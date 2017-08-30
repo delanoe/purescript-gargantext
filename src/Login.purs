@@ -1,11 +1,11 @@
 module Login where
 
-import Network.HTTP.Affjax (AJAX)
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
+import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
 import React.DOM (a, div, footer, h1, h3, hr, i, img, li, p, span, text, ul)
-import React.DOM.Props (_data, _id, aria, className, href, role, src, tabIndex, target, title)
+import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
 import Thermite (PerformAction, Render, Spec, simpleSpec)
 import Thermite as T
 
@@ -91,17 +91,38 @@ loginSpec = simpleSpec performAction render
                [
                  li [className "dropdown"]
                  [
-                   a [href "#", role "button", className"dropdown-toggle navbar-text", _data {toggle : "dropdown"}, title "That is your username"]
-                   [ i [className "icon-user"] []
-
-                  ]
+                   a [ className "dropdown-toggle navbar-text", _data {toggle : "dropdown"}, href "#",  role "button", title "That is your username" ]
+                   [ i [ className "" ]
+                     []
+                   , span [ aria {hidden : true}, className "glyphicon glyphicon-user", style {color:"white"} ]
+                     []
+                   , i [ className "caret" ]
+                     []
+                   ]
+                 , ul [className "dropdown-menu"]
+                   [
+                    li []
+                     [ a [tabIndex (-1), target "blank", title "Send us a message (bug, thanks, congrats...)", href "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"]
+                       [
+                         span [ className "glyphicon glyphicon-bullhorn" ,aria {hidden : true}] []
+                        , text "Report Feedback"
+                       ]
+                     ]
+                   , li [ className"divider"]
+                     []
+                   , li []
+                     [ a [tabIndex (-1), href "/auth/login" ]
+                       [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
+                       , text "login"
+                       ]
+                     ]
+                   ]
                  ]
                ]
              ]
 
           ]
         ]
-
 
       , div [className "container"]
         [
