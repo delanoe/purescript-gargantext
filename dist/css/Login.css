@@ -6,12 +6,16 @@
 }
 
 
-.logo-designed {
+#logo-designed {
     border:15px;
  }
 
-.logo-designed img {
-    width: 100px;
+#logo-designed img {
+
     height:150px;
     border:3px solid white;
+}
+
+#funnyimg {
+    border:2px solid black;
 }
