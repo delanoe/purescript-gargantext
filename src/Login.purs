@@ -117,7 +117,7 @@ loginSpec = simpleSpec performAction render
                 [ text "A web platform to explore text-mining" ]
               , p []
                 [ a [ className "btn btn-primary btn-lg", href "/projects", title "Click and test by yourself" ]
-                  [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
+                  [ span [ className "glyphicon glyphicon-hand-right" ]
                     []
                   , text "Log in"
                   ]
@@ -198,12 +198,12 @@ loginSpec = simpleSpec performAction render
       , footer []
         [ p []
           [ text "Gargantext"
-          , span [ aria {hidden : true}, className "glyphicon glyphicon-registration-mark" ]
+          , span [className "glyphicon glyphicon-registration-mark" ]
             []
           , text ", version 3.0.6.9.4,"
           , a [ href "http://www.cnrs.fr", target "blank", title "Institution that enables this project." ]
             [ text "Copyrights"
-            , span [ aria {hidden : true}, className "glyphicon glyphicon-copyright-mark" ]
+            , span [ className "glyphicon glyphicon-copyright-mark" ]
               []
             , text "CNRS 2017"
             ]
