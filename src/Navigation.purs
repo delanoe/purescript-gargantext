@@ -1,0 +1,137 @@
+module Navigation where
+
+import Control.Monad.Eff.Console (CONSOLE)
+import DOM (DOM)
+import Data.Either (Either(..))
+import Data.Foldable (fold)
+import Data.Lens (Lens', Prism', lens, over, prism)
+import Data.Maybe (Maybe(Nothing, Just))
+import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
+import Prelude hiding (div)
+import Network.HTTP.Affjax (AJAX)
+import PageRouter (Routes(..))
+import React.DOM (div)
+import React.DOM.Props (_id, className)
+import Landing as L
+import Login as LN
+
+type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
+
+type AppState =
+  { currentRoute :: Maybe Routes
+  , landingState :: L.State
+  , loginState :: LN.State
+
+  }
+
+initAppState :: AppState
+initAppState =
+  { currentRoute : Nothing
+  , landingState : L.initialState
+  , loginState : LN.initialState
+
+  }
+
+
+data Action
+  = Initialize
+  | LandingA L.Action
+  | LoginA LN.Action
+  | SetRoute Routes
+
+
+
+performAction :: forall eff props. PerformAction (dom :: DOM |eff) AppState props Action
+performAction (SetRoute route)  _ _ = void do
+  modifyState $ _ {currentRoute = pure route}
+
+performAction _ _ _ = void do
+  modifyState id
+
+
+
+---- Lens and Prism
+_landingState:: Lens' AppState L.State
+_landingState = lens (\s -> s.landingState) (\s ss -> s{landingState = ss})
+
+
+_landingAction :: Prism' Action L.Action
+_landingAction = prism LandingA \action ->
+  case action of
+    LandingA caction -> Right caction
+    _-> Left action
+
+
+
+_loginState:: Lens' AppState LN.State
+_loginState = lens (\s -> s.loginState) (\s ss -> s{loginState = ss})
+
+
+_loginAction :: Prism' Action LN.Action
+_loginAction = prism LoginA \action ->
+  case action of
+    LoginA caction -> Right caction
+    _-> Left action
+
+
+
+pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
+pagesComponent s =
+  case s.currentRoute of
+    Just route ->
+      selectSpec route
+    Nothing ->
+      selectSpec Home
+  where
+    selectSpec :: Routes -> Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff) AppState props Action
+    selectSpec Home = focus _landingState _landingAction L.loginSpec
+    selectSpec Login   = wrap $ focus _loginState _loginAction LN.renderSpec
+
+routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
+routingSpec = simpleSpec performAction defaultRender
+
+wrap :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+wrap spec =
+  fold
+  [ sidebarnavSpec
+  , innerContainer $ spec
+  ]
+  where
+    innerContainer :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+    innerContainer = over _render \render d p s c ->
+      [  div [_id "page-wrapper"]
+        [
+          div[className "container-fluid"]  (render d p s c)
+        ]
+      ]
+
+
+sidebarnavSpec ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+sidebarnavSpec = simpleSpec performAction render
+  where
+    render :: Render AppState props Action
+    render dispatch _ state _ =
+      [ ]
+
+
+layoutSpec :: forall eff props. Spec (E eff) AppState props Action
+layoutSpec =
+  fold
+  [ routingSpec
+  , container $
+       withState pagesComponent
+  ]
+  where
+    container :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+    container = over _render \render d p s c ->
+      (render d p s c)
+
+dispatchAction :: forall t115 t445 t447.  Bind t445 =>  Applicative t445 => (Action -> t445 t447) -> t115 -> Routes -> t445 Unit
+dispatchAction dispatcher _ Home = do
+  _ <- dispatcher $ SetRoute $ Home
+  _ <- dispatcher $ LandingA $ L.NoOp
+  pure unit
+dispatchAction dispatcher _ Login = do
+  _ <- dispatcher $ SetRoute $ Login
+  _ <- dispatcher $ LoginA $ LN.NoOp
+  pure unit

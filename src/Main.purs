@@ -1,25 +1,37 @@
 module Main where
 
-import Login (initialState, loginSpec)
 import Prelude
 
-import Control.Monad.Eff.Unsafe (unsafePerformEff)
+import Control.Monad.Eff (Eff)
+import DOM (DOM)
 import DOM.HTML (window) as DOM
 import DOM.HTML.Types (htmlDocumentToParentNode) as DOM
 import DOM.HTML.Window (document) as DOM
 import DOM.Node.ParentNode (QuerySelector(..))
 import DOM.Node.ParentNode (querySelector) as DOM
 import Data.Maybe (fromJust)
+import Navigation (dispatchAction, initAppState, layoutSpec)
+import PageRouter (routeHandler, routing)
 import Partial.Unsafe (unsafePartial)
 import React as R
 import ReactDOM as RDOM
+import Routing (matches)
+import Routing.Hash (getHash, setHash)
 import Thermite as T
 
-main :: Unit
-main = unsafePerformEff $ do
-  case T.createReactSpec loginSpec initialState  of
+main :: forall e. Eff (dom:: DOM | e) Unit
+main = do
+  case T.createReactSpec layoutSpec initAppState of
     { spec, dispatcher } -> void $ do
-      let spec' = spec
+      let setRouting this = void $ do
+            matches routing (routeHandler (dispatchAction (dispatcher this)))
+          spec' = spec { componentWillMount = setRouting }
       document <- DOM.window >>= DOM.document
-      container <- unsafePartial (fromJust <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
+      container <- unsafePartial (fromJust  <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
+      h <- getHash
+      case h of
+        "" -> setHash "/"
+        _ -> do
+          setHash "/"
+          setHash h
       RDOM.render (R.createFactory (R.createClass spec') {}) container
