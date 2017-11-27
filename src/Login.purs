@@ -97,8 +97,8 @@ renderSpec = simpleSpec performAction render
                            value "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP0j4WcEM" ]
                     []
                   , div [className "form-group"]
-                    [
-                      input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username] []
+                    [ p [] [text state.errorMessage]
+                     , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username] []
                     ]
                   , div [className "form-group"]
                     [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password] []

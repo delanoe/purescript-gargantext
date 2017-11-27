@@ -57,7 +57,7 @@ loginSpec = simpleSpec performAction render
           [
             div [ className "navbar-inner" ]
             [ a [ className "navbar-brand logoSmall", href "/" ]
-              [ img [ src "dist/images/logoSmall.png", title "Back to home." ]
+              [ img [ src "static/images/logoSmall.png", title "Back to home." ]
                 []
               ]
             ]
@@ -143,7 +143,7 @@ loginSpec = simpleSpec performAction render
                 [ a [ className "btn btn-primary btn-lg",onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
                   [ span [ className "glyphicon glyphicon-hand-right" ]
                     []
-                  , text "Login"
+                  , text " Login $$$"
                   ]
                 , a [ className "btn btn-warning btn-lg", href "https://iscpif.fr/services/applyforourservices/", target "blank", title "Fill the form to sign up" ]
                   [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
@@ -166,7 +166,7 @@ loginSpec = simpleSpec performAction render
               [
                 p [ className "right" ]
                 [ div [_id "logo-designed" ]
-                  [ img [ src "dist/images/logo.png", title "Logo designed by dacha and anoe" ]
+                  [ img [ src "static/images/logo.png", title "Logo designed by dacha and anoe" ]
                     []
                   ]
                 ]
@@ -178,7 +178,7 @@ loginSpec = simpleSpec performAction render
       , div [className "container"]
         [ div [className "row"]
           [ div [className "col-md-offset-5 col-md-6 content"]
-            [ img [ src "dist/images/Gargantextuel-212x300.jpg", title "Gargantextuel drawn by Cecile Meadel", _id "funnyimg"] []
+            [ img [ src "static/images/Gargantextuel-212x300.jpg", title "Gargantextuel drawn by Cecile Meadel", _id "funnyimg"] []
             ]
           ]
         ]
