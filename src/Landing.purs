@@ -66,6 +66,7 @@ loginSpec = simpleSpec performAction render
 
              ul [className "nav navbar-nav"]
                [
+                 ul [className "nav navbar-nav pull-left"] [
                  li [className "dropdown"]
                  [
                    a [ className "dropdown-toggle navbar-text", _data {toggle: "dropdown"}, href "#", role "button", title "Informations about Gargantext" ]
@@ -90,6 +91,7 @@ loginSpec = simpleSpec performAction render
                    ]
                  ]
                ]
+              ]
              , ul [className "nav navbar-nav pull-right"]
                [
                  li [className "dropdown"]
