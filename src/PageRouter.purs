@@ -44,6 +44,7 @@ routeHandler dispatchAction old new = do
   liftEff $ log $ "JWToken : " <> show tkn
   case tkn of
     Nothing -> do
+      dispatchAction old new
       liftEff $ log $ "called SignIn Route :"
     Just t -> do
       dispatchAction old new
