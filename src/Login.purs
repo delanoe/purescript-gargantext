@@ -20,9 +20,10 @@ import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Prelude hiding (div)
 import React.DOM (a, button, div, form, h2, h4, i, input, label, p, span, text)
-import React.DOM.Props (_id, _type, className, href, maxLength, name, onClick, placeholder, target, value)
+import React.DOM.Props (_id, _type, className, href, maxLength, name, onClick, onInput, placeholder, target, value)
 import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Unsafe.Coerce (unsafeCoerce)
 
 
 newtype State = State
@@ -44,11 +45,22 @@ initialState = State
 data Action
   = NoOp
   | Login
+  | SetUserName String
+  | SetPassword String
 
 
 performAction :: forall eff props. PerformAction (console :: CONSOLE, ajax :: AJAX,dom::DOM | eff) State props Action
 performAction NoOp _ _ = void do
   modifyState id
+
+performAction (SetUserName usr) _ _ = void do
+  modifyState \(State state) -> State $ state { username = usr }
+
+
+performAction (SetPassword pwd) _ _ = void do
+  modifyState \(State state) -> State $ state { password = pwd }
+
+
 
 performAction Login _ (State state) = void do
   res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
@@ -98,10 +110,10 @@ renderSpec = simpleSpec performAction render
                     []
                   , div [className "form-group"]
                     [ p [] [text state.errorMessage]
-                     , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username] []
+                     , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName (unsafeEventValue e))] []
                     ]
                   , div [className "form-group"]
-                    [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password] []
+                    [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password,onInput \e -> dispatch (SetPassword (unsafeEventValue e))] []
                     , div [className "clearfix"] []
                     ]
                   , div [className "center"]
@@ -114,7 +126,7 @@ renderSpec = simpleSpec performAction render
                       , text "I accept the terms of uses",
                         a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text "[Read the terms of use]"]
                       ]
-                    , button [_id "login-button",className "btn btn-primary btn-rounded", _type "submit", onClick \_ -> dispatch $ Login] [text "Login hello"]
+                    , button [_id "login-button",className "btn btn-primary btn-rounded", _type "submit", onClick \_ -> dispatch $ Login] [text "Login"]
                     ]
                     ]
                   ]
@@ -125,6 +137,10 @@ renderSpec = simpleSpec performAction render
           ]
         ]
       ]
+
+
+unsafeEventValue :: forall event. event -> String
+unsafeEventValue e = (unsafeCoerce e).target.value
 
 
 
@@ -160,7 +176,7 @@ loginReq encodeData =
   let
     setting =
       defaultRequest
-        { url = "https://dev.gargantext.org/api/auth/token"
+        { url = "http://unstable.gargantext.org/api/auth/token"
         , method = Left POST
         , headers =
             [ ContentType applicationJSON

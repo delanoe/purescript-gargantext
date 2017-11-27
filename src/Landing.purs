@@ -143,7 +143,7 @@ loginSpec = simpleSpec performAction render
                 [ a [ className "btn btn-primary btn-lg",onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
                   [ span [ className "glyphicon glyphicon-hand-right" ]
                     []
-                  , text " Login $$$"
+                  , text " Login"
                   ]
                 , a [ className "btn btn-warning btn-lg", href "https://iscpif.fr/services/applyforourservices/", target "blank", title "Fill the form to sign up" ]
                   [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
