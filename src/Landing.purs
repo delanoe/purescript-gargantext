@@ -140,7 +140,7 @@ loginSpec = simpleSpec performAction render
               , p []
                 [ text "A web platform to explore text-mining" ]
               , p []
-                [ button [ className "btn btn-primary btn-lg",onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
+                [ a [ className "btn btn-primary btn-lg",onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
                   [ span [ className "glyphicon glyphicon-hand-right" ]
                     []
                   , text "Login"
