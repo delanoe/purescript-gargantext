@@ -144,17 +144,17 @@ loginSpec = simpleSpec performAction render
               , p []
                 [ text "A web platform to explore text-mining" ]
               , p []
-                [ a [ className "btn btn-primary btn-lg",onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
+                [ a [ className "btn btn-primary btn-lg spacing-class ",onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
                   [ span [ className "glyphicon glyphicon-hand-right" ]
                     []
                   , text " Login"
                   ]
-                , a [ className "btn btn-warning btn-lg", href "https://iscpif.fr/services/applyforourservices/", target "blank", title "Fill the form to sign up" ]
+                , a [ className "btn btn-warning btn-lg spacing-class", href "https://iscpif.fr/services/applyforourservices/", target "blank", title "Fill the form to sign up" ]
                   [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
                     []
                   , text "Sign Up"
                   ]
-                , a [ className "btn btn-success btn-lg", href "https://iscpif.fr/gargantext/your-first-map/", target "blank", title "Fill the form to sign up" ]
+                , a [ className "btn btn-success btn-lg spacing-class", href "https://iscpif.fr/gargantext/your-first-map/", target "blank", title "Fill the form to sign up" ]
                   [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
                     []
                   , text "Documentation"
