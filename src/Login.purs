@@ -100,7 +100,7 @@ renderSpec = simpleSpec performAction render
                     ]
                   , p [className "text-muted"]
                     [ text $ "Login to your account or",
-                      a [ target "blank",href "https://iscpif.fr/services/applyforourservices/"] [text "ask to get an access"]
+                      a [ target "blank",href "https://iscpif.fr/services/applyforourservices/"] [text " ask to get an access"]
                     ]
                   ]
                 , div []
@@ -123,7 +123,7 @@ renderSpec = simpleSpec performAction render
                       [ input [_id "terms-accept", _type "checkbox", value "", className "checkbox"]
                         [
                         ]
-                      , text "I accept the terms of uses",
+                      , text "I accept the terms of uses ",
                         a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text "[Read the terms of use]"]
                       ]
                     , button [_id "login-button",className "btn btn-primary btn-rounded", _type "submit", onClick \_ -> dispatch $ Login] [text "Login"]

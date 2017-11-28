@@ -223,15 +223,15 @@ loginSpec = simpleSpec performAction render
            hr [] []
       , footer []
         [ p []
-          [ text "Gargantext"
+          [ text "Gargantext "
           , span [className "glyphicon glyphicon-registration-mark" ]
             []
-          , text ", version 3.0.6.9.4,"
+          , text ", version 3.1"
           , a [ href "http://www.cnrs.fr", target "blank", title "Institution that enables this project." ]
-            [ text "Copyrights"
+            [ text ", Copyrights "
             , span [ className "glyphicon glyphicon-copyright-mark" ]
               []
-            , text "CNRS 2017"
+            , text " CNRS 2017"
             ]
           , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE", target "blank", title "Legal instructions of the project." ]
             [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
