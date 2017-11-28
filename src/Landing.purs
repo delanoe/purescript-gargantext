@@ -76,7 +76,7 @@ loginSpec = simpleSpec performAction render
                    , i [ className "caret" ]
                      []
                    ]
-                 ]
+
                , ul [className "dropdown-menu"]
                  [ li []
                    [ a [tabIndex (-1),  target "blank", title "Documentation and tutorials", href "https://iscpif.fr/gargantext/your-first-map/"]
@@ -90,7 +90,9 @@ loginSpec = simpleSpec performAction render
 
                    ]
                  ]
-               ]
+                 ]
+
+                 ]
               ]
              , ul [className "nav navbar-nav pull-right"]
                [
