@@ -41,7 +41,7 @@ randomIt ar = unsafePartial $ do
          Nothing    ->
            crash "it should not happen"
          Just char  ->
-           Ran {l : char, r : rest}
+           pure $ Ran {l : char, r : rest}
 
 randomText :: String -> String
 randomText txt = fromCharArray ( start <> middle <> end)
