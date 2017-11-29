@@ -1,22 +1,17 @@
 module RandomText where
 
 import Prelude
-import Data.String (toCharArray, fromCharArray)
 
-import Data.Maybe(Maybe(Nothing, Just), fromJust)
-import Data.Tuple.Nested ((/\))
-import Data.Tuple(Tuple(..))
-import Data.Array ( length, (!!)
-                  , head  , tail
-                  , take  , takeEnd
-                  , drop  , dropEnd
-                  )
--- import Control.Monad.Eff.Console (log)
+import Control.Monad.Eff (Eff(..))
 import Control.Monad.Eff.Random (RANDOM(..), randomInt)
-import Control.Monad.Eff(Eff(..))
+import Data.Array (length, (!!), head, tail, take, takeEnd, drop, dropEnd)
+import Data.Maybe (Maybe(Nothing, Just), fromJust)
+import Data.String (toCharArray, fromCharArray)
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import Partial (crash)
 import Partial.Unsafe (unsafePartial)
-
+import Unsafe.Coerce (unsafeCoerce)
 
 
 --rando Ran x [] = Ran x []
@@ -32,7 +27,7 @@ remove n xs = unsafePartial $ case n of
                    _ -> (take n xs) <> (drop (n+1) xs)
 
 
-data Ran  = Ran  { l :: Char, r :: Array Char}
+data Ran = Ran { l :: Char, r :: Array Char}
 
 randomIt :: forall t46. String -> Eff ( random :: RANDOM | t46 ) Ran
 randomIt ar = unsafePartial $ do
@@ -43,8 +38,10 @@ randomIt ar = unsafePartial $ do
     let rest   = remove n ar'
 
     case maybeChar of
-         Nothing    -> crash "it should not happen"
-         Just char  -> (Ran char rest) -- (Ran char rest)
+         Nothing    ->
+           crash "it should not happen"
+         Just char  ->
+           Ran {l : char, r : rest}
 
 randomText :: String -> String
 randomText txt = fromCharArray ( start <> middle <> end)
