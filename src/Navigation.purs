@@ -99,6 +99,7 @@ pagesComponent s =
     selectSpec :: Routes -> Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff) AppState props Action
     selectSpec Home = focus _landingState _landingAction L.loginSpec
     selectSpec Login   = wrap $ focus _loginState _loginAction LN.renderSpec
+    selectSpec AddCorpus   = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
