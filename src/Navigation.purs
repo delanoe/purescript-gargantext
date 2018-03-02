@@ -1,20 +1,21 @@
 module Navigation where
 
+import DOM
+
+import AddCorpusview as AC
 import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Foldable (fold)
 import Data.Lens (Lens', Prism', lens, over, prism)
-import Data.Maybe (Maybe(Nothing, Just))
-import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
-import Prelude hiding (div)
-import Network.HTTP.Affjax (AJAX)
-import PageRouter (Routes(..))
-import React.DOM (div)
-import React.DOM.Props (_id, className)
+import Data.Maybe (Maybe, Maybe(Nothing, Just))
 import Landing as L
 import Login as LN
-import AddCorpusview as AC
+import Network.HTTP.Affjax (AJAX)
+import PageRouter (Routes(..))
+import Prelude hiding (div)
+import React.DOM (a, div, i, img, li, span,  text, ul)
+import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
+import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -27,7 +28,7 @@ type AppState =
 
 initAppState :: AppState
 initAppState =
-  { currentRoute : Nothing
+  { currentRoute : Just AddCorpus
   , landingState : L.initialState
   , loginState : LN.initialState
   , addCorpusState : AC.initialState
@@ -97,8 +98,8 @@ pagesComponent s =
       selectSpec Home
   where
     selectSpec :: Routes -> Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff) AppState props Action
-    selectSpec Home = focus _landingState _landingAction L.loginSpec
-    selectSpec Login   = wrap $ focus _loginState _loginAction LN.renderSpec
+    selectSpec Home = wrap $ focus _landingState _landingAction L.loginSpec
+    selectSpec Login   =  focus _loginState _loginAction LN.renderSpec
     selectSpec AddCorpus   = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
@@ -125,7 +126,88 @@ sidebarnavSpec = simpleSpec performAction render
   where
     render :: Render AppState props Action
     render dispatch _ state _ =
-      [ ]
+      [
+        div [ _id "dafixedtop", className "navbar navbar-inverse navbar-fixed-top", role "navigation"]
+        [ div [className "container"]
+          [
+            div [ className "navbar-inner" ]
+            [ a [ className "navbar-brand logoSmall", href "/" ]
+              [ img [ src "images/logoSmall.png", title "Back to home." ]
+                []
+              ]
+            ]
+          ,  div [className "navbar-collapse collapse"]
+             [
+
+             ul [className "nav navbar-nav"]
+               [
+                 ul [className "nav navbar-nav pull-left"] [
+                 li [className "dropdown"]
+                 [
+                   a [
+                      className "dropdown-toggle navbar-text", _data {toggle: "dropdown"}, href "#", role "button", title "Informations about Gargantext" ]
+                   [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ]
+                     []
+                   , text "Info"
+                   , i [ className "caret" ]
+                     []
+                   ]
+
+               , ul [className "dropdown-menu"]
+                 [ li []
+                   [ a [tabIndex (-1),  target "blank", title "Documentation and tutorials", href "https://iscpif.fr/gargantext/your-first-map/"]
+                     [text "Documentation"]
+                   ]
+                 , li [className "divider"] []
+                 , li []
+                   [
+                     a [ tabIndex (-1), target "blank", title "About", href "/about/", title "More informations about the project, its sponsors and its authors"]
+                     [ text "About"]
+
+                   ]
+                 ]
+                 ]
+
+                 ]
+              ]
+             , ul [className "nav navbar-nav pull-right"]
+               [
+                 li [className "dropdown"]
+                 [
+                   a [ className "dropdown-toggle navbar-text", _data {toggle : "dropdown"}, href "#",  role "button", title "That is your username" ]
+                   [ i [ className "" ]
+                     []
+                   , span [ aria {hidden : true}, className "glyphicon glyphicon-user", style {color:"white"} ]
+                     []
+                   , i [ className "caret" ]
+                     []
+                   ]
+                 , ul [className "dropdown-menu"]
+                   [
+                    li []
+                     [ a [tabIndex (-1), target "blank", title "Send us a message (bug, thanks, congrats...)", href "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"]
+                       [
+                         span [ className "glyphicon glyphicon-bullhorn" ,aria {hidden : true}] []
+                        , text "Report Feedback"
+                       ]
+                     ]
+                   , li [ className"divider"]
+                     []
+                   , li []
+                     [ a [tabIndex (-1), href "/auth/login" ]
+                       [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
+                       , text "login"
+                       ]
+                     ]
+                   ]
+                 ]
+               ]
+             ]
+
+          ]
+        ]
+
+      ]
 
 
 layoutSpec :: forall eff props. Spec (E eff) AppState props Action

@@ -74,8 +74,6 @@ addcorpusviewSpec = simpleSpec performAction render
             ]
           , div [className "col align-self-center"]
             [
-
-
             ]
 
           ]

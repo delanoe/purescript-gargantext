@@ -52,87 +52,87 @@ loginSpec = simpleSpec performAction render
     render :: Render State props Action
     render dispatch _ state _ =
       [
-        div [ _id "dafixedtop", className "navbar navbar-inverse navbar-fixed-top", role "navigation"]
-        [ div [className "container"]
-          [
-            div [ className "navbar-inner" ]
-            [ a [ className "navbar-brand logoSmall", href "/" ]
-              [ img [ src "images/logoSmall.png", title "Back to home." ]
-                []
-              ]
-            ]
-          ,  div [className "navbar-collapse collapse"]
-             [
+        -- div [ _id "dafixedtop", className "navbar navbar-inverse navbar-fixed-top", role "navigation"]
+        -- [ div [className "container"]
+        --   [
+        --     div [ className "navbar-inner" ]
+        --     [ a [ className "navbar-brand logoSmall", href "/" ]
+        --       [ img [ src "images/logoSmall.png", title "Back to home." ]
+        --         []
+        --       ]
+        --     ]
+        --   ,  div [className "navbar-collapse collapse"]
+        --      [
 
-             ul [className "nav navbar-nav"]
-               [
-                 ul [className "nav navbar-nav pull-left"] [
-                 li [className "dropdown"]
-                 [
-                   a [
-                      className "dropdown-toggle navbar-text", _data {toggle: "dropdown"}, href "#", role "button", title "Informations about Gargantext" ]
-                   [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ]
-                     []
-                   , text "Info"
-                   , i [ className "caret" ]
-                     []
-                   ]
+        --      ul [className "nav navbar-nav"]
+        --        [
+        --          ul [className "nav navbar-nav pull-left"] [
+        --          li [className "dropdown"]
+        --          [
+        --            a [
+        --               className "dropdown-toggle navbar-text", _data {toggle: "dropdown"}, href "#", role "button", title "Informations about Gargantext" ]
+        --            [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ]
+        --              []
+        --            , text "Info"
+        --            , i [ className "caret" ]
+        --              []
+        --            ]
 
-               , ul [className "dropdown-menu"]
-                 [ li []
-                   [ a [tabIndex (-1),  target "blank", title "Documentation and tutorials", href "https://iscpif.fr/gargantext/your-first-map/"]
-                     [text "Documentation"]
-                   ]
-                 , li [className "divider"] []
-                 , li []
-                   [
-                     a [ tabIndex (-1), target "blank", title "About", href "/about/", title "More informations about the project, its sponsors and its authors"]
-                     [ text "About"]
+        --        , ul [className "dropdown-menu"]
+        --          [ li []
+        --            [ a [tabIndex (-1),  target "blank", title "Documentation and tutorials", href "https://iscpif.fr/gargantext/your-first-map/"]
+        --              [text "Documentation"]
+        --            ]
+        --          , li [className "divider"] []
+        --          , li []
+        --            [
+        --              a [ tabIndex (-1), target "blank", title "About", href "/about/", title "More informations about the project, its sponsors and its authors"]
+        --              [ text "About"]
 
-                   ]
-                 ]
-                 ]
+        --            ]
+        --          ]
+        --          ]
 
-                 ]
-              ]
-             , ul [className "nav navbar-nav pull-right"]
-               [
-                 li [className "dropdown"]
-                 [
-                   a [ className "dropdown-toggle navbar-text", _data {toggle : "dropdown"}, href "#",  role "button", title "That is your username" ]
-                   [ i [ className "" ]
-                     []
-                   , span [ aria {hidden : true}, className "glyphicon glyphicon-user", style {color:"white"} ]
-                     []
-                   , i [ className "caret" ]
-                     []
-                   ]
-                 , ul [className "dropdown-menu"]
-                   [
-                    li []
-                     [ a [tabIndex (-1), target "blank", title "Send us a message (bug, thanks, congrats...)", href "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"]
-                       [
-                         span [ className "glyphicon glyphicon-bullhorn" ,aria {hidden : true}] []
-                        , text "Report Feedback"
-                       ]
-                     ]
-                   , li [ className"divider"]
-                     []
-                   , li []
-                     [ a [tabIndex (-1), href "/auth/login" ]
-                       [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
-                       , text "login"
-                       ]
-                     ]
-                   ]
-                 ]
-               ]
-             ]
+        --          ]
+        --       ]
+        --      , ul [className "nav navbar-nav pull-right"]
+        --        [
+        --          li [className "dropdown"]
+        --          [
+        --            a [ className "dropdown-toggle navbar-text", _data {toggle : "dropdown"}, href "#",  role "button", title "That is your username" ]
+        --            [ i [ className "" ]
+        --              []
+        --            , span [ aria {hidden : true}, className "glyphicon glyphicon-user", style {color:"white"} ]
+        --              []
+        --            , i [ className "caret" ]
+        --              []
+        --            ]
+        --          , ul [className "dropdown-menu"]
+        --            [
+        --             li []
+        --              [ a [tabIndex (-1), target "blank", title "Send us a message (bug, thanks, congrats...)", href "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"]
+        --                [
+        --                  span [ className "glyphicon glyphicon-bullhorn" ,aria {hidden : true}] []
+        --                 , text "Report Feedback"
+        --                ]
+        --              ]
+        --            , li [ className"divider"]
+        --              []
+        --            , li []
+        --              [ a [tabIndex (-1), href "/auth/login" ]
+        --                [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
+        --                , text "login"
+        --                ]
+        --              ]
+        --            ]
+        --          ]
+        --        ]
+        --      ]
 
-          ]
-        ]
+        --   ]
+        -- ]
 
-      , div [className "container"]
+       div [className "container"]
         [
           div [className "jumbotron"]
           [
