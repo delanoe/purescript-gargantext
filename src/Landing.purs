@@ -69,7 +69,8 @@ loginSpec = simpleSpec performAction render
                  ul [className "nav navbar-nav pull-left"] [
                  li [className "dropdown"]
                  [
-                   a [ className "dropdown-toggle navbar-text", _data {toggle: "dropdown"}, href "#", role "button", title "Informations about Gargantext" ]
+                   a [
+                      className "dropdown-toggle navbar-text", _data {toggle: "dropdown"}, href "#", role "button", title "Informations about Gargantext" ]
                    [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ]
                      []
                    , text "Info"
