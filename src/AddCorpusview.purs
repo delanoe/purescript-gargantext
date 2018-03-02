@@ -66,16 +66,19 @@ addcorpusviewSpec = simpleSpec performAction render
       [
         div [className "container"]
         [
-          div [className "row"]
+          div [className "jumbotron"]
+          [div [className "row"]
           [
-            div [className "col align-self-start"]
+            div [className "col-md-3"]
             [
               h3 [] [text "Treeview"]
             ]
-          , div [className "col align-self-center"]
+          , div [className "col-md-9"]
             [
+              h3 [] [text "Corpusview"]
             ]
 
+          ]
           ]
         ]
       ]
