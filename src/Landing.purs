@@ -57,7 +57,7 @@ loginSpec = simpleSpec performAction render
           [
             div [ className "navbar-inner" ]
             [ a [ className "navbar-brand logoSmall", href "/" ]
-              [ img [ src "static/images/logoSmall.png", title "Back to home." ]
+              [ img [ src "images/logoSmall.png", title "Back to home." ]
                 []
               ]
             ]
@@ -171,7 +171,7 @@ loginSpec = simpleSpec performAction render
               [
                 p [ className "right" ]
                 [ div [_id "logo-designed" ]
-                  [ img [ src "static/images/logo.png", title "Logo designed by dacha and anoe" ]
+                  [ img [ src "images/logo.png", title "Logo designed by dacha and anoe" ]
                     []
                   ]
                 ]
@@ -183,7 +183,7 @@ loginSpec = simpleSpec performAction render
       , div [className "container"]
         [ div [className "row"]
           [ div [className "col-md-offset-5 col-md-6 content"]
-            [ img [ src "static/images/Gargantextuel-212x300.jpg", title "Gargantextuel drawn by Cecile Meadel", _id "funnyimg"] []
+            [ img [ src "images/Gargantextuel-212x300.jpg", title "Gargantextuel drawn by Cecile Meadel", _id "funnyimg"] []
             ]
           ]
         ]
