@@ -17,10 +17,12 @@ import Routing.Match.Class (lit, num)
 data Routes
   = Home
   | Login
+  | AddCorpus
 
 instance showRoutes :: Show Routes where
   show Home = "Home"
   show Login = "Login"
+  show AddCorpus = "AddCorpus"
 
 int :: Match Int
 int = floor <$> num
@@ -28,8 +30,10 @@ int = floor <$> num
 routing :: Match Routes
 routing =
       loginRoute
+  <|> addcorpusRoute
   <|> home
   where
+    addcorpusRoute = AddCorpus <$ route "AddCorpus"
     loginRoute = Login <$ route "login"
     home = Home <$ lit ""
     route str = lit "" *> lit str

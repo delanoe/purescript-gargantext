@@ -19,7 +19,7 @@ import Data.MediaType.Common (applicationJSON)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Prelude hiding (div)
-import React.DOM (a, button, div, form, h2, h4, i, input, label, p, span, text)
+import React.DOM (a, button, div, form, h2, h3, h4, i, input, label, p, span, text)
 import React.DOM.Props (_id, _type, className, href, maxLength, name, onClick, onInput, placeholder, target, value)
 import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
@@ -63,4 +63,21 @@ addcorpusviewSpec = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ ]
+      [
+        div [className "container"]
+        [
+          div [className "row"]
+          [
+            div [className "col align-self-start"]
+            [
+              h3 [] [text "Treeview"]
+            ]
+          , div [className "col align-self-center"]
+            [
+
+
+            ]
+
+          ]
+        ]
+      ]

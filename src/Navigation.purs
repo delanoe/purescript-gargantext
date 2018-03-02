@@ -14,6 +14,7 @@ import React.DOM (div)
 import React.DOM.Props (_id, className)
 import Landing as L
 import Login as LN
+import AddCorpusview as AC
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -21,7 +22,7 @@ type AppState =
   { currentRoute :: Maybe Routes
   , landingState :: L.State
   , loginState :: LN.State
-
+  , addCorpusState :: AC.State
   }
 
 initAppState :: AppState
@@ -29,7 +30,7 @@ initAppState =
   { currentRoute : Nothing
   , landingState : L.initialState
   , loginState : LN.initialState
-
+  , addCorpusState : AC.initialState
   }
 
 
@@ -38,7 +39,7 @@ data Action
   | LandingA L.Action
   | LoginA LN.Action
   | SetRoute Routes
-
+  | AddCorpusA AC.Action
 
 
 performAction :: forall eff props. PerformAction (dom :: DOM |eff) AppState props Action
@@ -71,6 +72,18 @@ _loginAction :: Prism' Action LN.Action
 _loginAction = prism LoginA \action ->
   case action of
     LoginA caction -> Right caction
+    _-> Left action
+
+
+
+_addCorpusState:: Lens' AppState AC.State
+_addCorpusState = lens (\s -> s.addCorpusState) (\s ss -> s{addCorpusState = ss})
+
+
+_addCorpusAction :: Prism' Action AC.Action
+_addCorpusAction = prism AddCorpusA \action ->
+  case action of
+    AddCorpusA caction -> Right caction
     _-> Left action
 
 
@@ -134,4 +147,9 @@ dispatchAction dispatcher _ Home = do
 dispatchAction dispatcher _ Login = do
   _ <- dispatcher $ SetRoute $ Login
   _ <- dispatcher $ LoginA $ LN.NoOp
+  pure unit
+
+dispatchAction dispatcher _ AddCorpus = do
+  _ <- dispatcher $ SetRoute $ AddCorpus
+  _ <- dispatcher $ AddCorpusA $ AC.NoOp
   pure unit
