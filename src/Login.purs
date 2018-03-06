@@ -69,7 +69,7 @@ performAction Login _ (State state) = void do
       lift $ log $ show e
       modifyState \(State s) ->  State $ s { errorMessage = e}
     Right r@(LoginRes response) -> do
-      lift $ setHash "/"
+      lift $ setHash "/addCorpus"
       modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
 
 
@@ -176,7 +176,7 @@ loginReq encodeData =
   let
     setting =
       defaultRequest
-        { url = "http://unstable.gargantext.org/api/auth/token"
+        { url = "https://dev.gargantext.org/api/auth/token"
         , method = Left POST
         , headers =
             [ ContentType applicationJSON

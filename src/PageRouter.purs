@@ -33,7 +33,7 @@ routing =
   <|> addcorpusRoute
   <|> home
   where
-    addcorpusRoute = AddCorpus <$ route "AddCorpus"
+    addcorpusRoute = AddCorpus <$ route "addCorpus"
     loginRoute = Login <$ route "login"
     home = Home <$ lit ""
     route str = lit "" *> lit str

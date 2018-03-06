@@ -20,6 +20,7 @@ import Data.MediaType.Common (applicationJSON)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Prelude hiding (div)
+import React (ReactElement)
 import React.DOM (a, button, div, form, h2, h3, h4, i, input, label, li, p, span, text, ul)
 import React.DOM.Props (_id, _type, className, href, maxLength, name, onClick, onInput, placeholder, target, value)
 import Routing.Hash.Aff (setHash)
@@ -95,13 +96,7 @@ addcorpusviewSpec = simpleSpec performAction render
           , div [className "col-md-9"]
             [
               h3 [] [text "Corpusview"]
-            , ul [className "list-group"]
-              [
-                li [className "list-group-item justify-content-between"]
-                [
-                  span [className "badge badge-default badge-pill"] []
-                ]
-              ]
+            , ul [className "list-group"] $ map fn1 state.response
             ]
 
           ]
@@ -109,6 +104,13 @@ addcorpusviewSpec = simpleSpec performAction render
         ]
       ]
 
+
+fn1 :: Response -> ReactElement
+fn1 (Response o) =
+  li [className "list-group-item justify-content-between"]
+  [
+    span [className "badge badge-default badge-pill"] [ text $ show o.count_count]
+  ]
 
 getDatabaseDetails :: forall eff. Aff (console::CONSOLE,ajax :: AJAX | eff) (Either String (Array Response))
 getDatabaseDetails = do
