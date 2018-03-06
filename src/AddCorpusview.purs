@@ -23,20 +23,29 @@ import Prelude hiding (div)
 import React.DOM (a, button, div, form, h2, h3, h4, i, input, label, li, p, span, text, ul)
 import React.DOM.Props (_id, _type, className, href, maxLength, name, onClick, onInput, placeholder, target, value)
 import Routing.Hash.Aff (setHash)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, cotransform, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 
-newtype State = State
+type State =
   { select_database :: Boolean
   , unselect_database :: Boolean  --  dummy state
+  , response :: Array Response
+  }
+
+newtype Response = Response
+  {
+    count_count :: Int
+  , count_message :: Maybe String
+  , count_name :: String
   }
 
 initialState :: State
-initialState = State
+initialState =
   {
     select_database : true
   , unselect_database : true
+  , response : []
   }
 
 
@@ -44,6 +53,7 @@ data Action
   = NoOp
   | SelectDatabase Boolean
   | UnselectDatabase Boolean
+  | LoadDatabaseDetails
 
 
 performAction :: forall eff props. PerformAction (console :: CONSOLE, ajax :: AJAX,dom::DOM | eff) State props Action
@@ -51,11 +61,19 @@ performAction NoOp _ _ = void do
   modifyState id
 
 performAction (SelectDatabase selected) _ _ = void do
-  modifyState \(State state) -> State $ state { select_database = selected }
+  modifyState \( state) -> state { select_database = selected }
 
 
 performAction (UnselectDatabase unselected) _ _ = void do
-  modifyState \(State state) -> State $ state { unselect_database = unselected }
+  modifyState \( state) ->  state { unselect_database = unselected }
+
+performAction (LoadDatabaseDetails) _ _ = void do
+  res <- lift $ getDatabaseDetails
+  case res of
+     Left err -> cotransform $ \(state) ->  state
+     Right resData -> do
+       cotransform $ \(state) -> state {response  = resData}
+
 
 
 
@@ -92,13 +110,12 @@ addcorpusviewSpec = simpleSpec performAction render
       ]
 
 
-
-getDatabaseDetais = do
-  let token = ""
-  -- liftEff $ log $ "calling update Age "
+getDatabaseDetails :: forall eff. Aff (console::CONSOLE,ajax :: AJAX | eff) (Either String (Array Response))
+getDatabaseDetails = do
+  let token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTk5OTg1ODMsInVzZXJfaWQiOjUsImVtYWlsIjoiYWxleGFuZHJlLmRlbGFub2VAaXNjcGlmLmZyIiwidXNlcm5hbWUiOiJkZXZlbG9wZXIifQ.Os-3wuFNSmRIxCZi98oFNBu2zqGc0McO-dgDayozHJg"
   affResp <- liftAff $ attempt $ affjax defaultRequest
     { method = Left GET
-    , url ="http://unstable.gargantext.org/api/auth/token"
+    , url ="http://localhost:8009/count"
     , headers =  [ ContentType applicationJSON
                 , Accept applicationJSON
                 , RequestHeader "Authorization" $  "Bearer " <> token
@@ -115,24 +132,10 @@ getDatabaseDetais = do
 
 
 
--- updateProfileAge :: forall eff. State -> UpdateAgeReq -> Aff (console::CONSOLE,ajax :: AJAX | eff) (Either String UpdateProfileUserProfile)
--- updateProfileAge state reqBody = do
---   let token = fromMaybe "" $ (\(State s) -> s.token) state
---   liftEff $ log $ "calling update Age " <> show reqBody
---   affResp <- liftAff $ attempt $ affjax defaultRequest
---     { method = Left PUT
---     , url = host <> "api/users/update_profile_fields"
---     , headers =  [ ContentType applicationJSON
---                 , Accept applicationJSON
---                 , RequestHeader "Authorization" $  "Bearer " <> token
---             ]
---     , content = Just $ encodeJson reqBody
---     }
---   case affResp of
---     Left err -> do
---       pure $ Left $ show err
---     Right a -> do
---       liftEff $ log $ "POST method Completed"
---       liftEff $ log $ "GET /api response: " <> show a.response
---       let res = decodeJson a.response
---       pure res
+instance decodeJsonresponse :: DecodeJson Response where
+  decodeJson json = do
+    obj <- decodeJson json
+    count_count <- obj .? "count_count"
+    count_message <- obj .? "count_message"
+    count_name <- obj .? "count_name"
+    pure $ Response {count_count,count_message,count_name }

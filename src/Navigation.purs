@@ -3,6 +3,9 @@ module Navigation where
 import DOM
 
 import AddCorpusview as AC
+import Control.Monad.Aff.Class (liftAff)
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Data.Either (Either(..))
 import Data.Foldable (fold)
@@ -13,7 +16,7 @@ import Login as LN
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
 import Prelude hiding (div)
-import React.DOM (a, div, i, img, li, span,  text, ul)
+import React.DOM (a, div, i, img, li, span, text, ul)
 import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 
@@ -28,7 +31,7 @@ type AppState =
 
 initAppState :: AppState
 initAppState =
-  { currentRoute : Just AddCorpus
+ { currentRoute : Just AddCorpus
   , landingState : L.initialState
   , loginState : LN.initialState
   , addCorpusState : AC.initialState
@@ -210,6 +213,7 @@ sidebarnavSpec = simpleSpec performAction render
       ]
 
 
+
 layoutSpec :: forall eff props. Spec (E eff) AppState props Action
 layoutSpec =
   fold
@@ -234,5 +238,5 @@ dispatchAction dispatcher _ Login = do
 
 dispatchAction dispatcher _ AddCorpus = do
   _ <- dispatcher $ SetRoute $ AddCorpus
-  _ <- dispatcher $ AddCorpusA $ AC.NoOp
+  _ <- dispatcher $ AddCorpusA $ AC.LoadDatabaseDetails
   pure unit

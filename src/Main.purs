@@ -3,6 +3,7 @@ module Main where
 import Prelude
 
 import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import DOM.HTML (window) as DOM
 import DOM.HTML.Types (htmlDocumentToParentNode) as DOM
@@ -11,6 +12,7 @@ import DOM.Node.ParentNode (QuerySelector(..))
 import DOM.Node.ParentNode (querySelector) as DOM
 import Data.Maybe (fromJust)
 import Navigation (dispatchAction, initAppState, layoutSpec)
+import Network.HTTP.Affjax (AJAX)
 import PageRouter (routeHandler, routing)
 import Partial.Unsafe (unsafePartial)
 import React as R
@@ -19,9 +21,9 @@ import Routing (matches)
 import Routing.Hash (getHash, setHash)
 import Thermite as T
 
-main :: forall e. Eff (dom:: DOM | e) Unit
+main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e ) Unit
 main = do
-  case T.createReactSpec layoutSpec initAppState of
+ case T.createReactSpec layoutSpec initAppState of
     { spec, dispatcher } -> void $ do
       let setRouting this = void $ do
             matches routing (routeHandler (dispatchAction (dispatcher this)))
