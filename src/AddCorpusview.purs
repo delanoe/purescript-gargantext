@@ -69,7 +69,7 @@ performAction (UnselectDatabase unselected) _ _ = void do
   modifyState \( state) ->  state { unselect_database = unselected }
 
 performAction (LoadDatabaseDetails) _ _ = void do
-  res <- lift $ getDatabaseDetails
+  res <- lift $ getDatabaseDetails $ QueryString{query_query: "string",query_name: ["Pubmed"]}
   case res of
      Left err -> cotransform $ \(state) ->  state
      Right resData -> do
@@ -112,16 +112,42 @@ fn1 (Response o) =
     span [className "badge badge-default badge-pill"] [ text $ show o.count_count]
   ]
 
-getDatabaseDetails :: forall eff. Aff (console::CONSOLE,ajax :: AJAX | eff) (Either String (Array Response))
-getDatabaseDetails = do
+
+newtype QueryString = QueryString
+  {
+    query_query :: String
+  ,  query_name :: Array String
+  }
+
+queryString :: QueryString
+queryString = QueryString
+  {
+  query_query: "string",
+  query_name: [
+    "Pubmed"
+  ]
+  }
+
+
+instance encodeJsonQueryString :: EncodeJson QueryString where
+  encodeJson (QueryString obj) =
+    "query_query"       := obj.query_query
+    ~> "query_name"        := obj.query_name
+    ~> jsonEmptyObject
+
+
+
+getDatabaseDetails :: forall eff.  QueryString -> Aff (console::CONSOLE,ajax :: AJAX | eff) (Either String (Array Response))
+getDatabaseDetails reqBody = do
   let token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTk5OTg1ODMsInVzZXJfaWQiOjUsImVtYWlsIjoiYWxleGFuZHJlLmRlbGFub2VAaXNjcGlmLmZyIiwidXNlcm5hbWUiOiJkZXZlbG9wZXIifQ.Os-3wuFNSmRIxCZi98oFNBu2zqGc0McO-dgDayozHJg"
   affResp <- liftAff $ attempt $ affjax defaultRequest
-    { method = Left GET
+    { method = Left POST
     , url ="http://localhost:8009/count"
     , headers =  [ ContentType applicationJSON
                 , Accept applicationJSON
-                , RequestHeader "Authorization" $  "Bearer " <> token
+              --   , RequestHeader "Authorization" $  "Bearer " <> token
             ]
+    , content = Just $ encodeJson reqBody
     }
   case affResp of
     Left err -> do
