@@ -36,9 +36,8 @@ type State =
 
 newtype Response = Response
   {
-    count_count :: Int
-  , count_message :: Maybe String
-  , count_name :: String
+    count :: Int
+  , name :: String
   }
 
 initialState :: State
@@ -109,8 +108,8 @@ fn1 :: Response -> ReactElement
 fn1 (Response o) =
   li [className "list-group-item justify-content-between"]
   [
-    span [] [text $ fromMaybe "" o.count_message]
-  ,  span [className "badge badge-default badge-pill"] [ text $ show o.count_count]
+    span [] [text  o.name]
+  ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
   ]
 
 
@@ -152,7 +151,9 @@ getDatabaseDetails reqBody = do
     }
   case affResp of
     Left err -> do
+      liftAff $ log $ "error" <> show err
       pure $ Left $ show err
+
     Right a -> do
       liftAff $ log $ "POST method Completed"
       liftAff $ log $ "GET /api response: " <> show a.response
@@ -160,11 +161,9 @@ getDatabaseDetails reqBody = do
       pure res
 
 
-
 instance decodeJsonresponse :: DecodeJson Response where
   decodeJson json = do
     obj <- decodeJson json
-    count_count <- obj .? "count_count"
-    count_message <- obj .? "count_message"
-    count_name <- obj .? "count_name"
-    pure $ Response {count_count,count_message,count_name }
+    count <- obj .? "count"
+    name <- obj .? "name"
+    pure $ Response {count,name }
