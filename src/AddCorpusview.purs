@@ -15,7 +15,7 @@ import DOM.WebStorage.Storage (getItem, setItem)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.MediaType.Common (applicationJSON)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
@@ -87,19 +87,19 @@ addcorpusviewSpec = simpleSpec performAction render
         div [className "container"]
         [
           div [className "jumbotron"]
-          [div [className "row"]
-          [
-            div [className "col-md-3"]
-            [
-              h3 [] [text "Treeview"]
-            ]
-          , div [className "col-md-9"]
-            [
-              h3 [] [text "Corpusview"]
-            , ul [className "list-group"] $ map fn1 state.response
-            ]
+          [ div [className "row"]
+           [
+             div [className "col-md-3"]
+             [
+               h3 [] [text "Treeview"]
+             ]
+           , div [className "col-md-9"]
+             [
+               h3 [] [text "Corpusview"]
+             , ul [className "list-group"] $ map fn1 state.response
+             ]
 
-          ]
+           ]
           ]
         ]
       ]
@@ -109,7 +109,8 @@ fn1 :: Response -> ReactElement
 fn1 (Response o) =
   li [className "list-group-item justify-content-between"]
   [
-    span [className "badge badge-default badge-pill"] [ text $ show o.count_count]
+    span [] [text $ fromMaybe "" o.count_message]
+  ,  span [className "badge badge-default badge-pill"] [ text $ show o.count_count]
   ]
 
 
