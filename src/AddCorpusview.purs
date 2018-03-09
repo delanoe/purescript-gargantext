@@ -109,7 +109,7 @@ fn1 :: Response -> ReactElement
 fn1 (Response o) =
   li [className "list-group-item justify-content-between"]
   [
-    a [ href "#",onClick  \_ -> dispatch $ Submit]
+    a [ href "#"]
     [ span [] [text  o.name]
     ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
     ]
