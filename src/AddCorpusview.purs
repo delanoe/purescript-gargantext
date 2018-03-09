@@ -96,6 +96,7 @@ addcorpusviewSpec = simpleSpec performAction render
              [
                h3 [] [text "Corpusview"]
              , ul [className "list-group"] $ map fn1 state.response
+             , button [] [text "GO"]
              ]
 
            ]
@@ -108,8 +109,11 @@ fn1 :: Response -> ReactElement
 fn1 (Response o) =
   li [className "list-group-item justify-content-between"]
   [
-    span [] [text  o.name]
-  ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
+    a [ href "#",onClick  \_ -> dispatch $ Submit]
+    [ span [] [text  o.name]
+    ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
+    ]
+
   ]
 
 
