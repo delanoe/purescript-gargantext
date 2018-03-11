@@ -32,8 +32,8 @@ int = floor <$> num
 routing :: Match Routes
 routing =
       loginRoute
-  <|> addcorpusRoute
   <|> docviewRoute
+  <|> addcorpusRoute
   <|> home
   where
     docviewRoute = DocView <$ route "docView"
