@@ -6,4 +6,5 @@
 /.psc*
 /.purs*
 /.psa*
+/dist/css/*map
 bundle.js
