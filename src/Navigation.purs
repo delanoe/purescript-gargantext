@@ -19,6 +19,8 @@ import Prelude hiding (div)
 import React.DOM (a, div, i, img, li, span, text, ul)
 import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
+import DocView as DV
+
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -27,6 +29,7 @@ type AppState =
   , landingState :: L.State
   , loginState :: LN.State
   , addCorpusState :: AC.State
+  , docViewState :: DV.State
   }
 
 initAppState :: AppState
@@ -35,6 +38,7 @@ initAppState =
   , landingState : L.initialState
   , loginState : LN.initialState
   , addCorpusState : AC.initialState
+  , docViewState : DV.tdata
   }
 
 
@@ -44,6 +48,7 @@ data Action
   | LoginA LN.Action
   | SetRoute Routes
   | AddCorpusA AC.Action
+  | DocViewA DV.Action
 
 
 performAction :: forall eff props. PerformAction (dom :: DOM |eff) AppState props Action
@@ -92,6 +97,18 @@ _addCorpusAction = prism AddCorpusA \action ->
 
 
 
+_docViewState:: Lens' AppState DV.State
+_docViewState = lens (\s -> s.docViewState) (\s ss -> s{docViewState = ss})
+
+
+_docViewAction :: Prism' Action DV.Action
+_docViewAction = prism DocViewA \action ->
+  case action of
+    DocViewA caction -> Right caction
+    _-> Left action
+
+
+
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
   case s.currentRoute of
@@ -104,6 +121,7 @@ pagesComponent s =
     selectSpec Home = wrap $ focus _landingState _landingAction L.loginSpec
     selectSpec Login   =  focus _loginState _loginAction LN.renderSpec
     selectSpec AddCorpus   = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
+    selectSpec DocView   = wrap $ focus _docViewState _docViewAction DV.spec
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
@@ -239,4 +257,9 @@ dispatchAction dispatcher _ Login = do
 dispatchAction dispatcher _ AddCorpus = do
   _ <- dispatcher $ SetRoute $ AddCorpus
   _ <- dispatcher $ AddCorpusA $ AC.LoadDatabaseDetails
+  pure unit
+
+dispatchAction dispatcher _ DocView = do
+  _ <- dispatcher $ SetRoute $ DocView
+  _ <- dispatcher $ DocViewA $ DV.LoadData
   pure unit

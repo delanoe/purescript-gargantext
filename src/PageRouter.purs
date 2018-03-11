@@ -18,11 +18,13 @@ data Routes
   = Home
   | Login
   | AddCorpus
+  | DocView
 
 instance showRoutes :: Show Routes where
   show Home = "Home"
   show Login = "Login"
   show AddCorpus = "AddCorpus"
+  show DocView = "DocView"
 
 int :: Match Int
 int = floor <$> num
@@ -31,8 +33,10 @@ routing :: Match Routes
 routing =
       loginRoute
   <|> addcorpusRoute
+  <|> docviewRoute
   <|> home
   where
+    docviewRoute = DocView <$ route "docView"
     addcorpusRoute = AddCorpus <$ route "addCorpus"
     loginRoute = Login <$ route "login"
     home = Home <$ lit ""

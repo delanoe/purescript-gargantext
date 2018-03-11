@@ -15,8 +15,11 @@ import DOM.WebStorage.Storage (getItem, setItem)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
+import Data.Lens (Lens', Prism', lens, over)
+import Data.List (List, fold, fromFoldable, toUnfoldable)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.MediaType.Common (applicationJSON)
+import Data.Tuple (Tuple(..))
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Prelude hiding (div)
@@ -24,8 +27,9 @@ import React (ReactElement)
 import React.DOM (a, button, div, form, h2, h3, h4, i, input, label, li, p, span, text, ul)
 import React.DOM.Props (_id, _type, className, href, maxLength, name, onClick, onInput, placeholder, target, value)
 import Routing.Hash.Aff (setHash)
-import Thermite (PerformAction, Render, Spec, cotransform, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, _render, cotransform, focus, foreach, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
+
 
 
 type State =
@@ -54,6 +58,7 @@ data Action
   | SelectDatabase Boolean
   | UnselectDatabase Boolean
   | LoadDatabaseDetails
+  | ResponseAction
 
 
 performAction :: forall eff props. PerformAction (console :: CONSOLE, ajax :: AJAX,dom::DOM | eff) State props Action
@@ -74,6 +79,8 @@ performAction (LoadDatabaseDetails) _ _ = void do
      Right resData -> do
        cotransform $ \(state) -> state {response  = resData}
 
+performAction ResponseAction _ _ = void do
+  modifyState id
 
 
 
@@ -96,25 +103,29 @@ addcorpusviewSpec = simpleSpec performAction render
              [
                h3 [] [text "Corpusview"]
              , ul [className "list-group"] $ map fn1 state.response
-             , button [] [text "GO"]
              ]
 
            ]
           ]
         ]
       ]
+      where
+        fn1 (Response o) =
+          li [className "list-group-item justify-content-between"]
+          [
+          span [] [text  o.name]
+          ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
+          ]
 
 
-fn1 :: Response -> ReactElement
-fn1 (Response o) =
-  li [className "list-group-item justify-content-between"]
-  [
-    a [ href "#"]
-    [ span [] [text  o.name]
-    ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
-    ]
 
-  ]
+-- fn1 :: Response -> ReactElement
+-- fn1 (Response o) =
+--   li [className "list-group-item justify-content-between"]
+--   [
+--     span [] [text  o.name]
+--   ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
+--   ]
 
 
 newtype QueryString = QueryString
