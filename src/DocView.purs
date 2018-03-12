@@ -26,7 +26,7 @@ import Partial.Unsafe (unsafePartial)
 import Prelude (class Eq, class Ord, class Show, Unit, bind, id, map, not, pure, show, void, ($), (*), (+), (-), (/), (<), (<$>), (<>), (==), (>), (>=), (>>=))
 import React (ReactElement)
 import React as R
-import React.DOM (a, b, b', br', div, i, input, li, option, select, span, table, tbody, td, text, thead, tr, ul)
+import React.DOM (a, b, b', br', div, h3, i, input, li, option, select, span, table, tbody, td, text, thead, tr, ul)
 import React.DOM.Props (Props, _type, className, href, onChange, onClick, selected, value)
 import ReactDOM as RDOM
 import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, modifyState, simpleSpec)
@@ -133,6 +133,7 @@ spec = simpleSpec performAction render
                 br' []
               , br' []
               , p''
+              , h3 [] [text "Chart Title"]
               , ex1
               , p''
 
