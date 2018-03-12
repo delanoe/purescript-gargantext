@@ -1,7 +1,12 @@
 {
   "dependencies": {
-    "create-react-class": "^15.6.0",
-    "react": "^15.6.1",
-    "react-dom": "^15.6.1"
+    "create-react-class": "^15.6.2",
+    "echarts": "^3.8.5",
+    "echarts-for-react": "^2.0.0",
+    "prop-types": "15.6.0",
+    "react": "^16.2.0",
+    "react-addons-css-transition-group": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-echarts-v3": "^1.0.14"
   }
 }

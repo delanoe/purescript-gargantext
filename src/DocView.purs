@@ -32,6 +32,7 @@ import React.DOM.Props (Props, _type, className, href, onChange, onClick, select
 import ReactDOM as RDOM
 import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, defaultPerformAction, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
+import Chart
 
 main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
 main = do
@@ -126,6 +127,11 @@ spec = simpleSpec performAction render
               [
                 br' []
               , br' []
+              , p''
+              , ex1
+              , p''
+
+
               , div [] [b [] [text d.title]]
               , div [] [ text "Search "
                        , input [] []
