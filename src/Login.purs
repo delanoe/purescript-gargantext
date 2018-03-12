@@ -19,7 +19,7 @@ import Data.MediaType.Common (applicationJSON)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Prelude hiding (div)
-import React.DOM (a, button, div, form, h2, h4, i, input, label, p, span, text)
+import React.DOM (a, button, div, h2, h4, i, input, label, p, span, text)
 import React.DOM.Props (_id, _type, className, href, maxLength, name, onClick, onInput, placeholder, target, value)
 import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
@@ -63,14 +63,16 @@ performAction (SetPassword pwd) _ _ = void do
 
 
 performAction Login _ (State state) = void do
-  res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
-  case res of
-    Left e -> do
-      lift $ log $ show e
-      modifyState \(State s) ->  State $ s { errorMessage = e}
-    Right r@(LoginRes response) -> do
-      lift $ setHash "/addCorpus"
-      modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
+  lift $ setHash "/addCorpus"
+  modifyState id
+  -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
+  -- case res of
+  --   Left e -> do
+  --     lift $ log $ show e
+  --     modifyState \(State s) ->  State $ s { errorMessage = e}
+  --   Right r@(LoginRes response) -> do
+  --     lift $ setHash "/addCorpus"
+  --     modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
 
 
 
