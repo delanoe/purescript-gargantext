@@ -58,7 +58,7 @@ data Action
   | SelectDatabase Boolean
   | UnselectDatabase Boolean
   | LoadDatabaseDetails
-  | ResponseAction
+  | GO
 
 
 performAction :: forall eff props. PerformAction (console :: CONSOLE, ajax :: AJAX,dom::DOM | eff) State props Action
@@ -79,7 +79,8 @@ performAction (LoadDatabaseDetails) _ _ = void do
      Right resData -> do
        cotransform $ \(state) -> state {response  = resData}
 
-performAction ResponseAction _ _ = void do
+performAction GO _ _ = void do
+  lift $ setHash "/docView"
   modifyState id
 
 
@@ -103,6 +104,7 @@ addcorpusviewSpec = simpleSpec performAction render
              [
                h3 [] [text "Corpusview"]
              , ul [className "list-group"] $ map fn1 state.response
+             , button [onClick \_ -> dispatch GO] [text "GO"]
              ]
 
            ]
