@@ -378,7 +378,7 @@ ex1 = echarts
      [ option
        [ tooltip [trigger "axis"]
        , grid [containLabel true]
-       , legend [data' ["data1", "data2", "data3"]]
+       , legend [data' ["Query A", "Query B", "Query C"]]
        , xAxis
          [ type' "category"
          , axisTick [alignWithLabel true]
@@ -408,22 +408,22 @@ dz2 = unsafeFromPropsArray
 
 ya1 = unsafeFromPropsArray
       [ type' "value"
-      , name "Eur"
+      , name "Publications (by year)"
       , min 0
       , position "left"
-      , axisLabel [formatter "{value} h"]
+      , axisLabel [formatter "{value}"]
       ]
 
 ya2 = unsafeFromPropsArray
       [ type' "value"
-      , name "Eur"
+      , name "Score metric"
       , min 0
       , position "right"
-      , axisLabel [formatter "{value} Eur"]
+      , axisLabel [formatter "{value}"]
       ]
 
 sd1 = unsafeFromPropsArray
-      [ name "data1"
+      [ name "Query A"
       , type' "line"
       , label [normal[showp true, position "top"]]
       , lineStyle [ normal
@@ -436,7 +436,7 @@ sd1 = unsafeFromPropsArray
       ]
 
 sd2 = unsafeFromPropsArray
-      [ name "data2"
+      [ name "Query B"
       , type' "bar"
       , label [normal[showp true, position "top"]]
       , yAxisIndex 1
@@ -444,7 +444,7 @@ sd2 = unsafeFromPropsArray
       ]
 
 sd3 = unsafeFromPropsArray
-      [ name "data3"
+      [ name "Query C"
       , type' "bar"
       , label [normal[showp true, position "top"]]
       , yAxisIndex 1
