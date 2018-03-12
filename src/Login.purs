@@ -63,7 +63,7 @@ performAction (SetPassword pwd) _ _ = void do
 
 
 performAction Login _ (State state) = void do
-  lift $ setHash "/addCorpus"
+  lift $ setHash "/search"
   modifyState id
   -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
   -- case res of

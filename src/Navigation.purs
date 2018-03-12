@@ -20,7 +20,7 @@ import React.DOM (a, div, i, img, li, span, text, ul)
 import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import DocView as DV
-
+import SearchForm as S
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -30,6 +30,7 @@ type AppState =
   , loginState :: LN.State
   , addCorpusState :: AC.State
   , docViewState :: DV.State
+  , searchState :: S.State
   }
 
 initAppState :: AppState
@@ -39,6 +40,7 @@ initAppState =
   , loginState : LN.initialState
   , addCorpusState : AC.initialState
   , docViewState : DV.tdata
+  , searchState : S.initialState
   }
 
 
@@ -49,6 +51,7 @@ data Action
   | SetRoute Routes
   | AddCorpusA AC.Action
   | DocViewA DV.Action
+  | SearchA S.Action
 
 
 performAction :: forall eff props. PerformAction (dom :: DOM |eff) AppState props Action
@@ -108,6 +111,17 @@ _docViewAction = prism DocViewA \action ->
     _-> Left action
 
 
+_searchState:: Lens' AppState S.State
+_searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
+
+
+_searchAction :: Prism' Action S.Action
+_searchAction = prism SearchA \action ->
+  case action of
+    SearchA caction -> Right caction
+    _-> Left action
+
+
 
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
@@ -122,6 +136,7 @@ pagesComponent s =
     selectSpec Login   =  focus _loginState _loginAction LN.renderSpec
     selectSpec AddCorpus   = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
     selectSpec DocView   = wrap $ focus _docViewState _docViewAction DV.spec
+    selectSpec SearchView   = wrap $ focus _searchState _searchAction S.searchSpec
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
@@ -262,4 +277,10 @@ dispatchAction dispatcher _ AddCorpus = do
 dispatchAction dispatcher _ DocView = do
   _ <- dispatcher $ SetRoute $ DocView
   _ <- dispatcher $ DocViewA $ DV.LoadData
+  pure unit
+
+
+dispatchAction dispatcher _ SearchView = do
+  _ <- dispatcher $ SetRoute $ SearchView
+  _ <- dispatcher $ SearchA $ S.NoOp
   pure unit

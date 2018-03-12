@@ -1,6 +1,7 @@
 module PageRouter where
 
 import Prelude
+
 import Control.Alt ((<|>))
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
@@ -19,12 +20,14 @@ data Routes
   | Login
   | AddCorpus
   | DocView
+  | SearchView
 
 instance showRoutes :: Show Routes where
   show Home = "Home"
   show Login = "Login"
   show AddCorpus = "AddCorpus"
   show DocView = "DocView"
+  show SearchView = "SearchView"
 
 int :: Match Int
 int = floor <$> num
@@ -32,10 +35,12 @@ int = floor <$> num
 routing :: Match Routes
 routing =
       loginRoute
+   <|> searchRoute
   <|> docviewRoute
   <|> addcorpusRoute
   <|> home
   where
+    searchRoute = SearchView <$ route "search"
     docviewRoute = DocView <$ route "docView"
     addcorpusRoute = AddCorpus <$ route "addCorpus"
     loginRoute = Login <$ route "login"
