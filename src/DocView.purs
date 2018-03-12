@@ -1,6 +1,7 @@
 module DocView where
 
 import Data.Argonaut
+import Prelude hiding (div)
 
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
@@ -20,13 +21,13 @@ import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (fromJust)
 import Data.MediaType.Common (applicationJSON)
+import Data.Tuple (Tuple(..))
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Partial.Unsafe (unsafePartial)
-import Prelude hiding (div)
 import React (ReactElement)
 import React as R
-import React.DOM (a, b, b', br', div, dt, input, option, select, span, table, tbody, td, text, thead, tr)
+import React.DOM (a, b, b', br, br', div, dt, i, input, li, option, select, span, table, tbody, td, text, thead, tr, ul)
 import React.DOM.Props (_type, className, href, onChange, onClick, selected, value)
 import ReactDOM as RDOM
 import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, defaultPerformAction, modifyState, simpleSpec)
@@ -94,6 +95,14 @@ instance decodeResponse :: DecodeJson Response where
     pure $ Response { cid, created, favorite, ngramCount, hyperdata }
 
 
+data NTree a = NLeaf a | NNode String (Array (NTree a))
+
+type FTree = NTree (Tuple String String)
+
+
+
+
+
 spec :: Spec _ State _ Action
 spec = simpleSpec performAction render
   where
@@ -104,35 +113,81 @@ spec = simpleSpec performAction render
           div [className "jumbotron"]
           [
             div [className "row"]
-            [ br' []
-            , br' []
-            , div [] [b [] [text d.title]]
-            , div [] [ text "Search "
-                     , input [] []
-                     ]
-            , sizeDD d.pageSize dispatch
-            , br' []
-            , br' []
-            , textDescription d.currentPage d.pageSize d.totalRecords
-            , br' []
-            , br' []
-            , pagination dispatch d.totalPages d.currentPage
-            , br' []
-            , br' []
-            , table []
-              [thead [] [tr []
-                         [ td [] [ b' [text "Date"]]
-                         , td [] [ b' [text "Title"]]
-                         , td [] [ b' [text "Source"]]
-                         , td [] [ b' [text "Fav"]]
-                         , td [] [ b' [text "Delete"]]
-                         ]]
-              , tbody [] $ map showRow d.rows
+            [ div [className "col-md-3"]
+              [ br' []
+              , br' []
+              ,  toHtml exampleTree
+              ]
+            , div [className "col-md-9"]
+              [
+                br' []
+              , br' []
+              , div [] [b [] [text d.title]]
+              , div [] [ text "Search "
+                       , input [] []
+                       ]
+              , sizeDD d.pageSize dispatch
+              , br' []
+              , br' []
+              , textDescription d.currentPage d.pageSize d.totalRecords
+              , br' []
+              , br' []
+              , pagination dispatch d.totalPages d.currentPage
+              , br' []
+              , br' []
+              , table []
+                [thead [] [tr []
+                           [ td [] [ b' [text "Date"]]
+                           , td [] [ b' [text "Title"]]
+                           , td [] [ b' [text "Source"]]
+                           , td [] [ b' [text "Fav"]]
+                           , td [] [ b' [text "Delete"]]
+                           ]]
+                , tbody [] $ map showRow d.rows
+                ]
               ]
             ]
           ]
         ]
       ]
+
+exampleTree :: NTree (Tuple String String)
+exampleTree =
+  NNode "Web Sites"
+  [ NNode "Google"
+    [ NLeaf (Tuple "Search" "http://google.com/")
+    , NLeaf (Tuple "Maps" "http://maps.google.com/")
+    ]
+  , NNode "Social Media"
+    [ NLeaf (Tuple "Google +" "http://plus.google.com/")
+    , NLeaf (Tuple "Twitter" "http://twitter.com/")
+    , NLeaf (Tuple "Facebook" "http://facebook.com/")
+    , NNode "Others"
+      [ NLeaf (Tuple "Instagram" "https://www.instagram.com/")
+      , NLeaf (Tuple "WhatsApp" "https://web.whatsapp.com")
+      ]
+    ]
+  ]
+
+
+
+toHtml :: FTree -> ReactElement
+toHtml (NLeaf (Tuple name link)) =
+  li []
+  [ a [ href link]
+    [ text name
+    ]
+  ]
+toHtml (NNode name ary) =
+  ul []
+  [ li [] $
+    [ i [className "fas fa-folder"] []
+    ,  text name
+    ] <>
+    map toHtml ary
+  ]
+
+
 
 performAction :: PerformAction _ State _ Action
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
@@ -156,21 +211,6 @@ performAction LoadData _ _ = void do
          }
 
 
- -- Corpus {_id : 1, url : "", date : "date", title : "title", source : "source", fav : false}
-
--- newtype Response = Response
---   { cid :: Int
---   , created :: String
---   , favorite :: Boolean
---   , ngramCount :: Int
---   , hyperdata :: Hyperdata
---   }
-
--- newtype Hyperdata = Hyperdata
---   {
---     title :: String
---   , abstract :: String
---   }
 
 
 
