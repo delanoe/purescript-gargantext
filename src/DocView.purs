@@ -104,8 +104,9 @@ spec = simpleSpec performAction render
           div [className "jumbotron"]
           [
             div [className "row"]
-            [
-              div [] [b [] [text d.title]]
+            [ br' []
+            , br' []
+            , div [] [b [] [text d.title]]
             , div [] [ text "Search "
                      , input [] []
                      ]
