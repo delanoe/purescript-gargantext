@@ -27,7 +27,7 @@ import Prelude hiding (div)
 import React (ReactElement)
 import React as R
 import React.DOM (a, b, b', br', div, dt, input, option, select, span, table, tbody, td, text, thead, tr)
-import React.DOM.Props (_type, href, onChange, onClick, selected, value)
+import React.DOM.Props (_type, className, href, onChange, onClick, selected, value)
 import ReactDOM as RDOM
 import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, defaultPerformAction, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
@@ -91,7 +91,7 @@ instance decodeResponse :: DecodeJson Response where
     favorite <- obj .? "favorite"
     ngramCount <- obj .? "ngramCount"
     hyperdata <- obj .? "hyperdata"
-    pure $ Response { cid,created,favorite,ngramCount,hyperdata }
+    pure $ Response { cid, created, favorite, ngramCount, hyperdata }
 
 
 spec :: Spec _ State _ Action
@@ -99,43 +99,78 @@ spec = simpleSpec performAction render
   where
     render :: Render State _ Action
     render dispatch _ state@(TableData d) _ =
-      [ div []
-        [ div [] [b [] [text d.title]]
-        , div [] [ text "Search "
-                 , input [] []
-                 ]
-        , sizeDD d.pageSize dispatch
-        , br' []
-        , br' []
-        , textDescription d.currentPage d.pageSize d.totalRecords
-        , br' []
-        , br' []
-        , pagination dispatch d.totalPages d.currentPage
-        , br' []
-        , br' []
-        , table []
-          [thead [] [tr []
-                     [ td [] [ b' [text "Date"]]
-                     , td [] [ b' [text "Title"]]
-                     , td [] [ b' [text "Source"]]
-                     , td [] [ b' [text "Fav"]]
-                     , td [] [ b' [text "Delete"]]
-                     ]]
-          , tbody [] $ map showRow d.rows
+      [ div [className "container"]
+        [
+          div [className "jumbotron"]
+          [
+            div [className "row"]
+            [
+              div [] [b [] [text d.title]]
+            , div [] [ text "Search "
+                     , input [] []
+                     ]
+            , sizeDD d.pageSize dispatch
+            , br' []
+            , br' []
+            , textDescription d.currentPage d.pageSize d.totalRecords
+            , br' []
+            , br' []
+            , pagination dispatch d.totalPages d.currentPage
+            , br' []
+            , br' []
+            , table []
+              [thead [] [tr []
+                         [ td [] [ b' [text "Date"]]
+                         , td [] [ b' [text "Title"]]
+                         , td [] [ b' [text "Source"]]
+                         , td [] [ b' [text "Fav"]]
+                         , td [] [ b' [text "Delete"]]
+                         ]]
+              , tbody [] $ map showRow d.rows
+              ]
+            ]
           ]
         ]
       ]
 
 performAction :: PerformAction _ State _ Action
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
+
 performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
-performAction _ _ _ = void (cotransform id)
+
 performAction LoadData _ _ = void do
   res <- lift $ loadData
   case res of
      Left err -> cotransform $ \(state) ->  state
      Right resData -> do
-       cotransform  id              -- \(state) -> state {response  = resData}
+       modifyState (\s -> tdata' $ data' (res2corpus <$> resData))
+      where
+        res2corpus (Response res) =
+          Corpus { _id : res.cid
+          , url : ""
+          , date :  res.created
+          , title : (\(Hyperdata r) -> r.title) res.hyperdata
+          , source :  (\(Hyperdata r) -> r.abstract)res.hyperdata
+          , fav : res.favorite
+         }
+
+
+ -- Corpus {_id : 1, url : "", date : "date", title : "title", source : "source", fav : false}
+
+-- newtype Response = Response
+--   { cid :: Int
+--   , created :: String
+--   , favorite :: Boolean
+--   , ngramCount :: Int
+--   , hyperdata :: Hyperdata
+--   }
+
+-- newtype Hyperdata = Hyperdata
+--   {
+--     title :: String
+--   , abstract :: String
+--   }
+
 
 
 
@@ -286,6 +321,7 @@ newtype Corpus
     , source :: String
     , fav :: Boolean
     }
+
 type CorpusTableData = TableData Corpus
 
 sampleData' :: Corpus
@@ -310,6 +346,15 @@ tdata = TableData
         , title : "Publications by title"
         }
 
+tdata' d = TableData
+        { rows : d
+        , totalPages : 10
+        , currentPage : 1
+        , pageSize : PS10
+        , totalRecords : 100
+        , title : "Publications by title"
+        }
+
 
 showRow :: {row :: Corpus, delete :: Boolean} -> ReactElement
 showRow {row : (Corpus c), delete} =
@@ -324,7 +369,7 @@ showRow {row : (Corpus c), delete} =
 
 
 
-loadData :: forall eff. Aff ( console :: CONSOLE, ajax :: AJAX| eff) (Either String Response)
+loadData :: forall eff. Aff ( console :: CONSOLE, ajax :: AJAX| eff) (Either String (Array Response))
 loadData  = do
   -- liftEff $ log $ "GET /api response: "
   affResp <- liftAff $ attempt $ affjax defaultRequest
