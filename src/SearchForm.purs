@@ -61,10 +61,7 @@ searchSpec = simpleSpec performAction render
          [
            div [className "row"]
            [
-             div [className "col-md-3"]
-             [ h3 [] [text "Treeview"]
-             ]
-           , div [className "col-md-9"]
+             div [className "col-md-10"]
              [ br' []
               , br' []
               , div [className "form-group"]
@@ -78,10 +75,15 @@ searchSpec = simpleSpec performAction render
                         onInput \e -> dispatch (SetQuery (unsafeEventValue e))
                        ] []
               , br'[]
-             , button [onClick \_ -> dispatch GO] [text "GO"]
              ]
 
            ]
+         , div [className "col-md-2"]
+             [ br' []
+             , br' []
+
+             ,  button [onClick \_ -> dispatch GO] [text "GO"]
+             ]
          ]
        ]
       ]
