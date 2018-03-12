@@ -152,7 +152,7 @@ sidebarnavSpec = simpleSpec performAction render
         [ div [className "container"]
           [
             div [ className "navbar-inner" ]
-            [ a [ className "navbar-brand logoSmall", href "/" ]
+            [ a [ className "navbar-brand logoSmall", href "/index.html" ]
               [ img [ src "images/logoSmall.png", title "Back to home." ]
                 []
               ]
