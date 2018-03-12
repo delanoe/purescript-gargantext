@@ -28,7 +28,7 @@ import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React as R
 import React.DOM (a, b, b', br, br', div, dt, i, input, li, option, select, span, table, tbody, td, text, thead, tr, ul)
-import React.DOM.Props (_type, className, href, onChange, onClick, selected, value)
+import React.DOM.Props (Props, _type, className, href, onChange, onClick, selected, style, value)
 import ReactDOM as RDOM
 import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, defaultPerformAction, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
@@ -95,9 +95,13 @@ instance decodeResponse :: DecodeJson Response where
     pure $ Response { cid, created, favorite, ngramCount, hyperdata }
 
 
-data NTree a = NLeaf a | NNode String (Array (NTree a))
+type Name = String
+type Open = Boolean
+type URL = String
 
-type FTree = NTree (Tuple String String)
+data NTree a = NLeaf a | NNode Open Name (Array (NTree a))
+
+type FTree = NTree (Tuple Name URL)
 
 
 
@@ -151,18 +155,20 @@ spec = simpleSpec performAction render
         ]
       ]
 
+
+
 exampleTree :: NTree (Tuple String String)
 exampleTree =
-  NNode "Web Sites"
-  [ NNode "Google"
+  NNode true "Web Sites"
+  [ NNode true "Google"
     [ NLeaf (Tuple "Search" "http://google.com/")
     , NLeaf (Tuple "Maps" "http://maps.google.com/")
     ]
-  , NNode "Social Media"
+  , NNode false "Social Media"
     [ NLeaf (Tuple "Google +" "http://plus.google.com/")
     , NLeaf (Tuple "Twitter" "http://twitter.com/")
     , NLeaf (Tuple "Facebook" "http://facebook.com/")
-    , NNode "Others"
+    , NNode true "Others"
       [ NLeaf (Tuple "Instagram" "https://www.instagram.com/")
       , NLeaf (Tuple "WhatsApp" "https://web.whatsapp.com")
       ]
@@ -178,16 +184,19 @@ toHtml (NLeaf (Tuple name link)) =
     [ text name
     ]
   ]
-toHtml (NNode name ary) =
-  ul []
+toHtml (NNode open name ary) =
+  ul [ ]
   [ li [] $
-    [ i [className "fas fa-folder"] []
-    ,  text name
+    [ i [fldr open] []
+    ,  text $ " " <> name
     ] <>
-    map toHtml ary
+    if open then
+      map toHtml ary
+      else []
   ]
 
-
+fldr :: Boolean -> Props
+fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 performAction :: PerformAction _ State _ Action
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
