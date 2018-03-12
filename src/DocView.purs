@@ -23,7 +23,7 @@ import Data.Tuple (Tuple(..))
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Partial.Unsafe (unsafePartial)
-import Prelude (class Eq, class Ord, class Show, Unit, bind, id, map, not, pure, show, void, ($), (*), (+), (-), (/), (<), (<$>), (<>), (==), (>), (>=), (>>=))
+import Prelude (class Eq, class Ord, class Show, Unit, bind, map, not, pure, show, void, ($), (*), (+), (-), (/), (<), (<$>), (<>), (==), (>), (>=), (>>=))
 import React (ReactElement)
 import React as R
 import React.DOM (a, b, b', br', div, h3, i, input, li, option, select, span, table, tbody, td, text, thead, tr, ul)
@@ -126,7 +126,7 @@ spec = simpleSpec performAction render
             [ div [className "col-md-3"]
               [ br' []
               , br' []
-              ,  toHtml dispatch d.tree
+              ,  div [className "tree"] [toHtml dispatch d.tree]
               ]
             , div [className "col-md-9"]
               [

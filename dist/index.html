@@ -12,12 +12,12 @@
         <link href="css/Login.css" rel="stylesheet">
         <style>
          * {margin: 0; padding: 0; list-style: none;}
-         ul li {
+         .tree ul li {
              margin-left: 15px;
              position: relative;
              padding-left: 5px;
          }
-         ul li::before {
+         .tree ul li::before {
              content: " ";
              position: absolute;
              width: 1px;
@@ -26,9 +26,9 @@
              bottom: -12px;
              left: -10px;
          }
-         body > ul > li:first-child::before {top: 12px;}
-         ul li:not(:first-child):last-child::before {display: none;}
-         ul li:only-child::before {
+         body > .tree ul > li:first-child::before {top: 12px;}
+         .tree ul li:not(:first-child):last-child::before {display: none;}
+         .tree ul li:only-child::before {
              display: list-item;
              content: " ";
              position: absolute;
@@ -39,7 +39,7 @@
              height: 7px;
              left: -10px;
          }
-         ul li::after {
+         .tree ul li::after {
              content: " ";
              position: absolute;
              left: -10px;
