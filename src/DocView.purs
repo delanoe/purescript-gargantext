@@ -1,14 +1,12 @@
 module DocView where
 
 import Data.Argonaut
-import Prelude hiding (div)
 
+import Chart (ex1, p'')
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
-import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import DOM.HTML (window) as DOM
@@ -25,14 +23,14 @@ import Data.Tuple (Tuple(..))
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Partial.Unsafe (unsafePartial)
+import Prelude (class Eq, class Ord, class Show, Unit, bind, id, map, not, pure, show, void, ($), (*), (+), (-), (/), (<), (<$>), (<>), (==), (>), (>=), (>>=))
 import React (ReactElement)
 import React as R
-import React.DOM (a, b, b', br, br', div, dt, i, input, li, option, select, span, table, tbody, td, text, thead, tr, ul)
-import React.DOM.Props (Props, _type, className, href, onChange, onClick, selected, style, value)
+import React.DOM (a, b, b', br', div, i, input, li, option, select, span, table, tbody, td, text, thead, tr, ul)
+import React.DOM.Props (Props, _type, className, href, onChange, onClick, selected, value)
 import ReactDOM as RDOM
-import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, defaultPerformAction, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-import Chart
 
 main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
 main = do
@@ -74,6 +72,7 @@ data Action
   = ChangePageSize PageSizes
   | ChangePage Int
   | LoadData
+  | ToggleFolder ID
 
 
 instance decodeHyperdata :: DecodeJson Hyperdata where
@@ -99,12 +98,18 @@ instance decodeResponse :: DecodeJson Response where
 type Name = String
 type Open = Boolean
 type URL = String
+type ID = Int
 
-data NTree a = NLeaf a | NNode Open Name (Array (NTree a))
+data NTree a = NLeaf a | NNode ID Open Name (Array (NTree a))
 
 type FTree = NTree (Tuple Name URL)
 
-
+toggleNode :: forall t10. Int -> NTree t10 -> NTree t10
+toggleNode sid (NNode iid open name ary) =
+  NNode iid nopen name $ map (toggleNode sid) ary
+  where
+    nopen = if sid == iid then not open else open
+toggleNode sid a = a
 
 
 
@@ -121,7 +126,7 @@ spec = simpleSpec performAction render
             [ div [className "col-md-3"]
               [ br' []
               , br' []
-              ,  toHtml exampleTree
+              ,  toHtml dispatch d.tree
               ]
             , div [className "col-md-9"]
               [
@@ -165,16 +170,16 @@ spec = simpleSpec performAction render
 
 exampleTree :: NTree (Tuple String String)
 exampleTree =
-  NNode true "Web Sites"
-  [ NNode true "Google"
+  NNode 1 true "Web Sites"
+  [ NNode 2 true "Google"
     [ NLeaf (Tuple "Search" "http://google.com/")
     , NLeaf (Tuple "Maps" "http://maps.google.com/")
     ]
-  , NNode false "Social Media"
+  , NNode 3 false "Social Media"
     [ NLeaf (Tuple "Google +" "http://plus.google.com/")
     , NLeaf (Tuple "Twitter" "http://twitter.com/")
     , NLeaf (Tuple "Facebook" "http://facebook.com/")
-    , NNode true "Others"
+    , NNode 4 true "Others"
       [ NLeaf (Tuple "Instagram" "https://www.instagram.com/")
       , NLeaf (Tuple "WhatsApp" "https://web.whatsapp.com")
       ]
@@ -183,21 +188,21 @@ exampleTree =
 
 
 
-toHtml :: FTree -> ReactElement
-toHtml (NLeaf (Tuple name link)) =
+toHtml :: _ -> FTree -> ReactElement
+toHtml d (NLeaf (Tuple name link)) =
   li []
   [ a [ href link]
     [ text name
     ]
   ]
-toHtml (NNode open name ary) =
+toHtml d (NNode id open name ary) =
   ul [ ]
   [ li [] $
-    [ i [fldr open] []
+    [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
     ,  text $ " " <> name
     ] <>
     if open then
-      map toHtml ary
+      map (toHtml d) ary
       else []
   ]
 
@@ -226,8 +231,7 @@ performAction LoadData _ _ = void do
          }
 
 
-
-
+performAction (ToggleFolder i) _ _ = void (cotransform (\(TableData td) -> TableData $ td {tree = toggleNode i td.tree}))
 
 
 changePageSize :: PageSizes -> CorpusTableData -> CorpusTableData
@@ -366,6 +370,7 @@ newtype TableData a
     , pageSize :: PageSizes
     , totalRecords :: Int
     , title :: String
+    , tree :: FTree
     }
 
 newtype Corpus
@@ -400,8 +405,10 @@ tdata = TableData
         , pageSize : PS10
         , totalRecords : 100
         , title : "Publications by title"
+        , tree : exampleTree
         }
 
+tdata' :: _ -> CorpusTableData
 tdata' d = TableData
         { rows : d
         , totalPages : 10
@@ -409,6 +416,7 @@ tdata' d = TableData
         , pageSize : PS10
         , totalRecords : 100
         , title : "Publications by title"
+        , tree : exampleTree
         }
 
 
