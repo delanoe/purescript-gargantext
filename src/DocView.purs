@@ -168,26 +168,35 @@ spec = simpleSpec performAction render
       ]
 
 
+------------------------------------------------------------------------
+-- Realistic Tree for the UI
+
+urlFacetDoc :: String
+urlFacetDoc  = "http://localhost:8009/index.html#/docView"
+
+myCorpus :: Int -> String -> NTree (Tuple String String)
+myCorpus n name = NNode n false name
+    [ NLeaf (Tuple "Facets"    urlFacetDoc)
+    , NLeaf (Tuple "Graph"     urlFacetDoc)
+    , NLeaf (Tuple "Dashboard" urlFacetDoc)
+    ]
+
+urlFacetAuth :: String
+urlFacetAuth = urlFacetDoc
 
 exampleTree :: NTree (Tuple String String)
 exampleTree =
-  NNode 1 true "Web Sites"
-  [ NNode 2 true "Google"
-    [ NLeaf (Tuple "Search" "http://google.com/")
-    , NLeaf (Tuple "Maps" "http://maps.google.com/")
-    ]
-  , NNode 3 false "Social Media"
-    [ NLeaf (Tuple "Google +" "http://plus.google.com/")
-    , NLeaf (Tuple "Twitter" "http://twitter.com/")
-    , NLeaf (Tuple "Facebook" "http://facebook.com/")
-    , NNode 4 true "Others"
-      [ NLeaf (Tuple "Instagram" "https://www.instagram.com/")
-      , NLeaf (Tuple "WhatsApp" "https://web.whatsapp.com")
-      ]
-    ]
+  NNode 1 true "My gargantext"
+  [ myCorpus 2 "My publications"
+  , myCorpus 3 "My community"
+  , NNode 4 false "My researchs" [ myCorpus 5 "Subject A"
+                                 , myCorpus 6 "Subject B"
+                                 , myCorpus 7 "Subject C"
+                                 ]
   ]
 
 
+------------------------------------------------------------------------
 
 toHtml :: _ -> FTree -> ReactElement
 toHtml d (NLeaf (Tuple name link)) =
