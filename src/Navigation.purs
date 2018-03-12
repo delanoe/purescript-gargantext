@@ -34,7 +34,7 @@ type AppState =
 
 initAppState :: AppState
 initAppState =
- { currentRoute : Just AddCorpus
+ { currentRoute : Just Home
   , landingState : L.initialState
   , loginState : LN.initialState
   , addCorpusState : AC.initialState
