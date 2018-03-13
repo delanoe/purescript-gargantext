@@ -1,11 +1,10 @@
 module UserPage where
 
-import Prelude hiding (div)
-
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
-import React.DOM (a, div, h3, h5, img, span, text)
+import Prelude hiding (div)
+import React.DOM (a, div, h3, h5, img, small, span, text)
 import React.DOM.Props (_id, className, src)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
