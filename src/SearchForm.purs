@@ -47,8 +47,8 @@ performAction GO _ _ = void do
 
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
-
-
+-- TODO: case loggedIn of True -> Just Tree ; False -> Nothing
+-- TODO: put the search form in the center of the page
 searchSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
 searchSpec = simpleSpec performAction render
   where
@@ -81,7 +81,7 @@ searchSpec = simpleSpec performAction render
          , div [className "col-md-2"]
              [ br' []
              , br' []
-
+             -- TODO put Gargantext logo as search button
              ,  button [onClick \_ -> dispatch GO] [text "GO"]
              ]
          ]
