@@ -197,23 +197,36 @@ exampleTree =
 
 
 ------------------------------------------------------------------------
+-- TODO
+-- alignment to the right
+nodeOptionsCorp = [ i [className "fab fa-whmcs" ] []]
+
+-- TODO
+-- alignment to the right
+-- on hover make other options available:
+nodeOptionsView = [ i [className "fas fa-sync-alt" ] []
+              , i [className "fas fa-upload"   ] []
+              , i [className "fas fa-share-alt"] []
+              ]
 
 toHtml :: _ -> FTree -> ReactElement
 toHtml d (NLeaf (Tuple name link)) =
   li []
   [ a [ href link]
-    [ text name
-    ]
+    ( [ text (name <> "    ")
+      ] <> nodeOptionsView
+    )
   ]
 toHtml d (NNode id open name ary) =
   ul [ ]
   [ li [] $
-    [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-    ,  text $ " " <> name
-    ] <>
-    if open then
-      map (toHtml d) ary
-      else []
+    ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
+      ,  text $ " " <> name <> "    "
+      ] <> nodeOptionsCorp <>
+      if open then
+        map (toHtml d) ary
+        else []
+    )
   ]
 
 fldr :: Boolean -> Props
