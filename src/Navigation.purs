@@ -21,6 +21,7 @@ import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tab
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import DocView as DV
 import SearchForm as S
+import UserPage as UP
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -31,6 +32,7 @@ type AppState =
   , addCorpusState :: AC.State
   , docViewState :: DV.State
   , searchState :: S.State
+  , userPage :: UP.State
   }
 
 initAppState :: AppState
@@ -41,6 +43,7 @@ initAppState =
   , addCorpusState : AC.initialState
   , docViewState : DV.tdata
   , searchState : S.initialState
+  , userPage : UP.initialState
   }
 
 
@@ -52,6 +55,7 @@ data Action
   | AddCorpusA AC.Action
   | DocViewA DV.Action
   | SearchA S.Action
+  | UserPageA UP.Action
 
 
 performAction :: forall eff props. PerformAction (dom :: DOM |eff) AppState props Action
@@ -122,6 +126,17 @@ _searchAction = prism SearchA \action ->
     _-> Left action
 
 
+_userPageState:: Lens' AppState UP.State
+_userPageState = lens (\s -> s.userPage) (\s ss -> s{userPage = ss})
+
+
+_userPageAction :: Prism' Action UP.Action
+_userPageAction = prism UserPageA \action ->
+  case action of
+    UserPageA caction -> Right caction
+    _-> Left action
+
+
 
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
@@ -137,6 +152,7 @@ pagesComponent s =
     selectSpec AddCorpus   = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
     selectSpec DocView   = wrap $ focus _docViewState _docViewAction DV.spec
     selectSpec SearchView   = wrap $ focus _searchState _searchAction S.searchSpec
+    selectSpec UserPage   = wrap $ focus _userPageState _userPageAction UP.userPageSpec
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
@@ -283,4 +299,10 @@ dispatchAction dispatcher _ DocView = do
 dispatchAction dispatcher _ SearchView = do
   _ <- dispatcher $ SetRoute $ SearchView
   _ <- dispatcher $ SearchA $ S.NoOp
+  pure unit
+
+
+dispatchAction dispatcher _ UserPage = do
+  _ <- dispatcher $ SetRoute $ UserPage
+  _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
