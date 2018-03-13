@@ -194,6 +194,7 @@ loginSpec = simpleSpec performAction render
           [ div [ className "col-md-4 content" ]
             [ h3 []
               [ a [ href "#", title "Random sentences in Gargantua's Books chapters, historically true" ]
+              -- TODO click on icon and randomize the text below
                 [ i [className "fas fa-random"] []
                 , text "   Historic" 
                 ]
@@ -205,6 +206,7 @@ loginSpec = simpleSpec performAction render
           , div [ className "col-md-4 content" ]
             [ h3 []
               [ a [ href "#", title "Randomized words, semantically and syntaxically falses." ]
+              -- TODO click on icon and randomize the text below
                 [ i [className "fas fa-random"] []
                 , text "   Presentation" 
                 ]
@@ -216,6 +218,7 @@ loginSpec = simpleSpec performAction render
           , div [ className "col-md-4 content" ]
             [ h3 []
               [ a [ href "#", title "Randomized letters, true or false ?" ]
+              -- TODO click on icon and randomize the text below
                 [ i [className "fas fa-random"] []
                 , text "   Tutoreil" 
                 ]
