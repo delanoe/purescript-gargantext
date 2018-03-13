@@ -163,7 +163,7 @@ loginSpec = simpleSpec performAction render
                  a [ className "btn btn-success btn-lg spacing-class", href "https://iscpif.fr/gargantext/your-first-map/", target "blank", title "Fill the form to sign up" ]
                   [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
                     []
-                  , text "Documentation"
+                  , text " Get's started"
                   ]
                 ]
               , span [ aria {hidden : true}, className "glyphicon glyphicon-warning-sign" ]
