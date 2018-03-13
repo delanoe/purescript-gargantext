@@ -16,7 +16,8 @@ import Login as LN
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
 import Prelude hiding (div)
-import React.DOM (a, div, i, img, li, span, text, ul)
+import React (ReactElement)
+import React.DOM (a, div, i, img, li, span, text, ul, map')
 import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import DocView as DV
@@ -147,12 +148,12 @@ pagesComponent s =
       selectSpec Home
   where
     selectSpec :: Routes -> Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff) AppState props Action
-    selectSpec Home = wrap $ focus _landingState _landingAction L.loginSpec
-    selectSpec Login   =  focus _loginState _loginAction LN.renderSpec
-    selectSpec AddCorpus   = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
-    selectSpec DocView   = wrap $ focus _docViewState _docViewAction DV.spec
-    selectSpec SearchView   = wrap $ focus _searchState _searchAction S.searchSpec
-    selectSpec UserPage   = wrap $ focus _userPageState _userPageAction UP.userPageSpec
+    selectSpec Login      = focus _loginState _loginAction LN.renderSpec
+    selectSpec Home       = wrap $ focus _landingState   _landingAction   L.loginSpec
+    selectSpec AddCorpus  = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
+    selectSpec DocView    = wrap $ focus _docViewState   _docViewAction   DV.spec
+    selectSpec SearchView = wrap $ focus _searchState    _searchAction    S.searchSpec
+    selectSpec UserPage   = wrap $ focus _userPageState  _userPageAction  UP.userPageSpec
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
@@ -173,6 +174,39 @@ wrap spec =
       ]
 
 
+data LiNav = LiNav { title :: String
+                   , href  :: String
+                   , icon  :: String
+                   , text  :: String
+                   }
+
+liNav :: LiNav -> ReactElement
+liNav (LiNav { title:tit
+             , href :h
+             , icon:i
+             , text: txt
+             }
+      ) = li [] [ a [ tabIndex (-1)
+                    , target "blank"
+                    , title tit
+                    , href h
+                    ]
+                       
+                    [ span [ className i ] []
+                           , text $ " " <> txt
+                    ]
+                ]
+
+divLogo :: ReactElement
+divLogo =div [ className "navbar-inner" ]
+             [ a [ className "navbar-brand logoSmall", href "/index.html"  ]
+                [ img [ src "images/logoSmall.png", title "Back to home." ] [] ]
+            ]
+
+--divDropdownLeft :: ReactElement
+--divDropdownLeft = undefined
+
+
 sidebarnavSpec ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
 sidebarnavSpec = simpleSpec performAction render
   where
@@ -181,83 +215,102 @@ sidebarnavSpec = simpleSpec performAction render
       [
         div [ _id "dafixedtop", className "navbar navbar-inverse navbar-fixed-top", role "navigation"]
         [ div [className "container"]
-          [
-            div [ className "navbar-inner" ]
-            [ a [ className "navbar-brand logoSmall", href "/index.html" ]
-              [ img [ src "images/logoSmall.png", title "Back to home." ]
-                []
-              ]
-            ]
+          [ divLogo
           ,  div [className "navbar-collapse collapse"]
-             [
-
-             ul [className "nav navbar-nav"]
-               [
-                 ul [className "nav navbar-nav pull-left"] [
-                 li [className "dropdown"]
-                 [
-                   a [
-                      className "dropdown-toggle navbar-text", _data {toggle: "dropdown"}, href "#", role "button", title "Informations about Gargantext" ]
-                   [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ]
-                     []
-                   , text "Info"
-                   ]
-
-               , ul [className "dropdown-menu"]
-                 [ li []
-                   [ a [tabIndex (-1),  target "blank", title "Documentation and tutorials", href "https://iscpif.fr/gargantext/your-first-map/"]
-                     [text "Documentation"]
-                   ]
-                 , li [className "divider"] []
-                 , li []
-                   [
-                     a [ tabIndex (-1), target "blank", title "About", href "/about/", title "More informations about the project, its sponsors and its authors"]
-                     [ text "About"]
-
-                   ]
-                 ]
-                 ]
-
+             [ ul [className "nav navbar-nav"]
+               [ ul [className "nav navbar-nav pull-left"]
+                 [ li [className "dropdown"]
+                   [ a [ className "dropdown-toggle navbar-text"
+                       , _data {toggle: "dropdown"}
+                       , href "#", role "button"
+                       , title "Informations about Gargantext" 
+                       ]
+                       [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ] []
+                       , text " Info"
+                       ]
+---------------------------------------------------------------------------
+                 , ul [className "dropdown-menu"]
+                  (( map liNav [ LiNav { title : "Documentation and tutorials"
+                                        , href  : "https://iscpif.fr/gargantext/your-first-map/"
+                                        , icon  : "fas fa-book"
+                                        , text  : "Documentation"
+                                        }
+                               , LiNav { title : "Report bug here"
+                                        , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
+                                        , icon  : "glyphicon glyphicon-bullhorn"
+                                        , text  : "Feedback"
+                                        }
+                               , LiNav { title : "Interactive chat"
+                                        , href  : "https://chat.iscpif.fr/channel/gargantext"
+                                        , icon  : "fab fa-rocketchat"
+                                        , text  : "Chat"
+                                        }
+                               , LiNav { title : "Asynchronous discussions"
+                                        , href  : "https://discourse.iscpif.fr/c/gargantext"
+                                        , icon  : "fab fa-discourse"
+                                        , text  : "Forum"
+                                        }
+                                ]
+                   )
+                   <> [li [className "divider"] []] <>
+                           [ liNav (LiNav { title : "About"
+                                         , href  : "http://iscpif.fr"
+                                         , icon  : "fas fa-question-circle"
+                                         , text  : "About"
+                                         }
+                                   )
+                           ]
+                   )
                  ]
               ]
-             , ul [className "nav navbar-nav pull-right"]
-               [
-                 li [className "dropdown"]
-                 [
-                   a [ className "dropdown-toggle navbar-text", _data {toggle : "dropdown"}, href "#",  role "button", title "That is your username" ]
-                   [ i [ className "" ]
-                     []
-                   , span [ aria {hidden : true}, className "glyphicon glyphicon-user", style {color:"white"} ]
-                     []
-                   ]
-                 , ul [className "dropdown-menu"]
-                   [
-                    li []
-                     [ a [tabIndex (-1), target "blank", title "Send us a message (bug, thanks, congrats...)", href "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"]
-                       [
-                         span [ className "glyphicon glyphicon-bullhorn" ,aria {hidden : true}] []
-                        , text " Report Feedback"
-                       ]
-                     ]
-                   , li [ className"divider"]
-                     []
-                   , li []
-                     [ a [tabIndex (-1), href "/auth/login" ]
-                       [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
-                       , text " Login"
-                       ]
-                     ]
-                   ]
-                 ]
-               ]
-             ]
-
-          ]
+----------------------------------------------------------------------------------
         ]
 
+             , ul [className "nav navbar-nav pull-right"]
+               [
+                 -- TODO if logged in : enable dropdown
+                 --li [className "dropdown"]
+                 --[
+                   a [
+                     className "dropdown-toggle navbar-text"
+                     , _data {toggle : "dropdown"}
+                     , href "#",  role "button"
+                     , title "Username" 
+                     ]
+                   
+                   -- FIXME not sure about the className "login"
+                   [ i [ className "login" ] []
+                   , span [ aria {hidden : true}
+                          -- TODO if logged in
+                          --, className "glyphicon glyphicon-user"
+                          -- else
+                          , className "glyphicon glyphicon-log-in"
+                          , style {color:"white"} 
+                          ]
+                     []
+                    -- TODO if logged in
+                    --, text " username"
+                    -- else
+                    , text " Login / Signup"
+                   ]
+--                 , ul [className "dropdown-menu"]
+--                   [
+--                   , li [ className"divider"]
+--                     []
+--                   , li []
+--                      -- TODO if logged in show logout
+--                     [ a [tabIndex (-1), href "/auth/login" ]
+--                       [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
+--                       , text " Logout"
+--                       ]
+--                     ]
+--                   ]
+                 --]
+               ]
+             ]
       ]
-
-
+  ]
+  ]
 
 layoutSpec :: forall eff props. Spec (E eff) AppState props Action
 layoutSpec =
@@ -302,3 +355,8 @@ dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ SetRoute $ UserPage
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
+
+
+
+
+
