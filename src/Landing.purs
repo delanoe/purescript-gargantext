@@ -26,7 +26,7 @@ initialState = State
 data Action
   = NoOp
   | Documentation
-  | Submit
+  | Enter
   | SignUp
 
 
@@ -37,8 +37,8 @@ performAction NoOp _ _ = void do
 performAction Documentation _ _ = void do
   T.modifyState \state -> state
 
-performAction Submit _ _ = void do
-  lift $ setHash "/login"
+performAction Enter _ _ = void do
+  lift $ setHash "/search"
   T.modifyState \state -> state
 
 performAction SignUp _ _ = void do
@@ -143,19 +143,24 @@ loginSpec = simpleSpec performAction render
                 h1 []
                 [ text "Gargantext" ]
               , p []
-                [ text "A web platform to explore text-mining" ]
+                [ text "Collaborative knowledge mapping experience" ]
+              
+--          TODO : put the login in top right page [#54]
               , p []
-                [ a [ className "btn btn-primary btn-lg spacing-class ",onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
-                  [ span [ className "glyphicon glyphicon-hand-right" ]
-                    []
-                  , text " Login"
-                  ]
-                , a [ className "btn btn-warning btn-lg spacing-class", href "https://iscpif.fr/services/applyforourservices/", target "blank", title "Fill the form to sign up" ]
-                  [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
-                    []
-                  , text "Sign Up"
-                  ]
-                , a [ className "btn btn-success btn-lg spacing-class", href "https://iscpif.fr/gargantext/your-first-map/", target "blank", title "Fill the form to sign up" ]
+                [ 
+--                  a [ className "btn btn-primary btn-lg spacing-class ", onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
+--                  [ span [ className "glyphicon glyphicon-hand-right" ]
+--                    []
+--                  , text " Login"
+--                  ]
+----          TODO: login / sign up will not be mandatory any more (mandatory to save/share your research only)
+----          TODO: ask for login or account creation after 5 mn when user is not logged and has made one search at least
+--                , a [ className "btn btn-warning btn-lg spacing-class", href "https://iscpif.fr/services/applyforourservices/", target "blank", title "Fill the form to sign up" ]
+--                  [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
+--                    []
+--                  , text "Sign Up"
+--                  ]
+                 a [ className "btn btn-success btn-lg spacing-class", href "https://iscpif.fr/gargantext/your-first-map/", target "blank", title "Fill the form to sign up" ]
                   [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
                     []
                   , text "Documentation"
@@ -183,7 +188,11 @@ loginSpec = simpleSpec performAction render
       , div [className "container"]
         [ div [className "row"]
           [ div [className "col-md-offset-5 col-md-6 content"]
-            [ img [ src "images/Gargantextuel-212x300.jpg", title "Gargantextuel drawn by Cecile Meadel", _id "funnyimg"] []
+            [ img [ src "images/Gargantextuel-212x300.jpg"
+                  , title "Gargantextuel drawn by Cecile Meadel"
+                  , _id "funnyimg"
+                  , onClick \_ -> dispatch $ Enter , title "Click and test by yourself"
+                  ] []
             ]
           ]
         ]
@@ -241,7 +250,7 @@ loginSpec = simpleSpec performAction render
           [ text "Gargantext "
           , span [className "glyphicon glyphicon-registration-mark" ]
             []
-          , text ", version 3.1"
+          , text ", version 4.0"
           , a [ href "http://www.cnrs.fr", target "blank", title "Institution that enables this project." ]
             [ text ", Copyrights "
             , span [ className "glyphicon glyphicon-copyright-mark" ]

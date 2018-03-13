@@ -201,8 +201,6 @@ sidebarnavSpec = simpleSpec performAction render
                    [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ]
                      []
                    , text "Info"
-                   , i [ className "caret" ]
-                     []
                    ]
 
                , ul [className "dropdown-menu"]
@@ -231,8 +229,6 @@ sidebarnavSpec = simpleSpec performAction render
                      []
                    , span [ aria {hidden : true}, className "glyphicon glyphicon-user", style {color:"white"} ]
                      []
-                   , i [ className "caret" ]
-                     []
                    ]
                  , ul [className "dropdown-menu"]
                    [
@@ -240,7 +236,7 @@ sidebarnavSpec = simpleSpec performAction render
                      [ a [tabIndex (-1), target "blank", title "Send us a message (bug, thanks, congrats...)", href "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"]
                        [
                          span [ className "glyphicon glyphicon-bullhorn" ,aria {hidden : true}] []
-                        , text "Report Feedback"
+                        , text " Report Feedback"
                        ]
                      ]
                    , li [ className"divider"]
@@ -248,7 +244,7 @@ sidebarnavSpec = simpleSpec performAction render
                    , li []
                      [ a [tabIndex (-1), href "/auth/login" ]
                        [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
-                       , text "login"
+                       , text " Login"
                        ]
                      ]
                    ]
