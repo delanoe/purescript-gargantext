@@ -4,7 +4,7 @@ import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
-import React.DOM (a, div, h3, h5, img, small, span, text)
+import React.DOM (a, div, h3, h5, h6, img, li, small, span, text, ul)
 import React.DOM.Props (_id, className, src)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
@@ -50,14 +50,22 @@ userPageSpec = simpleSpec performAction render
                 ]
               , div [className "col-md-8"]
                 [
-                  div [className "list-group"]
+                  ul [className "list-group"]
                   [
-                    a [className "list-group-item list-group-item-action flex-column align-items-start"]
-                    [ div [className "d-flex w-100 justify-content-between"]
-                      [ h5 [className "mb-1"] [ text "fonction"]
-                      , small [] [text "Enseignant chercheur"]
-                      ]
+                    li [className "list-group-item justify-content-between"]
+                    [  span [] [text "fonction"]
+                    , span [className "badge badge-default badge-pill"] [text "Ensignent checheur"]
                     ]
+                  , li [className "list-group-item justify-content-between"]
+                    [  span [] [text "Entitte, service"]
+                    , span [className "badge badge-default badge-pill"] [text "Mines Saint - Etinene SPIN -PTSI"]
+                    ]
+
+                  , li [className "list-group-item justify-content-between"]
+                    [  span [] [text "Entitte, service"]
+                    , span [className "badge badge-default badge-pill"] [text "Mines Saint - Etinene"]
+                    ]
+
                   ]
                 ]
               ]
