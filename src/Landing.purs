@@ -194,25 +194,34 @@ loginSpec = simpleSpec performAction render
           [ div [ className "col-md-4 content" ]
             [ h3 []
               [ a [ href "#", title "Random sentences in Gargantua's Books chapters, historically true" ]
-                [ text "Historic" ]
+                [ i [className "fas fa-random"] []
+                , text "   Historic" 
+                ]
               ]
             , p []
+            -- TODO use RandomText.randomSentences on this text (should be editable by user later)
               [ text "Chapter 1.XV. How Gargantua was put under other schoolmasters. Chapter 2.XXII. How Panurge served a Parisian lady a trick that pleased her not very well. Chapter 3.XXXVII. How Pantagruel persuaded Panurge to take counsel of a fool. Chapter 4.LXI. How Gaster invented means to get and preserve corn. Chapter 5.XXXVIII. Of the temple's admirable pavement." ]
             ]
           , div [ className "col-md-4 content" ]
             [ h3 []
               [ a [ href "#", title "Randomized words, semantically and syntaxically falses." ]
-                [ text "Presentation" ]
+                [ i [className "fas fa-random"] []
+                , text "   Presentation" 
+                ]
               ]
             , p []
+            -- TODO use RandomText.randomWords on this text (should be editable by user later)
               [ text "Autem nascetur iaculis, sedfusce enimsed cursus posuere consectetuer eu justo aliquammauris. Phasellus vero nisi porttitor elit quod, leo feliscras ultricies non tempor sagittis. Liberoduis facilisinam erat dapibusnam, lacus dui duis tristique volutpatut quis vestibulum magna. Nobis faucibusvestibulum dolores minim. Bibendumin malesuada adipiscing ante, mattis fames nequeetiam lorem. No diam id. Litora quisaenean commodo lobortisetiam neque, libero mollis scelerisque inceptos ullamcorper sea congue delenit possim.            " ]
             ]
           , div [ className "col-md-4 content" ]
             [ h3 []
               [ a [ href "#", title "Randomized letters, true or false ?" ]
-                [ text "Tutoreil" ]
+                [ i [className "fas fa-random"] []
+                , text "   Tutoreil" 
+                ]
               ]
             , p []
+            -- TODO use RandomText.randomChars on this text (should be editable by user later)
               [ text "Il paraît que l'rdore des lettres dans un mot n'a pas d'imtraopnce. La première et la dernière lettre doeivnt être à la bonne place. Le reste peut être dans un désordre total et on peut touojurs lire sans prolèbme. On ne lit donc pas chaque lettre en ellêem-me, mais le mot comme un tout. Un chaegmnent de référentiel et nous tranpossons ce résultat au texte luimê-me: l'rdore des mots est failbement important copamré au contexte du texte qui, lui, est copmté: comptexter avec Gargantext.                "
               , text " "
               , text ""
@@ -234,7 +243,7 @@ loginSpec = simpleSpec performAction render
             [ text ", Copyrights "
             , span [ className "glyphicon glyphicon-copyright-mark" ]
               []
-            , text " CNRS 2017"
+            , text " CNRS 2017-Present"
             ]
           , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE", target "blank", title "Legal instructions of the project." ]
             [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
