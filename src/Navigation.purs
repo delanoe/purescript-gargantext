@@ -18,9 +18,10 @@ import PageRouter (Routes(..))
 import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, div, i, img, li, span, text, ul, map')
-import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
+import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title, onClick)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import DocView as DV
+import Landing as Landing
 import SearchForm as S
 import UserPage as UP
 
@@ -219,7 +220,11 @@ sidebarnavSpec = simpleSpec performAction render
     render :: Render AppState props Action
     render dispatch _ state _ =
       [
-        div [ _id "dafixedtop", className "navbar navbar-inverse navbar-fixed-top", role "navigation"]
+        div [ _id "dafixedtop"
+            , className "navbar navbar-inverse navbar-fixed-top"
+            , role "navigation"
+            ]
+        
         [ div [className "container"]
           [ divLogo
           -- divDropdownLeft
@@ -236,7 +241,9 @@ sidebarnavSpec = simpleSpec performAction render
                        , href "#", role "button"
                        , title "Informations about Gargantext" 
                        ]
-                       [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ] []
+                       [ span [ aria {hidden : true}
+                              , className "glyphicon glyphicon-info-sign" 
+                              ] []
                        , text " Info"
                        ]
                    , ul [className "dropdown-menu"]
@@ -292,7 +299,8 @@ divDropdownRight = ul [className "nav navbar-nav pull-right"]
                    a [
                      className "dropdown-toggle navbar-text"
                      , _data {toggle : "dropdown"}
-                     , href "#",  role "button"
+                     -- , onClick \_ -> dispatch $ Login
+                     , role  "button"
                      , title "Username" 
                      ]
                    
@@ -369,8 +377,4 @@ dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ SetRoute $ UserPage
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
-
-
-
-
 
