@@ -198,10 +198,16 @@ liNav (LiNav { title:tit
                 ]
 
 divLogo :: ReactElement
-divLogo =div [ className "navbar-inner" ]
-             [ a [ className "navbar-brand logoSmall", href "/index.html"  ]
-                [ img [ src "images/logoSmall.png", title "Back to home." ] [] ]
-            ]
+divLogo = div [ className "navbar-inner" ]
+               [ a [ className "navbar-brand logoSmall"
+                   , href "/index.html"  
+                   ]
+                   
+                   [ img [ src "images/logoSmall.png"
+                         , title "Back to home." ] 
+                         []
+                   ]
+               ]
 
 --divDropdownLeft :: ReactElement
 --divDropdownLeft = undefined
@@ -216,6 +222,11 @@ sidebarnavSpec = simpleSpec performAction render
         div [ _id "dafixedtop", className "navbar navbar-inverse navbar-fixed-top", role "navigation"]
         [ div [className "container"]
           [ divLogo
+          -- divDropdownLeft
+---------------------------------------------------------------------------
+-- here is divDropDowLeft--------------------------------------------------
+-- FIXME : divDropDownLeft and divDropDownRight seems to be intricated in dropdown?
+---------------------------------------------------------------------------
           ,  div [className "navbar-collapse collapse"]
              [ ul [className "nav navbar-nav"]
                [ ul [className "nav navbar-nav pull-left"]
@@ -228,45 +239,52 @@ sidebarnavSpec = simpleSpec performAction render
                        [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ] []
                        , text " Info"
                        ]
----------------------------------------------------------------------------
-                 , ul [className "dropdown-menu"]
-                  (( map liNav [ LiNav { title : "Documentation and tutorials"
-                                        , href  : "https://iscpif.fr/gargantext/your-first-map/"
-                                        , icon  : "fas fa-book"
-                                        , text  : "Documentation"
-                                        }
-                               , LiNav { title : "Report bug here"
-                                        , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
-                                        , icon  : "glyphicon glyphicon-bullhorn"
-                                        , text  : "Feedback"
-                                        }
-                               , LiNav { title : "Interactive chat"
-                                        , href  : "https://chat.iscpif.fr/channel/gargantext"
-                                        , icon  : "fab fa-rocketchat"
-                                        , text  : "Chat"
-                                        }
-                               , LiNav { title : "Asynchronous discussions"
-                                        , href  : "https://discourse.iscpif.fr/c/gargantext"
-                                        , icon  : "fab fa-discourse"
-                                        , text  : "Forum"
-                                        }
-                                ]
-                   )
-                   <> [li [className "divider"] []] <>
-                           [ liNav (LiNav { title : "About"
-                                         , href  : "http://iscpif.fr"
-                                         , icon  : "fas fa-question-circle"
-                                         , text  : "About"
-                                         }
-                                   )
-                           ]
-                   )
+                   , ul [className "dropdown-menu"]
+                      (( map liNav [ LiNav { title : "Documentation and tutorials"
+                                            , href  : "https://iscpif.fr/gargantext/your-first-map/"
+                                            , icon  : "fas fa-book"
+                                            , text  : "Documentation"
+                                            }
+                                   , LiNav { title : "Report bug here"
+                                            , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
+                                            , icon  : "glyphicon glyphicon-bullhorn"
+                                            , text  : "Feedback"
+                                            }
+                                   , LiNav { title : "Interactive chat"
+                                            , href  : "https://chat.iscpif.fr/channel/gargantext"
+                                            , icon  : "fab fa-rocketchat"
+                                            , text  : "Chat"
+                                            }
+                                   , LiNav { title : "Asynchronous discussions"
+                                            , href  : "https://discourse.iscpif.fr/c/gargantext"
+                                            , icon  : "fab fa-discourse"
+                                            , text  : "Forum"
+                                            }
+                                    ]
+                       )
+                       <> [li [className "divider"] []] <>
+                               [ liNav (LiNav { title : "About"
+                                              , href  : "http://iscpif.fr"
+                                              , icon  : "fas fa-question-circle"
+                                              , text  : "About"
+                                              }
+                                       )
+                               ]
+                       )
+                   ]
                  ]
-              ]
-----------------------------------------------------------------------------------
+               ]
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+             , divDropdownRight
+            ]
+          ]
         ]
+      ]
 
-             , ul [className "nav navbar-nav pull-right"]
+divDropdownRight :: ReactElement
+divDropdownRight = ul [className "nav navbar-nav pull-right"]
                [
                  -- TODO if logged in : enable dropdown
                  --li [className "dropdown"]
@@ -307,10 +325,6 @@ sidebarnavSpec = simpleSpec performAction render
 --                   ]
                  --]
                ]
-             ]
-      ]
-  ]
-  ]
 
 layoutSpec :: forall eff props. Spec (E eff) AppState props Action
 layoutSpec =
