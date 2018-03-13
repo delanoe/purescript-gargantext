@@ -47,7 +47,7 @@ userPageSpec = simpleSpec performAction render
             div [className "col-md-12"]
             [ div [className "row"]
               [ div [className "col-md-2"]
-                [ img [src "/images/corporate.jpg"] []
+                [ img [src "/images/Gargantextuel-212x300.jpg"] []
                 ]
               , div [className "col-md-8"]
                 [
@@ -56,7 +56,7 @@ userPageSpec = simpleSpec performAction render
                     a [className "list-group-item list-group-item-action flex-column align-items-start"]
                     [ div [className "d-flex w-100 justify-content-between"]
                       [ h5 [className "mb-1"] [ text "fonction"]
-                      , h5 [] [text "Enseignent checheur"]
+                      , h5 [] [text "Enseignant chercheur"]
                       ]
                     ]
                   ]
