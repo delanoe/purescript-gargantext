@@ -19,3 +19,15 @@
 #funnyimg {
     border:2px solid black;
 }
+
+#page-wrapper {
+    margin-top : 56px;
+}
+
+#user-page-header {
+    border-bottom : 1px solid black;
+}
+
+#user-page-info {
+    margin-top : 38px;
+}

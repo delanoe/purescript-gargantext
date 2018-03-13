@@ -21,6 +21,8 @@ data Routes
   | AddCorpus
   | DocView
   | SearchView
+  | UserPage
+
 
 instance showRoutes :: Show Routes where
   show Home = "Home"
@@ -28,18 +30,22 @@ instance showRoutes :: Show Routes where
   show AddCorpus = "AddCorpus"
   show DocView = "DocView"
   show SearchView = "SearchView"
+  show UserPage = "UserPage"
 
 int :: Match Int
 int = floor <$> num
 
+
 routing :: Match Routes
 routing =
       loginRoute
-   <|> searchRoute
+  <|> userPageRoute
+  <|> searchRoute
   <|> docviewRoute
   <|> addcorpusRoute
   <|> home
   where
+    userPageRoute = UserPage <$ route "userPage"
     searchRoute = SearchView <$ route "search"
     docviewRoute = DocView <$ route "docView"
     addcorpusRoute = AddCorpus <$ route "addCorpus"
