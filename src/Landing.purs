@@ -6,7 +6,8 @@ import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
 import React.DOM (a, button, div, footer, h1, h3, hr, i, img, li, p, span, text, ul)
-import React.DOM.Props (_data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title)
+import React.DOM.Props (Props, _data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title)
+import React (ReactElement)
 import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, simpleSpec)
 import Thermite as T
@@ -49,58 +50,62 @@ performAction Login _ _ = void do
 performAction SignUp _ _ = void do
   T.modifyState \state -> state
 
+jumboTitle :: ReactElement
+jumboTitle = div [className "jumbotron"       ]
+                   [ div [className "row"             ]
+                     [ div [className "col-md-8 content"]
+                       [ h1 [] [ text "Gargantext"]
+                       , p  [] [ text "Collaborative knowledge mapping experience" ]
+                       , p  [] [ a [ className "btn btn-success btn-lg spacing-class"
+                                   , href "https://iscpif.fr/gargantext/your-first-map/"
+                                   , target "blank"
+                                   , title "Your first map in less than 5 minutes" 
+                                   ]
+                                   [ span [ aria {hidden : true}
+                                          , className "glyphicon glyphicon-hand-right" 
+                                          ]  []
+                                   , text " Get's started"
+                                   ]
+                                ]
+                       ]
+                     , div [ className "col-md-2 content"]
+                           [p [ className "right" ]
+                              [ div [_id "logo-designed" ]
+                              [ img [ src "images/logo.png", title "Project hosted by CNRS (France, Europa, Solar System)" ]
+                              []
+                           ]
+                         ]
+                       ]
+                     ]
+                   ]
 
 
-loginSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
-loginSpec = simpleSpec performAction render
+imageEnter :: Props -> ReactElement
+imageEnter action =  div [className "row"]
+                           [ div [className "col-md-offset-5 col-md-6 content"]
+                             [ img [ src "images/Gargantextuel-212x300.jpg"
+                                   , _id "funnyimg"
+                                   , title "Click and test by yourself"
+                                   , action
+                                   ] 
+                                   []
+                             ]
+                           ]
+
+
+home :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
+home = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ div [className "container"       ]
-        [ div [className "jumbotron"       ]
-          [ div [className "row"             ]
-            [ div [className "col-md-8 content"]
-              [ h1 [] [ text "Gargantext"]
-              , p  [] [ text "Collaborative knowledge mapping experience" ]
-              , p  [] [ a [ className "btn btn-success btn-lg spacing-class"
-                          , href "https://iscpif.fr/gargantext/your-first-map/"
-                          , target "blank"
-                          , title "Your first map in less than 5 minutes" 
-                          ]
-                          [ span [ aria {hidden : true}
-                                 , className "glyphicon glyphicon-hand-right" 
-                                 ]  []
-                          , text " Get's started"
-                          ]
-                       ]
-              ]
-            , div [ className "col-md-2 content"]
-                  [p [ className "right" ]
-                     [ div [_id "logo-designed" ]
-                     [ img [ src "images/logo.png", title "Logo designed by dacha and anoe" ]
-                     []
-                  ]
-                ]
-              ]
-            ]
-          ]
-        ]
+      [ div [ className "container" ] [ jumboTitle                                ]
+      , div [ className "container" ] [ imageEnter (onClick \_ -> dispatch $ Enter)]
+      , div [ className "container" ] [ blocksRandomText                          ]
+      , div [ className "container" ] [ hr [] [], footerLegalInfo                 ]
+      ]
 
-      , div [className "container"]
-        [ div [className "row"]
-          [ div [className "col-md-offset-5 col-md-6 content"]
-            [ img [ src "images/Gargantextuel-212x300.jpg"
-                  , title "Gargantextuel drawn by Cecile Meadel"
-                  , _id "funnyimg"
-                  , onClick \_ -> dispatch $ Enter , title "Click and test by yourself"
-                  ] []
-            ]
-          ]
-        ]
-
-
-      , div [ className "container" ]
-        [ div [ className "row" ]
+blocksRandomText :: ReactElement
+blocksRandomText = div [ className "row" ]
           [ div [ className "col-md-4 content" ]
             [ h3 []
               [ a [ href "#", title "Random sentences in Gargantua's Books chapters, historically true" ]
@@ -141,28 +146,26 @@ loginSpec = simpleSpec performAction render
               ]
             ]
           ]
-        ]
 
-      , div [className "container"]
-        [
-           hr [] []
-      , footer []
-        [ p []
-          [ text "Gargantext "
-          , span [className "glyphicon glyphicon-registration-mark" ]
-            []
-          , text ", version 4.0"
-          , a [ href "http://www.cnrs.fr", target "blank", title "Institution that enables this project." ]
-            [ text ", Copyrights "
-            , span [ className "glyphicon glyphicon-copyright-mark" ]
-              []
-            , text " CNRS 2017-Present"
-            ]
-          , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE", target "blank", title "Legal instructions of the project." ]
-            [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
-          , text "."
-          ]
-        ]
-        ]
 
-      ]
+footerLegalInfo :: ReactElement
+footerLegalInfo = footer [] [ p [] [ text "Gargantext "
+                                   , span [className "glyphicon glyphicon-registration-mark" ] []
+                                   , text ", version 4.0"
+                                   , a [ href "http://www.cnrs.fr"
+                                       , target "blank"
+                                       , title "Project hosted by CNRS." 
+                                       ]
+                                         [ text ", Copyrights "
+                                         , span [ className "glyphicon glyphicon-copyright-mark" ] []
+                                         , text " CNRS 2017-Present"
+                                         ]
+                                   , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
+                                       , target "blank"
+                                       , title "Legal instructions of the project." 
+                                       ]
+                                         [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
+                                         , text "."
+                                   ]
+                            ]
+

@@ -145,7 +145,7 @@ pagesComponent s =
   where
     selectSpec :: Routes -> Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff) AppState props Action
     selectSpec Login      = focus _loginState _loginAction LN.renderSpec
-    selectSpec Home       = wrap $ focus _landingState   _landingAction   L.loginSpec
+    selectSpec Home       = wrap $ focus _landingState   _landingAction   L.home
     selectSpec AddCorpus  = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
     selectSpec DocView    = wrap $ focus _docViewState   _docViewAction   DV.spec
     selectSpec SearchView = wrap $ focus _searchState    _searchAction    S.searchSpec
@@ -297,6 +297,7 @@ divDropdownRight = ul [className "nav navbar-nav pull-right"]
                      , className "glyphicon glyphicon-log-in"
                      , href "#/login"
                      , style {color:"white"} 
+                     , title "Log in and save your time"
                      -- TODO hover: bold
                       ]
                     -- TODO if logged in

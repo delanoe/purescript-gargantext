@@ -30,6 +30,7 @@ import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, _render, cotransform, focus, foreach, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 
+import Landing as L
 
 
 type State =
@@ -91,7 +92,8 @@ addcorpusviewSpec = simpleSpec performAction render
     render :: Render State props Action
     render dispatch _ state _ =
       [
-        div [className "container"]
+        div [className "container"] [L.jumboTitle]
+      ,  div [className "container"]
         [
           div [className "jumbotron"]
           [ div [className "row"]

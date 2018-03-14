@@ -6,11 +6,12 @@ import Control.Monad.Cont.Trans (lift)
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
-import React.DOM (br', button, div, h3, input, text, i, span)
-import React.DOM.Props (_id, _type, className, name, onClick, onInput, placeholder, value, aria)
+import React.DOM (br', button, div, h3, input, text, i, span, img)
+import React.DOM.Props (_id, _type, className, name, onClick, onInput, placeholder, value, aria, src, title)
 import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
+import Landing as L
 
 type State =
   {
@@ -55,7 +56,8 @@ searchSpec = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ div [className "container"]
+      [ div [className "container"] [L.jumboTitle]
+      , div [className "container"]
        [ div [className "jumbotron" ]
          [ div [className "row"       ]
            [ div [className "col-md-10" ]
