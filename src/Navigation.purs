@@ -3,25 +3,21 @@ module Navigation where
 import DOM
 
 import AddCorpusview as AC
-import Control.Monad.Aff.Class (liftAff)
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
 import Data.Either (Either(..))
 import Data.Foldable (fold)
 import Data.Lens (Lens', Prism', lens, over, prism)
-import Data.Maybe (Maybe, Maybe(Nothing, Just))
+import Data.Maybe (Maybe(Nothing, Just))
 import Landing as L
 import Login as LN
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
-import Prelude hiding (div)
+import Prelude (class Applicative, class Bind, Unit, bind, id, map, negate, pure, unit, void, ($), (<>))
 import React (ReactElement)
-import React.DOM (a, div, i, img, li, span, text, ul, map')
-import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title, onClick)
+import React.DOM (a, div, img, li, span, text, ul)
+import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import DocView as DV
-import Landing as Landing
 import SearchForm as S
 import UserPage as UP
 
@@ -246,30 +242,33 @@ sidebarnavSpec = simpleSpec performAction render
                        , text " Info"
                        ]
                    , ul [className "dropdown-menu"]
-                      (( map liNav [ LiNav { title : "Documentation and tutorials"
-                                            , href  : "https://iscpif.fr/gargantext/your-first-map/"
-                                            , icon  : "fas fa-book"
-                                            , text  : "Documentation"
-                                            }
+                      (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
+                                           , href  : "https://iscpif.fr/gargantext/your-first-map/"
+                                           , icon  : "fas fa-book"
+                                           , text  : "Documentation"
+                                           }
                                    , LiNav { title : "Report bug here"
-                                            , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
-                                            , icon  : "glyphicon glyphicon-bullhorn"
-                                            , text  : "Feedback"
-                                            }
-                                   , LiNav { title : "Interactive chat"
+                                           , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
+                                           , icon  : "glyphicon glyphicon-bullhorn"
+                                           , text  : "Feedback"
+                                           }
+                                   ]
+                       )
+                       <> [li [className "divider"] []] <>
+                       (map liNav [ LiNav { title : "Interactive chat"
                                             , href  : "https://chat.iscpif.fr/channel/gargantext"
                                             , icon  : "fab fa-rocketchat"
                                             , text  : "Chat"
                                             }
-                                   , LiNav { title : "Asynchronous discussions"
+                                  , LiNav { title : "Asynchronous discussions"
                                             , href  : "https://discourse.iscpif.fr/c/gargantext"
                                             , icon  : "fab fa-discourse"
                                             , text  : "Forum"
                                             }
-                                    ]
+                                  ]
                        )
                        <> [li [className "divider"] []] <>
-                               [ liNav (LiNav { title : "About"
+                               [ liNav (LiNav { title : "More about us (you)"
                                               , href  : "http://iscpif.fr"
                                               , icon  : "fas fa-question-circle"
                                               , text  : "About"

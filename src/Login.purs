@@ -26,6 +26,9 @@ import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 
+--          TODO: ask for login (modal) or account creation after 15 mn when user is not logged and has made one search at least
+
+
 newtype State = State
   { username :: String
   , password :: String

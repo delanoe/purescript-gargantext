@@ -56,133 +56,29 @@ loginSpec = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [
-        -- div [ _id "dafixedtop", className "navbar navbar-inverse navbar-fixed-top", role "navigation"]
-        -- [ div [className "container"]
-        --   [
-        --     div [ className "navbar-inner" ]
-        --     [ a [ className "navbar-brand logoSmall", href "/" ]
-        --       [ img [ src "images/logoSmall.png", title "Back to home." ]
-        --         []
-        --       ]
-        --     ]
-        --   ,  div [className "navbar-collapse collapse"]
-        --      [
-
-        --      ul [className "nav navbar-nav"]
-        --        [
-        --          ul [className "nav navbar-nav pull-left"] [
-        --          li [className "dropdown"]
-        --          [
-        --            a [
-        --               className "dropdown-toggle navbar-text", _data {toggle: "dropdown"}, href "#", role "button", title "Informations about Gargantext" ]
-        --            [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ]
-        --              []
-        --            , text "Info"
-        --            , i [ className "caret" ]
-        --              []
-        --            ]
-
-        --        , ul [className "dropdown-menu"]
-        --          [ li []
-        --            [ a [tabIndex (-1),  target "blank", title "Documentation and tutorials", href "https://iscpif.fr/gargantext/your-first-map/"]
-        --              [text "Documentation"]
-        --            ]
-        --          , li [className "divider"] []
-        --          , li []
-        --            [
-        --              a [ tabIndex (-1), target "blank", title "About", href "/about/", title "More informations about the project, its sponsors and its authors"]
-        --              [ text "About"]
-
-        --            ]
-        --          ]
-        --          ]
-
-        --          ]
-        --       ]
-        --      , ul [className "nav navbar-nav pull-right"]
-        --        [
-        --          li [className "dropdown"]
-        --          [
-        --            a [ className "dropdown-toggle navbar-text", _data {toggle : "dropdown"}, href "#",  role "button", title "That is your username" ]
-        --            [ i [ className "" ]
-        --              []
-        --            , span [ aria {hidden : true}, className "glyphicon glyphicon-user", style {color:"white"} ]
-        --              []
-        --            , i [ className "caret" ]
-        --              []
-        --            ]
-        --          , ul [className "dropdown-menu"]
-        --            [
-        --             li []
-        --              [ a [tabIndex (-1), target "blank", title "Send us a message (bug, thanks, congrats...)", href "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"]
-        --                [
-        --                  span [ className "glyphicon glyphicon-bullhorn" ,aria {hidden : true}] []
-        --                 , text "Report Feedback"
-        --                ]
-        --              ]
-        --            , li [ className"divider"]
-        --              []
-        --            , li []
-        --              [ a [tabIndex (-1), href "/auth/login" ]
-        --                [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
-        --                , text "login"
-        --                ]
-        --              ]
-        --            ]
-        --          ]
-        --        ]
-        --      ]
-
-        --   ]
-        -- ]
-
-       div [className "container"]
-        [
-          div [className "jumbotron"]
-          [
-            div [className "row"]
-            [
-              div [className "col-md-8 content"]
-              [
-                h1 []
-                [ text "Gargantext" ]
-              , p []
-                [ text "Collaborative knowledge mapping experience" ]
-              
---          TODO : put the login in top right page [#54]
-              , p []
-                [ 
---                  a [ className "btn btn-primary btn-lg spacing-class ", onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
---                  [ span [ className "glyphicon glyphicon-hand-right" ]
---                    []
---                  , text " Login"
---                  ]
-----          TODO: login / sign up will not be mandatory any more (mandatory to save/share your research only)
-----          TODO: ask for login or account creation after 5 mn when user is not logged and has made one search at least
---                , a [ className "btn btn-warning btn-lg spacing-class", href "https://iscpif.fr/services/applyforourservices/", target "blank", title "Fill the form to sign up" ]
---                  [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
---                    []
---                  , text "Sign Up"
---                  ]
-                 a [ className "btn btn-success btn-lg spacing-class", href "https://iscpif.fr/gargantext/your-first-map/", target "blank", title "Fill the form to sign up" ]
-                  [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
-                    []
-                  , text " Get's started"
-                  ]
-                ]
-              , span [ aria {hidden : true}, className "glyphicon glyphicon-warning-sign" ]
-                []
-              , i []
-                [ text "Some features may not work without a javascript optimized browser (Chromium for instance).                        " ]
-
+      [ div [className "container"       ]
+        [ div [className "jumbotron"       ]
+          [ div [className "row"             ]
+            [ div [className "col-md-8 content"]
+              [ h1 [] [ text "Gargantext"]
+              , p  [] [ text "Collaborative knowledge mapping experience" ]
+              , p  [] [ a [ className "btn btn-success btn-lg spacing-class"
+                          , href "https://iscpif.fr/gargantext/your-first-map/"
+                          , target "blank"
+                          , title "Your first map in less than 5 minutes" 
+                          ]
+                          [ span [ aria {hidden : true}
+                                 , className "glyphicon glyphicon-hand-right" 
+                                 ]  []
+                          , text " Get's started"
+                          ]
+                       ]
               ]
-            , div [className "col-md-2 content"]
-              [
-                p [ className "right" ]
-                [ div [_id "logo-designed" ]
-                  [ img [ src "images/logo.png", title "Logo designed by dacha and anoe" ]
-                    []
+            , div [ className "col-md-2 content"]
+                  [p [ className "right" ]
+                     [ div [_id "logo-designed" ]
+                     [ img [ src "images/logo.png", title "Logo designed by dacha and anoe" ]
+                     []
                   ]
                 ]
               ]
