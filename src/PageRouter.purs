@@ -25,12 +25,12 @@ data Routes
 
 
 instance showRoutes :: Show Routes where
-  show Home = "Home"
-  show Login = "Login"
-  show AddCorpus = "AddCorpus"
-  show DocView = "DocView"
+  show Home       = "Home"
+  show Login      = "Login"
+  show AddCorpus  = "AddCorpus"
+  show DocView    = "DocView"
   show SearchView = "SearchView"
-  show UserPage = "UserPage"
+  show UserPage   = "UserPage"
 
 int :: Match Int
 int = floor <$> num
@@ -45,13 +45,13 @@ routing =
   <|> addcorpusRoute
   <|> home
   where
-    userPageRoute = UserPage <$ route "userPage"
-    searchRoute = SearchView <$ route "search"
-    docviewRoute = DocView <$ route "docView"
-    addcorpusRoute = AddCorpus <$ route "addCorpus"
-    loginRoute = Login <$ route "login"
-    home = Home <$ lit ""
-    route str = lit "" *> lit str
+    userPageRoute  = UserPage   <$ route "userPage"
+    searchRoute    = SearchView <$ route "search"
+    docviewRoute   = DocView    <$ route "docView"
+    addcorpusRoute = AddCorpus  <$ route "addCorpus"
+    loginRoute     = Login      <$ route "login"
+    home           = Home       <$ lit ""
+    route str      = lit "" *> lit str
 
 routeHandler :: forall e. (Maybe Routes -> Routes -> Eff ( dom :: DOM, console :: CONSOLE | e) Unit) -> Maybe Routes -> Routes -> Eff (dom :: DOM, console :: CONSOLE | e) Unit
 routeHandler dispatchAction old new = do
