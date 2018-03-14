@@ -4,7 +4,7 @@ import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
-import React.DOM (a, div, h3, h5, h6, img, li, nav, small, span, table, tbody, td, text, th, thead, tr, ul)
+import React.DOM (a, div, h3, h5, h6, i, img, li, nav, small, span, table, tbody, td, text, th, thead, tr, ul)
 import React.DOM.Props (_data, _id, aria, className, href, role, scope, src)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
@@ -133,21 +133,21 @@ userPageSpec = simpleSpec performAction render
                   , tbody []
                     [ tr []
                       [ td [] [ text "2012/03/06"]
-                      , td [] [ text "use of acoustic mission"]
-                      , td [] [ text "use of acoustic emission"]
-                      , td [] [ text "use of acoustic emission"]
-                      , td [] [ text "use of acoustic emission"]
+                      , td [] [ text "USE OF ACOUSTIC TO DISCRIMINATE DAMAGE MODES IN COMPOSITE -ANTENNA - STRUCTURE DURING BUCKLING LOADING "]
+                      , td [] [ text "ICEM15: 15TH INTERNATIONAL CONFERENCE ON EXPERIMENTAL MECHANICS"]
+                      , td [] [ i [className "fas fa-star"] []]
+                      , td [] [ text "delete"]
                       ]
                     ]
                   ]
                 ]
               , div [className "tab-pane fade show", role "tabpanel", aria {labelledby : "nav-profile-tab"}, _id "nav-profile"]
                 [
-                  h3 [] [text "hello1"]
+                  span [] [text "Lorizzle ipsum bling bling sit amizzle, consectetuer adipiscing elit. Nizzle sapien velizzle, bling bling volutpat, suscipit , gravida vel, arcu. Check it out hizzle that's the shizzle. We gonna chung erizzle. Fo izzle dolor fo turpis tempizzle tempor. Gangsta boom shackalack mofo et turpizzle. Sizzle izzle tortor. Pellentesque uhuh ... yih!"]
                 ]
               , div [className "tab-pane fade show", role "tabpanel", aria {labelledby : "nav-contact-tab"}, _id "nav-contact"]
                 [
-                  h3 [] [text "hello2"]
+                  span [] [text "Lorizzle ipsum bling bling sit amizzle, consectetuer adipiscing elit. Nizzle sapien velizzle, bling bling volutpat, suscipit , gravida vel, arcu. Check it out hizzle that's the shizzle. We gonna chung erizzle. Fo izzle dolor fo turpis tempizzle tempor. Gangsta boom shackalack mofo et turpizzle. Sizzle izzle tortor. Pellentesque uhuh ... yih!"]
                 ]
               ]
             ]
