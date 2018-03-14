@@ -56,7 +56,7 @@ searchSpec = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ div [className "container"] [L.jumboTitle]
+      [ div [className "container"] [L.jumboTitle false]
       , div [className "container"]
        [ div [className "jumbotron" ]
          [ div [className "row"       ]

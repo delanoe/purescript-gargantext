@@ -14,8 +14,8 @@ import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
 import Prelude (class Applicative, class Bind, Unit, bind, id, map, negate, pure, unit, void, ($), (<>))
 import React (ReactElement)
-import React.DOM (a, div, img, li, span, text, ul)
-import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
+import React.DOM (a, div, img, li, span, text, ul, input)
+import React.DOM.Props (_data, _id, aria, className, href, name, placeholder, _type, role, src, style, tabIndex, target, title)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import DocView as DV
 import SearchForm as S
@@ -280,6 +280,13 @@ sidebarnavSpec = simpleSpec performAction render
                  ]
                ]
 ---------------------------------------------------------------------------
+-- TODO put the search form in the center of the navBar
+--             , ul [ className "nav navbar-nav"] 
+--                    [ input [ className "form-control"
+--                            , placeholder "Query, URL or FILE (optimized experience with Firefox or Chromium browsers)"
+--                            , _type "text"
+--                            ] []
+--                    ]
              , divDropdownRight
             ]
           ]

@@ -50,12 +50,12 @@ performAction Login _ _ = void do
 performAction SignUp _ _ = void do
   T.modifyState \state -> state
 
-jumboTitle :: ReactElement
-jumboTitle = div [className "jumbotron"       ]
+jumboTitle :: Boolean -> ReactElement
+jumboTitle b = div jumbo
                    [ div [className "row"             ]
                      [ div [className "col-md-8 content"]
                        [ h1 [] [ text "Gargantext"]
-                       , p  [] [ text "Collaborative knowledge mapping experience" ]
+                       , p  [] [ text "search map share" ]
                        , p  [] [ a [ className "btn btn-success btn-lg spacing-class"
                                    , href "https://iscpif.fr/gargantext/your-first-map/"
                                    , target "blank"
@@ -64,7 +64,7 @@ jumboTitle = div [className "jumbotron"       ]
                                    [ span [ aria {hidden : true}
                                           , className "glyphicon glyphicon-hand-right" 
                                           ]  []
-                                   , text " Get's started"
+                                   , text " Documentation"
                                    ]
                                 ]
                        ]
@@ -78,6 +78,10 @@ jumboTitle = div [className "jumbotron"       ]
                        ]
                      ]
                    ]
+                  where
+                    jumbo = case b of
+                                 true  -> [className "jumbotron"       ]
+                                 false -> []
 
 
 imageEnter :: Props -> ReactElement
@@ -98,7 +102,7 @@ home = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ div [ className "container" ] [ jumboTitle                                ]
+      [ div [ className "container" ] [ jumboTitle true                            ]
       , div [ className "container" ] [ imageEnter (onClick \_ -> dispatch $ Enter)]
       , div [ className "container" ] [ blocksRandomText                          ]
       , div [ className "container" ] [ hr [] [], footerLegalInfo                 ]

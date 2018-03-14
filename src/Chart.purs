@@ -373,16 +373,20 @@ yAxisIndex = unsafeMkProps "yAxisIndex"
       -- , p''
       -- ]
 
-ex1 :: ReactElement
-ex1 = echarts
+histogram :: ReactElement
+histogram = echarts
      [ option
        [ tooltip [trigger "axis"]
        , grid [containLabel true]
-       , legend [data' ["Query A", "Query B", "Query C"]]
+       , legend [data' ["Map terms coverage", "Favorites", "All"]]
+       -- , legend [data' ["Map Terms coverage", "Favorites", "All"]]
        , xAxis
          [ type' "category"
          , axisTick [alignWithLabel true]
-         , data' ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
+         , data' ["Jan" , "Feb", "Mar" , "Apr"
+                 , "May", "Jun", "July", "Aug"
+                 , "Sep", "Oct", "Nov" , "Dec"
+                 ]
          ]
        , dataZoom [dz1,dz1,dz2,dz2]
        , yAxis [ya1, ya2]
@@ -423,7 +427,7 @@ ya2 = unsafeFromPropsArray
       ]
 
 sd1 = unsafeFromPropsArray
-      [ name "Query A"
+      [ name "Map terms coverage"
       , type' "line"
       , label [normal[showp true, position "top"]]
       , lineStyle [ normal
@@ -436,7 +440,7 @@ sd1 = unsafeFromPropsArray
       ]
 
 sd2 = unsafeFromPropsArray
-      [ name "Query B"
+      [ name "Favorites"
       , type' "bar"
       , label [normal[showp true, position "top"]]
       , yAxisIndex 1
@@ -444,7 +448,7 @@ sd2 = unsafeFromPropsArray
       ]
 
 sd3 = unsafeFromPropsArray
-      [ name "Query C"
+      [ name "All"
       , type' "bar"
       , label [normal[showp true, position "top"]]
       , yAxisIndex 1

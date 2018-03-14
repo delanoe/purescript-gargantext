@@ -8,6 +8,7 @@ import React.DOM (a, div, h3, h5, h6, img, li, nav, small, span, table, tbody, t
 import React.DOM.Props (_data, _id, aria, className, href, role, scope, src)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
+import DocView as DV
 
 type State = String
 
@@ -31,10 +32,11 @@ userPageSpec = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ div [className "container-fluid"]
+      [ -- TODO: div [className "tree"] [DV.toHtml dispatch d.tree]
+        div [className "container-fluid"]
         [ div [className "row", _id "user-page-header"]
           [ div [className "col-md-2"]
-            [ h3 [] [text "UserName"]
+            [ h3 [] [text "User Name"]
             ]
           , div [className "col-md-8"] []
           , div [className "col-md-2"]
@@ -54,26 +56,21 @@ userPageSpec = simpleSpec performAction render
                   ul [className "list-group"]
                   [
                     li [className "list-group-item justify-content-between"]
-                    [  span [] [text "fonction"]
-                    , span [className "badge badge-default badge-pill"] [text "Ensignent checheur"]
+                    [  span [] [text "Fonction"]
+                    , span [className "badge badge-default badge-pill"] [text "Enseignant chercheur"]
                     ]
                   , li [className "list-group-item justify-content-between"]
-                    [  span [] [text "Entitte, service"]
-                    , span [className "badge badge-default badge-pill"] [text "Mines Saint - Etinene SPIN -PTSI"]
+                    [  span [] [text "Entité, service"]
+                    , span [className "badge badge-default badge-pill"] [text "Mines Saint-Etienne SPIN -PTSI"]
                     ]
 
                   , li [className "list-group-item justify-content-between"]
-                    [  span [] [text "Telephone"]
-                    , span [className "badge badge-default badge-pill"] [text "04 77 42 0070"]
+                    [  span [] [text "Téléphone"]
+                    , span [className "badge badge-default badge-pill"] [text "(+33) 04 77 42 0070"]
                     ]
                    , li [className "list-group-item justify-content-between"]
-                    [  span [] [text "Telephone"]
-                    , span [className "badge badge-default badge-pill"] [text "04 77 42 0070"]
-                    ]
-
-                   , li [className "list-group-item justify-content-between"]
-                    [  span [] [text "courriel"]
-                    , span [className "badge badge-default badge-pill"] [text "veronica@mines-stsi.fr"]
+                    [  span [] [text "Courriel"]
+                    , span [className "badge badge-default badge-pill"] [text "gargantua@rabelais.fr"]
                     ]
                    , li [className "list-group-item justify-content-between"]
                     [  span [] [text "Bureau"]
@@ -81,11 +78,11 @@ userPageSpec = simpleSpec performAction render
                     ]
                    , li [className "list-group-item justify-content-between"]
                     [  span [] [text "Apellation"]
-                    , span [className "badge badge-default badge-pill"] [text "Maitre de reherche (EPA)"]
+                    , span [className "badge badge-default badge-pill"] [text "Maître de conférences (EPA)"]
                     ]
                    , li [className "list-group-item justify-content-between"]
                     [  span [] [text "Lieu"]
-                    , span [className "badge badge-default badge-pill"] [text "Saint -Etienne, 158 Cours Fauriel"]
+                    , span [className "badge badge-default badge-pill"] [text "Saint-Etienne, 158 Cours Fauriel"]
                     ]
 
                   ]
@@ -95,62 +92,74 @@ userPageSpec = simpleSpec performAction render
           ]
         , div [className "row",_id "user-page-footer"]
           [ div [className "col-md-12"]
-            [ nav []
+            facets          
+            ]
+        ]
+      ]
+
+
+facets = [ nav []
               [ div [className "nav nav-tabs", _id "nav-tab",role "tablist"]
-                [
-                  a [className "nav-item nav-link active",_id "nav-home-tab",  _data {toggle : "tab"},href "#nav-home",role "tab",aria {controls : "nav-home"},aria {selected:true}] [ text "Publications (12)"]
-
-                , a [className "nav-item nav-link",_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "Brevets (2)"]
-
-                ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Projets IMT (5)"]
-
+                [ a [className "nav-item nav-link active",_id "nav-home-tab"   ,  _data {toggle : "tab"},href "#nav-home"   ,role "tab",aria {controls : "nav-home"}   ,aria {selected:true}] [ text "Publications (12)"]
+                , a [className "nav-item nav-link"       ,_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "Brevets (2)"]
+                , a [className "nav-item nav-link"       ,_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Projets (5)"]
+                , a [className "nav-item nav-link"       ,_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "All (19)"]
                 ]
               ]
             , div [className "tab-content" , _id "nav-tabContent"]
               [
-                div [className "tab-pane fade show active", role "tabpanel", aria {labelledby : "nav-home-tab"}, _id "nav-home"]
-                [
-                  table [ className "table"]
+                div [ className "tab-pane fade show active"
+                    , role "tabpanel"
+                    , aria {labelledby : "nav-home-tab"}
+                    , _id "nav-home"
+                    ]
+                      [ facetExample ]
+              
+              , div [ className "tab-pane fade show"
+                    , role "tabpanel"
+                    , aria {labelledby : "nav-profile-tab"}
+                    , _id "nav-profile"
+                    ]
+                      [ ]
+              , div [ className "tab-pane fade show"
+                    , role "tabpanel"
+                    , aria {labelledby : "nav-contact-tab"}
+                    , _id "nav-contact"
+                    ]
+                      [ ]
+              ]
+            ]
+
+facetExample = table [ className "table"]
                   [ thead [ className "thead-dark"]
                     [ tr []
-                      [
-                        th [ scope "col"]
-                        [ text "Date"
-                        ]
-                      , th [scope "col"]
-                        [ text "Description"
-                        ]
-                      , th [ scope "col"]
-                        [ text "Projects"]
-                      , th [ scope "col"]
-                        [ text " Favorite"]
-
-                      , th [scope "col"]
-                        [text "Delete"]
-
+                      [ th [ scope "col"] [ text "Date"        ]
+                      , th [ scope "col"] [ text "Description" ]
+                      , th [ scope "col"] [ text "Projects"    ]
+                      , th [ scope "col"] [ text "Favorite"    ]
+                      , th [ scope "col"] [ text "Delete"      ]
                       ]
                     ]
                   , tbody []
-                    [ tr []
-                      [ td [] [ text "2012/03/06"]
-                      , td [] [ text "use of acoustic mission"]
-                      , td [] [ text "use of acoustic emission"]
-                      , td [] [ text "use of acoustic emission"]
-                      , td [] [ text "use of acoustic emission"]
-                      ]
+                    [ tr [] [ td [] [ text "2012/03/06"]
+                            , td [] [ text "Big data and text mining"]
+                            , td [] [ text "European funds"]
+                            , td [] [ text "True"]
+                            , td [] [ text "False"]
+                            ]
+                    , tr [] [ td [] [ text "2013/03/06"]
+                            , td [] [ text "Cryptography"]
+                            , td [] [ text "French funds"]
+                            , td [] [ text "True"]
+                            , td [] [ text "False"]
+                            ]
+                    , tr [] [ td [] [ text "2013/03/06"]
+                            , td [] [ text "Artificial Intelligence"]
+                            , td [] [ text "Not found"]
+                            , td [] [ text "True"]
+                            , td [] [ text "False"]
+                            ]
                     ]
                   ]
-                ]
-              , div [className "tab-pane fade show", role "tabpanel", aria {labelledby : "nav-profile-tab"}, _id "nav-profile"]
-                [
-                  h3 [] [text "hello1"]
-                ]
-              , div [className "tab-pane fade show", role "tabpanel", aria {labelledby : "nav-contact-tab"}, _id "nav-contact"]
-                [
-                  h3 [] [text "hello2"]
-                ]
-              ]
-            ]
-          ]
-        ]
-      ]
+
+
