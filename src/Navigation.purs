@@ -18,45 +18,46 @@ import PageRouter (Routes(..))
 import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, div, i, img, li, span, text, ul, map')
-import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title)
+import React.DOM.Props (_data, _id, aria, className, href, role, src, style, tabIndex, target, title, onClick)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import DocView as DV
+import Landing as Landing
 import SearchForm as S
 import UserPage as UP
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
 type AppState =
-  { currentRoute :: Maybe Routes
-  , landingState :: L.State
-  , loginState :: LN.State
+  { currentRoute   :: Maybe Routes
+  , landingState   :: L.State
+  , loginState     :: LN.State
   , addCorpusState :: AC.State
-  , docViewState :: DV.State
-  , searchState :: S.State
-  , userPage :: UP.State
+  , docViewState   :: DV.State
+  , searchState    :: S.State
+  , userPage       :: UP.State
   }
 
 initAppState :: AppState
 initAppState =
- { currentRoute : Just Home
-  , landingState : L.initialState
-  , loginState : LN.initialState
+ { currentRoute    : Just Home
+  , landingState   : L.initialState
+  , loginState     : LN.initialState
   , addCorpusState : AC.initialState
-  , docViewState : DV.tdata
-  , searchState : S.initialState
-  , userPage : UP.initialState
+  , docViewState   : DV.tdata
+  , searchState    : S.initialState
+  , userPage       : UP.initialState
   }
 
 
 data Action
   = Initialize
-  | LandingA L.Action
-  | LoginA LN.Action
-  | SetRoute Routes
+  | LandingA   L.Action
+  | LoginA     LN.Action
+  | SetRoute   Routes
   | AddCorpusA AC.Action
-  | DocViewA DV.Action
-  | SearchA S.Action
-  | UserPageA UP.Action
+  | DocViewA   DV.Action
+  | SearchA    S.Action
+  | UserPageA  UP.Action
 
 
 performAction :: forall eff props. PerformAction (dom :: DOM |eff) AppState props Action
@@ -90,7 +91,6 @@ _loginAction = prism LoginA \action ->
   case action of
     LoginA caction -> Right caction
     _-> Left action
-
 
 
 _addCorpusState:: Lens' AppState AC.State
@@ -219,7 +219,11 @@ sidebarnavSpec = simpleSpec performAction render
     render :: Render AppState props Action
     render dispatch _ state _ =
       [
-        div [ _id "dafixedtop", className "navbar navbar-inverse navbar-fixed-top", role "navigation"]
+        div [ _id "dafixedtop"
+            , className "navbar navbar-inverse navbar-fixed-top"
+            , role "navigation"
+            ]
+        
         [ div [className "container"]
           [ divLogo
           -- divDropdownLeft
@@ -236,7 +240,9 @@ sidebarnavSpec = simpleSpec performAction render
                        , href "#", role "button"
                        , title "Informations about Gargantext" 
                        ]
-                       [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ] []
+                       [ span [ aria {hidden : true}
+                              , className "glyphicon glyphicon-info-sign" 
+                              ] []
                        , text " Info"
                        ]
                    , ul [className "dropdown-menu"]
@@ -275,55 +281,30 @@ sidebarnavSpec = simpleSpec performAction render
                  ]
                ]
 ---------------------------------------------------------------------------
----------------------------------------------------------------------------
----------------------------------------------------------------------------
              , divDropdownRight
             ]
           ]
         ]
       ]
 
+--divDropdownRight :: Render AppState props Action
 divDropdownRight :: ReactElement
 divDropdownRight = ul [className "nav navbar-nav pull-right"]
                [
-                 -- TODO if logged in : enable dropdown
-                 --li [className "dropdown"]
-                 --[
-                   a [
-                     className "dropdown-toggle navbar-text"
-                     , _data {toggle : "dropdown"}
-                     , href "#",  role "button"
-                     , title "Username" 
-                     ]
-                   
-                   -- FIXME not sure about the className "login"
-                   [ i [ className "login" ] []
-                   , span [ aria {hidden : true}
-                          -- TODO if logged in
-                          --, className "glyphicon glyphicon-user"
-                          -- else
-                          , className "glyphicon glyphicon-log-in"
-                          , style {color:"white"} 
-                          ]
-                     []
+                 -- TODO if logged in : enable dropdown to logout
+                 li [className "dropdown"]
+                 [
+                   a [ aria {hidden : true}
+                     , className "glyphicon glyphicon-log-in"
+                     , href "#/login"
+                     , style {color:"white"} 
+                     -- TODO hover: bold
+                      ]
                     -- TODO if logged in
                     --, text " username"
                     -- else
-                    , text " Login / Signup"
-                   ]
---                 , ul [className "dropdown-menu"]
---                   [
---                   , li [ className"divider"]
---                     []
---                   , li []
---                      -- TODO if logged in show logout
---                     [ a [tabIndex (-1), href "/auth/login" ]
---                       [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
---                       , text " Logout"
---                       ]
---                     ]
---                   ]
-                 --]
+                   [text " Login / Signup"]
+                  ]
                ]
 
 layoutSpec :: forall eff props. Spec (E eff) AppState props Action
@@ -345,11 +326,11 @@ dispatchAction dispatcher _ Home = do
   pure unit
 dispatchAction dispatcher _ Login = do
   _ <- dispatcher $ SetRoute $ Login
-  _ <- dispatcher $ LoginA $ LN.NoOp
+  _ <- dispatcher $ LoginA   $ LN.NoOp
   pure unit
 
 dispatchAction dispatcher _ AddCorpus = do
-  _ <- dispatcher $ SetRoute $ AddCorpus
+  _ <- dispatcher $ SetRoute   $ AddCorpus
   _ <- dispatcher $ AddCorpusA $ AC.LoadDatabaseDetails
   pure unit
 
@@ -361,16 +342,12 @@ dispatchAction dispatcher _ DocView = do
 
 dispatchAction dispatcher _ SearchView = do
   _ <- dispatcher $ SetRoute $ SearchView
-  _ <- dispatcher $ SearchA $ S.NoOp
+  _ <- dispatcher $ SearchA  $ S.NoOp
   pure unit
 
 
 dispatchAction dispatcher _ UserPage = do
-  _ <- dispatcher $ SetRoute $ UserPage
+  _ <- dispatcher $ SetRoute  $ UserPage
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
-
-
-
-
 

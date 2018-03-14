@@ -27,6 +27,7 @@ data Action
   = NoOp
   | Documentation
   | Enter
+  | Login
   | SignUp
 
 
@@ -39,6 +40,10 @@ performAction Documentation _ _ = void do
 
 performAction Enter _ _ = void do
   lift $ setHash "/search"
+  T.modifyState \state -> state
+
+performAction Login _ _ = void do
+  lift $ setHash "/login"
   T.modifyState \state -> state
 
 performAction SignUp _ _ = void do
