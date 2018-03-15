@@ -156,11 +156,14 @@ pagesComponent s =
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
 
+
+
 wrap :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
 wrap spec =
   fold
   [ sidebarnavSpec
-  --, tree
+--  TODO Add Tree to the template
+--, exampleTree'
   , innerContainer $ spec
   , footerLegalInfo
   ]
@@ -172,6 +175,13 @@ wrap spec =
           div [className "container-fluid"]  (render d p s c)
         ]
       ]
+--    TODO Add Tree to the template
+--    exampleTree' ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+--    exampleTree' = simpleSpec performAction render
+--      where
+--        render :: Render AppState props Action
+--        render dispatch _ state _ = DV.toHtml dispatch DV.exampleTree
+
 
 
 data LiNav = LiNav { title :: String
@@ -191,7 +201,7 @@ liNav (LiNav { title:tit
                     , title tit
                     , href h
                     ]
-                       
+                   
                     [ span [ className i ] []
                            , text $ " " <> txt
                     ]
@@ -371,6 +381,7 @@ dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ SetRoute  $ UserPage
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
+
 
 
 

@@ -36,7 +36,7 @@ main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
 main = do
   case createReactSpec spec tdata of
     { spec, dispatcher } -> void $ do
-      document <- DOM.window >>= DOM.document
+      document  <- DOM.window >>= DOM.document
       container <- unsafePartial (fromJust  <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
       RDOM.render (R.createFactory (R.createClass spec) {}) container
 
@@ -96,8 +96,8 @@ instance decodeResponse :: DecodeJson Response where
 
 type Name = String
 type Open = Boolean
-type URL = String
-type ID = Int
+type URL  = String
+type ID   = Int
 
 data NTree a = NLeaf a | NNode ID Open Name (Array (NTree a))
 
@@ -109,7 +109,6 @@ toggleNode sid (NNode iid open name ary) =
   where
     nopen = if sid == iid then not open else open
 toggleNode sid a = a
-
 
 
 spec :: Spec _ State _ Action
@@ -194,7 +193,6 @@ exampleTree =
                                  , myCorpus 7 "Subject C"
                                  ]
   ]
-
 
 ------------------------------------------------------------------------
 -- TODO
@@ -405,23 +403,25 @@ greaterthan x y = x > y
 
 newtype TableData a
   = TableData
-    { rows :: Array {row :: a, delete :: Boolean}
-    , totalPages :: Int
-    , currentPage :: Int
-    , pageSize :: PageSizes
+    { rows         :: Array { row    :: a
+                            , delete :: Boolean
+                            }
+    , totalPages   :: Int
+    , currentPage  :: Int
+    , pageSize     :: PageSizes
     , totalRecords :: Int
-    , title :: String
-    , tree :: FTree
+    , title        :: String
+    , tree         :: FTree
     }
 
 newtype Corpus
   = Corpus
-    { _id :: Int
-    , url :: String
-    , date :: String
-    , title :: String
+    { _id    :: Int
+    , url    :: String
+    , date   :: String
+    , title  :: String
     , source :: String
-    , fav :: Boolean
+    , fav    :: Boolean
     }
 
 type CorpusTableData = TableData Corpus
@@ -440,24 +440,24 @@ sdata = data' sampleData
 
 tdata :: CorpusTableData
 tdata = TableData
-        { rows : sdata
-        , totalPages : 10
-        , currentPage : 1
-        , pageSize : PS10
+        { rows         : sdata
+        , totalPages   : 10
+        , currentPage  : 1
+        , pageSize     : PS10
         , totalRecords : 100
-        , title : "Documents"
-        , tree : exampleTree
+        , title        : "Documents"
+        , tree         : exampleTree
         }
 
 tdata' :: _ -> CorpusTableData
 tdata' d = TableData
-        { rows : d
-        , totalPages : 10
-        , currentPage : 1
-        , pageSize : PS10
+        { rows         : d
+        , totalPages   : 10
+        , currentPage  : 1
+        , pageSize     : PS10
         , totalRecords : 100
-        , title : "Documents"
-        , tree : exampleTree
+        , title        : "Documents"
+        , tree         : exampleTree
         }
 
 

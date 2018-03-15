@@ -151,4 +151,3 @@ blocksRandomText = div [ className "row" ]
           ]
 
 
-
