@@ -105,7 +105,6 @@ home = simpleSpec performAction render
       [ div [ className "container" ] [ jumboTitle true                            ]
       , div [ className "container" ] [ imageEnter (onClick \_ -> dispatch $ Enter)]
       , div [ className "container" ] [ blocksRandomText                          ]
-      , div [ className "container" ] [ hr [] [], footerLegalInfo                 ]
       ]
 
 blocksRandomText :: ReactElement
@@ -152,24 +151,4 @@ blocksRandomText = div [ className "row" ]
           ]
 
 
-footerLegalInfo :: ReactElement
-footerLegalInfo = footer [] [ p [] [ text "Gargantext "
-                                   , span [className "glyphicon glyphicon-registration-mark" ] []
-                                   , text ", version 4.0"
-                                   , a [ href "http://www.cnrs.fr"
-                                       , target "blank"
-                                       , title "Project hosted by CNRS." 
-                                       ]
-                                         [ text ", Copyrights "
-                                         , span [ className "glyphicon glyphicon-copyright-mark" ] []
-                                         , text " CNRS 2017-Present"
-                                         ]
-                                   , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
-                                       , target "blank"
-                                       , title "Legal instructions of the project." 
-                                       ]
-                                         [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
-                                         , text "."
-                                   ]
-                            ]
 

@@ -14,7 +14,7 @@ import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
 import Prelude (class Applicative, class Bind, Unit, bind, id, map, negate, pure, unit, void, ($), (<>))
 import React (ReactElement)
-import React.DOM (a, div, img, li, span, text, ul, input, button)
+import React.DOM (a, div, img, li, span, text, ul, input, button, footer, p, hr)
 import React.DOM.Props (_data, _id, aria, className, href, name, placeholder, _type, role, src, style, tabIndex, target, title)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import DocView as DV
@@ -35,7 +35,7 @@ type AppState =
 
 initAppState :: AppState
 initAppState =
- { currentRoute    : Just Home
+  { currentRoute   : Just Home
   , landingState   : L.initialState
   , loginState     : LN.initialState
   , addCorpusState : AC.initialState
@@ -43,7 +43,6 @@ initAppState =
   , searchState    : S.initialState
   , userPage       : UP.initialState
   }
-
 
 data Action
   = Initialize
@@ -100,7 +99,7 @@ _addCorpusAction = prism AddCorpusA \action ->
     _-> Left action
 
 
-_docViewState:: Lens' AppState DV.State
+_docViewState :: Lens' AppState DV.State
 _docViewState = lens (\s -> s.docViewState) (\s ss -> s{docViewState = ss})
 
 
@@ -142,7 +141,11 @@ pagesComponent s =
     Nothing ->
       selectSpec Home
   where
-    selectSpec :: Routes -> Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff) AppState props Action
+    selectSpec :: Routes -> Spec ( ajax    :: AJAX
+                                 , console :: CONSOLE
+                                 , dom     :: DOM
+                                 | eff
+                                 ) AppState props Action
     selectSpec Login      = focus _loginState _loginAction LN.renderSpec
     selectSpec Home       = wrap $ focus _landingState   _landingAction   L.home
     selectSpec AddCorpus  = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
@@ -157,14 +160,16 @@ wrap :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) App
 wrap spec =
   fold
   [ sidebarnavSpec
+  --, tree
   , innerContainer $ spec
+  , footerLegalInfo
   ]
   where
     innerContainer :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
     innerContainer = over _render \render d p s c ->
       [  div [_id "page-wrapper"]
         [
-          div[className "container-fluid"]  (render d p s c)
+          div [className "container-fluid"]  (render d p s c)
         ]
       ]
 
@@ -255,15 +260,15 @@ sidebarnavSpec = simpleSpec performAction render
                        )
                        <> [li [className "divider"] []] <>
                        (map liNav [ LiNav { title : "Interactive chat"
-                                            , href  : "https://chat.iscpif.fr/channel/gargantext"
-                                            , icon  : "fab fa-rocketchat"
-                                            , text  : "Chat"
-                                            }
+                                          , href  : "https://chat.iscpif.fr/channel/gargantext"
+                                          , icon  : "fab fa-rocketchat"
+                                          , text  : "Chat"
+                                          }
                                   , LiNav { title : "Asynchronous discussions"
-                                            , href  : "https://discourse.iscpif.fr/c/gargantext"
-                                            , icon  : "fab fa-discourse"
-                                            , text  : "Forum"
-                                            }
+                                          , href  : "https://discourse.iscpif.fr/c/gargantext"
+                                          , icon  : "fab fa-discourse"
+                                          , text  : "Forum"
+                                          }
                                   ]
                        )
                        <> [li [className "divider"] []] <>
@@ -366,3 +371,32 @@ dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ SetRoute  $ UserPage
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
+
+
+
+footerLegalInfo ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+footerLegalInfo = simpleSpec performAction render
+  where
+    render :: Render AppState props Action
+    render dispatch _ state _ = [div [ className "container" ] [ hr [] [], footerLegalInfo']]
+      where
+        footerLegalInfo' = footer [] [ p [] [ text "Gargantext "
+                                   , span [className "glyphicon glyphicon-registration-mark" ] []
+                                   , text ", version 4.0"
+                                   , a [ href "http://www.cnrs.fr"
+                                       , target "blank"
+                                       , title "Project hosted by CNRS." 
+                                       ]
+                                         [ text ", Copyrights "
+                                         , span [ className "glyphicon glyphicon-copyright-mark" ] []
+                                         , text " CNRS 2017-Present"
+                                         ]
+                                   , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
+                                       , target "blank"
+                                       , title "Legal instructions of the project." 
+                                       ]
+                                         [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
+                                         , text "."
+                                   ]
+                            ]
+
