@@ -48,7 +48,7 @@ newtype Response = Response
 initialState :: State
 initialState =
   {
-    select_database : true
+    select_database   : true
   , unselect_database : true
   , response : []
   }
@@ -62,7 +62,10 @@ data Action
   | GO
 
 
-performAction :: forall eff props. PerformAction (console :: CONSOLE, ajax :: AJAX,dom::DOM | eff) State props Action
+performAction :: forall eff props. PerformAction ( console :: CONSOLE
+                                                 , ajax    :: AJAX
+                                                 , dom     :: DOM 
+                                                 | eff ) State props Action
 performAction NoOp _ _ = void do
   modifyState id
 
@@ -182,7 +185,7 @@ getDatabaseDetails reqBody = do
 
 instance decodeJsonresponse :: DecodeJson Response where
   decodeJson json = do
-    obj <- decodeJson json
+    obj   <- decodeJson json
     count <- obj .? "count"
-    name <- obj .? "name"
+    name  <- obj .? "name"
     pure $ Response {count,name }

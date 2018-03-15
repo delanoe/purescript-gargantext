@@ -54,16 +54,15 @@ main = do
 -- TODO: When a pagination link is clicked, reload data. Right now it doesn't make sense to reload mock data.
 
 newtype Response = Response
-  { cid :: Int
-  , created :: String
-  , favorite :: Boolean
+  { cid        :: Int
+  , created    :: String
+  , favorite   :: Boolean
   , ngramCount :: Int
-  , hyperdata :: Hyperdata
+  , hyperdata  :: Hyperdata
   }
 
 newtype Hyperdata = Hyperdata
-  {
-    title :: String
+  { title  :: String
   , source :: String
   }
 

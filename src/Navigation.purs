@@ -286,7 +286,7 @@ sidebarnavSpec = simpleSpec performAction render
                             , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
                             , _type "text"
                             , style { height: "35px"
-                                    , width: "450px"
+                                    , width : "450px"
                                   --  , color: "white"
                                   --  , background : "#A1C2D8"
                                   }
@@ -355,15 +355,12 @@ dispatchAction dispatcher _ DocView = do
   _ <- dispatcher $ DocViewA $ DV.LoadData
   pure unit
 
-
 dispatchAction dispatcher _ SearchView = do
   _ <- dispatcher $ SetRoute $ SearchView
   _ <- dispatcher $ SearchA  $ S.NoOp
   pure unit
 
-
 dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ SetRoute  $ UserPage
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
-

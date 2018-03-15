@@ -151,18 +151,16 @@ unsafeEventValue e = (unsafeCoerce e).target.value
 
 getDeviseID ::  forall eff. Eff (dom :: DOM | eff) (Maybe String)
 getDeviseID = do
-  w <- window
+  w  <- window
   ls <- localStorage w
-  i <- getItem "token" ls
-  pure $  i
+  getItem "token" ls
 
 
 setToken :: forall e . String -> Eff (dom :: DOM | e) Unit
 setToken s = do
-  w <- window
+  w  <- window
   ls <- localStorage w
-  liftEff $ setItem "token" s ls
-  pure unit
+  setItem "token" s ls
 
 
 
@@ -172,7 +170,7 @@ newtype LoginRes = LoginRes
 
 
 newtype LoginReq = LoginReq
-  {  username :: String
+  { username :: String
   , password :: String
   }
 
@@ -210,7 +208,7 @@ loginReq encodeData =
 
 instance decodeLoginRes :: DecodeJson LoginRes where
   decodeJson json = do
-    obj <- decodeJson json
+    obj   <- decodeJson json
     token <- obj .? "token"
     pure $ LoginRes { token}
 
