@@ -285,7 +285,14 @@ sidebarnavSpec = simpleSpec performAction render
                     [ input [ className "form-control"
                             , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
                             , _type "text"
-                            ] []
+                            , style { height: "35px"
+                                    , width: "450px"
+                                  --  , color: "white"
+                                  --  , background : "#A1C2D8"
+                                  }
+                            ] [
+                              
+                              ]
                     -- TODO add button in navbar (and "enter" execution)
                     -- , div [] [button [][]]
                     ]

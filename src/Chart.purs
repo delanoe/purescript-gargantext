@@ -412,17 +412,17 @@ dz2 = unsafeFromPropsArray
 
 ya1 = unsafeFromPropsArray
       [ type' "value"
-      , name "Publications (by year)"
+      , name "Score metric"
       , min 0
-      , position "left"
+      , position "right"
       , axisLabel [formatter "{value}"]
       ]
 
 ya2 = unsafeFromPropsArray
       [ type' "value"
-      , name "Score metric"
+      , name "Publications (by year)"
       , min 0
-      , position "right"
+      , position "left"
       , axisLabel [formatter "{value}"]
       ]
 
@@ -436,16 +436,9 @@ sd1 = unsafeFromPropsArray
                     , shadowBlur 10
                     , shadowOffsetY 10
                     ]]
-      , data' [1, 13, 37, 35, 15, 13, 25, 21, 6, 45, 32, 2]
+      , data' [95, 80, 75, 35, 30, 50, 70, 80, 95, 95, 95, 99]
       ]
 
-sd2 = unsafeFromPropsArray
-      [ name "Favorites"
-      , type' "bar"
-      , label [normal[showp true, position "top"]]
-      , yAxisIndex 1
-      , data' [22, 22, 23, 77, 24, 55, 55, 89, 98, 164, 106, 224]
-      ]
 
 sd3 = unsafeFromPropsArray
       [ name "All"
@@ -455,6 +448,14 @@ sd3 = unsafeFromPropsArray
       , data' [201, 222, 223, 777, 244, 255, 555, 879, 938, 1364, 1806, 2324]
       ]
 
+
+sd2 = unsafeFromPropsArray
+      [ name "Favorites"
+      , type' "bar"
+      , label [normal[showp true, position "top"]]
+      , yAxisIndex 1
+      , data' [22, 22, 23, 77, 24, 55, 139, 350, 150, 164, 106, 224]
+      ]
 
 
 p'' :: ReactElement
