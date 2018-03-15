@@ -67,7 +67,7 @@ searchSpec = simpleSpec performAction render
                    [ input [ className "form-control"
                            , _id "id_password"
                            , name "query"
-                           , placeholder "Query, URL or FILE (optimized experience with Firefox or Chromium browsers)"
+                           , placeholder "Query, URL or FILE (works best with Firefox or Chromium browsers)"
                            , _type "text"
                            , value state.query
                            , onInput \e -> dispatch (SetQuery (unsafeEventValue e))
