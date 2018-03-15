@@ -80,7 +80,7 @@ jumboTitle b = div jumbo
                    ]
                   where
                     jumbo = case b of
-                                 true  -> [className "jumbotron"       ]
+                                 true  -> [className "jumbotron"]
                                  false -> []
 
 
