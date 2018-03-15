@@ -52,7 +52,11 @@ data Action
   | SetPassword String
 
 
-performAction :: forall eff props. PerformAction (console :: CONSOLE, ajax :: AJAX,dom::DOM | eff) State props Action
+performAction :: forall eff props. PerformAction ( console :: CONSOLE
+                                                 , ajax    :: AJAX
+                                                 , dom     :: DOM 
+                                                 | eff
+                                                 ) State props Action
 performAction NoOp _ _ = void do
   modifyState id
 

@@ -56,7 +56,9 @@ data Action
   | UserPageA  UP.Action
 
 
-performAction :: forall eff props. PerformAction (dom :: DOM |eff) AppState props Action
+performAction :: forall eff props. PerformAction ( dom :: DOM
+                                                 | eff
+                                                 ) AppState props Action
 performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
 
@@ -64,9 +66,8 @@ performAction _ _ _ = void do
   modifyState id
 
 
-
 ---- Lens and Prism
-_landingState:: Lens' AppState L.State
+_landingState :: Lens' AppState L.State
 _landingState = lens (\s -> s.landingState) (\s ss -> s{landingState = ss})
 
 
@@ -77,8 +78,7 @@ _landingAction = prism LandingA \action ->
     _-> Left action
 
 
-
-_loginState:: Lens' AppState LN.State
+_loginState :: Lens' AppState LN.State
 _loginState = lens (\s -> s.loginState) (\s ss -> s{loginState = ss})
 
 
@@ -89,7 +89,7 @@ _loginAction = prism LoginA \action ->
     _-> Left action
 
 
-_addCorpusState:: Lens' AppState AC.State
+_addCorpusState :: Lens' AppState AC.State
 _addCorpusState = lens (\s -> s.addCorpusState) (\s ss -> s{addCorpusState = ss})
 
 
@@ -98,7 +98,6 @@ _addCorpusAction = prism AddCorpusA \action ->
   case action of
     AddCorpusA caction -> Right caction
     _-> Left action
-
 
 
 _docViewState:: Lens' AppState DV.State
@@ -112,7 +111,7 @@ _docViewAction = prism DocViewA \action ->
     _-> Left action
 
 
-_searchState:: Lens' AppState S.State
+_searchState :: Lens' AppState S.State
 _searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
 
 
@@ -123,7 +122,7 @@ _searchAction = prism SearchA \action ->
     _-> Left action
 
 
-_userPageState:: Lens' AppState UP.State
+_userPageState :: Lens' AppState UP.State
 _userPageState = lens (\s -> s.userPage) (\s ss -> s{userPage = ss})
 
 
@@ -335,11 +334,14 @@ layoutSpec =
     container = over _render \render d p s c ->
       (render d p s c)
 
-dispatchAction :: forall t115 t445 t447.  Bind t445 =>  Applicative t445 => (Action -> t445 t447) -> t115 -> Routes -> t445 Unit
+dispatchAction :: forall t115 t445 t447.
+                  Bind t445 => Applicative t445  => 
+                  (Action -> t445 t447) -> t115 -> Routes -> t445 Unit
 dispatchAction dispatcher _ Home = do
   _ <- dispatcher $ SetRoute $ Home
   _ <- dispatcher $ LandingA $ L.NoOp
   pure unit
+
 dispatchAction dispatcher _ Login = do
   _ <- dispatcher $ SetRoute $ Login
   _ <- dispatcher $ LoginA   $ LN.NoOp

@@ -53,12 +53,22 @@ routing =
     home           = Home       <$ lit ""
     route str      = lit "" *> lit str
 
-routeHandler :: forall e. (Maybe Routes -> Routes -> Eff ( dom :: DOM, console :: CONSOLE | e) Unit) -> Maybe Routes -> Routes -> Eff (dom :: DOM, console :: CONSOLE | e) Unit
+
+routeHandler :: forall e. ( Maybe Routes -> Routes -> Eff
+                            ( dom     :: DOM
+                            , console :: CONSOLE
+                            | e
+                            ) Unit
+                          ) -> Maybe Routes -> Routes -> Eff
+                            ( dom     :: DOM
+                            , console :: CONSOLE
+                            | e
+                            ) Unit
 routeHandler dispatchAction old new = do
   liftEff $ log $ "change route : " <> show new
-  w <- window
-  ls <- localStorage w
-  token <- getItem "accessToken" ls
+  w      <- window
+  ls     <- localStorage w
+  token  <- getItem "accessToken" ls
   let tkn = token
   liftEff $ log $ "JWToken : " <> show tkn
   case tkn of
