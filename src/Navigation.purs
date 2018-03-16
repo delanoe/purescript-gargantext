@@ -8,6 +8,7 @@ import Data.Either (Either(..))
 import Data.Foldable (fold)
 import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.Maybe (Maybe(Nothing, Just))
+import DocView as DV
 import Landing as L
 import Login as LN
 import Network.HTTP.Affjax (AJAX)
@@ -15,11 +16,11 @@ import PageRouter (Routes(..))
 import Prelude (class Applicative, class Bind, Unit, bind, id, map, negate, pure, unit, void, ($), (<>))
 import React (ReactElement)
 import React.DOM (a, div, img, li, span, text, ul, input, button, footer, p, hr, form)
-import React.DOM.Props (_data, _id, aria, className, href, name, placeholder, _type, role, src, style, tabIndex, target, title)
-import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
-import DocView as DV
+import React.DOM.Props (_data, _id, _type, aria, className, href, name, placeholder, role, src, style, tabIndex, target, title)
 import SearchForm as S
+import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import UserPage as UP
+import React.DOM.Props as RP
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -151,7 +152,7 @@ pagesComponent s =
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
-    
+
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState    _searchAction    S.searchSpec
 
@@ -198,7 +199,6 @@ layoutSidebar = simpleSpec performAction render
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"]
                                  [ divDropdownLeft
-                                 , ul [className "nav navbar-nav"][text "  XXXXXXXXXXXXXXXXXXX  "]
                                  , divSearchBar
                                  , divDropdownRight
                                  ]
@@ -211,9 +211,9 @@ layoutSidebar = simpleSpec performAction render
 
 divLogo :: ReactElement
 divLogo = a [ className "navbar-brand logoSmall"
-            , href "/index.html"  
+            , href "/index.html"
             ] [ img [ src "images/logoSmall.png"
-                    , title "Back to home." 
+                    , title "Back to home."
                     ] []
               ]
 
@@ -225,12 +225,12 @@ divDropdownLeft = ul [className "nav navbar-nav"]
                                [ a [ className "dropdown-toggle navbar-text"
                                    , _data {toggle: "dropdown"}
                                    , href "#", role "button"
-                                   , title "About Gargantext" 
+                                   , title "About Gargantext"
                                    ][ span [ aria {hidden : true}
-                                           , className "glyphicon glyphicon-info-sign" 
+                                           , className "glyphicon glyphicon-info-sign"
                                            ] []
                                     , text " Info"
-                                    ] 
+                                    ]
                                , ul [className "dropdown-menu"]
                                     (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
                                                          , href  : "https://iscpif.fr/gargantext/your-first-map/"
@@ -296,8 +296,8 @@ liNav (LiNav { title:tit
 
 -- TODO put the search form in the center of the navBar
 divSearchBar :: ReactElement
-divSearchBar = ul [ className "nav navbar-nav"]
-                  [ div [className "navbar-form"] 
+divSearchBar = ul [ className "nav navbar-nav", style { "margin-left" : "146px"}]
+                  [ div [className "navbar-form"]
                         [ input [ className   "search-query"
                                 , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
                                 , _type "text"
@@ -322,7 +322,7 @@ divDropdownRight = ul [className "nav navbar-nav pull-right"]
                    a [ aria {hidden : true}
                      , className "glyphicon glyphicon-log-in"
                      , href "#/login"
-                     , style {color:"white"} 
+                     , style {color:"white"}
                      , title "Log in and save your time"
                      -- TODO hover: bold
                       ]
@@ -346,7 +346,7 @@ layoutFooter = simpleSpec performAction render
                                    , text ", version 4.0"
                                    , a [ href "http://www.cnrs.fr"
                                        , target "blank"
-                                       , title "Project hosted by CNRS." 
+                                       , title "Project hosted by CNRS."
                                        ]
                                          [ text ", Copyrights "
                                          , span [ className "glyphicon glyphicon-copyright-mark" ] []
@@ -354,7 +354,7 @@ layoutFooter = simpleSpec performAction render
                                          ]
                                    , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
                                        , target "blank"
-                                       , title "Legal instructions of the project." 
+                                       , title "Legal instructions of the project."
                                        ]
                                          [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
                                          , text "."
@@ -376,7 +376,7 @@ layoutSpec =
       (render d p s c)
 
 dispatchAction :: forall t115 t445 t447.
-                  Bind t445 => Applicative t445  => 
+                  Bind t445 => Applicative t445  =>
                   (Action -> t445 t447) -> t115 -> Routes -> t445 Unit
 dispatchAction dispatcher _ Home = do
   _ <- dispatcher $ SetRoute $ Home
@@ -407,7 +407,3 @@ dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ SetRoute  $ UserPage
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
-
-
-
-
