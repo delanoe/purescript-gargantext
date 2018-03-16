@@ -14,7 +14,7 @@ import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
 import Prelude (class Applicative, class Bind, Unit, bind, id, map, negate, pure, unit, void, ($), (<>))
 import React (ReactElement)
-import React.DOM (a, div, img, li, span, text, ul, input, button, footer, p, hr)
+import React.DOM (a, div, img, li, span, text, ul, input, button, footer, p, hr, form)
 import React.DOM.Props (_data, _id, aria, className, href, name, placeholder, _type, role, src, style, tabIndex, target, title)
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import DocView as DV
@@ -183,6 +183,91 @@ wrap spec =
 --        render dispatch _ state _ = DV.toHtml dispatch DV.exampleTree
 
 
+sidebarnavSpec ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+sidebarnavSpec = simpleSpec performAction render
+  where
+    render :: Render AppState props Action
+    render dispatch _ state _ =
+      [ div [ _id "dafixedtop"
+            , className "navbar navbar-inverse navbar-fixed-top"
+            , role "navigation"
+            ] [ div [className "container"]
+                    [ div [ className "navbar-inner" ]
+                          [ divLogo
+                          ,  div [ className "collapse navbar-collapse"]
+                                 [ divDropdownLeft
+                                 , ul [className "nav navbar-nav"][text "  XXXXXXXXXXXXXXXXXXX  "]
+                                 , divSearchBar
+                                 , divDropdownRight
+                                 ]
+                          ]
+                    ]
+              ]
+      ]
+
+
+
+divLogo :: ReactElement
+divLogo = a [ className "navbar-brand logoSmall"
+            , href "/index.html"  
+            ] [ img [ src "images/logoSmall.png"
+                    , title "Back to home." 
+                    ] []
+              ]
+
+
+divDropdownLeft :: ReactElement
+divDropdownLeft = ul [className "nav navbar-nav"]
+                     [ ul [className "nav navbar-nav pull-left"]
+                     [ li [className "dropdown"]
+                          [ a [ className "dropdown-toggle navbar-text"
+                              , _data {toggle: "dropdown"}
+                              , href "#", role "button"
+                              , title "About Gargantext" 
+                              ][ span [ aria {hidden : true}
+                                      , className "glyphicon glyphicon-info-sign" 
+                                      ] []
+                               , text " Info"
+                               ] 
+                          , ul [className "dropdown-menu"]
+                               (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
+                                                    , href  : "https://iscpif.fr/gargantext/your-first-map/"
+                                                    , icon  : "fas fa-book"
+                                                    , text  : "Documentation"
+                                                    }
+                                            , LiNav { title : "Report bug here"
+                                                    , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
+                                                    , icon  : "glyphicon glyphicon-bullhorn"
+                                                    , text  : "Feedback"
+                                                    }
+                                            ]
+                                  )
+                                   <> [li [className "divider"] []] <>
+                                  (map liNav [ LiNav { title : "Interactive chat"
+                                                     , href  : "https://chat.iscpif.fr/channel/gargantext"
+                                                     , icon  : "fab fa-rocketchat"
+                                                     , text  : "Chat"
+                                                     }
+                                             , LiNav { title : "Asynchronous discussions"
+                                                     , href  : "https://discourse.iscpif.fr/c/gargantext"
+                                                     , icon  : "fab fa-discourse"
+                                                     , text  : "Forum"
+                                                     }
+                                             ]
+                                   )
+                                    <> [li [className "divider"] []] <>
+                                   [ liNav (LiNav { title : "More about us (you)"
+                                                  , href  : "http://iscpif.fr"
+                                                  , icon  : "fas fa-question-circle"
+                                                  , text  : "About"
+                                                  }
+                                            )
+                                   ]
+                                  )
+                            ]
+                      ]
+                      ]
+
 
 data LiNav = LiNav { title :: String
                    , href  :: String
@@ -200,121 +285,30 @@ liNav (LiNav { title:tit
                     , target "blank"
                     , title tit
                     , href h
-                    ]
-                   
-                    [ span [ className i ] []
-                           , text $ " " <> txt
-                    ]
+                    ] [ span [ className i ] []
+                      , text $ " " <> txt
+                      ]
                 ]
 
-divLogo :: ReactElement
-divLogo = div [ className "navbar-inner" ]
-               [ a [ className "navbar-brand logoSmall"
-                   , href "/index.html"  
-                   ]
-                   
-                   [ img [ src "images/logoSmall.png"
-                         , title "Back to home." ] 
-                         []
-                   ]
-               ]
-
---divDropdownLeft :: ReactElement
---divDropdownLeft = undefined
 
 
-sidebarnavSpec ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
-sidebarnavSpec = simpleSpec performAction render
-  where
-    render :: Render AppState props Action
-    render dispatch _ state _ =
-      [
-        div [ _id "dafixedtop"
-            , className "navbar navbar-inverse navbar-fixed-top"
-            , role "navigation"
-            ]
-        
-        [ div [className "container"]
-          [ divLogo
-          -- divDropdownLeft
----------------------------------------------------------------------------
--- here is divDropDowLeft--------------------------------------------------
--- FIXME : divDropDownLeft and divDropDownRight seems to be intricated in dropdown?
----------------------------------------------------------------------------
-          ,  div [ className "navbar-collapse collapse"]
-             [ ul [className "nav navbar-nav"]
-               [ ul [className "nav navbar-nav pull-left"]
-                 [ li [className "dropdown"]
-                   [ a [ className "dropdown-toggle navbar-text"
-                       , _data {toggle: "dropdown"}
-                       , href "#", role "button"
-                       , title "Informations about Gargantext" 
-                       ]
-                       [ span [ aria {hidden : true}
-                              , className "glyphicon glyphicon-info-sign" 
-                              ] []
-                       , text " Info"
-                       ]
-                   , ul [className "dropdown-menu"]
-                      (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
-                                           , href  : "https://iscpif.fr/gargantext/your-first-map/"
-                                           , icon  : "fas fa-book"
-                                           , text  : "Documentation"
-                                           }
-                                   , LiNav { title : "Report bug here"
-                                           , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
-                                           , icon  : "glyphicon glyphicon-bullhorn"
-                                           , text  : "Feedback"
-                                           }
-                                   ]
-                       )
-                       <> [li [className "divider"] []] <>
-                       (map liNav [ LiNav { title : "Interactive chat"
-                                          , href  : "https://chat.iscpif.fr/channel/gargantext"
-                                          , icon  : "fab fa-rocketchat"
-                                          , text  : "Chat"
-                                          }
-                                  , LiNav { title : "Asynchronous discussions"
-                                          , href  : "https://discourse.iscpif.fr/c/gargantext"
-                                          , icon  : "fab fa-discourse"
-                                          , text  : "Forum"
-                                          }
-                                  ]
-                       )
-                       <> [li [className "divider"] []] <>
-                               [ liNav (LiNav { title : "More about us (you)"
-                                              , href  : "http://iscpif.fr"
-                                              , icon  : "fas fa-question-circle"
-                                              , text  : "About"
-                                              }
-                                       )
-                               ]
-                       )
-                   ]
-                 ]
-               ]
----------------------------------------------------------------------------
 -- TODO put the search form in the center of the navBar
-             , ul [ className "nav navbar-nav"]
-                    [ input [ className "form-control"
-                            , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
-                            , _type "text"
-                            , style { height: "35px"
-                                    , width : "450px"
-                                  --  , color: "white"
-                                  --  , background : "#A1C2D8"
-                                  }
-                            ] [
-                              
-                              ]
-                    -- TODO add button in navbar (and "enter" execution)
-                    -- , div [] [button [][]]
-                    ]
-             , divDropdownRight
-            ]
-          ]
-        ]
-      ]
+divSearchBar :: ReactElement
+divSearchBar = ul [ className "nav navbar-nav"]
+                  [ div [className "navbar-form"] 
+                        [ input [ className   "search-query"
+                                , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
+                                , _type "text"
+                                , style { height: "35px"
+                                        , width : "450px"
+                                        --  , color: "white"
+                                        --  , background : "#A1C2D8"
+                                        }
+                                ] []
+                                           -- TODO add button in navbar (and "enter" execution)
+                                           -- , div [] [button [][]]
+                          ]
+                  ]
 
 --divDropdownRight :: Render AppState props Action
 divDropdownRight :: ReactElement
@@ -336,6 +330,36 @@ divDropdownRight = ul [className "nav navbar-nav pull-right"]
                    [text " Login / Signup"]
                   ]
                ]
+
+
+
+footerLegalInfo ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+footerLegalInfo = simpleSpec performAction render
+  where
+    render :: Render AppState props Action
+    render dispatch _ state _ = [div [ className "container" ] [ hr [] [], footerLegalInfo']]
+      where
+        footerLegalInfo' = footer [] [ p [] [ text "Gargantext "
+                                   , span [className "glyphicon glyphicon-registration-mark" ] []
+                                   , text ", version 4.0"
+                                   , a [ href "http://www.cnrs.fr"
+                                       , target "blank"
+                                       , title "Project hosted by CNRS." 
+                                       ]
+                                         [ text ", Copyrights "
+                                         , span [ className "glyphicon glyphicon-copyright-mark" ] []
+                                         , text " CNRS 2017-Present"
+                                         ]
+                                   , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
+                                       , target "blank"
+                                       , title "Legal instructions of the project." 
+                                       ]
+                                         [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
+                                         , text "."
+                                   ]
+                            ]
+
+
 
 layoutSpec :: forall eff props. Spec (E eff) AppState props Action
 layoutSpec =
@@ -384,30 +408,4 @@ dispatchAction dispatcher _ UserPage = do
 
 
 
-
-footerLegalInfo ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
-footerLegalInfo = simpleSpec performAction render
-  where
-    render :: Render AppState props Action
-    render dispatch _ state _ = [div [ className "container" ] [ hr [] [], footerLegalInfo']]
-      where
-        footerLegalInfo' = footer [] [ p [] [ text "Gargantext "
-                                   , span [className "glyphicon glyphicon-registration-mark" ] []
-                                   , text ", version 4.0"
-                                   , a [ href "http://www.cnrs.fr"
-                                       , target "blank"
-                                       , title "Project hosted by CNRS." 
-                                       ]
-                                         [ text ", Copyrights "
-                                         , span [ className "glyphicon glyphicon-copyright-mark" ] []
-                                         , text " CNRS 2017-Present"
-                                         ]
-                                   , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
-                                       , target "blank"
-                                       , title "Legal instructions of the project." 
-                                       ]
-                                         [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
-                                         , text "."
-                                   ]
-                            ]
 
