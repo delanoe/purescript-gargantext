@@ -20,17 +20,16 @@ import Data.List (List, fold, fromFoldable, toUnfoldable)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.MediaType.Common (applicationJSON)
 import Data.Tuple (Tuple(..))
+import Landing as L
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Prelude hiding (div)
 import React (ReactElement)
-import React.DOM (a, button, div, form, h2, h3, h4, i, input, label, li, p, span, text, ul)
-import React.DOM.Props (_id, _type, className, href, maxLength, name, onClick, onInput, placeholder, target, value)
+import React.DOM (a, button, div, form, h2, h3, h4, h5, i, input, label, li, p, span, text, ul)
+import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
 import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, _render, cotransform, focus, foreach, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
-
-import Landing as L
 
 
 type State =
@@ -64,7 +63,7 @@ data Action
 
 performAction :: forall eff props. PerformAction ( console :: CONSOLE
                                                  , ajax    :: AJAX
-                                                 , dom     :: DOM 
+                                                 , dom     :: DOM
                                                  | eff ) State props Action
 performAction NoOp _ _ = void do
   modifyState id
@@ -101,11 +100,27 @@ layoutAddcorpus = simpleSpec performAction render
           div [className "jumbotron"]
           [ div [className "row"]
            [
-             div [className "col-md-3"]
+             div [className "col-md-6"]
              [
-               h3 [] [text "Treeview"]
+               div [className "modal fade",role "dialog"]
+               [ div [className "modal-dialog",role "document"]
+                 [ div [className "modal-content"]
+                   [ div [className "modal-header"]
+                     [  h5 [className "modal-title"] [ text "Tree View"]
+                     , button [ _type "button",className "close", _data { dismiss : "modal"}]
+                       [ span [aria {hidden : true}] [ text "&times;"]
+                       ]
+                     ]
+                   ,  div [className "modal-body"] [ p [] [text "Modal body text goes here"]]
+                   , div [className "modal-footer"]
+                     [ button [ _type "button", className "btn btn-secondary", _data {dismiss : "modal"}]
+                       [ text "GO"]
+                     ]
+                   ]
+                 ]
+               ]
              ]
-           , div [className "col-md-9"]
+           , div [className "col-md-6"]
              [
                h3 [] [text "Corpusview"]
              , ul [className "list-group"] $ map fn1 state.response
@@ -123,16 +138,6 @@ layoutAddcorpus = simpleSpec performAction render
           span [] [text  o.name]
           ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
           ]
-
-
-
--- fn1 :: Response -> ReactElement
--- fn1 (Response o) =
---   li [className "list-group-item justify-content-between"]
---   [
---     span [] [text  o.name]
---   ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
---   ]
 
 
 newtype QueryString = QueryString
