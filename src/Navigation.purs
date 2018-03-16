@@ -161,17 +161,17 @@ routingSpec = simpleSpec performAction defaultRender
 
 
 layout0 :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
-layout0 spec =
+layout0 layout =
   fold
   [ layoutSidebar
---  TODO Add Tree to the template
+--  TODO Add layoutTree
 --, exampleTree'
-  , innerContainer $ spec
-  , footerLegalInfo
+  , innerLayout $ layout
+  , layoutFooter
   ]
   where
-    innerContainer :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
-    innerContainer = over _render \render d p s c ->
+    innerLayout :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+    innerLayout = over _render \render d p s c ->
       [  div [_id "page-wrapper"]
         [
           div [className "container-fluid"]  (render d p s c)
@@ -335,8 +335,8 @@ divDropdownRight = ul [className "nav navbar-nav pull-right"]
 
 
 
-footerLegalInfo ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
-footerLegalInfo = simpleSpec performAction render
+layoutFooter ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+layoutFooter = simpleSpec performAction render
   where
     render :: Render AppState props Action
     render dispatch _ state _ = [div [ className "container" ] [ hr [] [], footerLegalInfo']]
