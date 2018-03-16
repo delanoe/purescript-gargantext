@@ -26,6 +26,9 @@ import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 
+--          TODO: ask for login (modal) or account creation after 15 mn when user is not logged and has made one search at least
+
+
 newtype State = State
   { username :: String
   , password :: String
@@ -49,7 +52,11 @@ data Action
   | SetPassword String
 
 
-performAction :: forall eff props. PerformAction (console :: CONSOLE, ajax :: AJAX,dom::DOM | eff) State props Action
+performAction :: forall eff props. PerformAction ( console :: CONSOLE
+                                                 , ajax    :: AJAX
+                                                 , dom     :: DOM 
+                                                 | eff
+                                                 ) State props Action
 performAction NoOp _ _ = void do
   modifyState id
 
@@ -148,18 +155,16 @@ unsafeEventValue e = (unsafeCoerce e).target.value
 
 getDeviseID ::  forall eff. Eff (dom :: DOM | eff) (Maybe String)
 getDeviseID = do
-  w <- window
+  w  <- window
   ls <- localStorage w
-  i <- getItem "token" ls
-  pure $  i
+  getItem "token" ls
 
 
 setToken :: forall e . String -> Eff (dom :: DOM | e) Unit
 setToken s = do
-  w <- window
+  w  <- window
   ls <- localStorage w
-  liftEff $ setItem "token" s ls
-  pure unit
+  setItem "token" s ls
 
 
 
@@ -169,7 +174,7 @@ newtype LoginRes = LoginRes
 
 
 newtype LoginReq = LoginReq
-  {  username :: String
+  { username :: String
   , password :: String
   }
 
@@ -207,7 +212,7 @@ loginReq encodeData =
 
 instance decodeLoginRes :: DecodeJson LoginRes where
   decodeJson json = do
-    obj <- decodeJson json
+    obj   <- decodeJson json
     token <- obj .? "token"
     pure $ LoginRes { token}
 

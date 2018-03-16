@@ -6,7 +6,8 @@ import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
 import React.DOM (a, button, div, footer, h1, h3, hr, i, img, li, p, span, text, ul)
-import React.DOM.Props (_data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title)
+import React.DOM.Props (Props, _data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title)
+import React (ReactElement)
 import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, simpleSpec)
 import Thermite as T
@@ -49,162 +50,65 @@ performAction Login _ _ = void do
 performAction SignUp _ _ = void do
   T.modifyState \state -> state
 
+jumboTitle :: Boolean -> ReactElement
+jumboTitle b = div jumbo
+                   [ div [className "row"             ]
+                     [ div [className "col-md-8 content"]
+                       [ h1 [] [ text "Gargantext"]
+                       , p  [] [ text "search map share" ]
+                       , p  [] [ a [ className "btn btn-success btn-lg spacing-class"
+                                   , href "https://iscpif.fr/gargantext/your-first-map/"
+                                   , target "blank"
+                                   , title "Your first map in less than 5 minutes" 
+                                   ]
+                                   [ span [ aria {hidden : true}
+                                          , className "glyphicon glyphicon-hand-right" 
+                                          ]  []
+                                   , text " Documentation"
+                                   ]
+                                ]
+                       ]
+                     , div [ className "col-md-2 content"]
+                           [p [ className "right" ]
+                              [ div [_id "logo-designed" ]
+                              [ img [ src "images/logo.png", title "Project hosted by CNRS (France, Europa, Solar System)" ]
+                              []
+                           ]
+                         ]
+                       ]
+                     ]
+                   ]
+                  where
+                    jumbo = case b of
+                                 true  -> [className "jumbotron"]
+                                 false -> []
 
 
-loginSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
-loginSpec = simpleSpec performAction render
+imageEnter :: Props -> ReactElement
+imageEnter action =  div [className "row"]
+                           [ div [className "col-md-offset-5 col-md-6 content"]
+                             [ img [ src "images/Gargantextuel-212x300.jpg"
+                                   , _id "funnyimg"
+                                   , title "Click and test by yourself"
+                                   , action
+                                   ] 
+                                   []
+                             ]
+                           ]
+
+
+home :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
+home = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [
-        -- div [ _id "dafixedtop", className "navbar navbar-inverse navbar-fixed-top", role "navigation"]
-        -- [ div [className "container"]
-        --   [
-        --     div [ className "navbar-inner" ]
-        --     [ a [ className "navbar-brand logoSmall", href "/" ]
-        --       [ img [ src "images/logoSmall.png", title "Back to home." ]
-        --         []
-        --       ]
-        --     ]
-        --   ,  div [className "navbar-collapse collapse"]
-        --      [
+      [ div [ className "container" ] [ jumboTitle true                            ]
+      , div [ className "container" ] [ imageEnter (onClick \_ -> dispatch $ Enter)]
+      , div [ className "container" ] [ blocksRandomText                          ]
+      ]
 
-        --      ul [className "nav navbar-nav"]
-        --        [
-        --          ul [className "nav navbar-nav pull-left"] [
-        --          li [className "dropdown"]
-        --          [
-        --            a [
-        --               className "dropdown-toggle navbar-text", _data {toggle: "dropdown"}, href "#", role "button", title "Informations about Gargantext" ]
-        --            [ span [ aria {hidden : true}, className "glyphicon glyphicon-info-sign" ]
-        --              []
-        --            , text "Info"
-        --            , i [ className "caret" ]
-        --              []
-        --            ]
-
-        --        , ul [className "dropdown-menu"]
-        --          [ li []
-        --            [ a [tabIndex (-1),  target "blank", title "Documentation and tutorials", href "https://iscpif.fr/gargantext/your-first-map/"]
-        --              [text "Documentation"]
-        --            ]
-        --          , li [className "divider"] []
-        --          , li []
-        --            [
-        --              a [ tabIndex (-1), target "blank", title "About", href "/about/", title "More informations about the project, its sponsors and its authors"]
-        --              [ text "About"]
-
-        --            ]
-        --          ]
-        --          ]
-
-        --          ]
-        --       ]
-        --      , ul [className "nav navbar-nav pull-right"]
-        --        [
-        --          li [className "dropdown"]
-        --          [
-        --            a [ className "dropdown-toggle navbar-text", _data {toggle : "dropdown"}, href "#",  role "button", title "That is your username" ]
-        --            [ i [ className "" ]
-        --              []
-        --            , span [ aria {hidden : true}, className "glyphicon glyphicon-user", style {color:"white"} ]
-        --              []
-        --            , i [ className "caret" ]
-        --              []
-        --            ]
-        --          , ul [className "dropdown-menu"]
-        --            [
-        --             li []
-        --              [ a [tabIndex (-1), target "blank", title "Send us a message (bug, thanks, congrats...)", href "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"]
-        --                [
-        --                  span [ className "glyphicon glyphicon-bullhorn" ,aria {hidden : true}] []
-        --                 , text "Report Feedback"
-        --                ]
-        --              ]
-        --            , li [ className"divider"]
-        --              []
-        --            , li []
-        --              [ a [tabIndex (-1), href "/auth/login" ]
-        --                [ span [className "glyphicon glyphicon-log-in",aria {hidden : true}] []
-        --                , text "login"
-        --                ]
-        --              ]
-        --            ]
-        --          ]
-        --        ]
-        --      ]
-
-        --   ]
-        -- ]
-
-       div [className "container"]
-        [
-          div [className "jumbotron"]
-          [
-            div [className "row"]
-            [
-              div [className "col-md-8 content"]
-              [
-                h1 []
-                [ text "Gargantext" ]
-              , p []
-                [ text "Collaborative knowledge mapping experience" ]
-              
---          TODO : put the login in top right page [#54]
-              , p []
-                [ 
---                  a [ className "btn btn-primary btn-lg spacing-class ", onClick \_ -> dispatch $ Submit , title "Click and test by yourself" ]
---                  [ span [ className "glyphicon glyphicon-hand-right" ]
---                    []
---                  , text " Login"
---                  ]
-----          TODO: login / sign up will not be mandatory any more (mandatory to save/share your research only)
-----          TODO: ask for login or account creation after 5 mn when user is not logged and has made one search at least
---                , a [ className "btn btn-warning btn-lg spacing-class", href "https://iscpif.fr/services/applyforourservices/", target "blank", title "Fill the form to sign up" ]
---                  [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
---                    []
---                  , text "Sign Up"
---                  ]
-                 a [ className "btn btn-success btn-lg spacing-class", href "https://iscpif.fr/gargantext/your-first-map/", target "blank", title "Fill the form to sign up" ]
-                  [ span [ aria {hidden : true}, className "glyphicon glyphicon-hand-right" ]
-                    []
-                  , text " Get's started"
-                  ]
-                ]
-              , span [ aria {hidden : true}, className "glyphicon glyphicon-warning-sign" ]
-                []
-              , i []
-                [ text "Some features may not work without a javascript optimized browser (Chromium for instance).                        " ]
-
-              ]
-            , div [className "col-md-2 content"]
-              [
-                p [ className "right" ]
-                [ div [_id "logo-designed" ]
-                  [ img [ src "images/logo.png", title "Logo designed by dacha and anoe" ]
-                    []
-                  ]
-                ]
-              ]
-            ]
-          ]
-        ]
-
-      , div [className "container"]
-        [ div [className "row"]
-          [ div [className "col-md-offset-5 col-md-6 content"]
-            [ img [ src "images/Gargantextuel-212x300.jpg"
-                  , title "Gargantextuel drawn by Cecile Meadel"
-                  , _id "funnyimg"
-                  , onClick \_ -> dispatch $ Enter , title "Click and test by yourself"
-                  ] []
-            ]
-          ]
-        ]
-
-
-      , div [ className "container" ]
-        [ div [ className "row" ]
+blocksRandomText :: ReactElement
+blocksRandomText = div [ className "row" ]
           [ div [ className "col-md-4 content" ]
             [ h3 []
               [ a [ href "#", title "Random sentences in Gargantua's Books chapters, historically true" ]
@@ -245,28 +149,5 @@ loginSpec = simpleSpec performAction render
               ]
             ]
           ]
-        ]
 
-      , div [className "container"]
-        [
-           hr [] []
-      , footer []
-        [ p []
-          [ text "Gargantext "
-          , span [className "glyphicon glyphicon-registration-mark" ]
-            []
-          , text ", version 4.0"
-          , a [ href "http://www.cnrs.fr", target "blank", title "Institution that enables this project." ]
-            [ text ", Copyrights "
-            , span [ className "glyphicon glyphicon-copyright-mark" ]
-              []
-            , text " CNRS 2017-Present"
-            ]
-          , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE", target "blank", title "Legal instructions of the project." ]
-            [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
-          , text "."
-          ]
-        ]
-        ]
 
-      ]

@@ -2,7 +2,7 @@ module DocView where
 
 import Data.Argonaut
 
-import Chart (ex1, p'')
+import Chart (histogram, p'')
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Cont.Trans (lift)
@@ -26,8 +26,8 @@ import Partial.Unsafe (unsafePartial)
 import Prelude (class Eq, class Ord, class Show, Unit, bind, map, not, pure, show, void, ($), (*), (+), (-), (/), (<), (<$>), (<>), (==), (>), (>=), (>>=))
 import React (ReactElement)
 import React as R
-import React.DOM (a, b, b', br', div, h3, i, input, li, option, select, span, table, tbody, td, text, thead, tr, ul)
-import React.DOM.Props (Props, _type, className, href, onChange, onClick, selected, value)
+import React.DOM (a, b, b', br', div, h3, i, input, li, option, select, span, table, tbody, td, text, thead, th, tr, ul, nav)
+import React.DOM.Props (Props, _type, className, href, onChange, onClick, selected, value, scope, _id, role, _data, aria)
 import ReactDOM as RDOM
 import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
@@ -36,7 +36,7 @@ main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
 main = do
   case createReactSpec spec tdata of
     { spec, dispatcher } -> void $ do
-      document <- DOM.window >>= DOM.document
+      document  <- DOM.window >>= DOM.document
       container <- unsafePartial (fromJust  <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
       RDOM.render (R.createFactory (R.createClass spec) {}) container
 
@@ -54,17 +54,16 @@ main = do
 -- TODO: When a pagination link is clicked, reload data. Right now it doesn't make sense to reload mock data.
 
 newtype Response = Response
-  { cid :: Int
-  , created :: String
-  , favorite :: Boolean
+  { cid        :: Int
+  , created    :: String
+  , favorite   :: Boolean
   , ngramCount :: Int
-  , hyperdata :: Hyperdata
+  , hyperdata  :: Hyperdata
   }
 
 newtype Hyperdata = Hyperdata
-  {
-    title :: String
-  , abstract :: String
+  { title  :: String
+  , source :: String
   }
 
 type State = CorpusTableData
@@ -77,28 +76,28 @@ data Action
 
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
-    obj <- decodeJson json
-    title <- obj .? "title"
-    abstract <- obj .? "abstract"
-    pure $ Hyperdata { title,abstract }
+    obj    <- decodeJson json
+    title  <- obj .? "title"
+    source <- obj .? "source"
+    pure $ Hyperdata { title,source }
 
 
 
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
-    obj <- decodeJson json
-    cid <- obj .? "id"
-    created <- obj .? "created"
-    favorite <- obj .? "favorite"
+    obj        <- decodeJson json
+    cid        <- obj .? "id"
+    created    <- obj .? "created"
+    favorite   <- obj .? "favorite"
     ngramCount <- obj .? "ngramCount"
-    hyperdata <- obj .? "hyperdata"
+    hyperdata  <- obj .? "hyperdata"
     pure $ Response { cid, created, favorite, ngramCount, hyperdata }
 
 
 type Name = String
 type Open = Boolean
-type URL = String
-type ID = Int
+type URL  = String
+type ID   = Int
 
 data NTree a = NLeaf a | NNode ID Open Name (Array (NTree a))
 
@@ -112,55 +111,61 @@ toggleNode sid (NNode iid open name ary) =
 toggleNode sid a = a
 
 
-
 spec :: Spec _ State _ Action
 spec = simpleSpec performAction render
   where
     render :: Render State _ Action
     render dispatch _ state@(TableData d) _ =
       [ div [className "container"]
-        [
-          div [className "jumbotron"]
-          [
-            div [className "row"]
-            [ div [className "col-md-3"]
-              [ br' []
-              , br' []
-              ,  div [className "tree"] [toHtml dispatch d.tree]
-              ]
-            , div [className "col-md-9"]
-              [
-                br' []
-              , br' []
-              , p''
-              , h3 [] [text "Chart Title"]
-              , ex1
-              , p''
+        [ div [className "row"]
+          [ div [className "col-md-3"]
+            [ br' []
+            , br' []
+            ,  div [className "tree"] [toHtml dispatch d.tree]
+            ]
+          , div [className "col-md-9"]
+            [ nav []
+              [ div [className "nav nav-tabs", _id "nav-tab",role "tablist"]
+                [
+                  a [ className "nav-item nav-link active"
+                    , _id "nav-home-tab"
+                    , _data {toggle : "tab"}
+                    , href "#nav-home"
+                    , role "tab"
+                    , aria {controls : "nav-home"}
+                    , aria {selected:true}] [ text "Documents"]
 
+                , a [className "nav-item nav-link",_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "Sources"]
 
-              , div [] [b [] [text d.title]]
-              , div [] [ text "Search "
-                       , input [] []
-                       ]
-              , sizeDD d.pageSize dispatch
-              , br' []
-              , br' []
-              , textDescription d.currentPage d.pageSize d.totalRecords
-              , br' []
-              , br' []
-              , pagination dispatch d.totalPages d.currentPage
-              , br' []
-              , br' []
-              , table []
-                [thead [] [tr []
-                           [ td [] [ b' [text "Date"]]
-                           , td [] [ b' [text "Title"]]
-                           , td [] [ b' [text "Source"]]
-                           , td [] [ b' [text "Fav"]]
-                           , td [] [ b' [text "Delete"]]
-                           ]]
-                , tbody [] $ map showRow d.rows
+                ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Authors"]
+                ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Terms"]
+                ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "(+)"]
+
                 ]
+              ]
+            , br' []
+            , p''
+            , h3 [] [text "Chart Title"]
+            , histogram
+            , p''
+            , br' []
+            , div [] [ b [] [text d.title]
+                     , text "    Filter "
+                     , input [] []
+                     , sizeDD d.pageSize dispatch
+                     , textDescription d.currentPage d.pageSize d.totalRecords
+                     , pagination dispatch d.totalPages d.currentPage
+                     ]
+            , table [ className "table"]
+              [thead  [ className "thead-dark"] 
+                         [tr [] [ th [scope "col"] [ b' [text "Date"]    ]
+                                , th [scope "col"] [ b' [text "Title"]   ]
+                                , th [scope "col"] [ b' [text "Source"]  ]
+                                , th [scope "col"] [ b' [text "Favorite"]]
+                                , th [scope "col"] [ b' [text "Delete"]  ]
+                                ]
+                         ]
+              , tbody [] $ map showRow d.rows
               ]
             ]
           ]
@@ -171,18 +176,12 @@ spec = simpleSpec performAction render
 ------------------------------------------------------------------------
 -- Realistic Tree for the UI
 
-urlFacetDoc :: String
-urlFacetDoc  = "http://localhost:8009/index.html#/docView"
-
 myCorpus :: Int -> String -> NTree (Tuple String String)
 myCorpus n name = NNode n false name
-    [ NLeaf (Tuple "Facets"    urlFacetDoc)
-    , NLeaf (Tuple "Graph"     urlFacetDoc)
-    , NLeaf (Tuple "Dashboard" urlFacetDoc)
+    [ NLeaf (Tuple "Facets"    "#/docView")
+    , NLeaf (Tuple "Graph"     "#/docView")
+    , NLeaf (Tuple "Dashboard" "#/userPage")
     ]
-
-urlFacetAuth :: String
-urlFacetAuth = urlFacetDoc
 
 exampleTree :: NTree (Tuple String String)
 exampleTree =
@@ -195,26 +194,29 @@ exampleTree =
                                  ]
   ]
 
-
 ------------------------------------------------------------------------
 -- TODO
 -- alignment to the right
-nodeOptionsCorp = [ i [className "fab fa-whmcs" ] []]
+nodeOptionsCorp activated = case activated of
+                         true  -> [ i [className "fab fa-whmcs" ] []]
+                         false -> []
 
 -- TODO
 -- alignment to the right
 -- on hover make other options available:
-nodeOptionsView = [ i [className "fas fa-sync-alt" ] []
-              , i [className "fas fa-upload"   ] []
-              , i [className "fas fa-share-alt"] []
-              ]
+nodeOptionsView activated = case activated of
+                         true -> [ i [className "fas fa-sync-alt" ] []
+                                 , i [className "fas fa-upload"   ] []
+                                 , i [className "fas fa-share-alt"] []
+                                 ]
+                         false -> []
 
 toHtml :: _ -> FTree -> ReactElement
 toHtml d (NLeaf (Tuple name link)) =
   li []
   [ a [ href link]
     ( [ text (name <> "    ")
-      ] <> nodeOptionsView
+      ] <> nodeOptionsView false
     )
   ]
 toHtml d (NNode id open name ary) =
@@ -222,7 +224,7 @@ toHtml d (NNode id open name ary) =
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
       ,  text $ " " <> name <> "    "
-      ] <> nodeOptionsCorp <>
+      ] <> nodeOptionsCorp false <>
       if open then
         map (toHtml d) ary
         else []
@@ -246,11 +248,11 @@ performAction LoadData _ _ = void do
       where
         res2corpus (Response res) =
           Corpus { _id : res.cid
-          , url : ""
-          , date :  res.created
-          , title : (\(Hyperdata r) -> r.title) res.hyperdata
-          , source :  (\(Hyperdata r) -> r.abstract)res.hyperdata
-          , fav : res.favorite
+          , url    : ""
+          , date   :  res.created
+          , title  : (\(Hyperdata r) -> r.title) res.hyperdata
+          , source : (\(Hyperdata r) -> r.source)res.hyperdata
+          , fav    : res.favorite
          }
 
 
@@ -258,7 +260,11 @@ performAction (ToggleFolder i) _ _ = void (cotransform (\(TableData td) -> Table
 
 
 changePageSize :: PageSizes -> CorpusTableData -> CorpusTableData
-changePageSize ps (TableData td) = TableData $ td { pageSize = ps, totalPages = td.totalRecords / pageSizes2Int ps, currentPage = 1}
+changePageSize ps (TableData td) = 
+  TableData $ td { pageSize      = ps
+                 , totalPages    = td.totalRecords / pageSizes2Int ps
+                 , currentPage   = 1
+                 }
 
 
 data PageSizes = PS10 | PS20 | PS50 | PS100
@@ -332,7 +338,9 @@ pagination d tp cp
                else
                span []
                [ text " "
-               , a [href "javascript:void()", onClick (\e -> d $ ChangePage $ cp - 1)] [text "Previous"]
+               , a [ href "javascript:void()"
+                   , onClick (\e -> d $ ChangePage $ cp - 1)
+                   ] [text "Previous"]
                , text " "
                ]
       next = if cp == tp then
@@ -340,7 +348,9 @@ pagination d tp cp
                else
                span []
                [ text " "
-               , a [href "javascript:void()", onClick (\e -> d $ ChangePage $ cp + 1)] [text "Next"]
+               , a [ href "javascript:void()"
+                   , onClick (\e -> d $ ChangePage $ cp + 1)
+                   ] [text "Next"]
                , text " "
                ]
       first = if cp == 1 then
@@ -348,7 +358,9 @@ pagination d tp cp
                 else
                 span []
                 [ text " "
-                , a [href "javascript:void()", onClick (\e -> d $ ChangePage 1)] [text "1"]
+                , a [ href "javascript:void()"
+                    , onClick (\e -> d $ ChangePage 1)
+                    ] [text "1"]
                 , text " "
                 ]
       last = if cp == tp then
@@ -356,7 +368,9 @@ pagination d tp cp
              else
                span []
                [ text " "
-               , a [href "javascript:void()", onClick (\e -> d $ ChangePage tp)] [text $ show tp]
+               , a [ href "javascript:void()"
+                   , onClick (\e -> d $ ChangePage tp)
+                   ] [text $ show tp]
                , text " "
                ]
       ldots = if cp >= 5 then
@@ -374,7 +388,9 @@ fnmid :: _ -> Int -> ReactElement
 fnmid d i
   = span []
     [ text " "
-    , a [href "javascript:void()", onClick (\e -> d $ ChangePage i)] [text $ show i]
+    , a [ href "javascript:void()"
+        , onClick (\e -> d $ ChangePage i)
+        ] [text $ show i]
     , text " "
     ]
 
@@ -387,23 +403,25 @@ greaterthan x y = x > y
 
 newtype TableData a
   = TableData
-    { rows :: Array {row :: a, delete :: Boolean}
-    , totalPages :: Int
-    , currentPage :: Int
-    , pageSize :: PageSizes
+    { rows         :: Array { row    :: a
+                            , delete :: Boolean
+                            }
+    , totalPages   :: Int
+    , currentPage  :: Int
+    , pageSize     :: PageSizes
     , totalRecords :: Int
-    , title :: String
-    , tree :: FTree
+    , title        :: String
+    , tree         :: FTree
     }
 
 newtype Corpus
   = Corpus
-    { _id :: Int
-    , url :: String
-    , date :: String
-    , title :: String
+    { _id    :: Int
+    , url    :: String
+    , date   :: String
+    , title  :: String
     , source :: String
-    , fav :: Boolean
+    , fav    :: Boolean
     }
 
 type CorpusTableData = TableData Corpus
@@ -422,24 +440,24 @@ sdata = data' sampleData
 
 tdata :: CorpusTableData
 tdata = TableData
-        { rows : sdata
-        , totalPages : 10
-        , currentPage : 1
-        , pageSize : PS10
+        { rows         : sdata
+        , totalPages   : 10
+        , currentPage  : 1
+        , pageSize     : PS10
         , totalRecords : 100
-        , title : "Publications by title"
-        , tree : exampleTree
+        , title        : "Documents"
+        , tree         : exampleTree
         }
 
 tdata' :: _ -> CorpusTableData
 tdata' d = TableData
-        { rows : d
-        , totalPages : 10
-        , currentPage : 1
-        , pageSize : PS10
+        { rows         : d
+        , totalPages   : 10
+        , currentPage  : 1
+        , pageSize     : PS10
         , totalRecords : 100
-        , title : "Publications by title"
-        , tree : exampleTree
+        , title        : "Documents"
+        , tree         : exampleTree
         }
 
 
@@ -449,10 +467,13 @@ showRow {row : (Corpus c), delete} =
   [ td [] [text c.date]
   , td [] [text c.title]
   , td [] [text c.source]
-  , td [] [text $ show c.fav]
-  , td [] [ input [ _type "checkbox"] []]
+  , td [] [div [className $ fa <> "fa-star"][]]
+  , td [] [input [ _type "checkbox"] []]
   ]
-
+    where
+      fa = case c.fav of
+                true  -> "fas "
+                false -> "far "
 
 
 
@@ -477,3 +498,6 @@ loadData  = do
       --liftEff $ log $ "GET /api response: " <> show a.response
       let res = decodeJson a.response
       pure res
+
+
+
