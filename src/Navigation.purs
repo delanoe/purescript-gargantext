@@ -163,7 +163,7 @@ routingSpec = simpleSpec performAction defaultRender
 layout0 :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
 layout0 spec =
   fold
-  [ sidebarnavSpec
+  [ layoutSidebar
 --  TODO Add Tree to the template
 --, exampleTree'
   , innerContainer $ spec
@@ -185,8 +185,8 @@ layout0 spec =
 --        render dispatch _ state _ = DV.toHtml dispatch DV.exampleTree
 
 
-sidebarnavSpec ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
-sidebarnavSpec = simpleSpec performAction render
+layoutSidebar ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+layoutSidebar = simpleSpec performAction render
   where
     render :: Render AppState props Action
     render dispatch _ state _ =
