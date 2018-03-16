@@ -219,53 +219,53 @@ divLogo = a [ className "navbar-brand logoSmall"
 divDropdownLeft :: ReactElement
 divDropdownLeft = ul [className "nav navbar-nav"]
                      [ ul [className "nav navbar-nav pull-left"]
-                     [ li [className "dropdown"]
-                          [ a [ className "dropdown-toggle navbar-text"
-                              , _data {toggle: "dropdown"}
-                              , href "#", role "button"
-                              , title "About Gargantext" 
-                              ][ span [ aria {hidden : true}
-                                      , className "glyphicon glyphicon-info-sign" 
-                                      ] []
-                               , text " Info"
-                               ] 
-                          , ul [className "dropdown-menu"]
-                               (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
-                                                    , href  : "https://iscpif.fr/gargantext/your-first-map/"
-                                                    , icon  : "fas fa-book"
-                                                    , text  : "Documentation"
-                                                    }
-                                            , LiNav { title : "Report bug here"
-                                                    , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
-                                                    , icon  : "glyphicon glyphicon-bullhorn"
-                                                    , text  : "Feedback"
-                                                    }
-                                            ]
-                                  )
-                                   <> [li [className "divider"] []] <>
-                                  (map liNav [ LiNav { title : "Interactive chat"
-                                                     , href  : "https://chat.iscpif.fr/channel/gargantext"
-                                                     , icon  : "fab fa-rocketchat"
-                                                     , text  : "Chat"
-                                                     }
-                                             , LiNav { title : "Asynchronous discussions"
-                                                     , href  : "https://discourse.iscpif.fr/c/gargantext"
-                                                     , icon  : "fab fa-discourse"
-                                                     , text  : "Forum"
-                                                     }
-                                             ]
-                                   )
-                                    <> [li [className "divider"] []] <>
-                                   [ liNav (LiNav { title : "More about us (you)"
-                                                  , href  : "http://iscpif.fr"
-                                                  , icon  : "fas fa-question-circle"
-                                                  , text  : "About"
-                                                  }
-                                            )
-                                   ]
-                                  )
-                            ]
-                      ]
+                          [ li [className "dropdown"]
+                               [ a [ className "dropdown-toggle navbar-text"
+                                   , _data {toggle: "dropdown"}
+                                   , href "#", role "button"
+                                   , title "About Gargantext" 
+                                   ][ span [ aria {hidden : true}
+                                           , className "glyphicon glyphicon-info-sign" 
+                                           ] []
+                                    , text " Info"
+                                    ] 
+                               , ul [className "dropdown-menu"]
+                                    (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
+                                                         , href  : "https://iscpif.fr/gargantext/your-first-map/"
+                                                         , icon  : "fas fa-book"
+                                                         , text  : "Documentation"
+                                                         }
+                                                 , LiNav { title : "Report bug here"
+                                                         , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
+                                                         , icon  : "glyphicon glyphicon-bullhorn"
+                                                         , text  : "Feedback"
+                                                         }
+                                                 ]
+                                       )
+                                        <> [li [className "divider"] []] <>
+                                       (map liNav [ LiNav { title : "Interactive chat"
+                                                          , href  : "https://chat.iscpif.fr/channel/gargantext"
+                                                          , icon  : "fab fa-rocketchat"
+                                                          , text  : "Chat"
+                                                          }
+                                                  , LiNav { title : "Asynchronous discussions"
+                                                          , href  : "https://discourse.iscpif.fr/c/gargantext"
+                                                          , icon  : "fab fa-discourse"
+                                                          , text  : "Forum"
+                                                          }
+                                                  ]
+                                        )
+                                         <> [li [className "divider"] []] <>
+                                        [ liNav (LiNav { title : "More about us (you)"
+                                                       , href  : "http://iscpif.fr"
+                                                       , icon  : "fas fa-question-circle"
+                                                       , text  : "About"
+                                                       }
+                                                 )
+                                        ]
+                                       )
+                                 ]
+                           ]
                       ]
 
 
