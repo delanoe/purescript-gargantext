@@ -147,29 +147,31 @@ pagesComponent s =
                                  | eff
                                  ) AppState props Action
     selectSpec Login      = focus _loginState _loginAction LN.renderSpec
-    selectSpec Home       = wrap $ focus _landingState   _landingAction   L.home
-    selectSpec AddCorpus  = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
-    selectSpec DocView    = wrap $ focus _docViewState   _docViewAction   DV.spec
-    selectSpec SearchView = wrap $ focus _searchState    _searchAction    S.searchSpec
-    selectSpec UserPage   = wrap $ focus _userPageState  _userPageAction  UP.userPageSpec
+    selectSpec Home       = layout0 $ focus _landingState   _landingAction   L.layoutHome
+    selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
+    selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
+    selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
+    
+    -- To be removed
+    selectSpec SearchView = layout0 $ focus _searchState    _searchAction    S.searchSpec
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
 
 
 
-wrap :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
-wrap spec =
+layout0 :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+layout0 layout =
   fold
-  [ sidebarnavSpec
---  TODO Add Tree to the template
+  [ layoutSidebar
+--  TODO Add layoutTree
 --, exampleTree'
-  , innerContainer $ spec
-  , footerLegalInfo
+  , innerLayout $ layout
+  , layoutFooter
   ]
   where
-    innerContainer :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
-    innerContainer = over _render \render d p s c ->
+    innerLayout :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+    innerLayout = over _render \render d p s c ->
       [  div [_id "page-wrapper"]
         [
           div [className "container-fluid"]  (render d p s c)
@@ -183,8 +185,8 @@ wrap spec =
 --        render dispatch _ state _ = DV.toHtml dispatch DV.exampleTree
 
 
-sidebarnavSpec ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
-sidebarnavSpec = simpleSpec performAction render
+layoutSidebar ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+layoutSidebar = simpleSpec performAction render
   where
     render :: Render AppState props Action
     render dispatch _ state _ =
@@ -333,8 +335,8 @@ divDropdownRight = ul [className "nav navbar-nav pull-right"]
 
 
 
-footerLegalInfo ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
-footerLegalInfo = simpleSpec performAction render
+layoutFooter ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+layoutFooter = simpleSpec performAction render
   where
     render :: Render AppState props Action
     render dispatch _ state _ = [div [ className "container" ] [ hr [] [], footerLegalInfo']]

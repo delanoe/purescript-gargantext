@@ -89,8 +89,8 @@ performAction GO _ _ = void do
 
 
 
-addcorpusviewSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
-addcorpusviewSpec = simpleSpec performAction render
+layoutAddcorpus :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
+layoutAddcorpus = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
