@@ -87,6 +87,55 @@ performAction GO _ _ = void do
   modifyState id
 
 
+layoutModal :: forall e.  { response :: Array Response | e} -> Array ReactElement
+layoutModal state = 
+      [button [ _type "button"
+             , _data { "toggle" : "modal"
+             , "target" : ".myModal"
+             }
+             ][text "Launch modal"]
+             , div [ className "modal fade myModal"
+                   , role "dialog"
+                   , _data {show : true}  
+                   ][ div [ className "modal-dialog"
+                          , role "document"
+                          ] [ div [ className "modal-content"]
+                                  [ div [ className "modal-header"]
+                                        [ h5 [ className "modal-title"
+                                             ]
+                                             [ text "CorpusView"
+                                             ]
+                                        , button [ _type "button"
+                                                 , className "close"
+                                                 , _data { dismiss : "modal"}
+                                                 ] [ span [ aria {hidden : true}] 
+                                                          [ text "X"]
+                                                   ]
+                                        ]
+                   
+                                  , div [ className "modal-body"]
+                                        [ ul [ className "list-group"] ( map fn1 state.response ) ]
+                   
+                                  , div [className "modal-footer"]
+                                        [ button [ _type "button"
+                                                 , className "btn btn-secondary"
+                                                 , _data {dismiss : "modal"}
+                                                 ] [ text "GO"]
+                                        ]
+                                   ]
+                            ]
+                     ]
+        ]
+      where
+        fn1 (Response o) =
+          li [className "list-group-item justify-content-between"]
+          [
+          span [] [text  o.name]
+          ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
+          ]
+
+
+
 
 layoutAddcorpus :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
 layoutAddcorpus = simpleSpec performAction render
@@ -100,29 +149,7 @@ layoutAddcorpus = simpleSpec performAction render
           div [className "jumbotron"]
           [ div [className "row"]
            [
-             div [className "col-md-6"]
-             [
-               button [_type "button", _data {"toggle" : "modal", "target" : ".myModal"}][text "Launch modal"]
-             , div [className "modal fade myModal",role "dialog", _data {show : true}  ]
-               [ div [className "modal-dialog",role "document"]
-                 [ div [className "modal-content"]
-                   [ div [className "modal-header"]
-                     [  h5 [className "modal-title"] [ text "CorpusView"]
-                     , button [ _type "button",className "close", _data { dismiss : "modal"}]
-                       [ span [aria {hidden : true}] [ text "X"]
-                       ]
-                     ]
-                   ,  div [className "modal-body"]
-                      [ ul [className "list-group"] $ map fn1 state.response
-                      ]
-                   , div [className "modal-footer"]
-                     [ button [ _type "button", className "btn btn-secondary", _data {dismiss : "modal"}]
-                       [ text "GO"]
-                     ]
-                   ]
-                 ]
-               ]
-             ]
+             div [className "col-md-6"] (layoutModal state)
            , div [className "col-md-6"]
              [
                h3 [] [text "Corpusview"]
