@@ -34,7 +34,7 @@ import Unsafe.Coerce (unsafeCoerce)
 
 main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
 main = do
-  case createReactSpec spec tdata of
+  case createReactSpec layoutDocview tdata of
     { spec, dispatcher } -> void $ do
       document  <- DOM.window >>= DOM.document
       container <- unsafePartial (fromJust  <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
@@ -111,8 +111,8 @@ toggleNode sid (NNode iid open name ary) =
 toggleNode sid a = a
 
 
-spec :: Spec _ State _ Action
-spec = simpleSpec performAction render
+layoutDocview :: Spec _ State _ Action
+layoutDocview = simpleSpec performAction render
   where
     render :: Render State _ Action
     render dispatch _ state@(TableData d) _ =

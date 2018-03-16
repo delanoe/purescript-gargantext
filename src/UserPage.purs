@@ -28,12 +28,12 @@ performAction NoOp _ _ = void do
   modifyState id
 
 
-userPageSpec :: forall props eff . Spec ( console :: CONSOLE
+layoutUser :: forall props eff . Spec ( console :: CONSOLE
                                         , ajax    :: AJAX
                                         , dom     :: DOM
                                         | eff
                                         ) State props Action
-userPageSpec = simpleSpec performAction render
+layoutUser = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =

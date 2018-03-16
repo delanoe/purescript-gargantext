@@ -147,19 +147,21 @@ pagesComponent s =
                                  | eff
                                  ) AppState props Action
     selectSpec Login      = focus _loginState _loginAction LN.renderSpec
-    selectSpec Home       = wrap $ focus _landingState   _landingAction   L.home
-    selectSpec AddCorpus  = wrap $ focus _addCorpusState _addCorpusAction AC.addcorpusviewSpec
-    selectSpec DocView    = wrap $ focus _docViewState   _docViewAction   DV.spec
-    selectSpec SearchView = wrap $ focus _searchState    _searchAction    S.searchSpec
-    selectSpec UserPage   = wrap $ focus _userPageState  _userPageAction  UP.userPageSpec
+    selectSpec Home       = layout0 $ focus _landingState   _landingAction   L.layoutHome
+    selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
+    selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
+    selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
+    
+    -- To be removed
+    selectSpec SearchView = layout0 $ focus _searchState    _searchAction    S.searchSpec
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
 
 
 
-wrap :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
-wrap spec =
+layout0 :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+layout0 spec =
   fold
   [ sidebarnavSpec
 --  TODO Add Tree to the template
