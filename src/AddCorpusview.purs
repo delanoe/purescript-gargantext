@@ -102,13 +102,14 @@ layoutAddcorpus = simpleSpec performAction render
            [
              div [className "col-md-6"]
              [
-               div [className "modal fade",role "dialog"]
+               button [_type "button", _data {"toggle" : "modal", "target" : ".myModal"}][text "Launch modal"]
+             , div [className "modal fade myModal",role "dialog", _data {show : true}  ]
                [ div [className "modal-dialog",role "document"]
                  [ div [className "modal-content"]
                    [ div [className "modal-header"]
                      [  h5 [className "modal-title"] [ text "Tree View"]
                      , button [ _type "button",className "close", _data { dismiss : "modal"}]
-                       [ span [aria {hidden : true}] [ text "&times;"]
+                       [ span [aria {hidden : true}] [ text "X"]
                        ]
                      ]
                    ,  div [className "modal-body"] [ p [] [text "Modal body text goes here"]]
