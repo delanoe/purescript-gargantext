@@ -247,7 +247,7 @@ divDropdownLeft = ul [className "nav navbar-nav"]
 --             divider = [li [className "divider"] []]
 --
 divLeftdropdownElements :: Array ReactElement
-divLeftdropdownElements = (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
+divLeftdropdownElements =          (  (map liNav [ LiNav { title : "Quick start, tutorials and methodology"
                                                          , href  : "https://iscpif.fr/gargantext/your-first-map/"
                                                          , icon  : "fas fa-book"
                                                          , text  : "Documentation"
@@ -280,7 +280,7 @@ divLeftdropdownElements = (( map liNav [ LiNav { title : "Quick start, tutorials
                                                        }
                                                  )
                                         ]
-                                       )
+                                  )
 
 
 data LiNav = LiNav { title :: String
