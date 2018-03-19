@@ -240,7 +240,7 @@ divDropdownLeft = ul [className "nav navbar-nav"]
                       ]
 
 
--- WYSIWYG = Pure React
+-- | WYSIWYG example in Pure React ?
 divLeftdropdownElements :: Array ReactElement
 divLeftdropdownElements = menu
   [ -- ===========================================================
@@ -276,6 +276,7 @@ divLeftdropdownElements = menu
     ]
   ] -- ===========================================================
 
+-- | Menu in the sidebar, syntactic sugar
 menu :: Array (Array LiNav) -> Array ReactElement
 menu ns = intercalate divider $ map (map liNav) ns
   where
