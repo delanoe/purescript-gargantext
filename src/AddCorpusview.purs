@@ -71,12 +71,11 @@ performAction NoOp _ _ = void do
 performAction (SelectDatabase selected) _ _ = void do
   modifyState \( state) -> state { select_database = selected }
 
-
 performAction (UnselectDatabase unselected) _ _ = void do
   modifyState \( state) ->  state { unselect_database = unselected }
 
 performAction (LoadDatabaseDetails) _ _ = void do
-  res <- lift $ getDatabaseDetails $ QueryString{query_query: "string",query_name: ["Pubmed"]}
+  res <- lift $ getDatabaseDetails $ QueryString { query_query: "string",query_name: ["Pubmed"]}
   case res of
      Left err -> cotransform $ \(state) ->  state
      Right resData -> do
@@ -173,7 +172,7 @@ layoutAddcorpus = simpleSpec performAction render
 newtype QueryString = QueryString
   {
     query_query :: String
-  ,  query_name :: Array String
+  , query_name :: Array String
   }
 
 queryString :: QueryString

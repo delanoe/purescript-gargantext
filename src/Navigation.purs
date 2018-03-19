@@ -217,7 +217,6 @@ divLogo = a [ className "navbar-brand logoSmall"
                     ] []
               ]
 
-
 divDropdownLeft :: ReactElement
 divDropdownLeft = ul [className "nav navbar-nav"]
                      [ ul [className "nav navbar-nav pull-left"]
@@ -231,8 +230,24 @@ divDropdownLeft = ul [className "nav navbar-nav"]
                                            ] []
                                     , text " Info"
                                     ]
-                               , ul [className "dropdown-menu"]
-                                    (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
+                               , ul [className "dropdown-menu"] divLeftdropdownElements
+                               ]
+                           ]
+                      ]
+
+-- TODO 
+-- import Gargantext.Data.Array
+-- menu [[ LiNav, LiNav]
+--      ,[ LiNav, LiNav]
+--      ,[ LiNav ]
+--      ]
+--      where
+--         menu = map linNav . foldl (\a b -> a <> b) . intercalate [divider]
+--          where
+--             divider = [li [className "divider"] []]
+--
+divLeftdropdownElements :: Array ReactElement
+divLeftdropdownElements = (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
                                                          , href  : "https://iscpif.fr/gargantext/your-first-map/"
                                                          , icon  : "fas fa-book"
                                                          , text  : "Documentation"
@@ -266,9 +281,6 @@ divDropdownLeft = ul [className "nav navbar-nav"]
                                                  )
                                         ]
                                        )
-                                 ]
-                           ]
-                      ]
 
 
 data LiNav = LiNav { title :: String
@@ -296,42 +308,44 @@ liNav (LiNav { title:tit
 
 -- TODO put the search form in the center of the navBar
 divSearchBar :: ReactElement
-divSearchBar = ul [ className "nav navbar-nav", style { "margin-left" : "146px"}]
-                  [ div [className "navbar-form"]
-                        [ input [ className   "search-query"
-                                , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
-                                , _type "text"
-                                , style { height: "35px"
-                                        , width : "450px"
-                                        --  , color: "white"
-                                        --  , background : "#A1C2D8"
-                                        }
-                                ] []
-                                           -- TODO add button in navbar (and "enter" execution)
-                                           -- , div [] [button [][]]
-                          ]
+divSearchBar = ul [ className "nav navbar-nav"
+                  , style { "margin-left" : "146px"}
+                  ] [ div [className "navbar-form"]
+                          [ input [ className   "search-query"
+                                  , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
+                                  , _type "text"
+                                  , style { height: "35px"
+                                          , width : "450px"
+                                          --  , color: "white"
+                                          --  , background : "#A1C2D8"
+                                          }
+                                  ] []
+                                             -- TODO add button in navbar (and "enter" execution)
+                                             -- , div [] [button [][]]
+                            ]
                   ]
 
 --divDropdownRight :: Render AppState props Action
 divDropdownRight :: ReactElement
-divDropdownRight = ul [className "nav navbar-nav pull-right"]
-               [
-                 -- TODO if logged in : enable dropdown to logout
-                 li [className "dropdown"]
-                 [
-                   a [ aria {hidden : true}
-                     , className "glyphicon glyphicon-log-in"
-                     , href "#/login"
-                     , style {color:"white"}
-                     , title "Log in and save your time"
-                     -- TODO hover: bold
-                      ]
-                    -- TODO if logged in
-                    --, text " username"
-                    -- else
-                   [text " Login / Signup"]
-                  ]
-               ]
+divDropdownRight = 
+  ul [className "nav navbar-nav pull-right"]
+     [
+       -- TODO if logged in : enable dropdown to logout
+       li [className "dropdown"]
+       [
+         a [ aria {hidden : true}
+           , className "glyphicon glyphicon-log-in"
+           , href "#/login"
+           , style {color:"white"}
+           , title "Log in and save your time"
+           -- TODO hover: bold
+            ]
+          -- TODO if logged in
+          --, text " username"
+          -- else
+         [text " Login / Signup"]
+        ]
+     ]
 
 
 
@@ -367,8 +381,7 @@ layoutSpec :: forall eff props. Spec (E eff) AppState props Action
 layoutSpec =
   fold
   [ routingSpec
-  , container $
-       withState pagesComponent
+  , container $ withState pagesComponent
   ]
   where
     container :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
