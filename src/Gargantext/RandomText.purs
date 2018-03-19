@@ -17,7 +17,7 @@ randomChars    : randomizes chars     in a word.
 TODO: add some tests as examples.
 -}
 
-module RandomText where
+module Gargantext.RandomText where
 
 import Prelude
 
