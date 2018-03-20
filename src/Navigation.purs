@@ -4,8 +4,10 @@ import DOM
 
 import AddCorpusview as AC
 import Control.Monad.Eff.Console (CONSOLE)
+
+import Data.Array (concat)
 import Data.Either (Either(..))
-import Data.Foldable (fold)
+import Data.Foldable (fold, intercalate)
 import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.Maybe (Maybe(Nothing, Just))
 import DocView as DV
@@ -177,7 +179,8 @@ routingSpec = simpleSpec performAction defaultRender
 
 
 
-layout0 :: forall eff props. Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+layout0 :: forall eff props. Spec (E eff) AppState props Action
+                          -> Spec (E eff) AppState props Action
 layout0 layout =
   fold
   [ layoutSidebar
@@ -187,7 +190,8 @@ layout0 layout =
   , layoutFooter
   ]
   where
-    innerLayout :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+    innerLayout :: Spec (E eff) AppState props Action
+                -> Spec (E eff) AppState props Action
     innerLayout = over _render \render d p s c ->
       [  div [_id "page-wrapper"]
         [
@@ -233,7 +237,6 @@ divLogo = a [ className "navbar-brand logoSmall"
                     ] []
               ]
 
-
 divDropdownLeft :: ReactElement
 divDropdownLeft = ul [className "nav navbar-nav"]
                      [ ul [className "nav navbar-nav pull-left"]
@@ -247,44 +250,53 @@ divDropdownLeft = ul [className "nav navbar-nav"]
                                            ] []
                                     , text " Info"
                                     ]
-                               , ul [className "dropdown-menu"]
-                                    (( map liNav [ LiNav { title : "Quick start, tutorials and methodology"
-                                                         , href  : "https://iscpif.fr/gargantext/your-first-map/"
-                                                         , icon  : "fas fa-book"
-                                                         , text  : "Documentation"
-                                                         }
-                                                 , LiNav { title : "Report bug here"
-                                                         , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
-                                                         , icon  : "glyphicon glyphicon-bullhorn"
-                                                         , text  : "Feedback"
-                                                         }
-                                                 ]
-                                       )
-                                        <> [li [className "divider"] []] <>
-                                       (map liNav [ LiNav { title : "Interactive chat"
-                                                          , href  : "https://chat.iscpif.fr/channel/gargantext"
-                                                          , icon  : "fab fa-rocketchat"
-                                                          , text  : "Chat"
-                                                          }
-                                                  , LiNav { title : "Asynchronous discussions"
-                                                          , href  : "https://discourse.iscpif.fr/c/gargantext"
-                                                          , icon  : "fab fa-discourse"
-                                                          , text  : "Forum"
-                                                          }
-                                                  ]
-                                        )
-                                         <> [li [className "divider"] []] <>
-                                        [ liNav (LiNav { title : "More about us (you)"
-                                                       , href  : "http://iscpif.fr"
-                                                       , icon  : "fas fa-question-circle"
-                                                       , text  : "About"
-                                                       }
-                                                 )
-                                        ]
-                                       )
-                                 ]
+                               , ul [className "dropdown-menu"] divLeftdropdownElements
+                               ]
                            ]
                       ]
+
+
+-- WYSIWYG = Pure React
+divLeftdropdownElements :: Array ReactElement
+divLeftdropdownElements = menu
+  [ -- ===========================================================
+    [ LiNav { title : "Quick start, tutorials and methodology"
+            , href  : "https://iscpif.fr/gargantext/your-first-map/"
+            , icon  : "fas fa-book"
+            , text  : "Documentation"
+            }
+    , LiNav { title : "Report bug here"
+            , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
+            , icon  : "glyphicon glyphicon-bullhorn"
+            , text  : "Feedback"
+            }
+    ]
+    , -----------------------------------------------------------
+    [ LiNav { title : "Interactive chat"
+            , href  : "https://chat.iscpif.fr/channel/gargantext"
+            , icon  : "fab fa-rocketchat"
+            , text  : "Chat"
+            }
+    , LiNav { title : "Asynchronous discussions"
+            , href  : "https://discourse.iscpif.fr/c/gargantext"
+            , icon  : "fab fa-discourse"
+            , text  : "Forum"
+            }
+    ]
+    ,------------------------------------------------------------
+    [ LiNav { title : "More about us (you)"
+            , href  : "http://iscpif.fr"
+            , icon  : "fas fa-question-circle"
+            , text  : "About"
+            }
+    ]
+  ] -- ===========================================================
+
+menu :: Array (Array LiNav) -> Array ReactElement
+menu ns = intercalate divider $ map (map liNav) ns
+  where
+    divider :: Array ReactElement
+    divider = [li [className "divider"] []]
 
 
 data LiNav = LiNav { title :: String
@@ -312,42 +324,44 @@ liNav (LiNav { title:tit
 
 -- TODO put the search form in the center of the navBar
 divSearchBar :: ReactElement
-divSearchBar = ul [ className "nav navbar-nav", style { "margin-left" : "146px"}]
-                  [ div [className "navbar-form"]
-                        [ input [ className   "search-query"
-                                , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
-                                , _type "text"
-                                , style { height: "35px"
-                                        , width : "450px"
-                                        --  , color: "white"
-                                        --  , background : "#A1C2D8"
-                                        }
-                                ] []
-                                           -- TODO add button in navbar (and "enter" execution)
-                                           -- , div [] [button [][]]
-                          ]
+divSearchBar = ul [ className "nav navbar-nav"
+                  , style { "margin-left" : "146px"}
+                  ] [ div [className "navbar-form"]
+                          [ input [ className   "search-query"
+                                  , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
+                                  , _type "text"
+                                  , style { height: "35px"
+                                          , width : "450px"
+                                          --  , color: "white"
+                                          --  , background : "#A1C2D8"
+                                          }
+                                  ] []
+                                             -- TODO add button in navbar (and "enter" execution)
+                                             -- , div [] [button [][]]
+                            ]
                   ]
 
 --divDropdownRight :: Render AppState props Action
 divDropdownRight :: ReactElement
-divDropdownRight = ul [className "nav navbar-nav pull-right"]
-               [
-                 -- TODO if logged in : enable dropdown to logout
-                 li [className "dropdown"]
-                 [
-                   a [ aria {hidden : true}
-                     , className "glyphicon glyphicon-log-in"
-                     , href "#/login"
-                     , style {color:"white"}
-                     , title "Log in and save your time"
-                     -- TODO hover: bold
-                      ]
-                    -- TODO if logged in
-                    --, text " username"
-                    -- else
-                   [text " Login / Signup"]
-                  ]
-               ]
+divDropdownRight = 
+  ul [className "nav navbar-nav pull-right"]
+     [
+       -- TODO if logged in : enable dropdown to logout
+       li [className "dropdown"]
+       [
+         a [ aria {hidden : true}
+           , className "glyphicon glyphicon-log-in"
+           , href "#/login"
+           , style {color:"white"}
+           , title "Log in and save your time"
+           -- TODO hover: bold
+            ]
+          -- TODO if logged in
+          --, text " username"
+          -- else
+         [text " Login / Signup"]
+        ]
+     ]
 
 
 
@@ -383,8 +397,7 @@ layoutSpec :: forall eff props. Spec (E eff) AppState props Action
 layoutSpec =
   fold
   [ routingSpec
-  , container $
-       withState pagesComponent
+  , container $ withState pagesComponent
   ]
   where
     container :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
