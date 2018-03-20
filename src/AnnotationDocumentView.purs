@@ -34,7 +34,8 @@ performAction (ChangeString ps) _ _ = pure unit
 
 performAction (ChangeAnotherString ps) _ _ = pure unit
 
-performAction (SetInput ps) _ _ = pure unit
+performAction (SetInput ps) _ _ = void do
+  modifyState \( state) ->  state { inputValue = ps }
 
 
 
@@ -59,9 +60,9 @@ docview = simpleSpec performAction render
                 [
                   nav [ ]
                   [ div [className "nav nav-tabs", _id "nav-tab",role "tablist"]
-                    [ a [className "nav-item nav-link active",_id "nav-home-tab"   ,  _data {toggle : "tab"},href "#nav-home"   ,role "tab",aria {controls : "nav-home"}   ,aria {selected:true}] [ text "Publications (12)"]
-                    , a [className "nav-item nav-link"       ,_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "Brevets (2)"]
-                    , a [className "nav-item nav-link"       ,_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Projets (5)"]
+                    [ a [className "nav-item nav-link active",_id "nav-home-tab"   ,  _data {toggle : "tab"},href "#nav-home"   ,role "tab",aria {controls : "nav-home"}   ,aria {selected:true}] [ text "STOPLIST"]
+                    , a [className "nav-item nav-link"       ,_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "MAINLIST"]
+                    , a [className "nav-item nav-link"       ,_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "MAPLIST"]
 
                     ]
                   ]
