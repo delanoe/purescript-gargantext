@@ -34,7 +34,8 @@ performAction (ChangeString ps) _ _ = pure unit
 
 performAction (ChangeAnotherString ps) _ _ = pure unit
 
-performAction (SetInput ps) _ _ = pure unit
+performAction (SetInput ps) _ _ = void do
+  modifyState \( state) ->  state { inputValue = ps }
 
 
 
