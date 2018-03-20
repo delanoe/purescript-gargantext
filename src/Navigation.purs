@@ -23,7 +23,7 @@ import React.DOM.Props as RP
 import SearchForm as S
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import UserPage as UP
-import DocumentView as D
+import AnnotationDocumentView as D
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -35,7 +35,7 @@ type AppState =
   , docViewState   :: DV.State
   , searchState    :: S.State
   , userPage       :: UP.State
-  , documentView   :: D.State
+  , annotationdocumentView   :: D.State
   }
 
 initAppState :: AppState
@@ -47,7 +47,7 @@ initAppState =
   , docViewState   : DV.tdata
   , searchState    : S.initialState
   , userPage       : UP.initialState
-  , documentView   : D.initialState
+  , annotationdocumentView   : D.initialState
   }
 
 data Action
@@ -59,7 +59,7 @@ data Action
   | DocViewA   DV.Action
   | SearchA    S.Action
   | UserPageA  UP.Action
-  | DocumentViewA  D.Action
+  | AnnotationDocumentViewA  D.Action
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
@@ -139,14 +139,14 @@ _userPageAction = prism UserPageA \action ->
     _-> Left action
 
 
-_documentviewState :: Lens' AppState D.State
-_documentviewState = lens (\s -> s.documentView) (\s ss -> s{documentView = ss})
+_annotationdocumentviewState :: Lens' AppState D.State
+_annotationdocumentviewState = lens (\s -> s.annotationdocumentView) (\s ss -> s{annotationdocumentView = ss})
 
 
-_documentviewAction :: Prism' Action D.Action
-_documentviewAction = prism DocumentViewA \action ->
+_annotationdocumentviewAction :: Prism' Action D.Action
+_annotationdocumentviewAction = prism AnnotationDocumentViewA \action ->
   case action of
-    DocumentViewA caction -> Right caction
+    AnnotationDocumentViewA caction -> Right caction
     _-> Left action
 
 
@@ -169,7 +169,7 @@ pagesComponent s =
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
-    selectSpec (DocumentView i)   = layout0 $ focus _documentviewState  _documentviewAction  D.docview
+    selectSpec (AnnotationDocumentView i)   = layout0 $ focus _annotationdocumentviewState  _annotationdocumentviewAction  D.docview
 
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState    _searchAction    S.searchSpec
@@ -344,7 +344,7 @@ divSearchBar = ul [ className "nav navbar-nav"
 
 --divDropdownRight :: Render AppState props Action
 divDropdownRight :: ReactElement
-divDropdownRight = 
+divDropdownRight =
   ul [className "nav navbar-nav pull-right"]
      [
        -- TODO if logged in : enable dropdown to logout
@@ -438,7 +438,7 @@ dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
 
-dispatchAction dispatcher _ (DocumentView i) = do
-  _ <- dispatcher $ SetRoute  $ DocumentView i
-  _ <- dispatcher $ UserPageA $ UP.NoOp
+dispatchAction dispatcher _ (AnnotationDocumentView i) = do
+  _ <- dispatcher $ SetRoute  $ AnnotationDocumentView i
+  _ <- dispatcher $ AnnotationDocumentViewA $ D.NoOp
   pure unit
