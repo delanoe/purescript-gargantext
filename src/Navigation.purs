@@ -17,10 +17,11 @@ import Prelude (class Applicative, class Bind, Unit, bind, id, map, negate, pure
 import React (ReactElement)
 import React.DOM (a, div, img, li, span, text, ul, input, button, footer, p, hr, form)
 import React.DOM.Props (_data, _id, _type, aria, className, href, name, placeholder, role, src, style, tabIndex, target, title)
+import React.DOM.Props as RP
 import SearchForm as S
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import UserPage as UP
-import React.DOM.Props as RP
+import DocumentView as D
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -32,6 +33,7 @@ type AppState =
   , docViewState   :: DV.State
   , searchState    :: S.State
   , userPage       :: UP.State
+  , documentView   :: D.State
   }
 
 initAppState :: AppState
@@ -43,6 +45,7 @@ initAppState =
   , docViewState   : DV.tdata
   , searchState    : S.initialState
   , userPage       : UP.initialState
+  , documentView   : D.initialState
   }
 
 data Action
@@ -54,6 +57,7 @@ data Action
   | DocViewA   DV.Action
   | SearchA    S.Action
   | UserPageA  UP.Action
+  | DocumentViewA  D.Action
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
@@ -133,6 +137,17 @@ _userPageAction = prism UserPageA \action ->
     _-> Left action
 
 
+_documentviewState :: Lens' AppState D.State
+_documentviewState = lens (\s -> s.documentView) (\s ss -> s{documentView = ss})
+
+
+_documentviewAction :: Prism' Action D.Action
+_documentviewAction = prism DocumentViewA \action ->
+  case action of
+    DocumentViewA caction -> Right caction
+    _-> Left action
+
+
 
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
@@ -152,6 +167,7 @@ pagesComponent s =
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
+    selectSpec (DocumentView i)   = layout0 $ focus _documentviewState  _documentviewAction  D.docview
 
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState    _searchAction    S.searchSpec
@@ -405,5 +421,10 @@ dispatchAction dispatcher _ SearchView = do
 
 dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ SetRoute  $ UserPage
+  _ <- dispatcher $ UserPageA $ UP.NoOp
+  pure unit
+
+dispatchAction dispatcher _ (DocumentView i) = do
+  _ <- dispatcher $ SetRoute  $ DocumentView i
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
