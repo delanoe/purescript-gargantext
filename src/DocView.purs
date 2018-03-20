@@ -465,7 +465,7 @@ showRow :: {row :: Corpus, delete :: Boolean} -> ReactElement
 showRow {row : (Corpus c), delete} =
   tr []
   [ td [] [text c.date]
-  , td [] [text c.title]
+  , td [] [ a [ href "#/documentView/1"] [ text c.title ] ]
   , td [] [text c.source]
   , td [] [div [className $ fa <> "fa-star"][]]
   , td [] [input [ _type "checkbox"] []]
