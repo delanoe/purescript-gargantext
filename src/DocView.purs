@@ -157,7 +157,7 @@ layoutDocview = simpleSpec performAction render
                      , pagination dispatch d.totalPages d.currentPage
                      ]
             , table [ className "table"]
-              [thead  [ className "thead-dark"] 
+              [thead  [ className "thead-dark"]
                          [tr [] [ th [scope "col"] [ b' [text "Date"]    ]
                                 , th [scope "col"] [ b' [text "Title"]   ]
                                 , th [scope "col"] [ b' [text "Source"]  ]
@@ -260,7 +260,7 @@ performAction (ToggleFolder i) _ _ = void (cotransform (\(TableData td) -> Table
 
 
 changePageSize :: PageSizes -> CorpusTableData -> CorpusTableData
-changePageSize ps (TableData td) = 
+changePageSize ps (TableData td) =
   TableData $ td { pageSize      = ps
                  , totalPages    = td.totalRecords / pageSizes2Int ps
                  , currentPage   = 1
@@ -479,7 +479,6 @@ showRow {row : (Corpus c), delete} =
 
 loadData :: forall eff. Aff ( console :: CONSOLE, ajax :: AJAX| eff) (Either String (Array Response))
 loadData  = do
-  -- liftEff $ log $ "GET /api response: "
   affResp <- liftAff $ attempt $ affjax defaultRequest
     { method  = Left GET
     , url     = "http://localhost:8009/corpus/1/facet/documents/table"
@@ -491,13 +490,7 @@ loadData  = do
     }
   case affResp of
     Left err -> do
-      --liftEff $ log $ "Error"  <> show err
       pure $ Left $ show err
     Right a -> do
-      --liftEff $ log $ "POST method Completed"
-      --liftEff $ log $ "GET /api response: " <> show a.response
       let res = decodeJson a.response
       pure res
-
-
-
