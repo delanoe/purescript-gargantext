@@ -246,33 +246,37 @@ divDropdownLeft = divDropdownLeft' (LiNav { title : "About Gargantext"
                                           }
                                     )
 
+
 divDropdownLeft' :: LiNav -> ReactElement
-divDropdownLeft' (LiNav { title: title'
-                         , href : href'
-                         , icon : icon'
-                         , text : text'
-                         }
-                 ) =  ul [className "nav navbar-nav"]
+divDropdownLeft' mb =  ul [className "nav navbar-nav"]
                          [ ul [className "nav navbar-nav pull-left"]
                               [ li [className "dropdown"]
-                                   [ a [ className "dropdown-toggle navbar-text"
-                                       , _data {toggle: "dropdown"}
-                                       , href href', role "button"
-                                       , title title'
-                                       ][ span [ aria {hidden : true}
-                                               , className icon'
-                                               ] []
-                                        , text (" " <> text')
-                                        ]
-                                   , ul [className "dropdown-menu"] divLeftdropdownElements
+                                   [ menuButton mb
+                                   , menuElements'
                                    ]
                                ]
                           ]
 
 
+menuButton :: LiNav -> ReactElement
+menuButton (LiNav { title : title'
+                  , href : href'
+                  , icon : icon'
+                  , text : text'
+                  }) = a [ className "dropdown-toggle navbar-text"
+                        , _data {toggle: "dropdown"}
+                        , href href', role "button"
+                        , title title'
+                        ][ span [ aria {hidden : true}
+                                , className icon'
+                                ] []
+                         , text (" " <> text')
+                         ]
+
+
 -- | WYSIWYG example in Pure React ?
-divLeftdropdownElements :: Array ReactElement
-divLeftdropdownElements = menu  -- title, icon, text
+menuElements' :: ReactElement
+menuElements' = menuElements-- title, icon, text
   [ -- ===========================================================
     [ LiNav { title : "Quick start, tutorials and methodology"
             , href  : "https://iscpif.fr/gargantext/your-first-map/"
@@ -307,19 +311,22 @@ divLeftdropdownElements = menu  -- title, icon, text
   ] -- ===========================================================
 
 -- | Menu in the sidebar, syntactic sugar
-menu :: Array (Array LiNav) -> Array ReactElement
-menu ns = intercalate divider $ map (map liNav) ns
+menuElements :: Array (Array LiNav) -> ReactElement
+menuElements ns = dropDown $ intercalate divider $ map (map liNav) ns
   where
+    dropDown :: Array ReactElement -> ReactElement
+    dropDown = ul [className "dropdown-menu"]
+    
     divider :: Array ReactElement
     divider = [li [className "divider"] []]
 
 -- | surgar for target : "blank"
-data LiNav_ = LiNav_ { title  :: String
-                     , href   :: String
-                     , icon   :: String
-                     , text   :: String
-                     , target :: String
-                     }
+--data LiNav_ = LiNav_ { title  :: String
+--                     , href   :: String
+--                     , icon   :: String
+--                     , text   :: String
+--                     , target :: String
+--                     }
 
 
 data LiNav = LiNav { title :: String
