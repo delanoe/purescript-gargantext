@@ -237,28 +237,42 @@ divLogo = a [ className "navbar-brand logoSmall"
                     ] []
               ]
 
+
 divDropdownLeft :: ReactElement
-divDropdownLeft = ul [className "nav navbar-nav"]
-                     [ ul [className "nav navbar-nav pull-left"]
-                          [ li [className "dropdown"]
-                               [ a [ className "dropdown-toggle navbar-text"
-                                   , _data {toggle: "dropdown"}
-                                   , href "#", role "button"
-                                   , title "About Gargantext"
-                                   ][ span [ aria {hidden : true}
-                                           , className "glyphicon glyphicon-info-sign"
-                                           ] []
-                                    , text " Info"
-                                    ]
-                               , ul [className "dropdown-menu"] divLeftdropdownElements
+divDropdownLeft = divDropdownLeft' (LiNav { title : "About Gargantext"
+                                          , href  : "#"
+                                          , icon  : "glyphicon glyphicon-info-sign"
+                                          , text  : "Info"
+                                          }
+                                    )
+
+divDropdownLeft' :: LiNav -> ReactElement
+divDropdownLeft' (LiNav { title: title'
+                         , href : href'
+                         , icon : icon'
+                         , text : text'
+                         }
+                 ) =  ul [className "nav navbar-nav"]
+                         [ ul [className "nav navbar-nav pull-left"]
+                              [ li [className "dropdown"]
+                                   [ a [ className "dropdown-toggle navbar-text"
+                                       , _data {toggle: "dropdown"}
+                                       , href href', role "button"
+                                       , title title'
+                                       ][ span [ aria {hidden : true}
+                                               , className icon'
+                                               ] []
+                                        , text (" " <> text')
+                                        ]
+                                   , ul [className "dropdown-menu"] divLeftdropdownElements
+                                   ]
                                ]
-                           ]
-                      ]
+                          ]
 
 
 -- | WYSIWYG example in Pure React ?
 divLeftdropdownElements :: Array ReactElement
-divLeftdropdownElements = menu
+divLeftdropdownElements = menu  -- title, icon, text
   [ -- ===========================================================
     [ LiNav { title : "Quick start, tutorials and methodology"
             , href  : "https://iscpif.fr/gargantext/your-first-map/"
@@ -285,7 +299,7 @@ divLeftdropdownElements = menu
     ]
     ,------------------------------------------------------------
     [ LiNav { title : "More about us (you)"
-            , href  : "http://iscpif.fr"
+            , href  : "https://iscpif.fr"
             , icon  : "fas fa-question-circle"
             , text  : "About"
             }
@@ -299,6 +313,14 @@ menu ns = intercalate divider $ map (map liNav) ns
     divider :: Array ReactElement
     divider = [li [className "divider"] []]
 
+-- | surgar for target : "blank"
+data LiNav_ = LiNav_ { title  :: String
+                     , href   :: String
+                     , icon   :: String
+                     , text   :: String
+                     , target :: String
+                     }
+
 
 data LiNav = LiNav { title :: String
                    , href  :: String
@@ -307,17 +329,17 @@ data LiNav = LiNav { title :: String
                    }
 
 liNav :: LiNav -> ReactElement
-liNav (LiNav { title:tit
-             , href :h
-             , icon:i
-             , text: txt
+liNav (LiNav { title : title'
+             , href  : href'
+             , icon  : icon'
+             , text  : text'
              }
       ) = li [] [ a [ tabIndex (-1)
                     , target "blank"
-                    , title tit
-                    , href h
-                    ] [ span [ className i ] []
-                      , text $ " " <> txt
+                    , title title'
+                    , href href'
+                    ] [ span [ className icon' ] []
+                      , text $ " " <> text'
                       ]
                 ]
 
