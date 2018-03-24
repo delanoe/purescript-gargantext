@@ -158,10 +158,10 @@ layoutDocview = simpleSpec performAction render
                      ]
             , table [ className "table"]
               [thead  [ className "thead-dark"]
-                         [tr [] [ th [scope "col"] [ b' [text "Date"]    ]
+                         [tr [] [ th [scope "col"] [ b' [text ""]    ]
+                                , th [scope "col"] [ b' [text "Date"]]
                                 , th [scope "col"] [ b' [text "Title"]   ]
                                 , th [scope "col"] [ b' [text "Source"]  ]
-                                , th [scope "col"] [ b' [text "Favorite"]]
                                 , th [scope "col"] [ b' [text "Delete"]  ]
                                 ]
                          ]
@@ -464,10 +464,11 @@ tdata' d = TableData
 showRow :: {row :: Corpus, delete :: Boolean} -> ReactElement
 showRow {row : (Corpus c), delete} =
   tr []
-  [ td [] [text c.date]
+  [ td [] [div [className $ fa <> "fa-star"][]]
+  -- TODO show date: Year-Month-Day only
+  , td [] [text c.date]
   , td [] [ a [ href "#/documentView/1"] [ text c.title ] ]
   , td [] [text c.source]
-  , td [] [div [className $ fa <> "fa-star"][]]
   , td [] [input [ _type "checkbox"] []]
   ]
     where

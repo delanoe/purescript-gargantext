@@ -142,7 +142,7 @@ layoutAddcorpus = simpleSpec performAction render
     render :: Render State props Action
     render dispatch _ state _ =
       [
-        div [className "container"] [L.jumboTitle false]
+        div [className "container"] []
       ,  div [className "container"]
         [
           div [className "jumbotron"]
