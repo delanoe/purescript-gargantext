@@ -25,6 +25,8 @@ import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, mod
 import UserPage as UP
 import AnnotationDocumentView as D
 
+import Gargantext.Data.Lang
+
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
 type AppState =
@@ -165,7 +167,7 @@ pagesComponent s =
                                  | eff
                                  ) AppState props Action
     selectSpec Login      = focus _loginState _loginAction LN.renderSpec
-    selectSpec Home       = layout0 $ focus _landingState   _landingAction   L.layoutHome
+    selectSpec Home       = layout0 $ focus _landingState   _landingAction   (L.layoutHome EN)
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser

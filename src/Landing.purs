@@ -12,6 +12,12 @@ import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, simpleSpec)
 import Thermite as T
 
+import Gargantext.Data.Landing
+import Gargantext.Data.Lang
+
+import Gargantext.Lang.Landing.EnUS as En
+import Gargantext.Lang.Landing.FrFR as Fr
+
 newtype State = State
   { userName :: String
   , password :: String
@@ -54,6 +60,53 @@ performAction Login _ _ = void do
 performAction SignUp _ _ = void do
   T.modifyState \state -> state
 
+
+-- Layout |
+
+layoutHome :: forall props eff . Lang -> Spec ( console :: CONSOLE
+                                      , ajax    :: AJAX
+                                      , dom     :: DOM 
+                                      | eff
+                                      ) State props Action
+layoutHome FR = layoutHome' Fr.homeData
+layoutHome EN = layoutHome' En.homeData
+
+
+------------------------------------------------------------------------
+
+layoutHome' :: forall props eff . HomeData -> Spec ( console :: CONSOLE
+                                                  , ajax    :: AJAX
+                                                  , dom     :: DOM 
+                                                  | eff
+                                                  ) State props Action
+layoutHome' hd = simpleSpec performAction render
+  where
+    render :: Render State props Action
+    render dispatch _ state _ =
+      [ div [ className "container" ] [ jumboTitle hd false                 ]
+      , div [ className "container" ] [ imageEnter hd (onClick \_ -> dispatch $ Enter)]
+      , div [ className "container" ] [ blocksRandomText' hd                ]
+      ]
+------------------------------------------------------------------------
+
+blocksRandomText' :: HomeData -> ReactElement
+blocksRandomText' (HomeData hd) = blocksRandomText hd.blockTexts
+
+
+blocksRandomText :: BlockTexts -> ReactElement
+blocksRandomText (BlockTexts bt) = 
+  div [ className "row" ] ( map showBlock bt.blocks )
+    where
+      showBlock :: BlockText -> ReactElement
+      showBlock (BlockText b) =
+        div [ className "col-md-4 content" ]
+              [ h3 [] [ a [ href b.href, title b.title]
+                          [ i [className b.icon] []
+                          , text b.titleText
+                          ]
+                      ]
+              , p [] [ text b.text ]
+              ]
 
 
 docButton :: Button -> ReactElement
@@ -105,98 +158,5 @@ imageEnter (HomeData hd) action =  div [className "row"]
                                    []
                              ]
                            ]
-
-
-layoutHome :: forall props eff . Spec ( console :: CONSOLE
-                                      , ajax    :: AJAX
-                                      , dom     :: DOM 
-                                      | eff
-                                      ) State props Action
-layoutHome = simpleSpec performAction render
-  where
-    render :: Render State props Action
-    render dispatch _ state _ =
-      [ div [ className "container" ] [ jumboTitle homeData false                 ]
-      , div [ className "container" ] [ imageEnter homeData (onClick \_ -> dispatch $ Enter)]
-      , div [ className "container" ] [ blocksRandomText' homeData                ]
-      ]
-
-
-blocksRandomText' :: HomeData -> ReactElement
-blocksRandomText' (HomeData hd) = blocksRandomText hd.blockTexts
-
-
-blocksRandomText :: BlockTexts -> ReactElement
-blocksRandomText (BlockTexts bt) = 
-  div [ className "row" ] ( map showBlock bt.blocks )
-    where
-      showBlock :: BlockText -> ReactElement
-      showBlock (BlockText b) =
-        div [ className "col-md-4 content" ]
-              [ h3 [] [ a [ href b.href, title b.title]
-                          [ i [className b.icon] []
-                          , text b.titleText
-                          ]
-                      ]
-              , p [] [ text b.text ]
-              ]
-
-
-
-data HomeData = HomeData { name       :: String
-                         , signature  :: String
-                         , logoTitle  :: String
-                         , imageTitle :: String
-                         , docButton  :: Button
-                         , blockTexts :: BlockTexts
-                         }
-
-data Button = Button { title :: String
-                     , text  :: String
-                     , href  :: String
-                   }
-
-data BlockTexts = BlockTexts { blocks :: Array BlockText }
-
-data BlockText = BlockText { title      :: String
-                           , href       :: String
-                           , titleText  :: String
-                           , icon       :: String
-                           , text       :: String
-                          }
-
-
-homeData = HomeData { name      : "Gargantext"
-                    , signature : "search map share"
-                    , logoTitle : "Project hosted by CNRS (France, Europa)"
-                    , imageTitle: "Click and test by yourself"
-                    , docButton : Button { title : "Your first map in less than 5 minutes" 
-                                         , text  : " Documentation"
-                                         , href  : "https://iscpif.fr/gargantext/your-first-map/"
-                                         }
-                    , blockTexts : BlockTexts {blocks : blockTexts}
-                    }
-
-
-blockTexts :: Array BlockText
-blockTexts = [ BlockText { title : "Random sentences in Gargantua's Books chapters, historically true"
-                         , href  : "#"
-                         , icon  : "fas fa-random"
-                         , titleText : "   Historic"
-                         , text  : "Chapter 1.XV. How Gargantua was put under other schoolmasters. Chapter 2.XXII. How Panurge served a Parisian lady a trick that pleased her not very well. Chapter 3.XXXVII. How Pantagruel persuaded Panurge to take counsel of a fool. Chapter 4.LXI. How Gaster invented means to get and preserve corn. Chapter 5.XXXVIII. Of the temple's admirable pavement."
-                                    }
-             , BlockText { title : "Randomized words, semantically and syntaxically falses."
-                         , href  : "#"
-                         , icon  : "fas fa-random"
-                         , titleText : "   Presentation"
-                         , text  : "Autem nascetur iaculis, sedfusce enimsed cursus posuere consectetuer eu justo aliquammauris. Phasellus vero nisi porttitor elit quod, leo feliscras ultricies non tempor sagittis. Liberoduis facilisinam erat dapibusnam, lacus dui duis tristique volutpatut quis vestibulum magna. Nobis faucibusvestibulum dolores minim. Bibendumin malesuada adipiscing ante, mattis fames nequeetiam lorem. No diam id. Litora quisaenean commodo lobortisetiam neque, libero mollis scelerisque inceptos ullamcorper sea congue delenit possim."
-                                    }
-             , BlockText { title : "Randomized letters, true or false ?"
-                         , href  : "#"
-                         , icon  : "fas fa-random"
-                         , titleText : "   Tutoreil"
-                         , text  : "Il paraît que l'rdore des lettres dans un mot n'a pas d'imtraopnce. La première et la dernière lettre doeivnt être à la bonne place. Le reste peut être dans un désordre total et on peut touojurs lire sans prolèbme. On ne lit donc pas chaque lettre en ellêem-me, mais le mot comme un tout. Un chaegmnent de référentiel et nous tranpossons ce résultat au texte luimê-me: l'rdore des mots est failbement important copamré au contexte du texte qui, lui, est copmté: comptexter avec Gargantext."
-                                    }
-              ]
 
 
