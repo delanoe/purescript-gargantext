@@ -167,7 +167,7 @@ pagesComponent s =
                                  | eff
                                  ) AppState props Action
     selectSpec Login      = focus _loginState _loginAction LN.renderSpec
-    selectSpec Home       = layout0 $ focus _landingState   _landingAction   (L.layoutHome EN)
+    selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
@@ -276,7 +276,6 @@ menuButton (LiNav { title : title'
                          ]
 
 
--- | WYSIWYG example in Pure React ?
 menuElements' :: ReactElement
 menuElements' = menuElements-- title, icon, text
   [ -- ===========================================================

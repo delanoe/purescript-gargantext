@@ -63,23 +63,22 @@ performAction SignUp _ _ = void do
 
 -- Layout |
 
-layoutHome :: forall props eff . Lang -> Spec ( console :: CONSOLE
-                                      , ajax    :: AJAX
-                                      , dom     :: DOM 
-                                      | eff
-                                      ) State props Action
-layoutHome FR = layoutHome' Fr.homeData
-layoutHome EN = layoutHome' En.homeData
-
+layoutLanding :: forall props eff . Lang -> Spec ( console :: CONSOLE
+                                              , ajax    :: AJAX
+                                              , dom     :: DOM 
+                                              | eff
+                                              ) State props Action
+layoutLanding FR = layoutLanding' Fr.landingData
+layoutLanding EN = layoutLanding' En.landingData
 
 ------------------------------------------------------------------------
 
-layoutHome' :: forall props eff . HomeData -> Spec ( console :: CONSOLE
-                                                  , ajax    :: AJAX
-                                                  , dom     :: DOM 
-                                                  | eff
-                                                  ) State props Action
-layoutHome' hd = simpleSpec performAction render
+layoutLanding' :: forall props eff . LandingData -> Spec ( console :: CONSOLE
+                                                   , ajax    :: AJAX
+                                                   , dom     :: DOM 
+                                                   | eff
+                                                   ) State props Action
+layoutLanding' hd = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
@@ -89,8 +88,8 @@ layoutHome' hd = simpleSpec performAction render
       ]
 ------------------------------------------------------------------------
 
-blocksRandomText' :: HomeData -> ReactElement
-blocksRandomText' (HomeData hd) = blocksRandomText hd.blockTexts
+blocksRandomText' :: LandingData -> ReactElement
+blocksRandomText' (LandingData hd) = blocksRandomText hd.blockTexts
 
 
 blocksRandomText :: BlockTexts -> ReactElement
@@ -102,12 +101,11 @@ blocksRandomText (BlockTexts bt) =
         div [ className "col-md-4 content" ]
               [ h3 [] [ a [ href b.href, title b.title]
                           [ i [className b.icon] []
-                          , text b.titleText
+                          , text ("   " <> b.titleText)
                           ]
                       ]
               , p [] [ text b.text ]
               ]
-
 
 docButton :: Button -> ReactElement
 docButton (Button b) = a [ className "btn btn-success btn-lg spacing-class"
@@ -120,8 +118,8 @@ docButton (Button b) = a [ className "btn btn-success btn-lg spacing-class"
                 , text b.text
                 ]
 
-jumboTitle :: HomeData -> Boolean -> ReactElement
-jumboTitle (HomeData hd) b = div jumbo
+jumboTitle :: LandingData -> Boolean -> ReactElement
+jumboTitle (LandingData hd) b = div jumbo
                    [ div [className "row"             ]
                      [ div [className "col-md-4 content"]
                        [ h1 [] [ text hd.name]
@@ -146,9 +144,8 @@ jumboTitle (HomeData hd) b = div jumbo
                                  true  -> [className "jumbotron"]
                                  false -> []
 
-
-imageEnter :: HomeData -> Props -> ReactElement
-imageEnter (HomeData hd) action =  div [className "row"]
+imageEnter :: LandingData -> Props -> ReactElement
+imageEnter (LandingData hd) action =  div [className "row"]
                            [ div [className "col-md-offset-5 col-md-6 content"]
                              [ img [ src "images/Gargantextuel-212x300.jpg"
                                    , _id "funnyimg"
@@ -158,5 +155,3 @@ imageEnter (HomeData hd) action =  div [className "row"]
                                    []
                              ]
                            ]
-
-
