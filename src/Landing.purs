@@ -105,10 +105,11 @@ blocksRandomText (BlockTexts bt) =
                           ]
                       ]
               , p [] [ text b.text ]
+              , p [] [ docButton b.docButton ]
               ]
 
 docButton :: Button -> ReactElement
-docButton (Button b) = a [ className "btn btn-success btn-lg spacing-class"
+docButton (Button b) = a [ className "btn btn-outline-primary btn-sm spacing-class"
               , href b.href
               , target "blank"
               , title b.title
@@ -124,7 +125,6 @@ jumboTitle (LandingData hd) b = div jumbo
                      [ div [className "col-md-4 content"]
                        [ h1 [] [ text hd.name]
                        , p  [] [ text hd.signature ]
-                       , p  [] [ docButton hd.docButton]
                        ]
                      , div [className "col-md-4 content"] []
                      , div [ className "col-md-4 content"]
