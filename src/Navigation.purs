@@ -24,7 +24,6 @@ import SearchForm as S
 import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
 import UserPage as UP
 import AnnotationDocumentView as D
-
 import Gargantext.Data.Lang
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
@@ -188,7 +187,9 @@ layout0 layout =
   [ layoutSidebar
 --  TODO Add layoutTree
 --, exampleTree'
+    , divSearchBar
   , innerLayout $ layout
+
   , layoutFooter
   ]
   where
@@ -221,7 +222,7 @@ layoutSidebar = simpleSpec performAction render
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"]
                                  [ divDropdownLeft
-                                 , divSearchBar
+--                                  , divSearchBar
                                  , divDropdownRight
                                  ]
                           ]
@@ -317,7 +318,7 @@ menuElements ns = dropDown $ intercalate divider $ map (map liNav) ns
   where
     dropDown :: Array ReactElement -> ReactElement
     dropDown = ul [className "dropdown-menu"]
-    
+
     divider :: Array ReactElement
     divider = [li [className "divider"] []]
 
@@ -354,23 +355,31 @@ liNav (LiNav { title : title'
 
 
 -- TODO put the search form in the center of the navBar
-divSearchBar :: ReactElement
-divSearchBar = ul [ className "nav navbar-nav"
-                  , style { "margin-left" : "146px"}
-                  ] [ div [className "navbar-form"]
-                          [ input [ className   "search-query"
-                                  , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
-                                  , _type "text"
-                                  , style { height: "35px"
-                                          , width : "450px"
-                                          --  , color: "white"
-                                          --  , background : "#A1C2D8"
-                                          }
-                                  ] []
-                                             -- TODO add button in navbar (and "enter" execution)
-                                             -- , div [] [button [][]]
+divSearchBar :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
+divSearchBar = simpleSpec performAction render
+  where
+    render :: Render AppState props Action
+    render dispatch _ state _ = [div [ className "" ] [ searchbar']]
+      where
+        searchbar' = ul [ className "nav navbar-nav"
+                        , style { "margin-left" : "79px"}
+                        ] [ div [className "navbar-form"]
+                            [ input [ className   "search-query"
+                                    , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
+                                    , _type "text"
+                                    , style { height: "35px"
+                                            , width : "450px"
+                                              --  , color: "white"
+                                              --  , background : "#A1C2D8"
+                                            }
+                                    ] []
+                              -- TODO add button in navbar (and "enter" execution)
+                              -- , div [] [button [][]]
                             ]
-                  ]
+                          ]
+
+
+
 
 --divDropdownRight :: Render AppState props Action
 divDropdownRight :: ReactElement
