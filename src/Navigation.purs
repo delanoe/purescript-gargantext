@@ -1,31 +1,31 @@
 module Navigation where
 
 import DOM
+import Gargantext.Data.Lang
+import Prelude
 
 import AddCorpusview as AC
+import AnnotationDocumentView as D
 import Control.Monad.Eff.Console (CONSOLE)
-
 import Data.Array (concat)
 import Data.Either (Either(..))
 import Data.Foldable (fold, intercalate)
 import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.Maybe (Maybe(Nothing, Just))
+import Data.Tuple (Tuple(..))
 import DocView as DV
 import Landing as L
 import Login as LN
+import NTree as NT
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
-import Prelude (class Applicative, class Bind, Unit, bind, id, map, negate, pure, unit, void, ($), (<>))
 import React (ReactElement)
-import React.DOM (a, div, img, li, span, text, ul, input, button, footer, p, hr, form)
-import React.DOM.Props (_data, _id, _type, aria, className, href, name, placeholder, role, src, style, tabIndex, target, title)
+import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, text, ul)
+import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onClick, placeholder, role, src, style, tabIndex, target, title)
 import React.DOM.Props as RP
 import SearchForm as S
-import Thermite (PerformAction, Render, Spec, _render, defaultRender, focus, modifyState, simpleSpec, withState)
+import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultRender, focus, modifyState, simpleSpec, withState)
 import UserPage as UP
-import AnnotationDocumentView as D
-import Gargantext.Data.Lang
-
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
 type AppState =
@@ -37,6 +37,7 @@ type AppState =
   , searchState    :: S.State
   , userPage       :: UP.State
   , annotationdocumentView   :: D.State
+  , ntreeView   :: NT.State
   }
 
 initAppState :: AppState
@@ -49,6 +50,7 @@ initAppState =
   , searchState    : S.initialState
   , userPage       : UP.initialState
   , annotationdocumentView   : D.initialState
+  , ntreeView : NT.exampleTree
   }
 
 data Action
@@ -61,6 +63,7 @@ data Action
   | SearchA    S.Action
   | UserPageA  UP.Action
   | AnnotationDocumentViewA  D.Action
+  | TreeViewA  NT.Action
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
@@ -69,8 +72,10 @@ performAction :: forall eff props. PerformAction ( dom :: DOM
 performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
 
-performAction _ _ _ = void do
+
+performAction _  _ _ = void do
   modifyState id
+
 
 
 ---- Lens and Prism
@@ -151,6 +156,16 @@ _annotationdocumentviewAction = prism AnnotationDocumentViewA \action ->
     _-> Left action
 
 
+_treeState :: Lens' AppState NT.State
+_treeState = lens (\s -> s.ntreeView) (\s ss -> s {ntreeView = ss})
+
+
+_treeAction :: Prism' Action NT.Action
+_treeAction = prism TreeViewA \action ->
+  case action of
+    TreeViewA caction -> Right caction
+    _-> Left action
+
 
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
@@ -185,11 +200,9 @@ layout0 :: forall eff props. Spec (E eff) AppState props Action
 layout0 layout =
   fold
   [ layoutSidebar
---  TODO Add layoutTree
---, exampleTree'
-    , divSearchBar
+  , focus _treeState _treeAction NT.treeview
+  , divSearchBar
   , innerLayout $ layout
-
   , layoutFooter
   ]
   where
@@ -202,11 +215,11 @@ layout0 layout =
         ]
       ]
 --    TODO Add Tree to the template
---    exampleTree' ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
---    exampleTree' = simpleSpec performAction render
---      where
---        render :: Render AppState props Action
---        render dispatch _ state _ = DV.toHtml dispatch DV.exampleTree
+    -- exampleTree' ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+    -- exampleTree' = simpleSpec performAction render
+    --  where
+    --    render :: Render AppState props Action
+    --    render dispatch _ state _ = [ toHtml dispatch exampleTree]
 
 
 layoutSidebar ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action

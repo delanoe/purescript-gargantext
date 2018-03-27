@@ -67,11 +67,12 @@ newtype Hyperdata = Hyperdata
   }
 
 type State = CorpusTableData
+
 data Action
   = ChangePageSize PageSizes
   | ChangePage Int
   | LoadData
-  | ToggleFolder ID
+
 
 
 instance decodeHyperdata :: DecodeJson Hyperdata where
@@ -94,21 +95,6 @@ instance decodeResponse :: DecodeJson Response where
     pure $ Response { cid, created, favorite, ngramCount, hyperdata }
 
 
-type Name = String
-type Open = Boolean
-type URL  = String
-type ID   = Int
-
-data NTree a = NLeaf a | NNode ID Open Name (Array (NTree a))
-
-type FTree = NTree (Tuple Name URL)
-
-toggleNode :: forall t10. Int -> NTree t10 -> NTree t10
-toggleNode sid (NNode iid open name ary) =
-  NNode iid nopen name $ map (toggleNode sid) ary
-  where
-    nopen = if sid == iid then not open else open
-toggleNode sid a = a
 
 
 layoutDocview :: Spec _ State _ Action
@@ -121,7 +107,7 @@ layoutDocview = simpleSpec performAction render
           [ div [className "col-md-3"]
             [ br' []
             , br' []
-            ,  div [className "tree"] [toHtml dispatch d.tree]
+--            ,  div [className "tree"] [toHtml dispatch d.tree]
             ]
           , div [className "col-md-9"]
             [ nav []
@@ -173,66 +159,6 @@ layoutDocview = simpleSpec performAction render
       ]
 
 
-------------------------------------------------------------------------
--- Realistic Tree for the UI
-
-myCorpus :: Int -> String -> NTree (Tuple String String)
-myCorpus n name = NNode n false name
-    [ NLeaf (Tuple "Facets"    "#/docView")
-    , NLeaf (Tuple "Graph"     "#/docView")
-    , NLeaf (Tuple "Dashboard" "#/userPage")
-    ]
-
-exampleTree :: NTree (Tuple String String)
-exampleTree =
-  NNode 1 true "My gargantext"
-  [ myCorpus 2 "My publications"
-  , myCorpus 3 "My community"
-  , NNode 4 false "My researchs" [ myCorpus 5 "Subject A"
-                                 , myCorpus 6 "Subject B"
-                                 , myCorpus 7 "Subject C"
-                                 ]
-  ]
-
-------------------------------------------------------------------------
--- TODO
--- alignment to the right
-nodeOptionsCorp activated = case activated of
-                         true  -> [ i [className "fab fa-whmcs" ] []]
-                         false -> []
-
--- TODO
--- alignment to the right
--- on hover make other options available:
-nodeOptionsView activated = case activated of
-                         true -> [ i [className "fas fa-sync-alt" ] []
-                                 , i [className "fas fa-upload"   ] []
-                                 , i [className "fas fa-share-alt"] []
-                                 ]
-                         false -> []
-
-toHtml :: _ -> FTree -> ReactElement
-toHtml d (NLeaf (Tuple name link)) =
-  li []
-  [ a [ href link]
-    ( [ text (name <> "    ")
-      ] <> nodeOptionsView false
-    )
-  ]
-toHtml d (NNode id open name ary) =
-  ul [ ]
-  [ li [] $
-    ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      ,  text $ " " <> name <> "    "
-      ] <> nodeOptionsCorp false <>
-      if open then
-        map (toHtml d) ary
-        else []
-    )
-  ]
-
-fldr :: Boolean -> Props
-fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 performAction :: PerformAction _ State _ Action
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
@@ -256,7 +182,7 @@ performAction LoadData _ _ = void do
          }
 
 
-performAction (ToggleFolder i) _ _ = void (cotransform (\(TableData td) -> TableData $ td {tree = toggleNode i td.tree}))
+-- performAction (ToggleFolder i) _ _ = void (cotransform (\(TableData td) -> TableData $ td {tree = toggleNode i td.tree}))
 
 
 changePageSize :: PageSizes -> CorpusTableData -> CorpusTableData
@@ -411,7 +337,7 @@ newtype TableData a
     , pageSize     :: PageSizes
     , totalRecords :: Int
     , title        :: String
-    , tree         :: FTree
+   -- , tree         :: FTree
     }
 
 newtype Corpus
@@ -446,7 +372,7 @@ tdata = TableData
         , pageSize     : PS10
         , totalRecords : 100
         , title        : "Documents"
-        , tree         : exampleTree
+     --   , tree         : exampleTree
         }
 
 tdata' :: _ -> CorpusTableData
@@ -457,7 +383,7 @@ tdata' d = TableData
         , pageSize     : PS10
         , totalRecords : 100
         , title        : "Documents"
-        , tree         : exampleTree
+       -- , tree         : exampleTree
         }
 
 
