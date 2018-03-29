@@ -40,8 +40,8 @@ data Action
 
 performAction :: forall eff props. PerformAction ( console :: CONSOLE
                                                  , ajax    :: AJAX
-                                                 , dom     :: DOM 
-                                                 | eff 
+                                                 , dom     :: DOM
+                                                 | eff
                                                  ) State props Action
 performAction NoOp _ _ = void do
   T.modifyState \state -> state
@@ -65,7 +65,7 @@ performAction SignUp _ _ = void do
 
 layoutLanding :: forall props eff . Lang -> Spec ( console :: CONSOLE
                                               , ajax    :: AJAX
-                                              , dom     :: DOM 
+                                              , dom     :: DOM
                                               | eff
                                               ) State props Action
 layoutLanding FR = layoutLanding' Fr.landingData
@@ -75,16 +75,16 @@ layoutLanding EN = layoutLanding' En.landingData
 
 layoutLanding' :: forall props eff . LandingData -> Spec ( console :: CONSOLE
                                                    , ajax    :: AJAX
-                                                   , dom     :: DOM 
+                                                   , dom     :: DOM
                                                    | eff
                                                    ) State props Action
 layoutLanding' hd = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ div [ className "container" ] [ jumboTitle hd false                 ]
-      , div [ className "container" ] [ imageEnter hd (onClick \_ -> dispatch $ Enter)]
-      , div [ className "container" ] [ blocksRandomText' hd                ]
+      [ div [ className "container1" ] [ jumboTitle hd false                 ]
+      , div [ className "container1" ] [ imageEnter hd (onClick \_ -> dispatch $ Enter)]
+      , div [ className "container1" ] [ blocksRandomText' hd                ]
       ]
 ------------------------------------------------------------------------
 
@@ -93,7 +93,7 @@ blocksRandomText' (LandingData hd) = blocksRandomText hd.blockTexts
 
 
 blocksRandomText :: BlockTexts -> ReactElement
-blocksRandomText (BlockTexts bt) = 
+blocksRandomText (BlockTexts bt) =
   div [ className "row" ] ( map showBlock bt.blocks )
     where
       showBlock :: BlockText -> ReactElement
@@ -114,7 +114,7 @@ docButton (Button b) = a [ className "btn btn-outline-primary btn-sm spacing-cla
               , target "blank"
               , title b.title
               ] [ span [ aria {hidden : true}
-                       , className "glyphicon glyphicon-hand-right" 
+                       , className "glyphicon glyphicon-hand-right"
                        ]  []
                 , text b.text
                 ]
@@ -151,7 +151,7 @@ imageEnter (LandingData hd) action =  div [className "row"]
                                    , _id "funnyimg"
                                    , title hd.imageTitle
                                    , action
-                                   ] 
+                                   ]
                                    []
                              ]
                            ]

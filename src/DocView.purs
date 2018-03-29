@@ -102,7 +102,7 @@ layoutDocview = simpleSpec performAction render
   where
     render :: Render State _ Action
     render dispatch _ state@(TableData d) _ =
-      [ div [className "container"]
+      [ div [className "container1"]
         [ div [className "row"]
           [ div [className "col-md-3"]
             [ br' []

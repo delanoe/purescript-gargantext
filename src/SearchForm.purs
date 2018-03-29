@@ -51,15 +51,15 @@ unsafeEventValue e = (unsafeCoerce e).target.value
 
 searchSpec :: forall props eff . Spec ( console :: CONSOLE
                                       , ajax    :: AJAX
-                                      , dom     :: DOM 
+                                      , dom     :: DOM
                                       | eff
                                       ) State props Action
 searchSpec = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ div [className "container"] []
-      , div [className "container"]
+      [ div [className "container1"] []
+      , div [className "container1"]
        [ div [className "jumbotron" ]
          [ div [className "row"       ]
            [ div [className "col-md-10" ]

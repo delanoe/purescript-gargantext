@@ -211,7 +211,7 @@ layout0 layout =
       , rs b
       ]
     ls = over _render \render d p s c ->
-      [div [className "col-md-4"] (render d p s c)]
+      [div [className "col-md-3"] (render d p s c)]
     rs = over _render \render d p s c ->
       [ div [className "col-md-8"] (render d p s c) ]
     cont = over _render \render d p s c ->
@@ -240,7 +240,7 @@ layoutSidebar = simpleSpec performAction render
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
             , role "navigation"
-            ] [ div [className "container"]
+            ] [ div [className "container1"]
                     [ div [ className "navbar-inner" ]
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"]
@@ -384,13 +384,13 @@ divSearchBar = simpleSpec performAction render
     render dispatch _ state _ = [div [ className "" ] [ searchbar']]
       where
         searchbar' = ul [ className "nav navbar-nav"
-                        , style { "margin-left" : "79px"}
+                        , style { "margin-left" : "0px"}
                         ] [ div [className "navbar-form"]
                             [ input [ className   "search-query"
                                     , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
                                     , _type "text"
                                     , style { height: "35px"
-                                            , width : "450px"
+
                                               --  , color: "white"
                                               --  , background : "#A1C2D8"
                                             }
@@ -431,7 +431,7 @@ layoutFooter ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
 layoutFooter = simpleSpec performAction render
   where
     render :: Render AppState props Action
-    render dispatch _ state _ = [div [ className "container" ] [ hr [] [], footerLegalInfo']]
+    render dispatch _ state _ = [div [ className "container1" ] [ hr [] [], footerLegalInfo']]
       where
         footerLegalInfo' = footer [] [ p [] [ text "Gargantext "
                                    , span [className "glyphicon glyphicon-registration-mark" ] []

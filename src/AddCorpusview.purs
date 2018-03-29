@@ -87,7 +87,7 @@ performAction GO _ _ = void do
 
 
 layoutModal :: forall e.  { response :: Array Response | e} -> Array ReactElement
-layoutModal state = 
+layoutModal state =
       [button [ _type "button"
              , _data { "toggle" : "modal"
              , "target" : ".myModal"
@@ -95,7 +95,7 @@ layoutModal state =
              ][text "Launch modal"]
              , div [ className "modal fade myModal"
                    , role "dialog"
-                   , _data {show : true}  
+                   , _data {show : true}
                    ][ div [ className "modal-dialog"
                           , role "document"
                           ] [ div [ className "modal-content"]
@@ -107,14 +107,14 @@ layoutModal state =
                                         , button [ _type "button"
                                                  , className "close"
                                                  , _data { dismiss : "modal"}
-                                                 ] [ span [ aria {hidden : true}] 
+                                                 ] [ span [ aria {hidden : true}]
                                                           [ text "X"]
                                                    ]
                                         ]
-                   
+
                                   , div [ className "modal-body"]
                                         [ ul [ className "list-group"] ( map fn1 state.response ) ]
-                   
+
                                   , div [className "modal-footer"]
                                         [ button [ _type "button"
                                                  , className "btn btn-secondary"
@@ -142,8 +142,8 @@ layoutAddcorpus = simpleSpec performAction render
     render :: Render State props Action
     render dispatch _ state _ =
       [
-        div [className "container"] []
-      ,  div [className "container"]
+        div [className "container1"] []
+      ,  div [className "container1"]
         [
           div [className "jumbotron"]
           [ div [className "row"]

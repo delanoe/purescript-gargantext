@@ -45,7 +45,7 @@ docview = simpleSpec performAction render
     render :: Render State _ Action
     render dispatch _ state _ =
       [
-          div [className "container"]
+          div [className "container1"]
           [
             div [className "row"]
             [
