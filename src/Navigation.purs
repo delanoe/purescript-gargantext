@@ -200,12 +200,28 @@ layout0 :: forall eff props. Spec (E eff) AppState props Action
 layout0 layout =
   fold
   [ layoutSidebar
-  , focus _treeState _treeAction NT.treeview
-  , divSearchBar
-  , innerLayout $ layout
+  , outerLayout
   , layoutFooter
   ]
   where
+    outerLayout :: Spec (E eff) AppState props Action
+    outerLayout =
+      cont $ fold
+      [ ls a
+      , rs b
+      ]
+    ls = over _render \render d p s c ->
+      [div [className "col-md-4"] (render d p s c)]
+    rs = over _render \render d p s c ->
+      [ div [className "col-md-8"] (render d p s c) ]
+    cont = over _render \render d p s c ->
+      [ div [ className "row" ] (render d p s c) ]
+
+    a = fold  [ focus _treeState _treeAction NT.treeview
+              , divSearchBar
+              ]
+    b = innerLayout $ layout
+
     innerLayout :: Spec (E eff) AppState props Action
                 -> Spec (E eff) AppState props Action
     innerLayout = over _render \render d p s c ->
@@ -214,12 +230,6 @@ layout0 layout =
           div [className "container-fluid"]  (render d p s c)
         ]
       ]
---    TODO Add Tree to the template
-    -- exampleTree' ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
-    -- exampleTree' = simpleSpec performAction render
-    --  where
-    --    render :: Render AppState props Action
-    --    render dispatch _ state _ = [ toHtml dispatch exampleTree]
 
 
 layoutSidebar ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
@@ -235,7 +245,6 @@ layoutSidebar = simpleSpec performAction render
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"]
                                  [ divDropdownLeft
---                                  , divSearchBar
                                  , divDropdownRight
                                  ]
                           ]
