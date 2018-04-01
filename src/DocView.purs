@@ -158,8 +158,6 @@ layoutDocview = simpleSpec performAction render
         ]
       ]
 
-
-
 performAction :: PerformAction _ State _ Action
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
 
