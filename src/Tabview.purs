@@ -21,6 +21,7 @@ data Action
   | AuthorviewA AV.Action
   | TermsviewA TV.Action
   | ChangeTab
+  | NoOp
 
 data TabTitle = TabTitle String Int
 

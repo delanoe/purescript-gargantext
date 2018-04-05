@@ -23,6 +23,7 @@ data Routes
   | SearchView
   | UserPage
   | AnnotationDocumentView Int
+  | Tabview
 
 
 instance showRoutes :: Show Routes where
@@ -33,6 +34,7 @@ instance showRoutes :: Show Routes where
   show SearchView = "SearchView"
   show UserPage   = "UserPage"
   show (AnnotationDocumentView i)  = "DocumentView"
+  show Tabview   = "Tabview"
 
 int :: Match Int
 int = floor <$> num
@@ -41,6 +43,7 @@ int = floor <$> num
 routing :: Match Routes
 routing =
       loginRoute
+  <|> tabview
   <|> documentView
   <|> userPageRoute
   <|> searchRoute
@@ -48,6 +51,7 @@ routing =
   <|> addcorpusRoute
   <|> home
   where
+    tabview  = Tabview   <$ route "tabview"
     documentView   = AnnotationDocumentView <$> (route "documentView" *> int)
     userPageRoute  = UserPage   <$ route "userPage"
     searchRoute    = SearchView <$ route "search"

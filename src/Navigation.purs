@@ -2,7 +2,7 @@ module Navigation where
 
 import DOM
 import Gargantext.Data.Lang
-import Prelude
+import Prelude hiding (div)
 
 import AddCorpusview as AC
 import AnnotationDocumentView as D
@@ -24,8 +24,11 @@ import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, 
 import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onClick, placeholder, role, src, style, tabIndex, target, title)
 import React.DOM.Props as RP
 import SearchForm as S
+import Tabview as TV
 import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultRender, focus, modifyState, simpleSpec, withState)
 import UserPage as UP
+
+
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
 type AppState =
@@ -38,6 +41,7 @@ type AppState =
   , userPage       :: UP.State
   , annotationdocumentView   :: D.State
   , ntreeView   :: NT.State
+  , tabview :: TV.State
   }
 
 initAppState :: AppState
@@ -51,6 +55,7 @@ initAppState =
   , userPage       : UP.initialState
   , annotationdocumentView   : D.initialState
   , ntreeView : NT.exampleTree
+  , tabview : TV.initialState
   }
 
 data Action
@@ -64,6 +69,7 @@ data Action
   | UserPageA  UP.Action
   | AnnotationDocumentViewA  D.Action
   | TreeViewA  NT.Action
+  | TabViewA TV.Action
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
@@ -167,6 +173,17 @@ _treeAction = prism TreeViewA \action ->
     _-> Left action
 
 
+_tabviewState :: Lens' AppState TV.State
+_tabviewState = lens (\s -> s.tabview) (\s ss -> s {tabview = ss})
+
+
+_tabviewAction :: Prism' Action TV.Action
+_tabviewAction = prism TabViewA \action ->
+  case action of
+    TabViewA caction -> Right caction
+    _-> Left action
+
+
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
   case s.currentRoute of
@@ -186,6 +203,7 @@ pagesComponent s =
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
     selectSpec (AnnotationDocumentView i)   = layout0 $ focus _annotationdocumentviewState  _annotationdocumentviewAction  D.docview
+    selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tabSpec
 
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState    _searchAction    S.searchSpec
@@ -502,4 +520,10 @@ dispatchAction dispatcher _ UserPage = do
 dispatchAction dispatcher _ (AnnotationDocumentView i) = do
   _ <- dispatcher $ SetRoute  $ AnnotationDocumentView i
   _ <- dispatcher $ AnnotationDocumentViewA $ D.NoOp
+  pure unit
+
+
+dispatchAction dispatcher _ Tabview = do
+  _ <- dispatcher $ SetRoute  $ Tabview
+  _ <- dispatcher $ TabViewA $ TV.NoOp
   pure unit
