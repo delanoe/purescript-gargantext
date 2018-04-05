@@ -43,7 +43,7 @@ initialState =
   , termsview : TV.initialState
   , tabTitle : TabTitleState
     { selectedTab : 1
-    , tabTitles : [TabTitle "Docview" 1, TabTitle "Sourceview" 2, TabTitle "Authorview" 3, TabTitle "Termsview" 4]
+    , tabTitles : [TabTitle "Documentsview" 1, TabTitle "Sourceview" 2, TabTitle "Authorview" 3, TabTitle "Termsview" 4]
     }
   }
 
