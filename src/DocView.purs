@@ -104,33 +104,28 @@ layoutDocview = simpleSpec performAction render
     render dispatch _ state@(TableData d) _ =
       [ div [className "container1"]
         [ div [className "row"]
-          [ div [className "col-md-3"]
-            [ br' []
-            , br' []
---            ,  div [className "tree"] [toHtml dispatch d.tree]
-            ]
-          , div [className "col-md-9"]
-            [ nav []
-              [ div [className "nav nav-tabs", _id "nav-tab",role "tablist"]
-                [
-                  a [ className "nav-item nav-link active"
-                    , _id "nav-home-tab"
-                    , _data {toggle : "tab"}
-                    , href "#nav-home"
-                    , role "tab"
-                    , aria {controls : "nav-home"}
-                    , aria {selected:true}] [ text "Documents"]
+          [
+           div [className "col-md-12"]
+            [ -- nav []
+              -- [ div [className "nav nav-tabs", _id "nav-tab",role "tablist"]
+              --   [
+              --     a [ className "nav-item nav-link active"
+              --       , _id "nav-home-tab"
+              --       , _data {toggle : "tab"}
+              --       , href "#nav-home"
+              --       , role "tab"
+              --       , aria {controls : "nav-home"}
+              --       , aria {selected:true}] [ text "Documents"]
 
-                , a [className "nav-item nav-link",_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "Sources"]
+              --   , a [className "nav-item nav-link",_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "Sources"]
 
-                ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Authors"]
-                ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Terms"]
-                ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "(+)"]
+              --   ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Authors"]
+              --   ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Terms"]
+              --   ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "(+)"]
 
-                ]
-              ]
-            , br' []
-            , p''
+              --   ]
+              -- ]
+             p''
             , h3 [] [text "Chart Title"]
             , histogram
             , p''

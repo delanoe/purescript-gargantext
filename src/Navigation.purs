@@ -258,7 +258,7 @@ layoutSidebar = simpleSpec performAction render
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
             , role "navigation"
-            ] [ div [className "container1"]
+            ] [ div [className "container"]
                     [ div [ className "navbar-inner" ]
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"]
