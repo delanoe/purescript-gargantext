@@ -116,8 +116,7 @@ _tabAction = prism TabViewA \ action ->
 
 
 
-tab1 :: forall eff props. Spec ( dom :: DOM, console :: CONSOLE, ajax :: AJAX
-    | eff) State props Action
+tab1 :: forall eff props. Spec ( dom :: DOM, console :: CONSOLE, ajax :: AJAX| eff) State props Action
 tab1 = tabs _tablens _tabAction $ fromFoldable [ Tuple "Doc View" docPageSpec
       , Tuple "Author View" authorPageSpec
       , Tuple "Source View" sourcePageSpec
