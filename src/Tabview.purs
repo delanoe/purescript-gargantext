@@ -6,12 +6,16 @@ import DOM (DOM)
 import Data.Array (fold)
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, over, prism, view)
+import Data.List (List, fromFoldable)
+import Data.Tuple (Tuple(..))
 import DocView as DV
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
 import React.DOM (a, div, li, text, ul)
 import React.DOM.Props (_data, _id, aria, className, href, role)
 import Sourceview as SV
+import Tab (tabs)
+import Tab as Tab
 import Termsview as TV
 import Thermite (Render, Spec, _performAction, _render, defaultPerformAction, defaultRender, focus, focusState, simpleSpec, withState)
 
@@ -20,19 +24,15 @@ data Action
   | SourceviewA SV.Action
   | AuthorviewA AV.Action
   | TermsviewA TV.Action
-  | ChangeTab
+  | TabViewA Tab.Action
   | NoOp
-
-data TabTitle = TabTitle String Int
-
-newtype TabTitleState = TabTitleState {tabTitles :: Array TabTitle, selectedTab :: Int}
 
 type State =
   { docview :: DV.State
   , authorview :: AV.State
   , sourceview :: SV.State
   , termsview :: TV.State
-  , tabTitle :: TabTitleState
+  , activeTab :: Int
   }
 
 initialState :: State
@@ -41,10 +41,7 @@ initialState =
   , authorview : AV.initialState
   , sourceview : SV.initialState
   , termsview : TV.initialState
-  , tabTitle : TabTitleState
-    { selectedTab : 1
-    , tabTitles : [TabTitle "Documentsview" 1, TabTitle "Sourceview" 2, TabTitle "Authorview" 3, TabTitle "Termsview" 4]
-    }
+  , activeTab : 0
   }
 
 _doclens :: Lens' State DV.State
@@ -63,9 +60,14 @@ _termslens :: Lens' State TV.State
 _termslens = lens (\s -> s.termsview) (\s ss -> s {termsview = ss})
 
 
-_tabtitlelens :: Lens' State TabTitleState
-_tabtitlelens = lens (\s -> s.tabTitle) (\s ss -> s {tabTitle = ss})
+_tablens :: Lens' State Tab.State
+_tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
 
+_tabAction :: Prism' Action Tab.Action
+_tabAction = prism TabViewA \ action ->
+  case action of
+    TabViewA laction -> Right laction
+    _-> Left action
 
 _docAction :: Prism' Action DV.Action
 _docAction = prism DocviewA \ action ->
@@ -116,44 +118,12 @@ authorPageActionSpec = simpleSpec (view _performAction authorPageSpec) defaultRe
 termsPageActionSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
 termsPageActionSpec = simpleSpec (view _performAction termsPageSpec) defaultRender
 
-tabSpec' :: forall eff props. Spec eff State props Action
-tabSpec' = container $ fold
-      [ withState $ wrapSpec docPageSpec
-      , withState $ wrapSpec authorPageSpec
-      , withState $ wrapSpec sourcePageSpec
-      , withState $ wrapSpec termsPageSpec
-      ]
-  where
-    container :: Spec eff State props Action -> Spec eff State props Action
-    container = over _render \render d p s c ->
-      [ div [className "tab-content"] $ render d p s c ]
-    containerTabContent st = over _render \render d p s c ->
-      [ div [className "tab-pane fade"] $ render d p s c ]
-    wrapSpec spec st =
-      simpleSpec defaultPerformAction (view _render spec)
-
-tabSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State props  Action
-tabSpec = fold
-            [ focusState _tabtitlelens tabTitleSpec
-            , tabSpec'
-            , docPageActionSpec
-            , sourcePagesActionSpec
-            , authorPageActionSpec
-            , termsPageActionSpec
-            ]
 
 
-tabTitleSpec :: forall eff props. Spec eff TabTitleState  props Action
-tabTitleSpec = simpleSpec defaultPerformAction render
-  where
-    render :: Render TabTitleState  props Action
-    render dispatch _ state@(TabTitleState st)_ =
-      [ ul [className "nav nav-tabs", _id "myTab", role "tablist"]
-        (map (item st.selectedTab) st.tabTitles)
-      ]
-      where
-        item sid (TabTitle title iid) =
-          li [className "nav-item"]
-          [ a [className (if sid == iid then "nav-link active" else "nav-link"), _id ("tv-page-tab-item-" <> show iid), _data {toggle : "tab"}, href "", role "tab", aria {controls : title, selected : (if sid == iid then "true" else "false")}]
-            [ text title]
-          ]
+tab1 :: forall eff props. Spec ( dom :: DOM, console :: CONSOLE, ajax :: AJAX
+    | eff) State props Action
+tab1 = tabs _tablens _tabAction $ fromFoldable [ Tuple "Doc View" docPageSpec
+      , Tuple "Author View" authorPageSpec
+      , Tuple "Source View" sourcePageSpec
+      , Tuple "Terms View" termsPageSpec
+]

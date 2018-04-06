@@ -203,7 +203,7 @@ pagesComponent s =
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
     selectSpec (AnnotationDocumentView i)   = layout0 $ focus _annotationdocumentviewState  _annotationdocumentviewAction  D.docview
-    selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tabSpec
+    selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
 
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState    _searchAction    S.searchSpec
