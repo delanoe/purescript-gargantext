@@ -48,32 +48,34 @@ _doclens :: Lens' State DV.State
 _doclens = lens (\s -> s.docview) (\s ss -> s {docview = ss})
 
 
-_authorlens :: Lens' State AV.State
-_authorlens = lens (\s -> s.authorview) (\s ss -> s {authorview = ss})
-
-
-_sourcelens :: Lens' State SV.State
-_sourcelens = lens (\s -> s.sourceview) (\s ss -> s {sourceview = ss})
-
-
-_termslens :: Lens' State TV.State
-_termslens = lens (\s -> s.termsview) (\s ss -> s {termsview = ss})
-
-
-_tablens :: Lens' State Tab.State
-_tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
-
-_tabAction :: Prism' Action Tab.Action
-_tabAction = prism TabViewA \ action ->
-  case action of
-    TabViewA laction -> Right laction
-    _-> Left action
-
 _docAction :: Prism' Action DV.Action
 _docAction = prism DocviewA \ action ->
   case action of
     DocviewA laction -> Right laction
     _-> Left action
+
+
+docPageSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+docPageSpec = focus _doclens _docAction DV.layoutDocview
+
+
+_authorlens :: Lens' State AV.State
+_authorlens = lens (\s -> s.authorview) (\s ss -> s {authorview = ss})
+
+
+_authorAction :: Prism' Action AV.Action
+_authorAction = prism AuthorviewA \ action ->
+  case action of
+    AuthorviewA laction -> Right laction
+    _-> Left action
+
+authorPageSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State  props Action
+authorPageSpec = focus _authorlens _authorAction AV.authorSpec
+
+
+_sourcelens :: Lens' State SV.State
+_sourcelens = lens (\s -> s.sourceview) (\s ss -> s {sourceview = ss})
+
 
 _sourceAction :: Prism' Action SV.Action
 _sourceAction = prism SourceviewA \ action ->
@@ -81,11 +83,13 @@ _sourceAction = prism SourceviewA \ action ->
     SourceviewA laction -> Right laction
     _-> Left action
 
-_authorAction :: Prism' Action AV.Action
-_authorAction = prism AuthorviewA \ action ->
-  case action of
-    AuthorviewA laction -> Right laction
-    _-> Left action
+
+sourcePageSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+sourcePageSpec = focus _sourcelens _sourceAction SV.sourceSpec
+
+
+_termslens :: Lens' State TV.State
+_termslens = lens (\s -> s.termsview) (\s ss -> s {termsview = ss})
 
 
 _termsAction :: Prism' Action TV.Action
@@ -94,29 +98,21 @@ _termsAction = prism TermsviewA \ action ->
     TermsviewA laction -> Right laction
     _-> Left action
 
-docPageSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-docPageSpec = focus _doclens _docAction DV.layoutDocview
-
-authorPageSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State  props Action
-authorPageSpec = focus _authorlens _authorAction AV.authorSpec
-
-sourcePageSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-sourcePageSpec = focus _sourcelens _sourceAction SV.sourceSpec
 
 termsPageSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
 termsPageSpec = focus _termslens _termsAction TV.termsSpec
 
-docPageActionSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-docPageActionSpec = simpleSpec (view _performAction docPageSpec) defaultRender
 
-sourcePagesActionSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State props Action
-sourcePagesActionSpec = simpleSpec (view _performAction sourcePageSpec) defaultRender
+_tablens :: Lens' State Tab.State
+_tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
 
-authorPageActionSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-authorPageActionSpec = simpleSpec (view _performAction authorPageSpec) defaultRender
 
-termsPageActionSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-termsPageActionSpec = simpleSpec (view _performAction termsPageSpec) defaultRender
+
+_tabAction :: Prism' Action Tab.Action
+_tabAction = prism TabViewA \ action ->
+  case action of
+    TabViewA laction -> Right laction
+    _-> Left action
 
 
 
