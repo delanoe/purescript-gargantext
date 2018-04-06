@@ -2,7 +2,6 @@ module Navigation where
 
 import DOM
 import Gargantext.Data.Lang
-import Prelude hiding (div)
 
 import AddCorpusview as AC
 import AnnotationDocumentView as D
@@ -19,13 +18,15 @@ import Login as LN
 import NTree as NT
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
+import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, text, ul)
-import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onClick, placeholder, role, src, style, tabIndex, target, title)
+import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
 import React.DOM.Props as RP
 import SearchForm as S
 import Tabview as TV
 import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultRender, focus, modifyState, simpleSpec, withState)
+import Unsafe.Coerce (unsafeCoerce)
 import UserPage as UP
 
 
@@ -42,6 +43,7 @@ type AppState =
   , annotationdocumentView   :: D.State
   , ntreeView   :: NT.State
   , tabview :: TV.State
+  , search :: String
   }
 
 initAppState :: AppState
@@ -56,6 +58,7 @@ initAppState =
   , annotationdocumentView   : D.initialState
   , ntreeView : NT.exampleTree
   , tabview : TV.initialState
+  , search : ""
   }
 
 data Action
@@ -70,6 +73,8 @@ data Action
   | AnnotationDocumentViewA  D.Action
   | TreeViewA  NT.Action
   | TabViewA TV.Action
+  | Search String
+  | Go
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
@@ -78,8 +83,15 @@ performAction :: forall eff props. PerformAction ( dom :: DOM
 performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
 
+performAction (Search s)  _ _ = void do
+  modifyState $ _ {search = s}
 
-performAction _  _ _ = void do
+
+performAction Go  _ _ = void do
+  modifyState id
+
+
+performAction _ _ _ = void do
   modifyState id
 
 
@@ -408,15 +420,13 @@ divSearchBar = simpleSpec performAction render
                                     , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
                                     , _type "text"
                                     , style { height: "35px"
-
-                                              --  , color: "white"
-                                              --  , background : "#A1C2D8"
                                             }
+                                    , onChange \e -> dispatch $ Search (unsafeCoerce e).target.value
                                     ] []
-                              -- TODO add button in navbar (and "enter" execution)
-                              -- , div [] [button [][]]
+                            , div []
+                              [ button [onClick \e -> dispatch Go, className "btn btn-primary", style {marginTop : "10px"}] [text "Enter"] ]
                             ]
-                          ]
+                  ]
 
 
 
