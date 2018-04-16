@@ -34,6 +34,7 @@ newtype State = State
   , password :: String
   , response :: LoginRes
   , errorMessage :: String
+  , loginC :: Boolean
   }
 
 
@@ -43,6 +44,7 @@ initialState = State
  , password : ""
  , response : LoginRes {token : ""}
  , errorMessage : ""
+ , loginC : false
   }
 
 data Action
@@ -54,7 +56,7 @@ data Action
 
 performAction :: forall eff props. PerformAction ( console :: CONSOLE
                                                  , ajax    :: AJAX
-                                                 , dom     :: DOM 
+                                                 , dom     :: DOM
                                                  | eff
                                                  ) State props Action
 performAction NoOp _ _ = void do
@@ -71,7 +73,7 @@ performAction (SetPassword pwd) _ _ = void do
 
 performAction Login _ (State state) = void do
   lift $ setHash "/search"
-  modifyState id
+  modifyState \(State state) -> State $ state {loginC = true}
   -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
   -- case res of
   --   Left e -> do
@@ -146,6 +148,42 @@ renderSpec = simpleSpec performAction render
           ]
         ]
       ]
+
+
+
+-- div [ className "modal fade myModal"
+--                    , role "dialog"
+--                    , _data {show : true}
+--                    ][ div [ className "modal-dialog"
+--                           , role "document"
+--                           ] [ div [ className "modal-content"]
+--                                   [ div [ className "modal-header"]
+--                                         [ h5 [ className "modal-title"
+--                                              ]
+--                                              [ text "CorpusView"
+--                                              ]
+--                                         , button [ _type "button"
+--                                                  , className "close"
+--                                                  , _data { dismiss : "modal"}
+--                                                  ] [ span [ aria {hidden : true}]
+--                                                           [ text "X"]
+--                                                    ]
+--                                         ]
+
+--                                   , div [ className "modal-body"]
+--                                         [ ul [ className "list-group"] ( map fn1 state.response ) ]
+
+--                                   , div [className "modal-footer"]
+--                                         [ button [ _type "button"
+--                                                  , className "btn btn-secondary"
+--                                                  , _data {dismiss : "modal"}
+--                                                  ] [ text "GO"]
+--                                         ]
+--                                    ]
+--                             ]
+--                      ]
+--         ]
+
 
 
 unsafeEventValue :: forall event. event -> String

@@ -2,7 +2,6 @@ module Navigation where
 
 import DOM
 import Gargantext.Data.Lang
-import Prelude hiding (div)
 
 import AddCorpusview as AC
 import AnnotationDocumentView as D
@@ -22,6 +21,7 @@ import Login as LN
 import NTree as NT
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
+import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, text, ul)
 import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
@@ -29,7 +29,7 @@ import React.DOM.Props as RP
 import Routing.Hash.Aff (setHash)
 import SearchForm as S
 import Tabview as TV
-import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultRender, focus, modifyState, simpleSpec, withState)
+import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultPerformAction, defaultRender, focus, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import UserPage as UP
 
@@ -255,10 +255,13 @@ layout0 layout =
   , layoutFooter
   ]
   where
+    outerLayout1 = simpleSpec defaultPerformAction defaultRender
     outerLayout :: Spec (E eff) AppState props Action
     outerLayout =
       cont $ fold
-      [ ls as
+      [ withState \st ->
+         if ((\(LN.State s) -> s.loginC) st.loginState == true) then ls as
+         else outerLayout1
       , rs bs      ]
     ls = over _render \render d p s c ->
       [div [className "col-md-3"] (render d p s c)]
