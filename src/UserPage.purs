@@ -1,31 +1,60 @@
 module UserPage where
 
+import Tab
+
+import Brevets as B
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
+import Data.Either (Either(..))
+import Data.Lens (Lens', Prism', lens, prism)
+import Data.List (fromFoldable)
+import Data.Tuple (Tuple(..))
+import DocView as DV
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
+import Projects as PS
+import Publications as P
 import React.DOM (a, div, h3, h5, h6, i, img, li, nav, small, span, table, tbody, td, text, th, thead, tr, ul)
 import React.DOM.Props (_data, _id, aria, className, href, role, scope, src)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Tab as Tab
+import Thermite (PerformAction, Render, Spec, focus, modifyState, simpleSpec)
 
-import DocView as DV
-
-type State = String
+type State =
+  { activeTab :: Int
+  , publications :: P.State
+  , brevets :: B.State
+  , projects :: PS.State
+  }
 
 
 initialState :: State
-initialState = ""
+initialState =
+  { activeTab : 0
+  , publications : P.initialState
+  , brevets : B.initialState
+  , projects : PS.initialState
+  }
 
-data Action = NoOp
+data Action
+  = NoOp
+  | PublicationA P.Action
+  | BrevetsA B.Action
+  | ProjectsA PS.Action
+  | TabA Tab.Action
 
 
 performAction :: forall eff props. PerformAction ( console :: CONSOLE
                                                  , ajax    :: AJAX
                                                  , dom     :: DOM
-                                                 | eff
-                                                 ) State props Action
+                                                 | eff ) State props Action
 performAction NoOp _ _ = void do
   modifyState id
+
+
+performAction _ _ _ = void do
+  modifyState id
+
+
 
 
 layoutUser :: forall props eff . Spec ( console :: CONSOLE
@@ -37,7 +66,7 @@ layoutUser = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ -- TODO: div [className "tree"] [DV.toHtml dispatch d.tree]
+      [
         div [className "container-fluid"]
         [ div [className "row", _id "user-page-header"]
           [ div [className "col-md-2"]
@@ -97,73 +126,73 @@ layoutUser = simpleSpec performAction render
           ]
         , div [className "row",_id "user-page-footer"]
           [ div [className "col-md-12"]
-            facets
+              []
+
             ]
         ]
       ]
 
 
-facets = [ nav []
-              [ div [className "nav nav-tabs", _id "nav-tab",role "tablist"]
-                [ a [className "nav-item nav-link active",_id "nav-home-tab"   ,  _data {toggle : "tab"},href "#nav-home"   ,role "tab",aria {controls : "nav-home"}   ,aria {selected:true}] [ text "Publications (12)"]
-                , a [className "nav-item nav-link"       ,_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "Brevets (2)"]
-                , a [className "nav-item nav-link"       ,_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Projets (5)"]
-                , a [className "nav-item nav-link"       ,_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "All (19)"]
-                ]
-              ]
-            , div [className "tab-content" , _id "nav-tabContent"]
-              [
-                div [ className "tab-pane fade show active"
-                    , role "tabpanel"
-                    , aria {labelledby : "nav-home-tab"}
-                    , _id "nav-home"
-                    ]
-                      [ facetExample ]
 
-              , div [ className "tab-pane fade show"
-                    , role "tabpanel"
-                    , aria {labelledby : "nav-profile-tab"}
-                    , _id "nav-profile"
-                    ]
-                      [ ]
-              , div [ className "tab-pane fade show"
-                    , role "tabpanel"
-                    , aria {labelledby : "nav-contact-tab"}
-                    , _id "nav-contact"
-                    ]
-                      [ ]
-              ]
-            ]
+_tablens :: Lens' State Tab.State
+_tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
 
-facetExample = table [ className "table"]
-                  [ thead [ className "thead-dark"]
-                    [ tr []
-                      [ th [ scope "col"] [ text "Date"        ]
-                      , th [ scope "col"] [ text "Description" ]
-                      , th [ scope "col"] [ text "Projects"    ]
-                      , th [ scope "col"] [ text "Favorite"    ]
-                      , th [ scope "col"] [ text "Delete"      ]
-                      ]
-                    ]
-                  , tbody []
+_tabAction :: Prism' Action Tab.Action
+_tabAction = prism TabA \ action ->
+  case action of
+    TabA laction -> Right laction
+    _-> Left action
 
-                    [ tr [] [ td [] [ text "2012/03/06"]
-                            , td [] [ text "Big data and text mining"]
-                            , td [] [ text "European funds"]
-                            , td [] [ text "True"]
-                            , td [] [ text "False"]
-                            ]
-                    , tr [] [ td [] [ text "2013/03/06"]
-                            , td [] [ text "Cryptography"]
-                            , td [] [ text "French funds"]
-                            , td [] [ text "True"]
-                            , td [] [ text "False"]
-                            ]
-                    , tr [] [ td [] [ text "2013/03/06"]
-                            , td [] [ text "Artificial Intelligence"]
-                            , td [] [ text "Not found"]
-                            , td [] [ text "True"]
-                            , td [] [ text "False"]
-                            ]
-                    ]
-                  ]
+
+
+_publens :: Lens' State P.State
+_publens = lens (\s -> s.publications) (\s ss -> s { publications= ss})
+
+
+_pubAction :: Prism' Action P.Action
+_pubAction = prism PublicationA \ action ->
+  case action of
+    PublicationA laction -> Right laction
+    _-> Left action
+
+
+
+publicationSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+publicationSpec = focus _publens _pubAction P.publicationSpec
+
+
+_brevetslens :: Lens' State B.State
+_brevetslens = lens (\s -> s.brevets) (\s ss -> s {brevets = ss})
+
+
+_brevetsAction :: Prism' Action B.Action
+_brevetsAction = prism BrevetsA \ action ->
+  case action of
+    BrevetsA laction -> Right laction
+    _-> Left action
+
+brevetSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State  props Action
+brevetSpec = focus _brevetslens _brevetsAction B.brevetsSpec
+
+
+_projectslens :: Lens' State PS.State
+_projectslens = lens (\s -> s.projects) (\s ss -> s {projects = ss})
+
+
+_projectsAction :: Prism' Action PS.Action
+_projectsAction = prism ProjectsA \ action ->
+  case action of
+    ProjectsA laction -> Right laction
+    _-> Left action
+
+
+projectSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+projectSpec = focus _projectslens _projectsAction PS.projets
+
+
+facets :: forall eff props. Spec ( dom :: DOM, console :: CONSOLE, ajax :: AJAX| eff) State props Action
+facets = tabs _tablens _tabAction $ fromFoldable
+         [ Tuple "Publications(12)" publicationSpec
+         , Tuple "Brevets (2)" brevetSpec
+         , Tuple "Projets IMT (5)" projectSpec
+      ]

@@ -82,7 +82,7 @@ performAction (LoadDatabaseDetails) _ _ = void do
        cotransform $ \(state) -> state {response  = resData}
 
 performAction GO _ _ = void do
-  lift $ setHash "/docView"
+  lift $ setHash "/corpus"
   modifyState id
 
 

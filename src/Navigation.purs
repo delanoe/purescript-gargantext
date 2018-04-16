@@ -6,6 +6,7 @@ import Gargantext.Data.Lang
 import AddCorpusview as AC
 import AnnotationDocumentView as D
 import Control.Monad.Eff.Console (CONSOLE)
+import CorpusAnalysis as CA
 import Data.Array (concat)
 import Data.Either (Either(..))
 import Data.Foldable (fold, intercalate)
@@ -29,7 +30,6 @@ import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultRende
 import Unsafe.Coerce (unsafeCoerce)
 import UserPage as UP
 
-
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
 type AppState =
@@ -44,6 +44,7 @@ type AppState =
   , ntreeView   :: NT.State
   , tabview :: TV.State
   , search :: String
+  , corpusAnalysis :: CA.State
   }
 
 initAppState :: AppState
@@ -59,6 +60,7 @@ initAppState =
   , ntreeView : NT.exampleTree
   , tabview : TV.initialState
   , search : ""
+  , corpusAnalysis : CA.initialState
   }
 
 data Action
@@ -75,6 +77,7 @@ data Action
   | TabViewA TV.Action
   | Search String
   | Go
+  | CorpusAnalysisA CA.Action
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
@@ -196,6 +199,18 @@ _tabviewAction = prism TabViewA \action ->
     _-> Left action
 
 
+
+_corpusState :: Lens' AppState CA.State
+_corpusState = lens (\s -> s.corpusAnalysis) (\s ss -> s {corpusAnalysis = ss})
+
+
+_corpusAction :: Prism' Action CA.Action
+_corpusAction = prism CorpusAnalysisA \action ->
+  case action of
+    CorpusAnalysisA caction -> Right caction
+    _-> Left action
+
+
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
   case s.currentRoute of
@@ -209,6 +224,7 @@ pagesComponent s =
                                  , dom     :: DOM
                                  | eff
                                  ) AppState props Action
+    selectSpec CorpusAnalysis = layout0 $ focus _corpusState  _corpusAction CA.corpusAnalysisSpec
     selectSpec Login      = focus _loginState _loginAction LN.renderSpec
     selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
@@ -216,9 +232,10 @@ pagesComponent s =
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
     selectSpec (AnnotationDocumentView i)   = layout0 $ focus _annotationdocumentviewState  _annotationdocumentviewAction  D.docview
     selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
-
     -- To be removed
-    selectSpec SearchView = layout0 $ focus _searchState    _searchAction    S.searchSpec
+    selectSpec SearchView = layout0 $ focus _searchState _searchAction  S.searchSpec
+
+
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
@@ -536,4 +553,10 @@ dispatchAction dispatcher _ (AnnotationDocumentView i) = do
 dispatchAction dispatcher _ Tabview = do
   _ <- dispatcher $ SetRoute  $ Tabview
   _ <- dispatcher $ TabViewA $ TV.NoOp
+  pure unit
+
+
+dispatchAction dispatcher _ CorpusAnalysis = do
+  _ <- dispatcher $ SetRoute  $ CorpusAnalysis
+  _ <- dispatcher $ CorpusAnalysisA $ CA.NoOp
   pure unit

@@ -24,6 +24,7 @@ data Routes
   | UserPage
   | AnnotationDocumentView Int
   | Tabview
+  | CorpusAnalysis
 
 
 instance showRoutes :: Show Routes where
@@ -35,6 +36,7 @@ instance showRoutes :: Show Routes where
   show UserPage   = "UserPage"
   show (AnnotationDocumentView i)  = "DocumentView"
   show Tabview   = "Tabview"
+  show CorpusAnalysis   = "corpus"
 
 int :: Match Int
 int = floor <$> num
@@ -42,13 +44,14 @@ int = floor <$> num
 
 routing :: Match Routes
 routing =
-      loginRoute
+   loginRoute
   <|> tabview
   <|> documentView
   <|> userPageRoute
   <|> searchRoute
   <|> docviewRoute
   <|> addcorpusRoute
+  <|> corpusAnalysis
   <|> home
   where
     tabview  = Tabview   <$ route "tabview"
@@ -58,6 +61,7 @@ routing =
     docviewRoute   = DocView    <$ route "docView"
     addcorpusRoute = AddCorpus  <$ route "addCorpus"
     loginRoute     = Login      <$ route "login"
+    corpusAnalysis  = CorpusAnalysis <$ route "corpus"
     home           = Home       <$ lit ""
     route str      = lit "" *> lit str
 
