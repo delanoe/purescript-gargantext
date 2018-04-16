@@ -228,7 +228,7 @@ pagesComponent s =
                                  , dom     :: DOM
                                  | eff
                                  ) AppState props Action
-    selectSpec CorpusAnalysis = layout0 $ focus _corpusState  _corpusAction CA.corpusAnalysisSpec
+    selectSpec CorpusAnalysis = layout0 $ focus _corpusState  _corpusAction CA.spec'
     selectSpec Login      = focus _loginState _loginAction LN.renderSpec
     selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
@@ -554,5 +554,5 @@ dispatchAction dispatcher _ Tabview = do
 
 dispatchAction dispatcher _ CorpusAnalysis = do
   _ <- dispatcher $ SetRoute  $ CorpusAnalysis
-  _ <- dispatcher $ CorpusAnalysisA $ CA.NoOp
+  --_ <- dispatcher $ CorpusAnalysisA $ CA.NoOp
   pure unit

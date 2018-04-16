@@ -1,38 +1,30 @@
 module CorpusAnalysis where
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
+import Data.Array (fold)
 import Network.HTTP.Affjax (AJAX)
 import Prelude (id, void)
 import Prelude hiding (div)
 import React.DOM (div, h3, hr, i, p, span, text)
 import React.DOM.Props (className, style)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Tabview as Tab
+import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
 
+type State = Tab.State
 
-type State = String
+type Action = Tab.Action
 
 initialState :: State
-initialState = ""
+initialState = Tab.initialState
 
-data Action = NoOp
-
-performAction :: forall eff props. PerformAction ( console :: CONSOLE
-                                                 , ajax    :: AJAX
-                                                 , dom     :: DOM
-                                                 | eff
-                                                 ) State props Action
-performAction NoOp _ _ = void do
-  modifyState id
+spec' :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) Tab.State props Tab.Action
+spec' = fold [corpusAnalysisSpec, Tab.tab1]
 
 
-corpusAnalysisSpec :: forall props eff . Spec ( console :: CONSOLE
-                                        , ajax    :: AJAX
-                                        , dom     :: DOM
-                                        | eff
-                                        ) State props Action
-corpusAnalysisSpec = simpleSpec performAction render
+corpusAnalysisSpec :: forall props eff . Spec eff Tab.State props Tab.Action
+corpusAnalysisSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render State props Action
+    render :: Render Tab.State props Tab.Action
     render dispatch _ state _ =
       [ div [className "row"]
         [ div [className "col-md-3"]
