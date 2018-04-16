@@ -5,7 +5,7 @@ import Data.Array (fold)
 import Network.HTTP.Affjax (AJAX)
 import Prelude (id, void)
 import Prelude hiding (div)
-import React.DOM (div, h3, hr, i, p, span, text)
+import React.DOM (div, h3, hr, i, p, span, text, input)
 import React.DOM.Props (className, style)
 import Tabview as Tab
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
@@ -18,8 +18,9 @@ initialState :: State
 initialState = Tab.initialState
 
 spec' :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) Tab.State props Tab.Action
-spec' = fold [corpusAnalysisSpec, Tab.tab1]
-
+spec' = fold [ corpusAnalysisSpec
+             , Tab.tab1
+             ]
 
 corpusAnalysisSpec :: forall props eff . Spec eff Tab.State props Tab.Action
 corpusAnalysisSpec = simpleSpec defaultPerformAction render

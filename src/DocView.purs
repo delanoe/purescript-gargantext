@@ -29,7 +29,7 @@ import React as R
 import React.DOM (a, b, b', br', div, h3, i, input, li, option, select, span, table, tbody, td, text, thead, th, tr, ul, nav)
 import React.DOM.Props (Props, _type, className, href, onChange, onClick, selected, value, scope, _id, role, _data, aria)
 import ReactDOM as RDOM
-import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, defaultPerformAction, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
@@ -96,6 +96,12 @@ instance decodeResponse :: DecodeJson Response where
 
 
 
+filterSpec :: Spec _ State _ Action
+filterSpec = simpleSpec defaultPerformAction render
+  where
+    render :: Render State _ Action
+    render dispatch _ state _ = [div [] [text "Filter ", input [] []]]
+
 
 layoutDocview :: Spec _ State _ Action
 layoutDocview = simpleSpec performAction render
@@ -107,13 +113,12 @@ layoutDocview = simpleSpec performAction render
           [
            div [className "col-md-12"]
             [ p''
+            , text "Filter ", input [] []
             , h3 [] [text "Chart Title"]
             , histogram
             , p''
             , br' []
             , div [] [ b [] [text d.title]
-                     , text "    Filter "
-                     , input [] []
                      , sizeDD d.pageSize dispatch
                      , textDescription d.currentPage d.pageSize d.totalRecords
                      , pagination dispatch d.totalPages d.currentPage
