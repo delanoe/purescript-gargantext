@@ -2,9 +2,12 @@ module Navigation where
 
 import DOM
 import Gargantext.Data.Lang
+import Prelude hiding (div)
 
 import AddCorpusview as AC
 import AnnotationDocumentView as D
+import Control.Monad.Cont.Trans (lift)
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
 import CorpusAnalysis as CA
 import Data.Array (concat)
@@ -19,11 +22,11 @@ import Login as LN
 import NTree as NT
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
-import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, text, ul)
 import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
 import React.DOM.Props as RP
+import Routing.Hash.Aff (setHash)
 import SearchForm as S
 import Tabview as TV
 import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultRender, focus, modifyState, simpleSpec, withState)
@@ -91,6 +94,7 @@ performAction (Search s)  _ _ = void do
 
 
 performAction Go  _ _ = void do
+  _ <- lift $ setHash "/addCorpus"
   modifyState id
 
 
@@ -246,7 +250,7 @@ layout0 :: forall eff props. Spec (E eff) AppState props Action
                           -> Spec (E eff) AppState props Action
 layout0 layout =
   fold
-  [ layoutSidebar
+  [ layoutSidebar divSearchBar
   , outerLayout
   , layoutFooter
   ]
@@ -254,9 +258,8 @@ layout0 layout =
     outerLayout :: Spec (E eff) AppState props Action
     outerLayout =
       cont $ fold
-      [ ls a
-      , rs b
-      ]
+      [ ls as
+      , rs bs      ]
     ls = over _render \render d p s c ->
       [div [className "col-md-3"] (render d p s c)]
     rs = over _render \render d p s c ->
@@ -264,10 +267,9 @@ layout0 layout =
     cont = over _render \render d p s c ->
       [ div [ className "row" ] (render d p s c) ]
 
-    a = fold  [ focus _treeState _treeAction NT.treeview
-              , divSearchBar
-              ]
-    b = innerLayout $ layout
+    as = focus _treeState _treeAction NT.treeview
+
+    bs = innerLayout $ layout
 
     innerLayout :: Spec (E eff) AppState props Action
                 -> Spec (E eff) AppState props Action
@@ -278,12 +280,9 @@ layout0 layout =
         ]
       ]
 
-
-layoutSidebar ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
-layoutSidebar = simpleSpec performAction render
-  where
-    render :: Render AppState props Action
-    render dispatch _ state _ =
+layoutSidebar ::  forall props eff. Spec (E eff) AppState props Action
+                -> Spec (E eff) AppState props Action
+layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
             , role "navigation"
@@ -291,9 +290,9 @@ layoutSidebar = simpleSpec performAction render
                     [ div [ className "navbar-inner" ]
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"]
-                                 [ divDropdownLeft
-                                 , divDropdownRight
-                                 ]
+                             $ [ divDropdownLeft]
+                             <> render d p s c <>
+                             [ divDropdownRight ]
                           ]
                     ]
               ]
@@ -430,23 +429,20 @@ divSearchBar = simpleSpec performAction render
     render :: Render AppState props Action
     render dispatch _ state _ = [div [ className "" ] [ searchbar']]
       where
-        searchbar' = ul [ className "nav navbar-nav"
-                        , style { "margin-left" : "0px"}
+        searchbar' = ul [ className "nav navbar-nav col-md-6 col-md-offset-3"
+                        , style { "marginLeft" : "15%"}
                         ] [ div [className "navbar-form"]
                             [ input [ className   "search-query"
                                     , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
                                     , _type "text"
                                     , style { height: "35px"
+                                            , width: "400px"
                                             }
                                     , onChange \e -> dispatch $ Search (unsafeCoerce e).target.value
                                     ] []
-                            , div []
-                              [ button [onClick \e -> dispatch Go, className "btn btn-primary", style {marginTop : "10px"}] [text "Enter"] ]
+                            ,  button [onClick \e -> dispatch Go, className "btn btn-primary"] [text "Enter"]
                             ]
                   ]
-
-
-
 
 --divDropdownRight :: Render AppState props Action
 divDropdownRight :: ReactElement
