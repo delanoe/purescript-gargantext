@@ -14,15 +14,16 @@ import DOM.WebStorage.Storage (getItem, setItem)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
+import Data.Lens (over)
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationJSON)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Prelude hiding (div)
-import React.DOM (a, button, div, h2, h4, i, input, label, p, span, text)
-import React.DOM.Props (_id, _type, className, href, maxLength, name, onClick, onInput, placeholder, target, value)
+import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
+import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
 import Routing.Hash.Aff (setHash)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, _render, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 
@@ -84,6 +85,36 @@ performAction Login _ (State state) = void do
   --     modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
 
 
+modalSpec :: forall eff props. Boolean -> String -> Spec eff State props Action -> Spec eff State props Action
+modalSpec sm t = over _render \render d p s c ->
+  [ div [ className $ "modal myModal" <> if sm then "" else " fade"
+            , role "dialog"
+            , _data {show : true}
+            ][ div [ className "modal-dialog"
+                   , role "document"
+                   ] [ div [ className "modal-content"]
+                       [ div [ className "modal-header"]
+                         [ h5 [ className "modal-title"
+                              ]
+                           [ text $ t
+                           ]
+                         , button [ _type "button"
+                                  , className "close"
+                                  , _data { dismiss : "modal"}
+                                  ] [ span [ aria {hidden : true}]
+                                      [ text "X"]
+                                    ]
+                         ]
+
+                       , div [ className "modal-body"]
+                         (render d p s c)
+                       ]
+                     ]
+             ]
+  ]
+
+spec' :: forall eff props. Spec (console:: CONSOLE, ajax :: AJAX, dom :: DOM | eff) State props Action
+spec' = modalSpec true "Login" renderSpec
 
 renderSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
 renderSpec = simpleSpec performAction render
@@ -121,7 +152,7 @@ renderSpec = simpleSpec performAction render
                     []
                   , div [className "form-group"]
                     [ p [] [text state.errorMessage]
-                     , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName (unsafeEventValue e))] []
+                    , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName (unsafeEventValue e))] []
                     ]
                   , div [className "form-group"]
                     [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password,onInput \e -> dispatch (SetPassword (unsafeEventValue e))] []
@@ -130,29 +161,26 @@ renderSpec = simpleSpec performAction render
                   , div [className "center"]
                     [
                       label [] [
-                      div [className "checkbox"]
-                      [ input [_id "terms-accept", _type "checkbox", value "", className "checkbox"]
-                        [
-                        ]
-                      , text "I accept the terms of uses ",
-                        a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text "[Read the terms of use]"]
-                      ]
-                    , button [_id "login-button",className "btn btn-primary btn-rounded", _type "submit", onClick \_ -> dispatch $ Login] [text "Login"]
-                    ]
+                         div [className "checkbox"]
+                         [ input [_id "terms-accept", _type "checkbox", value "", className "checkbox"]
+                           [
+                           ]
+                         , text "I accept the terms of uses ",
+                           a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text "[Read the terms of use]"]
+                         ]
+                         , button [_id "login-button",className "btn btn-primary btn-rounded", _type "submit", onClick \_ -> dispatch $ Login] [text "Login"]
+                         ]
                     ]
                   ]
                 ]
               ]
             ]
-
           ]
         ]
       ]
 
-
-
--- div [ className "modal fade myModal"
---                    , role "dialog"
+      -- div [ className "modal fade myModal"
+      --                    , role "dialog"
 --                    , _data {show : true}
 --                    ][ div [ className "modal-dialog"
 --                           , role "document"
