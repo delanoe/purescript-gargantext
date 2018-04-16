@@ -32,6 +32,7 @@ import Tabview as TV
 import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultRender, focus, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import UserPage as UP
+import Dashboard as Dsh
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -48,6 +49,7 @@ type AppState =
   , tabview :: TV.State
   , search :: String
   , corpusAnalysis :: CA.State
+  , dashboard :: Dsh.State
   }
 
 initAppState :: AppState
@@ -64,6 +66,7 @@ initAppState =
   , tabview : TV.initialState
   , search : ""
   , corpusAnalysis : CA.initialState
+  , dashboard : Dsh.initialState
   }
 
 data Action
@@ -214,7 +217,6 @@ _corpusAction = prism CorpusAnalysisA \action ->
     CorpusAnalysisA caction -> Right caction
     _-> Left action
 
-
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
   case s.currentRoute of
@@ -229,13 +231,13 @@ pagesComponent s =
                                  | eff
                                  ) AppState props Action
     selectSpec CorpusAnalysis = layout0 $ focus _corpusState  _corpusAction CA.spec'
-    selectSpec Login      = focus _loginState _loginAction LN.renderSpec
-    selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
-    selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
-    selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
-    selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
-    selectSpec (AnnotationDocumentView i)   = layout0 $ focus _annotationdocumentviewState  _annotationdocumentviewAction  D.docview
-    selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
+    selectSpec Login = focus _loginState _loginAction LN.renderSpec
+    selectSpec Home = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
+    selectSpec AddCorpus = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
+    selectSpec DocView = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
+    selectSpec UserPage = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
+    selectSpec (AnnotationDocumentView i) = layout0 $ focus _annotationdocumentviewState  _annotationdocumentviewAction  D.docview
+    selectSpec Tabview = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState _searchAction  S.searchSpec
 
