@@ -106,26 +106,7 @@ layoutDocview = simpleSpec performAction render
         [ div [className "row"]
           [
            div [className "col-md-12"]
-            [ -- nav []
-              -- [ div [className "nav nav-tabs", _id "nav-tab",role "tablist"]
-              --   [
-              --     a [ className "nav-item nav-link active"
-              --       , _id "nav-home-tab"
-              --       , _data {toggle : "tab"}
-              --       , href "#nav-home"
-              --       , role "tab"
-              --       , aria {controls : "nav-home"}
-              --       , aria {selected:true}] [ text "Documents"]
-
-              --   , a [className "nav-item nav-link",_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "Sources"]
-
-              --   ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Authors"]
-              --   ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "Terms"]
-              --   ,a [className "nav-item nav-link",_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "(+)"]
-
-              --   ]
-              -- ]
-             p''
+            [ p''
             , h3 [] [text "Chart Title"]
             , histogram
             , p''
@@ -173,9 +154,6 @@ performAction LoadData _ _ = void do
           , source : (\(Hyperdata r) -> r.source)res.hyperdata
           , fav    : res.favorite
          }
-
-
--- performAction (ToggleFolder i) _ _ = void (cotransform (\(TableData td) -> TableData $ td {tree = toggleNode i td.tree}))
 
 
 changePageSize :: PageSizes -> CorpusTableData -> CorpusTableData

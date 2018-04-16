@@ -3,30 +3,20 @@ module Sourceview where
 
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
+import Data.Array (fold)
+import DocView as D
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import React.DOM (h3, text)
+import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
+
+type State = D.State
 
 
-type State = String
+initialState :: D.State
+initialState = D.tdata
 
-
-initialState :: State
-initialState = ""
-
-data Action = NoOp
-
-
-performAction :: forall eff props. PerformAction ( console :: CONSOLE
-                                                 , ajax    :: AJAX
-                                                 , dom     :: DOM
-                                                 | eff
-                                                 ) State props Action
-performAction NoOp _ _ = void do
-  modifyState id
-
-
-
+type Action = D.Action
 
 
 sourceSpec :: forall props eff . Spec ( console :: CONSOLE
@@ -34,8 +24,11 @@ sourceSpec :: forall props eff . Spec ( console :: CONSOLE
                                         , dom     :: DOM
                                         | eff
                                         ) State props Action
-sourceSpec = simpleSpec performAction render
+sourceSpec = simpleSpec defaultPerformAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      []
+      [ h3 [] [text "Source view"]]
+
+sourcespec' :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+sourcespec' = fold [sourceSpec, D.layoutDocview]

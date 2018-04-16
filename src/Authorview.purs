@@ -3,31 +3,23 @@ module Authorview where
 
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
+import Data.Array (fold)
+import DocView as D
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import React.DOM (h3, text)
+import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
 
 
 
 
-type State = String
+type State = D.State
 
 
 initialState :: State
-initialState = ""
+initialState = D.tdata
 
-data Action = NoOp
-
-
-performAction :: forall eff props. PerformAction ( console :: CONSOLE
-                                                 , ajax    :: AJAX
-                                                 , dom     :: DOM
-                                                 | eff
-                                                 ) State props Action
-performAction NoOp _ _ = void do
-  modifyState id
-
-
+type Action = D.Action
 
 
 authorSpec :: forall props eff . Spec ( console :: CONSOLE
@@ -35,8 +27,11 @@ authorSpec :: forall props eff . Spec ( console :: CONSOLE
                                         , dom     :: DOM
                                         | eff
                                         ) State props Action
-authorSpec = simpleSpec performAction render
+authorSpec = simpleSpec defaultPerformAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      []
+       [ h3 [] [text "AuthorView"]]
+
+authorspec' :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+authorspec' = fold [authorSpec, D.layoutDocview]

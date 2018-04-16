@@ -70,7 +70,7 @@ _authorAction = prism AuthorviewA \ action ->
     _-> Left action
 
 authorPageSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State  props Action
-authorPageSpec = focus _authorlens _authorAction AV.authorSpec
+authorPageSpec = focus _authorlens _authorAction AV.authorspec'
 
 
 _sourcelens :: Lens' State SV.State
@@ -85,7 +85,7 @@ _sourceAction = prism SourceviewA \ action ->
 
 
 sourcePageSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-sourcePageSpec = focus _sourcelens _sourceAction SV.sourceSpec
+sourcePageSpec = focus _sourcelens _sourceAction SV.sourcespec'
 
 
 _termslens :: Lens' State TV.State
@@ -100,7 +100,7 @@ _termsAction = prism TermsviewA \ action ->
 
 
 termsPageSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-termsPageSpec = focus _termslens _termsAction TV.termsSpec
+termsPageSpec = focus _termslens _termsAction TV.termSpec'
 
 
 _tablens :: Lens' State Tab.State
