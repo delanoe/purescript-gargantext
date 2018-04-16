@@ -40,8 +40,8 @@ toggleNode sid a = a
 
 myCorpus :: Int -> String -> NTree (Tuple String String)
 myCorpus n name = NNode n false name
-    [ NLeaf (Tuple "Facets"    "#/docView")
-    , NLeaf (Tuple "Graph"     "#/docView")
+    [ NLeaf (Tuple "Facets"    "#/corpus")
+    , NLeaf (Tuple "Graph"     "#/corpus")
     , NLeaf (Tuple "Dashboard" "#/userPage")
     ]
 
