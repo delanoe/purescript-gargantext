@@ -94,14 +94,12 @@ instance decodeResponse :: DecodeJson Response where
     hyperdata  <- obj .? "hyperdata"
     pure $ Response { cid, created, favorite, ngramCount, hyperdata }
 
-
-
-filterSpec :: Spec _ State _ Action
+filterSpec :: forall eff props. Spec eff State props Action
 filterSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render State _ Action
-    render dispatch _ state _ = [div [] [text "Filter ", input [] []]]
-
+    render d p s c = [div [] [ text "    Filter "
+                     , input [] []
+                     ]]
 
 layoutDocview :: Spec _ State _ Action
 layoutDocview = simpleSpec performAction render
@@ -113,7 +111,7 @@ layoutDocview = simpleSpec performAction render
           [
            div [className "col-md-12"]
             [ p''
-            , text "Filter ", input [] []
+            , div [] [ text "    Filter ", input [] []]
             , h3 [] [text "Chart Title"]
             , histogram
             , p''

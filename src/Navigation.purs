@@ -2,10 +2,12 @@ module Navigation where
 
 import DOM
 import Gargantext.Data.Lang
+import Prelude hiding (div)
 
 import AddCorpusview as AC
 import AnnotationDocumentView as D
 import Control.Monad.Cont.Trans (lift)
+import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
 import CorpusAnalysis as CA
@@ -18,10 +20,10 @@ import Data.Tuple (Tuple(..))
 import DocView as DV
 import Landing as L
 import Login as LN
+import Modal (modalShow)
 import NTree as NT
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
-import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, text, ul)
 import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
@@ -48,6 +50,7 @@ type AppState =
   , tabview :: TV.State
   , search :: String
   , corpusAnalysis :: CA.State
+  , showLogin :: Boolean
   }
 
 initAppState :: AppState
@@ -64,6 +67,7 @@ initAppState =
   , tabview : TV.initialState
   , search : ""
   , corpusAnalysis : CA.initialState
+  , showLogin : false
   }
 
 data Action
@@ -81,6 +85,7 @@ data Action
   | Search String
   | Go
   | CorpusAnalysisA CA.Action
+  | ShowLogin
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
@@ -92,6 +97,9 @@ performAction (SetRoute route)  _ _ = void do
 performAction (Search s)  _ _ = void do
   modifyState $ _ {search = s}
 
+performAction (ShowLogin)  _ _ = void do
+  liftEff $ modalShow "loginModal"
+  modifyState $ _ {showLogin = true}
 
 performAction Go  _ _ = void do
   _ <- lift $ setHash "/addCorpus"
@@ -100,8 +108,6 @@ performAction Go  _ _ = void do
 
 performAction _ _ _ = void do
   modifyState id
-
-
 
 ---- Lens and Prism
 _landingState :: Lens' AppState L.State
@@ -229,7 +235,7 @@ pagesComponent s =
                                  | eff
                                  ) AppState props Action
     selectSpec CorpusAnalysis = layout0 $ focus _corpusState  _corpusAction CA.spec'
-    selectSpec Login      = focus _loginState _loginAction LN.renderSpec
+    -- selectSpec Login      = focus _loginState _loginAction LN.renderSpec
     selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
@@ -238,8 +244,7 @@ pagesComponent s =
     selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState _searchAction  S.searchSpec
-
-
+    selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
@@ -295,7 +300,7 @@ layoutSidebar = over _render \render d p s c ->
                           ,  div [ className "collapse navbar-collapse"]
                              $ [ divDropdownLeft]
                              <> render d p s c <>
-                             [ divDropdownRight ]
+                             [ divDropdownRight d]
                           ]
                     ]
               ]
@@ -305,7 +310,7 @@ layoutSidebar = over _render \render d p s c ->
 
 divLogo :: ReactElement
 divLogo = a [ className "navbar-brand logoSmall"
-            , href "/index.html"
+            , href "#/"
             ] [ img [ src "images/logoSmall.png"
                     , title "Back to home."
                     ] []
@@ -448,8 +453,8 @@ divSearchBar = simpleSpec performAction render
                   ]
 
 --divDropdownRight :: Render AppState props Action
-divDropdownRight :: ReactElement
-divDropdownRight =
+divDropdownRight :: _ -> ReactElement
+divDropdownRight d =
   ul [className "nav navbar-nav pull-right"]
      [
        -- TODO if logged in : enable dropdown to logout
@@ -457,7 +462,8 @@ divDropdownRight =
        [
          a [ aria {hidden : true}
            , className "glyphicon glyphicon-log-in"
-           , href "#/login"
+           , --href "#/login"
+             onClick $ \e -> d ShowLogin
            , style {color:"white"}
            , title "Log in and save your time"
            -- TODO hover: bold
@@ -498,12 +504,13 @@ layoutFooter = simpleSpec performAction render
                             ]
 
 
-
 layoutSpec :: forall eff props. Spec (E eff) AppState props Action
 layoutSpec =
   fold
   [ routingSpec
   , container $ withState pagesComponent
+  , withState \st ->
+      focus _loginState _loginAction (LN.modalSpec st.showLogin "Login" LN.renderSpec)
   ]
   where
     container :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
