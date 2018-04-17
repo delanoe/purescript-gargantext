@@ -86,6 +86,39 @@ performAction GO _ _ = void do
   modifyState id
 
 
+modalSpec :: forall eff props. Boolean -> String -> Spec eff State props Action -> Spec eff State props Action
+modalSpec sm t = over _render \render d p s c ->
+  [ div [ _id "loginModal", className $ "modal myModal" <> if sm then "" else " fade"
+            , role "dialog"
+            , _data {show : true}
+            ][ div [ className "modal-dialog"
+                   , role "document"
+                   ] [ div [ className "modal-content"]
+                       [ div [ className "modal-header"]
+                         [ h5 [ className "modal-title"
+                              ]
+                           [ text $ t
+                           ]
+                         , button [ _type "button"
+                                  , className "close"
+                                  , _data { dismiss : "modal"}
+                                  ] [ span [ aria {hidden : true}]
+                                      [ text "X"]
+                                    ]
+                         ]
+
+                       , div [ className "modal-body"]
+                         (render d p s c)
+                       ]
+                     ]
+             ]
+  ]
+
+spec' :: forall eff props. Spec (console:: CONSOLE, ajax :: AJAX, dom :: DOM | eff) State props Action
+spec' = modalSpec true "Search Results" layoutAddcorpus
+
+
+
 layoutModal :: forall e.  { response :: Array Response | e} -> Array ReactElement
 layoutModal state =
       [button [ _type "button"

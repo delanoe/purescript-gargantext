@@ -2,7 +2,6 @@ module Navigation where
 
 import DOM
 import Gargantext.Data.Lang
-import Prelude hiding (div)
 
 import AddCorpusview as AC
 import AnnotationDocumentView as D
@@ -24,6 +23,7 @@ import Modal (modalShow)
 import NTree as NT
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
+import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, text, ul)
 import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
@@ -51,6 +51,7 @@ type AppState =
   , search :: String
   , corpusAnalysis :: CA.State
   , showLogin :: Boolean
+  , showCorpus :: Boolean
   }
 
 initAppState :: AppState
@@ -68,6 +69,7 @@ initAppState =
   , search : ""
   , corpusAnalysis : CA.initialState
   , showLogin : false
+  , showCorpus : false
   }
 
 data Action
@@ -86,6 +88,8 @@ data Action
   | Go
   | CorpusAnalysisA CA.Action
   | ShowLogin
+  | ShowAddcorpus
+
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
@@ -101,9 +105,17 @@ performAction (ShowLogin)  _ _ = void do
   liftEff $ modalShow "loginModal"
   modifyState $ _ {showLogin = true}
 
+
+performAction (ShowAddcorpus)  _ _ = void do
+  liftEff $ modalShow "addCorpus"
+  modifyState $ _ {showCorpus = true}
+
+
 performAction Go  _ _ = void do
-  _ <- lift $ setHash "/addCorpus"
-  modifyState id
+  liftEff $ modalShow "addCorpus"
+  modifyState $ _ {showCorpus = true}
+ -- _ <- lift $ setHash "/addCorpus"
+  --modifyState id
 
 
 performAction _ _ _ = void do
@@ -237,7 +249,7 @@ pagesComponent s =
     selectSpec CorpusAnalysis = layout0 $ focus _corpusState  _corpusAction CA.spec'
     -- selectSpec Login      = focus _loginState _loginAction LN.renderSpec
     selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
-    selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
+    -- selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
     selectSpec (AnnotationDocumentView i)   = layout0 $ focus _annotationdocumentviewState  _annotationdocumentviewAction  D.docview
@@ -248,7 +260,6 @@ pagesComponent s =
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
-
 
 
 layout0 :: forall eff props. Spec (E eff) AppState props Action
@@ -510,7 +521,9 @@ layoutSpec =
   [ routingSpec
   , container $ withState pagesComponent
   , withState \st ->
-      focus _loginState _loginAction (LN.modalSpec st.showLogin "Login" LN.renderSpec)
+     fold [ focus _loginState _loginAction (LN.modalSpec st.showLogin "Login" LN.renderSpec)
+          , focus _addCorpusState _addCorpusAction (AC.modalSpec st.showCorpus "Search Results" AC.layoutAddcorpus)
+          ]
   ]
   where
     container :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
