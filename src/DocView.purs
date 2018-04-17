@@ -206,11 +206,14 @@ optps cv val = option [ selected (cv == val), value $ show val ] [text $ show va
 
 textDescription :: Int -> PageSizes -> Int -> ReactElement
 textDescription currPage pageSize totalRecords
-  = text $ "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords
+  =  div [className "row"]
+          [ div [className "col-md-12"]
+                [ text $ "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords ]
+          ]
     where
       start = (currPage - 1) * pageSizes2Int pageSize + 1
       end' = currPage * pageSizes2Int pageSize
-      end = if end' > totalRecords then totalRecords else end'
+      end  = if end' > totalRecords then totalRecords else end'
 
 
 pagination :: _ -> Int -> Int -> ReactElement
