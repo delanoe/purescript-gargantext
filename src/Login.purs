@@ -1,5 +1,7 @@
 module Login where
 
+import Prelude hiding (div)
+
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Aff.Console (log)
@@ -17,9 +19,9 @@ import Data.HTTP.Method (Method(..))
 import Data.Lens (over)
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationJSON)
+import Modal (modalHide)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
-import Prelude hiding (div)
 import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
 import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
 import Routing.Hash.Aff (setHash)
@@ -73,7 +75,8 @@ performAction (SetPassword pwd) _ _ = void do
 
 
 performAction Login _ (State state) = void do
-  lift $ setHash "/search"
+  --lift $ setHash "/search"
+  liftEff $ modalHide "loginModal"
   modifyState \(State state) -> State $ state {loginC = true}
   -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
   -- case res of
@@ -87,7 +90,7 @@ performAction Login _ (State state) = void do
 
 modalSpec :: forall eff props. Boolean -> String -> Spec eff State props Action -> Spec eff State props Action
 modalSpec sm t = over _render \render d p s c ->
-  [ div [ className $ "modal myModal" <> if sm then "" else " fade"
+  [ div [ _id "loginModal", className $ "modal myModal" <> if sm then "" else " fade"
             , role "dialog"
             , _data {show : true}
             ][ div [ className "modal-dialog"

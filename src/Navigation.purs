@@ -2,10 +2,12 @@ module Navigation where
 
 import DOM
 import Gargantext.Data.Lang
+import Prelude hiding (div)
 
 import AddCorpusview as AC
 import AnnotationDocumentView as D
 import Control.Monad.Cont.Trans (lift)
+import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
 import CorpusAnalysis as CA
@@ -18,10 +20,10 @@ import Data.Tuple (Tuple(..))
 import DocView as DV
 import Landing as L
 import Login as LN
+import Modal (modalShow)
 import NTree as NT
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
-import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, text, ul)
 import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
@@ -95,10 +97,9 @@ performAction (SetRoute route)  _ _ = void do
 performAction (Search s)  _ _ = void do
   modifyState $ _ {search = s}
 
-
 performAction (ShowLogin)  _ _ = void do
+  liftEff $ modalShow "loginModal"
   modifyState $ _ {showLogin = true}
-
 
 performAction Go  _ _ = void do
   _ <- lift $ setHash "/addCorpus"
@@ -107,8 +108,6 @@ performAction Go  _ _ = void do
 
 performAction _ _ _ = void do
   modifyState id
-
-
 
 ---- Lens and Prism
 _landingState :: Lens' AppState L.State
