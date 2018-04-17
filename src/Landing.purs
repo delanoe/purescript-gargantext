@@ -83,7 +83,7 @@ layoutLanding' hd = simpleSpec performAction render
     render :: Render State props Action
     render dispatch _ state _ =
       [ div [ className "container1" ] [ jumboTitle hd false                 ]
-      , div [ className "container1" ] [ imageEnter hd (onClick \_ -> dispatch $ Enter)]
+      , div [ className "container1" ] [] -- put research here
       , div [ className "container1" ] [ blocksRandomText' hd                ]
       ]
 ------------------------------------------------------------------------
@@ -122,21 +122,22 @@ docButton (Button b) = a [ className "btn btn-outline-primary btn-sm spacing-cla
 jumboTitle :: LandingData -> Boolean -> ReactElement
 jumboTitle (LandingData hd) b = div jumbo
                    [ div [className "row"             ]
-                     [ div [className "col-md-4 content"]
-                       [ h1 [] [ text hd.name]
-                       , p  [] [ text hd.signature ]
-                       ]
-                     , div [className "col-md-4 content"] []
-                     , div [ className "col-md-4 content"]
-                           [ p [ className "right" ]
+                     [ div [ className "col-md-8 content"]
+                           [ p [ className "left" ]
                                [ div [_id "logo-designed" ]
-                               [ img [ src "images/logo.png"
-                                     , title hd.logoTitle
-                                     ]
-                               []
+                                 [ img [ src "images/logo.png"
+                                       , title hd.logoTitle
+                                       ] []
+                                 ]
+                               ]
                            ]
-                         ]
-                       ]
+                     , div [ className "col-md-4 content"]
+                           [ img [ src "images/Gargantextuel.jpg"
+                                   , _id "funnyimg"
+                                   , title hd.imageTitle
+                                   ]
+                                   []
+                           ]
                      ]
                    ]
                   where
