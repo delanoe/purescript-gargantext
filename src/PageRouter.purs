@@ -25,6 +25,7 @@ data Routes
   | AnnotationDocumentView Int
   | Tabview
   | CorpusAnalysis
+  | PGraphExplorer
 
 
 instance showRoutes :: Show Routes where
@@ -37,6 +38,7 @@ instance showRoutes :: Show Routes where
   show (AnnotationDocumentView i)  = "DocumentView"
   show Tabview   = "Tabview"
   show CorpusAnalysis   = "corpus"
+  show PGraphExplorer = "graphExplorer"
 
 int :: Match Int
 int = floor <$> num
@@ -52,6 +54,7 @@ routing =
   <|> docviewRoute
   <|> addcorpusRoute
   <|> corpusAnalysis
+  <|> graphExplorer
   <|> home
   where
     tabview  = Tabview   <$ route "tabview"
@@ -61,7 +64,8 @@ routing =
     docviewRoute   = DocView    <$ route "docView"
     addcorpusRoute = AddCorpus  <$ route "addCorpus"
     loginRoute     = Login      <$ route "login"
-    corpusAnalysis  = CorpusAnalysis <$ route "corpus"
+    corpusAnalysis = CorpusAnalysis <$ route "corpus"
+    graphExplorer  = PGraphExplorer <$ route "graphExplorer"
     home           = Home       <$ lit ""
     route str      = lit "" *> lit str
 

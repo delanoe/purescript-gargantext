@@ -34,6 +34,7 @@ import Tabview as TV
 import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultPerformAction, defaultRender, focus, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import UserPage as UP
+import GraphExplorer as GE
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -52,6 +53,7 @@ type AppState =
   , corpusAnalysis :: CA.State
   , showLogin :: Boolean
   , showCorpus :: Boolean
+  , graphExplorer :: GE.State
   }
 
 initAppState :: AppState
@@ -70,6 +72,7 @@ initAppState =
   , corpusAnalysis : CA.initialState
   , showLogin : false
   , showCorpus : false
+  , graphExplorer : GE.initialState
   }
 
 data Action
@@ -84,6 +87,7 @@ data Action
   | AnnotationDocumentViewA  D.Action
   | TreeViewA  NT.Action
   | TabViewA TV.Action
+  | GraphExplorerA GE.Action
   | Search String
   | Go
   | CorpusAnalysisA CA.Action
@@ -124,7 +128,6 @@ performAction _ _ _ = void do
 ---- Lens and Prism
 _landingState :: Lens' AppState L.State
 _landingState = lens (\s -> s.landingState) (\s ss -> s{landingState = ss})
-
 
 _landingAction :: Prism' Action L.Action
 _landingAction = prism LandingA \action ->
@@ -233,6 +236,16 @@ _corpusAction = prism CorpusAnalysisA \action ->
     _-> Left action
 
 
+_graphExplorerState :: Lens' AppState GE.State
+_graphExplorerState = lens (\s -> s.graphExplorer) (\s ss -> s{graphExplorer = ss})
+
+_graphExplorerAction :: Prism' Action GE.Action
+_graphExplorerAction = prism GraphExplorerA \action ->
+  case action of
+    GraphExplorerA caction -> Right caction
+    _-> Left action
+
+
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
   case s.currentRoute of
@@ -256,6 +269,7 @@ pagesComponent s =
     selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState _searchAction  S.searchSpec
+    selectSpec PGraphExplorer = focus _graphExplorerState _graphExplorerAction  GE.spec
     selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
@@ -578,4 +592,9 @@ dispatchAction dispatcher _ Tabview = do
 dispatchAction dispatcher _ CorpusAnalysis = do
   _ <- dispatcher $ SetRoute  $ CorpusAnalysis
   --_ <- dispatcher $ CorpusAnalysisA $ CA.NoOp
+  pure unit
+
+dispatchAction dispatcher _ PGraphExplorer = do
+  _ <- dispatcher $ SetRoute  $ PGraphExplorer
+  --_ <- dispatcher $ GraphExplorerA $ GE.NoOp
   pure unit
