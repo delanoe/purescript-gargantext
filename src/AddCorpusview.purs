@@ -21,6 +21,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.MediaType.Common (applicationJSON)
 import Data.Tuple (Tuple(..))
 import Landing as L
+import Modal (modalHide)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Prelude hiding (div)
@@ -83,6 +84,7 @@ performAction (LoadDatabaseDetails) _ _ = void do
 
 performAction GO _ _ = void do
   lift $ setHash "/corpus"
+  _ <- liftEff $ modalHide "addCorpus"
   modifyState id
 
 
