@@ -88,7 +88,7 @@ performAction GO _ _ = void do
 
 modalSpec :: forall eff props. Boolean -> String -> Spec eff State props Action -> Spec eff State props Action
 modalSpec sm t = over _render \render d p s c ->
-  [ div [ _id "loginModal", className $ "modal myModal" <> if sm then "" else " fade"
+  [ div [ _id "addCorpus", className $ "modal myModal" <> if sm then "" else " fade"
             , role "dialog"
             , _data {show : true}
             ][ div [ className "modal-dialog"
