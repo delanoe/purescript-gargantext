@@ -20,7 +20,10 @@ spec = simpleSpec defaultPerformAction render
             [ menu [_id "toolbar"]
               [ ul'
                 [ li'
-                  [--GraphLoader here
+                  [ form'
+                    [ input [_type "file", name "file", value ""] []
+                    , input [_type "submit", value "submit"] []
+                    ]
                   ]
                 , li'
                   [ button [className "btn btn-success btn-sm"] [text "Change Type"]
