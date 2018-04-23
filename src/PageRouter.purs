@@ -54,8 +54,8 @@ routing =
   <|> docviewRoute
   <|> addcorpusRoute
   <|> corpusAnalysis
-  <|> home
   <|> dashboard
+  <|> home
   where
     tabview  = Tabview   <$ route "tabview"
     documentView   = AnnotationDocumentView <$> (route "documentView" *> int)
@@ -65,8 +65,8 @@ routing =
     addcorpusRoute = AddCorpus  <$ route "addCorpus"
     loginRoute     = Login      <$ route "login"
     corpusAnalysis  = CorpusAnalysis <$ route "corpus"
-    home           = Home       <$ lit ""
     dashboard = Dashboard <$ route "dashboard"
+    home           = Home       <$ lit ""
     route str      = lit "" *> lit str
 
 
