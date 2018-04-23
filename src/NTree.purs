@@ -42,7 +42,7 @@ myCorpus :: Int -> String -> NTree (Tuple String String)
 myCorpus n name = NNode n false name
     [ NLeaf (Tuple "Facets"    "#/docView")
     , NLeaf (Tuple "Graph"     "#/docView")
-    , NLeaf (Tuple "Dashboard" "#/userPage")
+    , NLeaf (Tuple "Dashboard" "#/dashboard")
     ]
 
 exampleTree :: NTree (Tuple String String)

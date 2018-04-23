@@ -81,6 +81,7 @@ data Action
   | AnnotationDocumentViewA  D.Action
   | TreeViewA  NT.Action
   | TabViewA TV.Action
+  | DashboardA Dsh.Action
   | Search String
   | Go
   | CorpusAnalysisA CA.Action
@@ -91,16 +92,11 @@ performAction :: forall eff props. PerformAction ( dom :: DOM
                                                  ) AppState props Action
 performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
-
 performAction (Search s)  _ _ = void do
   modifyState $ _ {search = s}
-
-
 performAction Go  _ _ = void do
   _ <- lift $ setHash "/addCorpus"
   modifyState id
-
-
 performAction _ _ _ = void do
   modifyState id
 
@@ -172,6 +168,11 @@ _userPageAction = prism UserPageA \action ->
     UserPageA caction -> Right caction
     _-> Left action
 
+_dashBoardAction :: Prism' Action Dsh.Action
+_dashBoardAction = prism DashboardA \action ->
+  case action of
+    DashboardA caction -> Right caction
+    _ -> Left action
 
 _annotationdocumentviewState :: Lens' AppState D.State
 _annotationdocumentviewState = lens (\s -> s.annotationdocumentView) (\s ss -> s{annotationdocumentView = ss})
@@ -205,17 +206,17 @@ _tabviewAction = prism TabViewA \action ->
     TabViewA caction -> Right caction
     _-> Left action
 
-
-
 _corpusState :: Lens' AppState CA.State
 _corpusState = lens (\s -> s.corpusAnalysis) (\s ss -> s {corpusAnalysis = ss})
-
 
 _corpusAction :: Prism' Action CA.Action
 _corpusAction = prism CorpusAnalysisA \action ->
   case action of
     CorpusAnalysisA caction -> Right caction
     _-> Left action
+
+_dashBoardSate :: Lens' AppState Dsh.State
+_dashBoardSate = lens (\s -> s.dashboard) (\s ss -> s {dashboard = ss})
 
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
@@ -240,8 +241,7 @@ pagesComponent s =
     selectSpec Tabview = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState _searchAction  S.searchSpec
-
-
+    selectSpec Dashboard = layout0 $ focus _dashBoardSate _dashBoardAction Dsh.layoutDashboard
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
@@ -516,45 +516,38 @@ dispatchAction dispatcher _ Home = do
   _ <- dispatcher $ SetRoute $ Home
   _ <- dispatcher $ LandingA $ L.NoOp
   pure unit
-
 dispatchAction dispatcher _ Login = do
   _ <- dispatcher $ SetRoute $ Login
   _ <- dispatcher $ LoginA   $ LN.NoOp
   pure unit
-
 dispatchAction dispatcher _ AddCorpus = do
   _ <- dispatcher $ SetRoute   $ AddCorpus
   _ <- dispatcher $ AddCorpusA $ AC.LoadDatabaseDetails
   pure unit
-
 dispatchAction dispatcher _ DocView = do
   _ <- dispatcher $ SetRoute $ DocView
   _ <- dispatcher $ DocViewA $ DV.LoadData
   pure unit
-
 dispatchAction dispatcher _ SearchView = do
   _ <- dispatcher $ SetRoute $ SearchView
   _ <- dispatcher $ SearchA  $ S.NoOp
   pure unit
-
 dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ SetRoute  $ UserPage
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
-
 dispatchAction dispatcher _ (AnnotationDocumentView i) = do
   _ <- dispatcher $ SetRoute  $ AnnotationDocumentView i
   _ <- dispatcher $ AnnotationDocumentViewA $ D.NoOp
   pure unit
-
-
 dispatchAction dispatcher _ Tabview = do
   _ <- dispatcher $ SetRoute  $ Tabview
   _ <- dispatcher $ TabViewA $ TV.NoOp
   pure unit
-
-
 dispatchAction dispatcher _ CorpusAnalysis = do
   _ <- dispatcher $ SetRoute  $ CorpusAnalysis
   --_ <- dispatcher $ CorpusAnalysisA $ CA.NoOp
+  pure unit
+dispatchAction dispatcher _ Dashboard = do
+  _ <- dispatcher $ SetRoute $ Dashboard
   pure unit
