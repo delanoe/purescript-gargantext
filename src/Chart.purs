@@ -3,10 +3,11 @@ module Chart where
 import Prelude
 
 import CSS (Color, white)
-import React.DOM.Props (Props, unsafeFromPropsArray, unsafeMkProps)
+import Data.Maybe (Maybe(..))
 import React as R
 import React.DOM (p)
 import React.DOM.Props (Props, className, unsafeFromPropsArray)
+import React.DOM.Props (Props, unsafeFromPropsArray, unsafeMkProps)
 import ReactDOM as RDOM
 import Thermite (Render, Spec, createReactSpec, defaultPerformAction, simpleSpec)
 
@@ -57,14 +58,14 @@ type OptsLoading =
   }
 
 type Option =
-  { title    :: Title
-  , legend   :: Legend
-  , tooltip  :: Tooltip
-  , grid     :: Grid
-  , xAxis    :: Array XAxis
-  , yAxis    :: Array YAxis
-  , series   :: Array Series
-  , dataZoom :: Array DataZoom
+  { title    :: Maybe Title
+  , legend   :: Maybe Legend
+  , tooltip  :: Maybe Tooltip
+  , grid     :: Maybe Grid
+  , xAxis    :: Maybe Array XAxis
+  , yAxis    :: Maybe Array YAxis
+  , series   :: Maybe Array Series
+  , dataZoom :: Maybe Array DataZoom
   }
 
 
@@ -81,33 +82,33 @@ type Grid =
   }
 
 type Legend =
-  {"type"  :: String
-  , show   :: Boolean
-  , zlevel :: Number
-  , z      :: Number
-  , left   :: Number
-  , top    :: Number
-  , right  :: Number
-  , bottom :: Number
-  , width  :: Number
-  , height :: Number
-  , orient :: String
-  , align  :: String
-  , padding       :: Number
-  , itemGap       :: Number
-  , itemWidth     :: Number
-  , itemHeight    :: Number
-  , formatter     :: String
-  , selectedMode  :: Boolean
-  , inactiveColor :: Color
-  , selected      :: String -- object
-  , "data"        :: Array Data
+  {"type"  :: Maybe String
+  , show   :: Maybe Boolean
+  , zlevel :: Maybe Number
+  , z      :: Maybe Number
+  , left   :: Maybe Number
+  , top    :: Maybe Number
+  , right  :: Maybe Number
+  , bottom :: Maybe Number
+  , width  :: Maybe Number
+  , height :: Maybe Number
+  , orient :: Maybe String
+  , align  :: Maybe String
+  , padding       :: Maybe Number
+  , itemGap       :: Maybe Number
+  , itemWidth     :: Maybe Number
+  , itemHeight    :: Maybe Number
+  , formatter     :: Maybe String
+  , selectedMode  :: Maybe Boolean
+  , inactiveColor :: Maybe Color
+  , selected      :: Maybe String -- object
+  , "data"        :: Maybe (Array Data)
   }
 
 type Data =
   { name      :: String
-  , icon      :: String
-  , textStyle :: {}
+  , icon      :: Maybe String
+  , textStyle :: Maybe {}
   }
 
 
@@ -139,7 +140,7 @@ type Tooltip =
   }
 
 type XAxis =
-  { "data"   :: Array String
+  { "data"   :: Array Data
   , "type"   :: String
   , axisTick :: AxisTick
   }
@@ -203,9 +204,13 @@ type Rich = {}
 
 
 foreign import eChartsClass :: forall props. R.ReactClass props
+foreign import eChartsClass' :: forall props. R.ReactClass Option
 
 echarts :: forall eff. Array Props -> R.ReactElement
 echarts p = R.createElementDynamic eChartsClass (unsafeFromPropsArray p) []
+
+echarts' :: forall eff. Option -> R.ReactElement
+echarts' opt = R.createElementDynamic eChartsClass opt []
 
 -- Props
 
@@ -362,6 +367,69 @@ yAxisIndex = unsafeMkProps "yAxisIndex"
       -- , p''
       -- ]
 
+legend' :: Maybe Legend
+legend' = Just $
+  {
+    "type": Nothing
+   ,show: Nothing
+   ,zlevel: Nothing
+   ,  z    : Nothing
+   , left  : Nothing
+   , top   : Nothing
+   , right : Nothing
+   , bottom: Nothing
+   , width : Nothing
+   , height: Nothing
+   , orient: Nothing
+   , align : Nothing
+   , padding      : Nothing
+   , itemGap      : Nothing
+   , itemWidth    : Nothing
+   , itemHeight   : Nothing
+   , formatter    : Nothing
+   , selectedMode : Nothing
+   , inactiveColor: Nothing
+   , selected     : Nothing
+   , "data"       : [data1, data2, data3]
+  }
+
+data1 :: Data
+data1 = {name: "Map terms coverage", icon: Nothing, textStyle: Nothing}
+
+data2 :: Data
+data2 = {name: "Favorites", icon: Nothing, textStyle: Nothing}
+
+data3 :: Data
+data3 = {name: "All", icon: Nothing, textStyle: Nothing}
+
+xAxis :: XAxis
+xAxis =
+ {
+
+  }
+
+opt :: Option
+opt =
+  {
+    title: title'
+    ,legend: legend'
+    ,tooltip: tooltip'
+    ,grid: grid'
+    ,xAxis: xAxis'
+    ,yAxis: yAxis'
+    ,series: series'
+    ,dataZoom: dataZoom'
+  }
+  where title' = Nothing
+        tooltip' = Nothing
+        grid' = Nothing
+        yAxis' = Nothing
+        series' = Nothing
+        dataZoom' = Nothing
+
+histogram' :: R.ReactElement
+histogram' = echarts []
+
 histogram :: R.ReactElement
 histogram = echarts
      [ option
@@ -480,6 +548,19 @@ sd3 = unsafeFromPropsArray
       , yAxisIndex 1
       , data' [201, 222, 223, 777, 244, 255, 555, 879, 938, 1364, 1806, 2324]
       ]
+
+dataZoom' :: Array DataZoom -> Props
+dataZoom' dzs = unsafeMkProps "dataZoom" $ dzToProps <$> dzs
+
+dzToProps :: forall props. DataZoom -> props
+dzToProps dz = unsafeFromPropsArray
+               [ type' dz."type"
+               , xAxisIndex dz.xAxisIndex
+               , filterMode dz.filterMode
+               , start dz.start
+               , end dz.end
+               ]
+
 
 
 sd2 :: forall props. props
