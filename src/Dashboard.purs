@@ -2,9 +2,10 @@ module Dashboard where
 
 import DOM (DOM)
 import Data.Unit (Unit)
-import Prelude (pure, unit, void)
+import Prelude (pure, unit)
 import React.DOM (text)
 import Thermite (PerformAction, Render, Spec, simpleSpec)
+import Chart
 
 type State = Unit
 
@@ -17,7 +18,7 @@ performAction :: forall eff props. PerformAction (dom :: DOM | eff) State props 
 performAction _ _ _ = pure unit
 
 render :: forall props. Render State props Action
-render dispatch _ state _ = [text "Dashboard"]
+render dispatch _ state _ = [text "Dashboard", histogram]
 
 layoutDashboard :: forall props eff. Spec (dom :: DOM | eff) State props Action
 layoutDashboard = simpleSpec performAction render

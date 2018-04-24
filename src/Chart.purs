@@ -3,18 +3,7 @@ module Chart where
 import Prelude
 
 import CSS (Color, white)
-import React (ReactClass, ReactElement, createElementDynamic)
 import React.DOM.Props (Props, unsafeFromPropsArray, unsafeMkProps)
-import Control.Monad.Eff (Eff)
-import DOM (DOM)
-import DOM.HTML (window) as DOM
-import DOM.HTML.Types (htmlDocumentToParentNode) as DOM
-import DOM.HTML.Window (document) as DOM
-import DOM.Node.ParentNode (QuerySelector(..))
-import DOM.Node.ParentNode (querySelector) as DOM
-import Data.Maybe (fromJust)
-import Partial.Unsafe (unsafePartial)
-import React (ReactElement)
 import React as R
 import React.DOM (p)
 import React.DOM.Props (Props, className, unsafeFromPropsArray)
@@ -213,10 +202,10 @@ type Title =
 type Rich = {}
 
 
-foreign import eChartsClass :: forall props. ReactClass props
+foreign import eChartsClass :: forall props. R.ReactClass props
 
-echarts :: forall eff. Array Props -> ReactElement
-echarts p = createElementDynamic eChartsClass (unsafeFromPropsArray p) []
+echarts :: forall eff. Array Props -> R.ReactElement
+echarts p = R.createElementDynamic eChartsClass (unsafeFromPropsArray p) []
 
 -- Props
 
@@ -373,7 +362,7 @@ yAxisIndex = unsafeMkProps "yAxisIndex"
       -- , p''
       -- ]
 
-histogram :: ReactElement
+histogram :: R.ReactElement
 histogram = echarts
      [ option
        [ tooltip [trigger "axis"]
@@ -388,12 +377,53 @@ histogram = echarts
                  , "Sep", "Oct", "Nov" , "Dec"
                  ]
          ]
-       , dataZoom [dz1,dz1,dz2,dz2]
+       , dataZoom' [dz1', dz1', dz2', dz2']
        , yAxis [ya1, ya2]
        , series [sd1, sd2, sd3]
        ]
      ]
 
+{-
+type DataZoom =
+  {"type"      :: String
+  , xAxisIndex :: Int
+  , filterMode :: String
+  , start      :: Int
+  , end        :: Int
+  }
+-}
+
+dataZoom' :: Array DataZoom -> Props
+dataZoom' dzs = unsafeMkProps "dataZoom" $ dzToProps <$> dzs
+
+dzToProps :: forall props. DataZoom -> props
+dzToProps dz = unsafeFromPropsArray
+               [ type' dz."type"
+               , xAxisIndex dz.xAxisIndex
+               , filterMode dz.filterMode
+               , start dz.start
+               , end dz.end
+               ]
+
+dz1' :: DataZoom
+dz1' = {
+  "type": "slider"
+  ,xAxisIndex: 0
+  ,filterMode: "empty"
+  ,start: 0
+  ,end: 100
+  }
+
+dz2' :: DataZoom
+dz2' = {
+  "type": "inside"
+  ,xAxisIndex: 0
+  ,filterMode: "empty"
+  ,start: 0
+  ,end: 100
+  }
+
+dz1 :: forall props. props
 dz1 = unsafeFromPropsArray
       [ type' "slider"
       , xAxisIndex 0
@@ -402,6 +432,7 @@ dz1 = unsafeFromPropsArray
       , end 100
       ]
 
+dz2 :: forall props. props
 dz2 = unsafeFromPropsArray
       [ type' "inside"
       , xAxisIndex 0
@@ -410,6 +441,7 @@ dz2 = unsafeFromPropsArray
       , end 100
       ]
 
+ya1 :: forall props. props
 ya1 = unsafeFromPropsArray
       [ type' "value"
       , name "Score metric"
@@ -417,7 +449,7 @@ ya1 = unsafeFromPropsArray
       , position "right"
       , axisLabel [formatter "{value}"]
       ]
-
+ya2 :: forall props. props
 ya2 = unsafeFromPropsArray
       [ type' "value"
       , name "Publications (by year)"
@@ -426,6 +458,7 @@ ya2 = unsafeFromPropsArray
       , axisLabel [formatter "{value}"]
       ]
 
+sd1 :: forall props. props
 sd1 = unsafeFromPropsArray
       [ name "Map terms coverage"
       , type' "line"
@@ -439,6 +472,7 @@ sd1 = unsafeFromPropsArray
       , data' [95, 80, 75, 35, 30, 50, 70, 80, 95, 95, 95, 99]
       ]
 
+sd3 :: forall props. props
 sd3 = unsafeFromPropsArray
       [ name "All"
       , type' "bar"
@@ -448,6 +482,7 @@ sd3 = unsafeFromPropsArray
       ]
 
 
+sd2 :: forall props. props
 sd2 = unsafeFromPropsArray
       [ name "Favorites"
       , type' "bar"
@@ -457,5 +492,5 @@ sd2 = unsafeFromPropsArray
       ]
 
 
-p'' :: ReactElement
+p'' :: R.ReactElement
 p'' = p [] []
