@@ -60,13 +60,13 @@ type OptsLoading =
 
 type Option =
   { title    :: Maybe Title
-  , legend   :: Maybe Legend
-  , tooltip  :: Maybe Tooltip
-  , grid     :: Maybe Grid
-  , xAxis    :: Maybe XAxis
-  , yAxis    :: Maybe YAxis
-  , series   :: Maybe (Array Series)
-  , dataZoom :: Maybe (Array DataZoom)
+  , legend   :: Legend
+  , tooltip  :: Tooltip
+  , grid     :: Grid
+  , xAxis    :: XAxis
+  , yAxis    :: YAxis
+  , series   :: Array Series
+  , dataZoom :: Array DataZoom
   }
 
 
@@ -135,7 +135,7 @@ type SubtextStyle =
 
 type Tooltip =
   { trigger   :: String
-  , formatter :: String -- TODO function
+  , formatter :: Maybe String -- TODO function
   }
 
 type XAxis =
@@ -429,23 +429,36 @@ yData1 =
   , axisLabel: {formatter: "{value}"}
   }
 
+tooltip' :: Tooltip
+tooltip' =
+  {
+    trigger: "axis"
+  , formatter: Nothing
+  }
+
+
+series' :: Series
+series' =
+  {
+    name: "All"
+  , "type": "bar"
+  , "data": [201, 222, 223, 777, 244, 255, 555, 879]
+  }
+
 opt :: Option
 opt =
   {
     title: title'
-    ,legend: Just legend'
+    ,legend: legend'
     ,tooltip: tooltip'
     ,grid: grid'
-    ,xAxis: Just xAxis'
-    ,yAxis: Just yData1
-    ,series: series'
-    ,dataZoom: Just [dz1', dz1', dz2', dz2']
+    ,xAxis: xAxis'
+    ,yAxis: yData1
+    ,series: [series']
+    ,dataZoom: [dz1', dz1', dz2', dz2']
   }
   where title' = Nothing
-        tooltip' = Nothing
-        grid' = Nothing
-        series' = Nothing
-        dataZoom' = Nothing
+        grid' = {containLabel: true}
 
 histogram2 :: R.ReactElement
 histogram2 = echarts' opt
@@ -455,7 +468,7 @@ histogram = echarts
      [ option
        [ tooltip [trigger "axis"]
        , grid [containLabel true]
-       , legend [data' ["Map terms coverage", "Favorites", "All"]]
+       , legend [data' ["TEST MUDADA", "Favorites", "All"]]
        -- , legend [data' ["Map Terms coverage", "Favorites", "All"]]
        , xAxis
          [ type' "category"
@@ -467,7 +480,7 @@ histogram = echarts
          ]
        , dataZoom' [dz1', dz1', dz2', dz2']
        , yAxis [ya1, ya2]
-       , series [sd1, sd2, sd3]
+       , series [ sd3]
        ]
      ]
 
