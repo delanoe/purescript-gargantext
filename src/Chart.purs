@@ -1,9 +1,4 @@
-module Chart
-(
-  histogram2,
-  histogram
-)
-where
+module Chart where
 
 import Prelude
 
@@ -215,7 +210,7 @@ echarts :: forall eff. Array Props -> R.ReactElement
 echarts p = R.createElementDynamic eChartsClass (unsafeFromPropsArray p) []
 
 echarts' :: forall eff. Option -> R.ReactElement
-echarts' opt = R.createElementDynamic eChartsClass2 opt []
+echarts' chart = R.createElementDynamic eChartsClass2 chart []
 
 -- Props
 
