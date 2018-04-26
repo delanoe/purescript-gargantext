@@ -1,9 +1,15 @@
-module Chart where
+module Chart
+(
+  histogram2,
+  histogram
+)
+where
 
 import Prelude
 
 import CSS (Color, white)
 import Data.Maybe (Maybe(..))
+import Data.Boolean
 import React as R
 import React.DOM (p)
 import React.DOM.Props (Props, className, unsafeFromPropsArray)
@@ -62,10 +68,10 @@ type Option =
   , legend   :: Maybe Legend
   , tooltip  :: Maybe Tooltip
   , grid     :: Maybe Grid
-  , xAxis    :: Maybe Array XAxis
-  , yAxis    :: Maybe Array YAxis
-  , series   :: Maybe Array Series
-  , dataZoom :: Maybe Array DataZoom
+  , xAxis    :: Maybe XAxis
+  , yAxis    :: Maybe YAxis
+  , series   :: Maybe (Array Series)
+  , dataZoom :: Maybe (Array DataZoom)
   }
 
 
@@ -102,7 +108,7 @@ type Legend =
   , selectedMode  :: Maybe Boolean
   , inactiveColor :: Maybe Color
   , selected      :: Maybe String -- object
-  , "data"        :: Maybe (Array Data)
+  , "data"        :: Array Data
   }
 
 type Data =
@@ -110,8 +116,6 @@ type Data =
   , icon      :: Maybe String
   , textStyle :: Maybe {}
   }
-
-
 
 type SubtextStyle =
   { color      :: Color
@@ -144,6 +148,7 @@ type XAxis =
   , "type"   :: String
   , axisTick :: AxisTick
   }
+
 type AxisTick =
   {
     alignWithLabel :: Boolean
@@ -204,13 +209,13 @@ type Rich = {}
 
 
 foreign import eChartsClass :: forall props. R.ReactClass props
-foreign import eChartsClass' :: forall props. R.ReactClass Option
+foreign import eChartsClass2 :: R.ReactClass Option
 
 echarts :: forall eff. Array Props -> R.ReactElement
 echarts p = R.createElementDynamic eChartsClass (unsafeFromPropsArray p) []
 
 echarts' :: forall eff. Option -> R.ReactElement
-echarts' opt = R.createElementDynamic eChartsClass opt []
+echarts' opt = R.createElementDynamic eChartsClass2 opt []
 
 -- Props
 
@@ -367,8 +372,8 @@ yAxisIndex = unsafeMkProps "yAxisIndex"
       -- , p''
       -- ]
 
-legend' :: Maybe Legend
-legend' = Just $
+legend' :: Legend
+legend' =
   {
     "type": Nothing
    ,show: Nothing
@@ -402,33 +407,53 @@ data2 = {name: "Favorites", icon: Nothing, textStyle: Nothing}
 data3 :: Data
 data3 = {name: "All", icon: Nothing, textStyle: Nothing}
 
-xAxis :: XAxis
-xAxis =
+xAxis' :: XAxis
+xAxis' =
  {
+   "data": [xData1, xData2, xData3]
+ , "type": "category"
+ , axisTick: {alignWithLabel: true}
+ }
 
+xData1 :: Data
+xData1 = {name: "Jan", icon: Nothing, textStyle: Nothing}
+
+xData2 :: Data
+xData2 = {name: "Feb", icon: Nothing, textStyle: Nothing}
+
+xData3 :: Data
+xData3 = {name: "Mar", icon: Nothing, textStyle: Nothing}
+
+yData1 :: YAxis
+yData1 =
+  {
+    "type": "value"
+  , name: "Score metric"
+  , min: 0
+  , position: "right"
+  , axisLabel: {formatter: "{value}"}
   }
 
 opt :: Option
 opt =
   {
     title: title'
-    ,legend: legend'
+    ,legend: Just legend'
     ,tooltip: tooltip'
     ,grid: grid'
-    ,xAxis: xAxis'
-    ,yAxis: yAxis'
+    ,xAxis: Just xAxis'
+    ,yAxis: Just yData1
     ,series: series'
-    ,dataZoom: dataZoom'
+    ,dataZoom: Just [dz1', dz1', dz2', dz2']
   }
   where title' = Nothing
         tooltip' = Nothing
         grid' = Nothing
-        yAxis' = Nothing
         series' = Nothing
         dataZoom' = Nothing
 
-histogram' :: R.ReactElement
-histogram' = echarts []
+histogram2 :: R.ReactElement
+histogram2 = echarts' opt
 
 histogram :: R.ReactElement
 histogram = echarts
@@ -460,18 +485,6 @@ type DataZoom =
   , end        :: Int
   }
 -}
-
-dataZoom' :: Array DataZoom -> Props
-dataZoom' dzs = unsafeMkProps "dataZoom" $ dzToProps <$> dzs
-
-dzToProps :: forall props. DataZoom -> props
-dzToProps dz = unsafeFromPropsArray
-               [ type' dz."type"
-               , xAxisIndex dz.xAxisIndex
-               , filterMode dz.filterMode
-               , start dz.start
-               , end dz.end
-               ]
 
 dz1' :: DataZoom
 dz1' = {

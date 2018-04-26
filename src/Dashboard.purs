@@ -18,7 +18,7 @@ performAction :: forall eff props. PerformAction (dom :: DOM | eff) State props 
 performAction _ _ _ = pure unit
 
 render :: forall props. Render State props Action
-render dispatch _ state _ = [text "Dashboard", histogram]
+render dispatch _ state _ = [text "Dashboard", histogram2]
 
 layoutDashboard :: forall props eff. Spec (dom :: DOM | eff) State props Action
 layoutDashboard = simpleSpec performAction render
