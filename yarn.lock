@@ -166,6 +166,10 @@ react-echarts-v3@^1.0.14:
     element-resize-detector latest
     lodash latest
 
+react-sigma@^1.2.30:
+  version "1.2.30"
+  resolved "https://registry.yarnpkg.com/react-sigma/-/react-sigma-1.2.30.tgz#794f88e796c4f763158afe404d10d9635f848846"
+
 react-transition-group@^1.2.0:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/react-transition-group/-/react-transition-group-1.2.1.tgz#e11f72b257f921b213229a774df46612346c7ca6"

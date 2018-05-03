@@ -7,6 +7,7 @@
     "react": "^16.2.0",
     "react-addons-css-transition-group": "^16.2.0",
     "react-dom": "^16.2.0",
-    "react-echarts-v3": "^1.0.14"
+    "react-echarts-v3": "^1.0.14",
+    "react-sigma": "^1.2.30"
   }
 }
