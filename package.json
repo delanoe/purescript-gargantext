@@ -1,12 +1,43 @@
 {
-  "dependencies": {
-    "create-react-class": "^15.6.2",
-    "echarts": "^3.8.5",
-    "echarts-for-react": "^2.0.0",
-    "prop-types": "15.6.0",
-    "react": "^16.2.0",
-    "react-addons-css-transition-group": "^16.2.0",
-    "react-dom": "^16.2.0",
-    "react-echarts-v3": "^1.0.14"
-  }
+    "dependencies": {
+        "create-react-class": "^15.6.2",
+        "echarts": "^3.8.5",
+        "echarts-for-react": "^2.0.0",
+        "imports-loader": "^0.7.1",
+        "prop-types": "15.6.0",
+        "react": "^16.2.0",
+        "react-dom": "^16.2.0",
+        "react-echarts-v3": "^1.0.14",
+        "sigma": "^1.2.1",
+        "graph-explorer": "git+ssh://git@gitlab.iscpif.fr:20022/gargantext/graphExplorer.git"
+    },
+    "browserify": {
+        "transform": [
+            [
+                "babelify",
+                {
+                    "presets": [
+                        "es2015",
+                        "stage-0",
+                        "react"
+                    ]
+                }
+            ]
+        ]
+    },
+    "babel": {
+        "presets": [
+            "es2015",
+            "stage-0",
+            "react"
+        ]
+    },
+    "devDependencies": {
+        "babel-core": "^6.26.0",
+        "babel-preset-es2015": "^6.24.1",
+        "babel-preset-react": "^6.24.1",
+        "babel-preset-stage-0": "^6.24.1",
+        "babel-runtime": "^6.26.0",
+        "babelify": "^8.0.0"
+    }
 }
