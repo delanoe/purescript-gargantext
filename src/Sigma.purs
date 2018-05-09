@@ -1,7 +1,7 @@
 module Sigma where
 
-import React (ReactClass)
-import React.DOM.Props (Props, unsafeMkProps)
+import React (ReactClass, ReactElement, createElement)
+import React.DOM.Props (Props, unsafeFromPropsArray, unsafeMkProps)
 
 foreign import sigmaClass :: forall props. ReactClass props
 foreign import edgeShapesClass :: forall props. ReactClass props
@@ -16,13 +16,19 @@ foreign import neoCypherClass :: forall props. ReactClass props
 foreign import randomizeNodePositionsClass :: forall props. ReactClass props
   --sigma props
 
+sigmaC :: Array Props -> Array ReactElement -> ReactElement
+sigmaC props = createElement sigmaClass (unsafeFromPropsArray props)
+
+loadJSON :: Array Props -> ReactElement
+loadJSON props = createElement loadJSONClass (unsafeFromPropsArray props) []
+
 settings:: String -> Props -- Sigma$Settings,
 settings = unsafeMkProps "settings"
 
 renderer:: String -> Props -- "webgl" | "canvas" | "svg",
 renderer = unsafeMkProps "renderer"
 
-style:: String -> Props -- Object,
+style:: forall a. a -> Props -- Object,
 style = unsafeMkProps "style"
 
 _children:: String -> Props -- mixed,
@@ -70,7 +76,7 @@ sigma = unsafeMkProps "sigma"
 
 ---loadgex props
 
-path  ::  String -> Props --  string,
+path :: String -> Props --  string,
 path = unsafeMkProps "path"
 
 onGraphLoaded  ::  String -> Props -- ?: () => void,

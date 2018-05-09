@@ -3,6 +3,7 @@ module GraphExplorer where
 import React.DOM (button, button', div, form', input, li', menu, text, ul, ul')
 import React.DOM.Props (_id, _type, className, name, placeholder, value)
 import Thermite (Spec, defaultPerformAction, simpleSpec)
+import Sigma
 
 newtype State = State {mode :: String}
 
@@ -48,7 +49,10 @@ spec = simpleSpec defaultPerformAction render
            ]
          , div [className "row"]
            [ div [className "col-md-8"]
-             [ div [] [text "GraphExplorer here...."]
+             [ --div [] [text "GraphExplorer here...."]
+               sigmaC [ style {width : 500, height : 500}, renderer "webgl"]
+               [ loadJSON [path "./sites_coords.json"]
+               ]
              ]
            , div [className "col-md-4"]
              [ div [_id "sidepanel"]
