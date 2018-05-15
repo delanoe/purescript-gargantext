@@ -5,7 +5,7 @@ import Data.Unit (Unit)
 import Prelude (pure, unit)
 import React.DOM (text)
 import Thermite (PerformAction, Render, Spec, simpleSpec)
-import Chart
+import Charts.ECharts
 
 type State = Unit
 

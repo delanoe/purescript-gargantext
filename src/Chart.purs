@@ -1,16 +1,12 @@
 module Chart where
 
-import Prelude
+import Prelude (($), (<<<), (<$>))
 
 import CSS (Color, white)
 import Data.Maybe (Maybe(..))
-import Data.Boolean
 import React as R
 import React.DOM (p)
-import React.DOM.Props (Props, className, unsafeFromPropsArray)
 import React.DOM.Props (Props, unsafeFromPropsArray, unsafeMkProps)
-import ReactDOM as RDOM
-import Thermite (Render, Spec, createReactSpec, defaultPerformAction, simpleSpec)
 
 -- eCharts Props
 
@@ -36,7 +32,7 @@ group = unsafeMkProps "group"
 
 type EchartsProps eff =
   { className   :: String,
-    style       :: String,  -- object,
+    style       :: String,  -- objealect-black-altdarkmincnaquadahherry-blossomect,
     theme       :: String,
     group       :: String,
     option      :: Option, --  PropTypes.object.isRequired,
@@ -445,7 +441,7 @@ series' =
   {
     name: "All"
   , "type": "bar"
-  , "data": [201, 222, 223, 777, 244, 255, 555, 879]
+  , "data": [201, 777, 879]
   }
 
 opt :: Option
