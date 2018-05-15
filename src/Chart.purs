@@ -58,9 +58,12 @@ type OptsLoading =
     zlevel    :: Int
   }
 
+type OpTest =
+  {option :: Option}
+
 type Option =
   { title    :: Maybe Title
-  , legend   :: Legend
+  , legend   :: Maybe Legend
   , tooltip  :: Tooltip
   , grid     :: Grid
   , xAxis    :: XAxis
@@ -83,8 +86,8 @@ type Grid =
   }
 
 type Legend =
-  {"type"  :: Maybe String
-  , show   :: Maybe Boolean
+  {"type"  :: String
+  , show   :: Boolean
   , zlevel :: Maybe Number
   , z      :: Maybe Number
   , left   :: Maybe Number
@@ -103,7 +106,7 @@ type Legend =
   , selectedMode  :: Maybe Boolean
   , inactiveColor :: Maybe Color
   , selected      :: Maybe String -- object
-  , "data"        :: Array Data
+  , "data"        :: Maybe (Array Data)
   }
 
 type Data =
@@ -204,13 +207,13 @@ type Rich = {}
 
 
 foreign import eChartsClass :: forall props. R.ReactClass props
-foreign import eChartsClass2 :: R.ReactClass Option
+foreign import eChartsClass2 :: R.ReactClass OpTest
 
 echarts :: forall eff. Array Props -> R.ReactElement
 echarts p = R.createElementDynamic eChartsClass (unsafeFromPropsArray p) []
 
 echarts' :: forall eff. Option -> R.ReactElement
-echarts' chart = R.createElementDynamic eChartsClass2 chart []
+echarts' chart = R.createElementDynamic eChartsClass2 {option: chart} []
 
 -- Props
 
@@ -370,27 +373,27 @@ yAxisIndex = unsafeMkProps "yAxisIndex"
 legend' :: Legend
 legend' =
   {
-    "type": Nothing
-   ,show: Nothing
-   ,zlevel: Nothing
-   ,  z    : Nothing
-   , left  : Nothing
-   , top   : Nothing
-   , right : Nothing
+    "type": "plain"
+   , show: true
+   , zlevel: Nothing
+   , z: Nothing
+   , left: Nothing
+   , top: Nothing
+   , right: Nothing
    , bottom: Nothing
-   , width : Nothing
+   , width: Nothing
    , height: Nothing
    , orient: Nothing
-   , align : Nothing
-   , padding      : Nothing
-   , itemGap      : Nothing
-   , itemWidth    : Nothing
-   , itemHeight   : Nothing
-   , formatter    : Nothing
-   , selectedMode : Nothing
+   , align: Nothing
+   , padding: Nothing
+   , itemGap: Nothing
+   , itemWidth: Nothing
+   , itemHeight: Nothing
+   , formatter: Nothing
+   , selectedMode: Nothing
    , inactiveColor: Nothing
-   , selected     : Nothing
-   , "data"       : [data1, data2, data3]
+   , selected: Nothing
+   , "data": Nothing
   }
 
 data1 :: Data
@@ -448,17 +451,15 @@ series' =
 opt :: Option
 opt =
   {
-    title: title'
-    ,legend: legend'
+    title: Nothing
+    ,legend: Nothing
     ,tooltip: tooltip'
-    ,grid: grid'
+    ,grid: {containLabel: true}
     ,xAxis: xAxis'
     ,yAxis: yData1
     ,series: [series']
     ,dataZoom: [dz1', dz1', dz2', dz2']
   }
-  where title' = Nothing
-        grid' = {containLabel: true}
 
 histogram2 :: R.ReactElement
 histogram2 = echarts' opt
@@ -480,7 +481,7 @@ histogram = echarts
          ]
        , dataZoom' [dz1', dz1', dz2', dz2']
        , yAxis [ya1, ya2]
-       , series [ sd3]
+       , series [sd1, sd2, sd3]
        ]
      ]
 
