@@ -1,23 +1,27 @@
 module Charts.Types where
 
-import Data.Maybe(Maybe(..))
+import Prelude ((<>), show, ($))
+import Data.Maybe(Maybe)
+import Data.Either(Either)
+import Data.String (toLower)
+import Data.Generic (class Generic, gShow)
 import CSS (Color)
 
--- eCharts Props
+type NumberOrArray = Either Number (Array Number)
 
--- className :: String -> from React DOM Props
---    style     :: String,  -- object,
+data Top = Top | Middle | Bottom
+derive instance genericTop :: Generic Top
 
-    -- group     :: String,
-    -- option    :: Option, --  PropTypes.object.isRequired,
-    -- initOpts  :: String, -- PropTypes.object,
-    -- notMerge  :: Boolean,
-    -- lazyUpdate:: Boolean
-    -- loading   :: Boolean,
-    -- optsLoading::  OptsLoading, --  PropTypes.object,
-    -- onReady    :: String, --  PropTypes.func,
-    -- resizable  :: Boolean, -- PropTypes.bool,
-    -- onEvents   :: String --  PropTypes.object
+data Position relative = Flat Number | Percent Number | Relative relative -- 20 | 20% | top
+
+class InitialB r
+instance nightOfNumber :: InitialB Number
+instance runningInTheString :: InitialB String
+
+displayTopPosition :: forall a. InitialB a => Position Top -> a
+displayTopPosition (Flat n) = n
+displayTopPosition (Percent n) = (show n) <> "%"
+displayTopPosition (Relative r) = toLower $ gShow r
 
 type Echarts =
   { className   :: Maybe String,
@@ -35,14 +39,6 @@ type Echarts =
     onEvents    :: Maybe String --  PropTypes.object
   }
 
-type OptsLoading =
-  { text      :: String,
-    color     :: Color,  --- color
-    textColor :: Color, --color
-    maskColor :: Color, --color
-    zlevel    :: Int
-  }
-
 type Option =
   { title    :: Maybe Title
   , legend   :: Maybe Legend
@@ -55,31 +51,41 @@ type Option =
   }
 
 type Title =
-  { text         :: String
-  , show         :: Boolean
-  , link         :: String
-  , target       :: String
-  , textStyle    :: TextStyle
-  , subtext      :: String
-  , sublink      :: String
-  , subtarget    :: String
+  {
+    id :: Maybe String
+  , show :: Boolean -- default True
+  , text :: Maybe String -- default ''
+  , link :: Maybe String -- default ''
+  , target :: String -- default 'blank'
+  , textStyle :: TextStyle
+  , subtext :: String -- default ''
+  , sublink :: String -- default ''
+  , subtarget :: String -- default 'blank'
   , subtextStyle :: SubtextStyle
-  , padding      :: Number
-  , itemGap      :: Number
-  , zlevel       :: Number
-  , z            :: Number
-  , left         :: Number
-  , top          :: Number
-  , right        :: Number
-  , bottom       :: Number
-  , backgroundColor :: Color
-  , borderColor     :: Color
-  , borderWidth     :: Number
-  , borderRadius    :: Number -- data NumberOrArray = Number | Array Number
-  , shadowBlur      :: Number
-  , shadowColor     :: Color
-  , shadowOffsetX   :: Number
-  , shadowOffsetY   :: Number
+  , padding :: Number -- default '5'
+  , itemGap :: Number -- default '10'
+  , zlevel :: Number -- default '0'
+  , z :: Number -- default '2'
+  , left :: Number -- default 'auto'
+  , top :: Number -- default 'auto'
+  , right :: Number -- default 'auto'
+  , bottom :: Number -- default 'auto'
+  , backgroundColor :: Color -- default 'transparent''
+  , borderColor :: Color -- default '#ccc'
+  , borderWidth :: Number -- default '1'
+  , borderRadius :: Number -- default 0; data NumberOrArray = Number | Array Number
+  , shadowBlur :: Number
+  , shadowColor :: Color
+  , shadowOffsetX :: Number
+  , shadowOffsetY :: Number
+  }
+
+type OptsLoading =
+  { text      :: String,
+    color     :: Color,  --- color
+    textColor :: Color, --color
+    maskColor :: Color, --color
+    zlevel    :: Int
   }
 
 type DataZoom =
