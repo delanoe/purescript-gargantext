@@ -1,27 +1,47 @@
 module Charts.Types where
 
-import Prelude ((<>), show, ($))
-import Data.Maybe(Maybe)
-import Data.Either(Either)
-import Data.String (toLower)
+import Unsafe.Coerce
+
+import CSS (Color, toHexString)
+import Data.Either (Either)
 import Data.Generic (class Generic, gShow)
-import CSS (Color)
+import Data.Maybe (Maybe)
+import Data.String (toLower)
+import Prelude ((<>), class Show, show, ($), (>>>), Unit, (<<<))
 
 type NumberOrArray = Either Number (Array Number)
 
-data Top = Top | Middle | Bottom
-derive instance genericTop :: Generic Top
+data TopRelativePosition = Top | Middle | Bottom
+instance showTopRelativePosition :: Show TopRelativePosition
+  where show (Top) = "top"
+        show (Middle) = "middle"
+        show (Bottom) = "bottom"
 
-data Position relative = Flat Number | Percent Number | Relative relative -- 20 | 20% | top
 
-class InitialB r
-instance nightOfNumber :: InitialB Number
-instance runningInTheString :: InitialB String
+data LeftRelativePosition = LeftPos | Center | RightPos
+instance showLeftRelativePosition :: Show LeftRelativePosition
+  where show (LeftPos) = "left"
+        show (Center) = "center"
+        show (RightPos) = "right"
 
-displayTopPosition :: forall a. InitialB a => Position Top -> a
-displayTopPosition (Flat n) = n
-displayTopPosition (Percent n) = (show n) <> "%"
-displayTopPosition (Relative r) = toLower $ gShow r
+newtype CSSColor = CSSColor String
+
+renderCSSColor :: Color -> CSSColor
+renderCSSColor = CSSColor <<< toHexString
+
+foreign import data Position :: Type -> Type
+
+renderNumber :: forall r. Number -> Position r
+renderNumber = unsafeCoerce
+
+renderPercentage :: forall r. Number -> Position r
+renderPercentage n = unsafeCoerce $ (show n) <> "%"
+
+renderTopRelativePosition :: TopRelativePosition -> Position TopRelativePosition
+renderTopRelativePosition = unsafeCoerce <<< show
+
+renderLeftRelativePosition :: LeftRelativePosition -> Position LeftRelativePosition
+renderLeftRelativePosition = unsafeCoerce <<< show
 
 type Echarts =
   { className   :: Maybe String,
@@ -40,7 +60,7 @@ type Echarts =
   }
 
 type Option =
-  { title    :: Maybe Title
+  { title    :: Title
   , legend   :: Maybe Legend
   , tooltip  :: Tooltip
   , grid     :: Grid
@@ -52,30 +72,30 @@ type Option =
 
 type Title =
   {
-    id :: Maybe String
+    id :: String -- None by default
   , show :: Boolean -- default True
-  , text :: Maybe String -- default ''
-  , link :: Maybe String -- default ''
+  , text :: String -- default ''
+  , link :: String -- default ''
   , target :: String -- default 'blank'
-  , textStyle :: TextStyle
+  , textStyle :: Maybe TextStyle
   , subtext :: String -- default ''
   , sublink :: String -- default ''
   , subtarget :: String -- default 'blank'
-  , subtextStyle :: SubtextStyle
+  , subtextStyle :: Maybe SubtextStyle
   , padding :: Number -- default '5'
   , itemGap :: Number -- default '10'
   , zlevel :: Number -- default '0'
   , z :: Number -- default '2'
-  , left :: Number -- default 'auto'
-  , top :: Number -- default 'auto'
-  , right :: Number -- default 'auto'
-  , bottom :: Number -- default 'auto'
-  , backgroundColor :: Color -- default 'transparent''
-  , borderColor :: Color -- default '#ccc'
+  , left :: Position LeftRelativePosition -- default 'auto'
+  , top :: Position TopRelativePosition -- default 'auto'
+  , right :: Position Unit -- default 'auto'
+  , bottom :: Position Unit -- default 'auto'
+  , backgroundColor :: CSSColor -- default 'transparent''
+  , borderColor :: CSSColor -- default '#ccc'
   , borderWidth :: Number -- default '1'
-  , borderRadius :: Number -- default 0; data NumberOrArray = Number | Array Number
+  , borderRadius :: NumberOrArray -- default 0; data NumberOrArray = Number | Array Number
   , shadowBlur :: Number
-  , shadowColor :: Color
+  , shadowColor :: CSSColor
   , shadowOffsetX :: Number
   , shadowOffsetY :: Number
   }
