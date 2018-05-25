@@ -97,7 +97,7 @@ series' =
 opt :: Option
 opt =
   {
-    title: title'
+    title: title
     ,legend: Nothing
     ,tooltip: tooltip'
     ,grid: {containLabel: true}
@@ -106,35 +106,43 @@ opt =
     ,series: [series']
     ,dataZoom: [dz1', dz1', dz2', dz2']
   }
-  where title' =
-          {
-            id: ""
-            ,show: true
-            ,text: "MudaTitre rpz les pyramides"
-            ,link: "https://google.com"
-            ,target: "blank"
-            ,textStyle: Nothing
-            ,subtext: "Muda Subtitle"
-            ,sublink: "https://google.fr"
-            ,subtarget: "blank"
-            ,subtextStyle: Nothing
-            ,padding: 10.0
-            ,itemGap: 0.0
-            ,zlevel: 2.0
-            ,z: 2.0
-            ,left: renderLeftRelativePosition RightPos
-            ,top: renderTopRelativePosition Middle
-            ,right: renderNumber 60.0
-            ,bottom: renderPercentage 40.0
-            ,backgroundColor: renderCSSColor turquoise
-            ,borderColor: renderCSSColor violet
-            ,borderWidth: 20.0
-            ,borderRadius: Left 20.0
-            ,shadowBlur: 40.0
-            ,shadowColor: renderCSSColor turquoise
-            ,shadowOffsetX: 20.0
-            ,shadowOffsetY: 40.0
-          }
+
+title :: Title
+title =
+  {
+    id: ""
+   ,show: true
+   ,text: "MudaTitre rpz les pyramides"
+   ,link: "https://google.com"
+   ,target: "blank"
+   ,textStyle: Nothing
+   ,subtext: "Muda Subtitle"
+   ,sublink: "https://google.fr"
+   ,subtarget: "blank"
+   ,subtextStyle: Nothing
+   ,padding: 10.0
+   ,itemGap: 0.0
+   ,zlevel: 2.0
+   ,z: 2.0
+   ,left: renderLeftRelativePosition RightPos
+   ,top: renderTopRelativePosition Middle
+   ,right: renderNumber 60.0
+   ,bottom: renderPercentage 40.0
+   ,backgroundColor: renderChartColor turquoise
+   ,borderColor: renderChartColor violet
+   ,borderWidth: 20.0
+   ,borderRadius: Left 20.0
+   ,shadowBlur: 40.0
+   ,shadowColor: renderChartColor turquoise
+   ,shadowOffsetX: 20.0
+   ,shadowOffsetY: 40.0
+  }
+
+textStyle :: ChartFontStyle
+textStyle =
+  {
+    
+  }
 
 charts :: Echarts
 charts =

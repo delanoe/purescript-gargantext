@@ -2,12 +2,10 @@ module Charts.Types where
 
 import Unsafe.Coerce
 
-import CSS (Color, toHexString)
+import CSS (Color, FontStyle(..), Value(..), toHexString, Prefixed(..))
 import Data.Either (Either)
-import Data.Generic (class Generic, gShow)
 import Data.Maybe (Maybe)
-import Data.String (toLower)
-import Prelude ((<>), class Show, show, ($), (>>>), Unit, (<<<))
+import Prelude ((<>), class Show, show, ($), Unit, (<<<))
 
 type NumberOrArray = Either Number (Array Number)
 
@@ -17,17 +15,31 @@ instance showTopRelativePosition :: Show TopRelativePosition
         show (Middle) = "middle"
         show (Bottom) = "bottom"
 
-
 data LeftRelativePosition = LeftPos | Center | RightPos
 instance showLeftRelativePosition :: Show LeftRelativePosition
   where show (LeftPos) = "left"
         show (Center) = "center"
         show (RightPos) = "right"
 
-newtype CSSColor = CSSColor String
+newtype ChartColor = ChartColor String
 
-renderCSSColor :: Color -> CSSColor
-renderCSSColor = CSSColor <<< toHexString
+renderChartColor :: Color -> ChartColor
+renderChartColor = ChartColor <<< toHexString
+
+newtype ChartFontStyle = ChartFontStyle String
+
+renderChartFontStyle :: FontStyle -> ChartFontStyle
+renderChartFontStyle (FontStyle (Value (Plain "italic"))) = ChartFontStyle "italic"
+renderChartFontStyle (FontStyle (Value (Plain "oblique"))) = ChartFontStyle "oblique"
+renderChartFontStyle _ = ChartFontStyle "normal"
+
+newtype ChartFontWeight = ChartFontWeight String
+
+renderChartFontWeight :: FontWeight -> ChartFontWeight
+renderChartFontWeight (FontStyle (Value (Plain "bold")))) = ChartFontWeight "bold"
+renderChartFontWeight (FontStyle (Value (Plain "bolder")))) = ChartFontWeight "bolder"
+renderChartFontWeight (FontStyle (Value (Plain "lighter")))) = ChartFontWeight "lighter"
+renderChartFontWeight _ = ChartFontWeight "normal"
 
 foreign import data Position :: Type -> Type
 
@@ -90,12 +102,12 @@ type Title =
   , top :: Position TopRelativePosition -- default 'auto'
   , right :: Position Unit -- default 'auto'
   , bottom :: Position Unit -- default 'auto'
-  , backgroundColor :: CSSColor -- default 'transparent''
-  , borderColor :: CSSColor -- default '#ccc'
+  , backgroundColor :: ChartColor -- default 'transparent''
+  , borderColor :: ChartColor -- default '#ccc'
   , borderWidth :: Number -- default '1'
   , borderRadius :: NumberOrArray -- default 0; data NumberOrArray = Number | Array Number
   , shadowBlur :: Number
-  , shadowColor :: CSSColor
+  , shadowColor :: ChartColor
   , shadowOffsetX :: Number
   , shadowOffsetY :: Number
   }
@@ -151,12 +163,12 @@ type Data =
   }
 
 type SubtextStyle =
-  { color      :: Color
-  , fontStyle  :: String
-  , fontWeight :: String
+  { color      :: ChartColor
+  , fontStyle  :: ChartFontStyle
+  , fontWeight :: ChartFontWeight
   , fontFamily :: String
   , fontSize   :: Int
-  , align      :: String
+  , align      :: LeftRelativePosition
   , verticalAlign :: String
   , lineHeight    :: Number
   , width         :: Number
@@ -216,14 +228,14 @@ type TextStyle =
   , verticalAlign :: String
   , lineHeight :: Int
   , width :: Int
-  , height         :: Int
+  , height :: Int
   , textBorderColor :: String
   , textBorderWidth :: Int
   , textShadowColor :: String
-  , textShadowBlur  :: Int
+  , textShadowBlur :: Int
   , textShadowOffsetX :: Int
   , textShadowOffsetY :: Int
-  , rich              :: Rich
+  , rich :: Rich
   }
 
 type Rich = {}
