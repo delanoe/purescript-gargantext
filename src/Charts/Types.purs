@@ -2,7 +2,7 @@ module Charts.Types where
 
 import Unsafe.Coerce
 
-import CSS (Color, FontStyle(..), Value(..), toHexString, Prefixed(..))
+import CSS (Color, FontStyle(..), FontWeight(..), Prefixed(..), Value(..), toHexString)
 import Data.Either (Either)
 import Data.Maybe (Maybe)
 import Prelude ((<>), class Show, show, ($), Unit, (<<<))
@@ -21,6 +21,10 @@ instance showLeftRelativePosition :: Show LeftRelativePosition
         show (Center) = "center"
         show (RightPos) = "right"
 
+data Align p = Auto | Relative p
+
+newtype ChartAlign = ChartAlign String
+
 newtype ChartColor = ChartColor String
 
 renderChartColor :: Color -> ChartColor
@@ -36,10 +40,10 @@ renderChartFontStyle _ = ChartFontStyle "normal"
 newtype ChartFontWeight = ChartFontWeight String
 
 renderChartFontWeight :: FontWeight -> ChartFontWeight
-renderChartFontWeight (FontStyle (Value (Plain "bold")))) = ChartFontWeight "bold"
-renderChartFontWeight (FontStyle (Value (Plain "bolder")))) = ChartFontWeight "bolder"
-renderChartFontWeight (FontStyle (Value (Plain "lighter")))) = ChartFontWeight "lighter"
-renderChartFontWeight _ = ChartFontWeight "normal"
+renderChartFontWeight (FontWeight (Value (Plain "bold"))) = ChartFontWeight "bold"
+renderChartFontWeight (FontWeight (Value (Plain "bolder"))) = ChartFontWeight "bolder"
+renderChartFontWeight (FontWeight (Value (Plain "lighter"))) = ChartFontWeight "lighter"
+renderChartFontWeight  _ = ChartFontWeight "normal"
 
 foreign import data Position :: Type -> Type
 
@@ -49,11 +53,9 @@ renderNumber = unsafeCoerce
 renderPercentage :: forall r. Number -> Position r
 renderPercentage n = unsafeCoerce $ (show n) <> "%"
 
-renderTopRelativePosition :: TopRelativePosition -> Position TopRelativePosition
-renderTopRelativePosition = unsafeCoerce <<< show
-
-renderLeftRelativePosition :: LeftRelativePosition -> Position LeftRelativePosition
-renderLeftRelativePosition = unsafeCoerce <<< show
+renderRelativePosition :: forall a. Show a => Align a -> Position a
+renderRelativePosition (Auto) = unsafeCoerce "auto"
+renderRelativePosition (Relative r) = unsafeCoerce $ show r
 
 type Echarts =
   { className   :: Maybe String,
@@ -89,11 +91,11 @@ type Title =
   , text :: String -- default ''
   , link :: String -- default ''
   , target :: String -- default 'blank'
-  , textStyle :: Maybe TextStyle
+  , textStyle :: TextStyle
   , subtext :: String -- default ''
   , sublink :: String -- default ''
   , subtarget :: String -- default 'blank'
-  , subtextStyle :: Maybe SubtextStyle
+  , subtextStyle :: TextStyle
   , padding :: Number -- default '5'
   , itemGap :: Number -- default '10'
   , zlevel :: Number -- default '0'
@@ -162,24 +164,23 @@ type Data =
   , textStyle :: Maybe {}
   }
 
-type SubtextStyle =
+type TextStyle =
   { color      :: ChartColor
   , fontStyle  :: ChartFontStyle
   , fontWeight :: ChartFontWeight
   , fontFamily :: String
   , fontSize   :: Int
-  , align      :: LeftRelativePosition
-  , verticalAlign :: String
-  , lineHeight    :: Number
-  , width         :: Number
-  , height        :: Number
-  , textBorderColor :: String
+  , align      :: Position LeftRelativePosition
+  , verticalAlign :: Position TopRelativePosition
+  , lineHeight    :: Position Unit
+  , width         :: Position Unit
+  , height        :: Position Unit
+  , textBorderColor :: ChartColor
   , textBorderWidth :: Number
-  , textShadowColor :: String
-  , textShadowBlur  :: Number
+  , textShadowColor :: ChartColor
+  , textShadowBlur  :: ChartColor
   , textShadowOffsetX :: Number
   , textShadowOffsetY :: Number
-  , rich              :: Rich
   }
 
 type Tooltip =
@@ -214,28 +215,6 @@ type Series =
   { name   :: String
   , "type" :: String
   , "data" :: Array Int
-  }
-
--- Props
-
-type TextStyle =
-  { color :: Color
-  , fontStyle :: String
-  , fontWeight :: String
-  , fontFamily :: String
-  , fontSize :: Int
-  , align :: String
-  , verticalAlign :: String
-  , lineHeight :: Int
-  , width :: Int
-  , height :: Int
-  , textBorderColor :: String
-  , textBorderWidth :: Int
-  , textShadowColor :: String
-  , textShadowBlur :: Int
-  , textShadowOffsetX :: Int
-  , textShadowOffsetY :: Int
-  , rich :: Rich
   }
 
 type Rich = {}

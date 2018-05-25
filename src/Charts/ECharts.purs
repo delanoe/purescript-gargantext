@@ -3,9 +3,10 @@ module Charts.ECharts where
 import Charts.Types
 import Data.Either
 
-import CSS (Color, borderColor, toHexString, turquoise, violet, yellowgreen)
+import CSS (Color, black, blue, blueviolet, bolder, borderColor, fontWeight, green, italic, toHexString, turquoise, violet, white, yellow, yellowgreen)
+import CSS.Common (class Bottom, normal)
 import Data.Maybe (Maybe(..))
-import Prelude (show)
+import Prelude (show, ($))
 import React as R
 import React.DOM (p)
 import React.DOM.Props (Props)
@@ -115,33 +116,70 @@ title =
    ,text: "MudaTitre rpz les pyramides"
    ,link: "https://google.com"
    ,target: "blank"
-   ,textStyle: Nothing
+   ,textStyle: textStyle
    ,subtext: "Muda Subtitle"
    ,sublink: "https://google.fr"
    ,subtarget: "blank"
-   ,subtextStyle: Nothing
+   ,subtextStyle: textStyle2
    ,padding: 10.0
    ,itemGap: 0.0
    ,zlevel: 2.0
    ,z: 2.0
-   ,left: renderLeftRelativePosition RightPos
-   ,top: renderTopRelativePosition Middle
+   ,left: renderRelativePosition (Relative Center)
+   ,top: renderRelativePosition (Relative Middle)
    ,right: renderNumber 60.0
    ,bottom: renderPercentage 40.0
-   ,backgroundColor: renderChartColor turquoise
-   ,borderColor: renderChartColor violet
-   ,borderWidth: 20.0
+   ,backgroundColor: renderChartColor black
+   ,borderColor: renderChartColor black
+   ,borderWidth: 0.0
    ,borderRadius: Left 20.0
-   ,shadowBlur: 40.0
-   ,shadowColor: renderChartColor turquoise
-   ,shadowOffsetX: 20.0
-   ,shadowOffsetY: 40.0
+   ,shadowBlur: 0.0
+   ,shadowColor: renderChartColor black
+   ,shadowOffsetX: 0.0
+   ,shadowOffsetY: 0.0
   }
 
-textStyle :: ChartFontStyle
+textStyle2 :: TextStyle
+textStyle2 =
+  {
+    color: renderChartColor yellow
+    ,fontStyle: renderChartFontStyle normal
+    ,fontWeight: renderChartFontWeight normal
+    ,fontFamily: "sans-serif"
+    ,fontSize: 12
+    ,align: renderRelativePosition $ Relative RightPos
+    ,verticalAlign: renderRelativePosition $ Relative Bottom
+    ,lineHeight: renderPercentage 0.0
+    ,width: renderPercentage 100.0
+    ,height: renderPercentage 100.0
+    ,textBorderColor: renderChartColor blue
+    ,textBorderWidth: 5.0
+    ,textShadowColor: renderChartColor black
+    ,textShadowBlur: renderChartColor black
+    ,textShadowOffsetX: 0.0
+    ,textShadowOffsetY: 0.0
+  }
+
+
+textStyle :: TextStyle
 textStyle =
   {
-    
+    color: renderChartColor white
+    ,fontStyle: renderChartFontStyle normal
+    ,fontWeight: renderChartFontWeight normal
+    ,fontFamily: "sans-serif"
+    ,fontSize: 12
+    ,align: renderRelativePosition $ Relative LeftPos
+    ,verticalAlign: renderRelativePosition $ Relative Top
+    ,lineHeight: renderPercentage 0.0
+    ,width: renderPercentage 100.0
+    ,height: renderPercentage 100.0
+    ,textBorderColor: renderChartColor blue
+    ,textBorderWidth: 5.0
+    ,textShadowColor: renderChartColor black
+    ,textShadowBlur: renderChartColor black
+    ,textShadowOffsetX: 0.0
+    ,textShadowOffsetY: 0.0
   }
 
 charts :: Echarts
@@ -185,7 +223,7 @@ histogram = echarts
        , yAxis [ya1, ya2]
        , series [sd1, sd2, sd3]
        ]
-     ]
+j    ]
 
 type DataZoom =
   {"type"      :: String
