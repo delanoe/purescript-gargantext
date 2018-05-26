@@ -35,6 +35,7 @@ import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultPerfo
 import Unsafe.Coerce (unsafeCoerce)
 import UserPage as UP
 import GraphExplorer as GE
+import NgramsTable as NG
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -54,6 +55,7 @@ type AppState =
   , showLogin :: Boolean
   , showCorpus :: Boolean
   , graphExplorer :: GE.State
+  , ngState :: NG.State
   }
 
 initAppState :: AppState
@@ -73,6 +75,7 @@ initAppState =
   , showLogin : false
   , showCorpus : false
   , graphExplorer : GE.initialState
+  , ngState : NG.initialState
   }
 
 data Action
@@ -93,6 +96,7 @@ data Action
   | CorpusAnalysisA CA.Action
   | ShowLogin
   | ShowAddcorpus
+  | NgramsA  NG.Action
 
 
 
@@ -246,6 +250,17 @@ _graphExplorerAction = prism GraphExplorerA \action ->
     _-> Left action
 
 
+
+_ngState :: Lens' AppState NG.State
+_ngState = lens (\s -> s.ngState) (\s ss -> s{ngState = ss})
+
+_ngAction :: Prism' Action NG.Action
+_ngAction = prism NgramsA \action ->
+  case action of
+    NgramsA caction -> Right caction
+    _-> Left action
+
+
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
   case s.currentRoute of
@@ -269,7 +284,9 @@ pagesComponent s =
     selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState _searchAction  S.searchSpec
+    selectSpec NGramsTable  = layout0 $ focus _ngState _ngAction  NG.ngramsTableSpec
     selectSpec PGraphExplorer = focus _graphExplorerState _graphExplorerAction  GE.spec
+
     selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
 routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
@@ -597,4 +614,9 @@ dispatchAction dispatcher _ CorpusAnalysis = do
 dispatchAction dispatcher _ PGraphExplorer = do
   _ <- dispatcher $ SetRoute  $ PGraphExplorer
   --_ <- dispatcher $ GraphExplorerA $ GE.NoOp
+  pure unit
+
+dispatchAction dispatcher _ NGramsTable = do
+  _ <- dispatcher $ SetRoute  $ NGramsTable
+  _ <- dispatcher $ NgramsA $ NG.NoOp
   pure unit
