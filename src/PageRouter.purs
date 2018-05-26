@@ -26,6 +26,7 @@ data Routes
   | Tabview
   | CorpusAnalysis
   | PGraphExplorer
+  | NGramsTable
 
 
 instance showRoutes :: Show Routes where
@@ -39,6 +40,7 @@ instance showRoutes :: Show Routes where
   show Tabview   = "Tabview"
   show CorpusAnalysis   = "corpus"
   show PGraphExplorer = "graphExplorer"
+  show NGramsTable = "NGramsTable"
 
 int :: Match Int
 int = floor <$> num
@@ -55,8 +57,10 @@ routing =
   <|> addcorpusRoute
   <|> corpusAnalysis
   <|> graphExplorer
+  <|> ngramsTable
   <|> home
   where
+    ngramsTable = NGramsTable <$ route "ngrams"
     tabview  = Tabview   <$ route "tabview"
     documentView   = AnnotationDocumentView <$> (route "documentView" *> int)
     userPageRoute  = UserPage   <$ route "userPage"
