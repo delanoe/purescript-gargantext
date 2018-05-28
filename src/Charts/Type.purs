@@ -1,61 +1,15 @@
-module Charts.Types where
+module Charts.Type where
 
-import Unsafe.Coerce
-
-import CSS (Color, FontStyle(..), FontWeight(..), Prefixed(..), Value(..), toHexString)
+import Charts.Position (LeftRelativePosition, Position, TopRelativePosition)
+import Charts.Font
+import Charts.Color (ChartColor)
+import CSS (Color)
 import Data.Either (Either)
 import Data.Maybe (Maybe)
-import Prelude ((<>), class Show, show, ($), Unit, (<<<))
+import Prelude (Unit, (<<<))
 
-type NumberOrArray = Either Number (Array Number)
-
-data TopRelativePosition = Top | Middle | Bottom
-instance showTopRelativePosition :: Show TopRelativePosition
-  where show (Top) = "top"
-        show (Middle) = "middle"
-        show (Bottom) = "bottom"
-
-data LeftRelativePosition = LeftPos | Center | RightPos
-instance showLeftRelativePosition :: Show LeftRelativePosition
-  where show (LeftPos) = "left"
-        show (Center) = "center"
-        show (RightPos) = "right"
-
-data Align p = Auto | Relative p
 
 newtype ChartAlign = ChartAlign String
-
-newtype ChartColor = ChartColor String
-
-renderChartColor :: Color -> ChartColor
-renderChartColor = ChartColor <<< toHexString
-
-newtype ChartFontStyle = ChartFontStyle String
-
-renderChartFontStyle :: FontStyle -> ChartFontStyle
-renderChartFontStyle (FontStyle (Value (Plain "italic"))) = ChartFontStyle "italic"
-renderChartFontStyle (FontStyle (Value (Plain "oblique"))) = ChartFontStyle "oblique"
-renderChartFontStyle _ = ChartFontStyle "normal"
-
-newtype ChartFontWeight = ChartFontWeight String
-
-renderChartFontWeight :: FontWeight -> ChartFontWeight
-renderChartFontWeight (FontWeight (Value (Plain "bold"))) = ChartFontWeight "bold"
-renderChartFontWeight (FontWeight (Value (Plain "bolder"))) = ChartFontWeight "bolder"
-renderChartFontWeight (FontWeight (Value (Plain "lighter"))) = ChartFontWeight "lighter"
-renderChartFontWeight  _ = ChartFontWeight "normal"
-
-foreign import data Position :: Type -> Type
-
-renderNumber :: forall r. Number -> Position r
-renderNumber = unsafeCoerce
-
-renderPercentage :: forall r. Number -> Position r
-renderPercentage n = unsafeCoerce $ (show n) <> "%"
-
-renderRelativePosition :: forall a. Show a => Align a -> Position a
-renderRelativePosition (Auto) = unsafeCoerce "auto"
-renderRelativePosition (Relative r) = unsafeCoerce $ show r
 
 type Echarts =
   { className   :: Maybe String,
@@ -107,7 +61,7 @@ type Title =
   , backgroundColor :: ChartColor -- default 'transparent''
   , borderColor :: ChartColor -- default '#ccc'
   , borderWidth :: Number -- default '1'
-  , borderRadius :: NumberOrArray -- default 0; data NumberOrArray = Number | Array Number
+  , borderRadius :: Number -- default 0; data NumberOrArray = Number | Array Number
   , shadowBlur :: Number
   , shadowColor :: ChartColor
   , shadowOffsetX :: Number

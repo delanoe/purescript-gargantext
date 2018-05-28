@@ -1,15 +1,18 @@
 module Charts.ECharts where
 
-import Charts.Types
-import Data.Either
-
-import CSS (Color, black, blue, blueviolet, bolder, borderColor, fontWeight, green, italic, toHexString, turquoise, violet, white, yellow, yellowgreen)
-import CSS.Common (class Bottom, normal)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Prelude (show, ($))
+import Prelude (($))
+
+import Charts.Type (Data, DataZoom, Echarts, Legend, Option, Series, TextStyle, Title, Tooltip, XAxis, YAxis)
+import Charts.Color (renderChartColor)
+import Charts.Font (renderChartFontStyle, renderChartFontWeight)
+import Charts.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
+
+import CSS (black, blue, white, yellow)
+import CSS.Common (normal)
 import React as R
 import React.DOM (p)
-import React.DOM.Props (Props)
 
 foreign import eChartsClass :: forall props. R.ReactClass props
 foreign import eChartsClass2 :: R.ReactClass Echarts
@@ -125,14 +128,14 @@ title =
    ,itemGap: 0.0
    ,zlevel: 2.0
    ,z: 2.0
-   ,left: renderRelativePosition (Relative Center)
-   ,top: renderRelativePosition (Relative Middle)
-   ,right: renderNumber 60.0
-   ,bottom: renderPercentage 40.0
+   ,left: relativePosition (Relative Center)
+   ,top: relativePosition (Relative Middle)
+   ,right: numberPosition 60.0
+   ,bottom: percentPosition 40.0
    ,backgroundColor: renderChartColor black
    ,borderColor: renderChartColor black
    ,borderWidth: 0.0
-   ,borderRadius: Left 20.0
+   ,borderRadius: 20.0
    ,shadowBlur: 0.0
    ,shadowColor: renderChartColor black
    ,shadowOffsetX: 0.0
@@ -147,11 +150,11 @@ textStyle2 =
     ,fontWeight: renderChartFontWeight normal
     ,fontFamily: "sans-serif"
     ,fontSize: 12
-    ,align: renderRelativePosition $ Relative RightPos
-    ,verticalAlign: renderRelativePosition $ Relative Bottom
-    ,lineHeight: renderPercentage 0.0
-    ,width: renderPercentage 100.0
-    ,height: renderPercentage 100.0
+    ,align: relativePosition $ Relative RightPos
+    ,verticalAlign: relativePosition $ Relative Bottom
+    ,lineHeight: percentPosition 0.0
+    ,width: percentPosition 100.0
+    ,height: percentPosition 100.0
     ,textBorderColor: renderChartColor blue
     ,textBorderWidth: 5.0
     ,textShadowColor: renderChartColor black
@@ -169,11 +172,11 @@ textStyle =
     ,fontWeight: renderChartFontWeight normal
     ,fontFamily: "sans-serif"
     ,fontSize: 12
-    ,align: renderRelativePosition $ Relative LeftPos
-    ,verticalAlign: renderRelativePosition $ Relative Top
-    ,lineHeight: renderPercentage 0.0
-    ,width: renderPercentage 100.0
-    ,height: renderPercentage 100.0
+    ,align: relativePosition $ Relative LeftPos
+    ,verticalAlign: relativePosition $ Relative Top
+    ,lineHeight: percentPosition 0.0
+    ,width: percentPosition 100.0
+    ,height: percentPosition 100.0
     ,textBorderColor: renderChartColor blue
     ,textBorderWidth: 5.0
     ,textShadowColor: renderChartColor black
