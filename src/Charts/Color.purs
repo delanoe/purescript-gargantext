@@ -1,9 +1,13 @@
-module Charts.Color where
+module Charts.Color
+       (
+         ChartColor(),
+         chartColor
+       )where
 
 import Prelude ((<<<))
 import CSS (Color, toHexString)
 
 newtype ChartColor = ChartColor String
 
-renderChartColor :: Color -> ChartColor
-renderChartColor = ChartColor <<< toHexString
+chartColor :: Color -> ChartColor
+chartColor = ChartColor <<< toHexString

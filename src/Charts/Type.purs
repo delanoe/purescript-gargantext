@@ -1,9 +1,11 @@
 module Charts.Type where
 
-import Charts.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Charts.Font
-import Charts.Color (ChartColor)
+
 import CSS (Color)
+import Charts.Color (ChartColor)
+import Charts.Legend (LegendType)
+import Charts.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Data.Either (Either)
 import Data.Maybe (Maybe)
 import Prelude (Unit, (<<<))
@@ -89,27 +91,29 @@ type Grid =
   }
 
 type Legend =
-  {"type"  :: String
-  , show   :: Boolean
-  , zlevel :: Maybe Number
-  , z      :: Maybe Number
-  , left   :: Maybe Number
-  , top    :: Maybe Number
-  , right  :: Maybe Number
-  , bottom :: Maybe Number
-  , width  :: Maybe Number
-  , height :: Maybe Number
+  {
+    id :: String
+  , "type" :: LegendType
+  , show :: Boolean
+  , zlevel :: Number
+  , z :: Number
+  , left :: Position LeftRelativePosition -- default 'auto
+  , top :: Position TopRelativePosition
+  , right :: Position Unit
+  , bottom :: Position Unit
+  , width :: Position Unit
+  , height :: Position Unit
   , orient :: Maybe String
-  , align  :: Maybe String
-  , padding       :: Maybe Number
-  , itemGap       :: Maybe Number
-  , itemWidth     :: Maybe Number
-  , itemHeight    :: Maybe Number
-  , formatter     :: Maybe String
-  , selectedMode  :: Maybe Boolean
+  , align :: Maybe String
+  , padding :: Maybe Number
+  , itemGap :: Maybe Number
+  , itemWidth :: Maybe Number
+  , itemHeight :: Maybe Number
+  , formatter :: Maybe String
+  , selectedMode :: Maybe Boolean
   , inactiveColor :: Maybe Color
-  , selected      :: Maybe String -- object
-  , "data"        :: Maybe (Array Data)
+  , selected :: Maybe String -- object
+  , "data" :: Maybe (Array Data)
   }
 
 type Data =

@@ -1,38 +1,37 @@
 module Charts.ECharts where
 
+import CSS (black, blue, white, yellow)
+import CSS.Common (normal)
+import Charts.Color (chartColor)
+import Charts.Font (chartFontStyle, chartFontWeight)
+import Charts.Legend (legendType, LegendType, PlainOrScroll(..))
+import Charts.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
+import Charts.Type (Data, DataZoom, Echarts, Legend, Option, Series, TextStyle, Title, Tooltip, XAxis, YAxis)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Prelude (($))
-
-import Charts.Type (Data, DataZoom, Echarts, Legend, Option, Series, TextStyle, Title, Tooltip, XAxis, YAxis)
-import Charts.Color (renderChartColor)
-import Charts.Font (renderChartFontStyle, renderChartFontWeight)
-import Charts.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-
-import CSS (black, blue, white, yellow)
-import CSS.Common (normal)
 import React as R
 import React.DOM (p)
 
-foreign import eChartsClass :: forall props. R.ReactClass props
-foreign import eChartsClass2 :: R.ReactClass Echarts
+foreign import eChartsClass :: R.ReactClass Echarts
 
-echarts' :: forall eff. Echarts -> R.ReactElement
-echarts' chart = R.createElementDynamic eChartsClass2 chart []
+echarts :: forall eff. Echarts -> R.ReactElement
+echarts chart = R.createElementDynamic eChartsClass chart []
 
 legend' :: Legend
 legend' =
   {
-    "type": "plain"
+    id: ""
+   ,"type": legendType Plain
    , show: true
-   , zlevel: Nothing
-   , z: Nothing
-   , left: Nothing
-   , top: Nothing
-   , right: Nothing
-   , bottom: Nothing
-   , width: Nothing
-   , height: Nothing
+   , zlevel: 40.0
+   , z: 40.0
+   , left: percentPosition 40.0
+   , top:  percentPosition 40.0
+   , right:  percentPosition 40.0
+   , bottom:  percentPosition 40.0
+   , width: percentPosition 40.0
+   , height: percentPosition 40.0
    , orient: Nothing
    , align: Nothing
    , padding: Nothing
@@ -132,12 +131,12 @@ title =
    ,top: relativePosition (Relative Middle)
    ,right: numberPosition 60.0
    ,bottom: percentPosition 40.0
-   ,backgroundColor: renderChartColor black
-   ,borderColor: renderChartColor black
+   ,backgroundColor: chartColor black
+   ,borderColor: chartColor black
    ,borderWidth: 0.0
    ,borderRadius: 20.0
    ,shadowBlur: 0.0
-   ,shadowColor: renderChartColor black
+   ,shadowColor: chartColor black
    ,shadowOffsetX: 0.0
    ,shadowOffsetY: 0.0
   }
@@ -145,9 +144,9 @@ title =
 textStyle2 :: TextStyle
 textStyle2 =
   {
-    color: renderChartColor yellow
-    ,fontStyle: renderChartFontStyle normal
-    ,fontWeight: renderChartFontWeight normal
+    color: chartColor yellow
+    ,fontStyle: chartFontStyle normal
+    ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
     ,fontSize: 12
     ,align: relativePosition $ Relative RightPos
@@ -155,10 +154,10 @@ textStyle2 =
     ,lineHeight: percentPosition 0.0
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
-    ,textBorderColor: renderChartColor blue
+    ,textBorderColor: chartColor blue
     ,textBorderWidth: 5.0
-    ,textShadowColor: renderChartColor black
-    ,textShadowBlur: renderChartColor black
+    ,textShadowColor: chartColor black
+    ,textShadowBlur: chartColor black
     ,textShadowOffsetX: 0.0
     ,textShadowOffsetY: 0.0
   }
@@ -167,9 +166,9 @@ textStyle2 =
 textStyle :: TextStyle
 textStyle =
   {
-    color: renderChartColor white
-    ,fontStyle: renderChartFontStyle normal
-    ,fontWeight: renderChartFontWeight normal
+    color: chartColor white
+    ,fontStyle: chartFontStyle normal
+    ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
     ,fontSize: 12
     ,align: relativePosition $ Relative LeftPos
@@ -177,10 +176,10 @@ textStyle =
     ,lineHeight: percentPosition 0.0
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
-    ,textBorderColor: renderChartColor blue
+    ,textBorderColor: chartColor blue
     ,textBorderWidth: 5.0
-    ,textShadowColor: renderChartColor black
-    ,textShadowBlur: renderChartColor black
+    ,textShadowColor: chartColor black
+    ,textShadowBlur: chartColor black
     ,textShadowOffsetX: 0.0
     ,textShadowOffsetY: 0.0
   }
@@ -204,7 +203,7 @@ charts =
   }
 
 histogram2 :: R.ReactElement
-histogram2 = echarts' charts
+histogram2 = echarts charts
 
 {-
 histogram :: R.ReactElement

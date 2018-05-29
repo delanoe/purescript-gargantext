@@ -1,5 +1,13 @@
-module Charts.Position where
-
+module Charts.Position
+       (
+         Position(),
+         numberPosition,
+         percentPosition,
+         relativePosition,
+         Align(..),
+         TopRelativePosition(..),
+         LeftRelativePosition(..)
+       ) where
 import Prelude (class Show, show, ($), (<>))
 import Unsafe.Coerce (unsafeCoerce)
 
