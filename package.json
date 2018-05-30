@@ -9,7 +9,7 @@
         "react-dom": "^16.2.0",
         "react-echarts-v3": "^1.0.14",
         "sigma": "^1.2.1",
-        "graph-explorer": "git+ssh://git@gitlab.iscpif.fr:20022/gargantext/graphExplorer.git"
+        "react-graph-explorer": "git+ssh://git@gitlab.iscpif.fr:20022/gargantext/reactGraphExplorer.git#7f6d19396b694c70162f63b2f3e456eb14644928"
     },
     "browserify": {
         "transform": [

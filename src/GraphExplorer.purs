@@ -2,24 +2,20 @@ module GraphExplorer where
 
 import Prelude hiding (div)
 
-import Control.Monad.Aff (runAff)
-import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Aff.Console (CONSOLE)
-import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (log)
 import DOM (DOM)
-import DOM.File.FileReader (fileReader, readAsText, result)
-import DOM.File.Types (File, fileToBlob)
+import DOM.File.FileReader (fileReader, readAsText, readyState, result)
+import DOM.File.FileReader.ReadyState (ReadyState(..))
+import DOM.File.Types (File, FileReader, fileToBlob)
 import React (ReactClass, createElement)
 import React.DOM (button, button', div, form', input, li, li', menu, text, ul')
-import React.DOM.Props (_id, _type, className, name, onChange, onClick, placeholder, style, value)
+import React.DOM.Props (_id, _type, className, disabled, name, onChange, onClick, placeholder, style, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Unsafe.Coerce (unsafeCoerce)
 
 foreign import data GraphData :: Type
-
-foreign import initialGraph :: GraphData
 
 foreign import initialFile :: File
 
@@ -31,26 +27,43 @@ foreign import graphExplorerComponent :: ReactClass {graph :: GraphData, mode ::
 
 foreign import logger :: forall a eff. a -> Eff eff Unit
 
-newtype State = State {mode :: String, graph :: GraphData, file :: File}
+foreign import setupProgress :: forall e a. FileReader -> a -> Eff e Unit
+
+newtype State = State {mode :: String, graph :: GraphData, fileReader :: FileReader, readyState :: ReadyState}
 
 data Action
   = SetGraph
-  | SetFile File
+  | SetFile File (forall e. ReadyState -> Eff e Unit)
+  | SetProgress ReadyState
 
 initialState :: State
-initialState = State {mode : "select", graph : initialGraph, file : initialFile}
+initialState = State {mode : "select", graph : unsafeCoerce "", fileReader : unsafeCoerce "", readyState : EMPTY}
 
-
-reader :: forall eff. File -> Eff (console :: CONSOLE, dom :: DOM | eff) GraphData
-reader f = do
+startProcessing :: forall eff. File -> Eff (console :: CONSOLE, dom :: DOM | eff) FileReader
+startProcessing f = do
   fr <- fileReader
-  readAsText (fileToBlob f) fr
-  res <- result fr
-  --log $ show res
-  let da = parseJSON res
-  logger da
-  da
+  _ <- readAsText (fileToBlob f) fr
+  pure fr
 
+getData :: forall eff. FileReader -> Eff  (console :: CONSOLE, dom :: DOM | eff) GraphData
+getData fr = do
+  res <- result fr
+  parseJSON res
+
+-- processingStatus :: FileReader -> Boolean
+-- processingStatus fr = readyState fr == DONE
+
+  -- rs <- readyState fr
+  -- logger $ show rs
+  -- res <- result fr
+  -- logger fr
+  -- logger "res"
+  -- logger res
+  -- logger "/res"
+  -- da <- parseJSON res
+  -- logger "parsed Data"
+  -- logger da
+  -- logger "/parsed data"
 
 spec :: forall eff props. Spec (console :: CONSOLE, dom :: DOM | eff) State props Action
 spec = simpleSpec performAction render
@@ -63,8 +76,9 @@ spec = simpleSpec performAction render
               [ ul'
                 [ li [style {display : "inline-block"}]
                   [ form'
-                    [ input [_type "file", name "file", onChange (\e -> d $ SetFile $ getFile e)] []
-                    , input [_type "button", value "submit", onClick \_ -> d SetGraph] []
+                    [ input [_type "file", name "file", onChange (\e -> d $ SetFile (getFile e) (unsafeCoerce $ d <<< SetProgress))] []
+                    , input [_type "button", value "submit", onClick \_ -> d SetGraph, disabled (st.readyState /= DONE)] []
+                    -- , text $ show st.readyState
                     ]
                   ]
                 , li'
@@ -91,8 +105,7 @@ spec = simpleSpec performAction render
          , div [className "row"]
            [ div [className "col-md-8"]
              [ div [style {border : "1px black solid", height: "90%"}]
-               [ text "GraphExplorer here...."
-               , createElement graphExplorerComponent { graph : st.graph
+               [ createElement graphExplorerComponent { graph : st.graph
                                                       , mode : st.mode
                                                       } []
                ]
@@ -106,8 +119,20 @@ spec = simpleSpec performAction render
          ]
     performAction :: PerformAction (console :: CONSOLE, dom :: DOM | eff) State props Action
     performAction SetGraph _ (State st) = void do
-      gd <- liftEff $ reader st.file
+      gd <- liftEff $ getData st.fileReader
       modifyState \(State s) -> State $ s {graph = gd}
 
-    performAction (SetFile f) _ _ = void do
-      modifyState \(State s) -> State $ s {file = f}
+    performAction (SetFile f fn) _ _ = void do
+      fr <- liftEff $ startProcessing f
+      _ <- liftEff $ setupProgress fr (unsafeCoerce $ setP fr fn)
+      modifyState \(State s) -> State $ s {fileReader = fr}
+
+    performAction (SetProgress rs) _ _ = void do
+      modifyState $ \(State s) -> State $ s {readyState = rs}
+
+
+setP :: forall t89. FileReader -> (ReadyState -> Eff ( dom :: DOM | t89 ) Unit ) -> Eff ( dom :: DOM | t89 ) Unit
+setP fr fn = do
+  rs <- readyState fr
+  fn rs
+  pure unit
