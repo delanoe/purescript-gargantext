@@ -2,7 +2,7 @@ module Charts.Color
        (
          ChartColor(),
          chartColor
-       )where
+       ) where
 
 import Prelude ((<<<))
 import CSS (Color, toHexString)

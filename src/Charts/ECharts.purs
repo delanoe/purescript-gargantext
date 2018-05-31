@@ -1,12 +1,14 @@
 module Charts.ECharts where
 
-import CSS (black, blue, white, yellow)
+
+import CSS (black, blue, italic, violet, white, yellow)
 import CSS.Common (normal)
+import Charts.Data
 import Charts.Color (chartColor)
-import Charts.Font (chartFontStyle, chartFontWeight)
-import Charts.Legend (legendType, LegendType, PlainOrScroll(..))
+import Charts.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
+import Charts.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Charts.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-import Charts.Type (Data, DataZoom, Echarts, Legend, Option, Series, TextStyle, Title, Tooltip, XAxis, YAxis)
+import Charts.Type (DataZoom, Echarts, Legend, Option, Series, Title, Tooltip, XAxis, YAxis)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Prelude (($))
@@ -18,41 +20,42 @@ foreign import eChartsClass :: R.ReactClass Echarts
 echarts :: forall eff. Echarts -> R.ReactElement
 echarts chart = R.createElementDynamic eChartsClass chart []
 
-legend' :: Legend
-legend' =
+legend :: Legend
+legend =
   {
-    id: ""
+    id: "Muda"
    ,"type": legendType Plain
    , show: true
-   , zlevel: 40.0
-   , z: 40.0
-   , left: percentPosition 40.0
-   , top:  percentPosition 40.0
-   , right:  percentPosition 40.0
-   , bottom:  percentPosition 40.0
-   , width: percentPosition 40.0
-   , height: percentPosition 40.0
-   , orient: Nothing
-   , align: Nothing
-   , padding: Nothing
-   , itemGap: Nothing
-   , itemWidth: Nothing
-   , itemHeight: Nothing
+   , zlevel: 0.0
+   , z: 2.0
+   , left: relativePosition Auto
+   , top: relativePosition Auto
+   , right: relativePosition Auto
+   , bottom: relativePosition Auto
+   , width: relativePosition Auto
+   , height: relativePosition Auto
+   , orient: orient Horizontal
+   , align: relativePosition Auto
+   , padding: 5.0
+   , itemGap: 10.0
+   , itemWidth: 25.0
+   , itemHeight: 14.0
    , formatter: Nothing
-   , selectedMode: Nothing
-   , inactiveColor: Nothing
+   , selectedMode: selectedMode $ Bool true
+   , inactiveColor: chartColor violet
    , selected: Nothing
-   , "data": Nothing
+   , textStyle: textStyle
+   , "data": [data1]
   }
 
-data1 :: Data
-data1 = {name: "Map terms coverage", icon: Nothing, textStyle: Nothing}
+data1 :: DataN
+data1 = {name: "Map terms coverage", icon: icon $ Shape Circle, textStyle: textStyle'}
 
-data2 :: Data
-data2 = {name: "Favorites", icon: Nothing, textStyle: Nothing}
+data2 :: DataN
+data2 = {name: "Favorites", icon: icon $ Shape Circle, textStyle: textStyle'}
 
-data3 :: Data
-data3 = {name: "All", icon: Nothing, textStyle: Nothing}
+data3 :: DataN
+data3 = {name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle'}
 
 xAxis' :: XAxis
 xAxis' =
@@ -62,14 +65,14 @@ xAxis' =
  , axisTick: {alignWithLabel: true}
  }
 
-xData1 :: Data
-xData1 = {name: "Jan", icon: Nothing, textStyle: Nothing}
+xData1 :: DataV
+xData1 = {value: "Jan", textStyle: textStyle'}
 
-xData2 :: Data
-xData2 = {name: "Feb", icon: Nothing, textStyle: Nothing}
+xData2 :: DataV
+xData2 = {value: "Feb", textStyle: textStyle'}
 
-xData3 :: Data
-xData3 = {name: "Mar", icon: Nothing, textStyle: Nothing}
+xData3 :: DataV
+xData3 = {value: "Mar", textStyle: textStyle'}
 
 yData1 :: YAxis
 yData1 =
@@ -101,7 +104,7 @@ opt :: Option
 opt =
   {
     title: title
-    ,legend: Nothing
+    ,legend: legend
     ,tooltip: tooltip'
     ,grid: {containLabel: true}
     ,xAxis: xAxis'
@@ -113,7 +116,7 @@ opt =
 title :: Title
 title =
   {
-    id: ""
+    id: "Muda"
    ,show: true
    ,text: "MudaTitre rpz les pyramides"
    ,link: "https://google.com"
@@ -127,8 +130,8 @@ title =
    ,itemGap: 0.0
    ,zlevel: 2.0
    ,z: 2.0
-   ,left: relativePosition (Relative Center)
-   ,top: relativePosition (Relative Middle)
+   ,left: relativePosition (Relative LeftPos)
+   ,top: relativePosition (Relative Top)
    ,right: numberPosition 60.0
    ,bottom: percentPosition 40.0
    ,backgroundColor: chartColor black
@@ -145,7 +148,7 @@ textStyle2 :: TextStyle
 textStyle2 =
   {
     color: chartColor yellow
-    ,fontStyle: chartFontStyle normal
+    ,fontStyle: chartFontStyle italic
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
     ,fontSize: 12
@@ -162,6 +165,26 @@ textStyle2 =
     ,textShadowOffsetY: 0.0
   }
 
+textStyle' :: TextStyle
+textStyle' =
+  {
+    color: chartColor violet
+    ,fontStyle: chartFontStyle normal
+    ,fontWeight: chartFontWeight normal
+    ,fontFamily: "sans-serif"
+    ,fontSize: 12
+    ,align: relativePosition $ Relative LeftPos
+    ,verticalAlign: relativePosition $ Relative Top
+    ,lineHeight: percentPosition 0.0
+    ,width: percentPosition 100.0
+    ,height: percentPosition 100.0
+    ,textBorderColor: chartColor black
+    ,textBorderWidth: 5.0
+    ,textShadowColor: chartColor black
+    ,textShadowBlur: chartColor black
+    ,textShadowOffsetX: 0.0
+    ,textShadowOffsetY: 0.0
+  }
 
 textStyle :: TextStyle
 textStyle =

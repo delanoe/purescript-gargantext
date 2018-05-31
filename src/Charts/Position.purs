@@ -8,6 +8,7 @@ module Charts.Position
          TopRelativePosition(..),
          LeftRelativePosition(..)
        ) where
+
 import Prelude (class Show, show, ($), (<>))
 import Unsafe.Coerce (unsafeCoerce)
 

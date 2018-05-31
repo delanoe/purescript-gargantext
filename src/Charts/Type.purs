@@ -3,8 +3,10 @@ module Charts.Type where
 import Charts.Font
 
 import CSS (Color)
-import Charts.Color (ChartColor)
-import Charts.Legend (LegendType)
+import Charts.Data
+import Charts.Color (ChartColor(..))
+import Charts.Font (Icon, icon, TextStyle)
+import Charts.Legend (LegendType, SelectedMode, selectedMode, Orient)
 import Charts.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Data.Either (Either)
 import Data.Maybe (Maybe)
@@ -31,7 +33,7 @@ type Echarts =
 
 type Option =
   { title    :: Title
-  , legend   :: Maybe Legend
+  , legend   :: Legend
   , tooltip  :: Tooltip
   , grid     :: Grid
   , xAxis    :: XAxis
@@ -103,42 +105,18 @@ type Legend =
   , bottom :: Position Unit
   , width :: Position Unit
   , height :: Position Unit
-  , orient :: Maybe String
-  , align :: Maybe String
-  , padding :: Maybe Number
-  , itemGap :: Maybe Number
-  , itemWidth :: Maybe Number
-  , itemHeight :: Maybe Number
+  , orient :: Orient
+  , align :: Position LeftRelativePosition
+  , padding :: Number
+  , itemGap :: Number
+  , itemWidth :: Number
+  , itemHeight :: Number
   , formatter :: Maybe String
-  , selectedMode :: Maybe Boolean
-  , inactiveColor :: Maybe Color
+  , selectedMode :: SelectedMode
+  , inactiveColor :: ChartColor
   , selected :: Maybe String -- object
-  , "data" :: Maybe (Array Data)
-  }
-
-type Data =
-  { name      :: String
-  , icon      :: Maybe String
-  , textStyle :: Maybe {}
-  }
-
-type TextStyle =
-  { color      :: ChartColor
-  , fontStyle  :: ChartFontStyle
-  , fontWeight :: ChartFontWeight
-  , fontFamily :: String
-  , fontSize   :: Int
-  , align      :: Position LeftRelativePosition
-  , verticalAlign :: Position TopRelativePosition
-  , lineHeight    :: Position Unit
-  , width         :: Position Unit
-  , height        :: Position Unit
-  , textBorderColor :: ChartColor
-  , textBorderWidth :: Number
-  , textShadowColor :: ChartColor
-  , textShadowBlur  :: ChartColor
-  , textShadowOffsetX :: Number
-  , textShadowOffsetY :: Number
+  , textStyle :: TextStyle
+  , "data" :: Array DataN
   }
 
 type Tooltip =
@@ -147,7 +125,7 @@ type Tooltip =
   }
 
 type XAxis =
-  { "data"   :: Array Data
+  { "data"   :: Array DataV
   , "type"   :: String
   , axisTick :: AxisTick
   }
