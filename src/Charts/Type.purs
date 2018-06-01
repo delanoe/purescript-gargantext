@@ -3,6 +3,7 @@ module Charts.Type where
 import Charts.Font
 
 import CSS (Color)
+import Charts.Series
 import Charts.Data
 import Charts.Color (ChartColor(..))
 import Charts.Font (Icon, icon, TextStyle)
@@ -128,6 +129,7 @@ type XAxis =
   { "data"   :: Array DataV
   , "type"   :: String
   , axisTick :: AxisTick
+  , show :: Boolean
   }
 
 type AxisTick =
@@ -141,16 +143,11 @@ type YAxis =
   , min       :: Int
   , position  :: String
   , axisLabel :: AxisLabel
+  , show :: Boolean
   }
 
 type AxisLabel =
   { formatter :: String -- string or function
-  }
-
-type Series =
-  { name   :: String
-  , "type" :: String
-  , "data" :: Array Int
   }
 
 type Rich = {}

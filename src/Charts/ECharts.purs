@@ -3,12 +3,13 @@ module Charts.ECharts where
 
 import CSS (black, blue, italic, violet, white, yellow)
 import CSS.Common (normal)
+import Charts.Series
 import Charts.Data
 import Charts.Color (chartColor)
 import Charts.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
 import Charts.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Charts.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-import Charts.Type (DataZoom, Echarts, Legend, Option, Series, Title, Tooltip, XAxis, YAxis)
+import Charts.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Prelude (($))
@@ -63,6 +64,25 @@ xAxis' =
    "data": [xData1, xData2, xData3]
  , "type": "category"
  , axisTick: {alignWithLabel: true}
+ , show: true
+ }
+
+xAxis'' :: XAxis
+xAxis'' =
+ {
+   "data": [xData1, xData2, xData3, xData4, xData5]
+ , "type": "category"
+ , axisTick: {alignWithLabel: true}
+ , show: true
+ }
+
+xAxisVoid :: XAxis
+xAxisVoid =
+ {
+   "data": []
+ , "type": "category"
+ , axisTick: {alignWithLabel: true}
+ , show: false
  }
 
 xData1 :: DataV
@@ -74,14 +94,35 @@ xData2 = {value: "Feb", textStyle: textStyle'}
 xData3 :: DataV
 xData3 = {value: "Mar", textStyle: textStyle'}
 
+xData4 :: DataV
+xData4 = {value: "Apr", textStyle: textStyle'}
+
+xData5 :: DataV
+xData5 = {value: "May", textStyle: textStyle'}
+
+xDataVoid :: DataV
+xDataVoid = {value: "", textStyle: textStyle'}
+
+yDataVoid :: YAxis
+yDataVoid =
+  {
+    "type": ""
+  , name: ""
+  , min: 0
+  , position: ""
+  , axisLabel: {formatter: ""}
+  , show: false
+  }
+
 yData1 :: YAxis
 yData1 =
   {
     "type": "value"
-  , name: "Score metric"
+  , name: "data"
   , min: 0
   , position: "right"
   , axisLabel: {formatter: "{value}"}
+  , show: true
   }
 
 tooltip' :: Tooltip
@@ -91,17 +132,109 @@ tooltip' =
   , formatter: Nothing
   }
 
-
-series' :: Series
-series' =
+seriesBar :: Series
+seriesBar =
   {
-    name: "All"
-  , "type": "bar"
-  , "data": [201, 777, 879]
+    name: "Big Bar Data"
+  , "type": seriesType Bar
+  , "data": [{name: "Test1", value: 12.0},
+             {name: "Test2", value: 20.0},
+             {name: "Test4", value: 35.0},
+             {name: "Test5", value: 2.0},
+             {name: "Test3", value: 32.0}
+             ]
   }
 
-opt :: Option
-opt =
+seriesHBar :: Series
+seriesHBar =
+  {
+    name: "Funnel Data"
+  , "type": seriesType Funnel
+  , "data": [{name: "Test1", value: 60.0},
+             {name: "Test2", value: 100.0},
+             {name: "Test4", value: 40.0},
+             {name: "Test5", value: 65.0},
+             {name: "Test3", value: 32.0}
+             ]
+  }
+
+seriesLine :: Series
+seriesLine =
+  {
+    name: "Line Data"
+  , "type": seriesType Line
+  , "data": [{name: "Test1", value: 50.0},
+             {name: "Test2", value: 45.0},
+             {name: "Test3", value: 65.0},
+             {name: "Test4", value: 15.0},
+             {name: "Test5", value: 83.0}
+             ]
+  }
+
+seriesPie :: Series
+seriesPie =
+  {
+    name: "Pie"
+  , "type": seriesType Pie
+  , "data": [{name: "t1", value: 50.0},
+             {name: "t2", value: 45.0},
+             {name: "t3", value: 65.0},
+             {name: "t4", value: 15.0},
+             {name: "t5", value: 23.0}
+             ]
+  }
+
+seriesWave :: Series
+seriesWave =
+  {
+    name: "Bar Data"
+  , "type": seriesType Bar
+  , "data": [{name: "val1", value: 50.0},
+             {name: "val2", value: 20.0},
+             {name: "val5", value: 100.0}]
+  }
+
+optLineBar :: Option
+optLineBar =
+  {
+    title: title
+    ,legend: legend
+    ,tooltip: tooltip'
+    ,grid: {containLabel: true}
+    ,xAxis: xAxis''
+    ,yAxis: yData1
+    ,series: [seriesBar, seriesLine]
+    ,dataZoom: [dz1', dz1', dz2', dz2']
+  }
+
+optSunburst :: Option
+optSunburst =
+  {
+    title: title
+    ,legend: legend
+    ,tooltip: tooltip'
+    ,grid: {containLabel: true}
+    ,xAxis: xAxisVoid
+    ,yAxis: yDataVoid
+    ,series: [seriesPie]
+    ,dataZoom: []
+  }
+
+optHBar :: Option
+optHBar =
+  {
+    title: title
+    ,legend: legend
+    ,tooltip: tooltip'
+    ,grid: {containLabel: true}
+    ,xAxis: xAxisVoid
+    ,yAxis: yDataVoid
+    ,series: [seriesHBar]
+    ,dataZoom: []
+  }
+
+optWave :: Option
+optWave =
   {
     title: title
     ,legend: legend
@@ -109,21 +242,21 @@ opt =
     ,grid: {containLabel: true}
     ,xAxis: xAxis'
     ,yAxis: yData1
-    ,series: [series']
-    ,dataZoom: [dz1', dz1', dz2', dz2']
+    ,series: [seriesWave]
+    ,dataZoom: []
   }
 
 title :: Title
 title =
   {
-    id: "Muda"
+    id: ""
    ,show: true
-   ,text: "MudaTitre rpz les pyramides"
-   ,link: "https://google.com"
+   ,text: "Awesome Title"
+   ,link: ""
    ,target: "blank"
    ,textStyle: textStyle
-   ,subtext: "Muda Subtitle"
-   ,sublink: "https://google.fr"
+   ,subtext: "Awesome Subtitle"
+   ,sublink: ""
    ,subtarget: "blank"
    ,subtextStyle: textStyle2
    ,padding: 10.0
@@ -134,7 +267,7 @@ title =
    ,top: relativePosition (Relative Top)
    ,right: numberPosition 60.0
    ,bottom: percentPosition 40.0
-   ,backgroundColor: chartColor black
+   ,backgroundColor: chartColor white
    ,borderColor: chartColor black
    ,borderWidth: 0.0
    ,borderRadius: 20.0
@@ -147,18 +280,18 @@ title =
 textStyle2 :: TextStyle
 textStyle2 =
   {
-    color: chartColor yellow
+    color: chartColor black
     ,fontStyle: chartFontStyle italic
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
-    ,fontSize: 12
+    ,fontSize: 15
     ,align: relativePosition $ Relative RightPos
     ,verticalAlign: relativePosition $ Relative Bottom
     ,lineHeight: percentPosition 0.0
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
-    ,textBorderColor: chartColor blue
-    ,textBorderWidth: 5.0
+    ,textBorderColor: chartColor black
+    ,textBorderWidth: 1.0
     ,textShadowColor: chartColor black
     ,textShadowBlur: chartColor black
     ,textShadowOffsetX: 0.0
@@ -168,7 +301,7 @@ textStyle2 =
 textStyle' :: TextStyle
 textStyle' =
   {
-    color: chartColor violet
+    color: chartColor black
     ,fontStyle: chartFontStyle normal
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
@@ -179,7 +312,7 @@ textStyle' =
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
     ,textBorderColor: chartColor black
-    ,textBorderWidth: 5.0
+    ,textBorderWidth: 1.0
     ,textShadowColor: chartColor black
     ,textShadowBlur: chartColor black
     ,textShadowOffsetX: 0.0
@@ -189,7 +322,7 @@ textStyle' =
 textStyle :: TextStyle
 textStyle =
   {
-    color: chartColor white
+    color: chartColor black
     ,fontStyle: chartFontStyle normal
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
@@ -199,22 +332,22 @@ textStyle =
     ,lineHeight: percentPosition 0.0
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
-    ,textBorderColor: chartColor blue
-    ,textBorderWidth: 5.0
+    ,textBorderColor: chartColor black
+    ,textBorderWidth: 1.0
     ,textShadowColor: chartColor black
     ,textShadowBlur: chartColor black
     ,textShadowOffsetX: 0.0
     ,textShadowOffsetY: 0.0
   }
 
-charts :: Echarts
-charts =
+charts1 :: Echarts
+charts1 =
   {
     className: Nothing
     ,style: Nothing
     ,theme: Nothing
     ,group: Nothing
-    ,option: opt
+    ,option: optLineBar
     ,initOpts: Nothing
     ,notMerge: Nothing
     ,lazyUpdate: Nothing
@@ -225,8 +358,71 @@ charts =
     ,onEvents: Nothing
   }
 
+charts2 :: Echarts
+charts2 =
+  {
+    className: Nothing
+    ,style: Nothing
+    ,theme: Nothing
+    ,group: Nothing
+    ,option: optHBar
+    ,initOpts: Nothing
+    ,notMerge: Nothing
+    ,lazyUpdate: Nothing
+    ,loading: Nothing
+    ,optsLoading: Nothing
+    ,onReady: Nothing
+    ,resizable: Nothing
+    ,onEvents: Nothing
+  }
+
+charts3 :: Echarts
+charts3 =
+  {
+    className: Nothing
+    ,style: Nothing
+    ,theme: Nothing
+    ,group: Nothing
+    ,option: optWave
+    ,initOpts: Nothing
+    ,notMerge: Nothing
+    ,lazyUpdate: Nothing
+    ,loading: Nothing
+    ,optsLoading: Nothing
+    ,onReady: Nothing
+    ,resizable: Nothing
+    ,onEvents: Nothing
+  }
+
+charts4 :: Echarts
+charts4 =
+  {
+    className: Nothing
+    ,style: Nothing
+    ,theme: Nothing
+    ,group: Nothing
+    ,option: optSunburst
+    ,initOpts: Nothing
+    ,notMerge: Nothing
+    ,lazyUpdate: Nothing
+    ,loading: Nothing
+    ,optsLoading: Nothing
+    ,onReady: Nothing
+    ,resizable: Nothing
+    ,onEvents: Nothing
+  }
+
+histogram1 :: R.ReactElement
+histogram1 = echarts charts1
+
 histogram2 :: R.ReactElement
-histogram2 = echarts charts
+histogram2 = echarts charts2
+
+histogram3 :: R.ReactElement
+histogram3 = echarts charts3
+
+histogram4 :: R.ReactElement
+histogram4 = echarts charts4
 
 {-
 histogram :: R.ReactElement
