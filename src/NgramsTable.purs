@@ -1,5 +1,6 @@
 module NgramsTable where
 
+import CSS.TextAlign (center, textAlign)
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Data.Array (fold, toUnfoldable)
@@ -10,9 +11,10 @@ import Data.Tuple (Tuple(..), uncurry)
 import Network.HTTP.Affjax (AJAX)
 import NgramsItem as NI
 import Prelude hiding (div)
-import React.DOM (div, table, tbody, text, th, thead, tr)
-import React.DOM.Props (className, scope)
+import React.DOM hiding (style)
+import React.DOM.Props (_id, className, scope, style)
 import Thermite (PerformAction, Spec, _render, focus, foreach, modifyState, withState)
+
 
 newtype State = State
   { items :: List NI.State
@@ -40,19 +42,44 @@ performAction _ _ _ = void do
 
 tableSpec :: forall eff props .Spec eff State props Action -> Spec eff State props Action
 tableSpec = over _render \render dispatch p s c ->
-  [table [ className "table able table-bordered"]
-                  [ thead [ className "tableHeader table-bordered"]
-                    [ tr []
-                      [ th [ scope "col"] [ text "Map" ]
-                      , th [ scope "col"] [ text "Stop"]
-                      , th [ scope "col"] [ text "Terms"]
-                      , th [ scope "col"] [ text "Occurences (nb)" ]
-                      ]
-                    ]
-                  , tbody [] $  render dispatch p s c
+  [div [className "container1"]
+     [
+       div [className "jumbotron"]
+       [ div [className "row"]
+         [ div [className "panel panel-default"]
+           [
+             div [className "panel-heading"]
+             [ h2 [className "panel-title", style {textAlign : "center"}]
+               [ span [className "glyphicon glyphicon-hand-down"] []
+               , text "Extracted Terms"
                ]
-  ]
+             , div [className "savediv pull-left", style { margin :"1.5em 0 0 0", padding :"0 1em 0 0"}]
+               [ span [className "needsaveicon glyphicon glyphicon-import"] []
+               , button [_id "ImportListOrSaveAll", className "btn btn-warning", style {fontSize : "120%"}]
+                 [ text "Import a Termlist"
+                 ]
+               ]
+             , div []
+               [
+               ]
+             ]
 
+          ,  table [ className "table able table-bordered"]
+           [ thead [ className "tableHeader table-bordered"]
+             [ tr []
+               [ th [ scope "col"] [ text "Map" ]
+               , th [ scope "col"] [ text "Stop"]
+               , th [ scope "col"] [ text "Terms"]
+               , th [ scope "col"] [ text "Occurences (nb)" ]
+               ]
+             ]
+           , tbody [] $  render dispatch p s c
+           ]
+         ]
+       ]
+     ]
+  ]
+ ]
 ngramsTableSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
 ngramsTableSpec =  container $ fold
     [  tableSpec $ withState \st ->
