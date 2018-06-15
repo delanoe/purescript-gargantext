@@ -1,10 +1,5 @@
 module Users.Info
-       (layoutUser,
-        brevetSpec,
-        projectSpec,
-        facets,
-        module Users.Types.Types,
-        module Users.Types.Lens
+       (layoutUser
        )
        where
 
@@ -26,6 +21,7 @@ import React.DOM (a, div, h3, h5, h6, i, img, li, nav, small, span, table, tbody
 import React.DOM.Props (_data, _id, aria, className, href, role, scope, src)
 import Tab (tabs)
 import Thermite (PerformAction, Render, Spec, focus, modifyState, simpleSpec)
+
 
 layoutUser :: forall props eff . Spec ( console :: CONSOLE
                                         , ajax    :: AJAX
@@ -100,19 +96,4 @@ layoutUser = simpleSpec performAction render
 
             ]
         ]
-      ]
-
-
-brevetSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State  props Action
-brevetSpec = focus _brevetslens _brevetsAction B.brevetsSpec
-
-projectSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-projectSpec = focus _projectslens _projectsAction PS.projets
-
-
-facets :: forall eff props. Spec ( dom :: DOM, console :: CONSOLE, ajax :: AJAX| eff) State props Action
-facets = tabs _tablens _tabAction $ fromFoldable
-         [ Tuple "Publications(12)" publicationSpec
-         , Tuple "Brevets (2)" brevetSpec
-         , Tuple "Projets IMT (5)" projectSpec
       ]
