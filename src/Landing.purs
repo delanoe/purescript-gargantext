@@ -1,22 +1,21 @@
 module Landing where
 
+import Gargantext.Data.Landing
+import Gargantext.Data.Lang
+import Prelude hiding (div)
+
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
+import Gargantext.Lang.Landing.EnUS as En
+import Gargantext.Lang.Landing.FrFR as Fr
 import Network.HTTP.Affjax (AJAX)
-import Prelude hiding (div)
+import React (ReactElement)
 import React.DOM (a, button, div, footer, h1, h3, hr, i, img, li, p, span, text, ul)
 import React.DOM.Props (Props, _data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title)
-import React (ReactElement)
 import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, simpleSpec)
 import Thermite as T
-
-import Gargantext.Data.Landing
-import Gargantext.Data.Lang
-
-import Gargantext.Lang.Landing.EnUS as En
-import Gargantext.Lang.Landing.FrFR as Fr
 
 newtype State = State
   { userName :: String

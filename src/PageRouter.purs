@@ -59,7 +59,7 @@ routing =
   where
     tabview  = Tabview   <$ route "tabview"
     documentView   = AnnotationDocumentView <$> (route "documentView" *> int)
-    userPageRoute  = UserPage   <$ route "userPage"
+    userPageRoute  = UserPage   <$ (route "user" *> int)
     searchRoute    = SearchView <$ route "search"
     docviewRoute   = DocView    <$ route "docView"
     addcorpusRoute = AddCorpus  <$ route "addCorpus"
