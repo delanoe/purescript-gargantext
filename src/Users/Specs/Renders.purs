@@ -13,8 +13,8 @@ import Users.Types.Types (Action, State)
 infoRender :: forall props. Tuple String String -> Array ReactElement
 infoRender (Tuple title content) =
   [
-    span [] [text title],
-    span [className ""] [text content]
+    span [className "font-weight-bold text-primary"] [text title],
+    span [className "pull-right"] [text content]
   ]
 
 listElement :: forall props. Array ReactElement -> ReactElement
@@ -25,7 +25,7 @@ card title elems =
   [
     div [className "card"]
     [
-      div [className "card-header"]
+      div [className "card-header text-white bg-primary"]
       [
         h4 [] [text title]
       ],
@@ -67,10 +67,6 @@ render dispatch _ state _ =
         [
           div [className "col-md-8"]
           $ card "Jean HEUDE" [userInfos]
-        ,div [className "col-md-4"]
-         $
-         card "Publications" [pbInfos]
-         <> card "Brevets" [pbInfos]
         ]
       ]
     ]
