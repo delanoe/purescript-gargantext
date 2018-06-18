@@ -1,7 +1,7 @@
 module Users
        (module Users.Types,
-        module Users.Info)
+        module Users.Specs)
        where
 
 import Users.Types
-import Users.Info
+import Users.Specs

@@ -1,5 +1,6 @@
 module Users.Specs
-       (module Users.Specs.Renders)
+       (module Users.Specs.Renders,
+        layoutUser)
        where
 
 import Users.Specs.Renders
