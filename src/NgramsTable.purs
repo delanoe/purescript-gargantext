@@ -217,7 +217,6 @@ tableSpec = over _render \render dispatch p (State s) c ->
                  ]
 
                ]
-
              , div [className "col-md-6", style {marginTop : "24px", marginBottom : "14px"}]
                [ textDescription s.currentPage s.pageSize s.totalRecords
                , pagination dispatch s.totalPages s.currentPage
@@ -226,26 +225,29 @@ tableSpec = over _render \render dispatch p (State s) c ->
 
              ]
            ]
-         ,  div [_id "terms_table", className "panel-body"]
-            [ table [ className "table able table-bordered"]
-              [ thead [ className "tableHeader table-bordered"]
-                [ tr []
-                  [ th [ scope "col"] [ text "Map" ]
-                  , th [ scope "col"] [ text "Stop"]
-                  , th [ scope "col"] [ text "Terms"]
-                  , th [ scope "col"] [ text "Occurences (nb)" ]
-                  ]
-                ]
-              , tbody [] $  render dispatch p (State s) c
-              ]
-            ]
+           , div [] $ render dispatch p (State s) c
          ]
        ]
      ]
    ]
   ]
 
-
+tableWrapperSpec :: forall eff props. Spec eff State props Action -> Spec eff State props Action
+tableWrapperSpec = over _render \render dispatch p (State s) c ->
+  [ div [_id "terms_table", className "panel-body"]
+    [ table [ className "table able table-bordered"]
+      [ thead [ className "tableHeader table-bordered"]
+        [ tr []
+          [ th [ scope "col"] [ text "Map" ]
+          , th [ scope "col"] [ text "Stop"]
+          , th [ scope "col"] [ text "Terms"]
+          , th [ scope "col"] [ text "Occurences (nb)" ]
+          ]
+        ]
+      , tbody [] $  render dispatch p (State s) c
+      ]
+    ]
+  ]
 
 ngramsSpec :: forall props eff.
   Spec
@@ -269,28 +271,30 @@ ngramsSpec = simpleSpec performAction render
             , text " occurrences :"
             , text $ show $ NI.termTotal t
             , dispTermChildren t
-            , button [onClick $ d <<< (const DoneWithGroup) ] [text "Done"]
+            , button [onClick $ d <<< (const DoneWithGroup), className "btn btn-danger" ] [text "Cancel"]
+            , button [onClick $ d <<< (const DoneWithGroup), className "btn btn-info" ] [text "Done"]
             ]
           ]
-
         dispTermChildren :: NI.Term -> ReactElement
         dispTermChildren term = ul [] $ map childTerm (getter _.children term)
           where
             childTerm :: NI.Term -> ReactElement
             childTerm child = li []
-                      [ button [onClick $ d <<< (const (RemoveTerm child))] [text "Remove"]
+                      [ span [className "note glyphicon glyphicon-minus-sign", onClick $ d <<< (const (RemoveTerm child)), style {marginLeft : "13px", marginRight : "13px"}] []
+                    --  , button [onClick $ d <<< (const (RemoveTerm child))] [text "Remove"]
                       , NI.dispTerm (getter _.term child) (getter _._type child)
                       ]
 
 
 ngramsTableSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
 ngramsTableSpec =  container $ fold
-    [ ngramsSpec
-    ,tableSpec $ withState \st ->
-      focus _itemsList _ItemAction $
-      foreach \_ -> NI.ngramsItemSpec
+    [ tableSpec $ fold
+      [ ngramsSpec
+      , tableWrapperSpec $ withState \st ->
+          focus _itemsList _ItemAction $
+          foreach \_ -> NI.ngramsItemSpec
+      ]
     ]
-
 
 container :: forall eff state props action. Spec eff state props action -> Spec eff state props action
 container = over _render \render d p s c ->
