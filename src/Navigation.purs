@@ -47,13 +47,13 @@ type AppState =
   , searchState    :: S.State
   , userPage       :: UP.State
   , annotationdocumentView   :: D.State
-  , ntreeView   :: NT.State
-  , tabview :: TV.State
-  , search :: String
+  , ntreeView      :: NT.State
+  , tabview        :: TV.State
+  , search         :: String
   , corpusAnalysis :: CA.State
-  , showLogin :: Boolean
-  , showCorpus :: Boolean
-  , graphExplorer :: GE.State
+  , showLogin      :: Boolean
+  , showCorpus     :: Boolean
+  , graphExplorer  :: GE.State
   }
 
 initAppState :: AppState
@@ -66,13 +66,13 @@ initAppState =
   , searchState    : S.initialState
   , userPage       : UP.initialState
   , annotationdocumentView   : D.initialState
-  , ntreeView : NT.exampleTree
-  , tabview : TV.initialState
-  , search : ""
+  , ntreeView      : NT.exampleTree
+  , tabview        : TV.initialState
+  , search         : ""
   , corpusAnalysis : CA.initialState
-  , showLogin : false
-  , showCorpus : false
-  , graphExplorer : GE.initialState
+  , showLogin      : false
+  , showCorpus     : false
+  , graphExplorer  : GE.initialState
   }
 
 data Action
