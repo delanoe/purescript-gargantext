@@ -2,7 +2,7 @@ module DocView where
 
 import Data.Argonaut
 
-import Chart (histogram, p'')
+import Chart (histogram2, p'')
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Cont.Trans (lift)
@@ -113,7 +113,7 @@ layoutDocview = simpleSpec performAction render
             [ p''
             , div [] [ text "    Filter ", input [] []]
             , h3 [] [text "Chart Title"]
-            , histogram
+            , histogram2
             , p''
             , br' []
             , div [] [ b [] [text d.title]

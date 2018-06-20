@@ -36,6 +36,7 @@ import Unsafe.Coerce (unsafeCoerce)
 import UserPage as UP
 import GraphExplorer as GE
 import NgramsTable as NG
+import Dashboard as Dsh
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -56,6 +57,7 @@ type AppState =
   , showCorpus :: Boolean
   , graphExplorer :: GE.State
   , ngState :: NG.State
+  , dashboard :: Dsh.State
   }
 
 initAppState :: AppState
@@ -76,6 +78,7 @@ initAppState =
   , showCorpus : false
   , graphExplorer : GE.initialState
   , ngState : NG.initialState
+  , dashboard : Dsh.initialState
   }
 
 data Action
@@ -91,6 +94,7 @@ data Action
   | TreeViewA  NT.Action
   | TabViewA TV.Action
   | GraphExplorerA GE.Action
+  | DashboardA Dsh.Action
   | Search String
   | Go
   | CorpusAnalysisA CA.Action
@@ -105,7 +109,6 @@ performAction :: forall eff props. PerformAction ( dom :: DOM
                                                  ) AppState props Action
 performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
-
 performAction (Search s)  _ _ = void do
   modifyState $ _ {search = s}
 
@@ -125,6 +128,10 @@ performAction Go  _ _ = void do
  -- _ <- lift $ setHash "/addCorpus"
   --modifyState id
 
+
+performAction Go  _ _ = void do
+  _ <- lift $ setHash "/addCorpus"
+  modifyState id
 
 performAction _ _ _ = void do
   modifyState id
@@ -194,6 +201,11 @@ _userPageAction = prism UserPageA \action ->
     UserPageA caction -> Right caction
     _-> Left action
 
+_dashBoardAction :: Prism' Action Dsh.Action
+_dashBoardAction = prism DashboardA \action ->
+  case action of
+    DashboardA caction -> Right caction
+    _ -> Left action
 
 _docAnnotationViewState :: Lens' AppState D.State
 _docAnnotationViewState = lens (\s -> s.docAnnotationView) (\s ss -> s{docAnnotationView = ss})
@@ -227,11 +239,8 @@ _tabviewAction = prism TabViewA \action ->
     TabViewA caction -> Right caction
     _-> Left action
 
-
-
 _corpusState :: Lens' AppState CA.State
 _corpusState = lens (\s -> s.corpusAnalysis) (\s ss -> s {corpusAnalysis = ss})
-
 
 _corpusAction :: Prism' Action CA.Action
 _corpusAction = prism CorpusAnalysisA \action ->
@@ -239,6 +248,8 @@ _corpusAction = prism CorpusAnalysisA \action ->
     CorpusAnalysisA caction -> Right caction
     _-> Left action
 
+_dashBoardSate :: Lens' AppState Dsh.State
+_dashBoardSate = lens (\s -> s.dashboard) (\s ss -> s {dashboard = ss})
 
 _graphExplorerState :: Lens' AppState GE.State
 _graphExplorerState = lens (\s -> s.graphExplorer) (\s ss -> s{graphExplorer = ss})
@@ -275,9 +286,9 @@ pagesComponent s =
                                  | eff
                                  ) AppState props Action
     selectSpec CorpusAnalysis = layout0 $ focus _corpusState  _corpusAction CA.spec'
-    -- selectSpec Login      = focus _loginState _loginAction LN.renderSpec
+    selectSpec Login      = focus _loginState _loginAction LN.renderSpec
     selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
-    -- selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
+    selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
     selectSpec (DocAnnotation i)   = layout0 $ focus _docAnnotationViewState  _docAnnotationViewAction  D.docview
@@ -286,6 +297,7 @@ pagesComponent s =
     selectSpec SearchView = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec NGramsTable  = layout0 $ focus _ngState _ngAction  NG.ngramsTableSpec
     selectSpec PGraphExplorer = focus _graphExplorerState _graphExplorerAction  GE.spec
+    selectSpec Dashboard = layout0 $ focus _dashBoardSate _dashBoardAction Dsh.layoutDashboard
 
     selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
@@ -564,6 +576,7 @@ layoutSpec =
 dispatchAction :: forall t115 t445 t447.
                   Bind t445 => Applicative t445  =>
                   (Action -> t445 t447) -> t115 -> Routes -> t445 Unit
+
 dispatchAction dispatcher _ Home = do
   _ <- dispatcher $ SetRoute $ Home
   _ <- dispatcher $ LandingA $ L.NoOp
@@ -599,12 +612,10 @@ dispatchAction dispatcher _ (DocAnnotation i) = do
   _ <- dispatcher $ DocAnnotationViewA $ D.NoOp
   pure unit
 
-
 dispatchAction dispatcher _ Tabview = do
   _ <- dispatcher $ SetRoute  $ Tabview
   _ <- dispatcher $ TabViewA $ TV.NoOp
   pure unit
-
 
 dispatchAction dispatcher _ CorpusAnalysis = do
   _ <- dispatcher $ SetRoute  $ CorpusAnalysis
@@ -619,4 +630,8 @@ dispatchAction dispatcher _ PGraphExplorer = do
 dispatchAction dispatcher _ NGramsTable = do
   _ <- dispatcher $ SetRoute  $ NGramsTable
   _ <- dispatcher $ NgramsA $ NG.NoOp
+  pure unit
+
+dispatchAction dispatcher _ Dashboard = do
+  _ <- dispatcher $ SetRoute $ Dashboard
   pure unit
