@@ -143,7 +143,8 @@ performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePage
 performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
 
 performAction LoadData _ _ = void do
-  res <- lift $ loadData
+  res <- lift $ loadData "http://localhost:8008/corpus/452132/facet/documents/table"
+  --res <- lift $ loadData "http://localhost:8009/corpus/1/facet/documents/table"
   case res of
      Left err -> cotransform $ \(state) ->  state
      Right resData -> do
@@ -379,13 +380,11 @@ showRow {row : (Corpus c), delete} =
                 true  -> "fas "
                 false -> "far "
 
-
-
-loadData :: forall eff. Aff ( console :: CONSOLE, ajax :: AJAX| eff) (Either String (Array Response))
-loadData  = do
+loadData :: forall eff. String -> Aff ( console :: CONSOLE, ajax :: AJAX| eff) (Either String (Array Response))
+loadData url = do
   affResp <- liftAff $ attempt $ affjax defaultRequest
     { method  = Left GET
-    , url     = "http://localhost:8009/corpus/1/facet/documents/table"
+    , url     = url
     , headers =  [ ContentType applicationJSON
                  , Accept applicationJSON
               --   , RequestHeader "Authorization" $  "Bearer " <> token

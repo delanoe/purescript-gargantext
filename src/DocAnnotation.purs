@@ -1,4 +1,4 @@
-module AnnotationDocumentView where
+module DocAnnotation where
 
 import Prelude hiding (div)
 import React (ReactElement)
