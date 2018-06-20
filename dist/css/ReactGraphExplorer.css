@@ -1,0 +1,22 @@
+div#ge-container {
+  position: fixed;
+  top: 70px;
+  bottom: 0;
+  left: 0;
+  right: 300px;
+  z-index: 1;
+
+  /* non selectable: we've got our own events here */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
+  user-select: none; /* Chrome and Opera, future + */
+}
+
+div#ge-toolbar {
+  position: fixed;
+  right: 300px;
+  bottom: 0;
+  z-index: 1000;
+  margin: 10px;
+}

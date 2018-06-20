@@ -2653,6 +2653,18 @@ react-echarts-v3@^1.0.14:
     element-resize-detector latest
     lodash latest
 
+<<<<<<< HEAD
+=======
+"react-graph-explorer@git+ssh://git@gitlab.iscpif.fr:20022/gargantext/reactGraphExplorer.git#7f6d19396b694c70162f63b2f3e456eb14644928":
+  version "0.1.0"
+  resolved "git+ssh://git@gitlab.iscpif.fr:20022/gargantext/reactGraphExplorer.git#7f6d19396b694c70162f63b2f3e456eb14644928"
+  dependencies:
+    graph-explorer "git+ssh://git@gitlab.iscpif.fr:20022/gargantext/graphExplorer.git"
+    prop-types "^15.6.0"
+    react "^16.2.0"
+    react-dom "^16.2.0"
+
+>>>>>>> 9e8fbd4253ca1375e51692f03ec32d5ea4f5cac1
 react@^16.2.0:
   version "16.2.0"
   resolved "https://registry.yarnpkg.com/react/-/react-16.2.0.tgz#a31bd2dab89bff65d42134fa187f24d054c273ba"

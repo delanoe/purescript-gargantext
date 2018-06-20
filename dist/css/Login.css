@@ -32,3 +32,15 @@
     background-color : blue;
     color: white;
 }
+
+
+#toolbar ul li
+{ margin-right : 19px;
+}
+
+#horizontal-checkbox ul li
+{ display : inline;
+  float : left;
+  margin-top: 12px;
+  margin-right : 21px;
+}
