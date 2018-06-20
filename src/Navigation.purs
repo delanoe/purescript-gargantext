@@ -4,7 +4,7 @@ import DOM
 import Gargantext.Data.Lang
 
 import AddCorpusview as AC
-import AnnotationDocumentView as D
+import DocAnnotation as D
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
@@ -47,7 +47,7 @@ type AppState =
   , docViewState   :: DV.State
   , searchState    :: S.State
   , userPage       :: UP.State
-  , annotationdocumentView   :: D.State
+  , docAnnotationView   :: D.State
   , ntreeView   :: NT.State
   , tabview :: TV.State
   , search :: String
@@ -67,7 +67,7 @@ initAppState =
   , docViewState   : DV.tdata
   , searchState    : S.initialState
   , userPage       : UP.initialState
-  , annotationdocumentView   : D.initialState
+  , docAnnotationView   : D.initialState
   , ntreeView : NT.exampleTree
   , tabview : TV.initialState
   , search : ""
@@ -87,7 +87,7 @@ data Action
   | DocViewA   DV.Action
   | SearchA    S.Action
   | UserPageA  UP.Action
-  | AnnotationDocumentViewA  D.Action
+  | DocAnnotationViewA  D.Action
   | TreeViewA  NT.Action
   | TabViewA TV.Action
   | GraphExplorerA GE.Action
@@ -195,14 +195,14 @@ _userPageAction = prism UserPageA \action ->
     _-> Left action
 
 
-_annotationdocumentviewState :: Lens' AppState D.State
-_annotationdocumentviewState = lens (\s -> s.annotationdocumentView) (\s ss -> s{annotationdocumentView = ss})
+_docAnnotationViewState :: Lens' AppState D.State
+_docAnnotationViewState = lens (\s -> s.docAnnotationView) (\s ss -> s{docAnnotationView = ss})
 
 
-_annotationdocumentviewAction :: Prism' Action D.Action
-_annotationdocumentviewAction = prism AnnotationDocumentViewA \action ->
+_docAnnotationViewAction :: Prism' Action D.Action
+_docAnnotationViewAction = prism DocAnnotationViewA \action ->
   case action of
-    AnnotationDocumentViewA caction -> Right caction
+    DocAnnotationViewA caction -> Right caction
     _-> Left action
 
 
@@ -280,7 +280,7 @@ pagesComponent s =
     -- selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
-    selectSpec (AnnotationDocumentView i)   = layout0 $ focus _annotationdocumentviewState  _annotationdocumentviewAction  D.docview
+    selectSpec (DocAnnotation i)   = layout0 $ focus _docAnnotationViewState  _docAnnotationViewAction  D.docview
     selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState _searchAction  S.searchSpec
@@ -594,9 +594,9 @@ dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ UserPageA $ UP.NoOp
   pure unit
 
-dispatchAction dispatcher _ (AnnotationDocumentView i) = do
-  _ <- dispatcher $ SetRoute  $ AnnotationDocumentView i
-  _ <- dispatcher $ AnnotationDocumentViewA $ D.NoOp
+dispatchAction dispatcher _ (DocAnnotation i) = do
+  _ <- dispatcher $ SetRoute  $ DocAnnotation i
+  _ <- dispatcher $ DocAnnotationViewA $ D.NoOp
   pure unit
 
 

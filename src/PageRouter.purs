@@ -22,7 +22,7 @@ data Routes
   | DocView
   | SearchView
   | UserPage
-  | AnnotationDocumentView Int
+  | DocAnnotation Int
   | Tabview
   | CorpusAnalysis
   | PGraphExplorer
@@ -35,7 +35,7 @@ instance showRoutes :: Show Routes where
   show DocView    = "DocView"
   show SearchView = "SearchView"
   show UserPage   = "UserPage"
-  show (AnnotationDocumentView i)  = "DocumentView"
+  show (DocAnnotation i)= "DocumentView"
   show Tabview          = "Tabview"
   show CorpusAnalysis   = "corpus"
   show PGraphExplorer   = "graphExplorer"
@@ -46,17 +46,17 @@ int = floor <$> num
 
 routing :: Match Routes
 routing =
-      Login                  <$ route "login"
-  <|> Tabview                <$   route "tabview"
-  <|> AnnotationDocumentView <$> (route "documentView" *> int)
-  <|> UserPage               <$   route "userPage"
-  <|> SearchView             <$   route "search"
-  <|> DocView                <$   route "docView"
-  <|> AddCorpus              <$   route "addCorpus"
-  <|> CorpusAnalysis         <$   route "corpus"
-  <|> PGraphExplorer         <$   route "graphExplorer"
-  <|> NGramsTable            <$   route "ngrams"
-  <|> Home                   <$ lit ""
+      Login          <$   route "login"
+  <|> Tabview        <$   route "tabview"
+  <|> DocAnnotation  <$> (route "documentView" *> int)
+  <|> UserPage       <$   route "userPage"
+  <|> SearchView     <$   route "search"
+  <|> DocView        <$   route "docView"
+  <|> AddCorpus      <$   route "addCorpus"
+  <|> CorpusAnalysis <$   route "corpus"
+  <|> PGraphExplorer <$   route "graphExplorer"
+  <|> NGramsTable    <$   route "ngrams"
+  <|> Home           <$     lit ""
   where
     route str      = lit "" *> lit str
 
