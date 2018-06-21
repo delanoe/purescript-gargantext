@@ -32,6 +32,9 @@ import ReactDOM as RDOM
 import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, defaultPerformAction, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
+import Gargantext.REST (get)
+
+
 main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
 main = do
   case createReactSpec layoutDocview tdata of
@@ -143,7 +146,7 @@ performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePage
 performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
 
 performAction LoadData _ _ = void do
-  res <- lift $ loadData "http://localhost:8008/corpus/452132/facet/documents/table"
+  res <- lift $ get "http://localhost:8008/corpus/452132/facet/documents/table"
   --res <- lift $ loadData "http://localhost:8009/corpus/1/facet/documents/table"
   case res of
      Left err -> cotransform $ \(state) ->  state
@@ -380,20 +383,3 @@ showRow {row : (Corpus c), delete} =
                 true  -> "fas "
                 false -> "far "
 
-loadData :: forall eff. String -> Aff ( console :: CONSOLE, ajax :: AJAX| eff) (Either String (Array Response))
-loadData url = do
-  affResp <- liftAff $ attempt $ affjax defaultRequest
-    { method  = Left GET
-    , url     = url
-    , headers =  [ ContentType applicationJSON
-                 , Accept applicationJSON
-              --   , RequestHeader "Authorization" $  "Bearer " <> token
-                 ]
-   --  , content = Just $ encodeJson reqBody
-    }
-  case affResp of
-    Left err -> do
-      pure $ Left $ show err
-    Right a -> do
-      let res = decodeJson a.response
-      pure res

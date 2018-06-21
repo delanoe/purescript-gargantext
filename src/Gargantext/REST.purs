@@ -15,14 +15,10 @@ import Data.Either (Either(..))
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 
 
---loadData :: forall eff ajax a b. Bind ajax => MonadAff
---                     ( ajax :: AJAX
---                     , consolle :: CONSOLE
---                     | eff
---                     )
---                     ajax
---                    => Respondable a => (a -> Either String b) -> String -> ajax (Either String b)
-loadData f url = do
+get :: forall eff t2 t31. DecodeJson t31 => String -> 
+                      Aff ( console :: CONSOLE, ajax :: AJAX| eff)
+                          (Either String t31)
+get url = do
   affResp <- liftAff $ attempt $ affjax defaultRequest
     { method  = Left GET
     , url     = url
@@ -35,5 +31,5 @@ loadData f url = do
     Left err -> do
       pure $ Left $ show err
     Right a -> do
-      let res = f a.response
+      let res = decodeJson a.response
       pure res
