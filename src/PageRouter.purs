@@ -27,9 +27,10 @@ data Routes
   | CorpusAnalysis
   | PGraphExplorer
   | NGramsTable
+  | Dashboard
+
 
 instance showRoutes :: Show Routes where
-  show Home       = "Home"
   show Login      = "Login"
   show AddCorpus  = "AddCorpus"
   show DocView    = "DocView"
@@ -40,6 +41,8 @@ instance showRoutes :: Show Routes where
   show CorpusAnalysis   = "corpus"
   show PGraphExplorer   = "graphExplorer"
   show NGramsTable      = "NGramsTable"
+  show Dashboard        = "Dashboard"
+  show Home             = "Home"
 
 int :: Match Int
 int = floor <$> num
@@ -56,6 +59,7 @@ routing =
   <|> CorpusAnalysis <$   route "corpus"
   <|> PGraphExplorer <$   route "graphExplorer"
   <|> NGramsTable    <$   route "ngrams"
+  <|> Dashboard      <$   route "dashboard"
   <|> Home           <$     lit ""
   where
     route str      = lit "" *> lit str

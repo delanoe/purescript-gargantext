@@ -41,8 +41,8 @@ toggleNode sid a = a
 myCorpus :: Int -> String -> NTree (Tuple String String)
 myCorpus n name = NNode n false name
     [ NLeaf (Tuple "Facets"    "#/corpus")
-    , NLeaf (Tuple "Graph"     "#/corpus")
-    , NLeaf (Tuple "Dashboard" "#/userPage")
+    , NLeaf (Tuple "Graph"     "#/docView")
+    , NLeaf (Tuple "Dashboard" "#/dashboard")
     ]
 
 exampleTree :: NTree (Tuple String String)
