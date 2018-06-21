@@ -22,11 +22,11 @@ data Routes
   | DocView
   | SearchView
   | UserPage
-  | AnnotationDocumentView Int
+  | DocAnnotation Int
   | Tabview
   | CorpusAnalysis
   | PGraphExplorer
-
+  | NGramsTable
 
 instance showRoutes :: Show Routes where
   show Home       = "Home"
@@ -35,40 +35,30 @@ instance showRoutes :: Show Routes where
   show DocView    = "DocView"
   show SearchView = "SearchView"
   show UserPage   = "UserPage"
-  show (AnnotationDocumentView i)  = "DocumentView"
-  show Tabview   = "Tabview"
+  show (DocAnnotation i)= "DocumentView"
+  show Tabview          = "Tabview"
   show CorpusAnalysis   = "corpus"
-  show PGraphExplorer = "graphExplorer"
+  show PGraphExplorer   = "graphExplorer"
+  show NGramsTable      = "NGramsTable"
 
 int :: Match Int
 int = floor <$> num
 
-
 routing :: Match Routes
 routing =
-   loginRoute
-  <|> tabview
-  <|> documentView
-  <|> userPageRoute
-  <|> searchRoute
-  <|> docviewRoute
-  <|> addcorpusRoute
-  <|> corpusAnalysis
-  <|> graphExplorer
-  <|> home
+      Login          <$   route "login"
+  <|> Tabview        <$   route "tabview"
+  <|> DocAnnotation  <$> (route "documentView" *> int)
+  <|> UserPage       <$   route "userPage"
+  <|> SearchView     <$   route "search"
+  <|> DocView        <$   route "docView"
+  <|> AddCorpus      <$   route "addCorpus"
+  <|> CorpusAnalysis <$   route "corpus"
+  <|> PGraphExplorer <$   route "graphExplorer"
+  <|> NGramsTable    <$   route "ngrams"
+  <|> Home           <$     lit ""
   where
-    tabview  = Tabview   <$ route "tabview"
-    documentView   = AnnotationDocumentView <$> (route "documentView" *> int)
-    userPageRoute  = UserPage   <$ (route "user" *> int)
-    searchRoute    = SearchView <$ route "search"
-    docviewRoute   = DocView    <$ route "docView"
-    addcorpusRoute = AddCorpus  <$ route "addCorpus"
-    loginRoute     = Login      <$ route "login"
-    corpusAnalysis = CorpusAnalysis <$ route "corpus"
-    graphExplorer  = PGraphExplorer <$ route "graphExplorer"
-    home           = Home       <$ lit ""
     route str      = lit "" *> lit str
-
 
 routeHandler :: forall e. ( Maybe Routes -> Routes -> Eff
                             ( dom     :: DOM

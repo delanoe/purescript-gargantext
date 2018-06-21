@@ -27,3 +27,8 @@
 #user-page-info {
     margin-top : 38px;
 }
+
+.tableHeader {
+    background-color : blue;
+    color: white;
+}
