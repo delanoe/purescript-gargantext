@@ -33,7 +33,7 @@ import SearchForm as S
 import Tabview as TV
 import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultPerformAction, defaultRender, focus, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
-import Users as U
+import Gargantext.Users as U
 import GraphExplorer as GE
 import NgramsTable as NG
 import Dashboard as Dsh
@@ -47,13 +47,8 @@ type AppState =
   , addCorpusState :: AC.State
   , docViewState   :: DV.State
   , searchState    :: S.State
-<<<<<<< HEAD
   , userPage       :: U.State
-  , annotationdocumentView   :: D.State
-=======
-  , userPage       :: UP.State
   , docAnnotationView   :: D.State
->>>>>>> master
   , ntreeView   :: NT.State
   , tabview :: TV.State
   , search :: String
@@ -73,13 +68,8 @@ initAppState =
   , addCorpusState : AC.initialState
   , docViewState   : DV.tdata
   , searchState    : S.initialState
-<<<<<<< HEAD
   , userPage       : U.initialState
-  , annotationdocumentView   : D.initialState
-=======
-  , userPage       : UP.initialState
   , docAnnotationView   : D.initialState
->>>>>>> master
   , ntreeView : NT.exampleTree
   , tabview : TV.initialState
   , search : ""
@@ -99,13 +89,8 @@ data Action
   | AddCorpusA AC.Action
   | DocViewA   DV.Action
   | SearchA    S.Action
-<<<<<<< HEAD
   | UserPageA  U.Action
-  | AnnotationDocumentViewA  D.Action
-=======
-  | UserPageA  UP.Action
   | DocAnnotationViewA  D.Action
->>>>>>> master
   | TreeViewA  NT.Action
   | TabViewA TV.Action
   | GraphExplorerA GE.Action
@@ -305,7 +290,7 @@ pagesComponent s =
     selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
-    selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
+    selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
     selectSpec (DocAnnotation i)   = layout0 $ focus _docAnnotationViewState  _docAnnotationViewAction  D.docview
     selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
