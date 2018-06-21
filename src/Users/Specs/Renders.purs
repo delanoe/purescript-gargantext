@@ -1,11 +1,12 @@
 module Users.Specs.Renders
        where
 
+import Control.Monad.Aff.Class (liftAff)
 import Data.Tuple (Tuple(..))
-import Prelude (($), (<<<), (<>))
+import Prelude (($), (<<<))
 import React (ReactElement)
-import React.DOM (div, h1, h3, h4, img, li, span, text, ul)
-import React.DOM.Props (_id, className, src)
+import React.DOM (div, h4, li, span, text, ul)
+import React.DOM.Props (_id, className)
 import Thermite (Render)
 import Users.Types.Types (Action, State)
 
