@@ -40,12 +40,12 @@ userInfos =
     ul [className "list-group"]
     [
       listElement <<< infoRender $ Tuple "Fonction: " "Enseignant chercheur"
-    ,listElement <<< infoRender $ Tuple "Entité, service: " "Mines Saint-Etienne SPIN -PTSI"
-    ,listElement <<< infoRender $ Tuple "Téléphone: " "(+33) 4 77 42 00 70"
-    ,listElement <<< infoRender $ Tuple "Courriel: " "gargantua@rabelais.fr"
-    ,listElement <<< infoRender $ Tuple "Bureau: " "D1/10"
-    ,listElement <<< infoRender $ Tuple "Appelation: " "Maître de conférences (EPA)"
-    ,listElement <<< infoRender $ Tuple "Lieu: " "Saint-Etienne, 158 Cours Fauriel"
+    , listElement <<< infoRender $ Tuple "Entité, service: " "Mines Saint-Etienne SPIN -PTSI"
+    , listElement <<< infoRender $ Tuple "Téléphone: " "(+33) 4 77 42 00 70"
+    , listElement <<< infoRender $ Tuple "Courriel: " "gargantua@rabelais.fr"
+    , listElement <<< infoRender $ Tuple "Bureau: " "D1/10"
+    , listElement <<< infoRender $ Tuple "Appelation: " "Maître de conférences (EPA)"
+    , listElement <<< infoRender $ Tuple "Lieu: " "Saint-Etienne, 158 Cours Fauriel"
     ]
 
 pbInfos :: ReactElement
@@ -53,8 +53,8 @@ pbInfos =
   ul [className "list-group"]
   [
     listElement <<< infoRender $ Tuple "" "https://www.imt.fr/en/"
-  ,listElement <<< infoRender $ Tuple "" "https://www.imt.fr/en/"
-  ,listElement <<< infoRender $ Tuple "" "https://www.imt.fr/en/"
+  , listElement <<< infoRender $ Tuple "" "https://www.imt.fr/en/"
+  , listElement <<< infoRender $ Tuple "" "https://www.imt.fr/en/"
   ]
 
 render :: forall props. Render State props Action
