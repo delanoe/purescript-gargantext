@@ -1,6 +1,7 @@
 module Gargantext.Users.Types
        (module Gargantext.Users.Types.Types,
         module Gargantext.Users.Types.Lens,
+        module Gargantext.Users.Types.States,
         brevetSpec,
         projectSpec,
         facets
@@ -9,6 +10,7 @@ module Gargantext.Users.Types
 
 import Gargantext.Users.Types.Lens
 import Gargantext.Users.Types.Types
+import Gargantext.Users.Types.States
 
 import Brevets as B
 import Control.Monad.Aff.Console (CONSOLE)

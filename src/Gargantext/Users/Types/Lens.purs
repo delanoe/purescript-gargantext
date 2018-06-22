@@ -5,13 +5,17 @@ import Control.Monad.Aff.Console (CONSOLE)
 import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
+import Data.Maybe (Maybe)
+import Gargantext.Users.Types.States (Action(..), State)
+import Gargantext.Users.Types.Types (User)
 import Network.HTTP.Affjax (AJAX)
 import Projects as PS
 import Publications as P
 import Tab as Tab
 import Thermite (Spec, focus)
-import Gargantext.Users.Types.Types (State(..), Action(..))
 
+_user :: Lens' State (Maybe User)
+_user = lens (\s -> s.user) (\s ss -> s{user = ss})
 
 _tablens :: Lens' State Tab.State
 _tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})

@@ -1,14 +1,19 @@
 module Gargantext.Users.Specs.Renders
        where
 
+import Control.Monad.Aff (attempt)
 import Control.Monad.Aff.Class (liftAff)
+import Data.Either (Either(..))
+import Data.Generic (gShow)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Prelude (($), (<<<))
+import Gargantext.Users.API (getUser)
+import Gargantext.Users.Types
+import Prelude (show, ($), (<<<))
 import React (ReactElement)
 import React.DOM (div, h4, li, span, text, ul)
 import React.DOM.Props (_id, className)
 import Thermite (Render)
-import Gargantext.Users.Types.Types (Action, State)
 
 
 infoRender :: forall props. Tuple String String -> Array ReactElement
@@ -67,7 +72,9 @@ render dispatch _ state _ =
         div [className "row"]
         [
           div [className "col-md-8"]
-          $ card "Jean HEUDE" [userInfos]
+          $ card (case state.user of (Just _) -> "Ok"
+                                     Nothing -> "Pas Ok")
+          [userInfos]
         ]
       ]
     ]
