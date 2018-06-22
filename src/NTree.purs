@@ -1,7 +1,17 @@
 module NTree where
 
-import Data.Tuple (Tuple(..))
 import Prelude hiding (div)
+
+import Control.Monad.Aff (Aff, attempt)
+import Control.Monad.Aff.Class (liftAff)
+import Control.Monad.Eff.Class (liftEff)
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Either (Either(..))
+import Data.HTTP.Method (Method(..))
+import Data.Newtype (class Newtype)
+import Data.Tuple (Tuple(..))
+import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import React (ReactElement)
 import React.DOM (a, div, i, li, text, ul)
 import React.DOM.Props (Props, className, href, onClick)
@@ -106,3 +116,36 @@ toHtml d (NNode id open name ary) =
 
 fldr :: Boolean -> Props
 fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
+
+
+newtype LNode = LNode {id :: Int, name :: String}
+
+derive instance newtypeLNode :: Newtype LNode _
+
+instance decodeJsonLNode :: DecodeJson LNode where
+  decodeJson json = do
+    obj <- decodeJson json
+    id_ <- obj .? "id"
+    name <- obj .? "name"
+    pure $ LNode {id : id_, name}
+
+loadDefaultNode ::forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Either String (Array LNode))
+loadDefaultNode = do
+  res <- liftAff $ attempt $ affjax defaultRequest
+         { url = "http://localhost:8008/user"
+         , method = Left GET
+         }
+  case res of
+    Left err -> do
+      _ <- liftEff $ log $ show err
+      pure $ Left $ show err
+    Right a -> do
+      _ <- liftEff $ log $ show a.status
+      _ <- liftEff $ log $ show a.headers
+      _ <- liftEff $ log $ show a.response
+      let resp = decodeJson a.response
+      pure resp
+
+
+fnTransform :: LNode -> FTree
+fnTransform (LNode r) = NNode r.id false r.name []

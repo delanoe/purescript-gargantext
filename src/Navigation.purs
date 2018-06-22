@@ -2,28 +2,31 @@ module Navigation where
 
 import DOM
 import Gargantext.Data.Lang
+import Prelude hiding (div)
 
 import AddCorpusview as AC
 import DocAnnotation as D
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Console (CONSOLE, log)
 import CorpusAnalysis as CA
-import Data.Array (concat)
+import Data.Array (concat, head, length)
 import Data.Either (Either(..))
 import Data.Foldable (fold, intercalate)
 import Data.Lens (Lens', Prism', lens, over, prism)
-import Data.Maybe (Maybe(Nothing, Just))
+import Data.Maybe (Maybe(Nothing, Just), fromJust)
 import Data.Tuple (Tuple(..))
 import DocView as DV
+import GraphExplorer as GE
 import Landing as L
 import Login as LN
 import Modal (modalShow)
+import NTree (fnTransform, loadDefaultNode)
 import NTree as NT
 import Network.HTTP.Affjax (AJAX)
 import PageRouter (Routes(..))
-import Prelude hiding (div)
+import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, text, ul)
 import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
@@ -56,6 +59,7 @@ type AppState =
   , showLogin :: Boolean
   , showCorpus :: Boolean
   , graphExplorer :: GE.State
+  , initialized :: Boolean
   , ngState :: NG.State
   , dashboard :: Dsh.State
   }
@@ -77,6 +81,7 @@ initAppState =
   , showLogin : false
   , showCorpus : false
   , graphExplorer : GE.initialState
+  , initialized : false
   , ngState : NG.initialState
   , dashboard : Dsh.initialState
   }
@@ -105,6 +110,8 @@ data Action
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
+                                                 , ajax :: AJAX
+                                                 , console :: CONSOLE
                                                  | eff
                                                  ) AppState props Action
 performAction (SetRoute route)  _ _ = void do
@@ -128,6 +135,18 @@ performAction Go  _ _ = void do
  -- _ <- lift $ setHash "/addCorpus"
   --modifyState id
 
+performAction Initialize  _ state = void do
+  _ <- liftEff $ log "loading Initial nodes"
+  case state.initialized of
+    false -> do
+      lnodes <- lift $ loadDefaultNode
+      case lnodes of
+        Left err -> do
+          modifyState id
+        Right d -> do
+          modifyState $ _ {initialized = true, ntreeView = if length d > 0 then fnTransform $ unsafePartial $ fromJust $ head d else NT.initialState}
+    _ -> do
+      modifyState id
 
 performAction Go  _ _ = void do
   _ <- lift $ setHash "/addCorpus"
@@ -301,7 +320,7 @@ pagesComponent s =
 
     selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
-routingSpec :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
+routingSpec :: forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
 
 
@@ -485,7 +504,7 @@ liNav (LiNav { title : title'
 
 
 -- TODO put the search form in the center of the navBar
-divSearchBar :: forall props eff. Spec (dom :: DOM |eff) AppState props Action
+divSearchBar :: forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
 divSearchBar = simpleSpec performAction render
   where
     render :: Render AppState props Action
@@ -531,7 +550,7 @@ divDropdownRight d =
 
 
 
-layoutFooter ::  forall props eff. Spec (dom :: DOM |eff) AppState props Action
+layoutFooter ::  forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
 layoutFooter = simpleSpec performAction render
   where
     render :: Render AppState props Action
@@ -578,18 +597,20 @@ dispatchAction :: forall t115 t445 t447.
                   (Action -> t445 t447) -> t115 -> Routes -> t445 Unit
 
 dispatchAction dispatcher _ Home = do
-  _ <- dispatcher $ SetRoute $ Home
-  _ <- dispatcher $ LandingA $ L.NoOp
+  _ <- dispatcher Initialize
+  _ <- dispatcher $ SetRoute Home
+  _ <- dispatcher $ LandingA L.NoOp
   pure unit
 
 dispatchAction dispatcher _ Login = do
-  _ <- dispatcher $ SetRoute $ Login
-  _ <- dispatcher $ LoginA   $ LN.NoOp
+  _ <- dispatcher Initialize
+  _ <- dispatcher $ SetRoute Login
+  _ <- dispatcher $ LoginA LN.NoOp
   pure unit
 
 dispatchAction dispatcher _ AddCorpus = do
-  _ <- dispatcher $ SetRoute   $ AddCorpus
-  _ <- dispatcher $ AddCorpusA $ AC.LoadDatabaseDetails
+  _ <- dispatcher $ SetRoute AddCorpus
+  _ <- dispatcher $ AddCorpusA AC.LoadDatabaseDetails
   pure unit
 
 dispatchAction dispatcher _ DocView = do
