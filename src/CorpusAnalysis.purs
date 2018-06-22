@@ -1,4 +1,5 @@
 module CorpusAnalysis where
+
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Data.Array (fold)

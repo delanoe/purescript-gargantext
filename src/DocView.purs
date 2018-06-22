@@ -35,18 +35,14 @@ import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.REST (get)
 
 
-main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
-main = do
-  case createReactSpec layoutDocview tdata of
-    { spec, dispatcher } -> void $ do
-      document  <- DOM.window >>= DOM.document
-      container <- unsafePartial (fromJust  <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
-      RDOM.render (R.createFactory (R.createClass spec) {}) container
-
--- main :: forall e. Eff (console :: CONSOLE | e) Unit
--- main = do
---   log "Hello sailor!"
-
+--main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
+--main = do
+--  case createReactSpec layoutDocview tdata of
+--    { spec, dispatcher } -> void $ do
+--      document  <- DOM.window >>= DOM.document
+--      container <- unsafePartial (fromJust  <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
+--      RDOM.render (R.createFactory (R.createClass spec) {}) container
+--
 -- TODO: Pagination Details are not available from the BackEnd
 -- TODO: PageSize Change manually sets the totalPages, need to get from backend and reload the data
 -- TODO: Search is pending
