@@ -2,7 +2,7 @@ module DocView where
 
 import Data.Argonaut
 
-import Chart (histogram, p'')
+import Chart (histogram2, p'')
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Cont.Trans (lift)
@@ -31,6 +31,9 @@ import React.DOM.Props (Props, _type, className, href, onChange, onClick, select
 import ReactDOM as RDOM
 import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, defaultPerformAction, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
+
+import Gargantext.REST (get)
+
 
 main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
 main = do
@@ -113,7 +116,7 @@ layoutDocview = simpleSpec performAction render
             [ p''
             , div [] [ text "    Filter ", input [] []]
             , h3 [] [text "Chart Title"]
-            , histogram
+            , histogram2
             , p''
             , br' []
             , div [] [ b [] [text d.title]
@@ -143,7 +146,8 @@ performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePage
 performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
 
 performAction LoadData _ _ = void do
-  res <- lift $ loadData
+  res <- lift $ get "http://localhost:8008/corpus/452132/facet/documents/table"
+  --res <- lift $ loadData "http://localhost:8009/corpus/1/facet/documents/table"
   case res of
      Left err -> cotransform $ \(state) ->  state
      Right resData -> do
@@ -379,22 +383,3 @@ showRow {row : (Corpus c), delete} =
                 true  -> "fas "
                 false -> "far "
 
-
-
-loadData :: forall eff. Aff ( console :: CONSOLE, ajax :: AJAX| eff) (Either String (Array Response))
-loadData  = do
-  affResp <- liftAff $ attempt $ affjax defaultRequest
-    { method  = Left GET
-    , url     = "http://localhost:8009/corpus/1/facet/documents/table"
-    , headers =  [ ContentType applicationJSON
-                 , Accept applicationJSON
-              --   , RequestHeader "Authorization" $  "Bearer " <> token
-                 ]
-   --  , content = Just $ encodeJson reqBody
-    }
-  case affResp of
-    Left err -> do
-      pure $ Left $ show err
-    Right a -> do
-      let res = decodeJson a.response
-      pure res
