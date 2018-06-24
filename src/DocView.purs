@@ -1,13 +1,15 @@
 module DocView where
 
 import Data.Argonaut
+import Data.Generic (class Generic, gShow)
 
 import Chart (histogram2, p'')
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Console (CONSOLE, log)
 import DOM (DOM)
 import DOM.HTML (window) as DOM
 import DOM.HTML.Types (htmlDocumentToParentNode) as DOM
@@ -52,25 +54,60 @@ import Gargantext.REST (get)
 -- TODO: Filter is Pending
 -- TODO: When a pagination link is clicked, reload data. Right now it doesn't make sense to reload mock data.
 
+data Action
+  = LoadData
+  | ChangePageSize PageSizes
+  | ChangePage Int
+
+type State = CorpusTableData
+
+type CorpusTableData = TableData Corpus
+
+newtype TableData a
+  = TableData
+    { rows         :: Array { row    :: a
+                            , delete :: Boolean
+                            }
+    , totalPages   :: Int
+    , currentPage  :: Int
+    , pageSize     :: PageSizes
+    , totalRecords :: Int
+    , title        :: String
+   -- , tree         :: FTree
+    }
+
+newtype Corpus
+  = Corpus
+    { _id    :: Int
+    , url    :: String
+    , date   :: String
+    , title  :: String
+    , source :: String
+    , fav    :: Boolean
+    , ngramCount :: Int
+    }
+
+
+
+derive instance genericCorpus :: Generic Corpus
+
+instance showCorpus :: Show Corpus where
+  show = gShow
+
+
 newtype Response = Response
   { cid        :: Int
   , created    :: String
+  , hyperdata  :: Hyperdata
   , favorite   :: Boolean
   , ngramCount :: Int
-  , hyperdata  :: Hyperdata
   }
+
 
 newtype Hyperdata = Hyperdata
   { title  :: String
   , source :: String
   }
-
-type State = CorpusTableData
-
-data Action
-  = ChangePageSize PageSizes
-  | ChangePage Int
-  | LoadData
 
 
 
@@ -80,7 +117,6 @@ instance decodeHyperdata :: DecodeJson Hyperdata where
     title  <- obj .? "title"
     source <- obj .? "source"
     pure $ Hyperdata { title,source }
-
 
 
 instance decodeResponse :: DecodeJson Response where
@@ -93,6 +129,7 @@ instance decodeResponse :: DecodeJson Response where
     hyperdata  <- obj .? "hyperdata"
     pure $ Response { cid, created, favorite, ngramCount, hyperdata }
 
+-- | Filter
 filterSpec :: forall eff props. Spec eff State props Action
 filterSpec = simpleSpec defaultPerformAction render
   where
@@ -142,23 +179,94 @@ performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePage
 performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
 
 performAction LoadData _ _ = void do
-  res <- lift $ get "http://localhost:8008/corpus/452132/facet/documents/table"
-  --res <- lift $ loadData "http://localhost:8009/corpus/1/facet/documents/table"
+  res <- lift $ loadPage
   case res of
-     Left err -> cotransform $ \(state) ->  state
+     Left err      -> cotransform $ \state ->  state
+     Right resData -> modifyState (\s -> resData)
+
+
+loadPage :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Either String CorpusTableData)
+loadPage = do
+  res <- get "http://localhost:8008/corpus/472764/facet/documents/table"
+  case res of
+     Left err -> do
+       _ <- liftEff $ log $ show err
+       pure $ Left $ show err
      Right resData -> do
-       modifyState (\s -> tdata' $ data' (res2corpus <$> resData))
+       let docs = toTableData (res2corpus $ resData)
+       _ <- liftEff $ log $ show $ map (\({ row: r, delete :_}) -> show r) ((\(TableData docs') -> docs'.rows) docs)
+       _ <- liftEff $ log $ show "loading"
+       pure $ Right docs
       where
-        res2corpus (Response res) =
-          Corpus { _id : res.cid
+        res2corpus :: Array Response -> Array Corpus
+        res2corpus rs = map (\(Response r) ->
+          Corpus { _id : r.cid
           , url    : ""
-          , date   :  res.created
-          , title  : (\(Hyperdata r) -> r.title) res.hyperdata
-          , source : (\(Hyperdata r) -> r.source)res.hyperdata
-          , fav    : res.favorite
-         }
+          , date   :  r.created
+          , title  : (\(Hyperdata r) -> r.title) r.hyperdata
+          , source : (\(Hyperdata r) -> r.source) r.hyperdata
+          , fav    : r.favorite
+          , ngramCount : r.ngramCount
+         }) rs
 
 
+        toTableData :: Array Corpus -> CorpusTableData
+        toTableData ds = TableData
+                { rows         : map (\d -> { row : d , delete : false}) ds
+                , totalPages   : 10
+                , currentPage  : 1
+                , pageSize     : PS10
+                , totalRecords : 100
+                , title        : "Documents"
+             --   , tree         : exampleTree
+                }
+
+---------------------------------------------------------
+
+sampleData' :: Corpus
+sampleData' = Corpus {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1}
+--
+sampleData :: Array Corpus
+sampleData = replicate 10 sampleData'
+
+data' :: Array Corpus -> Array {row :: Corpus, delete :: Boolean}
+data' = map {row : _, delete : false}
+
+sdata :: Array { row :: Corpus, delete :: Boolean }
+sdata = data' sampleData
+
+
+tdata = TableData
+        { rows         : sdata
+        , totalPages   : 10
+        , currentPage  : 1
+        , pageSize     : PS10
+        , totalRecords : 100
+        , title        : "Documents"
+     --   , tree         : exampleTree
+        }
+
+
+showRow :: {row :: Corpus, delete :: Boolean} -> ReactElement
+showRow {row : (Corpus c), delete} =
+  tr []
+  [ td [] [div [className $ fa <> "fa-star"][]]
+  -- TODO show date: Year-Month-Day only
+  , td [] [text c.date]
+  , td [] [ a [ href "#/documentView/1"] [ text c.title ] ]
+  , td [] [text c.source]
+  , td [] [input [ _type "checkbox"] []]
+  ]
+    where
+      fa = case c.fav of
+                true  -> "fas "
+                false -> "far "
+
+
+
+--------------------------------------------------------------
+-- | Action
+-- ChangePageSize
 changePageSize :: PageSizes -> CorpusTableData -> CorpusTableData
 changePageSize ps (TableData td) =
   TableData $ td { pageSize      = ps
@@ -304,78 +412,4 @@ lessthan x y = x < y
 greaterthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
 greaterthan x y = x > y
 
-newtype TableData a
-  = TableData
-    { rows         :: Array { row    :: a
-                            , delete :: Boolean
-                            }
-    , totalPages   :: Int
-    , currentPage  :: Int
-    , pageSize     :: PageSizes
-    , totalRecords :: Int
-    , title        :: String
-   -- , tree         :: FTree
-    }
-
-newtype Corpus
-  = Corpus
-    { _id    :: Int
-    , url    :: String
-    , date   :: String
-    , title  :: String
-    , source :: String
-    , fav    :: Boolean
-    }
-
-type CorpusTableData = TableData Corpus
-
-sampleData' :: Corpus
-sampleData' = Corpus {_id : 1, url : "", date : "date", title : "title", source : "source", fav : false}
-
-sampleData :: Array Corpus
-sampleData = replicate 10 sampleData'
-
-data' :: Array Corpus -> Array {row :: Corpus, delete :: Boolean}
-data' = map {row : _, delete : false}
-
-sdata :: Array { row :: Corpus, delete :: Boolean }
-sdata = data' sampleData
-
-tdata :: CorpusTableData
-tdata = TableData
-        { rows         : sdata
-        , totalPages   : 10
-        , currentPage  : 1
-        , pageSize     : PS10
-        , totalRecords : 100
-        , title        : "Documents"
-     --   , tree         : exampleTree
-        }
-
-tdata' :: _ -> CorpusTableData
-tdata' d = TableData
-        { rows         : d
-        , totalPages   : 10
-        , currentPage  : 1
-        , pageSize     : PS10
-        , totalRecords : 100
-        , title        : "Documents"
-       -- , tree         : exampleTree
-        }
-
-
-showRow :: {row :: Corpus, delete :: Boolean} -> ReactElement
-showRow {row : (Corpus c), delete} =
-  tr []
-  [ td [] [div [className $ fa <> "fa-star"][]]
-  -- TODO show date: Year-Month-Day only
-  , td [] [text c.date]
-  , td [] [ a [ href "#/documentView/1"] [ text c.title ] ]
-  , td [] [text c.source]
-  , td [] [input [ _type "checkbox"] []]
-  ]
-    where
-      fa = case c.fav of
-                true  -> "fas "
-                false -> "far "
 

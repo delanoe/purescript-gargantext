@@ -139,12 +139,25 @@ performAction Initialize  _ state = void do
   _ <- liftEff $ log "loading Initial nodes"
   case state.initialized of
     false -> do
+
       lnodes <- lift $ loadDefaultNode
+      
       case lnodes of
         Left err -> do
           modifyState id
         Right d -> do
-          modifyState $ _ {initialized = true, ntreeView = if length d > 0 then fnTransform $ unsafePartial $ fromJust $ head d else NT.initialState}
+          page <- lift $ DV.loadPage
+          case page of
+            Left err -> do
+              modifyState id
+            Right docs -> do
+              modifyState $ _ { initialized = true
+                              , ntreeView = if length d > 0
+                                           then fnTransform $ unsafePartial $ fromJust $ head d 
+                                           else NT.initialState
+
+                              , docViewState = docs
+                              }
     _ -> do
       modifyState id
 

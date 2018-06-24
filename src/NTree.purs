@@ -120,7 +120,7 @@ fldr open = if open then className "fas fa-folder-open" else className "fas fa-f
 
 newtype LNode = LNode {id :: Int, name :: String}
 
-derive instance newtypeLNode :: Newtype LNode _
+-- derive instance newtypeLNode :: Newtype LNode _
 
 instance decodeJsonLNode :: DecodeJson LNode where
   decodeJson json = do
@@ -129,7 +129,7 @@ instance decodeJsonLNode :: DecodeJson LNode where
     name <- obj .? "name"
     pure $ LNode {id : id_, name}
 
-loadDefaultNode ::forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Either String (Array LNode))
+loadDefaultNode :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Either String (Array LNode))
 loadDefaultNode = do
   res <- liftAff $ attempt $ affjax defaultRequest
          { url = "http://localhost:8008/user"
