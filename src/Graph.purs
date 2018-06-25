@@ -400,10 +400,9 @@ specOld = simpleSpec performAction render
                        , edgeShapes {"default" : edgeShape.curve}
                        ]
                      ]
-                 <>
-                 [dispLegend st.legendData]
+
            ]
-         , div [className "col-md-3", style {border : "1px black solid", height: "90%", backgroundColor : "beige"}]
+         , div [className "col-md-3", style {border : "1px black solid", backgroundColor : "beige"}]
              [ div [className "row"]
                [ div [_id "sidepanel" , className "col-md-12", style {borderBottom : "1px solid black"}]
                [ p []
@@ -441,6 +440,7 @@ specOld = simpleSpec performAction render
                      , a [ className "badge badge-light"][text "software engineering"]
                      , a [ className "badge badge-light"][text "complex systems"]
                      , a [ className "badge badge-light"][text "wireless communications"]
+                     , dispLegend st.legendData
                      ]
                    ]
                  ]
