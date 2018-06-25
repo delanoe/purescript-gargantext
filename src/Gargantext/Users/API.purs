@@ -26,12 +26,11 @@ performAction :: forall eff props. PerformAction ( console :: CONSOLE
                                                  | eff ) State props Action
 performAction NoOp _ _ = void do
   modifyState id
-performAction (FetchUser id) _ _ = void do
-  value <- lift $ getUser id
-  let user = case value of
-        (Right user) -> Just user
-        _ -> Nothing
-  _ <- pure <<< log $ "Fetching user..."
-  pure $ modifyState \state -> set _user user state
+performAction (FetchUser userId) _ _ = void do
+  value <- lift $ getUser userId
+  _ <- case value of
+    (Right user) -> modifyState \state -> set _user (Just user) state
+    _ -> modifyState id
+  pure <<< log $ "Fetching user..."
 performAction _ _ _ = void do
   modifyState id
