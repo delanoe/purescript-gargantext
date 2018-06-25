@@ -1,5 +1,51 @@
 
+.
 .logoSmall {
+    line-height:15px;
+    height:10px;
+    padding: 10px 10px;
+}
+
+
+#logo-designed {
+    border:15px;
+ }
+
+#logo-designed img {
+
+    height:150px;
+    border:3px solid white;
+}
+
+#page-wrapper {
+    margin-top : 96px;
+}
+
+#user-page-header {
+    border-bottom : 1px solid black;
+}
+
+#user-page-info {
+    margin-top : 38px;
+}
+
+.tableHeader {
+    background-color : blue;
+    color: white;
+}
+
+
+#toolbar ul li
+{ margin-right : 19px;
+}
+
+#horizontal-checkbox ul li
+{ display : inline;
+  float : left;
+  margin-top: 12px;
+  margin-right : 21px;
+}
+logoSmall {
     line-height:15px;
     height:10px;
     padding: 10px 10px;

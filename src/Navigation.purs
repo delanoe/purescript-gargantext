@@ -4,6 +4,7 @@ import DOM
 import Gargantext.Data.Lang
 import Prelude hiding (div)
 
+
 import AddCorpusview as AC
 import DocAnnotation as D
 import Control.Monad.Cont.Trans (lift)
@@ -18,7 +19,6 @@ import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.Maybe (Maybe(Nothing, Just), fromJust)
 import Data.Tuple (Tuple(..))
 import DocView as DV
-import GraphExplorer as GE
 import Landing as L
 import Login as LN
 import Modal (modalShow)
@@ -37,9 +37,10 @@ import Tabview as TV
 import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultPerformAction, defaultRender, focus, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import UserPage as UP
-import GraphExplorer as GE
 import NgramsTable as NG
 import Dashboard as Dsh
+import Graph as GE
+
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -315,10 +316,10 @@ pagesComponent s =
     -- To be removed
     selectSpec SearchView = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec NGramsTable  = layout0 $ focus _ngState _ngAction  NG.ngramsTableSpec
-    selectSpec PGraphExplorer = focus _graphExplorerState _graphExplorerAction  GE.spec
+    selectSpec PGraphExplorer = focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard = layout0 $ focus _dashBoardSate _dashBoardAction Dsh.layoutDashboard
 
-    selectSpec _ = simpleSpec defaultPerformAction defaultRender
+    -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
 routingSpec :: forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
