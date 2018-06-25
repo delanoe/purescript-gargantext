@@ -153,7 +153,8 @@ performAction Initialize  _ state = void do
             Right docs -> do
               modifyState $ _ { initialized = true
                               , ntreeView = if length d > 0
-                                           then fnTransform $ unsafePartial $ fromJust $ head d 
+                                            then NT.exampleTree
+                                           --then fnTransform $ unsafePartial $ fromJust $ head d 
                                            else NT.initialState
 
                               , docViewState = docs
