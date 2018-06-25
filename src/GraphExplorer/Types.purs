@@ -3,7 +3,7 @@ module GraphExplorer.Types where
 import Prelude
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Array (concat, group, head, length, sort)
+import Data.Array (concat, group, head, length, sort, take)
 import Data.Maybe (fromJust)
 import Data.Newtype (class Newtype)
 import Data.NonEmpty (NonEmpty(..))
@@ -85,7 +85,7 @@ getLegendData (GraphData {nodes, edges}) = nn
     mp (NonEmpty a ary) = [a] <> (if length ary > 0 then [unsafePartial $ fromJust $ head ary] else [])
     n = sort $ map t' nodes
     g = group n
-    nn = concat $ map mp g
+    nn = take 5 $ concat $ map mp g
 
 t' :: Node -> Legend
 t' (Node r) = Legend { id_ : clustDefault, label : r.label}

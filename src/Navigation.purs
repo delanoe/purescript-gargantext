@@ -646,7 +646,7 @@ dispatchAction dispatcher _ CorpusAnalysis = do
 
 dispatchAction dispatcher _ PGraphExplorer = do
   _ <- dispatcher $ SetRoute  $ PGraphExplorer
-  --_ <- dispatcher $ GraphExplorerA $ GE.NoOp
+  _ <- dispatcher $ GraphExplorerA $ GE.LoadGraph "imtNew.json"
   pure unit
 
 dispatchAction dispatcher _ NGramsTable = do

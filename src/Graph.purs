@@ -8,7 +8,7 @@ import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Eff.Unsafe (unsafePerformEff)
 import DOM (DOM)
 import Data.Argonaut (decodeJson)
-import Data.Array (length, mapWithIndex, (!!))
+import Data.Array (length, mapWithIndex, take, (!!))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (toNumber)
@@ -69,9 +69,9 @@ performAction _ _ _ = void do
 
 
 convert :: GraphData -> SigmaGraphData
-convert (GraphData r) = SigmaGraphData { nodes : nodes', edges : edges'}
+convert (GraphData r) = SigmaGraphData { nodes, edges}
   where
-    nodes' = mapWithIndex nodeFn r.nodes
+    nodes = mapWithIndex nodeFn r.nodes
     nodeFn i (Node n) =
       sigmaNode
         { id    : n.id_
@@ -83,7 +83,7 @@ convert (GraphData r) = SigmaGraphData { nodes : nodes', edges : edges'}
         }
       where
         cDef (Cluster {clustDefault}) = clustDefault
-    edges' = map edgeFn r.edges
+    edges = map edgeFn r.edges
     edgeFn (Edge e) = sigmaEdge {id : e.id_, source : e.source, target : e.target}
 
 render :: forall props. Render State props Action
@@ -283,7 +283,7 @@ dispLegend :: Array Legend -> ReactElement
 dispLegend ary = div [] $ map dl ary
   where
     dl (Legend {id_, label}) =
-      div []
+      p []
       [ span [style {width : 10, height : 10, backgroundColor : intColor id_, display: "inline-block"}] []
       , text $ " " <> label
       ]
@@ -400,8 +400,9 @@ specOld = simpleSpec performAction render
                        , edgeShapes {"default" : edgeShape.curve}
                        ]
                      ]
-
-           ]
+                 <>
+                 if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
+             ]
          , div [className "col-md-3", style {border : "1px black solid", backgroundColor : "beige"}]
              [ div [className "row"]
                [ div [_id "sidepanel" , className "col-md-12", style {borderBottom : "1px solid black"}]
@@ -440,7 +441,7 @@ specOld = simpleSpec performAction render
                      , a [ className "badge badge-light"][text "software engineering"]
                      , a [ className "badge badge-light"][text "complex systems"]
                      , a [ className "badge badge-light"][text "wireless communications"]
-                     , dispLegend st.legendData
+
                      ]
                    ]
                  ]
