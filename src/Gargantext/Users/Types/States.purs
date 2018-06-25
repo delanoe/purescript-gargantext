@@ -14,7 +14,7 @@ data Action
   | BrevetsA B.Action
   | ProjectsA PS.Action
   | TabA Tab.Action
-  | FetchUser
+  | FetchUser Int
 
 type State =
   { activeTab :: Int

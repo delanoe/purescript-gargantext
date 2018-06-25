@@ -1,18 +1,19 @@
 module Gargantext.Users.Specs.Renders
        where
 
+import Gargantext.Users.Types
+
 import Control.Monad.Aff (attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Data.Either (Either(..))
 import Data.Generic (gShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Gargantext.Users.API (getUser)
-import Gargantext.Users.Types
-import Prelude (show, ($), (<<<))
+import Prelude (($), (<<<))
 import React (ReactElement)
-import React.DOM (div, h4, li, span, text, ul)
+import React.DOM (button, div, h4, li, span, text, ul)
 import React.DOM.Props (_id, className)
+import React.DOM.Props as RP
 import Thermite (Render)
 
 
@@ -71,6 +72,7 @@ render dispatch _ state _ =
       [
         div [className "row"]
         [
+          button [RP.onClick \_ -> dispatch $ FetchUser 452145] [ text "Fetch User"],
           div [className "col-md-8"]
           $ card (case state.user of (Just _) -> "Ok"
                                      Nothing -> "Pas Ok")
