@@ -8,8 +8,7 @@
         "react": "^16.2.0",
         "react-dom": "^16.2.0",
         "react-echarts-v3": "^1.0.14",
-        "sigma": "^1.2.1",
-        "graph-explorer": "git+ssh://git@gitlab.iscpif.fr:20022/gargantext/graphExplorer.git"
+        "react-sigma": "^1.2.30"
     },
     "browserify": {
         "transform": [
