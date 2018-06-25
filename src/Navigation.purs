@@ -38,7 +38,7 @@ import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultPerfo
 import Unsafe.Coerce (unsafeCoerce)
 import UserPage as UP
 import NgramsTable as NG
-import Dashboard as Dsh
+import Gargantext.Dashboard as Dsh
 import Graph as GE
 
 
@@ -107,7 +107,6 @@ data Action
   | ShowLogin
   | ShowAddcorpus
   | NgramsA  NG.Action
-
 
 
 performAction :: forall eff props. PerformAction ( dom :: DOM

@@ -1,4 +1,4 @@
-module Charts.Legend
+module Gargantext.Charts.Legend
        (
          LegendType(..),
          PlainOrScroll(..),

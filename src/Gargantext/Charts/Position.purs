@@ -1,4 +1,4 @@
-module Charts.Position
+module Gargantext.Charts.Position
        (
          Position(),
          numberPosition,

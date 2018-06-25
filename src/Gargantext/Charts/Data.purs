@@ -1,6 +1,6 @@
-module Charts.Data where
+module Gargantext.Charts.Data where
 
-import Charts.Font (TextStyle, Icon)
+import Gargantext.Charts.Font (TextStyle, Icon)
 import Prelude ((<<<))
 import Unsafe.Coerce (unsafeCoerce)
 

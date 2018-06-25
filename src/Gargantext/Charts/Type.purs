@@ -1,14 +1,14 @@
-module Charts.Type where
+module Gargantext.Charts.Type where
 
-import Charts.Font
+import Gargantext.Charts.Font
 
 import CSS (Color)
-import Charts.Series
-import Charts.Data
-import Charts.Color (ChartColor(..))
-import Charts.Font (Icon, icon, TextStyle)
-import Charts.Legend (LegendType, SelectedMode, selectedMode, Orient)
-import Charts.Position (LeftRelativePosition, Position, TopRelativePosition)
+import Gargantext.Charts.Series
+import Gargantext.Charts.Data
+import Gargantext.Charts.Color (ChartColor(..))
+import Gargantext.Charts.Font (Icon, icon, TextStyle)
+import Gargantext.Charts.Legend (LegendType, SelectedMode, selectedMode, Orient)
+import Gargantext.Charts.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Data.Either (Either)
 import Data.Maybe (Maybe)
 import Prelude (Unit, (<<<))

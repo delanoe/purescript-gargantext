@@ -1,4 +1,4 @@
-module Chart where
+module Gargantext.Chart where
 
 import Prelude (($), (<<<), (<$>))
 

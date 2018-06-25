@@ -3,7 +3,7 @@ module DocView where
 import Data.Argonaut
 import Data.Generic (class Generic, gShow)
 
-import Chart (histogram2, p'')
+import Gargantext.Chart (histogram2, p'')
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
@@ -187,7 +187,7 @@ performAction LoadData _ _ = void do
 
 loadPage :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Either String CorpusTableData)
 loadPage = do
-  res <- get "http://localhost:8008/corpus/472764/facet/documents/table"
+  res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
   case res of
      Left err -> do
        _ <- liftEff $ log $ show err

@@ -1,10 +1,12 @@
-module Charts.Series where
+module Gargantext.Charts.Series where
 
-import Charts.Data (DataS)
+import Gargantext.Charts.Data (DataS)
 import Prelude (class Show, show, (<<<))
 
 
 newtype SeriesType = SeriesType String
+
+type SeriesName = String
 
 data SeriesShape = Line
                  | Bar | PictorialBar
@@ -26,13 +28,13 @@ data SeriesShape = Line
                  | ThemeRiver
 
 instance showSeriesShape :: Show SeriesShape where
-  show Line = "line"
-  show Bar = "bar"
-  show Pie = "pie"
+  show Line     = "line"
+  show Bar      = "bar"
+  show Pie      = "pie"
   show Sunburst = "sunburst"
-  show Funnel = "funnel"
-  show Heatmap = "heatmap"
-  show _ = ""
+  show Funnel   = "funnel"
+  show Heatmap  = "heatmap"
+  show _        = ""
 
 seriesType :: SeriesShape -> SeriesType
 seriesType = SeriesType <<< show
