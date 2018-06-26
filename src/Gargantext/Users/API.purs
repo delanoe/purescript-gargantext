@@ -12,12 +12,12 @@ import Data.Lens (set)
 import Data.Maybe (Maybe(..))
 import Gargantext.REST (get)
 import Network.HTTP.Affjax (AJAX)
-import Prelude (bind, id, pure, show, void, ($), (<<<), (<>))
+import Prelude (bind, id, show, void, ($), (<<<), (<>))
 import Thermite (PerformAction, modifyState)
 
 getUser :: forall eff. Int -> Aff
         (console :: CONSOLE, ajax :: AJAX | eff) (Either String User)
-getUser id = get $ "localhost:8008/node/" <> show id
+getUser id = get $ "http://localhost:8008/node/" <> show id
 
 
 performAction :: forall eff props. PerformAction ( console :: CONSOLE
@@ -30,7 +30,9 @@ performAction (FetchUser userId) _ _ = void do
   value <- lift $ getUser userId
   _ <- case value of
     (Right user) -> modifyState \state -> set _user (Just user) state
-    _ -> modifyState id
-  pure <<< log $ "Fetching user..."
+    (Left err) -> do
+      _ <- lift $ log err
+      modifyState id
+  lift <<< log $ "Fetching user..."
 performAction _ _ _ = void do
   modifyState id

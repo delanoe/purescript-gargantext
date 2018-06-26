@@ -3,10 +3,6 @@ module Gargantext.Users.Specs.Renders
 
 import Gargantext.Users.Types
 
-import Control.Monad.Aff (attempt)
-import Control.Monad.Aff.Class (liftAff)
-import Data.Either (Either(..))
-import Data.Generic (gShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Prelude (($), (<<<))
@@ -41,18 +37,20 @@ card title elems =
     ]
   ]
 
-userInfos :: ReactElement
-userInfos =
+userInfos :: HyperData -> ReactElement
+userInfos (HyperData user) =
     ul [className "list-group"]
     [
-      listElement <<< infoRender $ Tuple "Fonction: " "Enseignant chercheur"
-    , listElement <<< infoRender $ Tuple "Entité, service: " "Mines Saint-Etienne SPIN -PTSI"
-    , listElement <<< infoRender $ Tuple "Téléphone: " "(+33) 4 77 42 00 70"
-    , listElement <<< infoRender $ Tuple "Courriel: " "gargantua@rabelais.fr"
-    , listElement <<< infoRender $ Tuple "Bureau: " "D1/10"
-    , listElement <<< infoRender $ Tuple "Appelation: " "Maître de conférences (EPA)"
-    , listElement <<< infoRender $ Tuple "Lieu: " "Saint-Etienne, 158 Cours Fauriel"
+      listElement <<< infoRender <<< Tuple "Fonction: " $ checkMaybe user.fonction
+    , listElement <<< infoRender <<< Tuple "Entité, service: " $ checkMaybe user.entite
+    , listElement <<< infoRender <<< Tuple "Téléphone: " $ checkMaybe user.atel
+    , listElement <<< infoRender <<< Tuple "Courriel: " $ checkMaybe user.mail
+    , listElement <<< infoRender <<< Tuple "Bureau: " $ checkMaybe user.bureau
+    , listElement <<< infoRender <<< Tuple "Appelation: " $ checkMaybe user.fonction
+    , listElement <<< infoRender $ Tuple "Lieu: " $ checkMaybe user.lieu
     ]
+    where checkMaybe (Nothing) = ""
+          checkMaybe (Just a) = a
 
 pbInfos :: ReactElement
 pbInfos =
@@ -74,9 +72,9 @@ render dispatch _ state _ =
         [
           button [RP.onClick \_ -> dispatch $ FetchUser 452145] [ text "Fetch User"],
           div [className "col-md-8"]
-          $ card (case state.user of (Just _) -> "Ok"
-                                     Nothing -> "Pas Ok")
-          [userInfos]
+          $ case state.user of
+            (Just (User user)) -> card user.name [userInfos user.hyperdata]
+            Nothing -> card "Aucun utilisateur" []
         ]
       ]
     ]
