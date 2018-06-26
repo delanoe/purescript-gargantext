@@ -110,14 +110,12 @@ newtype Hyperdata = Hyperdata
   }
 
 
-
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj    <- decodeJson json
     title  <- obj .? "title"
     source <- obj .? "source"
     pure $ Hyperdata { title,source }
-
 
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do

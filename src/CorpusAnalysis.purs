@@ -30,7 +30,7 @@ corpusAnalysisSpec = simpleSpec defaultPerformAction render
     render dispatch _ state _ =
       [ div [className "row"]
         [ div [className "col-md-3"]
-          [ h3 [] [text "Bisphenol A"]
+          [ h3 [] [text "IMT Global publications"]
 
           ]
         , div [className "col-md-9"]
@@ -41,18 +41,18 @@ corpusAnalysisSpec = simpleSpec defaultPerformAction render
           [ div [className "jumbotron1", style {padding : "12px 0px 20px 12px"}]
             [ div [ className "col-md-8 content"]
                   [ p [] [ i [className "fa fa-globe"] []
-                         , text " IsTex, PubMed, Hal"
+                         , text " Hal Database"
                          ]
                   , p [] [ i [className "fab fa-searchengin"] []
-                         , text " Query: bisphenol + A OR bpa"
+                         , text " Query: all publications with all schools ids"
                          ]
                   ]
             , div [ className "col-md-4 content"] 
                   [ p [] [ i [className "fa fa-calendar"] []
-                         , text " Sept. 11 2017, 10:59 am"
+                         , text " June. 26 2018, 10:59 am"
                          ]
                   , p [] [ i [className "fa fa-user"] []
-                         , text " Author(s): gargantua"
+                         , text " Author(s): françois.pineau"
                          ]
                   ]
             ]

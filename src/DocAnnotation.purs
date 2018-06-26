@@ -105,7 +105,7 @@ docview = simpleSpec performAction render
                   , span [className "badge badge-default badge-pill"] [text "source"]
                   ]
                 , li [className "list-group-item justify-content-between"]
-                  [  span [] [text "Luciano Alonso, Vicente Milanes, Carlos Torre-Ferarro, Jorge Godoy, Juan P oria, Teresa de pedro"]
+                  [  a [href "http://localhost:2015/#/userPage"] [text "Luciano Alonso, Vicente Milanes, Carlos Torre-Ferarro, Jorge Godoy, Juan P oria, Teresa de pedro"]
                   , span [className "badge badge-default badge-pill"] [text "authors"]
                   ]
 

@@ -36,7 +36,6 @@ import SearchForm as S
 import Tabview as TV
 import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultPerformAction, defaultRender, focus, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
---import UserPage as UP
 import Gargantext.Users as U
 import NgramsTable as NG
 import Gargantext.Dashboard as Dsh
