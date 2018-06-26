@@ -36,7 +36,8 @@ import SearchForm as S
 import Tabview as TV
 import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultPerformAction, defaultRender, focus, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
-import UserPage as UP
+--import UserPage as UP
+import Gargantext.Users as U
 import NgramsTable as NG
 import Gargantext.Dashboard as Dsh
 import Graph as GE
@@ -51,7 +52,7 @@ type AppState =
   , addCorpusState :: AC.State
   , docViewState   :: DV.State
   , searchState    :: S.State
-  , userPage       :: UP.State
+  , userPage       :: U.State
   , docAnnotationView   :: D.State
   , ntreeView   :: NT.State
   , tabview :: TV.State
@@ -73,7 +74,7 @@ initAppState =
   , addCorpusState : AC.initialState
   , docViewState   : DV.tdata
   , searchState    : S.initialState
-  , userPage       : UP.initialState
+  , userPage       : U.initialState
   , docAnnotationView   : D.initialState
   , ntreeView : NT.exampleTree
   , tabview : TV.initialState
@@ -95,7 +96,7 @@ data Action
   | AddCorpusA AC.Action
   | DocViewA   DV.Action
   | SearchA    S.Action
-  | UserPageA  UP.Action
+  | UserPageA  U.Action
   | DocAnnotationViewA  D.Action
   | TreeViewA  NT.Action
   | TabViewA TV.Action
@@ -224,11 +225,11 @@ _searchAction = prism SearchA \action ->
     _-> Left action
 
 
-_userPageState :: Lens' AppState UP.State
+_userPageState :: Lens' AppState U.State
 _userPageState = lens (\s -> s.userPage) (\s ss -> s{userPage = ss})
 
 
-_userPageAction :: Prism' Action UP.Action
+_userPageAction :: Prism' Action U.Action
 _userPageAction = prism UserPageA \action ->
   case action of
     UserPageA caction -> Right caction
@@ -323,7 +324,7 @@ pagesComponent s =
     selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
-    selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  UP.layoutUser
+    selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
     selectSpec (DocAnnotation i)   = layout0 $ focus _docAnnotationViewState  _docAnnotationViewAction  D.docview
     selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
@@ -639,7 +640,7 @@ dispatchAction dispatcher _ SearchView = do
 
 dispatchAction dispatcher _ UserPage = do
   _ <- dispatcher $ SetRoute  $ UserPage
-  _ <- dispatcher $ UserPageA $ UP.NoOp
+  _ <- dispatcher $ UserPageA $ U.NoOp
   pure unit
 
 dispatchAction dispatcher _ (DocAnnotation i) = do

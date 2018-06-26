@@ -15,8 +15,8 @@ import Data.Either (Either(..))
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 
 
-get :: forall eff t2 t31. DecodeJson t31 => String -> 
-                      Aff ( console :: CONSOLE, ajax :: AJAX| eff)
+get :: forall eff t2 t31. DecodeJson t31 => String ->
+                      Aff (console :: CONSOLE, ajax :: AJAX| eff)
                           (Either String t31)
 get url = do
   affResp <- liftAff $ attempt $ affjax defaultRequest
