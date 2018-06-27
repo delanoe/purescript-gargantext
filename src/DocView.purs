@@ -3,7 +3,10 @@ module DocView where
 import Data.Argonaut
 import Data.Generic (class Generic, gShow)
 
-import Gargantext.Chart (histogram2, p'')
+import Gargantext.Charts.ECharts
+import Gargantext.Chart (p'')
+import Gargantext.Dashboard (globalPublis)
+
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
@@ -109,23 +112,43 @@ newtype Hyperdata = Hyperdata
   , source :: String
   }
 
+--instance decodeHyperdata :: DecodeJson Hyperdata where
+--  decodeJson json = do
+--    obj    <- decodeJson json
+--    title  <- obj .? "title"
+--    source <- obj .? "source"
+--    pure $ Hyperdata { title,source }
+--instance decodeResponse :: DecodeJson Response where
+--  decodeJson json = do
+--    obj        <- decodeJson json
+--    cid        <- obj .? "id"
+--    created    <- obj .? "created"
+--    favorite   <- obj .? "favorite"
+--    ngramCount <- obj .? "ngramCount"
+--    hyperdata  <- obj .? "hyperdata"
+--    pure $ Response { cid, created, favorite, ngramCount, hyperdata }
+
+
 
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj    <- decodeJson json
-    title  <- obj .? "title"
-    source <- obj .? "source"
+    title  <- obj .? "nom"
+    source <- obj .? "fonction"
     pure $ Hyperdata { title,source }
 
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
     obj        <- decodeJson json
     cid        <- obj .? "id"
-    created    <- obj .? "created"
-    favorite   <- obj .? "favorite"
-    ngramCount <- obj .? "ngramCount"
+    created    <- pure "2018"
+    --created    <- obj .? "date"
+    favorite   <- pure true
+    ngramCount <- obj .? "id"
     hyperdata  <- obj .? "hyperdata"
     pure $ Response { cid, created, favorite, ngramCount, hyperdata }
+
+
 
 -- | Filter
 filterSpec :: forall eff props. Spec eff State props Action
@@ -146,9 +169,6 @@ layoutDocview = simpleSpec performAction render
            div [className "col-md-12"]
             [ p''
             , div [] [ text "    Filter ", input [] []]
-            , h3 [] [text "Chart Title"]
-            , histogram2
-            , p''
             , br' []
             , div [] [ b [] [text d.title]
                      , sizeDD d.pageSize dispatch
@@ -159,8 +179,10 @@ layoutDocview = simpleSpec performAction render
               [thead  [ className "thead-dark"]
                          [tr [] [ th [scope "col"] [ b' [text ""]    ]
                                 , th [scope "col"] [ b' [text "Date"]]
-                                , th [scope "col"] [ b' [text "Title"]   ]
-                                , th [scope "col"] [ b' [text "Source"]  ]
+                                , th [scope "col"] [ b' [text "Name"]   ]
+                                --, th [scope "col"] [ b' [text "Title"]   ]
+                                --, th [scope "col"] [ b' [text "Source"]  ]
+                                , th [scope "col"] [ b' [text "Fonction"]  ]
                                 , th [scope "col"] [ b' [text "Delete"]  ]
                                 ]
                          ]
@@ -185,7 +207,8 @@ performAction LoadData _ _ = void do
 
 loadPage :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Either String CorpusTableData)
 loadPage = do
-  res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
+  res <- get "http://localhost:8008/node/452132/children"
+  -- res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
   case res of
      Left err -> do
        _ <- liftEff $ log $ show err
@@ -211,10 +234,10 @@ loadPage = do
         toTableData :: Array Corpus -> CorpusTableData
         toTableData ds = TableData
                 { rows         : map (\d -> { row : d , delete : false}) ds
-                , totalPages   : 10
+                , totalPages   : 474
                 , currentPage  : 1
-                , pageSize     : PS10
-                , totalRecords : 100
+                , pageSize     : PS100
+                , totalRecords : 47361
                 , title        : "Documents"
              --   , tree         : exampleTree
                 }
@@ -251,7 +274,7 @@ showRow {row : (Corpus c), delete} =
   [ td [] [div [className $ fa <> "fa-star"][]]
   -- TODO show date: Year-Month-Day only
   , td [] [text c.date]
-  , td [] [ a [ href "#/documentView/1"] [ text c.title ] ]
+  , td [] [ a [ href "#/userPage"] [ text c.title ] ]
   , td [] [text c.source]
   , td [] [input [ _type "checkbox"] []]
   ]
@@ -313,7 +336,7 @@ optps cv val = option [ selected (cv == val), value $ show val ] [text $ show va
 textDescription :: Int -> PageSizes -> Int -> ReactElement
 textDescription currPage pageSize totalRecords
   =  div [className "row"]
-          [ div [className "col-md-12"]
+          [ div [className "col-md-2"]
                 [ text $ "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords ]
           ]
     where
@@ -325,11 +348,7 @@ textDescription currPage pageSize totalRecords
 pagination :: _ -> Int -> Int -> ReactElement
 pagination d tp cp
   = span [] $
-    [ text "Pages: "
-    , prev
-    , first
-    , ldots
-    ]
+    [ text "Pages: ", prev, first, ldots]
     <>
     lnums
     <>
@@ -337,10 +356,7 @@ pagination d tp cp
     <>
     rnums
     <>
-    [ rdots
-    , last
-    , next
-    ]
+    [ rdots, last, next ]
     where
       prev = if cp == 1 then
                text " Previous "

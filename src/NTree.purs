@@ -48,24 +48,25 @@ toggleNode sid a = a
 ------------------------------------------------------------------------
 -- Realistic Tree for the UI
 
-corpus :: Int -> String -> NTree (Tuple String String)
-corpus n name = NNode n false name
-    [ NLeaf (Tuple "Facets"    "#/docView")
-    , NLeaf (Tuple "Dashboard" "#/dashboard")
-    , NLeaf (Tuple "Graph"     "#/graphExplorer")
-    ]
-
-annuaire :: Int -> String -> NTree (Tuple String String)
-annuaire n name = NNode n false name
-    [ NLeaf (Tuple "Facets"    "#/docView")
-    ]
-
 exampleTree :: NTree (Tuple String String)
 exampleTree =
   NNode 1 true "françois.pineau"
   [ annuaire 2 "Annuaire"
   , corpus   3 "IMT publications"
   ]
+
+annuaire :: Int -> String -> NTree (Tuple String String)
+annuaire n name = NNode n false name
+    [ NLeaf (Tuple "IMT community"    "#/docView")
+    ]
+
+corpus :: Int -> String -> NTree (Tuple String String)
+corpus n name = NNode n false name
+    [ NLeaf (Tuple "Facets"    "#/corpus")
+    , NLeaf (Tuple "Dashboard" "#/dashboard")
+    , NLeaf (Tuple "Graph"     "#/graphExplorer")
+    ]
+
 
 ------------------------------------------------------------------------
 -- TODO

@@ -1,11 +1,15 @@
 module Gargantext.Dashboard where
 
 import Prelude (($), (<>), show, pure, unit, map)
+import Data.Array (zip)
+import Data.Tuple (Tuple(..))
 import Gargantext.Charts.ECharts
 import Gargantext.Charts.Series
 
 import DOM (DOM)
 import Data.Unit (Unit)
+import Data.Int (toNumber)
+
 import React.DOM (div, h1, text, title)
 import React.DOM.Props (className)
 import Thermite (PerformAction, Render, Spec, simpleSpec)
@@ -32,22 +36,6 @@ render dispatch _ state _ = [
                             )
   ]
     where
-      globalPublis :: Options
-      globalPublis = (Options { mainTitle : "Global Scientific Publications"
-                           , subTitle  : "Distribution of scientific publications by IMT's Schools over time"
-                           , xAxis     : xAxis ["Jan", "Feb", "Mar", "Apr", "May"]
-                           , yAxis     : [series Bar "Number of publication of IMT / year" [ {name: "Test1", value: 12.0}
-                                                              , {name: "Test2", value: 20.0}
-                                                              , {name: "Test4", value: 35.0}
-                                                              , {name: "Test5", value: 2.0}
-                                                              , {name: "Test3", value: 32.0}
-                                                              ]
-                                         ]
-                           , yAxisFormat : (YAxisFormat { position : "left"
-                                                        , visible  : true
-                                                      })
-                           , addZoom  : true
-                         })
       distriBySchool :: Options
       distriBySchool = Options { mainTitle : "School production in 2018"
                              , subTitle  : "Distribution by school"
@@ -82,21 +70,40 @@ render dispatch _ state _ = [
                          }
 
 
-      naturePublis :: Options
-      naturePublis = Options { mainTitle : "Nature of publications"
-                        , subTitle  : "Distribution by type"
-                        , xAxis     : xAxis []
-                        , yAxis     : [series Funnel "Funnel Data" [ {name: "Articles", value: 60.0}
-                                               , {name: "Reports", value: 100.0}
-                                               , {name: "Patents", value: 40.0}
-                                               , {name: "Books", value: 65.0}
-                                               ]
-                                       ]
-                        , yAxisFormat : (YAxisFormat { position : "left"
-                                                     , visible  : false
-                                                   })
-                        , addZoom   : false
-                      }
+-----------------------------------------------------------------------------------------------------------
+
+naturePublis_x = ["COMM","ART","COUV","THESE","REPORT","UNDEFINED","OTHER","POSTER","DOUV","OUV","PATENT","MEM","HDR","PRESCONF","LECTURE","VIDEO"]
+naturePublis_y' = [23901,17417,1585,1188,1176,895,473,393,323,246,108,43,36,26,9,1]
+
+naturePublis_y = map (\(Tuple n v) -> {name: n, value: toNumber v }) (zip naturePublis_x naturePublis_y')
+
+naturePublis :: Options
+naturePublis = Options { mainTitle : "Nature of publications"
+                  , subTitle  : "Distribution by type"
+                  , xAxis     : xAxis []
+                  , yAxis     : [series Funnel "Funnel Data" naturePublis_y]
+                  , yAxisFormat : (YAxisFormat { position : "left"
+                                               , visible  : false
+                                             })
+                  , addZoom   : false
+                }
+
+-----------------------------------------------------------------------------------------------------------
+
+
+globalPublis_x = [1982,1986,1987,1988,1990,1993,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017]
+globalPublis_y = [1,4,2,1,1,2,1,1,8,38,234,76,40,82,75,202,1475,1092,1827,2630,4978,3668,4764,5915,4602,5269,6814,4018]
+
+globalPublis :: Options
+globalPublis = (Options { mainTitle : "Global Scientific Publications"
+                     , subTitle  : "Distribution of scientific publications by IMT's Schools over time"
+                     , xAxis     : xAxis (map show globalPublis_x)
+                     , yAxis     : [series Bar "Number of publication of IMT / year" $ map (\n -> {name: "", value: toNumber n }) globalPublis_y]
+                     , yAxisFormat : (YAxisFormat { position : "left"
+                                                  , visible  : true
+                                                })
+                     , addZoom  : true
+                   })
 
 
 
