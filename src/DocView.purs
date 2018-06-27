@@ -170,10 +170,11 @@ layoutDocview = simpleSpec performAction render
             [ p''
             , div [] [ text "    Filter ", input [] []]
             , br' []
-            , div [] [ b [] [text d.title]
-                     , sizeDD d.pageSize dispatch
-                     , textDescription d.currentPage d.pageSize d.totalRecords
-                     , pagination dispatch d.totalPages d.currentPage
+            , div [className "row"]
+              [  div [className "col-md-1"] [b [] [text d.title]]
+              , div [className "col-md-2"] [sizeDD d.pageSize dispatch]
+              , div [className "col-md-3"] [textDescription d.currentPage d.pageSize d.totalRecords]
+              , div [className "col-md-3"] [pagination dispatch d.totalPages d.currentPage]
                      ]
             , table [ className "table"]
               [thead  [ className "thead-dark"]
@@ -192,6 +193,7 @@ layoutDocview = simpleSpec performAction render
           ]
         ]
       ]
+
 
 performAction :: PerformAction _ State _ Action
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
@@ -335,8 +337,8 @@ optps cv val = option [ selected (cv == val), value $ show val ] [text $ show va
 
 textDescription :: Int -> PageSizes -> Int -> ReactElement
 textDescription currPage pageSize totalRecords
-  =  div [className "row"]
-          [ div [className "col-md-2"]
+  =  div [className "row1"]
+          [ div [className ""]
                 [ text $ "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords ]
           ]
     where
@@ -425,5 +427,3 @@ lessthan x y = x < y
 
 greaterthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
 greaterthan x y = x > y
-
-
