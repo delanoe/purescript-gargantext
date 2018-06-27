@@ -11,6 +11,9 @@ import React.DOM.Props (className, style)
 import Tabview as Tab
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
 
+import Gargantext.Charts.ECharts (chart)
+import Gargantext.Dashboard (globalPublis)
+
 type State = Tab.State
 
 type Action = Tab.Action
@@ -57,4 +60,5 @@ corpusAnalysisSpec = simpleSpec defaultPerformAction render
                   ]
             ]
         ]
+        , chart globalPublis
       ]

@@ -32,34 +32,18 @@ render dispatch _ state _ = [
                             ]
     , chart distriBySchool
     , div [className "row"] (map (\school -> div [className "col-md-4 content"] [chart $ focus school])
-                                 [ "Telecom Paris Sud", "Telecom Bretagne", "Telecom ParisTech"]
+                                 [ "Télécom Bretagne", "Mines Nantes", "Eurecom"]
                             )
   ]
     where
-      distriBySchool :: Options
-      distriBySchool = Options { mainTitle : "School production in 2018"
-                             , subTitle  : "Distribution by school"
-                             , xAxis     : xAxis []
-                             , yAxis     : [ series Pie "Pie data" [{name: "Sud Paris", value: 50.0},
-                                                                    {name: "Eurecom", value: 45.0},
-                                                                    {name: "Telecom ParisTech", value: 65.0},
-                                                                    {name: "Telecom Bretagne", value: 15.0},
-                                                                    {name: "Telecom Saint-Etienne", value: 23.0}
-                                                                    ]
-                                           ]
-                             , yAxisFormat : (YAxisFormat { position : ""
-                                                          , visible  : false
-                                                        })
-                             , addZoom     : false
-                           }
 
       focus :: String -> Options
       focus school = Options { mainTitle : ("Focus " <> school)
                          , subTitle  : "Total scientific publications"
-                         , xAxis     : xAxis ["Jan", "Feb", "Mar"]
+                         , xAxis     : xAxis ["2015", "2016", "2017"]
                          , yAxis     : [series Bar "Bar Data"  [ {name: "val1", value: 50.0}
-                                           , {name: "val2", value: 20.0}
-                                           , {name: "val5", value: 100.0}
+                                           , {name: "val2", value: 70.0}
+                                           , {name: "val3", value: 80.0}
                                            ]
                                            ]
                          , yAxisFormat : (YAxisFormat { position : "left"
@@ -72,8 +56,8 @@ render dispatch _ state _ = [
 
 -----------------------------------------------------------------------------------------------------------
 
-naturePublis_x = ["COMM","ART","COUV","THESE","REPORT","UNDEFINED","OTHER","POSTER","DOUV","OUV","PATENT","MEM","HDR","PRESCONF","LECTURE","VIDEO"]
-naturePublis_y' = [23901,17417,1585,1188,1176,895,473,393,323,246,108,43,36,26,9,1]
+naturePublis_x = ["Com","Articles","Thèses","Reports"]
+naturePublis_y' = [23901,17417,1188,1176]
 
 naturePublis_y = map (\(Tuple n v) -> {name: n, value: toNumber v }) (zip naturePublis_x naturePublis_y')
 
@@ -90,9 +74,9 @@ naturePublis = Options { mainTitle : "Nature of publications"
 
 -----------------------------------------------------------------------------------------------------------
 
-
 globalPublis_x = [1982,1986,1987,1988,1990,1993,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017]
 globalPublis_y = [1,4,2,1,1,2,1,1,8,38,234,76,40,82,75,202,1475,1092,1827,2630,4978,3668,4764,5915,4602,5269,6814,4018]
+
 
 globalPublis :: Options
 globalPublis = (Options { mainTitle : "Global Scientific Publications"
@@ -105,6 +89,20 @@ globalPublis = (Options { mainTitle : "Global Scientific Publications"
                      , addZoom  : true
                    })
 
+
+
+distriBySchool_y = [(Tuple "Télécom Bretagne" 17383),(Tuple "Mines Nantes" 11055),(Tuple "Télécom SudParis" 7663),(Tuple "Télécom ParisTech" 3848),(Tuple "Mines Al\232s" 624),(Tuple "Télécom \201cole de Management" 539),(Tuple "IMT Atlantique" 241),(Tuple "Mines Albi-Carmaux" 125)]
+
+distriBySchool :: Options
+distriBySchool = Options { mainTitle : "School production in 2018"
+                       , subTitle  : "Distribution by school"
+                       , xAxis     : xAxis []
+                       , yAxis     : [ series Pie "Pie data" (map (\(Tuple n v) -> {name: n, value: toNumber v}) distriBySchool_y)]
+                       , yAxisFormat : (YAxisFormat { position : ""
+                                                    , visible  : false
+                                                  })
+                       , addZoom     : false
+                     }
 
 
 layoutDashboard :: forall props eff. Spec (dom :: DOM | eff) State props Action
