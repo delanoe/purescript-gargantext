@@ -1,5 +1,7 @@
 module Graph where
 
+import Prelude hiding (div)
+
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Cont.Trans (lift)
@@ -14,6 +16,7 @@ import Data.HTTP.Method (Method(..))
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.MediaType.Common (applicationJSON)
+import Data.Newtype (class Newtype)
 import GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Math (cos, sin)
@@ -21,21 +24,28 @@ import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Partial.Unsafe (unsafePartial)
 import Prelude (map)
-import Prelude hiding (div)
 import React (ReactElement, createElement)
-import React.DOM (a, button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
+import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
 import React.DOM.Props (_data, _id, _type, aria, checked, className, href, name, onChange, placeholder, role, style, title, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
+import Utils (getter)
 
 data Action = NoOp
   | LoadGraph String
+  | SelectNode SelectedNode
+
+newtype SelectedNode = SelectedNode {id :: String, label :: String}
+
+derive instance eqSelectedNode :: Eq SelectedNode
+derive instance newtypeSelectedNode :: Newtype SelectedNode _
 
 newtype State = State
   { graphData :: GraphData
   , filePath :: String
   , sigmaGraphData :: Maybe SigmaGraphData
   , legendData :: Array Legend
+  , selectedNode :: Maybe SelectedNode
   }
 
 initialState :: State
@@ -44,6 +54,7 @@ initialState = State
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []
+  , selectedNode : Nothing
   }
 
 graphSpec :: forall eff props. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff) State props Action
@@ -64,7 +75,10 @@ performAction (LoadGraph fp) _ _ = void do
         Right gd' -> do
           modifyState \(State s) -> State s {filePath = fp, graphData = gd', sigmaGraphData = Just $ convert gd', legendData = getLegendData gd'}
 
-performAction _ _ _ = void do
+performAction (SelectNode node) _ _ = void do
+  modifyState $ \(State s) -> State s {selectedNode = pure node}
+
+performAction NoOp _ _ = void do
   modifyState id
 
 
@@ -111,9 +125,7 @@ render d p (State s) c =
               , style : sStyle { height : "95%"}
               , onClickNode : \e -> unsafePerformEff $ do
                 log $ unsafeCoerce e
-                pure unit
-              , onOverNode : \e -> unsafePerformEff $ do
-                log $ unsafeCoerce e
+                d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
                 pure unit
               }
         [ sigmaEnableWebGL
@@ -390,9 +402,7 @@ specOld = simpleSpec performAction render
                              , style : sStyle { height : "95%"}
                              , onClickNode : \e -> unsafePerformEff $ do
                                log $ unsafeCoerce e
-                               pure unit
-                             , onOverNode : \e -> unsafePerformEff $ do
-                               log $ unsafeCoerce e
+                               d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
                                pure unit
                              }
                        [ sigmaEnableWebGL
@@ -406,7 +416,12 @@ specOld = simpleSpec performAction render
          , div [className "col-md-3", style {border : "1px black solid", backgroundColor : "beige"}]
              [ div [className "row"]
                [ div [_id "sidepanel" , className "col-md-12", style {borderBottom : "1px solid black"}]
-               [ p []
+               [ case st.selectedNode of
+                    Nothing -> span [] []
+                    Just selectedNode -> p [] [text $ "selected Node : " <> getter _.label selectedNode
+                                              , br' []
+                                              , text $ "BOUKLI HACENE Ghouthi, GRIPON Vincent, FARRUGIA Nicolas, ARZEL Matthieu, JEZEQUEL Michel Finding All Matches in a Database using Binary Neural Networks. COGNITIVE 2017 : The Ninth International Conference on Advanced Cognitive Technologies and Applications, 19-23 february 2017, AthÃ¨nes, Greece, 2017, pp. 59-64"]
+                 , p []
                  [ text "memory/status/important issue/ design/ knowledge mangaement/ design/ theory/ system design"
                  ]
                , button [className "btn btn-primary", style {marginBottom : "18px"}] [text "Remove"]
