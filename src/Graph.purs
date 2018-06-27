@@ -168,7 +168,7 @@ mySettings :: SigmaSettings
 mySettings = sigmaSettings { verbose : true
                            , drawLabels: true
                            , drawEdgeLabels: true
-                           , drawEdges: false
+                           , drawEdges: true
                            , drawNodes: true
                            , labelSize : "proportional"
                            --, nodesPowRatio: 0.3
@@ -201,7 +201,7 @@ mySettings = sigmaSettings { verbose : true
                           , font: "Droid Sans"                -- font params
                           , fontStyle: "bold"
                           , defaultLabelColor: "#000"         -- labels text color
-                          , labelSizeRatio: 6.0               -- label size in ratio of node size
+                          , labelSizeRatio: 2.0               -- label size in ratio of node size
                           , labelThreshold: 2.0               -- min node cam size to start showing label
                           , labelMaxSize: 10.0                -- (old tina: showLabelsIfZoom)
 
@@ -221,7 +221,7 @@ mySettings = sigmaSettings { verbose : true
                           , twEdgeGreyColor: "rgba(100, 100, 100, 0.25)"
                           , zoomMin: 0.0
                           , zoomMax: 1.7
-                          , zoomingRatio: 1.2
+                          , zoomingRatio: 3.2
                           , mouseZoomDuration: 150.0
                           }
 
@@ -252,11 +252,7 @@ defaultPalette :: Array Color
 defaultPalette = map Color defaultPalette'
 
 defaultPalette' :: Array String
-defaultPalette' = ["#023fa5", "#7d87b9", "#bec1d4", "#d6bcc0", "#bb7784",
-                  "#e07b91", "#d33f6a", "#11c638", "#8dd593", "#c6dec7",
-                  "#8e063b", "#4a6fe3", "#8595e1", "#b5bbe3", "#e6afb9",
-                  "#ead3c6", "#f0b98d", "#ef9708", "#0fcfc0", "#9cded6",
-                  "#d5eae7", "#f3e1eb", "#f6c4e1", "#f79cd4"]
+defaultPalette' = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#33c8f3","#739e9a","#caeca3","#f6f7e5","#f9bcca","#ccb069","#c9ffde","#c58683","#6c9eb0","#ffd3cf","#ccffc7","#52a1b0","#d2ecff","#99fffe","#9295ae","#5ea38b","#fff0b3","#d99e68"]
 
 -- clusterColor :: Cluster -> Color
 -- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `mod` length defaultPalette)
@@ -420,46 +416,43 @@ specOld = simpleSpec performAction render
                     Nothing -> span [] []
                     Just selectedNode -> p [] [text $ "selected Node : " <> getter _.label selectedNode
                                               , br' []
-                                              , text $ "BOUKLI HACENE Ghouthi, GRIPON Vincent, FARRUGIA Nicolas, ARZEL Matthieu, JEZEQUEL Michel Finding All Matches in a Database using Binary Neural Networks. COGNITIVE 2017 : The Ninth International Conference on Advanced Cognitive Technologies and Applications, 19-23 february 2017, AthÃ¨nes, Greece, 2017, pp. 59-64"]
-                 , p []
-                 [ text "memory/status/important issue/ design/ knowledge mangaement/ design/ theory/ system design"
-                 ]
-               , button [className "btn btn-primary", style {marginBottom : "18px"}] [text "Remove"]
+                                              , p [] [button [className "btn btn-primary", style {marginBottom : "18px"}] [text "Remove"]]
+                                              ]
                ]
-             , div [className "col-md-12"]
-               [
-                 ul [className "nav nav-tabs"
-                    , _id "myTab"
-                    , role "tablist"
-                    , style {marginBottom : "18px", marginTop : "18px"}
-                    ]
-                 [
-                   li [className "nav-item"]
-                   [
-                     a [className "nav-link active"
-                       , _id "home-tab"
-                       ,  _data {toggle : "tab"}
-                       , href "#home"
-                       , role "tab"
-                       , aria {controls :"home" , selected : "true"}
-                       ] [text "Neighbours"]
-                   ]
-                 ]
-                 , div [className "tab-content", _id "myTabContent", style {borderBottom : "1px solid black", paddingBottom : "19px"}]
-                   [ div [ className "", _id "home", role "tabpanel" ]
-                     [ a [ className "badge badge-light"][text "objects"]
-                     , a [ className "badge badge-light"][text "evaluation"]
-                     , a [ className "badge badge-light"][text "dynamics"]
-                     , a [ className "badge badge-light"][text "virtual environments"]
-                     , a [ className "badge badge-light"][text "virtual reality"]
-                     , a [ className "badge badge-light"][text "performance analysis"]
-                     , a [ className "badge badge-light"][text "software engineering"]
-                     , a [ className "badge badge-light"][text "complex systems"]
-                     , a [ className "badge badge-light"][text "wireless communications"]
-
-                     ]
-                   ]
-                 ]
+--             , div [className "col-md-12"]
+--               [
+--                 ul [className "nav nav-tabs"
+--                    , _id "myTab"
+--                    , role "tablist"
+--                    , style {marginBottom : "18px", marginTop : "18px"}
+--                    ]
+--                 [
+--                   li [className "nav-item"]
+--                   [
+--                     a [className "nav-link active"
+--                       , _id "home-tab"
+--                       ,  _data {toggle : "tab"}
+--                       , href "#home"
+--                       , role "tab"
+--                       , aria {controls :"home" , selected : "true"}
+--                       ] [text "Neighbours"]
+--                   ]
+--                 ]
+--                 , div [className "tab-content", _id "myTabContent", style {borderBottom : "1px solid black", paddingBottom : "19px"}]
+--                   [ div [ className "", _id "home", role "tabpanel" ]
+--                     [ a [ className "badge badge-light"][text "objects"]
+--                     , a [ className "badge badge-light"][text "evaluation"]
+--                     , a [ className "badge badge-light"][text "dynamics"]
+--                     , a [ className "badge badge-light"][text "virtual environments"]
+--                     , a [ className "badge badge-light"][text "virtual reality"]
+--                     , a [ className "badge badge-light"][text "performance analysis"]
+--                     , a [ className "badge badge-light"][text "software engineering"]
+--                     , a [ className "badge badge-light"][text "complex systems"]
+--                     , a [ className "badge badge-light"][text "wireless communications"]
+--
+--                     ]
+--                   ]
+--                 ]
              , div [className "col-md-12", _id "horizontal-checkbox"]
                [ ul [ style {display: "inline",float : "left" }]
                  [ li []
@@ -494,7 +487,7 @@ specOld = simpleSpec performAction render
                    [ span [] [text "Others"]
                      ,input [ _type "checkbox"
                            , className "checkbox"
-                           , checked $ true
+                           , checked $ false
                            , title "Mark as completed"
                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
                            ] []
@@ -503,9 +496,14 @@ specOld = simpleSpec performAction render
 
                ]
               , div []
-                [ p []
-                  [ text "Physical functions : common factor of side channel and fault attacks published in journal of cryptographic Enginering"
-                  ]
+                [ p [] []
+                , div [className "col-md-12"][ case st.selectedNode of
+                    Nothing -> span [] []
+                    Just selectedNode -> p [] [text $ "BOUKLI HACENE Ghouthi, GRIPON Vincent, FARRUGIA Nicolas, ARZEL Matthieu, ", a [href "http://localhost:2015/#/userPage/1"][text "JEZEQUEL Michel. "], text "Finding All Matches in a Database using Binary Neural Networks. COGNITIVE 2017 : The Ninth International Conference on Advanced Cognitive Technologies and Applications, 19-23 february 2017, AthÃ¨nes, Greece, 2017, pp. 59-64"]
+                 , p []
+                 [ 
+                 ]
+               ]
                 ]
                ]
              ]
