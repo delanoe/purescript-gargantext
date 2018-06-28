@@ -466,19 +466,19 @@ specOld = simpleSpec performAction render
 
                    ]
                  , li []
-                   [ span [] [text "Projets"]
+                   [ span [] [text "Projects"]
                      ,input [ _type "checkbox"
                            , className "checkbox"
-                           , checked $ true
+                           , checked $ false
                            , title "Mark as completed"
                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
                            ] []
                    ]
                  , li []
-                   [ span [] [text "Brevets"]
+                   [ span [] [text "Patents"]
                      ,input [ _type "checkbox"
                            , className "checkbox"
-                           , checked $ true
+                           , checked $ false
                            , title "Mark as completed"
                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
                            ] []

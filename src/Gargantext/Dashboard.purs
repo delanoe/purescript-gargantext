@@ -91,10 +91,11 @@ globalPublis = (Options { mainTitle : "Global Scientific Publications"
 
 
 
-distriBySchool_y = [(Tuple "Télécom Bretagne" 17383),(Tuple "Mines Nantes" 11055),(Tuple "Télécom SudParis" 7663),(Tuple "Télécom ParisTech" 3848),(Tuple "Mines Al\232s" 624),(Tuple "Télécom \201cole de Management" 539),(Tuple "IMT Atlantique" 241),(Tuple "Mines Albi-Carmaux" 125)]
+distriBySchool_y = [Tuple "Télécom Bretagne" 1150,Tuple "Télécom SudParis" 946,Tuple "Mines Nantes" 547,Tuple "Télécom ParisTech" 429,Tuple "IMT Atlantique" 205,Tuple "Mines Alès" 56
+                   ,Tuple "Télécom Ecole de Management" 52,Tuple "Mines Albi-Carmaux" 6]
 
 distriBySchool :: Options
-distriBySchool = Options { mainTitle : "School production in 2018"
+distriBySchool = Options { mainTitle : "School production in 2017"
                        , subTitle  : "Distribution by school"
                        , xAxis     : xAxis []
                        , yAxis     : [ series Pie "Pie data" (map (\(Tuple n v) -> {name: n, value: toNumber v}) distriBySchool_y)]
