@@ -7,19 +7,18 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Prelude (($), (<<<))
 import React (ReactElement)
-import React.DOM (button, div, h4, h3, li, span, text, ul, img)
+import React.DOM (div, h3, h1, li, span, text, ul, img)
 import React.DOM.Props (_id, className, src)
-import React.DOM.Props as RP
 import Thermite (Render)
 
 
 render :: forall props. Render State props Action
 render dispatch _ state _ =
-  [ button [RP.onClick \_ -> dispatch $ FetchUser 473593] [ text "Fetch User"],
+  [
           div [className "col-md-12"]
           $ case state.user of
             (Just (User user)) -> display user.name [userInfos user.hyperdata]
-            Nothing -> display "No user" []
+            Nothing -> display "User not found" [h1 [] [text "¯\\_(ツ)_/¯"]]
   ]
 
 display :: forall props. String -> Array ReactElement -> Array ReactElement
@@ -37,7 +36,7 @@ display title elems =
                     [ img [src "/images/Gargantextuel-212x300.jpg"] [] ]
               , div [className "col-md-1"] []
               , div [className "col-md-8"] elems
-              ] 
+              ]
             ]
           ]
      ]
@@ -55,7 +54,7 @@ userInfos (HyperData user) =
     , listElement <<< infoRender <<< Tuple "Appelation: "      $ checkMaybe user.fonction
     , listElement <<< infoRender $   Tuple "Lieu: "            $ checkMaybe user.lieu
     ]
-  where 
+  where
     checkMaybe (Nothing) = ""
     checkMaybe (Just a) = a
 
@@ -67,4 +66,3 @@ userInfos (HyperData user) =
       [ span [] [text title]
       , span [className "badge badge-default badge-pill"] [text content]
       ]
- 

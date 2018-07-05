@@ -21,7 +21,7 @@ data Routes
   | AddCorpus
   | DocView
   | SearchView
-  | UserPage
+  | UserPage Int
   | DocAnnotation Int
   | Tabview
   | CorpusAnalysis
@@ -31,36 +31,36 @@ data Routes
 
 
 instance showRoutes :: Show Routes where
-  show Login      = "Login"
-  show AddCorpus  = "AddCorpus"
-  show DocView    = "DocView"
+  show Login = "Login"
+  show AddCorpus = "AddCorpus"
+  show DocView = "DocView"
   show SearchView = "SearchView"
-  show UserPage   = "UserPage"
+  show (UserPage i) = "UserPage"
   show (DocAnnotation i)= "DocumentView"
-  show Tabview          = "Tabview"
-  show CorpusAnalysis   = "corpus"
-  show PGraphExplorer   = "graphExplorer"
-  show NGramsTable      = "NGramsTable"
-  show Dashboard        = "Dashboard"
-  show Home             = "Home"
+  show Tabview = "Tabview"
+  show CorpusAnalysis = "corpus"
+  show PGraphExplorer = "graphExplorer"
+  show NGramsTable = "NGramsTable"
+  show Dashboard = "Dashboard"
+  show Home = "Home"
 
 int :: Match Int
 int = floor <$> num
 
 routing :: Match Routes
 routing =
-      Login          <$   route "login"
-  <|> Tabview        <$   route "tabview"
+      Login          <$  route "login"
+  <|> Tabview        <$  route "tabview"
   <|> DocAnnotation  <$> (route "documentView" *> int)
-  <|> UserPage       <$   route "userPage"
-  <|> SearchView     <$   route "search"
-  <|> DocView        <$   route "docView"
-  <|> AddCorpus      <$   route "addCorpus"
-  <|> CorpusAnalysis <$   route "corpus"
-  <|> PGraphExplorer <$   route "graphExplorer"
-  <|> NGramsTable    <$   route "ngrams"
-  <|> Dashboard      <$   route "dashboard"
-  <|> Home           <$     lit ""
+  <|> UserPage       <$> (route "user" *> int)
+  <|> SearchView     <$ route "search"
+  <|> DocView        <$ route "docView"
+  <|> AddCorpus      <$ route "addCorpus"
+  <|> CorpusAnalysis <$ route "corpus"
+  <|> PGraphExplorer <$ route "graphExplorer"
+  <|> NGramsTable    <$ route "ngrams"
+  <|> Dashboard      <$ route "dashboard"
+  <|> Home           <$ lit ""
   where
     route str      = lit "" *> lit str
 
