@@ -18,7 +18,7 @@ render dispatch _ state _ =
           div [className "col-md-12"]
           $ case state.user of
             (Just (User user)) -> display user.name [userInfos user.hyperdata]
-            Nothing -> display "User not found" [h1 [] [text "¯\\_(ツ)_/¯"]]
+            Nothing -> display "User not found" []
   ]
 
 display :: forall props. String -> Array ReactElement -> Array ReactElement
