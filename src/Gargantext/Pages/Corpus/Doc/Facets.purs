@@ -1,23 +1,20 @@
 module Tabview where
 
+import Prelude hiding (div)
+
 import Authorview as AV
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
-import Data.Array (fold)
 import Data.Either (Either(..))
-import Data.Lens (Lens', Prism', lens, over, prism, view)
-import Data.List (List, fromFoldable)
+import Data.Lens (Lens', Prism', lens, prism)
+import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
 import DocView as DV
+import Gargantext.Components.Tab as Tab
 import Network.HTTP.Affjax (AJAX)
-import Prelude hiding (div)
-import React.DOM (a, div, li, text, ul)
-import React.DOM.Props (_data, _id, aria, className, href, role)
 import Sourceview as SV
-import Tab (tabs)
-import Tab as Tab
 import Termsview as TV
-import Thermite (Render, Spec, _performAction, _render, defaultPerformAction, defaultRender, focus, focusState, simpleSpec, withState)
+import Thermite (Spec, focus)
 
 data Action
   =  DocviewA DV.Action
@@ -117,7 +114,7 @@ _tabAction = prism TabViewA \ action ->
 
 
 tab1 :: forall eff props. Spec ( dom :: DOM, console :: CONSOLE, ajax :: AJAX| eff) State props Action
-tab1 = tabs _tablens _tabAction $ fromFoldable [ Tuple "Doc View" docPageSpec
+tab1 = Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Doc View" docPageSpec
                                                , Tuple "Author View" authorPageSpec
                                                , Tuple "Source View" sourcePageSpec
                                                , Tuple "Terms View" termsPageSpec

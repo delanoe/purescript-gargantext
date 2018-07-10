@@ -1,9 +1,10 @@
 module Gargantext.Users.Types.Types where
+
+import Prelude
+
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Generic (class Generic)
 import Data.Maybe (Maybe)
-import Prelude (bind, pure, ($))
-import DecodeMaybe
+import Gargantext.Utils.DecodeMaybe ((.?|))
 
 newtype User =
   User {

@@ -1,4 +1,4 @@
-module Modal where
+module Gargantext.Components.Modals.Modal where
 
 import Control.Monad.Eff (Eff)
 import Prelude (Unit)

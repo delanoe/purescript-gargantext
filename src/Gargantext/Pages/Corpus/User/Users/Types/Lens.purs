@@ -11,7 +11,7 @@ import Gargantext.Users.Types.Types (User)
 import Network.HTTP.Affjax (AJAX)
 import Projects as PS
 import Publications as P
-import Tab as Tab
+import Gargantext.Components.Tab as Tab
 import Thermite (Spec, focus)
 
 _user :: Lens' State (Maybe User)

@@ -1,4 +1,4 @@
-module Gargantext.REST where
+module Gargantext.Config.REST where
 
 import Data.Argonaut
 import Data.HTTP.Method (Method(..))

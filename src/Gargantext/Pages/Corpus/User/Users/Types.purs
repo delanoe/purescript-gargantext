@@ -8,19 +8,19 @@ module Gargantext.Users.Types
        )
        where
 
+import Prelude (($))
+
 import Gargantext.Users.Types.Lens
 import Gargantext.Users.Types.Types
 import Gargantext.Users.Types.States
-
 import Brevets as B
 import Control.Monad.Aff.Console (CONSOLE)
 import DOM (DOM)
 import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
 import Network.HTTP.Affjax (AJAX)
-import Prelude (($))
 import Projects as PS
-import Tab (tabs)
+import Gargantext.Components.Tab (tabs)
 import Thermite (Spec, focus)
 
 brevetSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State  props Action

@@ -1,5 +1,4 @@
-module Gargantext.Data.Landing
-  where
+module Gargantext.Components.Data.Landing where
 
 
 data LandingData = LandingData { name       :: String
@@ -24,4 +23,3 @@ data Button = Button { title :: String
                      , text  :: String
                      , href  :: String
                    }
-

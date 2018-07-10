@@ -1,4 +1,3 @@
-module Gargantext.Data.Lang
-  where
+module Gargantext.Components.Data.Lang where
 
 data Lang = EN | FR

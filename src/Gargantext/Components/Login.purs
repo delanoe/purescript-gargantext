@@ -1,11 +1,10 @@
-module Login where
+module Gargantext.Components.Login where
 
 import Prelude hiding (div)
 
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Aff.Console (log)
-import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
@@ -19,18 +18,16 @@ import Data.HTTP.Method (Method(..))
 import Data.Lens (over)
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationJSON)
-import Modal (modalHide)
+import Gargantext.Components.Modals.Modal (modalHide)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
 import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
-import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, _render, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 
 --          TODO: ask for login (modal) or account creation after 15 mn when user is not logged and has made one search at least
-
 
 newtype State = State
   { username :: String

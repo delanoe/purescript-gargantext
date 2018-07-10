@@ -1,4 +1,4 @@
-module DecodeMaybe where
+module Gargantext.Utils.DecodeMaybe where
 
 import Prelude
 

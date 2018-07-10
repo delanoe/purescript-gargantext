@@ -10,26 +10,25 @@ import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Eff.Unsafe (unsafePerformEff)
 import DOM (DOM)
 import Data.Argonaut (decodeJson)
-import Data.Array (length, mapWithIndex, take, (!!))
+import Data.Array (length, mapWithIndex, (!!))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.MediaType.Common (applicationJSON)
 import Data.Newtype (class Newtype)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Utils (getter)
 import GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
-import GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Math (cos, sin)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Partial.Unsafe (unsafePartial)
-import Prelude (map)
-import React (ReactElement, createElement)
+import React (ReactElement)
 import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_data, _id, _type, aria, checked, className, href, name, onChange, placeholder, role, style, title, value)
+import React.DOM.Props (_id, _type, checked, className, href, name, onChange, placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-import Utils (getter)
 
 data Action = NoOp
   | LoadGraph String
@@ -501,7 +500,7 @@ specOld = simpleSpec performAction render
                     Nothing -> span [] []
                     Just selectedNode -> p [] [text $ "BOUKLI HACENE Ghouthi, GRIPON Vincent, FARRUGIA Nicolas, ARZEL Matthieu, ", a [href "http://localhost:2015/#/userPage/1"][text "JEZEQUEL Michel. "], text "Finding All Matches in a Database using Binary Neural Networks. COGNITIVE 2017 : The Ninth International Conference on Advanced Cognitive Technologies and Applications, 19-23 february 2017, AthÃ¨nes, Greece, 2017, pp. 59-64"]
                  , p []
-                 [ 
+                 [
                  ]
                ]
                 ]

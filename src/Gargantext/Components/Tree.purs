@@ -1,4 +1,4 @@
-module NTree where
+module Gargantext.Components.Tree where
 
 import Prelude hiding (div)
 

@@ -1,4 +1,4 @@
-module Tab where
+module Gargantext.Components.Tab where
 
 import Data.Array (fold)
 import Data.Lens (Lens', Prism', over, view)

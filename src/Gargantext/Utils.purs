@@ -1,4 +1,4 @@
-module Utils where
+module Gargantext.Utils where
 
 import Prelude
 

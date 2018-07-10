@@ -1,21 +1,20 @@
 module Landing where
 
-import Gargantext.Data.Landing
-import Gargantext.Data.Lang
 import Prelude hiding (div)
 
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
-import Gargantext.Lang.Landing.EnUS as En
-import Gargantext.Lang.Landing.FrFR as Fr
+import Gargantext.Components.Lang.Landing.EnUS as En
+import Gargantext.Components.Lang.Landing.FrFR as Fr
+import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
+import Gargantext.Components.Data.Lang (Lang(..))
 import Network.HTTP.Affjax (AJAX)
 import React (ReactElement)
-import React.DOM (a, button, div, footer, h1, h3, hr, i, img, li, p, span, text, ul)
-import React.DOM.Props (Props, _data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title)
+import React.DOM (a, div, h3, i, img, p, span, text)
+import React.DOM.Props (Props, _id, aria, className, href, src, target, title)
 import Routing.Hash.Aff (setHash)
-import Thermite (PerformAction, Render, Spec, simpleSpec)
-import Thermite as T
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
 newtype State = State
   { userName :: String
@@ -43,21 +42,21 @@ performAction :: forall eff props. PerformAction ( console :: CONSOLE
                                                  | eff
                                                  ) State props Action
 performAction NoOp _ _ = void do
-  T.modifyState \state -> state
+  modifyState \state -> state
 
 performAction Documentation _ _ = void do
-  T.modifyState \state -> state
+  modifyState \state -> state
 
 performAction Enter _ _ = void do
   lift $ setHash "/search"
-  T.modifyState \state -> state
+  modifyState \state -> state
 
 performAction Login _ _ = void do
   lift $ setHash "/login"
-  T.modifyState \state -> state
+  modifyState \state -> state
 
 performAction SignUp _ _ = void do
-  T.modifyState \state -> state
+  modifyState \state -> state
 
 
 -- Layout |

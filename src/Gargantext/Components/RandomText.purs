@@ -17,27 +17,18 @@ randomChars    : randomizes chars     in a word.
 TODO: add some tests as examples.
 -}
 
-module Gargantext.RandomText where
+module Gargantext.Components.RandomText where
 
 import Prelude
 
-import Control.Monad.Eff (Eff(..))
-import Control.Monad.Eff.Random (RANDOM(..), randomInt)
-
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Random (RANDOM, randomInt)
+import Data.Array (drop, dropEnd, filter, foldl, head, length, tail, take, takeEnd, (!!))
 import Data.Maybe (Maybe(Nothing, Just), fromJust)
-import Data.Array ( length, (!!), filter, foldl
-                  , head, tail
-                  , take, takeEnd
-                  , drop, dropEnd
-                  )
-import Data.String ( toCharArray, fromCharArray
-                   , split, Pattern(..)
-                   )
-import Data.Tuple.Nested ((/\))
-
+import Data.String (Pattern(..), fromCharArray, split, toCharArray)
 import Partial (crash)
 import Partial.Unsafe (unsafePartial)
-import Unsafe.Coerce (unsafeCoerce)
+
 
 -------------------------------------------------------------------
 randomSentences :: forall a. String -> Eff ( random :: RANDOM | a ) String
@@ -81,11 +72,11 @@ randomPart array = randomArrayPoly middle >>= \(middle') -> pure ( start <> midd
 randomArrayPoly :: forall a b. Array a -> Eff ( random :: RANDOM | b ) (Array a)
 randomArrayPoly wheel = case head wheel of
                          Nothing -> pure []
-                         Just wheel' -> randomWheel (RandomWheel { before:wheel, during:wheel', after:[]}) 
+                         Just wheel' -> randomWheel (RandomWheel { before:wheel, during:wheel', after:[]})
                                      >>= \(RandomWheel rand) -> (pure rand.after)
 
 randomWheel :: forall a b. RandomWheel b -> Eff ( random :: RANDOM | a ) (RandomWheel b)
-randomWheel (RandomWheel {before:[], during:d, after:a}) = 
+randomWheel (RandomWheel {before:[], during:d, after:a}) =
     pure   (RandomWheel {before:[], during:d, after:a})
 
 randomWheel (RandomWheel {before:b, during:d, after:a}) = do
@@ -93,7 +84,7 @@ randomWheel (RandomWheel {before:b, during:d, after:a}) = do
     randomWheel $ RandomWheel {before:b', during:d', after:(a <> [d'])}
 
 
-randomArray :: forall a b. Array b -> Eff ( random :: RANDOM | a ) (RandomWheel b) 
+randomArray :: forall a b. Array b -> Eff ( random :: RANDOM | a ) (RandomWheel b)
 randomArray array = unsafePartial $ do
     n    <- randomInt 0 (length array - 1)
 

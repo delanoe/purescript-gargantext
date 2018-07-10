@@ -1,4 +1,4 @@
-module GraphExplorer.Types where
+module Gargantext.Components.GraphExplorer.Types where
 
 import Prelude
 

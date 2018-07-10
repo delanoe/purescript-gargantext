@@ -6,7 +6,7 @@ import Data.Maybe (Maybe(..))
 import Gargantext.Users.Types.Types (User)
 import Projects as PS
 import Publications as P
-import Tab as Tab
+import Gargantext.Components.Tab as Tab
 
 data Action
   = NoOp
@@ -32,4 +32,3 @@ initialState =
   , projects : PS.initialState
   , user: Nothing
   }
-

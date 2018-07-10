@@ -8,9 +8,9 @@ import Data.Newtype (class Newtype)
 import Network.HTTP.Affjax (AJAX)
 import React (ReactElement)
 import React.DOM (input, span, td, text, tr)
-import React.DOM.Props (_type, checked, className, color, onChange, style, title)
+import React.DOM.Props (_type, checked, className, onChange, style, title)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
-import Utils (getter, setter)
+import Gargantext.Utils (getter, setter)
 
 newtype State = State
   { term :: Term

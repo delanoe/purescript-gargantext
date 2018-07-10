@@ -1,8 +1,8 @@
-module Gargantext.Users.API
-       where
+module Gargantext.Users.API where
 
-import Gargantext.Users.Types
+import Prelude
 
+import Gargantext.Users.Types (Action(..), State, User, _user)
 import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Trans.Class (lift)
@@ -10,9 +10,8 @@ import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Lens (set)
 import Data.Maybe (Maybe(..))
-import Gargantext.REST (get)
+import Gargantext.Config.REST (get)
 import Network.HTTP.Affjax (AJAX)
-import Prelude (bind, id, show, void, ($), (<<<), (<>))
 import Thermite (PerformAction, modifyState)
 
 getUser :: forall eff. Int -> Aff

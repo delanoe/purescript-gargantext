@@ -1,17 +1,12 @@
 module DocView where
 
-import Data.Argonaut
-import Data.Generic (class Generic, gShow)
+import Prelude
 
-import Gargantext.Charts.ECharts
-import Gargantext.Chart (p'')
-import Gargantext.Dashboard (globalPublis)
-
-import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE, log)
 import DOM (DOM)
 import DOM.HTML (window) as DOM
@@ -19,16 +14,21 @@ import DOM.HTML.Types (htmlDocumentToParentNode) as DOM
 import DOM.HTML.Window (document) as DOM
 import DOM.Node.ParentNode (QuerySelector(..))
 import DOM.Node.ParentNode (querySelector) as DOM
+import Data.Argonaut
 import Data.Array (filter, replicate)
 import Data.Either (Either(..))
+import Data.Generic (class Generic, gShow)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (fromJust)
 import Data.MediaType.Common (applicationJSON)
 import Data.Tuple (Tuple(..))
+import Gargantext.Chart (p'')
+import Gargantext.Charts.ECharts
+import Gargantext.Dashboard (globalPublis)
+import Gargantext.Config.REST (get)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
 import Partial.Unsafe (unsafePartial)
-import Prelude (class Eq, class Ord, class Show, Unit, bind, map, not, pure, show, void, ($), (*), (+), (-), (/), (<), (<$>), (<>), (==), (>), (>=), (>>=))
 import React (ReactElement)
 import React as R
 import React.DOM (a, b, b', br', div, h3, i, input, li, option, select, span, table, tbody, td, text, thead, th, tr, ul, nav)
@@ -36,8 +36,6 @@ import React.DOM.Props (Props, _type, className, href, onChange, onClick, select
 import ReactDOM as RDOM
 import Thermite (PerformAction, Render, Spec, cotransform, createReactSpec, defaultPerformAction, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-
-import Gargantext.REST (get)
 
 
 --main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit

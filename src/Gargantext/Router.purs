@@ -1,4 +1,4 @@
-module PageRouter where
+module Gargantext.Router where
 
 import Prelude
 

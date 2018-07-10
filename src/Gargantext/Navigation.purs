@@ -1,46 +1,38 @@
-module Navigation where
+module Gargantext.Navigation where
 
-import DOM
-import Gargantext.Data.Lang
 import Prelude hiding (div)
 
-
 import AddCorpusview as AC
-import DocAnnotation as D
 import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE, log)
 import CorpusAnalysis as CA
-import Data.Array (concat, head, length)
+import DOM (DOM)
+import Data.Array (length)
 import Data.Either (Either(..))
 import Data.Foldable (fold, intercalate)
 import Data.Lens (Lens', Prism', lens, over, prism)
-import Data.Maybe (Maybe(Nothing, Just), fromJust)
-import Data.Tuple (Tuple(..))
+import Data.Maybe (Maybe(Nothing, Just))
+import DocAnnotation as D
 import DocView as DV
+import Gargantext.Components.Tree as Tree
+import Gargantext.Dashboard as Dsh
+import Gargantext.Components.Data.Lang (Lang(..))
+import Gargantext.Router (Routes(..))
+import Gargantext.Users as U
+import Graph as GE
 import Landing as L
-import Login as LN
-import Modal (modalShow)
-import NTree (fnTransform, loadDefaultNode)
-import NTree as NT
+import Gargantext.Components.Login as LN
+import Gargantext.Components.Modals.Modal (modalShow)
 import Network.HTTP.Affjax (AJAX)
-import PageRouter (Routes(..))
-import Partial.Unsafe (unsafePartial)
+import NgramsTable as NG
 import React (ReactElement)
-import React.DOM (a, button, div, footer, form, hr, i, img, input, li, p, span, text, ul)
-import React.DOM.Props (Props, _data, _id, _type, aria, className, href, name, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
-import React.DOM.Props as RP
-import Routing.Hash.Aff (setHash)
+import React.DOM (a, button, div, footer, hr, img, input, li, p, span, text, ul)
+import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
 import SearchForm as S
 import Tabview as TV
-import Thermite (PerformAction, Render, Spec, _render, cotransform, defaultPerformAction, defaultRender, focus, modifyState, simpleSpec, withState)
+import Thermite (PerformAction, Render, Spec, _render, defaultPerformAction, defaultRender, focus, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
-import Gargantext.Users as U
-import NgramsTable as NG
-import Gargantext.Dashboard as Dsh
-import Graph as GE
-
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
@@ -53,7 +45,7 @@ type AppState =
   , searchState    :: S.State
   , userPage       :: U.State
   , docAnnotationView   :: D.State
-  , ntreeView   :: NT.State
+  , ntreeView   :: Tree.State
   , tabview :: TV.State
   , search :: String
   , corpusAnalysis :: CA.State
@@ -75,7 +67,7 @@ initAppState =
   , searchState    : S.initialState
   , userPage       : U.initialState
   , docAnnotationView   : D.initialState
-  , ntreeView : NT.exampleTree
+  , ntreeView : Tree.exampleTree
   , tabview : TV.initialState
   , search : ""
   , corpusAnalysis : CA.initialState
@@ -97,7 +89,7 @@ data Action
   | SearchA    S.Action
   | UserPageA  U.Action
   | DocAnnotationViewA  D.Action
-  | TreeViewA  NT.Action
+  | TreeViewA  Tree.Action
   | TabViewA TV.Action
   | GraphExplorerA GE.Action
   | DashboardA Dsh.Action
@@ -123,11 +115,9 @@ performAction (ShowLogin)  _ _ = void do
   liftEff $ modalShow "loginModal"
   modifyState $ _ {showLogin = true}
 
-
 performAction (ShowAddcorpus)  _ _ = void do
   liftEff $ modalShow "addCorpus"
   modifyState $ _ {showCorpus = true}
-
 
 performAction Go  _ _ = void do
   liftEff $ modalShow "addCorpus"
@@ -140,8 +130,8 @@ performAction Initialize  _ state = void do
   case state.initialized of
     false -> do
 
-      lnodes <- lift $ loadDefaultNode
-      
+      lnodes <- lift $ Tree.loadDefaultNode
+
       case lnodes of
         Left err -> do
           modifyState id
@@ -153,18 +143,14 @@ performAction Initialize  _ state = void do
             Right docs -> do
               modifyState $ _ { initialized = true
                               , ntreeView = if length d > 0
-                                            then NT.exampleTree
-                                           --then fnTransform $ unsafePartial $ fromJust $ head d 
-                                           else NT.initialState
+                                            then Tree.exampleTree
+                                           --then fnTransform $ unsafePartial $ fromJust $ head d
+                                           else Tree.initialState
 
                               , docViewState = docs
                               }
     _ -> do
       modifyState id
-
-performAction Go  _ _ = void do
-  _ <- lift $ setHash "/addCorpus"
-  modifyState id
 
 performAction _ _ _ = void do
   modifyState id
@@ -179,10 +165,8 @@ _landingAction = prism LandingA \action ->
     LandingA caction -> Right caction
     _-> Left action
 
-
 _loginState :: Lens' AppState LN.State
 _loginState = lens (\s -> s.loginState) (\s ss -> s{loginState = ss})
-
 
 _loginAction :: Prism' Action LN.Action
 _loginAction = prism LoginA \action ->
@@ -190,10 +174,8 @@ _loginAction = prism LoginA \action ->
     LoginA caction -> Right caction
     _-> Left action
 
-
 _addCorpusState :: Lens' AppState AC.State
 _addCorpusState = lens (\s -> s.addCorpusState) (\s ss -> s{addCorpusState = ss})
-
 
 _addCorpusAction :: Prism' Action AC.Action
 _addCorpusAction = prism AddCorpusA \action ->
@@ -201,10 +183,8 @@ _addCorpusAction = prism AddCorpusA \action ->
     AddCorpusA caction -> Right caction
     _-> Left action
 
-
 _docViewState :: Lens' AppState DV.State
 _docViewState = lens (\s -> s.docViewState) (\s ss -> s{docViewState = ss})
-
 
 _docViewAction :: Prism' Action DV.Action
 _docViewAction = prism DocViewA \action ->
@@ -212,10 +192,8 @@ _docViewAction = prism DocViewA \action ->
     DocViewA caction -> Right caction
     _-> Left action
 
-
 _searchState :: Lens' AppState S.State
 _searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
-
 
 _searchAction :: Prism' Action S.Action
 _searchAction = prism SearchA \action ->
@@ -223,10 +201,8 @@ _searchAction = prism SearchA \action ->
     SearchA caction -> Right caction
     _-> Left action
 
-
 _userPageState :: Lens' AppState U.State
 _userPageState = lens (\s -> s.userPage) (\s ss -> s{userPage = ss})
-
 
 _userPageAction :: Prism' Action U.Action
 _userPageAction = prism UserPageA \action ->
@@ -243,28 +219,23 @@ _dashBoardAction = prism DashboardA \action ->
 _docAnnotationViewState :: Lens' AppState D.State
 _docAnnotationViewState = lens (\s -> s.docAnnotationView) (\s ss -> s{docAnnotationView = ss})
 
-
 _docAnnotationViewAction :: Prism' Action D.Action
 _docAnnotationViewAction = prism DocAnnotationViewA \action ->
   case action of
     DocAnnotationViewA caction -> Right caction
     _-> Left action
 
-
-_treeState :: Lens' AppState NT.State
+_treeState :: Lens' AppState Tree.State
 _treeState = lens (\s -> s.ntreeView) (\s ss -> s {ntreeView = ss})
 
-
-_treeAction :: Prism' Action NT.Action
+_treeAction :: Prism' Action Tree.Action
 _treeAction = prism TreeViewA \action ->
   case action of
     TreeViewA caction -> Right caction
     _-> Left action
 
-
 _tabviewState :: Lens' AppState TV.State
 _tabviewState = lens (\s -> s.tabview) (\s ss -> s {tabview = ss})
-
 
 _tabviewAction :: Prism' Action TV.Action
 _tabviewAction = prism TabViewA \action ->
@@ -293,8 +264,6 @@ _graphExplorerAction = prism GraphExplorerA \action ->
     GraphExplorerA caction -> Right caction
     _-> Left action
 
-
-
 _ngState :: Lens' AppState NG.State
 _ngState = lens (\s -> s.ngState) (\s ss -> s{ngState = ss})
 
@@ -303,7 +272,6 @@ _ngAction = prism NgramsA \action ->
   case action of
     NgramsA caction -> Right caction
     _-> Left action
-
 
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
@@ -337,7 +305,6 @@ pagesComponent s =
 routingSpec :: forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
 routingSpec = simpleSpec performAction defaultRender
 
-
 layout0 :: forall eff props. Spec (E eff) AppState props Action
                           -> Spec (E eff) AppState props Action
 layout0 layout =
@@ -362,7 +329,7 @@ layout0 layout =
     cont = over _render \render d p s c ->
       [ div [ className "row" ] (render d p s c) ]
 
-    as = focus _treeState _treeAction NT.treeview
+    as = focus _treeState _treeAction Tree.treeview
 
     bs = innerLayout $ layout
 
@@ -394,7 +361,6 @@ layoutSidebar = over _render \render d p s c ->
       ]
 
 
-
 divLogo :: ReactElement
 divLogo = a [ className "navbar-brand logoSmall"
             , href "#/"
@@ -403,7 +369,6 @@ divLogo = a [ className "navbar-brand logoSmall"
                     ] []
               ]
 
-
 divDropdownLeft :: ReactElement
 divDropdownLeft = divDropdownLeft' (LiNav { title : "About Gargantext"
                                           , href  : "#"
@@ -411,7 +376,6 @@ divDropdownLeft = divDropdownLeft' (LiNav { title : "About Gargantext"
                                           , text  : "Info"
                                           }
                                     )
-
 
 divDropdownLeft' :: LiNav -> ReactElement
 divDropdownLeft' mb =  ul [className "nav navbar-nav"]
@@ -422,7 +386,6 @@ divDropdownLeft' mb =  ul [className "nav navbar-nav"]
                                    ]
                                ]
                           ]
-
 
 menuButton :: LiNav -> ReactElement
 menuButton (LiNav { title : title'
@@ -438,7 +401,6 @@ menuButton (LiNav { title : title'
                                 ] []
                          , text (" " <> text')
                          ]
-
 
 menuElements' :: ReactElement
 menuElements' = menuElements-- title, icon, text
@@ -493,7 +455,6 @@ menuElements ns = dropDown $ intercalate divider $ map (map liNav) ns
 --                     , target :: String
 --                     }
 
-
 data LiNav = LiNav { title :: String
                    , href  :: String
                    , icon  :: String
@@ -514,8 +475,6 @@ liNav (LiNav { title : title'
                       , text $ " " <> text'
                       ]
                 ]
-
-
 
 -- TODO put the search form in the center of the navBar
 divSearchBar :: forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
@@ -562,8 +521,6 @@ divDropdownRight d =
         ]
      ]
 
-
-
 layoutFooter ::  forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
 layoutFooter = simpleSpec performAction render
   where
@@ -589,7 +546,6 @@ layoutFooter = simpleSpec performAction render
                                          , text "."
                                    ]
                             ]
-
 
 layoutSpec :: forall eff props. Spec (E eff) AppState props Action
 layoutSpec =
