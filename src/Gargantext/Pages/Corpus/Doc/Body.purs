@@ -7,7 +7,7 @@ import DOM (DOM)
 import Data.Array (fold)
 import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Dashboard (globalPublis)
-import Gargantext.Pages.Corpus.Doc.Facet as Tab
+import Gargantext.Pages.Corpus.Doc.Facets as Tab
 import Network.HTTP.Affjax (AJAX)
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
