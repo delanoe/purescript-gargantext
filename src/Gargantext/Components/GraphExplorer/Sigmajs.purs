@@ -1,7 +1,8 @@
-module GraphExplorer.Sigmajs where
+module Gargantext.Components.GraphExplorer.Sigmajs where
+
+import Prelude
 
 import Control.Monad.Eff (Eff)
-import Prelude (Unit)
 import React (ReactClass, ReactElement, createElement)
 import Unsafe.Coerce (unsafeCoerce)
 

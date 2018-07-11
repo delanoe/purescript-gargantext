@@ -22,8 +22,8 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (fromJust)
 import Data.MediaType.Common (applicationJSON)
 import Data.Tuple (Tuple(..))
-import Gargantext.Chart (p'')
-import Gargantext.Charts.ECharts
+import Gargantext.Components.Charts.Charts (p'')
+import Gargantext.Components.Charts.Options.ECharts
 import Gargantext.Dashboard (globalPublis)
 import Gargantext.Config.REST (get)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)

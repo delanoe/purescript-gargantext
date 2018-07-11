@@ -1,19 +1,16 @@
 module Gargantext.Config.REST where
 
-import Data.Argonaut
-import Data.HTTP.Method (Method(..))
-import Network.HTTP.RequestHeader (RequestHeader(..))
-import Prelude (bind, ($), pure, show)
-import Data.MediaType.Common (applicationJSON)
+import Prelude
 
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Eff.Console (CONSOLE)
-
+import Data.Argonaut (class DecodeJson, decodeJson)
 import Data.Either (Either(..))
-
+import Data.HTTP.Method (Method(..))
+import Data.MediaType.Common (applicationJSON)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
-
+import Network.HTTP.RequestHeader (RequestHeader(..))
 
 get :: forall eff t2 t31. DecodeJson t31 => String ->
                       Aff (console :: CONSOLE, ajax :: AJAX| eff)

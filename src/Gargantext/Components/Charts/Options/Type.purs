@@ -1,18 +1,15 @@
-module Gargantext.Charts.Type where
+module Gargantext.Components.Charts.Options.Type where
 
-import Gargantext.Charts.Font
+import Prelude
 
 import CSS (Color)
-import Gargantext.Charts.Series
-import Gargantext.Charts.Data
-import Gargantext.Charts.Color (ChartColor(..))
-import Gargantext.Charts.Font (Icon, icon, TextStyle)
-import Gargantext.Charts.Legend (LegendType, SelectedMode, selectedMode, Orient)
-import Gargantext.Charts.Position (LeftRelativePosition, Position, TopRelativePosition)
-import Data.Either (Either)
 import Data.Maybe (Maybe)
-import Prelude (Unit, (<<<))
-
+import Gargantext.Components.Charts.Options.Color (ChartColor)
+import Gargantext.Components.Charts.Options.Data (DataN, DataV)
+import Gargantext.Components.Charts.Options.Font (TextStyle)
+import Gargantext.Components.Charts.Options.Legend (LegendType, Orient, SelectedMode)
+import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
+import Gargantext.Components.Charts.Options.Series (Series)
 
 newtype ChartAlign = ChartAlign String
 

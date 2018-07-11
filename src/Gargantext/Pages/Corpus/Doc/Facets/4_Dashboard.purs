@@ -1,15 +1,14 @@
 module Gargantext.Dashboard where
 
-import Prelude (($), (<>), show, pure, unit, map)
+import Prelude
+
 import Data.Array (zip)
 import Data.Tuple (Tuple(..))
-import Gargantext.Charts.ECharts
-import Gargantext.Charts.Series
-
+import Gargantext.Components.Charts.Options.ECharts
+import Gargantext.Components.Charts.Options.Series
 import DOM (DOM)
 import Data.Unit (Unit)
 import Data.Int (toNumber)
-
 import React.DOM (div, h1, text, title)
 import React.DOM.Props (className)
 import Thermite (PerformAction, Render, Spec, simpleSpec)

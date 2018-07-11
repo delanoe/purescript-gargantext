@@ -1,7 +1,8 @@
-module Gargantext.Charts.Series where
+module Gargantext.Components.Charts.Options.Series where
 
-import Gargantext.Charts.Data (DataS)
-import Prelude (class Show, show, (<<<))
+import Prelude
+
+import Gargantext.Components.Charts.Options.Data (DataS)
 
 
 newtype SeriesType = SeriesType String

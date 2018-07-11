@@ -10,8 +10,7 @@ import React.DOM (div, h3, hr, i, p, span, text, input)
 import React.DOM.Props (className, style)
 import Tabview as Tab
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
-
-import Gargantext.Charts.ECharts (chart)
+import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Dashboard (globalPublis)
 
 type State = Tab.State
@@ -50,7 +49,7 @@ corpusAnalysisSpec = simpleSpec defaultPerformAction render
                          , text " Query: all publications with all schools ids"
                          ]
                   ]
-            , div [ className "col-md-4 content"] 
+            , div [ className "col-md-4 content"]
                   [ p [] [ i [className "fa fa-calendar"] []
                          , text " June. 26 2018, 10:59 am"
                          ]

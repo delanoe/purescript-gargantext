@@ -1,4 +1,4 @@
-module Gargantext.Charts.Legend
+module Gargantext.Components.Charts.Options.Legend
        (
          LegendType(..),
          PlainOrScroll(..),
@@ -11,9 +11,10 @@ module Gargantext.Charts.Legend
          selectedMode
        ) where
 
+import Prelude (class Show, show, (<<<))
+
 import Data.Generic (class Generic, gShow)
 import Data.String (toLower)
-import Prelude (class Show, show, (<<<))
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype LegendType = LegendType String
@@ -45,4 +46,3 @@ selectedMode :: LegendMode -> SelectedMode
 selectedMode (Bool b) = unsafeCoerce b
 selectedMode (Single) = unsafeCoerce "single"
 selectedMode (Multiple) = unsafeCoerce "multiple"
-

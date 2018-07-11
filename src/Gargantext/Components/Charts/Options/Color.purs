@@ -1,10 +1,11 @@
-module Gargantext.Charts.Color
+module Gargantext.Components.Charts.Options.Color
        ( ChartColor()
        , chartColor
        , transparent
        ) where
 
-import Prelude ((<<<))
+import Prelude
+
 import CSS (Color, toHexString)
 import Color (rgba)
 

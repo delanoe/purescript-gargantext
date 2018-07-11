@@ -15,15 +15,15 @@ import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.Maybe (Maybe(Nothing, Just))
 import DocAnnotation as D
 import DocView as DV
+import Gargantext.Components.Data.Lang (Lang(..))
+import Gargantext.Components.Login as LN
+import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Dashboard as Dsh
-import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Router (Routes(..))
 import Gargantext.Users as U
 import Graph as GE
 import Landing as L
-import Gargantext.Components.Login as LN
-import Gargantext.Components.Modals.Modal (modalShow)
 import Network.HTTP.Affjax (AJAX)
 import NgramsTable as NG
 import React (ReactElement)
