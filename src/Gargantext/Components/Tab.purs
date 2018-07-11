@@ -1,10 +1,11 @@
 module Gargantext.Components.Tab where
 
+import Prelude hiding (div)
+
 import Data.Array (fold)
 import Data.Lens (Lens', Prism', over, view)
 import Data.List (List, mapWithIndex, toUnfoldable)
 import Data.Tuple (Tuple(..))
-import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, div, nav, text)
 import React.DOM.Props (className, onClick)

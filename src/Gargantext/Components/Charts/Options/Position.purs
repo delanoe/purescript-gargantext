@@ -1,4 +1,4 @@
-module Gargantext.Charts.Position
+module Gargantext.Components.Charts.Options.Position
        (
          Position(),
          numberPosition,
@@ -9,7 +9,8 @@ module Gargantext.Charts.Position
          LeftRelativePosition(..)
        ) where
 
-import Prelude (class Show, show, ($), (<>))
+import Prelude
+
 import Unsafe.Coerce (unsafeCoerce)
 
 -- | The type `Position` is made to render a css position.

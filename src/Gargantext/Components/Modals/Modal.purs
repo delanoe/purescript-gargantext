@@ -1,7 +1,8 @@
 module Gargantext.Components.Modals.Modal where
 
-import Control.Monad.Eff (Eff)
 import Prelude (Unit)
+
+import Control.Monad.Eff (Eff)
 
 foreign import modalShow :: forall eff. String -> Eff eff Unit
 

@@ -1,4 +1,4 @@
-module Tabview where
+module Gargantext.Pages.Corpus.Doc.Facets where
 
 import Prelude hiding (div)
 
@@ -9,7 +9,7 @@ import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
 import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
-import DocView as DV
+import Gargantext.Pages.Corpus.Doc.Document as DV
 import Gargantext.Components.Tab as Tab
 import Network.HTTP.Affjax (AJAX)
 import Sourceview as SV

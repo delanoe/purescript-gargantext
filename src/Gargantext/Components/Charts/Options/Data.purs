@@ -1,8 +1,6 @@
-module Gargantext.Charts.Data where
+module Gargantext.Components.Charts.Options.Data where
 
-import Gargantext.Charts.Font (TextStyle, Icon)
-import Prelude ((<<<))
-import Unsafe.Coerce (unsafeCoerce)
+import Gargantext.Components.Charts.Options.Font (TextStyle, Icon)
 
 type DataN =
   { name :: String

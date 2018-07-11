@@ -1,6 +1,6 @@
-module Gargantext.Chart where
+module Gargantext.Components.Charts.Charts where
 
-import Prelude (($), (<<<), (<$>))
+import Prelude hiding (min)
 
 import CSS (Color, white)
 import Data.Maybe (Maybe(..))

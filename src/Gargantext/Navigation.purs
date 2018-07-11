@@ -2,35 +2,35 @@ module Gargantext.Navigation where
 
 import Prelude hiding (div)
 
-import AddCorpusview as AC
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE, log)
-import CorpusAnalysis as CA
+import Gargantext.Pages.Corpus.Doc.Body as CA
 import DOM (DOM)
 import Data.Array (length)
 import Data.Either (Either(..))
 import Data.Foldable (fold, intercalate)
 import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.Maybe (Maybe(Nothing, Just))
-import DocAnnotation as D
-import DocView as DV
+import Gargantext.Pages.Corpus.Doc.Annotation as D
+import Gargantext.Pages.Corpus.Doc.Document as DV
+import Gargantext.Components.Data.Lang (Lang(..))
+import Gargantext.Components.Login as LN
+import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Dashboard as Dsh
-import Gargantext.Components.Data.Lang (Lang(..))
+import Gargantext.Pages.Corpus as AC
 import Gargantext.Router (Routes(..))
 import Gargantext.Users as U
 import Graph as GE
-import Landing as L
-import Gargantext.Components.Login as LN
-import Gargantext.Components.Modals.Modal (modalShow)
+import Gargantext.Pages.Home as L
 import Network.HTTP.Affjax (AJAX)
 import NgramsTable as NG
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr, img, input, li, p, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
-import SearchForm as S
-import Tabview as TV
+import Gargantext.Pages.Search as S
+import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Thermite (PerformAction, Render, Spec, _render, defaultPerformAction, defaultRender, focus, modifyState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 

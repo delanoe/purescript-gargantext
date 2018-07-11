@@ -1,4 +1,4 @@
-module Gargantext.Charts.Font
+module Gargantext.Components.Charts.Options.Font
        (
          TextStyle,
          ChartFontStyle(),
@@ -12,12 +12,14 @@ module Gargantext.Charts.Font
          icon
        ) where
 
+import Prelude (Unit, ($), (<<<), (<>))
+
 import CSS (FontStyle(..), FontWeight(..), Prefixed(..), Value(..))
-import Gargantext.Charts.Color (ChartColor)
-import Gargantext.Charts.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Data.Generic (class Generic, gShow)
 import Data.String (toLower)
-import Prelude (Unit, ($), (<<<), (<>))
+import Gargantext.Components.Charts.Options.Color (ChartColor)
+import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
+
 
 type TextStyle =
   { color      :: ChartColor

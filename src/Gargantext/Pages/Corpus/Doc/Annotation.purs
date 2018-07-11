@@ -1,4 +1,4 @@
-module DocAnnotation where
+module Gargantext.Pages.Corpus.Doc.Annotation where
 
 import Prelude hiding (div)
 import React (ReactElement)

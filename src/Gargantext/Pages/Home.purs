@@ -1,4 +1,4 @@
-module Landing where
+module Gargantext.Pages.Home where
 
 import Prelude hiding (div)
 

@@ -19,7 +19,7 @@ import DOM (DOM)
 import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
 import Network.HTTP.Affjax (AJAX)
-import Projects as PS
+import Gargantext.Pages.Folder as PS
 import Gargantext.Components.Tab (tabs)
 import Thermite (Spec, focus)
 

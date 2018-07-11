@@ -1,21 +1,20 @@
-module Gargantext.Charts.ECharts where
+module Gargantext.Components.Charts.Options.ECharts where
 
-import Prelude (($), map, class Show, show, (<<<), (==))
-import Data.Array (length)
+import Prelude
 
-import CSS (black, blue, italic, violet, white, yellow)
+import CSS (black, italic, violet)
 import CSS.Common (normal)
-import Gargantext.Charts.Series
-import Gargantext.Charts.Data
-import Gargantext.Charts.Color (chartColor, transparent)
-import Gargantext.Charts.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
-import Gargantext.Charts.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
-import Gargantext.Charts.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-import Gargantext.Charts.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis)
-import Data.Either (Either(..))
+import Data.Array (length)
 import Data.Maybe (Maybe(..))
+import Gargantext.Components.Charts.Options.Color (chartColor, transparent)
+import Gargantext.Components.Charts.Options.Data (DataN, DataS, DataV)
+import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
+import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
+import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
+import Gargantext.Components.Charts.Options.Series (Series, SeriesName, SeriesShape(..), seriesType)
+import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis)
 import React as R
-import React.DOM (p)
+
 
 foreign import eChartsClass :: R.ReactClass Echarts
 
@@ -157,7 +156,7 @@ tooltip' =
 series :: SeriesShape -> SeriesName -> Array DataS -> Series
 series sh name ss =  { name: name
   , "type": seriesType sh
-  , "data": ss 
+  , "data": ss
   }
 
 data YAxisFormat = YAxisFormat { position :: String
@@ -293,5 +292,3 @@ textStyle =
     ,textShadowOffsetX: 0.0
     ,textShadowOffsetY: 0.0
   }
-
-
