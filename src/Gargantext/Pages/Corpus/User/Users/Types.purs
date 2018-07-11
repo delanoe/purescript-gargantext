@@ -32,7 +32,7 @@ projectSpec = focus _projectslens _projectsAction PS.projets
 
 facets :: forall eff props. Spec ( dom :: DOM, console :: CONSOLE, ajax :: AJAX| eff) State props Action
 facets = tabs _tablens _tabAction $ fromFoldable
-         [ Tuple "Publications(12)" publicationSpec
+         [ Tuple "Publications (12)" publicationSpec
          , Tuple "Brevets (2)" brevetSpec
          , Tuple "Projets IMT (5)" projectSpec
       ]

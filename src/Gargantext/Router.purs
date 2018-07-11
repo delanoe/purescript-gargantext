@@ -21,8 +21,8 @@ data Routes
   | AddCorpus
   | DocView
   | SearchView
-  | UserPage Int
-  | DocAnnotation Int
+  | UserPage       Int
+  | DocAnnotation  Int
   | Tabview
   | CorpusAnalysis
   | PGraphExplorer
@@ -31,18 +31,18 @@ data Routes
 
 
 instance showRoutes :: Show Routes where
-  show Login = "Login"
-  show AddCorpus = "AddCorpus"
-  show DocView = "DocView"
-  show SearchView = "SearchView"
-  show (UserPage i) = "UserPage"
+  show Login            = "Login"
+  show AddCorpus        = "AddCorpus"
+  show DocView          = "DocView"
+  show SearchView       = "SearchView"
+  show (UserPage i)     = "UserPage"
   show (DocAnnotation i)= "DocumentView"
-  show Tabview = "Tabview"
-  show CorpusAnalysis = "corpus"
-  show PGraphExplorer = "graphExplorer"
-  show NGramsTable = "NGramsTable"
-  show Dashboard = "Dashboard"
-  show Home = "Home"
+  show Tabview          = "Tabview"
+  show CorpusAnalysis   = "corpus"
+  show PGraphExplorer   = "graphExplorer"
+  show NGramsTable      = "NGramsTable"
+  show Dashboard        = "Dashboard"
+  show Home             = "Home"
 
 int :: Match Int
 int = floor <$> num
