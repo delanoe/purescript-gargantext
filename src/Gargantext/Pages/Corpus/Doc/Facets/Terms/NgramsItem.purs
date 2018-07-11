@@ -1,4 +1,4 @@
-module NgramsItem where
+module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem where
 
 import Prelude
 

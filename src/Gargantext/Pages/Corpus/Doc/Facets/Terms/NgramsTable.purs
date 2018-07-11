@@ -1,4 +1,4 @@
-module NgramsTable where
+module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable where
 
 import CSS.TextAlign (center, textAlign)
 import Control.Monad.Eff.Console (CONSOLE)
@@ -9,7 +9,7 @@ import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.List (List)
 import Data.Tuple (Tuple(..), uncurry)
 import Network.HTTP.Affjax (AJAX)
-import NgramsItem as NI
+import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem as NI
 import Prelude (class Eq, class Ord, class Show, Unit, bind, map, not, pure, show, void, ($), (*), (+), (-), (/), (<), (<$>), (<>), (==), (>), (>=), (>>=))
 import React (ReactElement)
 import React.DOM hiding (style)

@@ -1,4 +1,4 @@
-module Graph where
+module Gargantext.Pages.Corpus.Doc.Facets.Graph where
 
 import Prelude hiding (div)
 

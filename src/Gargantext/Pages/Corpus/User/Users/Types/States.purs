@@ -5,7 +5,7 @@ import Brevets as B
 import Data.Maybe (Maybe(..))
 import Gargantext.Users.Types.Types (User)
 import Gargantext.Pages.Folder as PS
-import Publications as P
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as P
 import Gargantext.Components.Tab as Tab
 
 data Action

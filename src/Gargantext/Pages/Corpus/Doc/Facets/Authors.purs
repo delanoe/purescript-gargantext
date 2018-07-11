@@ -1,4 +1,4 @@
-module Authorview where
+module Gargantext.Pages.Corpus.Doc.Facets.Authors where
 
 
 import Control.Monad.Eff.Console (CONSOLE)

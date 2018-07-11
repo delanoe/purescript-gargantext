@@ -1,4 +1,4 @@
-module Gargantext.Dashboard where
+module Gargantext.Pages.Corpus.Doc.Facets.Dashboard where
 
 import Prelude
 

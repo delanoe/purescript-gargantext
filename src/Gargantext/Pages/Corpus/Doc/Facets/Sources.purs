@@ -1,4 +1,4 @@
-module Sourceview where
+module Gargantext.Pages.Corpus.Doc.Facets.Sources where
 
 
 import Control.Monad.Eff.Console (CONSOLE)

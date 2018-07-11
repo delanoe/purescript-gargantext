@@ -18,14 +18,14 @@ import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Tree as Tree
-import Gargantext.Dashboard as Dsh
+import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus as AC
 import Gargantext.Router (Routes(..))
 import Gargantext.Users as U
-import Graph as GE
+import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Home as L
 import Network.HTTP.Affjax (AJAX)
-import NgramsTable as NG
+import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr, img, input, li, p, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
