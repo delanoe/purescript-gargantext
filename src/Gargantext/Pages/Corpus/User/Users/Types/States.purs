@@ -1,7 +1,7 @@
-module Gargantext.Users.Types.States
+module Gargantext.Users.Types.Types.States
        where
 
-import Brevets as B
+import Gargantext.Pages.Corpus.User.Brevets as B
 import Data.Maybe (Maybe(..))
 import Gargantext.Users.Types.Types (User)
 import Gargantext.Pages.Folder as PS

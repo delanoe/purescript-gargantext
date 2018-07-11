@@ -1,4 +1,4 @@
-module Brevets where
+module Gargantext.Pages.Corpus.User.Brevets where
 
 
 import Control.Monad.Eff.Console (CONSOLE)

@@ -1,12 +1,12 @@
-module Gargantext.Users.Types.Lens where
+module Gargantext.Pages.Corpus.User.Users.Types.Lens where
 
-import Brevets as B
+import Gargantext.Pages.Corpus.User.Brevets as B
 import Control.Monad.Aff.Console (CONSOLE)
 import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
 import Data.Maybe (Maybe)
-import Gargantext.Users.Types.States (Action(..), State)
+import Gargantext.Users.Types.Types.States (Action(..), State)
 import Gargantext.Users.Types.Types (User)
 import Network.HTTP.Affjax (AJAX)
 import Gargantext.Pages.Folder as PS

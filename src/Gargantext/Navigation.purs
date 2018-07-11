@@ -21,7 +21,7 @@ import Gargantext.Components.Tree as Tree
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus as AC
 import Gargantext.Router (Routes(..))
-import Gargantext.Users as U
+import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Home as L
 import Network.HTTP.Affjax (AJAX)
