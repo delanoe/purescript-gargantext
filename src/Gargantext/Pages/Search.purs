@@ -1,5 +1,4 @@
-module SearchForm where
-
+module Gargantext.Pages.Search where
 
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Cont.Trans (lift)
@@ -11,7 +10,7 @@ import React.DOM.Props (_id, _type, className, name, onClick, onInput, placehold
 import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-import Landing as L
+import Gargantext.Pages.Home as L
 
 type State =
   {

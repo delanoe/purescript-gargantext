@@ -1,11 +1,10 @@
-module Projects where
+module Gargantext.Pages.Folder where
 
-
+import Prelude (id, void)
 
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
-import Prelude (id, void)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
 

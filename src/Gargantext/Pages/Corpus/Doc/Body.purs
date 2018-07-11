@@ -1,17 +1,17 @@
-module CorpusAnalysis where
+module Gargantext.Pages.Corpus.Doc.Body where
+
+import Prelude hiding (div)
 
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Data.Array (fold)
-import Network.HTTP.Affjax (AJAX)
-import Prelude (id, void)
-import Prelude hiding (div)
-import React.DOM (div, h3, hr, i, p, span, text, input)
-import React.DOM.Props (className, style)
-import Tabview as Tab
-import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
 import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Dashboard (globalPublis)
+import Gargantext.Pages.Corpus.Doc.Facet as Tab
+import Network.HTTP.Affjax (AJAX)
+import React.DOM (div, h3, hr, i, p, text)
+import React.DOM.Props (className, style)
+import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 
 type State = Tab.State
 

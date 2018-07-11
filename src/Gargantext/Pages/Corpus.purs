@@ -1,37 +1,28 @@
-module AddCorpusview where
+module Gargantext.Pages.Corpus where
+
+import Prelude hiding (div)
 
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Aff.Console (log)
 import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
-import DOM.HTML (window)
-import DOM.HTML.Location (host)
-import DOM.HTML.Window (localStorage)
-import DOM.WebStorage.Storage (getItem, setItem)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Lens (Lens', Prism', lens, over)
-import Data.List (List, fold, fromFoldable, toUnfoldable)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Lens (over)
+import Data.Maybe (Maybe(Just))
 import Data.MediaType.Common (applicationJSON)
-import Data.Tuple (Tuple(..))
-import Landing as L
 import Gargantext.Components.Modals.Modal (modalHide)
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
-import Prelude hiding (div)
 import React (ReactElement)
-import React.DOM (a, button, div, form, h2, h3, h4, h5, i, input, label, li, p, span, text, ul)
-import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
+import React.DOM (button, div, h3, h5, li, span, text, ul)
+import React.DOM.Props (_data, _id, _type, aria, className, onClick, role)
 import Routing.Hash.Aff (setHash)
-import Thermite (PerformAction, Render, Spec, _render, cotransform, focus, foreach, modifyState, simpleSpec, withState)
-import Unsafe.Coerce (unsafeCoerce)
-
+import Thermite (PerformAction, Render, Spec, _render, cotransform, modifyState, simpleSpec)
 
 type State =
   { select_database :: Boolean

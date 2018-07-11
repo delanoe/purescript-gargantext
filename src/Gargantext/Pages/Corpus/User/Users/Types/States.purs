@@ -4,7 +4,7 @@ module Gargantext.Users.Types.States
 import Brevets as B
 import Data.Maybe (Maybe(..))
 import Gargantext.Users.Types.Types (User)
-import Projects as PS
+import Gargantext.Pages.Folder as PS
 import Publications as P
 import Gargantext.Components.Tab as Tab
 

@@ -4,11 +4,11 @@ module Sourceview where
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Data.Array (fold)
-import DocView as D
+import Gargantext.Pages.Corpus.Doc.Document as D
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
 import React.DOM (h3, text)
-import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
+import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 
 type State = D.State
 
