@@ -291,7 +291,7 @@ pagesComponent s =
     selectSpec Home        = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
     selectSpec AddCorpus  = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView    = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
-    selectSpec UserPage   = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
+    selectSpec (UserPage i) = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
     selectSpec (DocAnnotation i)   = layout0 $ focus _docAnnotationViewState  _docAnnotationViewAction  D.docview
     selectSpec Tabview   = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
@@ -593,9 +593,10 @@ dispatchAction dispatcher _ SearchView = do
   _ <- dispatcher $ SearchA  $ S.NoOp
   pure unit
 
-dispatchAction dispatcher _ UserPage = do
-  _ <- dispatcher $ SetRoute  $ UserPage
+dispatchAction dispatcher _ (UserPage id) = do
+  _ <- dispatcher $ SetRoute  $ UserPage id
   _ <- dispatcher $ UserPageA $ U.NoOp
+  _ <- dispatcher $ UserPageA $ U.FetchUser id
   pure unit
 
 dispatchAction dispatcher _ (DocAnnotation i) = do
