@@ -1,4 +1,4 @@
-module Sourceview where
+module Gargantext.Pages.Corpus.Doc.Facets.Authors where
 
 
 import Control.Monad.Eff.Console (CONSOLE)
@@ -8,27 +8,30 @@ import Gargantext.Pages.Corpus.Doc.Document as D
 import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
 import React.DOM (h3, text)
-import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
+import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
+
+
+
 
 type State = D.State
 
 
-initialState :: D.State
+initialState :: State
 initialState = D.tdata
 
 type Action = D.Action
 
 
-sourceSpec :: forall props eff . Spec ( console :: CONSOLE
+authorSpec :: forall props eff . Spec ( console :: CONSOLE
                                         , ajax    :: AJAX
                                         , dom     :: DOM
                                         | eff
                                         ) State props Action
-sourceSpec = simpleSpec defaultPerformAction render
+authorSpec = simpleSpec defaultPerformAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [ h3 [] [text "Source view"]]
+       [ h3 [] [text "AuthorView"]]
 
-sourcespec' :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-sourcespec' = fold [sourceSpec, D.layoutDocview]
+authorspec' :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+authorspec' = fold [authorSpec, D.layoutDocview]

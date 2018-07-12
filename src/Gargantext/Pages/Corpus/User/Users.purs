@@ -1,7 +1,7 @@
-module Gargantext.Users
-       (module Gargantext.Users.Types,
-        module Gargantext.Users.Specs)
+module Gargantext.Pages.Corpus.User.Users
+       (module Gargantext.Pages.Corpus.User.Users.Types,
+        module Gargantext.Pages.Corpus.User.Users.Specs)
        where
 
-import Gargantext.Users.Types
-import Gargantext.Users.Specs
+import Gargantext.Pages.Corpus.User.Users.Types
+import Gargantext.Pages.Corpus.User.Users.Specs

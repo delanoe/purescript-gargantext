@@ -1,8 +1,8 @@
-module Gargantext.Users.API where
+module Gargantext.Pages.Corpus.User.Users.API where
 
 import Prelude
 
-import Gargantext.Users.Types (Action(..), State, User, _user)
+import Gargantext.Pages.Corpus.User.Users.Types (Action(..), State, User, _user)
 import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Trans.Class (lift)

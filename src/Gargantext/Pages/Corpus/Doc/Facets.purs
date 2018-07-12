@@ -2,7 +2,7 @@ module Gargantext.Pages.Corpus.Doc.Facets where
 
 import Prelude hiding (div)
 
-import Authorview as AV
+import Gargantext.Pages.Corpus.Doc.Facets.Authors as AV
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Data.Either (Either(..))
@@ -12,8 +12,8 @@ import Data.Tuple (Tuple(..))
 import Gargantext.Pages.Corpus.Doc.Document as DV
 import Gargantext.Components.Tab as Tab
 import Network.HTTP.Affjax (AJAX)
-import Sourceview as SV
-import Termsview as TV
+import Gargantext.Pages.Corpus.Doc.Facets.Sources as SV
+import Gargantext.Pages.Corpus.Doc.Facets.Terms as TV
 import Thermite (Spec, focus)
 
 data Action

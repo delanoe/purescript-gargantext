@@ -1,6 +1,4 @@
-module Termsview where
-
-
+module Gargantext.Pages.Corpus.Doc.Facets.Terms where
 
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)

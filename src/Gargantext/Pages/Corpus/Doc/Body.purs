@@ -6,7 +6,7 @@ import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
 import Data.Array (fold)
 import Gargantext.Components.Charts.Options.ECharts (chart)
-import Gargantext.Dashboard (globalPublis)
+import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
 import Gargantext.Pages.Corpus.Doc.Facets as Tab
 import Network.HTTP.Affjax (AJAX)
 import React.DOM (div, h3, hr, i, p, text)
