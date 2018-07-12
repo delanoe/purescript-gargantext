@@ -6,8 +6,8 @@ import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
 import Data.Maybe (Maybe)
-import Gargantext.Users.Types.Types.States (Action(..), State)
-import Gargantext.Users.Types.Types (User)
+import Gargantext.Pages.Corpus.User.Users.Types.States (Action(..), State)
+import Gargantext.Pages.Corpus.User.Users.Types.Types (User)
 import Network.HTTP.Affjax (AJAX)
 import Gargantext.Pages.Folder as PS
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as P
