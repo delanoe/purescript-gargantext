@@ -11,7 +11,8 @@ import DOM.HTML.Window (document) as DOM
 import DOM.Node.ParentNode (QuerySelector(..))
 import DOM.Node.ParentNode (querySelector) as DOM
 import Data.Maybe (fromJust)
-import Gargantext.Navigation (dispatchAction, initAppState, layoutSpec)
+import Gargantext.Layout (dispatchAction, layoutSpec)
+import Gargantext.Navigation (initAppState)
 import Gargantext.Router (routeHandler, routing)
 import Network.HTTP.Affjax (AJAX)
 import Partial.Unsafe (unsafePartial)
