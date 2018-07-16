@@ -3,9 +3,11 @@ module Gargantext.Users.Specs.Renders
 
 import Gargantext.Users.Types
 
+import Data.List (List, toUnfoldable, zip)
+import Data.Map (Map, empty, keys, values)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
-import Prelude (($), (<<<))
+import Data.Tuple (Tuple(..), uncurry)
+import Prelude (($), (<<<), (<$>))
 import React (ReactElement)
 import React.DOM (div, h3, h1, li, span, text, ul, img)
 import React.DOM.Props (_id, className, src)
@@ -42,27 +44,27 @@ display title elems =
      ]
   ]
 
-userInfos :: HyperData -> ReactElement
-userInfos (HyperData user) =
-    ul [className "list-group"]
-    [
-      listElement <<< infoRender <<< Tuple "Fonction: "        $ checkMaybe user.fonction
-    , listElement <<< infoRender <<< Tuple "Entité, service: " $ checkMaybe user.entite
-    , listElement <<< infoRender <<< Tuple "Téléphone: "       $ checkMaybe user.atel
-    , listElement <<< infoRender <<< Tuple "Courriel: "        $ checkMaybe user.mail
-    , listElement <<< infoRender <<< Tuple "Bureau: "          $ checkMaybe user.bureau
-    , listElement <<< infoRender <<< Tuple "Appelation: "      $ checkMaybe user.fonction
-    , listElement <<< infoRender $   Tuple "Lieu: "            $ checkMaybe user.lieu
-    ]
+mapMyMap :: forall k v x. (k -> v -> x) -> Map k v -> Array x
+mapMyMap f m = toUnfoldable $ uncurry f <$> zip (keys m) (values m)
+
+infixl 4 mapMyMap as <.~$>
+
+userInfos :: Maybe HyperData -> ReactElement
+userInfos hyperdata =
+    ul [className "list-group"] $
+    listInfo <.~$> (checkMaybe hyperdata)
   where
-    checkMaybe (Nothing) = ""
-    checkMaybe (Just a) = a
+    checkMaybe (Nothing) = empty
+    checkMaybe (Just (HyperData a)) = a
 
-    listElement :: forall props. Array ReactElement -> ReactElement
-    listElement = li [className "list-group-item justify-content-between"]
+listInfo :: String -> String -> ReactElement
+listInfo s ss = listElement $ infoRender s ss
 
-    infoRender :: forall props. Tuple String String -> Array ReactElement
-    infoRender (Tuple title content) =
+listElement :: forall props. Array ReactElement -> ReactElement
+listElement = li [className "list-group-item justify-content-between"]
+
+infoRender :: forall props. String -> String -> Array ReactElement
+infoRender title content =
       [ span [] [text title]
       , span [className "badge badge-default badge-pill"] [text content]
       ]

@@ -1,9 +1,10 @@
 module Gargantext.Users.Types.Types where
+
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Generic (class Generic)
+import Data.Map (Map, fromFoldable)
 import Data.Maybe (Maybe)
+import DecodeMaybe ((.?|))
 import Prelude (bind, pure, ($))
-import DecodeMaybe
 
 newtype User =
   User {
@@ -13,60 +14,8 @@ newtype User =
     parentId :: Int,
     name :: String,
     date ::Maybe String,
-    hyperdata :: HyperData
+    hyperdata :: Maybe HyperData
        }
-
-newtype HyperData =
-  HyperData
-  {
-    bureau ::Maybe String,
-    atel ::Maybe String,
-    fax ::Maybe String,
-    aprecision ::Maybe String,
-    service ::Maybe String,
-    service2 ::Maybe String,
-    groupe ::Maybe String,
-    lieu ::Maybe String,
-    pservice ::Maybe String,
-    date_modification ::Maybe String,
-    fonction ::Maybe String,
-    pfonction ::Maybe String,
-    url ::Maybe String,
-    prenom ::Maybe String,
-    nom ::Maybe String,
-    idutilentite ::Maybe String,
-    afonction ::Maybe String,
-    grprech ::Maybe String,
-    entite ::Maybe String,
-    entite2 ::Maybe String,
-    mail :: Maybe String
-  }
-
-instance decodeUserHyperData :: DecodeJson HyperData where
-  decodeJson json = do
-    obj <- decodeJson json
-    bureau <- obj .?| "bureau"
-    atel <- obj .?| "atel"
-    fax <- obj .?| "fax"
-    aprecision <- obj .?| "aprecision"
-    service <- obj .?| "service"
-    service2 <- obj .?| "service2"
-    groupe <- obj .?| "groupe"
-    lieu <- obj .?| "lieu"
-    pservice <- obj .?| "pservice"
-    date_modification  <- obj .?| "date_modification"
-    fonction <- obj .?| "fonction"
-    pfonction <- obj .?| "pfonction"
-    url <- obj .?| "url"
-    prenom <- obj .?| "prenom"
-    nom <- obj .?| "nom"
-    idutilentite <- obj .?| "idutilentite"
-    afonction <- obj .?| "afonction"
-    grprech <- obj .?| "grprech"
-    entite <- obj .?| "entite"
-    entite2 <- obj .?| "entite2"
-    mail <- obj .?| "mail"
-    pure $ HyperData {bureau, atel, fax, aprecision, service, service2, groupe, lieu, pservice, date_modification, fonction, pfonction, url, prenom, nom, idutilentite, afonction, grprech, entite, entite2, mail}
 
 instance decodeUser :: DecodeJson User where
   decodeJson json = do
@@ -77,5 +26,12 @@ instance decodeUser :: DecodeJson User where
     parentId <- obj .? "parentId"
     name <- obj .? "name"
     date <- obj .?| "date"
-    hyperdata <- obj .? "hyperdata"
+    hyperdata <- obj .?| "hyperdata"
     pure $ User {id, typename, userId, parentId, name, date, hyperdata}
+
+newtype HyperData = HyperData (Map String String)
+
+instance decodeHyperData :: DecodeJson HyperData where
+  decodeJson json = do
+    obj <- decodeJObject json
+    pure <<< HyperData $ fromFoldable obj
