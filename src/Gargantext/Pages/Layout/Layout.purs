@@ -1,4 +1,4 @@
-module Gargantext.Layout where
+module Gargantext.Pages.Layout.Layout where
 
 import Prelude hiding (div)
 
@@ -11,7 +11,37 @@ import Data.Maybe (Maybe(Nothing, Just))
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree as Tree
-import Gargantext.Layout.Lens (_addCorpusAction, _addCorpusState, _corpusAction, _corpusState, _dashBoardAction, _dashBoardSate, _docAnnotationViewAction, _docAnnotationViewState, _docViewAction, _docViewState, _graphExplorerAction, _graphExplorerState, _landingAction, _landingState, _loginAction, _loginState, _ngAction, _ngState, _searchAction, _searchState, _tabviewAction, _tabviewState, _treeAction, _treeState, _userPageAction, _userPageState)
+
+-- | [Naming] metrics indicator: reduce spaces between "," and "_"
+import Gargantext.Pages.Layout.States (         _addCorpusState
+                                      ,            _corpusState
+                                      ,          _dashBoardSate
+                                      , _docAnnotationViewState
+                                      ,           _docViewState
+                                      ,     _graphExplorerState
+                                      ,           _landingState
+                                      ,             _loginState
+                                      ,                _ngState
+                                      ,            _searchState
+                                      ,           _tabviewState
+                                      ,              _treeState
+                                      ,          _userPageState
+                                      )
+-- | [Naming] metrics indicator: reduce spaces between "," and "_"
+import Gargantext.Pages.Layout.Actions (         _addCorpusAction
+                                       ,            _corpusAction
+                                       ,         _dashBoardAction
+                                       , _docAnnotationViewAction
+                                       ,           _docViewAction
+                                       ,     _graphExplorerAction
+                                       ,           _landingAction
+                                       ,             _loginAction
+                                       ,                _ngAction
+                                       ,            _searchAction
+                                       ,           _tabviewAction
+                                       ,              _treeAction
+                                       ,          _userPageAction
+                                       )
 import Gargantext.Pages.Corpus as AC
 import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Body as CA
@@ -78,12 +108,13 @@ layout0 layout =
     outerLayout =
       cont $ fold
       [ withState \st ->
-         if ((\(LN.State s) -> s.loginC) st.loginState == true) then ls as
-         else outerLayout1
+         if ((\(LN.State s) -> s.loginC) st.loginState == true) 
+            then ls as
+            else outerLayout1
       , rs bs      ]
     ls   = over _render \render d p s c -> [ div [className "col-md-2" ] (render d p s c) ]
     rs   = over _render \render d p s c -> [ div [className "col-md-10"] (render d p s c) ]
-    cont = over _render \render d p s c -> [ div [ className "row"     ] (render d p s c) ]
+    cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
     as = focus _treeState _treeAction Tree.treeview
 

@@ -8,6 +8,7 @@ import Control.Monad.Eff.Console (CONSOLE, log)
 import DOM (DOM)
 import Data.Array (length)
 import Data.Either (Either(..))
+import Data.Lens (Lens', Prism', lens, prism)
 
 import Gargantext.Pages.Corpus.Doc.Annotation   as D
 import Gargantext.Pages.Corpus.Doc.Body         as CA
@@ -108,3 +109,86 @@ performAction Initialize  _ state = void do
 
 performAction _ _ _ = void do
   modifyState id
+
+----------------------------------------------------------
+
+_landingAction :: Prism' Action L.Action
+_landingAction = prism LandingA \action ->
+  case action of
+    LandingA caction -> Right caction
+    _-> Left action
+
+_loginAction :: Prism' Action LN.Action
+_loginAction = prism LoginA \action ->
+  case action of
+    LoginA caction -> Right caction
+    _-> Left action
+
+_addCorpusAction :: Prism' Action AC.Action
+_addCorpusAction = prism AddCorpusA \action ->
+  case action of
+    AddCorpusA caction -> Right caction
+    _-> Left action
+
+_docViewAction :: Prism' Action DV.Action
+_docViewAction = prism DocViewA \action ->
+  case action of
+    DocViewA caction -> Right caction
+    _-> Left action
+
+_searchAction :: Prism' Action S.Action
+_searchAction = prism SearchA \action ->
+  case action of
+    SearchA caction -> Right caction
+    _-> Left action
+
+_userPageAction :: Prism' Action U.Action
+_userPageAction = prism UserPageA \action ->
+  case action of
+    UserPageA caction -> Right caction
+    _-> Left action
+
+_dashBoardAction :: Prism' Action Dsh.Action
+_dashBoardAction = prism DashboardA \action ->
+  case action of
+    DashboardA caction -> Right caction
+    _ -> Left action
+
+_docAnnotationViewAction :: Prism' Action D.Action
+_docAnnotationViewAction = prism DocAnnotationViewA \action ->
+  case action of
+    DocAnnotationViewA caction -> Right caction
+    _-> Left action
+
+_treeAction :: Prism' Action Tree.Action
+_treeAction = prism TreeViewA \action ->
+  case action of
+    TreeViewA caction -> Right caction
+    _-> Left action
+
+_tabviewAction :: Prism' Action TV.Action
+_tabviewAction = prism TabViewA \action ->
+  case action of
+    TabViewA caction -> Right caction
+    _-> Left action
+
+_corpusAction :: Prism' Action CA.Action
+_corpusAction = prism CorpusAnalysisA \action ->
+  case action of
+    CorpusAnalysisA caction -> Right caction
+    _-> Left action
+
+_graphExplorerAction :: Prism' Action GE.Action
+_graphExplorerAction = prism GraphExplorerA \action ->
+  case action of
+    GraphExplorerA caction -> Right caction
+    _-> Left action
+
+_ngAction :: Prism' Action NG.Action
+_ngAction = prism NgramsA \action ->
+  case action of
+    NgramsA caction -> Right caction
+    _-> Left action
+
+
+

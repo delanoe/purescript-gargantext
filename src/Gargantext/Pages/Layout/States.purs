@@ -75,4 +75,44 @@ initAppState =
   , dashboard      : Dsh.initialState
   }
 
+---------------------------------------------------------
+_landingState :: Lens' AppState L.State
+_landingState = lens (\s -> s.landingState) (\s ss -> s{landingState = ss})
+
+_loginState :: Lens' AppState LN.State
+_loginState = lens (\s -> s.loginState) (\s ss -> s{loginState = ss})
+
+_addCorpusState :: Lens' AppState AC.State
+_addCorpusState = lens (\s -> s.addCorpusState) (\s ss -> s{addCorpusState = ss})
+
+_docViewState :: Lens' AppState DV.State
+_docViewState = lens (\s -> s.docViewState) (\s ss -> s{docViewState = ss})
+
+_searchState :: Lens' AppState S.State
+_searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
+
+_userPageState :: Lens' AppState U.State
+_userPageState = lens (\s -> s.userPage) (\s ss -> s{userPage = ss})
+
+_docAnnotationViewState :: Lens' AppState D.State
+_docAnnotationViewState = lens (\s -> s.docAnnotationView) (\s ss -> s{docAnnotationView = ss})
+
+_treeState :: Lens' AppState Tree.State
+_treeState = lens (\s -> s.ntreeView) (\s ss -> s {ntreeView = ss})
+
+_tabviewState :: Lens' AppState TV.State
+_tabviewState = lens (\s -> s.tabview) (\s ss -> s {tabview = ss})
+
+_corpusState :: Lens' AppState CA.State
+_corpusState = lens (\s -> s.corpusAnalysis) (\s ss -> s {corpusAnalysis = ss})
+
+_dashBoardSate :: Lens' AppState Dsh.State
+_dashBoardSate = lens (\s -> s.dashboard) (\s ss -> s {dashboard = ss})
+
+_graphExplorerState :: Lens' AppState GE.State
+_graphExplorerState = lens (\s -> s.graphExplorer) (\s ss -> s{graphExplorer = ss})
+
+_ngState :: Lens' AppState NG.State
+_ngState = lens (\s -> s.ngState) (\s ss -> s{ngState = ss})
+
 
