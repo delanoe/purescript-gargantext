@@ -12,8 +12,8 @@ import DOM.Node.ParentNode (QuerySelector(..))
 import DOM.Node.ParentNode (querySelector) as DOM
 import Data.Maybe (fromJust)
 
-import Gargantext.Pages.Layout.Specs (layoutSpec)
-import Gargantext.Layout.Dispatcher   (dispatchAction)
+import Gargantext.Pages.Layout        (dispatchAction)
+import Gargantext.Pages.Layout.Specs  (layoutSpec)
 import Gargantext.Pages.Layout.States (initAppState)
 
 import Gargantext.Router (routeHandler, routing)

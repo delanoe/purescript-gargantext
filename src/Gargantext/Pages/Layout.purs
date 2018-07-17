@@ -1,4 +1,4 @@
-module Gargantext.Layout.Dispatcher where
+module Gargantext.Pages.Layout where
 
 import Prelude hiding (div)
 import Gargantext.Components.Login as LN
