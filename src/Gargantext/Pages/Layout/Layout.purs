@@ -10,7 +10,9 @@ import Data.Maybe (Maybe(Nothing, Just))
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree as Tree
-import Gargantext.Navigation (Action(..), AppState, E, _addCorpusAction, _addCorpusState, _corpusAction, _corpusState, _dashBoardAction, _dashBoardSate, _docAnnotationViewAction, _docAnnotationViewState, _docViewAction, _docViewState, _graphExplorerAction, _graphExplorerState, _landingAction, _landingState, _loginAction, _loginState, _ngAction, _ngState, _searchAction, _searchState, _tabviewAction, _tabviewState, _treeAction, _treeState, _userPageAction, _userPageState, performAction)
+import Gargantext.Layout.Action (performAction)
+import Gargantext.Layout.Lens (_addCorpusAction, _addCorpusState, _corpusAction, _corpusState, _dashBoardAction, _dashBoardSate, _docAnnotationViewAction, _docAnnotationViewState, _docViewAction, _docViewState, _graphExplorerAction, _graphExplorerState, _landingAction, _landingState, _loginAction, _loginState, _ngAction, _ngState, _searchAction, _searchState, _tabviewAction, _tabviewState, _treeAction, _treeState, _userPageAction, _userPageState)
+import Gargantext.Layout.Types (Action(..), AppState, E)
 import Gargantext.Pages.Corpus as AC
 import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Body as CA
@@ -316,69 +318,3 @@ layoutSpec =
     container :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
     container = over _render \render d p s c ->
       (render d p s c)
-
-dispatchAction :: forall t115 t445 t447.
-                  Bind t445 => Applicative t445  =>
-                  (Action -> t445 t447) -> t115 -> Routes -> t445 Unit
-
-dispatchAction dispatcher _ Home = do
-  _ <- dispatcher Initialize
-  _ <- dispatcher $ SetRoute Home
-  _ <- dispatcher $ LandingA L.NoOp
-  pure unit
-
-dispatchAction dispatcher _ Login = do
-  _ <- dispatcher Initialize
-  _ <- dispatcher $ SetRoute Login
-  _ <- dispatcher $ LoginA LN.NoOp
-  pure unit
-
-dispatchAction dispatcher _ AddCorpus = do
-  _ <- dispatcher $ SetRoute AddCorpus
-  _ <- dispatcher $ AddCorpusA AC.LoadDatabaseDetails
-  pure unit
-
-dispatchAction dispatcher _ DocView = do
-  _ <- dispatcher $ SetRoute $ DocView
-  _ <- dispatcher $ DocViewA $ DV.LoadData
-  pure unit
-
-dispatchAction dispatcher _ SearchView = do
-  _ <- dispatcher $ SetRoute $ SearchView
-  _ <- dispatcher $ SearchA  $ S.NoOp
-  pure unit
-
-dispatchAction dispatcher _ (UserPage id) = do
-  _ <- dispatcher $ SetRoute  $ UserPage id
-  _ <- dispatcher $ UserPageA $ U.NoOp
-  _ <- dispatcher $ UserPageA $ U.FetchUser id
-  pure unit
-
-dispatchAction dispatcher _ (DocAnnotation i) = do
-  _ <- dispatcher $ SetRoute  $ DocAnnotation i
-  _ <- dispatcher $ DocAnnotationViewA $ D.NoOp
-  pure unit
-
-dispatchAction dispatcher _ Tabview = do
-  _ <- dispatcher $ SetRoute  $ Tabview
-  _ <- dispatcher $ TabViewA $ TV.NoOp
-  pure unit
-
-dispatchAction dispatcher _ CorpusAnalysis = do
-  _ <- dispatcher $ SetRoute  $ CorpusAnalysis
-  --_ <- dispatcher $ CorpusAnalysisA $ CA.NoOp
-  pure unit
-
-dispatchAction dispatcher _ PGraphExplorer = do
-  _ <- dispatcher $ SetRoute  $ PGraphExplorer
-  _ <- dispatcher $ GraphExplorerA $ GE.LoadGraph "imtNew.json"
-  pure unit
-
-dispatchAction dispatcher _ NGramsTable = do
-  _ <- dispatcher $ SetRoute  $ NGramsTable
-  _ <- dispatcher $ NgramsA $ NG.NoOp
-  pure unit
-
-dispatchAction dispatcher _ Dashboard = do
-  _ <- dispatcher $ SetRoute $ Dashboard
-  pure unit
