@@ -7,12 +7,11 @@ import DOM (DOM)
 import Data.Foldable (fold, intercalate)
 import Data.Lens (over)
 import Data.Maybe (Maybe(Nothing, Just))
+
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree as Tree
-import Gargantext.Pages.Layout.Action (Action(..), performAction)
 import Gargantext.Layout.Lens (_addCorpusAction, _addCorpusState, _corpusAction, _corpusState, _dashBoardAction, _dashBoardSate, _docAnnotationViewAction, _docAnnotationViewState, _docViewAction, _docViewState, _graphExplorerAction, _graphExplorerState, _landingAction, _landingState, _loginAction, _loginState, _ngAction, _ngState, _searchAction, _searchState, _tabviewAction, _tabviewState, _treeAction, _treeState, _userPageAction, _userPageState)
-import Gargantext.Pages.Layout.State (AppState, E)
 import Gargantext.Pages.Corpus as AC
 import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Body as CA
@@ -23,8 +22,11 @@ import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Home as L
+import Gargantext.Pages.Layout.Actions (Action(..), performAction)
+import Gargantext.Pages.Layout.States (AppState, E)
 import Gargantext.Pages.Search as S
 import Gargantext.Router (Routes(..))
+
 import Network.HTTP.Affjax (AJAX)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr, img, input, li, p, span, text, ul)

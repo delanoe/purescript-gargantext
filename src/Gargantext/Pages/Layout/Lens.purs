@@ -1,7 +1,5 @@
 module Gargantext.Layout.Lens where
 
----- Lens and Prism
-import Gargantext.Pages.Layout.State
 
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
@@ -18,7 +16,8 @@ import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users   as U
 import Gargantext.Pages.Home                as L
-import Gargantext.Pages.Layout.Action       (Action(..))
+import Gargantext.Pages.Layout.Actions        (Action(..))
+import Gargantext.Pages.Layout.States
 import Gargantext.Pages.Search              as S
 
 ---- Lens and Prism

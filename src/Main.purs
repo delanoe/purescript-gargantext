@@ -14,7 +14,7 @@ import Data.Maybe (fromJust)
 
 import Gargantext.Layout (layoutSpec)
 import Gargantext.Layout.Dispatcher (dispatchAction)
-import Gargantext.Pages.Layout.State (initAppState)
+import Gargantext.Pages.Layout.States (initAppState)
 
 import Gargantext.Router (routeHandler, routing)
 import Network.HTTP.Affjax (AJAX)

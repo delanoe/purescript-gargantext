@@ -2,7 +2,7 @@ module Gargantext.Layout.Dispatcher where
 
 import Prelude hiding (div)
 import Gargantext.Components.Login as LN
-import Gargantext.Pages.Layout.Action (Action(..))
+import Gargantext.Pages.Layout.Actions (Action(..))
 import Gargantext.Pages.Corpus as AC
 import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Document as DV

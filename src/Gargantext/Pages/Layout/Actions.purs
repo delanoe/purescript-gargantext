@@ -1,4 +1,4 @@
-module Gargantext.Pages.Layout.Action where
+module Gargantext.Pages.Layout.Actions where
 
 import Prelude hiding (div)
 
@@ -25,7 +25,7 @@ import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Search                  as S
 import Gargantext.Pages.Corpus.Doc.Facets       as TV
 
-import Gargantext.Pages.Layout.State (AppState)
+import Gargantext.Pages.Layout.States (AppState)
 import Gargantext.Pages.Corpus.Doc.Document as DV
 
 import Network.HTTP.Affjax (AJAX)

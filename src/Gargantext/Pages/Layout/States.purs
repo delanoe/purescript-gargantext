@@ -1,4 +1,4 @@
-module Gargantext.Pages.Layout.State where
+module Gargantext.Pages.Layout.States where
 
 import Prelude hiding (div)
 
