@@ -9,7 +9,8 @@ import Control.Monad.Aff.Console (CONSOLE)
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
 import Thermite (Spec, simpleSpec)
-import Gargantext.Pages.Corpus.User.Users.Types (Action, State)
+import Gargantext.Pages.Corpus.User.Users.Actions
+import Gargantext.Pages.Corpus.User.Users.States
 import Gargantext.Pages.Corpus.User.Users.API (performAction)
 
 layoutUser :: forall props eff . Spec ( console :: CONSOLE
@@ -18,3 +19,19 @@ layoutUser :: forall props eff . Spec ( console :: CONSOLE
                                         | eff
                                         ) State props Action
 layoutUser = simpleSpec performAction render
+
+publicationSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+publicationSpec = focus _publens _pubAction P.publicationSpec
+
+brevetSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State  props Action
+brevetSpec = focus _brevetslens _brevetsAction B.brevetsSpec
+
+projectSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+projectSpec = focus _projectslens _projectsAction PS.projets
+
+facets :: forall eff props. Spec ( dom :: DOM, console :: CONSOLE, ajax :: AJAX| eff) State props Action
+facets = tabs _tablens _tabAction $ fromFoldable
+         [ Tuple "Publications (12)" publicationSpec
+         , Tuple "Brevets (2)" brevetSpec
+         , Tuple "Projets IMT (5)" projectSpec
+      ]

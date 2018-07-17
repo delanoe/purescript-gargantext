@@ -1,38 +1,49 @@
-module Gargantext.Pages.Corpus.User.Users.Types
-       (module Gargantext.Pages.Corpus.User.Users.Types.Types,
-        module Gargantext.Pages.Corpus.User.Users.Types.Lens,
-        module Gargantext.Pages.Corpus.User.Users.Types.States,
-        brevetSpec,
-        projectSpec,
-        facets
-       )
-       where
+module Gargantext.Pages.Corpus.User.Users.Types where
 
-import Prelude (($))
+import Prelude (bind, pure, ($))
 
-import Gargantext.Pages.Corpus.User.Users.Types.Lens
-import Gargantext.Pages.Corpus.User.Users.Types.Types
-import Gargantext.Pages.Corpus.User.Users.Types.States
 import Gargantext.Pages.Corpus.User.Brevets as B
-import Control.Monad.Aff.Console (CONSOLE)
-import DOM (DOM)
-import Data.List (fromFoldable)
-import Data.Tuple (Tuple(..))
-import Network.HTTP.Affjax (AJAX)
 import Gargantext.Pages.Folder as PS
 import Gargantext.Components.Tab (tabs)
+import Gargantext.Utils.DecodeMaybe ((.?|))
+
+import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Map (Map, fromFoldable)
+import Data.Maybe (Maybe)
+import Data.List (fromFoldable)
+import Data.Tuple (Tuple(..))
+
+import Control.Monad.Aff.Console (CONSOLE)
+import DOM (DOM)
+import Network.HTTP.Affjax (AJAX)
 import Thermite (Spec, focus)
 
-brevetSpec :: forall eff props. Spec (dom :: DOM, console::CONSOLE, ajax :: AJAX | eff) State  props Action
-brevetSpec = focus _brevetslens _brevetsAction B.brevetsSpec
+newtype User =
+  User {
+    id ::Int,
+    typename :: Maybe Int,
+    userId ::Int,
+    parentId :: Int,
+    name :: String,
+    date ::Maybe String,
+    hyperdata :: Maybe HyperData
+       }
 
-projectSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
-projectSpec = focus _projectslens _projectsAction PS.projets
+instance decodeUser :: DecodeJson User where
+  decodeJson json = do
+    obj <- decodeJson json
+    id <- obj .? "id"
+    typename <- obj .?| "typename"
+    userId <- obj .? "userId"
+    parentId <- obj .? "parentId"
+    name <- obj .? "name"
+    date <- obj .?| "date"
+    hyperdata <- obj .?| "hyperdata"
+    pure $ User {id, typename, userId, parentId, name, date, hyperdata}
 
+newtype HyperData = HyperData (Map String String)
 
-facets :: forall eff props. Spec ( dom :: DOM, console :: CONSOLE, ajax :: AJAX| eff) State props Action
-facets = tabs _tablens _tabAction $ fromFoldable
-         [ Tuple "Publications (12)" publicationSpec
-         , Tuple "Brevets (2)" brevetSpec
-         , Tuple "Projets IMT (5)" projectSpec
-      ]
+instance decodeHyperData :: DecodeJson HyperData where
+  decodeJson json = do
+    obj <- decodeJObject json
+    pure <<< HyperData $ fromFoldable obj
