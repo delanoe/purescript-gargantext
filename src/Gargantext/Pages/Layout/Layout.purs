@@ -10,9 +10,9 @@ import Data.Maybe (Maybe(Nothing, Just))
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree as Tree
-import Gargantext.Layout.Action (performAction)
+import Gargantext.Pages.Layout.Action (Action(..), performAction)
 import Gargantext.Layout.Lens (_addCorpusAction, _addCorpusState, _corpusAction, _corpusState, _dashBoardAction, _dashBoardSate, _docAnnotationViewAction, _docAnnotationViewState, _docViewAction, _docViewState, _graphExplorerAction, _graphExplorerState, _landingAction, _landingState, _loginAction, _loginState, _ngAction, _ngState, _searchAction, _searchState, _tabviewAction, _tabviewState, _treeAction, _treeState, _userPageAction, _userPageState)
-import Gargantext.Layout.Types (Action(..), AppState, E)
+import Gargantext.Pages.Layout.State (AppState, E)
 import Gargantext.Pages.Corpus as AC
 import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Body as CA
@@ -79,12 +79,9 @@ layout0 layout =
          if ((\(LN.State s) -> s.loginC) st.loginState == true) then ls as
          else outerLayout1
       , rs bs      ]
-    ls = over _render \render d p s c ->
-      [div [className "col-md-2"] (render d p s c)]
-    rs = over _render \render d p s c ->
-      [ div [className "col-md-10"] (render d p s c) ]
-    cont = over _render \render d p s c ->
-      [ div [ className "row" ] (render d p s c) ]
+    ls   = over _render \render d p s c -> [ div [className "col-md-2" ] (render d p s c) ]
+    rs   = over _render \render d p s c -> [ div [className "col-md-10"] (render d p s c) ]
+    cont = over _render \render d p s c -> [ div [ className "row"     ] (render d p s c) ]
 
     as = focus _treeState _treeAction Tree.treeview
 

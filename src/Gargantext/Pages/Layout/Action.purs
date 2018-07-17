@@ -1,4 +1,4 @@
-module Gargantext.Layout.Action where
+module Gargantext.Pages.Layout.Action where
 
 import Prelude hiding (div)
 
@@ -8,12 +8,52 @@ import Control.Monad.Eff.Console (CONSOLE, log)
 import DOM (DOM)
 import Data.Array (length)
 import Data.Either (Either(..))
-import Gargantext.Components.Modals.Modal (modalShow)
-import Gargantext.Components.Tree as Tree
-import Gargantext.Layout.Types (Action(..), AppState)
+
+import Gargantext.Pages.Corpus.Doc.Annotation   as D
+import Gargantext.Pages.Corpus.Doc.Body         as CA
+import Gargantext.Pages.Corpus.Doc.Document     as DV
+import Gargantext.Components.Login              as LN
+import Gargantext.Components.Modals.Modal          (modalShow)
+import Gargantext.Components.Tree               as Tree
+import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
+import Gargantext.Pages.Corpus                  as AC
+import Gargantext.Router                           (Routes(..))
+import Gargantext.Pages.Corpus.User.Users       as U
+import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
+import Gargantext.Pages.Home                    as L
+import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
+import Gargantext.Pages.Search                  as S
+import Gargantext.Pages.Corpus.Doc.Facets       as TV
+
+import Gargantext.Pages.Layout.State (AppState)
 import Gargantext.Pages.Corpus.Doc.Document as DV
+
 import Network.HTTP.Affjax (AJAX)
 import Thermite (PerformAction, modifyState)
+
+
+
+data Action
+  = Initialize
+  | LandingA   L.Action
+  | LoginA     LN.Action
+  | SetRoute   Routes
+  | AddCorpusA AC.Action
+  | DocViewA   DV.Action
+  | SearchA    S.Action
+  | UserPageA  U.Action
+  | DocAnnotationViewA  D.Action
+  | TreeViewA  Tree.Action
+  | TabViewA   TV.Action
+  | GraphExplorerA GE.Action
+  | DashboardA Dsh.Action
+  | Search     String
+  | Go
+  | CorpusAnalysisA CA.Action
+  | ShowLogin
+  | ShowAddcorpus
+  | NgramsA    NG.Action
+
 
 performAction :: forall eff props. PerformAction ( dom :: DOM
                                                  , ajax :: AJAX
