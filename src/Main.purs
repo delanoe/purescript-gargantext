@@ -11,9 +11,13 @@ import DOM.HTML.Window (document) as DOM
 import DOM.Node.ParentNode (QuerySelector(..))
 import DOM.Node.ParentNode (querySelector) as DOM
 import Data.Maybe (fromJust)
-import Navigation (dispatchAction, initAppState, layoutSpec)
+
+import Gargantext.Pages.Layout        (dispatchAction)
+import Gargantext.Pages.Layout.Specs  (layoutSpec)
+import Gargantext.Pages.Layout.States (initAppState)
+
+import Gargantext.Router (routeHandler, routing)
 import Network.HTTP.Affjax (AJAX)
-import PageRouter (routeHandler, routing)
 import Partial.Unsafe (unsafePartial)
 import React as R
 import ReactDOM as RDOM
