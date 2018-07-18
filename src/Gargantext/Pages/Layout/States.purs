@@ -9,9 +9,9 @@ import Data.Maybe (Maybe(Just))
 
 import Gargantext.Components.Login              as LN
 import Gargantext.Components.Tree               as Tree
-import Gargantext.Pages.Corpus                  as AC
+import Gargantext.Pages.Layout.Specs.AddCorpus  as AC
+import Gargantext.Pages.Corpus                  as CA
 import Gargantext.Pages.Corpus.Doc.Annotation   as D
-import Gargantext.Pages.Corpus.Doc.Body         as CA
 import Gargantext.Pages.Corpus.Doc.Document     as DV
 import Gargantext.Pages.Corpus.Doc.Facets       as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
@@ -19,7 +19,7 @@ import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users       as U
 import Gargantext.Pages.Home                    as L
-import Gargantext.Pages.Search                  as S
+import Gargantext.Pages.Layout.Specs.Search     as S
 import Gargantext.Router                           (Routes(..))
 
 import Network.HTTP.Affjax (AJAX)
@@ -37,7 +37,7 @@ type AppState =
   , docAnnotationState :: D.State
   , ntreeState     :: Tree.State
   , tabviewState   :: TV.State
-  , search    :: String
+  , search         :: String
   , corpusState    :: CA.State
   , showLogin      :: Boolean
   , showCorpus     :: Boolean

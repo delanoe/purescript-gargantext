@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Actions where
+module Gargantext.Pages.Layout.Specs.AddCorpus.Actions where
 
 import Prelude hiding (div)
 
@@ -17,7 +17,7 @@ import Data.Maybe (Maybe(Just))
 import Data.MediaType.Common (applicationJSON)
 
 import Gargantext.Components.Modals.Modal (modalHide)
-import Gargantext.Pages.Corpus.States
+import Gargantext.Pages.Layout.Specs.AddCorpus.States
 
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))

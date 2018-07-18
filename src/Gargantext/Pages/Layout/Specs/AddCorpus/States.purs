@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.States where
+module Gargantext.Pages.Layout.Specs.AddCorpus.States where
 
 import Prelude hiding (div)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))

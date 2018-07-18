@@ -42,9 +42,9 @@ import Gargantext.Pages.Layout.Actions (         _addCorpusAction
                                        ,              _treeAction
                                        ,          _userPageAction
                                        )
-import Gargantext.Pages.Corpus as AC
+import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Corpus.Doc.Annotation as D
-import Gargantext.Pages.Corpus.Doc.Body as CA
+import Gargantext.Pages.Corpus as CA
 import Gargantext.Pages.Corpus.Doc.Document as DV
 import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
@@ -54,7 +54,7 @@ import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Actions (Action(..), performAction)
 import Gargantext.Pages.Layout.States (AppState, E)
-import Gargantext.Pages.Search as S
+import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Router (Routes(..))
 
 import Network.HTTP.Affjax (AJAX)

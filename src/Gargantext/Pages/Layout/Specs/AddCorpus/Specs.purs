@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Specs where
+module Gargantext.Pages.Layout.Specs.AddCorpus.Specs where
 
 import Prelude hiding (div)
 
@@ -18,8 +18,8 @@ import Data.MediaType.Common (applicationJSON)
 
 import Gargantext.Components.Modals.Modal (modalHide)
 
-import Gargantext.Pages.Corpus.States
-import Gargantext.Pages.Corpus.Actions
+import Gargantext.Pages.Layout.Specs.AddCorpus.States
+import Gargantext.Pages.Layout.Specs.AddCorpus.Actions
 
 import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
 import Network.HTTP.RequestHeader (RequestHeader(..))
@@ -30,38 +30,30 @@ import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, _render, cotransform, modifyState, simpleSpec)
 
 
-
 modalSpec :: forall eff props. Boolean -> String -> Spec eff State props Action -> Spec eff State props Action
 modalSpec sm t = over _render \render d p s c ->
   [ div [ _id "addCorpus", className $ "modal myModal" <> if sm then "" else " fade"
-            , role "dialog"
-            , _data {show : true}
-            ][ div [ className "modal-dialog"
-                   , role "document"
-                   ] [ div [ className "modal-content"]
-                       [ div [ className "modal-header"]
-                         [ h5 [ className "modal-title"
-                              ]
-                           [ text $ t
+        , role "dialog"
+        , _data {show : true}
+        ][ div [ className "modal-dialog", role "document"]
+               [ div [ className "modal-content"] 
+                     [ div [ className "modal-header"]
+                           [ h5 [ className "modal-title" ] [ text $ t ]
+                           , button [ _type "button"
+                                    , className "close"
+                                    , _data { dismiss : "modal"}
+                                    ] [ span [ aria {hidden : true}] [ text "X"] ]
                            ]
-                         , button [ _type "button"
-                                  , className "close"
-                                  , _data { dismiss : "modal"}
-                                  ] [ span [ aria {hidden : true}]
-                                      [ text "X"]
-                                    ]
-                         ]
 
-                       , div [ className "modal-body"]
-                         (render d p s c)
-                       ]
-                     ]
-             ]
-  ]
+                      , div [ className "modal-body"] (render d p s c)
+                      ]
+                ]
+         ]
+   ]
+
 
 spec' :: forall eff props. Spec (console:: CONSOLE, ajax :: AJAX, dom :: DOM | eff) State props Action
 spec' = modalSpec true "Search Results" layoutAddcorpus
-
 
 
 layoutModal :: forall e.  { response :: Array Response | e} -> Array ReactElement
@@ -78,10 +70,8 @@ layoutModal state =
                           , role "document"
                           ] [ div [ className "modal-content"]
                                   [ div [ className "modal-header"]
-                                        [ h5 [ className "modal-title"
-                                             ]
-                                             [ text "CorpusView"
-                                             ]
+                                        [ h5 [className "modal-title"]
+                                             [text "CorpusView"      ]
                                         , button [ _type "button"
                                                  , className "close"
                                                  , _data { dismiss : "modal"}
@@ -112,27 +102,21 @@ layoutModal state =
           ]
 
 
-
 layoutAddcorpus :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
 layoutAddcorpus = simpleSpec performAction render
   where
     render :: Render State props Action
     render dispatch _ state _ =
-      [
-        div [className "container1"] []
-      ,  div [className "container1"]
-        [
-          div [className "jumbotron"]
+      [ div [className "container1"] []
+      , div [className "container1"]
+        [ div [className "jumbotron"]
           [ div [className "row"]
-           [
-             div [className "col-md-6"] (layoutModal state)
+           [ div [className "col-md-6"] (layoutModal state)
            , div [className "col-md-6"]
-             [
-               h3 [] [text "Corpusview"]
+             [ h3 [] [text "Corpusview"]
              , ul [className "list-group"] $ map fn1 state.response
              , button [onClick \_ -> dispatch GO] [text "GO"]
              ]
-
            ]
           ]
         ]

@@ -1,4 +1,4 @@
-module Gargantext.Pages.Search where
+module Gargantext.Pages.Layout.Specs.Search where
 
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Cont.Trans (lift)
@@ -21,7 +21,7 @@ type State =
 initialState :: State
 initialState =
   {
-    query : ""
+    query : "empty query"
   }
 
 
