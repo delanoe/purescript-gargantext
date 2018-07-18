@@ -10,7 +10,7 @@ import Gargantext.Pages.Corpus.User.Users.Types.States (Action(..), State)
 import Gargantext.Pages.Corpus.User.Users.Types.Types (User)
 import Network.HTTP.Affjax (AJAX)
 import Gargantext.Pages.Folder as PS
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as P
+import Gargantext.Pages.Corpus.User.Users.Specs.Documents as P
 import Gargantext.Components.Tab as Tab
 import Thermite (Spec, focus)
 

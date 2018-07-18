@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Doc.Facets.Documents where
+module Gargantext.Pages.Corpus.User.Users.Specs.Documents where
 
 import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
