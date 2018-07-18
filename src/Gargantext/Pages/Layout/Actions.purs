@@ -112,8 +112,8 @@ performAction _ _ _ = void do
 
 ----------------------------------------------------------
 
-_landingAction :: Prism' Action L.Action
-_landingAction = prism LandingA \action ->
+_LandingA :: Prism' Action L.Action
+_LandingA = prism LandingA \action ->
   case action of
     LandingA caction -> Right caction
     _-> Left action
@@ -184,8 +184,8 @@ _graphExplorerAction = prism GraphExplorerA \action ->
     GraphExplorerA caction -> Right caction
     _-> Left action
 
-_ngAction :: Prism' Action NG.Action
-_ngAction = prism NgramsA \action ->
+_NgramsA :: Prism' Action NG.Action
+_NgramsA = prism NgramsA \action ->
   case action of
     NgramsA caction -> Right caction
     _-> Left action

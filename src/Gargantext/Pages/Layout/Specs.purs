@@ -34,9 +34,9 @@ import Gargantext.Pages.Layout.Actions (         _addCorpusAction
                                        , _docAnnotationViewAction
                                        ,           _docViewAction
                                        ,     _graphExplorerAction
-                                       ,           _landingAction
+                                       ,           _LandingA
                                        ,             _loginAction
-                                       ,                _ngAction
+                                       ,            _NgramsA
                                        ,            _searchAction
                                        ,           _tabviewAction
                                        ,              _treeAction
@@ -77,7 +77,7 @@ pagesComponent s =
                                  ) AppState props Action
     selectSpec CorpusAnalysis    = layout0 $ focus _corpusState  _corpusAction CA.spec'
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
-    selectSpec Home              = layout0 $ focus _landingState   _landingAction   (L.layoutLanding EN)
+    selectSpec Home              = layout0 $ focus _landingState   _LandingA   (L.layoutLanding EN)
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView           = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
@@ -85,7 +85,7 @@ pagesComponent s =
     selectSpec Tabview           = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
-    selectSpec NGramsTable       = layout0 $ focus _ngState _ngAction  NG.ngramsTableSpec
+    selectSpec NGramsTable       = layout0 $ focus _ngState _NgramsA  NG.ngramsTableSpec
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ focus _dashBoardSate _dashBoardAction Dsh.layoutDashboard
 
