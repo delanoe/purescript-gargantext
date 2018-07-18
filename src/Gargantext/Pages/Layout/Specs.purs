@@ -21,7 +21,7 @@ import Gargantext.Pages.Layout.States (         _addCorpusState
                                       ,     _graphExplorerState
                                       ,           _landingState
                                       ,             _loginState
-                                      ,                _ngState
+                                      ,             _ngramState
                                       ,            _searchState
                                       ,           _tabviewState
                                       ,              _treeState
@@ -64,6 +64,22 @@ import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onCl
 import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 
+layoutSpec :: forall eff props. Spec (E eff) AppState props Action
+layoutSpec =
+  fold
+  [ routingSpec
+  , container $ withState pagesComponent
+  , withState \st ->
+     fold [ focus _loginState _loginAction (LN.modalSpec st.showLogin "Login" LN.renderSpec)
+          , focus _addCorpusState _addCorpusAction (AC.modalSpec st.showCorpus "Search Results" AC.layoutAddcorpus)
+          ]
+  ]
+  where
+    container :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+    container = over _render \render d p s c ->
+      (render d p s c)
+
+
 pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
 pagesComponent s =
   case s.currentRoute of
@@ -85,7 +101,7 @@ pagesComponent s =
     selectSpec Tabview           = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
     -- To be removed
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
-    selectSpec NGramsTable       = layout0 $ focus _ngState _NgramsA  NG.ngramsTableSpec
+    selectSpec NGramsTable       = layout0 $ focus _ngramState _NgramsA  NG.ngramsTableSpec
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ focus _dashBoardSate _dashBoardAction Dsh.layoutDashboard
 
@@ -334,17 +350,4 @@ layoutFooter = simpleSpec performAction render
                                    ]
                             ]
 
-layoutSpec :: forall eff props. Spec (E eff) AppState props Action
-layoutSpec =
-  fold
-  [ routingSpec
-  , container $ withState pagesComponent
-  , withState \st ->
-     fold [ focus _loginState _loginAction (LN.modalSpec st.showLogin "Login" LN.renderSpec)
-          , focus _addCorpusState _addCorpusAction (AC.modalSpec st.showCorpus "Search Results" AC.layoutAddcorpus)
-          ]
-  ]
-  where
-    container :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
-    container = over _render \render d p s c ->
-      (render d p s c)
+

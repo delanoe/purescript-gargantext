@@ -2,17 +2,12 @@ module Gargantext.Pages.Layout.States where
 
 import Prelude hiding (div)
 
-import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
+import Control.Monad.Eff.Console (CONSOLE)
 import DOM (DOM)
-import Data.Array (length)
-import Data.Either (Either(..))
-import Data.Lens (Lens', Prism', lens, prism)
+import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(Just))
 
 import Gargantext.Components.Login              as LN
-import Gargantext.Components.Modals.Modal          (modalShow)
 import Gargantext.Components.Tree               as Tree
 import Gargantext.Pages.Corpus                  as AC
 import Gargantext.Pages.Corpus.Doc.Annotation   as D
@@ -28,29 +23,28 @@ import Gargantext.Pages.Search                  as S
 import Gargantext.Router                           (Routes(..))
 
 import Network.HTTP.Affjax (AJAX)
-import Thermite (PerformAction, modifyState)
 
 type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
 type AppState =
   { currentRoute   :: Maybe Routes
   , landingState   :: L.State
-  , loginState     :: LN.State
+  ,   loginState   :: LN.State
   , addCorpusState :: AC.State
   , docViewState   :: DV.State
   , searchState    :: S.State
-  , userPage       :: U.State
-  , docAnnotationView :: D.State
-  , ntreeView      :: Tree.State
-  , tabview        :: TV.State
-  , search         :: String
-  , corpusAnalysis :: CA.State
+  , userPageState  :: U.State
+  , docAnnotationState :: D.State
+  , ntreeState     :: Tree.State
+  , tabviewState   :: TV.State
+  , search    :: String
+  , corpusState    :: CA.State
   , showLogin      :: Boolean
   , showCorpus     :: Boolean
-  , graphExplorer  :: GE.State
+  , graphExplorerState  :: GE.State
   , initialized    :: Boolean
-  , ngState        :: NG.State
-  , dashboard      :: Dsh.State
+  , ngramState     :: NG.State
+  , dashboardState :: Dsh.State
   }
 
 initAppState :: AppState
@@ -61,18 +55,18 @@ initAppState =
   , addCorpusState : AC.initialState
   , docViewState   : DV.tdata
   , searchState    : S.initialState
-  , userPage       : U.initialState
-  , docAnnotationView : D.initialState
-  , ntreeView      : Tree.exampleTree
-  , tabview        : TV.initialState
-  , search         : ""
-  , corpusAnalysis : CA.initialState
-  , showLogin      : false
-  , showCorpus     : false
-  , graphExplorer  : GE.initialState
+  , userPageState  : U.initialState
+  , docAnnotationState : D.initialState
+  , ntreeState   : Tree.exampleTree
+  , tabviewState : TV.initialState
+  , search  : ""
+  , corpusState  : CA.initialState
+  , showLogin    : false
+  , showCorpus   : false
+  , graphExplorerState  : GE.initialState
   , initialized    : false
-  , ngState        : NG.initialState
-  , dashboard      : Dsh.initialState
+  , ngramState     : NG.initialState
+  , dashboardState : Dsh.initialState
   }
 
 ---------------------------------------------------------
@@ -92,27 +86,27 @@ _searchState :: Lens' AppState S.State
 _searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
 
 _userPageState :: Lens' AppState U.State
-_userPageState = lens (\s -> s.userPage) (\s ss -> s{userPage = ss})
+_userPageState = lens (\s -> s.userPageState) (\s ss -> s{userPageState = ss})
 
 _docAnnotationViewState :: Lens' AppState D.State
-_docAnnotationViewState = lens (\s -> s.docAnnotationView) (\s ss -> s{docAnnotationView = ss})
+_docAnnotationViewState = lens (\s -> s.docAnnotationState) (\s ss -> s{docAnnotationState = ss})
 
 _treeState :: Lens' AppState Tree.State
-_treeState = lens (\s -> s.ntreeView) (\s ss -> s {ntreeView = ss})
+_treeState = lens (\s -> s.ntreeState) (\s ss -> s {ntreeState = ss})
 
 _tabviewState :: Lens' AppState TV.State
-_tabviewState = lens (\s -> s.tabview) (\s ss -> s {tabview = ss})
+_tabviewState = lens (\s -> s.tabviewState) (\s ss -> s {tabviewState = ss})
 
 _corpusState :: Lens' AppState CA.State
-_corpusState = lens (\s -> s.corpusAnalysis) (\s ss -> s {corpusAnalysis = ss})
+_corpusState = lens (\s -> s.corpusState) (\s ss -> s {corpusState = ss})
 
 _dashBoardSate :: Lens' AppState Dsh.State
-_dashBoardSate = lens (\s -> s.dashboard) (\s ss -> s {dashboard = ss})
+_dashBoardSate = lens (\s -> s.dashboardState) (\s ss -> s {dashboardState = ss})
 
 _graphExplorerState :: Lens' AppState GE.State
-_graphExplorerState = lens (\s -> s.graphExplorer) (\s ss -> s{graphExplorer = ss})
+_graphExplorerState = lens (\s -> s.graphExplorerState) (\s ss -> s{graphExplorerState = ss})
 
-_ngState :: Lens' AppState NG.State
-_ngState = lens (\s -> s.ngState) (\s ss -> s{ngState = ss})
+_ngramState :: Lens' AppState NG.State
+_ngramState = lens (\s -> s.ngramState) (\s ss -> s{ngramState = ss})
 
 
