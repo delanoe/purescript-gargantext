@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Doc.Document where
+module Gargantext.Pages.Corpus.Doc.Facets.Documents where
 
 import Prelude
 

@@ -1,7 +1,7 @@
 module Gargantext.Pages.Corpus.Doc.Facets.States where
 
 import Data.Lens (Lens', lens)
-import Gargantext.Pages.Corpus.Doc.Document as DV
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Sources as SV
 import Gargantext.Pages.Corpus.Doc.Facets.Authors as AV
 import Gargantext.Pages.Corpus.Doc.Facets.Terms as TV

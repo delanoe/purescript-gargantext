@@ -12,8 +12,8 @@ import Gargantext.Components.Tree               as Tree
 import Gargantext.Pages.Layout.Specs.AddCorpus  as AC
 import Gargantext.Pages.Corpus                  as CA
 import Gargantext.Pages.Corpus.Doc.Annotation   as D
-import Gargantext.Pages.Corpus.Doc.Document     as DV
 import Gargantext.Pages.Corpus.Doc.Facets       as TV
+import Gargantext.Pages.Corpus.Doc.Facets.Documents  as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG

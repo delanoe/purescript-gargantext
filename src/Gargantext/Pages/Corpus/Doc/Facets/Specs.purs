@@ -11,7 +11,7 @@ import Data.Tuple (Tuple(..))
 import Gargantext.Pages.Corpus.Doc.Facets.States (State(..), _doclens, _sourcelens, _authorlens, _termslens, _tablens)
 import Gargantext.Pages.Corpus.Doc.Facets.Actions (Action(..), _docAction, _sourceAction, _authorAction, _termsAction, _tabAction)
 
-import Gargantext.Pages.Corpus.Doc.Document as DV
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Sources as SV
 import Gargantext.Pages.Corpus.Doc.Facets.Authors as AV
 import Gargantext.Pages.Corpus.Doc.Facets.Terms as TV
