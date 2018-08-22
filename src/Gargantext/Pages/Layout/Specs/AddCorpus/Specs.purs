@@ -2,13 +2,7 @@ module Gargantext.Pages.Layout.Specs.AddCorpus.Specs where
 
 import Prelude hiding (div)
 
-import Control.Monad.Aff (Aff, attempt)
-import Control.Monad.Aff.Class (liftAff)
-import Control.Monad.Aff.Console (log)
 import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
@@ -21,22 +15,19 @@ import Gargantext.Components.Modals.Modal (modalHide)
 import Gargantext.Pages.Layout.Specs.AddCorpus.States
 import Gargantext.Pages.Layout.Specs.AddCorpus.Actions
 
-import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
-import Network.HTTP.RequestHeader (RequestHeader(..))
 import React (ReactElement)
 import React.DOM (button, div, h3, h5, li, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, onClick, role)
-import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, _render, cotransform, modifyState, simpleSpec)
 
 
-modalSpec :: forall eff props. Boolean -> String -> Spec eff State props Action -> Spec eff State props Action
+modalSpec :: forall props. Boolean -> String -> Spec State props Action -> Spec State props Action
 modalSpec sm t = over _render \render d p s c ->
   [ div [ _id "addCorpus", className $ "modal myModal" <> if sm then "" else " fade"
         , role "dialog"
         , _data {show : true}
         ][ div [ className "modal-dialog", role "document"]
-               [ div [ className "modal-content"] 
+               [ div [ className "modal-content"]
                      [ div [ className "modal-header"]
                            [ h5 [ className "modal-title" ] [ text $ t ]
                            , button [ _type "button"
@@ -52,7 +43,7 @@ modalSpec sm t = over _render \render d p s c ->
    ]
 
 
-spec' :: forall eff props. Spec (console:: CONSOLE, ajax :: AJAX, dom :: DOM | eff) State props Action
+spec' :: forall props. Spec State props Action
 spec' = modalSpec true "Search Results" layoutAddcorpus
 
 
@@ -102,7 +93,7 @@ layoutModal state =
           ]
 
 
-layoutAddcorpus :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
+layoutAddcorpus :: forall props. Spec State props Action
 layoutAddcorpus = simpleSpec performAction render
   where
     render :: Render State props Action
@@ -128,6 +119,3 @@ layoutAddcorpus = simpleSpec performAction render
           span [] [text  o.name]
           ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
           ]
-
-
-

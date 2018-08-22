@@ -1,13 +1,8 @@
 module Gargantext.Pages.Layout.Specs.Search where
 
-import Control.Monad.Aff.Console (CONSOLE)
-import Control.Monad.Cont.Trans (lift)
-import DOM (DOM)
-import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
 import React.DOM (br', button, div, h3, input, text, i, span, img)
 import React.DOM.Props (_id, _type, className, name, onClick, onInput, placeholder, value, aria, src, title)
-import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Pages.Home as L
@@ -31,7 +26,7 @@ data Action
   | SetQuery String
 
 
-performAction :: forall eff props. PerformAction (console :: CONSOLE, ajax :: AJAX,dom::DOM | eff) State props Action
+performAction :: forall props. PerformAction State props Action
 performAction NoOp _ _ = void do
   modifyState id
 
@@ -48,11 +43,7 @@ performAction GO _ _ = void do
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
 
-searchSpec :: forall props eff . Spec ( console :: CONSOLE
-                                      , ajax    :: AJAX
-                                      , dom     :: DOM
-                                      | eff
-                                      ) State props Action
+searchSpec :: forall props. Spec State props Action
 searchSpec = simpleSpec performAction render
   where
     render :: Render State props Action

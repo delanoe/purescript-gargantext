@@ -1,14 +1,11 @@
 module Gargantext.Pages.Corpus.User.Users.Types.Lens where
 
 import Gargantext.Pages.Corpus.User.Brevets as B
-import Control.Monad.Aff.Console (CONSOLE)
-import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
 import Data.Maybe (Maybe)
 import Gargantext.Pages.Corpus.User.Users.Types.States (Action(..), State)
 import Gargantext.Pages.Corpus.User.Users.Types.Types (User)
-import Network.HTTP.Affjax (AJAX)
 import Gargantext.Pages.Folder as PS
 import Gargantext.Pages.Corpus.User.Users.Specs.Documents as P
 import Gargantext.Components.Tab as Tab
@@ -35,7 +32,7 @@ _pubAction = prism PublicationA \ action ->
     PublicationA laction -> Right laction
     _-> Left action
 
-publicationSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action
+publicationSpec :: forall props. Spec State props Action
 publicationSpec = focus _publens _pubAction P.publicationSpec
 
 _brevetslens :: Lens' State B.State

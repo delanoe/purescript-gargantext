@@ -2,10 +2,7 @@ module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem where
 
 import Prelude
 
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
 import Data.Newtype (class Newtype)
-import Network.HTTP.Affjax (AJAX)
 import React (ReactElement)
 import React.DOM (input, span, td, text, tr)
 import React.DOM.Props (_type, checked, className, onChange, style, title)
@@ -36,14 +33,14 @@ data Action
   = SetMap Boolean
   | SetStop Boolean
 
-performAction :: forall eff props. PerformAction ( console :: CONSOLE , ajax    :: AJAX, dom     :: DOM | eff ) State props Action
+performAction :: forall props. PerformAction State props Action
 performAction (SetMap b)   _ _ = void do
   modifyState \(State s) -> State s {term = setter (_{_type = (if b then MapTerm else None)}) s.term}
 
 performAction (SetStop b)   _ _ = void do
     modifyState \(State s) -> State s {term = setter (_{_type = (if b then StopTerm else None)}) s.term}
 
-ngramsItemSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
+ngramsItemSpec :: forall props. Spec State props Action
 ngramsItemSpec = simpleSpec performAction render
   where
     render :: Render State props Action

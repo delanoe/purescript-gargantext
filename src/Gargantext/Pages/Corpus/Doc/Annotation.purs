@@ -27,7 +27,7 @@ data Action
   | SetInput String
 
 
-performAction :: PerformAction _ State _ Action
+performAction :: PerformAction State _ Action
 performAction NoOp _ _ = pure unit
 
 performAction (ChangeString ps) _ _ = pure unit
@@ -39,7 +39,7 @@ performAction (SetInput ps) _ _ = void do
 
 
 
-docview :: Spec _ State _ Action
+docview :: Spec State _ Action
 docview = simpleSpec performAction render
   where
     render :: Render State _ Action

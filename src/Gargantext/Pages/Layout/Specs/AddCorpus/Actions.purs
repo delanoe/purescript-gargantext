@@ -2,13 +2,6 @@ module Gargantext.Pages.Layout.Specs.AddCorpus.Actions where
 
 import Prelude hiding (div)
 
-import Control.Monad.Aff (Aff, attempt)
-import Control.Monad.Aff.Class (liftAff)
-import Control.Monad.Aff.Console (log)
-import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
@@ -19,12 +12,9 @@ import Data.MediaType.Common (applicationJSON)
 import Gargantext.Components.Modals.Modal (modalHide)
 import Gargantext.Pages.Layout.Specs.AddCorpus.States
 
-import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
-import Network.HTTP.RequestHeader (RequestHeader(..))
 import React (ReactElement)
 import React.DOM (button, div, h3, h5, li, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, onClick, role)
-import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, _render, cotransform, modifyState, simpleSpec)
 
 data Action
@@ -34,10 +24,7 @@ data Action
   | LoadDatabaseDetails
   | GO
 
-performAction :: forall eff props. PerformAction ( console :: CONSOLE
-                                                 , ajax    :: AJAX
-                                                 , dom     :: DOM
-                                                 | eff ) State props Action
+performAction :: forall props. PerformAction State props Action
 performAction NoOp _ _ = void do
   modifyState id
 
@@ -84,7 +71,7 @@ instance encodeJsonQueryString :: EncodeJson QueryString where
 
 
 
-getDatabaseDetails :: forall eff.  QueryString -> Aff (console::CONSOLE,ajax :: AJAX | eff) (Either String (Array Response))
+getDatabaseDetails :: QueryString -> Aff (Either String (Array Response))
 getDatabaseDetails reqBody = do
   let token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTk5OTg1ODMsInVzZXJfaWQiOjUsImVtYWlsIjoiYWxleGFuZHJlLmRlbGFub2VAaXNjcGlmLmZyIiwidXNlcm5hbWUiOiJkZXZlbG9wZXIifQ.Os-3wuFNSmRIxCZi98oFNBu2zqGc0McO-dgDayozHJg"
   affResp <- liftAff $ attempt $ affjax defaultRequest
@@ -106,6 +93,3 @@ getDatabaseDetails reqBody = do
       liftAff $ log $ "GET /api response: " <> show a.response
       let res = decodeJson a.response
       pure res
-
-
-

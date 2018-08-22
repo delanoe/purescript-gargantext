@@ -2,8 +2,6 @@ module Gargantext.Pages.Layout.States where
 
 import Prelude hiding (div)
 
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(Just))
 
@@ -22,14 +20,11 @@ import Gargantext.Pages.Home                    as L
 import Gargantext.Pages.Layout.Specs.Search     as S
 import Gargantext.Router                           (Routes(..))
 
-import Network.HTTP.Affjax (AJAX)
-
-type E e = (dom :: DOM, ajax :: AJAX, console :: CONSOLE | e)
 
 type AppState =
   { currentRoute   :: Maybe Routes
   , landingState   :: L.State
-  ,   loginState   :: LN.State
+  , loginState   :: LN.State
   , addCorpusState :: AC.State
   , docViewState   :: DV.State
   , searchState    :: S.State
@@ -108,5 +103,3 @@ _graphExplorerState = lens (\s -> s.graphExplorerState) (\s ss -> s{graphExplore
 
 _ngramState :: Lens' AppState NG.State
 _ngramState = lens (\s -> s.ngramState) (\s ss -> s{ngramState = ss})
-
-

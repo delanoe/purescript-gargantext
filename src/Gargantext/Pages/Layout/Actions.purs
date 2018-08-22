@@ -2,10 +2,6 @@ module Gargantext.Pages.Layout.Actions where
 
 import Prelude hiding (div)
 
-import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import DOM (DOM)
 import Data.Array (length)
 import Data.Either (Either(..))
 import Data.Lens (Prism', prism)
@@ -27,7 +23,6 @@ import Gargantext.Pages.Layout.States (AppState)
 import Gargantext.Pages.Layout.Specs.Search     as S
 import Gargantext.Router                           (Routes)
 
-import Network.HTTP.Affjax (AJAX)
 import Thermite (PerformAction, modifyState)
 
 
@@ -54,11 +49,7 @@ data Action
   | NgramsA    NG.Action
 
 
-performAction :: forall eff props. PerformAction ( dom :: DOM
-                                                 , ajax :: AJAX
-                                                 , console :: CONSOLE
-                                                 | eff
-                                                 ) AppState props Action
+performAction :: forall props. PerformAction AppState props Action
 performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
 performAction (Search s)  _ _ = void do
@@ -187,6 +178,3 @@ _NgramsA = prism NgramsA \action ->
   case action of
     NgramsA caction -> Right caction
     _-> Left action
-
-
-

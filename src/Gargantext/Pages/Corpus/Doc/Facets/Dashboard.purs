@@ -6,7 +6,6 @@ import Data.Array (zip)
 import Data.Tuple (Tuple(..))
 import Gargantext.Components.Charts.Options.ECharts
 import Gargantext.Components.Charts.Options.Series
-import DOM (DOM)
 import Data.Unit (Unit)
 import Data.Int (toNumber)
 import React.DOM (div, h1, text, title)
@@ -20,7 +19,7 @@ data Action = None
 initialState :: State
 initialState = unit
 
-performAction :: forall eff props. PerformAction (dom :: DOM | eff) State props Action
+performAction :: forall props. PerformAction State props Action
 performAction _ _ _ = pure unit
 
 render :: forall props. Render State props Action
@@ -105,5 +104,5 @@ distriBySchool = Options { mainTitle : "School production in 2017"
                      }
 
 
-layoutDashboard :: forall props eff. Spec (dom :: DOM | eff) State props Action
+layoutDashboard :: forall props. Spec State props Action
 layoutDashboard = simpleSpec performAction render

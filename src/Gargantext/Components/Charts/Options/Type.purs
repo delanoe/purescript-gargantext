@@ -10,7 +10,7 @@ import Gargantext.Components.Charts.Options.Font (TextStyle)
 import Gargantext.Components.Charts.Options.Legend (LegendType, Orient, SelectedMode)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Gargantext.Components.Charts.Options.Series (Series)
-
+import React as R
 newtype ChartAlign = ChartAlign String
 
 type Echarts =
@@ -38,6 +38,7 @@ type Option =
   , yAxis    :: YAxis
   , series   :: Array Series
   , dataZoom :: Array DataZoom
+  , children :: R.Children
   }
 
 type Title =

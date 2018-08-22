@@ -2,13 +2,6 @@ module Gargantext.Pages.Corpus.Doc.Facets.Graph where
 
 import Prelude hiding (div)
 
-import Control.Monad.Aff (Aff, attempt)
-import Control.Monad.Aff.Class (liftAff)
-import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Control.Monad.Eff.Unsafe (unsafePerformEff)
-import DOM (DOM)
 import Data.Argonaut (decodeJson)
 import Data.Array (length, mapWithIndex, (!!))
 import Data.Either (Either(..))
@@ -21,8 +14,6 @@ import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, S
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Utils (getter)
 import Math (cos, sin)
-import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
-import Network.HTTP.RequestHeader (RequestHeader(..))
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
@@ -56,10 +47,10 @@ initialState = State
   , selectedNode : Nothing
   }
 
-graphSpec :: forall eff props. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff) State props Action
+graphSpec :: forall props. Spec State props Action
 graphSpec = simpleSpec performAction render
 
-performAction :: forall eff props. PerformAction (ajax :: AJAX, console :: CONSOLE , dom :: DOM | eff) State props Action
+performAction :: forall props. PerformAction State props Action
 performAction (LoadGraph fp) _ _ = void do
   _ <- liftEff $ log fp
   case fp of
@@ -226,7 +217,7 @@ mySettings = sigmaSettings { verbose : true
 
 
 -- loadJSON  {path : "http://localhost:2015/examples/sites_coords.json"}
-getGraphData :: forall eff. String -> Aff (console :: CONSOLE, ajax :: AJAX , dom :: DOM | eff ) (Either String GraphData)
+getGraphData :: String -> Aff (Either String GraphData)
 getGraphData fp = do
   resp <- liftAff $ attempt $ affjax defaultRequest
           { url =("http://localhost:2015/examples/" <> fp)
@@ -296,7 +287,7 @@ dispLegend ary = div [] $ map dl ary
       ]
 
 
-specOld :: forall eff props. Spec (console :: CONSOLE, dom :: DOM, ajax :: AJAX | eff) State props Action
+specOld :: forall props. Spec State props Action
 specOld = simpleSpec performAction render
   where
     render :: Render State props Action

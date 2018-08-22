@@ -2,18 +2,12 @@ module Gargantext.Pages.Corpus.Doc.Facets.Documents where
 
 import Prelude
 
-import Control.Monad.Aff (Aff)
-import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Array (filter)
 import Data.Either (Either(..))
-import Data.Generic (class Generic, gShow)
 import Data.Tuple (Tuple(..))
 import Gargantext.Components.Charts.Charts (p'')
 import Gargantext.Config.REST (get)
-import Network.HTTP.Affjax (AJAX)
 import React (ReactElement)
 import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value)
@@ -132,14 +126,14 @@ instance decodeResponse :: DecodeJson Response where
 
 
 -- | Filter
-filterSpec :: forall eff props. Spec eff State props Action
+filterSpec :: forall props. Spec State props Action
 filterSpec = simpleSpec defaultPerformAction render
   where
     render d p s c = [div [] [ text "    Filter "
                      , input [] []
                      ]]
 
-layoutDocview :: Spec _ State _ Action
+layoutDocview :: Spec State _ Action
 layoutDocview = simpleSpec performAction render
   where
     render :: Render State _ Action
@@ -176,7 +170,7 @@ layoutDocview = simpleSpec performAction render
       ]
 
 
-performAction :: PerformAction _ State _ Action
+performAction :: PerformAction State _ Action
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
 
 performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
@@ -188,7 +182,7 @@ performAction LoadData _ _ = void do
      Right resData -> modifyState (\s -> resData)
 
 
-loadPage :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Either String CorpusTableData)
+loadPage :: Aff (Either String CorpusTableData)
 loadPage = do
   res <- get "http://localhost:8008/node/452132/children"
   -- res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"

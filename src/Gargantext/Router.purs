@@ -3,17 +3,11 @@ module Gargantext.Router where
 import Prelude
 
 import Control.Alt ((<|>))
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import DOM (DOM)
-import DOM.HTML (window)
-import DOM.HTML.Window (localStorage)
-import DOM.WebStorage.Storage (getItem)
+import Effect (Effect)
+import Effect.Class (liftEffect)
 import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Routing.Match (Match)
-import Routing.Match.Class (lit, num)
 
 data Routes
   = Home
@@ -64,16 +58,7 @@ routing =
   where
     route str      = lit "" *> lit str
 
-routeHandler :: forall e. ( Maybe Routes -> Routes -> Eff
-                            ( dom     :: DOM
-                            , console :: CONSOLE
-                            | e
-                            ) Unit
-                          ) -> Maybe Routes -> Routes -> Eff
-                            ( dom     :: DOM
-                            , console :: CONSOLE
-                            | e
-                            ) Unit
+routeHandler :: (Maybe Routes -> Routes -> Effect Unit) -> Maybe Routes -> Routes -> Effect Unit
 routeHandler dispatchAction old new = do
   liftEff $ log $ "change route : " <> show new
   w      <- window

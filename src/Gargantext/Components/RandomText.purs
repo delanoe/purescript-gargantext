@@ -21,8 +21,7 @@ module Gargantext.Components.RandomText where
 
 import Prelude
 
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Random (RANDOM, randomInt)
+import Effect (Effect)
 import Data.Array (drop, dropEnd, filter, foldl, head, length, tail, take, takeEnd, (!!))
 import Data.Maybe (Maybe(Nothing, Just), fromJust)
 import Data.String (Pattern(..), fromCharArray, split, toCharArray)
@@ -31,18 +30,18 @@ import Partial.Unsafe (unsafePartial)
 
 
 -------------------------------------------------------------------
-randomSentences :: forall a. String -> Eff ( random :: RANDOM | a ) String
+randomSentences :: String -> Effect String
 randomSentences ss = case (length (sentences ss)) >= 5 of
                     true -> foldl (\a b -> a <> "." <> b) "" <$> randomPart (sentences ss)
                     _    -> pure ss
 
 
-randomWords :: forall a. String -> Eff ( random :: RANDOM | a ) String
+randomWords :: String -> Effect String
 randomWords ws = case (length (words ws)) >= 5 of
                     true -> foldl (\a b -> a <> " " <> b) "" <$> randomPart (words ws)
                     _    -> pure ws
 
-randomChars :: forall a. String -> Eff ( random :: RANDOM | a ) String
+randomChars :: String -> Effect String
 randomChars word = case (length (toCharArray word)) >= 5 of
                     true -> fromCharArray <$> randomPart (toCharArray word)
                     _    -> pure word
@@ -61,7 +60,7 @@ data RandomWheel a = RandomWheel { before :: Array a
                                  , after  :: Array a
                                  }
 
-randomPart :: forall a b. Array b -> Eff ( random :: RANDOM | a ) (Array b)
+randomPart :: forall a b. Array b -> Effect (Array b)
 randomPart array = randomArrayPoly middle >>= \(middle') -> pure ( start <> middle' <> end)
         where
             start   = take    2          array
@@ -69,13 +68,13 @@ randomPart array = randomArrayPoly middle >>= \(middle') -> pure ( start <> midd
             end     = takeEnd 2          array
 
 
-randomArrayPoly :: forall a b. Array a -> Eff ( random :: RANDOM | b ) (Array a)
+randomArrayPoly :: forall a b. Array a -> Effect (Array a)
 randomArrayPoly wheel = case head wheel of
                          Nothing -> pure []
                          Just wheel' -> randomWheel (RandomWheel { before:wheel, during:wheel', after:[]})
                                      >>= \(RandomWheel rand) -> (pure rand.after)
 
-randomWheel :: forall a b. RandomWheel b -> Eff ( random :: RANDOM | a ) (RandomWheel b)
+randomWheel :: forall a b. RandomWheel b -> Effect (RandomWheel b)
 randomWheel (RandomWheel {before:[], during:d, after:a}) =
     pure   (RandomWheel {before:[], during:d, after:a})
 
@@ -84,7 +83,7 @@ randomWheel (RandomWheel {before:b, during:d, after:a}) = do
     randomWheel $ RandomWheel {before:b', during:d', after:(a <> [d'])}
 
 
-randomArray :: forall a b. Array b -> Eff ( random :: RANDOM | a ) (RandomWheel b)
+randomArray :: forall a b. Array b -> Effect (RandomWheel b)
 randomArray array = unsafePartial $ do
     n    <- randomInt 0 (length array - 1)
 

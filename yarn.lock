@@ -734,7 +734,7 @@ core-js@^2.4.0, core-js@^2.5.0:
   version "2.5.5"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.5.5.tgz#b14dde936c640c0579a6b50cabcc132dd6127e3b"
 
-create-react-class@^15.6.2:
+create-react-class@^15.6.3:
   version "15.6.3"
   resolved "https://registry.yarnpkg.com/create-react-class/-/create-react-class-15.6.3.tgz#2d73237fb3f970ae6ebe011a9e66f46dbca80036"
   dependencies:
@@ -754,11 +754,12 @@ detect-indent@^4.0.0:
   dependencies:
     repeating "^2.0.0"
 
-echarts-for-react@^2.0.0:
-  version "2.0.8"
-  resolved "https://registry.yarnpkg.com/echarts-for-react/-/echarts-for-react-2.0.8.tgz#cf56641d8a3bc50852310aeec06a464c4fc72b67"
+echarts-for-react@^2.0.14:
+  version "2.0.14"
+  resolved "https://registry.yarnpkg.com/echarts-for-react/-/echarts-for-react-2.0.14.tgz#6df7a31eea43ef35321e20a5854109cbc52c9df3"
   dependencies:
-    element-resize-event "2.0.9"
+    fast-deep-equal "^2.0.1"
+    size-sensor "^0.2.0"
 
 echarts@^3.8.5:
   version "3.8.5"
@@ -771,10 +772,6 @@ element-resize-detector@latest:
   resolved "https://registry.yarnpkg.com/element-resize-detector/-/element-resize-detector-1.1.14.tgz#af064a0a618a820ad570a95c5eec5b77be0128c1"
   dependencies:
     batch-processor "^1.0.0"
-
-element-resize-event@2.0.9:
-  version "2.0.9"
-  resolved "https://registry.yarnpkg.com/element-resize-event/-/element-resize-event-2.0.9.tgz#2f5e1581a296eb5275210c141bc56342e218f876"
 
 emojis-list@^2.0.0:
   version "2.1.0"
@@ -793,6 +790,10 @@ escape-string-regexp@^1.0.2:
 esutils@^2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/esutils/-/esutils-2.0.2.tgz#0abf4f1caa5bcb1f7a9d8acc6dea4faaa04bac9b"
+
+fast-deep-equal@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz#7b05218ddf9667bf7f370bf7fdb2cb15fdd0aa49"
 
 fbjs@^0.8.16:
   version "0.8.16"
@@ -839,12 +840,12 @@ iconv-lite@~0.4.13:
   version "0.4.18"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.18.tgz#23d8656b16aae6742ac29732ea8f0336a4789cf2"
 
-imports-loader@^0.7.1:
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/imports-loader/-/imports-loader-0.7.1.tgz#f204b5f34702a32c1db7d48d89d5e867a0441253"
+imports-loader@^0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/imports-loader/-/imports-loader-0.8.0.tgz#030ea51b8ca05977c40a3abfd9b4088fe0be9a69"
   dependencies:
     loader-utils "^1.0.2"
-    source-map "^0.5.6"
+    source-map "^0.6.1"
 
 invariant@^2.2.2:
   version "2.2.4"
@@ -960,11 +961,10 @@ promise@^7.1.1:
   dependencies:
     asap "~2.0.3"
 
-prop-types@15.6.0:
-  version "15.6.0"
-  resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.6.0.tgz#ceaf083022fc46b4a35f69e13ef75aed0d639856"
+prop-types@15.6.2:
+  version "15.6.2"
+  resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.6.2.tgz#05d5ca77b4453e985d60fc7ff8c859094a497102"
   dependencies:
-    fbjs "^0.8.16"
     loose-envify "^1.3.1"
     object-assign "^4.1.1"
 
@@ -976,16 +976,16 @@ prop-types@^15.6.0:
     loose-envify "^1.3.1"
     object-assign "^4.1.1"
 
-react-dom@^16.2.0:
-  version "16.2.0"
-  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.2.0.tgz#69003178601c0ca19b709b33a83369fe6124c044"
+react-dom@^16.4.2:
+  version "16.4.2"
+  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.4.2.tgz#4afed569689f2c561d2b8da0b819669c38a0bda4"
   dependencies:
     fbjs "^0.8.16"
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
     prop-types "^15.6.0"
 
-react-echarts-v3@^1.0.14:
+react-echarts-v3@^1.0.19:
   version "1.0.19"
   resolved "https://registry.yarnpkg.com/react-echarts-v3/-/react-echarts-v3-1.0.19.tgz#04148f16e3e7f01c2f6f3e6f0654bb32f238c2dc"
   dependencies:
@@ -996,9 +996,9 @@ react-sigma@^1.2.30:
   version "1.2.30"
   resolved "https://registry.yarnpkg.com/react-sigma/-/react-sigma-1.2.30.tgz#794f88e796c4f763158afe404d10d9635f848846"
 
-react@^16.2.0:
-  version "16.2.0"
-  resolved "https://registry.yarnpkg.com/react/-/react-16.2.0.tgz#a31bd2dab89bff65d42134fa187f24d054c273ba"
+react@^16.4.2:
+  version "16.4.2"
+  resolved "https://registry.yarnpkg.com/react/-/react-16.4.2.tgz#2cd90154e3a9d9dd8da2991149fdca3c260e129f"
   dependencies:
     fbjs "^0.8.16"
     loose-envify "^1.1.0"
@@ -1049,6 +1049,10 @@ setimmediate@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/setimmediate/-/setimmediate-1.0.5.tgz#290cbb232e306942d7d7ea9b83732ab7856f8285"
 
+size-sensor@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/size-sensor/-/size-sensor-0.2.0.tgz#f929368b025b0e69013f30fa24dd473008885eb3"
+
 slash@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/slash/-/slash-1.0.0.tgz#c41f2f6c39fc16d1cd17ad4b5d896114ae470d55"
@@ -1062,6 +1066,10 @@ source-map-support@^0.4.15:
 source-map@^0.5.6, source-map@^0.5.7:
   version "0.5.7"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
+
+source-map@^0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
 
 strip-ansi@^3.0.0:
   version "3.0.1"

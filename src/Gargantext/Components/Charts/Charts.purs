@@ -30,7 +30,7 @@ group = unsafeMkProps "group"
     -- resizable  :: Boolean, -- PropTypes.bool,
     -- onEvents   :: String --  PropTypes.object
 
-type EchartsProps eff =
+type EchartsProps=
   { className   :: String,
     style       :: String,  -- objealect-black-altdarkmincnaquadahherry-blossomect,
     theme       :: String,
@@ -55,7 +55,7 @@ type OptsLoading =
   }
 
 type OpTest =
-  {option :: Option}
+  {children :: R.Children, option :: Option}
 
 type Option =
   { title    :: Maybe Title
@@ -202,14 +202,14 @@ type Title =
 type Rich = {}
 
 
-foreign import eChartsClass :: forall props. R.ReactClass props
+foreign import eChartsClass :: forall props. R.ReactClass { children :: R.Children | props}
 foreign import eChartsClass2 :: R.ReactClass OpTest
 
-echarts :: forall eff. Array Props -> R.ReactElement
-echarts p = R.createElementDynamic eChartsClass (unsafeFromPropsArray p) []
+echarts :: Array Props -> R.ReactElement
+echarts p = R.unsafeCreateElementDynamic eChartsClass (unsafeFromPropsArray p) []
 
-echarts' :: forall eff. Option -> R.ReactElement
-echarts' chart = R.createElementDynamic eChartsClass2 {option: chart} []
+echarts' :: Option -> R.ReactElement
+echarts' chart = R.unsafeCreateElementDynamic eChartsClass2 {option: chart} []
 
 -- Props
 

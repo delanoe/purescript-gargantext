@@ -2,8 +2,6 @@ module Gargantext.Pages.Layout.Specs where
 
 import Prelude hiding (div)
 
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
 import Data.Foldable (fold, intercalate)
 import Data.Lens (over)
 import Data.Maybe (Maybe(Nothing, Just))
@@ -57,14 +55,13 @@ import Gargantext.Pages.Layout.States (AppState, E)
 import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Router (Routes(..))
 
-import Network.HTTP.Affjax (AJAX)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr, img, input, li, p, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
 import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 
-layoutSpec :: forall eff props. Spec (E eff) AppState props Action
+layoutSpec :: forall props. Spec AppState props Action
 layoutSpec =
   fold
   [ routingSpec
@@ -75,22 +72,18 @@ layoutSpec =
           ]
   ]
   where
-    container :: Spec (E eff) AppState props Action -> Spec (E eff) AppState props Action
+    container :: Spec AppState props Action -> Spec AppState props Action
     container = over _render \render d p s c ->
       (render d p s c)
 
 
-pagesComponent :: forall props eff. AppState -> Spec (E eff) AppState props Action
+pagesComponent :: forall props. AppState -> Spec AppState props Action
 pagesComponent s =
   case s.currentRoute of
     Just route -> selectSpec route
     Nothing    -> selectSpec Home
   where
-    selectSpec :: Routes -> Spec ( ajax    :: AJAX
-                                 , console :: CONSOLE
-                                 , dom     :: DOM
-                                 | eff
-                                 ) AppState props Action
+    selectSpec :: Routes -> Spec AppState props Action
     selectSpec CorpusAnalysis    = layout0 $ focus _corpusState  _corpusAction CA.spec'
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec Home              = layout0 $ focus _landingState   _LandingA   (L.layoutLanding EN)
@@ -107,11 +100,11 @@ pagesComponent s =
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
-routingSpec :: forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
+routingSpec :: forall props. Spec AppState props Action
 routingSpec = simpleSpec performAction defaultRender
 
-layout0 :: forall eff props. Spec (E eff) AppState props Action
-                          -> Spec (E eff) AppState props Action
+layout0 :: forall props. Spec AppState props Action
+                          -> Spec AppState props Action
 layout0 layout =
   fold
   [ layoutSidebar divSearchBar
@@ -124,7 +117,7 @@ layout0 layout =
     outerLayout =
       cont $ fold
       [ withState \st ->
-         if ((\(LN.State s) -> s.loginC) st.loginState == true) 
+         if ((\(LN.State s) -> s.loginC) st.loginState == true)
             then ls as
             else outerLayout1
       , rs bs      ]
@@ -136,8 +129,8 @@ layout0 layout =
 
     bs = innerLayout $ layout
 
-    innerLayout :: Spec (E eff) AppState props Action
-                -> Spec (E eff) AppState props Action
+    innerLayout :: Spec AppState props Action
+                -> Spec AppState props Action
     innerLayout = over _render \render d p s c ->
       [  div [_id "page-wrapper"]
         [
@@ -145,7 +138,7 @@ layout0 layout =
         ]
       ]
 
-layoutSidebar ::  forall props eff. Spec (E eff) AppState props Action
+layoutSidebar ::  forall props. Spec AppState props Action
                 -> Spec (E eff) AppState props Action
 layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
@@ -280,7 +273,7 @@ liNav (LiNav { title : title'
                 ]
 
 -- TODO put the search form in the center of the navBar
-divSearchBar :: forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
+divSearchBar :: forall props. Spec AppState props Action
 divSearchBar = simpleSpec performAction render
   where
     render :: Render AppState props Action
@@ -324,7 +317,7 @@ divDropdownRight d =
         ]
      ]
 
-layoutFooter ::  forall props eff. Spec (ajax :: AJAX, console :: CONSOLE, dom :: DOM |eff) AppState props Action
+layoutFooter ::  forall props. Spec AppState props Action
 layoutFooter = simpleSpec performAction render
   where
     render :: Render AppState props Action
@@ -349,5 +342,3 @@ layoutFooter = simpleSpec performAction render
                                          , text "."
                                    ]
                             ]
-
-

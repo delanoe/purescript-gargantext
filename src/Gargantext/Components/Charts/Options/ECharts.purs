@@ -38,7 +38,7 @@ chartWith opts = { className: Nothing
              , onEvents: Nothing
              }
 
-echarts :: forall eff. Echarts -> R.ReactElement
+echarts :: Echarts -> R.ReactElement
 echarts chart = R.createElementDynamic eChartsClass chart []
 
 type MainTitle = String

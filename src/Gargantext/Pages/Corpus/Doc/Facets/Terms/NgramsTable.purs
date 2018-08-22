@@ -1,14 +1,11 @@
 module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable where
 
 import CSS.TextAlign (center, textAlign)
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
 import Data.Array (filter, fold, toUnfoldable)
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.List (List)
 import Data.Tuple (Tuple(..), uncurry)
-import Network.HTTP.Affjax (AJAX)
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem as NI
 import Prelude (class Eq, class Ord, class Show, Unit, bind, map, not, pure, show, void, ($), (*), (+), (-), (/), (<), (<$>), (<>), (==), (>), (>=), (>>=))
 import React (ReactElement)
@@ -54,7 +51,7 @@ _ItemAction = prism (uncurry ItemAction) \ta ->
     ItemAction i a -> Right (Tuple i a)
     _ -> Left ta
 
-performAction :: forall eff props. PerformAction ( console :: CONSOLE , ajax    :: AJAX, dom     :: DOM | eff ) State props Action
+performAction :: forall props. PerformAction State props Action
 performAction _ _ _ = void do
   modifyState \(State state) -> State $ state
 
@@ -72,7 +69,7 @@ performAction (ChangeString c) _ _ = void do
 performAction (SetInput s) _ _ = void do
   modifyState \(State state) -> State $ state { search = s }
 
-tableSpec :: forall eff props .Spec eff State props Action -> Spec eff State props Action
+tableSpec :: forall props .Spec State props Action -> Spec eff State props Action
 tableSpec = over _render \render dispatch p (State s) c ->
   [div [className "container-fluid"]
      [
@@ -149,14 +146,14 @@ tableSpec = over _render \render dispatch p (State s) c ->
  ]
  ]
 
-ngramsTableSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
+ngramsTableSpec :: forall props . Spec State props Action
 ngramsTableSpec =  container $ fold
     [  tableSpec $ withState \st ->
         focus _itemsList _ItemAction $
           foreach \_ -> NI.ngramsItemSpec
    ]
 
-container :: forall eff state props action. Spec eff state props action -> Spec eff state props action
+container :: forall state props action. Spec state props action -> Spec state props action
 container = over _render \render d p s c ->
   [ div [ className "container-fluid" ] $
     (render d p s c)

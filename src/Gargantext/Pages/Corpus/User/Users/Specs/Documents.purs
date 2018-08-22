@@ -1,8 +1,5 @@
 module Gargantext.Pages.Corpus.User.Users.Specs.Documents where
 
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
-import Network.HTTP.Affjax (AJAX)
 import Prelude (id, void)
 import React.DOM (table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (className, scope)
@@ -16,21 +13,13 @@ initialState = ""
 
 data Action = NoOp
 
-performAction :: forall eff props. PerformAction ( console :: CONSOLE
-                                                 , ajax    :: AJAX
-                                                 , dom     :: DOM
-                                                 | eff
-                                                 ) State props Action
+performAction :: forall props. PerformAction State props Action
 performAction NoOp _ _ = void do
   modifyState id
 
 
 
-publicationSpec :: forall props eff . Spec ( console :: CONSOLE
-                                        , ajax    :: AJAX
-                                        , dom     :: DOM
-                                        | eff
-                                        ) State props Action
+publicationSpec :: forall props. Spec State props Action
 publicationSpec = simpleSpec performAction render
   where
     render :: Render State props Action

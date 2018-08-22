@@ -2,10 +2,6 @@ module Gargantext.Pages.Home.Specs where
 
 import Prelude hiding (div)
 
-import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
-
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
@@ -13,31 +9,21 @@ import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Pages.Home.States  (State(..))
 import Gargantext.Pages.Home.Actions (Action(..), performAction)
 
-import Network.HTTP.Affjax (AJAX)
 import React (ReactElement)
 import React.DOM (a, div, h3, i, img, p, span, text)
 import React.DOM.Props (Props, _id, aria, className, href, src, target, title)
-import Routing.Hash.Aff (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
 
 -- Layout |
 
-layoutLanding :: forall props eff . Lang -> Spec ( console :: CONSOLE
-                                              , ajax    :: AJAX
-                                              , dom     :: DOM
-                                              | eff
-                                              ) State props Action
+layoutLanding :: forall props. Lang -> Spec State props Action
 layoutLanding FR = layoutLanding' Fr.landingData
 layoutLanding EN = layoutLanding' En.landingData
 
 ------------------------------------------------------------------------
 
-layoutLanding' :: forall props eff . LandingData -> Spec ( console :: CONSOLE
-                                                   , ajax    :: AJAX
-                                                   , dom     :: DOM
-                                                   | eff
-                                                   ) State props Action
+layoutLanding' :: forall props. LandingData -> Spec State props Action
 layoutLanding' hd = simpleSpec performAction render
   where
     render :: Render State props Action
