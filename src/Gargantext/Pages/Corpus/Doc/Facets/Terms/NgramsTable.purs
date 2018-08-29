@@ -1,15 +1,15 @@
 module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable where
 
-import CSS.TextAlign (center, textAlign)
+
 import Data.Array (filter, fold, toUnfoldable)
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.List (List)
 import Data.Tuple (Tuple(..), uncurry)
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem as NI
-import Prelude (class Eq, class Ord, class Show, Unit, bind, map, not, pure, show, void, ($), (*), (+), (-), (/), (<), (<$>), (<>), (==), (>), (>=), (>>=))
+import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+), (-), (/), (<), (<>), (==), (>), (>=))
 import React (ReactElement)
-import React.DOM hiding (style)
+import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
 import Thermite (PerformAction, Spec, _render, cotransform, focus, foreach, modifyState, withState)
 import Unsafe.Coerce (unsafeCoerce)
@@ -52,8 +52,6 @@ _ItemAction = prism (uncurry ItemAction) \ta ->
     _ -> Left ta
 
 performAction :: forall props. PerformAction State props Action
-performAction _ _ _ = void do
-  modifyState \(State state) -> State $ state
 
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
 
@@ -69,7 +67,10 @@ performAction (ChangeString c) _ _ = void do
 performAction (SetInput s) _ _ = void do
   modifyState \(State state) -> State $ state { search = s }
 
-tableSpec :: forall props .Spec State props Action -> Spec eff State props Action
+performAction _ _ _ = void do
+  modifyState \(State state) -> State $ state
+
+tableSpec :: forall props .Spec State props Action -> Spec State props Action
 tableSpec = over _render \render dispatch p (State s) c ->
   [div [className "container-fluid"]
      [
@@ -97,7 +98,7 @@ tableSpec = over _render \render dispatch p (State s) c ->
                      , _type "value"
                      ,value s.search
                      ,onInput \e -> dispatch (SetInput (unsafeEventValue e))
-                     ] []
+                     ]
                  ]
 
 

@@ -1,6 +1,6 @@
 module Gargantext.Pages.Folder where
 
-import Prelude (id, void)
+import Prelude
 
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
@@ -14,8 +14,7 @@ data Action = NoOp
 
 performAction :: forall props. PerformAction State props Action
 performAction NoOp _ _ = void do
-  modifyState id
-
+  modifyState identity
 
 projets :: forall props. Spec State props Action
 projets = simpleSpec performAction render

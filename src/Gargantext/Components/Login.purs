@@ -2,18 +2,27 @@ module Gargantext.Components.Login where
 
 import Prelude hiding (div)
 
-import Effect (Effect)
+import Affjax (defaultRequest, request)
+import Affjax.RequestHeader (RequestHeader(..))
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Lens (over)
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationJSON)
+import Effect (Effect)
+import Effect.Aff (Aff, attempt)
+import Effect.Aff.Class (liftAff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
 import Gargantext.Components.Modals.Modal (modalHide)
 import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
 import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
 import Thermite (PerformAction, Render, Spec, _render, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
+import Web.HTML (window)
+import Web.HTML.Window (localStorage)
+import Web.Storage.Storage (getItem, setItem)
 
 --          TODO: ask for login (modal) or account creation after 15 mn when user is not logged and has made one search at least
 
@@ -44,7 +53,7 @@ data Action
 
 performAction :: forall props. PerformAction State props Action
 performAction NoOp _ _ = void do
-  modifyState id
+  modifyState identity
 
 performAction (SetUserName usr) _ _ = void do
   modifyState \(State state) -> State $ state { username = usr }
@@ -57,7 +66,7 @@ performAction (SetPassword pwd) _ _ = void do
 
 performAction Login _ (State state) = void do
   --lift $ setHash "/search"
-  liftEff $ modalHide "loginModal"
+  liftEffect $ modalHide "loginModal"
   modifyState \(State state) -> State $ state {loginC = true}
   -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
   -- case res of
@@ -133,13 +142,13 @@ renderSpec = simpleSpec performAction render
                   [ input [_type "hidden",
                            name "csrfmiddlewaretoken",
                            value "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP0j4WcEM" ]
-                    []
+
                   , div [className "form-group"]
                     [ p [] [text state.errorMessage]
-                    , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName (unsafeEventValue e))] []
+                    , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName (unsafeEventValue e))]
                     ]
                   , div [className "form-group"]
-                    [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password,onInput \e -> dispatch (SetPassword (unsafeEventValue e))] []
+                    [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password,onInput \e -> dispatch (SetPassword (unsafeEventValue e))]
                     , div [className "clearfix"] []
                     ]
                   , div [className "center"]
@@ -147,8 +156,6 @@ renderSpec = simpleSpec performAction render
                       label [] [
                          div [className "checkbox"]
                          [ input [_id "terms-accept", _type "checkbox", value "", className "checkbox"]
-                           [
-                           ]
                          , text "I accept the terms of uses ",
                            a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text "[Read the terms of use]"]
                          ]
@@ -243,7 +250,7 @@ loginReq encodeData =
         }
   in
     do
-      affResp <- liftAff $ attempt $ affjax setting
+      affResp <- liftAff $ attempt $ request setting
       case affResp of
         Left err -> do
           liftAff $ log $ show err
@@ -257,7 +264,7 @@ loginReq encodeData =
             Left e ->
               liftAff $ log $ "Error Decoding : " <> show e
             Right (LoginRes res1) ->
-              liftEff $ setToken res1.token
+              liftEffect $ setToken res1.token
           pure res
 
 instance decodeLoginRes :: DecodeJson LoginRes where

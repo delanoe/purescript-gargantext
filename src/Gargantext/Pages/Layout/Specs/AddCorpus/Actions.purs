@@ -1,21 +1,24 @@
 module Gargantext.Pages.Layout.Specs.AddCorpus.Actions where
 
+import Gargantext.Pages.Layout.Specs.AddCorpus.States
 import Prelude hiding (div)
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Affjax (defaultRequest, request)
+import Affjax.RequestBody (RequestBody(..))
+import Affjax.RequestHeader (RequestHeader(..))
+import Control.Monad.Cont.Trans (lift)
+import Data.Argonaut (class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Lens (over)
 import Data.Maybe (Maybe(Just))
 import Data.MediaType.Common (applicationJSON)
-
+import Effect.Aff (Aff, attempt)
+import Effect.Aff.Class (liftAff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
 import Gargantext.Components.Modals.Modal (modalHide)
-import Gargantext.Pages.Layout.Specs.AddCorpus.States
-
-import React (ReactElement)
-import React.DOM (button, div, h3, h5, li, span, text, ul)
-import React.DOM.Props (_data, _id, _type, aria, className, onClick, role)
-import Thermite (PerformAction, Render, Spec, _render, cotransform, modifyState, simpleSpec)
+import Routing.Hash (setHash)
+import Thermite (PerformAction, modifyState)
 
 data Action
   = NoOp
@@ -26,7 +29,7 @@ data Action
 
 performAction :: forall props. PerformAction State props Action
 performAction NoOp _ _ = void do
-  modifyState id
+  modifyState identity
 
 performAction (SelectDatabase selected) _ _ = void do
   modifyState \( state) -> state { select_database = selected }
@@ -37,14 +40,14 @@ performAction (UnselectDatabase unselected) _ _ = void do
 performAction (LoadDatabaseDetails) _ _ = void do
   res <- lift $ getDatabaseDetails $ QueryString { query_query: "string",query_name: ["Pubmed"]}
   case res of
-     Left err -> cotransform $ \(state) ->  state
+     Left err -> modifyState $ \(state) ->  state
      Right resData -> do
-       cotransform $ \(state) -> state {response  = resData}
+       modifyState $ \(state) -> state {response  = resData}
 
 performAction GO _ _ = void do
   lift $ setHash "/corpus"
-  _ <- liftEff $ modalHide "addCorpus"
-  modifyState id
+  _ <- liftEffect $ modalHide "addCorpus"
+  modifyState identity
 
 
 newtype QueryString = QueryString
@@ -74,22 +77,24 @@ instance encodeJsonQueryString :: EncodeJson QueryString where
 getDatabaseDetails :: QueryString -> Aff (Either String (Array Response))
 getDatabaseDetails reqBody = do
   let token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTk5OTg1ODMsInVzZXJfaWQiOjUsImVtYWlsIjoiYWxleGFuZHJlLmRlbGFub2VAaXNjcGlmLmZyIiwidXNlcm5hbWUiOiJkZXZlbG9wZXIifQ.Os-3wuFNSmRIxCZi98oFNBu2zqGc0McO-dgDayozHJg"
-  affResp <- liftAff $ attempt $ affjax defaultRequest
+  affResp <- liftAff $ attempt $ request $ defaultRequest
     { method = Left POST
     , url ="http://localhost:8009/count"
     , headers =  [ ContentType applicationJSON
                 , Accept applicationJSON
               --   , RequestHeader "Authorization" $  "Bearer " <> token
             ]
-    , content = Just $ encodeJson reqBody
+    , content = Just $ Json $ encodeJson reqBody
     }
   case affResp of
     Left err -> do
-      liftAff $ log $ "error" <> show err
+      liftEffect $ log $ "error" <> show err
       pure $ Left $ show err
 
     Right a -> do
-      liftAff $ log $ "POST method Completed"
-      liftAff $ log $ "GET /api response: " <> show a.response
-      let res = decodeJson a.response
+      liftEffect $ log $ "POST method Completed"
+      liftEffect $ log $ "GET /api response: " <> show a.body
+      res <- case a.body of
+        Left err -> []
+        Right d -> decodeJson d
       pure res

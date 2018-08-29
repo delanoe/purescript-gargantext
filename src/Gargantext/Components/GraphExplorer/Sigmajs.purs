@@ -3,6 +3,7 @@ module Gargantext.Components.GraphExplorer.Sigmajs where
 import Prelude
 
 import Effect (Effect)
+import Prim.Row (class Union)
 import React (ReactClass, ReactElement, createElement)
 import Unsafe.Coerce (unsafeCoerce)
 

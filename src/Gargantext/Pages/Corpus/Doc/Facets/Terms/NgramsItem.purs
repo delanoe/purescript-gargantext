@@ -60,7 +60,7 @@ ngramsItemSpec = simpleSpec performAction render
                 , checked $ getter _._type state.term == MapTerm
                 , title "Mark as completed"
                 , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
-                ] []
+                ]
         checkbox_stop =
           input
           [ _type "checkbox"
@@ -68,7 +68,7 @@ ngramsItemSpec = simpleSpec performAction render
           , checked $ getter _._type state.term == StopTerm
           , title "Mark as completed"
           , onChange $ dispatch <<< ( const $ SetStop $ not (getter _._type state.term == StopTerm))
-          ] []
+          ]
 
 
 dispTerm :: String -> TermType -> ReactElement

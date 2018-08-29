@@ -2,10 +2,15 @@ module Gargantext.Components.Tree where
 
 import Prelude hiding (div)
 
+import Affjax (defaultRequest, request)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Tuple (Tuple(..))
+import Effect.Aff (Aff, attempt)
+import Effect.Aff.Class (liftAff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
 import React (ReactElement)
 import React.DOM (a, div, i, li, text, ul)
 import React.DOM.Props (Props, className, href, onClick)
@@ -27,8 +32,9 @@ type State = FTree
 initialState :: State
 initialState = NLeaf (Tuple "" "")
 
-performAction :: PerformAction _ State _ Action
-performAction (ToggleFolder i) _ _ = void (cotransform (\td -> toggleNode i td))
+performAction :: PerformAction State _ Action
+performAction (ToggleFolder i) _ _ = void $
+ cotransform (\td -> toggleNode i td)
 
 toggleNode :: forall t10. Int -> NTree t10 -> NTree t10
 toggleNode sid (NNode iid open name ary) =
@@ -127,19 +133,19 @@ instance decodeJsonLNode :: DecodeJson LNode where
 
 loadDefaultNode :: Aff (Either String (Array LNode))
 loadDefaultNode = do
-  res <- liftAff $ attempt $ affjax defaultRequest
+  res <- liftAff $ attempt $ request defaultRequest
          { url = "http://localhost:8008/user"
          , method = Left GET
          }
   case res of
     Left err -> do
-      _ <- liftEff $ log $ show err
+      _ <- liftEffect $ log $ show err
       pure $ Left $ show err
     Right a -> do
-      _ <- liftEff $ log $ show a.status
-      _ <- liftEff $ log $ show a.headers
-      _ <- liftEff $ log $ show a.response
-      let resp = decodeJson a.response
+      _ <- liftEffect $ log $ show a.status
+      _ <- liftEffect $ log $ show a.headers
+      _ <- liftEffect $ log $ show a.body
+      let resp = decodeJson a.body
       pure resp
 
 

@@ -6,13 +6,13 @@ import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Data.Lang (Lang(..))
-import Gargantext.Pages.Home.States  (State(..))
-import Gargantext.Pages.Home.Actions (Action(..), performAction)
+import Gargantext.Pages.Home.States (State)
+import Gargantext.Pages.Home.Actions (Action, performAction)
 
 import React (ReactElement)
 import React.DOM (a, div, h3, i, img, p, span, text)
 import React.DOM.Props (Props, _id, aria, className, href, src, target, title)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Thermite (Render, Spec, simpleSpec)
 
 
 -- Layout |
@@ -73,7 +73,7 @@ jumboTitle (LandingData hd) b = div jumbo
                                [ div [_id "logo-designed" ]
                                  [ img [ src "images/logo.png"
                                        , title hd.logoTitle
-                                       ] []
+                                       ]
                                  ]
                                ]
                            ]
@@ -82,7 +82,7 @@ jumboTitle (LandingData hd) b = div jumbo
                                    , _id "funnyimg"
                                    , title hd.imageTitle
                                    ]
-                                   []
+
                            ]
                      ]
                    ]
@@ -99,6 +99,5 @@ imageEnter (LandingData hd) action =  div [className "row"]
                                    , title hd.imageTitle
                                    , action
                                    ]
-                                   []
                              ]
                            ]

@@ -1,11 +1,13 @@
 module Gargantext.Pages.Layout.Specs.Search where
 
 import Prelude hiding (div)
-import React.DOM (br', button, div, h3, input, text, i, span, img)
-import React.DOM.Props (_id, _type, className, name, onClick, onInput, placeholder, value, aria, src, title)
+
+import Effect.Class (liftEffect)
+import React.DOM (br', button, div, input, text)
+import React.DOM.Props (_id, _type, className, name, onClick, onInput, placeholder, value)
+import Routing.Hash (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-import Gargantext.Pages.Home as L
 
 type State =
   {
@@ -28,7 +30,7 @@ data Action
 
 performAction :: forall props. PerformAction State props Action
 performAction NoOp _ _ = void do
-  modifyState id
+  modifyState identity
 
 
 performAction (SetQuery q) _ _ = void do
@@ -36,8 +38,8 @@ performAction (SetQuery q) _ _ = void do
 
 
 performAction GO _ _ = void do
-  lift $ setHash "/addCorpus"
-  modifyState id
+  liftEffect $ setHash "/addCorpus"
+  modifyState identity
 
 
 unsafeEventValue :: forall event. event -> String
@@ -53,8 +55,8 @@ searchSpec = simpleSpec performAction render
        [ div [className "jumbotron" ]
          [ div [className "row"       ]
            [ div [className "col-md-10" ]
-             [ br' []
-             , br' []
+             [ br'
+             , br'
              , div [ className "form-group"]
                    [ input [ className "form-control"
                            , _id "id_password"
@@ -63,16 +65,16 @@ searchSpec = simpleSpec performAction render
                            , _type "text"
                            , value state.query
                            , onInput \e -> dispatch (SetQuery (unsafeEventValue e))
-                           ] []
-                    , br'[]
+                           ]
+                    , br'
                     ]
               ]
             , div [ className "col-md-2"]
-                  [ br' []
-                  , br' []
+                  [ br'
+                  , br'
                   , button [onClick \_ -> dispatch GO] [text "GO"]
                   ]
-            , br' []
+            , br'
             ]
           ]
         ]

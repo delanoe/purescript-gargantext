@@ -1,7 +1,6 @@
 module Gargantext.Pages.Corpus.User.Brevets where
 
-
-import Prelude (id, void)
+import Prelude
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
 
@@ -14,8 +13,7 @@ data Action = NoOp
 
 performAction :: forall props. PerformAction State props Action
 performAction NoOp _ _ = void do
-  modifyState id
-
+  modifyState identity
 
 brevetsSpec :: forall props. Spec State props Action
 brevetsSpec = simpleSpec performAction render

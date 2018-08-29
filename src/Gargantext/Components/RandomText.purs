@@ -21,10 +21,12 @@ module Gargantext.Components.RandomText where
 
 import Prelude
 
-import Effect (Effect)
 import Data.Array (drop, dropEnd, filter, foldl, head, length, tail, take, takeEnd, (!!))
 import Data.Maybe (Maybe(Nothing, Just), fromJust)
-import Data.String (Pattern(..), fromCharArray, split, toCharArray)
+import Data.String (Pattern(..), split)
+import Data.String.CodeUnits (fromCharArray, toCharArray)
+import Effect (Effect)
+import Effect.Random (randomInt)
 import Partial (crash)
 import Partial.Unsafe (unsafePartial)
 
@@ -60,7 +62,7 @@ data RandomWheel a = RandomWheel { before :: Array a
                                  , after  :: Array a
                                  }
 
-randomPart :: forall a b. Array b -> Effect (Array b)
+randomPart :: forall b. Array b -> Effect (Array b)
 randomPart array = randomArrayPoly middle >>= \(middle') -> pure ( start <> middle' <> end)
         where
             start   = take    2          array
@@ -68,13 +70,13 @@ randomPart array = randomArrayPoly middle >>= \(middle') -> pure ( start <> midd
             end     = takeEnd 2          array
 
 
-randomArrayPoly :: forall a b. Array a -> Effect (Array a)
+randomArrayPoly :: forall a. Array a -> Effect (Array a)
 randomArrayPoly wheel = case head wheel of
                          Nothing -> pure []
                          Just wheel' -> randomWheel (RandomWheel { before:wheel, during:wheel', after:[]})
                                      >>= \(RandomWheel rand) -> (pure rand.after)
 
-randomWheel :: forall a b. RandomWheel b -> Effect (RandomWheel b)
+randomWheel :: forall b. RandomWheel b -> Effect (RandomWheel b)
 randomWheel (RandomWheel {before:[], during:d, after:a}) =
     pure   (RandomWheel {before:[], during:d, after:a})
 
@@ -83,7 +85,7 @@ randomWheel (RandomWheel {before:b, during:d, after:a}) = do
     randomWheel $ RandomWheel {before:b', during:d', after:(a <> [d'])}
 
 
-randomArray :: forall a b. Array b -> Effect (RandomWheel b)
+randomArray :: forall b. Array b -> Effect (RandomWheel b)
 randomArray array = unsafePartial $ do
     n    <- randomInt 0 (length array - 1)
 

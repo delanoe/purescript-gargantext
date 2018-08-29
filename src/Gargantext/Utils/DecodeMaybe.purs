@@ -2,13 +2,14 @@ module Gargantext.Utils.DecodeMaybe where
 
 import Prelude
 
-import Data.Argonaut (class DecodeJson, JObject, getFieldOptional)
+import Data.Argonaut (class DecodeJson, Json, getFieldOptional)
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
+import Foreign.Object (Object)
 
 foreign import isNull :: forall a. a -> Boolean
 
-getFieldOptional' :: forall a. DecodeJson a => JObject -> String -> Either String (Maybe a)
+getFieldOptional' :: forall t9. DecodeJson t9 => Object Json -> String -> Either String (Maybe t9)
 getFieldOptional' o s = (case _ of
     Just v -> if isNull v then Nothing else v
     Nothing -> Nothing
