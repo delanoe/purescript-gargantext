@@ -4,7 +4,7 @@ import Prelude
 
 import Effect (Effect)
 import Prim.Row (class Union)
-import React (ReactClass, ReactElement, createElement)
+import React (Children, ReactClass, ReactElement, createElement, unsafeCreateElement)
 import Unsafe.Coerce (unsafeCoerce)
 
 foreign import edgeShapesClass  :: forall props. ReactClass props
@@ -13,51 +13,51 @@ foreign import forceAtlas2Class :: forall props. ReactClass props
 foreign import forceLinkClass   :: forall props. ReactClass props
 foreign import loadGEXFClass    :: forall props. ReactClass props
 foreign import loadJSONClass    :: forall props. ReactClass props
-foreign import nOverlapClass    :: forall props. ReactClass props
-foreign import neoCypherClass   :: forall props. ReactClass props
+foreign import nOverlapClass    :: ReactClass {children :: Children}
+foreign import neoCypherClass   :: ReactClass {children :: Children}
 foreign import neoGraphItemsProducersClass :: forall props. ReactClass props
-foreign import nodeShapesClass             :: forall props. ReactClass props
-foreign import randomizeNodePositionsClass :: forall props. ReactClass props
+foreign import nodeShapesClass             :: ReactClass {children :: Children}
+foreign import randomizeNodePositionsClass :: ReactClass {children :: Children}
 foreign import relativeSizeClass           :: forall props. ReactClass props
-foreign import sigmaClass :: forall props. ReactClass props
+foreign import sigmaClass :: ReactClass {children :: Children}
 foreign import sigmaEnableSVGClass :: forall props. ReactClass props
-foreign import sigmaEnableWebGLClass :: forall props. ReactClass props
+foreign import sigmaEnableWebGLClass :: ReactClass {children :: Children}
 
 neoCypher :: forall o. Optional o NeoCypherOptProps  => NeoCypherReqProps o -> ReactElement
-neoCypher props = createElement neoCypherClass props []
+neoCypher props = unsafeCreateElement neoCypherClass (unsafeCoerce props) []
 
 loadJSON :: forall o. Optional o (onGraphLoaded :: Effect Unit) => { "path" :: String | o } -> ReactElement
-loadJSON props = createElement loadJSONClass props []
+loadJSON props = unsafeCreateElement loadJSONClass props []
 
 loadGEXF :: forall o. Optional o (onGraphLoaded :: Effect Unit) => { "path" :: String | o } -> ReactElement
-loadGEXF props = createElement loadGEXFClass props []
+loadGEXF props = unsafeCreateElement loadGEXFClass props []
 
 forceLink :: forall o. Optional o ForceLinkOptProps  => { | o} -> ReactElement
-forceLink props = createElement forceLinkClass props []
+forceLink props = unsafeCreateElement forceLinkClass props []
 
 nOverlap :: forall o. Optional o NOverlapOptProps  => { | o } -> ReactElement
-nOverlap props = createElement nOverlapClass props []
+nOverlap props = unsafeCreateElement nOverlapClass (unsafeCoerce props) []
 
 randomizeNodePositions :: ReactElement
 randomizeNodePositions  = createElement randomizeNodePositionsClass {} []
 
 relativeSize :: {initialSize :: Number } -> ReactElement
-relativeSize props = createElement randomizeNodePositionsClass props []
+relativeSize props = unsafeCreateElement randomizeNodePositionsClass (unsafeCoerce props) []
 
 forceAtlas2 :: forall o. Optional o ForceAtlas2OptProps  => { | o } -> ReactElement
-forceAtlas2 props = createElement forceAtlas2Class props []
+forceAtlas2 props = unsafeCreateElement forceAtlas2Class props []
 
 sigma :: forall props. Optional props SigmaProps =>  { | props} -> Array ReactElement -> ReactElement
-sigma = createElement sigmaClass
+sigma props children = unsafeCreateElement sigmaClass (unsafeCoerce props) children
 
 sigmaEnableWebGL :: ReactElement
 sigmaEnableWebGL = createElement sigmaEnableWebGLClass {} []
 
 edgeShapes :: { "default" :: EdgeShape } -> ReactElement
-edgeShapes props = createElement edgeShapesClass props []
+edgeShapes props = unsafeCreateElement edgeShapesClass props []
 
 nodeShapes :: { "default" :: NodeShape } -> ReactElement
-nodeShapes props = createElement nodeShapesClass props []
+nodeShapes props = unsafeCreateElement nodeShapesClass (unsafeCoerce props) []
 
 
 foreign import data SigmaNode :: Type

@@ -36,7 +36,7 @@ corpusSpec = simpleSpec defaultPerformAction render
     render dispatch _ state _ =
       [ div [className "row"]
         [ div [className "col-md-3"] [ h3 [] [text corpus.title] ]
-        , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] [] ]
+        , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]
         ]
       , div [className "row"] [ div [className "jumbotron1", style {padding : "12px 0px 20px 12px"}]
             [ div [ className "col-md-8 content"]

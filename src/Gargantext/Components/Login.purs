@@ -2,17 +2,18 @@ module Gargantext.Components.Login where
 
 import Prelude hiding (div)
 
-import Affjax (defaultRequest, request)
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.RequestBody (RequestBody(..))
 import Affjax.RequestHeader (RequestHeader(..))
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Affjax.ResponseFormat as ResponseFormat
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, stringify, (.?), (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Lens (over)
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationJSON)
 import Effect (Effect)
-import Effect.Aff (Aff, attempt)
-import Effect.Aff.Class (liftAff)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Components.Modals.Modal (modalHide)
@@ -64,7 +65,7 @@ performAction (SetPassword pwd) _ _ = void do
 
 
 
-performAction Login _ (State state) = void do
+performAction Login _ _ = void do
   --lift $ setHash "/search"
   liftEffect $ modalHide "loginModal"
   modifyState \(State state) -> State $ state {loginC = true}
@@ -242,30 +243,30 @@ loginReq encodeData =
       defaultRequest
         { url = "https://dev.gargantext.org/api/auth/token"
         , method = Left POST
+        , responseFormat = ResponseFormat.json
         , headers =
             [ ContentType applicationJSON
             , Accept applicationJSON
             ]
-        , content = Just $ encodeJson encodeData
+        , content = Just $ Json $ encodeJson encodeData
         }
   in
     do
-      affResp <- liftAff $ attempt $ request setting
-      case affResp of
+      affResp <- request setting
+      case affResp.body of
         Left err -> do
-          liftAff $ log $ show err
-          pure $ Left $ show err
-        Right a -> do
-          liftAff $ log $ "POST method Completed"
-          liftAff $ log $ "GET /api response: " <> show a.response
-          let res = decodeJson a.response
-          liftAff $ log $ "res: " <> show a.response
-          case res of
+          liftEffect $ log $ printResponseFormatError err
+          pure $ Left $ printResponseFormatError err
+        Right json -> do
+          liftEffect $ log $ "POST method Completed"
+          liftEffect $ log $ "GET /api response: " <> stringify json
+          let obj = decodeJson json
+          case obj of
             Left e ->
-              liftAff $ log $ "Error Decoding : " <> show e
+              liftEffect $ log $ "Error Decoding : " <> show e
             Right (LoginRes res1) ->
               liftEffect $ setToken res1.token
-          pure res
+          pure obj
 
 instance decodeLoginRes :: DecodeJson LoginRes where
   decodeJson json = do

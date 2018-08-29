@@ -2,20 +2,22 @@ module Main where
 
 import Prelude
 
-import Effect (Effect)
 import Data.Maybe (fromJust)
-
-import Gargantext.Pages.Layout        (dispatchAction)
-import Gargantext.Pages.Layout.Specs  (layoutSpec)
+import Effect (Effect)
+import Gargantext.Pages.Layout (dispatchAction)
+import Gargantext.Pages.Layout.Specs (layoutSpec)
 import Gargantext.Pages.Layout.States (initAppState)
-
 import Gargantext.Router (routeHandler, routing)
 import Partial.Unsafe (unsafePartial)
+import React (ReactThis)
 import React as R
 import ReactDOM as RDOM
-import Routing (matches)
-import Routing.Hash (getHash, setHash)
+import Routing.Hash (getHash, matches, setHash)
+import Thermite (createClass)
 import Thermite as T
+import Web.DOM.ParentNode (QuerySelector(..), querySelector)
+import Web.HTML (window)
+import Web.HTML.Window (document)
 
 main :: Effect Unit
 main = do
@@ -24,12 +26,12 @@ main = do
       let setRouting this = void $ do
             matches routing (routeHandler (dispatchAction (dispatcher this)))
           spec' = spec { componentWillMount = setRouting }
-      document <- DOM.window >>= DOM.document
-      container <- unsafePartial (fromJust  <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
+      document <- window >>= document
+      container <- unsafePartial (fromJust  <$> querySelector (QuerySelector "#app") (document))
       h <- getHash
       case h of
         "" -> setHash "/"
         _ -> do
           setHash "/"
           setHash h
-      RDOM.render (R.createFactory (R.createClass spec') {}) container
+      RDOM.render (R.unsafeCreateElement (createClass spec') {}) container

@@ -13,14 +13,15 @@ import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), 
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
 import Gargantext.Components.Charts.Options.Series (Series, SeriesName, SeriesShape(..), seriesType)
 import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis)
+import React (unsafeCreateElementDynamic)
 import React as R
+import Unsafe.Coerce (unsafeCoerce)
 
 
 foreign import eChartsClass :: R.ReactClass Echarts
 
 chart :: Options -> R.ReactElement
 chart = echarts <<< chartWith <<< opts
-
 
 chartWith :: Option -> Echarts
 chartWith opts = { className: Nothing
@@ -39,7 +40,7 @@ chartWith opts = { className: Nothing
              }
 
 echarts :: Echarts -> R.ReactElement
-echarts chart = R.createElementDynamic eChartsClass chart []
+echarts chart = unsafeCreateElementDynamic (unsafeCoerce eChartsClass) chart []
 
 type MainTitle = String
 type SubTitle  = String
@@ -196,6 +197,7 @@ opts (Options { mainTitle : mainTitle
               , show: visible
               }
   ,dataZoom: if addZoom then [zoom Slider, zoom Inside] else []
+  , children : unsafeCoerce []
   }
 
 

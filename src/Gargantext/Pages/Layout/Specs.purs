@@ -5,58 +5,26 @@ import Prelude hiding (div)
 import Data.Foldable (fold, intercalate)
 import Data.Lens (over)
 import Data.Maybe (Maybe(Nothing, Just))
-
+import Effect (Effect)
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree as Tree
-
--- | [Naming] metrics indicator: reduce spaces between "," and "_"
-import Gargantext.Pages.Layout.States (         _addCorpusState
-                                      ,            _corpusState
-                                      ,          _dashBoardSate
-                                      , _docAnnotationViewState
-                                      ,           _docViewState
-                                      ,     _graphExplorerState
-                                      ,           _landingState
-                                      ,             _loginState
-                                      ,             _ngramState
-                                      ,            _searchState
-                                      ,           _tabviewState
-                                      ,              _treeState
-                                      ,          _userPageState
-                                      )
--- | [Naming] metrics indicator: reduce spaces between "," and "_"
-import Gargantext.Pages.Layout.Actions (         _addCorpusAction
-                                       ,            _corpusAction
-                                       ,         _dashBoardAction
-                                       , _docAnnotationViewAction
-                                       ,           _docViewAction
-                                       ,     _graphExplorerAction
-                                       ,           _LandingA
-                                       ,             _loginAction
-                                       ,            _NgramsA
-                                       ,            _searchAction
-                                       ,           _tabviewAction
-                                       ,              _treeAction
-                                       ,          _userPageAction
-                                       )
-import Gargantext.Pages.Layout.Specs.AddCorpus as AC
-import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus as CA
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
+import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), performAction)
-import Gargantext.Pages.Layout.States (AppState, E)
+import Gargantext.Pages.Layout.Actions (Action(..), _LandingA, _NgramsA, _addCorpusAction, _corpusAction, _dashBoardAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _tabviewAction, _treeAction, _userPageAction, performAction)
+import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _corpusState, _dashBoardSate, _docAnnotationViewState, _docViewState, _graphExplorerState, _landingState, _loginState, _ngramState, _searchState, _tabviewState, _treeState, _userPageState)
 import Gargantext.Router (Routes(..))
-
 import React (ReactElement)
-import React.DOM (a, button, div, footer, hr, img, input, li, p, span, text, ul)
+import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
 import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
@@ -113,7 +81,7 @@ layout0 layout =
   ]
   where
     outerLayout1 = simpleSpec defaultPerformAction defaultRender
-    outerLayout :: Spec (E eff) AppState props Action
+    outerLayout :: Spec AppState props Action
     outerLayout =
       cont $ fold
       [ withState \st ->
@@ -139,7 +107,7 @@ layout0 layout =
       ]
 
 layoutSidebar ::  forall props. Spec AppState props Action
-                -> Spec (E eff) AppState props Action
+                -> Spec AppState props Action
 layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
@@ -162,7 +130,7 @@ divLogo = a [ className "navbar-brand logoSmall"
             , href "#/"
             ] [ img [ src "images/logoSmall.png"
                     , title "Back to home."
-                    ] []
+                    ]
               ]
 
 divDropdownLeft :: ReactElement
@@ -289,13 +257,13 @@ divSearchBar = simpleSpec performAction render
                                             , width: "400px"
                                             }
                                     , onChange \e -> dispatch $ Search (unsafeCoerce e).target.value
-                                    ] []
+                                    ]
                             ,  button [onClick \e -> dispatch Go, className "btn btn-primary"] [text "Enter"]
                             ]
                   ]
 
 --divDropdownRight :: Render AppState props Action
-divDropdownRight :: _ -> ReactElement
+divDropdownRight :: (Action -> Effect Unit) -> ReactElement
 divDropdownRight d =
   ul [className "nav navbar-nav pull-right"]
      [
@@ -321,7 +289,7 @@ layoutFooter ::  forall props. Spec AppState props Action
 layoutFooter = simpleSpec performAction render
   where
     render :: Render AppState props Action
-    render dispatch _ state _ = [div [ className "container1" ] [ hr [] [], footerLegalInfo']]
+    render dispatch _ state _ = [div [ className "container1" ] [ hr', footerLegalInfo']]
       where
         footerLegalInfo' = footer [] [ p [] [ text "Gargantext "
                                    , span [className "glyphicon glyphicon-registration-mark" ] []

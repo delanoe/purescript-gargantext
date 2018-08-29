@@ -2,7 +2,11 @@ module Gargantext.Pages.Corpus.Doc.Facets.Graph where
 
 import Prelude hiding (div)
 
-import Data.Argonaut (decodeJson)
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.RequestHeader (RequestHeader(..))
+import Affjax.ResponseFormat as ResponseFormat
+import Control.Monad.Cont.Trans (lift)
+import Data.Argonaut (decodeJson, stringify)
 import Data.Array (length, mapWithIndex, (!!))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
@@ -10,6 +14,9 @@ import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.MediaType.Common (applicationJSON)
 import Data.Newtype (class Newtype)
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Utils (getter)
@@ -52,7 +59,7 @@ graphSpec = simpleSpec performAction render
 
 performAction :: forall props. PerformAction State props Action
 performAction (LoadGraph fp) _ _ = void do
-  _ <- liftEff $ log fp
+  _ <- liftEffect $ log fp
   case fp of
     "" -> do
       modifyState \(State s) -> State s {filePath = fp, graphData = GraphData {nodes : [], edges : []}, sigmaGraphData = Nothing}
@@ -69,7 +76,7 @@ performAction (SelectNode node) _ _ = void do
   modifyState $ \(State s) -> State s {selectedNode = pure node}
 
 performAction NoOp _ _ = void do
-  modifyState id
+  modifyState identity
 
 
 convert :: GraphData -> SigmaGraphData
@@ -113,10 +120,11 @@ render d p (State s) c =
               , renderer : canvas
               , settings : mySettings
               , style : sStyle { height : "95%"}
-              , onClickNode : \e -> unsafePerformEff $ do
-                log $ unsafeCoerce e
-                d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-                pure unit
+              -- , onClickNode : \e -> do
+              --   log $ unsafeCoerce e
+              --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+              --   pure unit
+              -- TODO: fix this!
               }
         [ sigmaEnableWebGL
         , forceAtlas2 forceAtlas2Config
@@ -219,21 +227,22 @@ mySettings = sigmaSettings { verbose : true
 -- loadJSON  {path : "http://localhost:2015/examples/sites_coords.json"}
 getGraphData :: String -> Aff (Either String GraphData)
 getGraphData fp = do
-  resp <- liftAff $ attempt $ affjax defaultRequest
+  resp <- request defaultRequest
           { url =("http://localhost:2015/examples/" <> fp)
           , method = Left GET
+          , responseFormat = ResponseFormat.json
           , headers =
             [ ContentType applicationJSON
             , Accept applicationJSON
             ]
           }
-  case resp of
+  case resp.body of
     Left err -> do
-      liftEff $ log $ show err
-      pure $ Left $ show err
-    Right a -> do
-      liftEff $ log $ show a.response
-      let gd = decodeJson a.response
+      liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      liftEffect $ log $ stringify json
+      let gd = decodeJson json
       pure gd
 
 
@@ -288,10 +297,10 @@ dispLegend ary = div [] $ map dl ary
 
 
 specOld :: forall props. Spec State props Action
-specOld = simpleSpec performAction render
+specOld = simpleSpec performAction render'
   where
-    render :: Render State props Action
-    render d _ (State st) _ =
+    render' :: Render State props Action
+    render' d _ (State st) _ =
       [  div [className "row"] [
             div [className "col-md-12", style {marginTop : "21px", marginBottom : "21px"}]
             [ menu [_id "toolbar"]
@@ -310,7 +319,7 @@ specOld = simpleSpec performAction render
                     [ input [_type "file"
                             , name "file"
                          --   , onChange (\e -> d $ SetFile (getFile e) (unsafeCoerce $ d <<< SetProgress))
-                            , className "btn btn-primary"] []
+                            , className "btn btn-primary"]
 
                     -- , text $ show st.readyState
                     ]
@@ -319,7 +328,7 @@ specOld = simpleSpec performAction render
                               , className "btn btn-warning btn-sm"
                               ,value "Run Demo"
                             --  , onClick \_ -> d SetGraph, disabled (st.readyState /= DONE)
-                              ] []
+                              ]
                       ]
 
                 , li'
@@ -334,24 +343,24 @@ specOld = simpleSpec performAction render
                             [ span [className "glyphicon glyphicon-search"] []
                             ]
                           ]
-                          ,input [_type "text", className "form-control", placeholder "select topics"] []
+                          ,input [_type "text", className "form-control", placeholder "select topics"]
                         ]
                       ]
 
                     ]
                   ]
                 , li [className "col-md-2"]
-                  [ span [] [text "selector size"],input [_type "range", _id "myRange", value "90"] []
+                  [ span [] [text "selector size"],input [_type "range", _id "myRange", value "90"]
                   ]
                 , li [className "col-md-2"]
-                  [ span [] [text "label size"],input [_type "range", _id "myRange", value "90"] []
+                  [ span [] [text "label size"],input [_type "range", _id "myRange", value "90"]
                   ]
 
                 , li [className "col-md-2"]
-                  [ span [] [text "Nodes"],input [_type "range", _id "myRange", value "90"] []
+                  [ span [] [text "Nodes"],input [_type "range", _id "myRange", value "90"]
                   ]
                 , li [className "col-md-2"]
-                  [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"] []
+                  [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
                   ]
                 , li'
                   [ button [className "btn btn-primary"] [text "Save"] -- TODO: Implement Save!
@@ -386,10 +395,10 @@ specOld = simpleSpec performAction render
                              , renderer : canvas
                              , settings : mySettings
                              , style : sStyle { height : "95%"}
-                             , onClickNode : \e -> unsafePerformEff $ do
-                               log $ unsafeCoerce e
-                               d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-                               pure unit
+                             -- , onClickNode : \e -> do
+                             --   log $ unsafeCoerce e
+                             --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+                             --   pure unit
                              }
                        [ sigmaEnableWebGL
                        , forceAtlas2 forceAtlas2Config
@@ -405,7 +414,7 @@ specOld = simpleSpec performAction render
                [ case st.selectedNode of
                     Nothing -> span [] []
                     Just selectedNode -> p [] [text $ "selected Node : " <> getter _.label selectedNode
-                                              , br' []
+                                              , br'
                                               , p [] [button [className "btn btn-primary", style {marginBottom : "18px"}] [text "Remove"]]
                                               ]
                ]
@@ -452,7 +461,7 @@ specOld = simpleSpec performAction render
                            , checked $ true
                            , title "Mark as completed"
                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
-                           ] []
+                           ]
 
                    ]
                  , li []
@@ -462,7 +471,7 @@ specOld = simpleSpec performAction render
                            , checked $ false
                            , title "Mark as completed"
                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
-                           ] []
+                           ]
                    ]
                  , li []
                    [ span [] [text "Patents"]
@@ -471,7 +480,7 @@ specOld = simpleSpec performAction render
                            , checked $ false
                            , title "Mark as completed"
                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
-                           ] []
+                           ]
                    ]
                  , li []
                    [ span [] [text "Others"]
@@ -480,7 +489,7 @@ specOld = simpleSpec performAction render
                            , checked $ false
                            , title "Mark as completed"
                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
-                           ] []
+                           ]
                    ]
                  ]
 

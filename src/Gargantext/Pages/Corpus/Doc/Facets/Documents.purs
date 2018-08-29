@@ -1,11 +1,18 @@
 module Gargantext.Pages.Corpus.Doc.Facets.Documents where
 
-import Prelude
+import Prelude hiding (div)
 
+import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Array (filter)
 import Data.Either (Either(..))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Tuple (Tuple(..))
+import Effect (Effect)
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
 import Gargantext.Components.Charts.Charts (p'')
 import Gargantext.Config.REST (get)
 import React (ReactElement)
@@ -67,10 +74,10 @@ newtype Corpus
 
 
 
-derive instance genericCorpus :: Generic Corpus
+derive instance genericCorpus :: Generic Corpus _
 
 instance showCorpus :: Show Corpus where
-  show = gShow
+  show = genericShow
 
 
 newtype Response = Response
@@ -130,21 +137,21 @@ filterSpec :: forall props. Spec State props Action
 filterSpec = simpleSpec defaultPerformAction render
   where
     render d p s c = [div [] [ text "    Filter "
-                     , input [] []
+                     , input []
                      ]]
 
-layoutDocview :: Spec State _ Action
+layoutDocview :: forall props. Spec State props Action
 layoutDocview = simpleSpec performAction render
   where
-    render :: Render State _ Action
+    render :: Render State props Action
     render dispatch _ state@(TableData d) _ =
       [ div [className "container1"]
         [ div [className "row"]
           [
            div [className "col-md-12"]
             [ p''
-            , div [] [ text "    Filter ", input [] []]
-            , br' []
+            , div [] [ text "    Filter ", input []]
+            , br'
             , div [className "row"]
               [  div [className "col-md-1"] [b [] [text d.title]]
               , div [className "col-md-2"] [sizeDD d.pageSize dispatch]
@@ -170,7 +177,7 @@ layoutDocview = simpleSpec performAction render
       ]
 
 
-performAction :: PerformAction State _ Action
+performAction :: forall props. PerformAction State props Action
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
 
 performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
@@ -188,12 +195,12 @@ loadPage = do
   -- res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
   case res of
      Left err -> do
-       _ <- liftEff $ log $ show err
+       _ <- liftEffect $ log $ show err
        pure $ Left $ show err
      Right resData -> do
        let docs = toTableData (res2corpus $ resData)
-       _ <- liftEff $ log $ show $ map (\({ row: r, delete :_}) -> show r) ((\(TableData docs') -> docs'.rows) docs)
-       _ <- liftEff $ log $ show "loading"
+       _ <- liftEffect $ log $ show $ map (\({ row: r, delete :_}) -> show r) ((\(TableData docs') -> docs'.rows) docs)
+       _ <- liftEffect $ log $ show "loading"
        pure $ Right docs
       where
         res2corpus :: Array Response -> Array Corpus
@@ -201,8 +208,8 @@ loadPage = do
           Corpus { _id : r.cid
           , url    : ""
           , date   :  r.created
-          , title  : (\(Hyperdata r) -> r.title) r.hyperdata
-          , source : (\(Hyperdata r) -> r.source) r.hyperdata
+          , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
+          , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
           , fav    : r.favorite
           , ngramCount : r.ngramCount
          }) rs
@@ -241,6 +248,7 @@ sdata :: Array { row :: Corpus, delete :: Boolean }
 sdata = data' sampleData
 
 
+tdata :: TableData Corpus
 tdata = TableData
         { rows         : sdata
         , totalPages   : 10
@@ -260,7 +268,7 @@ showRow {row : (Corpus c), delete} =
   , td [] [text c.date]
   , td [] [ a [ if c.fav == true then href "#/userPage" else href "#/documentView/1" ] [ text c.title ] ]
   , td [] [text c.source]
-  , td [] [input [ _type "checkbox"] []]
+  , td [] [input [ _type "checkbox"]]
   ]
     where
       fa = case c.fav of
@@ -306,7 +314,7 @@ string2PageSize "50" = PS50
 string2PageSize "100" = PS100
 string2PageSize _    = PS10
 
-sizeDD :: PageSizes -> _ -> ReactElement
+sizeDD :: PageSizes -> (Action -> Effect Unit) -> ReactElement
 sizeDD ps d
   = span []
     [ text "Show : "
@@ -329,7 +337,7 @@ textDescription currPage pageSize totalRecords
       end  = if end' > totalRecords then totalRecords else end'
 
 
-pagination :: _ -> Int -> Int -> ReactElement
+pagination :: (Action -> Effect Unit) -> Int -> Int -> ReactElement
 pagination d tp cp
   = span [] $
     [ text "Pages: ", prev, first, ldots]
@@ -393,7 +401,7 @@ pagination d tp cp
       lnums = map (\i -> fnmid d i) $ filter (lessthan 1) [cp - 2, cp - 1]
       rnums = map (\i -> fnmid d i) $ filter (greaterthan tp) [cp + 1, cp + 2]
 
-fnmid :: _ -> Int -> ReactElement
+fnmid :: (Action -> Effect Unit) -> Int -> ReactElement
 fnmid d i
   = span []
     [ text " "

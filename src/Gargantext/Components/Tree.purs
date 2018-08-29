@@ -2,13 +2,14 @@ module Gargantext.Components.Tree where
 
 import Prelude hiding (div)
 
-import Affjax (defaultRequest, request)
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.ResponseFormat as ResponseFormat
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Tuple (Tuple(..))
-import Effect.Aff (Aff, attempt)
-import Effect.Aff.Class (liftAff)
+import Effect (Effect)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import React (ReactElement)
@@ -32,7 +33,7 @@ type State = FTree
 initialState :: State
 initialState = NLeaf (Tuple "" "")
 
-performAction :: PerformAction State _ Action
+performAction :: forall props. PerformAction State props Action
 performAction (ToggleFolder i) _ _ = void $
  cotransform (\td -> toggleNode i td)
 
@@ -88,15 +89,15 @@ nodeOptionsView activated = case activated of
                          false -> []
 
 
-treeview :: Spec State _ Action
+treeview :: forall props. Spec State props Action
 treeview = simpleSpec performAction render
   where
-    render :: Render State _ Action
+    render :: Render State props Action
     render dispatch _ state _ =
       [div [className "tree"] [toHtml dispatch state]]
 
 
-toHtml :: _ -> FTree -> ReactElement
+toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
 toHtml d (NLeaf (Tuple name link)) =
   li []
   [ a [ href link]
@@ -133,20 +134,22 @@ instance decodeJsonLNode :: DecodeJson LNode where
 
 loadDefaultNode :: Aff (Either String (Array LNode))
 loadDefaultNode = do
-  res <- liftAff $ attempt $ request defaultRequest
+  res <- request $ defaultRequest
          { url = "http://localhost:8008/user"
+         , responseFormat = ResponseFormat.json
          , method = Left GET
+         , headers = []
          }
-  case res of
+  case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ show err
-      pure $ Left $ show err
-    Right a -> do
-      _ <- liftEffect $ log $ show a.status
-      _ <- liftEffect $ log $ show a.headers
-      _ <- liftEffect $ log $ show a.body
-      let resp = decodeJson a.body
-      pure resp
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj
 
 
 fnTransform :: LNode -> FTree

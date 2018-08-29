@@ -2,29 +2,29 @@ module Gargantext.Pages.Layout.Actions where
 
 import Prelude hiding (div)
 
+import Control.Monad.Cont.Trans (lift)
 import Data.Array (length)
 import Data.Either (Either(..))
 import Data.Lens (Prism', prism)
-
-import Gargantext.Components.Login              as LN
-import Gargantext.Components.Modals.Modal          (modalShow)
-import Gargantext.Components.Tree               as Tree
-import Gargantext.Pages.Layout.Specs.AddCorpus as AC
-import Gargantext.Pages.Corpus.Doc.Annotation   as D
-import Gargantext.Pages.Corpus                  as CA
-import Gargantext.Pages.Corpus.Doc.Facets.Documents     as DV
-import Gargantext.Pages.Corpus.Doc.Facets       as TV
+import Effect.Class (liftEffect)
+import Effect.Console (log)
+import Gargantext.Components.Login as LN
+import Gargantext.Components.Modals.Modal (modalShow)
+import Gargantext.Components.Tree as Tree
+import Gargantext.Pages.Corpus as CA
+import Gargantext.Pages.Corpus.Doc.Annotation as D
+import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
-import Gargantext.Pages.Corpus.User.Users       as U
-import Gargantext.Pages.Home                    as L
+import Gargantext.Pages.Corpus.User.Users as U
+import Gargantext.Pages.Home as L
+import Gargantext.Pages.Layout.Specs.AddCorpus as AC
+import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Pages.Layout.States (AppState)
-import Gargantext.Pages.Layout.Specs.Search     as S
-import Gargantext.Router                           (Routes)
-
+import Gargantext.Router (Routes)
 import Thermite (PerformAction, modifyState)
-
 
 
 data Action
@@ -56,21 +56,21 @@ performAction (Search s)  _ _ = void do
   modifyState $ _ {search = s}
 
 performAction (ShowLogin)  _ _ = void do
-  liftEff $ modalShow "loginModal"
+  liftEffect $ modalShow "loginModal"
   modifyState $ _ {showLogin = true}
 
 performAction (ShowAddcorpus)  _ _ = void do
-  liftEff $ modalShow "addCorpus"
+  liftEffect $ modalShow "addCorpus"
   modifyState $ _ {showCorpus = true}
 
 performAction Go  _ _ = void do
-  liftEff $ modalShow "addCorpus"
+  liftEffect $ modalShow "addCorpus"
   modifyState $ _ {showCorpus = true}
  -- _ <- lift $ setHash "/addCorpus"
   --modifyState id
 
 performAction Initialize  _ state = void do
-  _ <- liftEff $ log "loading Initial nodes"
+  _ <- liftEffect $ log "loading Initial nodes"
   case state.initialized of
     false -> do
 
@@ -78,12 +78,12 @@ performAction Initialize  _ state = void do
 
       case lnodes of
         Left err -> do
-          modifyState id
+          modifyState identity
         Right d -> do
           page <- lift $ DV.loadPage
           case page of
             Left err -> do
-              modifyState id
+              modifyState identity
             Right docs -> do
               modifyState $ _ { initialized = true
                               , ntreeState = if length d > 0
@@ -94,10 +94,10 @@ performAction Initialize  _ state = void do
                               , docViewState = docs
                               }
     _ -> do
-      modifyState id
+      modifyState identity
 
 performAction _ _ _ = void do
-  modifyState id
+  modifyState identity
 
 ----------------------------------------------------------
 

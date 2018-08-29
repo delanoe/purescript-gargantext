@@ -1,22 +1,22 @@
 module Gargantext.Pages.Layout.Specs.AddCorpus.Actions where
 
-import Gargantext.Pages.Layout.Specs.AddCorpus.States
 import Prelude hiding (div)
 
-import Affjax (defaultRequest, request)
+import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.RequestHeader (RequestHeader(..))
+import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
+import Data.Argonaut (class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, stringify, (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(Just))
 import Data.MediaType.Common (applicationJSON)
-import Effect.Aff (Aff, attempt)
-import Effect.Aff.Class (liftAff)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Components.Modals.Modal (modalHide)
+import Gargantext.Pages.Layout.Specs.AddCorpus.States (Response, State)
 import Routing.Hash (setHash)
 import Thermite (PerformAction, modifyState)
 
@@ -45,7 +45,7 @@ performAction (LoadDatabaseDetails) _ _ = void do
        modifyState $ \(state) -> state {response  = resData}
 
 performAction GO _ _ = void do
-  lift $ setHash "/corpus"
+  _ <- liftEffect $ setHash "/corpus"
   _ <- liftEffect $ modalHide "addCorpus"
   modifyState identity
 
@@ -72,29 +72,25 @@ instance encodeJsonQueryString :: EncodeJson QueryString where
     ~> "query_name"        := obj.query_name
     ~> jsonEmptyObject
 
-
-
 getDatabaseDetails :: QueryString -> Aff (Either String (Array Response))
 getDatabaseDetails reqBody = do
   let token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTk5OTg1ODMsInVzZXJfaWQiOjUsImVtYWlsIjoiYWxleGFuZHJlLmRlbGFub2VAaXNjcGlmLmZyIiwidXNlcm5hbWUiOiJkZXZlbG9wZXIifQ.Os-3wuFNSmRIxCZi98oFNBu2zqGc0McO-dgDayozHJg"
-  affResp <- liftAff $ attempt $ request $ defaultRequest
+  affResp <- request $ defaultRequest
     { method = Left POST
-    , url ="http://localhost:8009/count"
-    , headers =  [ ContentType applicationJSON
+    , responseFormat = ResponseFormat.json
+    , url = "http://localhost:8009/count"
+    , headers = [ ContentType applicationJSON
                 , Accept applicationJSON
-              --   , RequestHeader "Authorization" $  "Bearer " <> token
-            ]
+                  --   , RequestHeader "Authorization" $  "Bearer " <> token
+                ]
     , content = Just $ Json $ encodeJson reqBody
     }
-  case affResp of
+  case affResp.body of
     Left err -> do
-      liftEffect $ log $ "error" <> show err
-      pure $ Left $ show err
-
-    Right a -> do
+      liftEffect $ log $ "error" <> printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
       liftEffect $ log $ "POST method Completed"
-      liftEffect $ log $ "GET /api response: " <> show a.body
-      res <- case a.body of
-        Left err -> []
-        Right d -> decodeJson d
-      pure res
+      liftEffect $ log $ "GET /api response: " <> stringify json
+      let obj = decodeJson json
+      pure obj
