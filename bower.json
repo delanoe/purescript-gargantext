@@ -8,7 +8,7 @@
   ],
   "dependencies": {
     "purescript-console": "^4.1.0",
-    "purescript-thermite": "git@github.com:sudhirvkumar/purescript-thermite.git#migrate_0_12",
+    "purescript-thermite": "https://github.com/np/purescript-thermite.git#migrate_0_12",
     "purescript-affjax": "^7.0.0",
     "purescript-routing": "^8.0.0",
     "purescript-argonaut": "^4.0.1",
