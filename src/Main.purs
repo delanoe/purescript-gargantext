@@ -19,8 +19,8 @@ import Web.HTML (window)
 import Web.HTML.Window (document)
 import Web.HTML.HTMLDocument (toParentNode)
 
-setComponentWillMount :: forall s. Effect Unit -> Record s -> Record (componentWillMount :: Effect Unit | s)
-setComponentWillMount = unsafeSet "componentWillMount"
+setUnsafeComponentWillMount :: forall s. Effect Unit -> Record s -> Record (unsafeComponentWillMount :: Effect Unit | s)
+setUnsafeComponentWillMount = unsafeSet "unsafeComponentWillMount"
 
 main :: Effect Unit
 main = do
@@ -28,7 +28,7 @@ main = do
     { spec, dispatcher } -> void $ do
       let setRouting this = void $ do
             matches routing (routeHandler (dispatchAction (dispatcher this)))
-          spec' this = setComponentWillMount (setRouting this) <$> (spec this)
+          spec' this = setUnsafeComponentWillMount (setRouting this) <$> (spec this)
       document <- window >>= document
       container <- unsafePartial (fromJust  <$> querySelector (QuerySelector "#app") (toParentNode document))
       h <- getHash
@@ -37,5 +37,5 @@ main = do
         _ -> do
           setHash "/"
           setHash h
-      let e = R.unsafeCreateElement (R.component "GargantextMain" spec) {} []
+      let e = R.unsafeCreateElement (R.component "GargantextMain" spec') {} []
       RDOM.render e container
