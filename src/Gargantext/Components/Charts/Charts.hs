@@ -2,6 +2,7 @@ module Gargantext.Components.Charts.Charts where
 
 import Prelude hiding (min)
 
+import Gargantext.Components.Charts.Options.Series (Series(..), D1, seriesType, SeriesShape(..))
 import CSS (Color, white)
 import Data.Maybe (Maybe(..))
 import React as R
@@ -161,11 +162,12 @@ type AxisLabel =
   }
 
 
-type Series =
-  { name   :: String
-  , "type" :: String
-  , "data" :: Array Int
-  }
+--type Series =
+--  { name   :: String
+--  , "type" :: String
+--  , "data" :: Array Int
+--  }
+
 
 type Title =
   { text         :: String
@@ -436,12 +438,12 @@ tooltip' =
   }
 
 
-series' :: Series
+series' :: D1
 series' =
   {
     name: "All"
-  , "type": "bar"
-  , "data": [201, 777, 879]
+  , "type": seriesType Bar
+  , "data": [201.0, 777, 879]
   }
 
 opt :: Option
@@ -453,7 +455,7 @@ opt =
     ,grid: {containLabel: true}
     ,xAxis: xAxis'
     ,yAxis: yData1
-    ,series: [series']
+    ,series: [SeriesD1 series']
     ,dataZoom: [dz1', dz1', dz2', dz2']
   }
 
@@ -591,5 +593,4 @@ sd2 = unsafeFromPropsArray
       ]
 
 
-p'' :: R.ReactElement
-p'' = p [] []
+

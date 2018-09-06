@@ -4,7 +4,6 @@ import Prelude
 
 import Gargantext.Components.Charts.Options.Data (DataS)
 
-
 newtype SeriesType = SeriesType String
 
 type SeriesName = String
@@ -12,7 +11,7 @@ type SeriesName = String
 data SeriesShape = Line
                  | Bar | PictorialBar
                  | Pie
-                 | Scatter | EffectScater
+                 | Scatter | EffectScatter
                  | Radar
                  | Tree | TreeMap
                  | Sunburst
@@ -35,13 +34,24 @@ instance showSeriesShape :: Show SeriesShape where
   show Sunburst = "sunburst"
   show Funnel   = "funnel"
   show Heatmap  = "heatmap"
+  show EffectScatter = "effectScatter" -- ^ https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter-effect
+  show Scatter  = "scatter" -- ^ https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter-simple
   show _        = ""
 
 seriesType :: SeriesShape -> SeriesType
 seriesType = SeriesType <<< show
 
-type Series =
+
+data Series = SeriesD1 D1 | SeriesD2 D2
+
+type D1 =
   { name   :: String
-  , "type" :: SeriesType
   , "data" :: Array DataS
+  , "type" :: SeriesType
   }
+
+type D2 =
+  { "symbolSize" :: Number
+  , "data" :: Array (Array Number)
+  , "type" :: SeriesType
+}

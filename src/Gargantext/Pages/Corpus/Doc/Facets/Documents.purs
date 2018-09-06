@@ -13,14 +13,15 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Components.Charts.Charts (p'')
 import Gargantext.Config.REST (get)
 import React (ReactElement)
-import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr)
+import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr, p)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value)
 import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
+p'' :: ReactElement
+p'' = p [] []
 
 --main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
 --main = do
