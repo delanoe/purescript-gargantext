@@ -33,26 +33,26 @@ render dispatch _ state _ = [
     , div [className "row"] (map (\school -> div [className "col-md-4 content"] [chart $ focus school])
                                  [ "Télécom Bretagne", "Mines Nantes", "Eurecom"]
                             )
-    --, chart scatterEx
+    , chart scatterEx
   ]
     where
+      myData = [toSeries $ SeriesD1 $ series Bar "Bar Data"  [ {name: "val1", value: 50.0}
+                                           , {name: "val2", value: 70.0}
+                                           , {name: "val3", value: 80.0}
+                                           ]
+                                           ]
 
       focus :: String -> Options
       focus school = Options { mainTitle : ("Focus " <> school)
                          , subTitle  : "Total scientific publications"
                          , xAxis     : xAxis ["2015", "2016", "2017"]
-                         , yAxis     : [SeriesD1 $ series Bar "Bar Data"  [ {name: "val1", value: 50.0}
-                                           , {name: "val2", value: 70.0}
-                                           , {name: "val3", value: 80.0}
-                                           ]
-                                           ]
+                         , yAxis     : myData
                          , yAxisFormat : (YAxisFormat { position : "left"
                                                       , visible  : true
                                                       })
 
                          , addZoom   : false
                          }
-
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -65,7 +65,7 @@ naturePublis :: Options
 naturePublis = Options { mainTitle : "Nature of publications"
                   , subTitle  : "Distribution by type"
                   , xAxis     : xAxis []
-                  , yAxis     : [SeriesD1 $ series Funnel "Funnel Data" naturePublis_y]
+                  , yAxis     : [toSeries $ SeriesD1 $ series Funnel "Funnel Data" naturePublis_y]
                   , yAxisFormat : (YAxisFormat { position : "left"
                                                , visible  : false
                                              })
@@ -82,7 +82,7 @@ globalPublis :: Options
 globalPublis = (Options { mainTitle : "Global Scientific Publications"
                      , subTitle  : "Distribution of scientific publications by IMT's Schools over time"
                      , xAxis     : xAxis (map show globalPublis_x)
-                     , yAxis     : [SeriesD1 $ series Bar "Number of publication of IMT / year" $ map (\n -> {name: "", value: toNumber n }) globalPublis_y]
+                     , yAxis     : [toSeries $ SeriesD1 $ series Bar "Number of publication of IMT / year" $ map (\n -> {name: "", value: toNumber n }) globalPublis_y]
                      , yAxisFormat : (YAxisFormat { position : "left"
                                                   , visible  : true
                                                 })
@@ -98,7 +98,7 @@ distriBySchool :: Options
 distriBySchool = Options { mainTitle : "School production in 2017"
                        , subTitle  : "Distribution by school"
                        , xAxis     : xAxis []
-                       , yAxis     : [ SeriesD1 $ series Pie "Pie data" (map (\(Tuple n v) -> {name: n, value: toNumber v}) distriBySchool_y)]
+                       , yAxis     : [ toSeries $ SeriesD1 $ series Pie "Pie data" (map (\(Tuple n v) -> {name: n, value: toNumber v}) distriBySchool_y)]
                        , yAxisFormat : (YAxisFormat { position : ""
                                                     , visible  : false
                                                   })
@@ -109,40 +109,12 @@ scatterEx :: Options
 scatterEx = Options { mainTitle : "Scatter test"
                        , subTitle  : "Scatter subtitle"
                        , xAxis     : xAxis []
-                       , yAxis     : [ SeriesD2 $ seriesD2 Scatter 20.0 [[2.0,3.0],[3.0,4.0]]]
+                       , yAxis     : [ toSeries $ SeriesD2 $ seriesD2 Scatter 20.0 [[2.0,3.0],[3.0,4.0]]]
                        , yAxisFormat : (YAxisFormat { position : ""
-                                                    , visible  : false
+                                                    , visible  : true
                                                   })
                        , addZoom     : false
                      }
-
-
-
---scatterEx :: Options
---scatterEx =  { -- title: "title"
---               xAxis  : {}
---             , yAxis  : {}
---             , "data" : []
---             , series : [ { "symbolSize" : 20
---                          , data       : [[1,2]]
---                          , "type"       : "scatter"
---                        }
---                        ]
---             }
-
-
-  
---  Option {mainTitle : "Scatter ex"
---                    , subTitle : "Subtitle"
---                    , xAxis : xAxis []
---                    , yAxis : []
---                    , yAxisFormat : (YAxisFormat { position : ""
---                                                    , visible  : false
---                                                  })
---                    --, series : [SeriesD2 20 [[2,2]] Scatter]
---
---                    , addZoom : false
---                  }
 
 
 layoutDashboard :: forall props. Spec State props Action
