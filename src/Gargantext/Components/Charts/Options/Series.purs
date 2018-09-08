@@ -45,7 +45,7 @@ seriesType = SeriesType <<< show
 
 
 type Series = {}
-data Series' = SeriesD1 D1 | SeriesD2 D2
+data Serie = SeriesD1 D1 | SeriesD2 D2
 
 type D1 =
   { name   :: String
@@ -61,7 +61,7 @@ type D2 =
 }
 
 
-toSeries :: Series' -> Series
+toSeries :: Serie -> Series
 toSeries (SeriesD1 a) = unsafeCoerce a
 toSeries (SeriesD2 a) = unsafeCoerce a
 

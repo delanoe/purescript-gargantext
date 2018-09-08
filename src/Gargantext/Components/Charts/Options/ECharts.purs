@@ -11,7 +11,7 @@ import Gargantext.Components.Charts.Options.Data (DataN, DataS, DataV)
 import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
 import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-import Gargantext.Components.Charts.Options.Series (Series(..), SeriesName, SeriesShape(..), seriesType, D1, D2)
+import Gargantext.Components.Charts.Options.Series (Serie(..), Series(..), toSeries, SeriesName, SeriesShape(..), seriesType, D1, D2)
 import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis)
 import React (unsafeCreateElementDynamic)
 import React as R
@@ -175,7 +175,7 @@ data YAxisFormat = YAxisFormat { position :: String
 data Options = Options { mainTitle   :: MainTitle
                        , subTitle    :: SubTitle
                        , xAxis       :: XAxis
-                       , yAxis       :: Array Series
+                       , yAxis       :: Array Serie
                        , yAxisFormat :: YAxisFormat
                        , addZoom     :: Boolean
                      }
@@ -196,7 +196,7 @@ opts (Options { mainTitle : mainTitle
              }
   , grid   : {containLabel: true}
   , xAxis  : xs
-  , series : ss
+  , series : map toSeries $ ss
   , yAxis  : { "type": "value"
               , name: "data"
               , min: 0
