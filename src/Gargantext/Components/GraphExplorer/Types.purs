@@ -36,6 +36,15 @@ newtype GraphData = GraphData
 
 derive instance newtypeGraphData :: Newtype GraphData _
 
+instance semigroupGraphData :: Semigroup GraphData where
+  append (GraphData x) (GraphData y) = GraphData
+    { nodes: x.nodes <> y.nodes
+    , edges: x.edges <> y.edges
+    }
+
+instance monoidGraphData :: Monoid GraphData where
+  mempty = GraphData { nodes: [], edges: [] }
+
 instance decodeJsonGraphData :: DecodeJson GraphData where
   decodeJson json = do
     obj <- decodeJson json

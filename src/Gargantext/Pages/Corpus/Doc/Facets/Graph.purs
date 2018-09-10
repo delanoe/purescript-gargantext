@@ -43,16 +43,16 @@ derive instance newtypeSelectedNode :: Newtype SelectedNode _
 newtype State = State
   { graphData :: GraphData
   , filePath :: String
-  , sigmaGraphData :: Maybe SigmaGraphData
+  , sigmaGraphData :: SigmaGraphData
   , legendData :: Array Legend
   , selectedNode :: Maybe SelectedNode
   }
 
 initialState :: State
 initialState = State
-  { graphData : GraphData {nodes : [], edges : []}
+  { graphData : mempty
   , filePath : ""
-  , sigmaGraphData : Nothing
+  , sigmaGraphData : mempty
   , legendData : []
   , selectedNode : Nothing
   }
@@ -65,15 +65,15 @@ performAction (LoadGraph fp) _ _ = void do
   _ <- liftEffect $ log fp
   case fp of
     "" -> do
-      modifyState \(State s) -> State s {filePath = fp, graphData = GraphData {nodes : [], edges : []}, sigmaGraphData = Nothing}
+      modifyState \(State s) -> State s {filePath = fp, graphData = mempty, sigmaGraphData = mempty}
     _  -> do
-      _ <- modifyState \(State s) -> State s {filePath = fp, sigmaGraphData = Nothing}
+      _ <- modifyState \(State s) -> State s {filePath = fp, sigmaGraphData = mempty}
       gd <- lift $ getGraphData fp
       case gd of
         Left err -> do
-          modifyState \(State s) -> State s {filePath = fp, graphData = GraphData {nodes : [], edges : []}}
+          modifyState \(State s) -> State s {filePath = fp, graphData = mempty}
         Right gd' -> do
-          modifyState \(State s) -> State s {filePath = fp, graphData = gd', sigmaGraphData = Just $ convert gd', legendData = getLegendData gd'}
+          modifyState \(State s) -> State s {filePath = fp, graphData = gd', sigmaGraphData = convert gd', legendData = getLegendData gd'}
 
 performAction (SelectNode node) _ _ = void do
   modifyState $ \(State s) -> State s {selectedNode = pure node}
@@ -116,24 +116,21 @@ render d p (State s) c =
     ]
   ]
   <>
-  case s.sigmaGraphData of
-    Nothing -> []
-    Just gData ->
-      [ sigma { graph: gData
-              , renderer : canvas
-              , settings : mySettings
-              , style : sStyle { height : "95%"}
-              -- , onClickNode : \e -> do
-              --   log $ unsafeCoerce e
-              --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-              --   pure unit
-              -- TODO: fix this!
-              }
-        [ sigmaEnableWebGL
-        , forceAtlas2 forceAtlas2Config
-        , edgeShapes {"default" : edgeShape.curve}
-        ]
-      ]
+  [ sigma { renderer : canvas
+          , settings : mySettings
+          , style : sStyle { height : "95%"}
+          -- , onClickNode : \e -> do
+          --   log $ unsafeCoerce e
+          --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+          --   pure unit
+          -- TODO: fix this!
+          }
+    [ sigmaEnableWebGL
+    , forceAtlas2 forceAtlas2Config
+    , edgeShapes {"default" : edgeShape.curve}
+    , loadGraph {graph: s.sigmaGraphData}
+    ]
+  ]
   <>
   [dispLegend s.legendData]
 
@@ -391,24 +388,20 @@ specOld = simpleSpec performAction render'
                  ]
                ]
                <>
-               case st.sigmaGraphData of
-                   Nothing -> []
-                   Just gData ->
-                     [ sigma { graph: gData
-                             , renderer : canvas
-                             , settings : mySettings
-                             , style : sStyle { height : "95%"}
-                             -- , onClickNode : \e -> do
-                             --   log $ unsafeCoerce e
-                             --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-                             --   pure unit
-                             }
-                       [ sigmaEnableWebGL
-                       , forceAtlas2 forceAtlas2Config
-                       , edgeShapes {"default" : edgeShape.curve}
-                       , loadGraph {graph: st.sigmaGraphData}
-                       ]
-                     ]
+               [ sigma { renderer : canvas
+                       , settings : mySettings
+                       , style : sStyle { height : "95%"}
+                       -- , onClickNode : \e -> do
+                       --   log $ unsafeCoerce e
+                       --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+                       --   pure unit
+                       }
+                 [ sigmaEnableWebGL
+                 , forceAtlas2 forceAtlas2Config
+                 , edgeShapes {"default" : edgeShape.curve}
+                 , loadGraph {graph: st.sigmaGraphData}
+                 ]
+               ]
                  <>
                  if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
              ]

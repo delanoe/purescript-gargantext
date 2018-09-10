@@ -210,6 +210,15 @@ newtype SigmaGraphData = SigmaGraphData
   , edges :: Array SigmaEdge
   }
 
+instance semigroupSigmaGraphData :: Semigroup SigmaGraphData where
+  append (SigmaGraphData x) (SigmaGraphData y) = SigmaGraphData
+    { nodes: x.nodes <> y.nodes
+    , edges: x.edges <> y.edges
+    }
+
+instance monoidSigmaGraphData :: Monoid SigmaGraphData where
+  mempty = SigmaGraphData { nodes: [], edges: [] }
+
 type SigmaNodeOptProps =
   ( x :: Number
   , y :: Number
