@@ -35,6 +35,7 @@ render dispatch _ state _ = [
                             )
     , chart scatterEx
     , chart sankeyEx
+    , chart' treeMapEx
   ]
     where
       myData = [SeriesD1 $ series Bar "Bar Data"  [ {name: "val1", value: 50.0}
@@ -138,6 +139,26 @@ sankeyEx = Options { mainTitle : ""
                        , addZoom     : false
                      }
 
+
+treeMapData = [ mkTreeMap [ treeMapNode "nodeA" 10.0 [ treeMapLeaf "nodeAa" 4.0
+                                                     , treeMapLeaf "nodeAb" 5.0
+                                                     , treeMapLeaf "nodeAc" 1.0
+                                                     ]
+                          , treeMapNode "nodeB" 20.0 [ treeMapNode "nodeBb" 20.0 [treeMapLeaf "nodeBb1" 20.0]
+                                                     ]
+                                             ]
+                                   ]
+
+treeMapEx :: Options
+treeMapEx = Options { mainTitle : ""
+                    , subTitle  : ""
+                    , xAxis     : xAxis []
+                    , yAxis     : treeMapData
+                    , yAxisFormat : (YAxisFormat { position : ""
+                                                    , visible  : false
+                                                  })
+                    , addZoom     : false
+                     }
 
 
 
