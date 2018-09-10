@@ -13,6 +13,7 @@ foreign import forceAtlas2Class :: forall props. ReactClass props
 foreign import forceLinkClass   :: forall props. ReactClass props
 foreign import loadGEXFClass    :: forall props. ReactClass props
 foreign import loadJSONClass    :: forall props. ReactClass props
+foreign import loadGraphClass   :: forall props. ReactClass props
 foreign import nOverlapClass    :: ReactClass {children :: Children}
 foreign import neoCypherClass   :: ReactClass {children :: Children}
 foreign import neoGraphItemsProducersClass :: forall props. ReactClass props
@@ -31,6 +32,9 @@ loadJSON props = unsafeCreateElement loadJSONClass props []
 
 loadGEXF :: forall o. Optional o (onGraphLoaded :: Effect Unit) => { "path" :: String | o } -> ReactElement
 loadGEXF props = unsafeCreateElement loadGEXFClass props []
+
+loadGraph :: forall o. Optional o (onGraphLoaded :: Effect Unit) => { graph :: SigmaGraphData | o } -> ReactElement
+loadGraph props = unsafeCreateElement loadGraphClass props []
 
 forceLink :: forall o. Optional o ForceLinkOptProps  => { | o} -> ReactElement
 forceLink props = unsafeCreateElement forceLinkClass props []

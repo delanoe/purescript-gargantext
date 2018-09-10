@@ -17,7 +17,10 @@ import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing,
+    SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas,
+    edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge,
+    sigmaEnableWebGL, sigmaNode, sigmaSettings, loadGraph)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Utils (getter)
 import Math (cos, sin)
@@ -403,6 +406,7 @@ specOld = simpleSpec performAction render'
                        [ sigmaEnableWebGL
                        , forceAtlas2 forceAtlas2Config
                        , edgeShapes {"default" : edgeShape.curve}
+                       , loadGraph {graph: st.sigmaGraphData}
                        ]
                      ]
                  <>

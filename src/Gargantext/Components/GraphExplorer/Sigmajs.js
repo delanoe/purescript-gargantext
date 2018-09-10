@@ -8,6 +8,7 @@ exports.filterClass = SJS.Filter;
 exports.forceAtlas2Class = SJS.ForceAtlas2;
 exports.loadGEXFClass = SJS.LoadGEXF;
 exports.loadJSONClass = SJS.LoadJSON;
+exports.loadGraphClass = SJS.LoadGraph;
 exports.nOverlapClass = SJS.NOverlap;
 exports.neoCypherClass = SJS.NeoCypher;
 exports.neoGraphItemsProducersClass = SJS.NeoGraphItemsProducers;
