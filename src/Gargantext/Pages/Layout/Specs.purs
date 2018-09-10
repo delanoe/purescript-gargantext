@@ -18,10 +18,10 @@ import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _LandingA, _NgramsA, _addCorpusAction, {-_corpusAction,-} _dashBoardAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _tabviewAction, _treeAction, _userPageAction, performAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _LandingA, _NgramsA, _addCorpusAction, _corpusAction, _dashBoardAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _tabviewAction, _treeAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, {-_corpusState,-} _dashBoardSate, _docAnnotationViewState, _docViewState, _graphExplorerState, _landingState, _loginState, _ngramState, _searchState, _tabviewState, _treeState, _userPageState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _corpusState, _dashBoardSate, _docAnnotationViewState, _docViewState, _graphExplorerState, _landingState, _loginState, _ngramState, _searchState, _tabviewState, _treeState, _userPageState)
 import Gargantext.Router (Routes(..))
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
@@ -52,7 +52,7 @@ pagesComponent s =
     Nothing    -> selectSpec Home
   where
     selectSpec :: Routes -> Spec AppState props Action
-    selectSpec CorpusAnalysis    = unsafeCoerce {} -- TODO layout0 $ {-focus _corpusState _corpusAction-} CA.spec'
+    selectSpec CorpusAnalysis    = layout0 $ focus _corpusState  _corpusAction CA.spec'
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec Home              = layout0 $ focus _landingState   _LandingA   (L.layoutLanding EN)
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
