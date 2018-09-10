@@ -113,7 +113,9 @@ data2 = {name: "Favorites", icon: icon $ Shape Circle, textStyle: textStyle'}
 data3 :: DataN
 data3 = {name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle'}
 
+
 xAxis :: Array String -> XAxis
+xAxis [] = unsafeCoerce {}
 xAxis xs = { "data": xData xs
            , "type": "category"
            , axisTick: {alignWithLabel: true}

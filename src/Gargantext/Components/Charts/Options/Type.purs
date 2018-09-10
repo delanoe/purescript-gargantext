@@ -15,8 +15,8 @@ newtype ChartAlign = ChartAlign String
 
 type Echarts =
   { className   :: Maybe String
-  ,  style       :: Maybe String  -- objealect-black-altdarkmincnaquadahherry-blossomect,
-  ,  theme       :: Maybe String
+  , style       :: Maybe String  -- objealect-black-altdarkmincnaquadahherry-blossomect,
+  , theme       :: Maybe String
   , group       :: Maybe String
   , option      :: Option       --  PropTypes.object.isRequired,
   , initOpts    :: Maybe String -- PropTypes.object,

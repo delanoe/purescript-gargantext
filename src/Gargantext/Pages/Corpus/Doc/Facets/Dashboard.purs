@@ -34,6 +34,7 @@ render dispatch _ state _ = [
                                  [ "Télécom Bretagne", "Mines Nantes", "Eurecom"]
                             )
     , chart scatterEx
+    , chart sankeyEx
   ]
     where
       myData = [SeriesD1 $ series Bar "Bar Data"  [ {name: "val1", value: 50.0}
@@ -109,12 +110,34 @@ scatterEx :: Options
 scatterEx = Options { mainTitle : "Scatter test"
                        , subTitle  : "Scatter subtitle"
                        , xAxis     : xAxis []
-                       , yAxis     : [ SeriesD2 $ seriesD2 Scatter 20.0 [[2.0,3.0],[3.0,4.0]]]
+                       , yAxis     : [ SeriesD2 $ seriesD2 Scatter 10.0 [[2.0,3.0],[3.0,4.0]]
+                                     , SeriesD2 $ seriesD2 Scatter 5.0 [[1.0,3.0],[5.0,4.0]]
+                                     , SeriesD2 $ seriesD2 Scatter 10.0 [[10.0,3.0],[8.0,4.0]]
+                                     ]
                        , yAxisFormat : (YAxisFormat { position : ""
                                                     , visible  : true
                                                   })
                        , addZoom     : false
                      }
+
+
+sankeyEx :: Options
+sankeyEx = Options { mainTitle : "Sankey"
+                       , subTitle  : "Sankey subtitle"
+                       , xAxis     : xAxis []
+                       , yAxis     : [ SeriesSankey $ mkSankey [{name : "a"}, {name : "b"}, {name:"c"}]
+                       [{source : "a", target : "b", value :2.0}
+                       , {source : "a", target : "c", value :1.0}
+                       ]
+                                     ]
+                       , yAxisFormat : (YAxisFormat { position : ""
+                                                    , visible  : true
+                                                  })
+                       , addZoom     : false
+                     }
+
+
+
 
 
 layoutDashboard :: forall props. Spec State props Action
