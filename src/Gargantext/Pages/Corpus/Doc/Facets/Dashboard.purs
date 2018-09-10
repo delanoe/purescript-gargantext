@@ -122,20 +122,21 @@ scatterEx = Options { mainTitle : "Scatter test"
 
 
 sankeyEx :: Options
-sankeyEx = Options { mainTitle : "Sankey"
-                       , subTitle  : "Sankey subtitle"
+sankeyEx = Options { mainTitle : ""
+                       , subTitle  : ""
                        , xAxis     : xAxis []
-                       , yAxis     : [ SeriesSankey $ mkSankey [{name : "a"}, {name : "b"}, {name:"c"}]
+                       , yAxis     : [ SeriesSankey $ mkSankey [{name : "a"}, {name : "b"}, {name:"c"}, {name:"d"}]
                        [{source : "a", target : "b", value :2.0}
                        , {source : "a", target : "c", value :1.0}
+                       , {source : "b", target : "c", value :1.0}
+                       , {source : "b", target : "d", value :3.0}
                        ]
                                      ]
                        , yAxisFormat : (YAxisFormat { position : ""
-                                                    , visible  : true
+                                                    , visible  : false
                                                   })
                        , addZoom     : false
                      }
-
 
 
 

@@ -115,7 +115,7 @@ data3 = {name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle'}
 
 
 xAxis :: Array String -> XAxis
-xAxis [] = unsafeCoerce {}
+--xAxis [] = unsafeCoerce {}
 xAxis xs = { "data": xData xs
            , "type": "category"
            , axisTick: {alignWithLabel: true}
