@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(Just))
 import Gargantext.Components.Login              as LN
 import Gargantext.Components.Tree               as Tree
 import Gargantext.Pages.Layout.Specs.AddCorpus  as AC
-import Gargantext.Pages.Corpus                  as CA
+-- import Gargantext.Pages.Corpus                  as CA
 import Gargantext.Pages.Corpus.Doc.Annotation   as D
 import Gargantext.Pages.Corpus.Doc.Facets       as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Documents  as DV
@@ -33,7 +33,7 @@ type AppState =
   , ntreeState     :: Tree.State
   , tabviewState   :: TV.State
   , search         :: String
-  , corpusState    :: CA.State
+  -- , corpusState    :: CA.State
   , showLogin      :: Boolean
   , showCorpus     :: Boolean
   , graphExplorerState  :: GE.State
@@ -55,7 +55,7 @@ initAppState =
   , ntreeState   : Tree.exampleTree
   , tabviewState : TV.initialState
   , search  : ""
-  , corpusState  : CA.initialState
+  -- , corpusState  : CA.initialState
   , showLogin    : false
   , showCorpus   : false
   , graphExplorerState  : GE.initialState
@@ -92,8 +92,8 @@ _treeState = lens (\s -> s.ntreeState) (\s ss -> s {ntreeState = ss})
 _tabviewState :: Lens' AppState TV.State
 _tabviewState = lens (\s -> s.tabviewState) (\s ss -> s {tabviewState = ss})
 
-_corpusState :: Lens' AppState CA.State
-_corpusState = lens (\s -> s.corpusState) (\s ss -> s {corpusState = ss})
+-- _corpusState :: Lens' AppState CA.State
+-- _corpusState = lens (\s -> s.corpusState) (\s ss -> s {corpusState = ss})
 
 _dashBoardSate :: Lens' AppState Dsh.State
 _dashBoardSate = lens (\s -> s.dashboardState) (\s ss -> s {dashboardState = ss})

@@ -2,17 +2,17 @@ module Gargantext.Pages.Corpus where
 
 import Prelude hiding (div)
 
-import Data.Array (fold)
 import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
 import Gargantext.Pages.Corpus.Doc.Facets as Tab
+import React (class ReactPropFields)
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 
-type State = Tab.State
+-- type State = {} -- Tab.State
 
-type Action = Tab.Action
+-- data Action = None -- type Action = Tab.Action
 
 type Corpus = { title :: String
               , desc  :: String
@@ -21,19 +21,20 @@ type Corpus = { title :: String
               , authors :: String
               }
 
-initialState :: State
-initialState = Tab.initialState
+-- initialState :: State
+-- initialState = {} -- Tab.initialState
 
-spec' :: forall props. Spec Tab.State props Tab.Action
-spec' = fold [ corpusSpec
-             , Tab.tab1
-             ]
+-- type PureSpec props = forall state action. Spec state props action
 
-corpusSpec :: forall props. Spec Tab.State props Tab.Action
+spec' :: forall action. Spec {} {} action
+spec' = corpusSpec <> Tab.tab1
+
+-- corpusSpec :: forall props. Spec Tab.State props Tab.Action
+corpusSpec :: forall state props action. Spec (Record state) (Record props) action
 corpusSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render Tab.State props Tab.Action
-    render dispatch _ state _ =
+    render :: Render (Record state) (Record props) action
+    render dispatch _ _ _ =
       [ div [className "row"]
         [ div [className "col-md-3"] [ h3 [] [text corpus.title] ]
         , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]

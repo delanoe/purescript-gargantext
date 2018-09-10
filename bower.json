@@ -8,17 +8,15 @@
   ],
   "dependencies": {
     "purescript-console": "^4.1.0",
-    "purescript-thermite": "https://github.com/np/purescript-thermite.git#migrate_0_12",
+    "purescript-thermite": "https://github.com/np/purescript-thermite.git#hide",
     "purescript-affjax": "^7.0.0",
     "purescript-routing": "^8.0.0",
     "purescript-argonaut": "^4.0.1",
     "purescript-random": "^4.0.0",
+    "purescript-react": "^6.1.0",
     "purescript-css": "^4.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0"
-  },
-  "resolutions": {
-    "purescript-react": "exports"
   }
 }

@@ -11,7 +11,7 @@ import Effect.Console (log)
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Tree as Tree
-import Gargantext.Pages.Corpus as CA
+-- import Gargantext.Pages.Corpus as CA
 import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
@@ -43,7 +43,7 @@ data Action
   | DashboardA Dsh.Action
   | Search     String
   | Go
-  | CorpusAnalysisA CA.Action
+--  | CorpusAnalysisA CA.Action
   | ShowLogin
   | ShowAddcorpus
   | NgramsA    NG.Action
@@ -161,11 +161,13 @@ _tabviewAction = prism TabViewA \action ->
     TabViewA caction -> Right caction
     _-> Left action
 
+{-
 _corpusAction :: Prism' Action CA.Action
 _corpusAction = prism CorpusAnalysisA \action ->
   case action of
     CorpusAnalysisA caction -> Right caction
     _-> Left action
+-}
 
 _graphExplorerAction :: Prism' Action GE.Action
 _graphExplorerAction = prism GraphExplorerA \action ->
