@@ -60,7 +60,7 @@ type D2 =
   { "symbolSize" :: Number
   , "data" :: Array (Array Number)
   , "type" :: SeriesType
-}
+  }
 
 toSeries :: Serie -> Series
 toSeries (SeriesD1 a)     = unsafeCoerce a
@@ -79,14 +79,14 @@ type Node = { name :: String}
 type Link = { source :: String
             , target :: String
             , value  :: Number
-          }
+            }
 
-mkSankey :: Array Node -> Array Link -> Sankey
-mkSankey ns ls = {"type" : seriesType Sankey
-                 , layout : "none"
-                 , "data" : ns
-                 , "links" : ls
-                 }
+mkSankey :: Array Node -> Array Link -> Serie
+mkSankey ns ls = SeriesSankey {"type"   : seriesType Sankey
+                              , layout  : "none"
+                              , "data"  : ns
+                              , "links" : ls
+                              }
 
 
 --
@@ -129,6 +129,5 @@ mkSankey ns ls = {"type" : seriesType Sankey
 
 -- https://ecomfe.github.io/echarts-examples/public/data/asset/data/life-expectancy-table.json
 -- https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter3D-dataset&gl=1
-
 
 
