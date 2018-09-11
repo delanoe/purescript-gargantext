@@ -190,7 +190,7 @@ treeMapEx :: Options
 treeMapEx = Options { mainTitle : ""
                     , subTitle  : ""
                     , xAxis     : xAxis []
-                    , yAxis     : [mkTreeMap treeData]
+                    , yAxis     : [mkTree TreeMap treeData]
                     , yAxisFormat : (YAxisFormat { position : ""
                                                     , visible  : false
                                                   })
@@ -199,16 +199,15 @@ treeMapEx = Options { mainTitle : ""
 
 
 treeEx :: Options
-treeEx = Options { mainTitle : ""
-                    , subTitle  : ""
+treeEx = Options { mainTitle : "Tree"
+                    , subTitle  : "Radial"
                     , xAxis     : xAxis []
-                    , yAxis     : [mkTree treeData']
+                    , yAxis     : [mkTree TreeRadial treeData']
                     , yAxisFormat : (YAxisFormat { position : ""
                                                     , visible  : false
                                                   })
                     , addZoom     : false
                      }
-
 
 
 layoutDashboard :: forall props. Spec State props Action

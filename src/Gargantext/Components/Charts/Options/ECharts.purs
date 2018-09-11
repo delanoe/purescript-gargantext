@@ -11,7 +11,7 @@ import Gargantext.Components.Charts.Options.Data (DataN, DataS, DataV)
 import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
 import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-import Gargantext.Components.Charts.Options.Series (Serie(..), Series(..), toSeries, SeriesName, SeriesShape(..), seriesType, D1, D2)
+import Gargantext.Components.Charts.Options.Series (Serie(..), Series(..), toSeries, SeriesName, Chart(..), seriesType, D1, D2)
 import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis)
 import React (unsafeCreateElementDynamic)
 import React as R
@@ -157,13 +157,13 @@ tooltip' =
   }
 
 
-series :: SeriesShape -> SeriesName -> Array DataS -> D1
+series :: Chart -> SeriesName -> Array DataS -> D1
 series sh name ss =  { name: name
   , "type": seriesType sh
   , "data": ss
   }
 
-seriesD2 :: SeriesShape -> Number -> Array (Array Number) -> D2
+seriesD2 :: Chart -> Number -> Array (Array Number) -> D2
 seriesD2 sh size ds = { "symbolSize" : size
                       , "data"       : ds
                       , "type"       : seriesType sh
