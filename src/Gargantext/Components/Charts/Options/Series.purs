@@ -16,7 +16,7 @@ data SeriesShape = Line
                  | Pie
                  | Scatter | EffectScatter
                  | Radar
-                 | Tree | TreeMap
+                 | Tree | Radial | TreeMap
                  | Sunburst
                  | Boxplot
                  | Candlestick
@@ -37,9 +37,10 @@ instance showSeriesShape :: Show SeriesShape where
   show Heatmap  = "heatmap"
   show Line     = "line"
   show Pie      = "pie"
+  show Tree     = "tree"               -- ^ https://ecomfe.github.io/echarts-examples/public/editor.html?c=tree-radial
   show Sankey   = "sankey"
   show TreeMap  = "treemap"
-  show Scatter  = "scatter" -- ^ https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter-simple
+  show Scatter  = "scatter"            -- ^ https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter-simple
   show Sunburst = "sunburst"
   show _        = "not implemented yet: should throw error here"
 
@@ -48,7 +49,7 @@ seriesType = SeriesType <<< show
 
 
 type Series = {}
-data Serie = SeriesD1 D1 | SeriesD2 D2 | SerieSankey Sankey | SerieTreeMap TreeMap
+data Serie = SeriesD1 D1 | SeriesD2 D2 | SerieSankey Sankey | SerieTreeMap TreeMap | SerieTree Tree
 
 type D1 =
   { name   :: String
@@ -68,6 +69,7 @@ toSeries (SeriesD1 a)    = unsafeCoerce a
 toSeries (SeriesD2 a)    = unsafeCoerce a
 toSeries (SerieSankey  a) = unsafeCoerce a
 toSeries (SerieTreeMap a) = unsafeCoerce a
+toSeries (SerieTree    a) = unsafeCoerce a
 
 -- | Sankey Chart
 -- https://ecomfe.github.io/echarts-examples/public/editor.html?c=sankey-simple
@@ -93,47 +95,58 @@ mkSankey ns ls = SerieSankey {"type"   : seriesType Sankey
 -- | TreeMap Chart
 -- https://ecomfe.github.io/echarts-examples/public/editor.html?c=treemap-simple
 
-mkTreeMap :: Array TreeMapTree -> Serie
+mkTreeMap :: Array TreeData -> Serie
 mkTreeMap ts = SerieTreeMap { "type" : seriesType TreeMap
-                            , "data" : map toTreeMap ts
+                            , "data" : map toTree ts
                           }
 
 type TreeMap = { "type" :: SeriesType
-               , "data" :: Array TreeMapTree
+               , "data" :: Array TreeData
                }
 
-data TreeMapTree = TreeMapLeaf TreeMapLeaf
-                 | TreeMapNode TreeMapNode
+data TreeData = TreeLeaf TreeLeaf
+              | TreeNode TreeNode
 
-toTreeMap :: TreeMapTree -> TreeMapTree
-toTreeMap (TreeMapLeaf x) = unsafeCoerce x
-toTreeMap (TreeMapNode x) = unsafeCoerce { name : x.name
-                                         , value : x.value
-                                         , children : (map toTreeMap x.children)
-                                         }
-
-
-type TreeMapNode =  { name     :: String
-                    , value    :: Number
-                    , children :: Array TreeMapTree
-                    }
-
-type TreeMapLeaf = { name :: String
-                   , value :: Number
-                   }
-
-treeMapNode :: String -> Number -> Array TreeMapTree -> TreeMapTree
-treeMapNode n v ts = TreeMapNode {name : n, value:v, children:ts}
-
-treeMapLeaf :: String -> Number -> TreeMapTree
-treeMapLeaf n v = TreeMapLeaf { name : n, value : v}
+toTree :: TreeData -> TreeData
+toTree (TreeLeaf x) = unsafeCoerce x
+toTree (TreeNode x) = unsafeCoerce { name : x.name
+                                   , value : x.value
+                                   , children : (map toTree x.children)
+                                   }
 
 
--- https://ecomfe.github.io/echarts-examples/public/data/asset/data/flare.json
+type TreeNode =  { name     :: String
+                 , value    :: Number
+                 , children :: Array TreeData
+                 }
+
+type TreeLeaf = { name :: String
+                , value :: Number
+                }
+
+treeNode :: String -> Number -> Array TreeData -> TreeData
+treeNode n v ts = TreeNode {name : n, value:v, children:ts}
+
+treeLeaf :: String -> Number -> TreeData
+treeLeaf n v = TreeLeaf { name : n, value : v}
+
+
+-- | Tree
 -- https://ecomfe.github.io/echarts-examples/public/editor.html?c=tree-radial
 
+type Tree = { "type" :: SeriesType
+            , "data" :: Array TreeData
+            , layout :: String
+            }
 
+mkTree :: Array TreeData -> Serie
+mkTree ts = SerieTree { "type" : seriesType Tree
+                 , "data" : map toTree ts
+                 , layout : "radial"
+                 }
+
+
+-- | TODO
 -- https://ecomfe.github.io/echarts-examples/public/data/asset/data/life-expectancy-table.json
 -- https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter3D-dataset&gl=1
-
 

@@ -35,7 +35,8 @@ render dispatch _ state _ = [
                             )
     , chart scatterEx
     , chart sankeyEx
-    , chart' treeMapEx
+    , chart treeMapEx
+    , chart treeEx
   ]
     where
       myData = [SeriesD1 $ series Bar "Bar Data"  [ {name: "val1", value: 50.0}
@@ -140,20 +141,68 @@ sankeyEx = Options { mainTitle : ""
                      }
 
 
-treeMapData = [ mkTreeMap [ treeMapNode "nodeA" 10.0 [ treeMapLeaf "nodeAa" 4.0
-                                                     , treeMapLeaf "nodeAb" 5.0
-                                                     , treeMapLeaf "nodeAc" 1.0
-                                                     ]
-                          , treeMapNode "nodeB" 20.0 [ treeMapNode "nodeBb" 20.0 [treeMapLeaf "nodeBb1" 20.0]
-                                                     ]
-                                             ]
+treeData :: Array TreeData
+treeData = [ treeNode "nodeA" 10.0 [ treeLeaf "nodeAa" 4.0
+                                   , treeLeaf "nodeAb" 5.0
+                                   , treeNode "nodeAc" 1.0 [ treeLeaf "nodeAca" 0.5
+                                                           , treeLeaf "nodeAcb" 0.5
+                                                          ]
                                    ]
+           , treeNode "nodeB" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
+           , treeNode "nodeC" 20.0 [ treeNode "nodeCa" 20.0 [ treeLeaf "nodeCa1" 10.0
+                                                            , treeLeaf "nodeCa2" 10.0
+                                                            ]
+                                   ]
+           , treeNode "nodeD" 20.0 [ treeNode "nodeDa" 20.0 [ treeLeaf "nodeDa1" 2.0
+                                                            , treeLeaf "nodeDa2" 2.0
+                                                            , treeLeaf "nodeDa3" 2.0
+                                                            , treeLeaf "nodeDa4" 2.0
+                                                            , treeLeaf "nodeDa5" 2.0
+                                                            , treeLeaf "nodeDa6" 2.0
+                                                            , treeLeaf "nodeDa7" 2.0
+                                                            , treeLeaf "nodeDa8" 2.0
+                                                            , treeLeaf "nodeDa9" 2.0
+                                                            , treeLeaf "nodeDa10" 2.0
+                                                            ]
+                                     ]
+          ]
+
+
+treeData' :: Array TreeData
+treeData' = [ treeNode "nodeA" 10.0 [ treeLeaf "nodeAa" 4.0
+                                    , treeLeaf "nodeAb" 5.0
+                                    , treeNode "nodeAc" 1.0 [ treeLeaf "nodeAca" 0.5
+                                                           , treeLeaf "nodeAcb" 0.5
+                                                          ]
+                                   , treeNode "nodeB" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
+                                   , treeNode "nodeC" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
+                                   , treeNode "nodeD" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
+                                   , treeNode "nodeE" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
+                                   , treeNode "nodeF" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
+                                   , treeNode "nodeG" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
+                                   , treeNode "nodeH" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
+                                   ]
+          ]
+
+
 
 treeMapEx :: Options
 treeMapEx = Options { mainTitle : ""
                     , subTitle  : ""
                     , xAxis     : xAxis []
-                    , yAxis     : treeMapData
+                    , yAxis     : [mkTreeMap treeData]
+                    , yAxisFormat : (YAxisFormat { position : ""
+                                                    , visible  : false
+                                                  })
+                    , addZoom     : false
+                     }
+
+
+treeEx :: Options
+treeEx = Options { mainTitle : ""
+                    , subTitle  : ""
+                    , xAxis     : xAxis []
+                    , yAxis     : [mkTree treeData']
                     , yAxisFormat : (YAxisFormat { position : ""
                                                     , visible  : false
                                                   })

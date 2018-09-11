@@ -23,9 +23,6 @@ foreign import eChartsClass :: R.ReactClass Echarts
 chart :: Options -> R.ReactElement
 chart = echarts <<< chartWith <<< opts
 
-chart' :: Options -> R.ReactElement
-chart' = echarts <<< chartWith <<< opts'
-
 
 chartWith :: Option -> Echarts
 chartWith opts = { className : Nothing
@@ -213,32 +210,6 @@ opts (Options { mainTitle : mainTitle
   , dataZoom: if addZoom then [zoom Slider, zoom Inside] else []
   , children : unsafeCoerce []
   }
-
-
-
-opts' :: Options -> Option
-opts' (Options { mainTitle : mainTitle
-              , subTitle : subTitle
-              , xAxis : xs
-              , yAxis : ss
-              , yAxisFormat : (YAxisFormat { position : position
-                                           , visible  : visible
-                                         })
-              , addZoom : addZoom}) =
-  { title: title mainTitle subTitle
-  , legend : legend
-  , tooltip: { trigger: "axis"
-             , formatter: Nothing
-             }
-  , grid   : {containLabel: false}
-  , xAxis  : unsafeCoerce {}
-  , series : map toSeries $ ss
-  , yAxis  : unsafeCoerce {}
-  , dataZoom: if addZoom then [zoom Slider, zoom Inside] else []
-  , children : unsafeCoerce []
-  }
-
-
 
 
 data Zoom = Slider | Inside
