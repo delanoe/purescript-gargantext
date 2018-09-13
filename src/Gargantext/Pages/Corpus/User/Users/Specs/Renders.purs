@@ -12,7 +12,7 @@ import React.DOM.Props (_id, className, src)
 import Thermite (Render)
 
 
-render :: forall props. Render State props Action
+render :: Render State {} Action
 render dispatch _ state _ =
   [
           div [className "col-md-12"]

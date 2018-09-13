@@ -20,16 +20,15 @@ import Gargantext.Pages.Folder as PS
 import Gargantext.Components.Tab (tabs)
 import Thermite (Spec, focus)
 
-brevetSpec :: forall props. Spec State  props Action
+brevetSpec :: Spec State {} Action
 brevetSpec = focus _brevetslens _brevetsAction B.brevetsSpec
 
-projectSpec :: forall props. Spec State props Action
+projectSpec :: Spec State {} Action
 projectSpec = focus _projectslens _projectsAction PS.projets
 
-
-facets :: forall props. Spec State props Action
+facets :: Spec State {} Action
 facets = tabs _tablens _tabAction $ fromFoldable
          [ Tuple "Publications (12)" publicationSpec
          , Tuple "Brevets (2)" brevetSpec
          , Tuple "Projets IMT (5)" projectSpec
-      ]
+         ]

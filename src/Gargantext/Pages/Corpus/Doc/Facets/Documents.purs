@@ -133,17 +133,17 @@ instance decodeResponse :: DecodeJson Response where
 
 
 -- | Filter
-filterSpec :: forall props. Spec State props Action
+filterSpec :: Spec State {} Action
 filterSpec = simpleSpec defaultPerformAction render
   where
     render d p s c = [div [] [ text "    Filter "
                      , input []
                      ]]
 
-layoutDocview :: forall props. Spec State props Action
+layoutDocview :: Spec State {} Action
 layoutDocview = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state@(TableData d) _ =
       [ div [className "container1"]
         [ div [className "row"]
@@ -177,7 +177,7 @@ layoutDocview = simpleSpec performAction render
       ]
 
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
 
 performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))

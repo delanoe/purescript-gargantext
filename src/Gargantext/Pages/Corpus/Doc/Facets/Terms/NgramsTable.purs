@@ -51,7 +51,7 @@ _ItemAction = prism (uncurry ItemAction) \ta ->
     ItemAction i a -> Right (Tuple i a)
     _ -> Left ta
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 
 performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
 
@@ -70,7 +70,7 @@ performAction (SetInput s) _ _ = void do
 performAction _ _ _ = void do
   modifyState \(State state) -> State $ state
 
-tableSpec :: forall props .Spec State props Action -> Spec State props Action
+tableSpec :: Spec State {} Action -> Spec State {} Action
 tableSpec = over _render \render dispatch p (State s) c ->
   [div [className "container-fluid"]
      [
@@ -147,7 +147,7 @@ tableSpec = over _render \render dispatch p (State s) c ->
  ]
  ]
 
-ngramsTableSpec :: forall props . Spec State props Action
+ngramsTableSpec :: Spec State {} Action
 ngramsTableSpec =  container $ fold
     [  tableSpec $ withState \st ->
         focus _itemsList _ItemAction $

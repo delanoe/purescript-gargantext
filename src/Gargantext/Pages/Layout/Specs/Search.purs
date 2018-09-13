@@ -28,7 +28,7 @@ data Action
   | SetQuery String
 
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction NoOp _ _ = void do
   modifyState identity
 
@@ -45,10 +45,10 @@ performAction GO _ _ = void do
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
 
-searchSpec :: forall props. Spec State props Action
+searchSpec :: Spec State {} Action
 searchSpec = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [ div [className "container1"] []
       , div [className "container1"]

@@ -27,7 +27,7 @@ data Action
   | SetInput String
 
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction NoOp _ _ = pure unit
 
 performAction (ChangeString ps) _ _ = pure unit
@@ -39,10 +39,10 @@ performAction (SetInput ps) _ _ = void do
 
 
 
-docview :: forall props. Spec State props Action
+docview :: Spec State {} Action
 docview = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [
           div [className "container1"]

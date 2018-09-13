@@ -32,7 +32,7 @@ _pubAction = prism PublicationA \ action ->
     PublicationA laction -> Right laction
     _-> Left action
 
-publicationSpec :: forall props. Spec State props Action
+publicationSpec :: Spec State {} Action
 publicationSpec = focus _publens _pubAction P.publicationSpec
 
 _brevetslens :: Lens' State B.State

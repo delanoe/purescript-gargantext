@@ -19,21 +19,21 @@ import Thermite (Spec, focus)
 
 
 
-tab1 :: forall props. Spec State props Action
+tab1 :: Spec State {} Action
 tab1 = Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Doc View"    docPageSpec
                                                    , Tuple "Author View" authorPageSpec
                                                    , Tuple "Source View" sourcePageSpec
                                                    , Tuple "Terms View"  termsPageSpec
                                                    ]
 
-docPageSpec :: forall props. Spec State props Action
+docPageSpec :: Spec State {} Action
 docPageSpec = focus _doclens _docAction DV.layoutDocview
 
-authorPageSpec :: forall props. Spec State  props Action
+authorPageSpec :: Spec State  {} Action
 authorPageSpec = focus _authorlens _authorAction AV.authorspec'
 
-sourcePageSpec :: forall props. Spec State props Action
+sourcePageSpec :: Spec State {} Action
 sourcePageSpec = focus _sourcelens _sourceAction SV.sourcespec'
 
-termsPageSpec :: forall props. Spec State props Action
+termsPageSpec :: Spec State {} Action
 termsPageSpec = focus _termslens _termsAction TV.termSpec'

@@ -24,15 +24,15 @@ type Corpus = { title :: String
 initialState :: State
 initialState = Tab.initialState
 
-spec' :: forall props. Spec Tab.State props Tab.Action
+spec' :: Spec Tab.State {} Tab.Action
 spec' = fold [ corpusSpec
              , Tab.tab1
              ]
 
-corpusSpec :: forall props. Spec Tab.State props Tab.Action
+corpusSpec :: Spec Tab.State {} Tab.Action
 corpusSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render Tab.State props Tab.Action
+    render :: Render Tab.State {} Tab.Action
     render dispatch _ state _ =
       [ div [className "row"]
         [ div [className "col-md-3"] [ h3 [] [text corpus.title] ]

@@ -33,17 +33,17 @@ data Action
   = SetMap Boolean
   | SetStop Boolean
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction (SetMap b)   _ _ = void do
   modifyState \(State s) -> State s {term = setter (_{_type = (if b then MapTerm else None)}) s.term}
 
 performAction (SetStop b)   _ _ = void do
     modifyState \(State s) -> State s {term = setter (_{_type = (if b then StopTerm else None)}) s.term}
 
-ngramsItemSpec :: forall props. Spec State props Action
+ngramsItemSpec :: Spec State {} Action
 ngramsItemSpec = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ (State state) _ =
       [
         tr []

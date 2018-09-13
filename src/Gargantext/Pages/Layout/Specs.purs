@@ -29,7 +29,7 @@ import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onCl
 import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 
-layoutSpec :: forall props. Spec AppState props Action
+layoutSpec :: Spec AppState {} Action
 layoutSpec =
   fold
   [ routingSpec
@@ -40,18 +40,19 @@ layoutSpec =
           ]
   ]
   where
-    container :: Spec AppState props Action -> Spec AppState props Action
+    -- NP: what is it for ?
+    container :: Spec AppState {} Action -> Spec AppState {} Action
     container = over _render \render d p s c ->
       (render d p s c)
 
 
-pagesComponent :: forall props. AppState -> Spec AppState props Action
+pagesComponent :: AppState -> Spec AppState {} Action
 pagesComponent s =
   case s.currentRoute of
     Just route -> selectSpec route
     Nothing    -> selectSpec Home
   where
-    selectSpec :: Routes -> Spec AppState props Action
+    selectSpec :: Routes -> Spec AppState {} Action
     selectSpec CorpusAnalysis    = layout0 $ focus _corpusState  _corpusAction CA.spec'
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec Home              = layout0 $ focus _landingState   _LandingA   (L.layoutLanding EN)
@@ -68,11 +69,11 @@ pagesComponent s =
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
-routingSpec :: forall props. Spec AppState props Action
+routingSpec :: Spec AppState {} Action
 routingSpec = simpleSpec performAction defaultRender
 
-layout0 :: forall props. Spec AppState props Action
-                          -> Spec AppState props Action
+layout0 :: Spec AppState {} Action
+        -> Spec AppState {} Action
 layout0 layout =
   fold
   [ layoutSidebar divSearchBar
@@ -81,7 +82,7 @@ layout0 layout =
   ]
   where
     outerLayout1 = simpleSpec defaultPerformAction defaultRender
-    outerLayout :: Spec AppState props Action
+    outerLayout :: Spec AppState {} Action
     outerLayout =
       cont $ fold
       [ withState \st ->
@@ -97,8 +98,8 @@ layout0 layout =
 
     bs = innerLayout $ layout
 
-    innerLayout :: Spec AppState props Action
-                -> Spec AppState props Action
+    innerLayout :: Spec AppState {} Action
+                -> Spec AppState {} Action
     innerLayout = over _render \render d p s c ->
       [  div [_id "page-wrapper"]
         [
@@ -106,8 +107,8 @@ layout0 layout =
         ]
       ]
 
-layoutSidebar ::  forall props. Spec AppState props Action
-                -> Spec AppState props Action
+layoutSidebar :: Spec AppState {} Action
+              -> Spec AppState {} Action
 layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
@@ -241,10 +242,10 @@ liNav (LiNav { title : title'
                 ]
 
 -- TODO put the search form in the center of the navBar
-divSearchBar :: forall props. Spec AppState props Action
+divSearchBar :: Spec AppState {} Action
 divSearchBar = simpleSpec performAction render
   where
-    render :: Render AppState props Action
+    render :: Render AppState {} Action
     render dispatch _ state _ = [div [ className "" ] [ searchbar']]
       where
         searchbar' = ul [ className "nav navbar-nav col-md-6 col-md-offset-3"
@@ -262,7 +263,7 @@ divSearchBar = simpleSpec performAction render
                             ]
                   ]
 
---divDropdownRight :: Render AppState props Action
+--divDropdownRight :: Render AppState {} Action
 divDropdownRight :: (Action -> Effect Unit) -> ReactElement
 divDropdownRight d =
   ul [className "nav navbar-nav pull-right"]
@@ -285,10 +286,10 @@ divDropdownRight d =
         ]
      ]
 
-layoutFooter ::  forall props. Spec AppState props Action
+layoutFooter :: Spec AppState {} Action
 layoutFooter = simpleSpec performAction render
   where
-    render :: Render AppState props Action
+    render :: Render AppState {} Action
     render dispatch _ state _ = [div [ className "container1" ] [ hr', footerLegalInfo']]
       where
         footerLegalInfo' = footer [] [ p [] [ text "Gargantext "

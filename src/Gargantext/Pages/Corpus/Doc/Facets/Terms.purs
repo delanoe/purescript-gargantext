@@ -17,12 +17,12 @@ initialState = D.tdata
 type Action = D.Action
 
 
-termsSpec :: forall props. Spec State props Action
+termsSpec :: Spec State {} Action
 termsSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [ h3 [] [text "Terms view"]]
 
-termSpec' :: forall props. Spec State props Action
+termSpec' :: Spec State {} Action
 termSpec' = fold [termsSpec, D.layoutDocview]

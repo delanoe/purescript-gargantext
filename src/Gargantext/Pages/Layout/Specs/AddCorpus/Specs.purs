@@ -21,7 +21,7 @@ import React.DOM.Props (_data, _id, _type, aria, className, onClick, role)
 import Thermite (PerformAction, Render, Spec, _render, cotransform, modifyState, simpleSpec)
 
 
-modalSpec :: forall props. Boolean -> String -> Spec State props Action -> Spec State props Action
+modalSpec :: Boolean -> String -> Spec State {} Action -> Spec State {} Action
 modalSpec sm t = over _render \render d p s c ->
   [ div [ _id "addCorpus", className $ "modal myModal" <> if sm then "" else " fade"
         , role "dialog"
@@ -43,7 +43,7 @@ modalSpec sm t = over _render \render d p s c ->
    ]
 
 
-spec' :: forall props. Spec State props Action
+spec' :: Spec State {} Action
 spec' = modalSpec true "Search Results" layoutAddcorpus
 
 
@@ -93,10 +93,10 @@ layoutModal state =
           ]
 
 
-layoutAddcorpus :: forall props. Spec State props Action
+layoutAddcorpus :: Spec State {} Action
 layoutAddcorpus = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [ div [className "container1"] []
       , div [className "container1"]

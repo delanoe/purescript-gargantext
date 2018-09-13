@@ -33,7 +33,7 @@ type State = FTree
 initialState :: State
 initialState = NLeaf (Tuple "" "")
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction (ToggleFolder i) _ _ = void $
  cotransform (\td -> toggleNode i td)
 
@@ -89,10 +89,10 @@ nodeOptionsView activated = case activated of
                          false -> []
 
 
-treeview :: forall props. Spec State props Action
+treeview :: Spec State {} Action
 treeview = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [div [className "tree"] [toHtml dispatch state]]
 

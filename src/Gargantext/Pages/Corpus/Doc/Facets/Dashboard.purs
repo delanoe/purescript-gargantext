@@ -19,10 +19,10 @@ data Action = None
 initialState :: State
 initialState = unit
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction _ _ _ = pure unit
 
-render :: forall props. Render State props Action
+render :: Render State {} Action
 render dispatch _ state _ = [
     h1 [] [text "IMT DashBoard"]
     , div [className "row"] [ div [className "col-md-9 content"] [chart globalPublis]
@@ -104,5 +104,5 @@ distriBySchool = Options { mainTitle : "School production in 2017"
                      }
 
 
-layoutDashboard :: forall props. Spec State props Action
+layoutDashboard :: Spec State {} Action
 layoutDashboard = simpleSpec performAction render

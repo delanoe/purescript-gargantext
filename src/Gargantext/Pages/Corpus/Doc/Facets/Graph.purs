@@ -54,10 +54,10 @@ initialState = State
   , selectedNode : Nothing
   }
 
-graphSpec :: forall props. Spec State props Action
+graphSpec :: Spec State {} Action
 graphSpec = simpleSpec performAction render
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction (LoadGraph fp) _ _ = void do
   _ <- liftEffect $ log fp
   case fp of
@@ -97,7 +97,7 @@ convert (GraphData r) = SigmaGraphData { nodes, edges}
     edges = map edgeFn r.edges
     edgeFn (Edge e) = sigmaEdge {id : e.id_, source : e.source, target : e.target}
 
-render :: forall props. Render State props Action
+render :: Render State {} Action
 render d p (State s) c =
   [ select [ onChange $ \e -> d $ LoadGraph (unsafeCoerce e).target.value, value s.filePath]
     [ option [value ""] [text ""]
@@ -296,10 +296,10 @@ dispLegend ary = div [] $ map dl ary
       ]
 
 
-specOld :: forall props. Spec State props Action
+specOld :: Spec State {} Action
 specOld = simpleSpec performAction render'
   where
-    render' :: Render State props Action
+    render' :: Render State {} Action
     render' d _ (State st) _ =
       [  div [className "row"] [
             div [className "col-md-12", style {marginTop : "21px", marginBottom : "21px"}]

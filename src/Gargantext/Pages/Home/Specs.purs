@@ -17,16 +17,16 @@ import Thermite (Render, Spec, simpleSpec)
 
 -- Layout |
 
-layoutLanding :: forall props. Lang -> Spec State props Action
+layoutLanding :: Lang -> Spec State {} Action
 layoutLanding FR = layoutLanding' Fr.landingData
 layoutLanding EN = layoutLanding' En.landingData
 
 ------------------------------------------------------------------------
 
-layoutLanding' :: forall props. LandingData -> Spec State props Action
+layoutLanding' :: LandingData -> Spec State {} Action
 layoutLanding' hd = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [ div [ className "container1" ] [ jumboTitle hd false                 ]
       , div [ className "container1" ] [] -- put research here

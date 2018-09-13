@@ -15,7 +15,7 @@ data Action
   | SignUp
 
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction NoOp _ _ = void do
   modifyState \state -> state
 

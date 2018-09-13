@@ -14,13 +14,12 @@ initialState = D.tdata
 
 type Action = D.Action
 
-
-authorSpec :: forall props. Spec State props Action
+authorSpec :: Spec State {} Action
 authorSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
        [ h3 [] [text "AuthorView"]]
 
-authorspec' :: forall props. Spec State props Action
+authorspec' :: Spec State {} Action
 authorspec' = fold [authorSpec, D.layoutDocview]

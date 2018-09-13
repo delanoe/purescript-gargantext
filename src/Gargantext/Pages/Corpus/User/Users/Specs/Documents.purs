@@ -13,14 +13,14 @@ initialState = ""
 
 data Action = NoOp
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction NoOp _ _ = void do
   modifyState identity
 
-publicationSpec :: forall props. Spec State props Action
+publicationSpec :: Spec State {} Action
 publicationSpec = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [ table [ className "table"]
                   [ thead [ className "thead-dark"]

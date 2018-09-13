@@ -17,7 +17,7 @@ getUser :: Int -> Aff (Either String User)
 getUser id = get $ "http://localhost:8008/node/" <> show id
 
 
-performAction :: forall props. PerformAction State props Action
+performAction :: PerformAction State {} Action
 performAction NoOp _ _ = void do
   modifyState identity
 performAction (FetchUser userId) _ _ = void do

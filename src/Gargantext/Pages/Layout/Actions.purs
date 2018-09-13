@@ -49,7 +49,7 @@ data Action
   | NgramsA    NG.Action
 
 
-performAction :: forall props. PerformAction AppState props Action
+performAction :: PerformAction AppState {} Action
 performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
 performAction (Search s)  _ _ = void do
