@@ -1,7 +1,7 @@
 module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable where
 
 
-import Data.Array (filter, fold, toUnfoldable)
+import Data.Array (filter, toUnfoldable)
 import Data.Either (Either(..))
 import Data.Newtype (class Newtype, unwrap)
 import Data.Lens (Lens', Prism', lens, over, prism)
@@ -10,6 +10,8 @@ import Data.Lens.Iso.Newtype (_Newtype)
 import Data.List (List)
 import Data.Tuple (Tuple(..), uncurry)
 import Data.Void (Void)
+import Data.Unit (Unit)
+import Effect (Effect)
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem as NI
 import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+), (-), (/), (<), (<>), (==), (>), (>=))
 import React (ReactElement)
@@ -55,6 +57,8 @@ _ItemAction = prism (uncurry ItemAction) \ta ->
   case ta of
     ItemAction i a -> Right (Tuple i a)
     _ -> Left ta
+
+type Dispatch = Action -> Effect Unit
 
 performAction :: PerformAction State {} Action
 
@@ -220,7 +224,7 @@ string2PageSize "50" = PS50
 string2PageSize "100" = PS100
 string2PageSize _    = PS10
 
-sizeDD :: PageSizes -> _ -> ReactElement
+sizeDD :: PageSizes -> Dispatch -> ReactElement
 sizeDD ps d
   = p []
     [ text "Show : "
@@ -243,7 +247,7 @@ textDescription currPage pageSize totalRecords
       end  = if end' > totalRecords then totalRecords else end'
 
 
-pagination :: _ -> Int -> Int -> ReactElement
+pagination :: Dispatch -> Int -> Int -> ReactElement
 pagination d tp cp
   = span [] $
     [ text "Pages: "
@@ -314,7 +318,7 @@ pagination d tp cp
       lnums = map (\i -> fnmid d i) $ filter (lessthan 1) [cp - 2, cp - 1]
       rnums = map (\i -> fnmid d i) $ filter (greaterthan tp) [cp + 1, cp + 2]
 
-fnmid :: _ -> Int -> ReactElement
+fnmid :: Dispatch -> Int -> ReactElement
 fnmid d i
   = span []
     [ text " "
