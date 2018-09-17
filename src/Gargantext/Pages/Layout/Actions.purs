@@ -13,7 +13,6 @@ import Gargantext.Components.Tree as Tree
 import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
-import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
@@ -37,7 +36,6 @@ data Action
   | Go
   | ShowLogin
   | ShowAddcorpus
-  | NgramsA    NG.Action
 
 
 performAction :: PerformAction AppState {} Action
@@ -97,7 +95,6 @@ performAction (UserPageA _) _ _ = pure unit
 performAction (DocAnnotationViewA _) _ _ = pure unit
 performAction (TreeViewA _) _ _ = pure unit
 performAction (GraphExplorerA _) _ _ = pure unit
-performAction (NgramsA _) _ _ = pure unit
 
 ----------------------------------------------------------
 
@@ -147,10 +144,4 @@ _graphExplorerAction :: Prism' Action GE.Action
 _graphExplorerAction = prism GraphExplorerA \action ->
   case action of
     GraphExplorerA caction -> Right caction
-    _-> Left action
-
-_NgramsA :: Prism' Action NG.Action
-_NgramsA = prism NgramsA \action ->
-  case action of
-    NgramsA caction -> Right caction
     _-> Left action

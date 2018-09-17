@@ -9,7 +9,6 @@ import Gargantext.Components.Tree as Tree
 import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
-import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
@@ -29,7 +28,6 @@ type AppState =
   , showCorpus     :: Boolean
   , graphExplorerState  :: GE.State
   , initialized    :: Boolean
-  , ngramState     :: NG.State
   }
 
 initAppState :: AppState
@@ -47,7 +45,6 @@ initAppState =
   , showCorpus   : false
   , graphExplorerState  : GE.initialState
   , initialized    : false
-  , ngramState     : NG.initialState
   }
 
 ---------------------------------------------------------
@@ -74,6 +71,3 @@ _treeState = lens (\s -> s.ntreeState) (\s ss -> s {ntreeState = ss})
 
 _graphExplorerState :: Lens' AppState GE.State
 _graphExplorerState = lens (\s -> s.graphExplorerState) (\s ss -> s{graphExplorerState = ss})
-
-_ngramState :: Lens' AppState NG.State
-_ngramState = lens (\s -> s.ngramState) (\s ss -> s{ngramState = ss})

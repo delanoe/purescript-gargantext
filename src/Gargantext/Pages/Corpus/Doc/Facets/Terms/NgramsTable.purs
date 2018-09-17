@@ -3,15 +3,19 @@ module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable where
 
 import Data.Array (filter, fold, toUnfoldable)
 import Data.Either (Either(..))
+import Data.Newtype (class Newtype, unwrap)
 import Data.Lens (Lens', Prism', lens, over, prism)
+import Data.Lens.Iso (re)
+import Data.Lens.Iso.Newtype (_Newtype)
 import Data.List (List)
 import Data.Tuple (Tuple(..), uncurry)
+import Data.Void (Void)
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem as NI
 import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+), (-), (/), (<), (<>), (==), (>), (>=))
 import React (ReactElement)
 import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
-import Thermite (PerformAction, Spec, _render, cotransform, focus, foreach, modifyState, withState)
+import Thermite (PerformAction, Spec, _render, cotransform, focus, foreach, modifyState, withState, focusState, hide)
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype State = State
@@ -23,6 +27,8 @@ newtype State = State
   , pageSize     :: PageSizes
   , totalRecords :: Int
   }
+
+derive instance newtypeState :: Newtype State _
 
 initialState :: State
 initialState = State { items : toUnfoldable [NI.initialState]
@@ -146,9 +152,11 @@ tableSpec = over _render \render dispatch p (State s) c ->
  ]
  ]
 
-ngramsTableSpec :: Spec State {} Action
-ngramsTableSpec =  container $ fold
-    [  tableSpec $ withState \st ->
+ngramsTableSpec :: Spec {} {} Void
+ngramsTableSpec = hide (unwrap initialState) $
+                  focusState (re _Newtype) $
+                  container $ fold
+   [  tableSpec $ withState \st ->
         focus _itemsList _ItemAction $
           foreach \_ -> NI.ngramsItemSpec
    ]
