@@ -5,7 +5,7 @@ import Prelude hiding (div)
 import Effect.Class (liftEffect)
 import Gargantext.Pages.Home.States (State)
 import Routing.Hash (setHash)
-import Thermite (PerformAction, modifyState)
+import Thermite (PerformAction)
 
 data Action
   = Documentation
