@@ -11,14 +11,13 @@ import React.DOM (a, div, h3, i, img, p, span, text)
 import React.DOM.Props (Props, _id, aria, className, href, src, target, title)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
-newtype State = State
+type State =
   { userName :: String
   , password :: String
   }
 
-
 initialState :: State
-initialState = State
-  {userName : ""
- , password : ""
+initialState =
+  { userName : ""
+  , password : ""
   }

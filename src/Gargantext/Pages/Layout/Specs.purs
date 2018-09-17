@@ -18,10 +18,10 @@ import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _LandingA, _NgramsA, _addCorpusAction, _dashBoardAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _NgramsA, _addCorpusAction, _dashBoardAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _dashBoardSate, _docAnnotationViewState, _docViewState, _graphExplorerState, _landingState, _loginState, _ngramState, _searchState, _treeState, _userPageState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _dashBoardSate, _docAnnotationViewState, _docViewState, _graphExplorerState, _loginState, _ngramState, _searchState, _treeState, _userPageState)
 import Gargantext.Router (Routes(..))
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
@@ -45,7 +45,6 @@ layoutSpec =
     container = over _render \render d p s c ->
       (render d p s c)
 
-
 pagesComponent :: AppState -> Spec AppState {} Action
 pagesComponent s =
   case s.currentRoute of
@@ -55,7 +54,7 @@ pagesComponent s =
     selectSpec :: Routes -> Spec AppState {} Action
     selectSpec CorpusAnalysis    = layout0 $ noState CA.spec'
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
-    selectSpec Home              = layout0 $ focus _landingState   _LandingA   (L.layoutLanding EN)
+    selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView           = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser

@@ -12,14 +12,12 @@ import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
-import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Router (Routes(..))
 
 type AppState =
   { currentRoute   :: Maybe Routes
-  , landingState   :: L.State
   , loginState   :: LN.State
   , addCorpusState :: AC.State
   , docViewState   :: DV.State
@@ -39,7 +37,6 @@ type AppState =
 initAppState :: AppState
 initAppState =
   { currentRoute   : Just Home
-  , landingState   : L.initialState
   , loginState     : LN.initialState
   , addCorpusState : AC.initialState
   , docViewState   : DV.tdata
@@ -57,9 +54,6 @@ initAppState =
   }
 
 ---------------------------------------------------------
-_landingState :: Lens' AppState L.State
-_landingState = lens (\s -> s.landingState) (\s ss -> s{landingState = ss})
-
 _loginState :: Lens' AppState LN.State
 _loginState = lens (\s -> s.loginState) (\s ss -> s{loginState = ss})
 

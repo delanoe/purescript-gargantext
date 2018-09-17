@@ -6,20 +6,23 @@ import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Data.Lang (Lang(..))
-import Gargantext.Pages.Home.States (State)
+import Gargantext.Pages.Home.States (State, initialState)
 import Gargantext.Pages.Home.Actions (Action, performAction)
 
 import React (ReactElement)
 import React.DOM (a, div, h3, i, img, p, span, text)
 import React.DOM.Props (Props, _id, aria, className, href, src, target, title)
-import Thermite (Render, Spec, simpleSpec)
+import Thermite (Render, Spec, simpleSpec, hide)
 
 
 -- Layout |
 
-layoutLanding :: Lang -> Spec State {} Action
-layoutLanding FR = layoutLanding' Fr.landingData
-layoutLanding EN = layoutLanding' En.landingData
+landingData :: Lang -> LandingData
+landingData FR = Fr.landingData
+landingData EN = En.landingData
+
+layoutLanding :: Lang -> Spec {} {} Void
+layoutLanding = hide initialState <<< layoutLanding' <<< landingData
 
 ------------------------------------------------------------------------
 

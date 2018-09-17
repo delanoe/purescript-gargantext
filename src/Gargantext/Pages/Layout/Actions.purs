@@ -16,7 +16,6 @@ import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
-import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Pages.Layout.States (AppState)
@@ -26,7 +25,6 @@ import Thermite (PerformAction, modifyState)
 
 data Action
   = Initialize
-  | LandingA   L.Action
   | LoginA     LN.Action
   | SetRoute   Routes
   | AddCorpusA AC.Action
@@ -93,7 +91,6 @@ performAction Initialize  _ state = void do
     _ -> do
       modifyState identity
 
-performAction (LandingA _) _ _ = pure unit
 performAction (LoginA _) _ _ = pure unit
 performAction (AddCorpusA _) _ _ = pure unit
 performAction (DocViewA _) _ _ = pure unit
@@ -106,12 +103,6 @@ performAction (DashboardA _) _ _ = pure unit
 performAction (NgramsA _) _ _ = pure unit
 
 ----------------------------------------------------------
-
-_LandingA :: Prism' Action L.Action
-_LandingA = prism LandingA \action ->
-  case action of
-    LandingA caction -> Right caction
-    _-> Left action
 
 _loginAction :: Prism' Action LN.Action
 _loginAction = prism LoginA \action ->
