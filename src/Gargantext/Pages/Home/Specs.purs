@@ -2,6 +2,10 @@ module Gargantext.Pages.Home.Specs where
 
 import Prelude hiding (div)
 
+import Data.Lens (re)
+import Data.Lens.Iso.Newtype (_Newtype)
+import Data.Newtype (unwrap)
+
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
@@ -12,7 +16,7 @@ import Gargantext.Pages.Home.Actions (Action, performAction)
 import React (ReactElement)
 import React.DOM (a, div, h3, i, img, p, span, text)
 import React.DOM.Props (Props, _id, aria, className, href, src, target, title)
-import Thermite (Render, Spec, simpleSpec, hide)
+import Thermite (Render, Spec, simpleSpec, hide, focusState)
 
 
 -- Layout |
@@ -22,7 +26,9 @@ landingData FR = Fr.landingData
 landingData EN = En.landingData
 
 layoutLanding :: Lang -> Spec {} {} Void
-layoutLanding = hide initialState <<< layoutLanding' <<< landingData
+layoutLanding = hide (unwrap initialState)
+            <<< focusState (re _Newtype)
+            <<< layoutLanding' <<< landingData
 
 ------------------------------------------------------------------------
 
