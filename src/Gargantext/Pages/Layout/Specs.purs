@@ -18,15 +18,15 @@ import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _LandingA, _NgramsA, _addCorpusAction, _corpusAction, _dashBoardAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _tabviewAction, _treeAction, _userPageAction, performAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _LandingA, _NgramsA, _addCorpusAction, _dashBoardAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _corpusState, _dashBoardSate, _docAnnotationViewState, _docViewState, _graphExplorerState, _landingState, _loginState, _ngramState, _searchState, _tabviewState, _treeState, _userPageState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _dashBoardSate, _docAnnotationViewState, _docViewState, _graphExplorerState, _landingState, _loginState, _ngramState, _searchState, _treeState, _userPageState)
 import Gargantext.Router (Routes(..))
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
-import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState)
+import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState)
 import Unsafe.Coerce (unsafeCoerce)
 
 layoutSpec :: Spec AppState {} Action
@@ -53,14 +53,14 @@ pagesComponent s =
     Nothing    -> selectSpec Home
   where
     selectSpec :: Routes -> Spec AppState {} Action
-    selectSpec CorpusAnalysis    = layout0 $ focus _corpusState  _corpusAction CA.spec'
+    selectSpec CorpusAnalysis    = layout0 $ noState CA.spec'
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec Home              = layout0 $ focus _landingState   _LandingA   (L.layoutLanding EN)
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView           = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
     selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState  _docAnnotationViewAction  D.docview
-    selectSpec Tabview           = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
+    selectSpec Tabview           = layout0 $ noState TV.pureTab1
     -- To be removed
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec NGramsTable       = layout0 $ focus _ngramState _NgramsA  NG.ngramsTableSpec

@@ -2,17 +2,12 @@ module Gargantext.Pages.Corpus where
 
 import Prelude hiding (div)
 
-import Data.Array (fold)
 import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
 import Gargantext.Pages.Corpus.Doc.Facets as Tab
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
-
-type State = Tab.State
-
-type Action = Tab.Action
 
 type Corpus = { title :: String
               , desc  :: String
@@ -21,19 +16,14 @@ type Corpus = { title :: String
               , authors :: String
               }
 
-initialState :: State
-initialState = Tab.initialState
+spec' :: Spec {} {} Void
+spec' = corpusSpec <> Tab.pureTab1
 
-spec' :: Spec Tab.State {} Tab.Action
-spec' = fold [ corpusSpec
-             , Tab.tab1
-             ]
-
-corpusSpec :: Spec Tab.State {} Tab.Action
+corpusSpec :: Spec {} {} Void
 corpusSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render Tab.State {} Tab.Action
-    render dispatch _ state _ =
+    render :: Render {} {} Void
+    render _ _ _ _ =
       [ div [className "row"]
         [ div [className "col-md-3"] [ h3 [] [text corpus.title] ]
         , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]

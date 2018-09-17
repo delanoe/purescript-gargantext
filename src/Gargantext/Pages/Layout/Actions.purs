@@ -10,9 +10,7 @@ import Effect.Console (log)
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Tree as Tree
-import Gargantext.Pages.Corpus as CA
 import Gargantext.Pages.Corpus.Doc.Annotation as D
-import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
@@ -37,12 +35,10 @@ data Action
   | UserPageA  U.Action
   | DocAnnotationViewA  D.Action
   | TreeViewA  Tree.Action
-  | TabViewA   TV.Action
   | GraphExplorerA GE.Action
   | DashboardA Dsh.Action
   | Search     String
   | Go
-  | CorpusAnalysisA CA.Action
   | ShowLogin
   | ShowAddcorpus
   | NgramsA    NG.Action
@@ -105,11 +101,9 @@ performAction (SearchA _) _ _ = pure unit
 performAction (UserPageA _) _ _ = pure unit
 performAction (DocAnnotationViewA _) _ _ = pure unit
 performAction (TreeViewA _) _ _ = pure unit
-performAction (TabViewA _) _ _ = pure unit
 performAction (GraphExplorerA _) _ _ = pure unit
 performAction (DashboardA _) _ _ = pure unit
 performAction (NgramsA _) _ _ = pure unit
-performAction (CorpusAnalysisA _) _ _ = pure unit
 
 ----------------------------------------------------------
 
@@ -165,18 +159,6 @@ _treeAction :: Prism' Action Tree.Action
 _treeAction = prism TreeViewA \action ->
   case action of
     TreeViewA caction -> Right caction
-    _-> Left action
-
-_tabviewAction :: Prism' Action TV.Action
-_tabviewAction = prism TabViewA \action ->
-  case action of
-    TabViewA caction -> Right caction
-    _-> Left action
-
-_corpusAction :: Prism' Action CA.Action
-_corpusAction = prism CorpusAnalysisA \action ->
-  case action of
-    CorpusAnalysisA caction -> Right caction
     _-> Left action
 
 _graphExplorerAction :: Prism' Action GE.Action
