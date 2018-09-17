@@ -15,12 +15,12 @@ import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+),
 import React (ReactElement)
 import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
-import Thermite (PerformAction, Spec, _render, cotransform, focus, foreach, modifyState, withState, focusState, hide)
+import Thermite (PerformAction, Spec, _render, cotransform, focus, foreach, modifyState, focusState, hide)
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype State = State
-  { items :: List NI.State
-  , search :: String
+  { items        :: List {}
+  , search       :: String
   , selectString :: String
   , totalPages   :: Int
   , currentPage  :: Int
@@ -31,26 +31,26 @@ newtype State = State
 derive instance newtypeState :: Newtype State _
 
 initialState :: State
-initialState = State { items : toUnfoldable [NI.initialState]
-                     , search : ""
+initialState = State { items        : toUnfoldable [{}]
+                     , search       : ""
                      , selectString : ""
-                     ,totalPages   : 10
+                     , totalPages   : 10
                      , currentPage  : 1
                      , pageSize     : PS10
                      , totalRecords : 100
                      }
 
 data Action
-  = ItemAction Int NI.Action
+  = ItemAction Int Void
   | ChangeString String
   | SetInput String
   | ChangePageSize PageSizes
   | ChangePage Int
 
-_itemsList :: Lens' State (List NI.State)
+_itemsList :: Lens' State (List {})
 _itemsList = lens (\(State s) -> s.items) (\(State s) v -> State s { items = v })
 
-_ItemAction :: Prism' Action (Tuple Int NI.Action)
+_ItemAction :: Prism' Action (Tuple Int Void)
 _ItemAction = prism (uncurry ItemAction) \ta ->
   case ta of
     ItemAction i a -> Right (Tuple i a)
@@ -153,13 +153,14 @@ tableSpec = over _render \render dispatch p (State s) c ->
  ]
 
 ngramsTableSpec :: Spec {} {} Void
-ngramsTableSpec = hide (unwrap initialState) $
-                  focusState (re _Newtype) $
-                  container $ fold
-   [  tableSpec $ withState \st ->
-        focus _itemsList _ItemAction $
-          foreach \_ -> NI.ngramsItemSpec
-   ]
+ngramsTableSpec =
+  hide (unwrap initialState) $
+  focusState (re _Newtype) $
+  container $
+  tableSpec $
+  focus _itemsList _ItemAction $
+  foreach $ \ _ ->
+  NI.ngramsItemSpec
 
 container :: forall state props action. Spec state props action -> Spec state props action
 container = over _render \render d p s c ->
