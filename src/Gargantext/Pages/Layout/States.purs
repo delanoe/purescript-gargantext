@@ -7,7 +7,6 @@ import Data.Maybe (Maybe(Just))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree as Tree
 import Gargantext.Pages.Corpus.Doc.Annotation as D
-import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
@@ -31,7 +30,6 @@ type AppState =
   , graphExplorerState  :: GE.State
   , initialized    :: Boolean
   , ngramState     :: NG.State
-  , dashboardState :: Dsh.State
   }
 
 initAppState :: AppState
@@ -50,7 +48,6 @@ initAppState =
   , graphExplorerState  : GE.initialState
   , initialized    : false
   , ngramState     : NG.initialState
-  , dashboardState : Dsh.initialState
   }
 
 ---------------------------------------------------------
@@ -74,9 +71,6 @@ _docAnnotationViewState = lens (\s -> s.docAnnotationState) (\s ss -> s{docAnnot
 
 _treeState :: Lens' AppState Tree.State
 _treeState = lens (\s -> s.ntreeState) (\s ss -> s {ntreeState = ss})
-
-_dashBoardSate :: Lens' AppState Dsh.State
-_dashBoardSate = lens (\s -> s.dashboardState) (\s ss -> s {dashboardState = ss})
 
 _graphExplorerState :: Lens' AppState GE.State
 _graphExplorerState = lens (\s -> s.graphExplorerState) (\s ss -> s{graphExplorerState = ss})

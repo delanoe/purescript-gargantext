@@ -1,28 +1,18 @@
 module Gargantext.Pages.Corpus.Doc.Facets.Dashboard where
 
-import Prelude
+import Prelude hiding (div)
 
 import Data.Array (zip)
 import Data.Tuple (Tuple(..))
 import Gargantext.Components.Charts.Options.ECharts
-import Gargantext.Components.Charts.Options.Series
-import Data.Unit (Unit)
+        (Options(..), xAxis, series, YAxisFormat(..), chart)
+import Gargantext.Components.Charts.Options.Series (SeriesShape(..))
 import Data.Int (toNumber)
-import React.DOM (div, h1, text, title)
+import React.DOM (div, h1, text)
 import React.DOM.Props (className)
-import Thermite (PerformAction, Render, Spec, simpleSpec)
+import Thermite (Render, Spec, simpleSpec, defaultPerformAction)
 
-type State = Unit
-
-data Action = None
-
-initialState :: State
-initialState = unit
-
-performAction :: PerformAction State {} Action
-performAction _ _ _ = pure unit
-
-render :: Render State {} Action
+render :: Render {} {} Void
 render dispatch _ state _ = [
     h1 [] [text "IMT DashBoard"]
     , div [className "row"] [ div [className "col-md-9 content"] [chart globalPublis]
@@ -54,9 +44,12 @@ render dispatch _ state _ = [
 
 -----------------------------------------------------------------------------------------------------------
 
+naturePublis_x :: Array String
 naturePublis_x = ["Com","Articles","Thèses","Reports"]
+naturePublis_y' :: Array Int
 naturePublis_y' = [23901,17417,1188,1176]
 
+naturePublis_y :: Array {name :: String, value :: Number}
 naturePublis_y = map (\(Tuple n v) -> {name: n, value: toNumber v }) (zip naturePublis_x naturePublis_y')
 
 naturePublis :: Options
@@ -72,7 +65,9 @@ naturePublis = Options { mainTitle : "Nature of publications"
 
 -----------------------------------------------------------------------------------------------------------
 
+globalPublis_x :: Array Int
 globalPublis_x = [1982,1986,1987,1988,1990,1993,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017]
+globalPublis_y :: Array Int
 globalPublis_y = [1,4,2,1,1,2,1,1,8,38,234,76,40,82,75,202,1475,1092,1827,2630,4978,3668,4764,5915,4602,5269,6814,4018]
 
 
@@ -89,6 +84,7 @@ globalPublis = (Options { mainTitle : "Global Scientific Publications"
 
 
 
+distriBySchool_y :: Array (Tuple String Int)
 distriBySchool_y = [Tuple "Télécom Bretagne" 1150,Tuple "Télécom SudParis" 946,Tuple "Mines Nantes" 547,Tuple "Télécom ParisTech" 429,Tuple "IMT Atlantique" 205,Tuple "Mines Alès" 56
                    ,Tuple "Télécom Ecole de Management" 52,Tuple "Mines Albi-Carmaux" 6]
 
@@ -104,5 +100,5 @@ distriBySchool = Options { mainTitle : "School production in 2017"
                      }
 
 
-layoutDashboard :: Spec State {} Action
-layoutDashboard = simpleSpec performAction render
+layoutDashboard :: Spec {} {} Void
+layoutDashboard = simpleSpec defaultPerformAction render

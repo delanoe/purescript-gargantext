@@ -18,10 +18,10 @@ import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _NgramsA, _addCorpusAction, _dashBoardAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _NgramsA, _addCorpusAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _dashBoardSate, _docAnnotationViewState, _docViewState, _graphExplorerState, _loginState, _ngramState, _searchState, _treeState, _userPageState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _docAnnotationViewState, _docViewState, _graphExplorerState, _loginState, _ngramState, _searchState, _treeState, _userPageState)
 import Gargantext.Router (Routes(..))
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
@@ -64,7 +64,7 @@ pagesComponent s =
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec NGramsTable       = layout0 $ focus _ngramState _NgramsA  NG.ngramsTableSpec
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
-    selectSpec Dashboard         = layout0 $ focus _dashBoardSate _dashBoardAction Dsh.layoutDashboard
+    selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 

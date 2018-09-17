@@ -11,7 +11,6 @@ import Gargantext.Components.Login as LN
 import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Pages.Corpus.Doc.Annotation as D
-import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
@@ -34,7 +33,6 @@ data Action
   | DocAnnotationViewA  D.Action
   | TreeViewA  Tree.Action
   | GraphExplorerA GE.Action
-  | DashboardA Dsh.Action
   | Search     String
   | Go
   | ShowLogin
@@ -99,7 +97,6 @@ performAction (UserPageA _) _ _ = pure unit
 performAction (DocAnnotationViewA _) _ _ = pure unit
 performAction (TreeViewA _) _ _ = pure unit
 performAction (GraphExplorerA _) _ _ = pure unit
-performAction (DashboardA _) _ _ = pure unit
 performAction (NgramsA _) _ _ = pure unit
 
 ----------------------------------------------------------
@@ -133,12 +130,6 @@ _userPageAction = prism UserPageA \action ->
   case action of
     UserPageA caction -> Right caction
     _-> Left action
-
-_dashBoardAction :: Prism' Action Dsh.Action
-_dashBoardAction = prism DashboardA \action ->
-  case action of
-    DashboardA caction -> Right caction
-    _ -> Left action
 
 _docAnnotationViewAction :: Prism' Action D.Action
 _docAnnotationViewAction = prism DocAnnotationViewA \action ->
