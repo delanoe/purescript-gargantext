@@ -13,8 +13,7 @@ initialState = ""
 data Action = NoOp
 
 performAction :: PerformAction State {} Action
-performAction NoOp _ _ = void do
-  modifyState identity
+performAction NoOp _ _ = pure unit
 
 projets :: Spec State {} Action
 projets = simpleSpec performAction render

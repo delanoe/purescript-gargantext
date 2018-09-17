@@ -21,16 +21,12 @@ import Routing.Hash (setHash)
 import Thermite (PerformAction, modifyState)
 
 data Action
-  = NoOp
-  | SelectDatabase Boolean
+  = SelectDatabase Boolean
   | UnselectDatabase Boolean
   | LoadDatabaseDetails
   | GO
 
 performAction :: PerformAction State {} Action
-performAction NoOp _ _ = void do
-  modifyState identity
-
 performAction (SelectDatabase selected) _ _ = void do
   modifyState \( state) -> state { select_database = selected }
 

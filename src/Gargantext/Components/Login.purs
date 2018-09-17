@@ -46,15 +46,12 @@ initialState = State
   }
 
 data Action
-  = NoOp
-  | Login
+  = Login
   | SetUserName String
   | SetPassword String
 
 
 performAction :: PerformAction State {} Action
-performAction NoOp _ _ = void do
-  modifyState identity
 
 performAction (SetUserName usr) _ _ = void do
   modifyState \(State state) -> State $ state { username = usr }

@@ -23,24 +23,17 @@ initialState =
 
 
 data Action
-  = NoOp
-  | GO
+  = GO
   | SetQuery String
 
 
 performAction :: PerformAction State {} Action
-performAction NoOp _ _ = void do
-  modifyState identity
-
-
 performAction (SetQuery q) _ _ = void do
    modifyState \( state) ->  state { query = q }
 
 
 performAction GO _ _ = void do
   liftEffect $ setHash "/addCorpus"
-  modifyState identity
-
 
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value

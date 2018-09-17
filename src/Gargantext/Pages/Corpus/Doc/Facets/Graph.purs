@@ -28,8 +28,8 @@ import React.DOM.Props (_id, _type, checked, className, href, name, onChange, pl
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
-data Action = NoOp
-  | LoadGraph String
+data Action
+  = LoadGraph String
   | SelectNode SelectedNode
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
@@ -74,10 +74,6 @@ performAction (LoadGraph fp) _ _ = void do
 
 performAction (SelectNode node) _ _ = void do
   modifyState $ \(State s) -> State s {selectedNode = pure node}
-
-performAction NoOp _ _ = void do
-  modifyState identity
-
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}

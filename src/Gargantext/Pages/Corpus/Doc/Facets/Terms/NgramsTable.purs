@@ -35,8 +35,7 @@ initialState = State { items : toUnfoldable [NI.initialState]
                      }
 
 data Action
-  = NoOp
-  | ItemAction Int NI.Action
+  = ItemAction Int NI.Action
   | ChangeString String
   | SetInput String
   | ChangePageSize PageSizes

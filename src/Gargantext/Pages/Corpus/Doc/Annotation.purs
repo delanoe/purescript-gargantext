@@ -21,15 +21,12 @@ initialState =
 
 
 data Action
-  = NoOp
-  | ChangeString String
+  = ChangeString String
   | ChangeAnotherString String
   | SetInput String
 
 
 performAction :: PerformAction State {} Action
-performAction NoOp _ _ = pure unit
-
 performAction (ChangeString ps) _ _ = pure unit
 
 performAction (ChangeAnotherString ps) _ _ = pure unit

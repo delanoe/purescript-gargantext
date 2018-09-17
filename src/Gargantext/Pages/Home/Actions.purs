@@ -8,27 +8,19 @@ import Routing.Hash (setHash)
 import Thermite (PerformAction, modifyState)
 
 data Action
-  = NoOp
-  | Documentation
+  = Documentation
   | Enter
   | Login
   | SignUp
 
 
 performAction :: PerformAction State {} Action
-performAction NoOp _ _ = void do
-  modifyState \state -> state
-
-performAction Documentation _ _ = void do
-  modifyState \state -> state
+performAction Documentation _ _ = pure unit
 
 performAction Enter _ _ = void do
   liftEffect $ setHash "/search"
-  modifyState \state -> state
 
 performAction Login _ _ = void do
   liftEffect $ setHash "/login"
-  modifyState \state -> state
 
-performAction SignUp _ _ = void do
-  modifyState \state -> state
+performAction SignUp _ _ = pure unit

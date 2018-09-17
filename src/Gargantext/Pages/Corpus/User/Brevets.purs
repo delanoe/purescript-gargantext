@@ -1,6 +1,7 @@
 module Gargantext.Pages.Corpus.User.Brevets where
 
 import Prelude
+import Data.Void
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
 
@@ -9,11 +10,10 @@ type State = String
 initialState :: State
 initialState = ""
 
-data Action = NoOp
+type Action = Void
 
 performAction :: PerformAction State {} Action
-performAction NoOp _ _ = void do
-  modifyState identity
+performAction action _ _ = absurd action
 
 brevetsSpec :: Spec State {} Action
 brevetsSpec = simpleSpec performAction render

@@ -96,8 +96,19 @@ performAction Initialize  _ state = void do
     _ -> do
       modifyState identity
 
-performAction _ _ _ = void do
-  modifyState identity
+performAction (LandingA _) _ _ = pure unit
+performAction (LoginA _) _ _ = pure unit
+performAction (AddCorpusA _) _ _ = pure unit
+performAction (DocViewA _) _ _ = pure unit
+performAction (SearchA _) _ _ = pure unit
+performAction (UserPageA _) _ _ = pure unit
+performAction (DocAnnotationViewA _) _ _ = pure unit
+performAction (TreeViewA _) _ _ = pure unit
+performAction (TabViewA _) _ _ = pure unit
+performAction (GraphExplorerA _) _ _ = pure unit
+performAction (DashboardA _) _ _ = pure unit
+performAction (NgramsA _) _ _ = pure unit
+performAction (CorpusAnalysisA _) _ _ = pure unit
 
 ----------------------------------------------------------
 
