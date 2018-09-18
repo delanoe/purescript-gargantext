@@ -7,7 +7,6 @@ import Affjax.ResponseFormat as ResponseFormat
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -22,51 +21,53 @@ type Open = Boolean
 type URL  = String
 type ID   = Int
 
-data NTree a = NLeaf a | NNode ID Open Name (Array (NTree a))
+data NTree a = NTree a (Array (NTree a))
 
-type FTree = NTree (Tuple Name URL)
+type FTree = NTree LNode
 
 data Action = ToggleFolder ID
 
 type State = FTree
 
 initialState :: State
-initialState = NLeaf (Tuple "" "")
+initialState = NTree (LNode {id : 1, name : "", nodeType : "", open : true}) []
 
 performAction :: PerformAction State {} Action
 performAction (ToggleFolder i) _ _ = void $
  cotransform (\td -> toggleNode i td)
 
-toggleNode :: forall t10. Int -> NTree t10 -> NTree t10
-toggleNode sid (NNode iid open name ary) =
-  NNode iid nopen name $ map (toggleNode sid) ary
+toggleNode :: Int -> NTree LNode -> NTree LNode
+toggleNode sid (NTree (LNode {id, name, nodeType, open}) ary) =
+  NTree (LNode {id,name, nodeType, open : nopen}) $ map (toggleNode sid) ary
   where
-    nopen = if sid == iid then not open else open
-toggleNode sid a = a
+    nopen = if sid == id then not open else open
 
 
 
 ------------------------------------------------------------------------
 -- Realistic Tree for the UI
 
-exampleTree :: NTree (Tuple String String)
-exampleTree =
-  NNode 1 true "françois.pineau"
-  [ annuaire 2 "Annuaire"
-  , corpus   3 "IMT publications"
-  ]
+exampleTree :: NTree LNode
+exampleTree = NTree (LNode {id : 1, name : "", nodeType : "", open : false}) []
 
-annuaire :: Int -> String -> NTree (Tuple String String)
-annuaire n name = NNode n false name
-    [ NLeaf (Tuple "IMT community"    "#/docView")
-    ]
+-- exampleTree :: NTree LNode
+-- exampleTree =
+--   NTree 1 true "françois.pineau"
+--   [ --annuaire 2 "Annuaire"
+--   --, corpus   3 "IMT publications"
+--   ]
 
-corpus :: Int -> String -> NTree (Tuple String String)
-corpus n name = NNode n false name
-    [ NLeaf (Tuple "Facets"    "#/corpus")
-    , NLeaf (Tuple "Dashboard" "#/dashboard")
-    , NLeaf (Tuple "Graph"     "#/graphExplorer")
-    ]
+-- annuaire :: Int -> String -> NTree (Tuple String String)
+-- annuaire n name = NTree n false name
+--     [ NTree (Tuple "IMT community"    "#/docView")
+--     ]
+
+-- corpus :: Int -> String -> NTree (Tuple String String)
+-- corpus n name = NTree (LNode {id : n, name, nodeType : "", open : false})
+--     [ NTree (Tuple "Facets"    "#/corpus") []
+--     , NTree (Tuple "Dashboard" "#/dashboard") []
+--     , NTree (Tuple "Graph"     "#/graphExplorer") []
+--     ]
 
 
 ------------------------------------------------------------------------
@@ -98,14 +99,14 @@ treeview = simpleSpec performAction render
 
 
 toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
-toHtml d (NLeaf (Tuple name link)) =
+toHtml d (NTree (LNode {id, name, nodeType, open}) []) =
   li []
-  [ a [ href link]
+  [ a [ href "#"]
     ( [ text (name <> "    ")
       ] <> nodeOptionsView false
     )
   ]
-toHtml d (NNode id open name ary) =
+toHtml d (NTree (LNode {id, name, nodeType, open}) ary) =
   ul [ ]
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
@@ -121,7 +122,7 @@ fldr :: Boolean -> Props
 fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 
-newtype LNode = LNode {id :: Int, name :: String}
+newtype LNode = LNode {id :: Int, name :: String, nodeType :: String, open :: Boolean}
 
 -- derive instance newtypeLNode :: Newtype LNode _
 
@@ -130,7 +131,8 @@ instance decodeJsonLNode :: DecodeJson LNode where
     obj <- decodeJson json
     id_ <- obj .? "id"
     name <- obj .? "name"
-    pure $ LNode {id : id_, name}
+    nodeType <- obj .? "type"
+    pure $ LNode {id : id_, name, nodeType, open : true}
 
 loadDefaultNode :: Aff (Either String (Array LNode))
 loadDefaultNode = do
@@ -153,4 +155,4 @@ loadDefaultNode = do
 
 
 fnTransform :: LNode -> FTree
-fnTransform (LNode r) = NNode r.id false r.name []
+fnTransform n = NTree n []

@@ -4,22 +4,20 @@ import Prelude hiding (div)
 
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(Just))
-
-import Gargantext.Components.Login              as LN
-import Gargantext.Components.Tree               as Tree
-import Gargantext.Pages.Layout.Specs.AddCorpus  as AC
-import Gargantext.Pages.Corpus                  as CA
-import Gargantext.Pages.Corpus.Doc.Annotation   as D
-import Gargantext.Pages.Corpus.Doc.Facets       as TV
-import Gargantext.Pages.Corpus.Doc.Facets.Documents  as DV
+import Gargantext.Components.Login as LN
+import Gargantext.Components.Tree as Tree
+import Gargantext.Pages.Corpus as CA
+import Gargantext.Pages.Corpus.Doc.Annotation as D
+import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
-import Gargantext.Pages.Corpus.User.Users       as U
-import Gargantext.Pages.Home                    as L
-import Gargantext.Pages.Layout.Specs.Search     as S
-import Gargantext.Router                           (Routes(..))
-
+import Gargantext.Pages.Corpus.User.Users as U
+import Gargantext.Pages.Home as L
+import Gargantext.Pages.Layout.Specs.AddCorpus as AC
+import Gargantext.Pages.Layout.Specs.Search as S
+import Gargantext.Router (Routes(..))
 
 type AppState =
   { currentRoute   :: Maybe Routes
