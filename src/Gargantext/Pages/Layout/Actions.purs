@@ -3,7 +3,6 @@ module Gargantext.Pages.Layout.Actions where
 import Prelude hiding (div)
 
 import Control.Monad.Cont.Trans (lift)
-import Data.Array (length)
 import Data.Either (Either(..))
 import Data.Lens (Prism', prism)
 import Effect.Class (liftEffect)
@@ -80,16 +79,18 @@ performAction Initialize  _ state = void do
         Left err -> do
           modifyState identity
         Right d -> do
+          _ <- modifyState $ _ { initialized = true, ntreeState = d}
           page <- lift $ DV.loadPage
           case page of
             Left err -> do
               modifyState identity
             Right docs -> do
               modifyState $ _ { initialized = true
-                              , ntreeState = if length d > 0
-                                            then Tree.exampleTree
-                                           --then fnTransform $ unsafePartial $ fromJust $ head d
-                                           else Tree.initialState
+                              , ntreeState = d
+                                -- if length d > 0
+                                --             then Tree.exampleTree
+                                --            --then fnTransform $ unsafePartial $ fromJust $ head d
+                                --            else Tree.initialState
 
                               , docViewState = docs
                               }

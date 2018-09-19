@@ -4,9 +4,11 @@ import Prelude hiding (div)
 
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.ResponseFormat as ResponseFormat
+import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
+import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -14,7 +16,7 @@ import Effect.Console (log)
 import React (ReactElement)
 import React.DOM (a, div, i, li, text, ul)
 import React.DOM.Props (Props, className, href, onClick)
-import Thermite (PerformAction, Render, Spec, cotransform, simpleSpec)
+import Thermite (PerformAction, Render, Spec, cotransform, modifyState, simpleSpec)
 
 type Name = String
 type Open = Boolean
@@ -25,7 +27,7 @@ data NTree a = NTree a (Array (NTree a))
 
 type FTree = NTree LNode
 
-data Action = ToggleFolder ID
+data Action = ToggleFolder ID --| Initialize
 
 type State = FTree
 
@@ -35,6 +37,13 @@ initialState = NTree (LNode {id : 1, name : "", nodeType : "", open : true}) []
 performAction :: PerformAction State {} Action
 performAction (ToggleFolder i) _ _ = void $
  cotransform (\td -> toggleNode i td)
+
+-- performAction Initialize _ _ = void $ do
+--  s <- lift $ loadDefaultNode
+--  case s of
+--    Left err -> modifyState identity
+--    Right d -> modifyState (\state -> d)
+
 
 toggleNode :: Int -> NTree LNode -> NTree LNode
 toggleNode sid (NTree (LNode {id, name, nodeType, open}) ary) =
@@ -124,7 +133,7 @@ fldr open = if open then className "fas fa-folder-open" else className "fas fa-f
 
 newtype LNode = LNode {id :: Int, name :: String, nodeType :: String, open :: Boolean}
 
--- derive instance newtypeLNode :: Newtype LNode _
+derive instance newtypeLNode :: Newtype LNode _
 
 instance decodeJsonLNode :: DecodeJson LNode where
   decodeJson json = do
@@ -134,10 +143,19 @@ instance decodeJsonLNode :: DecodeJson LNode where
     nodeType <- obj .? "type"
     pure $ LNode {id : id_, name, nodeType, open : true}
 
-loadDefaultNode :: Aff (Either String (Array LNode))
+instance decodeJsonFTree :: DecodeJson (NTree LNode) where
+  decodeJson json = do
+    obj <- decodeJson json
+    node <- obj .? "node"
+    nodes <- obj .? "children"
+    node' <- decodeJson node
+    nodes' <- decodeJson nodes
+    pure $ NTree node' nodes'
+
+loadDefaultNode :: Aff (Either String (NTree LNode))
 loadDefaultNode = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/user"
+         { url = "http://localhost:8008/tree/1"
          , responseFormat = ResponseFormat.json
          , method = Left GET
          , headers = []
