@@ -21,7 +21,7 @@ import Gargantext.Components.Modals.Modal (modalHide)
 import React (ReactElement)
 import React.DOM (button, div, h3, h5, li, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, onClick, role)
-import Thermite (PerformAction, Render, Spec, _render, cotransform, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, _render, simpleSpec)
 
 
 modalSpec :: Boolean -> String -> Spec State {} Action -> Spec State {} Action

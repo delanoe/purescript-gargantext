@@ -22,7 +22,7 @@ import Gargantext.Utils.DecodeMaybe ((.|))
 import React (ReactElement)
 import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value)
-import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, modifyState, defaultPerformAction, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 
@@ -182,15 +182,15 @@ layoutDocview = simpleSpec performAction render
 
 
 performAction :: PerformAction State {} Action
-performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
+performAction (ChangePageSize ps) _ _ = void $ modifyState $ changePageSize ps
 
-performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
+performAction (ChangePage p) _ _ = void $ modifyState \(TableData td) -> TableData $ td { currentPage = p }
 
 performAction LoadData _ _ = do
   res <- lift $ loadPage
   case res of
      Left err      -> pure unit
-     Right resData -> void $ modifyState (\s -> resData)
+     Right resData -> void $ modifyState $ const resData
 
 
 loadPage :: Aff (Either String CorpusTableData)

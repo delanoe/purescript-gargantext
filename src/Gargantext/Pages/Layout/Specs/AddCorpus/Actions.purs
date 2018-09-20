@@ -28,17 +28,17 @@ data Action
 
 performAction :: PerformAction State {} Action
 performAction (SelectDatabase selected) _ _ = void do
-  modifyState \( state) -> state { select_database = selected }
+  modifyState $ _ { select_database = selected }
 
 performAction (UnselectDatabase unselected) _ _ = void do
-  modifyState \( state) ->  state { unselect_database = unselected }
+  modifyState $ _ { unselect_database = unselected }
 
 performAction (LoadDatabaseDetails) _ _ = do
   res <- lift $ getDatabaseDetails $ QueryString { query_query: "string",query_name: ["Pubmed"]}
   case res of
      Left err -> pure unit
      Right resData -> do
-       void $ modifyState $ \(state) -> state {response  = resData}
+       void $ modifyState $ _ {response  = resData}
 
 performAction GO _ _ = do
   liftEffect $ setHash "/corpus"

@@ -13,11 +13,11 @@ import Data.Void (Void)
 import Data.Unit (Unit)
 import Effect (Effect)
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem as NI
-import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+), (-), (/), (<), (<>), (==), (>), (>=))
+import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+), (-), (/), (<), (<>), (==), (>), (>=), pure, unit)
 import React (ReactElement)
 import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
-import Thermite (PerformAction, Spec, _render, cotransform, focus, foreach, modifyState, focusState, hide)
+import Thermite (PerformAction, Spec, _render, focus, foreach, modifyState, focusState, hide)
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype State = State
@@ -62,7 +62,7 @@ type Dispatch = Action -> Effect Unit
 
 performAction :: PerformAction State {} Action
 
-performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
+performAction (ChangePageSize ps) _ _ = void $ modifyState $ changePageSize ps
 
 performAction (ChangePage p) _ _ = void  do
   modifyState \(State state) -> State $ state {currentPage = p}
@@ -76,8 +76,7 @@ performAction (ChangeString c) _ _ = void do
 performAction (SetInput s) _ _ = void do
   modifyState \(State state) -> State $ state { search = s }
 
-performAction _ _ _ = void do
-  modifyState \(State state) -> State $ state
+performAction _ _ _ = pure unit
 
 tableSpec :: Spec State {} Action -> Spec State {} Action
 tableSpec = over _render \render dispatch p (State s) c ->

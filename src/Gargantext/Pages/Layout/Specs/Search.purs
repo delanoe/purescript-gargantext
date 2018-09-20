@@ -29,7 +29,7 @@ data Action
 
 performAction :: PerformAction State {} Action
 performAction (SetQuery q) _ _ = void do
-   modifyState \( state) ->  state { query = q }
+   modifyState $ _ { query = q }
 
 
 performAction GO _ _ = void do

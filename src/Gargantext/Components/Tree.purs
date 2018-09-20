@@ -19,7 +19,7 @@ import Effect.Console (log)
 import React (ReactElement)
 import React.DOM (a, div, i, li, text, ul)
 import React.DOM.Props (Props, className, href, onClick)
-import Thermite (PerformAction, Render, Spec, cotransform, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
 type Name = String
 type Open = Boolean
@@ -38,8 +38,7 @@ initialState :: State
 initialState = NTree (LNode {id : 1, name : "", nodeType : "", open : true}) []
 
 performAction :: PerformAction State {} Action
-performAction (ToggleFolder i) _ _ = void $
- cotransform (\td -> toggleNode i td)
+performAction (ToggleFolder i) _ _ = void $ modifyState $ toggleNode i
 
 -- performAction Initialize _ _ = void $ do
 --  s <- lift $ loadDefaultNode

@@ -4,7 +4,7 @@ import Data.Array (fold)
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as D
 import Prelude hiding (div)
 import React.DOM (h3, text)
-import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, defaultPerformAction, simpleSpec)
 
 
 
