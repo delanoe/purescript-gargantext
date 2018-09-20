@@ -18,6 +18,7 @@ import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Components.Charts.Charts (p'')
 import Gargantext.Config.REST (get)
+import Gargantext.Utils.DecodeMaybe ((.|))
 import React (ReactElement)
 import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value)
@@ -118,8 +119,8 @@ newtype Hyperdata = Hyperdata
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj    <- decodeJson json
-    title  <- obj .? "nom"
-    source <- obj .? "fonction"
+    title  <- obj .| "title"
+    source <- obj .| "source"
     pure $ Hyperdata { title,source }
 
 instance decodeResponse :: DecodeJson Response where

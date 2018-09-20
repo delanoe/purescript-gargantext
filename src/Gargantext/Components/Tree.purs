@@ -112,11 +112,15 @@ treeview = simpleSpec performAction render
 
 toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
 toHtml d (NTree (LNode {id, name, nodeType, open}) []) =
-  li []
-  [ a [ href "#"]
-    ( [ text (name <> "    ")
-      ] <> nodeOptionsView false
-    )
+  ul []
+  [
+    li []
+    [
+      a [ href "#"]
+      ( [ text (name <> "    ")
+        ] <> nodeOptionsView false
+      )
+    ]
   ]
 toHtml d (NTree (LNode {id, name, nodeType, open}) ary) =
   ul [ ]
