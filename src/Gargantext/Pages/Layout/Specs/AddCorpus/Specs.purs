@@ -1,7 +1,12 @@
 module Gargantext.Pages.Layout.Specs.AddCorpus.Specs where
 
+import Gargantext.Pages.Layout.Specs.AddCorpus.Actions
+import Gargantext.Pages.Layout.Specs.AddCorpus.States
 import Prelude hiding (div)
 
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.RequestBody (RequestBody(..))
+import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Either (Either(..))
@@ -9,12 +14,10 @@ import Data.HTTP.Method (Method(..))
 import Data.Lens (over)
 import Data.Maybe (Maybe(Just))
 import Data.MediaType.Common (applicationJSON)
-
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
 import Gargantext.Components.Modals.Modal (modalHide)
-
-import Gargantext.Pages.Layout.Specs.AddCorpus.States
-import Gargantext.Pages.Layout.Specs.AddCorpus.Actions
-
 import React (ReactElement)
 import React.DOM (button, div, h3, h5, li, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, onClick, role)
@@ -119,3 +122,25 @@ layoutAddcorpus = simpleSpec performAction render
           span [] [text  o.name]
           ,  span [className "badge badge-default badge-pill"] [ text $ show o.count]
           ]
+
+
+
+countResults ::  Query -> Aff (Either String (Int))
+countResults query = do
+  res <- request $ defaultRequest
+         { url = "http://localhost:8008/count"
+         , responseFormat = ResponseFormat.json
+         , method = Left POST
+         , headers = []
+         , content = Just $ Json $ encodeJson query
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj

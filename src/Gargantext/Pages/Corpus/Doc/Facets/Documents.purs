@@ -2,12 +2,15 @@ module Gargantext.Pages.Corpus.Doc.Facets.Documents where
 
 import Prelude hiding (div)
 
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Array (filter)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.HTTP.Method (Method(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -417,3 +420,37 @@ lessthan x y = x < y
 
 greaterthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
 greaterthan x y = x > y
+
+newtype SearchQuery = SearchQuery
+  {
+    query :: Array String
+  , parent_id :: Int
+  }
+
+
+instance encodeJsonSQuery :: EncodeJson SearchQuery where
+  encodeJson (SearchQuery post)
+     = "query" := post.query
+    ~> "parent_id" := post.parent_id
+    ~> jsonEmptyObject
+
+
+
+searchResults ::  SearchQuery -> Aff (Either String (Int))
+searchResults squery = do
+  res <- request $ defaultRequest
+         { url = "http://localhost:8008/count"
+         , responseFormat = ResponseFormat.json
+         , method = Left POST
+         , headers = []
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj

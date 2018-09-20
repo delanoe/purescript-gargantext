@@ -3,11 +3,14 @@ module Gargantext.Components.Tree where
 import Prelude hiding (div)
 
 import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, Json, decodeJson, encodeJson, (.?))
+import Data.Argonaut.Core (Json)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -170,6 +173,93 @@ loadDefaultNode = do
       --_ <- liftEffect $ log $ show a.body
       let obj = decodeJson json
       pure obj
+
+----- TREE CRUD Operations
+
+renameNode :: Aff (Either String (Int))     --- need to change return type herre
+renameNode = do
+  res <- request $ defaultRequest
+         { url = "http://localhost:8008/tree/1"
+         , responseFormat = ResponseFormat.json
+         , method = Left PUT
+         , headers = []
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj
+
+
+
+deleteNode :: Aff (Either String (Int))
+deleteNode = do
+  res <- request $ defaultRequest
+         { url = "http://localhost:8008/tree/1"
+         , responseFormat = ResponseFormat.json
+         , method = Left DELETE
+         , headers = []
+         }
+
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj
+
+
+
+deleteNodes :: String -> Aff (Either String  Int)
+deleteNodes reqbody = do
+  res <- request $ defaultRequest
+         { url = "http://localhost:8008/tree"
+         , responseFormat = ResponseFormat.json
+         , method = Left DELETE
+         , headers = []
+         , content = Just $ Json $ encodeJson reqbody
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure  obj
+
+
+createNode :: String -> Aff (Either String (Int))
+createNode  reqbody= do
+  res <- request $ defaultRequest
+         { url = "http://localhost:8008/tree"
+         , responseFormat = ResponseFormat.json
+         , method = Left POST
+         , headers = []
+         , content = Just $ Json $ encodeJson reqbody
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj
+
 
 
 fnTransform :: LNode -> FTree
