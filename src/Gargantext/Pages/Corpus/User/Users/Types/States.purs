@@ -8,14 +8,12 @@ import Gargantext.Components.Tab as Tab
 
 data Action
   = NoOp
-  | PublicationA P.Action
   | ProjectsA PS.Action
   | TabA Tab.Action
   | FetchUser Int
 
 type State =
   { activeTab :: Int
-  , publications :: P.State
   , projects :: PS.State
   , user :: Maybe User
   }
@@ -23,7 +21,6 @@ type State =
 initialState :: State
 initialState =
   { activeTab : 0
-  , publications : P.initialState
   , projects : PS.initialState
   , user: Nothing
   }

@@ -9,7 +9,7 @@ import Gargantext.Pages.Corpus.User.Users.Types.Types (User)
 import Gargantext.Pages.Folder as PS
 import Gargantext.Pages.Corpus.User.Users.Specs.Documents as P
 import Gargantext.Components.Tab as Tab
-import Thermite (Spec, focus)
+import Thermite (Spec, noState)
 
 _user :: Lens' State (Maybe User)
 _user = lens (\s -> s.user) (\s ss -> s{user = ss})
@@ -23,17 +23,8 @@ _tabAction = prism TabA \ action ->
     TabA laction -> Right laction
     _-> Left action
 
-_publens :: Lens' State P.State
-_publens = lens (\s -> s.publications) (\s ss -> s { publications= ss})
-
-_pubAction :: Prism' Action P.Action
-_pubAction = prism PublicationA \ action ->
-  case action of
-    PublicationA laction -> Right laction
-    _-> Left action
-
 publicationSpec :: Spec State {} Action
-publicationSpec = focus _publens _pubAction P.publicationSpec
+publicationSpec = noState P.publicationSpec
 
 _projectslens :: Lens' State PS.State
 _projectslens = lens (\s -> s.projects) (\s ss -> s {projects = ss})
