@@ -33,17 +33,17 @@ performAction (SelectDatabase selected) _ _ = void do
 performAction (UnselectDatabase unselected) _ _ = void do
   modifyState \( state) ->  state { unselect_database = unselected }
 
-performAction (LoadDatabaseDetails) _ _ = void do
+performAction (LoadDatabaseDetails) _ _ = do
   res <- lift $ getDatabaseDetails $ QueryString { query_query: "string",query_name: ["Pubmed"]}
   case res of
-     Left err -> modifyState $ \(state) ->  state
+     Left err -> pure unit
      Right resData -> do
-       modifyState $ \(state) -> state {response  = resData}
+       void $ modifyState $ \(state) -> state {response  = resData}
 
-performAction GO _ _ = void do
-  _ <- liftEffect $ setHash "/corpus"
-  _ <- liftEffect $ modalHide "addCorpus"
-  modifyState identity
+performAction GO _ _ = do
+  liftEffect $ setHash "/corpus"
+  liftEffect $ modalHide "addCorpus"
+  pure unit
 
 
 newtype QueryString = QueryString

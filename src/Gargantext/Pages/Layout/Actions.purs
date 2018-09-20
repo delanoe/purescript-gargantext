@@ -67,14 +67,14 @@ performAction Initialize  _ state = void do
 
       case lnodes of
         Left err -> do
-          modifyState identity
+          pure unit
         Right d -> do
           _ <- modifyState $ _ { initialized = true, ntreeState = d}
           page <- lift $ DV.loadPage
           case page of
             Left err -> do
-              modifyState identity
-            Right docs -> do
+              pure unit
+            Right docs -> void do
               modifyState $ _ { initialized = true
                               , ntreeState = d
                                 -- if length d > 0
@@ -85,7 +85,7 @@ performAction Initialize  _ state = void do
                               , docViewState = docs
                               }
     _ -> do
-      modifyState identity
+      pure unit
 
 performAction (LoginA _) _ _ = pure unit
 performAction (AddCorpusA _) _ _ = pure unit

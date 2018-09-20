@@ -186,11 +186,11 @@ performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePage
 
 performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
 
-performAction LoadData _ _ = void do
+performAction LoadData _ _ = do
   res <- lift $ loadPage
   case res of
-     Left err      -> cotransform $ \state ->  state
-     Right resData -> modifyState (\s -> resData)
+     Left err      -> pure unit
+     Right resData -> void $ modifyState (\s -> resData)
 
 
 loadPage :: Aff (Either String CorpusTableData)

@@ -18,13 +18,11 @@ getUser id = get $ "http://localhost:8008/node/" <> show id
 
 
 performAction :: PerformAction State {} Action
-performAction (FetchUser userId) _ _ = void do
+performAction (FetchUser userId) _ _ = do
   value <- lift $ getUser userId
   _ <- case value of
-    (Right user) -> modifyState \state -> set _user (Just user) state
+    (Right user) -> void $ modifyState \state -> set _user (Just user) state
     (Left err) -> do
-      _ <- liftEffect $ log err
-      modifyState identity
+      liftEffect $ log err
   liftEffect <<< log $ "Fetching user..."
-performAction _ _ _ = void do
-  modifyState identity
+performAction _ _ _ = pure unit
