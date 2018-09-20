@@ -18,10 +18,10 @@ import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
 import Gargantext.Pages.Folder as PS
 import Gargantext.Components.Tab (tabs)
-import Thermite (Spec, focus)
+import Thermite (Spec, focus, noState)
 
 brevetSpec :: Spec State {} Action
-brevetSpec = focus _brevetslens _brevetsAction B.brevetsSpec
+brevetSpec = noState B.brevetsSpec
 
 projectSpec :: Spec State {} Action
 projectSpec = focus _projectslens _projectsAction PS.projets

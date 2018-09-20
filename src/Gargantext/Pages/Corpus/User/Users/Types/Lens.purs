@@ -35,15 +35,6 @@ _pubAction = prism PublicationA \ action ->
 publicationSpec :: Spec State {} Action
 publicationSpec = focus _publens _pubAction P.publicationSpec
 
-_brevetslens :: Lens' State B.State
-_brevetslens = lens (\s -> s.brevets) (\s ss -> s {brevets = ss})
-
-_brevetsAction :: Prism' Action B.Action
-_brevetsAction = prism BrevetsA \ action ->
-  case action of
-    BrevetsA laction -> Right laction
-    _-> Left action
-
 _projectslens :: Lens' State PS.State
 _projectslens = lens (\s -> s.projects) (\s ss -> s {projects = ss})
 

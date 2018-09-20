@@ -1,23 +1,11 @@
 module Gargantext.Pages.Corpus.User.Brevets where
 
 import Prelude
-import Data.Void
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 
-
-type State = String
-
-initialState :: State
-initialState = ""
-
-type Action = Void
-
-performAction :: PerformAction State {} Action
-performAction action _ _ = absurd action
-
-brevetsSpec :: Spec State {} Action
-brevetsSpec = simpleSpec performAction render
+brevetsSpec :: Spec {} {} Void
+brevetsSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render State {} Action
+    render :: Render {} {} Void
     render dispatch _ state _ =
       []
