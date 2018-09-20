@@ -4,15 +4,20 @@ import Prelude
 
 import Data.Argonaut (class DecodeJson, Json, getFieldOptional)
 import Data.Either (Either)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Foreign.Object (Object)
 
 foreign import isNull :: forall a. a -> Boolean
 
-getFieldOptional' :: forall t9. DecodeJson t9 => Object Json -> String -> Either String (Maybe t9)
+getFieldOptional' :: forall a. DecodeJson a => Object Json -> String -> Either String (Maybe a)
 getFieldOptional' o s = (case _ of
     Just v -> if isNull v then Nothing else v
     Nothing -> Nothing
   ) <$> (getFieldOptional o s)
 
 infix 7 getFieldOptional' as .?|
+
+getFieldOptionalAsMempty :: forall a. DecodeJson a => Monoid a => Object Json -> String -> Either String a
+getFieldOptionalAsMempty o s = fromMaybe mempty <$> (getFieldOptional' o s)
+
+infix 7 getFieldOptionalAsMempty as .|
