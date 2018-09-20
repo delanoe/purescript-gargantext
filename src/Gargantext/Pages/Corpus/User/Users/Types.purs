@@ -24,7 +24,7 @@ brevetSpec :: Spec State {} Action
 brevetSpec = noState B.brevetsSpec
 
 projectSpec :: Spec State {} Action
-projectSpec = focus _projectslens _projectsAction PS.projets
+projectSpec = noState PS.projets
 
 facets :: Spec State {} Action
 facets = tabs _tablens _tabAction $ fromFoldable

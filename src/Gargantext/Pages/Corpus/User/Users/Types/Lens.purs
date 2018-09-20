@@ -6,7 +6,6 @@ import Data.Lens (Lens', Prism', lens, prism)
 import Data.Maybe (Maybe)
 import Gargantext.Pages.Corpus.User.Users.Types.States (Action(..), State)
 import Gargantext.Pages.Corpus.User.Users.Types.Types (User)
-import Gargantext.Pages.Folder as PS
 import Gargantext.Pages.Corpus.User.Users.Specs.Documents as P
 import Gargantext.Components.Tab as Tab
 import Thermite (Spec, noState)
@@ -25,12 +24,3 @@ _tabAction = prism TabA \ action ->
 
 publicationSpec :: Spec State {} Action
 publicationSpec = noState P.publicationSpec
-
-_projectslens :: Lens' State PS.State
-_projectslens = lens (\s -> s.projects) (\s ss -> s {projects = ss})
-
-_projectsAction :: Prism' Action PS.Action
-_projectsAction = prism ProjectsA \ action ->
-  case action of
-    ProjectsA laction -> Right laction
-    _-> Left action
