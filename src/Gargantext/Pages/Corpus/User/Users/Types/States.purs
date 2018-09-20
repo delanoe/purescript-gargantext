@@ -6,8 +6,7 @@ import Gargantext.Pages.Corpus.User.Users.Specs.Documents as P
 import Gargantext.Components.Tab as Tab
 
 data Action
-  = NoOp
-  | TabA Tab.Action
+  = TabA Tab.Action
   | FetchUser Int
 
 type State =

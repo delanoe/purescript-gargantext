@@ -18,8 +18,6 @@ getUser id = get $ "http://localhost:8008/node/" <> show id
 
 
 performAction :: PerformAction State {} Action
-performAction NoOp _ _ = void do
-  modifyState identity
 performAction (FetchUser userId) _ _ = void do
   value <- lift $ getUser userId
   _ <- case value of
