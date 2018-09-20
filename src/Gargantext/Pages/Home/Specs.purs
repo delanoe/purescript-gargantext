@@ -69,7 +69,7 @@ jumboTitle :: LandingData -> Boolean -> ReactElement
 jumboTitle (LandingData hd) b = div jumbo
                    [ div [className "row"             ]
                      [ div [ className "col-md-8 content"]
-                           [ p [ className "left" ]
+                           [ div [ className "left" ]
                                [ div [_id "logo-designed" ]
                                  [ img [ src "images/logo.png"
                                        , title hd.logoTitle
