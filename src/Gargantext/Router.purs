@@ -32,11 +32,11 @@ instance showRoutes :: Show Routes where
   show Login            = "Login"
   show AddCorpus        = "AddCorpus"
   show DocView          = "DocView"
-  show SearchView       = "SearchView"
-  show (UserPage i)     = "UserPage"
-  show (DocAnnotation i)= "DocumentView"
+  show SearchView       = "Search"
+  show (UserPage i)     = "User"
+  show (DocAnnotation i)= "Document"
   show Tabview          = "Tabview"
-  show CorpusAnalysis   = "corpus"
+  show CorpusAnalysis   = "Corpus"
   show PGraphExplorer   = "graphExplorer"
   show NGramsTable      = "NGramsTable"
   show Dashboard        = "Dashboard"
@@ -49,7 +49,7 @@ routing :: Match Routes
 routing =
       Login          <$  route "login"
   <|> Tabview        <$  route "tabview"
-  <|> DocAnnotation  <$> (route "documentView" *> int)
+  <|> DocAnnotation  <$> (route "document" *> int)
   <|> UserPage       <$> (route "user" *> int)
   <|> SearchView     <$ route "search"
   <|> DocView        <$ route "docView"

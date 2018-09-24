@@ -21,6 +21,8 @@ import React.DOM (a, div, i, li, text, ul)
 import React.DOM.Props (Props, className, href, onClick)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
+import Gargantext.Config (NodeType(..), toUrl, readNodeType, End(..), ApiVersion)
+
 type Name = String
 type Open = Boolean
 type URL  = String
@@ -52,8 +54,6 @@ toggleNode sid (NTree (LNode {id, name, nodeType, open}) ary) =
   NTree (LNode {id,name, nodeType, open : nopen}) $ map (toggleNode sid) ary
   where
     nopen = if sid == id then not open else open
-
-
 
 ------------------------------------------------------------------------
 -- Realistic Tree for the UI
@@ -115,7 +115,7 @@ toHtml d (NTree (LNode {id, name, nodeType, open}) []) =
   [
     li []
     [
-      a [ href "#"]
+      a [ href (toUrl Front (readNodeType nodeType) id)]
       ( [ text (name <> "    ")
         ] <> nodeOptionsView false
       )
@@ -125,7 +125,8 @@ toHtml d (NTree (LNode {id, name, nodeType, open}) ary) =
   ul [ ]
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      ,  text $ " " <> name <> "    "
+      ,  a [ href (toUrl Front (readNodeType nodeType) id )]
+           [ text $ " " <> name <> " " ]
       ] <> nodeOptionsCorp false <>
       if open then
         map (toHtml d) ary
@@ -161,7 +162,7 @@ instance decodeJsonFTree :: DecodeJson (NTree LNode) where
 loadDefaultNode :: Aff (Either String (NTree LNode))
 loadDefaultNode = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/tree/1"
+         { url = toUrl Back Tree 1
          , responseFormat = ResponseFormat.json
          , method = Left GET
          , headers = []
@@ -182,7 +183,7 @@ loadDefaultNode = do
 renameNode :: Aff (Either String (Int))     --- need to change return type herre
 renameNode = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/tree/1"
+         { url = toUrl Back Tree 1
          , responseFormat = ResponseFormat.json
          , method = Left PUT
          , headers = []
@@ -203,7 +204,7 @@ renameNode = do
 deleteNode :: Aff (Either String (Int))
 deleteNode = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/tree/1"
+         { url = toUrl Back Tree 1
          , responseFormat = ResponseFormat.json
          , method = Left DELETE
          , headers = []
@@ -225,7 +226,7 @@ deleteNode = do
 deleteNodes :: String -> Aff (Either String  Int)
 deleteNodes reqbody = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/tree"
+         { url = toUrl Back Tree 1
          , responseFormat = ResponseFormat.json
          , method = Left DELETE
          , headers = []
@@ -246,7 +247,7 @@ deleteNodes reqbody = do
 createNode :: String -> Aff (Either String (Int))
 createNode  reqbody= do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/tree"
+         { url = toUrl Back Tree 1
          , responseFormat = ResponseFormat.json
          , method = Left POST
          , headers = []
