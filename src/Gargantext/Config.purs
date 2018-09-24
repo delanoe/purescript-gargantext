@@ -13,7 +13,7 @@ developpement is : toUrl.
     - (this mode supposes you have the dev haskell backend running)
 
 - for Prod config:
-    - toUrl Corpus 3 == "http://gargantext.org:8080/corpus/3"
+    - toUrl Corpus 3 == "https://gargantext.org:8080/corpus/3"
     - (this mode supposes you have a prod haskell backend running on the specified url)
 -}
 module Gargantext.Config where
@@ -45,6 +45,12 @@ mkPort :: Mode -> Int
 mkPort Mock = 2015
 mkPort Dev  = 8008
 mkPort Prod = 8080
+
+mkProto :: Mode -> String
+mkProto Mock = "http://"
+mkProto Dev  = "http://"
+mkProto Prod = "https://"
+
 ------------------------------------------------------------
 urlConfig :: Map NodeType Url
 urlConfig = DM.fromFoldable [ Tuple UserPage "user"
@@ -63,7 +69,7 @@ type FrontEndConfig = { proto   :: String
                       , urls    :: Map NodeType Url
                       }
 mkConfig :: Mode -> FrontEndConfig
-mkConfig mode = { proto   : "http://"
+mkConfig mode = { proto   : mkProto  mode
                 , address : mkAdress mode
                 , port    : mkPort   mode
                 , urls    : urlConfig
