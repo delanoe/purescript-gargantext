@@ -46,15 +46,12 @@ initialState = State
   }
 
 data Action
-  = NoOp
-  | Login
+  = Login
   | SetUserName String
   | SetPassword String
 
 
-performAction :: forall props. PerformAction State props Action
-performAction NoOp _ _ = void do
-  modifyState identity
+performAction :: PerformAction State {} Action
 
 performAction (SetUserName usr) _ _ = void do
   modifyState \(State state) -> State $ state { username = usr }
@@ -107,13 +104,13 @@ modalSpec sm t = over _render \render d p s c ->
              ]
   ]
 
-spec' :: forall props. Spec State props Action
+spec' :: Spec State {} Action
 spec' = modalSpec true "Login" renderSpec
 
-renderSpec :: forall props. Spec State props Action
+renderSpec :: Spec State {} Action
 renderSpec = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ (State state) _ =
       [
         div [className "row"]

@@ -4,7 +4,7 @@ import Prelude
 
 import Control.Monad.Trans.Class (lift)
 import Data.Either (Either(..))
-import Data.Lens (set)
+import Data.Lens ((?~))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -17,16 +17,12 @@ getUser :: Int -> Aff (Either String User)
 getUser id = get $ "http://localhost:8008/node/" <> show id
 
 
-performAction :: forall props. PerformAction State props Action
-performAction NoOp _ _ = void do
-  modifyState identity
-performAction (FetchUser userId) _ _ = void do
+performAction :: PerformAction State {} Action
+performAction (FetchUser userId) _ _ = do
   value <- lift $ getUser userId
   _ <- case value of
-    (Right user) -> modifyState \state -> set _user (Just user) state
+    (Right user) -> void $ modifyState $ _user ?~ user
     (Left err) -> do
-      _ <- liftEffect $ log err
-      modifyState identity
+      liftEffect $ log err
   liftEffect <<< log $ "Fetching user..."
-performAction _ _ _ = void do
-  modifyState identity
+performAction _ _ _ = pure unit

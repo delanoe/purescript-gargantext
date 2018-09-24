@@ -9,7 +9,7 @@ import Data.Tuple (Tuple(..))
 import React (ReactElement)
 import React.DOM (a, div, nav, text)
 import React.DOM.Props (className, onClick)
-import Thermite (PerformAction, Render, Spec, _render, cotransform, focus, simpleSpec, withState)
+import Thermite (PerformAction, Render, Spec, _render, modifyState, focus, simpleSpec, withState)
 
 type State = Int
 
@@ -34,8 +34,7 @@ tab sid iid (Tuple name spec) = over _render tabRender spec
 
 
 performAction :: forall props. PerformAction State props Action
-performAction (ChangeTab i) _ _ = void do
-  cotransform \_ -> i
+performAction (ChangeTab i) _ _ = void $ modifyState $ const i
 
 render :: forall state props action. State -> List (Tuple String (Spec state props action)) -> Render State props Action
 render at ls d p s c =

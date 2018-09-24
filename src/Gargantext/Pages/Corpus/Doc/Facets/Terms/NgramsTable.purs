@@ -1,22 +1,28 @@
 module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable where
 
 
-import Data.Array (filter, fold, toUnfoldable)
+import Data.Array (filter, toUnfoldable)
 import Data.Either (Either(..))
+import Data.Newtype (class Newtype, unwrap)
 import Data.Lens (Lens', Prism', lens, over, prism)
+import Data.Lens.Iso (re)
+import Data.Lens.Iso.Newtype (_Newtype)
 import Data.List (List)
 import Data.Tuple (Tuple(..), uncurry)
+import Data.Void (Void)
+import Data.Unit (Unit)
+import Effect (Effect)
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem as NI
-import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+), (-), (/), (<), (<>), (==), (>), (>=))
+import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+), (-), (/), (<), (<>), (==), (>), (>=), pure, unit)
 import React (ReactElement)
 import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
-import Thermite (PerformAction, Spec, _render, cotransform, focus, foreach, modifyState, withState)
+import Thermite (PerformAction, Spec, _render, focus, foreach, modifyState, focusState, hide)
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype State = State
-  { items :: List NI.State
-  , search :: String
+  { items        :: List {}
+  , search       :: String
   , selectString :: String
   , totalPages   :: Int
   , currentPage  :: Int
@@ -24,36 +30,39 @@ newtype State = State
   , totalRecords :: Int
   }
 
+derive instance newtypeState :: Newtype State _
+
 initialState :: State
-initialState = State { items : toUnfoldable [NI.initialState]
-                     , search : ""
+initialState = State { items        : toUnfoldable [{}]
+                     , search       : ""
                      , selectString : ""
-                     ,totalPages   : 10
+                     , totalPages   : 10
                      , currentPage  : 1
                      , pageSize     : PS10
                      , totalRecords : 100
                      }
 
 data Action
-  = NoOp
-  | ItemAction Int NI.Action
+  = ItemAction Int Void
   | ChangeString String
   | SetInput String
   | ChangePageSize PageSizes
   | ChangePage Int
 
-_itemsList :: Lens' State (List NI.State)
+_itemsList :: Lens' State (List {})
 _itemsList = lens (\(State s) -> s.items) (\(State s) v -> State s { items = v })
 
-_ItemAction :: Prism' Action (Tuple Int NI.Action)
+_ItemAction :: Prism' Action (Tuple Int Void)
 _ItemAction = prism (uncurry ItemAction) \ta ->
   case ta of
     ItemAction i a -> Right (Tuple i a)
     _ -> Left ta
 
-performAction :: forall props. PerformAction State props Action
+type Dispatch = Action -> Effect Unit
 
-performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
+performAction :: PerformAction State {} Action
+
+performAction (ChangePageSize ps) _ _ = void $ modifyState $ changePageSize ps
 
 performAction (ChangePage p) _ _ = void  do
   modifyState \(State state) -> State $ state {currentPage = p}
@@ -67,10 +76,9 @@ performAction (ChangeString c) _ _ = void do
 performAction (SetInput s) _ _ = void do
   modifyState \(State state) -> State $ state { search = s }
 
-performAction _ _ _ = void do
-  modifyState \(State state) -> State $ state
+performAction _ _ _ = pure unit
 
-tableSpec :: forall props .Spec State props Action -> Spec State props Action
+tableSpec :: Spec State {} Action -> Spec State {} Action
 tableSpec = over _render \render dispatch p (State s) c ->
   [div [className "container-fluid"]
      [
@@ -147,12 +155,15 @@ tableSpec = over _render \render dispatch p (State s) c ->
  ]
  ]
 
-ngramsTableSpec :: forall props . Spec State props Action
-ngramsTableSpec =  container $ fold
-    [  tableSpec $ withState \st ->
-        focus _itemsList _ItemAction $
-          foreach \_ -> NI.ngramsItemSpec
-   ]
+ngramsTableSpec :: Spec {} {} Void
+ngramsTableSpec =
+  hide (unwrap initialState) $
+  focusState (re _Newtype) $
+  container $
+  tableSpec $
+  focus _itemsList _ItemAction $
+  foreach $ \ _ ->
+  NI.ngramsItemSpec
 
 container :: forall state props action. Spec state props action -> Spec state props action
 container = over _render \render d p s c ->
@@ -212,7 +223,7 @@ string2PageSize "50" = PS50
 string2PageSize "100" = PS100
 string2PageSize _    = PS10
 
-sizeDD :: PageSizes -> _ -> ReactElement
+sizeDD :: PageSizes -> Dispatch -> ReactElement
 sizeDD ps d
   = p []
     [ text "Show : "
@@ -235,7 +246,7 @@ textDescription currPage pageSize totalRecords
       end  = if end' > totalRecords then totalRecords else end'
 
 
-pagination :: _ -> Int -> Int -> ReactElement
+pagination :: Dispatch -> Int -> Int -> ReactElement
 pagination d tp cp
   = span [] $
     [ text "Pages: "
@@ -306,7 +317,7 @@ pagination d tp cp
       lnums = map (\i -> fnmid d i) $ filter (lessthan 1) [cp - 2, cp - 1]
       rnums = map (\i -> fnmid d i) $ filter (greaterthan tp) [cp + 1, cp + 2]
 
-fnmid :: _ -> Int -> ReactElement
+fnmid :: Dispatch -> Int -> ReactElement
 fnmid d i
   = span []
     [ text " "

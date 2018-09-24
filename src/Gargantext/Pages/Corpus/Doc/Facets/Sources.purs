@@ -16,12 +16,12 @@ initialState = D.tdata
 type Action = D.Action
 
 
-sourceSpec :: forall props. Spec State props Action
+sourceSpec :: Spec State {} Action
 sourceSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [ h3 [] [text "Source view"]]
 
-sourcespec' :: forall props. Spec State props Action
+sourcespec' :: Spec State {} Action
 sourcespec' = fold [sourceSpec, D.layoutDocview]

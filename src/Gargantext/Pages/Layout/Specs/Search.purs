@@ -23,32 +23,25 @@ initialState =
 
 
 data Action
-  = NoOp
-  | GO
+  = GO
   | SetQuery String
 
 
-performAction :: forall props. PerformAction State props Action
-performAction NoOp _ _ = void do
-  modifyState identity
-
-
+performAction :: PerformAction State {} Action
 performAction (SetQuery q) _ _ = void do
-   modifyState \( state) ->  state { query = q }
+   modifyState $ _ { query = q }
 
 
 performAction GO _ _ = void do
   liftEffect $ setHash "/addCorpus"
-  modifyState identity
-
 
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
 
-searchSpec :: forall props. Spec State props Action
+searchSpec :: Spec State {} Action
 searchSpec = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [ div [className "container1"] []
       , div [className "container1"]

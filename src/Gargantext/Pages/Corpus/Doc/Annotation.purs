@@ -21,28 +21,25 @@ initialState =
 
 
 data Action
-  = NoOp
-  | ChangeString String
+  = ChangeString String
   | ChangeAnotherString String
   | SetInput String
 
 
-performAction :: forall props. PerformAction State props Action
-performAction NoOp _ _ = pure unit
-
+performAction :: PerformAction State {} Action
 performAction (ChangeString ps) _ _ = pure unit
 
 performAction (ChangeAnotherString ps) _ _ = pure unit
 
 performAction (SetInput ps) _ _ = void do
-  modifyState \( state) ->  state { inputValue = ps }
+  modifyState $ _ { inputValue = ps }
 
 
 
-docview :: forall props. Spec State props Action
+docview :: Spec State {} Action
 docview = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [
           div [className "container1"]

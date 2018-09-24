@@ -11,12 +11,11 @@ import Gargantext.Pages.Corpus.Doc.Facets.Terms as TV
 import Gargantext.Components.Tab as Tab
 
 data Action
-  =  DocviewA DV.Action
+  = DocviewA DV.Action
   | SourceviewA SV.Action
   | AuthorviewA AV.Action
   | TermsviewA TV.Action
   | TabViewA   Tab.Action
-  | NoOp
 
 _docAction :: Prism' Action DV.Action
 _docAction = prism DocviewA \ action ->

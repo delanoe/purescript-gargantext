@@ -2,22 +2,26 @@ module Gargantext.Pages.Corpus.Doc.Facets.Documents where
 
 import Prelude hiding (div)
 
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Array (filter)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.HTTP.Method (Method(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Config.REST (get)
+import Gargantext.Utils.DecodeMaybe ((.|))
 import React (ReactElement)
 import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr, p)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value)
-import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, modifyState, defaultPerformAction, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 p'' :: ReactElement
@@ -116,8 +120,8 @@ newtype Hyperdata = Hyperdata
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj    <- decodeJson json
-    title  <- obj .? "nom"
-    source <- obj .? "fonction"
+    title  <- obj .| "title"
+    source <- obj .| "source"
     pure $ Hyperdata { title,source }
 
 instance decodeResponse :: DecodeJson Response where
@@ -134,17 +138,17 @@ instance decodeResponse :: DecodeJson Response where
 
 
 -- | Filter
-filterSpec :: forall props. Spec State props Action
+filterSpec :: Spec State {} Action
 filterSpec = simpleSpec defaultPerformAction render
   where
     render d p s c = [div [] [ text "    Filter "
                      , input []
                      ]]
 
-layoutDocview :: forall props. Spec State props Action
+layoutDocview :: Spec State {} Action
 layoutDocview = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state@(TableData d) _ =
       [ div [className "container1"]
         [ div [className "row"]
@@ -178,16 +182,16 @@ layoutDocview = simpleSpec performAction render
       ]
 
 
-performAction :: forall props. PerformAction State props Action
-performAction (ChangePageSize ps) _ _ = void (cotransform (\state ->  changePageSize ps state ))
+performAction :: PerformAction State {} Action
+performAction (ChangePageSize ps) _ _ = void $ modifyState $ changePageSize ps
 
-performAction (ChangePage p) _ _ = void (cotransform (\(TableData td) -> TableData $ td { currentPage = p} ))
+performAction (ChangePage p) _ _ = void $ modifyState \(TableData td) -> TableData $ td { currentPage = p }
 
-performAction LoadData _ _ = void do
+performAction LoadData _ _ = do
   res <- lift $ loadPage
   case res of
-     Left err      -> cotransform $ \state ->  state
-     Right resData -> modifyState (\s -> resData)
+     Left err      -> pure unit
+     Right resData -> void $ modifyState $ const resData
 
 
 loadPage :: Aff (Either String CorpusTableData)
@@ -418,3 +422,37 @@ lessthan x y = x < y
 
 greaterthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
 greaterthan x y = x > y
+
+newtype SearchQuery = SearchQuery
+  {
+    query :: Array String
+  , parent_id :: Int
+  }
+
+
+instance encodeJsonSQuery :: EncodeJson SearchQuery where
+  encodeJson (SearchQuery post)
+     = "query" := post.query
+    ~> "parent_id" := post.parent_id
+    ~> jsonEmptyObject
+
+
+
+searchResults ::  SearchQuery -> Aff (Either String (Int))
+searchResults squery = do
+  res <- request $ defaultRequest
+         { url = "http://localhost:8008/count"
+         , responseFormat = ResponseFormat.json
+         , method = Left POST
+         , headers = []
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj

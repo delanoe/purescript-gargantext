@@ -15,6 +15,22 @@ newtype Response = Response
   , name :: String
   }
 
+
+newtype Query = Query
+  {
+    query_query :: String
+  , query_name :: Array String
+  }
+
+
+instance encodeJsonQuery :: EncodeJson Query where
+  encodeJson (Query post)
+     = "query_query" := post.query_query
+    ~> "query_name" := post.query_name
+    ~> jsonEmptyObject
+
+
+
 instance decodeJsonresponse :: DecodeJson Response where
   decodeJson json = do
     obj   <- decodeJson json
@@ -29,6 +45,3 @@ initialState =
   , unselect_database : true
   , response : []
   }
-
-
-

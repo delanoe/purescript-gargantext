@@ -3,7 +3,6 @@ module Gargantext.Pages.Layout.Actions where
 import Prelude hiding (div)
 
 import Control.Monad.Cont.Trans (lift)
-import Data.Array (length)
 import Data.Either (Either(..))
 import Data.Lens (Prism', prism)
 import Effect.Class (liftEffect)
@@ -11,15 +10,10 @@ import Effect.Console (log)
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Tree as Tree
-import Gargantext.Pages.Corpus as CA
 import Gargantext.Pages.Corpus.Doc.Annotation as D
-import Gargantext.Pages.Corpus.Doc.Facets as TV
-import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
-import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
-import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Pages.Layout.States (AppState)
@@ -29,7 +23,6 @@ import Thermite (PerformAction, modifyState)
 
 data Action
   = Initialize
-  | LandingA   L.Action
   | LoginA     LN.Action
   | SetRoute   Routes
   | AddCorpusA AC.Action
@@ -38,18 +31,14 @@ data Action
   | UserPageA  U.Action
   | DocAnnotationViewA  D.Action
   | TreeViewA  Tree.Action
-  | TabViewA   TV.Action
   | GraphExplorerA GE.Action
-  | DashboardA Dsh.Action
   | Search     String
   | Go
-  | CorpusAnalysisA CA.Action
   | ShowLogin
   | ShowAddcorpus
-  | NgramsA    NG.Action
 
 
-performAction :: forall props. PerformAction AppState props Action
+performAction :: PerformAction AppState {} Action
 performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
 performAction (Search s)  _ _ = void do
@@ -78,34 +67,36 @@ performAction Initialize  _ state = void do
 
       case lnodes of
         Left err -> do
-          modifyState identity
+          pure unit
         Right d -> do
+          _ <- modifyState $ _ { initialized = true, ntreeState = d}
           page <- lift $ DV.loadPage
           case page of
             Left err -> do
-              modifyState identity
-            Right docs -> do
+              pure unit
+            Right docs -> void do
               modifyState $ _ { initialized = true
-                              , ntreeState = if length d > 0
-                                            then Tree.exampleTree
-                                           --then fnTransform $ unsafePartial $ fromJust $ head d
-                                           else Tree.initialState
+                              , ntreeState = d
+                                -- if length d > 0
+                                --             then Tree.exampleTree
+                                --            --then fnTransform $ unsafePartial $ fromJust $ head d
+                                --            else Tree.initialState
 
                               , docViewState = docs
                               }
     _ -> do
-      modifyState identity
+      pure unit
 
-performAction _ _ _ = void do
-  modifyState identity
+performAction (LoginA _) _ _ = pure unit
+performAction (AddCorpusA _) _ _ = pure unit
+performAction (DocViewA _) _ _ = pure unit
+performAction (SearchA _) _ _ = pure unit
+performAction (UserPageA _) _ _ = pure unit
+performAction (DocAnnotationViewA _) _ _ = pure unit
+performAction (TreeViewA _) _ _ = pure unit
+performAction (GraphExplorerA _) _ _ = pure unit
 
 ----------------------------------------------------------
-
-_LandingA :: Prism' Action L.Action
-_LandingA = prism LandingA \action ->
-  case action of
-    LandingA caction -> Right caction
-    _-> Left action
 
 _loginAction :: Prism' Action LN.Action
 _loginAction = prism LoginA \action ->
@@ -137,12 +128,6 @@ _userPageAction = prism UserPageA \action ->
     UserPageA caction -> Right caction
     _-> Left action
 
-_dashBoardAction :: Prism' Action Dsh.Action
-_dashBoardAction = prism DashboardA \action ->
-  case action of
-    DashboardA caction -> Right caction
-    _ -> Left action
-
 _docAnnotationViewAction :: Prism' Action D.Action
 _docAnnotationViewAction = prism DocAnnotationViewA \action ->
   case action of
@@ -155,26 +140,8 @@ _treeAction = prism TreeViewA \action ->
     TreeViewA caction -> Right caction
     _-> Left action
 
-_tabviewAction :: Prism' Action TV.Action
-_tabviewAction = prism TabViewA \action ->
-  case action of
-    TabViewA caction -> Right caction
-    _-> Left action
-
-_corpusAction :: Prism' Action CA.Action
-_corpusAction = prism CorpusAnalysisA \action ->
-  case action of
-    CorpusAnalysisA caction -> Right caction
-    _-> Left action
-
 _graphExplorerAction :: Prism' Action GE.Action
 _graphExplorerAction = prism GraphExplorerA \action ->
   case action of
     GraphExplorerA caction -> Right caction
-    _-> Left action
-
-_NgramsA :: Prism' Action NG.Action
-_NgramsA = prism NgramsA \action ->
-  case action of
-    NgramsA caction -> Right caction
     _-> Left action

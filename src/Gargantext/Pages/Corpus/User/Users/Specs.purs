@@ -9,5 +9,5 @@ import Thermite (Spec, simpleSpec)
 import Gargantext.Pages.Corpus.User.Users.Types (Action, State)
 import Gargantext.Pages.Corpus.User.Users.API (performAction)
 
-layoutUser :: forall props. Spec State props Action
+layoutUser :: Spec State {} Action
 layoutUser = simpleSpec performAction render

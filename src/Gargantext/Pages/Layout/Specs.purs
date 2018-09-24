@@ -18,18 +18,18 @@ import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Corpus.User.Users as U
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _LandingA, _NgramsA, _addCorpusAction, _corpusAction, _dashBoardAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _tabviewAction, _treeAction, _userPageAction, performAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _corpusState, _dashBoardSate, _docAnnotationViewState, _docViewState, _graphExplorerState, _landingState, _loginState, _ngramState, _searchState, _tabviewState, _treeState, _userPageState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _docAnnotationViewState, _docViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState)
 import Gargantext.Router (Routes(..))
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
-import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState)
+import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState)
 import Unsafe.Coerce (unsafeCoerce)
 
-layoutSpec :: forall props. Spec AppState props Action
+layoutSpec :: Spec AppState {} Action
 layoutSpec =
   fold
   [ routingSpec
@@ -40,39 +40,39 @@ layoutSpec =
           ]
   ]
   where
-    container :: Spec AppState props Action -> Spec AppState props Action
+    -- NP: what is it for ?
+    container :: Spec AppState {} Action -> Spec AppState {} Action
     container = over _render \render d p s c ->
       (render d p s c)
 
-
-pagesComponent :: forall props. AppState -> Spec AppState props Action
+pagesComponent :: AppState -> Spec AppState {} Action
 pagesComponent s =
   case s.currentRoute of
     Just route -> selectSpec route
     Nothing    -> selectSpec Home
   where
-    selectSpec :: Routes -> Spec AppState props Action
-    selectSpec CorpusAnalysis    = layout0 $ focus _corpusState  _corpusAction CA.spec'
+    selectSpec :: Routes -> Spec AppState {} Action
+    selectSpec CorpusAnalysis    = layout0 $ noState CA.spec'
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
-    selectSpec Home              = layout0 $ focus _landingState   _LandingA   (L.layoutLanding EN)
+    selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec DocView           = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
     selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState  _docAnnotationViewAction  D.docview
-    selectSpec Tabview           = layout0 $ focus _tabviewState  _tabviewAction  TV.tab1
+    selectSpec Tabview           = layout0 $ noState TV.pureTab1
     -- To be removed
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
-    selectSpec NGramsTable       = layout0 $ focus _ngramState _NgramsA  NG.ngramsTableSpec
+    selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
-    selectSpec Dashboard         = layout0 $ focus _dashBoardSate _dashBoardAction Dsh.layoutDashboard
+    selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
-routingSpec :: forall props. Spec AppState props Action
+routingSpec :: Spec AppState {} Action
 routingSpec = simpleSpec performAction defaultRender
 
-layout0 :: forall props. Spec AppState props Action
-                          -> Spec AppState props Action
+layout0 :: Spec AppState {} Action
+        -> Spec AppState {} Action
 layout0 layout =
   fold
   [ layoutSidebar divSearchBar
@@ -81,7 +81,7 @@ layout0 layout =
   ]
   where
     outerLayout1 = simpleSpec defaultPerformAction defaultRender
-    outerLayout :: Spec AppState props Action
+    outerLayout :: Spec AppState {} Action
     outerLayout =
       cont $ fold
       [ withState \st ->
@@ -97,8 +97,8 @@ layout0 layout =
 
     bs = innerLayout $ layout
 
-    innerLayout :: Spec AppState props Action
-                -> Spec AppState props Action
+    innerLayout :: Spec AppState {} Action
+                -> Spec AppState {} Action
     innerLayout = over _render \render d p s c ->
       [  div [_id "page-wrapper"]
         [
@@ -106,8 +106,8 @@ layout0 layout =
         ]
       ]
 
-layoutSidebar ::  forall props. Spec AppState props Action
-                -> Spec AppState props Action
+layoutSidebar :: Spec AppState {} Action
+              -> Spec AppState {} Action
 layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
@@ -241,10 +241,10 @@ liNav (LiNav { title : title'
                 ]
 
 -- TODO put the search form in the center of the navBar
-divSearchBar :: forall props. Spec AppState props Action
+divSearchBar :: Spec AppState {} Action
 divSearchBar = simpleSpec performAction render
   where
-    render :: Render AppState props Action
+    render :: Render AppState {} Action
     render dispatch _ state _ = [div [ className "" ] [ searchbar']]
       where
         searchbar' = ul [ className "nav navbar-nav col-md-6 col-md-offset-3"
@@ -262,7 +262,7 @@ divSearchBar = simpleSpec performAction render
                             ]
                   ]
 
---divDropdownRight :: Render AppState props Action
+--divDropdownRight :: Render AppState {} Action
 divDropdownRight :: (Action -> Effect Unit) -> ReactElement
 divDropdownRight d =
   ul [className "nav navbar-nav pull-right"]
@@ -285,10 +285,10 @@ divDropdownRight d =
         ]
      ]
 
-layoutFooter ::  forall props. Spec AppState props Action
+layoutFooter :: Spec AppState {} Action
 layoutFooter = simpleSpec performAction render
   where
-    render :: Render AppState props Action
+    render :: Render AppState {} Action
     render dispatch _ state _ = [div [ className "container1" ] [ hr', footerLegalInfo']]
       where
         footerLegalInfo' = footer [] [ p [] [ text "Gargantext "
