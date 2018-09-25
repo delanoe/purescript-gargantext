@@ -3,18 +3,9 @@
 The main function to use for internal link in the Front-End
 developpement is : toUrl.
 
-* Example usage:
-- for Mock config:
-    - toUrl Front Corpus 3 == "http://localhost:2015/corpus/3"
-    - (this mode supposes you have the mock haskell backend running)
-
-- for Dev config:
-    - toUrl Front Corpus 3 == "http://localhost:8008/corpus/3"
-    - (this mode supposes you have the dev haskell backend running)
-
-- for Prod config:
-    - toUrl Front Corpus 3 == "https://gargantext.org:8080/corpus/3"
-    - (this mode supposes you have a prod haskell backend running on the specified url)
+* Example usage (depending on your Config):
+toUrl Back  Corpus 1 == "http://localhost:8008/api/v1.0/corpus/1"
+toUrl Front Corpus 1 == "http://localhost:2015/#/corpus/1"
 -}
 module Gargantext.Config where
 
