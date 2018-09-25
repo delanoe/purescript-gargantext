@@ -147,7 +147,7 @@ instance showNodeType :: Show NodeType where
   show Individu  = "individu"
   show Project   = "project"
   show Tree      = "tree"
-  show Error     = "ErrorShowNodeType"
+  show Error     = "ErrorNodeType"
 
 readNodeType :: String -> NodeType
 readNodeType "NodeUser"   = NodeUser
