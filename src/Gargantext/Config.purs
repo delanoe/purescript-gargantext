@@ -111,7 +111,6 @@ data NodeType = NodeUser
               | Folder
               | Graph
               | Individu
-              | Project
               | Tree
               | Error
 data End = Back | Front
@@ -132,7 +131,6 @@ urlConfig Document  = show Document
 urlConfig Folder    = show Folder
 urlConfig Graph     = show Graph
 urlConfig Individu  = show Individu
-urlConfig Project   = show Project
 urlConfig Tree      = show Tree
 urlConfig Error     = show Error
 ------------------------------------------------------------
@@ -145,7 +143,6 @@ instance showNodeType :: Show NodeType where
   show Folder    = "folder"
   show Graph     = "graph"
   show Individu  = "individu"
-  show Project   = "project"
   show Tree      = "tree"
   show Error     = "ErrorNodeType"
 
@@ -157,11 +154,10 @@ readNodeType "NodeCorpus" = Corpus
 readNodeType "Annuaire"   = Annuaire
 readNodeType "Dashboard"  = Dashboard
 readNodeType "Document"   = Document
-readNodeType "Folder"     = Folder
 readNodeType "Graph"      = Graph
 readNodeType "Individu"   = Individu
-readNodeType "Project"    = Project
 readNodeType "Tree"       = Tree
+readNodeType "Folder"     = Folder
 readNodeType _            = Error
 ------------------------------------------------------------
 instance ordNodeType :: Ord NodeType where

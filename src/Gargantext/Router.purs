@@ -26,6 +26,8 @@ data Routes
   | PGraphExplorer
   | NGramsTable
   | Dashboard
+  | Annuaire       Int
+  | Folder         Int
 
 
 instance showRoutes :: Show Routes where
@@ -40,6 +42,8 @@ instance showRoutes :: Show Routes where
   show PGraphExplorer   = "graphExplorer"
   show NGramsTable      = "NGramsTable"
   show Dashboard        = "Dashboard"
+  show (Annuaire i)     = "Annuaire"
+  show (Folder   i)     = "Folder"
   show Home             = "Home"
 
 int :: Match Int
@@ -58,6 +62,8 @@ routing =
   <|> PGraphExplorer <$ route "graph"
   <|> NGramsTable    <$ route "ngrams"
   <|> Dashboard      <$ route "dashboard"
+  <|> Annuaire       <$> (route "annuaire" *> int)
+  <|> Folder         <$> (route "folder" *> int)
   <|> Home           <$ lit ""
   where
     route str      = lit "" *> lit str

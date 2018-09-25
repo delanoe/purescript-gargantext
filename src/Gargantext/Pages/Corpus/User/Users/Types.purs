@@ -8,7 +8,7 @@ module Gargantext.Pages.Corpus.User.Users.Types
        )
        where
 
-import Prelude (($))
+import Prelude
 
 import Gargantext.Pages.Corpus.User.Users.Types.Lens
 import Gargantext.Pages.Corpus.User.Users.Types.Types
@@ -16,15 +16,21 @@ import Gargantext.Pages.Corpus.User.Users.Types.States
 import Gargantext.Pages.Corpus.User.Brevets as B
 import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
-import Gargantext.Pages.Folder as PS
 import Gargantext.Components.Tab (tabs)
-import Thermite (Spec, focus, noState)
+import Thermite (Render, Spec, focus, noState, defaultPerformAction, simpleSpec)
 
 brevetSpec :: Spec State {} Action
 brevetSpec = noState B.brevetsSpec
 
+projets :: Spec {} {} Void
+projets = simpleSpec defaultPerformAction render
+  where
+    render :: Render {} {} Void
+    render dispatch _ state _ =
+      []
+
 projectSpec :: Spec State {} Action
-projectSpec = noState PS.projets
+projectSpec = noState projets
 
 facets :: Spec State {} Action
 facets = tabs _tablens _tabAction $ fromFoldable

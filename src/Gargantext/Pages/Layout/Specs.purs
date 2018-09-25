@@ -8,8 +8,10 @@ import Data.Maybe (Maybe(Nothing, Just))
 import Effect (Effect)
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
-import Gargantext.Components.Tree as Tree
-import Gargantext.Pages.Corpus as CA
+import Gargantext.Components.Tree  as Tree
+import Gargantext.Pages.Corpus.Annuaire   as A
+import Gargantext.Folder           as F
+import Gargantext.Pages.Corpus     as CA
 import Gargantext.Pages.Corpus.Doc.Annotation as D
 import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
@@ -65,6 +67,8 @@ pagesComponent s =
     selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
+    selectSpec (Annuaire i)      = layout0 $ noState A.layoutAnnuaire
+    selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 

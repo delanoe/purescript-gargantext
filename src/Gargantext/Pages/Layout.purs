@@ -47,6 +47,12 @@ dispatchAction dispatcher _ (UserPage id) = do
   -- dispatcher $ UserPageA TODO
   dispatcher $ UserPageA $ U.FetchUser id
 
+dispatchAction dispatcher _ (Annuaire id) = do
+  dispatcher $ SetRoute $ Annuaire id
+
+dispatchAction dispatcher _ (Folder id) = do
+  dispatcher $ SetRoute $ Folder id
+
 dispatchAction dispatcher _ (DocAnnotation i) = do
   dispatcher $ SetRoute $ DocAnnotation i
   -- dispatcher $ DocAnnotationViewA TODO
