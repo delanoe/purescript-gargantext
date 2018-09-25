@@ -149,6 +149,8 @@ instance showNodeType :: Show NodeType where
   show Tree      = "tree"
   show Error     = "ErrorNodeType"
 
+-- | TODO : where is the Read Class ?
+-- instance readNodeType :: Read NodeType where
 readNodeType :: String -> NodeType
 readNodeType "NodeUser"   = NodeUser
 readNodeType "NodeCorpus" = Corpus
