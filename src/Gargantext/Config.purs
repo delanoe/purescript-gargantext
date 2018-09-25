@@ -63,7 +63,6 @@ backProd v = { proto      : "https://"
             }
 ------------------------------------------------------------------------
 
-
 type EndConfig = { front :: Config
                  , back  :: Config
                  }
@@ -90,7 +89,6 @@ endBaseUrl Front c = baseUrl c.front
 baseUrl :: Config -> UrlBase
 baseUrl conf = conf.proto <> conf.domain <> ":" <> show conf.port
 ------------------------------------------------------------
-
 endPathUrl :: End -> EndConfig -> NodeType -> Id -> UrlPath
 endPathUrl Back  c nt i = pathUrl c.back nt i
 endPathUrl Front c nt i = pathUrl c.front nt i
@@ -98,15 +96,24 @@ endPathUrl Front c nt i = pathUrl c.front nt i
 pathUrl :: Config -> NodeType -> Id -> UrlPath
 pathUrl c nt i = c.prePath <> urlConfig nt <> "/" <> show i
 ------------------------------------------------------------
-
 toUrl :: End -> NodeType -> Id -> Url
 toUrl e nt i = doUrl base path params
   where
-    base = endBaseUrl e endConfig
-    path = endPathUrl e endConfig nt i
+    base   = endBaseUrl e endConfig
+    path   = endPathUrl e endConfig nt i
     params = ""
 ------------------------------------------------------------
-data NodeType = UserPage | Folder | Corpus | Document | Annuaire | Individu | Project | Tree | Error
+data NodeType = NodeUser
+              | Annuaire
+              | Corpus
+              | Dashboard
+              | Document
+              | Folder
+              | Graph
+              | Individu
+              | Project
+              | Tree
+              | Error
 data End = Back | Front
 type Id  = Int
 ------------------------------------------------------------
@@ -117,35 +124,41 @@ instance showApiVersion :: Show ApiVersion where
 ------------------------------------------------------------
 ------------------------------------------------------------
 urlConfig :: NodeType -> Url
-urlConfig UserPage = "user"
-urlConfig Corpus   = show Corpus
-urlConfig Project  = show Project
-urlConfig Project  = show Project
-urlConfig Document = show Document
-urlConfig Annuaire = show Annuaire
-urlConfig Individu = show Individu
-urlConfig Tree     = show Tree
-urlConfig _        = "error Url Config with That Node Type"
+urlConfig NodeUser  = show NodeUser
+urlConfig Annuaire  = show Annuaire
+urlConfig Corpus    = show Corpus
+urlConfig Dashboard = show Dashboard
+urlConfig Document  = show Document
+urlConfig Folder    = show Folder
+urlConfig Graph     = show Graph
+urlConfig Individu  = show Individu
+urlConfig Project   = show Project
+urlConfig Tree      = show Tree
+urlConfig Error     = show Error
 ------------------------------------------------------------
 instance showNodeType :: Show NodeType where
-  show UserPage = "user"
-  show Project  = "project"
-  show Folder   = "folder"
-  show Corpus   = "corpus"
-  show Document = "document"
-  show Annuaire = "annuaire"
-  show Individu = "individu"
-  show Tree     = "tree"
-  show Error    = "errNodeType"
+  show NodeUser  = "user"
+  show Annuaire  = "annuaire"
+  show Corpus    = "corpus"
+  show Dashboard = "dashboard"
+  show Document  = "document"
+  show Folder    = "folder"
+  show Graph     = "graph"
+  show Individu  = "individu"
+  show Project   = "project"
+  show Tree      = "tree"
+  show Error     = "ErrorShowNodeType"
 
 readNodeType :: String -> NodeType
-readNodeType "NodeUser"   = UserPage
-readNodeType "Project"    = Project
-readNodeType "Folder"     = Folder
+readNodeType "NodeUser"   = NodeUser
 readNodeType "NodeCorpus" = Corpus
-readNodeType "Document"   = Document
 readNodeType "Annuaire"   = Annuaire
+readNodeType "Dashboard"  = Dashboard
+readNodeType "Document"   = Document
+readNodeType "Folder"     = Folder
+readNodeType "Graph"      = Graph
 readNodeType "Individu"   = Individu
+readNodeType "Project"    = Project
 readNodeType "Tree"       = Tree
 readNodeType _            = Error
 ------------------------------------------------------------

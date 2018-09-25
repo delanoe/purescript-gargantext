@@ -271,7 +271,7 @@ showRow {row : (Corpus c), delete} =
   [ td [] [div [className $ fa <> "fa-star"][]]
   -- TODO show date: Year-Month-Day only
   , td [] [text c.date]
-  , td [] [ a [ if c.fav == true then href "#/userPage" else href "#/documentView/1" ] [ text c.title ] ]
+  , td [] [ a [ if c.fav == true then href "#/user" else href "#/document/1" ] [ text c.title ] ]
   , td [] [text c.source]
   , td [] [input [ _type "checkbox"]]
   ]

@@ -55,7 +55,7 @@ routing =
   <|> DocView        <$ route "docView"
   <|> AddCorpus      <$ route "addCorpus"
   <|> CorpusAnalysis <$ route "corpus"
-  <|> PGraphExplorer <$ route "graphExplorer"
+  <|> PGraphExplorer <$ route "graph"
   <|> NGramsTable    <$ route "ngrams"
   <|> Dashboard      <$ route "dashboard"
   <|> Home           <$ lit ""
