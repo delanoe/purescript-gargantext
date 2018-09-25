@@ -26,103 +26,138 @@ import Data.Map as DM
 import Data.Maybe (maybe)
 import Data.Tuple (Tuple(..))
 
-------------------------------------------------------------
--- | Versions will used later after the release
-data ApiVersion = V10 | V11
+endConfig :: EndConfig
+endConfig = endConfig' V10
 
+endConfig' :: ApiVersion -> EndConfig
+endConfig' v = { front : frontCaddy
+               , back  : backDev v }
+
+------------------------------------------------------------------------
+frontCaddy :: Config
+frontCaddy = { proto   : "http://"
+             , port       : 2015
+             , domain     : "localhost"
+             , prePath    : "/#/"
+             }
+
+frontHaskell :: Config
+frontHaskell = { proto   : "http://"
+               , port       : 8008
+               , domain     : "localhost"
+               , prePath    : "/index.html#/"
+               }
+
+frontProd :: Config
+frontProd = { proto   : "https://"
+            , port       : 8080
+            , domain     : "gargantext.org"
+            , prePath    : "/index.html#/"
+            }
+
+------------------------------------------------------------------------
+
+backDev :: ApiVersion -> Config
+backDev v = { proto      : "http://"
+            , port       : 8008
+            , domain     : "localhost"
+            , prePath    : "/api/" <> show v <> "/"
+            }
+
+backProd :: ApiVersion -> Config
+backProd v = { proto      : "https://"
+            , port       : 8080
+            , domain     : "gargantext.org"
+            , prePath    : "/api/" <> show v <> "/"
+            }
+------------------------------------------------------------------------
+
+
+type EndConfig = { front :: Config
+                 , back  :: Config
+                 }
+
+type Config = { proto      :: String
+              , port       :: Int
+              , domain     :: String
+              , prePath    :: String
+              }
+
+------------------------------------------------------------
+type UrlBase  = String
+type UrlPath  = String
+type UrlParam = String
+type Url      = String
+
+doUrl :: UrlBase -> UrlPath -> UrlParam -> Url
+doUrl b p ps = b <> p <> ps
+------------------------------------------------------------
+endBaseUrl :: End -> EndConfig -> UrlBase
+endBaseUrl Back  c = baseUrl c.back
+endBaseUrl Front c = baseUrl c.front
+
+baseUrl :: Config -> UrlBase
+baseUrl conf = conf.proto <> conf.domain <> ":" <> show conf.port
+------------------------------------------------------------
+
+endPathUrl :: End -> EndConfig -> NodeType -> Id -> UrlPath
+endPathUrl Back  c nt i = pathUrl c.back nt i
+endPathUrl Front c nt i = pathUrl c.front nt i
+
+pathUrl :: Config -> NodeType -> Id -> UrlPath
+pathUrl c nt i = c.prePath <> urlConfig nt <> "/" <> show i
+------------------------------------------------------------
+
+toUrl :: End -> NodeType -> Id -> Url
+toUrl e nt i = doUrl base path params
+  where
+    base = endBaseUrl e endConfig
+    path = endPathUrl e endConfig nt i
+    params = ""
+------------------------------------------------------------
+data NodeType = UserPage | Folder | Corpus | Document | Annuaire | Individu | Project | Tree | Error
+data End = Back | Front
+type Id  = Int
+------------------------------------------------------------
+data ApiVersion = V10 | V11
 instance showApiVersion :: Show ApiVersion where
   show V10 = "v1.0"
   show V11 = "v1.1"
-
-data End = Back | Front
-
--- | Main options of the configuration
-data Mode = Mock | Dev | Prod
-
-config :: FrontEndConfig
-config = mkConfig Dev V10
-
-mkAdress :: Mode -> String
-mkAdress Mock = "localhost"
-mkAdress Dev  = "localhost"
-mkAdress Prod = "gargantext.org"
-
-mkPort :: Mode -> Int
-mkPort Mock = 2015
-mkPort Dev  = 8008
-mkPort Prod = 8080
-
-mkProto :: Mode -> String
-mkProto Mock = "http://"
-mkProto Dev  = "http://"
-mkProto Prod = "https://"
-
-------------------------------------------------------------
-urlConfig :: Map NodeType Url
-urlConfig = DM.fromFoldable [ Tuple UserPage "user"
-                            , easy Corpus
-                            , easy Project
-                            , easy Document
-                            , easy Annuaire
-                            , easy Individu
-                            , easy Tree
-                            ]
-    where
-      easy :: NodeType -> Tuple NodeType Url
-      easy n = Tuple n (show n)
-------------------------------------------------------------
-type FrontEndConfig = { proto      :: String
-                      , port       :: Int
-                      , address    :: String
-                      , apiVersion :: ApiVersion
-                      , urls       :: Map NodeType Url
-                      }
-mkConfig :: Mode -> ApiVersion -> FrontEndConfig
-mkConfig mode v = { proto      : mkProto  mode
-                  , address    : mkAdress mode
-                  , port       : mkPort   mode
-                  , apiVersion : v
-                  , urls       : urlConfig
-                  }
 ------------------------------------------------------------
 ------------------------------------------------------------
--- | Main function to use in the Front-End developpement
--- for more complex urls, use urlConfig and smart constructors
-toUrl :: End -> NodeType -> Id -> Url
-toUrl end nt i = config.proto <> config.address <> ":" <> show config.port <> end' <> path
-  where
-    end' = case end of
-                Back  -> "/api/" <> show config.apiVersion <> "/"
-                Front -> "/"
-    path    = subPath <> "/" <> show i
-    subPath = maybe "errorSubPath" identity (DM.lookup nt config.urls)
-
-------------------------------------------------------------
-type Url = String
-type Id  = Int
-------------------------------------------------------------
-data NodeType = UserPage | Corpus | Document | Annuaire | Individu | Project | Tree | Error
+urlConfig :: NodeType -> Url
+urlConfig UserPage = "user"
+urlConfig Corpus   = show Corpus
+urlConfig Project  = show Project
+urlConfig Project  = show Project
+urlConfig Document = show Document
+urlConfig Annuaire = show Annuaire
+urlConfig Individu = show Individu
+urlConfig Tree     = show Tree
+urlConfig _        = "error Url Config with That Node Type"
 ------------------------------------------------------------
 instance showNodeType :: Show NodeType where
   show UserPage = "user"
+  show Project  = "project"
+  show Folder   = "folder"
   show Corpus   = "corpus"
   show Document = "document"
   show Annuaire = "annuaire"
   show Individu = "individu"
-  show Project  = "project"
   show Tree     = "tree"
   show Error    = "errNodeType"
 
 readNodeType :: String -> NodeType
 readNodeType "NodeUser"   = UserPage
+readNodeType "Project"    = Project
+readNodeType "Folder"     = Folder
 readNodeType "NodeCorpus" = Corpus
-readNodeType "Document" = Document
-readNodeType "Annuaire" = Annuaire
-readNodeType "Individu" = Individu
-readNodeType "Project"  = Project
-readNodeType "Tree"     = Tree
-readNodeType _          = Error
-
+readNodeType "Document"   = Document
+readNodeType "Annuaire"   = Annuaire
+readNodeType "Individu"   = Individu
+readNodeType "Tree"       = Tree
+readNodeType _            = Error
+------------------------------------------------------------
 instance ordNodeType :: Ord NodeType where
   compare n1 n2 = compare (show n1) (show n2)
 
