@@ -16,16 +16,16 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
+
+import Gargantext.Config (NodeType(..), toUrl, End(Back))
 import Gargantext.Config.REST (get)
 import Gargantext.Utils.DecodeMaybe ((.|))
+
 import React (ReactElement)
 import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr, p)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value)
 import Thermite (PerformAction, Render, Spec, modifyState, defaultPerformAction, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-
-p'' :: ReactElement
-p'' = p [] []
 
 --main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
 --main = do
@@ -38,11 +38,11 @@ p'' = p [] []
 -- TODO: Pagination Details are not available from the BackEnd
 -- TODO: PageSize Change manually sets the totalPages, need to get from backend and reload the data
 -- TODO: Search is pending
--- TODO: Delete is pending
 -- TODO: Fav is pending
 -- TODO: Sort is Pending
 -- TODO: Filter is Pending
--- TODO: When a pagination link is clicked, reload data. Right now it doesn't make sense to reload mock data.
+-- TODO: When a pagination link is clicked, reload data. 
+          -- Right now it doesn't make sense to reload mock data.
 
 data Action
   = LoadData
@@ -51,7 +51,7 @@ data Action
 
 type State = CorpusTableData
 
-type CorpusTableData = TableData Corpus
+type CorpusTableData = TableData CorpusView
 
 newtype TableData a
   = TableData
@@ -66,8 +66,8 @@ newtype TableData a
    -- , tree         :: FTree
     }
 
-newtype Corpus
-  = Corpus
+newtype CorpusView
+  = CorpusView
     { _id    :: Int
     , url    :: String
     , date   :: String
@@ -78,10 +78,9 @@ newtype Corpus
     }
 
 
+derive instance genericCorpus :: Generic CorpusView _
 
-derive instance genericCorpus :: Generic Corpus _
-
-instance showCorpus :: Show Corpus where
+instance showCorpus :: Show CorpusView where
   show = genericShow
 
 
@@ -114,7 +113,6 @@ newtype Hyperdata = Hyperdata
 --    ngramCount <- obj .? "ngramCount"
 --    hyperdata  <- obj .? "hyperdata"
 --    pure $ Response { cid, created, favorite, ngramCount, hyperdata }
-
 
 
 instance decodeHyperdata :: DecodeJson Hyperdata where
@@ -154,7 +152,7 @@ layoutDocview = simpleSpec performAction render
         [ div [className "row"]
           [
            div [className "col-md-12"]
-            [ p''
+            [ p [] []
             , div [] [ text "    Filter ", input []]
             , br'
             , div [className "row"]
@@ -196,7 +194,7 @@ performAction LoadData _ _ = do
 
 loadPage :: Aff (Either String CorpusTableData)
 loadPage = do
-  res <- get "http://localhost:8008/node/452132/children"
+  res <- get $ toUrl Back Children 452132
   -- res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
   case res of
      Left err -> do
@@ -208,9 +206,9 @@ loadPage = do
        _ <- liftEffect $ log $ show "loading"
        pure $ Right docs
       where
-        res2corpus :: Array Response -> Array Corpus
+        res2corpus :: Array Response -> Array CorpusView
         res2corpus rs = map (\(Response r) ->
-          Corpus { _id : r.cid
+          CorpusView { _id : r.cid
           , url    : ""
           , date   :  r.created
           , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
@@ -220,7 +218,7 @@ loadPage = do
          }) rs
 
 
-        toTableData :: Array Corpus -> CorpusTableData
+        toTableData :: Array CorpusView -> CorpusTableData
         toTableData ds = TableData
                 { rows         : map (\d -> { row : d , delete : false}) ds
                 , totalPages   : 474
@@ -233,12 +231,12 @@ loadPage = do
 
 ---------------------------------------------------------
 
-sampleData' :: Corpus
-sampleData' = Corpus {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1}
+sampleData' :: CorpusView
+sampleData' = CorpusView {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1}
 --
-sampleData :: Array Corpus
+sampleData :: Array CorpusView
 --sampleData = replicate 10 sampleData'
-sampleData = map (\(Tuple t s) -> Corpus {_id : 1, url : "", date : "2017", title: t, source: s, fav : false, ngramCount : 10}) sampleDocuments
+sampleData = map (\(Tuple t s) -> CorpusView {_id : 1, url : "", date : "2017", title: t, source: s, fav : false, ngramCount : 10}) sampleDocuments
 
 sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
@@ -246,14 +244,14 @@ sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal d
 
 
 
-data' :: Array Corpus -> Array {row :: Corpus, delete :: Boolean}
+data' :: Array CorpusView -> Array {row :: CorpusView, delete :: Boolean}
 data' = map {row : _, delete : false}
 
-sdata :: Array { row :: Corpus, delete :: Boolean }
+sdata :: Array { row :: CorpusView, delete :: Boolean }
 sdata = data' sampleData
 
 
-tdata :: TableData Corpus
+tdata :: TableData CorpusView
 tdata = TableData
         { rows         : sdata
         , totalPages   : 10
@@ -265,8 +263,8 @@ tdata = TableData
         }
 
 
-showRow :: {row :: Corpus, delete :: Boolean} -> ReactElement
-showRow {row : (Corpus c), delete} =
+showRow :: {row :: CorpusView, delete :: Boolean} -> ReactElement
+showRow {row : (CorpusView c), delete} =
   tr []
   [ td [] [div [className $ fa <> "fa-star"][]]
   -- TODO show date: Year-Month-Day only

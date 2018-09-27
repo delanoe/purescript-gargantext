@@ -11,3 +11,12 @@ render dispatch _ state _ = [h1 [] [text "Annuaire"]]
 layoutAnnuaire :: Spec {} {} Void
 layoutAnnuaire = simpleSpec defaultPerformAction render
 
+
+------------------------------------------------------------------------------
+
+--data Action
+--  = LoadData
+--  | ChangePageSize PageSizes
+--  | ChangePage Int
+--
+

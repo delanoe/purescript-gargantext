@@ -94,6 +94,7 @@ endPathUrl Back  c nt i = pathUrl c.back nt i
 endPathUrl Front c nt i = pathUrl c.front nt i
 
 pathUrl :: Config -> NodeType -> Id -> UrlPath
+pathUrl c Children i = pathUrl c Node i <> "/" <> show Children
 pathUrl c nt i = c.prePath <> urlConfig nt <> "/" <> show i
 ------------------------------------------------------------
 toUrl :: End -> NodeType -> Id -> Url
@@ -105,14 +106,16 @@ toUrl e nt i = doUrl base path params
 ------------------------------------------------------------
 data NodeType = NodeUser
               | Annuaire
+              | Children
               | Corpus
               | Dashboard
               | Document
+              | Error
               | Folder
               | Graph
               | Individu
+              | Node
               | Tree
-              | Error
 data End = Back | Front
 type Id  = Int
 ------------------------------------------------------------
@@ -123,41 +126,47 @@ instance showApiVersion :: Show ApiVersion where
 ------------------------------------------------------------
 ------------------------------------------------------------
 urlConfig :: NodeType -> Url
-urlConfig NodeUser  = show NodeUser
 urlConfig Annuaire  = show Annuaire
+urlConfig Children  = show Children
 urlConfig Corpus    = show Corpus
 urlConfig Dashboard = show Dashboard
 urlConfig Document  = show Document
+urlConfig Error     = show Error
 urlConfig Folder    = show Folder
 urlConfig Graph     = show Graph
 urlConfig Individu  = show Individu
+urlConfig Node      = show Node
+urlConfig NodeUser  = show NodeUser
 urlConfig Tree      = show Tree
-urlConfig Error     = show Error
 ------------------------------------------------------------
 instance showNodeType :: Show NodeType where
-  show NodeUser  = "user"
   show Annuaire  = "annuaire"
+  show Children  = "children"
   show Corpus    = "corpus"
   show Dashboard = "dashboard"
   show Document  = "document"
+  show Error     = "ErrorNodeType"
   show Folder    = "folder"
   show Graph     = "graph"
   show Individu  = "individu"
+  show Node      = "node"
+  show NodeUser  = "user"
   show Tree      = "tree"
-  show Error     = "ErrorNodeType"
 
 -- | TODO : where is the Read Class ?
 -- instance readNodeType :: Read NodeType where
 readNodeType :: String -> NodeType
-readNodeType "NodeUser"   = NodeUser
-readNodeType "NodeCorpus" = Corpus
 readNodeType "Annuaire"   = Annuaire
+readNodeType "Children"   = Children
 readNodeType "Dashboard"  = Dashboard
 readNodeType "Document"   = Document
+readNodeType "Folder"     = Folder
 readNodeType "Graph"      = Graph
 readNodeType "Individu"   = Individu
+readNodeType "Node"       = Node
+readNodeType "NodeCorpus" = Corpus
+readNodeType "NodeUser"   = NodeUser
 readNodeType "Tree"       = Tree
-readNodeType "Folder"     = Folder
 readNodeType _            = Error
 ------------------------------------------------------------
 instance ordNodeType :: Ord NodeType where
