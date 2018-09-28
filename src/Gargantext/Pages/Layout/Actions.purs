@@ -70,20 +70,21 @@ performAction Initialize  _ state = void do
           pure unit
         Right d -> do
           _ <- modifyState $ _ { initialized = true, ntreeState = d}
-          page <- lift $ DV.loadPage
-          case page of
-            Left err -> do
-              pure unit
-            Right docs -> void do
-              modifyState $ _ { initialized = true
-                              , ntreeState = d
-                                -- if length d > 0
-                                --             then Tree.exampleTree
-                                --            --then fnTransform $ unsafePartial $ fromJust $ head d
-                                --            else Tree.initialState
-
-                              , docViewState = docs
-                              }
+          pure unit
+--          page <- lift $ DV.loadPage
+--          case page of
+--            Left err -> do
+--              pure unit
+--            Right docs -> void do
+--              modifyState $ _ { initialized = true
+--                              , ntreeState = d
+--                                -- if length d > 0
+--                                --             then Tree.exampleTree
+--                                --            --then fnTransform $ unsafePartial $ fromJust $ head d
+--                                --            else Tree.initialState
+--
+--                              , docViewState = docs
+--                              }
     _ -> do
       pure unit
 
