@@ -47,7 +47,7 @@ import Unsafe.Coerce (unsafeCoerce)
 data Action
   = LoadData
   | ChangePageSize PageSizes
-  | ChangePage Int
+  | ChangePage     Int
 
 type State = CorpusTableData
 
@@ -203,7 +203,7 @@ loadPage = do
      Right resData -> do
        let docs = toTableData (res2corpus $ resData)
        _ <- liftEffect $ log $ show $ map (\({ row: r, delete :_}) -> show r) ((\(TableData docs') -> docs'.rows) docs)
-       _ <- liftEffect $ log $ show "loading"
+       _ <- liftEffect $ log $ show "loading page documents"
        pure $ Right docs
       where
         res2corpus :: Array Response -> Array CorpusView
@@ -226,14 +226,13 @@ loadPage = do
                 , pageSize     : PS100
                 , totalRecords : 47361
                 , title        : "Documents"
-             --   , tree         : exampleTree
                 }
 
 ---------------------------------------------------------
 
 sampleData' :: CorpusView
 sampleData' = CorpusView {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1}
---
+
 sampleData :: Array CorpusView
 --sampleData = replicate 10 sampleData'
 sampleData = map (\(Tuple t s) -> CorpusView {_id : 1, url : "", date : "2017", title: t, source: s, fav : false, ngramCount : 10}) sampleDocuments
@@ -242,14 +241,11 @@ sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
 
 
-
-
 data' :: Array CorpusView -> Array {row :: CorpusView, delete :: Boolean}
 data' = map {row : _, delete : false}
 
 sdata :: Array { row :: CorpusView, delete :: Boolean }
 sdata = data' sampleData
-
 
 tdata :: TableData CorpusView
 tdata = TableData
@@ -269,7 +265,7 @@ showRow {row : (CorpusView c), delete} =
   [ td [] [div [className $ fa <> "fa-star"][]]
   -- TODO show date: Year-Month-Day only
   , td [] [text c.date]
-  , td [] [ a [ if c.fav == true then href "#/user" else href "#/document/1" ] [ text c.title ] ]
+  , td [] [ a [ href (toUrl Back Document 1) ] [ text c.title ] ]
   , td [] [text c.source]
   , td [] [input [ _type "checkbox"]]
   ]
@@ -296,15 +292,15 @@ data PageSizes = PS10 | PS20 | PS50 | PS100
 derive instance eqPageSizes :: Eq PageSizes
 
 instance showPageSize :: Show PageSizes where
-  show PS10 = "10"
-  show PS20 = "20"
-  show PS50 = "50"
+  show PS10  = "10"
+  show PS20  = "20"
+  show PS50  = "50"
   show PS100 = "100"
 
 pageSizes2Int :: PageSizes -> Int
-pageSizes2Int PS10 = 10
-pageSizes2Int PS20 = 20
-pageSizes2Int PS50 = 50
+pageSizes2Int PS10  = 10
+pageSizes2Int PS20  = 20
+pageSizes2Int PS50  = 50
 pageSizes2Int PS100 = 100
 
 aryPS :: Array PageSizes

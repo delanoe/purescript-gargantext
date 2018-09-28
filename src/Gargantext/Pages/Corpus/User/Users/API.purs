@@ -9,12 +9,14 @@ import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
+
+import Gargantext.Config (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Corpus.User.Users.Types (Action(..), State, User, _user)
 import Thermite (PerformAction, modifyState)
 
 getUser :: Int -> Aff (Either String User)
-getUser id = get $ "http://localhost:8008/node/" <> show id
+getUser id = get $ toUrl Back Node id
 
 
 performAction :: PerformAction State {} Action

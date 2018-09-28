@@ -39,11 +39,11 @@ initAppState =
   , searchState    : S.initialState
   , userPageState  : U.initialState
   , docAnnotationState : D.initialState
-  , ntreeState   : Tree.exampleTree
-  , search  : ""
-  , showLogin    : false
-  , showCorpus   : false
-  , graphExplorerState  : GE.initialState
+  , ntreeState     : Tree.exampleTree
+  , search         : ""
+  , showLogin      : false
+  , showCorpus     : false
+  , graphExplorerState : GE.initialState
   , initialized    : false
   }
 
