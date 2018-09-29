@@ -1,25 +1,29 @@
+-- | Module Description
+
 module Gargantext.Pages.Layout.Actions where
 
 import Prelude hiding (div)
 
-import Control.Monad.Cont.Trans (lift)
-import Data.Either (Either(..))
-import Data.Lens (Prism', prism)
-import Effect.Class (liftEffect)
-import Effect.Console (log)
-import Gargantext.Components.Login as LN
-import Gargantext.Components.Modals.Modal (modalShow)
-import Gargantext.Components.Tree as Tree
-import Gargantext.Pages.Corpus.Doc.Annotation as D
+import Control.Monad.Cont.Trans                        (lift)
+import Data.Either                                     (Either(..))
+import Data.Lens                                       (Prism', prism)
+import Effect.Class                                    (liftEffect)
+import Effect.Console                                  (log)
+import Gargantext.Components.Login                  as LN
+import Gargantext.Components.Modals.Modal              (modalShow)
+import Gargantext.Components.Tree                   as Tree
+import Gargantext.Pages.Corpus.Doc.Annotation       as D
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
-import Gargantext.Pages.Corpus.User.Users as U
-import Gargantext.Pages.Layout.Specs.AddCorpus as AC
-import Gargantext.Pages.Layout.Specs.Search as S
-import Gargantext.Pages.Layout.States (AppState)
-import Gargantext.Router (Routes)
-import Thermite (PerformAction, modifyState)
+import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
+import Gargantext.Pages.Corpus.User.Users           as U
+import Gargantext.Pages.Corpus.Annuaire             as Annuaire
+import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
+import Gargantext.Pages.Layout.Specs.Search         as S
+import Gargantext.Pages.Layout.States                  (AppState)
+import Gargantext.Router                               (Routes)
+import Thermite                                        (PerformAction, modifyState)
 
+------------------------------------------------------------------------
 
 data Action
   = Initialize
@@ -29,10 +33,11 @@ data Action
   | DocViewA   DV.Action
   | SearchA    S.Action
   | UserPageA  U.Action
-  | DocAnnotationViewA  D.Action
-  | TreeViewA  Tree.Action
-  | GraphExplorerA GE.Action
-  | Search     String
+  | DocAnnotationViewA D.Action
+  | TreeViewA          Tree.Action
+  | GraphExplorerA     GE.Action
+  | Search             String
+  | AnnuaireAction     Annuaire.Action
   | Go
   | ShowLogin
   | ShowAddcorpus
@@ -62,9 +67,7 @@ performAction Initialize  _ state = void do
   _ <- liftEffect $ log "loading Initial nodes"
   case state.initialized of
     false -> do
-
       lnodes <- lift $ Tree.loadDefaultNode
-
       case lnodes of
         Left err -> do
           pure unit
@@ -88,14 +91,15 @@ performAction Initialize  _ state = void do
     _ -> do
       pure unit
 
-performAction (LoginA _) _ _ = pure unit
-performAction (AddCorpusA _) _ _ = pure unit
-performAction (DocViewA _) _ _ = pure unit
-performAction (SearchA _) _ _ = pure unit
-performAction (UserPageA _) _ _ = pure unit
+performAction (LoginA        _) _ _ = pure unit
+performAction (AddCorpusA    _) _ _ = pure unit
+performAction (DocViewA      _) _ _ = pure unit
+performAction (SearchA       _) _ _ = pure unit
+performAction (UserPageA     _) _ _ = pure unit
 performAction (DocAnnotationViewA _) _ _ = pure unit
-performAction (TreeViewA _) _ _ = pure unit
-performAction (GraphExplorerA _) _ _ = pure unit
+performAction (TreeViewA          _) _ _ = pure unit
+performAction (GraphExplorerA     _) _ _ = pure unit
+performAction (AnnuaireAction     _) _ _ = pure unit
 
 ----------------------------------------------------------
 
@@ -128,6 +132,12 @@ _userPageAction = prism UserPageA \action ->
   case action of
     UserPageA caction -> Right caction
     _-> Left action
+
+_annuaireAction :: Prism' Action Annuaire.Action
+_annuaireAction = prism AnnuaireAction \action ->
+  case action of
+       AnnuaireAction a -> Right a
+       _                -> Left  action
 
 _docAnnotationViewAction :: Prism' Action D.Action
 _docAnnotationViewAction = prism DocAnnotationViewA \action ->

@@ -54,7 +54,7 @@ routing =
       Login          <$  route "login"
   <|> Tabview        <$  route "tabview"
   <|> DocAnnotation  <$> (route "document" *> int)
-  <|> UserPage       <$> (route "user" *> int)
+  <|> UserPage       <$> (route "user"     *> int)
   <|> SearchView     <$ route "search"
   <|> DocView        <$ route "docView"
   <|> AddCorpus      <$ route "addCorpus"
@@ -63,7 +63,7 @@ routing =
   <|> NGramsTable    <$ route "ngrams"
   <|> Dashboard      <$ route "dashboard"
   <|> Annuaire       <$> (route "annuaire" *> int)
-  <|> Folder         <$> (route "folder" *> int)
+  <|> Folder         <$> (route "folder"   *> int)
   <|> Home           <$ lit ""
   where
     route str      = lit "" *> lit str

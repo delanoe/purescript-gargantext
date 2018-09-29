@@ -12,6 +12,7 @@ import Gargantext.Pages.Corpus.Doc.Facets.Graph             as GE
 -- import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 
 import Gargantext.Pages.Corpus.User.Users as U
+import Gargantext.Pages.Corpus.Annuaire   as Annuaire
 -- import Gargantext.Pages.Home as L
 -- import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Router (Routes(..))
@@ -48,7 +49,8 @@ dispatchAction dispatcher _ (UserPage id) = do
   dispatcher $ UserPageA $ U.FetchUser id
 
 dispatchAction dispatcher _ (Annuaire id) = do
-  dispatcher $ SetRoute $ Annuaire id
+  dispatcher $ SetRoute       $ Annuaire id
+  dispatcher $ AnnuaireAction $ Annuaire.Load id
 
 dispatchAction dispatcher _ (Folder id) = do
   dispatcher $ SetRoute $ Folder id

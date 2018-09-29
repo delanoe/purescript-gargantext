@@ -2,17 +2,18 @@ module Gargantext.Pages.Layout.States where
 
 import Prelude hiding (div)
 
-import Data.Lens (Lens', lens)
-import Data.Maybe (Maybe(Just))
-import Gargantext.Components.Login as LN
-import Gargantext.Components.Tree as Tree
-import Gargantext.Pages.Corpus.Doc.Annotation as D
+import Data.Lens                                       (Lens', lens)
+import Data.Maybe                                      (Maybe(Just))
+import Gargantext.Components.Login                  as LN
+import Gargantext.Components.Tree                   as Tree
+import Gargantext.Pages.Corpus.Doc.Annotation       as D
+import Gargantext.Pages.Corpus.Annuaire             as Annuaire
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
-import Gargantext.Pages.Corpus.User.Users as U
-import Gargantext.Pages.Layout.Specs.AddCorpus as AC
-import Gargantext.Pages.Layout.Specs.Search as S
-import Gargantext.Router (Routes(..))
+import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
+import Gargantext.Pages.Corpus.User.Users           as U
+import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
+import Gargantext.Pages.Layout.Specs.Search         as S
+import Gargantext.Router                               (Routes(..))
 
 type AppState =
   { currentRoute   :: Maybe Routes
@@ -22,6 +23,7 @@ type AppState =
   , searchState    :: S.State
   , userPageState  :: U.State
   , docAnnotationState :: D.State
+  , annuaireState  :: Annuaire.State
   , ntreeState     :: Tree.State
   , search         :: String
   , showLogin      :: Boolean
@@ -40,6 +42,7 @@ initAppState =
   , userPageState  : U.initialState
   , docAnnotationState : D.initialState
   , ntreeState     : Tree.exampleTree
+  , annuaireState  : Annuaire.initialState
   , search         : ""
   , showLogin      : false
   , showCorpus     : false
@@ -62,6 +65,9 @@ _searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
 
 _userPageState :: Lens' AppState U.State
 _userPageState = lens (\s -> s.userPageState) (\s ss -> s{userPageState = ss})
+
+_annuaireState :: Lens' AppState Annuaire.State
+_annuaireState = lens (\s -> s.annuaireState) (\s ss -> s{annuaireState = ss})
 
 _docAnnotationViewState :: Lens' AppState D.State
 _docAnnotationViewState = lens (\s -> s.docAnnotationState) (\s ss -> s{docAnnotationState = ss})
