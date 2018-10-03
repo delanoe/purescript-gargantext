@@ -21,7 +21,7 @@ import React.DOM (a, div, i, li, text, ul)
 import React.DOM.Props (Props, className, href, onClick)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
-import Gargantext.Config (NodeType(..), toUrl, readNodeType, End(..), ApiVersion)
+import Gargantext.Config (NodeType(..), toUrl, readNodeType, End(..), ApiVersion, defaultRoot)
 
 type Name = String
 type Open = Boolean
@@ -162,7 +162,7 @@ instance decodeJsonFTree :: DecodeJson (NTree LNode) where
 loadDefaultNode :: Aff (Either String (NTree LNode))
 loadDefaultNode = do
   res <- request $ defaultRequest
-         { url = toUrl Back Tree 1
+         { url = toUrl Back Tree defaultRoot
          , responseFormat = ResponseFormat.json
          , method = Left GET
          , headers = []

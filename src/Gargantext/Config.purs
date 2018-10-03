@@ -24,6 +24,11 @@ endConfig' :: ApiVersion -> EndConfig
 endConfig' v = { front : frontCaddy
                , back  : backDev v }
 
+-- | Default Root on shared database to develop
+-- until authentication implementation
+-- (Default Root will be given after authentication)
+defaultRoot :: Int
+defaultRoot = 347474
 ------------------------------------------------------------------------
 frontCaddy :: Config
 frontCaddy = { proto   : "http://"
