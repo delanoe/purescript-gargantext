@@ -35,9 +35,9 @@ dispatchAction dispatcher _ AddCorpus = do
   dispatcher $ SetRoute   AddCorpus
   dispatcher $ AddCorpusA AC.LoadDatabaseDetails
 
-dispatchAction dispatcher _ DocView = do
-  dispatcher $ SetRoute   DocView
-  dispatcher $ DocViewA $ DV.LoadData
+dispatchAction dispatcher _ (DocView n) = do
+  dispatcher $ SetRoute   (DocView n)
+  dispatcher $ DocViewA $ DV.LoadData n
 
 dispatchAction dispatcher _ SearchView = do
   dispatcher $ SetRoute SearchView

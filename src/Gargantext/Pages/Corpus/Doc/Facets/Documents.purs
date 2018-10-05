@@ -45,7 +45,7 @@ import Unsafe.Coerce (unsafeCoerce)
           -- Right now it doesn't make sense to reload mock data.
 
 data Action
-  = LoadData
+  = LoadData       Int
   | ChangePageSize PageSizes
   | ChangePage     Int
 
@@ -185,20 +185,26 @@ performAction (ChangePageSize ps) _ _ = void $ modifyState $ changePageSize ps
 
 performAction (ChangePage p) _ _ = void $ modifyState \(TableData td) -> TableData $ td { currentPage = p }
 
-performAction LoadData _ _ = do
-  res <- lift $ loadPage
+performAction (LoadData n) _ _ = do
+  res <- lift $ loadPage n
   case res of
-     Left err      -> pure unit
-     Right resData -> void $ modifyState $ const resData
+     Left err      -> do
+       _ <- liftEffect $ log $ show err
+       _ <- liftEffect $ log $ show "Error: loading page documents"
+       pure unit
+     Right resData -> do
+       _ <- liftEffect $ log $ show "OK: loading page documents"
+       void $ modifyState $ const resData
 
 
-loadPage :: Aff (Either String CorpusTableData)
-loadPage = do
-  res <- get $ toUrl Back Children 452132
+loadPage :: Int -> Aff (Either String CorpusTableData)
+loadPage n = do
+  res <- get $ toUrl Back Children n
   -- res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
   case res of
      Left err -> do
        _ <- liftEffect $ log $ show err
+       _ <- liftEffect $ log $ show "loading page documents"
        pure $ Left $ show err
      Right resData -> do
        let docs = toTableData (res2corpus $ resData)

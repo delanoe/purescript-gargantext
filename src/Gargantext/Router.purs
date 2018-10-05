@@ -17,7 +17,7 @@ data Routes
   = Home
   | Login
   | AddCorpus
-  | DocView
+  | DocView        Int
   | SearchView
   | UserPage       Int
   | DocAnnotation  Int
@@ -33,7 +33,7 @@ data Routes
 instance showRoutes :: Show Routes where
   show Login            = "Login"
   show AddCorpus        = "AddCorpus"
-  show DocView          = "DocView"
+  show (DocView i)      = "DocView"
   show SearchView       = "Search"
   show (UserPage i)     = "User"
   show (DocAnnotation i)= "Document"
@@ -56,7 +56,7 @@ routing =
   <|> DocAnnotation  <$> (route "document" *> int)
   <|> UserPage       <$> (route "user"     *> int)
   <|> SearchView     <$ route "search"
-  <|> DocView        <$ route "docView"
+  <|> DocView        <$> (route "docView" *> int)
   <|> AddCorpus      <$ route "addCorpus"
   <|> CorpusAnalysis <$ route "corpus"
   <|> PGraphExplorer <$ route "graph"
