@@ -12,7 +12,7 @@ import Gargantext.Components.Tree  as Tree
 import Gargantext.Pages.Corpus.Annuaire   as A
 import Gargantext.Folder           as F
 import Gargantext.Pages.Corpus     as CA
-import Gargantext.Pages.Corpus.Doc.Annotation as D
+import Gargantext.Pages.Corpus.Doc.Annotation as Annotation
 import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
@@ -54,13 +54,14 @@ pagesComponent s =
     Nothing    -> selectSpec Home
   where
     selectSpec :: Routes -> Spec AppState {} Action
-    selectSpec CorpusAnalysis    = layout0 $ noState CA.spec'
+    selectSpec (Corpus   i)      = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec (DocView  i)      = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
-    selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState  _docAnnotationViewAction  D.docview
+    selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState
+                                                   _docAnnotationViewAction  Annotation.docview
     selectSpec Tabview           = layout0 $ noState TV.pureTab1
     -- To be removed
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec

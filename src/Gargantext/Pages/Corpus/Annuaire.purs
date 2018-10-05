@@ -179,20 +179,21 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
 ------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
 performAction (Load aId) _ _ = do
-  eitherTable <- lift $ getTable aId
-  liftEffect $ log "Feching Table"
-  _ <- case eitherTable of
-            (Right table') -> void $ modifyState $ _table ?~ table'
-            (Left       err)  -> do
-              liftEffect $ log err
-
+  
   eitherInfo <- lift $ getInfo aId
   _ <- case eitherInfo of
             (Right info') -> void $ modifyState $ _info ?~ info'
             (Left       err)  -> do
               liftEffect $ log err
 
-  liftEffect <<< log $ "Fetching annuaire page..."
+  eitherTable <- lift $ getTable aId
+  liftEffect $ log "Feching Table"
+  _ <- case eitherTable of
+            (Right table') -> void $ modifyState $ _table ?~ table'
+            (Left       err)  -> do
+              liftEffect $ log err
+  liftEffect <<< log $ "Annuaire page fetched."
+
 performAction _ _ _ = pure unit
 ------------------------------------------------------------------------
 getTable :: Int -> Aff (Either String AnnuaireTable)

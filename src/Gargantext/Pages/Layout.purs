@@ -63,9 +63,9 @@ dispatchAction dispatcher _ Tabview = do
   dispatcher $ SetRoute Tabview
   -- dispatcher $ TabViewA TODO
 
-dispatchAction dispatcher _ CorpusAnalysis = do
-  dispatcher $ SetRoute CorpusAnalysis
-  -- dispatcher $ CorpusAnalysisA TODO
+dispatchAction dispatcher _ (Corpus n) = do
+  dispatcher $ SetRoute $ Corpus n
+  dispatcher $ DocViewA $ DV.LoadData n
 
 dispatchAction dispatcher _ PGraphExplorer = do
   dispatcher $ SetRoute PGraphExplorer

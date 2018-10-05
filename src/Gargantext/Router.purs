@@ -22,7 +22,7 @@ data Routes
   | UserPage       Int
   | DocAnnotation  Int
   | Tabview
-  | CorpusAnalysis
+  | Corpus         Int
   | PGraphExplorer
   | NGramsTable
   | Dashboard
@@ -35,15 +35,15 @@ instance showRoutes :: Show Routes where
   show AddCorpus        = "AddCorpus"
   show (DocView i)      = "DocView"
   show SearchView       = "Search"
-  show (UserPage i)     = "User"
+  show (UserPage i)     = "User" <> show i
   show (DocAnnotation i)= "Document"
   show Tabview          = "Tabview"
-  show CorpusAnalysis   = "Corpus"
   show PGraphExplorer   = "graphExplorer"
   show NGramsTable      = "NGramsTable"
   show Dashboard        = "Dashboard"
-  show (Annuaire i)     = "Annuaire"
-  show (Folder   i)     = "Folder"
+  show (Corpus i)       = "Corpus" <> show i
+  show (Annuaire i)     = "Annuaire" <> show i
+  show (Folder   i)     = "Folder"   <> show i
   show Home             = "Home"
 
 int :: Match Int
@@ -51,20 +51,20 @@ int = floor <$> num
 
 routing :: Match Routes
 routing =
-      Login          <$  route "login"
-  <|> Tabview        <$  route "tabview"
+      Login          <$   route "login"
+  <|> Tabview        <$   route "tabview"
   <|> DocAnnotation  <$> (route "document" *> int)
   <|> UserPage       <$> (route "user"     *> int)
-  <|> SearchView     <$ route "search"
-  <|> DocView        <$> (route "docView" *> int)
-  <|> AddCorpus      <$ route "addCorpus"
-  <|> CorpusAnalysis <$ route "corpus"
-  <|> PGraphExplorer <$ route "graph"
-  <|> NGramsTable    <$ route "ngrams"
-  <|> Dashboard      <$ route "dashboard"
+  <|> SearchView     <$   route "search"
+  <|> DocView        <$> (route "docView"  *> int)
+  <|> AddCorpus      <$   route "addCorpus"
+  <|> Corpus         <$> (route "corpus"   *> int)
+  <|> PGraphExplorer <$   route "graph"
+  <|> NGramsTable    <$   route "ngrams"
+  <|> Dashboard      <$   route "dashboard"
   <|> Annuaire       <$> (route "annuaire" *> int)
   <|> Folder         <$> (route "folder"   *> int)
-  <|> Home           <$ lit ""
+  <|> Home           <$   lit ""
   where
     route str      = lit "" *> lit str
 
