@@ -83,6 +83,7 @@ derive instance genericCorpus :: Generic CorpusView _
 instance showCorpus :: Show CorpusView where
   show = genericShow
 
+
 newtype Response = Response
   { cid        :: Int
   , created    :: String
@@ -90,6 +91,7 @@ newtype Response = Response
   , favorite   :: Boolean
   , ngramCount :: Int
   }
+
 
 newtype Hyperdata = Hyperdata
   { title  :: String
