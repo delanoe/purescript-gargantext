@@ -137,7 +137,7 @@ showRow (Just (User { id : id, hyperdata : (HyperData user) })) =
   , td [] [text $ maybe' user.groupe]
   ]
     where
-      maybe' = maybe "Unknown" identity
+      maybe' = maybe "" identity
 
 
 ------------------------------------------------------------------------------
