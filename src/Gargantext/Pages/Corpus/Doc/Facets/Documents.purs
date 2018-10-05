@@ -83,7 +83,6 @@ derive instance genericCorpus :: Generic CorpusView _
 instance showCorpus :: Show CorpusView where
   show = genericShow
 
-
 newtype Response = Response
   { cid        :: Int
   , created    :: String
@@ -91,7 +90,6 @@ newtype Response = Response
   , favorite   :: Boolean
   , ngramCount :: Int
   }
-
 
 newtype Hyperdata = Hyperdata
   { title  :: String
@@ -200,16 +198,17 @@ performAction (LoadData n) _ _ = do
 loadPage :: Int -> Aff (Either String CorpusTableData)
 loadPage n = do
   res <- get $ toUrl Back Children n
+  -- TODO: offset and limit
   -- res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
   case res of
      Left err -> do
+       _ <- liftEffect $ log $ show "Err: loading page documents"
        _ <- liftEffect $ log $ show err
-       _ <- liftEffect $ log $ show "loading page documents"
        pure $ Left $ show err
      Right resData -> do
        let docs = toTableData (res2corpus $ resData)
+       _ <- liftEffect $ log $ show "Ok: loading page documents"
        _ <- liftEffect $ log $ show $ map (\({ row: r, delete :_}) -> show r) ((\(TableData docs') -> docs'.rows) docs)
-       _ <- liftEffect $ log $ show "loading page documents"
        pure $ Right docs
       where
         res2corpus :: Array Response -> Array CorpusView

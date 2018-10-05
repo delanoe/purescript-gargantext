@@ -28,17 +28,16 @@ type State = { info  :: Maybe AnnuaireInfo
              , table :: Maybe AnnuaireTable
              }
 
-initialState :: State
-initialState = { info : Nothing, table : Nothing }
-
 type Offset = Int
 type Limit  = Int
 
-data Action
-  = Load Int
+data Action = Load Int
 --  | ChangePageSize PageSizes
 --  | ChangePage Int
 ------------------------------------------------------------------------------
+initialState :: State
+initialState = { info : Nothing, table : Nothing }
+
 defaultAnnuaireTable :: AnnuaireTable
 defaultAnnuaireTable = AnnuaireTable { annuaireTable : [Nothing] }
 
@@ -51,7 +50,7 @@ defaultAnnuaireInfo = AnnuaireInfo { id : 0
                                    , date     : ""
                                    , hyperdata : ""
                                    }
-
+------------------------------------------------------------------------------
 toRows :: AnnuaireTable -> Array (Maybe User)
 toRows (AnnuaireTable a) = a.annuaireTable
 
@@ -81,7 +80,8 @@ render dispatch _ state _ = [ div [className "row"]
                                       $ maybe (toRows defaultAnnuaireTable) toRows state.table]
                    ]
                         where
-                          (AnnuaireInfo info) = maybe defaultAnnuaireInfo identity state.info
+                          (AnnuaireInfo  info)  = maybe defaultAnnuaireInfo  identity state.info
+                          (AnnuaireTable table) = maybe defaultAnnuaireTable identity state.table
 
 ------------------------------------------------------------------------------
 newtype AnnuaireInfo = AnnuaireInfo { id        :: Int
@@ -116,20 +116,14 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
 newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe User)}
 instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
   decodeJson json = do
-    obj <- decodeJson json
-    annuaire'  <- obj .? "annuaire"
-    pure $ AnnuaireTable { annuaireTable : annuaire'}
+    rows <- decodeJson json
+    pure $ AnnuaireTable { annuaireTable : rows}
 
-------------------------------------------------------------------------
-getTable :: Int -> Aff (Either String AnnuaireTable)
-getTable id = get $ toUrl Back Children id
-
-getInfo :: Int -> Aff (Either String AnnuaireInfo)
-getInfo id = get $ toUrl Back Node id
 ------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
 performAction (Load aId) _ _ = do
   eitherTable <- lift $ getTable aId
+  liftEffect $ log "Feching Table"
   _ <- case eitherTable of
             (Right table') -> void $ modifyState $ _table ?~ table'
             (Left       err)  -> do
@@ -143,6 +137,12 @@ performAction (Load aId) _ _ = do
 
   liftEffect <<< log $ "Fetching annuaire page..."
 performAction _ _ _ = pure unit
+------------------------------------------------------------------------
+getTable :: Int -> Aff (Either String AnnuaireTable)
+getTable id = get $ toUrl Back Children id
+
+getInfo :: Int -> Aff (Either String AnnuaireInfo)
+getInfo id = get $ toUrl Back Node id
 ------------------------------------------------------------------------------
 _table :: Lens' State (Maybe AnnuaireTable)
 _table = lens (\s -> s.table) (\s ss -> s{table = ss})
