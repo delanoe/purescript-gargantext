@@ -21,7 +21,7 @@ import React.DOM (a, div, i, li, text, ul)
 import React.DOM.Props (Props, className, href, onClick)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 
-import Gargantext.Config (NodeType(..), toUrl, readNodeType, End(..), ApiVersion, defaultRoot)
+import Gargantext.Config (NodeType(..), readNodeType, toUrl, readNodeType, End(..), ApiVersion, defaultRoot)
 
 type Name = String
 type Open = Boolean
@@ -37,7 +37,7 @@ data Action = ToggleFolder ID --| Initialize
 type State = FTree
 
 initialState :: State
-initialState = NTree (LNode {id : 1, name : "", nodeType : "", open : true}) []
+initialState = NTree (LNode {id : 1, name : "", nodeType : NodeUser, open : true}) []
 
 performAction :: PerformAction State {} Action
 performAction (ToggleFolder i) _ _ = void $ modifyState $ toggleNode i
@@ -59,7 +59,7 @@ toggleNode sid (NTree (LNode {id, name, nodeType, open}) ary) =
 -- Realistic Tree for the UI
 
 exampleTree :: NTree LNode
-exampleTree = NTree (LNode {id : 1, name : "", nodeType : "", open : false}) []
+exampleTree = NTree (LNode {id : 1, name : "", nodeType : NodeUser, open : false}) []
 
 -- exampleTree :: NTree LNode
 -- exampleTree =
@@ -110,12 +110,21 @@ treeview = simpleSpec performAction render
 
 
 toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
-toHtml d (NTree (LNode {id, name, nodeType, open}) []) =
+toHtml d (NTree (LNode {id, name, nodeType : Folder, open}) []) =
+  ul [ ]
+  [ li [] $
+    ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
+      ,  a [ href (toUrl Front Folder id )]
+           [ text $ " " <> name <> " " ]
+      ] <> nodeOptionsCorp false
+    )
+  ]
+toHtml d (NTree (LNode {id, name, nodeType : nodeType, open}) []) =
   ul []
   [
     li []
     [
-      a [ href (toUrl Front (readNodeType nodeType) id)]
+      a [ href (toUrl Front nodeType id)]
       ( [ text (name <> "    ")
         ] <> nodeOptionsView false
       )
@@ -125,7 +134,7 @@ toHtml d (NTree (LNode {id, name, nodeType, open}) ary) =
   ul [ ]
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      ,  a [ href (toUrl Front (readNodeType nodeType) id )]
+      ,  a [ href (toUrl Front nodeType id )]
            [ text $ " " <> name <> " " ]
       ] <> nodeOptionsCorp false <>
       if open then
@@ -138,7 +147,7 @@ fldr :: Boolean -> Props
 fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 
-newtype LNode = LNode {id :: Int, name :: String, nodeType :: String, open :: Boolean}
+newtype LNode = LNode {id :: Int, name :: String, nodeType :: NodeType, open :: Boolean}
 
 derive instance newtypeLNode :: Newtype LNode _
 
@@ -147,7 +156,7 @@ instance decodeJsonLNode :: DecodeJson LNode where
     obj <- decodeJson json
     id_ <- obj .? "id"
     name <- obj .? "name"
-    nodeType <- obj .? "type"
+    nodeType <- readNodeType <$> obj .? "type"
     pure $ LNode {id : id_, name, nodeType, open : true}
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
