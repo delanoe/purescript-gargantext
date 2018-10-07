@@ -1,7 +1,7 @@
-module Gargantext.Pages.Corpus.User.Users.Specs.Renders
+module Gargantext.Pages.Annuaire.User.Users.Specs.Renders
        where
 
-import Gargantext.Pages.Corpus.User.Users.Types
+import Gargantext.Pages.Annuaire.User.Users.Types
 
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))

@@ -15,8 +15,8 @@ import Gargantext.Components.Tree                   as Tree
 import Gargantext.Pages.Corpus.Doc.Annotation       as D
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
-import Gargantext.Pages.Corpus.User.Users           as U
-import Gargantext.Pages.Corpus.Annuaire             as Annuaire
+import Gargantext.Pages.Annuaire.User.Users           as U
+import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Pages.Layout.States                  (AppState)
@@ -53,6 +53,8 @@ performAction (ShowLogin)  _ _ = void do
   liftEffect $ modalShow "loginModal"
   modifyState $ _ {showLogin = true}
 
+---------------------------------------------------------
+-- TODO chose one of them
 performAction (ShowAddcorpus)  _ _ = void do
   liftEffect $ modalShow "addCorpus"
   modifyState $ _ {showCorpus = true}
@@ -62,6 +64,7 @@ performAction Go  _ _ = void do
   modifyState $ _ {showCorpus = true}
  -- _ <- lift $ setHash "/addCorpus"
   --modifyState id
+---------------------------------------------------------
 
 performAction Initialize  _ state = void do
   _ <- liftEffect $ log "loading Initial nodes"

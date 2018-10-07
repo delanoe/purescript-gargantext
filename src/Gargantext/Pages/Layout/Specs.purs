@@ -9,16 +9,16 @@ import Effect (Effect)
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree  as Tree
-import Gargantext.Pages.Corpus.Annuaire   as A
+import Gargantext.Pages.Annuaire   as A
 import Gargantext.Folder           as F
-import Gargantext.Pages.Corpus     as CA
+import Gargantext.Pages.Corpus     as Corpus
 import Gargantext.Pages.Corpus.Doc.Annotation as Annotation
 import Gargantext.Pages.Corpus.Doc.Facets as TV
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
-import Gargantext.Pages.Corpus.User.Users as U
+import Gargantext.Pages.Annuaire.User.Users as U
 import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
@@ -62,8 +62,8 @@ pagesComponent s =
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
     selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState
                                                    _docAnnotationViewAction  Annotation.docview
-    selectSpec Tabview           = layout0 $ noState TV.pureTab1
     -- To be removed
+    selectSpec Tabview           = layout0 $ noState TV.pureTab1
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld

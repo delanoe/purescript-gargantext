@@ -1,12 +1,12 @@
-module Gargantext.Pages.Corpus.User.Users.Types.Lens where
+module Gargantext.Pages.Annuaire.User.Users.Types.Lens where
 
-import Gargantext.Pages.Corpus.User.Brevets as B
+import Gargantext.Pages.Annuaire.User.Brevets as B
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
 import Data.Maybe (Maybe)
-import Gargantext.Pages.Corpus.User.Users.Types.States (Action(..), State)
-import Gargantext.Pages.Corpus.User.Users.Types.Types (User)
-import Gargantext.Pages.Corpus.User.Users.Specs.Documents as P
+import Gargantext.Pages.Annuaire.User.Users.Types.States (Action(..), State)
+import Gargantext.Pages.Annuaire.User.Users.Types.Types (User)
+import Gargantext.Pages.Annuaire.User.Users.Specs.Documents as P
 import Gargantext.Components.Tab as Tab
 import Thermite (Spec, noState)
 

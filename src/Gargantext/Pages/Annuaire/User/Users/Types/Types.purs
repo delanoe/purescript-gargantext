@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.User.Users.Types.Types where
+module Gargantext.Pages.Annuaire.User.Users.Types.Types where
 
 import Prelude
 

@@ -33,17 +33,17 @@ data Routes
 instance showRoutes :: Show Routes where
   show Login            = "Login"
   show AddCorpus        = "AddCorpus"
-  show (DocView i)      = "DocView"
   show SearchView       = "Search"
-  show (UserPage i)     = "User" <> show i
+  show (UserPage i)     = "User"   <> show i
   show (DocAnnotation i)= "Document"
-  show Tabview          = "Tabview"
-  show PGraphExplorer   = "graphExplorer"
-  show NGramsTable      = "NGramsTable"
-  show Dashboard        = "Dashboard"
   show (Corpus i)       = "Corpus" <> show i
+  show Tabview          = "Tabview"
+  show (DocView i)      = "DocView"
+  show NGramsTable      = "NGramsTable"
   show (Annuaire i)     = "Annuaire" <> show i
   show (Folder   i)     = "Folder"   <> show i
+  show Dashboard        = "Dashboard"
+  show PGraphExplorer   = "graphExplorer"
   show Home             = "Home"
 
 int :: Match Int
@@ -68,14 +68,18 @@ routing =
   where
     route str      = lit "" *> lit str
 
-routeHandler :: (Maybe Routes -> Routes -> Effect Unit) -> Maybe Routes -> Routes -> Effect Unit
+routeHandler :: (Maybe Routes -> Routes -> Effect Unit)
+              -> Maybe Routes -> Routes -> Effect Unit
 routeHandler dispatchAction old new = do
   liftEffect $ log $ "change route : " <> show new
+  
   w      <- window
   ls     <- localStorage w
   token  <- getItem "accessToken" ls
   let tkn = token
+  
   liftEffect $ log $ "JWToken : " <> show tkn
+  
   case tkn of
     Nothing -> do
       dispatchAction old new

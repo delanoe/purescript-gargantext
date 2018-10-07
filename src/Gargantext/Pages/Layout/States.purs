@@ -7,10 +7,10 @@ import Data.Maybe                                      (Maybe(Just))
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Tree                   as Tree
 import Gargantext.Pages.Corpus.Doc.Annotation       as D
-import Gargantext.Pages.Corpus.Annuaire             as Annuaire
+import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
-import Gargantext.Pages.Corpus.User.Users           as U
+import Gargantext.Pages.Annuaire.User.Users           as U
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Router                               (Routes(..))

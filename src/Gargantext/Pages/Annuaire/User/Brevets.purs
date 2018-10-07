@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.User.Brevets where
+module Gargantext.Pages.Annuaire.User.Brevets where
 
 import Prelude
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec)

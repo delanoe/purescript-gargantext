@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.User.Users.API where
+module Gargantext.Pages.Annuaire.User.Users.API where
 
 import Prelude
 
@@ -12,7 +12,7 @@ import Effect.Console (log)
 
 import Gargantext.Config (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Corpus.User.Users.Types (Action(..), State, User, _user)
+import Gargantext.Pages.Annuaire.User.Users.Types (Action(..), State, User, _user)
 import Thermite (PerformAction, modifyState)
 
 getUser :: Int -> Aff (Either String User)

@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Annuaire where
+module Gargantext.Pages.Annuaire where
 
 import Prelude
 
@@ -20,7 +20,7 @@ import Effect.Aff (Aff)
 
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Corpus.User.Users.Types.Types (User(..), HyperData(..))
+import Gargantext.Pages.Annuaire.User.Users.Types.Types (User(..), HyperData(..))
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 
@@ -99,7 +99,6 @@ render dispatch _ state _ = [ div [className "row"]
                                       ]
                                 ]
                             ]
-                            
                             ,             p [] []
             , div [] [ text "    Filter ", input []]
             , br'
@@ -175,7 +174,6 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
   decodeJson json = do
     rows <- decodeJson json
     pure $ AnnuaireTable { annuaireTable : rows}
-
 ------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
 performAction (Load aId) _ _ = do

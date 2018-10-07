@@ -1,7 +1,7 @@
-module Gargantext.Pages.Corpus.User.Users.Types
-       (module Gargantext.Pages.Corpus.User.Users.Types.Types,
-        module Gargantext.Pages.Corpus.User.Users.Types.Lens,
-        module Gargantext.Pages.Corpus.User.Users.Types.States,
+module Gargantext.Pages.Annuaire.User.Users.Types
+       (module Gargantext.Pages.Annuaire.User.Users.Types.Types,
+        module Gargantext.Pages.Annuaire.User.Users.Types.Lens,
+        module Gargantext.Pages.Annuaire.User.Users.Types.States,
         brevetSpec,
         projectSpec,
         facets
@@ -10,10 +10,10 @@ module Gargantext.Pages.Corpus.User.Users.Types
 
 import Prelude
 
-import Gargantext.Pages.Corpus.User.Users.Types.Lens
-import Gargantext.Pages.Corpus.User.Users.Types.Types
-import Gargantext.Pages.Corpus.User.Users.Types.States
-import Gargantext.Pages.Corpus.User.Brevets as B
+import Gargantext.Pages.Annuaire.User.Users.Types.Lens
+import Gargantext.Pages.Annuaire.User.Users.Types.Types
+import Gargantext.Pages.Annuaire.User.Users.Types.States
+import Gargantext.Pages.Annuaire.User.Brevets as B
 import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
 import Gargantext.Components.Tab (tabs)
