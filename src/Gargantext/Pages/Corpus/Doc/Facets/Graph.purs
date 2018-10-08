@@ -107,28 +107,27 @@ render d p (State s) c =
     , option [value "imtNew.json"] [text "imtNew.json"]
     -- , option [value "exemplePhyloBipartite.gexf"] [text "exemplePhyloBipartite.gexf"]
     ]
+  , sigma
+    { graph:
+        -- TODO cleanup
+        case s.sigmaGraphData of
+          Nothing -> SigmaGraphData {nodes: [], edges: []}
+          Just gData -> gData
+    , renderer : canvas
+    , settings : mySettings
+    , style : sStyle { height : "95%"}
+    -- , onClickNode : \e -> do
+    --   log $ unsafeCoerce e
+    --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+    --   pure unit
+    -- TODO: fix this!
+    }
+    [ sigmaEnableWebGL
+    , forceAtlas2 forceAtlas2Config
+    , edgeShapes {"default" : edgeShape.curve}
+    ]
+  , dispLegend s.legendData
   ]
-  <>
-  case s.sigmaGraphData of
-    Nothing -> []
-    Just gData ->
-      [ sigma { graph: gData
-              , renderer : canvas
-              , settings : mySettings
-              , style : sStyle { height : "95%"}
-              -- , onClickNode : \e -> do
-              --   log $ unsafeCoerce e
-              --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-              --   pure unit
-              -- TODO: fix this!
-              }
-        [ sigmaEnableWebGL
-        , forceAtlas2 forceAtlas2Config
-        , edgeShapes {"default" : edgeShape.curve}
-        ]
-      ]
-  <>
-  [dispLegend s.legendData]
 
 forceAtlas2Config :: { slowDown :: Number
                     , startingIterations :: Number
