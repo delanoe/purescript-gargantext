@@ -17,7 +17,6 @@ import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
 import Gargantext.Pages.Annuaire.User.Users           as U
 import Gargantext.Pages.Annuaire             as Annuaire
-import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Pages.Layout.States                  (AppState)
 import Gargantext.Router                               (Routes)
@@ -29,7 +28,6 @@ data Action
   = Initialize
   | LoginA     LN.Action
   | SetRoute   Routes
-  | AddCorpusA AC.Action
   | DocViewA   DV.Action
   | SearchA    S.Action
   | UserPageA  U.Action
@@ -95,7 +93,6 @@ performAction Initialize  _ state = void do
       pure unit
 
 performAction (LoginA        _) _ _ = pure unit
-performAction (AddCorpusA    _) _ _ = pure unit
 performAction (DocViewA      _) _ _ = pure unit
 performAction (SearchA       _) _ _ = pure unit
 performAction (UserPageA     _) _ _ = pure unit
@@ -110,12 +107,6 @@ _loginAction :: Prism' Action LN.Action
 _loginAction = prism LoginA \action ->
   case action of
     LoginA caction -> Right caction
-    _-> Left action
-
-_addCorpusAction :: Prism' Action AC.Action
-_addCorpusAction = prism AddCorpusA \action ->
-  case action of
-    AddCorpusA caction -> Right caction
     _-> Left action
 
 _docViewAction :: Prism' Action DV.Action

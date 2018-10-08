@@ -1,30 +1,28 @@
 module Gargantext.Pages.Layout.Specs.AddCorpus.Specs where
 
-import Gargantext.Pages.Layout.Specs.AddCorpus.Actions
-import Gargantext.Pages.Layout.Specs.AddCorpus.States
+import Gargantext.Pages.Layout.Specs.AddCorpus.Actions (Action(..), performAction)
+import Gargantext.Pages.Layout.Specs.AddCorpus.States (Query, Response(..), State, initialState)
 import Prelude hiding (div)
 
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat as ResponseFormat
-import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Data.Argonaut (decodeJson, encodeJson)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Lens (over)
 import Data.Maybe (Maybe(Just))
-import Data.MediaType.Common (applicationJSON)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Components.Modals.Modal (modalHide)
 import React (ReactElement)
 import React.DOM (button, div, h3, h5, li, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, onClick, role)
-import Thermite (PerformAction, Render, Spec, _render, simpleSpec)
+import Thermite (Render, Spec, _render, hide, simpleSpec)
 
 
-modalSpec :: Boolean -> String -> Spec State {} Action -> Spec State {} Action
+modalSpec :: forall state props action
+           . Boolean -> String -> Spec state props action -> Spec state props action
 modalSpec sm t = over _render \render d p s c ->
   [ div [ _id "addCorpus", className $ "modal myModal" <> if sm then "" else " fade"
         , role "dialog"
@@ -46,7 +44,7 @@ modalSpec sm t = over _render \render d p s c ->
    ]
 
 
-spec' :: Spec State {} Action
+spec' :: Spec {} {} Void
 spec' = modalSpec true "Search Results" layoutAddcorpus
 
 
@@ -96,8 +94,8 @@ layoutModal state =
           ]
 
 
-layoutAddcorpus :: Spec State {} Action
-layoutAddcorpus = simpleSpec performAction render
+layoutAddcorpus :: Spec {} {} Void
+layoutAddcorpus = hide initialState $ simpleSpec performAction render
   where
     render :: Render State {} Action
     render dispatch _ state _ =

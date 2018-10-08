@@ -3,7 +3,7 @@ module Gargantext.Pages.Layout where
 import Prelude hiding (div)
 -- import Gargantext.Components.Login as LN
 import Gargantext.Pages.Layout.Actions (Action(..))
-import Gargantext.Pages.Layout.Specs.AddCorpus as AC
+-- import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 -- import Gargantext.Pages.Corpus.Doc.Facets as TV
 -- import Gargantext.Pages.Corpus.Doc.Annotation as D
 
@@ -33,7 +33,10 @@ dispatchAction dispatcher _ Login = do
 
 dispatchAction dispatcher _ AddCorpus = do
   dispatcher $ SetRoute   AddCorpus
-  dispatcher $ AddCorpusA AC.LoadDatabaseDetails
+-- NP: I think that init code should be part of the Spec.
+--     TODO: Add a Thermite combinator which takes an initialisation
+--           command.
+--  dispatcher $ AddCorpusA AC.LoadDatabaseDetails
 
 dispatchAction dispatcher _ (DocView n) = do
   dispatcher $ SetRoute   (DocView n)
