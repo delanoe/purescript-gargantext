@@ -3,11 +3,8 @@ module Gargantext.Components.GraphExplorer.Types where
 import Prelude
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Array (concat, group, head, length, sort, take)
-import Data.Maybe (fromJust)
+import Data.Array (concat, fromFoldable, group, sort, take)
 import Data.Newtype (class Newtype)
-import Data.NonEmpty (NonEmpty(..))
-import Partial.Unsafe (unsafePartial)
 
 newtype Node = Node
   { id_ :: String
@@ -82,10 +79,10 @@ instance ordLegend :: Ord Legend where
 getLegendData :: GraphData -> Array Legend
 getLegendData (GraphData {nodes, edges}) = nn
   where
-    mp (NonEmpty a ary) = [a] <> (if length ary > 0 then [unsafePartial $ fromJust $ head ary] else [])
+    --mp (NonEmptyArray a ary) = [a] <> (if length ary > 0 then [unsafePartial $ fromJust $ head ary] else [])
     n = sort $ map t' nodes
     g = group n
-    nn = take 5 $ concat $ map mp g
+    nn = take 5 $ concat $ map fromFoldable g -- TODO: fix this after checking the output
 
 t' :: Node -> Legend
 t' (Node r) = Legend { id_ : clustDefault, label : r.label}

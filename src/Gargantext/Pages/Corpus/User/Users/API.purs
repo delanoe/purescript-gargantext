@@ -2,36 +2,29 @@ module Gargantext.Pages.Corpus.User.Users.API where
 
 import Prelude
 
-import Gargantext.Pages.Corpus.User.Users.Types (Action(..), State, User, _user)
-import Control.Monad.Aff (Aff)
-import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Trans.Class (lift)
-import DOM (DOM)
 import Data.Either (Either(..))
-import Data.Lens (set)
+import Data.Lens ((?~))
 import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
+
+import Gargantext.Config (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
-import Network.HTTP.Affjax (AJAX)
+import Gargantext.Pages.Corpus.User.Users.Types (Action(..), State, User, _user)
 import Thermite (PerformAction, modifyState)
 
-getUser :: forall eff. Int -> Aff
-        (console :: CONSOLE, ajax :: AJAX | eff) (Either String User)
-getUser id = get $ "http://localhost:8008/node/" <> show id
+getUser :: Int -> Aff (Either String User)
+getUser id = get $ toUrl Back Node id
 
 
-performAction :: forall eff props. PerformAction ( console :: CONSOLE
-                                                 , ajax    :: AJAX
-                                                 , dom     :: DOM
-                                                 | eff ) State props Action
-performAction NoOp _ _ = void do
-  modifyState id
-performAction (FetchUser userId) _ _ = void do
+performAction :: PerformAction State {} Action
+performAction (FetchUser userId) _ _ = do
   value <- lift $ getUser userId
   _ <- case value of
-    (Right user) -> modifyState \state -> set _user (Just user) state
+    (Right user) -> void $ modifyState $ _user ?~ user
     (Left err) -> do
-      _ <- lift $ log err
-      modifyState id
-  lift <<< log $ "Fetching user..."
-performAction _ _ _ = void do
-  modifyState id
+      liftEffect $ log err
+  liftEffect <<< log $ "Fetching user..."
+performAction _ _ _ = pure unit

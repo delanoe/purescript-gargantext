@@ -1,81 +1,79 @@
 module Gargantext.Pages.Layout where
 
 import Prelude hiding (div)
-import Gargantext.Components.Login as LN
+-- import Gargantext.Components.Login as LN
 import Gargantext.Pages.Layout.Actions (Action(..))
-import Gargantext.Pages.Corpus as AC
-import Gargantext.Pages.Corpus.Doc.Annotation as D
-import Gargantext.Pages.Corpus.Doc.Document as DV
-import Gargantext.Pages.Corpus.Doc.Facets as TV
-import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
-import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
+import Gargantext.Pages.Layout.Specs.AddCorpus as AC
+-- import Gargantext.Pages.Corpus.Doc.Facets as TV
+-- import Gargantext.Pages.Corpus.Doc.Annotation as D
+
+import Gargantext.Pages.Corpus.Doc.Facets.Documents         as DV
+import Gargantext.Pages.Corpus.Doc.Facets.Graph             as GE
+-- import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
+
 import Gargantext.Pages.Corpus.User.Users as U
-import Gargantext.Pages.Home as L
-import Gargantext.Pages.Search as S
+import Gargantext.Pages.Corpus.Annuaire   as Annuaire
+-- import Gargantext.Pages.Home as L
+-- import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Router (Routes(..))
 
-dispatchAction :: forall t115 t445 t447.
-                  Bind t445 => Applicative t445  =>
-                  (Action -> t445 t447) -> t115 -> Routes -> t445 Unit
+dispatchAction :: forall ignored m.
+                  Monad m =>
+                  (Action -> m Unit) -> ignored -> Routes -> m Unit
 
 dispatchAction dispatcher _ Home = do
-  _ <- dispatcher Initialize
-  _ <- dispatcher $ SetRoute Home
-  _ <- dispatcher $ LandingA L.NoOp
-  pure unit
+  dispatcher Initialize
+  dispatcher $ SetRoute Home
+  -- dispatcher $ LandingA TODO
 
 dispatchAction dispatcher _ Login = do
-  _ <- dispatcher Initialize
-  _ <- dispatcher $ SetRoute Login
-  _ <- dispatcher $ LoginA LN.NoOp
-  pure unit
+  dispatcher Initialize
+  dispatcher $ SetRoute Login
+  -- dispatcher $ LoginA TODO
 
 dispatchAction dispatcher _ AddCorpus = do
-  _ <- dispatcher $ SetRoute AddCorpus
-  _ <- dispatcher $ AddCorpusA AC.LoadDatabaseDetails
-  pure unit
+  dispatcher $ SetRoute   AddCorpus
+  dispatcher $ AddCorpusA AC.LoadDatabaseDetails
 
-dispatchAction dispatcher _ DocView = do
-  _ <- dispatcher $ SetRoute $ DocView
-  _ <- dispatcher $ DocViewA $ DV.LoadData
-  pure unit
+dispatchAction dispatcher _ (DocView n) = do
+  dispatcher $ SetRoute   (DocView n)
+  dispatcher $ DocViewA $ DV.LoadData n
 
 dispatchAction dispatcher _ SearchView = do
-  _ <- dispatcher $ SetRoute $ SearchView
-  _ <- dispatcher $ SearchA  $ S.NoOp
-  pure unit
+  dispatcher $ SetRoute SearchView
+  -- dispatcher $ SearchA TODO
 
 dispatchAction dispatcher _ (UserPage id) = do
-  _ <- dispatcher $ SetRoute  $ UserPage id
-  _ <- dispatcher $ UserPageA $ U.NoOp
-  _ <- dispatcher $ UserPageA $ U.FetchUser id
-  pure unit
+  dispatcher $ SetRoute $ UserPage id
+  -- dispatcher $ UserPageA TODO
+  dispatcher $ UserPageA $ U.FetchUser id
+
+dispatchAction dispatcher _ (Annuaire id) = do
+  dispatcher $ SetRoute       $ Annuaire id
+  dispatcher $ AnnuaireAction $ Annuaire.Load id
+
+dispatchAction dispatcher _ (Folder id) = do
+  dispatcher $ SetRoute $ Folder id
 
 dispatchAction dispatcher _ (DocAnnotation i) = do
-  _ <- dispatcher $ SetRoute  $ DocAnnotation i
-  _ <- dispatcher $ DocAnnotationViewA $ D.NoOp
-  pure unit
+  dispatcher $ SetRoute $ DocAnnotation i
+  -- dispatcher $ DocAnnotationViewA TODO
 
 dispatchAction dispatcher _ Tabview = do
-  _ <- dispatcher $ SetRoute  $ Tabview
-  _ <- dispatcher $ TabViewA $ TV.NoOp
-  pure unit
+  dispatcher $ SetRoute Tabview
+  -- dispatcher $ TabViewA TODO
 
 dispatchAction dispatcher _ CorpusAnalysis = do
-  _ <- dispatcher $ SetRoute  $ CorpusAnalysis
-  --_ <- dispatcher $ CorpusAnalysisA $ CA.NoOp
-  pure unit
+  dispatcher $ SetRoute CorpusAnalysis
+  -- dispatcher $ CorpusAnalysisA TODO
 
 dispatchAction dispatcher _ PGraphExplorer = do
-  _ <- dispatcher $ SetRoute  $ PGraphExplorer
-  _ <- dispatcher $ GraphExplorerA $ GE.LoadGraph "imtNew.json"
-  pure unit
+  dispatcher $ SetRoute PGraphExplorer
+  dispatcher $ GraphExplorerA $ GE.LoadGraph "imtNew.json"
 
 dispatchAction dispatcher _ NGramsTable = do
-  _ <- dispatcher $ SetRoute  $ NGramsTable
-  _ <- dispatcher $ NgramsA $ NG.NoOp
-  pure unit
+  dispatcher $ SetRoute NGramsTable
+  -- dispatcher $ NgramsA TODO
 
 dispatchAction dispatcher _ Dashboard = do
-  _ <- dispatcher $ SetRoute $ Dashboard
-  pure unit
+  dispatcher $ SetRoute Dashboard

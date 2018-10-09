@@ -2,6 +2,7 @@ module Gargantext.Components.Charts.Charts where
 
 import Prelude hiding (min)
 
+import Gargantext.Components.Charts.Options.Series (Series(..), D1, seriesType, SeriesShape(..))
 import CSS (Color, white)
 import Data.Maybe (Maybe(..))
 import React as R
@@ -30,7 +31,7 @@ group = unsafeMkProps "group"
     -- resizable  :: Boolean, -- PropTypes.bool,
     -- onEvents   :: String --  PropTypes.object
 
-type EchartsProps eff =
+type EchartsProps=
   { className   :: String,
     style       :: String,  -- objealect-black-altdarkmincnaquadahherry-blossomect,
     theme       :: String,
@@ -55,7 +56,7 @@ type OptsLoading =
   }
 
 type OpTest =
-  {option :: Option}
+  {children :: R.Children, option :: Option}
 
 type Option =
   { title    :: Maybe Title
@@ -161,11 +162,12 @@ type AxisLabel =
   }
 
 
-type Series =
-  { name   :: String
-  , "type" :: String
-  , "data" :: Array Int
-  }
+--type Series =
+--  { name   :: String
+--  , "type" :: String
+--  , "data" :: Array Int
+--  }
+
 
 type Title =
   { text         :: String
@@ -202,14 +204,14 @@ type Title =
 type Rich = {}
 
 
-foreign import eChartsClass :: forall props. R.ReactClass props
+foreign import eChartsClass :: forall props. R.ReactClass { children :: R.Children | props}
 foreign import eChartsClass2 :: R.ReactClass OpTest
 
-echarts :: forall eff. Array Props -> R.ReactElement
-echarts p = R.createElementDynamic eChartsClass (unsafeFromPropsArray p) []
+echarts :: Array Props -> R.ReactElement
+echarts p = R.unsafeCreateElementDynamic eChartsClass (unsafeFromPropsArray p) []
 
-echarts' :: forall eff. Option -> R.ReactElement
-echarts' chart = R.createElementDynamic eChartsClass2 {option: chart} []
+echarts' :: Option -> R.ReactElement
+echarts' chart = R.unsafeCreateElementDynamic eChartsClass2 {option: chart} []
 
 -- Props
 
@@ -436,12 +438,12 @@ tooltip' =
   }
 
 
-series' :: Series
+series' :: D1
 series' =
   {
     name: "All"
-  , "type": "bar"
-  , "data": [201, 777, 879]
+  , "type": seriesType Bar
+  , "data": [201.0, 777, 879]
   }
 
 opt :: Option
@@ -453,7 +455,7 @@ opt =
     ,grid: {containLabel: true}
     ,xAxis: xAxis'
     ,yAxis: yData1
-    ,series: [series']
+    ,series: [SeriesD1 series']
     ,dataZoom: [dz1', dz1', dz2', dz2']
   }
 
@@ -591,5 +593,4 @@ sd2 = unsafeFromPropsArray
       ]
 
 
-p'' :: R.ReactElement
-p'' = p [] []
+

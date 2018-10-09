@@ -13,7 +13,8 @@ module Gargantext.Components.Charts.Options.Legend
 
 import Prelude (class Show, show, (<<<))
 
-import Data.Generic (class Generic, gShow)
+import Data.Generic.Rep
+import Data.Generic.Rep.Show
 import Data.String (toLower)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -31,16 +32,16 @@ legendType = LegendType <<< toLower <<< show
 newtype Orient = Orient String
 
 data Orientation = Horizontal | Vertical
-derive instance genericOrientation :: Generic Orientation
+derive instance genericOrientation :: Generic Orientation _
 
 orient :: Orientation -> Orient
-orient = Orient <<< toLower <<< gShow
+orient = Orient <<< toLower <<< genericShow
 
 
 foreign import data SelectedMode :: Type
 
 data LegendMode = Bool Boolean | Single | Multiple
-derive instance genericLegendMode :: Generic LegendMode
+derive instance genericLegendMode :: Generic LegendMode _
 
 selectedMode :: LegendMode -> SelectedMode
 selectedMode (Bool b) = unsafeCoerce b

@@ -3,23 +3,21 @@ module Gargantext.Router where
 import Prelude
 
 import Control.Alt ((<|>))
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import DOM (DOM)
-import DOM.HTML (window)
-import DOM.HTML.Window (localStorage)
-import DOM.WebStorage.Storage (getItem)
 import Data.Int (floor)
 import Data.Maybe (Maybe(..))
-import Routing.Match (Match)
-import Routing.Match.Class (lit, num)
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
+import Routing.Match (Match, lit, num)
+import Web.HTML (window)
+import Web.HTML.Window (localStorage)
+import Web.Storage.Storage (getItem)
 
 data Routes
   = Home
   | Login
   | AddCorpus
-  | DocView
+  | DocView        Int
   | SearchView
   | UserPage       Int
   | DocAnnotation  Int
@@ -28,20 +26,24 @@ data Routes
   | PGraphExplorer
   | NGramsTable
   | Dashboard
+  | Annuaire       Int
+  | Folder         Int
 
 
 instance showRoutes :: Show Routes where
   show Login            = "Login"
   show AddCorpus        = "AddCorpus"
-  show DocView          = "DocView"
-  show SearchView       = "SearchView"
-  show (UserPage i)     = "UserPage"
-  show (DocAnnotation i)= "DocumentView"
+  show (DocView i)      = "DocView"
+  show SearchView       = "Search"
+  show (UserPage i)     = "User"
+  show (DocAnnotation i)= "Document"
   show Tabview          = "Tabview"
-  show CorpusAnalysis   = "corpus"
+  show CorpusAnalysis   = "Corpus"
   show PGraphExplorer   = "graphExplorer"
   show NGramsTable      = "NGramsTable"
   show Dashboard        = "Dashboard"
+  show (Annuaire i)     = "Annuaire"
+  show (Folder   i)     = "Folder"
   show Home             = "Home"
 
 int :: Match Int
@@ -51,40 +53,33 @@ routing :: Match Routes
 routing =
       Login          <$  route "login"
   <|> Tabview        <$  route "tabview"
-  <|> DocAnnotation  <$> (route "documentView" *> int)
-  <|> UserPage       <$> (route "user" *> int)
+  <|> DocAnnotation  <$> (route "document" *> int)
+  <|> UserPage       <$> (route "user"     *> int)
   <|> SearchView     <$ route "search"
-  <|> DocView        <$ route "docView"
+  <|> DocView        <$> (route "docView" *> int)
   <|> AddCorpus      <$ route "addCorpus"
   <|> CorpusAnalysis <$ route "corpus"
-  <|> PGraphExplorer <$ route "graphExplorer"
+  <|> PGraphExplorer <$ route "graph"
   <|> NGramsTable    <$ route "ngrams"
   <|> Dashboard      <$ route "dashboard"
+  <|> Annuaire       <$> (route "annuaire" *> int)
+  <|> Folder         <$> (route "folder"   *> int)
   <|> Home           <$ lit ""
   where
     route str      = lit "" *> lit str
 
-routeHandler :: forall e. ( Maybe Routes -> Routes -> Eff
-                            ( dom     :: DOM
-                            , console :: CONSOLE
-                            | e
-                            ) Unit
-                          ) -> Maybe Routes -> Routes -> Eff
-                            ( dom     :: DOM
-                            , console :: CONSOLE
-                            | e
-                            ) Unit
+routeHandler :: (Maybe Routes -> Routes -> Effect Unit) -> Maybe Routes -> Routes -> Effect Unit
 routeHandler dispatchAction old new = do
-  liftEff $ log $ "change route : " <> show new
+  liftEffect $ log $ "change route : " <> show new
   w      <- window
   ls     <- localStorage w
   token  <- getItem "accessToken" ls
   let tkn = token
-  liftEff $ log $ "JWToken : " <> show tkn
+  liftEffect $ log $ "JWToken : " <> show tkn
   case tkn of
     Nothing -> do
       dispatchAction old new
-      liftEff $ log $ "called SignIn Route :"
+      liftEffect $ log $ "called SignIn Route :"
     Just t -> do
       dispatchAction old new
-      liftEff $ log $ "called Route : " <> show new
+      liftEffect $ log $ "called Route : " <> show new

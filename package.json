@@ -1,13 +1,13 @@
 {
     "dependencies": {
-        "create-react-class": "^15.6.2",
+        "create-react-class": "^15.6.3",
         "echarts": "^3.8.5",
-        "echarts-for-react": "^2.0.0",
-        "imports-loader": "^0.7.1",
-        "prop-types": "15.6.0",
-        "react": "^16.2.0",
-        "react-dom": "^16.2.0",
-        "react-echarts-v3": "^1.0.14",
+        "echarts-for-react": "^2.0.14",
+        "imports-loader": "^0.8.0",
+        "prop-types": "15.6.2",
+        "react": "^16.4.2",
+        "react-dom": "^16.4.2",
+        "react-echarts-v3": "^1.0.19",
         "react-sigma": "^1.2.30"
     },
     "browserify": {
@@ -37,6 +37,10 @@
         "babel-preset-react": "^6.24.1",
         "babel-preset-stage-0": "^6.24.1",
         "babel-runtime": "^6.26.0",
-        "babelify": "^8.0.0"
+        "babelify": "^8.0.0",
+        "bower": "^1.8.4",
+        "http-server": "^0.11.1",
+        "pulp": "^12.3.0",
+        "purescript": "^0.12.0"
     }
 }

@@ -2,30 +2,28 @@ module Gargantext.Components.Login where
 
 import Prelude hiding (div)
 
-import Control.Monad.Aff (Aff, attempt)
-import Control.Monad.Aff.Class (liftAff)
-import Control.Monad.Aff.Console (log)
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
-import DOM.HTML (window)
-import DOM.HTML.Window (localStorage)
-import DOM.WebStorage.Storage (getItem, setItem)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.RequestBody (RequestBody(..))
+import Affjax.RequestHeader (RequestHeader(..))
+import Affjax.ResponseFormat as ResponseFormat
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, stringify, (.?), (:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Lens (over)
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationJSON)
+import Effect (Effect)
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
 import Gargantext.Components.Modals.Modal (modalHide)
-import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
-import Network.HTTP.RequestHeader (RequestHeader(..))
 import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
 import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
 import Thermite (PerformAction, Render, Spec, _render, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-
+import Web.HTML (window)
+import Web.HTML.Window (localStorage)
+import Web.Storage.Storage (getItem, setItem)
 
 --          TODO: ask for login (modal) or account creation after 15 mn when user is not logged and has made one search at least
 
@@ -48,19 +46,12 @@ initialState = State
   }
 
 data Action
-  = NoOp
-  | Login
+  = Login
   | SetUserName String
   | SetPassword String
 
 
-performAction :: forall eff props. PerformAction ( console :: CONSOLE
-                                                 , ajax    :: AJAX
-                                                 , dom     :: DOM
-                                                 | eff
-                                                 ) State props Action
-performAction NoOp _ _ = void do
-  modifyState id
+performAction :: PerformAction State {} Action
 
 performAction (SetUserName usr) _ _ = void do
   modifyState \(State state) -> State $ state { username = usr }
@@ -71,9 +62,9 @@ performAction (SetPassword pwd) _ _ = void do
 
 
 
-performAction Login _ (State state) = void do
+performAction Login _ _ = void do
   --lift $ setHash "/search"
-  liftEff $ modalHide "loginModal"
+  liftEffect $ modalHide "loginModal"
   modifyState \(State state) -> State $ state {loginC = true}
   -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
   -- case res of
@@ -85,7 +76,7 @@ performAction Login _ (State state) = void do
   --     modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
 
 
-modalSpec :: forall eff props. Boolean -> String -> Spec eff State props Action -> Spec eff State props Action
+modalSpec :: forall props. Boolean -> String -> Spec State props Action -> Spec State props Action
 modalSpec sm t = over _render \render d p s c ->
   [ div [ _id "loginModal", className $ "modal myModal" <> if sm then "" else " fade"
             , role "dialog"
@@ -113,13 +104,13 @@ modalSpec sm t = over _render \render d p s c ->
              ]
   ]
 
-spec' :: forall eff props. Spec (console:: CONSOLE, ajax :: AJAX, dom :: DOM | eff) State props Action
+spec' :: Spec State {} Action
 spec' = modalSpec true "Login" renderSpec
 
-renderSpec :: forall props eff . Spec (console::CONSOLE, ajax::AJAX, dom::DOM | eff) State props Action
+renderSpec :: Spec State {} Action
 renderSpec = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ (State state) _ =
       [
         div [className "row"]
@@ -149,13 +140,13 @@ renderSpec = simpleSpec performAction render
                   [ input [_type "hidden",
                            name "csrfmiddlewaretoken",
                            value "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP0j4WcEM" ]
-                    []
+
                   , div [className "form-group"]
                     [ p [] [text state.errorMessage]
-                    , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName (unsafeEventValue e))] []
+                    , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName (unsafeEventValue e))]
                     ]
                   , div [className "form-group"]
-                    [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password,onInput \e -> dispatch (SetPassword (unsafeEventValue e))] []
+                    [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password,onInput \e -> dispatch (SetPassword (unsafeEventValue e))]
                     , div [className "clearfix"] []
                     ]
                   , div [className "center"]
@@ -163,8 +154,6 @@ renderSpec = simpleSpec performAction render
                       label [] [
                          div [className "checkbox"]
                          [ input [_id "terms-accept", _type "checkbox", value "", className "checkbox"]
-                           [
-                           ]
                          , text "I accept the terms of uses ",
                            a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text "[Read the terms of use]"]
                          ]
@@ -219,14 +208,14 @@ unsafeEventValue e = (unsafeCoerce e).target.value
 
 
 
-getDeviseID ::  forall eff. Eff (dom :: DOM | eff) (Maybe String)
+getDeviseID ::  Effect (Maybe String)
 getDeviseID = do
   w  <- window
   ls <- localStorage w
   getItem "token" ls
 
 
-setToken :: forall e . String -> Eff (dom :: DOM | e) Unit
+setToken :: String -> Effect Unit
 setToken s = do
   w  <- window
   ls <- localStorage w
@@ -244,37 +233,37 @@ newtype LoginReq = LoginReq
   , password :: String
   }
 
-loginReq :: forall eff. LoginReq -> Aff (console :: CONSOLE, ajax :: AJAX, dom :: DOM | eff) (Either String LoginRes)
+loginReq :: LoginReq -> Aff (Either String LoginRes)
 loginReq encodeData =
   let
     setting =
       defaultRequest
         { url = "https://dev.gargantext.org/api/auth/token"
         , method = Left POST
+        , responseFormat = ResponseFormat.json
         , headers =
             [ ContentType applicationJSON
             , Accept applicationJSON
             ]
-        , content = Just $ encodeJson encodeData
+        , content = Just $ Json $ encodeJson encodeData
         }
   in
     do
-      affResp <- liftAff $ attempt $ affjax setting
-      case affResp of
+      affResp <- request setting
+      case affResp.body of
         Left err -> do
-          liftAff $ log $ show err
-          pure $ Left $ show err
-        Right a -> do
-          liftAff $ log $ "POST method Completed"
-          liftAff $ log $ "GET /api response: " <> show a.response
-          let res = decodeJson a.response
-          liftAff $ log $ "res: " <> show a.response
-          case res of
+          liftEffect $ log $ printResponseFormatError err
+          pure $ Left $ printResponseFormatError err
+        Right json -> do
+          liftEffect $ log $ "POST method Completed"
+          liftEffect $ log $ "GET /api response: " <> stringify json
+          let obj = decodeJson json
+          case obj of
             Left e ->
-              liftAff $ log $ "Error Decoding : " <> show e
+              liftEffect $ log $ "Error Decoding : " <> show e
             Right (LoginRes res1) ->
-              liftEff $ setToken res1.token
-          pure res
+              liftEffect $ setToken res1.token
+          pure obj
 
 instance decodeLoginRes :: DecodeJson LoginRes where
   decodeJson json = do

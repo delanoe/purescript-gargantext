@@ -1,49 +1,40 @@
-module Gargantext.Pages.Corpus.User.Users.Types where
+module Gargantext.Pages.Corpus.User.Users.Types
+       (module Gargantext.Pages.Corpus.User.Users.Types.Types,
+        module Gargantext.Pages.Corpus.User.Users.Types.Lens,
+        module Gargantext.Pages.Corpus.User.Users.Types.States,
+        brevetSpec,
+        projectSpec,
+        facets
+       )
+       where
 
-import Prelude (bind, pure, ($))
+import Prelude
 
+import Gargantext.Pages.Corpus.User.Users.Types.Lens
+import Gargantext.Pages.Corpus.User.Users.Types.Types
+import Gargantext.Pages.Corpus.User.Users.Types.States
 import Gargantext.Pages.Corpus.User.Brevets as B
-import Gargantext.Pages.Folder as PS
-import Gargantext.Components.Tab (tabs)
-import Gargantext.Utils.DecodeMaybe ((.?|))
-
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Map (Map, fromFoldable)
-import Data.Maybe (Maybe)
 import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
+import Gargantext.Components.Tab (tabs)
+import Thermite (Render, Spec, focus, noState, defaultPerformAction, simpleSpec)
 
-import Control.Monad.Aff.Console (CONSOLE)
-import DOM (DOM)
-import Network.HTTP.Affjax (AJAX)
-import Thermite (Spec, focus)
+brevetSpec :: Spec State {} Action
+brevetSpec = noState B.brevetsSpec
 
-newtype User =
-  User {
-    id ::Int,
-    typename :: Maybe Int,
-    userId ::Int,
-    parentId :: Int,
-    name :: String,
-    date ::Maybe String,
-    hyperdata :: Maybe HyperData
-       }
+projets :: Spec {} {} Void
+projets = simpleSpec defaultPerformAction render
+  where
+    render :: Render {} {} Void
+    render dispatch _ state _ =
+      []
 
-instance decodeUser :: DecodeJson User where
-  decodeJson json = do
-    obj <- decodeJson json
-    id <- obj .? "id"
-    typename <- obj .?| "typename"
-    userId <- obj .? "userId"
-    parentId <- obj .? "parentId"
-    name <- obj .? "name"
-    date <- obj .?| "date"
-    hyperdata <- obj .?| "hyperdata"
-    pure $ User {id, typename, userId, parentId, name, date, hyperdata}
+projectSpec :: Spec State {} Action
+projectSpec = noState projets
 
-newtype HyperData = HyperData (Map String String)
-
-instance decodeHyperData :: DecodeJson HyperData where
-  decodeJson json = do
-    obj <- decodeJObject json
-    pure <<< HyperData $ fromFoldable obj
+facets :: Spec State {} Action
+facets = tabs _tablens _tabAction $ fromFoldable
+         [ Tuple "Publications (12)" publicationSpec
+         , Tuple "Brevets (2)" brevetSpec
+         , Tuple "Projets IMT (5)" projectSpec
+         ]

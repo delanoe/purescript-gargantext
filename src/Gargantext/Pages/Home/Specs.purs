@@ -2,45 +2,40 @@ module Gargantext.Pages.Home.Specs where
 
 import Prelude hiding (div)
 
-import Control.Monad.Cont.Trans (lift)
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
+import Data.Lens (re)
+import Data.Lens.Iso.Newtype (_Newtype)
+import Data.Newtype (unwrap)
 
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Data.Lang (Lang(..))
-import Gargantext.Pages.Home.States  (State(..))
-import Gargantext.Pages.Home.Actions (Action(..), performAction)
+import Gargantext.Pages.Home.States (State, initialState)
+import Gargantext.Pages.Home.Actions (Action, performAction)
 
-import Network.HTTP.Affjax (AJAX)
 import React (ReactElement)
 import React.DOM (a, div, h3, i, img, p, span, text)
 import React.DOM.Props (Props, _id, aria, className, href, src, target, title)
-import Routing.Hash.Aff (setHash)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Thermite (Render, Spec, simpleSpec, hide, focusState)
 
 
 -- Layout |
 
-layoutLanding :: forall props eff . Lang -> Spec ( console :: CONSOLE
-                                              , ajax    :: AJAX
-                                              , dom     :: DOM
-                                              | eff
-                                              ) State props Action
-layoutLanding FR = layoutLanding' Fr.landingData
-layoutLanding EN = layoutLanding' En.landingData
+landingData :: Lang -> LandingData
+landingData FR = Fr.landingData
+landingData EN = En.landingData
+
+layoutLanding :: Lang -> Spec {} {} Void
+layoutLanding = hide (unwrap initialState)
+            <<< focusState (re _Newtype)
+            <<< layoutLanding' <<< landingData
 
 ------------------------------------------------------------------------
 
-layoutLanding' :: forall props eff . LandingData -> Spec ( console :: CONSOLE
-                                                   , ajax    :: AJAX
-                                                   , dom     :: DOM
-                                                   | eff
-                                                   ) State props Action
+layoutLanding' :: LandingData -> Spec State {} Action
 layoutLanding' hd = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [ div [ className "container1" ] [ jumboTitle hd false                 ]
       , div [ className "container1" ] [] -- put research here
@@ -83,11 +78,11 @@ jumboTitle :: LandingData -> Boolean -> ReactElement
 jumboTitle (LandingData hd) b = div jumbo
                    [ div [className "row"             ]
                      [ div [ className "col-md-8 content"]
-                           [ p [ className "left" ]
+                           [ div [ className "left" ]
                                [ div [_id "logo-designed" ]
                                  [ img [ src "images/logo.png"
                                        , title hd.logoTitle
-                                       ] []
+                                       ]
                                  ]
                                ]
                            ]
@@ -96,7 +91,7 @@ jumboTitle (LandingData hd) b = div jumbo
                                    , _id "funnyimg"
                                    , title hd.imageTitle
                                    ]
-                                   []
+
                            ]
                      ]
                    ]
@@ -113,6 +108,5 @@ imageEnter (LandingData hd) action =  div [className "row"]
                                    , title hd.imageTitle
                                    , action
                                    ]
-                                   []
                              ]
                            ]

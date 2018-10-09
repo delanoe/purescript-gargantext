@@ -3,8 +3,8 @@ module Gargantext.Pages.Corpus.Doc.Annotation where
 import Prelude hiding (div)
 import React (ReactElement)
 import React.DOM (a, button, div, h4, h6, input, li, nav, option, p, select, span, text, ul)
-import React.DOM.Props (_data, _id, _type, aria, className, href, name, onChange, onInput, placeholder, role, selected, style, value)
-import Thermite (PerformAction, Render, Spec, cotransform, modifyState, simpleSpec)
+import React.DOM.Props (_data, _id, _type, aria, className, href, name, onChange, onInput, placeholder, role, style, value)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 
@@ -21,28 +21,25 @@ initialState =
 
 
 data Action
-  = NoOp
-  | ChangeString String
+  = ChangeString String
   | ChangeAnotherString String
   | SetInput String
 
 
-performAction :: PerformAction _ State _ Action
-performAction NoOp _ _ = pure unit
-
+performAction :: PerformAction State {} Action
 performAction (ChangeString ps) _ _ = pure unit
 
 performAction (ChangeAnotherString ps) _ _ = pure unit
 
 performAction (SetInput ps) _ _ = void do
-  modifyState \( state) ->  state { inputValue = ps }
+  modifyState $ _ { inputValue = ps }
 
 
 
-docview :: Spec _ State _ Action
+docview :: Spec State {} Action
 docview = simpleSpec performAction render
   where
-    render :: Render State _ Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [
           div [className "container1"]
@@ -76,7 +73,7 @@ docview = simpleSpec performAction render
                     [
                       h6 [] [text "Add a free term to STOPLIST"]
                     ,  div [className "form-group"]
-                       [ input [className "form-control", _id "id_password", name "password", placeholder "Any text", _type "value",value state.inputValue,onInput \e -> dispatch (SetInput (unsafeEventValue e))] []
+                       [ input [className "form-control", _id "id_password", name "password", placeholder "Any text", _type "value",value state.inputValue,onInput \e -> dispatch (SetInput (unsafeEventValue e))]
                        , div [className "clearfix"] []
                        ]
                     , button [className "btn btn-primary", _type "button"] [text "Create and Add"]

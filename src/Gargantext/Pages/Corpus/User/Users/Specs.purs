@@ -5,19 +5,12 @@ module Gargantext.Pages.Corpus.User.Users.Specs
 
 import Gargantext.Pages.Corpus.User.Users.Specs.Renders
 
-import Control.Monad.Aff.Console (CONSOLE)
-import DOM (DOM)
-import Network.HTTP.Affjax (AJAX)
 import Thermite (Spec, simpleSpec)
 import Gargantext.Pages.Corpus.User.Users.Actions
 import Gargantext.Pages.Corpus.User.Users.States
 import Gargantext.Pages.Corpus.User.Users.API (performAction)
 
-layoutUser :: forall props eff . Spec ( console :: CONSOLE
-                                        , ajax    :: AJAX
-                                        , dom     :: DOM
-                                        | eff
-                                        ) State props Action
+layoutUser :: Spec State {} Action
 layoutUser = simpleSpec performAction render
 
 publicationSpec :: forall eff props. Spec (dom :: DOM, console :: CONSOLE, ajax :: AJAX | eff) State props Action

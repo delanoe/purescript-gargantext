@@ -14,8 +14,9 @@ module Gargantext.Components.Charts.Options.Font
 
 import Prelude (Unit, ($), (<<<), (<>))
 
+import Data.Generic.Rep
+import Data.Generic.Rep.Show
 import CSS (FontStyle(..), FontWeight(..), Prefixed(..), Value(..))
-import Data.Generic (class Generic, gShow)
 import Data.String (toLower)
 import Gargantext.Components.Charts.Options.Color (ChartColor)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
@@ -63,10 +64,10 @@ newtype Icon = Icon String
 newtype ImageURL = ImageURL String
 
 data Shape = Circle | Rect | RoundRect | Triangle | Diamond | Pin | Arrow
-derive instance genericShape :: Generic Shape
+derive instance genericShape :: Generic Shape _
 
 data IconOptions = Shape Shape | Image ImageURL
 
 icon :: IconOptions -> Icon
-icon (Shape s) = Icon <<< toLower $ gShow s
+icon (Shape s) = Icon <<< toLower $ genericShow s
 icon (Image (ImageURL url)) = Icon $ "image://" <> url

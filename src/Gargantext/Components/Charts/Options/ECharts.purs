@@ -11,9 +11,11 @@ import Gargantext.Components.Charts.Options.Data (DataN, DataS, DataV)
 import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
 import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-import Gargantext.Components.Charts.Options.Series (Series, SeriesName, SeriesShape(..), seriesType)
+import Gargantext.Components.Charts.Options.Series (Serie(..), Series(..), toSeries, SeriesName, Chart(..), seriesType, D1, D2)
 import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis)
+import React (unsafeCreateElementDynamic)
 import React as R
+import Unsafe.Coerce (unsafeCoerce)
 
 
 foreign import eChartsClass :: R.ReactClass Echarts
@@ -23,23 +25,23 @@ chart = echarts <<< chartWith <<< opts
 
 
 chartWith :: Option -> Echarts
-chartWith opts = { className: Nothing
-             , style: Nothing
-             , theme: Nothing
-             , group: Nothing
-             , option: opts
-             , initOpts: Nothing
-             , notMerge: Nothing
-             , lazyUpdate: Nothing
-             , loading: Nothing
-             , optsLoading: Nothing
-             , onReady: Nothing
-             , resizable: Nothing
-             , onEvents: Nothing
-             }
+chartWith opts = { className : Nothing
+                 , style     : Nothing
+                 , theme     : Nothing
+                 , group     : Nothing
+                 , option    : opts
+                 , initOpts  : Nothing
+                 , notMerge  : Nothing
+                 , lazyUpdate: Nothing
+                 , loading   : Nothing
+                 , optsLoading: Nothing
+                 , onReady    : Nothing
+                 , resizable  : Nothing
+                 , onEvents   : Nothing
+                 }
 
-echarts :: forall eff. Echarts -> R.ReactElement
-echarts chart = R.createElementDynamic eChartsClass chart []
+echarts :: Echarts -> R.ReactElement
+echarts chart = unsafeCreateElementDynamic (unsafeCoerce eChartsClass) chart []
 
 type MainTitle = String
 type SubTitle  = String
@@ -112,7 +114,9 @@ data2 = {name: "Favorites", icon: icon $ Shape Circle, textStyle: textStyle'}
 data3 :: DataN
 data3 = {name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle'}
 
+
 xAxis :: Array String -> XAxis
+xAxis [] = unsafeCoerce {}
 xAxis xs = { "data": xData xs
            , "type": "category"
            , axisTick: {alignWithLabel: true}
@@ -153,11 +157,19 @@ tooltip' =
   }
 
 
-series :: SeriesShape -> SeriesName -> Array DataS -> Series
+series :: Chart -> SeriesName -> Array DataS -> D1
 series sh name ss =  { name: name
   , "type": seriesType sh
   , "data": ss
   }
+
+seriesD2 :: Chart -> Number -> Array (Array Number) -> D2
+seriesD2 sh size ds = { "symbolSize" : size
+                      , "data"       : ds
+                      , "type"       : seriesType sh
+                    }
+
+
 
 data YAxisFormat = YAxisFormat { position :: String
                                , visible  :: Boolean
@@ -166,7 +178,7 @@ data YAxisFormat = YAxisFormat { position :: String
 data Options = Options { mainTitle   :: MainTitle
                        , subTitle    :: SubTitle
                        , xAxis       :: XAxis
-                       , yAxis       :: Array Series
+                       , yAxis       :: Array Serie
                        , yAxisFormat :: YAxisFormat
                        , addZoom     :: Boolean
                      }
@@ -187,7 +199,7 @@ opts (Options { mainTitle : mainTitle
              }
   , grid   : {containLabel: true}
   , xAxis  : xs
-  , series : ss
+  , series : map toSeries $ ss
   , yAxis  : { "type": "value"
               , name: "data"
               , min: 0
@@ -195,7 +207,8 @@ opts (Options { mainTitle : mainTitle
               , axisLabel: {formatter: "{value}"}
               , show: visible
               }
-  ,dataZoom: if addZoom then [zoom Slider, zoom Inside] else []
+  , dataZoom: if addZoom then [zoom Slider, zoom Inside] else []
+  , children : unsafeCoerce []
   }
 
 
@@ -215,10 +228,10 @@ zoom z = {
   }
 
 
-seriesPie :: Series
+seriesPie :: D1
 seriesPie =
   {
-    name: "Pie"
+    name: "Pie name"
   , "type": seriesType Pie
   , "data": [{name: "t1", value: 50.0},
              {name: "t2", value: 45.0},
@@ -227,7 +240,6 @@ seriesPie =
              {name: "t5", value: 23.0}
              ]
   }
-
 
 
 textStyle2 :: TextStyle

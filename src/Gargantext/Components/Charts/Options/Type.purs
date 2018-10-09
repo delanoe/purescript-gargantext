@@ -10,23 +10,23 @@ import Gargantext.Components.Charts.Options.Font (TextStyle)
 import Gargantext.Components.Charts.Options.Legend (LegendType, Orient, SelectedMode)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Gargantext.Components.Charts.Options.Series (Series)
-
+import React as R
 newtype ChartAlign = ChartAlign String
 
 type Echarts =
-  { className   :: Maybe String,
-    style       :: Maybe String,  -- objealect-black-altdarkmincnaquadahherry-blossomect,
-    theme       :: Maybe String,
-    group       :: Maybe String,
-    option      :: Option, --  PropTypes.object.isRequired,
-    initOpts    :: Maybe String, -- PropTypes.object,
-    notMerge    :: Maybe Boolean,
-    lazyUpdate  :: Maybe Boolean,
-    loading     :: Maybe Boolean,
-    optsLoading :: Maybe OptsLoading, --  PropTypes.object,
-    onReady     :: Maybe String, --  PropTypes.func,
-    resizable   :: Maybe Boolean, -- PropTypes.bool,
-    onEvents    :: Maybe String --  PropTypes.object
+  { className   :: Maybe String
+  , style       :: Maybe String  -- objealect-black-altdarkmincnaquadahherry-blossomect,
+  , theme       :: Maybe String
+  , group       :: Maybe String
+  , option      :: Option       --  PropTypes.object.isRequired,
+  , initOpts    :: Maybe String -- PropTypes.object,
+  , notMerge    :: Maybe Boolean
+  , lazyUpdate  :: Maybe Boolean
+  , loading     :: Maybe Boolean
+  , optsLoading :: Maybe OptsLoading --  PropTypes.object,
+  , onReady     :: Maybe String   --  PropTypes.func,
+  , resizable   :: Maybe Boolean  -- PropTypes.bool,
+  , onEvents    :: Maybe String   -- PropTypes.object
   }
 
 type Option =
@@ -38,11 +38,11 @@ type Option =
   , yAxis    :: YAxis
   , series   :: Array Series
   , dataZoom :: Array DataZoom
+  , children :: R.Children
   }
 
 type Title =
-  {
-    id :: String -- None by default
+  { id :: String -- None by default
   , show :: Boolean -- default True
   , text :: String -- default ''
   , link :: String -- default ''
@@ -71,11 +71,11 @@ type Title =
   }
 
 type OptsLoading =
-  { text      :: String,
-    color     :: Color,  --- color
-    textColor :: Color, --color
-    maskColor :: Color, --color
-    zlevel    :: Int
+  { text      :: String
+  ,  color     :: Color  --- color
+  ,  textColor :: Color --color
+  ,  maskColor :: Color --color
+  ,  zlevel    :: Int
   }
 
 type DataZoom =

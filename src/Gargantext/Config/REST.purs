@@ -2,31 +2,30 @@ module Gargantext.Config.REST where
 
 import Prelude
 
-import Control.Monad.Aff (Aff, attempt)
-import Control.Monad.Aff.Class (liftAff)
-import Control.Monad.Eff.Console (CONSOLE)
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.RequestHeader (RequestHeader(..))
+import Affjax.ResponseFormat as ResponseFormat
 import Data.Argonaut (class DecodeJson, decodeJson)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.MediaType.Common (applicationJSON)
-import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
-import Network.HTTP.RequestHeader (RequestHeader(..))
+import Effect.Aff (Aff)
 
-get :: forall eff t2 t31. DecodeJson t31 => String ->
-                      Aff (console :: CONSOLE, ajax :: AJAX| eff)
-                          (Either String t31)
+get :: forall t31. DecodeJson t31 => String ->
+                      Aff (Either String t31)
 get url = do
-  affResp <- liftAff $ attempt $ affjax defaultRequest
+  affResp <- request defaultRequest
     { method  = Left GET
     , url     = url
+    , responseFormat = ResponseFormat.json
     , headers =  [ ContentType applicationJSON
                  , Accept applicationJSON
-              --   , RequestHeader "Authorization" $  "Bearer " <> token
+                   --   , RequestHeader "Authorization" $  "Bearer " <> token
                  ]
     }
-  case affResp of
+  case affResp.body of
     Left err -> do
-      pure $ Left $ show err
+      pure $ Left $ printResponseFormatError err
     Right a -> do
-      let res = decodeJson a.response
+      let res = decodeJson a
       pure res

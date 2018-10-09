@@ -17,3 +17,4 @@ type DataS =
   { name :: String
   , value :: Number
   }
+

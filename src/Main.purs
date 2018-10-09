@@ -2,42 +2,40 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE)
-import DOM (DOM)
-import DOM.HTML (window) as DOM
-import DOM.HTML.Types (htmlDocumentToParentNode) as DOM
-import DOM.HTML.Window (document) as DOM
-import DOM.Node.ParentNode (QuerySelector(..))
-import DOM.Node.ParentNode (querySelector) as DOM
 import Data.Maybe (fromJust)
-
-import Gargantext.Pages.Layout        (dispatchAction)
-import Gargantext.Pages.Layout.Specs  (layoutSpec)
+import Effect (Effect)
+import Gargantext.Pages.Layout (dispatchAction)
+import Gargantext.Pages.Layout.Specs (layoutSpec)
 import Gargantext.Pages.Layout.States (initAppState)
-
 import Gargantext.Router (routeHandler, routing)
-import Network.HTTP.Affjax (AJAX)
 import Partial.Unsafe (unsafePartial)
 import React as R
 import ReactDOM as RDOM
-import Routing (matches)
-import Routing.Hash (getHash, setHash)
+import Record.Unsafe (unsafeSet)
+import Routing.Hash (getHash, matches, setHash)
 import Thermite as T
+import Web.DOM.ParentNode (QuerySelector(..), querySelector)
+import Web.HTML (window)
+import Web.HTML.Window (document)
+import Web.HTML.HTMLDocument (toParentNode)
 
-main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e ) Unit
+setUnsafeComponentWillMount :: forall s. Effect Unit -> Record s -> Record (unsafeComponentWillMount :: Effect Unit | s)
+setUnsafeComponentWillMount = unsafeSet "unsafeComponentWillMount"
+
+main :: Effect Unit
 main = do
  case T.createReactSpec layoutSpec initAppState of
     { spec, dispatcher } -> void $ do
       let setRouting this = void $ do
             matches routing (routeHandler (dispatchAction (dispatcher this)))
-          spec' = spec { componentWillMount = setRouting }
-      document <- DOM.window >>= DOM.document
-      container <- unsafePartial (fromJust  <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
+          spec' this = setUnsafeComponentWillMount (setRouting this) <$> (spec this)
+      document <- window >>= document
+      container <- unsafePartial (fromJust  <$> querySelector (QuerySelector "#app") (toParentNode document))
       h <- getHash
       case h of
         "" -> setHash "/"
         _ -> do
           setHash "/"
           setHash h
-      RDOM.render (R.createFactory (R.createClass spec') {}) container
+      let e = R.unsafeCreateElement (R.component "GargantextMain" spec') {} []
+      RDOM.render e container

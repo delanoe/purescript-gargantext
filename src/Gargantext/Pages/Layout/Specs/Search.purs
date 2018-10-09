@@ -1,16 +1,13 @@
-module Gargantext.Pages.Search where
+module Gargantext.Pages.Layout.Specs.Search where
 
-import Control.Monad.Aff.Console (CONSOLE)
-import Control.Monad.Cont.Trans (lift)
-import DOM (DOM)
-import Network.HTTP.Affjax (AJAX)
 import Prelude hiding (div)
-import React.DOM (br', button, div, h3, input, text, i, span, img)
-import React.DOM.Props (_id, _type, className, name, onClick, onInput, placeholder, value, aria, src, title)
-import Routing.Hash.Aff (setHash)
+
+import Effect.Class (liftEffect)
+import React.DOM (br', button, div, input, text)
+import React.DOM.Props (_id, _type, className, name, onClick, onInput, placeholder, value)
+import Routing.Hash (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-import Gargantext.Pages.Home as L
 
 type State =
   {
@@ -21,49 +18,38 @@ type State =
 initialState :: State
 initialState =
   {
-    query : ""
+    query : "empty query"
   }
 
 
 data Action
-  = NoOp
-  | GO
+  = GO
   | SetQuery String
 
 
-performAction :: forall eff props. PerformAction (console :: CONSOLE, ajax :: AJAX,dom::DOM | eff) State props Action
-performAction NoOp _ _ = void do
-  modifyState id
-
-
+performAction :: PerformAction State {} Action
 performAction (SetQuery q) _ _ = void do
-   modifyState \( state) ->  state { query = q }
+   modifyState $ _ { query = q }
 
 
 performAction GO _ _ = void do
-  lift $ setHash "/addCorpus"
-  modifyState id
-
+  liftEffect $ setHash "/addCorpus"
 
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
 
-searchSpec :: forall props eff . Spec ( console :: CONSOLE
-                                      , ajax    :: AJAX
-                                      , dom     :: DOM
-                                      | eff
-                                      ) State props Action
+searchSpec :: Spec State {} Action
 searchSpec = simpleSpec performAction render
   where
-    render :: Render State props Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [ div [className "container1"] []
       , div [className "container1"]
        [ div [className "jumbotron" ]
          [ div [className "row"       ]
            [ div [className "col-md-10" ]
-             [ br' []
-             , br' []
+             [ br'
+             , br'
              , div [ className "form-group"]
                    [ input [ className "form-control"
                            , _id "id_password"
@@ -72,16 +58,16 @@ searchSpec = simpleSpec performAction render
                            , _type "text"
                            , value state.query
                            , onInput \e -> dispatch (SetQuery (unsafeEventValue e))
-                           ] []
-                    , br'[]
+                           ]
+                    , br'
                     ]
               ]
             , div [ className "col-md-2"]
-                  [ br' []
-                  , br' []
+                  [ br'
+                  , br'
                   , button [onClick \_ -> dispatch GO] [text "GO"]
                   ]
-            , br' []
+            , br'
             ]
           ]
         ]

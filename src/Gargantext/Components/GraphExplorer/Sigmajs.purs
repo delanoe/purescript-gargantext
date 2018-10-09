@@ -2,8 +2,9 @@ module Gargantext.Components.GraphExplorer.Sigmajs where
 
 import Prelude
 
-import Control.Monad.Eff (Eff)
-import React (ReactClass, ReactElement, createElement)
+import Effect (Effect)
+import Prim.Row (class Union)
+import React (Children, ReactClass, ReactElement, createElement, unsafeCreateElement)
 import Unsafe.Coerce (unsafeCoerce)
 
 foreign import edgeShapesClass  :: forall props. ReactClass props
@@ -12,51 +13,51 @@ foreign import forceAtlas2Class :: forall props. ReactClass props
 foreign import forceLinkClass   :: forall props. ReactClass props
 foreign import loadGEXFClass    :: forall props. ReactClass props
 foreign import loadJSONClass    :: forall props. ReactClass props
-foreign import nOverlapClass    :: forall props. ReactClass props
-foreign import neoCypherClass   :: forall props. ReactClass props
+foreign import nOverlapClass    :: ReactClass {children :: Children}
+foreign import neoCypherClass   :: ReactClass {children :: Children}
 foreign import neoGraphItemsProducersClass :: forall props. ReactClass props
-foreign import nodeShapesClass             :: forall props. ReactClass props
-foreign import randomizeNodePositionsClass :: forall props. ReactClass props
+foreign import nodeShapesClass             :: ReactClass {children :: Children}
+foreign import randomizeNodePositionsClass :: ReactClass {children :: Children}
 foreign import relativeSizeClass           :: forall props. ReactClass props
-foreign import sigmaClass :: forall props. ReactClass props
+foreign import sigmaClass :: ReactClass {children :: Children}
 foreign import sigmaEnableSVGClass :: forall props. ReactClass props
-foreign import sigmaEnableWebGLClass :: forall props. ReactClass props
+foreign import sigmaEnableWebGLClass :: ReactClass {children :: Children}
 
-neoCypher :: forall eff o. Optional o (NeoCypherOptProps eff)  => NeoCypherReqProps o -> ReactElement
-neoCypher props = createElement neoCypherClass props []
+neoCypher :: forall o. Optional o NeoCypherOptProps  => NeoCypherReqProps o -> ReactElement
+neoCypher props = unsafeCreateElement neoCypherClass (unsafeCoerce props) []
 
-loadJSON :: forall eff o. Optional o (onGraphLoaded :: Eff eff Unit) => { "path" :: String | o } -> ReactElement
-loadJSON props = createElement loadJSONClass props []
+loadJSON :: forall o. Optional o (onGraphLoaded :: Effect Unit) => { "path" :: String | o } -> ReactElement
+loadJSON props = unsafeCreateElement loadJSONClass props []
 
-loadGEXF :: forall eff o. Optional o (onGraphLoaded :: Eff eff Unit) => { "path" :: String | o } -> ReactElement
-loadGEXF props = createElement loadGEXFClass props []
+loadGEXF :: forall o. Optional o (onGraphLoaded :: Effect Unit) => { "path" :: String | o } -> ReactElement
+loadGEXF props = unsafeCreateElement loadGEXFClass props []
 
-forceLink :: forall eff o. Optional o (ForceLinkOptProps eff)  => { | o} -> ReactElement
-forceLink props = createElement forceLinkClass props []
+forceLink :: forall o. Optional o ForceLinkOptProps  => { | o} -> ReactElement
+forceLink props = unsafeCreateElement forceLinkClass props []
 
 nOverlap :: forall o. Optional o NOverlapOptProps  => { | o } -> ReactElement
-nOverlap props = createElement nOverlapClass props []
+nOverlap props = unsafeCreateElement nOverlapClass (unsafeCoerce props) []
 
 randomizeNodePositions :: ReactElement
 randomizeNodePositions  = createElement randomizeNodePositionsClass {} []
 
 relativeSize :: {initialSize :: Number } -> ReactElement
-relativeSize props = createElement randomizeNodePositionsClass props []
+relativeSize props = unsafeCreateElement randomizeNodePositionsClass (unsafeCoerce props) []
 
-forceAtlas2 :: forall eff o. Optional o (ForceAtlas2OptProps eff)  => { | o } -> ReactElement
-forceAtlas2 props = createElement forceAtlas2Class props []
+forceAtlas2 :: forall o. Optional o ForceAtlas2OptProps  => { | o } -> ReactElement
+forceAtlas2 props = unsafeCreateElement forceAtlas2Class props []
 
-sigma :: forall props eff. Optional props (SigmaProps eff) =>  { | props} -> Array ReactElement -> ReactElement
-sigma = createElement sigmaClass
+sigma :: forall props. Optional props SigmaProps =>  { | props} -> Array ReactElement -> ReactElement
+sigma props children = unsafeCreateElement sigmaClass (unsafeCoerce props) children
 
 sigmaEnableWebGL :: ReactElement
 sigmaEnableWebGL = createElement sigmaEnableWebGLClass {} []
 
 edgeShapes :: { "default" :: EdgeShape } -> ReactElement
-edgeShapes props = createElement edgeShapesClass props []
+edgeShapes props = unsafeCreateElement edgeShapesClass props []
 
 nodeShapes :: { "default" :: NodeShape } -> ReactElement
-nodeShapes props = createElement nodeShapesClass props []
+nodeShapes props = unsafeCreateElement nodeShapesClass (unsafeCoerce props) []
 
 
 foreign import data SigmaNode :: Type
@@ -69,9 +70,9 @@ instance srInstance :: Union r t s => Optional r s
 
 
 
-type NeoCypherOptProps eff =
+type NeoCypherOptProps =
   ( producers :: String
-  , onGraphLoaded :: Eff eff Unit
+  , onGraphLoaded :: Effect Unit
   )
 
 type NeoCypherReqProps o =
@@ -84,7 +85,7 @@ type NeoCypherReqProps o =
 
 
 
-type ForceLinkOptProps eff =
+type ForceLinkOptProps =
   ( barnesHutOptimize :: Boolean
   , barnesHutTheta :: Number
   , adjustSizes :: Boolean
@@ -138,7 +139,7 @@ sigmaEasing =
   , cubicInOut : SigmaEasing "cubicInOut"
   }
 
-type ForceAtlas2OptProps eff =
+type ForceAtlas2OptProps =
   ( worker :: Boolean
   , barnesHutOptimize :: Boolean
   , barnesHutTheta :: Number
@@ -248,17 +249,17 @@ sigmaSettings = unsafeCoerce
 
 foreign import data SigmaStyle :: Type
 
-type SigmaProps eff =
+type SigmaProps =
   ( renderer :: Renderer
   , settings :: SigmaSettings
   , style :: SigmaStyle
   , graph :: SigmaGraphData
   , onClickNode :: SigmaNodeEvent -> Unit
   , onOverNode :: SigmaNodeEvent -> Unit
-  , onOutNode :: SigmaNodeEvent -> Eff eff Unit
-  , onClickEdge :: SigmaEdgeEvent -> Eff eff Unit
-  , onOverEdge :: SigmaEdgeEvent -> Eff eff Unit
-  , onOutEdge :: SigmaEdgeEvent -> Eff eff Unit
+  , onOutNode :: SigmaNodeEvent -> Effect Unit
+  , onClickEdge :: SigmaEdgeEvent -> Effect Unit
+  , onOverEdge :: SigmaEdgeEvent -> Effect Unit
+  , onOutEdge :: SigmaEdgeEvent -> Effect Unit
   )
 
 sStyle :: forall style. { | style } -> SigmaStyle

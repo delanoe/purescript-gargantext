@@ -2,69 +2,83 @@ module Gargantext.Components.Tree where
 
 import Prelude hiding (div)
 
-import Control.Monad.Aff (Aff, attempt)
-import Control.Monad.Aff.Class (liftAff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.RequestBody (RequestBody(..))
+import Affjax.ResponseFormat as ResponseFormat
+import Control.Monad.Cont.Trans (lift)
+import Data.Argonaut (class DecodeJson, Json, decodeJson, encodeJson, (.?))
+import Data.Argonaut.Core (Json)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Tuple (Tuple(..))
-import Network.HTTP.Affjax (AJAX, affjax, defaultRequest)
+import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
+import Effect (Effect)
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
 import React (ReactElement)
 import React.DOM (a, div, i, li, text, ul)
 import React.DOM.Props (Props, className, href, onClick)
-import Thermite (PerformAction, Render, Spec, cotransform, simpleSpec)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+
+import Gargantext.Config (NodeType(..), toUrl, readNodeType, End(..), ApiVersion, defaultRoot)
 
 type Name = String
 type Open = Boolean
 type URL  = String
 type ID   = Int
 
-data NTree a = NLeaf a | NNode ID Open Name (Array (NTree a))
+data NTree a = NTree a (Array (NTree a))
 
-type FTree = NTree (Tuple Name URL)
+type FTree = NTree LNode
 
-data Action = ToggleFolder ID
+data Action = ToggleFolder ID --| Initialize
 
 type State = FTree
 
 initialState :: State
-initialState = NLeaf (Tuple "" "")
+initialState = NTree (LNode {id : 1, name : "", nodeType : "", open : true}) []
 
-performAction :: PerformAction _ State _ Action
-performAction (ToggleFolder i) _ _ = void (cotransform (\td -> toggleNode i td))
+performAction :: PerformAction State {} Action
+performAction (ToggleFolder i) _ _ = void $ modifyState $ toggleNode i
 
-toggleNode :: forall t10. Int -> NTree t10 -> NTree t10
-toggleNode sid (NNode iid open name ary) =
-  NNode iid nopen name $ map (toggleNode sid) ary
+-- performAction Initialize _ _ = void $ do
+--  s <- lift $ loadDefaultNode
+--  case s of
+--    Left err -> modifyState identity
+--    Right d -> modifyState (\state -> d)
+
+
+toggleNode :: Int -> NTree LNode -> NTree LNode
+toggleNode sid (NTree (LNode {id, name, nodeType, open}) ary) =
+  NTree (LNode {id,name, nodeType, open : nopen}) $ map (toggleNode sid) ary
   where
-    nopen = if sid == iid then not open else open
-toggleNode sid a = a
-
-
+    nopen = if sid == id then not open else open
 
 ------------------------------------------------------------------------
 -- Realistic Tree for the UI
 
-exampleTree :: NTree (Tuple String String)
-exampleTree =
-  NNode 1 true "françois.pineau"
-  [ annuaire 2 "Annuaire"
-  , corpus   3 "IMT publications"
-  ]
+exampleTree :: NTree LNode
+exampleTree = NTree (LNode {id : 1, name : "", nodeType : "", open : false}) []
 
-annuaire :: Int -> String -> NTree (Tuple String String)
-annuaire n name = NNode n false name
-    [ NLeaf (Tuple "IMT community"    "#/docView")
-    ]
+-- exampleTree :: NTree LNode
+-- exampleTree =
+--   NTree 1 true "françois.pineau"
+--   [ --annuaire 2 "Annuaire"
+--   --, corpus   3 "IMT publications"
+--   ]
 
-corpus :: Int -> String -> NTree (Tuple String String)
-corpus n name = NNode n false name
-    [ NLeaf (Tuple "Facets"    "#/corpus")
-    , NLeaf (Tuple "Dashboard" "#/dashboard")
-    , NLeaf (Tuple "Graph"     "#/graphExplorer")
-    ]
+-- annuaire :: Int -> String -> NTree (Tuple String String)
+-- annuaire n name = NTree n false name
+--     [ NTree (Tuple "IMT community"    "#/docView")
+--     ]
+
+-- corpus :: Int -> String -> NTree (Tuple String String)
+-- corpus n name = NTree (LNode {id : n, name, nodeType : "", open : false})
+--     [ NTree (Tuple "Facets"    "#/corpus") []
+--     , NTree (Tuple "Dashboard" "#/dashboard") []
+--     , NTree (Tuple "Graph"     "#/graphExplorer") []
+--     ]
 
 
 ------------------------------------------------------------------------
@@ -87,27 +101,32 @@ nodeOptionsView activated = case activated of
                          false -> []
 
 
-treeview :: Spec _ State _ Action
+treeview :: Spec State {} Action
 treeview = simpleSpec performAction render
   where
-    render :: Render State _ Action
+    render :: Render State {} Action
     render dispatch _ state _ =
       [div [className "tree"] [toHtml dispatch state]]
 
 
-toHtml :: _ -> FTree -> ReactElement
-toHtml d (NLeaf (Tuple name link)) =
-  li []
-  [ a [ href link]
-    ( [ text (name <> "    ")
-      ] <> nodeOptionsView false
-    )
+toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
+toHtml d (NTree (LNode {id, name, nodeType, open}) []) =
+  ul []
+  [
+    li []
+    [
+      a [ href (toUrl Front (readNodeType nodeType) id)]
+      ( [ text (name <> "    ")
+        ] <> nodeOptionsView false
+      )
+    ]
   ]
-toHtml d (NNode id open name ary) =
+toHtml d (NTree (LNode {id, name, nodeType, open}) ary) =
   ul [ ]
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      ,  text $ " " <> name <> "    "
+      ,  a [ href (toUrl Front (readNodeType nodeType) id )]
+           [ text $ " " <> name <> " " ]
       ] <> nodeOptionsCorp false <>
       if open then
         map (toHtml d) ary
@@ -119,34 +138,133 @@ fldr :: Boolean -> Props
 fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 
-newtype LNode = LNode {id :: Int, name :: String}
+newtype LNode = LNode {id :: Int, name :: String, nodeType :: String, open :: Boolean}
 
--- derive instance newtypeLNode :: Newtype LNode _
+derive instance newtypeLNode :: Newtype LNode _
 
 instance decodeJsonLNode :: DecodeJson LNode where
   decodeJson json = do
     obj <- decodeJson json
     id_ <- obj .? "id"
     name <- obj .? "name"
-    pure $ LNode {id : id_, name}
+    nodeType <- obj .? "type"
+    pure $ LNode {id : id_, name, nodeType, open : true}
 
-loadDefaultNode :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Either String (Array LNode))
+instance decodeJsonFTree :: DecodeJson (NTree LNode) where
+  decodeJson json = do
+    obj <- decodeJson json
+    node <- obj .? "node"
+    nodes <- obj .? "children"
+    node' <- decodeJson node
+    nodes' <- decodeJson nodes
+    pure $ NTree node' nodes'
+
+loadDefaultNode :: Aff (Either String (NTree LNode))
 loadDefaultNode = do
-  res <- liftAff $ attempt $ affjax defaultRequest
-         { url = "http://localhost:8008/user"
+  res <- request $ defaultRequest
+         { url = toUrl Back Tree defaultRoot
+         , responseFormat = ResponseFormat.json
          , method = Left GET
+         , headers = []
          }
-  case res of
+  case res.body of
     Left err -> do
-      _ <- liftEff $ log $ show err
-      pure $ Left $ show err
-    Right a -> do
-      _ <- liftEff $ log $ show a.status
-      _ <- liftEff $ log $ show a.headers
-      _ <- liftEff $ log $ show a.response
-      let resp = decodeJson a.response
-      pure resp
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj
+
+----- TREE CRUD Operations
+
+renameNode :: Aff (Either String (Int))     --- need to change return type herre
+renameNode = do
+  res <- request $ defaultRequest
+         { url = toUrl Back Tree 1
+         , responseFormat = ResponseFormat.json
+         , method = Left PUT
+         , headers = []
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj
+
+
+
+deleteNode :: Aff (Either String (Int))
+deleteNode = do
+  res <- request $ defaultRequest
+         { url = toUrl Back Tree 1
+         , responseFormat = ResponseFormat.json
+         , method = Left DELETE
+         , headers = []
+         }
+
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj
+
+
+
+deleteNodes :: String -> Aff (Either String  Int)
+deleteNodes reqbody = do
+  res <- request $ defaultRequest
+         { url = toUrl Back Tree 1
+         , responseFormat = ResponseFormat.json
+         , method = Left DELETE
+         , headers = []
+         , content = Just $ Json $ encodeJson reqbody
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure  obj
+
+
+createNode :: String -> Aff (Either String (Int))
+createNode  reqbody= do
+  res <- request $ defaultRequest
+         { url = toUrl Back Tree 1
+         , responseFormat = ResponseFormat.json
+         , method = Left POST
+         , headers = []
+         , content = Just $ Json $ encodeJson reqbody
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj
+
 
 
 fnTransform :: LNode -> FTree
-fnTransform (LNode r) = NNode r.id false r.name []
+fnTransform n = NTree n []
