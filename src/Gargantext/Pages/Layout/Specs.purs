@@ -22,7 +22,7 @@ import Gargantext.Pages.Annuaire.User.Users as U
 import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Actions (Action(..), _corpusAction, _addCorpusAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
-import Gargantext.Pages.Layout.Specs.Search as S
+import Gargantext.Pages.Layout.Specs.Search    as S
 import Gargantext.Pages.Layout.States (AppState, _corpusState, _addCorpusState, _docAnnotationViewState, _docViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState, _annuaireState)
 import Gargantext.Router (Routes(..))
 import React (ReactElement)

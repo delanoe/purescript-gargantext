@@ -13,7 +13,7 @@ import React (ReactElement)
 import React.DOM (div, h1, h3, hr, i, p, text, thead, tbody, input, br', b, b', tr, th, table, td, a)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value, style)
 import Thermite (Render, Spec
-                , simpleSpec, defaultPerformAction
+                , simpleSpec
                 , PerformAction, modifyState)
 import Effect.Console (log)
 import Effect.Aff (Aff)

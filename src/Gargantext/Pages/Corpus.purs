@@ -1,51 +1,67 @@
 module Gargantext.Pages.Corpus where
 
-import Data.Maybe (Maybe(..), maybe)
 import Prelude hiding (div)
+
+import Control.Monad.Trans.Class (lift)
+import Data.Maybe (Maybe(..), maybe)
+import Data.Lens (Lens', Prism', lens, prism, (?~))
+import Data.Either (Either(..))
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
+
+import Gargantext.Config      (toUrl, NodeType(..), End(..))
+import Gargantext.Config.REST (get)
 import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
 import Gargantext.Pages.Corpus.Doc.Facets as Tab
+
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
-import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
+import Thermite ( Render, Spec, PerformAction
+                , defaultPerformAction, simpleSpec, modifyState)
 
 -------------------------------------------------------------------
-
-type State = { info    :: Maybe CorpusInfo
-             }
+type State = { info :: Maybe (NodePoly CorpusInfo)}
 
 initialState :: State
 initialState = { info : Nothing }
 
 data Action = Load Int
 
-newtype Node a = Node { id       :: Int
-                      , typename :: Int
-                      , userId   :: Int
-                      , parentId  :: Int
-                      , name      :: String
-                      , date      :: String
-                      , hyperdata :: a
-                      }
+newtype NodePoly a = NodePoly { id :: Int
+                              , typename :: Int
+                              , userId   :: Int
+                              , parentId  :: Int
+                              , name      :: String
+                              , date      :: String
+                              , hyperdata :: a
+                              }
 
 newtype CorpusInfo = CorpusInfo { title   :: String
-                  , desc    :: String
-                  , query   :: String
-                  , date    :: String
-                  , authors :: String
-                  , chart   :: (Maybe (Array Number))
-                  }
+                                , desc    :: String
+                                , query   :: String
+                                , authors :: String
+                                , chart   :: (Maybe (Array Number))
+                                }
 
-corpusInfoDefault :: CorpusInfo
-corpusInfoDefault = CorpusInfo
-                    { title : "Global Publications"
-                    , desc  : " Hal Database"
-                    , query : " Query: all publications"
-                    , date  : " June. 26 2018, 10:59 am"
-                    , authors : " Author(s): first.last name"
-                    , chart   : Nothing
-                    }
+corpusInfoDefault :: NodePoly CorpusInfo
+corpusInfoDefault = NodePoly { id : 0
+                             , typename : 0
+                             , userId : 0
+                             , parentId : 0
+                             , name : "Default name"
+                             , date  : " Default date"
+                             , hyperdata : CorpusInfo
+                                { title : "Default title"
+                                , desc  : " Default desc"
+                                , query : " Default Query"
+                                , authors : " Author(s): default"
+                                , chart   : Nothing
+                                }
+                             }
 
 instance decodeCorpusInfo :: DecodeJson CorpusInfo where
   decodeJson json = do
@@ -53,13 +69,12 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     title <- obj .? "title"
     desc  <- obj .? "desc"
     query <- obj .? "query"
-    date  <- obj .? "date"
     authors <- obj .? "authors"
     chart   <- obj .? "chart"
-    pure $ CorpusInfo {title, desc, query, date, authors, chart}
+    pure $ CorpusInfo {title, desc, query, authors, chart}
 
 
-instance decodeNode :: (DecodeJson a) => DecodeJson (Node a) where
+instance decodeNode :: (DecodeJson a) => DecodeJson (NodePoly a) where
   decodeJson json = do
     obj <- decodeJson json
     id        <- obj .? "id"
@@ -72,7 +87,7 @@ instance decodeNode :: (DecodeJson a) => DecodeJson (Node a) where
     hyperdata  <- obj .? "hyperdata"
     hyperdata' <- decodeJson hyperdata
     
-    pure $ Node  { id : id
+    pure $ NodePoly  { id : id
                  , typename : typename
                  , userId   : userId
                  , parentId : parentId
@@ -82,16 +97,17 @@ instance decodeNode :: (DecodeJson a) => DecodeJson (Node a) where
                  }
 
 
+------------------------------------------------------------------------
 layout :: Spec State {} Action
 layout = corpusSpec -- <> Tab.pureTab1
 
 corpusSpec :: Spec State {} Action
-corpusSpec = simpleSpec defaultPerformAction render
+corpusSpec = simpleSpec performAction render
   where
     render :: Render State {} Action
     render dispatch _ state _ =
         [ div [className "row"]
-          [ div [className "col-md-3"] [ h3 [] [text corpus.title] ]
+          [ div [className "col-md-3"] [ h3 [] [text "Corpus " <> text title] ]
           , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]
           ]
         , div [className "row"] [ div [className "jumbotron1", style {padding : "12px 0px 20px 12px"}]
@@ -105,7 +121,7 @@ corpusSpec = simpleSpec defaultPerformAction render
                     ]
               , div [ className "col-md-4 content"]
                     [ p [] [ i [className "fa fa-calendar"] []
-                           , text corpus.date
+                           , text date'
                            ]
                     , p [] [ i [className "fa fa-user"] []
                            , text corpus.authors
@@ -113,8 +129,32 @@ corpusSpec = simpleSpec defaultPerformAction render
                     ]
               ]
           ]
-          -- , chart globalPublis TODO add chart data in state
+          --, chart globalPublis -- TODO add chart data in state
         ]
           where
-            CorpusInfo corpus = maybe corpusInfoDefault identity state.info
+            NodePoly { name: title
+                     , date: date'
+                     , hyperdata : CorpusInfo corpus
+                   }
+              = maybe corpusInfoDefault identity state.info
+
+
+------------------------------------------------------------------------
+
+performAction :: PerformAction State {} Action
+performAction (Load nId) _ _ = do
+  eitherInfo <- lift $ getNode nId
+  _ <- case eitherInfo of
+            (Right node') -> void $ modifyState $ _info ?~ node'
+            (Left       err)  -> do
+              liftEffect $ log err
+  liftEffect <<< log $ "Node Corpus fetched."
+performAction _ _ _ = pure unit
+
+getNode :: Int -> Aff (Either String (NodePoly CorpusInfo))
+getNode id = get $ toUrl Back Node id
+
+_info :: Lens' State (Maybe (NodePoly CorpusInfo))
+_info = lens (\s -> s.info) (\s ss -> s{info = ss})
+
 
