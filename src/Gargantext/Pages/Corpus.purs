@@ -12,19 +12,31 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 
-import Gargantext.Config      (toUrl, NodeType(..), End(..))
-import Gargantext.Config.REST (get)
-import Gargantext.Components.Charts.Options.ECharts (chart)
-import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
-import Gargantext.Pages.Corpus.Doc.Facets as Tab
-
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
 import Thermite ( Render, Spec, PerformAction
                 , defaultPerformAction, simpleSpec, modifyState)
-
+--------------------------------------------------------
+import Gargantext.Config      (toUrl, NodeType(..), End(..))
+import Gargantext.Config.REST (get)
+import Gargantext.Components.Charts.Options.ECharts (chart)
+import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
+import Gargantext.Pages.Corpus.Doc.Facets (pureTab1)
+---------------------------------------------------------
+-- Facets
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as D
+import Gargantext.Pages.Corpus.Doc.Facets.Sources   as S
+import Gargantext.Pages.Corpus.Doc.Facets.Authors   as A
+import Gargantext.Pages.Corpus.Doc.Facets.Terms     as T
+import Gargantext.Components.Tab as Tab
 -------------------------------------------------------------------
-type State = { info :: Maybe (NodePoly CorpusInfo)}
+type State = { info       :: Maybe (NodePoly CorpusInfo)
+--             , docview    :: D.state
+--             , authorview :: A.State
+--             , sourceview :: S.State
+--             , termsview  :: T.State
+--             , activeTab  :: Int
+             }
 
 initialState :: State
 initialState = { info : Nothing }
@@ -99,7 +111,7 @@ instance decodeNode :: (DecodeJson a) => DecodeJson (NodePoly a) where
 
 ------------------------------------------------------------------------
 layout :: Spec State {} Action
-layout = corpusSpec -- <> Tab.pureTab1
+layout = corpusSpec -- <> pureTab1
 
 corpusSpec :: Spec State {} Action
 corpusSpec = simpleSpec performAction render
@@ -156,5 +168,12 @@ getNode id = get $ toUrl Back Node id
 
 _info :: Lens' State (Maybe (NodePoly CorpusInfo))
 _info = lens (\s -> s.info) (\s ss -> s{info = ss})
+
+------------------------------------------------------------------------
+-- Tabs
+------------------------------------------------------------------------
+
+
+
 
 

@@ -13,7 +13,6 @@ import Gargantext.Pages.Corpus.Doc.Facets.Sources as SV
 import Gargantext.Pages.Corpus.Doc.Facets.Authors as AV
 import Gargantext.Pages.Corpus.Doc.Facets.Terms as TV
 import Gargantext.Components.Tab as Tab
-
 import Thermite (Spec, focus, hide)
 
 
