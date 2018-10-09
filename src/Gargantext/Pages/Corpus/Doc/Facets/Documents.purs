@@ -155,6 +155,7 @@ layoutDocview = simpleSpec performAction render
                          [tr [] [ th [scope "col"] [ b' [text ""]    ]
                                 , th [scope "col"] [ b' [text "Date"]]
                                 , th [scope "col"] [ b' [text "Title"]   ]
+                                , th [scope "col"] [ b' [text "Source"]   ]
                                 , th [scope "col"] [ b' [text "Delete"]  ]
                                 ]
                          ]
