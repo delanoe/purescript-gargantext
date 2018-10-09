@@ -128,7 +128,7 @@ showRow :: Maybe User -> ReactElement
 showRow Nothing = tr [][]
 showRow (Just (User { id : id, hyperdata : (HyperData user) })) =
   tr []
-  [ td [] [ a [ href (toUrl Back NodeUser id) ] [ text $ maybe' user.nom <> " " <> maybe' user.prenom ] ]
+  [ td [] [ a [ href (toUrl Front NodeUser id) ] [ text $ maybe' user.nom <> " " <> maybe' user.prenom ] ]
   , td [] [text $ maybe' user.fonction]
   , td [] [text $ maybe' user.service]
   , td [] [text $ maybe' user.groupe]
