@@ -3,11 +3,13 @@ module Gargantext.Pages.Annuaire.User.Users.Specs.Renders
 
 import Gargantext.Pages.Annuaire.User.Users.Types
 
-import Data.List (List, toUnfoldable, zip)
-import Data.Map (Map, empty, keys, values)
+import Data.List (List, zipWith, catMaybes, toUnfoldable)
+import Data.Unfoldable (class Unfoldable)
+import Data.Map (Map, empty, keys, values, lookup)
+import Data.Set (toUnfoldable) as S
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), uncurry)
-import Prelude (($), (<<<), (<$>))
+import Prelude (($), (<<<), (<$>), flip, class Ord)
 import React (ReactElement)
 import React.DOM (div, h3, img, li, span, text, ul)
 import React.DOM.Props (_id, className, src)
@@ -37,15 +39,18 @@ display title elems =
               [ div [className "col-md-2"]
                     [ img [src "/images/Gargantextuel-212x300.jpg"] ]
               , div [className "col-md-1"] []
-              , div [className "col-md-8"] elems
+              , div [className "col-mdData.Unfoldable-8"] elems
               ]
             ]
           ]
      ]
   ]
 
-mapMyMap :: forall k v x. (k -> v -> x) -> Map k v -> Array x
-mapMyMap f m = toUnfoldable $ uncurry f <$> zip (keys m) (values m)
+mapMyMap :: forall k v x f. Ord k => Unfoldable f => (k -> v -> x) -> Map k v -> f x
+mapMyMap f m = toUnfoldable
+               $ zipWith f mapKeys
+               (catMaybes $ flip lookup m <$> mapKeys)
+  where mapKeys = S.toUnfoldable $ keys m
 
 infixl 4 mapMyMap as <.~$>
 
@@ -57,8 +62,8 @@ userInfos hyperdata =
     checkMaybe (Nothing) = empty
     checkMaybe (Just (HyperData a)) = a
 
-listInfo :: String -> String -> ReactElement
-listInfo s ss = listElement $ infoRender s ss
+listInfo :: Tuple String String -> ReactElement
+listInfo s = listElement $ infoRender s
 
 listElement :: Array ReactElement -> ReactElement
 listElement = li [className "list-group-item justify-content-between"]
