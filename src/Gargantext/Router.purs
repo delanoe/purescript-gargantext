@@ -19,7 +19,6 @@ data Routes
   | Folder             Int
     | Corpus           Int
       | AddCorpus
-      | Tabview
       | DocView        Int
       | DocAnnotation  Int
       | PGraphExplorer
@@ -35,9 +34,8 @@ routing =
   <|> AddCorpus        <$   route "addCorpus"
   <|> Folder           <$> (route "folder"   *> int)
   <|> Corpus           <$> (route "corpus"   *> int)
-    <|> Tabview        <$   route "tabview"
-      <|> DocView      <$> (route "docView"  *> int)
-      <|> NGramsTable  <$   route "ngrams"
+    <|> DocView      <$> (route "docView"  *> int)
+    <|> NGramsTable  <$   route "ngrams"
     <|> DocAnnotation  <$> (route "document" *> int)
     <|> Dashboard      <$   route "dashboard"
     <|> PGraphExplorer <$   route "graph"
@@ -58,7 +56,6 @@ instance showRoutes :: Show Routes where
   show (UserPage i)     = "User"   <> show i
   show (DocAnnotation i)= "Document"
   show (Corpus i)       = "Corpus" <> show i
-  show Tabview          = "Tabview"
   show (DocView i)      = "DocView"
   show NGramsTable      = "NGramsTable"
   show (Annuaire i)     = "Annuaire" <> show i

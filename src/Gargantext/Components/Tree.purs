@@ -35,7 +35,7 @@ data Action =  ShowPopOver
               | ToggleFolder ID
               | RenameNode  String
               | Submit
-            --| Initialize
+            -- | Initialize
 
 type State = FTree
 

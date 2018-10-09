@@ -112,6 +112,7 @@ data NodeType = NodeUser
               | Annuaire
               | Children
               | Corpus
+              | CorpusV3
               | Dashboard
               | Document
               | Error
@@ -133,6 +134,7 @@ urlConfig :: NodeType -> Url
 urlConfig Annuaire  = show Annuaire
 urlConfig Children  = show Children
 urlConfig Corpus    = show Corpus
+urlConfig CorpusV3  = show CorpusV3
 urlConfig Dashboard = show Dashboard
 urlConfig Document  = show Document
 urlConfig Error     = show Error
@@ -147,6 +149,7 @@ instance showNodeType :: Show NodeType where
   show Annuaire  = "annuaire"
   show Children  = "children"
   show Corpus    = "corpus"
+  show CorpusV3  = "corpus"
   show Dashboard = "dashboard"
   show Document  = "document"
   show Error     = "ErrorNodeType"
@@ -169,6 +172,7 @@ readNodeType "Graph"      = Graph
 readNodeType "Individu"   = Individu
 readNodeType "Node"       = Node
 readNodeType "NodeCorpus" = Corpus
+readNodeType "NodeCorpusV3" = CorpusV3
 readNodeType "NodeUser"   = NodeUser
 readNodeType "Tree"       = Tree
 readNodeType _            = Error

@@ -65,10 +65,6 @@ dispatchAction dispatcher _ (DocAnnotation i) = do
   dispatcher $ SetRoute $ DocAnnotation i
   -- dispatcher $ DocAnnotationViewA TODO
 
-dispatchAction dispatcher _ Tabview = do
-  dispatcher $ SetRoute Tabview
-  -- dispatcher $ TabViewA TODO
-
 dispatchAction dispatcher _ PGraphExplorer = do
   dispatcher $ SetRoute PGraphExplorer
   dispatcher $ GraphExplorerA $ GE.LoadGraph "imtNew.json"
