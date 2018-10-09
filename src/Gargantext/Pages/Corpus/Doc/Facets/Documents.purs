@@ -1,6 +1,5 @@
 module Gargantext.Pages.Corpus.Doc.Facets.Documents where
 
-import Prelude hiding (div)
 
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.ResponseFormat as ResponseFormat
@@ -14,9 +13,8 @@ import Data.HTTP.Method (Method(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Console (log)
 
+import Gargantext.Prelude hiding (div)
 import Gargantext.Config (NodeType(..), toUrl, End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Utils.DecodeMaybe ((.|))
@@ -183,18 +181,21 @@ layoutDocview = simpleSpec performAction render
 
 
 performAction :: PerformAction State {} Action
-performAction (ChangePageSize ps) _ _ = void $ modifyState $ changePageSize ps
+performAction (ChangePageSize ps) _ _ =
+  void $ modifyState $ changePageSize ps
 
-performAction (ChangePage p) _ _ = void $ modifyState \(TableData td) -> TableData $ td { currentPage = p }
+performAction (ChangePage p) _ _ = 
+  void $ modifyState \(TableData td) -> TableData 
+       $ td { currentPage = p }
 
 performAction (LoadData n) _ _ = do
   res <- lift $ loadPage n
   case res of
      Left err      -> do
-       _ <- liftEffect $ log $ show $ "Error: loading page documents:" <> show err
+       _ <- logs $ "Error: loading page documents:" <> show err
        pure unit
      Right resData -> do
-       _ <- liftEffect  $ log $ show "OK: loading page documents."
+       _ <- logs "OK: loading page documents."
        _ <- modifyState $ const resData
        pure unit
 
@@ -206,13 +207,14 @@ loadPage n = do
   -- res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
   case res of
      Left err -> do
-       _ <- liftEffect $ log $ show "Err: loading page documents"
-       _ <- liftEffect $ log $ show err
+       _ <- logs "Err: loading page documents"
+       _ <- logs $ show err
        pure $ Left $ show err
      Right resData -> do
        let docs = toTableData (res2corpus $ resData)
-       _ <- liftEffect $ log $ show "Ok: loading page documents"
-       _ <- liftEffect $ log $ show $ map (\({ row: r, delete :_}) -> show r) ((\(TableData docs') -> docs'.rows) docs)
+       _ <- logs "Ok: loading page documents"
+       _ <- logs $ map (\({ row: r, delete :_}) -> show r)
+                       ((\(TableData docs') -> docs'.rows) docs)
        pure $ Right docs
       where
         res2corpus :: Array Response -> Array DocumentsView
@@ -451,11 +453,11 @@ searchResults squery = do
          }
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      _ <- logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
+      --_ <- logs a.status
+      --_ <- logs a.headers
+      --_ <- logs a.body
       let obj = decodeJson json
       pure obj
