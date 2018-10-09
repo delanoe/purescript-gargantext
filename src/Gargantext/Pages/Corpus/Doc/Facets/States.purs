@@ -18,11 +18,11 @@ type State =
 
 initialState :: State
 initialState =
-  { docview : DV.tdata
+  { docview    : DV.initialState
   , authorview : AV.initialState
   , sourceview : SV.initialState
-  , termsview : TV.initialState
-  , activeTab : 0
+  , termsview  : TV.initialState
+  , activeTab  : 0
   }
 
 _doclens :: Lens' State DV.State

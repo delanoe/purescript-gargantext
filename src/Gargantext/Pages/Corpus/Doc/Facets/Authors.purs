@@ -10,7 +10,7 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, simpleSpec)
 type State = D.State
 
 initialState :: State
-initialState = D.tdata
+initialState = D.initialState
 
 type Action = D.Action
 

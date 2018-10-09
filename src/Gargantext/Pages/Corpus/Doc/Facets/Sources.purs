@@ -11,7 +11,7 @@ type State = D.State
 
 
 initialState :: D.State
-initialState = D.tdata
+initialState = D.initialState
 
 type Action = D.Action
 

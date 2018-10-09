@@ -21,6 +21,11 @@ import Gargantext.Config (NodeType(..), toUrl, End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Utils.DecodeMaybe ((.|))
 
+------------------------------------------------------------------------
+import Gargantext.Components.Charts.Options.ECharts (chart)
+import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
+------------------------------------------------------------------------
+
 import React (ReactElement)
 import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr, p)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value)
@@ -51,7 +56,7 @@ data Action
 
 type State = CorpusTableData
 
-type CorpusTableData = TableData CorpusView
+type CorpusTableData = TableData DocumentsView
 
 newtype TableData a
   = TableData
@@ -66,8 +71,8 @@ newtype TableData a
    -- , tree         :: FTree
     }
 
-newtype CorpusView
-  = CorpusView
+newtype DocumentsView
+  = DocumentsView
     { _id    :: Int
     , url    :: String
     , date   :: String
@@ -78,9 +83,9 @@ newtype CorpusView
     }
 
 
-derive instance genericCorpus :: Generic CorpusView _
+derive instance genericCorpus :: Generic DocumentsView _
 
-instance showCorpus :: Show CorpusView where
+instance showCorpus :: Show DocumentsView where
   show = genericShow
 
 
@@ -150,8 +155,8 @@ layoutDocview = simpleSpec performAction render
     render dispatch _ state@(TableData d) _ =
       [ div [className "container1"]
         [ div [className "row"]
-          [
-           div [className "col-md-12"]
+          [ chart globalPublis
+          , div [className "col-md-12"]
             [ p [] []
             , div [] [ text "    Filter ", input []]
             , br'
@@ -186,12 +191,12 @@ performAction (LoadData n) _ _ = do
   res <- lift $ loadPage n
   case res of
      Left err      -> do
-       _ <- liftEffect $ log $ show err
-       _ <- liftEffect $ log $ show "Error: loading page documents"
+       _ <- liftEffect $ log $ show $ "Error: loading page documents:" <> show err
        pure unit
      Right resData -> do
-       _ <- liftEffect $ log $ show "OK: loading page documents"
-       void $ modifyState $ const resData
+       _ <- liftEffect  $ log $ show "OK: loading page documents."
+       _ <- modifyState $ const resData
+       pure unit
 
 
 loadPage :: Int -> Aff (Either String CorpusTableData)
@@ -210,9 +215,9 @@ loadPage n = do
        _ <- liftEffect $ log $ show $ map (\({ row: r, delete :_}) -> show r) ((\(TableData docs') -> docs'.rows) docs)
        pure $ Right docs
       where
-        res2corpus :: Array Response -> Array CorpusView
+        res2corpus :: Array Response -> Array DocumentsView
         res2corpus rs = map (\(Response r) ->
-          CorpusView { _id : r.cid
+          DocumentsView { _id : r.cid
           , url    : ""
           , date   :  r.created
           , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
@@ -222,7 +227,7 @@ loadPage n = do
          }) rs
 
 
-        toTableData :: Array CorpusView -> CorpusTableData
+        toTableData :: Array DocumentsView -> CorpusTableData
         toTableData ds = TableData
                 { rows         : map (\d -> { row : d , delete : false}) ds
                 , totalPages   : 474
@@ -234,25 +239,25 @@ loadPage n = do
 
 ---------------------------------------------------------
 
-sampleData' :: CorpusView
-sampleData' = CorpusView {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1}
+sampleData' :: DocumentsView
+sampleData' = DocumentsView {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1}
 
-sampleData :: Array CorpusView
+sampleData :: Array DocumentsView
 --sampleData = replicate 10 sampleData'
-sampleData = map (\(Tuple t s) -> CorpusView {_id : 1, url : "", date : "2017", title: t, source: s, fav : false, ngramCount : 10}) sampleDocuments
+sampleData = map (\(Tuple t s) -> DocumentsView {_id : 1, url : "", date : "2017", title: t, source: s, fav : false, ngramCount : 10}) sampleDocuments
 
 sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
 
 
-data' :: Array CorpusView -> Array {row :: CorpusView, delete :: Boolean}
+data' :: Array DocumentsView -> Array {row :: DocumentsView, delete :: Boolean}
 data' = map {row : _, delete : false}
 
-sdata :: Array { row :: CorpusView, delete :: Boolean }
+sdata :: Array { row :: DocumentsView, delete :: Boolean }
 sdata = data' sampleData
 
-tdata :: TableData CorpusView
-tdata = TableData
+initialState :: TableData DocumentsView
+initialState = TableData
         { rows         : sdata
         , totalPages   : 10
         , currentPage  : 1
@@ -263,8 +268,8 @@ tdata = TableData
         }
 
 
-showRow :: {row :: CorpusView, delete :: Boolean} -> ReactElement
-showRow {row : (CorpusView c), delete} =
+showRow :: {row :: DocumentsView, delete :: Boolean} -> ReactElement
+showRow {row : (DocumentsView c), delete} =
   tr []
   [ td [] [div [className $ fa <> "fa-star"][]]
   -- TODO show date: Year-Month-Day only

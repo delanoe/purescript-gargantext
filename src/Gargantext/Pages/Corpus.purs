@@ -5,7 +5,10 @@ import Prelude hiding (div)
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Lens (Lens', Prism', lens, prism, (?~))
+import Data.List (fromFoldable)
 import Data.Either (Either(..))
+import Data.Tuple (Tuple(..))
+
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 
 import Effect.Aff (Aff)
@@ -14,14 +17,11 @@ import Effect.Console (log)
 
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
-import Thermite ( Render, Spec, PerformAction
+import Thermite ( Render, Spec, PerformAction, focus, hide
                 , defaultPerformAction, simpleSpec, modifyState)
 --------------------------------------------------------
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Components.Charts.Options.ECharts (chart)
-import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
-import Gargantext.Pages.Corpus.Doc.Facets (pureTab1)
 ---------------------------------------------------------
 -- Facets
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as D
@@ -30,19 +30,80 @@ import Gargantext.Pages.Corpus.Doc.Facets.Authors   as A
 import Gargantext.Pages.Corpus.Doc.Facets.Terms     as T
 import Gargantext.Components.Tab as Tab
 -------------------------------------------------------------------
-type State = { info       :: Maybe (NodePoly CorpusInfo)
---             , docview    :: D.state
---             , authorview :: A.State
---             , sourceview :: S.State
---             , termsview  :: T.State
---             , activeTab  :: Int
+type State = { info        :: Maybe (NodePoly CorpusInfo)
+             , docsView    :: D.State
+             , authorsView :: A.State
+             , sourcesView :: S.State
+             , termsView   :: T.State
+             , activeTab   :: Int
              }
 
 initialState :: State
-initialState = { info : Nothing }
+initialState = { info : Nothing
+               , docsView    : D.initialState
+               , authorsView : A.initialState
+               , sourcesView : S.initialState
+               , termsView   : T.initialState
+               , activeTab : 0
+               }
 
-data Action = Load Int
+------------------------------------------------------------------------
+_info :: Lens' State (Maybe (NodePoly CorpusInfo))
+_info = lens (\s -> s.info) (\s ss -> s{info = ss})
 
+_doclens :: Lens' State D.State
+_doclens = lens (\s -> s.docsView) (\s ss -> s {docsView = ss})
+
+_authorlens :: Lens' State A.State
+_authorlens = lens (\s -> s.authorsView) (\s ss -> s {authorsView = ss})
+
+_sourcelens :: Lens' State S.State
+_sourcelens = lens (\s -> s.sourcesView) (\s ss -> s {sourcesView = ss})
+
+_termslens :: Lens' State T.State
+_termslens = lens (\s -> s.termsView) (\s ss -> s {termsView = ss})
+
+_tablens :: Lens' State Tab.State
+_tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
+------------------------------------------------------------------------
+data Action = Load        Int
+            | DocviewA    D.Action
+            | AuthorviewA A.Action
+            | SourceviewA S.Action
+            | TermsviewA  T.Action
+            | TabViewA    Tab.Action
+
+_docAction :: Prism' Action D.Action
+_docAction = prism DocviewA \ action ->
+  case action of
+    DocviewA laction -> Right laction
+    _-> Left action
+
+_authorAction :: Prism' Action A.Action
+_authorAction = prism AuthorviewA \ action ->
+  case action of
+    AuthorviewA laction -> Right laction
+    _-> Left action
+
+_sourceAction :: Prism' Action S.Action
+_sourceAction = prism SourceviewA \ action ->
+  case action of
+    SourceviewA laction -> Right laction
+    _-> Left action
+
+_termsAction :: Prism' Action T.Action
+_termsAction = prism TermsviewA \ action ->
+  case action of
+    TermsviewA laction -> Right laction
+    _-> Left action
+
+_tabAction :: Prism' Action Tab.Action
+_tabAction = prism TabViewA \ action ->
+  case action of
+    TabViewA laction -> Right laction
+    _-> Left action
+
+------------------------------------------------------------------------
 newtype NodePoly a = NodePoly { id :: Int
                               , typename :: Int
                               , userId   :: Int
@@ -111,7 +172,7 @@ instance decodeNode :: (DecodeJson a) => DecodeJson (NodePoly a) where
 
 ------------------------------------------------------------------------
 layout :: Spec State {} Action
-layout = corpusSpec -- <> pureTab1
+layout = corpusSpec <> facets
 
 corpusSpec :: Spec State {} Action
 corpusSpec = simpleSpec performAction render
@@ -152,7 +213,6 @@ corpusSpec = simpleSpec performAction render
 
 
 ------------------------------------------------------------------------
-
 performAction :: PerformAction State {} Action
 performAction (Load nId) _ _ = do
   eitherInfo <- lift $ getNode nId
@@ -166,14 +226,30 @@ performAction _ _ _ = pure unit
 getNode :: Int -> Aff (Either String (NodePoly CorpusInfo))
 getNode id = get $ toUrl Back Node id
 
-_info :: Lens' State (Maybe (NodePoly CorpusInfo))
-_info = lens (\s -> s.info) (\s ss -> s{info = ss})
-
 ------------------------------------------------------------------------
--- Tabs
+-- Facets
 ------------------------------------------------------------------------
+facets :: Spec State {} Action
+facets = hide initialState statefulFacets
 
+statefulFacets :: Spec State {} Action
+statefulFacets =
+  Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Doc View"    docPageSpec
+                                              , Tuple "Author View" authorPageSpec
+                                              , Tuple "Source View" sourcePageSpec
+                                              , Tuple "Terms View"  termsPageSpec
+                                              ]
 
+docPageSpec :: Spec State {} Action
+docPageSpec = focus _doclens _docAction D.layoutDocview
 
+authorPageSpec :: Spec State  {} Action
+authorPageSpec = focus _authorlens _authorAction A.authorspec'
+
+sourcePageSpec :: Spec State {} Action
+sourcePageSpec = focus _sourcelens _sourceAction S.sourcespec'
+
+termsPageSpec :: Spec State {} Action
+termsPageSpec = focus _termslens _termsAction T.termSpec'
 
 
