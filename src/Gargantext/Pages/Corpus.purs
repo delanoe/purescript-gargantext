@@ -1,25 +1,20 @@
 module Gargantext.Pages.Corpus where
 
-import Prelude hiding (div)
 
 import Control.Monad.Trans.Class (lift)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism, (?~))
 import Data.List (fromFoldable)
-import Data.Either (Either(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
-
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Console (log)
-
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
 import Thermite ( Render, Spec, PerformAction, focus, hide
                 , defaultPerformAction, simpleSpec, modifyState)
 --------------------------------------------------------
+import Gargantext.Prelude
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 ---------------------------------------------------------
@@ -202,7 +197,6 @@ corpusSpec = simpleSpec performAction render
                     ]
               ]
           ]
-          --, chart globalPublis -- TODO add chart data in state
         ]
           where
             NodePoly { name: title
@@ -219,8 +213,8 @@ performAction (Load nId) _ _ = do
   _ <- case eitherInfo of
             (Right node') -> void $ modifyState $ _info ?~ node'
             (Left       err)  -> do
-              liftEffect $ log err
-  liftEffect <<< log $ "Node Corpus fetched."
+               logs err
+  logs $ "Node Corpus fetched."
 performAction _ _ _ = pure unit
 
 getNode :: Int -> Aff (Either String (NodePoly CorpusInfo))

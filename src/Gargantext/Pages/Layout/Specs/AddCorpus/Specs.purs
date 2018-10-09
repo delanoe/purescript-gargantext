@@ -1,9 +1,5 @@
 module Gargantext.Pages.Layout.Specs.AddCorpus.Specs where
 
-import Gargantext.Pages.Layout.Specs.AddCorpus.Actions
-import Gargantext.Pages.Layout.Specs.AddCorpus.States
-import Prelude hiding (div)
-
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat as ResponseFormat
@@ -23,6 +19,9 @@ import React.DOM (button, div, h3, h5, li, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, onClick, role)
 import Thermite (PerformAction, Render, Spec, _render, simpleSpec)
 
+import Gargantext.Prelude
+import Gargantext.Pages.Layout.Specs.AddCorpus.Actions
+import Gargantext.Pages.Layout.Specs.AddCorpus.States
 
 modalSpec :: Boolean -> String -> Spec State {} Action -> Spec State {} Action
 modalSpec sm t = over _render \render d p s c ->
@@ -136,11 +135,11 @@ countResults query = do
          }
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      _ <- logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
+      --_ <- logs $ show a.status
+      --_ <- logs $ show a.headers
+      --_ <- logs $ show a.body
       let obj = decodeJson json
       pure obj

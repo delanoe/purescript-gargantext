@@ -1,29 +1,27 @@
 module Gargantext.Pages.Annuaire where
 
-import Prelude
-
 import Data.Array (concat)
 import Data.Traversable (foldl)
 import Control.Monad.Trans.Class (lift)
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism, (?~))
 import Data.Maybe (Maybe(..), maybe)
-import Effect.Class (liftEffect)
 import React (ReactElement)
 import React.DOM (div, h1, h3, hr, i, p, text, thead, tbody, input, br', b, b', tr, th, table, td, a)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value, style)
+import Effect.Console (log)
+import Effect.Aff (Aff)
 import Thermite (Render, Spec
                 , simpleSpec
                 , PerformAction, modifyState)
-import Effect.Console (log)
-import Effect.Aff (Aff)
 
+------------------------------------------------------------------------------
+import Gargantext.Prelude
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Users.Types.Types (User(..), HyperData(..))
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-
 ------------------------------------------------------------------------------
 type State = { info  :: Maybe AnnuaireInfo
              , stable :: Maybe AnnuaireTable
@@ -177,20 +175,19 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
 ------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
 performAction (Load aId) _ _ = do
-  
   eitherInfo <- lift $ getInfo aId
   _ <- case eitherInfo of
             (Right info') -> void $ modifyState $ _info ?~ info'
             (Left       err)  -> do
-              liftEffect $ log err
+              logs err
 
   eitherTable <- lift $ getTable aId
-  liftEffect $ log "Feching Table"
+  logs "Feching Table"
   _ <- case eitherTable of
             (Right table') -> void $ modifyState $ _table ?~ table'
             (Left       err)  -> do
-              liftEffect $ log err
-  liftEffect <<< log $ "Annuaire page fetched."
+              logs err
+  logs "Annuaire page fetched."
 
 performAction _ _ _ = pure unit
 ------------------------------------------------------------------------

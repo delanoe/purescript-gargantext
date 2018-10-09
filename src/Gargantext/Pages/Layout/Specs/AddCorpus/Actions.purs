@@ -1,7 +1,5 @@
 module Gargantext.Pages.Layout.Specs.AddCorpus.Actions where
 
-import Prelude hiding (div)
-
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.RequestHeader (RequestHeader(..))
@@ -15,10 +13,12 @@ import Data.MediaType.Common (applicationJSON)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Components.Modals.Modal (modalHide)
-import Gargantext.Pages.Layout.Specs.AddCorpus.States (Response, State)
 import Routing.Hash (setHash)
 import Thermite (PerformAction, modifyState)
+
+import Gargantext.Prelude
+import Gargantext.Components.Modals.Modal (modalHide)
+import Gargantext.Pages.Layout.Specs.AddCorpus.States (Response, State)
 
 data Action
   = SelectDatabase Boolean
@@ -83,10 +83,10 @@ getDatabaseDetails reqBody = do
     }
   case affResp.body of
     Left err -> do
-      liftEffect $ log $ "error" <> printResponseFormatError err
+      logs $ "error" <> printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
-      liftEffect $ log $ "POST method Completed"
-      liftEffect $ log $ "GET /api response: " <> stringify json
+      logs $ "POST method Completed"
+      logs $ "GET /api response: " <> stringify json
       let obj = decodeJson json
       pure obj

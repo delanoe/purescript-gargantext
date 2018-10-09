@@ -1,7 +1,5 @@
 module Gargantext.Components.Login where
 
-import Prelude hiding (div)
-
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.RequestHeader (RequestHeader(..))
@@ -12,11 +10,9 @@ import Data.HTTP.Method (Method(..))
 import Data.Lens (over)
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationJSON)
+import Effect.Class (liftEffect)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Console (log)
-import Gargantext.Components.Modals.Modal (modalHide)
 import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
 import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
 import Thermite (PerformAction, Render, Spec, _render, modifyState, simpleSpec)
@@ -25,7 +21,12 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, setItem)
 
---          TODO: ask for login (modal) or account creation after 15 mn when user is not logged and has made one search at least
+------------------------------------------------------------------------
+import Gargantext.Prelude
+import Gargantext.Components.Modals.Modal (modalHide)
+
+-- TODO: ask for login (modal) or account creation after 15 mn when user
+-- is not logged and has made one search at least
 
 newtype State = State
   { username :: String
@@ -69,7 +70,7 @@ performAction Login _ _ = void do
   -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
   -- case res of
   --   Left e -> do
-  --     lift $ log $ show e
+  --     logs e
   --     modifyState \(State s) ->  State $ s { errorMessage = e}
   --   Right r@(LoginRes response) -> do
   --     lift $ setHash "/addCorpus"
@@ -252,15 +253,15 @@ loginReq encodeData =
       affResp <- request setting
       case affResp.body of
         Left err -> do
-          liftEffect $ log $ printResponseFormatError err
+          logs $ printResponseFormatError err
           pure $ Left $ printResponseFormatError err
         Right json -> do
-          liftEffect $ log $ "POST method Completed"
-          liftEffect $ log $ "GET /api response: " <> stringify json
+          logs $ "POST method Completed"
+          logs $ "GET /api response: " <> stringify json
           let obj = decodeJson json
           case obj of
             Left e ->
-              liftEffect $ log $ "Error Decoding : " <> show e
+               logs $ "Error Decoding : " <> show e
             Right (LoginRes res1) ->
               liftEffect $ setToken res1.token
           pure obj

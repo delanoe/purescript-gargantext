@@ -2,28 +2,27 @@
 
 module Gargantext.Pages.Layout.Actions where
 
-import Prelude hiding (div)
-
 import Control.Monad.Cont.Trans                        (lift)
 import Data.Either                                     (Either(..))
 import Data.Lens                                       (Prism', prism)
 import Effect.Class                                    (liftEffect)
 import Effect.Console                                  (log)
+import Thermite                                        (PerformAction, modifyState)
+
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Modals.Modal              (modalShow)
 import Gargantext.Components.Tree                   as Tree
-
+import Gargantext.Pages.Annuaire             as Annuaire
+import Gargantext.Pages.Annuaire.User.Users           as U
 import Gargantext.Pages.Corpus                      as Corpus
 import Gargantext.Pages.Corpus.Doc.Annotation       as D
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
-import Gargantext.Pages.Annuaire.User.Users           as U
-import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Pages.Layout.States                  (AppState)
+import Gargantext.Prelude
 import Gargantext.Router                               (Routes)
-import Thermite                                        (PerformAction, modifyState)
 
 ------------------------------------------------------------------------
 
@@ -70,7 +69,7 @@ performAction Go  _ _ = void do
 ---------------------------------------------------------
 
 performAction Initialize  _ state = void do
-  _ <- liftEffect $ log "loading Initial nodes"
+  _ <- logs "loading Initial nodes"
   case state.initialized of
     false -> do
       lnodes <- lift $ Tree.loadDefaultNode

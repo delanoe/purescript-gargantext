@@ -1,7 +1,7 @@
 module Gargantext.Prelude (module Prelude, logs)
   where
 
-import Prelude
+import Prelude hiding (div)
 import Effect.Console (log)
 import Effect.Class   -- (MonadEffect(), liftEffect) -- TODO fix import
 

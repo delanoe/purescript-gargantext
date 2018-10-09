@@ -1,13 +1,12 @@
 module Gargantext.Router where
 
-import Prelude
+import Gargantext.Prelude
 
 import Control.Alt ((<|>))
 import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
 import Routing.Match (Match, lit, num)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -72,19 +71,19 @@ instance showRoutes :: Show Routes where
 routeHandler :: (Maybe Routes -> Routes -> Effect Unit)
               -> Maybe Routes -> Routes -> Effect Unit
 routeHandler dispatchAction old new = do
-  liftEffect $ log $ "change route : " <> show new
+  logs $ "change route : " <> show new
   
   w      <- window
   ls     <- localStorage w
   token  <- getItem "accessToken" ls
   let tkn = token
   
-  liftEffect $ log $ "JWToken : " <> show tkn
+  logs $ "JWToken : " <> show tkn
   
   case tkn of
     Nothing -> do
       dispatchAction old new
-      liftEffect $ log $ "called SignIn Route :"
+      logs $ "called SignIn Route :"
     Just t -> do
       dispatchAction old new
-      liftEffect $ log $ "called Route : " <> show new
+      logs $ "called Route : " <> show new

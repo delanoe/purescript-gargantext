@@ -1,7 +1,5 @@
 module Gargantext.Components.Tree where
 
-import Prelude hiding (div)
-
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat as ResponseFormat
@@ -14,15 +12,15 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Console (log)
 import Prelude (identity)
 import React (ReactElement)
-import Gargantext.Config (NodeType(..), readNodeType, toUrl, readNodeType, End(..), ApiVersion, defaultRoot)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
 import React.DOM.Props (Props, _type, className, href, onClick, onInput, placeholder, style, value)
 import Thermite (PerformAction, Render, Spec, cotransform, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
+
+import Gargantext.Prelude
+import Gargantext.Config (NodeType(..), readNodeType, toUrl, readNodeType, End(..), ApiVersion, defaultRoot)
 
 type Name = String
 type Open = Boolean
@@ -289,12 +287,12 @@ loadDefaultNode = do
          }
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      _ <-  logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
+      --_ <-  logs $ show a.status
+      --_ <-  logs $ show a.headers
+      --_ <-  logs $ show a.body
       let obj = decodeJson json
       pure obj
 
@@ -322,12 +320,12 @@ renameNode renameNodeId reqbody = do
          }
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      _ <-  logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
+      --_ <-  logs $ show a.status
+      --_ <-  logs $ show a.headers
+      --_ <-  logs $ show a.body
       let obj = decodeJson json
       pure obj
 
@@ -344,12 +342,12 @@ deleteNode = do
 
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      _ <-  logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
+      --_ <-  logs $ show a.status
+      --_ <-  logs $ show a.headers
+      --_ <-  logs $ show a.body
       let obj = decodeJson json
       pure obj
 
@@ -366,12 +364,12 @@ deleteNodes reqbody = do
          }
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      _ <-  logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
+      --_ <-  logs $ show a.status
+      --_ <-  logs $ show a.headers
+      --_ <-  logs $ show a.body
       let obj = decodeJson json
       pure  obj
 
@@ -387,12 +385,12 @@ createNode  reqbody= do
          }
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      _ <-  logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
+      --_ <-  logs $ show a.status
+      --_ <-  logs $ show a.headers
+      --_ <-  logs $ show a.body
       let obj = decodeJson json
       pure obj
 

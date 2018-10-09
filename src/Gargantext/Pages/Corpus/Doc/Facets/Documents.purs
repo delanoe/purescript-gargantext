@@ -1,6 +1,5 @@
 module Gargantext.Pages.Corpus.Doc.Facets.Documents where
 
-
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
@@ -13,31 +12,19 @@ import Data.HTTP.Method (Method(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
-
-import Gargantext.Prelude hiding (div)
-import Gargantext.Config (NodeType(..), toUrl, End(..))
-import Gargantext.Config.REST (get)
-import Gargantext.Utils.DecodeMaybe ((.|))
-
-------------------------------------------------------------------------
-import Gargantext.Components.Charts.Options.ECharts (chart)
-import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
-------------------------------------------------------------------------
-
 import React (ReactElement)
 import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr, p)
 import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value)
 import Thermite (PerformAction, Render, Spec, modifyState, defaultPerformAction, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-
---main :: forall e. Eff (dom:: DOM, console :: CONSOLE, ajax :: AJAX | e) Unit
---main = do
---  case createReactSpec layoutDocview tdata of
---    { spec, dispatcher } -> void $ do
---      document  <- DOM.window >>= DOM.document
---      container <- unsafePartial (fromJust  <$> DOM.querySelector (QuerySelector "#app") (DOM.htmlDocumentToParentNode document))
---      RDOM.render (R.createFactory (R.createClass spec) {}) container
---
+------------------------------------------------------------------------
+import Gargantext.Prelude
+import Gargantext.Config (NodeType(..), toUrl, End(..))
+import Gargantext.Config.REST (get)
+import Gargantext.Utils.DecodeMaybe ((.|))
+import Gargantext.Components.Charts.Options.ECharts (chart)
+import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
+------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
 -- TODO: PageSize Change manually sets the totalPages, need to get from backend and reload the data
 -- TODO: Search is pending
@@ -45,7 +32,6 @@ import Unsafe.Coerce (unsafeCoerce)
 -- TODO: Sort is Pending
 -- TODO: Filter is Pending
 -- TODO: When a pagination link is clicked, reload data. 
-          -- Right now it doesn't make sense to reload mock data.
 
 data Action
   = LoadData       Int
@@ -208,7 +194,7 @@ loadPage n = do
   case res of
      Left err -> do
        _ <- logs "Err: loading page documents"
-       _ <- logs $ show err
+       _ <- logs err
        pure $ Left $ show err
      Right resData -> do
        let docs = toTableData (res2corpus $ resData)

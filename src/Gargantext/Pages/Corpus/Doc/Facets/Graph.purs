@@ -1,7 +1,5 @@
 module Gargantext.Pages.Corpus.Doc.Facets.Graph where
 
-import Prelude hiding (div)
-
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestHeader (RequestHeader(..))
 import Affjax.ResponseFormat as ResponseFormat
@@ -15,11 +13,6 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.MediaType.Common (applicationJSON)
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Console (log)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
-import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
@@ -27,6 +20,12 @@ import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, s
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
+
+import Gargantext.Prelude
+import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Utils (getter)
+
 
 data Action
   = LoadGraph String
@@ -59,7 +58,7 @@ graphSpec = simpleSpec performAction render
 
 performAction :: PerformAction State {} Action
 performAction (LoadGraph fp) _ _ = void do
-  _ <- liftEffect $ log fp
+  _ <- logs fp
   case fp of
     "" -> do
       modifyState \(State s) -> State s {filePath = fp, graphData = GraphData {nodes : [], edges : []}, sigmaGraphData = Nothing}
@@ -117,7 +116,7 @@ render d p (State s) c =
               , settings : mySettings
               , style : sStyle { height : "95%"}
               -- , onClickNode : \e -> do
-              --   log $ unsafeCoerce e
+              --   logs $ unsafeCoerce e
               --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
               --   pure unit
               -- TODO: fix this!
@@ -234,10 +233,10 @@ getGraphData fp = do
           }
   case resp.body of
     Left err -> do
-      liftEffect $ log $ printResponseFormatError err
+      logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
-      liftEffect $ log $ stringify json
+      logs $ stringify json
       let gd = decodeJson json
       pure gd
 
@@ -392,7 +391,7 @@ specOld = simpleSpec performAction render'
                              , settings : mySettings
                              , style : sStyle { height : "95%"}
                              -- , onClickNode : \e -> do
-                             --   log $ unsafeCoerce e
+                             --   logs $ unsafeCoerce e
                              --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
                              --   pure unit
                              }
