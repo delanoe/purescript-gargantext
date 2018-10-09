@@ -12,6 +12,8 @@ import Effect.Console                                  (log)
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Modals.Modal              (modalShow)
 import Gargantext.Components.Tree                   as Tree
+
+import Gargantext.Pages.Corpus                      as Corpus
 import Gargantext.Pages.Corpus.Doc.Annotation       as D
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
@@ -32,12 +34,13 @@ data Action
   | AddCorpusA AC.Action
   | DocViewA   DV.Action
   | SearchA    S.Action
-  | UserPageA  U.Action
-  | DocAnnotationViewA D.Action
-  | TreeViewA          Tree.Action
-  | GraphExplorerA     GE.Action
   | Search             String
+  | TreeViewA          Tree.Action
+  | CorpusAction       Corpus.Action
+    | GraphExplorerA     GE.Action
+  | DocAnnotationViewA D.Action
   | AnnuaireAction     Annuaire.Action
+    | UserPageA  U.Action
   | Go
   | ShowLogin
   | ShowAddcorpus
@@ -96,6 +99,7 @@ performAction Initialize  _ state = void do
 
 performAction (LoginA        _) _ _ = pure unit
 performAction (AddCorpusA    _) _ _ = pure unit
+performAction (CorpusAction  _) _ _ = pure unit
 performAction (DocViewA      _) _ _ = pure unit
 performAction (SearchA       _) _ _ = pure unit
 performAction (UserPageA     _) _ _ = pure unit
@@ -116,6 +120,12 @@ _addCorpusAction :: Prism' Action AC.Action
 _addCorpusAction = prism AddCorpusA \action ->
   case action of
     AddCorpusA caction -> Right caction
+    _-> Left action
+
+_corpusAction :: Prism' Action Corpus.Action
+_corpusAction = prism CorpusAction \action ->
+  case action of
+    CorpusAction caction -> Right caction
     _-> Left action
 
 _docViewAction :: Prism' Action DV.Action

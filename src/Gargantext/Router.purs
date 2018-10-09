@@ -16,19 +16,41 @@ import Web.Storage.Storage (getItem)
 data Routes
   = Home
   | Login
-  | AddCorpus
-  | DocView        Int
   | SearchView
-  | UserPage       Int
-  | DocAnnotation  Int
-  | Tabview
-  | Corpus         Int
-  | PGraphExplorer
-  | NGramsTable
-  | Dashboard
-  | Annuaire       Int
-  | Folder         Int
+  | Folder             Int
+    | Corpus           Int
+      | AddCorpus
+      | Tabview
+      | DocView        Int
+      | DocAnnotation  Int
+      | PGraphExplorer
+      | NGramsTable
+      | Dashboard
+    | Annuaire         Int
+      | UserPage       Int
 
+routing :: Match Routes
+routing =
+      Login            <$   route "login"
+  <|> SearchView       <$   route "search"
+  <|> AddCorpus        <$   route "addCorpus"
+  <|> Folder           <$> (route "folder"   *> int)
+  <|> Corpus           <$> (route "corpus"   *> int)
+    <|> Tabview        <$   route "tabview"
+      <|> DocView      <$> (route "docView"  *> int)
+      <|> NGramsTable  <$   route "ngrams"
+    <|> DocAnnotation  <$> (route "document" *> int)
+    <|> Dashboard      <$   route "dashboard"
+    <|> PGraphExplorer <$   route "graph"
+  <|> Annuaire         <$> (route "annuaire" *> int)
+    <|> UserPage       <$> (route "user"     *> int)
+  <|> Home             <$   lit ""
+  
+ where
+    route str      = lit "" *> lit str
+  
+    int :: Match Int
+    int = floor <$> num
 
 instance showRoutes :: Show Routes where
   show Login            = "Login"
@@ -46,27 +68,6 @@ instance showRoutes :: Show Routes where
   show PGraphExplorer   = "graphExplorer"
   show Home             = "Home"
 
-int :: Match Int
-int = floor <$> num
-
-routing :: Match Routes
-routing =
-      Login          <$   route "login"
-  <|> Tabview        <$   route "tabview"
-  <|> DocAnnotation  <$> (route "document" *> int)
-  <|> UserPage       <$> (route "user"     *> int)
-  <|> SearchView     <$   route "search"
-  <|> DocView        <$> (route "docView"  *> int)
-  <|> AddCorpus      <$   route "addCorpus"
-  <|> Corpus         <$> (route "corpus"   *> int)
-  <|> PGraphExplorer <$   route "graph"
-  <|> NGramsTable    <$   route "ngrams"
-  <|> Dashboard      <$   route "dashboard"
-  <|> Annuaire       <$> (route "annuaire" *> int)
-  <|> Folder         <$> (route "folder"   *> int)
-  <|> Home           <$   lit ""
-  where
-    route str      = lit "" *> lit str
 
 routeHandler :: (Maybe Routes -> Routes -> Effect Unit)
               -> Maybe Routes -> Routes -> Effect Unit
