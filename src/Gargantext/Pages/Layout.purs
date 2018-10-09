@@ -7,12 +7,13 @@ import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 -- import Gargantext.Pages.Corpus.Doc.Facets as TV
 -- import Gargantext.Pages.Corpus.Doc.Annotation as D
 
+import Gargantext.Pages.Corpus as Corpus
 import Gargantext.Pages.Corpus.Doc.Facets.Documents         as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph             as GE
 -- import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 
-import Gargantext.Pages.Corpus.User.Users as U
-import Gargantext.Pages.Corpus.Annuaire   as Annuaire
+import Gargantext.Pages.Annuaire.User.Users as U
+import Gargantext.Pages.Annuaire   as Annuaire
 -- import Gargantext.Pages.Home as L
 -- import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Router (Routes(..))
@@ -39,6 +40,10 @@ dispatchAction dispatcher _ (DocView n) = do
   dispatcher $ SetRoute   (DocView n)
   dispatcher $ DocViewA $ DV.LoadData n
 
+dispatchAction dispatcher _ (Corpus n) = do
+  dispatcher $ SetRoute     $ Corpus n
+  dispatcher $ CorpusAction $ Corpus.Load n
+
 dispatchAction dispatcher _ SearchView = do
   dispatcher $ SetRoute SearchView
   -- dispatcher $ SearchA TODO
@@ -62,10 +67,6 @@ dispatchAction dispatcher _ (DocAnnotation i) = do
 dispatchAction dispatcher _ Tabview = do
   dispatcher $ SetRoute Tabview
   -- dispatcher $ TabViewA TODO
-
-dispatchAction dispatcher _ CorpusAnalysis = do
-  dispatcher $ SetRoute CorpusAnalysis
-  -- dispatcher $ CorpusAnalysisA TODO
 
 dispatchAction dispatcher _ PGraphExplorer = do
   dispatcher $ SetRoute PGraphExplorer

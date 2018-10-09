@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Annuaire where
+module Gargantext.Pages.Annuaire where
 
 import Prelude
 
@@ -9,34 +9,58 @@ import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism, (?~))
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Class (liftEffect)
-import React.DOM (div, h1, h3, hr, i, p, text)
-import React.DOM.Props (className, style)
+import React (ReactElement)
+import React.DOM (div, h1, h3, hr, i, p, text, thead, tbody, input, br', b, b', tr, th, table, td, a)
+import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value, style)
 import Thermite (Render, Spec
                 , simpleSpec, defaultPerformAction
                 , PerformAction, modifyState)
 import Effect.Console (log)
 import Effect.Aff (Aff)
+
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
-
-import Gargantext.Pages.Corpus.User.Users.Types.Types (User(..))
+import Gargantext.Pages.Annuaire.User.Users.Types.Types (User(..), HyperData(..))
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 
 ------------------------------------------------------------------------------
 type State = { info  :: Maybe AnnuaireInfo
-             , table :: Maybe AnnuaireTable
+             , stable :: Maybe AnnuaireTable
              }
 
 type Offset = Int
 type Limit  = Int
+type PageSize = Int
 
 data Action = Load Int
---  | ChangePageSize PageSizes
---  | ChangePage Int
+            | ChangePageSize PageSize -- TODO
+            | ChangePage     Int      -- TODO
+
+
+type AnnuaireTable' = Table IndividuView
+
+newtype Table a
+  = Table
+    { rows         :: Array { row :: a }
+    , totalPages   :: Int
+    , currentPage  :: Int
+    , pageSize     :: PageSize
+    , totalRecords :: Int
+    , title        :: String
+    }
+
+newtype IndividuView
+  = CorpusView
+    { id      :: Int
+    , name    :: String
+    , role    :: String
+    , company :: String
+    }
+
 ------------------------------------------------------------------------------
 initialState :: State
-initialState = { info : Nothing, table : Nothing }
+initialState = { info : Nothing, stable : Nothing }
 
 defaultAnnuaireTable :: AnnuaireTable
 defaultAnnuaireTable = AnnuaireTable { annuaireTable : [Nothing] }
@@ -70,18 +94,50 @@ render dispatch _ state _ = [ div [className "row"]
                                       ]
                                 , div [ className "col-md-4 content"]
                                       [ p [] [ i [className "fa fa-calendar"] []
-                                      , text info.date
+                                      , text ("Last update: " <> info.date)
                                              ]
                                       ]
                                 ]
                             ]
-                            , p  [] [text $ foldl (<>) " "
-                                      $ map (maybe "Nothing" (\(User u) -> show u.name))
-                                      $ maybe (toRows defaultAnnuaireTable) toRows state.table]
+                            ,             p [] []
+            , div [] [ text "    Filter ", input []]
+            , br'
+            , div [className "row"]
+              [  div [className "col-md-1"] [b [] [text "title"]]
+              --, div [className "col-md-2"] [sizeDD d.pageSize dispatch]
+              --, div [className "col-md-3"] [textDescription d.currentPage d.pageSize d.totalRecords]
+              --, div [className "col-md-3"] [pagination dispatch d.totalPages d.currentPage]
+                     ]
+            , table [ className "table"]
+              [thead  [ className "thead-dark"]
+                         [tr [] [ th [scope "col"] [ b' [text ""]    ]
+                                , th [scope "col"] [ b' [text "Name"]   ]
+                                , th [scope "col"] [ b' [text "Role"]  ]
+                                , th [scope "col"] [ b' [text "Service"]  ]
+                                , th [scope "col"] [ b' [text "Company"]  ]
+                                ]
+                         ]
+                         , tbody [] $ map showRow individuals
+              ]
                    ]
                         where
-                          (AnnuaireInfo  info)  = maybe defaultAnnuaireInfo  identity state.info
-                          (AnnuaireTable table) = maybe defaultAnnuaireTable identity state.table
+                          (AnnuaireInfo  info)   = maybe defaultAnnuaireInfo  identity state.info
+                          (AnnuaireTable stable) = maybe defaultAnnuaireTable identity state.stable
+                          individuals = maybe (toRows defaultAnnuaireTable) toRows state.stable
+
+
+showRow :: Maybe User -> ReactElement
+showRow Nothing = tr [][]
+showRow (Just (User { id : id, hyperdata : (HyperData user) })) =
+  tr []
+  [ td [] [ a [ href (toUrl Back NodeUser id) ] [ text $ maybe' user.nom <> " " <> maybe' user.prenom ] ]
+  , td [] [text $ maybe' user.fonction]
+  , td [] [text $ maybe' user.service]
+  , td [] [text $ maybe' user.groupe]
+  ]
+    where
+      maybe' = maybe "" identity
+
 
 ------------------------------------------------------------------------------
 newtype AnnuaireInfo = AnnuaireInfo { id        :: Int
@@ -118,24 +174,24 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
   decodeJson json = do
     rows <- decodeJson json
     pure $ AnnuaireTable { annuaireTable : rows}
-
 ------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
 performAction (Load aId) _ _ = do
-  eitherTable <- lift $ getTable aId
-  liftEffect $ log "Feching Table"
-  _ <- case eitherTable of
-            (Right table') -> void $ modifyState $ _table ?~ table'
-            (Left       err)  -> do
-              liftEffect $ log err
-
+  
   eitherInfo <- lift $ getInfo aId
   _ <- case eitherInfo of
             (Right info') -> void $ modifyState $ _info ?~ info'
             (Left       err)  -> do
               liftEffect $ log err
 
-  liftEffect <<< log $ "Fetching annuaire page..."
+  eitherTable <- lift $ getTable aId
+  liftEffect $ log "Feching Table"
+  _ <- case eitherTable of
+            (Right table') -> void $ modifyState $ _table ?~ table'
+            (Left       err)  -> do
+              liftEffect $ log err
+  liftEffect <<< log $ "Annuaire page fetched."
+
 performAction _ _ _ = pure unit
 ------------------------------------------------------------------------
 getTable :: Int -> Aff (Either String AnnuaireTable)
@@ -145,7 +201,7 @@ getInfo :: Int -> Aff (Either String AnnuaireInfo)
 getInfo id = get $ toUrl Back Node id
 ------------------------------------------------------------------------------
 _table :: Lens' State (Maybe AnnuaireTable)
-_table = lens (\s -> s.table) (\s ss -> s{table = ss})
+_table = lens (\s -> s.stable) (\s ss -> s{stable = ss})
 
 _info :: Lens' State (Maybe AnnuaireInfo)
 _info = lens (\s -> s.info) (\s ss -> s{info = ss})

@@ -1,8 +1,8 @@
-module Gargantext.Pages.Corpus.User.Users.Types.States  where
+module Gargantext.Pages.Annuaire.User.Users.Types.States  where
 
 import Data.Maybe (Maybe(..))
-import Gargantext.Pages.Corpus.User.Users.Types.Types (User)
-import Gargantext.Pages.Corpus.User.Users.Specs.Documents as P
+import Gargantext.Pages.Annuaire.User.Users.Types.Types (User)
+import Gargantext.Pages.Annuaire.User.Users.Specs.Documents as P
 import Gargantext.Components.Tab as Tab
 
 data Action

@@ -17,7 +17,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 
-import Gargantext.Config (NodeType(..), toUrl, End(Back))
+import Gargantext.Config (NodeType(..), toUrl, End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Utils.DecodeMaybe ((.|))
 
@@ -83,6 +83,7 @@ derive instance genericCorpus :: Generic CorpusView _
 instance showCorpus :: Show CorpusView where
   show = genericShow
 
+
 newtype Response = Response
   { cid        :: Int
   , created    :: String
@@ -90,6 +91,7 @@ newtype Response = Response
   , favorite   :: Boolean
   , ngramCount :: Int
   }
+
 
 newtype Hyperdata = Hyperdata
   { title  :: String
@@ -163,10 +165,7 @@ layoutDocview = simpleSpec performAction render
               [thead  [ className "thead-dark"]
                          [tr [] [ th [scope "col"] [ b' [text ""]    ]
                                 , th [scope "col"] [ b' [text "Date"]]
-                                , th [scope "col"] [ b' [text "Name"]   ]
-                                --, th [scope "col"] [ b' [text "Title"]   ]
-                                --, th [scope "col"] [ b' [text "Source"]  ]
-                                , th [scope "col"] [ b' [text "Fonction"]  ]
+                                , th [scope "col"] [ b' [text "Title"]   ]
                                 , th [scope "col"] [ b' [text "Delete"]  ]
                                 ]
                          ]
@@ -270,7 +269,7 @@ showRow {row : (CorpusView c), delete} =
   [ td [] [div [className $ fa <> "fa-star"][]]
   -- TODO show date: Year-Month-Day only
   , td [] [text c.date]
-  , td [] [ a [ href (toUrl Back Document 1) ] [ text c.title ] ]
+  , td [] [ a [ href (toUrl Front Document c._id) ] [ text c.title ] ]
   , td [] [text c.source]
   , td [] [input [ _type "checkbox"]]
   ]

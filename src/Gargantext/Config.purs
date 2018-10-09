@@ -9,9 +9,8 @@ toUrl Front Corpus 1 == "http://localhost:2015/#/corpus/1"
 -}
 module Gargantext.Config where
 
-import Prelude ( class Eq, class Ord, class Show
-               , compare, eq, show, (<>), identity)
-
+import Prelude
+import Data.Argonaut (class DecodeJson, decodeJson)
 import Data.Map (Map)
 import Data.Map as DM
 import Data.Maybe (maybe)
@@ -180,3 +179,7 @@ instance ordNodeType :: Ord NodeType where
 instance eqNodeType :: Eq NodeType where
   eq n1 n2  = eq (show n1) (show n2)
 ------------------------------------------------------------
+instance decodeJsonNodeType :: DecodeJson NodeType where
+  decodeJson json = do
+    obj <- decodeJson json
+    pure $ readNodeType obj

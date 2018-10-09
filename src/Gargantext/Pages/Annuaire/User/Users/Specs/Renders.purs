@@ -1,9 +1,7 @@
-module Gargantext.Pages.Corpus.User.Users.Specs.Renders
+module Gargantext.Pages.Annuaire.User.Users.Specs.Renders
        where
 
-import Gargantext.Pages.Corpus.User.Users.Actions
-import Gargantext.Pages.Corpus.User.Users.States
-import Gargantext.Pages.Corpus.User.Users.Types
+import Gargantext.Pages.Annuaire.User.Users.Types
 
 import Data.List (List, toUnfoldable, zip)
 import Data.Map (Map, empty, keys, values)
