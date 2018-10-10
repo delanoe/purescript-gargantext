@@ -215,7 +215,11 @@ performAction (Load nId) _ _ = do
             (Left       err)  -> do
                logs err
   logs $ "Node Corpus fetched."
-performAction _ _ _ = pure unit
+performAction (DocviewA a) _ _ = pure unit
+performAction (AuthorviewA _) _ _ = pure unit
+performAction (SourceviewA _) _ _ = pure unit
+performAction (TabViewA _) _ _ = pure unit
+performAction (TermsviewA _) _ _ = pure unit
 
 getNode :: Int -> Aff (Either String (NodePoly CorpusInfo))
 getNode id = get $ toUrl Back Node id
