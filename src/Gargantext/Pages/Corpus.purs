@@ -18,11 +18,11 @@ import Gargantext.Prelude
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 ---------------------------------------------------------
--- Facets
-import Gargantext.Pages.Corpus.Facets.Documents as D
-import Gargantext.Pages.Corpus.Facets.Sources   as S
-import Gargantext.Pages.Corpus.Facets.Authors   as A
-import Gargantext.Pages.Corpus.Facets.Terms     as T
+-- Tabs
+import Gargantext.Pages.Corpus.Tabs.Documents as D
+import Gargantext.Pages.Corpus.Tabs.Sources   as S
+import Gargantext.Pages.Corpus.Tabs.Authors   as A
+import Gargantext.Pages.Corpus.Tabs.Terms     as T
 import Gargantext.Components.Tab as Tab
 -------------------------------------------------------------------
 type State = { info        :: Maybe (NodePoly CorpusInfo)
@@ -225,7 +225,7 @@ getNode :: Int -> Aff (Either String (NodePoly CorpusInfo))
 getNode id = get $ toUrl Back Node id
 
 ------------------------------------------------------------------------
--- Facets
+-- Tabs
 ------------------------------------------------------------------------
 facets :: Spec State {} Action
 facets =

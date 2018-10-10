@@ -109,7 +109,7 @@ exampleTree = NTree (LNode { id : 1
 
 -- corpus :: Int -> String -> NTree (Tuple String String)
 -- corpus n name = NTree (LNode {id : n, name, nodeType : "", open : false})
---     [ NTree (Tuple "Facets"    "#/corpus") []
+--     [ NTree (Tuple "Tabs"    "#/corpus") []
 --     , NTree (Tuple "Dashboard" "#/dashboard") []
 --     , NTree (Tuple "Graph"     "#/graphExplorer") []
 --     ]

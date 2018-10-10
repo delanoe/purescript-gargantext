@@ -19,11 +19,11 @@ import Gargantext.Pages.Annuaire   as A
 import Gargantext.Pages.Annuaire.User.Users as U
 import Gargantext.Pages.Corpus     as Corpus
 import Gargantext.Pages.Corpus.Document as Annotation
-import Gargantext.Pages.Corpus.Facets as TV
-import Gargantext.Pages.Corpus.Facets.Dashboard as Dsh
-import Gargantext.Pages.Corpus.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Facets.Graph as GE
-import Gargantext.Pages.Corpus.Facets.Terms.NgramsTable as NG
+import Gargantext.Pages.Corpus.Tabs as TV
+import Gargantext.Pages.Corpus.Dashboard as Dsh
+import Gargantext.Pages.Corpus.Tabs.Documents as DV
+import Gargantext.Pages.Corpus.Graph as GE
+import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
 import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Actions (Action(..), _corpusAction, _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC

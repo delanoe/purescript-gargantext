@@ -1,8 +1,8 @@
-module Gargantext.Pages.Corpus.Facets.Authors where
+module Gargantext.Pages.Corpus.Tabs.Authors where
 
 
 import Data.Array (fold)
-import Gargantext.Pages.Corpus.Facets.Documents as D
+import Gargantext.Pages.Corpus.Tabs.Documents as D
 import Prelude hiding (div)
 import React.DOM (h3, text)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, simpleSpec)
