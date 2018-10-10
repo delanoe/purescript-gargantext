@@ -62,16 +62,16 @@ _tablens :: Lens' State Tab.State
 _tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
 ------------------------------------------------------------------------
 data Action = Load          Int
-            | DocviewAction D.Action
+            | DocviewA D.Action
             | AuthorviewA   A.Action
             | SourceviewA   S.Action
             | TermsviewA    T.Action
             | TabViewA      Tab.Action
 
 _docAction :: Prism' Action D.Action
-_docAction = prism DocviewAction \ action ->
+_docAction = prism DocviewA \ action ->
   case action of
-    DocviewAction laction -> Right laction
+    DocviewA laction -> Right laction
     _-> Left action
 
 _authorAction :: Prism' Action A.Action
@@ -215,11 +215,11 @@ performAction (Load nId) _ _ = do
             (Left       err)  -> do
                logs err
   logs $ "Node Corpus fetched."
-performAction (DocviewAction a) _ _ = pure unit
+performAction (DocviewA    _) _ _ = pure unit
 performAction (AuthorviewA _) _ _ = pure unit
 performAction (SourceviewA _) _ _ = pure unit
-performAction (TabViewA _) _ _ = pure unit
-performAction (TermsviewA _) _ _ = pure unit
+performAction (TabViewA    _) _ _ = pure unit
+performAction (TermsviewA  _) _ _ = pure unit
 
 getNode :: Int -> Aff (Either String (NodePoly CorpusInfo))
 getNode id = get $ toUrl Back Node id
@@ -229,10 +229,10 @@ getNode id = get $ toUrl Back Node id
 ------------------------------------------------------------------------
 facets :: Spec State {} Action
 facets =
-  Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Doc View"    docPageSpec
-                                              , Tuple "Author View" authorPageSpec
-                                              , Tuple "Source View" sourcePageSpec
-                                              , Tuple "Terms View"  termsPageSpec
+  Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Documents"    docPageSpec
+                                              , Tuple "Authors" authorPageSpec
+                                              , Tuple "Sources" sourcePageSpec
+                                              , Tuple "Terms"  termsPageSpec
                                               ]
 
 docPageSpec :: Spec State {} Action
