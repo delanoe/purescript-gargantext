@@ -61,9 +61,9 @@ dispatchAction dispatcher _ (Annuaire id) = do
 dispatchAction dispatcher _ (Folder id) = do
   dispatcher $ SetRoute $ Folder id
 
-dispatchAction dispatcher _ (DocAnnotation i) = do
-  dispatcher $ SetRoute $ DocAnnotation i
-  -- dispatcher $ DocAnnotationViewA TODO
+dispatchAction dispatcher _ (Document i) = do
+  dispatcher $ SetRoute $ Document i
+  -- dispatcher $ DocumentViewA TODO
 
 dispatchAction dispatcher _ PGraphExplorer = do
   dispatcher $ SetRoute PGraphExplorer

@@ -37,7 +37,7 @@ data Action
     | AddCorpusA AC.Action
     | DocViewA   DV.Action
     | GraphExplorerA     GE.Action
-    | DocAnnotationViewA D.Action
+    | DocumentViewA D.Action
   | AnnuaireAction     Annuaire.Action
     | UserPageA  U.Action
   | Go
@@ -102,7 +102,7 @@ performAction (CorpusAction  _) _ _ = pure unit
 performAction (DocViewA      _) _ _ = pure unit
 performAction (SearchA       _) _ _ = pure unit
 performAction (UserPageA     _) _ _ = pure unit
-performAction (DocAnnotationViewA _) _ _ = pure unit
+performAction (DocumentViewA _) _ _ = pure unit
 performAction (TreeViewA          _) _ _ = pure unit
 performAction (GraphExplorerA     _) _ _ = pure unit
 performAction (AnnuaireAction     _) _ _ = pure unit
@@ -152,9 +152,9 @@ _annuaireAction = prism AnnuaireAction \action ->
        _                -> Left  action
 
 _docAnnotationViewAction :: Prism' Action D.Action
-_docAnnotationViewAction = prism DocAnnotationViewA \action ->
+_docAnnotationViewAction = prism DocumentViewA \action ->
   case action of
-    DocAnnotationViewA caction -> Right caction
+    DocumentViewA caction -> Right caction
     _-> Left action
 
 _treeAction :: Prism' Action Tree.Action

@@ -60,7 +60,7 @@ pagesComponent s = case s.currentRoute of
     selectSpec (Corpus   i)      = layout0 $ focus _corpusState   _corpusAction   Corpus.layout
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
-    selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState _docAnnotationViewAction  Annotation.docview
+    selectSpec (Document i) = layout0 $ focus _docAnnotationViewState _docAnnotationViewAction  Annotation.docview
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
     
