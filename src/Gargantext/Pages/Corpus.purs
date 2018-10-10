@@ -15,6 +15,7 @@ import Thermite ( Render, Spec, PerformAction, focus, hide
                 , defaultPerformAction, simpleSpec, modifyState)
 --------------------------------------------------------
 import Gargantext.Prelude
+import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 ---------------------------------------------------------
@@ -99,15 +100,6 @@ _tabAction = prism TabViewA \ action ->
     _-> Left action
 
 ------------------------------------------------------------------------
-newtype NodePoly a = NodePoly { id :: Int
-                              , typename :: Int
-                              , userId   :: Int
-                              , parentId  :: Int
-                              , name      :: String
-                              , date      :: String
-                              , hyperdata :: a
-                              }
-
 newtype CorpusInfo = CorpusInfo { title   :: String
                                 , desc    :: String
                                 , query   :: String
@@ -140,30 +132,6 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     authors <- obj .? "authors"
     chart   <- obj .? "chart"
     pure $ CorpusInfo {title, desc, query, authors, chart}
-
-
-instance decodeNode :: (DecodeJson a) => DecodeJson (NodePoly a) where
-  decodeJson json = do
-    obj <- decodeJson json
-    id        <- obj .? "id"
-    typename  <- obj .? "typename"
-    userId    <- obj .? "userId"
-    parentId  <- obj .? "parentId"
-    name      <- obj .? "name"
-    date      <- obj .? "date"
-    
-    hyperdata  <- obj .? "hyperdata"
-    hyperdata' <- decodeJson hyperdata
-    
-    pure $ NodePoly  { id : id
-                 , typename : typename
-                 , userId   : userId
-                 , parentId : parentId
-                 , name     : name
-                 , date     : date
-                 , hyperdata: hyperdata'
-                 }
-
 
 ------------------------------------------------------------------------
 layout :: Spec State {} Action

@@ -19,21 +19,16 @@ initialState =
     inputValue : ""
   }
 
-
 data Action
-  = ChangeString String
-  | ChangeAnotherString String
+  = Load Int
+  | ChangeString String
   | SetInput String
 
 
 performAction :: PerformAction State {} Action
 performAction (ChangeString ps) _ _ = pure unit
-
-performAction (ChangeAnotherString ps) _ _ = pure unit
-
-performAction (SetInput ps) _ _ = void do
-  modifyState $ _ { inputValue = ps }
-
+performAction (Load n)          _ _ = pure unit
+performAction (SetInput ps) _ _ = void <$> modifyState $ _ { inputValue = ps }
 
 
 docview :: Spec State {} Action
@@ -55,11 +50,6 @@ docview = simpleSpec performAction render
                                , onChange (\e -> dispatch (ChangeString $ (unsafeCoerce e).target.value))
                                ] $ map optps aryPS 
                       ]
-                , div [ className "col-md-12 form-control input-group mb-3"] 
-                      [ select [ className "form-control custom-select"
-                               , onChange (\e -> dispatch (ChangeAnotherString $ (unsafeCoerce e).target.value)) ]
-                               $ map optps aryPS1 
-                               ]
                 ]
               , div [className "row", style { marginTop : "35px"}]
                 [
@@ -158,7 +148,7 @@ docview = simpleSpec performAction render
       ]
 
 aryPS :: Array String
-aryPS = ["STOPLIST", "MAINLIST", "MAPLIST"]
+aryPS = ["Map", "Main", "Stop"]
 
 aryPS1 :: Array String
 aryPS1 = ["Nothing Selected","STOPLIST", "MAINLIST", "MAPLIST"]
