@@ -36,10 +36,6 @@ dispatchAction dispatcher _ AddCorpus = do
   dispatcher $ SetRoute   AddCorpus
   dispatcher $ AddCorpusA AC.LoadDatabaseDetails
 
-dispatchAction dispatcher _ (DocView n) = do
-  dispatcher $ SetRoute   (DocView n)
-  dispatcher $ DocViewA $ D.LoadData n
-
 dispatchAction dispatcher _ (Corpus n) = do
   dispatcher $ SetRoute     $ Corpus n
   dispatcher $ CorpusAction $ Corpus.Load n

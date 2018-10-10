@@ -25,10 +25,10 @@ import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _corpusAction, _addCorpusAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _corpusAction, _addCorpusAction, _docAnnotationViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search    as S
-import Gargantext.Pages.Layout.States (AppState, _corpusState, _addCorpusState, _docAnnotationViewState, _docViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState, _annuaireState)
+import Gargantext.Pages.Layout.States (AppState, _corpusState, _addCorpusState, _docAnnotationViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState, _annuaireState)
 import Gargantext.Router (Routes(..))
 
 layoutSpec :: Spec AppState {} Action
@@ -68,7 +68,6 @@ pagesComponent s = case s.currentRoute of
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
     -- To be removed
     selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
-    selectSpec (DocView  i)      = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 

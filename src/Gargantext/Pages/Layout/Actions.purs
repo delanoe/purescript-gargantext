@@ -35,7 +35,6 @@ data Action
     | SearchA    S.Action
     | Search             String
     | AddCorpusA AC.Action
-    | DocViewA   DV.Action
     | GraphExplorerA     GE.Action
     | DocumentViewA D.Action
   | AnnuaireAction     Annuaire.Action
@@ -79,27 +78,12 @@ performAction Initialize  _ state = void do
         Right d -> do
           _ <- modifyState $ _ { initialized = true, ntreeState = d}
           pure unit
---          page <- lift $ DV.loadPage
---          case page of
---            Left err -> do
---              pure unit
---            Right docs -> void do
---              modifyState $ _ { initialized = true
---                              , ntreeState = d
---                                -- if length d > 0
---                                --             then Tree.exampleTree
---                                --            --then fnTransform $ unsafePartial $ fromJust $ head d
---                                --            else Tree.initialState
---
---                              , docViewState = docs
---                              }
     _ -> do
       pure unit
 
 performAction (LoginA        _) _ _ = pure unit
 performAction (AddCorpusA    _) _ _ = pure unit
 performAction (CorpusAction  _) _ _ = pure unit
-performAction (DocViewA      _) _ _ = pure unit
 performAction (SearchA       _) _ _ = pure unit
 performAction (UserPageA     _) _ _ = pure unit
 performAction (DocumentViewA _) _ _ = pure unit
@@ -125,12 +109,6 @@ _corpusAction :: Prism' Action Corpus.Action
 _corpusAction = prism CorpusAction \action ->
   case action of
     CorpusAction caction -> Right caction
-    _-> Left action
-
-_docViewAction :: Prism' Action DV.Action
-_docViewAction = prism DocViewA \action ->
-  case action of
-    DocViewA caction -> Right caction
     _-> Left action
 
 _searchAction :: Prism' Action S.Action
