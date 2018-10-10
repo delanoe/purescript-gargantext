@@ -1,13 +1,13 @@
-module Gargantext.Pages.Corpus.Doc.Facets.Actions where
+module Gargantext.Pages.Corpus.Facets.Actions where
 
 
 import Data.Lens (Prism', prism)
 import Data.Either (Either(..))
 
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Sources as SV
-import Gargantext.Pages.Corpus.Doc.Facets.Authors as AV
-import Gargantext.Pages.Corpus.Doc.Facets.Terms as TV
+import Gargantext.Pages.Corpus.Facets.Documents as DV
+import Gargantext.Pages.Corpus.Facets.Sources as SV
+import Gargantext.Pages.Corpus.Facets.Authors as AV
+import Gargantext.Pages.Corpus.Facets.Terms as TV
 import Gargantext.Components.Tab as Tab
 
 data Action

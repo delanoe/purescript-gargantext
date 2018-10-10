@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable where
+module Gargantext.Pages.Corpus.Facets.Terms.NgramsTable where
 
 
 import Data.Array (filter, toUnfoldable)
@@ -12,7 +12,7 @@ import Data.Tuple (Tuple(..), uncurry)
 import Data.Void (Void)
 import Data.Unit (Unit)
 import Effect (Effect)
-import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem as NI
+import Gargantext.Pages.Corpus.Facets.Terms.NgramsItem as NI
 import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+), (-), (/), (<), (<>), (==), (>), (>=), pure, unit)
 import React (ReactElement)
 import React.DOM hiding (style, map)

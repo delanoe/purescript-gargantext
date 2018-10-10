@@ -19,10 +19,10 @@ import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 ---------------------------------------------------------
 -- Facets
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as D
-import Gargantext.Pages.Corpus.Doc.Facets.Sources   as S
-import Gargantext.Pages.Corpus.Doc.Facets.Authors   as A
-import Gargantext.Pages.Corpus.Doc.Facets.Terms     as T
+import Gargantext.Pages.Corpus.Facets.Documents as D
+import Gargantext.Pages.Corpus.Facets.Sources   as S
+import Gargantext.Pages.Corpus.Facets.Authors   as A
+import Gargantext.Pages.Corpus.Facets.Terms     as T
 import Gargantext.Components.Tab as Tab
 -------------------------------------------------------------------
 type State = { info        :: Maybe (NodePoly CorpusInfo)

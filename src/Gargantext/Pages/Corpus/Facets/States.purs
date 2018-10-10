@@ -1,10 +1,10 @@
-module Gargantext.Pages.Corpus.Doc.Facets.States where
+module Gargantext.Pages.Corpus.Facets.States where
 
 import Data.Lens (Lens', lens)
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Sources as SV
-import Gargantext.Pages.Corpus.Doc.Facets.Authors as AV
-import Gargantext.Pages.Corpus.Doc.Facets.Terms as TV
+import Gargantext.Pages.Corpus.Facets.Documents as DV
+import Gargantext.Pages.Corpus.Facets.Sources as SV
+import Gargantext.Pages.Corpus.Facets.Authors as AV
+import Gargantext.Pages.Corpus.Facets.Terms as TV
 import Gargantext.Components.Tab as Tab
 
 

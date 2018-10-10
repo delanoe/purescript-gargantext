@@ -8,10 +8,10 @@ import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Tree                   as Tree
 
 import Gargantext.Pages.Corpus                      as Corpus
-import Gargantext.Pages.Corpus.Doc.Annotation       as D
+import Gargantext.Pages.Corpus.Document       as D
 import Gargantext.Pages.Annuaire                    as Annuaire
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
+import Gargantext.Pages.Corpus.Facets.Documents as DV
+import Gargantext.Pages.Corpus.Facets.Graph     as GE
 import Gargantext.Pages.Annuaire.User.Users         as U
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
@@ -25,7 +25,7 @@ type AppState =
   , docViewState   :: DV.State
   , searchState    :: S.State
   , userPageState  :: U.State
-  , docAnnotationState :: D.State
+  , documentState :: D.State
   , annuaireState  :: Annuaire.State
   , ntreeState     :: Tree.State
   , search         :: String
@@ -44,7 +44,7 @@ initAppState =
   , docViewState   : DV.initialState
   , searchState    : S.initialState
   , userPageState  : U.initialState
-  , docAnnotationState : D.initialState
+  , documentState : D.initialState
   , ntreeState     : Tree.exampleTree
   , annuaireState  : Annuaire.initialState
   , search         : ""
@@ -76,8 +76,8 @@ _userPageState = lens (\s -> s.userPageState) (\s ss -> s{userPageState = ss})
 _annuaireState :: Lens' AppState Annuaire.State
 _annuaireState = lens (\s -> s.annuaireState) (\s ss -> s{annuaireState = ss})
 
-_docAnnotationViewState :: Lens' AppState D.State
-_docAnnotationViewState = lens (\s -> s.docAnnotationState) (\s ss -> s{docAnnotationState = ss})
+_documentViewState :: Lens' AppState D.State
+_documentViewState = lens (\s -> s.documentState) (\s ss -> s{documentState = ss})
 
 _treeState :: Lens' AppState Tree.State
 _treeState = lens (\s -> s.ntreeState) (\s ss -> s {ntreeState = ss})

@@ -15,9 +15,9 @@ import Gargantext.Components.Tree                   as Tree
 import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Annuaire.User.Users           as U
 import Gargantext.Pages.Corpus                      as Corpus
-import Gargantext.Pages.Corpus.Doc.Annotation       as D
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
+import Gargantext.Pages.Corpus.Document       as D
+import Gargantext.Pages.Corpus.Facets.Documents as DV
+import Gargantext.Pages.Corpus.Facets.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Pages.Layout.States                  (AppState)
@@ -129,8 +129,8 @@ _annuaireAction = prism AnnuaireAction \action ->
        AnnuaireAction a -> Right a
        _                -> Left  action
 
-_docAnnotationViewAction :: Prism' Action D.Action
-_docAnnotationViewAction = prism DocumentViewA \action ->
+_documentViewAction :: Prism' Action D.Action
+_documentViewAction = prism DocumentViewA \action ->
   case action of
     DocumentViewA caction -> Right caction
     _-> Left action

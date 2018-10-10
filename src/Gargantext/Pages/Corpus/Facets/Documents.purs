@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Doc.Facets.Documents where
+module Gargantext.Pages.Corpus.Facets.Documents where
 
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.ResponseFormat as ResponseFormat
@@ -23,7 +23,7 @@ import Gargantext.Config (NodeType(..), toUrl, End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
-import Gargantext.Pages.Corpus.Doc.Facets.Dashboard (globalPublis)
+import Gargantext.Pages.Corpus.Facets.Dashboard (globalPublis)
 ------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
 -- TODO: PageSize Change manually sets the totalPages, need to get from backend and reload the data

@@ -4,13 +4,13 @@ import Prelude hiding (div)
 -- import Gargantext.Components.Login as LN
 import Gargantext.Pages.Layout.Actions (Action(..))
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
--- import Gargantext.Pages.Corpus.Doc.Facets as TV
--- import Gargantext.Pages.Corpus.Doc.Annotation as D
+-- import Gargantext.Pages.Corpus.Facets as TV
+-- import Gargantext.Pages.Corpus.Document as D
 
 import Gargantext.Pages.Corpus as Corpus
-import Gargantext.Pages.Corpus.Doc.Facets.Documents         as D
-import Gargantext.Pages.Corpus.Doc.Facets.Graph             as GE
--- import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
+import Gargantext.Pages.Corpus.Facets.Documents         as D
+import Gargantext.Pages.Corpus.Facets.Graph             as GE
+-- import Gargantext.Pages.Corpus.Facets.Terms.NgramsTable as NG
 
 import Gargantext.Pages.Annuaire.User.Users as U
 import Gargantext.Pages.Annuaire   as Annuaire

@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Doc.Facets.Dashboard where
+module Gargantext.Pages.Corpus.Facets.Dashboard where
 
 import Prelude hiding (div)
 

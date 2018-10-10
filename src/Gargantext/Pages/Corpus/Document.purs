@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Doc.Annotation where
+module Gargantext.Pages.Corpus.Document where
 
 import Prelude hiding (div)
 import React (ReactElement)
@@ -50,16 +50,44 @@ docview = simpleSpec performAction render
               [
                 div [className "row"]
                 [
-                  div [className "col-md-12 input-group mb-3"] [select [className "form-control custom-select",onChange (\e -> dispatch (ChangeString $ (unsafeCoerce e).target.value)) ] $ map optps aryPS ]
-                , div [className "col-md-12 form-control input-group mb-3"] [ select [className "form-control custom-select",onChange (\e -> dispatch (ChangeAnotherString $ (unsafeCoerce e).target.value)) ] $ map optps aryPS1 ]
+                  div [ className "col-md-12 input-group mb-3"] 
+                      [ select [ className "form-control custom-select"
+                               , onChange (\e -> dispatch (ChangeString $ (unsafeCoerce e).target.value))
+                               ] $ map optps aryPS 
+                      ]
+                , div [ className "col-md-12 form-control input-group mb-3"] 
+                      [ select [ className "form-control custom-select"
+                               , onChange (\e -> dispatch (ChangeAnotherString $ (unsafeCoerce e).target.value)) ]
+                               $ map optps aryPS1 
+                               ]
                 ]
               , div [className "row", style { marginTop : "35px"}]
                 [
                   nav [ ]
-                  [ div [className "nav nav-tabs", _id "nav-tab",role "tablist"]
-                    [ a [className "nav-item nav-link active",_id "nav-home-tab"   ,  _data {toggle : "tab"},href "#nav-home"   ,role "tab",aria {controls : "nav-home"}   ,aria {selected:true}] [ text "STOPLIST"]
-                    , a [className "nav-item nav-link"       ,_id "nav-profile-tab",  _data {toggle : "tab"},href "#nav-profile",role "tab",aria {controls : "nav-profile"},aria {selected:true}] [ text "MAINLIST"]
-                    , a [className "nav-item nav-link"       ,_id "nav-contact-tab",  _data {toggle : "tab"},href "#nav-contact",role "tab",aria {controls : "nav-contact"},aria {selected:true}] [ text "MAPLIST"]
+                  [ div [ className "nav nav-tabs", _id "nav-tab", role "tablist"]
+                    [ a [ className "nav-item nav-link active"
+                        , _id "nav-home-tab"
+                        , _data {toggle : "tab"},href "#nav-home"
+                        , role "tab"
+                        , aria {controls : "nav-home"}
+                        , aria {selected:true}
+                        ] [ text "STOPLIST"]
+                    , a [ className "nav-item nav-link"
+                        , _id "nav-profile-tab"
+                        , _data {toggle : "tab"}
+                        , href "#nav-profile"
+                        , role "tab"
+                        , aria {controls : "nav-profile"}
+                        , aria {selected:true}
+                        ] [ text "MAINLIST"]
+                    , a [ className "nav-item nav-link"
+                        , _id "nav-contact-tab"
+                        , _data {toggle : "tab"}
+                        , href "#nav-contact"
+                        , role "tab"
+                        , aria {controls : "nav-contact"}
+                        , aria {selected:true}
+                        ] [ text "MAPLIST"]
 
                     ]
                   ]
@@ -73,10 +101,18 @@ docview = simpleSpec performAction render
                     [
                       h6 [] [text "Add a free term to STOPLIST"]
                     ,  div [className "form-group"]
-                       [ input [className "form-control", _id "id_password", name "password", placeholder "Any text", _type "value",value state.inputValue,onInput \e -> dispatch (SetInput (unsafeEventValue e))]
+                       [ input [ className "form-control"
+                               , _id "id_password"
+                               , name "password"
+                               , placeholder "Any text"
+                               , _type "value"
+                               , value state.inputValue,onInput \e -> dispatch (SetInput (unsafeEventValue e))
+                               ]
                        , div [className "clearfix"] []
                        ]
-                    , button [className "btn btn-primary", _type "button"] [text "Create and Add"]
+                    , button [ className "btn btn-primary"
+                             , _type "button"
+                             ] [text "Create and Add"]
                     ]
 
                   , div [ className "tab-pane fade show"
