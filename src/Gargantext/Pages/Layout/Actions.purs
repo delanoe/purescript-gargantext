@@ -30,14 +30,14 @@ data Action
   = Initialize
   | LoginA     LN.Action
   | SetRoute   Routes
-  | AddCorpusA AC.Action
-  | DocViewA   DV.Action
-  | SearchA    S.Action
-  | Search             String
   | TreeViewA          Tree.Action
   | CorpusAction       Corpus.Action
+    | SearchA    S.Action
+    | Search             String
+    | AddCorpusA AC.Action
+    | DocViewA   DV.Action
     | GraphExplorerA     GE.Action
-  | DocAnnotationViewA D.Action
+    | DocAnnotationViewA D.Action
   | AnnuaireAction     Annuaire.Action
     | UserPageA  U.Action
   | Go

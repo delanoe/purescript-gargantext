@@ -43,7 +43,7 @@ dispatchAction dispatcher _ (DocView n) = do
 dispatchAction dispatcher _ (Corpus n) = do
   dispatcher $ SetRoute     $ Corpus n
   dispatcher $ CorpusAction $ Corpus.Load n
-  dispatcher $ CorpusAction $ Corpus.DocviewA     $ D.LoadData n
+  dispatcher $ CorpusAction $ Corpus.DocviewAction $ D.LoadData n
 
 dispatchAction dispatcher _ SearchView = do
   dispatcher $ SetRoute SearchView

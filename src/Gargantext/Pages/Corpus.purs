@@ -61,17 +61,17 @@ _termslens = lens (\s -> s.termsView) (\s ss -> s {termsView = ss})
 _tablens :: Lens' State Tab.State
 _tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
 ------------------------------------------------------------------------
-data Action = Load        Int
-            | DocviewA    D.Action
-            | AuthorviewA A.Action
-            | SourceviewA S.Action
-            | TermsviewA  T.Action
-            | TabViewA    Tab.Action
+data Action = Load          Int
+            | DocviewAction D.Action
+            | AuthorviewA   A.Action
+            | SourceviewA   S.Action
+            | TermsviewA    T.Action
+            | TabViewA      Tab.Action
 
 _docAction :: Prism' Action D.Action
-_docAction = prism DocviewA \ action ->
+_docAction = prism DocviewAction \ action ->
   case action of
-    DocviewA laction -> Right laction
+    DocviewAction laction -> Right laction
     _-> Left action
 
 _authorAction :: Prism' Action A.Action
@@ -215,7 +215,7 @@ performAction (Load nId) _ _ = do
             (Left       err)  -> do
                logs err
   logs $ "Node Corpus fetched."
-performAction (DocviewA a) _ _ = pure unit
+performAction (DocviewAction a) _ _ = pure unit
 performAction (AuthorviewA _) _ _ = pure unit
 performAction (SourceviewA _) _ _ = pure unit
 performAction (TabViewA _) _ _ = pure unit

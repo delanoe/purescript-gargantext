@@ -48,27 +48,27 @@ layoutSpec =
       (render d p s c)
 
 pagesComponent :: AppState -> Spec AppState {} Action
-pagesComponent s =
-  case s.currentRoute of
+pagesComponent s = case s.currentRoute of
     Just route -> selectSpec route
-    Nothing    -> selectSpec Home
+    Nothing    -> selectSpec Home -- TODO add Error page here: url requested does not exist (with funny Garg image)
   where
     selectSpec :: Routes -> Spec AppState {} Action
-    selectSpec (Corpus   i)      = layout0 $ focus _corpusState   _corpusAction   Corpus.layout
-    selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
+    selectSpec Login             = focus _loginState _loginAction LN.renderSpec
+    selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
+    
+    selectSpec (Corpus   i)      = layout0 $ focus _corpusState   _corpusAction   Corpus.layout
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
-    selectSpec (DocView  i)      = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
-    selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
-    selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState
-                                                   _docAnnotationViewAction  Annotation.docview
-    -- To be removed
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
-    selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
+    selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState _docAnnotationViewAction  Annotation.docview
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
+    
     selectSpec (Annuaire i)      = layout0 $ focus _annuaireState _annuaireAction A.layoutAnnuaire
-    selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
+    selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
+    -- To be removed
+    selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
+    selectSpec (DocView  i)      = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 

@@ -216,8 +216,8 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) [
       ( [ text (name <> "    ")
         ]
         <> nodeOptionsView false
-        <> (nodeOptionsRename  d true)
-        <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
+        <> (nodeOptionsRename  d false)
+        -- <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
       )
     ]
   ]
@@ -233,8 +233,8 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) a
         map (toHtml d) ary
         else []
      <> nodeOptionsView false
-     <> (nodeOptionsRename  d true)
-     <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
+     <> (nodeOptionsRename  d false)
+     -- <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
     )
   ]
 

@@ -132,6 +132,7 @@ filterSpec = simpleSpec defaultPerformAction render
                      , input []
                      ]]
 
+-- | Main layout of the Documents Tab of a Corpus
 layoutDocview :: Spec State {} Action
 layoutDocview = simpleSpec performAction render
   where
@@ -168,14 +169,8 @@ layoutDocview = simpleSpec performAction render
 
 
 performAction :: PerformAction State {} Action
-performAction (ChangePageSize ps) _ _ =
-  void $ modifyState $ changePageSize ps
-
-performAction (ChangePage p) _ _ = 
-  void $ modifyState \(TableData td) -> TableData 
-       $ td { currentPage = p }
-
 performAction (LoadData n) _ _ = do
+  logs "loading documents page"
   res <- lift $ loadPage n
   case res of
      Left err      -> do
@@ -186,9 +181,17 @@ performAction (LoadData n) _ _ = do
        _ <- modifyState $ const resData
        pure unit
 
+performAction (ChangePageSize ps) _ _ =
+  void $ modifyState $ changePageSize ps
+
+performAction (ChangePage p) _ _ = 
+  void $ modifyState \(TableData td) -> TableData 
+       $ td { currentPage = p }
+
 
 loadPage :: Int -> Aff (Either String CorpusTableData)
 loadPage n = do
+  logs "loading documents page: loadPage"
   res <- get $ toUrl Back Children n
   -- TODO: offset and limit
   -- res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
