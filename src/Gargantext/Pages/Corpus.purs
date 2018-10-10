@@ -181,18 +181,18 @@ corpusSpec = simpleSpec performAction render
         , div [className "row"] [ div [className "jumbotron1", style {padding : "12px 0px 20px 12px"}]
               [ div [ className "col-md-8 content"]
                     [ p [] [ i [className "fa fa-globe"] []
-                           , text corpus.desc
+                           , text $ " " <> corpus.desc
                            ]
                     , p [] [ i [className "fab fa-searchengin"] []
-                           , text corpus.query
+                           , text $ " " <> corpus.query
                            ]
                     ]
               , div [ className "col-md-4 content"]
                     [ p [] [ i [className "fa fa-calendar"] []
-                           , text date'
+                           , text $ " " <> date'
                            ]
                     , p [] [ i [className "fa fa-user"] []
-                           , text corpus.authors
+                           , text $ " " <> corpus.authors
                            ]
                     ]
               ]
