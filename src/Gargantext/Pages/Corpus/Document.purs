@@ -1,22 +1,35 @@
 module Gargantext.Pages.Corpus.Document where
 
-import Prelude hiding (div)
+
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Data.Generic.Rep (class Generic)
+import Data.Lens (Lens', Prism', lens, prism, (?~))
+import Data.Generic.Rep.Show (genericShow)
+import Data.Maybe (Maybe(..), maybe)
+import Data.Either (Either(..))
+import Effect.Aff (Aff)
 import React (ReactElement)
 import React.DOM (a, button, div, h4, h6, input, li, nav, option, p, select, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, href, name, onChange, onInput, placeholder, role, style, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
+import Control.Monad.Trans.Class (lift)
+
+import Gargantext.Prelude
+import Gargantext.Config          (toUrl, NodeType(..), End(..))
+import Gargantext.Config.REST     (get)
+import Gargantext.Components.Node (NodePoly(..))
 
 
 type State =
-  {
-    inputValue :: String
+  { document   :: Maybe (NodePoly DocumentV3)
+  , inputValue :: String
   }
 
 initialState :: State
 initialState =
-  {
-    inputValue : ""
+  { document   : Nothing
+  , inputValue : ""
   }
 
 data Action
@@ -25,11 +38,244 @@ data Action
   | SetInput String
 
 
+newtype Status = Status { failed    :: Int
+                        , succeeded :: Int
+                        , remaining :: Int
+                        }
+
+newtype DocumentV3 =
+  DocumentV3 { abstract           :: Maybe String
+             , authors            :: Maybe String
+             --, error              :: Maybe String
+             , language_iso2      :: Maybe String
+             , language_iso3      :: Maybe String
+             , language_name      :: Maybe String
+             , publication_date   :: Maybe String
+             , publication_day    :: Maybe Int
+             , publication_hour   :: Maybe Int
+             , publication_minute :: Maybe Int
+             , publication_month  :: Maybe Int
+             , publication_second :: Maybe Int
+             , publication_year   :: Maybe Int
+             , realdate_full_     :: Maybe String
+             , source             :: Maybe String
+             , statuses           :: Maybe (Array Status)
+             , title              :: Maybe String
+             }
+
+defaultNodeDocumentV3 :: NodePoly DocumentV3
+defaultNodeDocumentV3 =
+  NodePoly { id : 0
+           , typename : 0
+           , userId   : 0
+           , parentId : 0
+           , name     : "Default name"
+           , date     : "Default date"
+           , hyperdata : defaultDocumentV3
+         }
+
+defaultDocumentV3 :: DocumentV3
+defaultDocumentV3 =
+  DocumentV3 { abstract           : Nothing
+             , authors            : Nothing
+             --, error              : Nothing
+             , language_iso2      : Nothing
+             , language_iso3      : Nothing
+             , language_name      : Nothing
+             , publication_date   : Nothing
+             , publication_day    : Nothing
+             , publication_hour   : Nothing
+             , publication_minute : Nothing
+             , publication_month  : Nothing
+             , publication_second : Nothing
+             , publication_year   : Nothing
+             , realdate_full_     : Nothing
+             , source             : Nothing
+             , statuses           : Nothing
+             , title              : Nothing
+             }
+
+data Document =
+  Document { abstract           :: Maybe String
+           , authors            :: Maybe String
+           , bdd                :: Maybe String
+           , doi                :: Maybe Int
+           , language_iso2      :: Maybe String
+           , language_iso3      :: Maybe String
+           , page               :: Maybe Int
+           , publication_date   :: Maybe String
+           , publication_second :: Maybe Int
+           , publication_minute :: Maybe Int
+           , publication_hour   :: Maybe Int
+           , publication_day    :: Maybe String
+           , publication_month  :: Maybe Int
+           , publication_year   :: Maybe Int
+           , source             :: Maybe String
+           , title              :: Maybe String
+           , uniqId             :: Maybe String
+           , url                :: Maybe String
+           , text               :: Maybe String
+           }
+
+defaultNodeDocument :: NodePoly Document
+defaultNodeDocument =
+  NodePoly { id : 0
+           , typename : 0
+           , userId   : 0
+           , parentId : 0
+           , name     : "Default name"
+           , date     : "Default date"
+           , hyperdata : defaultDocument
+         }
+
+defaultDocument :: Document
+defaultDocument =
+  Document { abstract           : Nothing
+           , authors            : Nothing
+           , bdd                : Nothing
+           , doi                : Nothing
+           , language_iso2      : Nothing
+           , language_iso3      : Nothing
+           , page               : Nothing
+           , publication_date   : Nothing
+           , publication_second : Nothing
+           , publication_minute : Nothing
+           , publication_hour   : Nothing
+           , publication_day    : Nothing
+           , publication_month  : Nothing
+           , publication_year   : Nothing
+           , source             : Nothing
+           , title              : Nothing
+           , uniqId             : Nothing
+           , url                : Nothing
+           , text               : Nothing
+           }
+
+derive instance genericDocument   :: Generic Document   _
+derive instance genericDocumentV3 :: Generic DocumentV3 _
+derive instance genericStatus     :: Generic Status     _
+
+instance showDocument :: Show Document where
+  show = genericShow
+
+instance showDocumentV3 :: Show DocumentV3 where
+  show = genericShow
+
+instance showStatus :: Show Status where
+  show = genericShow
+
+instance decodeStatus :: DecodeJson Status
+  where
+    decodeJson json = do
+      obj <- decodeJson json
+      failed <- obj .? "failed"
+      succeeded <- obj .? "succeeded"
+      remaining <- obj .? "remaining"
+      pure $ Status {failed, succeeded, remaining}
+
+
+instance decodeDocumentV3 :: DecodeJson DocumentV3
+  where
+    decodeJson json = do
+      obj <- decodeJson json
+      abstract <- obj .? "abstract"
+      authors  <- obj .? "authors"
+      --error    <- obj .? "error"
+      language_iso2 <- obj .? "language_iso2"
+      language_iso3 <- obj .? "language_iso3"
+      language_name <- obj .? "language_name"
+      publication_date   <- obj .? "publication_date"
+      publication_day    <- obj .? "publication_day"
+      publication_hour   <- obj .? "publication_hour"
+      publication_minute <- obj .? "publication_minute"
+      publication_month  <- obj .? "publication_month"
+      publication_second <- obj .? "publication_second"
+      publication_year   <- obj .? "publication_year"
+      realdate_full_     <- obj .? "realdate_full_"
+      source   <- obj .? "source"
+      statuses <- obj .? "statuses"
+      title    <- obj .? "title"
+      pure $ DocumentV3 { abstract
+                        , authors
+                        --, error
+                        , language_iso2
+                        , language_iso3
+                        , language_name
+                        , publication_date
+                        , publication_day
+                        , publication_hour
+                        , publication_minute
+                        , publication_month
+                        , publication_second
+                        , publication_year
+                        , realdate_full_
+                        , source
+                        , statuses
+                        , title
+                        }
+
+instance decodeDocument :: DecodeJson Document
+  where
+    decodeJson json = do
+      obj <- decodeJson json
+      abstract <- obj .? "abstract"
+      authors  <- obj .? "authors"
+      bdd      <- obj .? "bdd"
+      doi      <- obj .? "doi"
+      language_iso2 <- obj .? "language_iso2"
+      language_iso3 <- obj .? "language_iso3"
+      page          <- obj .? "page"
+      publication_date   <- obj .? "publication_date"
+      publication_second <- obj .? "publication_second"
+      publication_minute <- obj .? "publication_minute"
+      publication_hour   <- obj .? "publication_hour"
+      publication_day    <- obj .? "publication_day"
+      publication_month  <- obj .? "publication_month"
+      publication_year   <- obj .? "publication_year"
+      source             <- obj .? "source"
+      title              <- obj .? "title"
+      uniqId             <- obj .? "uniqId"
+      url                <- obj .? "url"
+      text               <- obj .? "text"
+      pure $ Document { abstract
+                      , authors
+                      , bdd
+                      , doi
+                      , language_iso2
+                      , language_iso3
+                      , page
+                      , publication_date
+                      , publication_second
+                      , publication_minute
+                      , publication_hour
+                      , publication_day
+                      , publication_month
+                      , publication_year
+                      , source
+                      , title
+                      , uniqId
+                      , url
+                      , text
+                      }
+
+------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
+performAction (Load nId) _ _ = do
+  eitherInfo <- lift $ getNode nId
+  _ <- case eitherInfo of
+            (Right node) -> void $ modifyState $ _document ?~ node
+            (Left  err)  -> do
+               logs err
+  logs $ "Node Document " <> show nId <> " fetched."
 performAction (ChangeString ps) _ _ = pure unit
-performAction (Load n)          _ _ = pure unit
 performAction (SetInput ps) _ _ = void <$> modifyState $ _ { inputValue = ps }
 
+getNode :: Int -> Aff (Either String (NodePoly DocumentV3))
+getNode id = get $ toUrl Back Node id
+
+_document :: Lens' State (Maybe (NodePoly DocumentV3))
+_document = lens (\s -> s.document) (\s ss -> s{document = ss})
+------------------------------------------------------------------------
 
 docview :: Spec State {} Action
 docview = simpleSpec performAction render
@@ -121,24 +367,24 @@ docview = simpleSpec performAction render
                 ]
               ]
             , div [className "col-md-8"]
-              [ h4 [] [text "Ultrasonic sensors in urban traffic driving-aid systems"]
+              [ h4 [] [text' document.title]
               , ul [className "list-group"]
-                [ li [className "list-group-item justify-content-between"]
-                  [  span [] [text "Sensors (Basel, switzerland)"]
-                  , span [className "badge badge-default badge-pill"] [text "source"]
-                  ]
-                , li [className "list-group-item justify-content-between"]
-                  [  a [href "http://localhost:2015/#/userPage"] [text "Luciano Alonso, Vicente Milanes, Carlos Torre-Ferarro, Jorge Godoy, Juan P oria, Teresa de pedro"]
-                  , span [className "badge badge-default badge-pill"] [text "authors"]
-                  ]
-
-                , li [className "list-group-item justify-content-between"]
-                  [  span [] [text "2011-01-11 0.00"]
-                  , span [className "badge badge-default badge-pill"] [text "date"]
-                  ]
+                [ li' [ span [] [text' document.source]
+                      , badge "source"
+                      ]
+                
+                -- TODO add href to /author/ if author present in
+                , li' [ span [] [text' document.authors]
+                      , badge "authors"
+                      ]
+                
+                , li' [ span [] [text' document.publication_date]
+                      , badge "date"
+                      ]
                 ]
-              , span [className "badge badge-default badge-pill"] [text "abstract"]
-              , p [] [text "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)."]
+              , badge "abstract"
+              , p [] [text' document.abstract]
+              
               , div [className "jumbotron"]
                 [ p [] [text "Empty Full Text"]
                 ]
@@ -146,6 +392,13 @@ docview = simpleSpec performAction render
             ]
           ]
       ]
+        where
+          li' = li [className "list-group-item justify-content-between"]
+          text' x = text $ maybe "Nothing" identity x
+          badge s = span [className "badge badge-default badge-pill"] [text s]
+
+          NodePoly {hyperdata : DocumentV3 document} = 
+            maybe defaultNodeDocumentV3 identity state.document
 
 aryPS :: Array String
 aryPS = ["Map", "Main", "Stop"]

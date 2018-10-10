@@ -5,11 +5,11 @@ import Prelude hiding (div)
 import Gargantext.Pages.Layout.Actions (Action(..))
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 -- import Gargantext.Pages.Corpus.Tabs as TV
--- import Gargantext.Pages.Corpus.Document as D
 
-import Gargantext.Pages.Corpus as Corpus
-import Gargantext.Pages.Corpus.Tabs.Documents         as D
-import Gargantext.Pages.Corpus.Graph             as GE
+import Gargantext.Pages.Corpus                as Corpus
+import Gargantext.Pages.Corpus.Document       as Document
+import Gargantext.Pages.Corpus.Tabs.Documents as D
+import Gargantext.Pages.Corpus.Graph          as GE
 -- import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
 
 import Gargantext.Pages.Annuaire.User.Users as U
@@ -57,9 +57,9 @@ dispatchAction dispatcher _ (Annuaire id) = do
 dispatchAction dispatcher _ (Folder id) = do
   dispatcher $ SetRoute $ Folder id
 
-dispatchAction dispatcher _ (Document i) = do
-  dispatcher $ SetRoute $ Document i
-  -- dispatcher $ DocumentViewA TODO
+dispatchAction dispatcher _ (Document n) = do
+  dispatcher $ SetRoute $ Document n
+  dispatcher $ DocumentViewA $ Document.Load n
 
 dispatchAction dispatcher _ PGraphExplorer = do
   dispatcher $ SetRoute PGraphExplorer

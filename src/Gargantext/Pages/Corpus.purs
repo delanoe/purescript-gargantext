@@ -215,4 +215,3 @@ sourcePageSpec = focus _sourcelens _sourceAction S.sourcespec'
 termsPageSpec :: Spec State {} Action
 termsPageSpec = focus _termslens _termsAction T.termSpec'
 
-

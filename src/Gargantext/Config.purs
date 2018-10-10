@@ -114,7 +114,7 @@ data NodeType = NodeUser
               | Corpus
               | CorpusV3
               | Dashboard
-              | Document
+              | Url_Document
               | Error
               | Folder
               | Graph
@@ -136,7 +136,7 @@ urlConfig Children  = show Children
 urlConfig Corpus    = show Corpus
 urlConfig CorpusV3  = show CorpusV3
 urlConfig Dashboard = show Dashboard
-urlConfig Document  = show Document
+urlConfig Url_Document  = show Url_Document
 urlConfig Error     = show Error
 urlConfig Folder    = show Folder
 urlConfig Graph     = show Graph
@@ -151,7 +151,7 @@ instance showNodeType :: Show NodeType where
   show Corpus    = "corpus"
   show CorpusV3  = "corpus"
   show Dashboard = "dashboard"
-  show Document  = "document"
+  show Url_Document  = "document"
   show Error     = "ErrorNodeType"
   show Folder    = "folder"
   show Graph     = "graph"
@@ -166,7 +166,7 @@ readNodeType :: String -> NodeType
 readNodeType "Annuaire"   = Annuaire
 readNodeType "Children"   = Children
 readNodeType "Dashboard"  = Dashboard
-readNodeType "Document"   = Document
+readNodeType "Document"   = Url_Document
 readNodeType "Folder"     = Folder
 readNodeType "Graph"      = Graph
 readNodeType "Individu"   = Individu

@@ -266,7 +266,7 @@ showRow {row : (DocumentsView c), delete} =
   [ td [] [div [className $ fa <> "fa-star"][]]
   -- TODO show date: Year-Month-Day only
   , td [] [text c.date]
-  , td [] [ a [ href (toUrl Front Document c._id) ] [ text c.title ] ]
+  , td [] [ a [ href (toUrl Front Url_Document c._id) ] [ text c.title ] ]
   , td [] [text c.source]
   , td [] [input [ _type "checkbox"]]
   ]
