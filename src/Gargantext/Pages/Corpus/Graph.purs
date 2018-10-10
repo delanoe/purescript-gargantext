@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Facets.Graph where
+module Gargantext.Pages.Corpus.Graph where
 
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestHeader (RequestHeader(..))
