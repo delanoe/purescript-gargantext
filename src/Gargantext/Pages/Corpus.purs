@@ -224,10 +224,7 @@ getNode id = get $ toUrl Back Node id
 -- Facets
 ------------------------------------------------------------------------
 facets :: Spec State {} Action
-facets = hide initialState statefulFacets
-
-statefulFacets :: Spec State {} Action
-statefulFacets =
+facets =
   Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Doc View"    docPageSpec
                                               , Tuple "Author View" authorPageSpec
                                               , Tuple "Source View" sourcePageSpec
