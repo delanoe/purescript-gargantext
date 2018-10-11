@@ -13,11 +13,11 @@ import Gargantext.Pages.Corpus.Tabs.Sources as SV
 import Gargantext.Pages.Corpus.Tabs.Authors as AV
 import Gargantext.Pages.Corpus.Tabs.Terms as TV
 import Gargantext.Components.Tab as Tab
-import Thermite (Spec, focus, hide)
+import Thermite (Spec, focus, hideState)
 
 
 pureTab1 :: Spec {} {} Void
-pureTab1 = hide initialState statefulTab1
+pureTab1 = hideState initialState statefulTab1
 
 statefulTab1 :: Spec State {} Action
 statefulTab1 =

@@ -17,7 +17,7 @@ import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+),
 import React (ReactElement)
 import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
-import Thermite (PerformAction, Spec, _render, focus, foreach, modifyState, focusState, hide)
+import Thermite (PerformAction, Spec, _render, focus, foreach, modifyState, focusState, hideState)
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype State = State
@@ -159,7 +159,7 @@ tableSpec = over _render \render dispatch p (State s) c ->
 
 ngramsTableSpec :: Spec {} {} Void
 ngramsTableSpec =
-  hide (unwrap initialState) $
+  hideState (unwrap initialState) $
   focusState (re _Newtype) $
   container $
   tableSpec $

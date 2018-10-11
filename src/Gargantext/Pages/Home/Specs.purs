@@ -16,7 +16,7 @@ import Gargantext.Pages.Home.Actions (Action, performAction)
 import React (ReactElement)
 import React.DOM (a, div, h3, i, img, p, span, text)
 import React.DOM.Props (Props, _id, aria, className, href, src, target, title)
-import Thermite (Render, Spec, simpleSpec, hide, focusState)
+import Thermite (Render, Spec, simpleSpec, hideState, focusState)
 
 
 -- Layout |
@@ -26,7 +26,7 @@ landingData FR = Fr.landingData
 landingData EN = En.landingData
 
 layoutLanding :: Lang -> Spec {} {} Void
-layoutLanding = hide (unwrap initialState)
+layoutLanding = hideState (unwrap initialState)
             <<< focusState (re _Newtype)
             <<< layoutLanding' <<< landingData
 

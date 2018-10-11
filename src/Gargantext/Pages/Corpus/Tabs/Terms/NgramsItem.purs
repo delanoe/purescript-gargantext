@@ -8,7 +8,7 @@ import Data.Lens.Iso.Newtype (_Newtype)
 import React (ReactElement)
 import React.DOM (input, span, td, text, tr)
 import React.DOM.Props (_type, checked, className, onChange, style, title)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec, hide, focusState)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec, hideState, focusState)
 import Gargantext.Utils (getter, setter)
 
 newtype State = State
@@ -38,7 +38,7 @@ data Action
   | SetStop Boolean
 
 ngramsItemSpec :: Spec {} {} Void
-ngramsItemSpec = hide (unwrap initialState) $
+ngramsItemSpec = hideState (unwrap initialState) $
                  focusState (re _Newtype) $
                  simpleSpec performAction render
   where
