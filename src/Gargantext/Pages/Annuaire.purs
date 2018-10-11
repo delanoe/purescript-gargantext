@@ -192,7 +192,7 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
 getTable :: Int -> Aff (Either String AnnuaireTable)
-getTable id = get $ toUrl Back Children id
+getTable id = get $ toUrl Back (Children 0 10) id
 
 getInfo :: Int -> Aff (Either String AnnuaireInfo)
 getInfo id = get $ toUrl Back Node id

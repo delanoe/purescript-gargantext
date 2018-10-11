@@ -68,8 +68,8 @@ _tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
 ------------------------------------------------------------------------
 data HeaderAction = Load Int
 
-data Action = HeaderA     HeaderAction
-            | DocviewA D.Action
+data Action = HeaderA       HeaderAction
+            | DocviewA      D.Action
             | AuthorviewA   A.Action
             | SourceviewA   S.Action
             | TermsviewA    T.Action
@@ -191,7 +191,6 @@ corpusHeaderSpec = simpleSpec performAction render
                    }
               = maybe corpusInfoDefault identity state.info
 
-
 ------------------------------------------------------------------------
 performAction :: PerformAction HeaderState {} HeaderAction
 performAction (Load nId) _ _ = do
@@ -210,10 +209,10 @@ getNode id = get $ toUrl Back Node id
 ------------------------------------------------------------------------
 facets :: Spec State {} Action
 facets =
-  Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Documents"    docPageSpec
-                                              , Tuple "Authors" authorPageSpec
-                                              , Tuple "Sources" sourcePageSpec
-                                              , Tuple "Terms"  termsPageSpec
+  Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Documents" docPageSpec
+                                              , Tuple "Authors"   authorPageSpec
+                                              , Tuple "Sources"   sourcePageSpec
+                                              , Tuple "Terms"     termsPageSpec
                                               ]
 
 docPageSpec :: Spec State {} Action

@@ -1,9 +1,11 @@
 module Gargantext.Pages.Corpus.Tabs.Documents where
 
+import Data.Maybe (Maybe(..))
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
+
 import Data.Array (filter)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -19,7 +21,7 @@ import Thermite (PerformAction, Render, Spec, modifyState, defaultPerformAction,
 import Unsafe.Coerce (unsafeCoerce)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (NodeType(..), toUrl, End(..))
+import Gargantext.Config (NodeType(..), toUrl, End(..), Limit, Offset)
 import Gargantext.Config.REST (get)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
@@ -34,7 +36,8 @@ import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 -- TODO: When a pagination link is clicked, reload data. 
 
 data Action
-  = LoadData       Int
+  = UpdateNodeId   Int
+  | LoadData       Int
   | ChangePageSize PageSizes
   | ChangePage     Int
 
@@ -52,7 +55,9 @@ newtype TableData a
     , pageSize     :: PageSizes
     , totalRecords :: Int
     , title        :: String
-   -- , tree         :: FTree
+    , nodeId       :: Maybe Int -- /!\ When changing the pages of the Table, NodeId
+                                -- is needed to reload Data (other solution is using
+                                -- NodeId as a parameter
     }
 
 newtype DocumentsView
@@ -169,10 +174,19 @@ layoutDocview = simpleSpec performAction render
     fa false = "far "
 
 
+
 performAction :: PerformAction State {} Action
-performAction (LoadData n) _ _ = do
+performAction (UpdateNodeId nId) _ _ = do
+  void $ modifyState \(TableData td) -> TableData $ td { nodeId = (Just nId) }
+  logs $ "writing NodeId" <> show nId
+
+performAction (LoadData n) props state@(TableData table) = do
   logs "loading documents page"
-  res <- lift $ loadPage n
+  logs table.nodeId
+  let limit  = pageSizes2Int table.pageSize
+  let offset = limit * (table.currentPage +1)
+  res <- lift $ loadPage n offset limit
+
   case res of
      Left err      -> do
        _ <- logs $ "Error: loading page documents:" <> show err
@@ -182,20 +196,29 @@ performAction (LoadData n) _ _ = do
        _ <- modifyState $ const resData
        pure unit
 
-performAction (ChangePageSize ps) _ _ =
+performAction (ChangePageSize ps) props state@(TableData table) = do
   void $ modifyState $ changePageSize ps
+  logs table.nodeId
+  performAction (LoadData nId) props state
+    where
+      nId = case table.nodeId of
+        Nothing   -> 0
+        (Just n)  -> n
 
-performAction (ChangePage p) _ _ = 
-  void $ modifyState \(TableData td) -> TableData 
-       $ td { currentPage = p }
+performAction (ChangePage p) props state@(TableData table) = do
+  void $ modifyState \(TableData td) -> TableData $ td { currentPage = p }
+  logs table.nodeId
+  performAction (LoadData nId) props state
+    where
+      nId = case table.nodeId of
+        Nothing -> 0
+        (Just n)-> n
 
 
-loadPage :: Int -> Aff (Either String CorpusTableData)
-loadPage n = do
+loadPage :: Int -> Offset -> Limit -> Aff (Either String CorpusTableData)
+loadPage n o l = do
   logs "loading documents page: loadPage"
-  res <- get $ toUrl Back Children n
-  -- TODO: offset and limit
-  -- res <- get "http://localhost:8008/corpus/472764/facet/documents/table?offset=0&limit=10"
+  res <- get $ toUrl Back (Children o l) n
   case res of
      Left err -> do
        _ <- logs "Err: loading page documents"
@@ -225,9 +248,10 @@ loadPage n = do
                 { rows         : map (\d -> { row : d , delete : false}) ds
                 , totalPages   : 474
                 , currentPage  : 1
-                , pageSize     : PS100
+                , pageSize     : PS10
                 , totalRecords : 47361
                 , title        : "Documents"
+                , nodeId       : Nothing
                 }
 
 ---------------------------------------------------------
@@ -257,6 +281,7 @@ initialState = TableData
         , pageSize     : PS10
         , totalRecords : 100
         , title        : "Documents"
+        , nodeId       : Nothing
      --   , tree         : exampleTree
         }
 
@@ -276,7 +301,6 @@ showTable {title, pageSize, currentPage, totalRecords, totalPages} dispatch colN
       , tbody [] $ map (tr [] <<< map (\c -> td [] [c])) rows
       ]
     ]
-
 
 --------------------------------------------------------------
 -- | Action
