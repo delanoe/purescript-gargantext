@@ -7,6 +7,7 @@ import Prelude hiding (div)
 import React.DOM (h3, text)
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 
+-- NP: TODO the state should be only the one required by sourceSpec not sourcespec'
 type State = D.State
 
 
@@ -24,4 +25,4 @@ sourceSpec = simpleSpec defaultPerformAction render
       [ h3 [] [text "Source view"]]
 
 sourcespec' :: Spec State {} Action
-sourcespec' = fold [sourceSpec, D.layoutDocview]
+sourcespec' = sourceSpec <> D.layoutDocview
