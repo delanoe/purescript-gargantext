@@ -78,9 +78,27 @@ toRows (AnnuaireTable a) = a.annuaireTable
 
 layoutAnnuaire :: Spec State {} Action
 layoutAnnuaire = simpleSpec performAction render
+  where
+    performAction :: PerformAction State {} Action
+    performAction (Load aId) _ _ = do
+      eitherInfo <- lift $ getInfo aId
+      _ <- case eitherInfo of
+                (Right info') -> void $ modifyState $ _info ?~ info'
+                (Left       err)  -> do
+                  logs err
 
-render :: Render State {} Action
-render dispatch _ state _ = [ div [className "row"]
+      eitherTable <- lift $ getTable aId
+      logs "Feching Table"
+      _ <- case eitherTable of
+                (Right table') -> void $ modifyState $ _table ?~ table'
+                (Left       err)  -> do
+                  logs err
+      logs "Annuaire page fetched."
+    performAction (ChangePageSize _) _ _ = pure unit -- TODO
+    performAction (ChangePage _)     _ _ = pure unit -- TODO
+
+    render :: Render State {} Action
+    render dispatch _ state _ = [ div [className "row"]
                      [ div [className "col-md-3"] [ h3 [] [text info.name] ]
                             , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]
                             ]
@@ -172,24 +190,6 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
   decodeJson json = do
     rows <- decodeJson json
     pure $ AnnuaireTable { annuaireTable : rows}
-------------------------------------------------------------------------
-performAction :: PerformAction State {} Action
-performAction (Load aId) _ _ = do
-  eitherInfo <- lift $ getInfo aId
-  _ <- case eitherInfo of
-            (Right info') -> void $ modifyState $ _info ?~ info'
-            (Left       err)  -> do
-              logs err
-
-  eitherTable <- lift $ getTable aId
-  logs "Feching Table"
-  _ <- case eitherTable of
-            (Right table') -> void $ modifyState $ _table ?~ table'
-            (Left       err)  -> do
-              logs err
-  logs "Annuaire page fetched."
-
-performAction _ _ _ = pure unit
 ------------------------------------------------------------------------
 getTable :: Int -> Aff (Either String AnnuaireTable)
 getTable id = get $ toUrl Back Children id
