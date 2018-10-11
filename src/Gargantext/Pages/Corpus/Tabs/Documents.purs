@@ -6,29 +6,25 @@ import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 
-import Data.Array (filter)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.HTTP.Method (Method(..))
 import Data.Tuple (Tuple(..))
-import Effect (Effect)
 import Effect.Aff (Aff)
-import React (ReactElement)
-import React.DOM (a, b, b', br', div, input, option, select, span, table, tbody, td, text, th, thead, tr, p)
-import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value)
+import React.DOM (a, br', div, input, p, text)
+import React.DOM.Props (_type, className, href)
 import Thermite (PerformAction, Render, Spec, modifyState, defaultPerformAction, simpleSpec)
-import Unsafe.Coerce (unsafeCoerce)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (NodeType(..), toUrl, End(..), Limit, Offset)
+import Gargantext.Config (NodeType(..), toUrl, End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
+import Gargantext.Components.Table as T
 import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 ------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
--- TODO: PageSize Change manually sets the totalPages, need to get from backend and reload the data
 -- TODO: Search is pending
 -- TODO: Fav is pending
 -- TODO: Sort is Pending
@@ -37,28 +33,14 @@ import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 
 data Action
   = UpdateNodeId   Int
-  | LoadData       Int
-  | ChangePageSize PageSizes
-  | ChangePage     Int
 
-type State = CorpusTableData
-
-type CorpusTableData = TableData DocumentsView
-
-newtype TableData a
-  = TableData
-    { rows         :: Array { row    :: a
-                            , delete :: Boolean
-                            }
-    , totalPages   :: Int
-    , currentPage  :: Int
-    , pageSize     :: PageSizes
-    , totalRecords :: Int
-    , title        :: String
-    , nodeId       :: Maybe Int -- /!\ When changing the pages of the Table, NodeId
-                                -- is needed to reload Data (other solution is using
-                                -- NodeId as a parameter
-    }
+type State =
+  { totalRecords :: Int
+  , nodeId       :: Maybe Int -- /!\ When changing the pages of the Table, NodeId
+                              -- is needed to reload Data (other solution is using
+                              -- NodeId as a parameter
+                              -- NP,TODO this should not be in state
+  }
 
 newtype DocumentsView
   = DocumentsView
@@ -141,8 +123,15 @@ filterSpec = simpleSpec defaultPerformAction render
 layoutDocview :: Spec State {} Action
 layoutDocview = simpleSpec performAction render
   where
+    performAction :: PerformAction State {} Action
+    performAction (UpdateNodeId nId) _ _ = do
+      void $ modifyState $ _ { nodeId = Just nId }
+      logs $ "writing NodeId" <> show nId
+{-
+    performAction (LoadData n) _ _ = do
+-}
     render :: Render State {} Action
-    render dispatch _ state@(TableData d) _ =
+    render dispatch _ {nodeId, totalRecords} _ =
       [ div [className "container1"]
         [ div [className "row"]
           [ chart globalPublis
@@ -150,79 +139,63 @@ layoutDocview = simpleSpec performAction render
             [ p [] []
             , div [] [ text "    Filter ", input []]
             , br'
-            , showTable d dispatch
-                 [ ""
-                 , "Date"
-                 , "Title"
-                 , "Source"
-                 , "Delete"
-                 ]
-                 ((\c ->
-                    let DocumentsView r = c.row in
-                    [ div [className $ fa r.fav <> "fa-star"] []
-                    -- TODO show date: Year-Month-Day only
-                    , text r.date
-                    , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
-                    , text r.source
-                    , input [ _type "checkbox"]
-                    ]) <$> d.rows)
+            , T.tableElt
+                { loadRows
+                , title: "Documents"
+                , colNames:
+                    [ ""
+                    , "Date"
+                    , "Title"
+                    , "Source"
+                    , "Delete"
+                    ]
+                , totalRecords
+                }
             ]
           ]
         ]
       ]
+      where
+        loadRows {offset, limit} = do
+          _ <- logs "loading documents page"
+          res <- loadPage {nodeId,offset,limit}
+          case res of
+            Left err      -> do
+              _ <- logs $ "Error: loading page documents:" <> show err
+              pure $ Left err
+            Right resData -> do
+              _ <- logs "OK: loading page documents."
+              pure $ Right $
+                (\(DocumentsView r) ->
+                    { row:
+                        [ div [className $ fa r.fav <> "fa-star"] []
+                        -- TODO show date: Year-Month-Day only
+                        , text r.date
+                        , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
+                        , text r.source
+                        , input [ _type "checkbox"]
+                        ]
+                    , delete: false
+                    }) <$> resData
     fa true  = "fas "
     fa false = "far "
 
 
-
-performAction :: PerformAction State {} Action
-performAction (UpdateNodeId nId) _ _ = do
-  void $ modifyState \(TableData td) -> TableData $ td { nodeId = (Just nId) }
-  logs $ "writing NodeId" <> show nId
-
-performAction (LoadData n) props state@(TableData table) = do
-  logs "loading documents page"
-  res <- lift $ loadPage state
-
-  case res of
-     Left err      -> do
-       _ <- logs $ "Error: loading page documents:" <> show err
-       pure unit
-     Right resData -> do
-       _ <- logs "OK: loading page documents."
-       _ <- modifyState $ const resData
-       pure unit
-
-performAction (ChangePageSize ps) props state@(TableData table) = do
-  void $ modifyState $ changePageSize ps
---  performAction (LoadData nId) props state
---    where
---      nId = maybe 0 identity table.nodeId
-
-performAction (ChangePage p) props state@(TableData table) = do
-  void $ modifyState \(TableData td) -> TableData $ td { currentPage = p }
---  performAction (LoadData nId) props state
---    where
---      nId = maybe 0 identity table.nodeId
-
-
-loadPage :: CorpusTableData -> Aff (Either String CorpusTableData)
-loadPage t@(TableData table) = do
+loadPage :: {nodeId :: Maybe Int, limit :: Int, offset :: Int} -> Aff (Either String (Array DocumentsView))
+loadPage {nodeId, limit, offset} = do -- {pageSize, currentPage, nodeId} = do
   logs "loading documents page: loadPage with Offset and limit"
-  let limit  = pageSizes2Int table.pageSize
-  let offset = limit * (table.currentPage - 1)
-
-  res <- get $ toUrl Back (Children offset limit) $ maybe 0 identity table.nodeId
+  -- let limit  = pageSizes2Int pageSize
+  -- let offset = limit * (currentPage - 1)
+  res <- get $ toUrl Back (Children offset limit) $ maybe 0 identity nodeId
   case res of
      Left err -> do
        _ <- logs "Err: loading page documents"
        _ <- logs err
        pure $ Left $ show err
      Right resData -> do
-       let docs = toTableData (res2corpus $ resData)
+       let docs = res2corpus resData
        _ <- logs "Ok: loading page documents"
-       _ <- logs $ map (\({ row: r, delete :_}) -> show r)
-                       ((\(TableData docs') -> docs'.rows) docs)
+       _ <- logs $ map show docs
        pure $ Right docs
       where
         res2corpus :: Array Response -> Array DocumentsView
@@ -236,16 +209,6 @@ loadPage t@(TableData table) = do
           , ngramCount : r.ngramCount
          }) rs
 
-        toTableData :: Array DocumentsView -> CorpusTableData
-        toTableData ds = TableData
-                { rows         : map (\d -> { row : d , delete : false}) ds
-                , totalPages   : table.totalPages
-                , currentPage  : table.currentPage
-                , pageSize     : table.pageSize
-                , totalRecords : table.totalRecords
-                , title        : table.title
-                , nodeId       : table.nodeId
-                }
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
@@ -258,182 +221,8 @@ sampleData = map (\(Tuple t s) -> DocumentsView {_id : 1, url : "", date : "2017
 sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
 
-
-data' :: Array DocumentsView -> Array {row :: DocumentsView, delete :: Boolean}
-data' = map {row : _, delete : false}
-
-sdata :: Array { row :: DocumentsView, delete :: Boolean }
-sdata = data' sampleData
-
-initialState :: TableData DocumentsView
-initialState = TableData
-        { rows         : sdata
-        , totalPages   : 10
-        , currentPage  : 1
-        , pageSize     : PS10
-        , totalRecords : 100
-        , title        : "Documents"
-        , nodeId       : Nothing
-     --   , tree         : exampleTree
-        }
-
-
-showTable {title, pageSize, currentPage, totalRecords, totalPages} dispatch colNames rows =
-  div []
-    [ div [className "row"]
-      [ div [className "col-md-1"] [b [] [text title]]
-      , div [className "col-md-2"] [sizeDD pageSize dispatch]
-      , div [className "col-md-3"] [textDescription currentPage pageSize totalRecords]
-      , div [className "col-md-3"] [pagination dispatch totalPages currentPage]
-             ]
-    , table [ className "table"]
-      [thead  [ className "thead-dark"]
-                 [tr [] ((\colName -> th [scope "col"] [ b' [text colName]]) <$> colNames)
-                 ]
-      , tbody [] $ map (tr [] <<< map (\c -> td [] [c])) rows
-      ]
-    ]
-
---------------------------------------------------------------
--- | Action
--- ChangePageSize
-changePageSize :: PageSizes -> CorpusTableData -> CorpusTableData
-changePageSize ps (TableData td) =
-  TableData $ td { pageSize      = ps
-                 , totalPages    = td.totalRecords / pageSizes2Int ps
-                 , currentPage   = 1
-                 }
-
-
-data PageSizes = PS10 | PS20 | PS50 | PS100
-
-derive instance eqPageSizes :: Eq PageSizes
-
-instance showPageSize :: Show PageSizes where
-  show PS10  = "10"
-  show PS20  = "20"
-  show PS50  = "50"
-  show PS100 = "100"
-
-pageSizes2Int :: PageSizes -> Int
-pageSizes2Int PS10  = 10
-pageSizes2Int PS20  = 20
-pageSizes2Int PS50  = 50
-pageSizes2Int PS100 = 100
-
-aryPS :: Array PageSizes
-aryPS = [PS10, PS20, PS50, PS100]
-
-string2PageSize :: String -> PageSizes
-string2PageSize "10" = PS10
-string2PageSize "20" = PS20
-string2PageSize "50" = PS50
-string2PageSize "100" = PS100
-string2PageSize _    = PS10
-
-sizeDD :: PageSizes -> (Action -> Effect Unit) -> ReactElement
-sizeDD ps d
-  = span []
-    [ text "Show : "
-    , select [onChange (\e -> d (ChangePageSize $ string2PageSize $ (unsafeCoerce e).target.value))] $ map (optps ps) aryPS
-    ]
-
-optps :: PageSizes -> PageSizes -> ReactElement
-optps cv val = option [ selected (cv == val), value $ show val ] [text $ show val]
-
-
-textDescription :: Int -> PageSizes -> Int -> ReactElement
-textDescription currPage pageSize totalRecords
-  =  div [className "row1"]
-          [ div [className ""]
-                [ text $ "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords ]
-          ]
-    where
-      start = (currPage - 1) * pageSizes2Int pageSize + 1
-      end' = currPage * pageSizes2Int pageSize
-      end  = if end' > totalRecords then totalRecords else end'
-
-
-pagination :: (Action -> Effect Unit) -> Int -> Int -> ReactElement
-pagination d tp cp
-  = span [] $
-    [ text "Pages: ", prev, first, ldots]
-    <>
-    lnums
-    <>
-    [b' [text $ " " <> show cp <> " "]]
-    <>
-    rnums
-    <>
-    [ rdots, last, next ]
-    where
-      prev = if cp == 1 then
-               text " Previous "
-               else
-               span []
-               [ text " "
-               , a [ href "javascript:void()"
-                   , onClick (\e -> d $ ChangePage $ cp - 1)
-                   ] [text "Previous"]
-               , text " "
-               ]
-      next = if cp == tp then
-               text " Next "
-               else
-               span []
-               [ text " "
-               , a [ href "javascript:void()"
-                   , onClick (\e -> d $ ChangePage $ cp + 1)
-                   ] [text "Next"]
-               , text " "
-               ]
-      first = if cp == 1 then
-                text ""
-                else
-                span []
-                [ text " "
-                , a [ href "javascript:void()"
-                    , onClick (\e -> d $ ChangePage 1)
-                    ] [text "1"]
-                , text " "
-                ]
-      last = if cp == tp then
-               text ""
-             else
-               span []
-               [ text " "
-               , a [ href "javascript:void()"
-                   , onClick (\e -> d $ ChangePage tp)
-                   ] [text $ show tp]
-               , text " "
-               ]
-      ldots = if cp >= 5 then
-                text " ... "
-                else
-                text ""
-      rdots = if cp + 3 < tp then
-                text " ... "
-                else
-                text ""
-      lnums = map (\i -> fnmid d i) $ filter (lessthan 1) [cp - 2, cp - 1]
-      rnums = map (\i -> fnmid d i) $ filter (greaterthan tp) [cp + 1, cp + 2]
-
-fnmid :: (Action -> Effect Unit) -> Int -> ReactElement
-fnmid d i
-  = span []
-    [ text " "
-    , a [ href "javascript:void()"
-        , onClick (\e -> d $ ChangePage i)
-        ] [text $ show i]
-    , text " "
-    ]
-
-
-lessthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
-lessthan x y = x < y
-
-greaterthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
-greaterthan x y = x > y
+initialState :: State
+initialState = { totalRecords: 47361, nodeId: Nothing }
 
 newtype SearchQuery = SearchQuery
   {
