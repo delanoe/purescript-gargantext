@@ -11,8 +11,8 @@ import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
-import Thermite ( Render, Spec, PerformAction, focus, hide
-                , defaultPerformAction, simpleSpec, modifyState)
+import Thermite ( Render, Spec, PerformAction, focus
+                , simpleSpec, modifyState)
 --------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..))
@@ -26,7 +26,8 @@ import Gargantext.Pages.Corpus.Tabs.Authors   as A
 import Gargantext.Pages.Corpus.Tabs.Terms     as T
 import Gargantext.Components.Tab as Tab
 -------------------------------------------------------------------
-type State = { info        :: Maybe (NodePoly CorpusInfo)
+type HeaderState = { info :: Maybe (NodePoly CorpusInfo) }
+type State = { headerView  :: HeaderState
              , docsView    :: D.State
              , authorsView :: A.State
              , sourcesView :: S.State
@@ -35,7 +36,7 @@ type State = { info        :: Maybe (NodePoly CorpusInfo)
              }
 
 initialState :: State
-initialState = { info : Nothing
+initialState = { headerView  : { info : Nothing }
                , docsView    : D.initialState
                , authorsView : A.initialState
                , sourcesView : S.initialState
@@ -44,8 +45,11 @@ initialState = { info : Nothing
                }
 
 ------------------------------------------------------------------------
-_info :: Lens' State (Maybe (NodePoly CorpusInfo))
+_info :: forall a b. Lens' { info :: a | b } a
 _info = lens (\s -> s.info) (\s ss -> s{info = ss})
+
+_headerView :: forall a b. Lens' { headerView :: a | b } a
+_headerView = lens (\s -> s.headerView) (\s ss -> s{headerView = ss})
 
 _doclens :: Lens' State D.State
 _doclens = lens (\s -> s.docsView) (\s ss -> s {docsView = ss})
@@ -62,12 +66,20 @@ _termslens = lens (\s -> s.termsView) (\s ss -> s {termsView = ss})
 _tablens :: Lens' State Tab.State
 _tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
 ------------------------------------------------------------------------
-data Action = Load          Int
+data HeaderAction = Load Int
+
+data Action = HeaderA     HeaderAction
             | DocviewA D.Action
             | AuthorviewA   A.Action
             | SourceviewA   S.Action
             | TermsviewA    T.Action
             | TabViewA      Tab.Action
+
+_headerAction :: Prism' Action HeaderAction
+_headerAction = prism HeaderA \ action ->
+  case action of
+    HeaderA haction -> Right haction
+    _-> Left action
 
 _docAction :: Prism' Action D.Action
 _docAction = prism DocviewA \ action ->
@@ -98,6 +110,12 @@ _tabAction = prism TabViewA \ action ->
   case action of
     TabViewA laction -> Right laction
     _-> Left action
+
+_loadAction :: Prism' HeaderAction Int
+_loadAction = prism Load \ action ->
+  case action of
+    Load x -> Right x
+    -- _-> Left action
 
 ------------------------------------------------------------------------
 newtype CorpusInfo = CorpusInfo { title   :: String
@@ -135,12 +153,12 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
 
 ------------------------------------------------------------------------
 layout :: Spec State {} Action
-layout = corpusSpec <> facets
+layout = focus _headerView _headerAction corpusHeaderSpec <> facets
 
-corpusSpec :: Spec State {} Action
-corpusSpec = simpleSpec performAction render
+corpusHeaderSpec :: Spec HeaderState {} HeaderAction
+corpusHeaderSpec = simpleSpec performAction render
   where
-    render :: Render State {} Action
+    render :: Render HeaderState {} HeaderAction
     render dispatch _ state _ =
         [ div [className "row"]
           [ div [className "col-md-3"] [ h3 [] [text "Corpus " <> text title] ]
@@ -175,7 +193,7 @@ corpusSpec = simpleSpec performAction render
 
 
 ------------------------------------------------------------------------
-performAction :: PerformAction State {} Action
+performAction :: PerformAction HeaderState {} HeaderAction
 performAction (Load nId) _ _ = do
   eitherInfo <- lift $ getNode nId
   _ <- case eitherInfo of
@@ -183,11 +201,6 @@ performAction (Load nId) _ _ = do
             (Left       err)  -> do
                logs err
   logs $ "Node Corpus fetched."
-performAction (DocviewA    _) _ _ = pure unit
-performAction (AuthorviewA _) _ _ = pure unit
-performAction (SourceviewA _) _ _ = pure unit
-performAction (TabViewA    _) _ _ = pure unit
-performAction (TermsviewA  _) _ _ = pure unit
 
 getNode :: Int -> Aff (Either String (NodePoly CorpusInfo))
 getNode id = get $ toUrl Back Node id
