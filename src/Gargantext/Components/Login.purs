@@ -52,31 +52,6 @@ data Action
   | SetPassword String
 
 
-performAction :: PerformAction State {} Action
-
-performAction (SetUserName usr) _ _ = void do
-  modifyState \(State state) -> State $ state { username = usr }
-
-
-performAction (SetPassword pwd) _ _ = void do
-  modifyState \(State state) -> State $ state { password = pwd }
-
-
-
-performAction Login _ _ = void do
-  --lift $ setHash "/search"
-  liftEffect $ modalHide "loginModal"
-  modifyState \(State state) -> State $ state {loginC = true}
-  -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
-  -- case res of
-  --   Left e -> do
-  --     logs e
-  --     modifyState \(State s) ->  State $ s { errorMessage = e}
-  --   Right r@(LoginRes response) -> do
-  --     lift $ setHash "/addCorpus"
-  --     modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
-
-
 modalSpec :: forall props. Boolean -> String -> Spec State props Action -> Spec State props Action
 modalSpec sm t = over _render \render d p s c ->
   [ div [ _id "loginModal", className $ "modal myModal" <> if sm then "" else " fade"
@@ -111,6 +86,27 @@ spec' = modalSpec true "Login" renderSpec
 renderSpec :: Spec State {} Action
 renderSpec = simpleSpec performAction render
   where
+    performAction :: PerformAction State {} Action
+
+    performAction (SetUserName usr) _ _ = void do
+      modifyState \(State state) -> State $ state { username = usr }
+
+    performAction (SetPassword pwd) _ _ = void do
+      modifyState \(State state) -> State $ state { password = pwd }
+
+    performAction Login _ _ = void do
+      --lift $ setHash "/search"
+      liftEffect $ modalHide "loginModal"
+      modifyState \(State state) -> State $ state {loginC = true}
+      -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
+      -- case res of
+      --   Left e -> do
+      --     logs e
+      --     modifyState \(State s) ->  State $ s { errorMessage = e}
+      --   Right r@(LoginRes response) -> do
+      --     lift $ setHash "/addCorpus"
+      --     modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
+
     render :: Render State {} Action
     render dispatch _ (State state) _ =
       [
