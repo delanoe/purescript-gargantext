@@ -60,6 +60,7 @@ _ItemAction = prism (uncurry ItemAction) \ta ->
 
 type Dispatch = Action -> Effect Unit
 
+{-
 performAction :: PerformAction State {} Action
 
 performAction (ChangePageSize ps) _ _ = void $ modifyState $ changePageSize ps
@@ -77,6 +78,7 @@ performAction (SetInput s) _ _ = void do
   modifyState \(State state) -> State $ state { search = s }
 
 performAction _ _ _ = pure unit
+-}
 
 tableSpec :: Spec State {} Action -> Spec State {} Action
 tableSpec = over _render \render dispatch p (State s) c ->
