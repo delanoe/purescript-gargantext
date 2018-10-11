@@ -145,27 +145,28 @@ layoutDocview = simpleSpec performAction render
             [ p [] []
             , div [] [ text "    Filter ", input []]
             , br'
-            , div [className "row"]
-              [  div [className "col-md-1"] [b [] [text d.title]]
-              , div [className "col-md-2"] [sizeDD d.pageSize dispatch]
-              , div [className "col-md-3"] [textDescription d.currentPage d.pageSize d.totalRecords]
-              , div [className "col-md-3"] [pagination dispatch d.totalPages d.currentPage]
-                     ]
-            , table [ className "table"]
-              [thead  [ className "thead-dark"]
-                         [tr [] [ th [scope "col"] [ b' [text ""]    ]
-                                , th [scope "col"] [ b' [text "Date"]]
-                                , th [scope "col"] [ b' [text "Title"]   ]
-                                , th [scope "col"] [ b' [text "Source"]   ]
-                                , th [scope "col"] [ b' [text "Delete"]  ]
-                                ]
-                         ]
-              , tbody [] $ map showRow d.rows
-              ]
+            , showTable d dispatch
+                 [ ""
+                 , "Date"
+                 , "Title"
+                 , "Source"
+                 , "Delete"
+                 ]
+                 ((\c ->
+                    let DocumentsView r = c.row in
+                    [ div [className $ fa r.fav <> "fa-star"] []
+                    -- TODO show date: Year-Month-Day only
+                    , text r.date
+                    , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
+                    , text r.source
+                    , input [ _type "checkbox"]
+                    ]) <$> d.rows)
             ]
           ]
         ]
       ]
+    fa true  = "fas "
+    fa false = "far "
 
 
 performAction :: PerformAction State {} Action
@@ -260,21 +261,21 @@ initialState = TableData
         }
 
 
-showRow :: {row :: DocumentsView, delete :: Boolean} -> ReactElement
-showRow {row : (DocumentsView c), delete} =
-  tr []
-  [ td [] [div [className $ fa <> "fa-star"][]]
-  -- TODO show date: Year-Month-Day only
-  , td [] [text c.date]
-  , td [] [ a [ href (toUrl Front Url_Document c._id) ] [ text c.title ] ]
-  , td [] [text c.source]
-  , td [] [input [ _type "checkbox"]]
-  ]
-    where
-      fa = case c.fav of
-                true  -> "fas "
-                false -> "far "
-
+showTable {title, pageSize, currentPage, totalRecords, totalPages} dispatch colNames rows =
+  div []
+    [ div [className "row"]
+      [ div [className "col-md-1"] [b [] [text title]]
+      , div [className "col-md-2"] [sizeDD pageSize dispatch]
+      , div [className "col-md-3"] [textDescription currentPage pageSize totalRecords]
+      , div [className "col-md-3"] [pagination dispatch totalPages currentPage]
+             ]
+    , table [ className "table"]
+      [thead  [ className "thead-dark"]
+                 [tr [] ((\colName -> th [scope "col"] [ b' [text colName]]) <$> colNames)
+                 ]
+      , tbody [] $ map (tr [] <<< map (\c -> td [] [c])) rows
+      ]
+    ]
 
 
 --------------------------------------------------------------
