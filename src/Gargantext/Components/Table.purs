@@ -1,14 +1,16 @@
 module Gargantext.Components.Table where
 
+import Control.Monad.Cont.Trans (lift)
 import Data.Array (filter)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Either (Either)
+import Data.Either (Either(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
+import React as React
 import React (ReactElement, ReactClass, Children, createElement)
-import React.DOM (a, b, b', div, option, select, span, table, tbody, td, text, th, thead, tr)
+import React.DOM (a, b, b', div, div', option, select, span, table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (className, href, onChange, onClick, scope, selected, value)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec, createClass)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec, createClass', createReactSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
@@ -61,10 +63,12 @@ tableSpec :: Spec State Props Action
 tableSpec = simpleSpec performAction render
   where
     performAction :: PerformAction State Props Action
-    performAction (ChangePageSize ps) {totalRecords} _ =
-      void $ modifyState $ changePageSize totalRecords ps
-    performAction (ChangePage p) _ _ = 
+    performAction (ChangePageSize ps) props state = do
+      void $ modifyState $ changePageSize props.totalRecords ps
+      loadAndSetRows props state
+    performAction (ChangePage p) props state = do
       void $ modifyState $ _ { currentPage = p }
+      loadAndSetRows props state
 
     render :: Render State Props Action
     render dispatch {title, colNames, totalRecords}
@@ -86,8 +90,28 @@ tableSpec = simpleSpec performAction render
         ]
       ]
 
+loadAndSetRows {loadRows} {pageSize, currentPage} = do
+  let limit = pageSizes2Int pageSize
+      offset = limit * (currentPage - 1)
+  x <- lift $ loadRows {offset, limit}
+  case x of
+    Left err -> logs err
+    Right rows ->
+      void $ modifyState (_ { rows = Just rows })
+
 tableClass :: ReactClass {children :: Children | Props'}
-tableClass = createClass "Table" tableSpec initialState
+tableClass =
+  React.component "Table"
+    (\this -> do
+       {state, render} <- spec this
+       pure { state, render
+            , componentDidMount: do
+                props <- React.getProps this
+                state' <- React.getState this
+                dispatcher' this $ loadAndSetRows props state'
+            })
+  where
+    { spec, dispatcher' } = createReactSpec tableSpec initialState
 
 tableElt :: Props -> ReactElement
 tableElt props = createElement tableClass props []
