@@ -316,8 +316,8 @@ pagination d tp cp
                 text " ... "
                 else
                 text ""
-      lnums = map (\i -> fnmid d i) $ filter (lessthan 1) [cp - 2, cp - 1]
-      rnums = map (\i -> fnmid d i) $ filter (greaterthan tp) [cp + 1, cp + 2]
+      lnums = map (\i -> fnmid d i) $ filter (1  < _) [cp - 2, cp - 1]
+      rnums = map (\i -> fnmid d i) $ filter (tp > _) [cp + 1, cp + 2]
 
 fnmid :: Dispatch -> Int -> ReactElement
 fnmid d i
@@ -328,10 +328,3 @@ fnmid d i
         ] [text $ show i]
     , text " "
     ]
-
-
-lessthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
-lessthan x y = x < y
-
-greaterthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
-greaterthan x y = x > y
