@@ -27,20 +27,19 @@ data Action
   | SetQuery String
 
 
-performAction :: PerformAction State {} Action
-performAction (SetQuery q) _ _ = void do
-   modifyState $ _ { query = q }
-
-
-performAction GO _ _ = void do
-  liftEffect $ setHash "/addCorpus"
-
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
 
 searchSpec :: Spec State {} Action
 searchSpec = simpleSpec performAction render
   where
+    performAction :: PerformAction State {} Action
+    performAction (SetQuery q) _ _ = void do
+      modifyState $ _ { query = q }
+
+    performAction GO _ _ = void do
+      liftEffect $ setHash "/addCorpus"
+
     render :: Render State {} Action
     render dispatch _ state _ =
       [ div [className "container1"] []
