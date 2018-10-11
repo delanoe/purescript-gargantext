@@ -195,22 +195,22 @@ performAction (LoadData n) props state@(TableData table) = do
 
 performAction (ChangePageSize ps) props state@(TableData table) = do
   void $ modifyState $ changePageSize ps
-  performAction (LoadData nId) props state
-    where
-      nId = maybe 0 identity table.nodeId
+--  performAction (LoadData nId) props state
+--    where
+--      nId = maybe 0 identity table.nodeId
 
 performAction (ChangePage p) props state@(TableData table) = do
   void $ modifyState \(TableData td) -> TableData $ td { currentPage = p }
-  performAction (LoadData nId) props state
-    where
-      nId = maybe 0 identity table.nodeId
+--  performAction (LoadData nId) props state
+--    where
+--      nId = maybe 0 identity table.nodeId
 
 
 loadPage :: CorpusTableData -> Aff (Either String CorpusTableData)
 loadPage t@(TableData table) = do
   logs "loading documents page: loadPage with Offset and limit"
   let limit  = pageSizes2Int table.pageSize
-  let offset = limit * (table.currentPage +1)
+  let offset = limit * (table.currentPage - 1)
 
   res <- get $ toUrl Back (Children offset limit) $ maybe 0 identity table.nodeId
   case res of
@@ -235,7 +235,6 @@ loadPage t@(TableData table) = do
           , fav    : r.favorite
           , ngramCount : r.ngramCount
          }) rs
-
 
         toTableData :: Array DocumentsView -> CorpusTableData
         toTableData ds = TableData
