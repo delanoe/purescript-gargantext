@@ -1,6 +1,6 @@
 module Gargantext.Pages.Corpus.Tabs.Documents where
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
@@ -182,10 +182,7 @@ performAction (UpdateNodeId nId) _ _ = do
 
 performAction (LoadData n) props state@(TableData table) = do
   logs "loading documents page"
-  logs table.nodeId
-  let limit  = pageSizes2Int table.pageSize
-  let offset = limit * (table.currentPage +1)
-  res <- lift $ loadPage n offset limit
+  res <- lift $ loadPage state
 
   case res of
      Left err      -> do
@@ -198,27 +195,24 @@ performAction (LoadData n) props state@(TableData table) = do
 
 performAction (ChangePageSize ps) props state@(TableData table) = do
   void $ modifyState $ changePageSize ps
-  logs table.nodeId
   performAction (LoadData nId) props state
     where
-      nId = case table.nodeId of
-        Nothing   -> 0
-        (Just n)  -> n
+      nId = maybe 0 identity table.nodeId
 
 performAction (ChangePage p) props state@(TableData table) = do
   void $ modifyState \(TableData td) -> TableData $ td { currentPage = p }
-  logs table.nodeId
   performAction (LoadData nId) props state
     where
-      nId = case table.nodeId of
-        Nothing -> 0
-        (Just n)-> n
+      nId = maybe 0 identity table.nodeId
 
 
-loadPage :: Int -> Offset -> Limit -> Aff (Either String CorpusTableData)
-loadPage n o l = do
-  logs "loading documents page: loadPage"
-  res <- get $ toUrl Back (Children o l) n
+loadPage :: CorpusTableData -> Aff (Either String CorpusTableData)
+loadPage t@(TableData table) = do
+  logs "loading documents page: loadPage with Offset and limit"
+  let limit  = pageSizes2Int table.pageSize
+  let offset = limit * (table.currentPage +1)
+
+  res <- get $ toUrl Back (Children offset limit) $ maybe 0 identity table.nodeId
   case res of
      Left err -> do
        _ <- logs "Err: loading page documents"
@@ -246,16 +240,15 @@ loadPage n o l = do
         toTableData :: Array DocumentsView -> CorpusTableData
         toTableData ds = TableData
                 { rows         : map (\d -> { row : d , delete : false}) ds
-                , totalPages   : 474
-                , currentPage  : 1
-                , pageSize     : PS10
-                , totalRecords : 47361
-                , title        : "Documents"
-                , nodeId       : Nothing
+                , totalPages   : table.totalPages
+                , currentPage  : table.currentPage
+                , pageSize     : table.pageSize
+                , totalRecords : table.totalRecords
+                , title        : table.title
+                , nodeId       : table.nodeId
                 }
 
 ---------------------------------------------------------
-
 sampleData' :: DocumentsView
 sampleData' = DocumentsView {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1}
 
