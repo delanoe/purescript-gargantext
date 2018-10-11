@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Thermite (PerformAction, modifyState)
+import Thermite (StateCoTransformer, modifyState)
 
 import Gargantext.Config (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
@@ -17,13 +17,11 @@ import Gargantext.Prelude
 getUser :: Int -> Aff (Either String User)
 getUser id = get $ toUrl Back Node id
 
-
-performAction :: PerformAction State {} Action
-performAction (FetchUser userId) _ _ = do
+fetchUser :: Int -> StateCoTransformer State Unit
+fetchUser userId = do
   value <- lift $ getUser userId
   _ <- case value of
     (Right user) -> void $ modifyState $ _user ?~ user
     (Left err) -> do
       logs err
   logs "Fetching user..."
-performAction _ _ _ = pure unit
