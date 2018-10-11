@@ -37,18 +37,18 @@ data Action
   = SetMap Boolean
   | SetStop Boolean
 
-performAction :: PerformAction State {} Action
-performAction (SetMap b)   _ _ = void do
-  modifyState \(State s) -> State s {term = setter (_{_type = (if b then MapTerm else None)}) s.term}
-
-performAction (SetStop b)   _ _ = void do
-    modifyState \(State s) -> State s {term = setter (_{_type = (if b then StopTerm else None)}) s.term}
-
 ngramsItemSpec :: Spec {} {} Void
 ngramsItemSpec = hide (unwrap initialState) $
                  focusState (re _Newtype) $
                  simpleSpec performAction render
   where
+    performAction :: PerformAction State {} Action
+    performAction (SetMap b)   _ _ = void do
+      modifyState \(State s) -> State s {term = setter (_{_type = (if b then MapTerm else None)}) s.term}
+
+    performAction (SetStop b)   _ _ = void do
+        modifyState \(State s) -> State s {term = setter (_{_type = (if b then StopTerm else None)}) s.term}
+
     render :: Render State {} Action
     render dispatch _ (State state) _ =
       [
