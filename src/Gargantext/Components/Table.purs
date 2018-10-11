@@ -8,9 +8,10 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import React as React
 import React (ReactElement, ReactClass, Children, createElement)
-import React.DOM (a, b, b', div, div', option, select, span, table, tbody, td, text, th, thead, tr)
+import React.DOM (a, b, b', div, option, select, span, table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (className, href, onChange, onClick, scope, selected, value)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec, createClass', createReactSpec)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec,
+    createReactSpec, StateCoTransformer)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
@@ -53,8 +54,8 @@ type ChangePageAction = Int -> Effect Unit
 
 -- | Action
 -- ChangePageSize
-changePageSize :: Int -> PageSizes -> State -> State
-changePageSize totalRecords ps td =
+changePageSize :: PageSizes -> State -> State
+changePageSize ps td =
   td { pageSize      = ps
      , currentPage   = 1
      }
@@ -62,18 +63,24 @@ changePageSize totalRecords ps td =
 tableSpec :: Spec State Props Action
 tableSpec = simpleSpec performAction render
   where
+    modifyStateAndReload :: (State -> State) -> Props -> State -> StateCoTransformer State Unit
+    modifyStateAndReload f {loadRows} state = do
+      void $ modifyState f
+      loadAndSetRows {loadRows} $ f state
+
     performAction :: PerformAction State Props Action
-    performAction (ChangePageSize ps) props state = do
-      void $ modifyState $ changePageSize props.totalRecords ps
-      loadAndSetRows props state
-    performAction (ChangePage p) props state = do
-      void $ modifyState $ _ { currentPage = p }
-      loadAndSetRows props state
+    performAction (ChangePageSize ps) =
+      modifyStateAndReload $ changePageSize ps
+    performAction (ChangePage p) =
+      modifyStateAndReload $ _ { currentPage = p }
 
     render :: Render State Props Action
     render dispatch {title, colNames, totalRecords}
                     {pageSize, currentPage, rows} _ =
-      let totalPages = totalRecords / pageSizes2Int pageSize in
+      let
+        ps = pageSizes2Int pageSize
+        totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
+      in
       [ div [className "row"]
         [ div [className "col-md-1"] [b [] [text title]]
         , div [className "col-md-2"] [sizeDD pageSize dispatch]
@@ -90,6 +97,7 @@ tableSpec = simpleSpec performAction render
         ]
       ]
 
+loadAndSetRows :: {loadRows :: LoadRows} -> State -> StateCoTransformer State Unit
 loadAndSetRows {loadRows} {pageSize, currentPage} = do
   let limit = pageSizes2Int pageSize
       offset = limit * (currentPage - 1)
@@ -106,9 +114,9 @@ tableClass =
        {state, render} <- spec this
        pure { state, render
             , componentDidMount: do
-                props <- React.getProps this
+                {loadRows} <- React.getProps this
                 state' <- React.getState this
-                dispatcher' this $ loadAndSetRows props state'
+                dispatcher' this $ loadAndSetRows {loadRows} state'
             })
   where
     { spec, dispatcher' } = createReactSpec tableSpec initialState

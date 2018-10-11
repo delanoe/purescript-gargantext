@@ -3,7 +3,7 @@ module Gargantext.Pages.Corpus.Tabs.Documents where
 import Data.Maybe (Maybe(..), maybe)
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.ResponseFormat as ResponseFormat
-import Control.Monad.Cont.Trans (lift)
+import Data.Array (take, drop, length)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 
 import Data.Either (Either(..))
@@ -127,9 +127,7 @@ layoutDocview = simpleSpec performAction render
     performAction (UpdateNodeId nId) _ _ = do
       void $ modifyState $ _ { nodeId = Just nId }
       logs $ "writing NodeId" <> show nId
-{-
-    performAction (LoadData n) _ _ = do
--}
+
     render :: Render State {} Action
     render dispatch _ {nodeId, totalRecords} _ =
       [ div [className "container1"]
@@ -180,12 +178,12 @@ layoutDocview = simpleSpec performAction render
     fa true  = "fas "
     fa false = "far "
 
+mock :: Boolean
+mock = false
 
 loadPage :: {nodeId :: Maybe Int, limit :: Int, offset :: Int} -> Aff (Either String (Array DocumentsView))
-loadPage {nodeId, limit, offset} = do -- {pageSize, currentPage, nodeId} = do
+loadPage {nodeId, limit, offset} = do
   logs "loading documents page: loadPage with Offset and limit"
-  -- let limit  = pageSizes2Int pageSize
-  -- let offset = limit * (currentPage - 1)
   res <- get $ toUrl Back (Children offset limit) $ maybe 0 identity nodeId
   case res of
      Left err -> do
@@ -196,7 +194,9 @@ loadPage {nodeId, limit, offset} = do -- {pageSize, currentPage, nodeId} = do
        let docs = res2corpus resData
        _ <- logs "Ok: loading page documents"
        _ <- logs $ map show docs
-       pure $ Right docs
+       pure $ Right $
+         if mock then take limit $ drop offset sampleData else
+         docs
       where
         res2corpus :: Array Response -> Array DocumentsView
         res2corpus rs = map (\(Response r) ->
@@ -222,7 +222,8 @@ sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
 
 initialState :: State
-initialState = { totalRecords: 47361, nodeId: Nothing }
+initialState = { totalRecords: if mock then length sampleData else 47361 -- TODO
+               , nodeId: Nothing }
 
 newtype SearchQuery = SearchQuery
   {
