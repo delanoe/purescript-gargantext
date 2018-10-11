@@ -16,7 +16,7 @@ import Prelude (identity)
 import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
 import React.DOM.Props (Props, _type, className, href, onClick, onInput, placeholder, style, value)
-import Thermite (PerformAction, Render, Spec, cotransform, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
@@ -47,33 +47,6 @@ initialState = NTree (LNode { id : 3
                             , popOver : false
                             , renameNodeValue : ""
                           }) []
-
-performAction :: PerformAction State {} Action
-performAction (ToggleFolder i) _ _ =
-  void $ cotransform (\td -> toggleNode i td)
-
-
-
-performAction ShowPopOver _ _ = void $
- modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { popOver = true }) ary
-
-
-performAction Submit _  s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary)  = void $ do
-  s' <- lift $ renameNode  id  $ RenameValue { name : getRenameNodeValue s}
-  case s' of
-    Left err -> modifyState identity
-    Right d -> modifyState identity
-
-
-performAction (RenameNode  r) _ _ = void $
- modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { renameNodeValue  = r }) ary
-
-
--- performAction Initialize _ _ = void $ do
---  s <- lift $ loadDefaultNode
---  case s of
---    Left err -> modifyState identity
---    Right d -> modifyState (\state -> d)
 
 
 toggleNode :: Int -> NTree LNode -> NTree LNode
@@ -148,6 +121,24 @@ nodeOptionsRename d activated =  case activated of
 treeview :: Spec State {} Action
 treeview = simpleSpec performAction render
   where
+    performAction :: PerformAction State {} Action
+    performAction (ToggleFolder i) _ _ =
+      void $ modifyState (\td -> toggleNode i td)
+    performAction ShowPopOver _ _ = void $
+      modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { popOver = true }) ary
+    performAction Submit _  s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary)  = void $ do
+      s' <- lift $ renameNode  id  $ RenameValue { name : getRenameNodeValue s}
+      case s' of
+        Left err -> modifyState identity
+        Right d -> modifyState identity
+    performAction (RenameNode  r) _ _ = void $
+      modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { renameNodeValue  = r }) ary
+    -- performAction Initialize _ _ = void $ do
+    --  s <- lift $ loadDefaultNode
+    --  case s of
+    --    Left err -> modifyState identity
+    --    Right d -> modifyState (\state -> d)
+
     render :: Render State {} Action
     render dispatch _ state _ =
       [ div [className "tree"]
