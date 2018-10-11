@@ -6,6 +6,36 @@ import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Maybe (Maybe)
 import Gargantext.Utils.DecodeMaybe ((.?|))
 
+{-
+newtype User =
+User {
+  id :: Int,
+  ... fields for all the gargantext utilities
+  authors :: [Author]
+}
+
+newtype Author =
+Author {
+  user :: Maybe User,
+  name :: String,
+  hyperdata :: [Map String String]
+  ...
+}
+
+newtype Document =
+Document {
+  authors :: [Author],
+  ...
+}
+
+So Users have many Author and Authors have one User. This relation permit to
+retrieve all the authors of a user to create corpus with it.
+It also permit to have multiple authors name to permit to retrace document signed with a nickname.
+It will happend that we can't establish a link between an Author and a User, this is why
+the "user" field is encapsulated in a Maybe.
+
+-}
+
 newtype User =
   User { id        :: Int
        , typename  :: Maybe Int
