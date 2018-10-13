@@ -37,6 +37,7 @@ data Action =  ShowPopOver ID
               | RenameNode  String ID
               | Submit ID String
             --| Initialize
+              | DeleteNode ID
 
 type State = FTree
 
@@ -56,6 +57,15 @@ performAction (ShowPopOver id) _ _ = void $
  cotransform (\td -> popOverNode id td)
 
 
+--- TODO : Need to update state once API is called
+performAction (DeleteNode nid) _ _ = void $ do
+  s' <- lift $ deleteNode nid
+  case s' of
+    Left err -> modifyState identity
+    Right d -> modifyState identity
+
+
+--- TODO : Need to update state once API is called
 performAction (Submit rid s'') _  _  = void $ do
   s' <- lift $ renameNode  rid  $ RenameValue { name : s''}
   case s' of
@@ -78,6 +88,7 @@ popOverNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValu
   NTree (LNode {id,name, nodeType, open , popOver : npopOver, renameNodeValue}) $ map (popOverNode sid) ary
   where
     npopOver = if sid == id then not popOver else popOver
+
 
 rename :: Int ->  String -> NTree LNode  -> NTree LNode
 rename sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary)  =
@@ -214,6 +225,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) [
         ]
       )
     ,  a [className "glyphicon glyphicon-pencil", _id "rename-a",onClick $ (\_-> d $ (ShowPopOver id))] [ ]
+    ,  a [className "glyphicon glyphicon-trash", _id "rename-d",onClick $ (\_-> d $ (DeleteNode id))] [ ]
     , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
     ]
   ]
@@ -312,10 +324,10 @@ renameNode renameNodeId reqbody = do
 
 
 
-deleteNode :: Aff (Either String (Int))
-deleteNode = do
+deleteNode :: Int -> Aff (Either String (Int))
+deleteNode renameNodeId = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/tree/1"
+         { url = "http://localhost:8008/api/v1.0/node/" <> show renameNodeId
          , responseFormat = ResponseFormat.json
          , method = Left DELETE
          , headers = []
