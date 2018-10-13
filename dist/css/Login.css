@@ -78,3 +78,14 @@ logoSmall {
     background-color : blue;
     color: white;
 }
+
+
+li#rename  #rename-a{
+    display : none;
+    position : absolute;
+    left : 109px;
+}
+
+li#rename:hover  #rename-a{
+    display : block;
+}

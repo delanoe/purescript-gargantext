@@ -19,8 +19,8 @@ import Effect.Console (log)
 import Prelude (identity)
 import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
-import React.DOM.Props (Props, _type, className, href, onClick, onInput, placeholder, style, value)
-import Thermite (PerformAction, Render, Spec, cotransform, modifyState, simpleSpec)
+import React.DOM.Props (Props, _id, _type, className, href, onClick, onInput, placeholder, style, value)
+import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, defaultRender, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 type Name = String
@@ -32,16 +32,16 @@ data NTree a = NTree a (Array (NTree a))
 
 type FTree = NTree LNode
 
-data Action =  ShowPopOver
+data Action =  ShowPopOver ID
               | ToggleFolder ID
-              | RenameNode  String
-              | Submit
+              | RenameNode  String ID
+              | Submit ID String
             --| Initialize
 
 type State = FTree
 
 initialState :: State
-initialState = NTree (LNode {id : 3, name : "", nodeType : "", open : true, popOver : false, renameNodeValue : ""}) []
+initialState = NTree (LNode {id : 3, name : "hello", nodeType : "", open : true, popOver : false, renameNodeValue : ""}) []
 
 
 
@@ -52,19 +52,19 @@ performAction (ToggleFolder i) _ _ = void $
 
 
 
-performAction ShowPopOver _ _ = void $
- modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { popOver = true }) ary
+performAction (ShowPopOver id) _ _ = void $
+ cotransform (\td -> popOverNode id td)
 
 
-performAction Submit _  s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary)  = void $ do
-  s' <- lift $ renameNode  id  $ RenameValue { name : getRenameNodeValue s}
+performAction (Submit rid s'') _  _  = void $ do
+  s' <- lift $ renameNode  rid  $ RenameValue { name : s''}
   case s' of
     Left err -> modifyState identity
     Right d -> modifyState identity
 
 
-performAction (RenameNode  r) _ _ = void $
- modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { renameNodeValue  = r }) ary
+performAction (RenameNode  r id) _ _ = void $
+  cotransform (\td -> rename  id r td)
 
 
 -- performAction Initialize _ _ = void $ do
@@ -72,6 +72,18 @@ performAction (RenameNode  r) _ _ = void $
 --  case s of
 --    Left err -> modifyState identity
 --    Right d -> modifyState (\state -> d)
+
+popOverNode :: Int -> NTree LNode -> NTree LNode
+popOverNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary) =
+  NTree (LNode {id,name, nodeType, open , popOver : npopOver, renameNodeValue}) $ map (popOverNode sid) ary
+  where
+    npopOver = if sid == id then not popOver else popOver
+
+rename :: Int ->  String -> NTree LNode  -> NTree LNode
+rename sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary)  =
+  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue : rvalue}) $ map (rename sid  v) ary
+  where
+    rvalue = if sid == id then  v   else ""
 
 
 toggleNode :: Int -> NTree LNode -> NTree LNode
@@ -128,10 +140,10 @@ nodeOptionsView activated = case activated of
                          false -> []
 
 
-nodeOptionsRename :: (Action -> Effect Unit) ->  Boolean -> Array ReactElement
-nodeOptionsRename d activated =  case activated of
+nodeOptionsRename :: (Action -> Effect Unit) ->  Boolean ->  ID -> Array ReactElement
+nodeOptionsRename d activated  id =  case activated of
                          true -> [ a [className "glyphicon glyphicon-pencil", style {marginLeft : "15px"}
-                                        , onClick $ (\_-> d $ ShowPopOver)
+                                        , onClick $ (\_-> d $ (ShowPopOver id))
                                         ] []
                                  ]
                          false -> []
@@ -151,8 +163,8 @@ treeview = simpleSpec performAction render
 
 
 
-renameTreeView :: (Action -> Effect Unit) -> State -> ReactElement
-renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) =
+renameTreeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
+renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) nid  =
        div [className ""]
         [  div [className "panel panel-default"]
            [
@@ -166,13 +178,13 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                     , placeholder "Rename Node"
                     , value $ getRenameNodeValue s
                     , className "col-md-12 form-control"
-                    , onInput \e -> d (RenameNode (unsafeEventValue e))
+                    , onInput \e -> d (RenameNode (unsafeEventValue e) nid)
                     ]
             ]
           , div [className "panel-footer"]
             [ button [className "btn btn-danger"
                      , _type "button"
-                     , onClick \_ -> d $ Submit
+                     , onClick \_ -> d $ (Submit nid renameNodeValue)
                      ] [text "Rename"]
             ]
           ]
@@ -194,16 +206,15 @@ toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
 toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) []) =
   ul []
   [
-    li [ style {width:"100%"}]
+    li [ style {width:"100%"}, _id "rename"]
     [
 
       a [ href "#"]
       ( [ text (name <> "    ")
         ]
-        <> nodeOptionsView false
-        <> (nodeOptionsRename  d true)
-        <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
       )
+    ,  a [className "glyphicon glyphicon-pencil", _id "rename-a",onClick $ (\_-> d $ (ShowPopOver id))] [ ]
+    , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
     ]
   ]
 --- need to add renameTreeview value to this function
@@ -211,14 +222,12 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) a
   ul [ ]
   [ li [style {width : "100%"}] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      ,  text $ " " <> name <> "    "
-      ] <> nodeOptionsCorp false <>
+      ,  text $ " " <> name <> " "
+
+      ] <>
       if open then
         map (toHtml d) ary
         else []
-     <> nodeOptionsView false
-     <> (nodeOptionsRename  d true)
-     <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
     )
   ]
 
