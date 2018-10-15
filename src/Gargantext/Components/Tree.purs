@@ -38,11 +38,15 @@ data Action =  ShowPopOver ID
               | Submit ID String
             --| Initialize
               | DeleteNode ID
+              | Create  ID
+              | SetNodeValue String ID
+              | ToggleCreateNode ID
+
 
 type State = FTree
 
 initialState :: State
-initialState = NTree (LNode {id : 3, name : "hello", nodeType : "", open : true, popOver : false, renameNodeValue : ""}) []
+initialState = NTree (LNode {id : 3, name : "hello", nodeType : "", open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode"}) []
 
 
 
@@ -55,6 +59,10 @@ performAction (ToggleFolder i) _ _ = void $
 
 performAction (ShowPopOver id) _ _ = void $
  cotransform (\td -> popOverNode id td)
+
+
+performAction (ToggleCreateNode id) _ _ = void $
+ cotransform (\td -> showCreateNode id td)
 
 
 --- TODO : Need to update state once API is called
@@ -70,11 +78,19 @@ performAction (Submit rid s'') _  _  = void $ do
   s' <- lift $ renameNode  rid  $ RenameValue { name : s''}
   case s' of
     Left err -> modifyState identity
-    Right d -> modifyState identity
+    Right d -> cotransform (\td -> popOverNode rid td)
 
 
-performAction (RenameNode  r id) _ _ = void $
-  cotransform (\td -> rename  id r td)
+performAction (RenameNode  r nid) _ _ = void $
+  cotransform (\td -> rename  nid r td)
+
+
+performAction (Create  nid) _ _ = void $
+  cotransform (\td -> showCreateNode nid td)
+
+
+performAction (SetNodeValue v nid) _ _ = void $
+  cotransform (\td -> setNodeValue  nid v td)
 
 
 -- performAction Initialize _ _ = void $ do
@@ -83,23 +99,51 @@ performAction (RenameNode  r id) _ _ = void $
 --    Left err -> modifyState identity
 --    Right d -> modifyState (\state -> d)
 
+
+
+
 popOverNode :: Int -> NTree LNode -> NTree LNode
-popOverNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary) =
-  NTree (LNode {id,name, nodeType, open , popOver : npopOver, renameNodeValue}) $ map (popOverNode sid) ary
+popOverNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary) =
+  NTree (LNode {id,name, nodeType, open , popOver : npopOver, renameNodeValue, createNode, nodeValue}) $ map (popOverNode sid) ary
   where
     npopOver = if sid == id then not popOver else popOver
 
 
+showCreateNode :: Int -> NTree LNode -> NTree LNode
+showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary) =
+  NTree (LNode {id,name, nodeType, open , popOver, renameNodeValue, createNode : createNode', nodeValue}) $ map (showCreateNode sid) ary
+  where
+    createNode' = if sid == id then not createNode else createNode
+
+----TODO get id and value to send API to call
+
+-- getCreateNode :: Int -> NTree LNode -> String
+-- getCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary) =
+--   createNode
+--   where
+--     NTree (LNode {id,name, nodeType, open , popOver, renameNodeValue, createNode , nodeValue}) $ map (getCreateNode sid) ary
+--     createNode' = if sid == id then  nodeValue else ""
+
+
+
 rename :: Int ->  String -> NTree LNode  -> NTree LNode
-rename sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary)  =
-  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue : rvalue}) $ map (rename sid  v) ary
+rename sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary)  =
+  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue : rvalue, createNode, nodeValue}) $ map (rename sid  v) ary
   where
     rvalue = if sid == id then  v   else ""
 
 
+setNodeValue :: Int ->  String -> NTree LNode  -> NTree LNode
+setNodeValue sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary)  =
+  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue , createNode, nodeValue : nvalue}) $ map (setNodeValue sid  v) ary
+  where
+    nvalue = if sid == id then  v   else ""
+
+
+
 toggleNode :: Int -> NTree LNode -> NTree LNode
-toggleNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary) =
-  NTree (LNode {id,name, nodeType, open : nopen, popOver, renameNodeValue}) $ map (toggleNode sid) ary
+toggleNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary) =
+  NTree (LNode {id,name, nodeType, open : nopen, popOver, renameNodeValue, createNode, nodeValue}) $ map (toggleNode sid) ary
   where
     nopen = if sid == id then not open else open
 
@@ -109,7 +153,7 @@ toggleNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue
 -- Realistic Tree for the UI
 
 exampleTree :: NTree LNode
-exampleTree = NTree (LNode {id : 1, name : "", nodeType : "", open : false, popOver : false, renameNodeValue : ""}) []
+exampleTree = NTree (LNode {id : 1, name : "", nodeType : "", open : false, popOver : false, renameNodeValue : "", createNode : false, nodeValue : ""}) []
 
 -- exampleTree :: NTree LNode
 -- exampleTree =
@@ -203,6 +247,38 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 
 
 
+
+
+
+createNodeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
+createNodeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) nid  =
+       div [className ""]
+        [  div [className "panel panel-default"]
+           [
+             div [className "panel-heading"]
+             [
+               h5 [] [text "Create Node"]
+             ]
+           ,div [className "panel-body"]
+            [
+              input [ _type "text"
+                    , placeholder "Create Node"
+                    , value $ getCreateNodeValue s
+                    , className "col-md-12 form-control"
+                    , onInput \e -> d (SetNodeValue (unsafeEventValue e) nid)
+                    ]
+            ]
+          , div [className "panel-footer"]
+            [ button [className "btn btn-success"
+                     , _type "button"
+                     , onClick \_ -> d $ (Create nid )
+                     ] [text "Create"]
+            ]
+          ]
+        ]
+
+
+
 renameTreeViewDummy :: (Action -> Effect Unit) -> State -> ReactElement
 renameTreeViewDummy d s = div [] []
 
@@ -213,8 +289,12 @@ getRenameNodeValue :: State -> String
 getRenameNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) = renameNodeValue
 
 
+getCreateNodeValue :: State -> String
+getCreateNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, nodeValue}) ary) = nodeValue
+
+
 toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) []) =
+toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue }) []) =
   ul []
   [
     li [ style {width:"100%"}, _id "rename"]
@@ -226,11 +306,13 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) [
       )
     ,  a [className "glyphicon glyphicon-pencil", _id "rename-a",onClick $ (\_-> d $ (ShowPopOver id))] [ ]
     ,  a [className "glyphicon glyphicon-trash", _id "rename-d",onClick $ (\_-> d $ (DeleteNode id))] [ ]
+    ,  a [className "glyphicon glyphicon-plus", _id "rename-c",onClick $ (\_-> d $ (ToggleCreateNode id))] [ ]
     , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
+    , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
     ]
   ]
 --- need to add renameTreeview value to this function
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary) =
+toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue}) ary) =
   ul [ ]
   [ li [style {width : "100%"}] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
@@ -249,7 +331,7 @@ fldr :: Boolean -> Props
 fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 
-newtype LNode = LNode {id :: Int, name :: String, nodeType :: String, open :: Boolean, popOver :: Boolean, renameNodeValue :: String}
+newtype LNode = LNode {id :: Int, name :: String, nodeType :: String, open :: Boolean, popOver :: Boolean, renameNodeValue :: String, nodeValue :: String, createNode :: Boolean}
 
 derive instance newtypeLNode :: Newtype LNode _
 
@@ -259,7 +341,7 @@ instance decodeJsonLNode :: DecodeJson LNode where
     id_ <- obj .? "id"
     name <- obj .? "name"
     nodeType <- obj .? "type"
-    pure $ LNode {id : id_, name, nodeType, open : true, popOver : false, renameNodeValue : ""}
+    pure $ LNode {id : id_, name, nodeType, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : ""}
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
   decodeJson json = do
@@ -349,7 +431,7 @@ deleteNode renameNodeId = do
 deleteNodes :: String -> Aff (Either String  Int)
 deleteNodes reqbody = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/tree"
+         { url = "http://localhost:8008/api/v1.0/nodes"
          , responseFormat = ResponseFormat.json
          , method = Left DELETE
          , headers = []
@@ -370,7 +452,7 @@ deleteNodes reqbody = do
 createNode :: String -> Aff (Either String (Int))
 createNode  reqbody= do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/tree"
+         { url = "http://localhost:8008/api/v1.0/node/"
          , responseFormat = ResponseFormat.json
          , method = Left POST
          , headers = []

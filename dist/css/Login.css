@@ -99,4 +99,16 @@ li#rename  #rename-d{
 
 li#rename:hover  #rename-d{
     display : block;
+
 }
+
+
+
+li#rename  #rename-c{
+    display : none;
+    position : absolute;
+    left : 54px;
+}
+
+li#rename:hover  #rename-c{
+    display : block;

@@ -90,8 +90,8 @@ layout0 layout =
             then ls as
             else outerLayout1
       , rs bs      ]
-    ls   = over _render \render d p s c -> [ div [className "col-md-2" ] (render d p s c) ]
-    rs   = over _render \render d p s c -> [ div [className "col-md-10"] (render d p s c) ]
+    ls   = over _render \render d p s c -> [ div [className "col-md-3" ] (render d p s c) ]
+    rs   = over _render \render d p s c -> [ div [className "col-md-9"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
     as = focus _treeState _treeAction Tree.treeview
