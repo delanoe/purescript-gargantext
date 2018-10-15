@@ -31,16 +31,17 @@ import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 -- TODO: Filter is Pending
 -- TODO: When a pagination link is clicked, reload data. 
 
-data Action
-  = UpdateNodeId   Int
-
-type State =
+type Props =
   { totalRecords :: Int
-  , nodeId       :: Maybe Int -- /!\ When changing the pages of the Table, NodeId
-                              -- is needed to reload Data (other solution is using
-                              -- NodeId as a parameter
-                              -- NP,TODO this should not be in state
+  , nodeId       :: Int -- /!\ When changing the pages of the Table, NodeId
+                        -- is needed to reload Data (other solution is using
+                        -- NodeId as a parameter
+                        -- NP,TODO this should not be in state
   }
+
+type State = {}
+
+type Action = Void
 
 newtype DocumentsView
   = DocumentsView
@@ -120,16 +121,11 @@ filterSpec = simpleSpec defaultPerformAction render
                      ]]
 
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: Spec State {} Action
-layoutDocview = simpleSpec performAction render
+layoutDocview :: Spec State Props Action
+layoutDocview = simpleSpec absurd render
   where
-    performAction :: PerformAction State {} Action
-    performAction (UpdateNodeId nId) _ _ = do
-      void $ modifyState $ _ { nodeId = Just nId }
-      logs $ "writing NodeId" <> show nId
-
-    render :: Render State {} Action
-    render dispatch _ {nodeId, totalRecords} _ =
+    render :: Render State Props Action
+    render dispatch {nodeId, totalRecords} _ _ =
       [ div [className "container1"]
         [ div [className "row"]
           [ chart globalPublis
@@ -181,10 +177,10 @@ layoutDocview = simpleSpec performAction render
 mock :: Boolean
 mock = false
 
-loadPage :: {nodeId :: Maybe Int, limit :: Int, offset :: Int} -> Aff (Either String (Array DocumentsView))
+loadPage :: {nodeId :: Int, limit :: Int, offset :: Int} -> Aff (Either String (Array DocumentsView))
 loadPage {nodeId, limit, offset} = do
   logs "loading documents page: loadPage with Offset and limit"
-  res <- get $ toUrl Back (Children offset limit) $ maybe 0 identity nodeId
+  res <- get $ toUrl Back (Children offset limit) nodeId
   case res of
      Left err -> do
        _ <- logs "Err: loading page documents"
@@ -222,8 +218,7 @@ sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
 
 initialState :: State
-initialState = { totalRecords: if mock then length sampleData else 47361 -- TODO
-               , nodeId: Nothing }
+initialState = {}
 
 newtype SearchQuery = SearchQuery
   {

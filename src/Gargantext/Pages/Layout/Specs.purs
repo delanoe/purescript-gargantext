@@ -7,7 +7,7 @@ import Effect (Effect)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
 import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
-import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState)
+import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
@@ -19,9 +19,7 @@ import Gargantext.Pages.Annuaire   as A
 import Gargantext.Pages.Annuaire.User.Users as U
 import Gargantext.Pages.Corpus     as Corpus
 import Gargantext.Pages.Corpus.Document as Annotation
-import Gargantext.Pages.Corpus.Tabs as TV
 import Gargantext.Pages.Corpus.Dashboard as Dsh
-import Gargantext.Pages.Corpus.Tabs.Documents as DV
 import Gargantext.Pages.Corpus.Graph as GE
 import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
 import Gargantext.Pages.Home as L
@@ -57,7 +55,9 @@ pagesComponent s = case s.currentRoute of
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
     
-    selectSpec (Corpus   i)      = layout0 $ focus _corpusState   _corpusAction   Corpus.layout
+    selectSpec (Corpus   i)      = layout0 $
+                                     cmapProps (const {nodeId: i, totalRecords: 47361}) -- TODO
+                                               (focus _corpusState _corpusAction   Corpus.layout)
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec (Document i) = layout0 $ focus _documentViewState _documentViewAction  Annotation.docview

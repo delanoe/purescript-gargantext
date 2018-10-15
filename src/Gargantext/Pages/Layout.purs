@@ -39,7 +39,6 @@ dispatchAction dispatcher _ AddCorpus = do
 
 dispatchAction dispatcher _ (Corpus n) = do
   dispatcher $ SetRoute     $ Corpus n
-  dispatcher $ CorpusAction $ Corpus.TabsA    $ TabsA.DocviewA $ D.UpdateNodeId n
   dispatcher $ CorpusAction $ Corpus.HeaderA  $ Corpus.Load    n
 
 dispatchAction dispatcher _ SearchView = do

@@ -11,17 +11,20 @@ import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
-import Thermite ( Render, Spec, PerformAction, focus
+import Thermite ( Render, Spec, PerformAction, focus, cmapProps
                 , simpleSpec, modifyState, noState)
 --------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
+import Gargantext.Pages.Corpus.Tabs.Types as Tabs
 import Gargantext.Pages.Corpus.Tabs.States as Tabs
 import Gargantext.Pages.Corpus.Tabs.Actions as Tabs
 import Gargantext.Pages.Corpus.Tabs.Specs as Tabs
 -------------------------------------------------------------------
+type Props = Tabs.Props
+
 type HeaderState = { info :: Maybe (NodePoly CorpusInfo) }
 type State = { headerView  :: HeaderState
              , tabsView    :: Tabs.State
@@ -102,8 +105,8 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     pure $ CorpusInfo {title, desc, query, authors, chart}
 
 ------------------------------------------------------------------------
-layout :: Spec State {} Action
-layout = focus _headerView _headerAction corpusHeaderSpec
+layout :: Spec State Props Action
+layout = cmapProps (const {}) (focus _headerView _headerAction corpusHeaderSpec)
       <> focus _tabsView _tabsAction Tabs.statefulTabs
 
 corpusHeaderSpec :: Spec HeaderState {} HeaderAction

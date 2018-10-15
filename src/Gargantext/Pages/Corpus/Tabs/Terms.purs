@@ -1,21 +1,17 @@
 module Gargantext.Pages.Corpus.Tabs.Terms where
 
 import Data.Array (fold)
-import Gargantext.Pages.Corpus.Tabs.Documents as D
 import Prelude hiding (div)
 import React.DOM (h3, text)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, simpleSpec)
 
 
+type State = {}
 
-type State = D.State
+initialState :: State
+initialState = {}
 
-
-initialState :: D.State
-initialState = D.initialState
-
-type Action = D.Action
-
+type Action = Void
 
 termsSpec :: Spec State {} Action
 termsSpec = simpleSpec defaultPerformAction render
@@ -23,6 +19,3 @@ termsSpec = simpleSpec defaultPerformAction render
     render :: Render State {} Action
     render dispatch _ state _ =
       [ h3 [] [text "Terms view"]]
-
-termSpec' :: Spec State {} Action
-termSpec' = fold [termsSpec, D.layoutDocview]
