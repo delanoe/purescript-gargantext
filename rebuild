@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf output bower_components node_modules
+bower install && yarn install && pulp build && pulp browserify --to dist/bundle.js
