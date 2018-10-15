@@ -9,6 +9,7 @@ import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Corpus                as Corpus
 import Gargantext.Pages.Corpus.Document       as Document
 import Gargantext.Pages.Corpus.Tabs.Documents as D
+import Gargantext.Pages.Corpus.Tabs.Actions   as TabsA
 import Gargantext.Pages.Corpus.Graph          as GE
 -- import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
 
@@ -38,7 +39,7 @@ dispatchAction dispatcher _ AddCorpus = do
 
 dispatchAction dispatcher _ (Corpus n) = do
   dispatcher $ SetRoute     $ Corpus n
-  dispatcher $ CorpusAction $ Corpus.DocviewA $ D.UpdateNodeId n
+  dispatcher $ CorpusAction $ Corpus.TabsA    $ TabsA.DocviewA $ D.UpdateNodeId n
   dispatcher $ CorpusAction $ Corpus.HeaderA  $ Corpus.Load    n
 
 dispatchAction dispatcher _ SearchView = do

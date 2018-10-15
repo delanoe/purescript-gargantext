@@ -1,45 +1,41 @@
 module Gargantext.Pages.Corpus.Tabs.States where
 
 import Data.Lens (Lens', lens)
-import Gargantext.Pages.Corpus.Tabs.Documents as DV
-import Gargantext.Pages.Corpus.Tabs.Sources as SV
-import Gargantext.Pages.Corpus.Tabs.Authors as AV
-import Gargantext.Pages.Corpus.Tabs.Terms as TV
+import Gargantext.Pages.Corpus.Tabs.Documents as D
+import Gargantext.Pages.Corpus.Tabs.Sources   as S
+import Gargantext.Pages.Corpus.Tabs.Authors   as A
+import Gargantext.Pages.Corpus.Tabs.Terms     as T
 import Gargantext.Components.Tab as Tab
 
 
 type State =
-  { docview :: DV.State
-  , authorview :: AV.State
-  , sourceview :: SV.State
-  , termsview :: TV.State
-  , activeTab :: Int
+  { docsView    :: D.State
+  , authorsView :: A.State
+  , sourcesView :: S.State
+  , termsView   :: T.State
+  , activeTab   :: Int
   }
 
 initialState :: State
 initialState =
-  { docview    : DV.initialState
-  , authorview : AV.initialState
-  , sourceview : SV.initialState
-  , termsview  : TV.initialState
-  , activeTab  : 0
+  { docsView    : D.initialState
+  , authorsView : A.initialState
+  , sourcesView : S.initialState
+  , termsView   : T.initialState
+  , activeTab : 0
   }
 
-_doclens :: Lens' State DV.State
-_doclens = lens (\s -> s.docview) (\s ss -> s {docview = ss})
+_doclens :: Lens' State D.State
+_doclens = lens (\s -> s.docsView) (\s ss -> s {docsView = ss})
 
-_authorlens :: Lens' State AV.State
-_authorlens = lens (\s -> s.authorview) (\s ss -> s {authorview = ss})
+_authorlens :: Lens' State A.State
+_authorlens = lens (\s -> s.authorsView) (\s ss -> s {authorsView = ss})
 
-_sourcelens :: Lens' State SV.State
-_sourcelens = lens (\s -> s.sourceview) (\s ss -> s {sourceview = ss})
+_sourcelens :: Lens' State S.State
+_sourcelens = lens (\s -> s.sourcesView) (\s ss -> s {sourcesView = ss})
 
-_termslens :: Lens' State TV.State
-_termslens = lens (\s -> s.termsview) (\s ss -> s {termsview = ss})
+_termslens :: Lens' State T.State
+_termslens = lens (\s -> s.termsView) (\s ss -> s {termsView = ss})
 
 _tablens :: Lens' State Tab.State
 _tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
-
-
-
-

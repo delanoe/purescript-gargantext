@@ -12,36 +12,24 @@ import Effect.Aff (Aff)
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
 import Thermite ( Render, Spec, PerformAction, focus
-                , simpleSpec, modifyState)
+                , simpleSpec, modifyState, noState)
 --------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
----------------------------------------------------------
--- Tabs
-import Gargantext.Pages.Corpus.Tabs.Documents as D
-import Gargantext.Pages.Corpus.Tabs.Sources   as S
-import Gargantext.Pages.Corpus.Tabs.Authors   as A
-import Gargantext.Pages.Corpus.Tabs.Terms     as T
-import Gargantext.Components.Tab as Tab
+import Gargantext.Pages.Corpus.Tabs.States as Tabs
+import Gargantext.Pages.Corpus.Tabs.Actions as Tabs
+import Gargantext.Pages.Corpus.Tabs.Specs as Tabs
 -------------------------------------------------------------------
 type HeaderState = { info :: Maybe (NodePoly CorpusInfo) }
 type State = { headerView  :: HeaderState
-             , docsView    :: D.State
-             , authorsView :: A.State
-             , sourcesView :: S.State
-             , termsView   :: T.State
-             , activeTab   :: Int
+             , tabsView    :: Tabs.State
              }
 
 initialState :: State
 initialState = { headerView  : { info : Nothing }
-               , docsView    : D.initialState
-               , authorsView : A.initialState
-               , sourcesView : S.initialState
-               , termsView   : T.initialState
-               , activeTab : 0
+               , tabsView    : Tabs.initialState
                }
 
 ------------------------------------------------------------------------
@@ -51,29 +39,14 @@ _info = lens (\s -> s.info) (\s ss -> s{info = ss})
 _headerView :: forall a b. Lens' { headerView :: a | b } a
 _headerView = lens (\s -> s.headerView) (\s ss -> s{headerView = ss})
 
-_doclens :: Lens' State D.State
-_doclens = lens (\s -> s.docsView) (\s ss -> s {docsView = ss})
-
-_authorlens :: Lens' State A.State
-_authorlens = lens (\s -> s.authorsView) (\s ss -> s {authorsView = ss})
-
-_sourcelens :: Lens' State S.State
-_sourcelens = lens (\s -> s.sourcesView) (\s ss -> s {sourcesView = ss})
-
-_termslens :: Lens' State T.State
-_termslens = lens (\s -> s.termsView) (\s ss -> s {termsView = ss})
-
-_tablens :: Lens' State Tab.State
-_tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
+_tabsView :: forall a b. Lens' { tabsView :: a | b } a
+_tabsView = lens (\s -> s.tabsView) (\s ss -> s{tabsView = ss})
 ------------------------------------------------------------------------
 data HeaderAction = Load Int
 
-data Action = HeaderA       HeaderAction
-            | DocviewA      D.Action
-            | AuthorviewA   A.Action
-            | SourceviewA   S.Action
-            | TermsviewA    T.Action
-            | TabViewA      Tab.Action
+data Action
+  = HeaderA HeaderAction
+  | TabsA   Tabs.Action
 
 _headerAction :: Prism' Action HeaderAction
 _headerAction = prism HeaderA \ action ->
@@ -81,35 +54,12 @@ _headerAction = prism HeaderA \ action ->
     HeaderA haction -> Right haction
     _-> Left action
 
-_docAction :: Prism' Action D.Action
-_docAction = prism DocviewA \ action ->
+_tabsAction :: Prism' Action Tabs.Action
+_tabsAction = prism TabsA \ action ->
   case action of
-    DocviewA laction -> Right laction
+    TabsA taction -> Right taction
     _-> Left action
 
-_authorAction :: Prism' Action A.Action
-_authorAction = prism AuthorviewA \ action ->
-  case action of
-    AuthorviewA laction -> Right laction
-    _-> Left action
-
-_sourceAction :: Prism' Action S.Action
-_sourceAction = prism SourceviewA \ action ->
-  case action of
-    SourceviewA laction -> Right laction
-    _-> Left action
-
-_termsAction :: Prism' Action T.Action
-_termsAction = prism TermsviewA \ action ->
-  case action of
-    TermsviewA laction -> Right laction
-    _-> Left action
-
-_tabAction :: Prism' Action Tab.Action
-_tabAction = prism TabViewA \ action ->
-  case action of
-    TabViewA laction -> Right laction
-    _-> Left action
 
 _loadAction :: Prism' HeaderAction Int
 _loadAction = prism Load \ action ->
@@ -153,7 +103,8 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
 
 ------------------------------------------------------------------------
 layout :: Spec State {} Action
-layout = focus _headerView _headerAction corpusHeaderSpec <> facets
+layout = focus _headerView _headerAction corpusHeaderSpec
+      <> focus _tabsView _tabsAction Tabs.statefulTabs
 
 corpusHeaderSpec :: Spec HeaderState {} HeaderAction
 corpusHeaderSpec = simpleSpec performAction render
@@ -203,27 +154,3 @@ performAction (Load nId) _ _ = do
 
 getNode :: Int -> Aff (Either String (NodePoly CorpusInfo))
 getNode id = get $ toUrl Back Node id
-
-------------------------------------------------------------------------
--- Tabs
-------------------------------------------------------------------------
-facets :: Spec State {} Action
-facets =
-  Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Documents" docPageSpec
-                                              , Tuple "Authors"   authorPageSpec
-                                              , Tuple "Sources"   sourcePageSpec
-                                              , Tuple "Terms"     termsPageSpec
-                                              ]
-
-docPageSpec :: Spec State {} Action
-docPageSpec = focus _doclens _docAction D.layoutDocview
-
-authorPageSpec :: Spec State  {} Action
-authorPageSpec = focus _authorlens _authorAction A.authorspec'
-
-sourcePageSpec :: Spec State {} Action
-sourcePageSpec = focus _sourcelens _sourceAction S.sourcespec'
-
-termsPageSpec :: Spec State {} Action
-termsPageSpec = focus _termslens _termsAction T.termSpec'
-

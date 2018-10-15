@@ -46,6 +46,3 @@ _tabAction = prism TabViewA \ action ->
   case action of
     TabViewA laction -> Right laction
     _-> Left action
-
-
-
