@@ -191,15 +191,15 @@ loadPage {nodeId, limit, offset} = do
        _ <- logs err
        pure $ Left $ show err
      Right resData -> do
-       let docs = res2corpus resData
+       let docs = res2corpus <$> resData
        _ <- logs "Ok: loading page documents"
        _ <- logs $ map show docs
        pure $ Right $
          if mock then take limit $ drop offset sampleData else
          docs
       where
-        res2corpus :: Array Response -> Array DocumentsView
-        res2corpus rs = map (\(Response r) ->
+        res2corpus :: Response -> DocumentsView
+        res2corpus (Response r) =
           DocumentsView { _id : r.cid
           , url    : ""
           , date   :  r.created
@@ -207,7 +207,7 @@ loadPage {nodeId, limit, offset} = do
           , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
           , fav    : r.favorite
           , ngramCount : r.ngramCount
-         }) rs
+         }
 
 
 ---------------------------------------------------------
