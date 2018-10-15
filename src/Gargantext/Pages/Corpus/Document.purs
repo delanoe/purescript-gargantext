@@ -261,17 +261,14 @@ instance decodeDocument :: DecodeJson Document
 ------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
 performAction (Load nId) _ _ = do
-  eitherInfo <- lift $ getNode nId
-  _ <- case eitherInfo of
-            (Right node) -> void $ modifyState $ _document ?~ node
-            (Left  err)  -> do
-               logs err
+  node <- lift $ getNode nId
+  void $ modifyState $ _document ?~ node
   logs $ "Node Document " <> show nId <> " fetched."
 performAction (ChangeString ps) _ _ = pure unit
 performAction (SetInput ps) _ _ = void <$> modifyState $ _ { inputValue = ps }
 
-getNode :: Int -> Aff (Either String (NodePoly DocumentV3))
-getNode id = get $ toUrl Back Node id
+getNode :: Int -> Aff (NodePoly DocumentV3)
+getNode = get <<< toUrl Back Node
 
 _document :: Lens' State (Maybe (NodePoly DocumentV3))
 _document = lens (\s -> s.document) (\s ss -> s{document = ss})

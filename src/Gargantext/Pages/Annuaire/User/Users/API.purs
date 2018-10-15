@@ -14,14 +14,11 @@ import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Users.Types (Action(..), State, User, _user)
 import Gargantext.Prelude
 
-getUser :: Int -> Aff (Either String User)
+getUser :: Int -> Aff User
 getUser id = get $ toUrl Back Node id
 
 fetchUser :: Int -> StateCoTransformer State Unit
 fetchUser userId = do
-  value <- lift $ getUser userId
-  _ <- case value of
-    (Right user) -> void $ modifyState $ _user ?~ user
-    (Left err) -> do
-      logs err
+  user <- lift $ getUser userId
+  void $ modifyState $ _user ?~ user
   logs "Fetching user..."

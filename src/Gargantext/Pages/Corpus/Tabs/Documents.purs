@@ -1,24 +1,19 @@
 module Gargantext.Pages.Corpus.Tabs.Documents where
 
-import Data.Maybe (Maybe(..), maybe)
-import Affjax (defaultRequest, printResponseFormatError, request)
-import Affjax.ResponseFormat as ResponseFormat
-import Data.Array (take, drop, length)
+import Data.Array (take, drop)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 
-import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.HTTP.Method (Method(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import React.DOM (a, br', div, input, p, text)
 import React.DOM.Props (_type, className, href)
-import Thermite (PerformAction, Render, Spec, modifyState, defaultPerformAction, simpleSpec)
+import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Config (NodeType(..), toUrl, End(..))
-import Gargantext.Config.REST (get)
+import Gargantext.Config.REST (get, post)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Components.Table as T
@@ -153,57 +148,46 @@ layoutDocview = simpleSpec absurd render
         loadRows {offset, limit} = do
           _ <- logs "loading documents page"
           res <- loadPage {nodeId,offset,limit}
-          case res of
-            Left err      -> do
-              _ <- logs $ "Error: loading page documents:" <> show err
-              pure $ Left err
-            Right resData -> do
-              _ <- logs "OK: loading page documents."
-              pure $ Right $
-                (\(DocumentsView r) ->
-                    { row:
-                        [ div [className $ fa r.fav <> "fa-star"] []
-                        -- TODO show date: Year-Month-Day only
-                        , text r.date
-                        , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
-                        , text r.source
-                        , input [ _type "checkbox"]
-                        ]
-                    , delete: false
-                    }) <$> resData
+          _ <- logs "OK: loading page documents."
+          pure $
+            (\(DocumentsView r) ->
+                { row:
+                    [ div [className $ fa r.fav <> "fa-star"] []
+                    -- TODO show date: Year-Month-Day only
+                    , text r.date
+                    , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
+                    , text r.source
+                    , input [ _type "checkbox"]
+                    ]
+                , delete: false
+                }) <$> res
     fa true  = "fas "
     fa false = "far "
 
 mock :: Boolean
 mock = false
 
-loadPage :: {nodeId :: Int, limit :: Int, offset :: Int} -> Aff (Either String (Array DocumentsView))
+loadPage :: {nodeId :: Int, limit :: Int, offset :: Int} -> Aff (Array DocumentsView)
 loadPage {nodeId, limit, offset} = do
   logs "loading documents page: loadPage with Offset and limit"
   res <- get $ toUrl Back (Children offset limit) nodeId
-  case res of
-     Left err -> do
-       _ <- logs "Err: loading page documents"
-       _ <- logs err
-       pure $ Left $ show err
-     Right resData -> do
-       let docs = res2corpus <$> resData
-       _ <- logs "Ok: loading page documents"
-       _ <- logs $ map show docs
-       pure $ Right $
-         if mock then take limit $ drop offset sampleData else
-         docs
-      where
-        res2corpus :: Response -> DocumentsView
-        res2corpus (Response r) =
-          DocumentsView { _id : r.cid
-          , url    : ""
-          , date   :  r.created
-          , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
-          , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
-          , fav    : r.favorite
-          , ngramCount : r.ngramCount
-         }
+  let docs = res2corpus <$> res
+  _ <- logs "Ok: loading page documents"
+  _ <- logs $ map show docs
+  pure $
+    if mock then take limit $ drop offset sampleData else
+    docs
+  where
+    res2corpus :: Response -> DocumentsView
+    res2corpus (Response r) =
+      DocumentsView { _id : r.cid
+      , url    : ""
+      , date   :  r.created
+      , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
+      , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
+      , fav    : r.favorite
+      , ngramCount : r.ngramCount
+     }
 
 
 ---------------------------------------------------------
@@ -235,21 +219,6 @@ instance encodeJsonSQuery :: EncodeJson SearchQuery where
 
 
 
-searchResults ::  SearchQuery -> Aff (Either String (Int))
-searchResults squery = do
-  res <- request $ defaultRequest
-         { url = "http://localhost:8008/count"
-         , responseFormat = ResponseFormat.json
-         , method = Left POST
-         , headers = []
-         }
-  case res.body of
-    Left err -> do
-      _ <- logs $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- logs a.status
-      --_ <- logs a.headers
-      --_ <- logs a.body
-      let obj = decodeJson json
-      pure obj
+searchResults :: SearchQuery -> Aff Int
+searchResults squery = post "http://localhost:8008/count" unit
+  -- TODO

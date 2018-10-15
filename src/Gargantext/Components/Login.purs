@@ -1,15 +1,8 @@
 module Gargantext.Components.Login where
 
-import Affjax (defaultRequest, printResponseFormatError, request)
-import Affjax.RequestBody (RequestBody(..))
-import Affjax.RequestHeader (RequestHeader(..))
-import Affjax.ResponseFormat as ResponseFormat
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, stringify, (.?), (:=), (~>))
-import Data.Either (Either(..))
-import Data.HTTP.Method (Method(..))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Lens (over)
-import Data.Maybe (Maybe(..))
-import Data.MediaType.Common (applicationJSON)
+import Data.Maybe (Maybe)
 import Effect.Class (liftEffect)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -23,6 +16,7 @@ import Web.Storage.Storage (getItem, setItem)
 
 ------------------------------------------------------------------------
 import Gargantext.Prelude
+import Gargantext.Config.REST (post)
 import Gargantext.Components.Modals.Modal (modalHide)
 
 -- TODO: ask for login (modal) or account creation after 15 mn when user
@@ -230,37 +224,8 @@ newtype LoginReq = LoginReq
   , password :: String
   }
 
-loginReq :: LoginReq -> Aff (Either String LoginRes)
-loginReq encodeData =
-  let
-    setting =
-      defaultRequest
-        { url = "https://dev.gargantext.org/api/auth/token"
-        , method = Left POST
-        , responseFormat = ResponseFormat.json
-        , headers =
-            [ ContentType applicationJSON
-            , Accept applicationJSON
-            ]
-        , content = Just $ Json $ encodeJson encodeData
-        }
-  in
-    do
-      affResp <- request setting
-      case affResp.body of
-        Left err -> do
-          logs $ printResponseFormatError err
-          pure $ Left $ printResponseFormatError err
-        Right json -> do
-          logs $ "POST method Completed"
-          logs $ "GET /api response: " <> stringify json
-          let obj = decodeJson json
-          case obj of
-            Left e ->
-               logs $ "Error Decoding : " <> show e
-            Right (LoginRes res1) ->
-              liftEffect $ setToken res1.token
-          pure obj
+loginReq :: LoginReq -> Aff LoginRes
+loginReq = post "https://dev.gargantext.org/api/auth/token"
 
 instance decodeLoginRes :: DecodeJson LoginRes where
   decodeJson json = do

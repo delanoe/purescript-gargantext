@@ -20,7 +20,7 @@ type Rows = Array { row    :: Array ReactElement
                   , delete :: Boolean
                   }
 
-type LoadRows = { offset :: Int, limit :: Int } -> Aff (Either String Rows)
+type LoadRows = { offset :: Int, limit :: Int } -> Aff Rows
 
 type Props' =
   ( title        :: String
@@ -101,11 +101,8 @@ loadAndSetRows :: {loadRows :: LoadRows} -> State -> StateCoTransformer State Un
 loadAndSetRows {loadRows} {pageSize, currentPage} = do
   let limit = pageSizes2Int pageSize
       offset = limit * (currentPage - 1)
-  x <- lift $ loadRows {offset, limit}
-  case x of
-    Left err -> logs err
-    Right rows ->
-      void $ modifyState (_ { rows = Just rows })
+  rows <- lift $ loadRows {offset, limit}
+  void $ modifyState (_ { rows = Just rows })
 
 tableClass :: ReactClass {children :: Children | Props'}
 tableClass =

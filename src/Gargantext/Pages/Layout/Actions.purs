@@ -6,7 +6,6 @@ import Control.Monad.Cont.Trans                        (lift)
 import Data.Either                                     (Either(..))
 import Data.Lens                                       (Prism', prism)
 import Effect.Class                                    (liftEffect)
-import Effect.Console                                  (log)
 import Thermite                                        (PerformAction, modifyState)
 
 import Gargantext.Components.Login                  as LN
@@ -16,7 +15,6 @@ import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Annuaire.User.Users           as U
 import Gargantext.Pages.Corpus                      as Corpus
 import Gargantext.Pages.Corpus.Document       as D
-import Gargantext.Pages.Corpus.Tabs.Documents as DV
 import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
@@ -72,12 +70,7 @@ performAction Initialize  _ state = void do
   case state.initialized of
     false -> do
       lnodes <- lift $ Tree.loadDefaultNode
-      case lnodes of
-        Left err -> do
-          pure unit
-        Right d -> do
-          _ <- modifyState $ _ { initialized = true, ntreeState = d}
-          pure unit
+      void $ modifyState $ _ { initialized = true, ntreeState = lnodes }
     _ -> do
       pure unit
 

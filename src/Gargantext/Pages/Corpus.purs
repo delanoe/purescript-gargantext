@@ -148,12 +148,9 @@ corpusHeaderSpec = simpleSpec performAction render
 ------------------------------------------------------------------------
 performAction :: PerformAction HeaderState {} HeaderAction
 performAction (Load nId) _ _ = do
-  eitherInfo <- lift $ getNode nId
-  _ <- case eitherInfo of
-            (Right node') -> void $ modifyState $ _info ?~ node'
-            (Left       err)  -> do
-               logs err
+  node <- lift $ getNode nId
+  void $ modifyState $ _info ?~ node
   logs $ "Node Corpus fetched."
 
-getNode :: Int -> Aff (Either String (NodePoly CorpusInfo))
-getNode id = get $ toUrl Back Node id
+getNode :: Int -> Aff (NodePoly CorpusInfo)
+getNode = get <<< toUrl Back Node

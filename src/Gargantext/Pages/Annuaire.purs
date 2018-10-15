@@ -81,18 +81,11 @@ layoutAnnuaire = simpleSpec performAction render
   where
     performAction :: PerformAction State {} Action
     performAction (Load aId) _ _ = do
-      eitherInfo <- lift $ getInfo aId
-      _ <- case eitherInfo of
-                (Right info') -> void $ modifyState $ _info ?~ info'
-                (Left       err)  -> do
-                  logs err
-
-      eitherTable <- lift $ getTable aId
+      info' <- lift $ getInfo aId
+      void $ modifyState $ _info ?~ info'
+      table' <- lift $ getTable aId
       logs "Feching Table"
-      _ <- case eitherTable of
-                (Right table') -> void $ modifyState $ _table ?~ table'
-                (Left       err)  -> do
-                  logs err
+      void $ modifyState $ _table ?~ table'
       logs "Annuaire page fetched."
     performAction (ChangePageSize _) _ _ = pure unit -- TODO
     performAction (ChangePage _)     _ _ = pure unit -- TODO
@@ -191,10 +184,10 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     rows <- decodeJson json
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
-getTable :: Int -> Aff (Either String AnnuaireTable)
+getTable :: Int -> Aff AnnuaireTable
 getTable id = get $ toUrl Back (Children 0 10) id
 
-getInfo :: Int -> Aff (Either String AnnuaireInfo)
+getInfo :: Int -> Aff AnnuaireInfo
 getInfo id = get $ toUrl Back Node id
 ------------------------------------------------------------------------------
 _table :: Lens' State (Maybe AnnuaireTable)
