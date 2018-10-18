@@ -23,10 +23,10 @@ import Gargantext.Pages.Corpus.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Graph as GE
 import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _corpusAction, _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search    as S
-import Gargantext.Pages.Layout.States (AppState, _corpusState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState, _annuaireState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState, _annuaireState)
 import Gargantext.Router (Routes(..))
 
 layoutSpec :: Spec AppState {} Action
@@ -55,9 +55,7 @@ pagesComponent s = case s.currentRoute of
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
     
-    selectSpec (Corpus   i)      = layout0 $
-                                     cmapProps (const {nodeId: i, totalRecords: 47361}) -- TODO
-                                               (focus _corpusState _corpusAction   Corpus.layout)
+    selectSpec (Corpus   i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState Corpus.layout
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec (Document i) = layout0 $ focus _documentViewState _documentViewAction  Annotation.docview

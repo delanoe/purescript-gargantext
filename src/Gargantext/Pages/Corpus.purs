@@ -1,119 +1,71 @@
 module Gargantext.Pages.Corpus where
 
 
-import Control.Monad.Trans.Class (lift)
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Either (Either(..))
-import Data.Lens (Lens', Prism', lens, prism, (?~))
-import Data.List (fromFoldable)
-import Data.Maybe (Maybe(..), maybe)
-import Data.Tuple (Tuple(..))
+import Data.Lens (Lens', Prism', lens, prism)
+import Data.Maybe (maybe)
 import Effect.Aff (Aff)
+import React as React
+import React (ReactClass, ReactElement)
 import React.DOM (div, h3, hr, i, p, text)
 import React.DOM.Props (className, style)
-import Thermite ( Render, Spec, PerformAction, focus, cmapProps
-                , simpleSpec, modifyState, noState)
+import Thermite ( Render, Spec, createClass, defaultPerformAction, focus
+                , simpleSpec, noState )
 --------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Components.Loader as Loader
+import Gargantext.Components.Loader (createLoaderClass)
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Corpus.Tabs.Types as Tabs
-import Gargantext.Pages.Corpus.Tabs.States as Tabs
-import Gargantext.Pages.Corpus.Tabs.Actions as Tabs
-import Gargantext.Pages.Corpus.Tabs.Specs as Tabs
+import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), corpusInfoDefault)
+import Gargantext.Pages.Corpus.Tabs.Types (Props) as Tabs
+import Gargantext.Pages.Corpus.Tabs.States (State, initialState) as Tabs
+import Gargantext.Pages.Corpus.Tabs.Actions (Action) as Tabs
+import Gargantext.Pages.Corpus.Tabs.Specs (statefulTabs) as Tabs
 -------------------------------------------------------------------
 type Props = Tabs.Props
 
-type HeaderState = { info :: Maybe (NodePoly CorpusInfo) }
-type State = { headerView  :: HeaderState
-             , tabsView    :: Tabs.State
+type State = { tabsView    :: Tabs.State
              }
 
 initialState :: State
-initialState = { headerView  : { info : Nothing }
-               , tabsView    : Tabs.initialState
+initialState = { tabsView    : Tabs.initialState
                }
 
 ------------------------------------------------------------------------
-_info :: forall a b. Lens' { info :: a | b } a
-_info = lens (\s -> s.info) (\s ss -> s{info = ss})
-
-_headerView :: forall a b. Lens' { headerView :: a | b } a
-_headerView = lens (\s -> s.headerView) (\s ss -> s{headerView = ss})
-
 _tabsView :: forall a b. Lens' { tabsView :: a | b } a
 _tabsView = lens (\s -> s.tabsView) (\s ss -> s{tabsView = ss})
 ------------------------------------------------------------------------
-data HeaderAction = Load Int
 
 data Action
-  = HeaderA HeaderAction
-  | TabsA   Tabs.Action
-
-_headerAction :: Prism' Action HeaderAction
-_headerAction = prism HeaderA \ action ->
-  case action of
-    HeaderA haction -> Right haction
-    _-> Left action
+  = TabsA   Tabs.Action
 
 _tabsAction :: Prism' Action Tabs.Action
 _tabsAction = prism TabsA \ action ->
   case action of
     TabsA taction -> Right taction
-    _-> Left action
-
-
-_loadAction :: Prism' HeaderAction Int
-_loadAction = prism Load \ action ->
-  case action of
-    Load x -> Right x
     -- _-> Left action
 
 ------------------------------------------------------------------------
-newtype CorpusInfo = CorpusInfo { title   :: String
-                                , desc    :: String
-                                , query   :: String
-                                , authors :: String
-                                , chart   :: (Maybe (Array Number))
-                                }
-
-corpusInfoDefault :: NodePoly CorpusInfo
-corpusInfoDefault = NodePoly { id : 0
-                             , typename : 0
-                             , userId : 0
-                             , parentId : 0
-                             , name : "Default name"
-                             , date  : " Default date"
-                             , hyperdata : CorpusInfo
-                                { title : "Default title"
-                                , desc  : " Default desc"
-                                , query : " Default Query"
-                                , authors : " Author(s): default"
-                                , chart   : Nothing
-                                }
-                             }
-
-instance decodeCorpusInfo :: DecodeJson CorpusInfo where
-  decodeJson json = do
-    obj <- decodeJson json
-    title <- obj .? "title"
-    desc  <- obj .? "desc"
-    query <- obj .? "query"
-    authors <- obj .? "authors"
-    chart   <- obj .? "chart"
-    pure $ CorpusInfo {title, desc, query, authors, chart}
-
-------------------------------------------------------------------------
-layout :: Spec State Props Action
-layout = cmapProps (const {}) (focus _headerView _headerAction corpusHeaderSpec)
-      <> focus _tabsView _tabsAction Tabs.statefulTabs
-
-corpusHeaderSpec :: Spec HeaderState {} HeaderAction
-corpusHeaderSpec = simpleSpec performAction render
+layout :: Spec {} {nodeId :: Int} Void
+layout = simpleSpec defaultPerformAction render
   where
-    render :: Render HeaderState {} HeaderAction
-    render dispatch _ state _ =
+    render :: Render {} {nodeId :: Int} Void
+    render _ {nodeId} _ _ =
+      [ nodeLoader { path: nodeId
+                   , component: createClass "Layout" layout' initialState
+                   } ]
+
+layout' :: Spec State Props Action
+layout' = noState corpusHeaderSpec
+       <> focus _tabsView _tabsAction Tabs.statefulTabs
+
+corpusHeaderSpec :: Spec {} Props Void
+corpusHeaderSpec = simpleSpec defaultPerformAction render
+  where
+    render :: Render {} Props Void
+    render dispatch {loaded} _ _ =
         [ div [className "row"]
           [ div [className "col-md-3"] [ h3 [] [text "Corpus " <> text title] ]
           , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]
@@ -143,14 +95,16 @@ corpusHeaderSpec = simpleSpec performAction render
                      , date: date'
                      , hyperdata : CorpusInfo corpus
                    }
-              = maybe corpusInfoDefault identity state.info
+              = maybe corpusInfoDefault identity loaded
 
 ------------------------------------------------------------------------
-performAction :: PerformAction HeaderState {} HeaderAction
-performAction (Load nId) _ _ = do
-  node <- lift $ getNode nId
-  void $ modifyState $ _info ?~ node
-  logs $ "Node Corpus fetched."
 
 getNode :: Int -> Aff (NodePoly CorpusInfo)
 getNode = get <<< toUrl Back Node
+-- MOCK getNode = const $ pure corpusInfoDefault
+
+nodeLoaderClass :: ReactClass (Loader.Props Int (NodePoly CorpusInfo))
+nodeLoaderClass = createLoaderClass "NodeLoader" getNode
+
+nodeLoader :: Loader.Props Int (NodePoly CorpusInfo) -> ReactElement
+nodeLoader = React.createLeafElement nodeLoaderClass

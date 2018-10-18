@@ -13,7 +13,6 @@ import Gargantext.Components.Modals.Modal              (modalShow)
 import Gargantext.Components.Tree                   as Tree
 import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Annuaire.User.Users           as U
-import Gargantext.Pages.Corpus                      as Corpus
 import Gargantext.Pages.Corpus.Document       as D
 import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
@@ -29,7 +28,6 @@ data Action
   | LoginA     LN.Action
   | SetRoute   Routes
   | TreeViewA          Tree.Action
-  | CorpusAction       Corpus.Action
     | SearchA    S.Action
     | Search             String
     | AddCorpusA AC.Action
@@ -76,7 +74,6 @@ performAction Initialize  _ state = void do
 
 performAction (LoginA        _) _ _ = pure unit
 performAction (AddCorpusA    _) _ _ = pure unit
-performAction (CorpusAction  _) _ _ = pure unit
 performAction (SearchA       _) _ _ = pure unit
 performAction (UserPageA     _) _ _ = pure unit
 performAction (DocumentViewA _) _ _ = pure unit
@@ -96,12 +93,6 @@ _addCorpusAction :: Prism' Action AC.Action
 _addCorpusAction = prism AddCorpusA \action ->
   case action of
     AddCorpusA caction -> Right caction
-    _-> Left action
-
-_corpusAction :: Prism' Action Corpus.Action
-_corpusAction = prism CorpusAction \action ->
-  case action of
-    CorpusAction caction -> Right caction
     _-> Left action
 
 _searchAction :: Prism' Action S.Action

@@ -7,7 +7,6 @@ import Data.Maybe                                      (Maybe(Just))
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Tree                   as Tree
 
-import Gargantext.Pages.Corpus                      as Corpus
 import Gargantext.Pages.Corpus.Document       as D
 import Gargantext.Pages.Annuaire                    as Annuaire
 import Gargantext.Pages.Corpus.Tabs.Documents as DV
@@ -20,7 +19,6 @@ import Gargantext.Router                               (Routes(..))
 type AppState =
   { currentRoute   :: Maybe Routes
   , loginState   :: LN.State
-  , corpus         :: Corpus.State
   , addCorpusState :: AC.State
   , docViewState   :: DV.State
   , searchState    :: S.State
@@ -38,7 +36,6 @@ type AppState =
 initAppState :: AppState
 initAppState =
   { currentRoute   : Just Home
-  , corpus         : Corpus.initialState
   , loginState     : LN.initialState
   , addCorpusState : AC.initialState
   , docViewState   : DV.initialState
@@ -60,9 +57,6 @@ _loginState = lens (\s -> s.loginState) (\s ss -> s{loginState = ss})
 
 _addCorpusState :: Lens' AppState AC.State
 _addCorpusState = lens (\s -> s.addCorpusState) (\s ss -> s{addCorpusState = ss})
-
-_corpusState :: Lens' AppState Corpus.State
-_corpusState = lens (\s -> s.corpus) (\s ss -> s{corpus = ss})
 
 _docViewState :: Lens' AppState DV.State
 _docViewState = lens (\s -> s.docViewState) (\s ss -> s{docViewState = ss})

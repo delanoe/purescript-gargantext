@@ -5,6 +5,7 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyO
 
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.Maybe (maybe)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import React.DOM (a, br', div, input, p, text)
@@ -17,6 +18,8 @@ import Gargantext.Config.REST (get, post)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Components.Table as T
+import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Pages.Corpus.Tabs.Types
 import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 ------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
@@ -25,14 +28,6 @@ import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 -- TODO: Sort is Pending
 -- TODO: Filter is Pending
 -- TODO: When a pagination link is clicked, reload data. 
-
-type Props =
-  { totalRecords :: Int
-  , nodeId       :: Int -- /!\ When changing the pages of the Table, NodeId
-                        -- is needed to reload Data (other solution is using
-                        -- NodeId as a parameter
-                        -- NP,TODO this should not be in state
-  }
 
 type State = {}
 
@@ -120,7 +115,7 @@ layoutDocview :: Spec State Props Action
 layoutDocview = simpleSpec absurd render
   where
     render :: Render State Props Action
-    render dispatch {nodeId, totalRecords} _ _ =
+    render dispatch {path, loaded} _ _ =
       [ div [className "container1"]
         [ div [className "row"]
           [ chart globalPublis
@@ -138,7 +133,12 @@ layoutDocview = simpleSpec absurd render
                     , "Source"
                     , "Delete"
                     ]
-                , totalRecords
+                , totalRecords: maybe 47361 -- TODO
+                                  identity
+                                  ((\(NodePoly n) -> n.hyperdata)
+                                   >>>
+                                   (\(CorpusInfo c) -> c.totalRecords)
+                                  <$> loaded)
                 }
             ]
           ]
@@ -147,7 +147,7 @@ layoutDocview = simpleSpec absurd render
       where
         loadRows {offset, limit} = do
           _ <- logs "loading documents page"
-          res <- loadPage {nodeId,offset,limit}
+          res <- loadPage {nodeId: path,offset,limit}
           _ <- logs "OK: loading page documents."
           pure $
             (\(DocumentsView r) ->
