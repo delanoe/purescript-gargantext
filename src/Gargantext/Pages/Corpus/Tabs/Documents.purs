@@ -170,7 +170,7 @@ mock = false
 loadPage :: {nodeId :: Int, limit :: Int, offset :: Int} -> Aff (Array DocumentsView)
 loadPage {nodeId, limit, offset} = do
   logs "loading documents page: loadPage with Offset and limit"
-  res <- get $ toUrl Back (Children offset limit) nodeId
+  res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
   let docs = res2corpus <$> res
   _ <- logs "Ok: loading page documents"
   _ <- logs $ map show docs

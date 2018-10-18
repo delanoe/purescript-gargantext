@@ -98,7 +98,7 @@ endPathUrl Back  c nt i = pathUrl c.back nt i
 endPathUrl Front c nt i = pathUrl c.front nt i
 
 pathUrl :: Config -> NodeType -> Id -> UrlPath
-pathUrl c (Children o l) i = pathUrl c Node i <> "/" <> show (Children o l)
+pathUrl c nt@(Children _ _ _) i = pathUrl c Node i <> "/" <> show nt
 pathUrl c nt i = c.prePath <> urlConfig nt <> "/" <> show i
 ------------------------------------------------------------
 toUrl :: End -> NodeType -> Id -> Url
@@ -110,7 +110,7 @@ toUrl e nt i = doUrl base path params
 ------------------------------------------------------------
 data NodeType = NodeUser
               | Annuaire
-              | Children Offset Limit
+              | Children NodeType Offset Limit
               | Corpus
               | CorpusV3
               | Dashboard
@@ -136,7 +136,7 @@ instance showApiVersion :: Show ApiVersion where
 ------------------------------------------------------------
 urlConfig :: NodeType -> Url
 urlConfig Annuaire  = show Annuaire
-urlConfig (Children o l)  = show (Children o l)
+urlConfig nt@(Children _ _ _) = show nt
 urlConfig Corpus    = show Corpus
 urlConfig CorpusV3  = show CorpusV3
 urlConfig Dashboard = show Dashboard
@@ -162,13 +162,13 @@ instance showNodeType :: Show NodeType where
   show Node      = "node"
   show NodeUser  = "user"
   show Tree      = "tree"
-  show (Children o l) = "children?offset=" <> show o <> "&limit=" <> show l
+  show (Children t o l) = "children?type=" <> show t <> "&offset=" <> show o <> "&limit=" <> show l
 
 -- | TODO : where is the Read Class ?
 -- instance readNodeType :: Read NodeType where
 readNodeType :: String -> NodeType
 readNodeType "Annuaire"   = Annuaire
-readNodeType "Children"   = (Children 0 0)
+readNodeType "Children"   = (Children Node 0 0)
 readNodeType "Dashboard"  = Dashboard
 readNodeType "Document"   = Url_Document
 readNodeType "Folder"     = Folder

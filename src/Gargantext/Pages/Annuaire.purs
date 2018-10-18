@@ -1,15 +1,11 @@
 module Gargantext.Pages.Annuaire where
 
-import Data.Array (concat)
-import Data.Traversable (foldl)
 import Control.Monad.Trans.Class (lift)
-import Data.Either (Either(..))
-import Data.Lens (Lens', Prism', lens, prism, (?~))
+import Data.Lens (Lens', lens, (?~))
 import Data.Maybe (Maybe(..), maybe)
 import React (ReactElement)
-import React.DOM (div, h1, h3, hr, i, p, text, thead, tbody, input, br', b, b', tr, th, table, td, a)
-import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value, style)
-import Effect.Console (log)
+import React.DOM (a, b, b', br', div, h3, hr, i, input, p, table, tbody, td, text, th, thead, tr)
+import React.DOM.Props (className, href, scope, style)
 import Effect.Aff (Aff)
 import Thermite (Render, Spec
                 , simpleSpec
@@ -20,7 +16,6 @@ import Gargantext.Prelude
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Users.Types.Types (User(..), HyperData(..))
-import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 ------------------------------------------------------------------------------
 type State = { info  :: Maybe AnnuaireInfo
@@ -185,7 +180,7 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
 getTable :: Int -> Aff AnnuaireTable
-getTable id = get $ toUrl Back (Children 0 10) id
+getTable id = get $ toUrl Back (Children Annuaire 0 10) id
 
 getInfo :: Int -> Aff AnnuaireInfo
 getInfo id = get $ toUrl Back Node id

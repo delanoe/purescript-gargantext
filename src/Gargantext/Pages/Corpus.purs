@@ -53,9 +53,9 @@ layout = simpleSpec defaultPerformAction render
   where
     render :: Render {} {nodeId :: Int} Void
     render _ {nodeId} _ _ =
-      [ nodeLoader { path: nodeId
-                   , component: createClass "Layout" layout' initialState
-                   } ]
+      [ corpusLoader { path: nodeId
+                     , component: createClass "Layout" layout' initialState
+                     } ]
 
 layout' :: Spec State Props Action
 layout' = noState corpusHeaderSpec
@@ -99,12 +99,11 @@ corpusHeaderSpec = simpleSpec defaultPerformAction render
 
 ------------------------------------------------------------------------
 
-getNode :: Int -> Aff (NodePoly CorpusInfo)
-getNode = get <<< toUrl Back Node
--- MOCK getNode = const $ pure corpusInfoDefault
+getCorpus :: Int -> Aff (NodePoly CorpusInfo)
+getCorpus = get <<< toUrl Back Corpus
 
-nodeLoaderClass :: ReactClass (Loader.Props Int (NodePoly CorpusInfo))
-nodeLoaderClass = createLoaderClass "NodeLoader" getNode
+corpusLoaderClass :: ReactClass (Loader.Props Int (NodePoly CorpusInfo))
+corpusLoaderClass = createLoaderClass "CorpusLoader" getCorpus
 
-nodeLoader :: Loader.Props Int (NodePoly CorpusInfo) -> ReactElement
-nodeLoader = React.createLeafElement nodeLoaderClass
+corpusLoader :: Loader.Props Int (NodePoly CorpusInfo) -> ReactElement
+corpusLoader = React.createLeafElement corpusLoaderClass
