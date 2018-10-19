@@ -13,7 +13,7 @@ import Thermite (Render, Spec
 
 ------------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config      (toUrl, NodeType(..), End(..))
+import Gargantext.Config      (toUrl, NodeType(..), TabType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Users.Types.Types (User(..), HyperData(..))
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
@@ -180,7 +180,7 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
 getTable :: Int -> Aff AnnuaireTable
-getTable id = get $ toUrl Back (Children Annuaire 0 10) id
+getTable id = get $ toUrl Back (Tab TabDocs 0 10) id
 
 getInfo :: Int -> Aff AnnuaireInfo
 getInfo id = get $ toUrl Back Node id

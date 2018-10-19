@@ -13,7 +13,7 @@ import React.DOM.Props (_type, className, href)
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (NodeType(..), toUrl, End(..))
+import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..))
 import Gargantext.Config.REST (get, post)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
@@ -170,7 +170,8 @@ mock = false
 loadPage :: {nodeId :: Int, limit :: Int, offset :: Int} -> Aff (Array DocumentsView)
 loadPage {nodeId, limit, offset} = do
   logs "loading documents page: loadPage with Offset and limit"
-  res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
+  --res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
+  res <- get $ toUrl Back (Tab TabDocs offset limit ) nodeId
   let docs = res2corpus <$> res
   _ <- logs "Ok: loading page documents"
   _ <- logs $ map show docs

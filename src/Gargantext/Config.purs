@@ -94,11 +94,11 @@ baseUrl :: Config -> UrlBase
 baseUrl conf = conf.proto <> conf.domain <> ":" <> show conf.port
 ------------------------------------------------------------
 endPathUrl :: End -> EndConfig -> NodeType -> Id -> UrlPath
-endPathUrl Back  c nt i = pathUrl c.back nt i
+endPathUrl Back  c nt i = pathUrl c.back  nt i
 endPathUrl Front c nt i = pathUrl c.front nt i
 
 pathUrl :: Config -> NodeType -> Id -> UrlPath
-pathUrl c nt@(Children _ _ _) i = pathUrl c Node i <> "/" <> show nt
+pathUrl c nt@(Tab _ _ _) i = pathUrl c Node i <> "/" <> show nt
 pathUrl c nt i = c.prePath <> urlConfig nt <> "/" <> show i
 ------------------------------------------------------------
 toUrl :: End -> NodeType -> Id -> Url
@@ -110,7 +110,7 @@ toUrl e nt i = doUrl base path params
 ------------------------------------------------------------
 data NodeType = NodeUser
               | Annuaire
-              | Children NodeType Offset Limit
+              | Tab TabType Offset Limit
               | Corpus
               | CorpusV3
               | Dashboard
@@ -133,10 +133,20 @@ instance showApiVersion :: Show ApiVersion where
   show V10 = "v1.0"
   show V11 = "v1.1"
 ------------------------------------------------------------
+
+data TabType = TabDocs | TabTerms | TabSources | TabAuthors | TabTrash
+
+instance showTabType :: Show TabType where
+  show TabDocs    = "Docs"
+  show TabTerms   = "Terms"
+  show TabSources = "Sources"
+  show TabAuthors = "Authors"
+  show TabTrash   = "Trash"
+
 ------------------------------------------------------------
 urlConfig :: NodeType -> Url
 urlConfig Annuaire  = show Annuaire
-urlConfig nt@(Children _ _ _) = show nt
+urlConfig nt@(Tab _ _ _) = show nt
 urlConfig Corpus    = show Corpus
 urlConfig CorpusV3  = show CorpusV3
 urlConfig Dashboard = show Dashboard
@@ -162,17 +172,17 @@ instance showNodeType :: Show NodeType where
   show Node      = "node"
   show NodeUser  = "user"
   show Tree      = "tree"
-  show (Children t o l) = "children?type=" <> show t <> "&offset=" <> show o <> "&limit=" <> show l
+  show (Tab t o l) = "table?view=" <> show t <> "&offset=" <> show o <> "&limit=" <> show l <> "&order=DateAsc"
 
 -- | TODO : where is the Read Class ?
 -- instance readNodeType :: Read NodeType where
 readNodeType :: String -> NodeType
-readNodeType "Annuaire"   = Annuaire
-readNodeType "Children"   = (Children Node 0 0)
-readNodeType "Dashboard"  = Dashboard
+readNodeType "NodeAnnuaire"   = Annuaire
+readNodeType "Tab"   = (Tab TabDocs 0 0)
+readNodeType "NodeDashboard"  = Dashboard
 readNodeType "Document"   = Url_Document
-readNodeType "Folder"     = Folder
-readNodeType "Graph"      = Graph
+readNodeType "NodeFolder"     = Folder
+readNodeType "NodeGraph"      = Graph
 readNodeType "Individu"   = Individu
 readNodeType "Node"       = Node
 readNodeType "NodeCorpus" = Corpus
