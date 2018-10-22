@@ -15,7 +15,7 @@ import Thermite (Render, Spec
 import Gargantext.Prelude
 import Gargantext.Config      (toUrl, NodeType(..), TabType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Annuaire.User.Users.Types.Types (User(..), HyperData(..))
+import Gargantext.Pages.Annuaire.User.Users.Types (User(..), HyperData(..))
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 ------------------------------------------------------------------------------
 type State = { info  :: Maybe AnnuaireInfo
