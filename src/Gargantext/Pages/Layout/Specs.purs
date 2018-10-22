@@ -16,7 +16,7 @@ import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree  as Tree
 import Gargantext.Folder           as F
 import Gargantext.Pages.Annuaire   as A
-import Gargantext.Pages.Annuaire.User.Users as U
+import Gargantext.Pages.Annuaire.User.Contacts as C
 import Gargantext.Pages.Corpus     as Corpus
 import Gargantext.Pages.Corpus.Document as Annotation
 import Gargantext.Pages.Corpus.Dashboard as Dsh
@@ -63,7 +63,7 @@ pagesComponent s = case s.currentRoute of
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
     
     selectSpec (Annuaire i)      = layout0 $ focus _annuaireState _annuaireAction A.layoutAnnuaire
-    selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
+    selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  C.layoutUser
     -- To be removed
     selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
 

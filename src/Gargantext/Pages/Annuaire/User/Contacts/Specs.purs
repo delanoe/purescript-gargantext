@@ -1,5 +1,5 @@
-module Gargantext.Pages.Annuaire.User.Users.Specs
-       (module Gargantext.Pages.Annuaire.User.Users.Specs.Renders,
+module Gargantext.Pages.Annuaire.User.Contacts.Specs
+       (module Gargantext.Pages.Annuaire.User.Contacts.Specs.Renders,
         brevetSpec,
         projectSpec,
         facets,
@@ -13,16 +13,16 @@ import Thermite (Render, PerformAction, Spec, focus, noState, defaultPerformActi
 import Gargantext.Prelude
 import Gargantext.Components.Tab as Tab
 import Gargantext.Pages.Annuaire.User.Brevets as B
-import Gargantext.Pages.Annuaire.User.Users.Specs.Documents as P
-import Gargantext.Pages.Annuaire.User.Users.Types (Action(..), State, _tablens, _tabAction)
-import Gargantext.Pages.Annuaire.User.Users.API (fetchUser)
-import Gargantext.Pages.Annuaire.User.Users.Specs.Renders (render)
+import Gargantext.Pages.Annuaire.User.Contacts.Specs.Documents as P
+import Gargantext.Pages.Annuaire.User.Contacts.Types (Action(..), State, _tablens, _tabAction)
+import Gargantext.Pages.Annuaire.User.Contacts.API (fetchContact)
+import Gargantext.Pages.Annuaire.User.Contacts.Specs.Renders (render)
 
 layoutUser :: Spec State {} Action
 layoutUser = simpleSpec performAction render
   where
     performAction :: PerformAction State {} Action
-    performAction (FetchUser userId) _ _ = fetchUser userId
+    performAction (FetchContact contactId) _ _ = fetchContact contactId
     performAction (TabA _) _ _ = pure unit
 
 brevetSpec :: Spec State {} Action

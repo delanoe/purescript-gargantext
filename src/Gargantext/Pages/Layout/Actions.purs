@@ -12,7 +12,7 @@ import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Modals.Modal              (modalShow)
 import Gargantext.Components.Tree                   as Tree
 import Gargantext.Pages.Annuaire             as Annuaire
-import Gargantext.Pages.Annuaire.User.Users           as U
+import Gargantext.Pages.Annuaire.User.Contacts      as C
 import Gargantext.Pages.Corpus.Document       as D
 import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
@@ -34,7 +34,7 @@ data Action
     | GraphExplorerA     GE.Action
     | DocumentViewA D.Action
   | AnnuaireAction     Annuaire.Action
-    | UserPageA  U.Action
+    | UserPageA  C.Action
   | Go
   | ShowLogin
   | ShowAddcorpus
@@ -101,7 +101,7 @@ _searchAction = prism SearchA \action ->
     SearchA caction -> Right caction
     _-> Left action
 
-_userPageAction :: Prism' Action U.Action
+_userPageAction :: Prism' Action C.Action
 _userPageAction = prism UserPageA \action ->
   case action of
     UserPageA caction -> Right caction

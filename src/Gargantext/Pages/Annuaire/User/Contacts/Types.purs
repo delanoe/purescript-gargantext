@@ -1,4 +1,4 @@
-module Gargantext.Pages.Annuaire.User.Users.Types where
+module Gargantext.Pages.Annuaire.User.Contacts.Types where
 
 import Prelude
 
@@ -10,15 +10,15 @@ import Data.Maybe (Maybe(..))
 import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.DecodeMaybe ((.?|))
 
-newtype User =
-  User { id        :: Int
-       , typename  :: Maybe Int
-       , userId    :: Int
-       , parentId  :: Int
-       , name      :: String
-       , date      :: Maybe String
-       , hyperdata :: HyperData
-       }
+newtype Contact = Contact
+  { id        :: Int
+  , typename  :: Maybe Int
+  , userId    :: Int
+  , parentId  :: Int
+  , name      :: String
+  , date      :: Maybe String
+  , hyperdata :: HyperData
+  }
 
 newtype HyperData =
   HyperData
@@ -79,7 +79,7 @@ instance decodeUserHyperData :: DecodeJson HyperData where
                      , entite2, mail
                      }
 
-instance decodeUser :: DecodeJson User where
+instance decodeUser :: DecodeJson Contact where
   decodeJson json = do
     obj      <- decodeJson json
     id       <- obj .? "id"
@@ -89,28 +89,28 @@ instance decodeUser :: DecodeJson User where
     name     <- obj .? "name"
     date     <- obj .?| "date"
     hyperdata <- obj .? "hyperdata"
-    pure $ User { id, typename, userId
-                , parentId, name, date
-                , hyperdata
-                }
+    pure $ Contact { id, typename, userId
+                   , parentId, name, date
+                   , hyperdata
+                   }
 
 data Action
   = TabA Tab.Action
-  | FetchUser Int
+  | FetchContact Int
 
 type State =
   { activeTab :: Int
-  , user :: Maybe User
+  , contact :: Maybe Contact
   }
 
 initialState :: State
 initialState =
   { activeTab : 0
-  , user: Nothing
+  , contact: Nothing
   }
 
-_user :: Lens' State (Maybe User)
-_user = lens (\s -> s.user) (\s ss -> s{user = ss})
+_contact :: Lens' State (Maybe Contact)
+_contact = lens (\s -> s.contact) (\s ss -> s{contact = ss})
 
 _tablens :: Lens' State Tab.State
 _tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
