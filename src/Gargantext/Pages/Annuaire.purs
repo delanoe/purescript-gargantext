@@ -20,7 +20,7 @@ import Effect.Aff (Aff)
 
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Annuaire.User.Users.Types.Types (User(..), HyperData(..))
+import Gargantext.Pages.Annuaire.User.Contacts.Types.Types (Contact(..), HyperData(..))
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 
@@ -75,7 +75,7 @@ defaultAnnuaireInfo = AnnuaireInfo { id : 0
                                    , hyperdata : ""
                                    }
 ------------------------------------------------------------------------------
-toRows :: AnnuaireTable -> Array (Maybe User)
+toRows :: AnnuaireTable -> Array (Maybe Contact)
 toRows (AnnuaireTable a) = a.annuaireTable
 
 layoutAnnuaire :: Spec State {} Action
@@ -126,14 +126,14 @@ render dispatch _ state _ = [ div [className "row"]
                           individuals = maybe (toRows defaultAnnuaireTable) toRows state.stable
 
 
-showRow :: Maybe User -> ReactElement
+showRow :: Maybe Contact -> ReactElement
 showRow Nothing = tr [][]
-showRow (Just (User { id : id, hyperdata : (HyperData user) })) =
+showRow (Just (Contact { id : id, hyperdata : (HyperData contact) })) =
   tr []
-  [ td [] [ a [ href (toUrl Back NodeUser id) ] [ text $ maybe' user.nom <> " " <> maybe' user.prenom ] ]
-  , td [] [text $ maybe' user.fonction]
-  , td [] [text $ maybe' user.service]
-  , td [] [text $ maybe' user.groupe]
+  [ td [] [ a [ href (toUrl Back NodeUser id) ] [ text $ maybe' contact.nom <> " " <> maybe' contact.prenom ] ]
+  , td [] [text $ maybe' contact.fonction]
+  , td [] [text $ maybe' contact.service]
+  , td [] [text $ maybe' contact.groupe]
   ]
     where
       maybe' = maybe "" identity
@@ -169,7 +169,7 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
                         }
 
 
-newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe User)}
+newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe Contact)}
 instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
   decodeJson json = do
     rows <- decodeJson json
@@ -177,7 +177,6 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
 ------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
 performAction (Load aId) _ _ = do
-  
   eitherInfo <- lift $ getInfo aId
   _ <- case eitherInfo of
             (Right info') -> void $ modifyState $ _info ?~ info'

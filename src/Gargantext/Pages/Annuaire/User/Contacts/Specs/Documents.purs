@@ -1,4 +1,4 @@
-module Gargantext.Pages.Annuaire.User.Users.Specs.Documents where
+module Gargantext.Pages.Annuaire.User.Contacts.Specs.Documents where
 
 import Prelude
 import React.DOM (table, tbody, td, text, th, thead, tr)

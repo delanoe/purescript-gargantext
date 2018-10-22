@@ -1,7 +1,7 @@
-module Gargantext.Pages.Annuaire.User.Users.Specs.Renders
+module Gargantext.Pages.Annuaire.User.Contacts.Specs.Renders
        where
 
-import Gargantext.Pages.Annuaire.User.Users.Types
+import Gargantext.Pages.Annuaire.User.Contacts.Types
 
 import Data.List (List, zipWith, catMaybes, toUnfoldable)
 import Data.Unfoldable (class Unfoldable)
@@ -20,20 +20,20 @@ render :: Render State {} Action
 render dispatch _ state _ =
   [
           div [className "col-md-12"]
-          $ case state.user of
-            (Just (User user)) -> display user.name [userInfos user.hyperdata]
-            Nothing -> display "User not found" []
+          $ case state.contact of
+            (Just (Contact contact)) -> display contact.name [contactInfos contact.hyperdata]
+            Nothing -> display "Contact not found" []
   ]
 
 display :: String -> Array ReactElement -> Array ReactElement
 display title elems =
   [ div [className "container-fluid"]
-    [ div [className "row", _id "user-page-header"]
+    [ div [className "row", _id "contact-page-header"]
           [ div [className "col-md-6"] [ h3 [] [text title] ]
           , div [className "col-md-8"] []
           , div [className "col-md-2"] [ span [] [text ""] ]
           ]
-    , div [className "row", _id "user-page-info"]
+    , div [className "row", _id "contact-page-info"]
           [ div [className "col-md-12"]
             [ div [className "row"]
               [ div [className "col-md-2"]
@@ -54,8 +54,8 @@ mapMyMap f m = toUnfoldable
 
 infixl 4 mapMyMap as <.~$>
 
-userInfos :: Maybe HyperData -> ReactElement
-userInfos hyperdata =
+contactInfos :: Maybe HyperData -> ReactElement
+contactInfos hyperdata =
     ul [className "list-group"] $
     listInfo <.~$> (checkMaybe hyperdata)
   where

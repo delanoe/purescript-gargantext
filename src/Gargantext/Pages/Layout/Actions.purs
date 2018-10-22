@@ -17,7 +17,7 @@ import Gargantext.Pages.Corpus                      as Corpus
 import Gargantext.Pages.Corpus.Doc.Annotation       as D
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
-import Gargantext.Pages.Annuaire.User.Users           as U
+import Gargantext.Pages.Annuaire.User.Contacts           as C
 import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
@@ -40,7 +40,7 @@ data Action
     | GraphExplorerA     GE.Action
   | DocAnnotationViewA D.Action
   | AnnuaireAction     Annuaire.Action
-    | UserPageA  U.Action
+    | UserPageA  C.Action
   | Go
   | ShowLogin
   | ShowAddcorpus
@@ -140,7 +140,7 @@ _searchAction = prism SearchA \action ->
     SearchA caction -> Right caction
     _-> Left action
 
-_userPageAction :: Prism' Action U.Action
+_userPageAction :: Prism' Action C.Action
 _userPageAction = prism UserPageA \action ->
   case action of
     UserPageA caction -> Right caction

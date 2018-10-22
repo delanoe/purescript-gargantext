@@ -18,7 +18,7 @@ import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
 import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
-import Gargantext.Pages.Annuaire.User.Users as U
+import Gargantext.Pages.Annuaire.User.Contacts as C
 import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Actions (Action(..), _corpusAction, _addCorpusAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
@@ -59,7 +59,7 @@ pagesComponent s =
     selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec (DocView  i)      = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
-    selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  U.layoutUser
+    selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  C.layoutUser
     selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState
                                                    _docAnnotationViewAction  Annotation.docview
     -- To be removed

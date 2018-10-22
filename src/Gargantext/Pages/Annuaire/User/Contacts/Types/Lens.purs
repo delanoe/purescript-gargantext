@@ -1,17 +1,17 @@
-module Gargantext.Pages.Annuaire.User.Users.Types.Lens where
+module Gargantext.Pages.Annuaire.User.Contacts.Types.Lens where
 
 import Gargantext.Pages.Annuaire.User.Brevets as B
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
 import Data.Maybe (Maybe)
-import Gargantext.Pages.Annuaire.User.Users.Types.States (Action(..), State)
-import Gargantext.Pages.Annuaire.User.Users.Types.Types (User)
-import Gargantext.Pages.Annuaire.User.Users.Specs.Documents as P
+import Gargantext.Pages.Annuaire.User.Contacts.Types.States (Action(..), State)
+import Gargantext.Pages.Annuaire.User.Contacts.Types.Types (Contact)
+import Gargantext.Pages.Annuaire.User.Contacts.Specs.Documents as P
 import Gargantext.Components.Tab as Tab
 import Thermite (Spec, noState)
 
-_user :: Lens' State (Maybe User)
-_user = lens (\s -> s.user) (\s ss -> s{user = ss})
+_contact :: Lens' State (Maybe Contact)
+_contact = lens (\s -> s.contact) (\s ss -> s{contact = ss})
 
 _tablens :: Lens' State Tab.State
 _tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})

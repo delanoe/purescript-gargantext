@@ -1,4 +1,4 @@
-module Gargantext.Pages.Annuaire.User.Users.Types.Types where
+module Gargantext.Pages.Annuaire.User.Contacts.Types.Types where
 
 import Prelude
 
@@ -36,8 +36,8 @@ the "user" field is encapsulated in a Maybe.
 
 -}
 
-newtype User =
-  User { id        :: Int
+newtype Contact =
+  Contact { id        :: Int
        , typename  :: Maybe Int
        , userId    :: Int
        , parentId  :: Int
@@ -105,7 +105,7 @@ instance decodeUserHyperData :: DecodeJson HyperData where
                      , entite2, mail
                      }
 
-instance decodeUser :: DecodeJson User where
+instance decodeUser :: DecodeJson Contact where
   decodeJson json = do
     obj      <- decodeJson json
     id       <- obj .? "id"
@@ -115,7 +115,7 @@ instance decodeUser :: DecodeJson User where
     name     <- obj .? "name"
     date     <- obj .?| "date"
     hyperdata <- obj .? "hyperdata"
-    pure $ User { id, typename, userId
+    pure $ Contact { id, typename, userId
                 , parentId, name, date
                 , hyperdata
                 }

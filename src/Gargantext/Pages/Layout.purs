@@ -12,7 +12,7 @@ import Gargantext.Pages.Corpus.Doc.Facets.Documents         as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph             as GE
 -- import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
 
-import Gargantext.Pages.Annuaire.User.Users as U
+import Gargantext.Pages.Annuaire.User.Contacts as C
 import Gargantext.Pages.Annuaire   as Annuaire
 -- import Gargantext.Pages.Home as L
 -- import Gargantext.Pages.Layout.Specs.Search as S
@@ -51,7 +51,7 @@ dispatchAction dispatcher _ SearchView = do
 dispatchAction dispatcher _ (UserPage id) = do
   dispatcher $ SetRoute $ UserPage id
   -- dispatcher $ UserPageA TODO
-  dispatcher $ UserPageA $ U.FetchUser id
+  dispatcher $ UserPageA $ C.FetchContact id
 
 dispatchAction dispatcher _ (Annuaire id) = do
   dispatcher $ SetRoute       $ Annuaire id

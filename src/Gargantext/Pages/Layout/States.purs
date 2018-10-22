@@ -12,7 +12,7 @@ import Gargantext.Pages.Corpus.Doc.Annotation       as D
 import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
 import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
-import Gargantext.Pages.Annuaire.User.Users           as U
+import Gargantext.Pages.Annuaire.User.Contacts      as C
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Router                               (Routes(..))
@@ -24,7 +24,7 @@ type AppState =
   , addCorpusState :: AC.State
   , docViewState   :: DV.State
   , searchState    :: S.State
-  , userPageState  :: U.State
+  , userPageState  :: C.State
   , docAnnotationState :: D.State
   , annuaireState  :: Annuaire.State
   , ntreeState     :: Tree.State
@@ -43,7 +43,7 @@ initAppState =
   , addCorpusState : AC.initialState
   , docViewState   : DV.tdata
   , searchState    : S.initialState
-  , userPageState  : U.initialState
+  , userPageState  : C.initialState
   , docAnnotationState : D.initialState
   , ntreeState     : Tree.exampleTree
   , annuaireState  : Annuaire.initialState
@@ -70,7 +70,7 @@ _docViewState = lens (\s -> s.docViewState) (\s ss -> s{docViewState = ss})
 _searchState :: Lens' AppState S.State
 _searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
 
-_userPageState :: Lens' AppState U.State
+_userPageState :: Lens' AppState C.State
 _userPageState = lens (\s -> s.userPageState) (\s ss -> s{userPageState = ss})
 
 _annuaireState :: Lens' AppState Annuaire.State
