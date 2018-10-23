@@ -19,11 +19,22 @@ type Rows = Array { row    :: Array ReactElement
                   , delete :: Boolean
                   }
 
-type LoadRows = { offset :: Int, limit :: Int } -> Aff Rows
+type OrderBy = Maybe (OrderByDirection ColumnName)
+
+type LoadRows = { offset :: Int, limit :: Int, orderBy :: OrderBy } -> Aff Rows
+
+newtype ColumnName = ColumnName String
+
+derive instance eqColumnName :: Eq ColumnName
+
+columnName :: ColumnName -> String
+columnName (ColumnName c) = c
+
+data OrderByDirection a = ASC a | DESC a
 
 type Props' =
   ( title        :: String
-  , colNames     :: Array String
+  , colNames     :: Array ColumnName
   , totalRecords :: Int
   , loadRows     :: LoadRows
   )
@@ -34,6 +45,7 @@ type State =
   { rows        :: Maybe Rows
   , currentPage :: Int
   , pageSize    :: PageSizes
+  , orderBy     :: OrderBy
 --, tree        :: FTree
   }
 
@@ -42,12 +54,14 @@ initialState =
   { rows         : Nothing
   , currentPage  : 1
   , pageSize     : PS10
+  , orderBy      : Nothing
 --, tree         : exampleTree
   }
 
 data Action
   = ChangePageSize PageSizes
   | ChangePage     Int
+  | ChangeOrderBy  OrderBy
 
 type ChangePageAction = Int -> Effect Unit
 
@@ -105,10 +119,26 @@ tableSpec = simpleSpec performAction render
       modifyStateAndReload $ changePageSize ps
     performAction (ChangePage p) =
       modifyStateAndReload $ _ { currentPage = p }
+    performAction (ChangeOrderBy mc) =
+      modifyStateAndReload $ _ { orderBy = mc }
+
+    renderColHeader :: (OrderBy -> Effect Unit)
+                    -> OrderBy
+                    -> ColumnName -> ReactElement
+    renderColHeader changeOrderBy currentOrderBy c =
+      th [scope "col"] [ b' cs ]
+      where
+        lnk mc = effectLink (changeOrderBy mc)
+        cs :: Array ReactElement
+        cs =
+          case currentOrderBy of
+            Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC ",  lnk Nothing (columnName c)]
+            Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ", lnk Nothing (columnName c)]
+            _ -> [lnk (Just (ASC c)) (columnName c)]
 
     render :: Render State Props Action
     render dispatch {title, colNames, totalRecords}
-                    {pageSize, currentPage, rows} _ =
+                    {pageSize, currentPage, orderBy, rows} _ =
       let
         ps = pageSizes2Int pageSize
         totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
@@ -121,7 +151,7 @@ tableSpec = simpleSpec performAction render
               ]
       , table [ className "table"]
         [ thead [className "thead-dark"]
-                [tr [] ((\colName -> th [scope "col"] [ b' [text colName]]) <$> colNames)]
+                [tr [] (renderColHeader (dispatch <<< ChangeOrderBy) orderBy <$> colNames)]
         , tbody [] $ map (tr [] <<< map (\c -> td [] [c]) <<< _.row)
                          (maybe [] identity rows)
                       -- TODO display a loading spinner when rows == Nothing
@@ -130,10 +160,10 @@ tableSpec = simpleSpec performAction render
       ]
 
 loadAndSetRows :: {loadRows :: LoadRows} -> State -> StateCoTransformer State Unit
-loadAndSetRows {loadRows} {pageSize, currentPage} = do
+loadAndSetRows {loadRows} {pageSize, currentPage, orderBy} = do
   let limit = pageSizes2Int pageSize
       offset = limit * (currentPage - 1)
-  rows <- lift $ loadRows {offset, limit}
+  rows <- lift $ loadRows {offset, limit, orderBy}
   void $ modifyState (_ { rows = Just rows })
 
 tableClass :: ReactClass {children :: Children | Props'}
@@ -171,6 +201,12 @@ textDescription currPage pageSize totalRecords
       end' = currPage * pageSizes2Int pageSize
       end  = if end' > totalRecords then totalRecords else end'
 
+effectLink :: Effect Unit -> String -> ReactElement
+effectLink eff msg =
+  a [ href "javascript:void()"
+    , onClick (const eff)
+    ] [text msg]
+
 pagination :: ChangePageAction -> Int -> Int -> ReactElement
 pagination changePage tp cp
   = span [] $
@@ -186,44 +222,20 @@ pagination changePage tp cp
     where
       prev = if cp == 1 then
                text " Previous "
-               else
-               span []
-               [ text " "
-               , a [ href "javascript:void()"
-                   , onClick (\e -> changePage $ cp - 1)
-                   ] [text "Previous"]
-               , text " "
-               ]
+             else
+               changePageLink (cp - 1) "Previous"
       next = if cp == tp then
                text " Next "
-               else
-               span []
-               [ text " "
-               , a [ href "javascript:void()"
-                   , onClick (\e -> changePage $ cp + 1)
-                   ] [text "Next"]
-               , text " "
-               ]
+             else
+               changePageLink (cp + 1) "Next"
       first = if cp == 1 then
                 text ""
-                else
-                span []
-                [ text " "
-                , a [ href "javascript:void()"
-                    , onClick (\e -> changePage 1)
-                    ] [text "1"]
-                , text " "
-                ]
+              else
+                changePageLink' 1
       last = if cp == tp then
                text ""
              else
-               span []
-               [ text " "
-               , a [ href "javascript:void()"
-                   , onClick (\e -> changePage tp)
-                   ] [text $ show tp]
-               , text " "
-               ]
+               changePageLink' tp
       ldots = if cp >= 5 then
                 text " ... "
                 else
@@ -232,18 +244,18 @@ pagination changePage tp cp
                 text " ... "
                 else
                 text ""
-      lnums = map (\i -> fnmid changePage i) $ filter (1  < _) [cp - 2, cp - 1]
-      rnums = map (\i -> fnmid changePage i) $ filter (tp > _) [cp + 1, cp + 2]
+      lnums = map changePageLink' $ filter (1  < _) [cp - 2, cp - 1]
+      rnums = map changePageLink' $ filter (tp > _) [cp + 1, cp + 2]
 
-fnmid :: ChangePageAction -> Int -> ReactElement
-fnmid changePage i
-  = span []
-    [ text " "
-    , a [ href "javascript:void()"
-        , onClick (\e -> changePage i)
-        ] [text $ show i]
-    , text " "
-    ]
+      changePageLink :: Int -> String -> ReactElement
+      changePageLink i s = span []
+          [ text " "
+          , effectLink (changePage i) s
+          , text " "
+          ]
+
+      changePageLink' :: Int -> ReactElement
+      changePageLink' i = changePageLink i (show i)
 
 data PageSizes = PS10 | PS20 | PS50 | PS100
 

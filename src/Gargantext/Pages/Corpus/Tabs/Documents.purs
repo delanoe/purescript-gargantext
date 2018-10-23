@@ -13,7 +13,7 @@ import React.DOM.Props (_type, className, href)
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..))
+import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..), OrderBy(..))
 import Gargantext.Config.REST (get, post)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
@@ -115,7 +115,7 @@ layoutDocview :: Spec {} Props Void
 layoutDocview = simpleSpec absurd render
   where
     render :: Render {} Props Void
-    render dispatch {path, loaded} _ _ =
+    render dispatch {path: nodeId, loaded} _ _ =
       [ div [className "container1"]
         [ div [className "row"]
           [ chart globalPublis
@@ -127,6 +127,7 @@ layoutDocview = simpleSpec absurd render
                 { loadRows
                 , title: "Documents"
                 , colNames:
+                    T.ColumnName <$>
                     [ ""
                     , "Date"
                     , "Title"
@@ -145,9 +146,9 @@ layoutDocview = simpleSpec absurd render
         ]
       ]
       where
-        loadRows {offset, limit} = do
+        loadRows {offset, limit, orderBy} = do
           _ <- logs "loading documents page"
-          res <- loadPage {nodeId: path,offset,limit}
+          res <- loadPage {nodeId,offset,limit,orderBy}
           _ <- logs "OK: loading page documents."
           pure $
             (\(DocumentsView r) ->
@@ -167,11 +168,11 @@ layoutDocview = simpleSpec absurd render
 mock :: Boolean
 mock = false
 
-loadPage :: {nodeId :: Int, limit :: Int, offset :: Int} -> Aff (Array DocumentsView)
-loadPage {nodeId, limit, offset} = do
+loadPage :: {nodeId :: Int, limit :: Int, offset :: Int, orderBy :: T.OrderBy} -> Aff (Array DocumentsView)
+loadPage {nodeId, limit, offset, orderBy} = do
   logs "loading documents page: loadPage with Offset and limit"
   --res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
-  res <- get $ toUrl Back (Tab TabDocs offset limit ) nodeId
+  res <- get $ toUrl Back (Tab TabDocs offset limit (convOrderBy <$> orderBy)) nodeId
   let docs = res2corpus <$> res
   _ <- logs "Ok: loading page documents"
   _ <- logs $ map show docs
@@ -189,6 +190,12 @@ loadPage {nodeId, limit, offset} = do
       , fav    : r.favorite
       , ngramCount : r.ngramCount
      }
+    convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
+    convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
+    convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
+    convOrderBy (T.DESC (T.ColumnName "Title")) = TitleDesc
+
+    convOrderBy _ = DateAsc -- TODO
 
 
 ---------------------------------------------------------

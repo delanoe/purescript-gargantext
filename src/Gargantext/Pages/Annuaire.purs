@@ -94,6 +94,7 @@ loadedAnnuaireSpec = simpleSpec defaultPerformAction render
           { loadRows
           , title: "title" -- TODO
           , colNames:
+              Table.ColumnName <$>
               [ ""
               , "Name"
               , "Role"
@@ -105,7 +106,7 @@ loadedAnnuaireSpec = simpleSpec defaultPerformAction render
       ]
       where
         annuaireId = path
-        loadRows {offset, limit} = do -- TODO use offset and limit
+        loadRows {offset, limit, orderBy} = do -- TODO use offset, limit, orderBy
           (AnnuaireTable {annuaireTable: rows}) <- getTable annuaireId
           pure $ (\c -> {row: renderContactCells c, delete: false}) <$> rows
 
@@ -168,7 +169,7 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
 getTable :: Int -> Aff AnnuaireTable
-getTable id = get $ toUrl Back (Tab TabDocs 0 10) id
+getTable id = get $ toUrl Back (Tab TabDocs 0 10 Nothing) id
 
 getAnnuaireInfo :: Int -> Aff AnnuaireInfo
 getAnnuaireInfo id = get $ toUrl Back Node id

@@ -11,9 +11,11 @@ module Gargantext.Config where
 
 import Prelude
 import Data.Argonaut (class DecodeJson, decodeJson)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Map (Map)
 import Data.Map as DM
-import Data.Maybe (maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
 
 endConfig :: EndConfig
@@ -98,7 +100,7 @@ endPathUrl Back  c nt i = pathUrl c.back  nt i
 endPathUrl Front c nt i = pathUrl c.front nt i
 
 pathUrl :: Config -> NodeType -> Id -> UrlPath
-pathUrl c nt@(Tab _ _ _) i = pathUrl c Node i <> "/" <> show nt
+pathUrl c nt@(Tab _ _ _ _) i = pathUrl c Node i <> "/" <> show nt
 pathUrl c nt i = c.prePath <> urlConfig nt <> "/" <> show i
 ------------------------------------------------------------
 toUrl :: End -> NodeType -> Id -> Url
@@ -110,7 +112,7 @@ toUrl e nt i = doUrl base path params
 ------------------------------------------------------------
 data NodeType = NodeUser
               | Annuaire
-              | Tab TabType Offset Limit
+              | Tab TabType Offset Limit (Maybe OrderBy)
               | Corpus
               | CorpusV3
               | Dashboard
@@ -126,6 +128,14 @@ type Id  = Int
 
 type Limit  = Int
 type Offset = Int
+data OrderBy = DateAsc  | DateDesc
+             | TitleAsc | TitleDesc
+             | FavDesc  | FavAsc
+
+derive instance genericOrderBy :: Generic OrderBy _
+
+instance showOrderBy :: Show OrderBy where
+  show = genericShow
 
 ------------------------------------------------------------
 data ApiVersion = V10 | V11
@@ -146,7 +156,7 @@ instance showTabType :: Show TabType where
 ------------------------------------------------------------
 urlConfig :: NodeType -> Url
 urlConfig Annuaire  = show Annuaire
-urlConfig nt@(Tab _ _ _) = show nt
+urlConfig nt@(Tab _ _ _ _) = show nt
 urlConfig Corpus    = show Corpus
 urlConfig CorpusV3  = show CorpusV3
 urlConfig Dashboard = show Dashboard
@@ -172,13 +182,16 @@ instance showNodeType :: Show NodeType where
   show Node      = "node"
   show NodeUser  = "user"
   show Tree      = "tree"
-  show (Tab t o l) = "table?view=" <> show t <> "&offset=" <> show o <> "&limit=" <> show l <> "&order=DateAsc"
+  show (Tab t o l s) = "table?view=" <> show t <> "&offset=" <> show o
+                         <> "&limit=" <> show l <> os
+    where
+      os = maybe "" (\x -> "&order=" <> show x) s
 
 -- | TODO : where is the Read Class ?
 -- instance readNodeType :: Read NodeType where
 readNodeType :: String -> NodeType
 readNodeType "NodeAnnuaire"   = Annuaire
-readNodeType "Tab"   = (Tab TabDocs 0 0)
+readNodeType "Tab"   = (Tab TabDocs 0 0 Nothing)
 readNodeType "NodeDashboard"  = Dashboard
 readNodeType "Document"   = Url_Document
 readNodeType "NodeFolder"     = Folder
