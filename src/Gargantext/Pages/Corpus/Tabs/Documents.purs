@@ -19,7 +19,7 @@ import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Components.Table as T
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Pages.Corpus.Tabs.Types
+import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), Props)
 import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 ------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
@@ -103,7 +103,7 @@ instance decodeResponse :: DecodeJson Response where
 
 
 -- | Filter
-filterSpec :: Spec State {} Action
+filterSpec :: Spec {} {} Void
 filterSpec = simpleSpec defaultPerformAction render
   where
     render d p s c = [div [] [ text "    Filter "
@@ -111,10 +111,10 @@ filterSpec = simpleSpec defaultPerformAction render
                      ]]
 
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: Spec State Props Action
+layoutDocview :: Spec {} Props Void
 layoutDocview = simpleSpec absurd render
   where
-    render :: Render State Props Action
+    render :: Render {} Props Void
     render dispatch {path, loaded} _ _ =
       [ div [className "container1"]
         [ div [className "row"]
@@ -201,9 +201,6 @@ sampleData = map (\(Tuple t s) -> DocumentsView {_id : 1, url : "", date : "2017
 
 sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
-
-initialState :: State
-initialState = {}
 
 newtype SearchQuery = SearchQuery
   {

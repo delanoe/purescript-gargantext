@@ -23,10 +23,10 @@ import Gargantext.Pages.Corpus.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Graph as GE
 import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search    as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState, _annuaireState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState)
 import Gargantext.Router (Routes(..))
 
 layoutSpec :: Spec AppState {} Action
@@ -62,7 +62,7 @@ pagesComponent s = case s.currentRoute of
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
     
-    selectSpec (Annuaire i)      = layout0 $ focus _annuaireState _annuaireAction A.layoutAnnuaire
+    selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  C.layoutUser
     -- To be removed
     selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec

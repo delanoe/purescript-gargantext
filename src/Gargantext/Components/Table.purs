@@ -8,10 +8,9 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import React as React
 import React (ReactElement, ReactClass, Children, createElement)
-import React.DOM (a, b, b', div, option, select, span, table, tbody, td, text, th, thead, tr)
-import React.DOM.Props (className, href, onChange, onClick, scope, selected, value)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec,
-    createReactSpec, StateCoTransformer)
+import React.DOM (a, b, b', p, i, h3, hr, div, option, select, span, table, tbody, td, text, th, thead, tr)
+import React.DOM.Props (className, href, onChange, onClick, scope, selected, value, style)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec, createReactSpec, StateCoTransformer)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
@@ -59,6 +58,39 @@ changePageSize ps td =
   td { pageSize      = ps
      , currentPage   = 1
      }
+
+-- TODO: Not sure this is the right place for this function.
+renderTableHeaderLayout :: { title :: String
+                           , desc  :: String
+                           , query :: String
+                           , date  :: String
+                           , user  :: String
+                           } -> Array ReactElement
+renderTableHeaderLayout {title, desc, query, date, user} =
+  [ div [className "row"]
+    [ div [className "col-md-3"] [ h3 [] [text title] ]
+    , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]
+    ]
+  , div [className "row"] [ div [className "jumbotron1", style {padding : "12px 0px 20px 12px"}]
+        [ div [ className "col-md-8 content"]
+              [ p [] [ i [className "fa fa-globe"] []
+                     , text $ " " <> desc
+                     ]
+              , p [] [ i [className "fab fa-searchengin"] []
+                     , text $ " " <> query
+                     ]
+              ]
+        , div [ className "col-md-4 content"]
+              [ p [] [ i [className "fa fa-calendar"] []
+                     , text $ " " <> date
+                     ]
+              , p [] [ i [className "fa fa-user"] []
+                     , text $ " " <> user
+                     ]
+              ]
+        ]
+    ]
+  ]
 
 tableSpec :: Spec State Props Action
 tableSpec = simpleSpec performAction render

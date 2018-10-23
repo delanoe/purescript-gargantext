@@ -7,8 +7,6 @@ import Data.Maybe (maybe)
 import Effect.Aff (Aff)
 import React as React
 import React (ReactClass, ReactElement)
-import React.DOM (div, h3, hr, i, p, text)
-import React.DOM.Props (className, style)
 import Thermite ( Render, Spec, createClass, defaultPerformAction, focus
                 , simpleSpec, noState )
 --------------------------------------------------------
@@ -16,6 +14,7 @@ import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Loader (createLoaderClass)
+import Gargantext.Components.Table as Table
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), corpusInfoDefault)
@@ -66,36 +65,19 @@ corpusHeaderSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
     render dispatch {loaded} _ _ =
-        [ div [className "row"]
-          [ div [className "col-md-3"] [ h3 [] [text "Corpus " <> text title] ]
-          , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]
-          ]
-        , div [className "row"] [ div [className "jumbotron1", style {padding : "12px 0px 20px 12px"}]
-              [ div [ className "col-md-8 content"]
-                    [ p [] [ i [className "fa fa-globe"] []
-                           , text $ " " <> corpus.desc
-                           ]
-                    , p [] [ i [className "fab fa-searchengin"] []
-                           , text $ " " <> corpus.query
-                           ]
-                    ]
-              , div [ className "col-md-4 content"]
-                    [ p [] [ i [className "fa fa-calendar"] []
-                           , text $ " " <> date'
-                           ]
-                    , p [] [ i [className "fa fa-user"] []
-                           , text $ " " <> corpus.authors
-                           ]
-                    ]
-              ]
-          ]
-        ]
-          where
-            NodePoly { name: title
-                     , date: date'
-                     , hyperdata : CorpusInfo corpus
-                   }
-              = maybe corpusInfoDefault identity loaded
+      Table.renderTableHeaderLayout
+        { title: "Corpus " <> title
+        , desc:  corpus.desc
+        , query: corpus.query
+        , date:  date'
+        , user:  corpus.authors
+        }
+      where
+        NodePoly { name: title
+                 , date: date'
+                 , hyperdata : CorpusInfo corpus
+                 }
+          = maybe corpusInfoDefault identity loaded
 
 ------------------------------------------------------------------------
 

@@ -18,7 +18,7 @@ type State =
 
 initialState :: State
 initialState =
-  { docsView    : D.initialState
+  { docsView    : {}
   , authorsView : A.initialState
   , sourcesView : S.initialState
   , termsView   : T.initialState
