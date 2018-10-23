@@ -1,12 +1,25 @@
-module Gargantext.Pages.Corpus.Graph where
+module Gargantext.Pages.Corpus.Doc.Facets.Graph where
 
+import Prelude hiding (div)
+
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.RequestHeader (RequestHeader(..))
+import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
+import Data.Argonaut (decodeJson, stringify)
 import Data.Array (length, mapWithIndex, (!!))
 import Data.Either (Either(..))
+import Data.HTTP.Method (Method(..))
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromJust)
+import Data.MediaType.Common (applicationJSON)
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
+import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
@@ -14,13 +27,6 @@ import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, s
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-
-import Gargantext.Prelude
-import Gargantext.Config.REST (get)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
-import Gargantext.Utils (getter)
-
 
 data Action
   = LoadGraph String
@@ -53,16 +59,18 @@ graphSpec = simpleSpec performAction render
 
 performAction :: PerformAction State {} Action
 performAction (LoadGraph fp) _ _ = void do
-  _ <- logs fp
+  _ <- liftEffect $ log fp
   case fp of
     "" -> do
       modifyState \(State s) -> State s {filePath = fp, graphData = GraphData {nodes : [], edges : []}, sigmaGraphData = Nothing}
     _  -> do
       _ <- modifyState \(State s) -> State s {filePath = fp, sigmaGraphData = Nothing}
       gd <- lift $ getGraphData fp
-      -- TODO: here one might `catchError getGraphData` to visually empty the
-      -- graph.
-      modifyState \(State s) -> State s {filePath = fp, graphData = gd, sigmaGraphData = Just $ convert gd, legendData = getLegendData gd}
+      case gd of
+        Left err -> do
+          modifyState \(State s) -> State s {filePath = fp, graphData = GraphData {nodes : [], edges : []}}
+        Right gd' -> do
+          modifyState \(State s) -> State s {filePath = fp, graphData = gd', sigmaGraphData = Just $ convert gd', legendData = getLegendData gd'}
 
 performAction (SelectNode node) _ _ = void do
   modifyState $ \(State s) -> State s {selectedNode = pure node}
@@ -109,7 +117,7 @@ render d p (State s) c =
               , settings : mySettings
               , style : sStyle { height : "95%"}
               -- , onClickNode : \e -> do
-              --   logs $ unsafeCoerce e
+              --   log $ unsafeCoerce e
               --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
               --   pure unit
               -- TODO: fix this!
@@ -213,8 +221,27 @@ mySettings = sigmaSettings { verbose : true
 
 
 -- loadJSON  {path : "http://localhost:2015/examples/sites_coords.json"}
-getGraphData :: String -> Aff GraphData
-getGraphData fp = get $ "http://localhost:2015/examples/" <> fp
+getGraphData :: String -> Aff (Either String GraphData)
+getGraphData fp = do
+  resp <- request defaultRequest
+          { url =("http://localhost:2015/examples/" <> fp)
+          , method = Left GET
+          , responseFormat = ResponseFormat.json
+          , headers =
+            [ ContentType applicationJSON
+            , Accept applicationJSON
+            ]
+          }
+  case resp.body of
+    Left err -> do
+      liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      liftEffect $ log $ stringify json
+      let gd = decodeJson json
+      pure gd
+
+
 
 defaultPalette :: Array Color
 defaultPalette = map Color defaultPalette'
@@ -365,7 +392,7 @@ specOld = simpleSpec performAction render'
                              , settings : mySettings
                              , style : sStyle { height : "95%"}
                              -- , onClickNode : \e -> do
-                             --   logs $ unsafeCoerce e
+                             --   log $ unsafeCoerce e
                              --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
                              --   pure unit
                              }

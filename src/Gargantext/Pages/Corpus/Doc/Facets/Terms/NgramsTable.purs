@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable where
+module Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable where
 
 
 import Data.Array (filter, toUnfoldable)
@@ -12,12 +12,12 @@ import Data.Tuple (Tuple(..), uncurry)
 import Data.Void (Void)
 import Data.Unit (Unit)
 import Effect (Effect)
-import Gargantext.Pages.Corpus.Tabs.Terms.NgramsItem as NI
+import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsItem as NI
 import Prelude (class Eq, class Ord, class Show, map, show, void, ($), (*), (+), (-), (/), (<), (<>), (==), (>), (>=), pure, unit)
 import React (ReactElement)
 import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
-import Thermite (PerformAction, Spec, _render, focus, foreach, modifyState, focusState, hideState)
+import Thermite (PerformAction, Spec, _render, focus, foreach, modifyState, focusState, hide)
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype State = State
@@ -60,7 +60,6 @@ _ItemAction = prism (uncurry ItemAction) \ta ->
 
 type Dispatch = Action -> Effect Unit
 
-{-
 performAction :: PerformAction State {} Action
 
 performAction (ChangePageSize ps) _ _ = void $ modifyState $ changePageSize ps
@@ -78,7 +77,6 @@ performAction (SetInput s) _ _ = void do
   modifyState \(State state) -> State $ state { search = s }
 
 performAction _ _ _ = pure unit
--}
 
 tableSpec :: Spec State {} Action -> Spec State {} Action
 tableSpec = over _render \render dispatch p (State s) c ->
@@ -159,7 +157,7 @@ tableSpec = over _render \render dispatch p (State s) c ->
 
 ngramsTableSpec :: Spec {} {} Void
 ngramsTableSpec =
-  hideState (unwrap initialState) $
+  hide (unwrap initialState) $
   focusState (re _Newtype) $
   container $
   tableSpec $
@@ -316,8 +314,8 @@ pagination d tp cp
                 text " ... "
                 else
                 text ""
-      lnums = map (\i -> fnmid d i) $ filter (1  < _) [cp - 2, cp - 1]
-      rnums = map (\i -> fnmid d i) $ filter (tp > _) [cp + 1, cp + 2]
+      lnums = map (\i -> fnmid d i) $ filter (lessthan 1) [cp - 2, cp - 1]
+      rnums = map (\i -> fnmid d i) $ filter (greaterthan tp) [cp + 1, cp + 2]
 
 fnmid :: Dispatch -> Int -> ReactElement
 fnmid d i
@@ -328,3 +326,10 @@ fnmid d i
         ] [text $ show i]
     , text " "
     ]
+
+
+lessthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
+lessthan x y = x < y
+
+greaterthan :: forall t28. Ord t28 => t28 -> t28 -> Boolean
+greaterthan x y = x > y

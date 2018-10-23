@@ -1,33 +1,35 @@
 module Gargantext.Pages.Layout.Specs where
 
+import Prelude hiding (div)
+
 import Data.Foldable (fold, intercalate)
 import Data.Lens (over)
 import Data.Maybe (Maybe(Nothing, Just))
 import Effect (Effect)
-import React (ReactElement)
-import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
-import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
-import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
-import Unsafe.Coerce (unsafeCoerce)
-
-import Gargantext.Prelude
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree  as Tree
-import Gargantext.Folder           as F
 import Gargantext.Pages.Annuaire   as A
-import Gargantext.Pages.Annuaire.User.Contacts as C
+import Gargantext.Folder           as F
 import Gargantext.Pages.Corpus     as Corpus
-import Gargantext.Pages.Corpus.Document as Annotation
-import Gargantext.Pages.Corpus.Dashboard as Dsh
-import Gargantext.Pages.Corpus.Graph as GE
-import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
+import Gargantext.Pages.Corpus.Doc.Annotation as Annotation
+import Gargantext.Pages.Corpus.Doc.Facets as TV
+import Gargantext.Pages.Corpus.Doc.Facets.Dashboard as Dsh
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
+import Gargantext.Pages.Corpus.Doc.Facets.Graph as GE
+import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
+import Gargantext.Pages.Annuaire.User.Contacts as C
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _corpusAction, _addCorpusAction, _docAnnotationViewAction, _docViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
-import Gargantext.Pages.Layout.Specs.Search    as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState, _annuaireState)
+import Gargantext.Pages.Layout.Specs.Search as S
+import Gargantext.Pages.Layout.States (AppState, _corpusState, _addCorpusState, _docAnnotationViewState, _docViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState, _annuaireState)
 import Gargantext.Router (Routes(..))
+import React (ReactElement)
+import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
+import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
+import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState)
+import Unsafe.Coerce (unsafeCoerce)
 
 layoutSpec :: Spec AppState {} Action
 layoutSpec =
@@ -46,26 +48,28 @@ layoutSpec =
       (render d p s c)
 
 pagesComponent :: AppState -> Spec AppState {} Action
-pagesComponent s = case s.currentRoute of
+pagesComponent s =
+  case s.currentRoute of
     Just route -> selectSpec route
-    Nothing    -> selectSpec Home -- TODO add Error page here: url requested does not exist (with funny Garg image)
+    Nothing    -> selectSpec Home
   where
     selectSpec :: Routes -> Spec AppState {} Action
-    selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
+    selectSpec (Corpus   i)      = layout0 $ focus _corpusState   _corpusAction   Corpus.layout
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
-    selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
-    
-    selectSpec (Corpus   i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState Corpus.layout
+    selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
+    selectSpec (DocView  i)      = layout0 $ focus _docViewState   _docViewAction   DV.layoutDocview
+    selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  C.layoutUser
+    selectSpec (DocAnnotation i) = layout0 $ focus _docAnnotationViewState
+                                                   _docAnnotationViewAction  Annotation.docview
+    -- To be removed
+    selectSpec Tabview           = layout0 $ noState TV.pureTab1
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
-    selectSpec (Document i) = layout0 $ focus _documentViewState _documentViewAction  Annotation.docview
+    selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
     selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
-    
     selectSpec (Annuaire i)      = layout0 $ focus _annuaireState _annuaireAction A.layoutAnnuaire
-    selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  C.layoutUser
-    -- To be removed
-    selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
+    selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 

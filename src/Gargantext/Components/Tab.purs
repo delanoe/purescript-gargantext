@@ -27,10 +27,6 @@ tabs l p ls = withState \st ->
   , wrapper $ fold $ mapWithIndex        (   tab (activeTab st)) ls
   ]
   where
-    performAction :: forall props.
-      PerformAction State props Action
-    performAction (ChangeTab i) _ _ =
-      void $ modifyState $ const i
     activeTab = view l
     wrapper = over _render \render d p s c ->
       [div [className "tab-content"] $ render d p s c]
@@ -47,6 +43,11 @@ tab sid iid (Tuple name spec) = over _render tabRender spec
            else " fade"] $ renderer d p s c
       ]
 
+
+performAction :: forall props.
+  PerformAction State props Action
+performAction (ChangeTab i) _ _ =
+  void $ modifyState $ const i
 
 render :: forall state props action.
   State -> List (Tuple String (Spec state props action))

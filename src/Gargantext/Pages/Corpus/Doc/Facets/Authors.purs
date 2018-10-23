@@ -1,16 +1,18 @@
-module Gargantext.Pages.Corpus.Tabs.Authors where
+module Gargantext.Pages.Corpus.Doc.Facets.Authors where
 
 
+import Data.Array (fold)
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as D
 import Prelude hiding (div)
 import React.DOM (h3, text)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, simpleSpec)
 
-type State = {}
+type State = D.State
 
 initialState :: State
-initialState = {}
+initialState = D.tdata
 
-type Action = Void
+type Action = D.Action
 
 authorSpec :: Spec State {} Action
 authorSpec = simpleSpec defaultPerformAction render
@@ -18,3 +20,6 @@ authorSpec = simpleSpec defaultPerformAction render
     render :: Render State {} Action
     render dispatch _ state _ =
        [ h3 [] [text "AuthorView"]]
+
+authorspec' :: Spec State {} Action
+authorspec' = fold [authorSpec, D.layoutDocview]

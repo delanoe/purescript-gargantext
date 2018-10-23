@@ -1,16 +1,20 @@
-module Gargantext.Pages.Corpus.Tabs.Sources where
+module Gargantext.Pages.Corpus.Doc.Facets.Sources where
 
 
+import Data.Array (fold)
+import Gargantext.Pages.Corpus.Doc.Facets.Documents as D
 import Prelude hiding (div)
 import React.DOM (h3, text)
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 
-type State = {}
+type State = D.State
 
-initialState :: State
-initialState = {}
 
-type Action = Void
+initialState :: D.State
+initialState = D.tdata
+
+type Action = D.Action
+
 
 sourceSpec :: Spec State {} Action
 sourceSpec = simpleSpec defaultPerformAction render
@@ -18,3 +22,6 @@ sourceSpec = simpleSpec defaultPerformAction render
     render :: Render State {} Action
     render dispatch _ state _ =
       [ h3 [] [text "Source view"]]
+
+sourcespec' :: Spec State {} Action
+sourcespec' = fold [sourceSpec, D.layoutDocview]

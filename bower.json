@@ -8,7 +8,7 @@
   ],
   "dependencies": {
     "purescript-console": "^4.1.0",
-    "purescript-thermite": "https://github.com/np/purescript-thermite.git#d7395aec9ff4e7b8f820e882b4b07ed15c4f804d",
+    "purescript-thermite": "https://github.com/np/purescript-thermite.git#hide",
     "purescript-affjax": "^7.0.0",
     "purescript-routing": "^8.0.0",
     "purescript-argonaut": "^4.0.1",

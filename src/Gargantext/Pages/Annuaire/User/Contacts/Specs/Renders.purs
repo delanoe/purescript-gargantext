@@ -54,14 +54,13 @@ mapMyMap f m = toUnfoldable
 
 infixl 4 mapMyMap as <.~$>
 
-contactInfos :: HyperData -> ReactElement
+contactInfos :: Maybe HyperData -> ReactElement
 contactInfos hyperdata =
-    ul [className "list-group"] [] {- $
-    listInfo <.~$> hyperdata
+    ul [className "list-group"] $
+    listInfo <.~$> (checkMaybe hyperdata)
   where
     checkMaybe (Nothing) = empty
     checkMaybe (Just (HyperData a)) = a
--}
 
 listInfo :: Tuple String String -> ReactElement
 listInfo s = listElement $ infoRender s

@@ -94,11 +94,11 @@ baseUrl :: Config -> UrlBase
 baseUrl conf = conf.proto <> conf.domain <> ":" <> show conf.port
 ------------------------------------------------------------
 endPathUrl :: End -> EndConfig -> NodeType -> Id -> UrlPath
-endPathUrl Back  c nt i = pathUrl c.back  nt i
+endPathUrl Back  c nt i = pathUrl c.back nt i
 endPathUrl Front c nt i = pathUrl c.front nt i
 
 pathUrl :: Config -> NodeType -> Id -> UrlPath
-pathUrl c nt@(Tab _ _ _) i = pathUrl c Node i <> "/" <> show nt
+pathUrl c Children i = pathUrl c Node i <> "/" <> show Children
 pathUrl c nt i = c.prePath <> urlConfig nt <> "/" <> show i
 ------------------------------------------------------------
 toUrl :: End -> NodeType -> Id -> Url
@@ -110,11 +110,10 @@ toUrl e nt i = doUrl base path params
 ------------------------------------------------------------
 data NodeType = NodeUser
               | Annuaire
-              | Tab TabType Offset Limit
+              | Children
               | Corpus
-              | CorpusV3
               | Dashboard
-              | Url_Document
+              | Document
               | Error
               | Folder
               | Graph
@@ -123,34 +122,19 @@ data NodeType = NodeUser
               | Tree
 data End = Back | Front
 type Id  = Int
-
-type Limit  = Int
-type Offset = Int
-
 ------------------------------------------------------------
 data ApiVersion = V10 | V11
 instance showApiVersion :: Show ApiVersion where
   show V10 = "v1.0"
   show V11 = "v1.1"
 ------------------------------------------------------------
-
-data TabType = TabDocs | TabTerms | TabSources | TabAuthors | TabTrash
-
-instance showTabType :: Show TabType where
-  show TabDocs    = "Docs"
-  show TabTerms   = "Terms"
-  show TabSources = "Sources"
-  show TabAuthors = "Authors"
-  show TabTrash   = "Trash"
-
 ------------------------------------------------------------
 urlConfig :: NodeType -> Url
 urlConfig Annuaire  = show Annuaire
-urlConfig nt@(Tab _ _ _) = show nt
+urlConfig Children  = show Children
 urlConfig Corpus    = show Corpus
-urlConfig CorpusV3  = show CorpusV3
 urlConfig Dashboard = show Dashboard
-urlConfig Url_Document  = show Url_Document
+urlConfig Document  = show Document
 urlConfig Error     = show Error
 urlConfig Folder    = show Folder
 urlConfig Graph     = show Graph
@@ -161,10 +145,10 @@ urlConfig Tree      = show Tree
 ------------------------------------------------------------
 instance showNodeType :: Show NodeType where
   show Annuaire  = "annuaire"
+  show Children  = "children"
   show Corpus    = "corpus"
-  show CorpusV3  = "corpus"
   show Dashboard = "dashboard"
-  show Url_Document  = "document"
+  show Document  = "document"
   show Error     = "ErrorNodeType"
   show Folder    = "folder"
   show Graph     = "graph"
@@ -172,21 +156,19 @@ instance showNodeType :: Show NodeType where
   show Node      = "node"
   show NodeUser  = "user"
   show Tree      = "tree"
-  show (Tab t o l) = "table?view=" <> show t <> "&offset=" <> show o <> "&limit=" <> show l <> "&order=DateAsc"
 
 -- | TODO : where is the Read Class ?
 -- instance readNodeType :: Read NodeType where
 readNodeType :: String -> NodeType
-readNodeType "NodeAnnuaire"   = Annuaire
-readNodeType "Tab"   = (Tab TabDocs 0 0)
-readNodeType "NodeDashboard"  = Dashboard
-readNodeType "Document"   = Url_Document
-readNodeType "NodeFolder"     = Folder
-readNodeType "NodeGraph"      = Graph
+readNodeType "Annuaire"   = Annuaire
+readNodeType "Children"   = Children
+readNodeType "Dashboard"  = Dashboard
+readNodeType "Document"   = Document
+readNodeType "Folder"     = Folder
+readNodeType "Graph"      = Graph
 readNodeType "Individu"   = Individu
 readNodeType "Node"       = Node
 readNodeType "NodeCorpus" = Corpus
-readNodeType "NodeCorpusV3" = CorpusV3
 readNodeType "NodeUser"   = NodeUser
 readNodeType "Tree"       = Tree
 readNodeType _            = Error
