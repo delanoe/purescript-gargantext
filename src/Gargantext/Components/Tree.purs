@@ -1,28 +1,21 @@
 module Gargantext.Components.Tree where
 
-import Prelude hiding (div)
-
-import Affjax (defaultRequest, printResponseFormatError, request)
-import Affjax.RequestBody (RequestBody(..))
-import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class DecodeJson, class EncodeJson, Json, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
-import Data.Argonaut.Core (Json)
-import Data.Either (Either(..))
-import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Newtype (class Newtype)
+import Data.Traversable (traverse)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Console (log)
 import Prelude (identity)
 import React (ReactElement)
-import Gargantext.Config (NodeType(..), readNodeType, toUrl, readNodeType, End(..), ApiVersion, defaultRoot)
-import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
+import React.DOM (a, button, div, h5, i, input, li, text, ul)
 import React.DOM.Props (Props, _type, className, href, onClick, onInput, placeholder, style, value)
-import Thermite (PerformAction, Render, Spec, cotransform, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
+
+import Gargantext.Prelude
+import Gargantext.Config.REST (get, put, post, delete)
+import Gargantext.Config (NodeType(..), toUrl, End(..), defaultRoot)
 
 type Name = String
 type Open = Boolean
@@ -37,7 +30,7 @@ data Action =  ShowPopOver
               | ToggleFolder ID
               | RenameNode  String
               | Submit
-            --| Initialize
+            -- | Initialize
 
 type State = FTree
 
@@ -49,33 +42,6 @@ initialState = NTree (LNode { id : 3
                             , popOver : false
                             , renameNodeValue : ""
                           }) []
-
-performAction :: PerformAction State {} Action
-performAction (ToggleFolder i) _ _ =
-  void $ cotransform (\td -> toggleNode i td)
-
-
-
-performAction ShowPopOver _ _ = void $
- modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { popOver = true }) ary
-
-
-performAction Submit _  s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary)  = void $ do
-  s' <- lift $ renameNode  id  $ RenameValue { name : getRenameNodeValue s}
-  case s' of
-    Left err -> modifyState identity
-    Right d -> modifyState identity
-
-
-performAction (RenameNode  r) _ _ = void $
- modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { renameNodeValue  = r }) ary
-
-
--- performAction Initialize _ _ = void $ do
---  s <- lift $ loadDefaultNode
---  case s of
---    Left err -> modifyState identity
---    Right d -> modifyState (\state -> d)
 
 
 toggleNode :: Int -> NTree LNode -> NTree LNode
@@ -111,7 +77,7 @@ exampleTree = NTree (LNode { id : 1
 
 -- corpus :: Int -> String -> NTree (Tuple String String)
 -- corpus n name = NTree (LNode {id : n, name, nodeType : "", open : false})
---     [ NTree (Tuple "Facets"    "#/corpus") []
+--     [ NTree (Tuple "Tabs"    "#/corpus") []
 --     , NTree (Tuple "Dashboard" "#/dashboard") []
 --     , NTree (Tuple "Graph"     "#/graphExplorer") []
 --     ]
@@ -150,6 +116,22 @@ nodeOptionsRename d activated =  case activated of
 treeview :: Spec State {} Action
 treeview = simpleSpec performAction render
   where
+    performAction :: PerformAction State {} Action
+    performAction (ToggleFolder i) _ _ =
+      void $ modifyState (\td -> toggleNode i td)
+    performAction ShowPopOver _ _ = void $
+      modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { popOver = true }) ary
+    performAction Submit _  s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) ary)  = void $ do
+      d <- lift $ renameNode  id  $ RenameValue { name : getRenameNodeValue s}
+      modifyState identity -- TODO why ???
+    performAction (RenameNode  r) _ _ = void $
+      modifyState $ \(NTree (LNode lnode) ary) -> NTree (LNode $ lnode { renameNodeValue  = r }) ary
+    -- performAction Initialize _ _ = void $ do
+    --  s <- lift $ loadDefaultNode
+    --  case s of
+    --    Left err -> modifyState identity
+    --    Right d -> modifyState (\state -> d)
+
     render :: Render State {} Action
     render dispatch _ state _ =
       [ div [className "tree"]
@@ -218,8 +200,8 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) [
       ( [ text (name <> "    ")
         ]
         <> nodeOptionsView false
-        <> (nodeOptionsRename  d true)
-        <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
+        <> (nodeOptionsRename  d false)
+        -- <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
       )
     ]
   ]
@@ -235,8 +217,8 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue}) a
         map (toHtml d) ary
         else []
      <> nodeOptionsView false
-     <> (nodeOptionsRename  d true)
-     <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
+     <> (nodeOptionsRename  d false)
+     -- <>[ if ((popOverValue s) == true) then (renameTreeView d s ) else (renameTreeView d s)]
     )
   ]
 
@@ -279,24 +261,8 @@ instance decodeJsonFTree :: DecodeJson (NTree LNode) where
     nodes' <- decodeJson nodes
     pure $ NTree node' nodes'
 
-loadDefaultNode :: Aff (Either String (NTree LNode))
-loadDefaultNode = do
-  res <- request $ defaultRequest
-         { url = toUrl Back Tree defaultRoot
-         , responseFormat = ResponseFormat.json
-         , method = Left GET
-         , headers = []
-         }
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure obj
+loadDefaultNode :: Aff (NTree LNode)
+loadDefaultNode = get $ toUrl Back Tree defaultRoot
 
 ----- TREE CRUD Operations
 
@@ -311,96 +277,25 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
     ~> jsonEmptyObject
 
 
-renameNode :: Int -> RenameValue -> Aff (Either String (Int))     --- need to change return type herre
-renameNode renameNodeId reqbody = do
-  res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/node/" <> show renameNodeId  <> "/rename"
-         , responseFormat = ResponseFormat.json
-         , method = Left PUT
-         , headers = []
-         , content  = Just $ Json $ encodeJson reqbody
-         }
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure obj
+renameNode :: Int -> RenameValue -> Aff Int     --- need to change return type herre
+renameNode renameNodeId reqbody =
+  put ("http://localhost:8008/api/v1.0/node/" <> show renameNodeId <> "/rename")
+      reqbody
 
+deleteNode :: Int -> Aff Int
+deleteNode = delete <<< toUrl Back Tree
 
+-- See https://stackoverflow.com/questions/21863326/delete-multiple-records-using-rest
+-- As of now I would recommend simply issuing many requests.
+-- In a second time implement a set of end points for batch edition.
+deleteNodes :: Array Int -> Aff (Array Int)
+deleteNodes = traverse deleteNode
 
-deleteNode :: Aff (Either String (Int))
-deleteNode = do
-  res <- request $ defaultRequest
-         { url = toUrl Back Tree 1
-         , responseFormat = ResponseFormat.json
-         , method = Left DELETE
-         , headers = []
-         }
-
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure obj
-
-
-
-deleteNodes :: String -> Aff (Either String  Int)
-deleteNodes reqbody = do
-  res <- request $ defaultRequest
-         { url = toUrl Back Tree 1
-         , responseFormat = ResponseFormat.json
-         , method = Left DELETE
-         , headers = []
-         , content = Just $ Json $ encodeJson reqbody
-         }
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure  obj
-
-
-createNode :: String -> Aff (Either String (Int))
-createNode  reqbody= do
-  res <- request $ defaultRequest
-         { url = toUrl Back Tree 1
-         , responseFormat = ResponseFormat.json
-         , method = Left POST
-         , headers = []
-         , content = Just $ Json $ encodeJson reqbody
-         }
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure obj
-
-
+createNode :: String -> Aff Int
+createNode reqbody = post (toUrl Back Tree 1) reqbody
 
 fnTransform :: LNode -> FTree
 fnTransform n = NTree n []
-
 
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value

@@ -1,13 +1,13 @@
-module Gargantext.Pages.Corpus.Doc.Facets.Actions where
+module Gargantext.Pages.Corpus.Tabs.Actions where
 
 
 import Data.Lens (Prism', prism)
 import Data.Either (Either(..))
 
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Sources as SV
-import Gargantext.Pages.Corpus.Doc.Facets.Authors as AV
-import Gargantext.Pages.Corpus.Doc.Facets.Terms as TV
+import Gargantext.Pages.Corpus.Tabs.Documents as DV
+import Gargantext.Pages.Corpus.Tabs.Sources as SV
+import Gargantext.Pages.Corpus.Tabs.Authors as AV
+import Gargantext.Pages.Corpus.Tabs.Terms as TV
 import Gargantext.Components.Tab as Tab
 
 data Action
@@ -46,6 +46,3 @@ _tabAction = prism TabViewA \ action ->
   case action of
     TabViewA laction -> Right laction
     _-> Left action
-
-
-

@@ -1,29 +1,23 @@
 module Gargantext.Pages.Annuaire where
 
-import Prelude
-
-import Data.Array (concat)
-import Data.Traversable (foldl)
 import Control.Monad.Trans.Class (lift)
-import Data.Either (Either(..))
-import Data.Lens (Lens', Prism', lens, prism, (?~))
+import Data.Lens (Lens', lens, (?~))
 import Data.Maybe (Maybe(..), maybe)
-import Effect.Class (liftEffect)
 import React (ReactElement)
-import React.DOM (div, h1, h3, hr, i, p, text, thead, tbody, input, br', b, b', tr, th, table, td, a)
-import React.DOM.Props (_type, className, href, onChange, onClick, scope, selected, value, style)
-import Thermite (Render, Spec
-                , simpleSpec, defaultPerformAction
-                , PerformAction, modifyState)
-import Effect.Console (log)
+import React.DOM (a, b, b', br', div, h3, hr, i, input, p, table, tbody, td, text, th, thead, tr)
+import React.DOM.Props (className, href, scope, style)
 import Effect.Aff (Aff)
+import Thermite (Render, Spec
+                , simpleSpec
+                , PerformAction, modifyState)
 
-import Gargantext.Config      (toUrl, NodeType(..), End(..))
+------------------------------------------------------------------------------
+import Gargantext.Prelude
+import Gargantext.Config      (toUrl, NodeType(..), TabType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Annuaire.User.Contacts.Types.Types (Contact(..), HyperData(..))
+import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperData(..))
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-
 ------------------------------------------------------------------------------
 type State = { info  :: Maybe AnnuaireInfo
              , stable :: Maybe AnnuaireTable
@@ -80,9 +74,20 @@ toRows (AnnuaireTable a) = a.annuaireTable
 
 layoutAnnuaire :: Spec State {} Action
 layoutAnnuaire = simpleSpec performAction render
+  where
+    performAction :: PerformAction State {} Action
+    performAction (Load aId) _ _ = do
+      info' <- lift $ getInfo aId
+      void $ modifyState $ _info ?~ info'
+      table' <- lift $ getTable aId
+      logs "Feching Table"
+      void $ modifyState $ _table ?~ table'
+      logs "Annuaire page fetched."
+    performAction (ChangePageSize _) _ _ = pure unit -- TODO
+    performAction (ChangePage _)     _ _ = pure unit -- TODO
 
-render :: Render State {} Action
-render dispatch _ state _ = [ div [className "row"]
+    render :: Render State {} Action
+    render dispatch _ state _ = [ div [className "row"]
                      [ div [className "col-md-3"] [ h3 [] [text info.name] ]
                             , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]
                             ]
@@ -130,7 +135,7 @@ showRow :: Maybe Contact -> ReactElement
 showRow Nothing = tr [][]
 showRow (Just (Contact { id : id, hyperdata : (HyperData contact) })) =
   tr []
-  [ td [] [ a [ href (toUrl Back NodeUser id) ] [ text $ maybe' contact.nom <> " " <> maybe' contact.prenom ] ]
+  [ td [] [ a [ href (toUrl Front NodeUser id) ] [ text $ maybe' contact.nom <> " " <> maybe' contact.prenom ] ]
   , td [] [text $ maybe' contact.fonction]
   , td [] [text $ maybe' contact.service]
   , td [] [text $ maybe' contact.groupe]
@@ -175,28 +180,10 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     rows <- decodeJson json
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
-performAction :: PerformAction State {} Action
-performAction (Load aId) _ _ = do
-  eitherInfo <- lift $ getInfo aId
-  _ <- case eitherInfo of
-            (Right info') -> void $ modifyState $ _info ?~ info'
-            (Left       err)  -> do
-              liftEffect $ log err
+getTable :: Int -> Aff AnnuaireTable
+getTable id = get $ toUrl Back (Tab TabDocs 0 10) id
 
-  eitherTable <- lift $ getTable aId
-  liftEffect $ log "Feching Table"
-  _ <- case eitherTable of
-            (Right table') -> void $ modifyState $ _table ?~ table'
-            (Left       err)  -> do
-              liftEffect $ log err
-  liftEffect <<< log $ "Annuaire page fetched."
-
-performAction _ _ _ = pure unit
-------------------------------------------------------------------------
-getTable :: Int -> Aff (Either String AnnuaireTable)
-getTable id = get $ toUrl Back Children id
-
-getInfo :: Int -> Aff (Either String AnnuaireInfo)
+getInfo :: Int -> Aff AnnuaireInfo
 getInfo id = get $ toUrl Back Node id
 ------------------------------------------------------------------------------
 _table :: Lens' State (Maybe AnnuaireTable)

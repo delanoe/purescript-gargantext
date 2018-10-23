@@ -4,13 +4,11 @@ import Prelude hiding (div)
 -- import Gargantext.Components.Login as LN
 import Gargantext.Pages.Layout.Actions (Action(..))
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
--- import Gargantext.Pages.Corpus.Doc.Facets as TV
--- import Gargantext.Pages.Corpus.Doc.Annotation as D
+-- import Gargantext.Pages.Corpus.Tabs as TV
 
-import Gargantext.Pages.Corpus as Corpus
-import Gargantext.Pages.Corpus.Doc.Facets.Documents         as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Graph             as GE
--- import Gargantext.Pages.Corpus.Doc.Facets.Terms.NgramsTable as NG
+import Gargantext.Pages.Corpus.Document       as Document
+import Gargantext.Pages.Corpus.Graph          as GE
+-- import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
 
 import Gargantext.Pages.Annuaire.User.Contacts as C
 import Gargantext.Pages.Annuaire   as Annuaire
@@ -36,13 +34,8 @@ dispatchAction dispatcher _ AddCorpus = do
   dispatcher $ SetRoute   AddCorpus
   dispatcher $ AddCorpusA AC.LoadDatabaseDetails
 
-dispatchAction dispatcher _ (DocView n) = do
-  dispatcher $ SetRoute   (DocView n)
-  dispatcher $ DocViewA $ DV.LoadData n
-
 dispatchAction dispatcher _ (Corpus n) = do
-  dispatcher $ SetRoute     $ Corpus n
-  dispatcher $ CorpusAction $ Corpus.Load n
+  dispatcher $ SetRoute $ Corpus n
 
 dispatchAction dispatcher _ SearchView = do
   dispatcher $ SetRoute SearchView
@@ -60,13 +53,9 @@ dispatchAction dispatcher _ (Annuaire id) = do
 dispatchAction dispatcher _ (Folder id) = do
   dispatcher $ SetRoute $ Folder id
 
-dispatchAction dispatcher _ (DocAnnotation i) = do
-  dispatcher $ SetRoute $ DocAnnotation i
-  -- dispatcher $ DocAnnotationViewA TODO
-
-dispatchAction dispatcher _ Tabview = do
-  dispatcher $ SetRoute Tabview
-  -- dispatcher $ TabViewA TODO
+dispatchAction dispatcher _ (Document n) = do
+  dispatcher $ SetRoute $ Document n
+  dispatcher $ DocumentViewA $ Document.Load n
 
 dispatchAction dispatcher _ PGraphExplorer = do
   dispatcher $ SetRoute PGraphExplorer

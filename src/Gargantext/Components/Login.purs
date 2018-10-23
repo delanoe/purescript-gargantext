@@ -1,22 +1,11 @@
 module Gargantext.Components.Login where
 
-import Prelude hiding (div)
-
-import Affjax (defaultRequest, printResponseFormatError, request)
-import Affjax.RequestBody (RequestBody(..))
-import Affjax.RequestHeader (RequestHeader(..))
-import Affjax.ResponseFormat as ResponseFormat
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, stringify, (.?), (:=), (~>))
-import Data.Either (Either(..))
-import Data.HTTP.Method (Method(..))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Lens (over)
-import Data.Maybe (Maybe(..))
-import Data.MediaType.Common (applicationJSON)
+import Data.Maybe (Maybe)
+import Effect.Class (liftEffect)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Console (log)
-import Gargantext.Components.Modals.Modal (modalHide)
 import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
 import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
 import Thermite (PerformAction, Render, Spec, _render, modifyState, simpleSpec)
@@ -25,7 +14,13 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, setItem)
 
---          TODO: ask for login (modal) or account creation after 15 mn when user is not logged and has made one search at least
+------------------------------------------------------------------------
+import Gargantext.Prelude
+import Gargantext.Config.REST (post)
+import Gargantext.Components.Modals.Modal (modalHide)
+
+-- TODO: ask for login (modal) or account creation after 15 mn when user
+-- is not logged and has made one search at least
 
 newtype State = State
   { username :: String
@@ -49,31 +44,6 @@ data Action
   = Login
   | SetUserName String
   | SetPassword String
-
-
-performAction :: PerformAction State {} Action
-
-performAction (SetUserName usr) _ _ = void do
-  modifyState \(State state) -> State $ state { username = usr }
-
-
-performAction (SetPassword pwd) _ _ = void do
-  modifyState \(State state) -> State $ state { password = pwd }
-
-
-
-performAction Login _ _ = void do
-  --lift $ setHash "/search"
-  liftEffect $ modalHide "loginModal"
-  modifyState \(State state) -> State $ state {loginC = true}
-  -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
-  -- case res of
-  --   Left e -> do
-  --     lift $ log $ show e
-  --     modifyState \(State s) ->  State $ s { errorMessage = e}
-  --   Right r@(LoginRes response) -> do
-  --     lift $ setHash "/addCorpus"
-  --     modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
 
 
 modalSpec :: forall props. Boolean -> String -> Spec State props Action -> Spec State props Action
@@ -110,6 +80,27 @@ spec' = modalSpec true "Login" renderSpec
 renderSpec :: Spec State {} Action
 renderSpec = simpleSpec performAction render
   where
+    performAction :: PerformAction State {} Action
+
+    performAction (SetUserName usr) _ _ = void do
+      modifyState \(State state) -> State $ state { username = usr }
+
+    performAction (SetPassword pwd) _ _ = void do
+      modifyState \(State state) -> State $ state { password = pwd }
+
+    performAction Login _ _ = void do
+      --lift $ setHash "/search"
+      liftEffect $ modalHide "loginModal"
+      modifyState \(State state) -> State $ state {loginC = true}
+      -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
+      -- case res of
+      --   Left e -> do
+      --     logs e
+      --     modifyState \(State s) ->  State $ s { errorMessage = e}
+      --   Right r@(LoginRes response) -> do
+      --     lift $ setHash "/addCorpus"
+      --     modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
+
     render :: Render State {} Action
     render dispatch _ (State state) _ =
       [
@@ -233,37 +224,8 @@ newtype LoginReq = LoginReq
   , password :: String
   }
 
-loginReq :: LoginReq -> Aff (Either String LoginRes)
-loginReq encodeData =
-  let
-    setting =
-      defaultRequest
-        { url = "https://dev.gargantext.org/api/auth/token"
-        , method = Left POST
-        , responseFormat = ResponseFormat.json
-        , headers =
-            [ ContentType applicationJSON
-            , Accept applicationJSON
-            ]
-        , content = Just $ Json $ encodeJson encodeData
-        }
-  in
-    do
-      affResp <- request setting
-      case affResp.body of
-        Left err -> do
-          liftEffect $ log $ printResponseFormatError err
-          pure $ Left $ printResponseFormatError err
-        Right json -> do
-          liftEffect $ log $ "POST method Completed"
-          liftEffect $ log $ "GET /api response: " <> stringify json
-          let obj = decodeJson json
-          case obj of
-            Left e ->
-              liftEffect $ log $ "Error Decoding : " <> show e
-            Right (LoginRes res1) ->
-              liftEffect $ setToken res1.token
-          pure obj
+loginReq :: LoginReq -> Aff LoginRes
+loginReq = post "https://dev.gargantext.org/api/auth/token"
 
 instance decodeLoginRes :: DecodeJson LoginRes where
   decodeJson json = do

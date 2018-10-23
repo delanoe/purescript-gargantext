@@ -2,28 +2,24 @@
 
 module Gargantext.Pages.Layout.Actions where
 
-import Prelude hiding (div)
-
 import Control.Monad.Cont.Trans                        (lift)
 import Data.Either                                     (Either(..))
 import Data.Lens                                       (Prism', prism)
 import Effect.Class                                    (liftEffect)
-import Effect.Console                                  (log)
+import Thermite                                        (PerformAction, modifyState)
+
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Modals.Modal              (modalShow)
 import Gargantext.Components.Tree                   as Tree
-
-import Gargantext.Pages.Corpus                      as Corpus
-import Gargantext.Pages.Corpus.Doc.Annotation       as D
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
-import Gargantext.Pages.Annuaire.User.Contacts           as C
 import Gargantext.Pages.Annuaire             as Annuaire
+import Gargantext.Pages.Annuaire.User.Contacts      as C
+import Gargantext.Pages.Corpus.Document       as D
+import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Pages.Layout.States                  (AppState)
+import Gargantext.Prelude
 import Gargantext.Router                               (Routes)
-import Thermite                                        (PerformAction, modifyState)
 
 ------------------------------------------------------------------------
 
@@ -31,14 +27,12 @@ data Action
   = Initialize
   | LoginA     LN.Action
   | SetRoute   Routes
-  | AddCorpusA AC.Action
-  | DocViewA   DV.Action
-  | SearchA    S.Action
-  | Search             String
   | TreeViewA          Tree.Action
-  | CorpusAction       Corpus.Action
+    | SearchA    S.Action
+    | Search             String
+    | AddCorpusA AC.Action
     | GraphExplorerA     GE.Action
-  | DocAnnotationViewA D.Action
+    | DocumentViewA D.Action
   | AnnuaireAction     Annuaire.Action
     | UserPageA  C.Action
   | Go
@@ -70,40 +64,19 @@ performAction Go  _ _ = void do
 ---------------------------------------------------------
 
 performAction Initialize  _ state = void do
-  _ <- liftEffect $ log "loading Initial nodes"
+  _ <- logs "loading Initial nodes"
   case state.initialized of
     false -> do
       lnodes <- lift $ Tree.loadDefaultNode
-      case lnodes of
-        Left err -> do
-          pure unit
-        Right d -> do
-          _ <- modifyState $ _ { initialized = true, ntreeState = d}
-          pure unit
---          page <- lift $ DV.loadPage
---          case page of
---            Left err -> do
---              pure unit
---            Right docs -> void do
---              modifyState $ _ { initialized = true
---                              , ntreeState = d
---                                -- if length d > 0
---                                --             then Tree.exampleTree
---                                --            --then fnTransform $ unsafePartial $ fromJust $ head d
---                                --            else Tree.initialState
---
---                              , docViewState = docs
---                              }
+      void $ modifyState $ _ { initialized = true, ntreeState = lnodes }
     _ -> do
       pure unit
 
 performAction (LoginA        _) _ _ = pure unit
 performAction (AddCorpusA    _) _ _ = pure unit
-performAction (CorpusAction  _) _ _ = pure unit
-performAction (DocViewA      _) _ _ = pure unit
 performAction (SearchA       _) _ _ = pure unit
 performAction (UserPageA     _) _ _ = pure unit
-performAction (DocAnnotationViewA _) _ _ = pure unit
+performAction (DocumentViewA _) _ _ = pure unit
 performAction (TreeViewA          _) _ _ = pure unit
 performAction (GraphExplorerA     _) _ _ = pure unit
 performAction (AnnuaireAction     _) _ _ = pure unit
@@ -120,18 +93,6 @@ _addCorpusAction :: Prism' Action AC.Action
 _addCorpusAction = prism AddCorpusA \action ->
   case action of
     AddCorpusA caction -> Right caction
-    _-> Left action
-
-_corpusAction :: Prism' Action Corpus.Action
-_corpusAction = prism CorpusAction \action ->
-  case action of
-    CorpusAction caction -> Right caction
-    _-> Left action
-
-_docViewAction :: Prism' Action DV.Action
-_docViewAction = prism DocViewA \action ->
-  case action of
-    DocViewA caction -> Right caction
     _-> Left action
 
 _searchAction :: Prism' Action S.Action
@@ -152,10 +113,10 @@ _annuaireAction = prism AnnuaireAction \action ->
        AnnuaireAction a -> Right a
        _                -> Left  action
 
-_docAnnotationViewAction :: Prism' Action D.Action
-_docAnnotationViewAction = prism DocAnnotationViewA \action ->
+_documentViewAction :: Prism' Action D.Action
+_documentViewAction = prism DocumentViewA \action ->
   case action of
-    DocAnnotationViewA caction -> Right caction
+    DocumentViewA caction -> Right caction
     _-> Left action
 
 _treeAction :: Prism' Action Tree.Action

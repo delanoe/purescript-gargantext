@@ -7,11 +7,10 @@ import Data.Maybe                                      (Maybe(Just))
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Tree                   as Tree
 
-import Gargantext.Pages.Corpus                      as Corpus
-import Gargantext.Pages.Corpus.Doc.Annotation       as D
-import Gargantext.Pages.Annuaire             as Annuaire
-import Gargantext.Pages.Corpus.Doc.Facets.Documents as DV
-import Gargantext.Pages.Corpus.Doc.Facets.Graph     as GE
+import Gargantext.Pages.Corpus.Document       as D
+import Gargantext.Pages.Annuaire                    as Annuaire
+import Gargantext.Pages.Corpus.Tabs.Documents as DV
+import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Annuaire.User.Contacts      as C
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
@@ -20,12 +19,11 @@ import Gargantext.Router                               (Routes(..))
 type AppState =
   { currentRoute   :: Maybe Routes
   , loginState   :: LN.State
-  , corpus         :: Corpus.State
   , addCorpusState :: AC.State
   , docViewState   :: DV.State
   , searchState    :: S.State
   , userPageState  :: C.State
-  , docAnnotationState :: D.State
+  , documentState  :: D.State
   , annuaireState  :: Annuaire.State
   , ntreeState     :: Tree.State
   , search         :: String
@@ -38,13 +36,12 @@ type AppState =
 initAppState :: AppState
 initAppState =
   { currentRoute   : Just Home
-  , corpus         : Corpus.initialState
   , loginState     : LN.initialState
   , addCorpusState : AC.initialState
-  , docViewState   : DV.tdata
+  , docViewState   : DV.initialState
   , searchState    : S.initialState
   , userPageState  : C.initialState
-  , docAnnotationState : D.initialState
+  , documentState  : D.initialState
   , ntreeState     : Tree.exampleTree
   , annuaireState  : Annuaire.initialState
   , search         : ""
@@ -61,9 +58,6 @@ _loginState = lens (\s -> s.loginState) (\s ss -> s{loginState = ss})
 _addCorpusState :: Lens' AppState AC.State
 _addCorpusState = lens (\s -> s.addCorpusState) (\s ss -> s{addCorpusState = ss})
 
-_corpusState :: Lens' AppState Corpus.State
-_corpusState = lens (\s -> s.corpus) (\s ss -> s{corpus = ss})
-
 _docViewState :: Lens' AppState DV.State
 _docViewState = lens (\s -> s.docViewState) (\s ss -> s{docViewState = ss})
 
@@ -76,8 +70,8 @@ _userPageState = lens (\s -> s.userPageState) (\s ss -> s{userPageState = ss})
 _annuaireState :: Lens' AppState Annuaire.State
 _annuaireState = lens (\s -> s.annuaireState) (\s ss -> s{annuaireState = ss})
 
-_docAnnotationViewState :: Lens' AppState D.State
-_docAnnotationViewState = lens (\s -> s.docAnnotationState) (\s ss -> s{docAnnotationState = ss})
+_documentViewState :: Lens' AppState D.State
+_documentViewState = lens (\s -> s.documentState) (\s ss -> s{documentState = ss})
 
 _treeState :: Lens' AppState Tree.State
 _treeState = lens (\s -> s.ntreeState) (\s ss -> s {ntreeState = ss})

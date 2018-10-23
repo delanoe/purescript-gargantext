@@ -1,13 +1,12 @@
 module Gargantext.Router where
 
-import Prelude
+import Gargantext.Prelude
 
 import Control.Alt ((<|>))
 import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
 import Routing.Match (Match, lit, num)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -20,9 +19,7 @@ data Routes
   | Folder             Int
     | Corpus           Int
       | AddCorpus
-      | Tabview
-      | DocView        Int
-      | DocAnnotation  Int
+      | Document  Int
       | PGraphExplorer
       | NGramsTable
       | Dashboard
@@ -36,10 +33,8 @@ routing =
   <|> AddCorpus        <$   route "addCorpus"
   <|> Folder           <$> (route "folder"   *> int)
   <|> Corpus           <$> (route "corpus"   *> int)
-    <|> Tabview        <$   route "tabview"
-      <|> DocView      <$> (route "docView"  *> int)
-      <|> NGramsTable  <$   route "ngrams"
-    <|> DocAnnotation  <$> (route "document" *> int)
+    <|> NGramsTable  <$   route "ngrams"
+    <|> Document  <$> (route "document" *> int)
     <|> Dashboard      <$   route "dashboard"
     <|> PGraphExplorer <$   route "graph"
   <|> Annuaire         <$> (route "annuaire" *> int)
@@ -57,10 +52,8 @@ instance showRoutes :: Show Routes where
   show AddCorpus        = "AddCorpus"
   show SearchView       = "Search"
   show (UserPage i)     = "User"   <> show i
-  show (DocAnnotation i)= "Document"
+  show (Document i)= "Document"
   show (Corpus i)       = "Corpus" <> show i
-  show Tabview          = "Tabview"
-  show (DocView i)      = "DocView"
   show NGramsTable      = "NGramsTable"
   show (Annuaire i)     = "Annuaire" <> show i
   show (Folder   i)     = "Folder"   <> show i
@@ -72,19 +65,19 @@ instance showRoutes :: Show Routes where
 routeHandler :: (Maybe Routes -> Routes -> Effect Unit)
               -> Maybe Routes -> Routes -> Effect Unit
 routeHandler dispatchAction old new = do
-  liftEffect $ log $ "change route : " <> show new
+  logs $ "change route : " <> show new
   
   w      <- window
   ls     <- localStorage w
   token  <- getItem "accessToken" ls
   let tkn = token
   
-  liftEffect $ log $ "JWToken : " <> show tkn
+  logs $ "JWToken : " <> show tkn
   
   case tkn of
     Nothing -> do
       dispatchAction old new
-      liftEffect $ log $ "called SignIn Route :"
+      logs $ "called SignIn Route :"
     Just t -> do
       dispatchAction old new
-      liftEffect $ log $ "called Route : " <> show new
+      logs $ "called Route : " <> show new
