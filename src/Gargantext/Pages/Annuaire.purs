@@ -3,6 +3,7 @@ module Gargantext.Pages.Annuaire where
 import Control.Monad.Trans.Class (lift)
 import Data.Lens (Lens', lens, (?~))
 import Data.Maybe (Maybe(..), maybe)
+import Data.Map (lookup)
 import React (ReactElement)
 import React.DOM (a, b, b', br', div, h3, hr, i, input, p, table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (className, href, scope, style)
@@ -69,7 +70,7 @@ defaultAnnuaireInfo = AnnuaireInfo { id : 0
                                    , hyperdata : ""
                                    }
 ------------------------------------------------------------------------------
-toRows :: AnnuaireTable -> Array (Maybe Contact)
+toRows :: AnnuaireTable -> Array (Maybe (Contact Void Void))
 toRows (AnnuaireTable a) = a.annuaireTable
 
 layoutAnnuaire :: Spec State {} Action
@@ -131,17 +132,24 @@ layoutAnnuaire = simpleSpec performAction render
                           individuals = maybe (toRows defaultAnnuaireTable) toRows state.stable
 
 
-showRow :: Maybe Contact -> ReactElement
+showRow :: Maybe (Contact Void Void) -> ReactElement
 showRow Nothing = tr [][]
-showRow (Just (Contact { id : id, hyperdata : (HyperData contact) })) =
+showRow (Just (Contact {id: id, hyperdata: (HyperData {specific: contact}) })) =
   tr []
-  [ td [] [ a [ href (toUrl Front NodeUser id) ] [ text $ maybe' contact.nom <> " " <> maybe' contact.prenom ] ]
-  , td [] [text $ maybe' contact.fonction]
-  , td [] [text $ maybe' contact.service]
-  , td [] [text $ maybe' contact.groupe]
+  [ td [] [ a [ href (toUrl Front NodeUser id) ] [
+               text $
+               (maybe' $ lookInContact "prenom")
+               <> " "
+               <> (maybe'$ lookInContact "nom")
+               ]
+          ]
+  , td [] [text $ maybe' $ lookInContact "fonction"]
+  , td [] [text $ maybe' $ lookInContact "service"]
+  , td [] [text $ maybe' $ lookInContact "groupe"]
   ]
     where
       maybe' = maybe "" identity
+      lookInContact key = lookup key contact
 
 
 ------------------------------------------------------------------------------
@@ -174,7 +182,7 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
                         }
 
 
-newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe Contact)}
+newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe (Contact Void Void))}
 instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
   decodeJson json = do
     rows <- decodeJson json

@@ -4,11 +4,12 @@ module Gargantext.Pages.Annuaire.User.Contacts.Specs.Renders
 import Gargantext.Pages.Annuaire.User.Contacts.Types
 
 import Data.List (List, zipWith, catMaybes, toUnfoldable)
-import Data.Unfoldable (class Unfoldable)
 import Data.Map (Map, empty, keys, values, lookup)
-import Data.Set (toUnfoldable) as S
 import Data.Maybe (Maybe(..))
+import Data.Set (toUnfoldable) as S
 import Data.Tuple (Tuple(..), uncurry)
+import Data.Unfoldable (class Unfoldable)
+import Prelude (Void)
 import Prelude (($), (<<<), (<$>), flip, class Ord)
 import React (ReactElement)
 import React.DOM (div, h3, img, li, span, text, ul)
@@ -54,7 +55,7 @@ mapMyMap f m = toUnfoldable
 
 infixl 4 mapMyMap as <.~$>
 
-contactInfos :: HyperData -> ReactElement
+contactInfos :: HyperData Void Void -> ReactElement
 contactInfos hyperdata =
     ul [className "list-group"] [] {- $
     listInfo <.~$> hyperdata

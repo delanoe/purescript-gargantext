@@ -6,88 +6,50 @@ import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
 import Data.Maybe (Maybe(..))
+import Data.Map (Map(..))
+
+import React (ReactElement)
+import React.DOM (div)
 
 import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.DecodeMaybe ((.?|))
+import Gargantext.Utils.Renderable
 
-newtype Contact = Contact
-  { id        :: Int
-  , typename  :: Maybe Int
-  , userId    :: Int
-  , parentId  :: Int
-  , name      :: String
-  , date      :: Maybe String
-  , hyperdata :: HyperData
+data Contact c s = Contact {
+  id :: Int
+  , typename :: Maybe Int
+  , userId :: Int
+  , parentId :: Maybe Int
+  , name :: String
+  , date :: Maybe String
+  , hyperdata :: HyperData c s
   }
 
-newtype HyperData =
+data HyperData c s =
   HyperData
-  { bureau :: Maybe String
-  , atel   :: Maybe String
-  , fax    :: Maybe String
-  , aprecision :: Maybe String
-  , service    :: Maybe String
-  , service2   :: Maybe String
-  , groupe     :: Maybe String
-  , lieu       :: Maybe String
-  , pservice   :: Maybe String
-  , date_modification :: Maybe String
-  , fonction          :: Maybe String
-  , pfonction         :: Maybe String
-  , url               :: Maybe String
-  , prenom            :: Maybe String
-  , nom               :: Maybe String
-  , idutilentite      :: Maybe String
-  , afonction         :: Maybe String
-  , grprech           :: Maybe String
-  , entite            :: Maybe String
-  , entite2           :: Maybe String
-  , mail              :: Maybe String
+  { common :: c
+  , shared :: s
+  , specific :: Map String String
   }
 
-instance decodeUserHyperData :: DecodeJson HyperData where
+instance decodeUserHyperData :: (DecodeJson c, DecodeJson s) =>
+                                DecodeJson (HyperData c s) where
+  decodeJson json = do
+    common <- decodeJson json
+    shared <- decodeJson json
+    specific <- decodeJson json
+    pure $ HyperData {common, shared, specific}
+
+instance decodeUser :: (DecodeJson c, DecodeJson s) =>
+                       DecodeJson (Contact c s) where
   decodeJson json = do
     obj <- decodeJson json
-    bureau <- obj .?| "bureau"
-    atel   <- obj .?| "atel"
-    fax    <- obj .?| "fax"
-    aprecision <- obj .?| "aprecision"
-    service    <- obj .?| "service"
-    service2   <- obj .?| "service2"
-    groupe     <- obj .?| "groupe"
-    lieu       <- obj .?| "lieu"
-    pservice   <- obj .?| "pservice"
-    date_modification <- obj .?| "date_modification"
-    fonction          <- obj .?| "fonction"
-    pfonction         <- obj .?| "pfonction"
-    url               <- obj .?| "url"
-    prenom            <- obj .?| "prenom"
-    nom               <- obj .?| "nom"
-    idutilentite    <- obj .?| "idutilentite"
-    afonction       <- obj .?| "afonction"
-    grprech         <- obj .?| "grprech"
-    entite          <- obj .?| "entite"
-    entite2         <- obj .?| "entite2"
-    mail            <- obj .?| "mail"
-    pure $ HyperData { bureau, atel, fax
-                     , aprecision, service
-                     , service2, groupe, lieu
-                     , pservice, date_modification
-                     , fonction, pfonction, url
-                     , prenom, nom, idutilentite
-                     , afonction, grprech, entite
-                     , entite2, mail
-                     }
-
-instance decodeUser :: DecodeJson Contact where
-  decodeJson json = do
-    obj      <- decodeJson json
-    id       <- obj .? "id"
+    id <- obj .? "id"
     typename <- obj .?| "typename"
-    userId   <- obj .? "userId"
-    parentId <- obj .? "parentId"
-    name     <- obj .? "name"
-    date     <- obj .?| "date"
+    userId <- obj .? "userId"
+    parentId <- obj .?| "parentId"
+    name <- obj .? "name"
+    date <- obj .?| "date"
     hyperdata <- obj .? "hyperdata"
     pure $ Contact { id, typename, userId
                    , parentId, name, date
@@ -100,7 +62,7 @@ data Action
 
 type State =
   { activeTab :: Int
-  , contact :: Maybe Contact
+  , contact :: Maybe (Contact )
   }
 
 initialState :: State
@@ -109,7 +71,7 @@ initialState =
   , contact: Nothing
   }
 
-_contact :: Lens' State (Maybe Contact)
+_contact :: Lens' State (Maybe (Contact Unit Unit))
 _contact = lens (\s -> s.contact) (\s ss -> s{contact = ss})
 
 _tablens :: Lens' State Tab.State
