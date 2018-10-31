@@ -18,6 +18,8 @@ import Data.Map as DM
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
 
+import Gargantext.Types
+
 endConfig :: EndConfig
 endConfig = endConfig' V10
 
@@ -113,6 +115,7 @@ toUrl e nt i = doUrl base path params
 data NodeType = NodeUser
               | Annuaire
               | Tab TabType Offset Limit (Maybe OrderBy)
+              | Ngrams TabType (Maybe TermList)
               | Corpus
               | CorpusV3
               | Dashboard
@@ -157,6 +160,7 @@ instance showTabType :: Show TabType where
 urlConfig :: NodeType -> Url
 urlConfig Annuaire  = show Annuaire
 urlConfig nt@(Tab _ _ _ _) = show nt
+urlConfig nt@(Ngrams _ _) = show nt
 urlConfig Corpus    = show Corpus
 urlConfig CorpusV3  = show CorpusV3
 urlConfig Dashboard = show Dashboard
@@ -186,12 +190,21 @@ instance showNodeType :: Show NodeType where
                          <> "&limit=" <> show l <> os
     where
       os = maybe "" (\x -> "&order=" <> show x) s
+  show (Ngrams t listid) = "listGet?ngramsType=" <> show t <> listid'
+    where
+      listid' = maybe "" (\x -> "&list=" <> show x) listid
 
 -- | TODO : where is the Read Class ?
+-- NP: We don't need the Read class. Here are the encoding formats we need:
+-- * JSON
+-- * URL parts has in {To,From}HttpApiData but only for certain types
+-- The Show class should only be used for dev.
+
 -- instance readNodeType :: Read NodeType where
 readNodeType :: String -> NodeType
 readNodeType "NodeAnnuaire"   = Annuaire
 readNodeType "Tab"   = (Tab TabDocs 0 0 Nothing)
+readNodeType "Ngrams"   = (Ngrams TabTerms Nothing)
 readNodeType "NodeDashboard"  = Dashboard
 readNodeType "Document"   = Url_Document
 readNodeType "NodeFolder"     = Folder

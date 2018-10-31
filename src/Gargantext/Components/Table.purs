@@ -15,6 +15,14 @@ import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
 
+type TableContainerProps =
+  { pageSizeControl     :: ReactElement
+  , pageSizeDescription :: ReactElement
+  , paginationLinks     :: ReactElement
+  , tableHead           :: ReactElement
+  , tableBody           :: Array ReactElement
+  }
+
 type Rows = Array { row    :: Array ReactElement
                   , delete :: Boolean
                   }
@@ -33,10 +41,10 @@ columnName (ColumnName c) = c
 data OrderByDirection a = ASC a | DESC a
 
 type Props' =
-  ( title        :: String
-  , colNames     :: Array ColumnName
+  ( colNames     :: Array ColumnName
   , totalRecords :: Int
   , loadRows     :: LoadRows
+  , container    :: TableContainerProps -> Array ReactElement
   )
 
 type Props = Record Props'
@@ -137,27 +145,37 @@ tableSpec = simpleSpec performAction render
             _ -> [lnk (Just (ASC c)) (columnName c)]
 
     render :: Render State Props Action
-    render dispatch {title, colNames, totalRecords}
+    render dispatch {container, colNames, totalRecords}
                     {pageSize, currentPage, orderBy, rows} _ =
-      let
+      container
+        { pageSizeControl: sizeDD pageSize dispatch
+        , pageSizeDescription: textDescription currentPage pageSize totalRecords
+        , paginationLinks: pagination (dispatch <<< ChangePage) totalPages currentPage
+        , tableHead:
+            tr [] (renderColHeader (dispatch <<< ChangeOrderBy) orderBy <$> colNames)
+        , tableBody:
+            map (tr [] <<< map (\c -> td [] [c]) <<< _.row)
+                (maybe [] identity rows)
+            -- TODO display a loading spinner when rows == Nothing
+            -- instead of an empty list of results.
+        }
+      where
         ps = pageSizes2Int pageSize
         totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
-      in
-      [ div [className "row"]
-        [ div [className "col-md-1"] [b [] [text title]]
-        , div [className "col-md-2"] [sizeDD pageSize dispatch]
-        , div [className "col-md-3"] [textDescription currentPage pageSize totalRecords]
-        , div [className "col-md-3"] [pagination (dispatch <<< ChangePage) totalPages currentPage]
-              ]
-      , table [ className "table"]
-        [ thead [className "thead-dark"]
-                [tr [] (renderColHeader (dispatch <<< ChangeOrderBy) orderBy <$> colNames)]
-        , tbody [] $ map (tr [] <<< map (\c -> td [] [c]) <<< _.row)
-                         (maybe [] identity rows)
-                      -- TODO display a loading spinner when rows == Nothing
-                      -- instead of an empty list of results.
-        ]
-      ]
+
+defaultContainer :: {title :: String} -> TableContainerProps -> Array ReactElement
+defaultContainer {title} props =
+  [ div [className "row"]
+    [ div [className "col-md-1"] [b [] [text title]]
+    , div [className "col-md-2"] [props.pageSizeControl]
+    , div [className "col-md-3"] [props.pageSizeDescription]
+    , div [className "col-md-3"] []
+    ]
+  , table [ className "table"]
+    [ thead [className "thead-dark"] [ props.tableHead ]
+    , tbody [] props.tableBody
+    ]
+  ]
 
 loadAndSetRows :: {loadRows :: LoadRows} -> State -> StateCoTransformer State Unit
 loadAndSetRows {loadRows} {pageSize, currentPage, orderBy} = do
@@ -193,7 +211,7 @@ sizeDD ps d
 textDescription :: Int -> PageSizes -> Int -> ReactElement
 textDescription currPage pageSize totalRecords
   =  div [className "row1"]
-          [ div [className ""]
+          [ div [className ""] -- TODO or col-md-6 ?
                 [ text $ "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords ]
           ]
     where

@@ -252,7 +252,7 @@ instance decodeJsonLNode :: DecodeJson LNode where
                  , renameNodeValue : ""
                }
 
-instance decodeJsonFTree :: DecodeJson (NTree LNode) where
+instance decodeJsonNTree :: DecodeJson a => DecodeJson (NTree a) where
   decodeJson json = do
     obj <- decodeJson json
     node <- obj .? "node"

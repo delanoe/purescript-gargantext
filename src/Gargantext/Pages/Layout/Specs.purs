@@ -21,7 +21,7 @@ import Gargantext.Pages.Corpus     as Corpus
 import Gargantext.Pages.Corpus.Document as Annotation
 import Gargantext.Pages.Corpus.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Graph as GE
-import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
+import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as NG
 import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
@@ -65,7 +65,8 @@ pagesComponent s = case s.currentRoute of
     selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  C.layoutUser
     -- To be removed
-    selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
+    selectSpec NGramsTable       = layout0 $ cmapProps (const {nodeId: i}) $ noState NG.ngramsTableSpec
+      where i = 0 -- TODO
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 

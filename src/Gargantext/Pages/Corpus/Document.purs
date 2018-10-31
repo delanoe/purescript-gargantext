@@ -3,7 +3,7 @@ module Gargantext.Pages.Corpus.Document where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
 import Data.Generic.Rep (class Generic)
-import Data.Lens (Lens', Prism', lens, prism, (?~))
+import Data.Lens (Lens', lens, (?~))
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))

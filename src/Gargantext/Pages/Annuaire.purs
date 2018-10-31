@@ -92,7 +92,7 @@ loadedAnnuaireSpec = simpleSpec defaultPerformAction render
       , br'
       , Table.tableElt
           { loadRows
-          , title: "title" -- TODO
+          , container: Table.defaultContainer { title: "title" } -- TODO
           , colNames:
               Table.ColumnName <$>
               [ ""

@@ -125,7 +125,7 @@ layoutDocview = simpleSpec absurd render
           , div [className "col-md-12"]
             [ T.tableElt
                 { loadRows
-                , title: "Documents"
+                , container: T.defaultContainer { title: "Documents" }
                 , colNames:
                     T.ColumnName <$>
                     [ ""
