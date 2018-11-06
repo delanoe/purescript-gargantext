@@ -1,26 +1,35 @@
 module Gargantext.Pages.Corpus.Tabs.Documents where
 
-import Data.Array (take, drop)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Gargantext.Prelude
 
+import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax.RequestBody (RequestBody(..))
+import Affjax.ResponseFormat as ResponseFormat
+import Control.Monad.Cont.Trans (lift)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Data.Array (take, drop)
+import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.HTTP.Method (Method(..))
+import Data.Maybe (Maybe(..))
 import Data.Maybe (maybe)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
-import React.DOM (a, br', div, input, p, text)
-import React.DOM.Props (_type, className, href)
-import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
-------------------------------------------------------------------------
-import Gargantext.Prelude
+import Effect.Class (liftEffect)
+import Effect.Console (log)
+import Gargantext.Components.Charts.Options.ECharts (chart)
+import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Components.Table as T
 import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..), OrderBy(..))
 import Gargantext.Config.REST (get, post)
-import Gargantext.Utils.DecodeMaybe ((.|))
-import Gargantext.Components.Charts.Options.ECharts (chart)
-import Gargantext.Components.Table as T
-import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), Props)
 import Gargantext.Pages.Corpus.Dashboard (globalPublis)
+import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), Props)
+import Gargantext.Utils.DecodeMaybe ((.|))
+import React.DOM (a, br', div, input, p, text)
+import React.DOM.Props (_type, className, href, onClick)
+import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, modifyState, simpleSpec)
 ------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
 -- TODO: Search is pending
@@ -29,9 +38,21 @@ import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 -- TODO: Filter is Pending
 -- TODO: When a pagination link is clicked, reload data. 
 
-type State = {}
+type State = 
+  { documents :: DocumentsView
+  }
 
-type Action = Void
+data Action = SendFavorites Int
+
+
+performAction :: PerformAction State Props Action
+performAction (SendFavorites nid) _ _ = void $ do
+  
+  s' <- lift $ favorites nid (FavoriteQuery {favorites : [nid]})
+  case s' of
+    Left err -> modifyState identity
+    Right d -> modifyState identity
+
 
 newtype DocumentsView
   = DocumentsView
@@ -65,22 +86,6 @@ newtype Hyperdata = Hyperdata
   , source :: String
   }
 
---instance decodeHyperdata :: DecodeJson Hyperdata where
---  decodeJson json = do
---    obj    <- decodeJson json
---    title  <- obj .? "title"
---    source <- obj .? "source"
---    pure $ Hyperdata { title,source }
---instance decodeResponse :: DecodeJson Response where
---  decodeJson json = do
---    obj        <- decodeJson json
---    cid        <- obj .? "id"
---    created    <- obj .? "created"
---    favorite   <- obj .? "favorite"
---    ngramCount <- obj .? "ngramCount"
---    hyperdata  <- obj .? "hyperdata"
---    pure $ Response { cid, created, favorite, ngramCount, hyperdata }
-
 
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
@@ -100,10 +105,13 @@ instance decodeResponse :: DecodeJson Response where
     hyperdata  <- obj .? "hyperdata"
     pure $ Response { cid, created, favorite, ngramCount, hyperdata }
 
+fa :: Boolean -> String
+fa true  = "fas "
+fa false = "far "
 
 
 -- | Filter
-filterSpec :: Spec {} {} Void
+filterSpec :: Spec {} {} Action
 filterSpec = simpleSpec defaultPerformAction render
   where
     render d p s c = [div [] [ text "    Filter "
@@ -111,10 +119,10 @@ filterSpec = simpleSpec defaultPerformAction render
                      ]]
 
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: Spec {} Props Void
-layoutDocview = simpleSpec absurd render
+layoutDocview :: Spec State Props Action
+layoutDocview = simpleSpec performAction render
   where
-    render :: Render {} Props Void
+    render :: Render State Props Action
     render dispatch {path: nodeId, loaded} _ _ =
       [ div [className "container1"]
         [ div [className "row"]
@@ -124,12 +132,12 @@ layoutDocview = simpleSpec absurd render
             , div [] [ text "    Filter ", input []]
             , br'
             , T.tableElt
-                { loadRows
+                { loadRows 
                 , title: "Documents"
                 , colNames:
                     T.ColumnName <$>
                     [ ""
-                    , "Date"
+                    , "Date "
                     , "Title"
                     , "Source"
                     , "Delete"
@@ -146,14 +154,17 @@ layoutDocview = simpleSpec absurd render
         ]
       ]
       where
-        loadRows {offset, limit, orderBy} = do
+        loadRows  {offset, limit, orderBy} = do
           _ <- logs "loading documents page"
           res <- loadPage {nodeId,offset,limit,orderBy}
           _ <- logs "OK: loading page documents."
           pure $
             (\(DocumentsView r) ->
                 { row:
-                    [ div [className $ fa r.fav <> "fa-star"] []
+                    [ div [] 
+                    [
+                      a [className $ fa r.fav <> "fa-star" ,onClick $ (\_-> dispatch $ (SendFavorites r._id))] []
+                    ]
                     -- TODO show date: Year-Month-Day only
                     , text r.date
                     , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
@@ -215,7 +226,6 @@ newtype SearchQuery = SearchQuery
   , parent_id :: Int
   }
 
-
 instance encodeJsonSQuery :: EncodeJson SearchQuery where
   encodeJson (SearchQuery post)
      = "query" := post.query
@@ -223,7 +233,53 @@ instance encodeJsonSQuery :: EncodeJson SearchQuery where
     ~> jsonEmptyObject
 
 
+newtype FavoriteQuery = FavoriteQuery 
+  { favorites :: Array Int
+  }
+
+instance encodeJsonFQuery :: EncodeJson FavoriteQuery where
+  encodeJson (FavoriteQuery post)
+     = "favorites" := post.favorites
+    ~> jsonEmptyObject
+
+
 
 searchResults :: SearchQuery -> Aff Int
 searchResults squery = post "http://localhost:8008/count" unit
   -- TODO
+
+
+
+favorites :: Int -> FavoriteQuery -> Aff (Either String (Array Int))
+favorites nodeId reqbody= do
+  res <- request $ defaultRequest
+         { url = "http://localhost:8008/api/v1.0/node/"<>show nodeId <>"/favorites"
+         , responseFormat = ResponseFormat.json
+         , method = Left PUT
+         , headers = []
+         , content = Just $ Json $ encodeJson reqbody
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      let obj = decodeJson json
+      pure obj
+
+deleteFavorites :: Int -> FavoriteQuery -> Aff (Either String (Array Int))
+deleteFavorites nodeId reqbody= do
+  res <- request $ defaultRequest
+         { url = "http://localhost:8008/api/v1.0/node/"<>show nodeId<>"/favorites"
+         , responseFormat = ResponseFormat.json
+         , method = Left DELETE
+         , headers = []
+         , content = Just $ Json $ encodeJson reqbody
+         }
+  case res.body of
+    Left err -> do
+      _ <- liftEffect $ log $ printResponseFormatError err
+      pure $ Left $ printResponseFormatError err
+    Right json -> do
+      let obj = decodeJson json
+      pure obj
