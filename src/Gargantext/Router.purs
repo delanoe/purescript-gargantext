@@ -34,7 +34,7 @@ routing =
   <|> Folder           <$> (route "folder"   *> int)
   <|> Corpus           <$> (route "corpus"   *> int)
     <|> NGramsTable  <$   route "ngrams"
-    <|> Document  <$> (route "document" *> int)
+    <|> Document     <$> (route "document" *> int)
     <|> Dashboard      <$   route "dashboard"
     <|> PGraphExplorer <$   route "graph"
   <|> Annuaire         <$> (route "annuaire" *> int)
@@ -52,7 +52,7 @@ instance showRoutes :: Show Routes where
   show AddCorpus        = "AddCorpus"
   show SearchView       = "Search"
   show (UserPage i)     = "User"   <> show i
-  show (Document i)= "Document"
+  show (Document i)     = "Document"
   show (Corpus i)       = "Corpus" <> show i
   show NGramsTable      = "NGramsTable"
   show (Annuaire i)     = "Annuaire" <> show i
