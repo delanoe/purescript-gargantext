@@ -16,5 +16,4 @@ authorSpec :: Spec State {} Action
 authorSpec = simpleSpec defaultPerformAction render
   where
     render :: Render State {} Action
-    render dispatch _ state _ =
-       [ h3 [] [text "AuthorView"]]
+    render dispatch _ state _ = []

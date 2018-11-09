@@ -16,5 +16,4 @@ sourceSpec :: Spec State {} Action
 sourceSpec = simpleSpec defaultPerformAction render
   where
     render :: Render State {} Action
-    render dispatch _ state _ =
-      [ h3 [] [text "Source view"]]
+    render dispatch _ state _ = []

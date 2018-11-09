@@ -5,6 +5,7 @@ import Gargantext.Pages.Corpus.Tabs.Documents as D
 import Gargantext.Pages.Corpus.Tabs.Sources   as S
 import Gargantext.Pages.Corpus.Tabs.Authors   as A
 import Gargantext.Pages.Corpus.Tabs.Terms     as T
+import Gargantext.Pages.Corpus.Tabs.Trash     as TT
 import Gargantext.Components.Tab as Tab
 
 
@@ -13,6 +14,7 @@ type State =
   , authorsView :: A.State
   , sourcesView :: S.State
   , termsView   :: T.State
+  , trashView   :: TT.State
   , activeTab   :: Int
   }
 
@@ -22,6 +24,7 @@ initialState =
   , authorsView : A.initialState
   , sourcesView : S.initialState
   , termsView   : T.initialState
+  , trashView   : TT.initialState
   , activeTab : 0
   }
 
@@ -36,6 +39,9 @@ _sourcelens = lens (\s -> s.sourcesView) (\s ss -> s {sourcesView = ss})
 
 _termslens :: Lens' State T.State
 _termslens = lens (\s -> s.termsView) (\s ss -> s {termsView = ss})
+
+_trashlens :: Lens' State TT.State
+_trashlens = lens (\s -> s.trashView) (\s ss -> s {trashView = ss})
 
 _tablens :: Lens' State Tab.State
 _tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})

@@ -17,5 +17,4 @@ termsSpec :: Spec State {} Action
 termsSpec = simpleSpec defaultPerformAction render
   where
     render :: Render State {} Action
-    render dispatch _ state _ =
-      [ h3 [] [text "Terms view"]]
+    render dispatch _ state _ = []

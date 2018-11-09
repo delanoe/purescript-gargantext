@@ -5,9 +5,10 @@ import Data.Lens (Prism', prism)
 import Data.Either (Either(..))
 
 import Gargantext.Pages.Corpus.Tabs.Documents as DV
-import Gargantext.Pages.Corpus.Tabs.Sources as SV
-import Gargantext.Pages.Corpus.Tabs.Authors as AV
-import Gargantext.Pages.Corpus.Tabs.Terms as TV
+import Gargantext.Pages.Corpus.Tabs.Sources   as SV
+import Gargantext.Pages.Corpus.Tabs.Authors   as AV
+import Gargantext.Pages.Corpus.Tabs.Terms     as TV
+import Gargantext.Pages.Corpus.Tabs.Trash     as TT
 import Gargantext.Components.Tab as Tab
 
 data Action
@@ -15,6 +16,7 @@ data Action
   | SourceviewA SV.Action
   | AuthorviewA AV.Action
   | TermsviewA TV.Action
+  | TrashviewA TT.Action
   | TabViewA   Tab.Action
 
 _docAction :: Prism' Action DV.Action
@@ -40,6 +42,12 @@ _termsAction = prism TermsviewA \ action ->
   case action of
     TermsviewA laction -> Right laction
     _-> Left action
+
+_trashAction :: Prism' Action TT.Action
+_trashAction = prism TrashviewA \action ->
+  case action of
+    TrashviewA laction -> Right laction
+    _ -> Left action
 
 _tabAction :: Prism' Action Tab.Action
 _tabAction = prism TabViewA \ action ->
