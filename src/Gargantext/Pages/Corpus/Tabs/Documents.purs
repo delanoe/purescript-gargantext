@@ -9,7 +9,7 @@ import Data.Maybe (maybe)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import React.DOM (a, br', div, input, p, text)
-import React.DOM.Props (_type, className, href)
+import React.DOM.Props (_type, className, href, style, placeholder, name)
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
@@ -116,14 +116,14 @@ layoutDocview = simpleSpec absurd render
   where
     render :: Render {} Props Void
     render dispatch {path: nodeId, loaded} _ _ =
-      [ div [className "container1"]
+      [ p [] []
+      , div [ style {textAlign : "center"}] [input [placeholder "Filter here"]]
+      , br'
+      , div [className "container1"]
         [ div [className "row"]
           [ chart globalPublis
           , div [className "col-md-12"]
-            [ p [] []
-            , div [] [ text "    Filter ", input []]
-            , br'
-            , T.tableElt
+            [ T.tableElt
                 { loadRows
                 , title: "Documents"
                 , colNames:
