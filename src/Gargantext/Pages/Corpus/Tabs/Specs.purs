@@ -35,18 +35,18 @@ docPageSpec = focus _doclens _docAction DV.layoutDocview
 
 authorPageSpec :: Spec State  Props Action
 authorPageSpec = cmapProps (const {}) (focus _authorlens _authorAction AV.authorSpec)
-              <> docPageSpec
+              -- <> docPageSpec
 
 sourcePageSpec :: Spec State Props Action
 sourcePageSpec = cmapProps (const {}) (focus _sourcelens _sourceAction SV.sourceSpec)
-              <> docPageSpec
+              -- <> docPageSpec
 
 termsPageSpec :: Spec State Props Action
 termsPageSpec = cmapProps (const {}) (focus _termslens _termsAction TV.termsSpec)
-             <> docPageSpec
+             -- <> docPageSpec
 
 trashPageSpec :: Spec State Props Action
 trashPageSpec = cmapProps (const {}) (focus _trashlens _trashAction TT.spec)
-              <> docPageSpec
+              -- <> docPageSpec
 
 
