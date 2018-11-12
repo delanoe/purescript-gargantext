@@ -9,7 +9,11 @@ import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.Lens.Iso (re)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.List (List)
+import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
+import Data.Set (Set)
+import Data.Set as Set
 import Data.Tuple (Tuple(..), uncurry)
 import Data.Void (Void)
 import Data.Unit (Unit)
@@ -37,20 +41,47 @@ type Props' = { path :: Int
               , loaded :: Maybe NgramsTable
               }
 
+type NgramsTerm = String
+
+newtype NgramsElement = NgramsElement
+  { ngrams      :: NgramsTerm
+  , list        :: TermList
+  , occurrences :: Int
+  }
+
+instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
+  decodeJson json = do
+    obj <- decodeJson json
+    ngrams <- obj .? "ngrams"
+    list <- obj .? "list"
+    occurrences <- obj .? "occurrences"
+    pure $ NgramsElement {ngrams, list, occurrences}
+
 type NgramsTable = Array (NTree NgramsElement)
 
+data Replace a
+  = Keep
+  | Replace { old :: a, new :: a }
+
+type NgramsPatch = { rem_children :: Set NgramsTerm
+                   , add_children :: Set NgramsTerm
+                   , patch_list   :: Replace TermList
+                   }
+
+type NgramsTablePatch = Map NgramsTerm NgramsPatch
+
 type State =
-  { ngramsTable    :: NgramsTable
-  , searchQuery    :: String
-  , termListFilter :: Maybe TermList -- Nothing means all
-  , termTypeFilter :: Maybe TermType -- Nothing means all
+  { ngramsTablePatch :: NgramsTablePatch
+  , searchQuery      :: String
+  , termListFilter   :: Maybe TermList -- Nothing means all
+  , termTypeFilter   :: Maybe TermType -- Nothing means all
   }
 
 initialState :: State
-initialState = { ngramsTable:    []
-               , searchQuery:    ""
-               , termListFilter: Nothing
-               , termTypeFilter: Nothing
+initialState = { ngramsTablePatch: Map.empty
+               , searchQuery:      ""
+               , termListFilter:   Nothing
+               , termTypeFilter:   Nothing
                }
 
 data Action
@@ -135,7 +166,7 @@ ngramsTableSpec' = simpleSpec performAction render
     performAction (SetTermListItem _i _l) _ _ = pure unit -- TODO
 
     render :: Render State Props' Action
-    render dispatch {path: nodeId, loaded} {searchQuery {- TODO more state -} } _ =
+    render dispatch {path: nodeId, loaded: initTable} {searchQuery {- TODO more state -} } _ =
       [ T.tableElt
           { loadRows
           , container: tableContainer {searchQuery, dispatch}
@@ -171,20 +202,6 @@ ngramsTableSpec' = simpleSpec performAction render
     fa true  = "fas "
     fa false = "far "
 -}
-
-newtype NgramsElement = NgramsElement
-  { ngrams      :: String
-  , list        :: TermList
-  , occurrences :: Int
-  }
-
-instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
-  decodeJson json = do
-    obj <- decodeJson json
-    ngrams <- obj .? "ngrams"
-    list <- obj .? "list"
-    occurrences <- obj .? "occurrences"
-    pure $ NgramsElement {ngrams, list, occurrences}
 
 getNgramsTable :: Int -> Aff NgramsTable
 getNgramsTable = get <<< toUrl Back (Ngrams TabTerms Nothing)
