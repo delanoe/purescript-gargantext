@@ -63,16 +63,53 @@ data Replace a
   = Keep
   | Replace { old :: a, new :: a }
 
+instance semigroupReplace :: Semigroup (Replace a) where
+  append Keep p = p
+  append p Keep = p
+  append (Replace { old: _m, new }) (Replace { old, new: _m' }) =
+    -- assert _m == _m'
+    Replace { old, new }
+
+instance semigroupMonoid :: Monoid (Replace a) where
+  mempty = Keep
+
 newtype PatchSet a = PatchSet
   { rem :: Set a
   , add :: Set a
   }
 
-type NgramsPatch = { patch_children :: PatchSet NgramsTerm
-                   , patch_list     :: Replace TermList
-                   }
+instance semigroupPatchSet :: Ord a => Semigroup (PatchSet a) where
+  append (PatchSet p) (PatchSet q) = PatchSet
+    { rem: q.rem <> p.rem
+    , add: Set.difference q.add p.rem <> p.add
+    }
 
-type NgramsTablePatch = Map NgramsTerm NgramsPatch
+instance monoidPatchSet :: Ord a => Monoid (PatchSet a) where
+  mempty = PatchSet { rem: Set.empty, add: Set.empty }
+
+newtype NgramsPatch = NgramsPatch
+  { patch_children :: PatchSet NgramsTerm
+  , patch_list     :: Replace TermList
+  }
+
+instance semigroupNgramsPatch :: Semigroup NgramsPatch where
+  append (NgramsPatch p) (NgramsPatch q) = NgramsPatch
+    { patch_children: p.patch_children <> q.patch_children
+    , patch_list:     p.patch_list     <> q.patch_list
+    }
+
+instance monoidNgramsPatch :: Monoid NgramsPatch where
+  mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
+
+newtype PatchMap k p = PatchMap (Map k p)
+
+instance semigroupPatchMap :: (Ord k, Semigroup p) => Semigroup (PatchMap k p) where
+  append (PatchMap p) (PatchMap q) = PatchMap (Map.unionWith append p q)
+
+instance monoidPatchMap :: (Ord k, Semigroup p) => Monoid (PatchMap k p) where
+  mempty = PatchMap Map.empty
+
+type NgramsTablePatch = PatchMap NgramsTerm NgramsPatch
 
 type State =
   { ngramsTablePatch :: NgramsTablePatch
@@ -82,7 +119,7 @@ type State =
   }
 
 initialState :: State
-initialState = { ngramsTablePatch: Map.empty
+initialState = { ngramsTablePatch: mempty
                , searchQuery:      ""
                , termListFilter:   Nothing
                , termTypeFilter:   Nothing
