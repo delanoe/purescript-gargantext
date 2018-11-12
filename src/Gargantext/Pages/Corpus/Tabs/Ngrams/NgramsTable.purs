@@ -4,6 +4,7 @@ module Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable where
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Array (filter, toUnfoldable)
 import Data.Either (Either(..))
+import Data.FunctorWithIndex
 import Data.Newtype (class Newtype, unwrap)
 import Data.Lens (Lens', Prism', lens, over, prism)
 import Data.Lens.Iso (re)
@@ -73,6 +74,10 @@ instance semigroupReplace :: Semigroup (Replace a) where
 instance semigroupMonoid :: Monoid (Replace a) where
   mempty = Keep
 
+applyReplace :: forall a. Eq a => Replace a -> a -> a
+applyReplace Keep a = a
+applyReplace (Replace { old, new }) a = new -- assert (a == old)
+
 newtype PatchSet a = PatchSet
   { rem :: Set a
   , add :: Set a
@@ -86,6 +91,9 @@ instance semigroupPatchSet :: Ord a => Semigroup (PatchSet a) where
 
 instance monoidPatchSet :: Ord a => Monoid (PatchSet a) where
   mempty = PatchSet { rem: Set.empty, add: Set.empty }
+
+applyPatchSet :: forall a. Ord a => PatchSet a -> Set a -> Set a
+applyPatchSet (PatchSet p) s = Set.difference s p.rem <> p.add
 
 newtype NgramsPatch = NgramsPatch
   { patch_children :: PatchSet NgramsTerm
@@ -109,7 +117,18 @@ instance semigroupPatchMap :: (Ord k, Semigroup p) => Semigroup (PatchMap k p) w
 instance monoidPatchMap :: (Ord k, Semigroup p) => Monoid (PatchMap k p) where
   mempty = PatchMap Map.empty
 
+applyPatchMap :: forall k p v. Ord k => (p -> v -> v) -> PatchMap k p -> Map k v -> Map k v
+applyPatchMap applyPatchValue (PatchMap p) = mapWithIndex f
+  where
+    f k v =
+      case Map.lookup k p of
+        Nothing -> v
+        Just pv -> applyPatchValue pv v
+
 type NgramsTablePatch = PatchMap NgramsTerm NgramsPatch
+
+applyNgramsTablePatch :: NgramsTablePatch -> NgramsTable -> NgramsTable
+applyNgramsTablePatch p t = t -- TODO
 
 type State =
   { ngramsTablePatch :: NgramsTablePatch
