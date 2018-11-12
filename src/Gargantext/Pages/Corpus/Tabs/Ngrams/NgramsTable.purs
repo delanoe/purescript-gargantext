@@ -29,6 +29,13 @@ import Gargantext.Config
 import Gargantext.Config.REST
 import Gargantext.Components.Tree (NTree(..))
 import Gargantext.Components.Loader as Loader
+import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), PropsRow)
+
+type Props = { mode :: Mode | PropsRow }
+
+type Props' = { path :: Int
+              , loaded :: Maybe NgramsTable
+              }
 
 type NgramsTable = Array (NTree NgramsElement)
 
@@ -52,13 +59,9 @@ data Action
   | SetTermTypeFilter (Maybe TermType)
   | SetSearchQuery String
 
-type Dispatch = Action -> Effect Unit
+data Mode = Authors | Sources | Terms
 
-performAction :: PerformAction State {} Action
-performAction (SetTermListFilter c) _ _ = modifyState_ $ _ { termListFilter = c }
-performAction (SetTermTypeFilter c) _ _ = modifyState_ $ _ { termTypeFilter = c }
-performAction (SetSearchQuery s) _ _ = modifyState_ $ _ { searchQuery = s }
-performAction (SetTermListItem _i _l) _ _ = pure unit -- TODO
+type Dispatch = Action -> Effect Unit
 
 tableContainer :: {searchQuery :: String, dispatch :: Dispatch} -> T.TableContainerProps -> Array ReactElement
 tableContainer {searchQuery, dispatch} props =
@@ -122,20 +125,23 @@ tableContainer {searchQuery, dispatch} props =
     ]
   ]
 
-
-ngramsTableSpec'' = simpleSpec defaultPerformAction (\_ _ _ _ -> [])
-
-ngramsTableSpec' :: Spec State {} Action
+ngramsTableSpec' :: Spec State Props' Action
 ngramsTableSpec' = simpleSpec performAction render
   where
-    render :: Render State {} Action
-    render dispatch { {-path: nodeId, loaded-} } {searchQuery {- TODO more state -} } _ =
+    performAction :: PerformAction State Props' Action
+    performAction (SetTermListFilter c) _ _ = modifyState_ $ _ { termListFilter = c }
+    performAction (SetTermTypeFilter c) _ _ = modifyState_ $ _ { termTypeFilter = c }
+    performAction (SetSearchQuery s) _ _ = modifyState_ $ _ { searchQuery = s }
+    performAction (SetTermListItem _i _l) _ _ = pure unit -- TODO
+
+    render :: Render State Props' Action
+    render dispatch {path: nodeId, loaded} {searchQuery {- TODO more state -} } _ =
       [ T.tableElt
           { loadRows
           , container: tableContainer {searchQuery, dispatch}
           , colNames:
               T.ColumnName <$>
-              [ "Map"
+              [ "Graph"
               , "Stop"
               , "Terms"
               , "Occurences (nb)"
@@ -189,13 +195,14 @@ ngramsLoaderClass = Loader.createLoaderClass "NgramsLoader" getNgramsTable
 ngramsLoader :: Loader.Props Int NgramsTable -> ReactElement
 ngramsLoader = React.createLeafElement ngramsLoaderClass
 
-ngramsTableSpec :: Spec {} {nodeId :: Int} Void
+ngramsTableSpec :: Spec {} Props Void
 ngramsTableSpec = simpleSpec defaultPerformAction render
   where
-    render :: Render {} {nodeId :: Int} Void
-    render _ {nodeId} _ _ =
+    render :: Render {} Props Void
+    render _ {path: nodeId} _ _ =
+      -- TODO: ignored mode, ignored loaded: corpusInfo
       [ ngramsLoader { path: nodeId
-                     , component: createClass "Layout" ngramsTableSpec'' initialState
+                     , component: createClass "Layout" ngramsTableSpec' initialState
                      } ]
 
 renderNgramsItem :: { ngrams :: String

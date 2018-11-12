@@ -10,7 +10,7 @@ import Gargantext.Pages.Corpus.Tabs.States (State(), _doclens, _ngramsView, _tab
 import Gargantext.Pages.Corpus.Tabs.Actions (Action(), _docAction, _NgramViewA, _tabAction)
 
 import Gargantext.Pages.Corpus.Tabs.Documents as DV
-import Gargantext.Pages.Corpus.Tabs.Ngrams as NV
+import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as NV
 import Gargantext.Components.Tab as Tab
 import Thermite (Spec, focus, hideState, cmapProps)
 
@@ -30,8 +30,10 @@ statefulTabs =
 docPageSpec :: Spec State Props Action
 docPageSpec = focus _doclens _docAction DV.layoutDocview
 
-ngramsViewSpec :: NV.Props -> Spec State Props Action
-ngramsViewSpec props = cmapProps (const props) (focus _ngramsView _NgramViewA NV.ngramsSpec)
+ngramsViewSpec :: {mode :: NV.Mode} -> Spec State Props Action
+ngramsViewSpec {mode} =
+  cmapProps (\{loaded, path} -> {mode,loaded,path})
+            (focus _ngramsView _NgramViewA NV.ngramsTableSpec)
 
 authorPageSpec :: Spec State Props Action
 authorPageSpec = ngramsViewSpec {mode: NV.Authors}

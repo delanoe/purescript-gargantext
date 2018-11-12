@@ -64,9 +64,6 @@ pagesComponent s = case s.currentRoute of
     
     selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  C.layoutUser
-    -- To be removed
-    selectSpec NGramsTable       = layout0 $ cmapProps (const {nodeId: i}) $ noState NG.ngramsTableSpec
-      where i = 0 -- TODO
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 

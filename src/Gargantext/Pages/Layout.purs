@@ -59,9 +59,5 @@ dispatchAction dispatcher _ PGraphExplorer = do
   dispatcher $ SetRoute PGraphExplorer
   dispatcher $ GraphExplorerA $ GE.LoadGraph "imtNew.json"
 
-dispatchAction dispatcher _ NGramsTable = do
-  dispatcher $ SetRoute NGramsTable
-  -- dispatcher $ NgramsA TODO
-
 dispatchAction dispatcher _ Dashboard = do
   dispatcher $ SetRoute Dashboard
