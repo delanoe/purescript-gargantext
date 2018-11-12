@@ -63,9 +63,13 @@ data Replace a
   = Keep
   | Replace { old :: a, new :: a }
 
-type NgramsPatch = { rem_children :: Set NgramsTerm
-                   , add_children :: Set NgramsTerm
-                   , patch_list   :: Replace TermList
+newtype PatchSet a = PatchSet
+  { rem :: Set a
+  , add :: Set a
+  }
+
+type NgramsPatch = { patch_children :: PatchSet NgramsTerm
+                   , patch_list     :: Replace TermList
                    }
 
 type NgramsTablePatch = Map NgramsTerm NgramsPatch
