@@ -22,7 +22,7 @@ import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
 import React.DOM.Props (Props, _id, _type, className, href, title, onClick, onInput, placeholder, style, value, _data)
 import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, defaultRender, modifyState, simpleSpec)
-import Unsafe.Coerce (unsafeCoerce)
+import Unsafe.Coerce 
 
 type Name = String
 type Open = Boolean
@@ -42,12 +42,13 @@ data Action =  ShowPopOver ID
               | Create  ID
               | SetNodeValue String ID
               | ToggleCreateNode ID
+              | ShowRenameBox ID
 
 
 type State = FTree
 
 initialState :: State
-initialState = NTree (LNode {id : 3, name : "hello", nodeType : "", open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode"}) []
+initialState = NTree (LNode {id : 3, name : "hello", nodeType : "", open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) []
 
 
 
@@ -62,9 +63,11 @@ performAction (ShowPopOver id) _ _ = void $
  cotransform (\td -> popOverNode id td)
 
 
+performAction (ShowRenameBox id) _ _ = void $
+  cotransform (\td -> showPopOverNode id td)
+
 performAction (ToggleCreateNode id) _ _ = void $
  cotransform (\td -> showCreateNode id td)
-
 
 --- TODO : Need to update state once API is called
 performAction (DeleteNode nid) _ _ = void $ do
@@ -104,15 +107,22 @@ performAction (SetNodeValue v nid) _ _ = void $
 
 
 popOverNode :: Int -> NTree LNode -> NTree LNode
-popOverNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary) =
-  NTree (LNode {id,name, nodeType, open , popOver : npopOver, renameNodeValue, createNode, nodeValue}) $ map (popOverNode sid) ary
+popOverNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
+  NTree (LNode {id,name, nodeType, open , popOver : npopOver, renameNodeValue, createNode, nodeValue, showRenameBox}) $ map (popOverNode sid) ary
   where
     npopOver = if sid == id then not popOver else popOver
 
 
+showPopOverNode :: Int -> NTree LNode -> NTree LNode
+showPopOverNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
+  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue, createNode, nodeValue, showRenameBox: nshowRenameBox}) $ map (showPopOverNode sid) ary
+  where
+    nshowRenameBox = if sid == id then not showRenameBox else showRenameBox
+
+
 showCreateNode :: Int -> NTree LNode -> NTree LNode
-showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary) =
-  NTree (LNode {id,name, nodeType, open , popOver, renameNodeValue, createNode : createNode', nodeValue}) $ map (showCreateNode sid) ary
+showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
+  NTree (LNode {id,name, nodeType, open , popOver, renameNodeValue, createNode : createNode', nodeValue, showRenameBox}) $ map (showCreateNode sid) ary
   where
     createNode' = if sid == id then not createNode else createNode
 
@@ -128,23 +138,23 @@ showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 
 
 rename :: Int ->  String -> NTree LNode  -> NTree LNode
-rename sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary)  =
-  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue : rvalue, createNode, nodeValue}) $ map (rename sid  v) ary
+rename sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary)  =
+  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue : rvalue, createNode, nodeValue, showRenameBox}) $ map (rename sid  v) ary
   where
     rvalue = if sid == id then  v   else ""
 
 
 setNodeValue :: Int ->  String -> NTree LNode  -> NTree LNode
-setNodeValue sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary)  =
-  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue , createNode, nodeValue : nvalue}) $ map (setNodeValue sid  v) ary
+setNodeValue sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary)  =
+  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue , createNode, nodeValue : nvalue, showRenameBox}) $ map (setNodeValue sid  v) ary
   where
     nvalue = if sid == id then  v   else ""
 
 
 
 toggleNode :: Int -> NTree LNode -> NTree LNode
-toggleNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary) =
-  NTree (LNode {id,name, nodeType, open : nopen, popOver, renameNodeValue, createNode, nodeValue}) $ map (toggleNode sid) ary
+toggleNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
+  NTree (LNode {id,name, nodeType, open : nopen, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) $ map (toggleNode sid) ary
   where
     nopen = if sid == id then not open else open
 
@@ -154,7 +164,7 @@ toggleNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue
 -- Realistic Tree for the UI
 
 exampleTree :: NTree LNode
-exampleTree = NTree (LNode {id : 1, name : "", nodeType : "", open : false, popOver : false, renameNodeValue : "", createNode : false, nodeValue : ""}) []
+exampleTree = NTree (LNode {id : 1, name : "", nodeType : "", open : false, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "", showRenameBox : false}) []
 
 -- exampleTree :: NTree LNode
 -- exampleTree =
@@ -220,13 +230,13 @@ treeview = simpleSpec performAction render
 
 
 renameTreeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
-renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) nid  =
+renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =
         div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Tooltip on right"]
         [  div [className "panel panel-default", style {border:"1px solid black"}]
            [
              div [className "panel-heading", style {float:"left"}]
              [
-               if (popOver == false) then div [_id "afterClick"] 
+               if (showRenameBox) then div [_id "afterClick"] 
                [ 
                  div [className "col-md-12"] 
                [
@@ -258,7 +268,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
               else 
                 div [ _id "beforeClick", className "col-md-12"] 
              [  text name 
-             , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil", _id "rename1", onClick $ (\_-> d $ (ShowPopOver id))] [ ]
+             , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil", _id "rename1", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
              ]
              ]
            ,div [className "panel-body", style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
@@ -306,18 +316,18 @@ renameTreeViewDummy :: (Action -> Effect Unit) -> State -> ReactElement
 renameTreeViewDummy d s = div [] []
 
 popOverValue :: State -> Boolean
-popOverValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) = popOver
+popOverValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) = popOver
 
 getRenameNodeValue :: State -> String
-getRenameNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) = renameNodeValue
+getRenameNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) = renameNodeValue
 
 
 getCreateNodeValue :: State -> String
-getCreateNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, nodeValue}) ary) = nodeValue
+getCreateNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, nodeValue, showRenameBox}) ary) = nodeValue
 
 
 toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue }) []) =
+toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue, showRenameBox }) []) =
   ul []
   [
     li [ style {width:"100%"}, _id "rename"]
@@ -334,7 +344,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
     ]
   ]
 --- need to add renameTreeview value to this function
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue}) ary) =
+toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue, showRenameBox}) ary) =
   ul [ ]
   [ li [style {width : "100%"}] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
@@ -353,7 +363,7 @@ fldr :: Boolean -> Props
 fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 
-newtype LNode = LNode {id :: Int, name :: String, nodeType :: String, open :: Boolean, popOver :: Boolean, renameNodeValue :: String, nodeValue :: String, createNode :: Boolean}
+newtype LNode = LNode {id :: Int, name :: String, nodeType :: String, open :: Boolean, popOver :: Boolean, renameNodeValue :: String, nodeValue :: String, createNode :: Boolean, showRenameBox :: Boolean}
 
 derive instance newtypeLNode :: Newtype LNode _
 
@@ -363,7 +373,7 @@ instance decodeJsonLNode :: DecodeJson LNode where
     id_ <- obj .? "id"
     name <- obj .? "name"
     nodeType <- obj .? "type"
-    pure $ LNode {id : id_, name, nodeType, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : ""}
+    pure $ LNode {id : id_, name, nodeType, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "", showRenameBox : false}
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
   decodeJson json = do
