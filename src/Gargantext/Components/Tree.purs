@@ -5,6 +5,7 @@ import Prelude hiding (div)
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat as ResponseFormat
+import CSS (backgroundColor, justifyContent)
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, Json, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Argonaut.Core (Json)
@@ -19,7 +20,7 @@ import Effect.Console (log)
 import Prelude (identity)
 import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
-import React.DOM.Props (Props, _id, _type, className, href, onClick, onInput, placeholder, style, value)
+import React.DOM.Props (Props, _id, _type, className, href, title, onClick, onInput, placeholder, style, value, _data)
 import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, defaultRender, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -220,34 +221,47 @@ treeview = simpleSpec performAction render
 
 renameTreeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) nid  =
-       div [className ""]
+        div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Tooltip on right"]
         [  div [className "panel panel-default"]
            [
-             div [className "panel-heading"]
+             div [className "panel-heading", style {float:"left"}]
              [
-               h5 [] [text "Rename Node"]
-             ]
-           ,div [className "panel-body"]
-            [
-              input [ _type "text"
+               div [className "col-md-12"] 
+               [
+                 input [ _type "text"
                     , placeholder "Rename Node"
                     , value $ getRenameNodeValue s
-                    , className "col-md-12 form-control"
+                    , style {float: "left"}
+                    , className "col-md-2 form-control"
                     , onInput \e -> d (RenameNode (unsafeEventValue e) nid)
                     ]
-            ]
-          , div [className "panel-footer"]
-            [ button [className "btn btn-danger"
+               ]
+              , div [className "col-md-6", style {padding : "9px"}] 
+              [ button [className "btn btn-danger"
                      , _type "button"
                      , onClick \_ -> d $ (Submit nid renameNodeValue)
+                     , style {float:"left"}
                      ] [text "Rename"]
+              ]
+              , div [className "col-md-6", style {padding : "9px"}] 
+              [button [className "btn btn-primary"
+                     , _type "button"
+                    -- , onClick \_ -> d $ (Submit nid renameNodeValue)
+                     , style {float:"left", backgroundColor: "white", color:"black"}
+                     ] [text "cancel"]
+
+             ]
+             ]
+           ,div [className "panel-body"][]
+          , div [className "panel-footer", style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
+            [ 
+               div [className "col-md-6"] [a [ style {color:"black"},className "glyphicon glyphicon-pencil", _id "rename1",onClick $ (\_-> d $ (ShowPopOver id))] [ ]]
+              ,  div [className "col-md-6"] [a [style {color:"black"}, className "glyphicon glyphicon-trash", _id "rename2",onClick $ (\_-> d $ (DeleteNode id))] [ ]]
+              --,  a [className "glyphicon glyphicon-plus", _id "rename-c",onClick $ (\_-> d $ (ToggleCreateNode id))] [ ]
             ]
           ]
         ]
-
-
-
-
+       
 
 
 createNodeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
@@ -304,9 +318,8 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
       ( [ text (name <> "    ")
         ]
       )
-    ,  a [className "glyphicon glyphicon-pencil", _id "rename-a",onClick $ (\_-> d $ (ShowPopOver id))] [ ]
-    ,  a [className "glyphicon glyphicon-trash", _id "rename-d",onClick $ (\_-> d $ (DeleteNode id))] [ ]
-    ,  a [className "glyphicon glyphicon-plus", _id "rename-c",onClick $ (\_-> d $ (ToggleCreateNode id))] [ ]
+    
+    ,  a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))] [ ]
     , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
     , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
     ]

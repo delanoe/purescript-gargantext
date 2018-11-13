@@ -83,7 +83,7 @@ logoSmall {
 li#rename  #rename-a{
     display : none;
     position : absolute;
-    left : 84px;
+    left : 125px;
 }
 
 li#rename:hover  #rename-a{
@@ -94,7 +94,7 @@ li#rename:hover  #rename-a{
 li#rename  #rename-d{
     display : none;
     position : absolute;
-    left : 111px;
+    left : 154px;
 }
 
 li#rename:hover  #rename-d{
@@ -107,8 +107,16 @@ li#rename:hover  #rename-d{
 li#rename  #rename-c{
     display : none;
     position : absolute;
-    left : 54px;
+    left : 92px;
 }
 
 li#rename:hover  #rename-c{
     display : block;
+}
+#rename-tooltip {
+    position : absolute;
+    left : 122px;
+    top:-39px;
+    background-color: white;
+
+}
