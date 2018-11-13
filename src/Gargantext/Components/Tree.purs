@@ -222,7 +222,7 @@ treeview = simpleSpec performAction render
 renameTreeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) nid  =
         div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Tooltip on right"]
-        [  div [className "panel panel-default"]
+        [  div [className "panel panel-default", style {border:"1px solid black"}]
            [
              div [className "panel-heading", style {float:"left"}]
              [

@@ -120,3 +120,8 @@ li#rename:hover  #rename-c{
     background-color: white;
 
 }
+
+
+#rename-tooltip:hover {
+    border:none;
+}
