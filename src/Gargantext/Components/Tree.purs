@@ -226,7 +226,9 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
            [
              div [className "panel-heading", style {float:"left"}]
              [
-               div [className "col-md-12"] 
+               if (popOver == false) then div [_id "afterClick"] 
+               [ 
+                 div [className "col-md-12"] 
                [
                  input [ _type "text"
                     , placeholder "Rename Node"
@@ -251,14 +253,21 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                      ] [text "cancel"]
 
              ]
-             ]
-           ,div [className "panel-body"][]
-          , div [className "panel-footer", style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
-            [ 
-               div [className "col-md-6"] [a [ style {color:"black"},className "glyphicon glyphicon-pencil", _id "rename1",onClick $ (\_-> d $ (ShowPopOver id))] [ ]]
-              ,  div [className "col-md-6"] [a [style {color:"black"}, className "glyphicon glyphicon-trash", _id "rename2",onClick $ (\_-> d $ (DeleteNode id))] [ ]]
-              --,  a [className "glyphicon glyphicon-plus", _id "rename-c",onClick $ (\_-> d $ (ToggleCreateNode id))] [ ]
+               
             ]
+              else 
+                div [ _id "beforeClick", className "col-md-12"] 
+             [  text name 
+             , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil", _id "rename1", onClick $ (\_-> d $ (ShowPopOver id))] [ ]
+             ]
+             ]
+           ,div [className "panel-body", style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
+           [   div [className "col-md-4"] [a [ style {color:"black"},className "glyphitem glyphicon glyphicon-download-alt", _id "rename1"] [ ]]
+               , div [className "col-md-4"] [a [ style {color:"black"},className "glyphitem glyphicon glyphicon-resize-horizontal", _id "rename1"] [ ]]
+              ,  div [className "col-md-4"] [a [style {color:"black"}, className "glyphicon glyphicon-trash", _id "rename2",onClick $ (\_-> d $ (DeleteNode id))] [ ]]
+
+           ]
+          
           ]
         ]
        
