@@ -258,20 +258,22 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                     ]
                ]
               , div [className "col-md-6", style {padding : "9px"}] 
-              [ a [className "btn btn-danger"
-                     , _type "button"
-                     , onClick \_ -> d $ (Submit nid renameNodeValue)
-                     , style {float:"left"}
-                     ] [text "Rename"]
-              ]
+              [ div [className "row"]
+                [ a [className "btn btn-danger"
+                    , _type "button"
+                    , onClick \_ -> d $ (Submit nid renameNodeValue)
+                    , style {float:"left"}
+                    ] [text "Rename"]
+                ]
               , div [className "col-md-6", style {padding : "9px"}] 
-              [a [className "btn btn-primary"
-                     , _type "button"
-                     , onClick \_ -> d $ (CancelRename nid)
-                     , style {float:"left", backgroundColor: "white", color:"black"}
-                     ] [text "cancel"]
+                [a [className "btn btn-primary"
+                   , _type "button"
+                   , onClick \_ -> d $ (CancelRename nid)
+                   , style {float:"left", backgroundColor: "white", color:"black"}
+                   ] [text "cancel"]
 
-             ]
+                ]
+                ]
                
             ]
               else 
