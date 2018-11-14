@@ -43,6 +43,7 @@ data Action =  ShowPopOver ID
               | SetNodeValue String ID
               | ToggleCreateNode ID
               | ShowRenameBox ID
+              | CancelRename ID
 
 
 type State = FTree
@@ -65,6 +66,11 @@ performAction (ShowPopOver id) _ _ = void $
 
 performAction (ShowRenameBox id) _ _ = void $
   cotransform (\td -> showPopOverNode id td)
+
+
+performAction (CancelRename id) _ _ = void $
+  cotransform (\td -> showPopOverNode id td)
+
 
 performAction (ToggleCreateNode id) _ _ = void $
  cotransform (\td -> showCreateNode id td)
@@ -234,7 +240,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
         div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Tooltip on right"]
         [  div [className "panel panel-default", style {border:"1px solid black"}]
            [
-             div [className "panel-heading", style {float:"left"}]
+             div [className "panel-heading", style {float:"left", width: "100%"}]
              [
                if (showRenameBox) then div [_id "afterClick"] 
                [ 
@@ -258,7 +264,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
               , div [className "col-md-6", style {padding : "9px"}] 
               [button [className "btn btn-primary"
                      , _type "button"
-                    -- , onClick \_ -> d $ (Submit nid renameNodeValue)
+                     , onClick \_ -> d $ (CancelRename nid)
                      , style {float:"left", backgroundColor: "white", color:"black"}
                      ] [text "cancel"]
 
@@ -267,14 +273,14 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
             ]
               else 
                 div [ _id "beforeClick", className "col-md-12"] 
-             [  text name 
-             , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil", _id "rename1", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
+             [  div [className "col-md-6"] [text name] 
+             , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil col-md-6", _id "rename1", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
              ]
              ]
            ,div [className "panel-body", style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
-           [   div [className "col-md-4"] [a [ style {color:"black"},className "glyphitem glyphicon glyphicon-download-alt", _id "rename1"] [ ]]
-               , div [className "col-md-4"] [a [ style {color:"black"},className "glyphitem glyphicon glyphicon-resize-horizontal", _id "rename1"] [ ]]
-              ,  div [className "col-md-4"] [a [style {color:"black"}, className "glyphicon glyphicon-trash", _id "rename2",onClick $ (\_-> d $ (DeleteNode id))] [ ]]
+            [   div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-download-alt", _id "rename1"] [ ]]
+           , div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-resize-horizontal", _id "rename1"] [ ]]
+              ,  div [className "col-md-4"] [ a [style {color:"black", paddingTop: "6px", paddingBottom: "6px"}, className "glyphicon glyphicon-trash", _id "rename2",onClick $ (\_-> d $ (DeleteNode id))] [ ]]
 
            ]
           
@@ -412,7 +418,7 @@ newtype RenameValue = RenameValue
 
 instance encodeJsonRenameValue :: EncodeJson RenameValue where
   encodeJson (RenameValue post)
-     = "name" := post.name
+     = "r_name" := post.name
     ~> jsonEmptyObject
 
 
