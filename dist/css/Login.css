@@ -86,38 +86,13 @@ li#rename  #rename-a{
     left : 125px;
 }
 
-li#rename:hover  #rename-a{
-    display : block;
-}
 
-
-li#rename  #rename-d{
-    display : none;
-    position : absolute;
-    left : 154px;
-}
-
-li#rename:hover  #rename-d{
-    display : block;
-
-}
-
-
-
-li#rename  #rename-c{
-    display : none;
-    position : absolute;
-    left : 92px;
-}
-
-li#rename:hover  #rename-c{
-    display : block;
-}
 #rename-tooltip {
     position : absolute;
     left : 122px;
     top:-39px;
     background-color: white;
+    z-index: 1000;
 
 }
 

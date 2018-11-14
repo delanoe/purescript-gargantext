@@ -88,7 +88,10 @@ performAction (Submit rid s'') _  _  = void $ do
   s' <- lift $ renameNode  rid  $ RenameValue { name : s''}
   case s' of
     Left err -> modifyState identity
-    Right d -> cotransform (\td -> popOverNode rid td)
+    Right d ->
+      cotransform (\td -> popOverNode rid td)
+      -- cotransform (\td -> showPopOverNode rid td) add this function to toggle rename function
+               
 
 
 performAction (RenameNode  r nid) _ _ = void $
@@ -215,7 +218,7 @@ nodeOptionsView activated = case activated of
 nodeOptionsRename :: (Action -> Effect Unit) ->  Boolean ->  ID -> Array ReactElement
 nodeOptionsRename d activated  id =  case activated of
                          true -> [ a [className "glyphicon glyphicon-pencil", style {marginLeft : "15px"}
-                                        , onClick $ (\_-> d $ (ShowPopOver id))
+                                        
                                         ] []
                                  ]
                          false -> []
@@ -237,7 +240,7 @@ treeview = simpleSpec performAction render
 
 renameTreeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =
-        div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Tooltip on right"]
+        div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
         [  div [className "panel panel-default", style {border:"1px solid black"}]
            [
              div [className "panel-heading", style {float:"left", width: "100%"}]
@@ -255,14 +258,14 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                     ]
                ]
               , div [className "col-md-6", style {padding : "9px"}] 
-              [ button [className "btn btn-danger"
+              [ a [className "btn btn-danger"
                      , _type "button"
                      , onClick \_ -> d $ (Submit nid renameNodeValue)
                      , style {float:"left"}
                      ] [text "Rename"]
               ]
               , div [className "col-md-6", style {padding : "9px"}] 
-              [button [className "btn btn-primary"
+              [a [className "btn btn-primary"
                      , _type "button"
                      , onClick \_ -> d $ (CancelRename nid)
                      , style {float:"left", backgroundColor: "white", color:"black"}
@@ -336,7 +339,7 @@ toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
 toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue, showRenameBox }) []) =
   ul []
   [
-    li [ style {width:"100%"}, _id "rename"]
+    li []
     [
 
       a [ href "#"]
@@ -344,15 +347,17 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
         ]
       )
     
-    ,  a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))] [ ]
-    , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
+    ,  a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
+       [ 
+       ]
+     , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
     , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
     ]
   ]
 --- need to add renameTreeview value to this function
 toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue, showRenameBox}) ary) =
-  ul [ ]
-  [ li [style {width : "100%"}] $
+    ul []
+  [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
       ,  text $ " " <> name <> " "
 
