@@ -276,8 +276,10 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
             ]
               else 
                 div [ _id "beforeClick", className "col-md-12"] 
-             [  div [className "col-md-6"] [text name] 
-             , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil col-md-6", _id "rename1", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
+             [  div [className "row"]
+                [ div [className "col-md-6"] [text name] 
+                , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil col-md-6", _id "rename1", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
+                ]
              ]
              ]
            ,div [className "panel-body", style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
