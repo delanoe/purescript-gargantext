@@ -1,7 +1,7 @@
 module Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable where
 
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
 import Data.Array (filter, toUnfoldable)
 import Data.Either (Either(..))
 import Data.FunctorWithIndex
@@ -24,7 +24,7 @@ import React (ReactElement, ReactClass)
 import React as React
 import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
-import Thermite (PerformAction, Spec, Render, _render, modifyState_, defaultPerformAction, focusState, hideState, simpleSpec, createClass)
+import Thermite (PerformAction, Spec, StateCoTransformer, Render, _render, modifyState_, defaultPerformAction, focusState, hideState, simpleSpec, createClass)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Types
@@ -48,6 +48,8 @@ newtype NgramsElement = NgramsElement
   { ngrams      :: NgramsTerm
   , list        :: TermList
   , occurrences :: Int
+  , root        :: Maybe NgramsTerm
+  , children    :: Set NgramsTerm
   }
 
 instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
@@ -56,13 +58,32 @@ instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
     ngrams <- obj .? "ngrams"
     list <- obj .? "list"
     occurrences <- obj .? "occurrences"
-    pure $ NgramsElement {ngrams, list, occurrences}
+    root <- obj .?? "root"
+    children' <- obj .? "children"
+    let children = Set.fromFoldable (children' :: Array NgramsTerm)
+    pure $ NgramsElement {ngrams, list, occurrences, root, children}
 
-type NgramsTable = Array (NTree NgramsElement)
+-- type NgramsTable = Array (NTree NgramsElement)
+-- type NgramsTable = Array NgramsElement
+newtype NgramsTable = NgramsTable (Map NgramsTerm NgramsElement)
+
+instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
+  decodeJson json = do
+    elements <- decodeJson json
+    pure $ NgramsTable
+         $ Map.fromFoldable
+         $ f <$> (elements :: Array NgramsElement)
+    where
+      f e@(NgramsElement e') = Tuple e'.ngrams e
 
 data Replace a
   = Keep
   | Replace { old :: a, new :: a }
+
+replace :: forall a. Eq a => a -> a -> Replace a
+replace old new
+  | old == new = Keep
+  | otherwise  = Replace { old, new }
 
 instance semigroupReplace :: Semigroup (Replace a) where
   append Keep p = p
@@ -76,7 +97,9 @@ instance semigroupMonoid :: Monoid (Replace a) where
 
 applyReplace :: forall a. Eq a => Replace a -> a -> a
 applyReplace Keep a = a
-applyReplace (Replace { old, new }) a = new -- assert (a == old)
+applyReplace (Replace { old, new }) a
+  | a == old  = new
+  | otherwise = a
 
 newtype PatchSet a = PatchSet
   { rem :: Set a
@@ -109,6 +132,16 @@ instance semigroupNgramsPatch :: Semigroup NgramsPatch where
 instance monoidNgramsPatch :: Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
 
+applyNgramsPatch :: NgramsPatch -> NgramsElement -> NgramsElement
+applyNgramsPatch (NgramsPatch p) (NgramsElement e) = NgramsElement
+  { ngrams:      e.ngrams
+  , list:        applyReplace p.patch_list e.list
+  , occurrences: e.occurrences -- TODO: is this correct ?
+  , root:        e.root -- TODO: is this correct ?
+                        -- See ROOT-UPDATE
+  , children:    applyPatchSet p.patch_children e.children
+  }
+
 newtype PatchMap k p = PatchMap (Map k p)
 
 instance semigroupPatchMap :: (Ord k, Semigroup p) => Semigroup (PatchMap k p) where
@@ -128,7 +161,10 @@ applyPatchMap applyPatchValue (PatchMap p) = mapWithIndex f
 type NgramsTablePatch = PatchMap NgramsTerm NgramsPatch
 
 applyNgramsTablePatch :: NgramsTablePatch -> NgramsTable -> NgramsTable
-applyNgramsTablePatch p t = t -- TODO
+applyNgramsTablePatch p (NgramsTable m) =
+  NgramsTable (applyPatchMap applyNgramsPatch p m)
+    -- TODO: update the .root fields...
+    -- See ROOT-UPDATE
 
 type State =
   { ngramsTablePatch :: NgramsTablePatch
@@ -145,7 +181,8 @@ initialState = { ngramsTablePatch: mempty
                }
 
 data Action
-  = SetTermListItem Int TermList
+  = SetTermListItem NgramsTerm (Replace TermList)
+  | AddTermChildren { parent :: NgramsTerm, child :: NgramsTerm }
   | SetTermListFilter (Maybe TermList)
   | SetTermTypeFilter (Maybe TermType)
   | SetSearchQuery String
@@ -216,6 +253,9 @@ tableContainer {searchQuery, dispatch} props =
     ]
   ]
 
+commitPatch :: NgramsTablePatch -> StateCoTransformer State Unit
+commitPatch pt = modifyState_ $ \s -> s { ngramsTablePatch = pt <> s.ngramsTablePatch }
+
 ngramsTableSpec' :: Spec State Props' Action
 ngramsTableSpec' = simpleSpec performAction render
   where
@@ -223,10 +263,26 @@ ngramsTableSpec' = simpleSpec performAction render
     performAction (SetTermListFilter c) _ _ = modifyState_ $ _ { termListFilter = c }
     performAction (SetTermTypeFilter c) _ _ = modifyState_ $ _ { termTypeFilter = c }
     performAction (SetSearchQuery s) _ _ = modifyState_ $ _ { searchQuery = s }
-    performAction (SetTermListItem _i _l) _ _ = pure unit -- TODO
+    performAction (SetTermListItem n pl) _ _ = commitPatch pt
+      where
+        pe = NgramsPatch { patch_list: pl, patch_children: mempty }
+        pt = PatchMap $ Map.singleton n pe
+    performAction (AddTermChildren { parent, child {- , child_root, parent_root -} }) _ _ = commitPatch pt
+      where
+        pc = PatchSet { rem: mempty, add: Set.singleton child }
+        pe = NgramsPatch { patch_list: mempty, patch_children: pc }
+     -- pr = NgramsPatch { patch_list: mempty
+     --                  , patch_children: mempty
+     --                  , patch_root: replace child_root parent_root
+     --                  }
+        pt = PatchMap $ Map.fromFoldable [Tuple parent pe]
+                                      -- ,Tuple child pr]
+        -- TODO ROOT-UPDATE
+        -- patch the root of the child to be equal to the root of the parent.
 
     render :: Render State Props' Action
-    render dispatch {path: nodeId, loaded: initTable} {searchQuery {- TODO more state -} } _ =
+    render dispatch {path: nodeId, loaded: initTable}
+                    {ngramsTablePatch, searchQuery {- TODO more state -} } _ =
       [ T.tableElt
           { loadRows
           , container: tableContainer {searchQuery, dispatch}
@@ -241,27 +297,24 @@ ngramsTableSpec' = simpleSpec performAction render
           }
       ]
       where
-        loadRows {offset, limit, orderBy} = do
-          pure []
-{-
-          _ <- logs "loading documents page"
-          res <- loadPage {nodeId,offset,limit,orderBy}
-          _ <- logs "OK: loading page documents."
-          pure $
-            (\(DocumentsView r) ->
-                { row:
-                    [ div [className $ fa r.fav <> "fa-star"] []
-                    -- TODO show date: Year-Month-Day only
-                    , text r.date
-                    , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
-                    , text r.source
-                    , input [ _type "checkbox"]
-                    ]
-                , delete: false
-                }) <$> res
-    fa true  = "fas "
-    fa false = "far "
--}
+        loadRows {offset, limit, orderBy} =
+          case applyNgramsTablePatch ngramsTablePatch <$> initTable of
+            Nothing -> pure [] -- or an error
+            Just (NgramsTable table) ->
+              pure $ convertRow <$> Map.toUnfoldable (Map.filter isRoot table)
+        isRoot (NgramsElement e) = e.root == Nothing
+        convertRow (Tuple ngrams (NgramsElement { occurrences, list })) =
+          { row:
+              let
+                setTermList Keep = do
+                  logs "setTermList Keep"
+                  pure unit
+                setTermList rep@(Replace {old,new}) = do
+                  logs $ Tuple "setTermList" (Tuple old new)
+                  dispatch $ SetTermListItem ngrams rep in
+              renderNgramsItem { ngrams, occurrences, termList: list, setTermList }
+          , delete: false
+          }
 
 getNgramsTable :: Int -> Aff NgramsTable
 getNgramsTable = get <<< toUrl Back (Ngrams TabTerms Nothing)
@@ -285,22 +338,25 @@ ngramsTableSpec = simpleSpec defaultPerformAction render
 renderNgramsItem :: { ngrams :: String
                     , occurrences :: Int
                     , termList :: TermList
-                    , setTermList :: TermList -> Effect Unit
-                    } -> Array (Array ReactElement)
+                    , setTermList :: Replace TermList -> Effect Unit
+                    } -> Array ReactElement
 renderNgramsItem { ngrams, occurrences, termList, setTermList } =
-  [ [ checkbox GraphTerm]
-  , [ checkbox StopTerm]
-  , [ span [termStyle termList] [text ngrams] ]
-  , [ text $ show occurrences ]
+  [ checkbox GraphTerm
+  , checkbox StopTerm
+  , span [termStyle termList] [text ngrams]
+  , text $ show occurrences
   ]
   where
     checkbox termList' =
+      let chkd = termList == termList'
+          termList'' = if chkd then CandidateTerm else termList'
+      in
       input
         [ _type "checkbox"
         , className "checkbox"
-        , checked $ termList == termList'
+        , checked chkd
      -- , title "Mark as completed"
-        , onChange $ const $ setTermList termList
+        , onChange $ const $ setTermList (replace termList termList'')
         ]
 
 -- termStyle :: TermList -> {}

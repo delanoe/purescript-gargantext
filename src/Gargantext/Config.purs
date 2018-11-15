@@ -103,6 +103,7 @@ endPathUrl Front c nt i = pathUrl c.front nt i
 
 pathUrl :: Config -> NodeType -> Id -> UrlPath
 pathUrl c nt@(Tab _ _ _ _) i = pathUrl c Node i <> "/" <> show nt
+pathUrl c nt@(Ngrams _ _) i = pathUrl c Node i <> "/" <> show nt
 pathUrl c nt i = c.prePath <> urlConfig nt <> "/" <> show i
 ------------------------------------------------------------
 toUrl :: End -> NodeType -> Id -> Url
