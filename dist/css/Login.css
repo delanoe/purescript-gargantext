@@ -97,6 +97,51 @@ li#rename  #rename-a{
 }
 
 
+.glyphitem {top: 0;
+
+display: inline-block;
+
+float: right;
+
+opacity: 0.6;
+
+padding-right: 5px;
+
+cursor: pointer;
+
+transition: transform 0.1s ease-out 0s;
+
+font-size: 15px;
+
+text-align: center;
+  }
+
+.glyphitem:hover {
+
+    display: inline-block;
+    opacity: 1;
+    transform: scale(1.4);
+}
+
 #rename-tooltip:hover {
     border:none;
 }
+
+
+
+#arrow:before {
+    width: 0; 
+    height: 0; 
+    border-width: 11px;
+
+    border-top-width: 11px;
+    border-right-width: 11px;
+    border-bottom-width: 11px;
+    border-left-width: 11px;
+    content : "";
+    border-right-color : blue;
+    position:absolute;
+}
+
+
+

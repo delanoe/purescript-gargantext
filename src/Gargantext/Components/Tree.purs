@@ -1,11 +1,12 @@
 module Gargantext.Components.Tree where
 
 import Prelude hiding (div)
+import Unsafe.Coerce
 
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat as ResponseFormat
-import CSS (backgroundColor, justifyContent)
+import CSS (backgroundColor, justifyContent, marginTop)
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, Json, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Argonaut.Core (Json)
@@ -22,8 +23,6 @@ import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
 import React.DOM.Props (Props, _id, _type, className, href, title, onClick, onInput, placeholder, style, value, _data)
 import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, defaultRender, modifyState, simpleSpec)
-import Unsafe.Coerce 
-
 type Name = String
 type Open = Boolean
 type URL  = String
@@ -87,11 +86,12 @@ performAction (DeleteNode nid) _ _ = void $ do
 performAction (Submit rid s'') _  _  = void $ do
   s' <- lift $ renameNode  rid  $ RenameValue { name : s''}
   case s' of
-    Left err -> modifyState identity
-    Right d ->
-      cotransform (\td -> popOverNode rid td)
-      -- cotransform (\td -> showPopOverNode rid td) add this function to toggle rename function
-               
+    Left err -> do
+      liftEffect $ log err
+      modifyState identity
+    Right d -> do
+      -- _ <- cotransform (\td -> popOverNode rid td)
+      cotransform (\td -> showPopOverNode rid td) -- add this function to toggle rename function
 
 
 performAction (RenameNode  r nid) _ _ = void $
@@ -240,7 +240,7 @@ treeview = simpleSpec performAction render
 
 renameTreeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =
-        div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
+        div [_id "arrow"] [div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
         [  div [className "panel panel-default", style {border:"1px solid black"}]
            [
              div [className "panel-heading", style {float:"left", width: "100%"}]
@@ -257,22 +257,25 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                     , onInput \e -> d (RenameNode (unsafeEventValue e) nid)
                     ]
                ]
-              , div [className "col-md-6", style {padding : "9px"}] 
-              [ div [className "row"]
-                [ a [className "btn btn-danger"
+              , div [className "col-md-12"] 
+              [ div [className "row", style {marginTop : "11px"}]
+                [ div [className "col-md-6"] [
+                     a [className "btn btn-danger"
                     , _type "button"
                     , onClick \_ -> d $ (Submit nid renameNodeValue)
                     , style {float:"left"}
                     ] [text "Rename"]
-                ]
-              , div [className "col-md-6", style {padding : "9px"}] 
-                [a [className "btn btn-primary"
-                   , _type "button"
-                   , onClick \_ -> d $ (CancelRename nid)
-                   , style {float:"left", backgroundColor: "white", color:"black"}
-                   ] [text "cancel"]
+                    ]
+                , div [className "col-md-6"] 
+                  [a [className "btn btn-primary"
+                     , _type "button"
+                     , onClick \_ -> d $ (CancelRename nid)
+                     , style {float:"left", backgroundColor: "white", color:"black"}
+                     ] [text "cancel"]
 
+                  ]
                 ]
+              
                 ]
                
             ]
@@ -287,13 +290,13 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
            ,div [className "panel-body", style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
             [   div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-download-alt", _id "rename1"] [ ]]
            , div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-resize-horizontal", _id "rename1"] [ ]]
-              ,  div [className "col-md-4"] [ a [style {color:"black", paddingTop: "6px", paddingBottom: "6px"}, className "glyphicon glyphicon-trash", _id "rename2",onClick $ (\_-> d $ (DeleteNode id))] [ ]]
+           ,  div [className "col-md-4"] [ a [style {color:"black", paddingTop: "6px", paddingBottom: "6px"}, className "glyphitem glyphicon glyphicon-trash", _id "rename2",onClick $ (\_-> d $ (DeleteNode id))] [ ]]
 
            ]
           
           ]
         ]
-       
+       ]
 
 
 createNodeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
@@ -431,7 +434,7 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
     ~> jsonEmptyObject
 
 
-renameNode :: Int -> RenameValue -> Aff (Either String (Int))     --- need to change return type herre
+renameNode :: Int -> RenameValue -> Aff (Either String Unit)     --- need to change return type herre
 renameNode renameNodeId reqbody = do
   res <- request $ defaultRequest
          { url = "http://localhost:8008/api/v1.0/node/" <> show renameNodeId  <> "/rename"
@@ -448,8 +451,8 @@ renameNode renameNodeId reqbody = do
       --_ <- liftEffect $ log $ show a.status
       --_ <- liftEffect $ log $ show a.headers
       --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure obj
+      --let obj = decodeJson json
+      pure $ Right unit       --- TODO decode when getting proper data get
 
 
 
