@@ -1,0 +1,20 @@
+{
+  "name": "gargantext",
+  "set": "master",
+  "source": "https://github.com/np/package-sets.git",
+  "depends": [
+    "css",
+    "generics-rep",
+    "routing",
+    "foreign-object",
+    "argonaut",
+    "effect",
+    "web-html",
+    "thermite",
+    "integers",
+    "random",
+    "affjax",
+    "console",
+    "prelude"
+  ]
+}

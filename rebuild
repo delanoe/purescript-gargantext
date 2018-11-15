@@ -2,3 +2,4 @@
 
 rm -rf output bower_components node_modules
 bower install && yarn install && pulp build && pulp browserify --to dist/bundle.js
+# yarn install && psc-package install && pulp --psc-package build && pulp --psc-package browserify --to dist/bundle.js
