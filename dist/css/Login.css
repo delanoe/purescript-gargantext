@@ -129,18 +129,16 @@ text-align: center;
 
 
 
-#arrow:before {
+#arrow {
     width: 0; 
     height: 0; 
-    border-width: 11px;
-
-    border-top-width: 11px;
-    border-right-width: 11px;
-    border-bottom-width: 11px;
-    border-left-width: 11px;
-    content : "";
-    border-right-color : blue;
-    position:absolute;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent; 
+    
+    border-right:10px solid gray;
+    position : relative;
+    top: 55px;
+    left: -9px;
 }
 
 

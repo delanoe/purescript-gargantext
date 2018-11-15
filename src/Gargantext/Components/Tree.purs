@@ -240,8 +240,10 @@ treeview = simpleSpec performAction render
 
 renameTreeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =
-        div [_id "arrow"] [div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
-        [  div [className "panel panel-default", style {border:"1px solid black"}]
+        
+       div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
+       [  div [_id "arrow"] []
+         , div [className "panel panel-default", style {border:"1px solid black"}]
            [
              div [className "panel-heading", style {float:"left", width: "100%"}]
              [
@@ -296,7 +298,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
           
           ]
         ]
-       ]
+       
 
 
 createNodeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
