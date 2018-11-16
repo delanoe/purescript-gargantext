@@ -6,7 +6,7 @@ import Unsafe.Coerce
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat as ResponseFormat
-import CSS (backgroundColor, justifyContent, marginTop)
+import CSS (backgroundColor, borderRadius, boxShadow, justifyContent, marginTop)
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, Json, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Argonaut.Core (Json)
@@ -111,7 +111,6 @@ performAction (SetNodeValue v nid) _ _ = void $
 --  case s of
 --    Left err -> modifyState identity
 --    Right d -> modifyState (\state -> d)
-
 
 
 
@@ -243,7 +242,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
         
        div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
        [  div [_id "arrow"] []
-         , div [className "panel panel-default", style {border:"1px solid black"}]
+       , div [className "panel panel-default", style {border:"1px solid rgba(0,0,0,0.2)", boxShadow : "0 5px 10px rgba(0,0,0,0.2)", borderRadius : "8px"}]
            [
              div [className "panel-heading", style {float:"left", width: "100%"}]
              [

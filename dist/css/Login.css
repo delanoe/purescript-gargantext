@@ -89,8 +89,8 @@ li#rename  #rename-a{
 
 #rename-tooltip {
     position : absolute;
-    left : 122px;
-    top:-39px;
+    left : 96px;
+    top:-64px;
     background-color: white;
     z-index: 1000;
 
@@ -135,7 +135,7 @@ text-align: center;
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent; 
     
-    border-right:10px solid gray;
+    border-right:10px solid black;
     position : relative;
     top: 55px;
     left: -9px;
