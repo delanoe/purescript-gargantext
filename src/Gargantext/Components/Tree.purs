@@ -284,14 +284,14 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                 div [ _id "beforeClick", className "col-md-12"] 
              [  div [className "row"]
                 [ div [className "col-md-6"] [text name] 
-                , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil col-md-6", _id "rename1", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
+                , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil col-md-6", _id "rename1", title "Rename", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
                 ]
              ]
              ]
            ,div [className "panel-body", style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
-            [   div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-download-alt", _id "rename1"] [ ]]
-           , div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-duplicate", _id "rename1"] [ ]]
-           ,  div [className "col-md-4"] [ a [style {color:"black", paddingTop: "6px", paddingBottom: "6px"}, className "glyphitem glyphicon glyphicon-trash", _id "rename2",onClick $ (\_-> d $ (DeleteNode id))] [ ]]
+            [   div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-download-alt", _id "rename1", title "Download [WIP]"] [ ]]
+           , div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-duplicate", _id "rename1", title "Duplicate [WIP]"] [ ]]
+           ,  div [className "col-md-4"] [ a [style {color:"black", paddingTop: "6px", paddingBottom: "6px"}, className "glyphitem glyphicon glyphicon-trash", _id "rename2",title "Delete", onClick $ (\_-> d $ (DeleteNode id))] [ ]]
 
            ]
           
