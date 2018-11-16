@@ -135,11 +135,16 @@ text-align: center;
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent; 
     
-    border-right:10px solid black;
+    border-right:10px solid darkgray;
     position : relative;
     top: 55px;
     left: -9px;
 }
 
+
+#rename-tooltip a:hover
+{
+    text-decoration:none;
+}
 
 

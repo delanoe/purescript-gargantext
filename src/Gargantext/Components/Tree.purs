@@ -242,7 +242,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
         
        div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
        [  div [_id "arrow"] []
-       , div [className "panel panel-default", style {border:"1px solid rgba(0,0,0,0.2)", boxShadow : "0 5px 10px rgba(0,0,0,0.2)", borderRadius : "8px"}]
+       , div [className "panel panel-default", style {border:"1px solid rgba(0,0,0,0.2)", boxShadow : "0 2px 5px rgba(0,0,0,0.2)"}]
            [
              div [className "panel-heading", style {float:"left", width: "100%"}]
              [
