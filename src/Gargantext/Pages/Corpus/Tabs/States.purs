@@ -12,12 +12,13 @@ type State =
   , activeTab   :: Int
   }
 
+
 initialState :: State
 initialState =
   { docsView    :
      { documents : D.sampleData'
      , deleteRows : false
-     , deleteRowId : 1
+     , deleteRowId : []
      }
   , ngramsView  : {} -- N.initialState
   , activeTab   : 0

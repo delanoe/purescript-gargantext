@@ -8,7 +8,7 @@ import Affjax.ResponseFormat (printResponseFormatError)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
-import Data.Array (take, drop)
+import Data.Array (cons, drop, take, (:))
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -41,7 +41,7 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState,
 type State = 
   { documents :: DocumentsView
   , deleteRows :: Boolean
-  , deleteRowId :: Int
+  , deleteRowId :: Array Int
   }
 
 
@@ -52,7 +52,7 @@ data Action
   | Trash
 
 performAction :: PerformAction State Props Action
-performAction (SendFavorites nid) _ _ = void $ do
+performAction (SendFavorites nid) {path : nodeId} _ = void $ do
   
   s' <- lift $ favorites nid (FavoriteQuery {favorites : [nid]})
   case s' of
@@ -63,10 +63,10 @@ performAction (SendFavorites nid) _ _ = void $ do
   
 performAction (DeleteDocuments nid) _ _ = void $ do
   _ <- liftEffect $ log $ show nid
-  modifyState \state -> state {deleteRowId = nid, deleteRows = true}
+  modifyState \state -> state {deleteRowId = ( cons nid []), deleteRows = true}
     
-performAction (Trash) _ state  = void $ do
-  s' <- lift $ deleteDocuments state.deleteRowId (DeleteDocumentQuery {documents : [state.deleteRowId]})
+performAction Trash {path:nodeId} state  = void $ do
+  s' <- lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents : state.deleteRowId})
   case s' of
     Left err -> do
       _ <- liftEffect $ log err
@@ -341,9 +341,9 @@ deleteFavorites nodeId reqbody= do
 
 
 deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Either String Unit)
-deleteDocuments ddid reqbody= do
+deleteDocuments nodeId reqbody= do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/annuaire/"<>show ddid<>"/documents"
+         { url = "http://localhost:8008/api/v1.0/annuaire/"<>show nodeId <>"/documents"
          , responseFormat = ResponseFormat.json
          , method = Left DELETE
          , headers = []
