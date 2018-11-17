@@ -21,7 +21,6 @@ data Routes
       | AddCorpus
       | Document  Int
       | PGraphExplorer Int
-      | NGramsTable
       | Dashboard
     | Annuaire         Int
       | UserPage       Int
