@@ -14,7 +14,11 @@ type State =
 
 initialState :: State
 initialState =
-  { docsView    : {}
+  { docsView    :
+     { documents : D.sampleData'
+     , deleteRows : false
+     , deleteRowId : 1
+     }
   , ngramsView  : {} -- N.initialState
   , activeTab   : 0
   }
