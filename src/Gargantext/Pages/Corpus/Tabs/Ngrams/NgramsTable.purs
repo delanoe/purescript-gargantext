@@ -187,7 +187,7 @@ data Action
   | SetTermTypeFilter (Maybe TermType)
   | SetSearchQuery String
 
-data Mode = Authors | Sources | Terms
+data Mode = Authors | Sources | Terms | Trash
 
 type Dispatch = Action -> Effect Unit
 
