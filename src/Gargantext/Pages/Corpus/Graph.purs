@@ -68,7 +68,7 @@ performAction (LoadGraph fp) _ _ = void do
       -- graph.
   case gd of
     Left err -> do
-      _ <- liftEffect $ log err
+      _ <- liftEffect $  log err 
       modifyState identity
     Right resp -> modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
@@ -95,18 +95,7 @@ convert (GraphData r) = SigmaGraphData { nodes, edges}
 
 render :: Render State {} Action
 render d p (State s) c =
-  [ select [ onChange $ \e -> d $ LoadGraph (unsafeCoerce e).target.value, value s.filePath]
-    [ option [value ""] [text ""]
-    , option [value "example_01_clean.json"] [text "example_01_clean.json"]
-    , option [value "example_01_conditional.json"] [text "example_01_conditional.json"]
-    , option [value "example_01_distributional.json"] [text "example_01_distributional.json"]
-    , option [value "example_02.json"] [text "example_02.json"]
-    , option [value "example_02_clean.json"] [text "example_02_clean.json"]
-    , option [value "example_03.json"] [text "example_03.json"]
-    , option [value "example_03_clean.json"] [text "example_03_clean.json"]
-    , option [value "imtNew.json"] [text "imtNew.json"]
-    -- , option [value "exemplePhyloBipartite.gexf"] [text "exemplePhyloBipartite.gexf"]
-    ]
+  [ 
   ]
   <>
   case s.sigmaGraphData of
@@ -279,7 +268,7 @@ specOld = simpleSpec performAction render'
     render' :: Render State {} Action
     render' d _ (State st) _ =
       [  div [className "row"] [
-            div [className "col-md-12", style {marginTop : "21px", marginBottom : "21px"}]
+            div [className "col-md-12", style {marginTop : "34px", marginBottom : "21px"}]
             [ menu [_id "toolbar"]
               [ ul'
                 [
@@ -349,20 +338,7 @@ specOld = simpleSpec performAction render'
          , div [className "row"]
            [ div [className "col-md-9"]
              [ div [style {border : "1px black solid", height: "90%"}] $
-               [ select [ onChange $ \e -> d $ LoadGraph (unsafeCoerce e).target.value
-                        , value st.filePath
-                        ]
-                 [ option [value ""] [text ""]
-                 , option [value "example_01_clean.json"] [text "example_01_clean.json"]
-                 , option [value "example_01_conditional.json"] [text "example_01_conditional.json"]
-                 , option [value "example_01_distributional.json"] [text "example_01_distributional.json"]
-                 , option [value "example_02.json"] [text "example_02.json"]
-                 , option [value "example_02_clean.json"] [text "example_02_clean.json"]
-                 , option [value "example_03.json"] [text "example_03.json"]
-                 , option [value "example_03_clean.json"] [text "example_03_clean.json"]
-                 , option [value "imtNew.json"] [text "imtNew.json"]
-                   -- , option [value "exemplePhyloBipartite.gexf"] [text "exemplePhyloBipartite.gexf"]
-                 ]
+               [ 
                ]
                <>
                case st.sigmaGraphData of

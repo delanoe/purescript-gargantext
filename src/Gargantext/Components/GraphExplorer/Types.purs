@@ -39,18 +39,18 @@ derive instance newtypeGraphData :: Newtype GraphData _
 instance decodeJsonGraphData :: DecodeJson GraphData where
   decodeJson json = do
     obj <- decodeJson json
-    nodes <- obj .? "graph_nodes"
-    edges <- obj .? "graph_edges"
+    nodes <- obj .? "nodes"
+    edges <- obj .? "edges"
     pure $ GraphData { nodes, edges }
 
 instance decodeJsonNode :: DecodeJson Node where
   decodeJson json = do
     obj <- decodeJson json
-    id_ <- obj .? "node_id"
-    type_ <- obj .? "node_type"
-    label <- obj .? "node_label"
-    size <- obj .? "node_size"
-    attributes <- obj .? "node_attributes"
+    id_ <- obj .? "id"
+    type_ <- obj .? "type"
+    label <- obj .? "label"
+    size <- obj .? "size"
+    attributes <- obj .? "attributes"
     pure $ Node { id_, type_, size, label, attributes }
 
 instance decodeJsonCluster :: DecodeJson Cluster where
@@ -62,10 +62,10 @@ instance decodeJsonCluster :: DecodeJson Cluster where
 instance decodeJsonEdge :: DecodeJson Edge where
   decodeJson json = do
     obj <- decodeJson json
-    id_ <- obj .? "edge_id"
-    source <- obj .? "edge_source"
-    target <- obj .? "edge_target"
-    weight <- obj .? "edge_weight"
+    id_ <- obj .? "id"
+    source <- obj .? "source"
+    target <- obj .? "target"
+    weight <- obj .? "weight"
     pure $ Edge { id_, source, target, weight }
 
 newtype Legend = Legend  {id_ ::Int , label :: String}

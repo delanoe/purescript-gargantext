@@ -55,9 +55,9 @@ dispatchAction dispatcher _ (Document n) = do
   dispatcher $ SetRoute $ Document n
   dispatcher $ DocumentViewA $ Document.Load n
 
-dispatchAction dispatcher _ PGraphExplorer = do
-  dispatcher $ SetRoute PGraphExplorer
-  dispatcher $ GraphExplorerA $ GE.LoadGraph 2
+dispatchAction dispatcher _ (PGraphExplorer nid) = do
+  dispatcher $ SetRoute $ PGraphExplorer nid
+  dispatcher $ GraphExplorerA $ GE.LoadGraph nid
   --dispatcher $ GraphExplorerA $ GE.LoadGraph "imtNew.json"
 
 dispatchAction dispatcher _ NGramsTable = do
