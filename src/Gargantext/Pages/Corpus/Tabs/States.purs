@@ -19,6 +19,7 @@ initialState =
      { documents : D.sampleData'
      , deleteRows : false
      , deleteRowId : []
+     , delete : []
      }
   , ngramsView  : {} -- N.initialState
   , activeTab   : 0

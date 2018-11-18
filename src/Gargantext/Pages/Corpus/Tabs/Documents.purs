@@ -42,9 +42,15 @@ type State =
   { documents :: DocumentsView
   , deleteRows :: Boolean
   , deleteRowId :: Array Int
+  , delete :: Array DeleteRow
   }
 
 
+newtype DeleteRow = DeleteRow
+  {
+    deleteRowId :: Int
+  , deleteRows :: Boolean
+  }
 
 data Action
   = SendFavorites Int
@@ -60,10 +66,10 @@ performAction (SendFavorites nid) {path : nodeId} _ = void $ do
       _ <- liftEffect $ log err
       modifyState identity
     Right d -> modifyState identity
-  
-performAction (DeleteDocuments nid) _ _ = void $ do
+  --TODO add array of delete rows here 
+performAction (DeleteDocuments nid) _ s = void $ do
   _ <- liftEffect $ log $ show nid
-  modifyState \state -> state {deleteRowId = ( cons nid []), deleteRows = true}
+  modifyState \state -> state {deleteRowId = ( cons nid s.deleteRowId), deleteRows = true}
     
 performAction Trash {path:nodeId} state  = void $ do
   s' <- lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents : state.deleteRowId})
@@ -73,6 +79,9 @@ performAction Trash {path:nodeId} state  = void $ do
       modifyState identity
     Right d -> modifyState identity
 
+
+
+-- modifyState \state -> state {deleteRowId = ( cons nid s.deleteRowId), deleteRows = true}   for referrence
     
 newtype DocumentsView
   = DocumentsView
@@ -83,6 +92,7 @@ newtype DocumentsView
     , source :: String
     , fav    :: Boolean
     , ngramCount :: Int
+    , delete :: Boolean
     }
 
 
@@ -208,9 +218,18 @@ layoutDocview = simpleSpec performAction render
                       [ a [className $ fa r.fav <> "fa-star" ,onClick $ (\_-> dispatch $ (SendFavorites r._id))] []
                       ]
                     -- TODO show date: Year-Month-Day only
-                    , text r.date 
-                    , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
-                    , text r.source
+                    , if (r.delete) then
+                        div [ style {textDecoration : "line-through"}][text r.date]
+                      else
+                        div [ ][text r.date]
+                    , if (r.delete) then
+                        a [ href (toUrl Front Url_Document r._id), style {textDecoration : "line-through"} ] [ text r.title ]
+                      else
+                        a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
+                    , if (r.delete) then
+                        div [style {textDecoration : "line-through"}] [ text r.source]
+                      else
+                        div [] [ text r.source]
                     , input [ _type "checkbox", onClick $ (\_ -> dispatch $ (DeleteDocuments r._id))]
                     ]
                 , delete: true
@@ -242,6 +261,7 @@ loadPage {nodeId, limit, offset, orderBy} = do
       , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
       , fav    : r.favorite
       , ngramCount : r.ngramCount
+      , delete : false
      }
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
@@ -253,11 +273,11 @@ loadPage {nodeId, limit, offset, orderBy} = do
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
-sampleData' = DocumentsView {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1}
+sampleData' = DocumentsView {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1, delete : false}
 
 sampleData :: Array DocumentsView
 --sampleData = replicate 10 sampleData'
-sampleData = map (\(Tuple t s) -> DocumentsView {_id : 1, url : "", date : "2017", title: t, source: s, fav : false, ngramCount : 10}) sampleDocuments
+sampleData = map (\(Tuple t s) -> DocumentsView {_id : 1, url : "", date : "2017", title: t, source: s, fav : false, ngramCount : 10, delete : false}) sampleDocuments
 
 sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
