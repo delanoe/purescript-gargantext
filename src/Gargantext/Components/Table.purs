@@ -1,16 +1,14 @@
 module Gargantext.Components.Table where
 
-import Control.Monad.Cont.Trans (lift)
 import Data.Array (filter)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))
 import Effect (Effect)
-import Effect.Aff (Aff)
-import React as React
+import Effect.Class (liftEffect)
 import React (ReactElement, ReactClass, Children, createElement)
 import React.DOM (a, b, b', p, i, h3, hr, div, option, select, span, table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (className, href, onChange, onClick, scope, selected, value, style)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec, createReactSpec, StateCoTransformer)
+import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec, StateCoTransformer, createClass)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
@@ -29,7 +27,7 @@ type Rows = Array { row    :: Array ReactElement
 
 type OrderBy = Maybe (OrderByDirection ColumnName)
 
-type LoadRows = { offset :: Int, limit :: Int, orderBy :: OrderBy } -> Aff Rows
+type Params = { offset :: Int, limit :: Int, orderBy :: OrderBy }
 
 newtype ColumnName = ColumnName String
 
@@ -40,31 +38,33 @@ columnName (ColumnName c) = c
 
 data OrderByDirection a = ASC a | DESC a
 
+derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
+
 type Props' =
   ( colNames     :: Array ColumnName
   , totalRecords :: Int
-  , loadRows     :: LoadRows
+  , setParams    :: Params -> Effect Unit
+  , rows         :: Rows
   , container    :: TableContainerProps -> Array ReactElement
   )
 
 type Props = Record Props'
 
 type State =
-  { rows        :: Maybe Rows
-  , currentPage :: Int
+  { currentPage :: Int
   , pageSize    :: PageSizes
   , orderBy     :: OrderBy
---, tree        :: FTree
   }
 
 initialState :: State
 initialState =
-  { rows         : Nothing
-  , currentPage  : 1
+  { currentPage  : 1
   , pageSize     : PS10
   , orderBy      : Nothing
---, tree         : exampleTree
   }
+
+initialParams :: Params
+initialParams = stateParams initialState
 
 data Action
   = ChangePageSize PageSizes
@@ -118,9 +118,9 @@ tableSpec :: Spec State Props Action
 tableSpec = simpleSpec performAction render
   where
     modifyStateAndReload :: (State -> State) -> Props -> State -> StateCoTransformer State Unit
-    modifyStateAndReload f {loadRows} state = do
-      void $ modifyState f
-      loadAndSetRows {loadRows} $ f state
+    modifyStateAndReload f {setParams} state = do
+      modifyState_ f
+      liftEffect $ setParams $ stateParams $ f state
 
     performAction :: PerformAction State Props Action
     performAction (ChangePageSize ps) =
@@ -145,8 +145,8 @@ tableSpec = simpleSpec performAction render
             _ -> [lnk (Just (ASC c)) (columnName c)]
 
     render :: Render State Props Action
-    render dispatch {container, colNames, totalRecords}
-                    {pageSize, currentPage, orderBy, rows} _ =
+    render dispatch {container, colNames, totalRecords, rows}
+                    {pageSize, currentPage, orderBy} _ =
       container
         { pageSizeControl: sizeDD pageSize dispatch
         , pageSizeDescription: textDescription currentPage pageSize totalRecords
@@ -154,10 +154,7 @@ tableSpec = simpleSpec performAction render
         , tableHead:
             tr [] (renderColHeader (dispatch <<< ChangeOrderBy) orderBy <$> colNames)
         , tableBody:
-            map (tr [] <<< map (\c -> td [] [c]) <<< _.row)
-                (maybe [] identity rows)
-            -- TODO display a loading spinner when rows == Nothing
-            -- instead of an empty list of results.
+            map (tr [] <<< map (\c -> td [] [c]) <<< _.row) rows
         }
       where
         ps = pageSizes2Int pageSize
@@ -169,7 +166,7 @@ defaultContainer {title} props =
     [ div [className "col-md-1"] [b [] [text title]]
     , div [className "col-md-2"] [props.pageSizeControl]
     , div [className "col-md-3"] [props.pageSizeDescription]
-    , div [className "col-md-3"] []
+    , div [className "col-md-3"] [props.paginationLinks]
     ]
   , table [ className "table"]
     [ thead [className "thead-dark"] [ props.tableHead ]
@@ -177,26 +174,14 @@ defaultContainer {title} props =
     ]
   ]
 
-loadAndSetRows :: {loadRows :: LoadRows} -> State -> StateCoTransformer State Unit
-loadAndSetRows {loadRows} {pageSize, currentPage, orderBy} = do
-  let limit = pageSizes2Int pageSize
-      offset = limit * (currentPage - 1)
-  rows <- lift $ loadRows {offset, limit, orderBy}
-  void $ modifyState (_ { rows = Just rows })
+stateParams :: State -> Params
+stateParams {pageSize, currentPage, orderBy} = {offset, limit, orderBy}
+  where
+    limit = pageSizes2Int pageSize
+    offset = limit * (currentPage - 1)
 
 tableClass :: ReactClass {children :: Children | Props'}
-tableClass =
-  React.component "Table"
-    (\this -> do
-       {state, render} <- spec this
-       pure { state, render
-            , componentDidMount: do
-                {loadRows} <- React.getProps this
-                state' <- React.getState this
-                dispatcher' this $ loadAndSetRows {loadRows} state'
-            })
-  where
-    { spec, dispatcher' } = createReactSpec tableSpec initialState
+tableClass = createClass "Table" tableSpec (const initialState)
 
 tableElt :: Props -> ReactElement
 tableElt props = createElement tableClass props []
@@ -220,10 +205,7 @@ textDescription currPage pageSize totalRecords
       end  = if end' > totalRecords then totalRecords else end'
 
 effectLink :: Effect Unit -> String -> ReactElement
-effectLink eff msg =
-  a [ href "javascript:void()"
-    , onClick (const eff)
-    ] [text msg]
+effectLink eff msg = a [onClick $ const eff] [text msg]
 
 pagination :: ChangePageAction -> Int -> Int -> ReactElement
 pagination changePage tp cp

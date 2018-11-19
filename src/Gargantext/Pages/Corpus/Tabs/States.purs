@@ -12,9 +12,8 @@ type State =
   , activeTab   :: Int
   }
 
-
-initialState :: State
-initialState =
+initialState :: {} -> State
+initialState _ =
   { docsView    :
      { documents : D.sampleData'
      , deleteRows : false

@@ -5,10 +5,12 @@ import Data.Lens (Prism', prism)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe)
 import React as React
-import React (ReactClass, ReactElement)
+import React (ReactClass, ReactElement, Children)
 import React.DOM (a, br', div, input, p, text)
 import React.DOM.Props (href)
+import Effect (Effect)
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
 import Thermite ( Render, Spec
                 , createClass, simpleSpec, defaultPerformAction
                 )
@@ -16,15 +18,17 @@ import Thermite ( Render, Spec
 ------------------------------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
-import Gargantext.Components.Loader (createLoaderClass)
 import Gargantext.Components.Tab as Tab
-import Gargantext.Components.Table as Table
+import Gargantext.Components.Table as T
 import Gargantext.Config      (toUrl, NodeType(..), TabType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperData(..))
 ------------------------------------------------------------------------------
 
-type Props = {path :: Int, loaded :: Maybe AnnuaireInfo }
+type Props =
+  { path :: Int
+  , loaded :: Maybe AnnuaireInfo
+  , dispatch :: Loader.Action Int -> Effect Unit }
 
 data Action
   = TabsA   Tab.Action
@@ -71,7 +75,7 @@ layout = simpleSpec defaultPerformAction render
     render _ {annuaireId} _ _ =
       [ annuaireLoader
           { path: annuaireId
-          , component: createClass "LoadedAnnuaire" loadedAnnuaireSpec {}
+          , component: createClass "LoadedAnnuaire" loadedAnnuaireSpec (const {})
           } ]
 
 loadedAnnuaireSpec :: Spec {} Props Void
@@ -79,8 +83,8 @@ loadedAnnuaireSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
     render _ {loaded: Nothing} _ _ = []
-    render _ {path, loaded: Just (AnnuaireInfo {name, date})} _ _ =
-      Table.renderTableHeaderLayout
+    render _ {path: nodeId, loaded: Just (annuaireInfo@AnnuaireInfo {name, date})} _ _ =
+      T.renderTableHeaderLayout
         { title: name
         , desc: name
         , query: ""
@@ -90,25 +94,54 @@ loadedAnnuaireSpec = simpleSpec defaultPerformAction render
       [ p [] []
       , div [] [ text "    Filter ", input []]
       , br'
-      , Table.tableElt
-          { loadRows
-          , container: Table.defaultContainer { title: "title" } -- TODO
-          , colNames:
-              Table.ColumnName <$>
+      , pageLoader
+          { path: initialPageParams nodeId
+          , annuaireInfo
+          }
+      ]
+
+type PageParams = {nodeId :: Int, params :: T.Params}
+
+initialPageParams :: Int -> PageParams
+initialPageParams nodeId = {nodeId, params: T.initialParams}
+
+type PageLoaderProps =
+  { path :: PageParams
+  , annuaireInfo :: AnnuaireInfo
+  }
+
+renderPage :: forall props path.
+              Render (Loader.State {nodeId :: Int | path} AnnuaireTable)
+                     {annuaireInfo :: AnnuaireInfo | props}
+                     (Loader.Action PageParams)
+renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
+renderPage dispatch {annuaireInfo}
+                    { currentPath: {nodeId}
+                    , loaded: Just (AnnuaireTable {annuaireTable: res})
+                    } _ =
+  [ T.tableElt
+      { rows
+      , setParams: \params -> liftEffect $ dispatch (Loader.SetPath {nodeId, params})
+      , container: T.defaultContainer { title: "Annuaire" } -- TODO
+      , colNames:
+          T.ColumnName <$>
               [ ""
               , "Name"
               , "Role"
               , "Service"
               , "Company"
               ]
-          , totalRecords: 47361 -- TODO
-          }
-      ]
-      where
-        annuaireId = path
-        loadRows {offset, limit, orderBy} = do -- TODO use offset, limit, orderBy
-          (AnnuaireTable {annuaireTable: rows}) <- getTable annuaireId
-          pure $ (\c -> {row: renderContactCells c, delete: false}) <$> rows
+      , totalRecords: 47361 -- TODO
+      }
+  ]
+  where
+    rows = (\c -> {row: renderContactCells c, delete: false}) <$> res
+
+pageLoaderClass :: ReactClass { path :: PageParams, annuaireInfo :: AnnuaireInfo, children :: Children }
+pageLoaderClass = Loader.createLoaderClass' "AnnuairePageLoader" loadPage renderPage
+
+pageLoader :: PageLoaderProps -> ReactElement
+pageLoader props = React.createElement pageLoaderClass props []
 
 renderContactCells :: Contact -> Array ReactElement
 renderContactCells (Contact { id, hyperdata : HyperData contact }) =
@@ -168,15 +201,17 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     rows <- decodeJson json
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
-getTable :: Int -> Aff AnnuaireTable
-getTable id = get $ toUrl Back (Tab TabDocs 0 10 Nothing) id
+loadPage :: PageParams -> Aff AnnuaireTable
+loadPage {nodeId, params} = get $ toUrl Back (Tab TabDocs 0 10 Nothing) nodeId
+ -- TODO Tab TabDocs is not the right API call
+ -- TODO params, see loadPage in Documents
 
 getAnnuaireInfo :: Int -> Aff AnnuaireInfo
 getAnnuaireInfo id = get $ toUrl Back Node id
 ------------------------------------------------------------------------------
 
 annuaireLoaderClass :: ReactClass (Loader.Props Int AnnuaireInfo)
-annuaireLoaderClass = createLoaderClass "AnnuaireLoader" getAnnuaireInfo
+annuaireLoaderClass = Loader.createLoaderClass "AnnuaireLoader" getAnnuaireInfo
 
-annuaireLoader :: Loader.Props Int AnnuaireInfo -> ReactElement
-annuaireLoader = React.createLeafElement annuaireLoaderClass
+annuaireLoader :: Loader.Props' Int AnnuaireInfo -> ReactElement
+annuaireLoader props = React.createElement annuaireLoaderClass props []

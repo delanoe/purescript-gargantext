@@ -1,6 +1,7 @@
 module Gargantext.Pages.Corpus.Tabs.Documents where
 
-import Gargantext.Prelude
+import Data.Array (take, drop)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 
 import Affjax (defaultRequest, request)
 import Affjax.RequestBody (RequestBody(..))
@@ -13,13 +14,23 @@ import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.HTTP.Method (Method(..))
-import Data.List (List)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
+import React as React
+import React (ReactClass, ReactElement, Children)
+import React.DOM (a, br', div, input, p, text)
+import React.DOM.Props (_type, className, href, style, placeholder, name)
+import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
+------------------------------------------------------------------------
+import Gargantext.Prelude
+import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..), OrderBy(..))
+import Gargantext.Config.REST (get, post)
+import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
+import Gargantext.Components.Loader as Loader
+import Gargantext.Components.Table as T
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
 import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..), OrderBy(..))
@@ -63,19 +74,19 @@ performAction (SendFavorites nid) {path : nodeId} _ = void $ do
   s' <- lift $ favorites nid (FavoriteQuery {favorites : [nid]})
   case s' of
     Left err -> do
-      _ <- liftEffect $ log err
+      logs err
       modifyState identity
     Right d -> modifyState identity
   --TODO add array of delete rows here 
 performAction (DeleteDocuments nid) _ s = void $ do
-  _ <- liftEffect $ log $ show nid
+  logs $ show nid
   modifyState \state -> state {deleteRowId = ( cons nid s.deleteRowId), deleteRows = true}
     
 performAction Trash {path:nodeId} state  = void $ do
   s' <- lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents : state.deleteRowId})
   case s' of
     Left err -> do
-      _ <- liftEffect $ log err
+      logs err
       modifyState identity
     Right d -> modifyState identity
 
@@ -166,7 +177,7 @@ layoutDocview :: Spec State Props Action
 layoutDocview = simpleSpec performAction render
   where
     render :: Render State Props Action
-    render dispatch {path: nodeId, loaded} _ s =
+    render dispatch {path: nodeId, loaded: corpusInfo} _ _ =
       [ p [] []
       , div [ style {textAlign : "center"}] [input [placeholder "Filter here"]]
       , br'
@@ -174,23 +185,9 @@ layoutDocview = simpleSpec performAction render
         [ div [className "row"]
           [ chart globalPublis
           , div [className "col-md-12"]
-            [ T.tableElt
-                { loadRows
-                , container: T.defaultContainer { title: "Documents" }
-                , colNames:
-                    T.ColumnName <$>
-                    [ ""
-                    , "Date"
-                    , "Title"
-                    , "Source"
-                    , "Delete"
-                    ]
-                , totalRecords: maybe 47361 -- TODO
-                                  identity
-                                  ((\(NodePoly n) -> n.hyperdata)
-                                   >>>
-                                   (\(CorpusInfo c) -> c.totalRecords)
-                                  <$> loaded)
+            [ pageLoader
+                { path: initialPageParams nodeId
+                , corpusInfo
                 }
             ]
           , div [className "col-md-12"]
@@ -206,42 +203,17 @@ layoutDocview = simpleSpec performAction render
           ]
         ]
       ]
-      where
-        loadRows {offset, limit, orderBy} = do
-          _ <- logs "loading documents page"
-          res <- loadPage {nodeId,offset,limit,orderBy}
-          _ <- logs "OK: loading page documents."
-          pure $
-            (\(DocumentsView r) ->
-                { row:
-                    [ div []
-                      [ a [className $ fa r.fav <> "fa-star" ,onClick $ (\_-> dispatch $ (SendFavorites r._id))] []
-                      ]
-                    -- TODO show date: Year-Month-Day only
-                    , if (r.delete) then
-                        div [ style {textDecoration : "line-through"}][text r.date]
-                      else
-                        div [ ][text r.date]
-                    , if (r.delete) then
-                        a [ href (toUrl Front Url_Document r._id), style {textDecoration : "line-through"} ] [ text r.title ]
-                      else
-                        a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
-                    , if (r.delete) then
-                        div [style {textDecoration : "line-through"}] [ text r.source]
-                      else
-                        div [] [ text r.source]
-                    , input [ _type "checkbox", onClick $ (\_ -> dispatch $ (DeleteDocuments r._id))]
-                    ]
-                , delete: true
-                }) <$> res
-    fa true  = "fas "
-    fa false = "far "
 
 mock :: Boolean
 mock = false
 
-loadPage :: {nodeId :: Int, limit :: Int, offset :: Int, orderBy :: T.OrderBy} -> Aff (Array DocumentsView)
-loadPage {nodeId, limit, offset, orderBy} = do
+type PageParams = {nodeId :: Int, params :: T.Params}
+
+initialPageParams :: Int -> PageParams
+initialPageParams nodeId = {nodeId, params: T.initialParams}
+
+loadPage :: PageParams -> Aff (Array DocumentsView)
+loadPage {nodeId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   --res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
   res <- get $ toUrl Back (Tab TabDocs offset limit (convOrderBy <$> orderBy)) nodeId
@@ -270,6 +242,69 @@ loadPage {nodeId, limit, offset, orderBy} = do
 
     convOrderBy _ = DateAsc -- TODO
 
+type PageLoaderProps =
+  { path :: PageParams
+  , corpusInfo :: Maybe (NodePoly CorpusInfo)
+  }
+
+renderPage :: forall props path.
+              Render (Loader.State {nodeId :: Int | path} (Array DocumentsView))
+                     {corpusInfo :: Maybe (NodePoly CorpusInfo) | props}
+                     (Loader.Action PageParams)
+renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
+renderPage dispatch {corpusInfo} {currentPath: {nodeId}, loaded: Just res} _ =
+  [ T.tableElt
+      { rows
+      , setParams: \params -> liftEffect $ dispatch (Loader.SetPath {nodeId, params})
+      , container: T.defaultContainer { title: "Documents" }
+      , colNames:
+          T.ColumnName <$>
+          [ ""
+          , "Date"
+          , "Title"
+          , "Source"
+          , "Delete"
+          ]
+      , totalRecords: maybe 47361 -- TODO
+                        identity
+                        ((\(NodePoly n) -> n.hyperdata)
+                         >>>
+                         (\(CorpusInfo c) -> c.totalRecords)
+                        <$> corpusInfo)
+      }
+  ]
+  where
+    dispatch2 _ = logs "TODO dispatch2"
+    fa true  = "fas "
+    fa false = "far "
+    rows = (\(DocumentsView r) ->
+                { row:
+                    [ div []
+                      [ a [className $ fa r.fav <> "fa-star" ,onClick $ (\_-> dispatch2 $ (SendFavorites r._id))] []
+                      ]
+                    -- TODO show date: Year-Month-Day only
+                    , if (r.delete) then
+                        div [ style {textDecoration : "line-through"}][text r.date]
+                      else
+                        div [ ][text r.date]
+                    , if (r.delete) then
+                        a [ href (toUrl Front Url_Document r._id), style {textDecoration : "line-through"} ] [ text r.title ]
+                      else
+                        a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
+                    , if (r.delete) then
+                        div [style {textDecoration : "line-through"}] [ text r.source]
+                      else
+                        div [] [ text r.source]
+                    , input [ _type "checkbox", onClick $ (\_ -> dispatch2 $ (DeleteDocuments r._id))]
+                    ]
+                , delete: true
+                }) <$> res
+
+pageLoaderClass :: ReactClass { path :: PageParams, corpusInfo :: Maybe (NodePoly CorpusInfo), children :: Children }
+pageLoaderClass = Loader.createLoaderClass' "PageLoader" loadPage renderPage
+
+pageLoader :: PageLoaderProps -> ReactElement
+pageLoader props = React.createElement pageLoaderClass props []
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
@@ -335,14 +370,15 @@ favorites nodeId reqbody= do
          }
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
       let obj = decodeJson json
       pure obj
 
 deleteFavorites :: Int -> FavoriteQuery -> Aff (Either String (Array Int))
-deleteFavorites nodeId reqbody= do
+deleteFavorites nodeId reqbody = do
+-- TODO use Config.REST.delete
   res <- request $ defaultRequest
          { url = "http://localhost:8008/api/v1.0/node/"<>show nodeId<>"/favorites"
          , responseFormat = ResponseFormat.json
@@ -352,7 +388,7 @@ deleteFavorites nodeId reqbody= do
          }
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
       let obj = decodeJson json
@@ -362,6 +398,7 @@ deleteFavorites nodeId reqbody= do
 
 deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Either String Unit)
 deleteDocuments nodeId reqbody= do
+-- TODO use Config.REST.delete
   res <- request $ defaultRequest
          { url = "http://localhost:8008/api/v1.0/annuaire/"<>show nodeId <>"/documents"
          , responseFormat = ResponseFormat.json
@@ -371,7 +408,7 @@ deleteDocuments nodeId reqbody= do
          }
   case res.body of
     Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
+      logs $ printResponseFormatError err
       pure $ Left $ printResponseFormatError err
     Right json -> do
       -- let obj = decodeJson json

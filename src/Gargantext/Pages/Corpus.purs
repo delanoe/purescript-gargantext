@@ -28,9 +28,9 @@ type Props = Tabs.Props
 type State = { tabsView    :: Tabs.State
              }
 
-initialState :: State
-initialState = { tabsView    : Tabs.initialState
-               }
+initialState :: Props -> State
+initialState _props =
+  { tabsView    : Tabs.initialState {} }
 
 ------------------------------------------------------------------------
 _tabsView :: forall a b. Lens' { tabsView :: a | b } a
@@ -87,5 +87,5 @@ getCorpus = get <<< toUrl Back Corpus
 corpusLoaderClass :: ReactClass (Loader.Props Int (NodePoly CorpusInfo))
 corpusLoaderClass = createLoaderClass "CorpusLoader" getCorpus
 
-corpusLoader :: Loader.Props Int (NodePoly CorpusInfo) -> ReactElement
-corpusLoader = React.createLeafElement corpusLoaderClass
+corpusLoader :: Loader.Props' Int (NodePoly CorpusInfo) -> ReactElement
+corpusLoader props = React.createElement corpusLoaderClass props []

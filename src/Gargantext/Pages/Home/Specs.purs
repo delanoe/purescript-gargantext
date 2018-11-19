@@ -26,7 +26,7 @@ landingData FR = Fr.landingData
 landingData EN = En.landingData
 
 layoutLanding :: Lang -> Spec {} {} Void
-layoutLanding = hideState (unwrap initialState)
+layoutLanding = hideState (const $ unwrap initialState)
             <<< focusState (re _Newtype)
             <<< layoutLanding' <<< landingData
 

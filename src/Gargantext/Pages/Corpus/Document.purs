@@ -26,8 +26,8 @@ type State =
   , inputValue :: String
   }
 
-initialState :: State
-initialState =
+initialState :: {} -> State
+initialState {} =
   { document   : Nothing
   , inputValue : ""
   }

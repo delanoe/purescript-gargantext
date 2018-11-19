@@ -24,7 +24,7 @@ setUnsafeComponentWillMount = unsafeSet "unsafeComponentWillMount"
 
 main :: Effect Unit
 main = do
- case T.createReactSpec layoutSpec initAppState of
+ case T.createReactSpec layoutSpec (const initAppState) of
     { spec, dispatcher } -> void $ do
       let setRouting this = void $ do
             matches routing (routeHandler (dispatchAction (dispatcher this)))
