@@ -71,7 +71,7 @@ layout = simpleSpec defaultPerformAction render
     render _ {annuaireId} _ _ =
       [ annuaireLoader
           { path: annuaireId
-          , component: createClass "LoadedAnnuaire" loadedAnnuaireSpec {}
+          , component: createClass "LoadedAnnuaire" loadedAnnuaireSpec (const {})
           } ]
 
 loadedAnnuaireSpec :: Spec {} Props Void
@@ -178,5 +178,5 @@ getAnnuaireInfo id = get $ toUrl Back Node id
 annuaireLoaderClass :: ReactClass (Loader.Props Int AnnuaireInfo)
 annuaireLoaderClass = createLoaderClass "AnnuaireLoader" getAnnuaireInfo
 
-annuaireLoader :: Loader.Props Int AnnuaireInfo -> ReactElement
-annuaireLoader = React.createLeafElement annuaireLoaderClass
+annuaireLoader :: Loader.Props' Int AnnuaireInfo -> ReactElement
+annuaireLoader props = React.createElement annuaireLoaderClass props []

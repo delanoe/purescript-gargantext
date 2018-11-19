@@ -15,8 +15,8 @@ import Gargantext.Components.Tab as Tab
 import Thermite (Spec, focus, hideState, cmapProps)
 
 
-pureTabs :: Spec {} Props Void
-pureTabs = hideState initialState statefulTabs
+-- pureTabs :: Spec {} Props Void
+-- pureTabs = hideState initialState statefulTabs
 
 statefulTabs :: Spec State Props Action
 statefulTabs =

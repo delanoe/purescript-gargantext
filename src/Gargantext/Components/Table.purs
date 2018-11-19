@@ -57,8 +57,8 @@ type State =
 --, tree        :: FTree
   }
 
-initialState :: State
-initialState =
+initialState :: Props -> State
+initialState _ =
   { rows         : Nothing
   , currentPage  : 1
   , pageSize     : PS10

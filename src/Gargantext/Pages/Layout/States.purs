@@ -36,7 +36,7 @@ initAppState =
   , addCorpusState : AC.initialState
   , searchState    : S.initialState
   , userPageState  : C.initialState
-  , documentState  : D.initialState
+  , documentState  : D.initialState {}
   , ntreeState     : Tree.exampleTree
   , search         : ""
   , showLogin      : false

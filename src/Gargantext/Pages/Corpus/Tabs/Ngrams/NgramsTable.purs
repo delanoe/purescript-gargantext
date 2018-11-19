@@ -173,12 +173,13 @@ type State =
   , termTypeFilter   :: Maybe TermType -- Nothing means all
   }
 
-initialState :: State
-initialState = { ngramsTablePatch: mempty
-               , searchQuery:      ""
-               , termListFilter:   Nothing
-               , termTypeFilter:   Nothing
-               }
+initialState :: forall props. props -> State
+initialState _ =
+  { ngramsTablePatch: mempty
+  , searchQuery:      ""
+  , termListFilter:   Nothing
+  , termTypeFilter:   Nothing
+  }
 
 data Action
   = SetTermListItem NgramsTerm (Replace TermList)
@@ -322,8 +323,8 @@ getNgramsTable = get <<< toUrl Back (Ngrams TabTerms Nothing)
 ngramsLoaderClass :: ReactClass (Loader.Props Int NgramsTable)
 ngramsLoaderClass = Loader.createLoaderClass "NgramsLoader" getNgramsTable
 
-ngramsLoader :: Loader.Props Int NgramsTable -> ReactElement
-ngramsLoader = React.createLeafElement ngramsLoaderClass
+ngramsLoader :: Loader.Props' Int NgramsTable -> ReactElement
+ngramsLoader props = React.createElement ngramsLoaderClass props []
 
 ngramsTableSpec :: Spec {} Props Void
 ngramsTableSpec = simpleSpec defaultPerformAction render

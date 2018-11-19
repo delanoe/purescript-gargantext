@@ -12,8 +12,8 @@ type State =
   , activeTab   :: Int
   }
 
-initialState :: State
-initialState =
+initialState :: {} -> State
+initialState _ =
   { docsView    : {}
   , ngramsView  : {} -- N.initialState
   , activeTab   : 0
