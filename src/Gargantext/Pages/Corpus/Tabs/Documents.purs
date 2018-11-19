@@ -1,13 +1,17 @@
 module Gargantext.Pages.Corpus.Tabs.Documents where
 
+import Control.Monad.Cont.Trans (lift)
 import Data.Array (take, drop)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
 
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import React as React
+import React (ReactClass, ReactElement, Children)
 import React.DOM (a, br', div, input, p, text)
 import React.DOM.Props (_type, className, href, style, placeholder, name)
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
@@ -17,6 +21,7 @@ import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..), OrderBy(..)
 import Gargantext.Config.REST (get, post)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
+import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Table as T
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), Props)
@@ -115,7 +120,7 @@ layoutDocview :: Spec {} Props Void
 layoutDocview = simpleSpec absurd render
   where
     render :: Render {} Props Void
-    render dispatch {path: nodeId, loaded} _ _ =
+    render dispatch {path: nodeId, loaded: corpusInfo} _ _ =
       [ p [] []
       , div [ style {textAlign : "center"}] [input [placeholder "Filter here"]]
       , br'
@@ -123,53 +128,25 @@ layoutDocview = simpleSpec absurd render
         [ div [className "row"]
           [ chart globalPublis
           , div [className "col-md-12"]
-            [ T.tableElt
-                { loadRows
-                , container: T.defaultContainer { title: "Documents" }
-                , colNames:
-                    T.ColumnName <$>
-                    [ ""
-                    , "Date"
-                    , "Title"
-                    , "Source"
-                    , "Delete"
-                    ]
-                , totalRecords: maybe 47361 -- TODO
-                                  identity
-                                  ((\(NodePoly n) -> n.hyperdata)
-                                   >>>
-                                   (\(CorpusInfo c) -> c.totalRecords)
-                                  <$> loaded)
+            [ pageLoader
+                { path: initialPageParams nodeId
+                , corpusInfo
                 }
             ]
           ]
         ]
       ]
-      where
-        loadRows {offset, limit, orderBy} = do
-          _ <- logs "loading documents page"
-          res <- loadPage {nodeId,offset,limit,orderBy}
-          _ <- logs "OK: loading page documents."
-          pure $
-            (\(DocumentsView r) ->
-                { row:
-                    [ div [className $ fa r.fav <> "fa-star"] []
-                    -- TODO show date: Year-Month-Day only
-                    , text r.date
-                    , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
-                    , text r.source
-                    , input [ _type "checkbox"]
-                    ]
-                , delete: false
-                }) <$> res
-    fa true  = "fas "
-    fa false = "far "
 
 mock :: Boolean
 mock = false
 
-loadPage :: {nodeId :: Int, limit :: Int, offset :: Int, orderBy :: T.OrderBy} -> Aff (Array DocumentsView)
-loadPage {nodeId, limit, offset, orderBy} = do
+type PageParams = {nodeId :: Int, params :: T.Params}
+
+initialPageParams :: Int -> PageParams
+initialPageParams nodeId = {nodeId, params: T.initialParams}
+
+loadPage :: PageParams -> Aff (Array DocumentsView)
+loadPage {nodeId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   --res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
   res <- get $ toUrl Back (Tab TabDocs offset limit (convOrderBy <$> orderBy)) nodeId
@@ -197,6 +174,57 @@ loadPage {nodeId, limit, offset, orderBy} = do
 
     convOrderBy _ = DateAsc -- TODO
 
+type PageLoaderProps =
+  { path :: PageParams
+  , corpusInfo :: Maybe (NodePoly CorpusInfo)
+  }
+
+renderPage :: forall props path.
+              Render (Loader.State {nodeId :: Int | path} (Array DocumentsView))
+                     {corpusInfo :: Maybe (NodePoly CorpusInfo) | props}
+                     (Loader.Action PageParams)
+renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
+renderPage dispatch {corpusInfo} {currentPath: {nodeId}, loaded: Just res} _ =
+  [ T.tableElt
+      { rows
+      , setParams: \params -> liftEffect $ dispatch (Loader.SetPath {nodeId, params})
+      , container: T.defaultContainer { title: "Documents" }
+      , colNames:
+          T.ColumnName <$>
+          [ ""
+          , "Date"
+          , "Title"
+          , "Source"
+          , "Delete"
+          ]
+      , totalRecords: maybe 47361 -- TODO
+                        identity
+                        ((\(NodePoly n) -> n.hyperdata)
+                         >>>
+                         (\(CorpusInfo c) -> c.totalRecords)
+                        <$> corpusInfo)
+      }
+  ]
+  where
+    fa true  = "fas "
+    fa false = "far "
+    rows = (\(DocumentsView r) ->
+                { row:
+                    [ div [className $ fa r.fav <> "fa-star"] []
+                    -- TODO show date: Year-Month-Day only
+                    , text r.date
+                    , a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
+                    , text r.source
+                    , input [ _type "checkbox"]
+                    ]
+                , delete: false
+                  }) <$> res
+
+pageLoaderClass :: ReactClass { path :: PageParams, corpusInfo :: Maybe (NodePoly CorpusInfo), children :: Children }
+pageLoaderClass = Loader.createLoaderClass' "PageLoader" loadPage renderPage
+
+pageLoader :: PageLoaderProps -> ReactElement
+pageLoader props = React.createElement pageLoaderClass props []
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView

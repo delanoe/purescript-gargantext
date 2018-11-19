@@ -20,7 +20,7 @@ import Data.Void (Void)
 import Data.Unit (Unit)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import React (ReactElement, ReactClass)
+import React (ReactElement, ReactClass, Children)
 import React as React
 import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
@@ -38,8 +38,11 @@ import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), PropsRow)
 
 type Props = { mode :: Mode | PropsRow }
 
-type Props' = { path :: Int
+type PageParams = {nodeId :: Int, params :: T.Params}
+
+type Props' = { path :: PageParams
               , loaded :: Maybe NgramsTable
+              , dispatch :: Loader.Action PageParams -> Effect Unit
               }
 
 type NgramsTerm = String
@@ -282,10 +285,13 @@ ngramsTableSpec' = simpleSpec performAction render
         -- patch the root of the child to be equal to the root of the parent.
 
     render :: Render State Props' Action
-    render dispatch {path: nodeId, loaded: initTable}
-                    {ngramsTablePatch, searchQuery {- TODO more state -} } _ =
+    render dispatch { path: {nodeId}
+                    , loaded: initTable
+                    , dispatch: loaderDispatch }
+                    { ngramsTablePatch, searchQuery } _children =
       [ T.tableElt
-          { loadRows
+          { rows
+          , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, params})
           , container: tableContainer {searchQuery, dispatch}
           , colNames:
               T.ColumnName <$>
@@ -294,36 +300,47 @@ ngramsTableSpec' = simpleSpec performAction render
               , "Terms"
               , "Occurences (nb)"
               ]
-          , totalRecords: 10 -- TODO
+          , totalRecords: 47361 -- TODO
           }
       ]
-      where
-        loadRows {offset, limit, orderBy} =
-          case applyNgramsTablePatch ngramsTablePatch <$> initTable of
-            Nothing -> pure [] -- or an error
-            Just (NgramsTable table) ->
-              pure $ convertRow <$> Map.toUnfoldable (Map.filter isRoot table)
-        isRoot (NgramsElement e) = e.root == Nothing
-        convertRow (Tuple ngrams (NgramsElement { occurrences, list })) =
-          { row:
-              let
-                setTermList Keep = do
-                  logs "setTermList Keep"
-                  pure unit
-                setTermList rep@(Replace {old,new}) = do
-                  logs $ Tuple "setTermList" (Tuple old new)
-                  dispatch $ SetTermListItem ngrams rep in
-              renderNgramsItem { ngrams, occurrences, termList: list, setTermList }
-          , delete: false
-          }
+          where
+            rows =
+              case applyNgramsTablePatch ngramsTablePatch <$> initTable of
+                Nothing -> [] -- or an error
+                Just (NgramsTable table) ->
+                  convertRow <$> Map.toUnfoldable (Map.filter isRoot table)
+            isRoot (NgramsElement e) = e.root == Nothing
+            convertRow (Tuple ngrams (NgramsElement { occurrences, list })) =
+              { row:
+                  let
+                    setTermList Keep = do
+                      logs "setTermList Keep"
+                      pure unit
+                    setTermList rep@(Replace {old,new}) = do
+                      logs $ Tuple "setTermList" (Tuple old new)
+                      dispatch $ SetTermListItem ngrams rep in
+                  renderNgramsItem { ngrams, occurrences, termList: list, setTermList }
+              , delete: false
+              }
+
+initialPageParams :: Int -> PageParams
+initialPageParams nodeId = {nodeId, params: T.initialParams}
+
+type PageLoaderProps =
+  { path :: PageParams
+--, corpusInfo :: Maybe (NodePoly CorpusInfo)
+  }
 
 getNgramsTable :: Int -> Aff NgramsTable
 getNgramsTable = get <<< toUrl Back (Ngrams TabTerms Nothing)
 
-ngramsLoaderClass :: ReactClass (Loader.Props Int NgramsTable)
-ngramsLoaderClass = Loader.createLoaderClass "NgramsLoader" getNgramsTable
+loadPage :: PageParams -> Aff NgramsTable
+loadPage {nodeId} = getNgramsTable nodeId -- TODO this ignores params
 
-ngramsLoader :: Loader.Props' Int NgramsTable -> ReactElement
+ngramsLoaderClass :: ReactClass (Loader.Props PageParams NgramsTable)
+ngramsLoaderClass = Loader.createLoaderClass "NgramsLoader" loadPage
+
+ngramsLoader :: Loader.Props' PageParams NgramsTable -> ReactElement
 ngramsLoader props = React.createElement ngramsLoaderClass props []
 
 ngramsTableSpec :: Spec {} Props Void
@@ -332,7 +349,7 @@ ngramsTableSpec = simpleSpec defaultPerformAction render
     render :: Render {} Props Void
     render _ {path: nodeId} _ _ =
       -- TODO: ignored mode, ignored loaded: corpusInfo
-      [ ngramsLoader { path: nodeId
+      [ ngramsLoader { path: initialPageParams nodeId
                      , component: createClass "Layout" ngramsTableSpec' initialState
                      } ]
 

@@ -5,36 +5,39 @@ import Data.Maybe (Maybe(..))
 import React as React
 import React (ReactClass, Children)
 import Gargantext.Prelude
+import Effect (Effect)
 import Effect.Aff (Aff)
 
 import Thermite (Render, PerformAction, simpleSpec, modifyState_, createReactSpec)
 
-type InnerProps a b =
-  { path     :: a
-  , loaded   :: Maybe b
+data Action path = ForceReload | SetPath path
+
+type InnerProps path loaded =
+  { path     :: path
+  , loaded   :: Maybe loaded
+  , dispatch :: Action path -> Effect Unit
   , children :: Children
   }
 
-type PropsRow a b c =
-  ( path      :: a
-  , component :: ReactClass (InnerProps a b)
-  | c
+type PropsRow path loaded row =
+  ( path      :: path
+  , component :: ReactClass (InnerProps path loaded)
+  | row
   )
 
-type Props a b = Record (PropsRow a b (children :: Children))
+type Props path loaded = Record (PropsRow path loaded (children :: Children))
 
-type Props' a b = Record (PropsRow a b ())
+type Props' path loaded = Record (PropsRow path loaded ())
 
-data Action a = ForceReload | SetPath a
+type State path loaded = { currentPath :: path, loaded :: Maybe loaded }
 
-type State a b = { currentPath :: a, loaded :: Maybe b }
-
-createLoaderClass :: forall a b
-                   . Eq a
-                  => String
-                  -> (a -> Aff b)
-                  -> ReactClass (Record (PropsRow a b (children :: Children)))
-createLoaderClass name loader =
+createLoaderClass' :: forall path loaded props
+                    . Eq path
+                   => String
+                   -> (path -> Aff loaded)
+                   -> Render (State path loaded) {path :: path | props} (Action path)
+                   -> ReactClass { path :: path, children :: Children | props }
+createLoaderClass' name loader render =
   React.component name
     (\this -> do
        s <- spec this
@@ -45,7 +48,7 @@ createLoaderClass name loader =
   where
     initialState {path} = {currentPath: path, loaded: Nothing}
 
-    performAction :: PerformAction (State a b) (Props' a b) (Action a)
+    performAction :: PerformAction (State path loaded) {path :: path | props} (Action path)
     performAction ForceReload _ {currentPath} = do
       loaded <- lift $ loader currentPath
       modifyState_ $ _ { loaded = Just loaded }
@@ -54,17 +57,25 @@ createLoaderClass name loader =
         loaded <- lift $ loader newPath
         modifyState_ $ _ { currentPath = newPath, loaded = Just loaded }
 
-    render :: Render (State a b) (Props' a b) (Action a)
-    render _d {component} {currentPath, loaded} c =
-      [React.createElement component {path: currentPath, loaded} c]
-
     {spec, dispatcher} = createReactSpec (simpleSpec performAction render) initialState
 
+createLoaderClass :: forall path loaded
+                   . Eq path
+                  => String
+                  -> (path -> Aff loaded)
+                  -> ReactClass (Record (PropsRow path loaded (children :: Children)))
+createLoaderClass name loader =
+    createLoaderClass' name loader render
+  where
+    render :: Render (State path loaded) (Props' path loaded) (Action path)
+    render dispatch {component} {currentPath, loaded} c =
+      [React.createElement component {path: currentPath, loaded, dispatch} c]
+
 {-
-createLoaderClass :: forall a b
+createLoaderClass :: forall path loaded
                    . String
-                  -> (a -> Aff b)
-                  -> ReactClass (Props a b)
+                  -> (path -> Aff loaded)
+                  -> ReactClass (Props path loaded)
 createLoaderClass name loader = React.component name mk
   where
     mk this =

@@ -32,7 +32,7 @@ docPageSpec = focus _doclens _docAction DV.layoutDocview
 
 ngramsViewSpec :: {mode :: NV.Mode} -> Spec State Props Action
 ngramsViewSpec {mode} =
-  cmapProps (\{loaded, path} -> {mode,loaded,path})
+  cmapProps (\{loaded, path, dispatch} -> {mode,loaded,path, dispatch})
             (focus _ngramsView _NgramViewA NV.ngramsTableSpec)
 
 authorPageSpec :: Spec State Props Action
