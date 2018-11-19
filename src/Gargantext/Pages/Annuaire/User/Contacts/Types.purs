@@ -61,7 +61,7 @@ data Action
 
 type State =
   { activeTab :: Int
-  , contact :: Maybe (Contact String String)
+  , contact :: Maybe (Contact Void Void)
   }
 
 initialState :: State
@@ -70,7 +70,7 @@ initialState =
   , contact: Nothing
   }
 
-_contact :: Lens' State (Maybe (Contact String String))
+_contact :: Lens' State (Maybe (Contact Void Void))
 _contact = lens (\s -> s.contact) (\s ss -> s{contact = ss})
 
 _tablens :: Lens' State Tab.State
