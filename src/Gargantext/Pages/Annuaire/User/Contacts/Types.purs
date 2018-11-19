@@ -13,7 +13,6 @@ import React.DOM (div)
 
 import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.DecodeMaybe ((.?|))
-import Gargantext.Utils.Renderable
 
 data Contact c s = Contact {
   id :: Int
@@ -62,7 +61,7 @@ data Action
 
 type State =
   { activeTab :: Int
-  , contact :: Maybe (Contact )
+  , contact :: Maybe (Contact String String)
   }
 
 initialState :: State
@@ -71,7 +70,7 @@ initialState =
   , contact: Nothing
   }
 
-_contact :: Lens' State (Maybe (Contact Unit Unit))
+_contact :: Lens' State (Maybe (Contact String String))
 _contact = lens (\s -> s.contact) (\s ss -> s{contact = ss})
 
 _tablens :: Lens' State Tab.State

@@ -55,7 +55,7 @@ mapMyMap f m = toUnfoldable
 
 infixl 4 mapMyMap as <.~$>
 
-contactInfos :: HyperData Void Void -> ReactElement
+contactInfos :: HyperData String String -> ReactElement
 contactInfos hyperdata =
     ul [className "list-group"] [] {- $
     listInfo <.~$> hyperdata
