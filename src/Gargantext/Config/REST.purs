@@ -51,5 +51,10 @@ put url = send PUT url <<< Just
 delete :: forall a. DecodeJson a => String -> Aff a
 delete url = send DELETE url noReqBody
 
+-- This might not be a good idea:
+-- https://stackoverflow.com/questions/14323716/restful-alternatives-to-delete-request-body
+deleteWithBody :: forall a b. EncodeJson a => DecodeJson b => String -> a -> Aff b
+deleteWithBody url = send DELETE url <<< Just
+
 post :: forall a b. EncodeJson a => DecodeJson b => String -> a -> Aff b
 post url = send POST url <<< Just

@@ -1,6 +1,7 @@
 module Gargantext.Pages.Corpus.Tabs.States where
 
 import Data.Lens (Lens', lens)
+import Gargantext.Prelude
 import Gargantext.Pages.Corpus.Tabs.Documents as D
 import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as N
 import Gargantext.Components.Tab as Tab
@@ -15,10 +16,7 @@ type State =
 initialState :: {} -> State
 initialState _ =
   { docsView    :
-     { documents : D.sampleData'
-     , deleteRows : false
-     , deleteRowId : []
-     , delete : []
+     { documentIdsToDelete : mempty
      }
   , ngramsView  : {} -- N.initialState
   , activeTab   : 0

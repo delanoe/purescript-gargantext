@@ -9,38 +9,36 @@ import Affjax.ResponseFormat (printResponseFormatError)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
-import Data.Array (cons, drop, take, (:))
+import Data.Array (drop, take, (:))
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
+import Data.Set (Set)
+import Data.Set as Set
 import Data.Tuple (Tuple(..))
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import React as React
 import React (ReactClass, ReactElement, Children)
-import React.DOM (a, br', div, input, p, text)
-import React.DOM.Props (_type, className, href, style, placeholder, name)
-import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..), OrderBy(..))
-import Gargantext.Config.REST (get, post)
+import Gargantext.Config.REST (get, put, post, deleteWithBody)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Table as T
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
-import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..), OrderBy(..))
-import Gargantext.Config.REST (get, post)
 import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), Props)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import React.DOM (a, br', button, div, i, input, p, text)
 import React.DOM.Props (_type, className, href, name, onClick, placeholder, style, value)
-import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec)
 ------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
 -- TODO: Search is pending
@@ -49,51 +47,15 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState,
 -- TODO: Filter is Pending
 -- TODO: When a pagination link is clicked, reload data. 
 
-type State = 
-  { documents :: DocumentsView
-  , deleteRows :: Boolean
-  , deleteRowId :: Array Int
-  , delete :: Array DeleteRow
-  }
-
-
-newtype DeleteRow = DeleteRow
-  {
-    deleteRowId :: Int
-  , deleteRows :: Boolean
+type State =
+  { documentIdsToDelete :: Set Int
   }
 
 data Action
-  = SendFavorites Int
-  | DeleteDocuments Int
+  = MarkFavorites (Array Int)
+  | ToggleDocumentToDelete Int
   | Trash
 
-performAction :: PerformAction State Props Action
-performAction (SendFavorites nid) {path : nodeId} _ = void $ do
-  
-  s' <- lift $ favorites nid (FavoriteQuery {favorites : [nid]})
-  case s' of
-    Left err -> do
-      logs err
-      modifyState identity
-    Right d -> modifyState identity
-  --TODO add array of delete rows here 
-performAction (DeleteDocuments nid) _ s = void $ do
-  logs $ show nid
-  modifyState \state -> state {deleteRowId = ( cons nid s.deleteRowId), deleteRows = true}
-    
-performAction Trash {path:nodeId} state  = void $ do
-  s' <- lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents : state.deleteRowId})
-  case s' of
-    Left err -> do
-      logs err
-      modifyState identity
-    Right d -> modifyState identity
-
-
-
--- modifyState \state -> state {deleteRowId = ( cons nid s.deleteRowId), deleteRows = true}   for referrence
-    
 newtype DocumentsView
   = DocumentsView
     { _id    :: Int
@@ -176,6 +138,22 @@ filterSpec = simpleSpec defaultPerformAction render
 layoutDocview :: Spec State Props Action
 layoutDocview = simpleSpec performAction render
   where
+    performAction :: PerformAction State Props Action
+    performAction (MarkFavorites nids) {path : nodeId} _ =
+      void $ lift $ putFavorites nodeId (FavoriteQuery {favorites: nids})
+    --TODO add array of delete rows here
+    performAction (ToggleDocumentToDelete nid) _ _ =
+      modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
+    performAction Trash {path: nodeId} {documentIdsToDelete} =
+      void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
+      -- TODO: what to do now that the documents are deleted
+      -- * should we reload?
+      -- * should we locally update our data?
+      -- * should we reset documentIdsToDelete?
+      -- * if so, how to un-check the checkboxes since the inputs are uncontrolled?
+      --   (maybe there is no need to uncheck them if they disapear because we
+      --    either reload or local update our data)
+
     render :: Render State Props Action
     render dispatch {path: nodeId, loaded: corpusInfo} _ _ =
       [ p [] []
@@ -188,17 +166,16 @@ layoutDocview = simpleSpec performAction render
             [ pageLoader
                 { path: initialPageParams nodeId
                 , corpusInfo
+                , dispatch
                 }
             ]
           , div [className "col-md-12"]
-             [ button [style {backgroundColor: "peru", padding : "9px", color : "white", border : "white", float: "right"}
-                      , onClick $ (\_ -> dispatch $ Trash )
+             [ button [ style {backgroundColor: "peru", padding : "9px", color : "white", border : "white", float: "right"}
+                      , onClick $ (\_ -> dispatch Trash)
                       ]
                [  i [className "glyphitem glyphicon glyphicon-trash", style {marginRight : "9px"}] []
                ,  text "Trash it !"
-               
                ]
-             
              ]
           ]
         ]
@@ -242,20 +219,25 @@ loadPage {nodeId, params: {limit, offset, orderBy}} = do
 
     convOrderBy _ = DateAsc -- TODO
 
-type PageLoaderProps =
+type PageLoaderProps ext =
   { path :: PageParams
   , corpusInfo :: Maybe (NodePoly CorpusInfo)
+  , dispatch :: Action -> Effect Unit
+  | ext
   }
 
 renderPage :: forall props path.
               Render (Loader.State {nodeId :: Int | path} (Array DocumentsView))
-                     {corpusInfo :: Maybe (NodePoly CorpusInfo) | props}
+                     { corpusInfo :: Maybe (NodePoly CorpusInfo)
+                     , dispatch :: Action -> Effect Unit
+                     | props
+                     }
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage dispatch {corpusInfo} {currentPath: {nodeId}, loaded: Just res} _ =
+renderPage loaderDispatch {corpusInfo, dispatch} {currentPath: {nodeId}, loaded: Just res} _ =
   [ T.tableElt
       { rows
-      , setParams: \params -> liftEffect $ dispatch (Loader.SetPath {nodeId, params})
+      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, params})
       , container: T.defaultContainer { title: "Documents" }
       , colNames:
           T.ColumnName <$>
@@ -274,13 +256,13 @@ renderPage dispatch {corpusInfo} {currentPath: {nodeId}, loaded: Just res} _ =
       }
   ]
   where
-    dispatch2 _ = logs "TODO dispatch2"
     fa true  = "fas "
     fa false = "far "
     rows = (\(DocumentsView r) ->
                 { row:
                     [ div []
-                      [ a [className $ fa r.fav <> "fa-star" ,onClick $ (\_-> dispatch2 $ (SendFavorites r._id))] []
+                      [ a [className $ fa r.fav <> "fa-star" ,onClick $ (\_->
+                          dispatch $ MarkFavorites [r._id])] []
                       ]
                     -- TODO show date: Year-Month-Day only
                     , if (r.delete) then
@@ -295,15 +277,15 @@ renderPage dispatch {corpusInfo} {currentPath: {nodeId}, loaded: Just res} _ =
                         div [style {textDecoration : "line-through"}] [ text r.source]
                       else
                         div [] [ text r.source]
-                    , input [ _type "checkbox", onClick $ (\_ -> dispatch2 $ (DeleteDocuments r._id))]
+                    , input [ _type "checkbox", onClick $ (\_ -> dispatch $ ToggleDocumentToDelete r._id)]
                     ]
                 , delete: true
                 }) <$> res
 
-pageLoaderClass :: ReactClass { path :: PageParams, corpusInfo :: Maybe (NodePoly CorpusInfo), children :: Children }
+pageLoaderClass :: ReactClass (PageLoaderProps (children :: Children))
 pageLoaderClass = Loader.createLoaderClass' "PageLoader" loadPage renderPage
 
-pageLoader :: PageLoaderProps -> ReactElement
+pageLoader :: PageLoaderProps () -> ReactElement
 pageLoader props = React.createElement pageLoaderClass props []
 
 ---------------------------------------------------------
@@ -358,58 +340,17 @@ instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
      = "documents" := post.documents
        ~> jsonEmptyObject
 
+putFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
+putFavorites nodeId = put (toUrl Back Node nodeId <> "/favorites")
 
-favorites :: Int -> FavoriteQuery -> Aff (Either String (Array Int))
-favorites nodeId reqbody= do
-  res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/node/"<>show nodeId <>"/favorites"
-         , responseFormat = ResponseFormat.json
-         , method = Left PUT
-         , headers = []
-         , content = Just $ Json $ encodeJson reqbody
-         }
-  case res.body of
-    Left err -> do
-      logs $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      let obj = decodeJson json
-      pure obj
+deleteFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
+deleteFavorites nodeId = deleteWithBody (toUrl Back Node nodeId <> "/favorites")
 
-deleteFavorites :: Int -> FavoriteQuery -> Aff (Either String (Array Int))
-deleteFavorites nodeId reqbody = do
--- TODO use Config.REST.delete
-  res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/node/"<>show nodeId<>"/favorites"
-         , responseFormat = ResponseFormat.json
-         , method = Left DELETE
-         , headers = []
-         , content = Just $ Json $ encodeJson reqbody
-         }
-  case res.body of
-    Left err -> do
-      logs $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      let obj = decodeJson json
-      pure obj
+deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Array Int)
+deleteDocuments nodeId = deleteWithBody (toUrl Back Node nodeId <> "/documents")
 
-
-
-deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Either String Unit)
-deleteDocuments nodeId reqbody= do
--- TODO use Config.REST.delete
-  res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/annuaire/"<>show nodeId <>"/documents"
-         , responseFormat = ResponseFormat.json
-         , method = Left DELETE
-         , headers = []
-         , content = Just $ Json $ encodeJson reqbody
-         }
-  case res.body of
-    Left err -> do
-      logs $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      -- let obj = decodeJson json
-      pure $ Right unit
+-- TODO: not optimal but Data.Set lacks some function (Set.alter)
+toggleSet :: forall a. Ord a => a -> Set a -> Set a
+toggleSet a s
+  | Set.member a s = Set.delete a s
+  | otherwise      = Set.insert a s
