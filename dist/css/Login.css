@@ -78,3 +78,82 @@ logoSmall {
     background-color : blue;
     color: white;
 }
+
+
+li#rename  #rename-a{
+    display : none;
+    position : absolute;
+    left : 125px;
+}
+
+
+#rename-tooltip {
+    position : absolute;
+    left : 96px;
+    top:-64px;
+    background-color: white;
+    z-index: 1000;
+
+}
+
+li a#rename {
+    display:none;
+    position:absolute;
+    text-decoration:none;
+    left: 77px;
+}
+
+li:hover a#rename {
+    display:block;
+}
+
+.glyphitem {top: 0;
+
+display: inline-block;
+
+float: right;
+
+opacity: 0.6;
+
+padding-right: 5px;
+
+cursor: pointer;
+
+transition: transform 0.1s ease-out 0s;
+
+font-size: 15px;
+
+text-align: center;
+  }
+
+.glyphitem:hover {
+
+    display: inline-block;
+    opacity: 1;
+    transform: scale(1.4);
+}
+
+#rename-tooltip:hover {
+    border:none;
+}
+
+
+
+#arrow {
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+
+    border-right:10px solid darkgray;
+    position : relative;
+    top: 55px;
+    left: -9px;
+}
+
+
+#rename-tooltip a:hover
+{
+    text-decoration:none;
+}
+
