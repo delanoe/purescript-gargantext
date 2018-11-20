@@ -3,6 +3,7 @@
   "set": "master",
   "source": "https://github.com/np/package-sets.git",
   "depends": [
+    "psci-support",
     "css",
     "generics-rep",
     "routing",

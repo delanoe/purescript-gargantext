@@ -31,7 +31,7 @@ endConfig' v = { front : frontCaddy
 -- until authentication implementation
 -- (Default Root will be given after authentication)
 defaultRoot :: Int
-defaultRoot = 347474
+defaultRoot = 943779
 ------------------------------------------------------------------------
 frontCaddy :: Config
 frontCaddy = { proto   : "http://"

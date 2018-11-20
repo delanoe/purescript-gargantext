@@ -110,6 +110,7 @@ data Document =
            , publication_month  :: Maybe Int
            , publication_year   :: Maybe Int
            , source             :: Maybe String
+           , institutes         :: Maybe String
            , title              :: Maybe String
            , uniqId             :: Maybe String
            --, url                :: Maybe String
@@ -144,6 +145,7 @@ defaultDocument =
            , publication_month  : Nothing
            , publication_year   : Nothing
            , source             : Nothing
+           , institutes         : Nothing
            , title              : Nothing
            , uniqId             : Nothing
            --, url                : Nothing
@@ -230,7 +232,8 @@ instance decodeDocument :: DecodeJson Document
       publication_day    <- obj .?? "publication_day"
       publication_month  <- obj .?? "publication_month"
       publication_year   <- obj .?? "publication_year"
-      source             <- obj .?? "source"
+      source             <- obj .?? "sources"
+      institutes         <- obj .?? "institutes"
       title              <- obj .?? "title"
       uniqId             <- obj .?? "uniqId"
       --url                <- obj .? "url"
@@ -249,6 +252,7 @@ instance decodeDocument :: DecodeJson Document
                       , publication_month
                       , publication_year
                       , source
+                      , institutes
                       , title
                       , uniqId
                       --, url
