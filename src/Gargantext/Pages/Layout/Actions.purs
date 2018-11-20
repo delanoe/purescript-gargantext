@@ -68,9 +68,13 @@ performAction Initialize  _ state = void do
   case state.initialized of
     false -> do
       lnodes <- lift $ Tree.loadDefaultNode
-      void $ modifyState $ _ { initialized = true, ntreeState = lnodes }
+      case lnodes of
+        Left err -> do
+          modifyState identity
+        Right d -> do
+          modifyState $ _ { initialized = true, ntreeState = d }
     _ -> do
-      pure unit
+      modifyState identity
 
 performAction (LoginA        _) _ _ = pure unit
 performAction (AddCorpusA    _) _ _ = pure unit
