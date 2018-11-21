@@ -193,7 +193,7 @@ loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   --res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
-  res <- get $ toUrl Back (Tab TabDocs offset limit (convOrderBy <$> orderBy)) nodeId
+  res <- get $ toUrl Back (Tab TabDocs offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let docs = res2corpus <$> res
   _ <- logs "Ok: loading page documents"
   _ <- logs $ map show docs
@@ -270,9 +270,9 @@ renderPage loaderDispatch {corpusInfo, dispatch} {currentPath: {nodeId}, loaded:
                       else
                         div [ ][text r.date]
                     , if (r.delete) then
-                        a [ href (toUrl Front Url_Document r._id), style {textDecoration : "line-through"} ] [ text r.title ]
+                        a [ href (toUrl Front Url_Document (Just r._id)), style {textDecoration : "line-through"} ] [ text r.title ]
                       else
-                        a [ href (toUrl Front Url_Document r._id) ] [ text r.title ]
+                        a [ href (toUrl Front Url_Document (Just r._id)) ] [ text r.title ]
                     , if (r.delete) then
                         div [style {textDecoration : "line-through"}] [ text r.source]
                       else
@@ -341,13 +341,13 @@ instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
        ~> jsonEmptyObject
 
 putFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
-putFavorites nodeId = put (toUrl Back Node nodeId <> "/favorites")
+putFavorites nodeId = put (toUrl Back Node (Just nodeId) <> "/favorites")
 
 deleteFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
-deleteFavorites nodeId = deleteWithBody (toUrl Back Node nodeId <> "/favorites")
+deleteFavorites nodeId = deleteWithBody (toUrl Back Node (Just nodeId) <> "/favorites")
 
 deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Array Int)
-deleteDocuments nodeId = deleteWithBody (toUrl Back Node nodeId <> "/documents")
+deleteDocuments nodeId = deleteWithBody (toUrl Back Node (Just nodeId) <> "/documents")
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)
 toggleSet :: forall a. Ord a => a -> Set a -> Set a

@@ -3,7 +3,7 @@ module Gargantext.Pages.Corpus where
 
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
-import Data.Maybe (maybe)
+import Data.Maybe (Maybe(..),maybe)
 import Effect.Aff (Aff)
 import React as React
 import React (ReactClass, ReactElement)
@@ -82,7 +82,7 @@ corpusHeaderSpec = simpleSpec defaultPerformAction render
 ------------------------------------------------------------------------
 
 getCorpus :: Int -> Aff (NodePoly CorpusInfo)
-getCorpus = get <<< toUrl Back Corpus
+getCorpus = get <<< toUrl Back Corpus <<< Just
 
 corpusLoaderClass :: ReactClass (Loader.Props Int (NodePoly CorpusInfo))
 corpusLoaderClass = createLoaderClass "CorpusLoader" getCorpus

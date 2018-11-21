@@ -23,7 +23,7 @@ import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
 import React.DOM.Props (Props, _id, _type, className, href, title, onClick, onInput, placeholder, style, value, _data)
 import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, defaultRender, modifyState, simpleSpec)
-import Gargantext.Config (toUrl, End(Front), NodeType(..))
+import Gargantext.Config (toUrl, End(..), NodeType(..), defaultRoot)
 type Name = String
 type Open = Boolean
 type URL  = String
@@ -351,7 +351,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
     li []
     [
 
-      a [ href (toUrl Front nodeType id)]
+      a [ href (toUrl Front nodeType (Just id))]
       ( [ text (name <> "    ")
         ]
       )
@@ -407,7 +407,7 @@ instance decodeJsonFTree :: DecodeJson (NTree LNode) where
 loadDefaultNode :: Aff (Either String (NTree LNode))
 loadDefaultNode = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/tree/1"     --- http://localhost:8008/api/v1.0/tree/1
+         { url = toUrl Back Tree (Just defaultRoot)
          , responseFormat = ResponseFormat.json
          , method = Left GET
          , headers = []
@@ -439,7 +439,7 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
 renameNode :: Int -> RenameValue -> Aff (Either String Unit)     --- need to change return type herre
 renameNode renameNodeId reqbody = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/node/" <> show renameNodeId  <> "/rename"
+         { url = toUrl Back Node (Just renameNodeId)  <> "/rename"
          , responseFormat = ResponseFormat.json
          , method = Left PUT
          , headers = []
@@ -461,7 +461,7 @@ renameNode renameNodeId reqbody = do
 deleteNode :: Int -> Aff (Either String (Int))
 deleteNode renameNodeId = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/node/" <> show renameNodeId
+         { url = toUrl Back Node (Just renameNodeId)
          , responseFormat = ResponseFormat.json
          , method = Left DELETE
          , headers = []
@@ -483,7 +483,7 @@ deleteNode renameNodeId = do
 deleteNodes :: String -> Aff (Either String  Int)
 deleteNodes reqbody = do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/nodes"
+         { url = toUrl Back Nodes Nothing
          , responseFormat = ResponseFormat.json
          , method = Left DELETE
          , headers = []
@@ -504,7 +504,7 @@ deleteNodes reqbody = do
 createNode :: String -> Aff (Either String (Int))
 createNode  reqbody= do
   res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/node/"
+         { url = toUrl Back Node Nothing
          , responseFormat = ResponseFormat.json
          , method = Left POST
          , headers = []

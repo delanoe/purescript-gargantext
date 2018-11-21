@@ -145,7 +145,7 @@ pageLoader props = React.createElement pageLoaderClass props []
 
 renderContactCells :: Contact -> Array ReactElement
 renderContactCells (Contact { id, hyperdata : HyperData contact }) =
-  [ a [ href (toUrl Front NodeUser id) ] [ text $ maybe' contact.nom <> " " <> maybe' contact.prenom ]
+  [ a [ href (toUrl Front NodeUser (Just id)) ] [ text $ maybe' contact.nom <> " " <> maybe' contact.prenom ]
   , text $ maybe' contact.fonction
   , text $ maybe' contact.service
   , text $ maybe' contact.groupe
@@ -202,12 +202,12 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
 loadPage :: PageParams -> Aff AnnuaireTable
-loadPage {nodeId, params} = get $ toUrl Back (Tab TabDocs 0 10 Nothing) nodeId
+loadPage {nodeId, params} = get $ toUrl Back (Tab TabDocs 0 10 Nothing) (Just nodeId)
  -- TODO Tab TabDocs is not the right API call
  -- TODO params, see loadPage in Documents
 
 getAnnuaireInfo :: Int -> Aff AnnuaireInfo
-getAnnuaireInfo id = get $ toUrl Back Node id
+getAnnuaireInfo id = get $ toUrl Back Node (Just id)
 ------------------------------------------------------------------------------
 
 annuaireLoaderClass :: ReactClass (Loader.Props Int AnnuaireInfo)

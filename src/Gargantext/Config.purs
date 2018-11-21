@@ -92,21 +92,21 @@ doUrl b p ps = b <> p <> ps
 ------------------------------------------------------------
 endBaseUrl :: End -> EndConfig -> UrlBase
 endBaseUrl Back  c = baseUrl c.back
-endBaseUrl Front c = baseUrl c.front
+endBaseUrl Front c = ""
 
 baseUrl :: Config -> UrlBase
 baseUrl conf = conf.proto <> conf.domain <> ":" <> show conf.port
 ------------------------------------------------------------
-endPathUrl :: End -> EndConfig -> NodeType -> Id -> UrlPath
+endPathUrl :: End -> EndConfig -> NodeType -> Maybe Id -> UrlPath
 endPathUrl Back  c nt i = pathUrl c.back  nt i
 endPathUrl Front c nt i = pathUrl c.front nt i
 
-pathUrl :: Config -> NodeType -> Id -> UrlPath
+pathUrl :: Config -> NodeType -> Maybe Id -> UrlPath
 pathUrl c nt@(Tab _ _ _ _) i = pathUrl c Node i <> "/" <> show nt
 pathUrl c nt@(Ngrams _ _) i = pathUrl c Node i <> "/" <> show nt
-pathUrl c nt i = c.prePath <> urlConfig nt <> "/" <> show i
+pathUrl c nt i = c.prePath <> urlConfig nt <> (maybe "" (\i' -> "/" <> show i') i)
 ------------------------------------------------------------
-toUrl :: End -> NodeType -> Id -> Url
+toUrl :: End -> NodeType -> Maybe Id -> Url
 toUrl e nt i = doUrl base path params
   where
     base   = endBaseUrl e endConfig
@@ -126,6 +126,7 @@ data NodeType = NodeUser
               | Graph
               | Individu
               | Node
+              | Nodes
               | Tree
 data End = Back | Front
 type Id  = Int
@@ -171,6 +172,7 @@ urlConfig Folder    = show Folder
 urlConfig Graph     = show Graph
 urlConfig Individu  = show Individu
 urlConfig Node      = show Node
+urlConfig Nodes      = show Nodes
 urlConfig NodeUser  = show NodeUser
 urlConfig Tree      = show Tree
 ------------------------------------------------------------
@@ -185,6 +187,7 @@ instance showNodeType :: Show NodeType where
   show Graph     = "graph"
   show Individu  = "individu"
   show Node      = "node"
+  show Nodes      = "nodes"
   show NodeUser  = "user"
   show Tree      = "tree"
   show (Tab t o l s) = "table?view=" <> show t <> "&offset=" <> show o
@@ -212,6 +215,7 @@ readNodeType "NodeFolder"     = Folder
 readNodeType "NodeGraph"      = Graph
 readNodeType "Individu"   = Individu
 readNodeType "Node"       = Node
+readNodeType "Nodes"       = Nodes
 readNodeType "NodeCorpus" = Corpus
 readNodeType "NodeCorpusV3" = CorpusV3
 readNodeType "NodeUser"   = NodeUser

@@ -331,11 +331,11 @@ type PageLoaderProps =
 --, corpusInfo :: Maybe (NodePoly CorpusInfo)
   }
 
-getNgramsTable :: Int -> Aff NgramsTable
+getNgramsTable :: Maybe Int -> Aff NgramsTable
 getNgramsTable = get <<< toUrl Back (Ngrams TabTerms Nothing)
 
 loadPage :: PageParams -> Aff NgramsTable
-loadPage {nodeId} = getNgramsTable nodeId -- TODO this ignores params
+loadPage {nodeId} = getNgramsTable (Just nodeId) -- TODO this ignores params
 
 ngramsLoaderClass :: ReactClass (Loader.Props PageParams NgramsTable)
 ngramsLoaderClass = Loader.createLoaderClass "NgramsLoader" loadPage
