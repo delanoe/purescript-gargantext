@@ -373,10 +373,15 @@ ngramsTableSpec = simpleSpec defaultPerformAction render
 tree :: NgramsTable -> DOM.Props -> NgramsTerm -> ReactElement
 tree table props label =
   li [ style {width : "100%"} ]
-     [ i [className "fas fa-folder-open"] [] -- TODO icon
+     [ i (gray <> [className $ "fas fa-caret-" <> if open then "down" else "right"]) []
      , span [props] [text $ " " <> label]
-     , forest table props (table ^.. ix label <<< _Newtype <<< to _.children <<< folded)
+     , forest table props cs
      ]
+  where
+    leaf = List.null cs
+    open = not leaf || false {- TODO -}
+    gray = if leaf then [style {color: "#adb5bd"}] else []
+    cs   = table ^.. ix label <<< _Newtype <<< to _.children <<< folded
 
 forest :: NgramsTable -> DOM.Props -> List NgramsTerm -> ReactElement
 forest table props = ul [] <<< map (tree table props) <<< List.toUnfoldable
@@ -390,8 +395,7 @@ renderNgramsItem :: { table :: NgramsTable
 renderNgramsItem { table, ngrams, occurrences, termList, setTermList } =
   [ checkbox GraphTerm
   , checkbox StopTerm
-  , span [className "tree"]
-    [ forest table (termStyle termList) (List.singleton ngrams) ]
+  , ul [] [span [className "tree"] [tree table (termStyle termList) ngrams]]
   , text $ show occurrences
   ]
   where
