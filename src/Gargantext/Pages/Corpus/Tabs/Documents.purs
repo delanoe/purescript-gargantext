@@ -151,8 +151,10 @@ layoutDocview = simpleSpec performAction render
       -- * should we locally update our data?
       -- * should we reset documentIdsToDelete?
       -- * if so, how to un-check the checkboxes since the inputs are uncontrolled?
-      --   (maybe there is no need to uncheck them if they disapear because we
-      --    either reload or local update our data)
+      --   + There is no need to uncheck them if they disapear because we
+      --     either reload or local update our data.
+      --   + Sync the checked value using
+      --       `checked: Set.member n state.documentIdsToDelete`
 
     render :: Render State Props Action
     render dispatch {path: nodeId, loaded: corpusInfo} _ _ =

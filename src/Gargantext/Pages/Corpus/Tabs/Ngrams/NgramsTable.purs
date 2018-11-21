@@ -6,13 +6,19 @@ import Data.Array (filter, toUnfoldable)
 import Data.Either (Either(..))
 import Data.FunctorWithIndex
 import Data.Newtype (class Newtype, unwrap)
-import Data.Lens (Lens', Prism', lens, over, prism)
+import Data.Lens (Lens', Prism', lens, over, prism, (^..))
+import Data.Lens.At (class At, at)
+import Data.Lens.Index (class Index, ix)
+import Data.Lens.Fold (folded)
+import Data.Lens.Getter (to)
 import Data.Lens.Iso (re)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.List (List)
+import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
+import Data.Traversable (traverse)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple (Tuple(..), uncurry)
@@ -24,6 +30,7 @@ import React (ReactElement, ReactClass, Children)
 import React as React
 import React.DOM hiding (style, map)
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
+import React.DOM.Props as DOM
 import Thermite (PerformAction, Spec, StateCoTransformer, Render, _render, modifyState_, defaultPerformAction, focusState, hideState, simpleSpec, createClass)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -55,6 +62,8 @@ newtype NgramsElement = NgramsElement
   , children    :: Set NgramsTerm
   }
 
+derive instance newtypeNgramsElement :: Newtype NgramsElement _
+
 instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
   decodeJson json = do
     obj <- decodeJson json
@@ -69,6 +78,14 @@ instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
 -- type NgramsTable = Array (NTree NgramsElement)
 -- type NgramsTable = Array NgramsElement
 newtype NgramsTable = NgramsTable (Map NgramsTerm NgramsElement)
+
+derive instance newtypeNgramsTable :: Newtype NgramsTable _
+
+instance indexNgramsTable :: Index NgramsTable String NgramsElement where
+  ix k = _Newtype <<< ix k
+
+instance atNgramsTable :: At NgramsTable String NgramsElement where
+  at k = _Newtype <<< at k
 
 instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
   decodeJson json = do
@@ -307,10 +324,10 @@ ngramsTableSpec' = simpleSpec performAction render
             rows =
               case applyNgramsTablePatch ngramsTablePatch <$> initTable of
                 Nothing -> [] -- or an error
-                Just (NgramsTable table) ->
-                  convertRow <$> Map.toUnfoldable (Map.filter isRoot table)
+                Just t@(NgramsTable table) ->
+                  convertRow t <$> Map.toUnfoldable (Map.filter isRoot table)
             isRoot (NgramsElement e) = e.root == Nothing
-            convertRow (Tuple ngrams (NgramsElement { occurrences, list })) =
+            convertRow table (Tuple ngrams (NgramsElement { occurrences, list })) =
               { row:
                   let
                     setTermList Keep = do
@@ -319,7 +336,7 @@ ngramsTableSpec' = simpleSpec performAction render
                     setTermList rep@(Replace {old,new}) = do
                       logs $ Tuple "setTermList" (Tuple old new)
                       dispatch $ SetTermListItem ngrams rep in
-                  renderNgramsItem { ngrams, occurrences, termList: list, setTermList }
+                  renderNgramsItem { table, ngrams, occurrences, termList: list, setTermList }
               , delete: false
               }
 
@@ -353,18 +370,32 @@ ngramsTableSpec = simpleSpec defaultPerformAction render
                      , component: createClass "Layout" ngramsTableSpec' initialState
                      } ]
 
-renderNgramsItem :: { ngrams :: String
+tree :: NgramsTable -> DOM.Props -> NgramsTerm -> ReactElement
+tree table props label =
+  li [ style {width : "100%"} ]
+     [ i [className "fas fa-folder-open"] [] -- TODO icon
+     , span [props] [text $ " " <> label]
+     , forest table props (table ^.. ix label <<< _Newtype <<< to _.children <<< folded)
+     ]
+
+forest :: NgramsTable -> DOM.Props -> List NgramsTerm -> ReactElement
+forest table props = ul [] <<< map (tree table props) <<< List.toUnfoldable
+
+renderNgramsItem :: { table :: NgramsTable
+                    , ngrams :: String
                     , occurrences :: Int
                     , termList :: TermList
                     , setTermList :: Replace TermList -> Effect Unit
                     } -> Array ReactElement
-renderNgramsItem { ngrams, occurrences, termList, setTermList } =
+renderNgramsItem { table, ngrams, occurrences, termList, setTermList } =
   [ checkbox GraphTerm
   , checkbox StopTerm
-  , span [termStyle termList] [text ngrams]
+  , span [className "tree"]
+    [ forest table (termStyle termList) (List.singleton ngrams) ]
   , text $ show occurrences
   ]
   where
+
     checkbox termList' =
       let chkd = termList == termList'
           termList'' = if chkd then CandidateTerm else termList'
@@ -377,7 +408,7 @@ renderNgramsItem { ngrams, occurrences, termList, setTermList } =
         , onChange $ const $ setTermList (replace termList termList'')
         ]
 
--- termStyle :: TermList -> {}
+termStyle :: TermList -> DOM.Props
 termStyle GraphTerm     = style {color: "green"}
 termStyle StopTerm      = style {color: "red", textDecoration : "line-through"}
 termStyle CandidateTerm = style {color: "black"}
