@@ -259,8 +259,11 @@ applyNgramsTablePatch p (NgramsTable m) =
 type State =
   { ngramsTablePatch :: NgramsTablePatch
   , ngramsParent     :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
-  , ngramsChildren   :: Set NgramsTerm   -- Used only when grouping, this is the set
-                                         -- of future children of `ngramsParent`.
+  , ngramsChildren   :: Map NgramsTerm Boolean
+                     -- ^ Used only when grouping.
+                     --   This updates the children of `ngramsParent`,
+                     --   ngrams set to `true` are to be added, and `false` to
+                     --   be removed.
   , searchQuery      :: String
   , termListFilter   :: Maybe TermList -- Nothing means all
   , termTypeFilter   :: Maybe TermType -- Nothing means all
