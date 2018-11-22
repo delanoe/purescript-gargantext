@@ -24,6 +24,7 @@ import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
 import React.DOM.Props (Props, _id, _type, className, href, title, onClick, onInput, placeholder, style, value, _data)
 import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, defaultRender, modifyState, simpleSpec)
+import Gargantext.Config (toUrl, End(Front), NodeType(..))
 type Name = String
 type Open = Boolean
 type URL  = String
@@ -49,7 +50,7 @@ data Action =  ShowPopOver ID
 type State = FTree
 
 initialState :: State
-initialState = NTree (LNode {id : 3, name : "hello", nodeType : "", open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) []
+initialState = NTree (LNode {id : 3, name : "hello", nodeType : Node, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) []
 
 
 
@@ -173,7 +174,7 @@ toggleNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue
 -- Realistic Tree for the UI
 
 exampleTree :: NTree LNode
-exampleTree = NTree (LNode {id : 1, name : "", nodeType : "", open : false, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "", showRenameBox : false}) []
+exampleTree = NTree (LNode {id : 1, name : "", nodeType : Node, open : false, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "", showRenameBox : false}) []
 
 -- exampleTree :: NTree LNode
 -- exampleTree =
@@ -351,7 +352,8 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
     li []
     [
 
-      a [ href (toUrl Front Folder id )]
+
+      a [ href (toUrl Front nodeType id)]
       ( [ text (name <> "    ")
         ]
       )
@@ -368,7 +370,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,cre
     ul []
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      ,  a [ href (toUrl Front Folder id )]
+      ,  a [ href (toUrl Front nodeType id)]
          [ text $ " " <> name <> " " ]
 
 
@@ -385,7 +387,7 @@ fldr :: Boolean -> Props
 fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 
-newtype LNode = LNode {id :: Int, name :: String, nodeType :: String, open :: Boolean, popOver :: Boolean, renameNodeValue :: String, nodeValue :: String, createNode :: Boolean, showRenameBox :: Boolean}
+newtype LNode = LNode {id :: Int, name :: String, nodeType :: NodeType, open :: Boolean, popOver :: Boolean, renameNodeValue :: String, nodeValue :: String, createNode :: Boolean, showRenameBox :: Boolean}
 
 derive instance newtypeLNode :: Newtype LNode _
 
@@ -531,3 +533,10 @@ fnTransform n = NTree n []
 
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
+
+
+
+
+                     -- <<<<<<< HEAD
+                     -- a [ href (toUrl Front Folder id )]
+                     -- =======
