@@ -18,6 +18,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
+import Gargantext.Config (End(..), NodeType(..), toUrl)
 import Prelude (identity)
 import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
@@ -368,7 +369,9 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,cre
     ul []
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      ,  text $ " " <> name <> " "
+      ,  a [ href (toUrl Front nodeType (Just id))]
+         [ text $ " " <> name <> " " ]
+
 
       ] <>
       if open then
@@ -529,3 +532,10 @@ fnTransform n = NTree n []
 
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
+
+
+
+
+                     -- <<<<<<< HEAD
+                     -- a [ href (toUrl Front Folder id )]
+                     -- =======
