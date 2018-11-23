@@ -28,9 +28,7 @@ import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperData(..)
 type Props =
   { path :: Int
   , loaded :: Maybe AnnuaireInfo
-  , dispatch :: Loader.Action Int -> Effect Unit
-  , props :: {}
-  }
+  , dispatch :: Loader.Action Int -> Effect Unit }
 
 data Action
   = TabsA   Tab.Action
@@ -78,7 +76,6 @@ layout = simpleSpec defaultPerformAction render
       [ annuaireLoader
           { path: annuaireId
           , component: createClass "LoadedAnnuaire" loadedAnnuaireSpec (const {})
-          , props: {}
           } ]
 
 loadedAnnuaireSpec :: Spec {} Props Void
@@ -100,7 +97,6 @@ loadedAnnuaireSpec = simpleSpec defaultPerformAction render
       , pageLoader
           { path: initialPageParams nodeId
           , annuaireInfo
-          , props: {}
           }
       ]
 
@@ -112,7 +108,6 @@ initialPageParams nodeId = {nodeId, params: T.initialParams}
 type PageLoaderProps =
   { path :: PageParams
   , annuaireInfo :: AnnuaireInfo
-  , props :: {}
   }
 
 renderPage :: forall props path.
@@ -142,7 +137,7 @@ renderPage dispatch {annuaireInfo}
   where
     rows = (\c -> {row: renderContactCells c, delete: false}) <$> res
 
-pageLoaderClass :: ReactClass { path :: PageParams, annuaireInfo :: AnnuaireInfo, children :: Children, props :: {} }
+pageLoaderClass :: ReactClass { path :: PageParams, annuaireInfo :: AnnuaireInfo, children :: Children }
 pageLoaderClass = Loader.createLoaderClass' "AnnuairePageLoader" loadPage renderPage
 
 pageLoader :: PageLoaderProps -> ReactElement
@@ -215,8 +210,8 @@ getAnnuaireInfo :: Int -> Aff AnnuaireInfo
 getAnnuaireInfo id = get $ toUrl Back Node (Just id)
 ------------------------------------------------------------------------------
 
-annuaireLoaderClass :: ReactClass (Loader.Props Int AnnuaireInfo {})
+annuaireLoaderClass :: ReactClass (Loader.Props Int AnnuaireInfo)
 annuaireLoaderClass = Loader.createLoaderClass "AnnuaireLoader" getAnnuaireInfo
 
-annuaireLoader :: Loader.Props' Int AnnuaireInfo {} -> ReactElement
+annuaireLoader :: Loader.Props' Int AnnuaireInfo -> ReactElement
 annuaireLoader props = React.createElement annuaireLoaderClass props []

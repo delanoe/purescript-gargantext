@@ -57,7 +57,6 @@ type PageParams = {nodeId :: Int, params :: T.Params}
 type Props' = { path :: PageParams
               , loaded :: Maybe NgramsTable
               , dispatch :: Loader.Action PageParams -> Effect Unit
-              , props :: {}
               }
 
 type NgramsTerm = String
@@ -496,10 +495,10 @@ getTable tab = get <<< toUrl Back (Ngrams tab Nothing)
 loadPage :: PageParams -> Aff NgramsTable
 loadPage {nodeId} = getTable TabTerms (Just nodeId) -- TODO this ignores params
 
-ngramsLoaderClass :: ReactClass (Loader.Props PageParams NgramsTable {})
+ngramsLoaderClass :: ReactClass (Loader.Props PageParams NgramsTable)
 ngramsLoaderClass = Loader.createLoaderClass "NgramsLoader" loadPage
 
-ngramsLoader :: Loader.Props' PageParams NgramsTable {} -> ReactElement
+ngramsLoader :: Loader.Props' PageParams NgramsTable -> ReactElement
 ngramsLoader props = React.createElement ngramsLoaderClass props []
 
 ngramsTableSpec :: Spec {} Props Void
@@ -509,7 +508,6 @@ ngramsTableSpec = simpleSpec defaultPerformAction render
     render _ {path: nodeId} _ _ =
       -- TODO: ignored mode, ignored loaded: corpusInfo
       [ ngramsLoader { path: initialPageParams nodeId
-                     , props: {}
                      , component: createClass "NgramsTableLayout" ngramsTableSpec' initialState
                      } ]
 

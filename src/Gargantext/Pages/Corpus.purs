@@ -54,7 +54,6 @@ layout = simpleSpec defaultPerformAction render
     render _ {nodeId} _ _ =
       [ corpusLoader { path: nodeId
                      , component: createClass "Layout" layout' initialState
-                     , props: {}
                      } ]
 
 layout' :: Spec State Props Action
@@ -85,8 +84,8 @@ corpusHeaderSpec = simpleSpec defaultPerformAction render
 getCorpus :: Int -> Aff (NodePoly CorpusInfo)
 getCorpus = get <<< toUrl Back Corpus <<< Just
 
-corpusLoaderClass :: ReactClass (Loader.Props Int (NodePoly CorpusInfo) {})
+corpusLoaderClass :: ReactClass (Loader.Props Int (NodePoly CorpusInfo))
 corpusLoaderClass = createLoaderClass "CorpusLoader" getCorpus
 
-corpusLoader :: Loader.Props' Int (NodePoly CorpusInfo) {} -> ReactElement
+corpusLoader :: Loader.Props' Int (NodePoly CorpusInfo) -> ReactElement
 corpusLoader props = React.createElement corpusLoaderClass props []

@@ -12,24 +12,22 @@ import Thermite (Render, PerformAction, simpleSpec, modifyState_, createReactSpe
 
 data Action path = ForceReload | SetPath path
 
-type InnerProps path loaded props =
+type InnerProps path loaded =
   { path     :: path
   , loaded   :: Maybe loaded
   , dispatch :: Action path -> Effect Unit
-  , props    :: props
   , children :: Children
   }
 
-type PropsRow path loaded props row =
+type PropsRow path loaded row =
   ( path      :: path
-  , component :: ReactClass (InnerProps path loaded props)
-  , props     :: props
+  , component :: ReactClass (InnerProps path loaded)
   | row
   )
 
-type Props path loaded props = Record (PropsRow path loaded props (children :: Children))
+type Props path loaded = Record (PropsRow path loaded (children :: Children))
 
-type Props' path loaded props = Record (PropsRow path loaded props ())
+type Props' path loaded = Record (PropsRow path loaded ())
 
 type State path loaded = { currentPath :: path, loaded :: Maybe loaded }
 
@@ -61,23 +59,23 @@ createLoaderClass' name loader render =
 
     {spec, dispatcher} = createReactSpec (simpleSpec performAction render) initialState
 
-createLoaderClass :: forall path loaded props
+createLoaderClass :: forall path loaded
                    . Eq path
                   => String
                   -> (path -> Aff loaded)
-                  -> ReactClass (Record (PropsRow path loaded props (children :: Children)))
+                  -> ReactClass (Record (PropsRow path loaded (children :: Children)))
 createLoaderClass name loader =
     createLoaderClass' name loader render
   where
-    render :: Render (State path loaded) (Props' path loaded props) (Action path)
-    render dispatch {component, props} {currentPath, loaded} c =
-      [React.createElement component {path: currentPath, loaded, dispatch, props} c]
+    render :: Render (State path loaded) (Props' path loaded) (Action path)
+    render dispatch {component} {currentPath, loaded} c =
+      [React.createElement component {path: currentPath, loaded, dispatch} c]
 
 {-
-createLoaderClass :: forall path loaded props
+createLoaderClass :: forall path loaded
                    . String
                   -> (path -> Aff loaded)
-                  -> ReactClass (Props path loaded props)
+                  -> ReactClass (Props path loaded)
 createLoaderClass name loader = React.component name mk
   where
     mk this =
