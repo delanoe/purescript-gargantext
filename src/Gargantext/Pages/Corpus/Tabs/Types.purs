@@ -49,6 +49,7 @@ type PropsRow =
   ( path :: Int
   , loaded :: Maybe (NodePoly CorpusInfo)
   , dispatch :: Loader.Action Int -> Effect Unit
+  , props :: {}
   )
 type Props = Record PropsRow
 
