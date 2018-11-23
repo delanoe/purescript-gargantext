@@ -31,7 +31,7 @@ endConfig' v = { front : frontCaddy
 -- until authentication implementation
 -- (Default Root will be given after authentication)
 defaultRoot :: Int
-defaultRoot = 943779
+defaultRoot = 950094
 ------------------------------------------------------------------------
 frontCaddy :: Config
 frontCaddy = { proto   : "http://"
@@ -149,14 +149,15 @@ instance showApiVersion :: Show ApiVersion where
   show V11 = "v1.1"
 ------------------------------------------------------------
 
-data TabType = TabDocs | TabTerms | TabSources | TabAuthors | TabTrash
+data TabType = TabDocs | TabTerms | TabSources | TabAuthors | TabInstitutes | TabTrash
 
 instance showTabType :: Show TabType where
-  show TabDocs    = "Docs"
-  show TabTerms   = "Terms"
-  show TabSources = "Sources"
-  show TabAuthors = "Authors"
-  show TabTrash   = "Trash"
+  show TabDocs       = "Docs"
+  show TabTerms      = "Terms"
+  show TabSources    = "Sources"
+  show TabAuthors    = "Authors"
+  show TabInstitutes = "Institutes"
+  show TabTrash      = "Trash"
 
 ------------------------------------------------------------
 urlConfig :: NodeType -> Url

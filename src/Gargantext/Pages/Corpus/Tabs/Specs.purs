@@ -23,6 +23,7 @@ statefulTabs =
   Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Documents" docPageSpec
                                               , Tuple "Authors"   authorPageSpec
                                               , Tuple "Sources"   sourcePageSpec
+                                              , Tuple "Institutes" institutesPageSpec
                                               , Tuple "Terms"     termsPageSpec
                                               , Tuple "Trash"     trashPageSpec
                                               ]
@@ -41,8 +42,13 @@ authorPageSpec = ngramsViewSpec {mode: NV.Authors}
 sourcePageSpec :: Spec State Props Action
 sourcePageSpec = ngramsViewSpec {mode: NV.Sources}
 
+institutesPageSpec :: Spec State Props Action
+institutesPageSpec = ngramsViewSpec {mode: NV.Institutes}
+
 termsPageSpec :: Spec State Props Action
 termsPageSpec = ngramsViewSpec {mode: NV.Terms}
 
 trashPageSpec :: Spec State Props Action
-trashPageSpec = ngramsViewSpec {mode: NV.Trash}
+trashPageSpec = focus _doclens _docAction DV.layoutDocview
+
+

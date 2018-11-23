@@ -80,12 +80,12 @@ _NgramsElement = _Newtype
 
 instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
   decodeJson json = do
-    obj <- decodeJson json
-    ngrams <- obj .? "ngrams"
-    list <- obj .? "list"
-    occurrences <- obj .? "occurrences"
-    parent <- obj .?? "parent"
-    children' <- obj .? "children"
+    obj         <- decodeJson json
+    ngrams      <- obj .?  "ngrams"
+    list        <- obj .?  "list"
+    occurrences <- obj .?  "occurrences"
+    parent      <- obj .?? "parent"
+    children'   <- obj .?  "children"
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
     pure $ NgramsElement {ngrams, list, occurrences, parent, children}
 
@@ -297,7 +297,7 @@ data Action
   | SetTermTypeFilter (Maybe TermType)
   | SetSearchQuery String
 
-data Mode = Authors | Sources | Terms | Trash
+data Mode = Authors | Sources | Institutes | Terms
 
 type Dispatch = Action -> Effect Unit
 
@@ -488,11 +488,12 @@ type PageLoaderProps =
 --, corpusInfo :: Maybe (NodePoly CorpusInfo)
   }
 
-getNgramsTable :: Maybe Int -> Aff NgramsTable
-getNgramsTable = get <<< toUrl Back (Ngrams TabTerms Nothing)
+getTable :: TabType -> Maybe Int -> Aff NgramsTable
+getTable tab = get <<< toUrl Back (Ngrams tab Nothing)
 
+-- TODO TabTerms or TabAuthors ...
 loadPage :: PageParams -> Aff NgramsTable
-loadPage {nodeId} = getNgramsTable (Just nodeId) -- TODO this ignores params
+loadPage {nodeId} = getTable TabTerms (Just nodeId) -- TODO this ignores params
 
 ngramsLoaderClass :: ReactClass (Loader.Props PageParams NgramsTable)
 ngramsLoaderClass = Loader.createLoaderClass "NgramsLoader" loadPage
