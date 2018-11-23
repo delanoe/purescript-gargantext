@@ -52,7 +52,7 @@ import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), PropsRow)
 
 type Props = { mode :: Mode | PropsRow }
 
-type PageParams = {nodeId :: Int, params :: T.Params}
+type PageParams = {nodeId :: Int, params :: T.Params, mode :: Mode}
 
 type Props' = { path :: PageParams
               , loaded :: Maybe NgramsTable
@@ -299,6 +299,8 @@ data Action
 
 data Mode = Authors | Sources | Institutes | Terms
 
+derive instance eqMode :: Eq Mode
+
 type Dispatch = Action -> Effect Unit
 
 tableContainer :: { searchQuery :: String
@@ -429,14 +431,14 @@ ngramsTableSpec' = simpleSpec performAction render
         -- patch the root of the child to be equal to the root of the parent.
 
     render :: Render State Props' Action
-    render dispatch { path: {nodeId}
+    render dispatch { path: {nodeId, mode}
                     , loaded: initTable
                     , dispatch: loaderDispatch }
                     { ngramsTablePatch, ngramsParent, ngramsChildren, searchQuery }
                     _reactChildren =
       [ T.tableElt
           { rows
-          , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, params})
+          , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, params, mode})
           , container: tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable}
           , colNames:
               T.ColumnName <$>
@@ -480,8 +482,8 @@ ngramsTableSpec' = simpleSpec performAction render
               , delete: false
               }
 
-initialPageParams :: Int -> PageParams
-initialPageParams nodeId = {nodeId, params: T.initialParams}
+initialPageParams :: Int -> Mode -> PageParams
+initialPageParams nodeId mode = {nodeId, params: T.initialParams, mode}
 
 type PageLoaderProps =
   { path :: PageParams
@@ -505,9 +507,9 @@ ngramsTableSpec :: Spec {} Props Void
 ngramsTableSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
-    render _ {path: nodeId} _ _ =
-      -- TODO: ignored mode, ignored loaded: corpusInfo
-      [ ngramsLoader { path: initialPageParams nodeId
+    render _ {path: nodeId, mode} _ _ =
+      -- TODO: ignored ignored loaded: corpusInfo
+      [ ngramsLoader { path: initialPageParams nodeId mode
                      , component: createClass "NgramsTableLayout" ngramsTableSpec' initialState
                      } ]
 
