@@ -493,9 +493,14 @@ type PageLoaderProps =
 getTable :: TabType -> Maybe Int -> Aff NgramsTable
 getTable tab = get <<< toUrl Back (Ngrams tab Nothing)
 
--- TODO TabTerms or TabAuthors ...
+modeTabType :: Mode -> TabType
+modeTabType Authors = TabAuthors
+modeTabType Sources = TabSources
+modeTabType Institutes = TabInstitutes
+modeTabType Terms = TabTerms
+
 loadPage :: PageParams -> Aff NgramsTable
-loadPage {nodeId} = getTable TabTerms (Just nodeId) -- TODO this ignores params
+loadPage {nodeId, mode} = getTable (modeTabType mode) (Just nodeId) -- TODO this ignores params
 
 ngramsLoaderClass :: ReactClass (Loader.Props PageParams NgramsTable)
 ngramsLoaderClass = Loader.createLoaderClass "NgramsLoader" loadPage
