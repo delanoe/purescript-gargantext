@@ -89,7 +89,7 @@ layout0 layout =
             else outerLayout1
       , rs bs      ]
     ls   = over _render \render d p s c -> [ 
-      div [if (s.showTree) then className "col-md-2" else className ""] if (s.showTree) then (render d p s c) else (render d p s c) 
+      div [if (s.showTree) then className "col-md-2" else className ""] if (s.showTree) then (render d p s c) else [] 
       ]
     rs   = over _render \render d p s c -> [ div [if (s.showTree) then className "col-md-10" else className "col-md-12"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
