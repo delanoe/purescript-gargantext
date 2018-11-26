@@ -24,15 +24,16 @@ import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_id, _type, checked, className, href, name, onChange, placeholder, style, title, value)
+import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick,placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 
 
 data Action
-  = LoadGraph Int         --- need to make it as String
+  = LoadGraph Int         
   | SelectNode SelectedNode
+  | ShowSidePanel 
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -45,6 +46,7 @@ newtype State = State
   , sigmaGraphData :: Maybe SigmaGraphData
   , legendData :: Array Legend
   , selectedNode :: Maybe SelectedNode
+  , showSidePanel :: Boolean
   }
 
 initialState :: State
@@ -54,6 +56,7 @@ initialState = State
   , sigmaGraphData : Nothing
   , legendData : []
   , selectedNode : Nothing
+  , showSidePanel : false
   }
 
 graphSpec :: Spec State {} Action
@@ -74,6 +77,9 @@ performAction (LoadGraph fp) _ _ = void do
 
 performAction (SelectNode node) _ _ = void do
   modifyState $ \(State s) -> State s {selectedNode = pure node}
+
+performAction (ShowSidePanel) _ (State state) = void do
+  modifyState $ \(State s) -> State s {showSidePanel = not (state.showSidePanel) }
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -268,7 +274,7 @@ specOld = simpleSpec performAction render'
     render' :: Render State {} Action
     render' d _ (State st) _ =
       [  div [className "row"] [
-            div [className "col-md-12", style {marginTop : "34px", marginBottom : "21px"}]
+            div [className "col-md-12", style {marginBottom : "21px"}]
             [ menu [_id "toolbar"]
               [ ul'
                 [
@@ -331,12 +337,13 @@ specOld = simpleSpec performAction render'
                 , li'
                   [ button [className "btn btn-primary"] [text "Save"] -- TODO: Implement Save!
                   ]
+                , button [onClick \_ -> d ShowSidePanel, className "btn btn-primary"] [text "show sidepanel"]
                 ]
               ]
             ]
            ]
          , div [className "row"]
-           [ div [className "col-md-9"]
+           [ div [if (st.showSidePanel) then className "col-md-10" else className "col-md-12"]
              [ div [style {border : "1px black solid", height: "90%"}] $
                [ 
                ]
@@ -361,9 +368,11 @@ specOld = simpleSpec performAction render'
                  <>
                  if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
              ]
-         , div [className "col-md-3", style {border : "1px black solid", backgroundColor : "beige"}]
+         
+         , if (st.showSidePanel) then 
+            div [_id "sp-container",className "col-md-2", style {border : "1px black solid", backgroundColor : "beige", position:"absolute",right: "0px",top:"265px"}]
              [ div [className "row"]
-               [ div [_id "sidepanel" , className "col-md-12", style {borderBottom : "1px solid black"}]
+               [ div [_id "sidepanel" , style {borderBottom : "1px solid black"}]
                [ case st.selectedNode of
                     Nothing -> span [] []
                     Just selectedNode -> p [] [text $ "selected Node : " <> getter _.label selectedNode
@@ -459,6 +468,8 @@ specOld = simpleSpec performAction render'
                 ]
                ]
              ]
+            else 
+              div [] []   -- ends sidepanel column here
            ]
          ]
 

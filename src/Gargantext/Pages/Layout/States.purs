@@ -27,6 +27,7 @@ type AppState =
   , showCorpus     :: Boolean
   , graphExplorerState  :: GE.State
   , initialized    :: Boolean
+  , showTree :: Boolean
   }
 
 initAppState :: AppState
@@ -43,6 +44,7 @@ initAppState =
   , showCorpus     : false
   , graphExplorerState : GE.initialState
   , initialized    : false
+  , showTree : false
   }
 
 ---------------------------------------------------------

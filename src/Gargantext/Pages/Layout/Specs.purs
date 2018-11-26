@@ -88,8 +88,10 @@ layout0 layout =
             then ls as
             else outerLayout1
       , rs bs      ]
-    ls   = over _render \render d p s c -> [ div [className "col-md-2" ] (render d p s c) ]
-    rs   = over _render \render d p s c -> [ div [className "col-md-10"] (render d p s c) ]
+    ls   = over _render \render d p s c -> [ 
+      div [if (s.showTree) then className "col-md-2" else className ""] if (s.showTree) then (render d p s c) else (render d p s c) 
+      ]
+    rs   = over _render \render d p s c -> [ div [if (s.showTree) then className "col-md-10" else className "col-md-12"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
     as = focus _treeState _treeAction Tree.treeview
@@ -111,7 +113,7 @@ layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
             , role "navigation"
-            ] [ div [className "container"]
+            ] [ div [className "container-fluid"]
                     [ div [ className "navbar-inner" ]
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"]
@@ -282,6 +284,10 @@ divDropdownRight d =
           -- else
          [text " Login / Signup"]
         ]
+      , li [] 
+      [
+        button [onClick $ \e -> d ShowTree, className "btn btn-primary"] [text "ShowTree"]
+      ]
      ]
 
 layoutFooter :: Spec AppState {} Action

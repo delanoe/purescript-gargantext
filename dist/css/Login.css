@@ -157,3 +157,9 @@ text-align: center;
     text-decoration:none;
 }
 
+#sp-container 
+{ -webkit-transition: width 2s; /* For Safari 3.1 to 6.0 */
+    transition: width 2s;
+
+}
+
