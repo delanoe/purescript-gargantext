@@ -337,13 +337,13 @@ specOld = simpleSpec performAction render'
                 , li'
                   [ button [className "btn btn-primary"] [text "Save"] -- TODO: Implement Save!
                   ]
-                , button [onClick \_ -> d ShowSidePanel, className "btn btn-primary"] [text "show sidepanel"]
+                
                 ]
               ]
             ]
            ]
          , div [className "row"]
-           [ div [if (st.showSidePanel) then className "col-md-10" else className "col-md-12"]
+           [ div [if (st.showSidePanel) then className "col-md-10" else className "col-md-11"]
              [ div [style {border : "1px black solid", height: "90%"}] $
                [ 
                ]
@@ -368,7 +368,7 @@ specOld = simpleSpec performAction render'
                  <>
                  if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
              ]
-         
+         , button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"0px",position : "relative",zIndex:"1000"}] [text "show sidepanel"]
          , if (st.showSidePanel) then 
             div [_id "sp-container",className "col-md-2", style {border : "1px black solid", backgroundColor : "beige", position:"absolute",right: "0px",top:"265px"}]
              [ div [className "row"]
