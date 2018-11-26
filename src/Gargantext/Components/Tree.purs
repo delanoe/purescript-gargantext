@@ -347,37 +347,28 @@ getCreateNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 
 toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
 toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue, showRenameBox }) []) =
-  ul []
-  [
-    li []
-    [
-
-      a [ href (toUrl Front nodeType (Just id))]
-      ( [ text (name <> "    ")
+  ul [] [ li [] [ a [ href (toUrl Front nodeType (Just id))]
+                    [ text (name <> "    ")                ]
+                ,  a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
+                     []
+                , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
+                , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
+                ]
         ]
-      )
-    
-    ,  a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
-       [ 
-       ]
-     , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
-    , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
-    ]
-  ]
 --- need to add renameTreeview value to this function
 toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue, showRenameBox}) ary) =
-    ul []
-  [ li [] $
-    ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
+  ul [] [ li [] $
+     [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
       ,  a [ href (toUrl Front nodeType (Just id))]
-         [ text $ " " <> name <> " " ]
+           [ text $ " " <> name <> " " ]
 
+      ,  a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
+           []
 
       ] <>
       if open then
         map (toHtml d) ary
         else []
-    )
   ]
 
 

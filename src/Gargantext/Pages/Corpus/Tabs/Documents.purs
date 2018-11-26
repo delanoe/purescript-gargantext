@@ -163,8 +163,8 @@ layoutDocview = simpleSpec performAction render
       , br'
       , div [className "container1"]
         [ div [className "row"]
-          [ chart globalPublis
-          , div [className "col-md-12"]
+          [ -- chart globalPublis
+           div [className "col-md-12"]
             [ pageLoader
                 { path: initialPageParams nodeId
                 , corpusInfo
