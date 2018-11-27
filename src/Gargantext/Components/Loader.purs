@@ -12,16 +12,18 @@ import Thermite (Render, PerformAction, simpleSpec, modifyState_, createReactSpe
 
 data Action path = ForceReload | SetPath path
 
-type InnerProps path loaded =
-  { path     :: path
-  , loaded   :: Maybe loaded
+type InnerPropsRow path loaded row =
+  ( path     :: path
+  , loaded   :: loaded
   , dispatch :: Action path -> Effect Unit
-  , children :: Children
-  }
+  | row
+  )
+
+type InnerProps path loaded row = Record (InnerPropsRow path loaded row)
 
 type PropsRow path loaded row =
   ( path      :: path
-  , component :: ReactClass (InnerProps path loaded)
+  , component :: ReactClass (InnerProps path loaded (children :: Children))
   | row
   )
 
@@ -68,7 +70,10 @@ createLoaderClass name loader =
     createLoaderClass' name loader render
   where
     render :: Render (State path loaded) (Props' path loaded) (Action path)
-    render dispatch {component} {currentPath, loaded} c =
+    render _ _ {loaded: Nothing} _ =
+      -- TODO load spinner
+      []
+    render dispatch {component} {currentPath, loaded: Just loaded} c =
       [React.createElement component {path: currentPath, loaded, dispatch} c]
 
 {-

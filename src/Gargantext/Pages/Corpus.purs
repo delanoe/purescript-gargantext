@@ -3,7 +3,7 @@ module Gargantext.Pages.Corpus where
 
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
-import Data.Maybe (Maybe(..),maybe)
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import React as React
 import React (ReactClass, ReactElement)
@@ -17,7 +17,7 @@ import Gargantext.Components.Loader (createLoaderClass)
 import Gargantext.Components.Table as Table
 import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), corpusInfoDefault)
+import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..))
 import Gargantext.Pages.Corpus.Tabs.Types (Props) as Tabs
 import Gargantext.Pages.Corpus.Tabs.States (State, initialState) as Tabs
 import Gargantext.Pages.Corpus.Tabs.Actions (Action) as Tabs
@@ -77,7 +77,7 @@ corpusHeaderSpec = simpleSpec defaultPerformAction render
                  , date: date'
                  , hyperdata : CorpusInfo corpus
                  }
-          = maybe corpusInfoDefault identity loaded
+          = loaded
 
 ------------------------------------------------------------------------
 

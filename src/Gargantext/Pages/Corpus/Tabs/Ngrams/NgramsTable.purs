@@ -54,10 +54,7 @@ type Props = { mode :: Mode | PropsRow }
 
 type PageParams = {nodeId :: Int, params :: T.Params, mode :: Mode}
 
-type Props' = { path :: PageParams
-              , loaded :: Maybe NgramsTable
-              , dispatch :: Loader.Action PageParams -> Effect Unit
-              }
+type Props' = Loader.InnerProps PageParams NgramsTable ()
 
 type NgramsTerm = String
 
@@ -451,10 +448,7 @@ ngramsTableSpec' = simpleSpec performAction render
           }
       ]
           where
-            ngramsTable =
-              case applyNgramsTablePatch ngramsTablePatch <$> initTable of
-                Nothing -> NgramsTable mempty
-                Just t -> t
+            ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
             rows = convertRow <$> Map.toUnfoldable (Map.filter displayRow (ngramsTable ^. _NgramsTable))
             isRoot (NgramsElement e) = e.parent == Nothing
             -- TODO: There is a missing case where we display a row that we should not.

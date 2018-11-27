@@ -221,16 +221,16 @@ loadPage {nodeId, params: {limit, offset, orderBy}} = do
 
     convOrderBy _ = DateAsc -- TODO
 
-type PageLoaderProps ext =
+type PageLoaderProps row =
   { path :: PageParams
-  , corpusInfo :: Maybe (NodePoly CorpusInfo)
+  , corpusInfo :: NodePoly CorpusInfo
   , dispatch :: Action -> Effect Unit
-  | ext
+  | row
   }
 
 renderPage :: forall props path.
               Render (Loader.State {nodeId :: Int | path} (Array DocumentsView))
-                     { corpusInfo :: Maybe (NodePoly CorpusInfo)
+                     { corpusInfo :: NodePoly CorpusInfo
                      , dispatch :: Action -> Effect Unit
                      | props
                      }
@@ -254,7 +254,7 @@ renderPage loaderDispatch {corpusInfo, dispatch} {currentPath: {nodeId}, loaded:
                         ((\(NodePoly n) -> n.hyperdata)
                          >>>
                          (\(CorpusInfo c) -> c.totalRecords)
-                        <$> corpusInfo)
+                        <$> Just corpusInfo) -- TODO
       }
   ]
   where

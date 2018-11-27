@@ -25,10 +25,7 @@ import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperData(..))
 ------------------------------------------------------------------------------
 
-type Props =
-  { path :: Int
-  , loaded :: Maybe AnnuaireInfo
-  , dispatch :: Loader.Action Int -> Effect Unit }
+type Props = Loader.InnerProps Int AnnuaireInfo ()
 
 data Action
   = TabsA   Tab.Action
@@ -82,8 +79,7 @@ loadedAnnuaireSpec :: Spec {} Props Void
 loadedAnnuaireSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
-    render _ {loaded: Nothing} _ _ = []
-    render _ {path: nodeId, loaded: Just (annuaireInfo@AnnuaireInfo {name, date})} _ _ =
+    render _ {path: nodeId, loaded: annuaireInfo@AnnuaireInfo {name, date}} _ _ =
       T.renderTableHeaderLayout
         { title: name
         , desc: name
