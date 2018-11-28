@@ -19,7 +19,8 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Prelude (identity)
-import React (ReactElement)
+import React (ReactClass, ReactElement)
+import React as React
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
 import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, placeholder, style, defaultValue, _data)
 import React.DOM.Props as DOM
@@ -27,11 +28,14 @@ import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction,
 
 import Gargantext.Config (toUrl, End(..), NodeType(..), defaultRoot)
 import Gargantext.Config.REST (get, put, post, delete, deleteWithBody)
+import Gargantext.Components.Loader as Loader
 
 type Name = String
 type Open = Boolean
 type URL  = String
 type ID   = Int
+
+type Props = { root :: ID }
 
 data NTree a = NTree a (Array (NTree a))
 
@@ -41,7 +45,6 @@ data Action =  ShowPopOver ID
               | ToggleFolder ID
               | RenameNode  String ID
               | Submit ID String
-            --| Initialize
               | DeleteNode ID
               | Create  ID
               | SetNodeValue String ID
@@ -203,12 +206,12 @@ nodeOptionsRename d activated  id =  case activated of
                                  ]
                          false -> []
 
+type LoadedTreeViewProps = Loader.InnerProps Int FTree ()
 
-
-treeview :: Spec State {} Action
-treeview = simpleSpec performAction render
+loadedTreeview :: Spec State LoadedTreeViewProps Action
+loadedTreeview = simpleSpec performAction render
   where
-    render :: Render State {} Action
+    render :: Render State LoadedTreeViewProps Action
     render dispatch _ {state} _ =
       [ div [className "tree"]
         [ toHtml dispatch state
@@ -216,7 +219,23 @@ treeview = simpleSpec performAction render
         ]
       ]
 
+treeViewClass :: ReactClass (Loader.InnerProps Int FTree (children :: React.Children))
+treeViewClass = createClass "TreeView" loadedTreeview (\{loaded: t} -> {state: t})
 
+treeLoaderClass :: Loader.LoaderClass Int FTree
+treeLoaderClass = Loader.createLoaderClass "TreeLoader" loadNode
+
+treeLoader :: Loader.Props' Int FTree -> ReactElement
+treeLoader props = React.createElement treeLoaderClass props []
+
+treeview :: Spec {} Props Void
+treeview = simpleSpec defaultPerformAction render
+  where
+    render :: Render {} Props Void
+    render _ {root} _ _ =
+      [ treeLoader { path: root
+                   , component: treeViewClass
+                   } ]
 
 renameTreeView :: (Action -> Effect Unit) -> FTree -> Int -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =

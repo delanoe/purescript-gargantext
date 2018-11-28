@@ -21,12 +21,10 @@ type AppState =
   , searchState    :: S.State
   , userPageState  :: C.State
   , documentState  :: D.State
-  , ntreeState     :: Tree.State
   , search         :: String
   , showLogin      :: Boolean
   , showCorpus     :: Boolean
   , graphExplorerState  :: GE.State
-  , initialized    :: Boolean
   , showTree :: Boolean
   }
 
@@ -38,12 +36,10 @@ initAppState =
   , searchState    : S.initialState
   , userPageState  : C.initialState
   , documentState  : D.initialState {}
-  , ntreeState     : {state: Tree.exampleTree}
   , search         : ""
   , showLogin      : false
   , showCorpus     : false
   , graphExplorerState : GE.initialState
-  , initialized    : false
   , showTree : false
   }
 
@@ -62,9 +58,6 @@ _userPageState = lens (\s -> s.userPageState) (\s ss -> s{userPageState = ss})
 
 _documentViewState :: Lens' AppState D.State
 _documentViewState = lens (\s -> s.documentState) (\s ss -> s{documentState = ss})
-
-_treeState :: Lens' AppState Tree.State
-_treeState = lens (\s -> s.ntreeState) (\s ss -> s {ntreeState = ss})
 
 _graphExplorerState :: Lens' AppState GE.State
 _graphExplorerState = lens (\s -> s.graphExplorerState) (\s ss -> s{graphExplorerState = ss})

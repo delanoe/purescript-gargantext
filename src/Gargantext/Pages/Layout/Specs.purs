@@ -11,6 +11,7 @@ import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, foc
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
+import Gargantext.Config (defaultRoot)
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree  as Tree
@@ -23,10 +24,10 @@ import Gargantext.Pages.Corpus.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Graph as GE
 import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as NG
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search    as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _userPageState)
 import Gargantext.Router (Routes(..))
 
 layoutSpec :: Spec AppState {} Action
@@ -85,7 +86,7 @@ layout0 layout =
       cont $ fold
       [ withState \st ->
          if ((\(LN.State s) -> s.loginC) st.loginState == true)
-            then ls as
+            then ls $ cmapProps (const {root: defaultRoot}) as
             else outerLayout1
       , rs bs      
       ]
@@ -95,7 +96,7 @@ layout0 layout =
     rs   = over _render \render d p s c -> [ div [ className "col-md-10"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
-    as = focus _treeState _treeAction Tree.treeview
+    as = noState Tree.treeview
 
     bs = innerLayout $ layout
 
@@ -108,7 +109,7 @@ layout0 layout =
         ]
       ]
 
-
+-- TODO avoid code duplication with layout0
 layout1 :: Spec AppState {} Action
         -> Spec AppState {} Action
 layout1 layout =
@@ -124,7 +125,7 @@ layout1 layout =
       cont $ fold
       [ withState \st ->
          if ((\(LN.State s) -> s.loginC) st.loginState == true)
-            then ls as
+            then ls $ cmapProps (const {root: defaultRoot}) as
             else outerLayout1
       , rs bs      
       ]
@@ -137,7 +138,7 @@ layout1 layout =
     rs   = over _render \render d p s c -> [ div [if (s.showTree) then className "col-md-10" else className "col-md-12"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
-    as = focus _treeState _treeAction Tree.treeview
+    as = noState Tree.treeview
 
     bs = innerLayout $ layout
 

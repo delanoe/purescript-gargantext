@@ -25,10 +25,8 @@ import Gargantext.Router                               (Routes)
 ------------------------------------------------------------------------
 
 data Action
-  = Initialize
-  | LoginA     LN.Action
+  = LoginA     LN.Action
   | SetRoute   Routes
-  | TreeViewA          Tree.Action
     | SearchA    S.Action
     | Search             String
     | AddCorpusA AC.Action
@@ -68,20 +66,11 @@ performAction Go  _ _ = void do
   --modifyState id
 ---------------------------------------------------------
 
-performAction Initialize  _ state = do
-  _ <- logs "loading Initial nodes"
-  case state.initialized of
-    false -> do
-      d <- lift $ Tree.loadNode defaultRoot
-      modifyState_ $ _ { initialized = true, ntreeState = {state: d} }
-    _ -> pure unit
-
 performAction (LoginA        _) _ _ = pure unit
 performAction (AddCorpusA    _) _ _ = pure unit
 performAction (SearchA       _) _ _ = pure unit
 performAction (UserPageA     _) _ _ = pure unit
 performAction (DocumentViewA _) _ _ = pure unit
-performAction (TreeViewA          _) _ _ = pure unit
 performAction (GraphExplorerA     _) _ _ = pure unit
 performAction (AnnuaireAction     _) _ _ = pure unit
 
@@ -121,12 +110,6 @@ _documentViewAction :: Prism' Action D.Action
 _documentViewAction = prism DocumentViewA \action ->
   case action of
     DocumentViewA caction -> Right caction
-    _-> Left action
-
-_treeAction :: Prism' Action Tree.Action
-_treeAction = prism TreeViewA \action ->
-  case action of
-    TreeViewA caction -> Right caction
     _-> Left action
 
 _graphExplorerAction :: Prism' Action GE.Action

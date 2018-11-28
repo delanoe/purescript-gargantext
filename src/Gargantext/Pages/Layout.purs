@@ -20,12 +20,10 @@ dispatchAction :: forall ignored m.
                   (Action -> m Unit) -> ignored -> Routes -> m Unit
 
 dispatchAction dispatcher _ Home = do
-  dispatcher Initialize
   dispatcher $ SetRoute Home
   -- dispatcher $ LandingA TODO
 
 dispatchAction dispatcher _ Login = do
-  dispatcher Initialize
   dispatcher $ SetRoute Login
   -- dispatcher $ LoginA TODO
 
