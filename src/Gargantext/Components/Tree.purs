@@ -21,7 +21,7 @@ import Effect.Console (log)
 import Prelude (identity)
 import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
-import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, placeholder, style, value, _data)
+import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, placeholder, style, defaultValue, _data)
 import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState_, simpleSpec)
 
@@ -233,7 +233,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                [
                  input [ _type "text"
                     , placeholder "Rename Node"
-                    , value $ getRenameNodeValue s
+                    , defaultValue $ getRenameNodeValue s
                     , style {float: "left"}
                     , className "col-md-2 form-control"
                     , onInput \e -> d (RenameNode (unsafeEventValue e) nid)
@@ -294,7 +294,7 @@ createNodeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
             [
               input [ _type "text"
                     , placeholder "Create Node"
-                    , value $ getCreateNodeValue s
+                    , defaultValue $ getCreateNodeValue s
                     , className "col-md-12 form-control"
                     , onInput \e -> d (SetNodeValue (unsafeEventValue e) nid)
                     ]
