@@ -496,7 +496,7 @@ modeTabType Terms = TabTerms
 loadPage :: PageParams -> Aff NgramsTable
 loadPage {nodeId, mode} = getTable (modeTabType mode) (Just nodeId) -- TODO this ignores params
 
-ngramsLoaderClass :: ReactClass (Loader.Props PageParams NgramsTable)
+ngramsLoaderClass :: Loader.LoaderClass PageParams NgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "NgramsLoader" loadPage
 
 ngramsLoader :: Loader.Props' PageParams NgramsTable -> ReactElement

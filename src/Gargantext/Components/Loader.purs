@@ -21,9 +21,11 @@ type InnerPropsRow path loaded row =
 
 type InnerProps path loaded row = Record (InnerPropsRow path loaded row)
 
+type InnerClass path loaded = ReactClass (InnerProps path loaded (children :: Children))
+
 type PropsRow path loaded row =
   ( path      :: path
-  , component :: ReactClass (InnerProps path loaded (children :: Children))
+  , component :: InnerClass path loaded
   | row
   )
 
@@ -61,11 +63,14 @@ createLoaderClass' name loader render =
 
     {spec, dispatcher} = createReactSpec (simpleSpec performAction render) initialState
 
+type LoaderClass path loaded =
+  ReactClass (Record (PropsRow path loaded (children :: Children)))
+
 createLoaderClass :: forall path loaded
                    . Eq path
                   => String
                   -> (path -> Aff loaded)
-                  -> ReactClass (Record (PropsRow path loaded (children :: Children)))
+                  -> LoaderClass path loaded
 createLoaderClass name loader =
     createLoaderClass' name loader render
   where
