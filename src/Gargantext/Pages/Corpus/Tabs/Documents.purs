@@ -38,7 +38,7 @@ import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), Props)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import React.DOM (a, br', button, div, i, input, p, text)
 import React.DOM.Props (_type, className, href, name, onClick, placeholder, style, value)
-import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec)
+import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
 -- TODO: Search is pending
@@ -49,6 +49,11 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_
 
 type State =
   { documentIdsToDelete :: Set Int
+  }
+
+initialState :: State
+initialState =
+  { documentIdsToDelete: mempty
   }
 
 data Action
@@ -133,6 +138,9 @@ filterSpec = simpleSpec defaultPerformAction render
     render d p s c = [div [] [ text "    Filter "
                      , input []
                      ]]
+
+docViewSpec :: Spec {} Props Void
+docViewSpec = hideState (const initialState) layoutDocview
 
 -- | Main layout of the Documents Tab of a Corpus
 layoutDocview :: Spec State Props Action

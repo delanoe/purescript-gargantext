@@ -6,8 +6,8 @@ import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
 
 import Gargantext.Pages.Corpus.Tabs.Types (Props)
-import Gargantext.Pages.Corpus.Tabs.States (State(), _doclens, _tablens, initialState)
-import Gargantext.Pages.Corpus.Tabs.Actions (Action(), _docAction, _tabAction)
+import Gargantext.Pages.Corpus.Tabs.States (State(), initialState, _activeTab)
+import Gargantext.Pages.Corpus.Tabs.Actions (Action(), _TabAction)
 
 import Gargantext.Pages.Corpus.Tabs.Documents as DV
 import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as NV
@@ -20,35 +20,16 @@ import Thermite (Spec, focus, hideState, noState, cmapProps)
 
 statefulTabs :: Spec State Props Action
 statefulTabs =
-  Tab.tabs _tablens _tabAction $ fromFoldable [ Tuple "Documents" docPageSpec
-                                              , Tuple "Authors"   authorPageSpec
-                                              , Tuple "Sources"   sourcePageSpec
-                                              , Tuple "Institutes" institutesPageSpec
-                                              , Tuple "Terms"     termsPageSpec
-                                              , Tuple "Trash"     trashPageSpec
-                                              ]
-
-docPageSpec :: Spec State Props Action
-docPageSpec = focus _doclens _docAction DV.layoutDocview
+  Tab.tabs _activeTab _TabAction $ fromFoldable
+    [ Tuple "Documents"  $ noState DV.docViewSpec
+    , Tuple "Authors"    $ ngramsViewSpec {mode: NV.Authors}
+    , Tuple "Sources"    $ ngramsViewSpec {mode: NV.Sources}
+    , Tuple "Institutes" $ ngramsViewSpec {mode: NV.Institutes}
+    , Tuple "Terms"      $ ngramsViewSpec {mode: NV.Terms}
+    , Tuple "Trash"      $ noState DV.docViewSpec -- TODO pass-in trash mode
+    ]
 
 ngramsViewSpec :: {mode :: NV.Mode} -> Spec State Props Action
 ngramsViewSpec {mode} =
   cmapProps (\{loaded, path, dispatch} -> {mode,loaded,path, dispatch})
             (noState NV.ngramsTableSpec)
-
-authorPageSpec :: Spec State Props Action
-authorPageSpec = ngramsViewSpec {mode: NV.Authors}
-
-sourcePageSpec :: Spec State Props Action
-sourcePageSpec = ngramsViewSpec {mode: NV.Sources}
-
-institutesPageSpec :: Spec State Props Action
-institutesPageSpec = ngramsViewSpec {mode: NV.Institutes}
-
-termsPageSpec :: Spec State Props Action
-termsPageSpec = ngramsViewSpec {mode: NV.Terms}
-
-trashPageSpec :: Spec State Props Action
-trashPageSpec = focus _doclens _docAction DV.layoutDocview
-
-
