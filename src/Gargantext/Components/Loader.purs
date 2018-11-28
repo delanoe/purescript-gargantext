@@ -48,9 +48,13 @@ createLoaderClass' name loader render =
        pure { state: s.state
             , render: s.render
             , componentDidMount: dispatcher this ForceReload
-            , componentDidUpdate: \_prevProps _prevState _snapshot -> do
+            , componentDidUpdate: \_prevProps {currentPath} _snapshot -> do
                 {path} <- React.getProps this
-                dispatcher this (SetPath path)
+                -- This guard is the same as in performAction (SetPath ...),
+                -- however we need it here to avoid potential infinite loops.
+                -- https://reactjs.org/docs/react-component.html#componentdidupdate
+                when (path /= currentPath) do
+                  dispatcher this (SetPath path)
             })
   where
     initialState {path} = {currentPath: path, loaded: Nothing}
@@ -60,7 +64,7 @@ createLoaderClass' name loader render =
       loaded <- lift $ loader currentPath
       modifyState_ $ _ { loaded = Just loaded }
     performAction (SetPath newPath) _ {currentPath} =
-      when (newPath /= currentPath) $ do
+      when (newPath /= currentPath) do
         loaded <- lift $ loader newPath
         modifyState_ $ _ { currentPath = newPath, loaded = Just loaded }
 
