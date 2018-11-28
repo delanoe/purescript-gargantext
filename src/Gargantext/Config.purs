@@ -24,8 +24,8 @@ endConfig :: EndConfig
 endConfig = endConfig' V10
 
 endConfig' :: ApiVersion -> EndConfig
-endConfig' v = { front : frontCaddy
-               , back  : backDev v }
+endConfig' v = { front : frontRelative
+               , back  : backLocal v }
 
 -- | Default Root on shared database to develop
 -- until authentication implementation
@@ -33,52 +33,55 @@ endConfig' v = { front : frontCaddy
 defaultRoot :: Int
 defaultRoot = 950094
 ------------------------------------------------------------------------
+frontRelative :: Config
+frontRelative = { baseUrl: ""
+                , prePath: "/#/"
+                }
+
 frontCaddy :: Config
-frontCaddy = { proto   : "http://"
-             , port       : 2015
-             , domain     : "localhost"
-             , prePath    : "/#/"
+frontCaddy = { baseUrl: "http://localhost:2015"
+             , prePath: "/#/"
              }
 
 frontHaskell :: Config
-frontHaskell = { proto   : "http://"
-               , port       : 8008
-               , domain     : "localhost"
-               , prePath    : "/index.html#/"
+frontHaskell = { baseUrl: "http://localhost:8008"
+               , prePath: "/#/"
                }
 
+frontDev :: Config
+frontDev = { baseUrl: "https://dev.gargantext.org"
+           , prePath: "/#/"
+           }
+
 frontProd :: Config
-frontProd = { proto   : "https://"
-            , port       : 8080
-            , domain     : "gargantext.org"
-            , prePath    : "/index.html#/"
+frontProd = { baseUrl: "https://gargantext.org"
+            , prePath: "/#/"
             }
 
 ------------------------------------------------------------------------
 
+backLocal :: ApiVersion -> Config
+backLocal v = { baseUrl: "http://localhost:8008"
+              , prePath: "/api/" <> show v <> "/"
+              }
+
 backDev :: ApiVersion -> Config
-backDev v = { proto      : "http://"
-            , port       : 8008
-            , domain     : "localhost"
-            , prePath    : "/api/" <> show v <> "/"
+backDev v = { baseUrl: "https://dev.gargantext.org"
+            , prePath: "/api/" <> show v <> "/"
             }
 
 backProd :: ApiVersion -> Config
-backProd v = { proto      : "https://"
-            , port       : 8080
-            , domain     : "gargantext.org"
-            , prePath    : "/api/" <> show v <> "/"
-            }
+backProd v = { baseUrl: "https://gargantext.org"
+             , prePath: "/api/" <> show v <> "/"
+             }
 ------------------------------------------------------------------------
 
 type EndConfig = { front :: Config
                  , back  :: Config
                  }
 
-type Config = { proto      :: String
-              , port       :: Int
-              , domain     :: String
-              , prePath    :: String
+type Config = { baseUrl :: String
+              , prePath :: String
               }
 
 ------------------------------------------------------------
@@ -91,11 +94,8 @@ doUrl :: UrlBase -> UrlPath -> UrlParam -> Url
 doUrl b p ps = b <> p <> ps
 ------------------------------------------------------------
 endBaseUrl :: End -> EndConfig -> UrlBase
-endBaseUrl Back  c = baseUrl c.back
-endBaseUrl Front c = ""
-
-baseUrl :: Config -> UrlBase
-baseUrl conf = conf.proto <> conf.domain <> ":" <> show conf.port
+endBaseUrl Back  c = c.back.baseUrl
+endBaseUrl Front c = c.front.baseUrl
 ------------------------------------------------------------
 endPathUrl :: End -> EndConfig -> NodeType -> Maybe Id -> UrlPath
 endPathUrl Back  c nt i = pathUrl c.back  nt i
