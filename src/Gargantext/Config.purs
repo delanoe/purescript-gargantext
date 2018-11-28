@@ -92,14 +92,16 @@ type Url      = String
 
 doUrl :: UrlBase -> UrlPath -> UrlParam -> Url
 doUrl b p ps = b <> p <> ps
-------------------------------------------------------------
+
+endOf :: forall cfg. End -> { front :: cfg, back :: cfg } -> cfg
+endOf Back  = _.back
+endOf Front = _.front
+
 endBaseUrl :: End -> EndConfig -> UrlBase
-endBaseUrl Back  c = c.back.baseUrl
-endBaseUrl Front c = c.front.baseUrl
-------------------------------------------------------------
+endBaseUrl end c = (endOf end c).baseUrl
+
 endPathUrl :: End -> EndConfig -> NodeType -> Maybe Id -> UrlPath
-endPathUrl Back  c nt i = pathUrl c.back  nt i
-endPathUrl Front c nt i = pathUrl c.front nt i
+endPathUrl end c nt i = pathUrl (endOf end c) nt i
 
 pathUrl :: Config -> NodeType -> Maybe Id -> UrlPath
 pathUrl c nt@(Tab _ _ _ _) i = pathUrl c Node i <> "/" <> show nt
