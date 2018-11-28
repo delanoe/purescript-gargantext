@@ -6,13 +6,13 @@ import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
 
 import Gargantext.Pages.Corpus.Tabs.Types (Props)
-import Gargantext.Pages.Corpus.Tabs.States (State(), _doclens, _ngramsView, _tablens, initialState)
-import Gargantext.Pages.Corpus.Tabs.Actions (Action(), _docAction, _NgramViewA, _tabAction)
+import Gargantext.Pages.Corpus.Tabs.States (State(), _doclens, _tablens, initialState)
+import Gargantext.Pages.Corpus.Tabs.Actions (Action(), _docAction, _tabAction)
 
 import Gargantext.Pages.Corpus.Tabs.Documents as DV
 import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as NV
 import Gargantext.Components.Tab as Tab
-import Thermite (Spec, focus, hideState, cmapProps)
+import Thermite (Spec, focus, hideState, noState, cmapProps)
 
 
 -- pureTabs :: Spec {} Props Void
@@ -34,7 +34,7 @@ docPageSpec = focus _doclens _docAction DV.layoutDocview
 ngramsViewSpec :: {mode :: NV.Mode} -> Spec State Props Action
 ngramsViewSpec {mode} =
   cmapProps (\{loaded, path, dispatch} -> {mode,loaded,path, dispatch})
-            (focus _ngramsView _NgramViewA NV.ngramsTableSpec)
+            (noState NV.ngramsTableSpec)
 
 authorPageSpec :: Spec State Props Action
 authorPageSpec = ngramsViewSpec {mode: NV.Authors}
