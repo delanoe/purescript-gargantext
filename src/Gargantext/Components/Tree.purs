@@ -286,7 +286,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                 div [ _id "beforeClick", className "col-md-12"] 
              [  div [className "row"]
                 [ div [className "col-md-6"] [text name] 
-                , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil col-md-6", _id "rename1", title "Rename", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
+                , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil col-md-2", _id "rename1", title "Rename", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
                 ]
              ]
              ]
@@ -352,7 +352,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
     li [] $
     [
      a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      , a [ href (toUrl Front nodeType (Just id))]
+      , a [ href (toUrl Front nodeType (Just id)), style {position:"absolute",left:"44px"}]
       ( [ text (name <> "    ")
         ]
       )
@@ -369,7 +369,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,cre
     ul []
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      ,  a [ href (toUrl Front nodeType (Just id))]
+      ,  a [ href (toUrl Front nodeType (Just id)), style {position:"absolute",left:"44px"}]
          [ text $ " " <> name <> " " ]
 ,      a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
        [ 
