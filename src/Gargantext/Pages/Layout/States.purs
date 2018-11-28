@@ -38,7 +38,7 @@ initAppState =
   , searchState    : S.initialState
   , userPageState  : C.initialState
   , documentState  : D.initialState {}
-  , ntreeState     : Tree.exampleTree
+  , ntreeState     : {state: Tree.exampleTree}
   , search         : ""
   , showLogin      : false
   , showCorpus     : false

@@ -6,8 +6,9 @@ import Control.Monad.Cont.Trans                        (lift)
 import Data.Either                                     (Either(..))
 import Data.Lens                                       (Prism', prism)
 import Effect.Class                                    (liftEffect)
-import Thermite                                        (PerformAction, modifyState)
+import Thermite                                        (PerformAction, modifyState, modifyState_)
 
+import Gargantext.Config (defaultRoot)
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Modals.Modal              (modalShow)
 import Gargantext.Components.Tree                   as Tree
@@ -67,18 +68,13 @@ performAction Go  _ _ = void do
   --modifyState id
 ---------------------------------------------------------
 
-performAction Initialize  _ state = void do
+performAction Initialize  _ state = do
   _ <- logs "loading Initial nodes"
   case state.initialized of
     false -> do
-      lnodes <- lift $ Tree.loadDefaultNode
-      case lnodes of
-        Left err -> do
-          modifyState identity
-        Right d -> do
-          modifyState $ _ { initialized = true, ntreeState = d }
-    _ -> do
-      modifyState identity
+      d <- lift $ Tree.loadNode defaultRoot
+      modifyState_ $ _ { initialized = true, ntreeState = {state: d} }
+    _ -> pure unit
 
 performAction (LoginA        _) _ _ = pure unit
 performAction (AddCorpusA    _) _ _ = pure unit

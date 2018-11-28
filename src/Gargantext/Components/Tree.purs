@@ -18,13 +18,16 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Config (End(..), NodeType(..), toUrl)
 import Prelude (identity)
 import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
-import React.DOM.Props (Props, _id, _type, className, href, title, onClick, onInput, placeholder, style, value, _data)
-import Thermite (PerformAction, Render, Spec, cotransform, defaultPerformAction, defaultRender, modifyState, simpleSpec)
+import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, placeholder, style, value, _data)
+import React.DOM.Props as DOM
+import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState, simpleSpec)
+
 import Gargantext.Config (toUrl, End(..), NodeType(..), defaultRoot)
+import Gargantext.Config.REST (get, put, post, delete, deleteWithBody)
+
 type Name = String
 type Open = Boolean
 type URL  = String
@@ -47,73 +50,51 @@ data Action =  ShowPopOver ID
               | CancelRename ID
 
 
-type State = FTree
+type State = { state :: FTree }
 
 initialState :: State
-initialState = NTree (LNode {id : 3, name : "hello", nodeType : Node, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) []
+initialState = { state: NTree (LNode {id : 3, name : "hello", nodeType : Node, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) [] }
+
+mapFTree :: (FTree -> FTree) -> State -> State
+mapFTree f {state} = {state: f state}
 
 
-
-performAction :: PerformAction State {} Action
+performAction :: forall props. PerformAction State props Action
 
 performAction (ToggleFolder i) _ _ = void $
- cotransform (\td -> toggleNode i td)
-
-
+  modifyState $ mapFTree $ toggleNode i
 
 performAction (ShowPopOver id) _ _ = void $
- cotransform (\td -> popOverNode id td)
-
+  modifyState $ mapFTree $ popOverNode id
 
 performAction (ShowRenameBox id) _ _ = void $
-  cotransform (\td -> showPopOverNode id td)
-
+  modifyState $ mapFTree $ showPopOverNode id
 
 performAction (CancelRename id) _ _ = void $
-  cotransform (\td -> showPopOverNode id td)
-
+  modifyState $ mapFTree $ showPopOverNode id
 
 performAction (ToggleCreateNode id) _ _ = void $
- cotransform (\td -> showCreateNode id td)
+  modifyState $ mapFTree $ showCreateNode id
 
---- TODO : Need to update state once API is called
 performAction (DeleteNode nid) _ _ = void $ do
-  s' <- lift $ deleteNode nid
-  case s' of
-    Left err -> modifyState identity
-    Right d -> modifyState identity
-
+  d <- lift $ deleteNode nid
+  --- TODO : Need to update state once API is called
+  pure unit
 
 --- TODO : Need to update state once API is called
 performAction (Submit rid s'') _  _  = void $ do
-  s' <- lift $ renameNode  rid  $ RenameValue { name : s''}
-  case s' of
-    Left err -> do
-      liftEffect $ log err
-      modifyState identity
-    Right d -> do
-      -- _ <- cotransform (\td -> popOverNode rid td)
-      cotransform (\td -> showPopOverNode rid td) -- add this function to toggle rename function
-
+  d <- lift $ renameNode rid $ RenameValue { name : s''}
+  -- modifyState_ $ mapFTree $ popOverNode rid
+  modifyState $ mapFTree $ showPopOverNode rid -- add this function to toggle rename function
 
 performAction (RenameNode  r nid) _ _ = void $
-  cotransform (\td -> rename  nid r td)
-
+  modifyState $ mapFTree $ rename nid r
 
 performAction (Create  nid) _ _ = void $
-  cotransform (\td -> showCreateNode nid td)
-
+  modifyState $ mapFTree $ showCreateNode nid
 
 performAction (SetNodeValue v nid) _ _ = void $
-  cotransform (\td -> setNodeValue  nid v td)
-
-
--- performAction Initialize _ _ = void $ do
---  s <- lift $ loadDefaultNode
---  case s of
---    Left err -> modifyState identity
---    Right d -> modifyState (\state -> d)
-
+  modifyState $ mapFTree $ setNodeValue nid v
 
 
 popOverNode :: Int -> NTree LNode -> NTree LNode
@@ -146,7 +127,6 @@ showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 --     createNode' = if sid == id then  nodeValue else ""
 
 
-
 rename :: Int ->  String -> NTree LNode  -> NTree LNode
 rename sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary)  =
   NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue : rvalue, createNode, nodeValue, showRenameBox}) $ map (rename sid  v) ary
@@ -159,7 +139,6 @@ setNodeValue sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
   NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue , createNode, nodeValue : nvalue, showRenameBox}) $ map (setNodeValue sid  v) ary
   where
     nvalue = if sid == id then  v   else ""
-
 
 
 toggleNode :: Int -> NTree LNode -> NTree LNode
@@ -230,7 +209,7 @@ treeview :: Spec State {} Action
 treeview = simpleSpec performAction render
   where
     render :: Render State {} Action
-    render dispatch _ state _ =
+    render dispatch _ {state} _ =
       [ div [className "tree"]
         [ toHtml dispatch state
 
@@ -239,7 +218,7 @@ treeview = simpleSpec performAction render
 
 
 
-renameTreeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
+renameTreeView :: (Action -> Effect Unit) -> FTree -> Int -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =
         
        div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
@@ -302,7 +281,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
        
 
 
-createNodeView :: (Action -> Effect Unit) -> State -> Int -> ReactElement
+createNodeView :: (Action -> Effect Unit) -> FTree -> Int -> ReactElement
 createNodeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) nid  =
        div [className ""]
         [  div [className "panel panel-default"]
@@ -331,17 +310,17 @@ createNodeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 
 
 
-renameTreeViewDummy :: (Action -> Effect Unit) -> State -> ReactElement
+renameTreeViewDummy :: (Action -> Effect Unit) -> FTree -> ReactElement
 renameTreeViewDummy d s = div [] []
 
-popOverValue :: State -> Boolean
+popOverValue :: FTree -> Boolean
 popOverValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) = popOver
 
-getRenameNodeValue :: State -> String
+getRenameNodeValue :: FTree -> String
 getRenameNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) = renameNodeValue
 
 
-getCreateNodeValue :: State -> String
+getCreateNodeValue :: FTree -> String
 getCreateNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, nodeValue, showRenameBox}) ary) = nodeValue
 
 
@@ -386,7 +365,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,cre
 
 
 
-fldr :: Boolean -> Props
+fldr :: Boolean -> DOM.Props
 fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 
@@ -411,24 +390,8 @@ instance decodeJsonFTree :: DecodeJson (NTree LNode) where
     nodes' <- decodeJson nodes
     pure $ NTree node' nodes'
 
-loadDefaultNode :: Aff (Either String (NTree LNode))
-loadDefaultNode = do
-  res <- request $ defaultRequest
-         { url = toUrl Back Tree (Just defaultRoot)
-         , responseFormat = ResponseFormat.json
-         , method = Left GET
-         , headers = []
-         }
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure obj
+loadNode :: Int -> Aff FTree
+loadNode = get <<< toUrl Back Tree <<< Just
 
 ----- TREE CRUD Operations
 
@@ -442,104 +405,22 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
      = "r_name" := post.name
     ~> jsonEmptyObject
 
+renameNode :: Int -> RenameValue -> Aff (Array Int)
+renameNode renameNodeId = put $ toUrl Back Node (Just renameNodeId) <> "/rename"
 
-renameNode :: Int -> RenameValue -> Aff (Either String Unit)     --- need to change return type herre
-renameNode renameNodeId reqbody = do
-  res <- request $ defaultRequest
-         { url = toUrl Back Node (Just renameNodeId)  <> "/rename"
-         , responseFormat = ResponseFormat.json
-         , method = Left PUT
-         , headers = []
-         , content  = Just $ Json $ encodeJson reqbody
-         }
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      --let obj = decodeJson json
-      pure $ Right unit       --- TODO decode when getting proper data get
+deleteNode :: Int -> Aff Int
+deleteNode = delete <<< toUrl Back Node <<< Just
 
+-- UNUSED
+-- deleteNodes :: TODO -> Aff Int
+-- deleteNodes = deleteWithBody (toUrl Back Nodes Nothing)
 
-
-deleteNode :: Int -> Aff (Either String (Int))
-deleteNode renameNodeId = do
-  res <- request $ defaultRequest
-         { url = toUrl Back Node (Just renameNodeId)
-         , responseFormat = ResponseFormat.json
-         , method = Left DELETE
-         , headers = []
-         }
-
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure obj
-
-
-
-deleteNodes :: String -> Aff (Either String  Int)
-deleteNodes reqbody = do
-  res <- request $ defaultRequest
-         { url = toUrl Back Nodes Nothing
-         , responseFormat = ResponseFormat.json
-         , method = Left DELETE
-         , headers = []
-         , content = Just $ Json $ encodeJson reqbody
-         }
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure  obj
-
-
-createNode :: String -> Aff (Either String (Int))
-createNode  reqbody= do
-  res <- request $ defaultRequest
-         { url = toUrl Back Node Nothing
-         , responseFormat = ResponseFormat.json
-         , method = Left POST
-         , headers = []
-         , content = Just $ Json $ encodeJson reqbody
-         }
-  case res.body of
-    Left err -> do
-      _ <- liftEffect $ log $ printResponseFormatError err
-      pure $ Left $ printResponseFormatError err
-    Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure obj
-
-
+-- UNUSED
+-- createNode :: TODO -> Aff Int
+-- createNode = post (toUrl Back Node Nothing)
 
 fnTransform :: LNode -> FTree
 fnTransform n = NTree n []
 
-
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
-
-
-
-
-                     -- <<<<<<< HEAD
-                     -- a [ href (toUrl Front Folder id )]
-                     -- =======
