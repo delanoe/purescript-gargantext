@@ -100,7 +100,7 @@ li a#rename {
     display:none;
     position:absolute;
     text-decoration:none;
-    left: 77px;
+    left: 142px;
 }
 
 li:hover a#rename {
@@ -155,5 +155,11 @@ text-align: center;
 #rename-tooltip a:hover
 {
     text-decoration:none;
+}
+
+#sp-container 
+{ -webkit-transition: width 2s; /* For Safari 3.1 to 6.0 */
+    transition: width 2s;
+
 }
 

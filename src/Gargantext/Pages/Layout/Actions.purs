@@ -38,6 +38,7 @@ data Action
   | Go
   | ShowLogin
   | ShowAddcorpus
+  | ShowTree 
 
 
 performAction :: PerformAction AppState {} Action
@@ -45,6 +46,9 @@ performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
 performAction (Search s)  _ _ = void do
   modifyState $ _ {search = s}
+
+performAction (ShowTree)  _ (state) = void do
+  modifyState $ _ {showTree = not (state.showTree)}
 
 performAction (ShowLogin)  _ _ = void do
   liftEffect $ modalShow "loginModal"

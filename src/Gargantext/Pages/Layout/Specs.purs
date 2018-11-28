@@ -59,7 +59,7 @@ pagesComponent s = case s.currentRoute of
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec (Document i) = layout0 $ focus _documentViewState _documentViewAction  Annotation.docview
-    selectSpec (PGraphExplorer i)    = layout0 $  focus _graphExplorerState _graphExplorerAction  GE.specOld
+    selectSpec (PGraphExplorer i)    = layout1 $  focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
     
     selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
@@ -87,9 +87,12 @@ layout0 layout =
          if ((\(LN.State s) -> s.loginC) st.loginState == true)
             then ls as
             else outerLayout1
-      , rs bs      ]
-    ls   = over _render \render d p s c -> [ div [className "col-md-2" ] (render d p s c) ]
-    rs   = over _render \render d p s c -> [ div [className "col-md-10"] (render d p s c) ]
+      , rs bs      
+      ]
+    ls   = over _render \render d p s c -> [ 
+         div [ className "col-md-2"] (render d p s c)  
+      ]
+    rs   = over _render \render d p s c -> [ div [ className "col-md-10"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
     as = focus _treeState _treeAction Tree.treeview
@@ -105,13 +108,56 @@ layout0 layout =
         ]
       ]
 
+
+layout1 :: Spec AppState {} Action
+        -> Spec AppState {} Action
+layout1 layout =
+  fold
+  [ layoutSidebar divSearchBar
+  , outerLayout
+  , layoutFooter
+  ]
+  where
+    outerLayout1 = simpleSpec defaultPerformAction defaultRender
+    outerLayout :: Spec AppState {} Action
+    outerLayout =
+      cont $ fold
+      [ withState \st ->
+         if ((\(LN.State s) -> s.loginC) st.loginState == true)
+            then ls as
+            else outerLayout1
+      , rs bs      
+      ]
+    ls   = over _render \render d p s c -> [  
+      
+        button [onClick $ \e -> d ShowTree, className "btn btn-primary",style {position:"relative", top: "68px",left:"-264px",zIndex : "1000"}] [text "ShowTree"]
+      
+        , div [if (s.showTree) then className "col-md-2" else className "col-md-2"] if (s.showTree) then (render d p s c) else [] 
+      ]
+    rs   = over _render \render d p s c -> [ div [if (s.showTree) then className "col-md-10" else className "col-md-12"] (render d p s c) ]
+    cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
+
+    as = focus _treeState _treeAction Tree.treeview
+
+    bs = innerLayout $ layout
+
+    innerLayout :: Spec AppState {} Action
+                -> Spec AppState {} Action
+    innerLayout = over _render \render d p s c ->
+      [  div [_id "page-wrapper"]
+        [
+          div [className "container-fluid"]  (render d p s c)
+        ]
+      ]
+
+
 layoutSidebar :: Spec AppState {} Action
               -> Spec AppState {} Action
 layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
             , role "navigation"
-            ] [ div [className "container"]
+            ] [ div [className "container-fluid"]
                     [ div [ className "navbar-inner" ]
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"]
@@ -282,6 +328,7 @@ divDropdownRight d =
           -- else
          [text " Login / Signup"]
         ]
+      
      ]
 
 layoutFooter :: Spec AppState {} Action
