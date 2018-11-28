@@ -23,7 +23,7 @@ import React (ReactElement)
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
 import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, placeholder, style, value, _data)
 import React.DOM.Props as DOM
-import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState_, simpleSpec)
 
 import Gargantext.Config (toUrl, End(..), NodeType(..), defaultRoot)
 import Gargantext.Config.REST (get, put, post, delete, deleteWithBody)
@@ -61,40 +61,40 @@ mapFTree f {state} = {state: f state}
 
 performAction :: forall props. PerformAction State props Action
 
-performAction (ToggleFolder i) _ _ = void $
-  modifyState $ mapFTree $ toggleNode i
+performAction (ToggleFolder i) _ _ =
+  modifyState_ $ mapFTree $ toggleNode i
 
-performAction (ShowPopOver id) _ _ = void $
-  modifyState $ mapFTree $ popOverNode id
+performAction (ShowPopOver id) _ _ =
+  modifyState_ $ mapFTree $ popOverNode id
 
-performAction (ShowRenameBox id) _ _ = void $
-  modifyState $ mapFTree $ showPopOverNode id
+performAction (ShowRenameBox id) _ _ =
+  modifyState_ $ mapFTree $ showPopOverNode id
 
-performAction (CancelRename id) _ _ = void $
-  modifyState $ mapFTree $ showPopOverNode id
+performAction (CancelRename id) _ _ =
+  modifyState_ $ mapFTree $ showPopOverNode id
 
-performAction (ToggleCreateNode id) _ _ = void $
-  modifyState $ mapFTree $ showCreateNode id
+performAction (ToggleCreateNode id) _ _ =
+  modifyState_ $ mapFTree $ showCreateNode id
 
-performAction (DeleteNode nid) _ _ = void $ do
+performAction (DeleteNode nid) _ _ = do
   d <- lift $ deleteNode nid
   --- TODO : Need to update state once API is called
   pure unit
 
 --- TODO : Need to update state once API is called
-performAction (Submit rid s'') _  _  = void $ do
+performAction (Submit rid s'') _  _  = do
   d <- lift $ renameNode rid $ RenameValue { name : s''}
   -- modifyState_ $ mapFTree $ popOverNode rid
-  modifyState $ mapFTree $ showPopOverNode rid -- add this function to toggle rename function
+  modifyState_ $ mapFTree $ showPopOverNode rid -- add this function to toggle rename function
 
-performAction (RenameNode  r nid) _ _ = void $
-  modifyState $ mapFTree $ rename nid r
+performAction (RenameNode  r nid) _ _ =
+  modifyState_ $ mapFTree $ rename nid r
 
-performAction (Create  nid) _ _ = void $
-  modifyState $ mapFTree $ showCreateNode nid
+performAction (Create  nid) _ _ =
+  modifyState_ $ mapFTree $ showCreateNode nid
 
-performAction (SetNodeValue v nid) _ _ = void $
-  modifyState $ mapFTree $ setNodeValue nid v
+performAction (SetNodeValue v nid) _ _ =
+  modifyState_ $ mapFTree $ setNodeValue nid v
 
 
 popOverNode :: Int -> NTree LNode -> NTree LNode
