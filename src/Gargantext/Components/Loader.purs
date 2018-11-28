@@ -48,6 +48,9 @@ createLoaderClass' name loader render =
        pure { state: s.state
             , render: s.render
             , componentDidMount: dispatcher this ForceReload
+            , componentDidUpdate: \_prevProps _prevState _snapshot -> do
+                {path} <- React.getProps this
+                dispatcher this (SetPath path)
             })
   where
     initialState {path} = {currentPath: path, loaded: Nothing}
