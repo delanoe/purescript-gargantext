@@ -1,0 +1,3 @@
+#!/bin/bash
+
+yarn && yarn psc-package install && yarn pulp --psc-package build && yarn pulp --psc-package browserify --to dist/bundle.js

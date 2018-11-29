@@ -2,10 +2,10 @@ module Gargantext.Pages.Annuaire.User.Contacts.Types where
 
 import Prelude
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Map (Map(..))
 
 import React (ReactElement)
@@ -14,15 +14,35 @@ import React.DOM (div)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.DecodeMaybe ((.?|))
 
-data Contact c s = Contact {
+data Contact = Contact {
   id :: Int
   , typename :: Maybe Int
-  , userId :: Int
+  , userId :: Maybe Int
   , parentId :: Maybe Int
-  , name :: String
+  , name :: Maybe String
   , date :: Maybe String
-  , hyperdata :: HyperData c s
+  , hyperdata :: HyperdataContact
   }
+
+data HyperdataContact =
+     HyperdataContact { bdd :: Maybe String
+                      , uniqId :: Maybe String
+                      , uniqIdBdd :: Maybe String
+                      , title :: Maybe String
+                      , source :: Maybe String
+                    }
+
+instance decodeHyperdataContact :: DecodeJson HyperdataContact
+  where
+    decodeJson json = do
+      obj <- decodeJson json
+      bdd <- obj .?? "bdd"
+      uniqId <- obj .?? "uniqId"
+      uniqIdBdd <- obj .?? "uniqIdBdd"
+      title     <- obj .?? "title"
+      source    <- obj .?? "source"
+      pure $ HyperdataContact {bdd, uniqId, uniqIdBdd, title, source}
+
 
 data HyperData c s =
   HyperData
@@ -39,17 +59,17 @@ instance decodeUserHyperData :: (DecodeJson c, DecodeJson s) =>
     specific <- decodeJson json
     pure $ HyperData {common, shared, specific}
 
-instance decodeUser :: (DecodeJson c, DecodeJson s) =>
-                       DecodeJson (Contact c s) where
+instance decodeUser :: DecodeJson Contact where
   decodeJson json = do
     obj <- decodeJson json
     id <- obj .? "id"
     typename <- obj .?| "typename"
-    userId <- obj .? "userId"
+    userId <- obj .?? "userId"
     parentId <- obj .?| "parentId"
-    name <- obj .? "name"
+    name <- obj .?? "name"
     date <- obj .?| "date"
     hyperdata <- obj .? "hyperdata"
+    
     pure $ Contact { id, typename, userId
                    , parentId, name, date
                    , hyperdata
@@ -61,7 +81,7 @@ data Action
 
 type State =
   { activeTab :: Int
-  , contact :: Maybe (Contact Void Void)
+  , contact :: Maybe Contact
   }
 
 initialState :: State
@@ -70,7 +90,7 @@ initialState =
   , contact: Nothing
   }
 
-_contact :: Lens' State (Maybe (Contact Void Void))
+_contact :: Lens' State (Maybe Contact)
 _contact = lens (\s -> s.contact) (\s ss -> s{contact = ss})
 
 _tablens :: Lens' State Tab.State

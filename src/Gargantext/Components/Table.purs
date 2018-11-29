@@ -1,54 +1,75 @@
 module Gargantext.Components.Table where
 
-import Control.Monad.Cont.Trans (lift)
 import Data.Array (filter)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))
 import Effect (Effect)
-import Effect.Aff (Aff)
-import React as React
+import Effect.Class (liftEffect)
 import React (ReactElement, ReactClass, Children, createElement)
-import React.DOM (a, b, b', div, option, select, span, table, tbody, td, text, th, thead, tr)
-import React.DOM.Props (className, href, onChange, onClick, scope, selected, value)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec,
-    createReactSpec, StateCoTransformer)
+import React.DOM (a, b, b', p, i, h3, hr, div, option, select, span, table, tbody, td, text, th, thead, tr)
+import React.DOM.Props (className, href, onChange, onClick, scope, selected, value, style)
+import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec, StateCoTransformer, createClass)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
+
+type TableContainerProps =
+  { pageSizeControl     :: ReactElement
+  , pageSizeDescription :: ReactElement
+  , paginationLinks     :: ReactElement
+  , tableHead           :: ReactElement
+  , tableBody           :: Array ReactElement
+  }
 
 type Rows = Array { row    :: Array ReactElement
                   , delete :: Boolean
                   }
 
-type LoadRows = { offset :: Int, limit :: Int } -> Aff Rows
+type OrderBy = Maybe (OrderByDirection ColumnName)
+
+type Params = { offset :: Int, limit :: Int, orderBy :: OrderBy }
+
+newtype ColumnName = ColumnName String
+
+derive instance eqColumnName :: Eq ColumnName
+
+columnName :: ColumnName -> String
+columnName (ColumnName c) = c
+
+data OrderByDirection a = ASC a | DESC a
+
+derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 
 type Props' =
-  ( title        :: String
-  , colNames     :: Array String
+  ( colNames     :: Array ColumnName
   , totalRecords :: Int
-  , loadRows     :: LoadRows
+  , setParams    :: Params -> Effect Unit
+  , rows         :: Rows
+  , container    :: TableContainerProps -> Array ReactElement
   )
 
 type Props = Record Props'
 
 type State =
-  { rows        :: Maybe Rows
-  , currentPage :: Int
+  { currentPage :: Int
   , pageSize    :: PageSizes
---, tree        :: FTree
+  , orderBy     :: OrderBy
   }
 
 initialState :: State
 initialState =
-  { rows         : Nothing
-  , currentPage  : 1
+  { currentPage  : 1
   , pageSize     : PS10
---, tree         : exampleTree
+  , orderBy      : Nothing
   }
+
+initialParams :: Params
+initialParams = stateParams initialState
 
 data Action
   = ChangePageSize PageSizes
   | ChangePage     Int
+  | ChangeOrderBy  OrderBy
 
 type ChangePageAction = Int -> Effect Unit
 
@@ -60,63 +81,107 @@ changePageSize ps td =
      , currentPage   = 1
      }
 
+-- TODO: Not sure this is the right place for this function.
+renderTableHeaderLayout :: { title :: String
+                           , desc  :: String
+                           , query :: String
+                           , date  :: String
+                           , user  :: String
+                           } -> Array ReactElement
+renderTableHeaderLayout {title, desc, query, date, user} =
+  [ div [className "row"]
+    [ div [className "col-md-3"] [ h3 [] [text title] ]
+    , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]
+    ]
+  , div [className "row"] [ div [className "jumbotron1", style {padding : "12px 0px 20px 12px"}]
+        [ div [ className "col-md-8 content"]
+              [ p [] [ i [className "fa fa-globe"] []
+                     , text $ " " <> desc
+                     ]
+              , p [] [ i [className "fab fa-searchengin"] []
+                     , text $ " " <> query
+                     ]
+              ]
+        , div [ className "col-md-4 content"]
+              [ p [] [ i [className "fa fa-calendar"] []
+                     , text $ " " <> date
+                     ]
+              , p [] [ i [className "fa fa-user"] []
+                     , text $ " " <> user
+                     ]
+              ]
+        ]
+    ]
+  ]
+
 tableSpec :: Spec State Props Action
 tableSpec = simpleSpec performAction render
   where
     modifyStateAndReload :: (State -> State) -> Props -> State -> StateCoTransformer State Unit
-    modifyStateAndReload f {loadRows} state = do
-      void $ modifyState f
-      loadAndSetRows {loadRows} $ f state
+    modifyStateAndReload f {setParams} state = do
+      modifyState_ f
+      liftEffect $ setParams $ stateParams $ f state
 
     performAction :: PerformAction State Props Action
     performAction (ChangePageSize ps) =
       modifyStateAndReload $ changePageSize ps
     performAction (ChangePage p) =
       modifyStateAndReload $ _ { currentPage = p }
+    performAction (ChangeOrderBy mc) =
+      modifyStateAndReload $ _ { orderBy = mc }
+
+    renderColHeader :: (OrderBy -> Effect Unit)
+                    -> OrderBy
+                    -> ColumnName -> ReactElement
+    renderColHeader changeOrderBy currentOrderBy c =
+      th [scope "col"] [ b' cs ]
+      where
+        lnk mc = effectLink (changeOrderBy mc)
+        cs :: Array ReactElement
+        cs =
+          case currentOrderBy of
+            Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC ",  lnk Nothing (columnName c)]
+            Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ", lnk Nothing (columnName c)]
+            _ -> [lnk (Just (ASC c)) (columnName c)]
 
     render :: Render State Props Action
-    render dispatch {title, colNames, totalRecords}
-                    {pageSize, currentPage, rows} _ =
-      let
+    render dispatch {container, colNames, totalRecords, rows}
+                    {pageSize, currentPage, orderBy} _ =
+      container
+        { pageSizeControl: sizeDD pageSize dispatch
+        , pageSizeDescription: textDescription currentPage pageSize totalRecords
+        , paginationLinks: pagination (dispatch <<< ChangePage) totalPages currentPage
+        , tableHead:
+            tr [] (renderColHeader (dispatch <<< ChangeOrderBy) orderBy <$> colNames)
+        , tableBody:
+            map (tr [] <<< map (\c -> td [] [c]) <<< _.row) rows
+        }
+      where
         ps = pageSizes2Int pageSize
         totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
-      in
-      [ div [className "row"]
-        [ div [className "col-md-1"] [b [] [text title]]
-        , div [className "col-md-2"] [sizeDD pageSize dispatch]
-        , div [className "col-md-3"] [textDescription currentPage pageSize totalRecords]
-        , div [className "col-md-3"] [pagination (dispatch <<< ChangePage) totalPages currentPage]
-              ]
-      , table [ className "table"]
-        [ thead [className "thead-dark"]
-                [tr [] ((\colName -> th [scope "col"] [ b' [text colName]]) <$> colNames)]
-        , tbody [] $ map (tr [] <<< map (\c -> td [] [c]) <<< _.row)
-                         (maybe [] identity rows)
-                      -- TODO display a loading spinner when rows == Nothing
-                      -- instead of an empty list of results.
-        ]
-      ]
 
-loadAndSetRows :: {loadRows :: LoadRows} -> State -> StateCoTransformer State Unit
-loadAndSetRows {loadRows} {pageSize, currentPage} = do
-  let limit = pageSizes2Int pageSize
-      offset = limit * (currentPage - 1)
-  rows <- lift $ loadRows {offset, limit}
-  void $ modifyState (_ { rows = Just rows })
+defaultContainer :: {title :: String} -> TableContainerProps -> Array ReactElement
+defaultContainer {title} props =
+  [ div [className "row"]
+    [ div [className "col-md-1"] [b [] [text title]]
+    , div [className "col-md-2"] [props.pageSizeControl]
+    , div [className "col-md-3"] [props.pageSizeDescription]
+    , div [className "col-md-3"] [props.paginationLinks]
+    ]
+  , table [ className "table"]
+    [ thead [className "thead-dark"] [ props.tableHead ]
+    , tbody [] props.tableBody
+    ]
+  ]
+
+stateParams :: State -> Params
+stateParams {pageSize, currentPage, orderBy} = {offset, limit, orderBy}
+  where
+    limit = pageSizes2Int pageSize
+    offset = limit * (currentPage - 1)
 
 tableClass :: ReactClass {children :: Children | Props'}
-tableClass =
-  React.component "Table"
-    (\this -> do
-       {state, render} <- spec this
-       pure { state, render
-            , componentDidMount: do
-                {loadRows} <- React.getProps this
-                state' <- React.getState this
-                dispatcher' this $ loadAndSetRows {loadRows} state'
-            })
-  where
-    { spec, dispatcher' } = createReactSpec tableSpec initialState
+tableClass = createClass "Table" tableSpec (const initialState)
 
 tableElt :: Props -> ReactElement
 tableElt props = createElement tableClass props []
@@ -131,13 +196,16 @@ sizeDD ps d
 textDescription :: Int -> PageSizes -> Int -> ReactElement
 textDescription currPage pageSize totalRecords
   =  div [className "row1"]
-          [ div [className ""]
+          [ div [className ""] -- TODO or col-md-6 ?
                 [ text $ "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords ]
           ]
     where
       start = (currPage - 1) * pageSizes2Int pageSize + 1
       end' = currPage * pageSizes2Int pageSize
       end  = if end' > totalRecords then totalRecords else end'
+
+effectLink :: Effect Unit -> String -> ReactElement
+effectLink eff msg = a [onClick $ const eff] [text msg]
 
 pagination :: ChangePageAction -> Int -> Int -> ReactElement
 pagination changePage tp cp
@@ -154,44 +222,20 @@ pagination changePage tp cp
     where
       prev = if cp == 1 then
                text " Previous "
-               else
-               span []
-               [ text " "
-               , a [ href "javascript:void()"
-                   , onClick (\e -> changePage $ cp - 1)
-                   ] [text "Previous"]
-               , text " "
-               ]
+             else
+               changePageLink (cp - 1) "Previous"
       next = if cp == tp then
                text " Next "
-               else
-               span []
-               [ text " "
-               , a [ href "javascript:void()"
-                   , onClick (\e -> changePage $ cp + 1)
-                   ] [text "Next"]
-               , text " "
-               ]
+             else
+               changePageLink (cp + 1) "Next"
       first = if cp == 1 then
                 text ""
-                else
-                span []
-                [ text " "
-                , a [ href "javascript:void()"
-                    , onClick (\e -> changePage 1)
-                    ] [text "1"]
-                , text " "
-                ]
+              else
+                changePageLink' 1
       last = if cp == tp then
                text ""
              else
-               span []
-               [ text " "
-               , a [ href "javascript:void()"
-                   , onClick (\e -> changePage tp)
-                   ] [text $ show tp]
-               , text " "
-               ]
+               changePageLink' tp
       ldots = if cp >= 5 then
                 text " ... "
                 else
@@ -200,18 +244,18 @@ pagination changePage tp cp
                 text " ... "
                 else
                 text ""
-      lnums = map (\i -> fnmid changePage i) $ filter (1  < _) [cp - 2, cp - 1]
-      rnums = map (\i -> fnmid changePage i) $ filter (tp > _) [cp + 1, cp + 2]
+      lnums = map changePageLink' $ filter (1  < _) [cp - 2, cp - 1]
+      rnums = map changePageLink' $ filter (tp > _) [cp + 1, cp + 2]
 
-fnmid :: ChangePageAction -> Int -> ReactElement
-fnmid changePage i
-  = span []
-    [ text " "
-    , a [ href "javascript:void()"
-        , onClick (\e -> changePage i)
-        ] [text $ show i]
-    , text " "
-    ]
+      changePageLink :: Int -> String -> ReactElement
+      changePageLink i s = span []
+          [ text " "
+          , effectLink (changePage i) s
+          , text " "
+          ]
+
+      changePageLink' :: Int -> ReactElement
+      changePageLink' i = changePageLink i (show i)
 
 data PageSizes = PS10 | PS20 | PS50 | PS100
 

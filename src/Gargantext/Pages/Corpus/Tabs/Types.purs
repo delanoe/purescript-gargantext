@@ -5,6 +5,7 @@ import Data.Maybe (Maybe(..))
 --------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Components.Loader as Loader
 
 newtype CorpusInfo = CorpusInfo { title   :: String
                                 , desc    :: String
@@ -43,7 +44,8 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
 
 -- TODO type Props = {nodeId :: Int, info :: Maybe (NodePoly CorpusInfo) }
-type Props = {path :: Int, loaded :: Maybe (NodePoly CorpusInfo) }
+type PropsRow = Loader.InnerPropsRow Int (NodePoly CorpusInfo) ()
+type Props = Record PropsRow
 
 -- TODO include Gargantext.Pages.Corpus.Tabs.States
 -- TODO include Gargantext.Pages.Corpus.Tabs.Actions

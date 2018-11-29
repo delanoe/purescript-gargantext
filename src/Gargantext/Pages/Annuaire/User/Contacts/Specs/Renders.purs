@@ -5,11 +5,11 @@ import Gargantext.Pages.Annuaire.User.Contacts.Types
 
 import Data.List (List, zipWith, catMaybes, toUnfoldable)
 import Data.Map (Map, empty, keys, values, lookup)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Set (toUnfoldable) as S
 import Data.Tuple (Tuple(..), uncurry)
 import Data.Unfoldable (class Unfoldable)
-import Prelude (Void)
+import Prelude (identity)
 import Prelude (($), (<<<), (<$>), flip, class Ord)
 import React (ReactElement)
 import React.DOM (div, h3, img, li, span, text, ul)
@@ -22,7 +22,7 @@ render dispatch _ state _ =
   [
           div [className "col-md-12"]
           $ case state.contact of
-            (Just (Contact contact)) -> display contact.name [contactInfos contact.hyperdata]
+            (Just (Contact contact)) -> display (maybe "no name" identity contact.name) [contactInfos contact.hyperdata]
             Nothing -> display "Contact not found" []
   ]
 
@@ -55,7 +55,7 @@ mapMyMap f m = toUnfoldable
 
 infixl 4 mapMyMap as <.~$>
 
-contactInfos :: HyperData Void Void -> ReactElement
+contactInfos :: HyperdataContact -> ReactElement
 contactInfos hyperdata =
     ul [className "list-group"] [] {- $
     listInfo <.~$> hyperdata

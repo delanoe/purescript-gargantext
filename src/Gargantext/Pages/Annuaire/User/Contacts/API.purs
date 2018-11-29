@@ -15,11 +15,11 @@ import Gargantext.Prelude
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Action(..), State, Contact, _contact)
 import Thermite (PerformAction, modifyState)
 
-getContact :: Int -> Aff (Contact Void Void)
+getContact :: Maybe Int -> Aff Contact
 getContact id = get $ toUrl Back Node id
 
 fetchContact :: Int -> StateCoTransformer State Unit
 fetchContact contactId = do
-  contact <- lift $ getContact contactId
+  contact <- lift $ getContact (Just contactId)
   void $ modifyState $ _contact ?~ contact
   logs "Fetching contact..."

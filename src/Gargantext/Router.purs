@@ -20,8 +20,7 @@ data Routes
     | Corpus           Int
       | AddCorpus
       | Document  Int
-      | PGraphExplorer
-      | NGramsTable
+      | PGraphExplorer Int
       | Dashboard
     | Annuaire         Int
       | UserPage       Int
@@ -33,10 +32,9 @@ routing =
   <|> AddCorpus        <$   route "addCorpus"
   <|> Folder           <$> (route "folder"   *> int)
   <|> Corpus           <$> (route "corpus"   *> int)
-    <|> NGramsTable  <$   route "ngrams"
-    <|> Document  <$> (route "document" *> int)
+    <|> Document     <$> (route "document" *> int)
     <|> Dashboard      <$   route "dashboard"
-    <|> PGraphExplorer <$   route "graph"
+    <|> PGraphExplorer <$>   (route "graph" *> int )
   <|> Annuaire         <$> (route "annuaire" *> int)
     <|> UserPage       <$> (route "user"     *> int)
   <|> Home             <$   lit ""
@@ -52,13 +50,12 @@ instance showRoutes :: Show Routes where
   show AddCorpus        = "AddCorpus"
   show SearchView       = "Search"
   show (UserPage i)     = "User"   <> show i
-  show (Document i)= "Document"
+  show (Document i)     = "Document"
   show (Corpus i)       = "Corpus" <> show i
-  show NGramsTable      = "NGramsTable"
   show (Annuaire i)     = "Annuaire" <> show i
   show (Folder   i)     = "Folder"   <> show i
   show Dashboard        = "Dashboard"
-  show PGraphExplorer   = "graphExplorer"
+  show (PGraphExplorer i)   = "graphExplorer" <> show i
   show Home             = "Home"
 
 

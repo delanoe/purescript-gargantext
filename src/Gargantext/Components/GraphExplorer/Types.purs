@@ -88,3 +88,5 @@ t' :: Node -> Legend
 t' (Node r) = Legend { id_ : clustDefault, label : r.label}
   where
     (Cluster {clustDefault}) = r.attributes
+
+

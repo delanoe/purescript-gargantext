@@ -1,9 +1,9 @@
 module Gargantext.Pages.Corpus.Document where
 
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
 import Data.Generic.Rep (class Generic)
-import Data.Lens (Lens', Prism', lens, prism, (?~))
+import Data.Lens (Lens', lens, (?~))
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))
@@ -22,12 +22,12 @@ import Gargantext.Components.Node (NodePoly(..))
 
 
 type State =
-  { document   :: Maybe (NodePoly DocumentV3)
+  { document   :: Maybe (NodePoly Document)
   , inputValue :: String
   }
 
-initialState :: State
-initialState =
+initialState :: {} -> State
+initialState {} =
   { document   : Nothing
   , inputValue : ""
   }
@@ -99,22 +99,22 @@ data Document =
   Document { abstract           :: Maybe String
            , authors            :: Maybe String
            , bdd                :: Maybe String
-           , doi                :: Maybe Int
+           , doi                :: Maybe String
            , language_iso2      :: Maybe String
-           , language_iso3      :: Maybe String
-           , page               :: Maybe Int
+           -- , page               :: Maybe Int
            , publication_date   :: Maybe String
-           , publication_second :: Maybe Int
-           , publication_minute :: Maybe Int
-           , publication_hour   :: Maybe Int
-           , publication_day    :: Maybe String
+           --, publication_second :: Maybe Int
+           --, publication_minute :: Maybe Int
+           --, publication_hour   :: Maybe Int
+           , publication_day    :: Maybe Int
            , publication_month  :: Maybe Int
            , publication_year   :: Maybe Int
            , source             :: Maybe String
+           , institutes         :: Maybe String
            , title              :: Maybe String
            , uniqId             :: Maybe String
-           , url                :: Maybe String
-           , text               :: Maybe String
+           --, url                :: Maybe String
+           --, text               :: Maybe String
            }
 
 defaultNodeDocument :: NodePoly Document
@@ -128,6 +128,7 @@ defaultNodeDocument =
            , hyperdata : defaultDocument
          }
 
+-- TODO: BUG if DOI does not exist, page is not shown
 defaultDocument :: Document
 defaultDocument =
   Document { abstract           : Nothing
@@ -135,20 +136,20 @@ defaultDocument =
            , bdd                : Nothing
            , doi                : Nothing
            , language_iso2      : Nothing
-           , language_iso3      : Nothing
-           , page               : Nothing
+           --, page               : Nothing
            , publication_date   : Nothing
-           , publication_second : Nothing
-           , publication_minute : Nothing
-           , publication_hour   : Nothing
+           --, publication_second : Nothing
+           --, publication_minute : Nothing
+           --, publication_hour   : Nothing
            , publication_day    : Nothing
            , publication_month  : Nothing
            , publication_year   : Nothing
            , source             : Nothing
+           , institutes         : Nothing
            , title              : Nothing
            , uniqId             : Nothing
-           , url                : Nothing
-           , text               : Nothing
+           --, url                : Nothing
+           --, text               : Nothing
            }
 
 derive instance genericDocument   :: Generic Document   _
@@ -178,7 +179,7 @@ instance decodeDocumentV3 :: DecodeJson DocumentV3
   where
     decodeJson json = do
       obj <- decodeJson json
-      abstract <- obj .? "abstract"
+      abstract <- obj .?? "abstract"
       authors  <- obj .? "authors"
       --error    <- obj .? "error"
       language_iso2 <- obj .? "language_iso2"
@@ -218,59 +219,60 @@ instance decodeDocument :: DecodeJson Document
   where
     decodeJson json = do
       obj <- decodeJson json
-      abstract <- obj .? "abstract"
-      authors  <- obj .? "authors"
-      bdd      <- obj .? "bdd"
-      doi      <- obj .? "doi"
-      language_iso2 <- obj .? "language_iso2"
-      language_iso3 <- obj .? "language_iso3"
-      page          <- obj .? "page"
-      publication_date   <- obj .? "publication_date"
-      publication_second <- obj .? "publication_second"
-      publication_minute <- obj .? "publication_minute"
-      publication_hour   <- obj .? "publication_hour"
-      publication_day    <- obj .? "publication_day"
-      publication_month  <- obj .? "publication_month"
-      publication_year   <- obj .? "publication_year"
-      source             <- obj .? "source"
-      title              <- obj .? "title"
-      uniqId             <- obj .? "uniqId"
-      url                <- obj .? "url"
-      text               <- obj .? "text"
+      abstract <- obj .?? "abstract"
+      authors  <- obj .?? "authors"
+      bdd      <- obj .?? "bdd"
+      doi      <- obj .?? "doi"
+      language_iso2 <- obj .?? "language_iso2"
+      -- page          <- obj .?? "page"
+      publication_date   <- obj .?? "publication_date"
+      --publication_second <- obj .?? "publication_second"
+      --publication_minute <- obj .?? "publication_minute"
+      --publication_hour   <- obj .?? "publication_hour"
+      publication_day    <- obj .?? "publication_day"
+      publication_month  <- obj .?? "publication_month"
+      publication_year   <- obj .?? "publication_year"
+      source             <- obj .?? "sources"
+      institutes         <- obj .?? "institutes"
+      title              <- obj .?? "title"
+      uniqId             <- obj .?? "uniqId"
+      --url                <- obj .? "url"
+      --text               <- obj .? "text"
       pure $ Document { abstract
                       , authors
                       , bdd
                       , doi
                       , language_iso2
-                      , language_iso3
-                      , page
+                      -- , page
                       , publication_date
-                      , publication_second
-                      , publication_minute
-                      , publication_hour
+                      --, publication_second
+                      --, publication_minute
+                      --, publication_hour
                       , publication_day
                       , publication_month
                       , publication_year
                       , source
+                      , institutes
                       , title
                       , uniqId
-                      , url
-                      , text
+                      --, url
+                      --, text
                       }
 
 ------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
 performAction (Load nId) _ _ = do
-  node <- lift $ getNode nId
+  node <- lift $ getNode (Just nId)
   void $ modifyState $ _document ?~ node
   logs $ "Node Document " <> show nId <> " fetched."
 performAction (ChangeString ps) _ _ = pure unit
 performAction (SetInput ps) _ _ = void <$> modifyState $ _ { inputValue = ps }
 
-getNode :: Int -> Aff (NodePoly DocumentV3)
+
+getNode :: Maybe Int -> Aff (NodePoly Document)
 getNode = get <<< toUrl Back Node
 
-_document :: Lens' State (Maybe (NodePoly DocumentV3))
+_document :: Lens' State (Maybe (NodePoly Document))
 _document = lens (\s -> s.document) (\s ss -> s{document = ss})
 ------------------------------------------------------------------------
 
@@ -394,8 +396,8 @@ docview = simpleSpec performAction render
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]
 
-          NodePoly {hyperdata : DocumentV3 document} = 
-            maybe defaultNodeDocumentV3 identity state.document
+          NodePoly {hyperdata : Document document} = 
+            maybe defaultNodeDocument identity state.document
 
 aryPS :: Array String
 aryPS = ["Map", "Main", "Stop"]

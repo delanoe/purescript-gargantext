@@ -3,42 +3,27 @@ module Gargantext.Pages.Corpus.Tabs.Actions where
 
 import Data.Lens (Prism', prism)
 import Data.Either (Either(..))
+import Data.Void (Void)
 
 import Gargantext.Pages.Corpus.Tabs.Documents as DV
-import Gargantext.Pages.Corpus.Tabs.Sources as SV
-import Gargantext.Pages.Corpus.Tabs.Authors as AV
-import Gargantext.Pages.Corpus.Tabs.Terms as TV
+import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as NG
 import Gargantext.Components.Tab as Tab
 
 data Action
-  = DocviewA DV.Action
-  | SourceviewA SV.Action
-  | AuthorviewA AV.Action
-  | TermsviewA TV.Action
-  | TabViewA   Tab.Action
+  = DocViewA DV.Action -- = Void
+  | NgramViewA Void -- NG.Action TODO needed ?
+  | TabViewA   Tab.Action -- = ChangeTab which is only used locally
 
 _docAction :: Prism' Action DV.Action
-_docAction = prism DocviewA \ action ->
+_docAction = prism DocViewA \ action ->
   case action of
-    DocviewA laction -> Right laction
+    DocViewA laction -> Right laction
     _-> Left action
 
-_authorAction :: Prism' Action AV.Action
-_authorAction = prism AuthorviewA \ action ->
+_NgramViewA :: Prism' Action Void -- NG.Action
+_NgramViewA = prism NgramViewA \ action ->
   case action of
-    AuthorviewA laction -> Right laction
-    _-> Left action
-
-_sourceAction :: Prism' Action SV.Action
-_sourceAction = prism SourceviewA \ action ->
-  case action of
-    SourceviewA laction -> Right laction
-    _-> Left action
-
-_termsAction :: Prism' Action TV.Action
-_termsAction = prism TermsviewA \ action ->
-  case action of
-    TermsviewA laction -> Right laction
+    NgramViewA laction -> Right laction
     _-> Left action
 
 _tabAction :: Prism' Action Tab.Action

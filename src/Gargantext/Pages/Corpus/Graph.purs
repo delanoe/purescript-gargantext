@@ -1,30 +1,39 @@
 module Gargantext.Pages.Corpus.Graph where
 
+import Gargantext.Prelude
+
+import Affjax (defaultRequest, request)
+import Affjax.ResponseFormat (printResponseFormatError)
+import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
+import Data.Argonaut (decodeJson)
 import Data.Array (length, mapWithIndex, (!!))
 import Data.Either (Either(..))
+import Data.HTTP.Method (Method(..))
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
+import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Config.REST (get)
+import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_id, _type, checked, className, href, name, onChange, placeholder, style, title, value)
+import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick,placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
-import Gargantext.Prelude
-import Gargantext.Config.REST (get)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
-import Gargantext.Utils (getter)
 
 
 data Action
-  = LoadGraph String
+  = LoadGraph Int         
   | SelectNode SelectedNode
+  | ShowSidePanel 
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -37,6 +46,7 @@ newtype State = State
   , sigmaGraphData :: Maybe SigmaGraphData
   , legendData :: Array Legend
   , selectedNode :: Maybe SelectedNode
+  , showSidePanel :: Boolean
   }
 
 initialState :: State
@@ -46,6 +56,7 @@ initialState = State
   , sigmaGraphData : Nothing
   , legendData : []
   , selectedNode : Nothing
+  , showSidePanel : false
   }
 
 graphSpec :: Spec State {} Action
@@ -54,18 +65,21 @@ graphSpec = simpleSpec performAction render
 performAction :: PerformAction State {} Action
 performAction (LoadGraph fp) _ _ = void do
   _ <- logs fp
-  case fp of
-    "" -> do
-      modifyState \(State s) -> State s {filePath = fp, graphData = GraphData {nodes : [], edges : []}, sigmaGraphData = Nothing}
-    _  -> do
-      _ <- modifyState \(State s) -> State s {filePath = fp, sigmaGraphData = Nothing}
-      gd <- lift $ getGraphData fp
+  _ <- modifyState \(State s) -> State s { sigmaGraphData = Nothing}
+  gd <- lift $ getNodes fp
       -- TODO: here one might `catchError getGraphData` to visually empty the
       -- graph.
-      modifyState \(State s) -> State s {filePath = fp, graphData = gd, sigmaGraphData = Just $ convert gd, legendData = getLegendData gd}
+  case gd of
+    Left err -> do
+      _ <- liftEffect $  log err 
+      modifyState identity
+    Right resp -> modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
 performAction (SelectNode node) _ _ = void do
   modifyState $ \(State s) -> State s {selectedNode = pure node}
+
+performAction (ShowSidePanel) _ (State state) = void do
+  modifyState $ \(State s) -> State s {showSidePanel = not (state.showSidePanel) }
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -87,18 +101,7 @@ convert (GraphData r) = SigmaGraphData { nodes, edges}
 
 render :: Render State {} Action
 render d p (State s) c =
-  [ select [ onChange $ \e -> d $ LoadGraph (unsafeCoerce e).target.value, value s.filePath]
-    [ option [value ""] [text ""]
-    , option [value "example_01_clean.json"] [text "example_01_clean.json"]
-    , option [value "example_01_conditional.json"] [text "example_01_conditional.json"]
-    , option [value "example_01_distributional.json"] [text "example_01_distributional.json"]
-    , option [value "example_02.json"] [text "example_02.json"]
-    , option [value "example_02_clean.json"] [text "example_02_clean.json"]
-    , option [value "example_03.json"] [text "example_03.json"]
-    , option [value "example_03_clean.json"] [text "example_03_clean.json"]
-    , option [value "imtNew.json"] [text "imtNew.json"]
-    -- , option [value "exemplePhyloBipartite.gexf"] [text "exemplePhyloBipartite.gexf"]
-    ]
+  [ 
   ]
   <>
   case s.sigmaGraphData of
@@ -271,7 +274,7 @@ specOld = simpleSpec performAction render'
     render' :: Render State {} Action
     render' d _ (State st) _ =
       [  div [className "row"] [
-            div [className "col-md-12", style {marginTop : "21px", marginBottom : "21px"}]
+            div [className "col-md-12", style {marginBottom : "21px"}]
             [ menu [_id "toolbar"]
               [ ul'
                 [
@@ -334,27 +337,15 @@ specOld = simpleSpec performAction render'
                 , li'
                   [ button [className "btn btn-primary"] [text "Save"] -- TODO: Implement Save!
                   ]
+                
                 ]
               ]
             ]
            ]
          , div [className "row"]
-           [ div [className "col-md-9"]
+           [ div [if (st.showSidePanel) then className "col-md-10" else className "col-md-11"]
              [ div [style {border : "1px black solid", height: "90%"}] $
-               [ select [ onChange $ \e -> d $ LoadGraph (unsafeCoerce e).target.value
-                        , value st.filePath
-                        ]
-                 [ option [value ""] [text ""]
-                 , option [value "example_01_clean.json"] [text "example_01_clean.json"]
-                 , option [value "example_01_conditional.json"] [text "example_01_conditional.json"]
-                 , option [value "example_01_distributional.json"] [text "example_01_distributional.json"]
-                 , option [value "example_02.json"] [text "example_02.json"]
-                 , option [value "example_02_clean.json"] [text "example_02_clean.json"]
-                 , option [value "example_03.json"] [text "example_03.json"]
-                 , option [value "example_03_clean.json"] [text "example_03_clean.json"]
-                 , option [value "imtNew.json"] [text "imtNew.json"]
-                   -- , option [value "exemplePhyloBipartite.gexf"] [text "exemplePhyloBipartite.gexf"]
-                 ]
+               [ 
                ]
                <>
                case st.sigmaGraphData of
@@ -377,9 +368,11 @@ specOld = simpleSpec performAction render'
                  <>
                  if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
              ]
-         , div [className "col-md-3", style {border : "1px black solid", backgroundColor : "beige"}]
+         , button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"0px",position : "relative",zIndex:"1000"}] [text "show sidepanel"]
+         , if (st.showSidePanel) then 
+            div [_id "sp-container",className "col-md-2", style {border : "1px black solid", backgroundColor : "beige", position:"absolute",right: "0px",top:"265px"}]
              [ div [className "row"]
-               [ div [_id "sidepanel" , className "col-md-12", style {borderBottom : "1px solid black"}]
+               [ div [_id "sidepanel" , style {borderBottom : "1px solid black"}]
                [ case st.selectedNode of
                     Nothing -> span [] []
                     Just selectedNode -> p [] [text $ "selected Node : " <> getter _.label selectedNode
@@ -475,5 +468,31 @@ specOld = simpleSpec performAction render'
                 ]
                ]
              ]
+            else 
+              div [] []   -- ends sidepanel column here
            ]
          ]
+
+
+
+
+
+getNodes :: Int -> Aff (Either String GraphData)
+getNodes graphId = do
+   res <- request $ defaultRequest
+         { url = "http://localhost:8008/api/v1.0/graph/"<> show graphId
+         , responseFormat = ResponseFormat.json
+         , method = Left GET
+         , headers = []
+         
+         }
+   case res.body of
+     Left err -> do
+       _ <- liftEffect $ log $ printResponseFormatError err
+       pure $ Left $ printResponseFormatError err
+     Right json -> do
+      --_ <- liftEffect $ log $ show a.status
+      --_ <- liftEffect $ log $ show a.headers
+      --_ <- liftEffect $ log $ show a.body
+      let obj = decodeJson json
+      pure obj

@@ -11,6 +11,7 @@ import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, foc
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
+import Gargantext.Config (defaultRoot)
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree  as Tree
@@ -21,12 +22,12 @@ import Gargantext.Pages.Corpus     as Corpus
 import Gargantext.Pages.Corpus.Document as Annotation
 import Gargantext.Pages.Corpus.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Graph as GE
-import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
+import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as NG
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _treeAction, _userPageAction, performAction, _annuaireAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search    as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _treeState, _userPageState, _annuaireState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _userPageState)
 import Gargantext.Router (Routes(..))
 
 layoutSpec :: Spec AppState {} Action
@@ -59,13 +60,11 @@ pagesComponent s = case s.currentRoute of
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec (Document i) = layout0 $ focus _documentViewState _documentViewAction  Annotation.docview
-    selectSpec PGraphExplorer    = focus _graphExplorerState _graphExplorerAction  GE.specOld
+    selectSpec (PGraphExplorer i)    = layout1 $  focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
     
-    selectSpec (Annuaire i)      = layout0 $ focus _annuaireState _annuaireAction A.layoutAnnuaire
+    selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
     selectSpec (UserPage i)      = layout0 $ focus _userPageState  _userPageAction  C.layoutUser
-    -- To be removed
-    selectSpec NGramsTable       = layout0 $ noState NG.ngramsTableSpec
 
     -- selectSpec _ = simpleSpec defaultPerformAction defaultRender
 
@@ -87,14 +86,17 @@ layout0 layout =
       cont $ fold
       [ withState \st ->
          if ((\(LN.State s) -> s.loginC) st.loginState == true)
-            then ls as
+            then ls $ cmapProps (const {root: defaultRoot}) as
             else outerLayout1
-      , rs bs      ]
-    ls   = over _render \render d p s c -> [ div [className "col-md-2" ] (render d p s c) ]
-    rs   = over _render \render d p s c -> [ div [className "col-md-10"] (render d p s c) ]
+      , rs bs      
+      ]
+    ls   = over _render \render d p s c -> [ 
+         div [ className "col-md-2"] (render d p s c)  
+      ]
+    rs   = over _render \render d p s c -> [ div [ className "col-md-10"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
-    as = focus _treeState _treeAction Tree.treeview
+    as = noState Tree.treeview
 
     bs = innerLayout $ layout
 
@@ -107,13 +109,56 @@ layout0 layout =
         ]
       ]
 
+-- TODO avoid code duplication with layout0
+layout1 :: Spec AppState {} Action
+        -> Spec AppState {} Action
+layout1 layout =
+  fold
+  [ layoutSidebar divSearchBar
+  , outerLayout
+  , layoutFooter
+  ]
+  where
+    outerLayout1 = simpleSpec defaultPerformAction defaultRender
+    outerLayout :: Spec AppState {} Action
+    outerLayout =
+      cont $ fold
+      [ withState \st ->
+         if ((\(LN.State s) -> s.loginC) st.loginState == true)
+            then ls $ cmapProps (const {root: defaultRoot}) as
+            else outerLayout1
+      , rs bs      
+      ]
+    ls   = over _render \render d p s c -> [  
+      
+        button [onClick $ \e -> d ShowTree, className "btn btn-primary",style {position:"relative", top: "68px",left:"-264px",zIndex : "1000"}] [text "ShowTree"]
+      
+        , div [if (s.showTree) then className "col-md-2" else className "col-md-2"] if (s.showTree) then (render d p s c) else [] 
+      ]
+    rs   = over _render \render d p s c -> [ div [if (s.showTree) then className "col-md-10" else className "col-md-12"] (render d p s c) ]
+    cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
+
+    as = noState Tree.treeview
+
+    bs = innerLayout $ layout
+
+    innerLayout :: Spec AppState {} Action
+                -> Spec AppState {} Action
+    innerLayout = over _render \render d p s c ->
+      [  div [_id "page-wrapper"]
+        [
+          div [className "container-fluid"]  (render d p s c)
+        ]
+      ]
+
+
 layoutSidebar :: Spec AppState {} Action
               -> Spec AppState {} Action
 layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
             , role "navigation"
-            ] [ div [className "container"]
+            ] [ div [className "container-fluid"]
                     [ div [ className "navbar-inner" ]
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"]
@@ -284,6 +329,7 @@ divDropdownRight d =
           -- else
          [text " Login / Signup"]
         ]
+      
      ]
 
 layoutFooter :: Spec AppState {} Action
