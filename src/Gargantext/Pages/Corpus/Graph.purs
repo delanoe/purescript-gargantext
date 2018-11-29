@@ -286,7 +286,12 @@ specOld = simpleSpec performAction render'
            [ button [className "btn btn-primary"
              , onClick \_ -> d ShowControls
              ,style {position:"relative",top:"-25px",left: "580px"}
-             ] [text "Show Controls"]
+             ] 
+             [text "Show Controls"]
+             , button [className "btn btn-primary"
+               , style {position:"relative",top:"-25px",left: "1262px"}
+               ,onClick \_ -> d ShowSidePanel
+               ] [text "showSidePanel"]
              ]
           , if (st.showControls) then 
               div [className "col-md-12", style {marginBottom : "21px"}]
@@ -384,7 +389,7 @@ specOld = simpleSpec performAction render'
                  <>
                  if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
              ]
-         , button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"39px",position : "relative",zIndex:"1000", top: "-59px"}] [text "Show SidePanel"]
+         --, button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"39px",position : "relative",zIndex:"1000", top: "-59px"}] [text "Show SidePanel"]
          , if (st.showSidePanel) then 
             div [_id "sp-container",className "col-md-2", style {border : "1px black solid", backgroundColor : "beige", position:"absolute",right: "0px",top:"265px"}]
              [ div [className "row"]
