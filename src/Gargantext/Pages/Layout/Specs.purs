@@ -130,7 +130,7 @@ layout1 layout =
       ]
     ls   = over _render \render d p s c -> [  
       
-        button [onClick $ \e -> d ShowTree, className "btn btn-primary",style {position:"relative", top: "68px",left:"-264px",zIndex : "1000"}] [text "ShowTree"]
+        button [onClick $ \e -> d ShowTree, className "btn btn-primary",style {position:"relative", top: "99px",left:"-264px",zIndex : "1000"}] [text "ShowTree"]
       
         , div [if (s.showTree) then className "col-md-2" else className "col-md-2"] if (s.showTree) then (render d p s c) else [] 
       ]

@@ -352,7 +352,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
     li [] $
     [
      a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      , a [ href (toUrl Front nodeType (Just id)), style {position:"absolute",left:"44px"}]
+     ,  a [ href (toUrl Front nodeType (Just id)), style {position:"absolute",left:"44px"}]
       ( [ text (name <> "    ")
         ]
       )
@@ -369,7 +369,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,cre
     ul []
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-      ,  a [ href (toUrl Front nodeType (Just id)), style {position:"absolute",left:"44px"}]
+       , a [ href (toUrl Front nodeType (Just id)), style {position:"absolute",left:"44px"}]
          [ text $ " " <> name <> " " ]
 ,      a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
        [ 
