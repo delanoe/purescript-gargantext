@@ -4,6 +4,7 @@ import Prelude hiding (div)
 
 import Data.Lens                                       (Lens', lens)
 import Data.Maybe                                      (Maybe(Just))
+import Effect (Effect)
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Tree                   as Tree
 
@@ -28,20 +29,22 @@ type AppState =
   , showTree :: Boolean
   }
 
-initAppState :: AppState
-initAppState =
-  { currentRoute   : Just Home
-  , loginState     : LN.initialState
-  , addCorpusState : AC.initialState
-  , searchState    : S.initialState
-  , userPageState  : C.initialState
-  , documentState  : D.initialState {}
-  , search         : ""
-  , showLogin      : false
-  , showCorpus     : false
-  , graphExplorerState : GE.initialState
-  , showTree : false
-  }
+initAppState :: Effect AppState
+initAppState = do
+  loginState <- LN.initialState
+  pure
+    { currentRoute   : Just Home
+    , loginState
+    , addCorpusState : AC.initialState
+    , searchState    : S.initialState
+    , userPageState  : C.initialState
+    , documentState  : D.initialState {}
+    , search         : ""
+    , showLogin      : false
+    , showCorpus     : false
+    , graphExplorerState : GE.initialState
+    , showTree : false
+    }
 
 ---------------------------------------------------------
 _loginState :: Lens' AppState LN.State

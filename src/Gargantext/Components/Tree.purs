@@ -26,7 +26,7 @@ import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, pl
 import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState_, simpleSpec)
 
-import Gargantext.Config (toUrl, End(..), NodeType(..), defaultRoot)
+import Gargantext.Config (toUrl, End(..), NodeType(..))
 import Gargantext.Config.REST (get, put, post, delete, deleteWithBody)
 import Gargantext.Components.Loader as Loader
 
