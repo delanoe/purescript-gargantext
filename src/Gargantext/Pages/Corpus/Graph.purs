@@ -34,6 +34,7 @@ data Action
   = LoadGraph Int         
   | SelectNode SelectedNode
   | ShowSidePanel 
+  | ShowControls
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -47,6 +48,7 @@ newtype State = State
   , legendData :: Array Legend
   , selectedNode :: Maybe SelectedNode
   , showSidePanel :: Boolean
+  , showControls :: Boolean
   }
 
 initialState :: State
@@ -57,6 +59,7 @@ initialState = State
   , legendData : []
   , selectedNode : Nothing
   , showSidePanel : false
+  , showControls : false
   }
 
 graphSpec :: Spec State {} Action
@@ -80,6 +83,10 @@ performAction (SelectNode node) _ _ = void do
 
 performAction (ShowSidePanel) _ (State state) = void do
   modifyState $ \(State s) -> State s {showSidePanel = not (state.showSidePanel) }
+
+
+performAction (ShowControls) _ (State state) = void do
+  modifyState $ \(State s) -> State s {showControls = not (state.showControls) }
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -273,8 +280,21 @@ specOld = simpleSpec performAction render'
   where
     render' :: Render State {} Action
     render' d _ (State st) _ =
-      [  div [className "row"] [
-            div [className "col-md-12", style {marginBottom : "21px"}]
+      [  div [className "row"] 
+      [
+           div [className "col-md-12"] 
+           [ button [className "btn btn-primary"
+             , onClick \_ -> d ShowControls
+             ,style {position:"relative",top:"-25px",left: "737px"}
+             ] 
+             [text "Show Controls"]
+             , button [className "btn btn-primary"
+               , style {position:"relative",top:"-25px",left: "1380px"}
+               ,onClick \_ -> d ShowSidePanel
+               ] [text "showSidePanel"]
+             ]
+          , if (st.showControls) then 
+              div [className "col-md-12", style {marginBottom : "21px"}]
             [ menu [_id "toolbar"]
               [ ul'
                 [
@@ -341,6 +361,7 @@ specOld = simpleSpec performAction render'
                 ]
               ]
             ]
+            else div [] []
            ]
          , div [className "row"]
            [ div [if (st.showSidePanel) then className "col-md-10" else className "col-md-11"]
@@ -368,7 +389,7 @@ specOld = simpleSpec performAction render'
                  <>
                  if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
              ]
-         , button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"0px",position : "relative",zIndex:"1000"}] [text "show sidepanel"]
+         --, button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"39px",position : "relative",zIndex:"1000", top: "-59px"}] [text "Show SidePanel"]
          , if (st.showSidePanel) then 
             div [_id "sp-container",className "col-md-2", style {border : "1px black solid", backgroundColor : "beige", position:"absolute",right: "0px",top:"265px"}]
              [ div [className "row"]
