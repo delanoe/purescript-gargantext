@@ -6,7 +6,6 @@ import Data.Lens                                       (Lens', lens)
 import Data.Maybe                                      (Maybe(Just))
 import Effect (Effect)
 import Gargantext.Components.Login                  as LN
-import Gargantext.Components.Tree                   as Tree
 
 import Gargantext.Pages.Corpus.Document       as D
 import Gargantext.Pages.Corpus.Graph     as GE
