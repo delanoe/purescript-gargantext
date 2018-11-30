@@ -285,11 +285,11 @@ specOld = simpleSpec performAction render'
            div [className "col-md-12"] 
            [ button [className "btn btn-primary"
              , onClick \_ -> d ShowControls
-             ,style {position:"relative",top:"-25px",left: "580px"}
+             ,style {position:"relative",top:"-25px",left: "737px"}
              ] 
              [text "Show Controls"]
              , button [className "btn btn-primary"
-               , style {position:"relative",top:"-25px",left: "1262px"}
+               , style {position:"relative",top:"-25px",left: "1380px"}
                ,onClick \_ -> d ShowSidePanel
                ] [text "showSidePanel"]
              ]
