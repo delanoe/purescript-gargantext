@@ -57,24 +57,3 @@ instance showRoutes :: Show Routes where
   show Dashboard        = "Dashboard"
   show (PGraphExplorer i)   = "graphExplorer" <> show i
   show Home             = "Home"
-
-
-routeHandler :: (Maybe Routes -> Routes -> Effect Unit)
-              -> Maybe Routes -> Routes -> Effect Unit
-routeHandler dispatchAction old new = do
-  logs $ "change route : " <> show new
-  
-  w      <- window
-  ls     <- localStorage w
-  token  <- getItem "accessToken" ls
-  let tkn = token
-  
-  logs $ "JWToken : " <> show tkn
-  
-  case tkn of
-    Nothing -> do
-      dispatchAction old new
-      logs $ "called SignIn Route :"
-    Just t -> do
-      dispatchAction old new
-      logs $ "called Route : " <> show new

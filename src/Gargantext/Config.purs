@@ -27,11 +27,6 @@ endConfig' :: ApiVersion -> EndConfig
 endConfig' v = { front : frontRelative
                , back  : backLocal v }
 
--- | Default Root on shared database to develop
--- until authentication implementation
--- (Default Root will be given after authentication)
-defaultRoot :: Int
-defaultRoot = 950094
 ------------------------------------------------------------------------
 frontRelative :: Config
 frontRelative = { baseUrl: ""
@@ -100,25 +95,41 @@ endOf Front = _.front
 endBaseUrl :: End -> EndConfig -> UrlBase
 endBaseUrl end c = (endOf end c).baseUrl
 
-endPathUrl :: End -> EndConfig -> NodeType -> Maybe Id -> UrlPath
-endPathUrl end c nt i = pathUrl (endOf end c) nt i
+endPathUrl :: End -> EndConfig -> Path -> Maybe Id -> UrlPath
+endPathUrl end = pathUrl <<< endOf end
 
-pathUrl :: Config -> NodeType -> Maybe Id -> UrlPath
-pathUrl c nt@(Tab _ _ _ _) i = pathUrl c Node i <> "/" <> show nt
-pathUrl c nt@(Ngrams _ _) i = pathUrl c Node i <> "/" <> show nt
-pathUrl c nt i = c.prePath <> urlConfig nt <> (maybe "" (\i' -> "/" <> show i') i)
-------------------------------------------------------------
-toUrl :: End -> NodeType -> Maybe Id -> Url
-toUrl e nt i = doUrl base path params
+pathUrl :: Config -> Path -> Maybe Id -> UrlPath
+pathUrl c (Tab t o l s) i =
+    pathUrl c (NodeAPI Node) i <>
+      "/" <> "table?view=" <> show t <> "&offset=" <> show o
+          <> "&limit=" <> show l <> os
   where
-    base   = endBaseUrl e endConfig
-    path   = endPathUrl e endConfig nt i
-    params = ""
+    os = maybe "" (\x -> "&order=" <> show x) s
+pathUrl c (Ngrams t listid) i =
+    pathUrl c (NodeAPI Node) i <> "/" <> "listGet?ngramsType=" <> show t <> listid'
+  where
+    listid' = maybe "" (\x -> "&list=" <> show x) listid
+pathUrl c Auth Nothing = c.prePath <> "auth"
+pathUrl c Auth (Just _) = "impossible" -- TODO better types
+pathUrl c (NodeAPI nt) i = c.prePath <> nodeTypeUrl nt <> (maybe "" (\i' -> "/" <> show i') i)
 ------------------------------------------------------------
+
+class ToUrl a where
+  toUrl :: End -> a -> Maybe Id -> Url
+
+instance toUrlNodeType :: ToUrl NodeType where
+  toUrl e nt i = toUrl e (NodeAPI nt) i
+
+instance toUrlPath :: ToUrl Path where
+  toUrl e p i = doUrl base path params
+    where
+      base   = endBaseUrl e endConfig
+      path   = endPathUrl e endConfig p i
+      params = ""
+------------------------------------------------------------
+
 data NodeType = NodeUser
               | Annuaire
-              | Tab TabType Offset Limit (Maybe OrderBy)
-              | Ngrams TabType (Maybe TermList)
               | Corpus
               | CorpusV3
               | Dashboard
@@ -130,6 +141,13 @@ data NodeType = NodeUser
               | Node
               | Nodes
               | Tree
+
+data Path
+  = Auth
+  | Tab TabType Offset Limit (Maybe OrderBy)
+  | Ngrams TabType (Maybe TermList)
+  | NodeAPI NodeType
+
 data End = Back | Front
 type Id  = Int
 
@@ -162,56 +180,23 @@ instance showTabType :: Show TabType where
   show TabTrash      = "Trash"
 
 ------------------------------------------------------------
-urlConfig :: NodeType -> Url
-urlConfig Annuaire  = show Annuaire
-urlConfig nt@(Tab _ _ _ _) = show nt
-urlConfig nt@(Ngrams _ _) = show nt
-urlConfig Corpus    = show Corpus
-urlConfig CorpusV3  = show CorpusV3
-urlConfig Dashboard = show Dashboard
-urlConfig Url_Document  = show Url_Document
-urlConfig Error     = show Error
-urlConfig Folder    = show Folder
-urlConfig Graph     = show Graph
-urlConfig Individu  = show Individu
-urlConfig Node      = show Node
-urlConfig Nodes      = show Nodes
-urlConfig NodeUser  = show NodeUser
-urlConfig Tree      = show Tree
-------------------------------------------------------------
-instance showNodeType :: Show NodeType where
-  show Annuaire  = "annuaire"
-  show Corpus    = "corpus"
-  show CorpusV3  = "corpus"
-  show Dashboard = "dashboard"
-  show Url_Document  = "document"
-  show Error     = "ErrorNodeType"
-  show Folder    = "folder"
-  show Graph     = "graph"
-  show Individu  = "individu"
-  show Node      = "node"
-  show Nodes      = "nodes"
-  show NodeUser  = "user"
-  show Tree      = "tree"
-  show (Tab t o l s) = "table?view=" <> show t <> "&offset=" <> show o
-                         <> "&limit=" <> show l <> os
-    where
-      os = maybe "" (\x -> "&order=" <> show x) s
-  show (Ngrams t listid) = "listGet?ngramsType=" <> show t <> listid'
-    where
-      listid' = maybe "" (\x -> "&list=" <> show x) listid
+nodeTypeUrl :: NodeType -> Url
+nodeTypeUrl Annuaire  = "annuaire"
+nodeTypeUrl Corpus    = "corpus"
+nodeTypeUrl CorpusV3  = "corpus"
+nodeTypeUrl Dashboard = "dashboard"
+nodeTypeUrl Url_Document  = "document"
+nodeTypeUrl Error     = "ErrorNodeType"
+nodeTypeUrl Folder    = "folder"
+nodeTypeUrl Graph     = "graph"
+nodeTypeUrl Individu  = "individu"
+nodeTypeUrl Node      = "node"
+nodeTypeUrl Nodes      = "nodes"
+nodeTypeUrl NodeUser  = "user"
+nodeTypeUrl Tree      = "tree"
 
--- | TODO : where is the Read Class ?
--- NP: We don't need the Read class. Here are the encoding formats we need:
--- * JSON
--- * URL parts has in {To,From}HttpApiData but only for certain types
--- The Show class should only be used for dev.
-
--- instance readNodeType :: Read NodeType where
 readNodeType :: String -> NodeType
 readNodeType "NodeAnnuaire"   = Annuaire
-readNodeType "Tab"   = (Tab TabDocs 0 0 Nothing)
-readNodeType "Ngrams"   = (Ngrams TabTerms Nothing)
 readNodeType "NodeDashboard"  = Dashboard
 readNodeType "Document"   = Url_Document
 readNodeType "NodeFolder"     = Folder
@@ -224,12 +209,14 @@ readNodeType "NodeCorpusV3" = CorpusV3
 readNodeType "NodeUser"   = NodeUser
 readNodeType "Tree"       = Tree
 readNodeType _            = Error
+{-
 ------------------------------------------------------------
 instance ordNodeType :: Ord NodeType where
   compare n1 n2 = compare (show n1) (show n2)
 
 instance eqNodeType :: Eq NodeType where
   eq n1 n2  = eq (show n1) (show n2)
+-}
 ------------------------------------------------------------
 instance decodeJsonNodeType :: DecodeJson NodeType where
   decodeJson json = do

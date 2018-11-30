@@ -1,47 +1,51 @@
 module Gargantext.Components.Login where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
-import Data.Lens (over)
-import Data.Maybe (Maybe)
+import Control.Monad.Cont.Trans (lift)
+import Data.Int as Int
+import Data.Lens (over, view)
+import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse_)
 import Effect.Class (liftEffect)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
 import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
-import Thermite (PerformAction, Render, Spec, _render, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, _render, modifyState_, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (getItem, setItem)
+import Web.Storage.Storage (getItem, setItem, removeItem)
 
 ------------------------------------------------------------------------
 import Gargantext.Prelude
+import Gargantext.Config (toUrl, Path(..), End(..))
 import Gargantext.Config.REST (post)
 import Gargantext.Components.Modals.Modal (modalHide)
+import Gargantext.Components.Login.Types
 
 -- TODO: ask for login (modal) or account creation after 15 mn when user
 -- is not logged and has made one search at least
 
-newtype State = State
+type State =
   { username :: String
   , password :: String
-  , response :: LoginRes
+  , authData :: Maybe AuthData
   , errorMessage :: String
-  , loginC :: Boolean
   }
 
 
-initialState :: State
-initialState = State
-  {username : ""
- , password : ""
- , response : LoginRes {token : ""}
- , errorMessage : ""
- , loginC : false
-  }
+initialState :: Effect State
+initialState = do
+  authData <- getAuthData
+  pure
+    { authData
+    , username : ""
+    , password : ""
+    , errorMessage : ""
+    }
 
 data Action
-  = Login
+  = PostAuth
   | SetUserName String
   | SetPassword String
 
@@ -49,29 +53,27 @@ data Action
 modalSpec :: forall props. Boolean -> String -> Spec State props Action -> Spec State props Action
 modalSpec sm t = over _render \render d p s c ->
   [ div [ _id "loginModal", className $ "modal myModal" <> if sm then "" else " fade"
-            , role "dialog"
-            , _data {show : true}
-            ][ div [ className "modal-dialog"
-                   , role "document"
-                   ] [ div [ className "modal-content"]
-                       [ div [ className "modal-header"]
-                         [ h5 [ className "modal-title"
-                              ]
-                           [ text $ t
-                           ]
-                         , button [ _type "button"
-                                  , className "close"
-                                  , _data { dismiss : "modal"}
-                                  ] [ span [ aria {hidden : true}]
-                                      [ text "X"]
-                                    ]
-                         ]
-
-                       , div [ className "modal-body"]
-                         (render d p s c)
-                       ]
-                     ]
-             ]
+        , role "dialog"
+        , _data {show : true}
+        ]
+    [ div [ className "modal-dialog"
+          , role "document"
+          ]
+      [ div [ className "modal-content"]
+        [ div [ className "modal-header"]
+          [ h5 [ className "modal-title" ]
+            [ text t ]
+          , button [ _type "button"
+                   , className "close"
+                   , _data { dismiss : "modal"}
+                   ]
+            [ span [ aria {hidden : true}] [ text "X"]
+            ]
+          ]
+        , div [ className "modal-body"] (render d p s c)
+        ]
+      ]
+    ]
   ]
 
 spec' :: Spec State {} Action
@@ -82,46 +84,36 @@ renderSpec = simpleSpec performAction render
   where
     performAction :: PerformAction State {} Action
 
-    performAction (SetUserName usr) _ _ = void do
-      modifyState \(State state) -> State $ state { username = usr }
+    performAction (SetUserName usr) _ _ =
+      modifyState_ $ _ { username = usr }
 
-    performAction (SetPassword pwd) _ _ = void do
-      modifyState \(State state) -> State $ state { password = pwd }
+    performAction (SetPassword pwd) _ _ =
+      modifyState_ $ _ { password = pwd }
 
-    performAction Login _ _ = void do
-      --lift $ setHash "/search"
-      liftEffect $ modalHide "loginModal"
-      modifyState \(State state) -> State $ state {loginC = true}
-      -- res <- lift $ loginReq $ LoginReq { username : state.username, password : state.password }
-      -- case res of
-      --   Left e -> do
-      --     logs e
-      --     modifyState \(State s) ->  State $ s { errorMessage = e}
-      --   Right r@(LoginRes response) -> do
-      --     lift $ setHash "/addCorpus"
-      --     modifyState \(State s) ->  State $ s {response = r, errorMessage = ""}
+    performAction PostAuth _ {username, password} = do
+      res <- lift $ postAuthRequest $ AuthRequest {username, password}
+      case res of
+        AuthResponse {inval: Just (AuthInvalid {message})} ->
+          modifyState_ $ _ { errorMessage = message }
+        AuthResponse {valid} -> do
+          liftEffect $ setAuthData valid
+          modifyState_ $ _ {authData = valid, errorMessage = ""}
+          liftEffect $ modalHide "loginModal"
 
     render :: Render State {} Action
-    render dispatch _ (State state) _ =
-      [
-        div [className "row"]
-        [
-          div [className "col-sm-10 col-sm-push-1 col-md-6 col-md-push-3 col-lg-6 col-lg-push-3"]
-          [
-            h2 [className "text-primary center m-a-2"]
+    render dispatch _ state _ =
+      [ div [className "row"]
+        [ div [className "col-sm-10 col-sm-push-1 col-md-6 col-md-push-3 col-lg-6 col-lg-push-3"]
+          [ h2 [className "text-primary center m-a-2"]
             [ i [className "material-icons md-36"] [text "control_point"]
             , span [className "icon-text"] [text "Gargantext"]
             ]
           , div [className "card-group"]
-            [
-              div [className "card"]
-              [
-                div [className "card-block"]
-                [
-                  div [className "center"]
+            [ div [className "card"]
+              [ div [className "card-block"]
+                [ div [className "center"]
                   [ h4 [className "m-b-0"]
-                    [ span [className "icon-text"] [ text "Connexion"]
-                    ]
+                    [ span [className "icon-text"] [ text "Connexion"] ]
                   , p [className "text-muted"]
                     [ text $ "Login to your account or",
                       a [ target "blank",href "https://iscpif.fr/services/applyforourservices/"] [text " ask to get an access"]
@@ -130,6 +122,7 @@ renderSpec = simpleSpec performAction render
                 , div []
                   [ input [_type "hidden",
                            name "csrfmiddlewaretoken",
+                           -- TODO hard-coded CSRF token
                            value "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP0j4WcEM" ]
 
                   , div [className "form-group"]
@@ -141,15 +134,14 @@ renderSpec = simpleSpec performAction render
                     , div [className "clearfix"] []
                     ]
                   , div [className "center"]
-                    [
-                      label [] [
-                         div [className "checkbox"]
-                         [ input [_id "terms-accept", _type "checkbox", value "", className "checkbox"]
-                         , text "I accept the terms of uses ",
-                           a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text "[Read the terms of use]"]
-                         ]
-                         , button [_id "login-button",className "btn btn-primary btn-rounded", _type "submit", onClick \_ -> dispatch $ Login] [text "Login"]
-                         ]
+                    [ label []
+                      [ div [className "checkbox"]
+                        [ input [_id "terms-accept", _type "checkbox", value "", className "checkbox"]
+                        , text "I accept the terms of uses ",
+                          a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text "[Read the terms of use]"]
+                        ]
+                      , button [_id "login-button",className "btn btn-primary btn-rounded", _type "submit", onClick \_ -> dispatch $ PostAuth] [text "Login"]
+                      ]
                     ]
                   ]
                 ]
@@ -179,7 +171,7 @@ renderSpec = simpleSpec performAction render
 --                                         ]
 
 --                                   , div [ className "modal-body"]
---                                         [ ul [ className "list-group"] ( map fn1 state.response ) ]
+--                                         [ ul [ className "list-group"] ( map fn1 state.authData ) ]
 
 --                                   , div [className "modal-footer"]
 --                                         [ button [ _type "button"
@@ -197,44 +189,28 @@ renderSpec = simpleSpec performAction render
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
 
-
-
-getDeviseID ::  Effect (Maybe String)
-getDeviseID = do
+getAuthData :: Effect (Maybe AuthData)
+getAuthData = do
   w  <- window
   ls <- localStorage w
-  getItem "token" ls
+  mto <- getItem "token" ls
+  mti <- getItem "tree_id" ls
+  pure do
+    token <- mto
+    tree_id <- Int.fromString =<< mti
+    pure $ AuthData {token, tree_id}
 
-
-setToken :: String -> Effect Unit
-setToken s = do
+setAuthData :: Maybe AuthData -> Effect Unit
+setAuthData Nothing = do
   w  <- window
   ls <- localStorage w
-  setItem "token" s ls
+  removeItem "token"   ls
+  removeItem "tree_id" ls
+setAuthData (Just (AuthData {tree_id, token})) = do
+  w  <- window
+  ls <- localStorage w
+  setItem "token"   token          ls
+  setItem "tree_id" (show tree_id) ls
 
-
-
-newtype LoginRes = LoginRes
-  {token :: String
-  }
-
-
-newtype LoginReq = LoginReq
-  { username :: String
-  , password :: String
-  }
-
-loginReq :: LoginReq -> Aff LoginRes
-loginReq = post "https://dev.gargantext.org/api/auth/token"
-
-instance decodeLoginRes :: DecodeJson LoginRes where
-  decodeJson json = do
-    obj   <- decodeJson json
-    token <- obj .? "token"
-    pure $ LoginRes { token}
-
-instance encodeLoginReq :: EncodeJson LoginReq where
-  encodeJson (LoginReq obj) =
-       "username"          := obj.username
-    ~> "password"          := obj.password
-    ~> jsonEmptyObject
+postAuthRequest :: AuthRequest -> Aff AuthResponse
+postAuthRequest = post $ toUrl Back Auth Nothing

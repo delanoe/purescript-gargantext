@@ -46,7 +46,6 @@ import Gargantext.Components.Table as T
 import Gargantext.Prelude
 import Gargantext.Config
 import Gargantext.Config.REST
-import Gargantext.Components.Tree (NTree(..))
 import Gargantext.Components.Loader as Loader
 import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), PropsRow)
 

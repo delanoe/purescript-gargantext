@@ -8,6 +8,7 @@ import Affjax.RequestBody (RequestBody(..))
 import Affjax.ResponseFormat as ResponseFormat
 import CSS (backgroundColor, borderRadius, boxShadow, justifyContent, marginTop)
 import Control.Monad.Cont.Trans (lift)
+import Data.Array (filter)
 import Data.Argonaut (class DecodeJson, class EncodeJson, Json, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
 import Data.Argonaut.Core (Json)
 import Data.Either (Either(..))
@@ -26,7 +27,7 @@ import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, pl
 import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState_, simpleSpec)
 
-import Gargantext.Config (toUrl, End(..), NodeType(..), defaultRoot)
+import Gargantext.Config (toUrl, End(..), NodeType(..))
 import Gargantext.Config.REST (get, put, post, delete, deleteWithBody)
 import Gargantext.Components.Loader as Loader
 
@@ -38,6 +39,15 @@ type ID   = Int
 type Props = { root :: ID }
 
 data NTree a = NTree a (Array (NTree a))
+
+instance ntreeFunctor :: Functor NTree where
+  map f (NTree x ary) = NTree (f x) (map (map f) ary)
+
+-- Keep only the nodes matching the predicate.
+-- The root of the tree is always kept.
+filterNTree :: forall a. (a -> Boolean) -> NTree a -> NTree a
+filterNTree p (NTree x ary) =
+  NTree x $ map (filterNTree p) $ filter (\(NTree a _) -> p a) ary
 
 type FTree = NTree LNode
 
@@ -55,40 +65,39 @@ data Action =  ShowPopOver ID
 
 type State = { state :: FTree }
 
+-- TODO remove
 initialState :: State
 initialState = { state: NTree (LNode {id : 3, name : "hello", nodeType : Node, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) [] }
 
 mapFTree :: (FTree -> FTree) -> State -> State
 mapFTree f {state} = {state: f state}
 
-
+-- TODO: make it a local function
 performAction :: forall props. PerformAction State props Action
 
 performAction (ToggleFolder i) _ _ =
   modifyState_ $ mapFTree $ toggleNode i
 
 performAction (ShowPopOver id) _ _ =
-  modifyState_ $ mapFTree $ popOverNode id
+  modifyState_ $ mapFTree $ map $ popOverNode id
 
 performAction (ShowRenameBox id) _ _ =
-  modifyState_ $ mapFTree $ showPopOverNode id
+  modifyState_ $ mapFTree $ map $ showPopOverNode id
 
 performAction (CancelRename id) _ _ =
-  modifyState_ $ mapFTree $ showPopOverNode id
+  modifyState_ $ mapFTree $ map $ showPopOverNode id
 
 performAction (ToggleCreateNode id) _ _ =
   modifyState_ $ mapFTree $ showCreateNode id
 
 performAction (DeleteNode nid) _ _ = do
-  d <- lift $ deleteNode nid
-  --- TODO : Need to update state once API is called
-  pure unit
+  void $ lift $ deleteNode nid
+  modifyState_ $ mapFTree $ filterNTree (\(LNode {id}) -> id /= nid)
 
---- TODO : Need to update state once API is called
-performAction (Submit rid s'') _  _  = do
-  d <- lift $ renameNode rid $ RenameValue { name : s''}
-  -- modifyState_ $ mapFTree $ popOverNode rid
-  modifyState_ $ mapFTree $ showPopOverNode rid -- add this function to toggle rename function
+performAction (Submit rid name) _  _  = do
+  void $ lift $ renameNode rid $ RenameValue {name}
+  modifyState_ $ mapFTree $ map $ popOverNode rid
+                              <<< onNode rid (\(LNode node) -> LNode (node { name = name }))
 
 performAction (RenameNode  r nid) _ _ =
   modifyState_ $ mapFTree $ rename nid r
@@ -99,21 +108,25 @@ performAction (Create  nid) _ _ =
 performAction (SetNodeValue v nid) _ _ =
   modifyState_ $ mapFTree $ setNodeValue nid v
 
+toggleIf :: Boolean -> Boolean -> Boolean
+toggleIf true  = not
+toggleIf false = const false
 
-popOverNode :: Int -> NTree LNode -> NTree LNode
-popOverNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
-  NTree (LNode {id,name, nodeType, open , popOver : npopOver, renameNodeValue, createNode, nodeValue, showRenameBox}) $ map (popOverNode sid) ary
-  where
-    npopOver = if sid == id then not popOver else popOver
+onNode :: Int -> (LNode -> LNode) -> LNode -> LNode
+onNode id f l@(LNode node)
+  | node.id == id = f l
+  | otherwise     = l
 
+popOverNode :: Int -> LNode -> LNode
+popOverNode sid (LNode node) =
+  LNode $ node { popOver = toggleIf (sid == node.id) node.popOver
+               , showRenameBox = false }
 
-showPopOverNode :: Int -> NTree LNode -> NTree LNode
-showPopOverNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
-  NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue, createNode, nodeValue, showRenameBox: nshowRenameBox}) $ map (showPopOverNode sid) ary
-  where
-    nshowRenameBox = if sid == id then not showRenameBox else showRenameBox
+showPopOverNode :: Int -> LNode -> LNode
+showPopOverNode sid (LNode node) =
+  LNode $ node {showRenameBox = toggleIf (sid == node.id) node.showRenameBox}
 
-
+-- TODO: DRY, NTree.map
 showCreateNode :: Int -> NTree LNode -> NTree LNode
 showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
   NTree (LNode {id,name, nodeType, open , popOver, renameNodeValue, createNode : createNode', nodeValue, showRenameBox}) $ map (showCreateNode sid) ary
@@ -129,21 +142,21 @@ showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 --     NTree (LNode {id,name, nodeType, open , popOver, renameNodeValue, createNode , nodeValue}) $ map (getCreateNode sid) ary
 --     createNode' = if sid == id then  nodeValue else ""
 
-
+-- TODO: DRY, NTree.map
 rename :: Int ->  String -> NTree LNode  -> NTree LNode
 rename sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary)  =
   NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue : rvalue, createNode, nodeValue, showRenameBox}) $ map (rename sid  v) ary
   where
     rvalue = if sid == id then  v   else ""
 
-
+-- TODO: DRY, NTree.map
 setNodeValue :: Int ->  String -> NTree LNode  -> NTree LNode
 setNodeValue sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary)  =
   NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue , createNode, nodeValue : nvalue, showRenameBox}) $ map (setNodeValue sid  v) ary
   where
     nvalue = if sid == id then  v   else ""
 
-
+-- TODO: DRY, NTree.map
 toggleNode :: Int -> NTree LNode -> NTree LNode
 toggleNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
   NTree (LNode {id,name, nodeType, open : nopen, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) $ map (toggleNode sid) ary
@@ -252,7 +265,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                [
                  input [ _type "text"
                     , placeholder "Rename Node"
-                    , defaultValue $ getRenameNodeValue s
+                    , defaultValue $ name
                     , style {float: "left"}
                     , className "col-md-2 form-control"
                     , onInput \e -> d (RenameNode (unsafeEventValue e) nid)
@@ -335,10 +348,6 @@ renameTreeViewDummy d s = div [] []
 popOverValue :: FTree -> Boolean
 popOverValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) = popOver
 
-getRenameNodeValue :: FTree -> String
-getRenameNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) = renameNodeValue
-
-
 getCreateNodeValue :: FTree -> String
 getCreateNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, nodeValue, showRenameBox}) ary) = nodeValue
 
@@ -420,8 +429,8 @@ newtype RenameValue = RenameValue
   }
 
 instance encodeJsonRenameValue :: EncodeJson RenameValue where
-  encodeJson (RenameValue post)
-     = "r_name" := post.name
+  encodeJson (RenameValue {name})
+     = "r_name" := name
     ~> jsonEmptyObject
 
 renameNode :: Int -> RenameValue -> Aff (Array Int)

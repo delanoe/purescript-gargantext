@@ -25,7 +25,7 @@ import React as React
 import React (ReactClass, ReactElement, Children)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (NodeType(..), TabType(..), toUrl, End(..), OrderBy(..))
+import Gargantext.Config (Path(..), NodeType(..), TabType(..), toUrl, End(..), OrderBy(..))
 import Gargantext.Config.REST (get, put, post, deleteWithBody)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)

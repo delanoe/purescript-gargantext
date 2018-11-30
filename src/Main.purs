@@ -7,7 +7,7 @@ import Effect (Effect)
 import Gargantext.Pages.Layout (dispatchAction)
 import Gargantext.Pages.Layout.Specs (layoutSpec)
 import Gargantext.Pages.Layout.States (initAppState)
-import Gargantext.Router (routeHandler, routing)
+import Gargantext.Router (routing)
 import Partial.Unsafe (unsafePartial)
 import React as R
 import ReactDOM as RDOM
@@ -24,10 +24,11 @@ setUnsafeComponentWillMount = unsafeSet "unsafeComponentWillMount"
 
 main :: Effect Unit
 main = do
- case T.createReactSpec layoutSpec (const initAppState) of
+  state <- initAppState
+  case T.createReactSpec layoutSpec (const state) of
     { spec, dispatcher } -> void $ do
       let setRouting this = void $ do
-            matches routing (routeHandler (dispatchAction (dispatcher this)))
+            matches routing (dispatchAction (dispatcher this))
           spec' this = setUnsafeComponentWillMount (setRouting this) <$> (spec this)
       document <- window >>= document
       container <- unsafePartial (fromJust  <$> querySelector (QuerySelector "#app") (toParentNode document))

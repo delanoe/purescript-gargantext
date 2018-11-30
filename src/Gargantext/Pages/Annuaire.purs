@@ -22,7 +22,7 @@ import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as T
-import Gargantext.Config      (toUrl, NodeType(..), TabType(..), End(..))
+import Gargantext.Config      (toUrl, Path(..), NodeType(..), TabType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperData(..), HyperdataContact(..))
 ------------------------------------------------------------------------------

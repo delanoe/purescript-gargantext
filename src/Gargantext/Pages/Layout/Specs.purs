@@ -11,8 +11,8 @@ import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, foc
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
-import Gargantext.Config (defaultRoot)
 import Gargantext.Components.Data.Lang (Lang(..))
+import Gargantext.Components.Login.Types (AuthData(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree  as Tree
 import Gargantext.Folder           as F
@@ -22,7 +22,6 @@ import Gargantext.Pages.Corpus     as Corpus
 import Gargantext.Pages.Corpus.Document as Annotation
 import Gargantext.Pages.Corpus.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Graph as GE
-import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as NG
 import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _userPageAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
@@ -85,10 +84,12 @@ layout0 layout =
     outerLayout =
       cont $ fold
       [ withState \st ->
-         if ((\(LN.State s) -> s.loginC) st.loginState == true)
-            then ls $ cmapProps (const {root: defaultRoot}) as
-            else outerLayout1
-      , rs bs      
+          case st.loginState.authData of
+            Just (AuthData {tree_id}) ->
+              ls $ cmapProps (const {root: tree_id}) as
+            Nothing ->
+              outerLayout1
+      , rs bs
       ]
     ls   = over _render \render d p s c -> [ 
          div [ className "col-md-2"] (render d p s c)  
@@ -124,10 +125,12 @@ layout1 layout =
     outerLayout =
       cont $ fold
       [ withState \st ->
-         if ((\(LN.State s) -> s.loginC) st.loginState == true)
-            then ls $ cmapProps (const {root: defaultRoot}) as
-            else outerLayout1
-      , rs bs      
+          case st.loginState.authData of
+            Just (AuthData {tree_id}) ->
+              ls $ cmapProps (const {root: tree_id}) as
+            Nothing ->
+              outerLayout1
+      , rs bs
       ]
     ls   = over _render \render d p s c -> [  
       
@@ -164,7 +167,7 @@ layoutSidebar = over _render \render d p s c ->
                           ,  div [ className "collapse navbar-collapse"]
                              $ [ divDropdownLeft]
                              <> render d p s c <>
-                             [ divDropdownRight d]
+                             [ divDropdownRight d s ]
                           ]
                     ]
               ]
@@ -308,29 +311,35 @@ divSearchBar = simpleSpec performAction render
                             ]
                   ]
 
---divDropdownRight :: Render AppState {} Action
-divDropdownRight :: (Action -> Effect Unit) -> ReactElement
-divDropdownRight d =
+divDropdownRight :: (Action -> Effect Unit) -> AppState -> ReactElement
+divDropdownRight d s =
   ul [className "nav navbar-nav pull-right"]
-     [
-       -- TODO if logged in : enable dropdown to logout
-       li [className "dropdown"]
-       [
-         a [ aria {hidden : true}
-           , className "glyphicon glyphicon-log-in"
-           , --href "#/login"
-             onClick $ \e -> d ShowLogin
-           , style {color:"white"}
-           , title "Log in and save your time"
-           -- TODO hover: bold
-            ]
-          -- TODO if logged in
-          --, text " username"
-          -- else
-         [text " Login / Signup"]
-        ]
-      
+     [ li [className "dropdown"]
+       [ case s.loginState.authData of
+           Nothing -> loginLink
+           Just _  -> logoutLink
+       ]
      ]
+  where
+    loginLink =
+      a [ aria {hidden : true}
+        , className "glyphicon glyphicon-log-in"
+        , onClick $ \e -> d ShowLogin
+        , style {color:"white"}
+        , title "Log in and save your time"
+        -- TODO hover: bold
+        ]
+        [text " Login / Signup"]
+    -- TODO dropdown to logout
+    logoutLink =
+      a [ aria {hidden : true}
+        , className "glyphicon glyphicon-log-out"
+        , onClick $ \e -> d Logout
+        , style {color:"white"}
+        , title "Log out" -- TODO
+        -- TODO hover: bold
+        ]
+        [text " Logout"]
 
 layoutFooter :: Spec AppState {} Action
 layoutFooter = simpleSpec performAction render

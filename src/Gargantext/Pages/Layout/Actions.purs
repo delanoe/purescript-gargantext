@@ -2,16 +2,15 @@
 
 module Gargantext.Pages.Layout.Actions where
 
-import Control.Monad.Cont.Trans                        (lift)
 import Data.Either                                     (Either(..))
+import Data.Maybe                                      (Maybe(..))
 import Data.Lens                                       (Prism', prism)
 import Effect.Class                                    (liftEffect)
 import Thermite                                        (PerformAction, modifyState, modifyState_)
+import Routing.Hash                                    (setHash)
 
-import Gargantext.Config (defaultRoot)
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Modals.Modal              (modalShow)
-import Gargantext.Components.Tree                   as Tree
 import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Annuaire.User.Contacts      as C
 import Gargantext.Pages.Corpus.Document       as D
@@ -36,6 +35,7 @@ data Action
     | UserPageA  C.Action
   | Go
   | ShowLogin
+  | Logout
   | ShowAddcorpus
   | ShowTree 
 
@@ -46,12 +46,19 @@ performAction (SetRoute route)  _ _ = void do
 performAction (Search s)  _ _ = void do
   modifyState $ _ {search = s}
 
-performAction (ShowTree)  _ (state) = void do
+performAction (ShowTree)  _ (state) = void do -- TODO
   modifyState $ _ {showTree = not (state.showTree)}
 
 performAction (ShowLogin)  _ _ = void do
   liftEffect $ modalShow "loginModal"
   modifyState $ _ {showLogin = true}
+
+performAction Logout _ _ = do
+  loginState <- liftEffect do
+    LN.setAuthData Nothing
+    setHash "/"
+    LN.initialState
+  modifyState_ $ _ {currentRoute = Nothing, loginState = loginState}
 
 ---------------------------------------------------------
 -- TODO chose one of them
