@@ -147,13 +147,13 @@ layoutDocview = simpleSpec performAction render
     performAction Trash {path: nodeId} {documentIdsToDelete} =
       void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
       -- TODO: what to do now that the documents are deleted
-      -- * should we reload?
-      -- * should we locally update our data?
-      -- * should we reset documentIdsToDelete?
+      -- * should we reload? NO (if you change page, yes and come back yes)
+      -- * should we locally update our data? YES
+      -- * should we reset documentIdsToDelete? YES
       -- * if so, how to un-check the checkboxes since the inputs are uncontrolled?
       --   + There is no need to uncheck them if they disapear because we
-      --     either reload or local update our data.
-      --   + Sync the checked value using
+      --     either reload or local update our data. YES
+      --   + Sync the checked value using (why check, just reset documentsIdsToDelete)
       --       `checked: Set.member n state.documentIdsToDelete`
 
     render :: Render State Props Action
