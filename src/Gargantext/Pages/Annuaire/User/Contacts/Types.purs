@@ -24,26 +24,97 @@ data Contact = Contact {
   , hyperdata :: HyperdataContact
   }
 
+data ContactWho =
+     ContactWho { idWho     :: Maybe String
+                , firstName :: Maybe String
+                , lastName  :: Maybe String
+                , keywords  :: Maybe (Array String)
+                , freetags  :: Maybe (Array String)
+                }
+
+instance decodeContactWho :: DecodeJson ContactWho
+  where
+    decodeJson json = do
+      obj <- decodeJson json
+      idWho  <- obj .?? "id"
+      firstName <- obj .?? "firstName"
+      lastName  <- obj .?? "lastName"
+      keywords  <- obj .?? "keywords"
+      freetags  <- obj .?? "freetags"
+      pure $ ContactWho {idWho, firstName, lastName, keywords, freetags}
+
+data ContactWhere =
+     ContactWhere { organization :: Maybe (Array String)
+                  , labTeamDepts :: Maybe (Array String)
+                  
+                  , role         :: Maybe String
+                  
+                  , office       :: Maybe String
+                  , country      :: Maybe String
+                  , city         :: Maybe String
+                  
+                  , touch        :: Maybe ContactTouch
+                  
+                  , entry        :: Maybe String
+                  , exit         :: Maybe String
+  }
+
+
+instance decodeContactWhere :: DecodeJson ContactWhere
+  where
+    decodeJson json = do
+      obj <- decodeJson json
+      organization  <- obj .?? "organization"
+      labTeamDepts  <- obj .?? "labTeamDepts"
+      role          <- obj .?? "role"
+      office        <- obj .?? "office"
+      country       <- obj .?? "country"
+      city          <- obj .?? "city"
+      touch         <- obj .?? "touch"
+      entry         <- obj .?? "entry"
+      exit          <- obj .?? "exit"
+      pure $ ContactWhere {organization, labTeamDepts, role, office, country, city, touch, entry, exit}
+
+data ContactTouch =
+     ContactTouch { mail      :: Maybe String
+                  , phone     :: Maybe String
+                  , url       :: Maybe String
+  }
+
+instance decodeContactTouch :: DecodeJson ContactTouch
+  where
+    decodeJson json = do
+      obj <- decodeJson json
+      mail  <- obj .?? "mail"
+      phone <- obj .?? "phone"
+      url   <- obj .?? "url"
+      pure $ ContactTouch {mail, phone, url}
+
+
 data HyperdataContact =
      HyperdataContact { bdd :: Maybe String
-                      , uniqId :: Maybe String
-                      , uniqIdBdd :: Maybe String
+                      , who :: Maybe ContactWho
+                      , ou  :: Maybe (Array ContactWhere)
                       , title :: Maybe String
                       , source :: Maybe String
-                      , role :: Maybe String
+                      , lastValidation :: Maybe String
+                      , uniqId :: Maybe String
+                      , uniqIdBdd :: Maybe String
                     }
 
 instance decodeHyperdataContact :: DecodeJson HyperdataContact
   where
     decodeJson json = do
       obj <- decodeJson json
-      bdd <- obj .?? "bdd"
-      uniqId <- obj .?? "uniqId"
-      uniqIdBdd <- obj .?? "uniqIdBdd"
-      title     <- obj .?? "title"
-      source    <- obj .?? "source"
-      role      <- obj .?? "role"
-      pure $ HyperdataContact {bdd, uniqId, uniqIdBdd, title, source, role}
+      bdd            <- obj .?? "bdd"
+      who            <- obj .?? "who"
+      ou             <- obj .?? "where"
+      title          <- obj .?? "title"
+      source         <- obj .?? "source"
+      lastValidation <- obj .?? "lastValidation"
+      uniqId         <- obj .?? "uniqId"
+      uniqIdBdd      <- obj .?? "uniqIdBdd"
+      pure $ HyperdataContact {bdd, who, ou, title, source, lastValidation, uniqId, uniqIdBdd}
 
 
 data HyperData c s =

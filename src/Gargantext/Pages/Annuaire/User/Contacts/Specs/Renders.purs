@@ -22,7 +22,7 @@ render dispatch _ state _ =
   [
           div [className "col-md-12"]
           $ case state.contact of
-            (Just (Contact contact)) -> display (maybe "no name" identity contact.name) [contactInfos contact.hyperdata]
+            (Just (Contact contact)) -> display (maybe "no name" identity contact.name) (contactInfos contact.hyperdata)
             Nothing -> display "Contact not found" []
   ]
 
@@ -38,8 +38,8 @@ display title elems =
           [ div [className "col-md-12"]
             [ div [className "row"]
               [ div [className "col-md-2"]
-                    [ ]
-                    -- [ img [src "/images/Gargantextuel-212x300.jpg"] ]
+                    --[ ]
+                    [ img [src "/images/Gargantextuel-212x300.jpg"] ]
               , div [className "col-md-1"] []
               , div [className "col-mdData.Unfoldable-8"] elems
               ]
@@ -56,9 +56,14 @@ mapMyMap f m = toUnfoldable
 
 infixl 4 mapMyMap as <.~$>
 
-contactInfos :: HyperdataContact -> ReactElement
-contactInfos (HyperdataContact hyperdata) =
-  ul [className "list-group"] (infoRender (Tuple "Name" $ maybe "no title" identity hyperdata.role)) {- $
+contactInfos :: HyperdataContact -> Array ReactElement
+contactInfos (HyperdataContact {who:who,ou:ou}) =
+  [ ul [className "list-group"] (infoRender (Tuple "Last Name"  $ maybe "no title" (\(ContactWho {lastName:lastName}) -> maybe "no lastName" identity lastName)  who))
+  , ul [className "list-group"] (infoRender (Tuple "First name" $ maybe "no title" (\(ContactWho {firstName:firstName}) -> maybe "no firstName" identity firstName)  who))
+  ]
+
+  
+  {- $
     listInfo <.~$> hyperdata
   where
     checkMaybe (Nothing) = empty

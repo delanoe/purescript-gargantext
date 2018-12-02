@@ -1,5 +1,6 @@
 module Gargantext.Pages.Annuaire where
 
+import Data.Array (head)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
 import Data.Lens (Prism', prism)
 import Data.Either (Either(..))
@@ -24,7 +25,7 @@ import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as T
 import Gargantext.Config      (toUrl, Path(..), NodeType(..), TabType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperData(..), HyperdataContact(..))
+import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperData(..), HyperdataContact(..), ContactWhere(..))
 ------------------------------------------------------------------------------
 
 type Props = Loader.InnerProps Int AnnuaireInfo ()
@@ -166,16 +167,26 @@ pageLoader props = React.createElement pageLoaderClass props []
 --{-
 renderContactCells :: Maybe Contact -> Array ReactElement
 renderContactCells Nothing = []
-renderContactCells (Just (Contact { id, hyperdata : (HyperdataContact contact) })) =
+renderContactCells (Just (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) })) =
   [ text ""
   , a [ href (toUrl Front NodeContact (Just id)) ] [ text $ maybe "name" identity contact.title ]
-  , text $ maybe "ecole" identity contact.source
-  , text "" -- $ maybe' contact.groupe
-  , text "" -- $ maybe' contact.groupe
+  , text $ maybe "No ContactWhere" renderContactWhereOrg  (join $ head <$> ou)
+  , text $ maybe "No ContactWhere" renderContactWhereDept (join $ head <$> ou)
+  , text $ maybe "No ContactWhere" renderContactWhereRole (join $ head <$> ou)
   ]
   where
     maybe' = maybe "" identity
-    ---}
+    renderContactWhereOrg (ContactWhere { organization: Nothing }) = "No Organization"
+    renderContactWhereOrg (ContactWhere { organization: Just orga }) =
+      maybe "No orga (list)" identity (head orga)
+
+    renderContactWhereDept (ContactWhere { labTeamDepts : Nothing }) = "Empty Dept"
+    renderContactWhereDept (ContactWhere { labTeamDepts : Just dept }) =
+      maybe "No Dept (list)" identity (head dept)
+
+    renderContactWhereRole (ContactWhere { role: Nothing }) = "Empty Role"
+    renderContactWhereRole (ContactWhere { role: Just role }) = role
+
 
 data HyperdataAnnuaire = HyperdataAnnuaire
   { title :: Maybe String
