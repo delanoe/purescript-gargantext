@@ -168,7 +168,7 @@ renderContactCells :: Maybe Contact -> Array ReactElement
 renderContactCells Nothing = []
 renderContactCells (Just (Contact { id, hyperdata : (HyperdataContact contact) })) =
   [ text ""
-  , a [ href (toUrl Front NodeUser (Just id)) ] [ text $ maybe "name" identity contact.title ]
+  , a [ href (toUrl Front NodeContact (Just id)) ] [ text $ maybe "name" identity contact.title ]
   , text $ maybe "ecole" identity contact.source
   , text "" -- $ maybe' contact.groupe
   , text "" -- $ maybe' contact.groupe
@@ -226,7 +226,7 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
 loadPage :: PageParams -> Aff AnnuaireTable
-loadPage {nodeId, params} = get $ toUrl Back (Tab TabDocs 0 10 Nothing) (Just nodeId)
+loadPage {nodeId, params} = get $ toUrl Back (Children NodeContact 0 10 Nothing) (Just nodeId)
  -- TODO Tab TabDocs is not the right API call
  -- TODO params, see loadPage in Documents
 

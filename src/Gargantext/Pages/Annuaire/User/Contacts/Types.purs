@@ -30,6 +30,7 @@ data HyperdataContact =
                       , uniqIdBdd :: Maybe String
                       , title :: Maybe String
                       , source :: Maybe String
+                      , role :: Maybe String
                     }
 
 instance decodeHyperdataContact :: DecodeJson HyperdataContact
@@ -41,7 +42,8 @@ instance decodeHyperdataContact :: DecodeJson HyperdataContact
       uniqIdBdd <- obj .?? "uniqIdBdd"
       title     <- obj .?? "title"
       source    <- obj .?? "source"
-      pure $ HyperdataContact {bdd, uniqId, uniqIdBdd, title, source}
+      role      <- obj .?? "role"
+      pure $ HyperdataContact {bdd, uniqId, uniqIdBdd, title, source, role}
 
 
 data HyperData c s =

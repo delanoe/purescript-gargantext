@@ -24,6 +24,7 @@ data Routes
       | Dashboard
     | Annuaire         Int
       | UserPage       Int
+      | ContactPage       Int
 
 routing :: Match Routes
 routing =
@@ -37,6 +38,7 @@ routing =
     <|> PGraphExplorer <$>   (route "graph" *> int )
   <|> Annuaire         <$> (route "annuaire" *> int)
     <|> UserPage       <$> (route "user"     *> int)
+    <|> ContactPage       <$> (route "contact"     *> int)
   <|> Home             <$   lit ""
   
  where
@@ -50,6 +52,7 @@ instance showRoutes :: Show Routes where
   show AddCorpus        = "AddCorpus"
   show SearchView       = "Search"
   show (UserPage i)     = "User"   <> show i
+  show (ContactPage i)     = "Contact"   <> show i
   show (Document i)     = "Document"
   show (Corpus i)       = "Corpus" <> show i
   show (Annuaire i)     = "Annuaire" <> show i

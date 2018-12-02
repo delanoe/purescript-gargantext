@@ -43,6 +43,11 @@ dispatchAction dispatcher _ (UserPage id) = do
   -- dispatcher $ UserPageA TODO
   dispatcher $ UserPageA $ C.FetchContact id
 
+dispatchAction dispatcher _ (ContactPage id) = do
+  dispatcher $ SetRoute $ ContactPage id
+  -- dispatcher $ UserPageA TODO
+  dispatcher $ UserPageA $ C.FetchContact id
+
 dispatchAction dispatcher _ (Annuaire id) = do
   dispatcher $ SetRoute $ Annuaire id
 

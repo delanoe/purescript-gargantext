@@ -12,7 +12,7 @@ import Data.Unfoldable (class Unfoldable)
 import Prelude (identity)
 import Prelude (($), (<<<), (<$>), flip, class Ord)
 import React (ReactElement)
-import React.DOM (div, h3, img, li, span, text, ul)
+import React.DOM (div, h3, img, li, span, text, ul, text)
 import React.DOM.Props (_id, className, src)
 import Thermite (Render)
 
@@ -38,7 +38,8 @@ display title elems =
           [ div [className "col-md-12"]
             [ div [className "row"]
               [ div [className "col-md-2"]
-                    [ img [src "/images/Gargantextuel-212x300.jpg"] ]
+                    [ ]
+                    -- [ img [src "/images/Gargantextuel-212x300.jpg"] ]
               , div [className "col-md-1"] []
               , div [className "col-mdData.Unfoldable-8"] elems
               ]
@@ -56,8 +57,8 @@ mapMyMap f m = toUnfoldable
 infixl 4 mapMyMap as <.~$>
 
 contactInfos :: HyperdataContact -> ReactElement
-contactInfos hyperdata =
-    ul [className "list-group"] [] {- $
+contactInfos (HyperdataContact hyperdata) =
+  ul [className "list-group"] (infoRender (Tuple "Name" $ maybe "no title" identity hyperdata.role)) {- $
     listInfo <.~$> hyperdata
   where
     checkMaybe (Nothing) = empty
@@ -72,6 +73,6 @@ listElement = li [className "list-group-item justify-content-between"]
 
 infoRender :: Tuple String String -> Array ReactElement
 infoRender (Tuple title content) =
-  [ span [] [text title]
-  , span [className "badge badge-default badge-pill"] [text content]
+  [ span [className "badge badge-default badge-pill"] [text title]
+  , span [] [text content]
   ]

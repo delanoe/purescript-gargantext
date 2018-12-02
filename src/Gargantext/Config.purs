@@ -105,6 +105,12 @@ pathUrl c (Tab t o l s) i =
           <> "&limit=" <> show l <> os
   where
     os = maybe "" (\x -> "&order=" <> show x) s
+pathUrl c (Children n o l s) i =
+    pathUrl c (NodeAPI Node) i <>
+      "/" <> "children?type=" <> show n <> "&offset=" <> show o
+          <> "&limit=" <> show l <> os
+  where
+    os = maybe "" (\x -> "&order=" <> show x) s
 pathUrl c (Ngrams t listid) i =
     pathUrl c (NodeAPI Node) i <> "/" <> "listGet?ngramsType=" <> show t <> listid'
   where
@@ -112,6 +118,9 @@ pathUrl c (Ngrams t listid) i =
 pathUrl c Auth Nothing = c.prePath <> "auth"
 pathUrl c Auth (Just _) = "impossible" -- TODO better types
 pathUrl c (NodeAPI nt) i = c.prePath <> nodeTypeUrl nt <> (maybe "" (\i' -> "/" <> show i') i)
+
+
+
 ------------------------------------------------------------
 
 class ToUrl a where
@@ -130,7 +139,9 @@ instance toUrlPath :: ToUrl Path where
 
 data NodeType = NodeUser
               | Annuaire
+                | NodeContact
               | Corpus
+--                | NodeDocument
               | CorpusV3
               | Dashboard
               | Url_Document
@@ -142,9 +153,30 @@ data NodeType = NodeUser
               | Nodes
               | Tree
 
+
+instance showNodeType :: Show NodeType where
+  show NodeUser      = "NodeUser"
+  show Annuaire      = "Annuaire"
+  show NodeContact   = "NodeDocument"
+  show Corpus        = "NodeCorpus"
+  show CorpusV3      = "NodeCorpusV3"
+  show Dashboard     = "NodeDashboard"
+  show Url_Document  = "NodeDashboard"
+  --show NodeDocument  = "NodeDocument"
+  show Error         = "NodeError"
+  show Folder        = "NodeFolder"
+  show Graph         = "NodeGraph"
+  show Individu      = "NodeIndividu"
+  show Node          = "Node"
+  show Nodes         = "Nodes"
+  show Tree          = "NodeTree"
+
+
+
 data Path
   = Auth
-  | Tab TabType Offset Limit (Maybe OrderBy)
+  | Tab      TabType  Offset Limit (Maybe OrderBy)
+  | Children NodeType Offset Limit (Maybe OrderBy)
   | Ngrams TabType (Maybe TermList)
   | NodeAPI NodeType
 
@@ -193,22 +225,24 @@ nodeTypeUrl Individu  = "individu"
 nodeTypeUrl Node      = "node"
 nodeTypeUrl Nodes      = "nodes"
 nodeTypeUrl NodeUser  = "user"
+nodeTypeUrl NodeContact = "contact"
 nodeTypeUrl Tree      = "tree"
 
 readNodeType :: String -> NodeType
-readNodeType "NodeAnnuaire"   = Annuaire
-readNodeType "NodeDashboard"  = Dashboard
-readNodeType "Document"   = Url_Document
-readNodeType "NodeFolder"     = Folder
-readNodeType "NodeGraph"      = Graph
-readNodeType "Individu"   = Individu
-readNodeType "Node"       = Node
-readNodeType "Nodes"       = Nodes
-readNodeType "NodeCorpus" = Corpus
-readNodeType "NodeCorpusV3" = CorpusV3
-readNodeType "NodeUser"   = NodeUser
-readNodeType "Tree"       = Tree
-readNodeType _            = Error
+readNodeType "NodeAnnuaire"  = Annuaire
+readNodeType "NodeDashboard" = Dashboard
+readNodeType "Document"      = Url_Document
+readNodeType "NodeFolder"    = Folder
+readNodeType "NodeGraph"     = Graph
+readNodeType "Individu"      = Individu
+readNodeType "Node"          = Node
+readNodeType "Nodes"         = Nodes
+readNodeType "NodeCorpus"    = Corpus
+readNodeType "NodeCorpusV3"  = CorpusV3
+readNodeType "NodeUser"      = NodeUser
+readNodeType "NodeContact"   = NodeContact
+readNodeType "Tree"          = Tree
+readNodeType _               = Error
 {-
 ------------------------------------------------------------
 instance ordNodeType :: Ord NodeType where
