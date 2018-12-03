@@ -18,6 +18,7 @@ import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Config as Config
 import Gargantext.Config.REST (get)
 import Gargantext.Utils (getter)
 import Math (cos, sin)
@@ -69,14 +70,10 @@ performAction :: PerformAction State {} Action
 performAction (LoadGraph fp) _ _ = void do
   _ <- logs fp
   _ <- modifyState \(State s) -> State s { sigmaGraphData = Nothing}
-  gd <- lift $ getNodes fp
-      -- TODO: here one might `catchError getGraphData` to visually empty the
+  resp <- lift $ getNodes fp
+      -- TODO: here one might `catchError getNodes` to visually empty the
       -- graph.
-  case gd of
-    Left err -> do
-      _ <- liftEffect $  log err 
-      modifyState identity
-    Right resp -> modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
+  modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
 performAction (SelectNode node) _ _ = void do
   modifyState $ \(State s) -> State s {selectedNode = pure node}
@@ -221,10 +218,6 @@ mySettings = sigmaSettings { verbose : true
                           , mouseZoomDuration: 150.0
                           }
 
-
--- loadJSON  {path : "http://localhost:2015/examples/sites_coords.json"}
-getGraphData :: String -> Aff GraphData
-getGraphData fp = get $ "http://localhost:2015/examples/" <> fp
 
 defaultPalette :: Array Color
 defaultPalette = map Color defaultPalette'
@@ -494,26 +487,5 @@ specOld = simpleSpec performAction render'
            ]
          ]
 
-
-
-
-
-getNodes :: Int -> Aff (Either String GraphData)
-getNodes graphId = do
-   res <- request $ defaultRequest
-         { url = "http://localhost:8008/api/v1.0/graph/"<> show graphId
-         , responseFormat = ResponseFormat.json
-         , method = Left GET
-         , headers = []
-         
-         }
-   case res.body of
-     Left err -> do
-       _ <- liftEffect $ log $ printResponseFormatError err
-       pure $ Left $ printResponseFormatError err
-     Right json -> do
-      --_ <- liftEffect $ log $ show a.status
-      --_ <- liftEffect $ log $ show a.headers
-      --_ <- liftEffect $ log $ show a.body
-      let obj = decodeJson json
-      pure obj
+getNodes :: Int -> Aff GraphData
+getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId
