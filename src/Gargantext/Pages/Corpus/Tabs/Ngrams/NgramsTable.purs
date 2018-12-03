@@ -8,6 +8,8 @@ import Data.Either (Either(..))
 import Data.Foldable
 import Data.FoldableWithIndex
 import Data.FunctorWithIndex
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Newtype (class Newtype, unwrap)
 import Data.Lens (Lens', Prism', Iso', lens, over, prism, (^.), (^..), (%~), (.=), use, (<>~))
 import Data.Lens.Common (_Just)
@@ -294,6 +296,11 @@ data Action
   | SetSearchQuery String
 
 data Mode = Authors | Sources | Institutes | Terms
+
+derive instance genericMode :: Generic Mode _
+
+instance showMode :: Show Mode where
+  show = genericShow
 
 derive instance eqMode :: Eq Mode
 

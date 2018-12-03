@@ -3,6 +3,8 @@ module Gargantext.Components.Table where
 import Data.Array (filter)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import React (ReactElement, ReactClass, Children, createElement)
@@ -31,12 +33,22 @@ type Params = { offset :: Int, limit :: Int, orderBy :: OrderBy }
 
 newtype ColumnName = ColumnName String
 
+derive instance genericColumnName :: Generic ColumnName _
+
+instance showColumnName :: Show ColumnName where
+  show = genericShow
+
 derive instance eqColumnName :: Eq ColumnName
 
 columnName :: ColumnName -> String
 columnName (ColumnName c) = c
 
 data OrderByDirection a = ASC a | DESC a
+
+derive instance genericOrderByDirection :: Generic (OrderByDirection a) _
+
+instance showOrderByDirection :: Show a => Show (OrderByDirection a) where
+  show = genericShow
 
 derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 
