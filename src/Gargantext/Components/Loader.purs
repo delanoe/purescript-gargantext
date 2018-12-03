@@ -37,6 +37,7 @@ type State path loaded = { currentPath :: path, loaded :: Maybe loaded }
 
 createLoaderClass' :: forall path loaded props
                     . Eq path
+                   => Show path
                    => String
                    -> (path -> Aff loaded)
                    -> Render (State path loaded) {path :: path | props} (Action path)
@@ -44,12 +45,16 @@ createLoaderClass' :: forall path loaded props
 createLoaderClass' name loader render =
   React.component name
     (\this -> do
+       logs $ "createLoaderClass' " <> name
        s <- spec this
        pure { state: s.state
             , render: s.render
-            , componentDidMount: dispatcher this ForceReload
-            , componentDidUpdate: \_prevProps {currentPath} _snapshot -> do
+            , componentDidMount: do
+                logs $ name <> ".componentDidMount"
+                dispatcher this ForceReload
+            , componentDidUpdate: \{path: prevPath} {currentPath} _snapshot -> do
                 {path} <- React.getProps this
+                logs $ name <> ".componentDidUpdate " <> show {currentPath, path, prevPath}
                 -- This guard is the same as in performAction (SetPath ...),
                 -- however we need it here to avoid potential infinite loops.
                 -- https://reactjs.org/docs/react-component.html#componentdidupdate
@@ -61,9 +66,11 @@ createLoaderClass' name loader render =
 
     performAction :: PerformAction (State path loaded) {path :: path | props} (Action path)
     performAction ForceReload _ {currentPath} = do
+      logs $ name <> ".ForceReload {currentPath: " <> show currentPath <> "}"
       loaded <- lift $ loader currentPath
       modifyState_ $ _ { loaded = Just loaded }
-    performAction (SetPath newPath) _ {currentPath} =
+    performAction (SetPath newPath) _ {currentPath} = do
+      logs $ name <> ".SetPath " <> show {newPath, currentPath}
       when (newPath /= currentPath) do
         loaded <- lift $ loader newPath
         modifyState_ $ _ { currentPath = newPath, loaded = Just loaded }
@@ -75,6 +82,7 @@ type LoaderClass path loaded =
 
 createLoaderClass :: forall path loaded
                    . Eq path
+                  => Show path
                   => String
                   -> (path -> Aff loaded)
                   -> LoaderClass path loaded

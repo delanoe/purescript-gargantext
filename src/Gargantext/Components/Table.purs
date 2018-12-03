@@ -131,6 +131,7 @@ tableSpec = simpleSpec performAction render
   where
     modifyStateAndReload :: (State -> State) -> Props -> State -> StateCoTransformer State Unit
     modifyStateAndReload f {setParams} state = do
+      logs "modifyStateAndReload" -- TODO rename
       modifyState_ f
       liftEffect $ setParams $ stateParams $ f state
 

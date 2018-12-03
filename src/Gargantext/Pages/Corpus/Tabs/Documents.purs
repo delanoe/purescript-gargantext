@@ -197,8 +197,8 @@ loadPage {nodeId, params: {limit, offset, orderBy}} = do
   --res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
   res <- get $ toUrl Back (Tab TabDocs offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let docs = res2corpus <$> res
-  _ <- logs "Ok: loading page documents"
-  _ <- logs $ map show docs
+  --_ <- logs "Ok: loading page documents"
+  --_ <- logs $ map show docs
   pure $
     if mock then take limit $ drop offset sampleData else
     docs
