@@ -5,14 +5,11 @@ import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
 import Data.Lens (Prism', prism)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe)
-import Data.Map (lookup)
-import Effect (Effect)
 import Effect.Aff (Aff)
 import React (ReactClass, ReactElement, Children)
 import React as React
-import React.DOM (a, b, b', br', div, h3, hr, i, input, p, table, tbody, td, text, th, thead, tr)
 import React.DOM (a, br', div, input, p, text)
-import React.DOM.Props (className, href, scope, style)
+import React.DOM.Props (href)
 import Effect.Class (liftEffect)
 import Thermite ( Render, Spec
                 , createClass, simpleSpec, defaultPerformAction
@@ -25,7 +22,7 @@ import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as T
 import Gargantext.Config      (toUrl, Path(..), NodeType(..), TabType(..), End(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperData(..), HyperdataContact(..), ContactWhere(..))
+import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperdataContact(..), ContactWhere(..))
 ------------------------------------------------------------------------------
 
 type Props = Loader.InnerProps Int AnnuaireInfo ()
@@ -70,18 +67,6 @@ defaultAnnuaireInfo = AnnuaireInfo { id : 0
 ------------------------------------------------------------------------------
 toRows :: AnnuaireTable -> Array (Maybe Contact)
 toRows (AnnuaireTable a) = a.annuaireTable
-
-{-
-layoutAnnuaire :: Spec State {} Action
-layoutAnnuaire = simpleSpec performAction render
-  where
-    render :: Render {} {annuaireId :: Int} Void
-    render _ {annuaireId} _ _ =
-      [ annuaireLoader
-          { path: annuaireId
-          , component: createClass "LoadedAnnuaire" loadedAnnuaireSpec (const {})
-          } ]
-          -}
 
 layout :: Spec {} {annuaireId :: Int} Void
 layout = simpleSpec defaultPerformAction render
@@ -237,9 +222,16 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
 loadPage :: PageParams -> Aff AnnuaireTable
-loadPage {nodeId, params} = get $ toUrl Back (Children NodeContact 0 10 Nothing) (Just nodeId)
- -- TODO Tab TabDocs is not the right API call
- -- TODO params, see loadPage in Documents
+loadPage {nodeId, params: { offset, limit, orderBy }} =
+    get $ toUrl Back (Tab TabDocs offset limit Nothing {-(convOrderBy <$> orderBy)-})
+                     (Just nodeId)
+ -- TODO Tab TabDocs is this what we want in the end?
+ -- TODO orderBy
+ -- where
+ --   convOrderBy (T.ASC  (T.ColumnName "Name")) = NameAsc
+ --   convOrderBy (T.DESC (T.ColumnName "Name")) = NameDesc
+ --   ...
+ --   convOrderBy _ = NameAsc -- TODO
 
 getAnnuaireInfo :: Int -> Aff AnnuaireInfo
 getAnnuaireInfo id = get $ toUrl Back Node (Just id)
