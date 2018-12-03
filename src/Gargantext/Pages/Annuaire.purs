@@ -20,7 +20,7 @@ import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as T
-import Gargantext.Config      (toUrl, Path(..), NodeType(..), TabType(..), End(..))
+import Gargantext.Config      (toUrl, Path(..), NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperdataContact(..), ContactWhere(..))
 ------------------------------------------------------------------------------
@@ -223,9 +223,8 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
 ------------------------------------------------------------------------
 loadPage :: PageParams -> Aff AnnuaireTable
 loadPage {nodeId, params: { offset, limit, orderBy }} =
-    get $ toUrl Back (Tab TabDocs offset limit Nothing {-(convOrderBy <$> orderBy)-})
+    get $ toUrl Back (Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-})
                      (Just nodeId)
- -- TODO Tab TabDocs is this what we want in the end?
  -- TODO orderBy
  -- where
  --   convOrderBy (T.ASC  (T.ColumnName "Name")) = NameAsc
