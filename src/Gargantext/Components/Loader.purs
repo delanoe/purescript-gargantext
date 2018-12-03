@@ -55,10 +55,15 @@ createLoaderClass' name loader render =
             , componentDidUpdate: \{path: prevPath} {currentPath} _snapshot -> do
                 {path} <- React.getProps this
                 logs $ name <> ".componentDidUpdate " <> show {currentPath, path, prevPath}
-                -- This guard is the same as in performAction (SetPath ...),
+                -- This guard is the similar to the one in performAction (SetPath ...),
                 -- however we need it here to avoid potential infinite loops.
                 -- https://reactjs.org/docs/react-component.html#componentdidupdate
-                when (path /= currentPath) do
+                -- Moreover we want to make sure that not only the new prop
+                -- `path` is different from the one in the state (`currentPath`)
+                -- but also that it is different than the previous `path` prop
+                -- (`prevPath`). This avoid the path being reset to the
+                -- previous value.
+                when (prevPath /= path && path /= currentPath) do
                   dispatcher this (SetPath path)
             })
   where
