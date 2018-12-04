@@ -5,7 +5,7 @@ import Gargantext.Pages.Annuaire.User.Contacts.Types
 
 import Data.List (List, zipWith, catMaybes, toUnfoldable)
 import Data.Map (Map, empty, keys, values, lookup)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set (toUnfoldable) as S
 import Data.Tuple (Tuple(..), uncurry)
 import Data.Unfoldable (class Unfoldable)
@@ -15,14 +15,15 @@ import React (ReactElement)
 import React.DOM (div, h3, img, li, span, text, ul, text)
 import React.DOM.Props (_id, className, src)
 import Thermite (Render)
-
+import Data.Newtype (unwrap)
+import Data.String
 
 render :: Render State {} Action
 render dispatch _ state _ =
   [
           div [className "col-md-12"]
           $ case state.contact of
-            (Just (Contact contact)) -> display (maybe "no name" identity contact.name) (contactInfos contact.hyperdata)
+            (Just (Contact contact)) -> display (fromMaybe "no name" contact.name) (contactInfos contact.hyperdata)
             Nothing -> display "Contact not found" []
   ]
 
@@ -41,7 +42,7 @@ display title elems =
                     --[ ]
                     [ img [src "/images/Gargantextuel-212x300.jpg"] ]
               , div [className "col-md-1"] []
-              , div [className "col-mdData.Unfoldable-8"] elems
+              , div [className "col-md-8"] elems
               ]
             ]
           ]
@@ -56,10 +57,36 @@ mapMyMap f m = toUnfoldable
 
 infixl 4 mapMyMap as <.~$>
 
+getFirstName obj = fromMaybe "no title" $ getFirstName' <$> obj
+getFirstName' = fromMaybe "no first name" <<< _.firstName <<< unwrap
+
+getLastName obj = fromMaybe "no title" $ getLastName' <$> obj
+getLastName' = fromMaybe "no last name"  <<< _.lastName <<< unwrap
+
+getRole obj = joinWith ", " $ getRole' <$> (fromMaybe [] obj)
+getRole' = fromMaybe "no role" <<< _.role <<< unwrap
+
+-- getTouch :: Maybe (Array ContactWhere) -> Array ContactTouch
+-- getTouch obj = (_.touch <<< unwrap) <$> 
+--   where
+--     ary = fromMaybe [] obj
+
+-- getPhone :: Maybe (Array ContactWhere) -> String
+-- getPhone obj = fromMaybe "" $ getPhone' <$> (getTouch obj)
+
+-- getPhone' :: ContactTouch -> String
+-- getPhone' = fromMaybe "no phone" <<< _.phone <<< unwrap
+
+-- getMail obj = fromMaybe "" $ getMail' <$> (getTouch obj)
+-- getMail' = fromMaybe "no mail" <<< _.mail <<< unwrap
+
 contactInfos :: HyperdataContact -> Array ReactElement
-contactInfos (HyperdataContact {who:who,ou:ou}) =
-  [ ul [className "list-group"] (infoRender (Tuple "Last Name"  $ maybe "no title" (\(ContactWho {lastName:lastName}) -> maybe "no lastName" identity lastName)  who))
-  , ul [className "list-group"] (infoRender (Tuple "First name" $ maybe "no title" (\(ContactWho {firstName:firstName}) -> maybe "no firstName" identity firstName)  who))
+contactInfos (HyperdataContact {who:who, ou:ou}) =
+  [ ul [className "list-group"] (infoRender (Tuple "Last Name"  $ getLastName who))
+  , ul [className "list-group"] (infoRender (Tuple "First name" $ getFirstName who))
+  , ul [className "list-group"] (infoRender (Tuple "Role" $ getRole ou))
+  -- , ul [className "list-group"] (infoRender (Tuple "Phone" $ getPhone "Phone" ou))
+  -- , ul [className "list-group"] (infoRender (Tuple "Mail" $ getMail "Mail"))
   ]
 
   
