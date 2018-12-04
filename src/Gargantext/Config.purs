@@ -157,7 +157,7 @@ data NodeType = NodeUser
 instance showNodeType :: Show NodeType where
   show NodeUser      = "NodeUser"
   show Annuaire      = "Annuaire"
-  show NodeContact   = "NodeDocument" -- TODO anoe
+  show NodeContact   = "NodeContact"
   show Corpus        = "NodeCorpus"
   show CorpusV3      = "NodeCorpusV3"
   show Dashboard     = "NodeDashboard"
