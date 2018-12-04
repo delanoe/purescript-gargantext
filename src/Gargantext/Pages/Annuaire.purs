@@ -155,18 +155,18 @@ renderContactCells Nothing = []
 renderContactCells (Just (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) })) =
   [ text ""
   , a [ href (toUrl Front NodeContact (Just id)) ] [ text $ maybe "name" identity contact.title ]
-  , text $ maybe "No ContactWhere" renderContactWhereOrg  (join $ head <$> ou)
-  , text $ maybe "No ContactWhere" renderContactWhereDept (join $ head <$> ou)
-  , text $ maybe "No ContactWhere" renderContactWhereRole (join $ head <$> ou)
+  , text $ maybe "No ContactWhere" renderContactWhereOrg  (head $ ou)
+  , text $ maybe "No ContactWhere" renderContactWhereDept (head $ ou)
+  , text $ maybe "No ContactWhere" renderContactWhereRole (head $ ou)
   ]
   where
     maybe' = maybe "" identity
-    renderContactWhereOrg (ContactWhere { organization: Nothing }) = "No Organization"
-    renderContactWhereOrg (ContactWhere { organization: Just orga }) =
+    renderContactWhereOrg (ContactWhere { organization: [] }) = "No Organization"
+    renderContactWhereOrg (ContactWhere { organization: orga }) =
       maybe "No orga (list)" identity (head orga)
 
-    renderContactWhereDept (ContactWhere { labTeamDepts : Nothing }) = "Empty Dept"
-    renderContactWhereDept (ContactWhere { labTeamDepts : Just dept }) =
+    renderContactWhereDept (ContactWhere { labTeamDepts : [] }) = "Empty Dept"
+    renderContactWhereDept (ContactWhere { labTeamDepts : dept }) =
       maybe "No Dept (list)" identity (head dept)
 
     renderContactWhereRole (ContactWhere { role: Nothing }) = "Empty Role"

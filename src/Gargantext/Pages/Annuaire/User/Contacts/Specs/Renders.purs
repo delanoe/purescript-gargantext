@@ -5,7 +5,9 @@ import Gargantext.Pages.Annuaire.User.Contacts.Types
 
 import Data.List (List, zipWith, catMaybes, toUnfoldable)
 import Data.Map (Map, empty, keys, values, lookup)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Array (head)
+import Data.Semigroup ((<>))
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Set (toUnfoldable) as S
 import Data.Tuple (Tuple(..), uncurry)
 import Data.Unfoldable (class Unfoldable)
@@ -63,30 +65,29 @@ getFirstName' = fromMaybe "no first name" <<< _.firstName <<< unwrap
 getLastName obj = fromMaybe "no title" $ getLastName' <$> obj
 getLastName' = fromMaybe "no last name"  <<< _.lastName <<< unwrap
 
-getRole obj = joinWith ", " $ getRole' <$> (fromMaybe [] obj)
+getRole obj = joinWith ", " $ getRole' <$> obj
 getRole' = fromMaybe "no role" <<< _.role <<< unwrap
 
--- getTouch :: Maybe (Array ContactWhere) -> Array ContactTouch
--- getTouch obj = (_.touch <<< unwrap) <$> 
---   where
---     ary = fromMaybe [] obj
+getTouch :: Array ContactWhere -> Maybe ContactTouch
+getTouch = maybe Nothing (\(ContactWhere {touch:x}) -> x) <<< head
 
--- getPhone :: Maybe (Array ContactWhere) -> String
--- getPhone obj = fromMaybe "" $ getPhone' <$> (getTouch obj)
+getPhone :: Array ContactWhere -> String
+getPhone obj = fromMaybe "" $ getPhone' <$> (getTouch obj)
+getPhone' :: ContactTouch -> String
+getPhone' = fromMaybe "no phone" <<< _.phone <<< unwrap
 
--- getPhone' :: ContactTouch -> String
--- getPhone' = fromMaybe "no phone" <<< _.phone <<< unwrap
-
--- getMail obj = fromMaybe "" $ getMail' <$> (getTouch obj)
--- getMail' = fromMaybe "no mail" <<< _.mail <<< unwrap
+getMail :: Array ContactWhere -> String
+getMail obj = fromMaybe "" $ getMail' <$> (getTouch obj)
+getMail' :: ContactTouch -> String
+getMail' = fromMaybe "no mail" <<< _.mail <<< unwrap
 
 contactInfos :: HyperdataContact -> Array ReactElement
 contactInfos (HyperdataContact {who:who, ou:ou}) =
-  [ ul [className "list-group"] (infoRender (Tuple "Last Name"  $ getLastName who))
-  , ul [className "list-group"] (infoRender (Tuple "First name" $ getFirstName who))
-  , ul [className "list-group"] (infoRender (Tuple "Role" $ getRole ou))
-  -- , ul [className "list-group"] (infoRender (Tuple "Phone" $ getPhone "Phone" ou))
-  -- , ul [className "list-group"] (infoRender (Tuple "Mail" $ getMail "Mail"))
+  [ ul [className "list-group"] (infoRender (Tuple "Last Name"  $ " " <> getLastName  who))
+  , ul [className "list-group"] (infoRender (Tuple "First name" $ " " <> getFirstName who))
+  , ul [className "list-group"] (infoRender (Tuple "Role"       $ " " <> getRole      ou ))
+  , ul [className "list-group"] (infoRender (Tuple "Phone"      $ " " <> getPhone     ou ))
+  , ul [className "list-group"] (infoRender (Tuple "Mail"       $ " " <> getMail      ou ))
   ]
 
   

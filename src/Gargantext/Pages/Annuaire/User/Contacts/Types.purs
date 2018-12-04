@@ -5,7 +5,7 @@ import Prelude
 import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
 import Data.Either (Either(..))
 import Data.Lens (Lens', Prism', lens, prism)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Map (Map(..))
 
 import React (ReactElement)
@@ -31,8 +31,8 @@ newtype ContactWho =
      ContactWho { idWho     :: Maybe String
                 , firstName :: Maybe String
                 , lastName  :: Maybe String
-                , keywords  :: Maybe (Array String)
-                , freetags  :: Maybe (Array String)
+                , keywords  :: (Array String)
+                , freetags  :: (Array String)
                 }
 
 derive instance newtypeContactWho :: Newtype ContactWho _
@@ -46,11 +46,15 @@ instance decodeContactWho :: DecodeJson ContactWho
       lastName  <- obj .?? "lastName"
       keywords  <- obj .?? "keywords"
       freetags  <- obj .?? "freetags"
-      pure $ ContactWho {idWho, firstName, lastName, keywords, freetags}
+
+      let k = fromMaybe [] keywords
+      let f = fromMaybe [] freetags
+
+      pure $ ContactWho {idWho, firstName, lastName, keywords:k, freetags:f}
 
 newtype ContactWhere =
-     ContactWhere { organization :: Maybe (Array String)
-                  , labTeamDepts :: Maybe (Array String)
+     ContactWhere { organization :: (Array String)
+                  , labTeamDepts :: (Array String)
                   
                   , role         :: Maybe String
                   
@@ -78,7 +82,11 @@ instance decodeContactWhere :: DecodeJson ContactWhere
       touch         <- obj .?? "touch"
       entry         <- obj .?? "entry"
       exit          <- obj .?? "exit"
-      pure $ ContactWhere {organization, labTeamDepts, role, office, country, city, touch, entry, exit}
+
+      let o = fromMaybe [] organization
+      let l = fromMaybe [] labTeamDepts
+
+      pure $ ContactWhere {organization:o, labTeamDepts:l, role, office, country, city, touch, entry, exit}
 
 newtype ContactTouch =
      ContactTouch { mail      :: Maybe String
@@ -100,7 +108,7 @@ instance decodeContactTouch :: DecodeJson ContactTouch
 newtype HyperdataContact =
      HyperdataContact { bdd :: Maybe String
                       , who :: Maybe ContactWho
-                      , ou  :: Maybe (Array ContactWhere)
+                      , ou  :: (Array ContactWhere)
                       , title :: Maybe String
                       , source :: Maybe String
                       , lastValidation :: Maybe String
@@ -122,7 +130,9 @@ instance decodeHyperdataContact :: DecodeJson HyperdataContact
       uniqId         <- obj .?? "uniqId"
       uniqIdBdd      <- obj .?? "uniqIdBdd"
       
-      pure $ HyperdataContact {bdd, who, ou, title, source, lastValidation, uniqId, uniqIdBdd}
+      let ou' = fromMaybe [] ou
+
+      pure $ HyperdataContact {bdd, who, ou:ou', title, source, lastValidation, uniqId, uniqIdBdd}
 
 
 newtype HyperData c s =
