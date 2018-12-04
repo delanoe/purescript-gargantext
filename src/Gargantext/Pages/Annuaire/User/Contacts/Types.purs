@@ -13,8 +13,9 @@ import React.DOM (div)
 
 import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.DecodeMaybe ((.?|))
+import Data.Newtype
 
-data Contact = Contact {
+newtype Contact = Contact {
   id :: Int
   , typename :: Maybe Int
   , userId :: Maybe Int
@@ -24,13 +25,17 @@ data Contact = Contact {
   , hyperdata :: HyperdataContact
   }
 
-data ContactWho =
+derive instance newtypeContact :: Newtype Contact _
+
+newtype ContactWho =
      ContactWho { idWho     :: Maybe String
                 , firstName :: Maybe String
                 , lastName  :: Maybe String
                 , keywords  :: Maybe (Array String)
                 , freetags  :: Maybe (Array String)
                 }
+
+derive instance newtypeContactWho :: Newtype ContactWho _
 
 instance decodeContactWho :: DecodeJson ContactWho
   where
@@ -43,7 +48,7 @@ instance decodeContactWho :: DecodeJson ContactWho
       freetags  <- obj .?? "freetags"
       pure $ ContactWho {idWho, firstName, lastName, keywords, freetags}
 
-data ContactWhere =
+newtype ContactWhere =
      ContactWhere { organization :: Maybe (Array String)
                   , labTeamDepts :: Maybe (Array String)
                   
@@ -58,7 +63,7 @@ data ContactWhere =
                   , entry        :: Maybe String
                   , exit         :: Maybe String
   }
-
+derive instance newtypeContactWhere :: Newtype ContactWhere _
 
 instance decodeContactWhere :: DecodeJson ContactWhere
   where
@@ -75,11 +80,12 @@ instance decodeContactWhere :: DecodeJson ContactWhere
       exit          <- obj .?? "exit"
       pure $ ContactWhere {organization, labTeamDepts, role, office, country, city, touch, entry, exit}
 
-data ContactTouch =
+newtype ContactTouch =
      ContactTouch { mail      :: Maybe String
                   , phone     :: Maybe String
                   , url       :: Maybe String
   }
+derive instance newtypeContactTouch :: Newtype ContactTouch _
 
 instance decodeContactTouch :: DecodeJson ContactTouch
   where
@@ -91,7 +97,7 @@ instance decodeContactTouch :: DecodeJson ContactTouch
       pure $ ContactTouch {mail, phone, url}
 
 
-data HyperdataContact =
+newtype HyperdataContact =
      HyperdataContact { bdd :: Maybe String
                       , who :: Maybe ContactWho
                       , ou  :: Maybe (Array ContactWhere)
@@ -101,6 +107,7 @@ data HyperdataContact =
                       , uniqId :: Maybe String
                       , uniqIdBdd :: Maybe String
                     }
+derive instance newtypeHyperdataContact :: Newtype HyperdataContact _
 
 instance decodeHyperdataContact :: DecodeJson HyperdataContact
   where
@@ -114,10 +121,11 @@ instance decodeHyperdataContact :: DecodeJson HyperdataContact
       lastValidation <- obj .?? "lastValidation"
       uniqId         <- obj .?? "uniqId"
       uniqIdBdd      <- obj .?? "uniqIdBdd"
+      
       pure $ HyperdataContact {bdd, who, ou, title, source, lastValidation, uniqId, uniqIdBdd}
 
 
-data HyperData c s =
+newtype HyperData c s =
   HyperData
   { common :: c
   , shared :: s
