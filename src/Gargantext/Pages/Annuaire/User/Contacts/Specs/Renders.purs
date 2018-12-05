@@ -17,6 +17,7 @@ import React.DOM.Props (_id, className, src)
 import Thermite (Render)
 import Data.Newtype (unwrap)
 import Data.String
+import Data.Array
 
 render :: Render State {} Action
 render dispatch _ state _ =
@@ -66,27 +67,39 @@ getLastName' = fromMaybe "no last name"  <<< _.lastName <<< unwrap
 getRole obj = joinWith ", " $ getRole' <$> (fromMaybe [] obj)
 getRole' = fromMaybe "no role" <<< _.role <<< unwrap
 
--- getTouch :: Maybe (Array ContactWhere) -> Array ContactTouch
--- getTouch obj = (_.touch <<< unwrap) <$> 
---   where
---     ary = fromMaybe [] obj
+getTouch :: Maybe (Array ContactWhere) -> Array ContactTouch
+getTouch obj = fn aryMaybeContactTouch
+  where
+    aryContactWhere = fromMaybe [] obj
+    aryMaybeContactTouch = (_.touch <<< unwrap) <$> aryContactWhere
 
--- getPhone :: Maybe (Array ContactWhere) -> String
--- getPhone obj = fromMaybe "" $ getPhone' <$> (getTouch obj)
 
--- getPhone' :: ContactTouch -> String
--- getPhone' = fromMaybe "no phone" <<< _.phone <<< unwrap
+fn :: forall a. Array (Maybe a) -> Array a
+fn obj = concat $ fn' <$> obj
+  where 
+    fn' :: Maybe a -> Array a
+    fn' Nothing = []
+    fn' (Just v) = [v]
 
--- getMail obj = fromMaybe "" $ getMail' <$> (getTouch obj)
--- getMail' = fromMaybe "no mail" <<< _.mail <<< unwrap
+getPhone :: Maybe (Array ContactWhere) -> String
+getPhone obj = joinWith ", " $ getPhone' <$> (getTouch obj)
+
+getPhone' :: ContactTouch -> String
+getPhone' = fromMaybe "no phone" <<< _.phone <<< unwrap
+
+getMail :: Maybe (Array ContactWhere) -> String
+getMail obj = joinWith ", " $ getMail' <$> (getTouch obj)
+
+getMail' :: ContactTouch -> String
+getMail' = fromMaybe "no mail" <<< _.mail <<< unwrap
 
 contactInfos :: HyperdataContact -> Array ReactElement
 contactInfos (HyperdataContact {who:who, ou:ou}) =
   [ ul [className "list-group"] (infoRender (Tuple "Last Name"  $ getLastName who))
   , ul [className "list-group"] (infoRender (Tuple "First name" $ getFirstName who))
   , ul [className "list-group"] (infoRender (Tuple "Role" $ getRole ou))
-  -- , ul [className "list-group"] (infoRender (Tuple "Phone" $ getPhone "Phone" ou))
-  -- , ul [className "list-group"] (infoRender (Tuple "Mail" $ getMail "Mail"))
+  , ul [className "list-group"] (infoRender (Tuple "Phone" $ getPhone ou))
+  , ul [className "list-group"] (infoRender (Tuple "Mail" $ getMail ou))
   ]
 
   
