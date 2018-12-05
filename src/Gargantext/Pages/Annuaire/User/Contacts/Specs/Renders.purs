@@ -3,6 +3,7 @@ module Gargantext.Pages.Annuaire.User.Contacts.Specs.Renders
 
 import Gargantext.Pages.Annuaire.User.Contacts.Types
 
+import Prelude (map)
 import Data.List (List, zipWith, catMaybes, toUnfoldable)
 import Data.Map (Map, empty, keys, values, lookup)
 import Data.Array (head)
@@ -59,15 +60,46 @@ mapMyMap f m = toUnfoldable
 
 infixl 4 mapMyMap as <.~$>
 
-getFirstName obj = fromMaybe "no title" $ getFirstName' <$> obj
-getFirstName' = fromMaybe "no first name" <<< _.firstName <<< unwrap
+getFirstName obj = fromMaybe "Empty title" $ getFirstName' <$> obj
+getFirstName' = fromMaybe "Empty first name" <<< _.firstName <<< unwrap
 
-getLastName obj = fromMaybe "no title" $ getLastName' <$> obj
-getLastName' = fromMaybe "no last name"  <<< _.lastName <<< unwrap
+getLastName obj = fromMaybe "Empty title" $ getLastName' <$> obj
+getLastName' = fromMaybe "Empty last name"  <<< _.lastName <<< unwrap
 
+-- | ContactWhere infos
+-- TODO factor below
+getRole :: Array ContactWhere -> String
 getRole obj = joinWith ", " $ getRole' <$> obj
 getRole' = fromMaybe "no role" <<< _.role <<< unwrap
 
+getOrga :: Array ContactWhere -> String
+getOrga = maybe "Emtpy Contact-Where" getOrga' <<< head
+  where
+    getOrga' :: ContactWhere -> String
+    getOrga' obj = joinWith ", " $ (\(ContactWhere {organization: o}) ->o) obj
+
+getDept :: Array ContactWhere -> String
+getDept = maybe "Empty Department" getDept' <<< head
+  where
+    getDept' :: ContactWhere -> String
+    getDept' obj = joinWith ", " $ (\(ContactWhere {labTeamDepts: l}) ->l) obj
+
+getOffice :: Array ContactWhere -> String
+getOffice = fromMaybe "Empty Office" 
+          <<< maybe Nothing (\(ContactWhere {office:x}) -> x) 
+          <<< head
+
+getCity :: Array ContactWhere -> String
+getCity = fromMaybe "Empty City" 
+          <<< maybe Nothing (\(ContactWhere {city:x}) -> x) 
+          <<< head
+
+getCountry :: Array ContactWhere -> String
+getCountry = fromMaybe "Empty Country" 
+          <<< maybe Nothing (\(ContactWhere {country:x}) -> x) 
+          <<< head
+
+-- | ContactWhere / Touch infos
 getTouch :: Array ContactWhere -> Maybe ContactTouch
 getTouch = maybe Nothing (\(ContactWhere {touch:x}) -> x) <<< head
 
@@ -81,13 +113,19 @@ getMail obj = fromMaybe "" $ getMail' <$> (getTouch obj)
 getMail' :: ContactTouch -> String
 getMail' = fromMaybe "no mail" <<< _.mail <<< unwrap
 
+-- | TODO format data in better design (UI) shape
 contactInfos :: HyperdataContact -> Array ReactElement
 contactInfos (HyperdataContact {who:who, ou:ou}) =
-  [ ul [className "list-group"] (infoRender (Tuple "Last Name"  $ " " <> getLastName  who))
-  , ul [className "list-group"] (infoRender (Tuple "First name" $ " " <> getFirstName who))
-  , ul [className "list-group"] (infoRender (Tuple "Role"       $ " " <> getRole      ou ))
-  , ul [className "list-group"] (infoRender (Tuple "Phone"      $ " " <> getPhone     ou ))
-  , ul [className "list-group"] (infoRender (Tuple "Mail"       $ " " <> getMail      ou ))
+  [ ul [className "list-group"] (infoRender (Tuple "Last Name"    $ " " <> getLastName  who))
+  , ul [className "list-group"] (infoRender (Tuple "First name"   $ " " <> getFirstName who))
+  , ul [className "list-group"] (infoRender (Tuple "Organization" $ " " <> getOrga      ou ))
+  , ul [className "list-group"] (infoRender (Tuple "Lab/Team/Dept"$ " " <> getOrga      ou ))
+  , ul [className "list-group"] (infoRender (Tuple "Office"       $ " " <> getOffice      ou ))
+  , ul [className "list-group"] (infoRender (Tuple "City"         $ " " <> getCity      ou ))
+  , ul [className "list-group"] (infoRender (Tuple "Country"      $ " " <> getCountry      ou ))
+  , ul [className "list-group"] (infoRender (Tuple "Role"         $ " " <> getRole      ou ))
+  , ul [className "list-group"] (infoRender (Tuple "Phone"        $ " " <> getPhone     ou ))
+  , ul [className "list-group"] (infoRender (Tuple "Mail"         $ " " <> getMail      ou ))
   ]
 
   
