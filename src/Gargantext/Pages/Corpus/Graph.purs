@@ -28,7 +28,7 @@ import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, s
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick,placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-
+import Effect.Unsafe
 
 
 data Action
@@ -115,10 +115,11 @@ render d p (State s) c =
               , renderer : canvas
               , settings : mySettings
               , style : sStyle { height : "95%"}
-              -- , onClickNode : \e -> do
-              --   logs $ unsafeCoerce e
-              --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-              --   pure unit
+              , onClickNode : \e -> unsafePerformEffect $ do
+                 _ <- log "hello"
+                 -- _ <- logs $ unsafeCoerce e
+                 _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+                 pure unit
               -- TODO: fix this!
               }
         [ sigmaEnableWebGL
@@ -369,10 +370,11 @@ specOld = simpleSpec performAction render'
                              , renderer : canvas
                              , settings : mySettings
                              , style : sStyle { height : "95%"}
-                             -- , onClickNode : \e -> do
-                             --   logs $ unsafeCoerce e
-                             --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-                             --   pure unit
+                             , onClickNode : \e -> unsafePerformEffect $ do
+                                _ <- log " hello 2"
+                                --logs $ unsafeCoerce e
+                                _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+                                pure unit
                              }
                        [ sigmaEnableWebGL
                        , forceAtlas2 forceAtlas2Config
