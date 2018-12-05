@@ -1,5 +1,6 @@
 module Gargantext.Pages.Corpus.Graph where
 
+import Effect.Unsafe
 import Gargantext.Prelude
 
 import Affjax (defaultRequest, request)
@@ -25,16 +26,15 @@ import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick,placeholder, style, title, value)
+import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-import Effect.Unsafe
 
 
 data Action
   = LoadGraph Int         
   | SelectNode SelectedNode
-  | ShowSidePanel 
+  | ShowSidePanel Boolean
   | ShowControls
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
@@ -78,8 +78,8 @@ performAction (LoadGraph fp) _ _ = void do
 performAction (SelectNode node) _ _ = void do
   modifyState $ \(State s) -> State s {selectedNode = pure node}
 
-performAction (ShowSidePanel) _ (State state) = void do
-  modifyState $ \(State s) -> State s {showSidePanel = not (state.showSidePanel) }
+performAction (ShowSidePanel b) _ (State state) = void do
+  modifyState $ \(State s) -> State s {showSidePanel = b }
 
 
 performAction (ShowControls) _ (State state) = void do
@@ -284,8 +284,8 @@ specOld = simpleSpec performAction render'
              [text "Show Controls"]
              , button [className "btn btn-primary"
                , style {position:"relative",top:"-25px",left: "1380px"}
-               ,onClick \_ -> d ShowSidePanel
-               ] [text "showSidePanel"]
+               ,onClick \_ -> d $ ShowSidePanel $ not st.showSidePanel
+               ] [text "Show SidePanel"]
              ]
           , if (st.showControls) then 
               div [className "col-md-12", style {marginBottom : "21px"}]
@@ -373,6 +373,7 @@ specOld = simpleSpec performAction render'
                              , onClickNode : \e -> unsafePerformEffect $ do
                                 _ <- log " hello 2"
                                 --logs $ unsafeCoerce e
+                                _ <- d $ ShowSidePanel true
                                 _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
                                 pure unit
                              }
