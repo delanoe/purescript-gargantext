@@ -15,6 +15,7 @@ import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
+import Data.String (joinWith)
 import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
@@ -52,7 +53,8 @@ newtype State = State
   , selectedNode :: Maybe SelectedNode
   , showSidePanel :: Boolean
   , showControls :: Boolean
-  , nodeResults :: Array NodeResults 
+  , nodeResults :: Array NodeResults
+  , corpusId :: Int 
   }
 
 newtype NodeQuery  = NodeQuery 
@@ -77,6 +79,7 @@ initialState = State
   , showSidePanel : false
   , showControls : false
   , nodeResults : []
+  , corpusId : 0
   }
 
 graphSpec :: Spec State {} Action
@@ -85,17 +88,21 @@ graphSpec = simpleSpec performAction render
 performAction :: PerformAction State {} Action
 performAction (LoadGraph fp) _ _ = void do
   _ <- logs fp
-  _ <- modifyState \(State s) -> State s { sigmaGraphData = Nothing}
+  _ <- modifyState \(State s) -> State s {corpusId = fp, sigmaGraphData = Nothing}
   resp <- lift $ getNodes fp
       -- TODO: here one might `catchError getNodes` to visually empty the
       -- graph.
   modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
-performAction (SelectNode (SelectedNode node)) _ _ = void do
-  response <- lift $selectNodeApi $ NodeQuery {query : [node.label], parentId : fromMaybe 0 $ fromString $ node.id}
-  
-  modifyState $ \(State s) -> State s {nodeResults = response }
-  --modifyState $ \(State s) -> State s {selectedNode = pure $ SelectedNode node}
+performAction (SelectNode (SelectedNode node)) _ (State state) = void do
+  _ <- modifyState $ \(State s) -> State s {selectedNode = pure $ SelectedNode node}
+  response <- lift $ attempt $ selectNodeApi $ NodeQuery {query : [node.label], parentId : state.corpusId}
+  case response of
+    Left err -> do
+      _ <- liftEffect $ log $ show err
+      modifyState identity
+    Right resp -> do
+      modifyState $ \(State s) -> State s {nodeResults = resp}
 
 performAction (ShowSidePanel b) _ (State state) = void do
   modifyState $ \(State s) -> State s {showSidePanel = b }
@@ -411,8 +418,10 @@ specOld = simpleSpec performAction render'
              [ div [className "row"]
                [ div [_id "sidepanel" , style {borderBottom : "1px solid black"}]
                [ case st.selectedNode of
-                    Nothing -> span [] []
-                    Just selectedNode -> p [] [text $ "selected Node : " <> getter _.label selectedNode
+                    Nothing -> span [] [ text "dummy text"]
+                    Just selectedNode -> p [] [ text $ "selected Node : " <> getter _.label selectedNode
+                                              , text $ (joinWith ", " ( getTitle st.nodeResults))
+                                              , text $ (joinWith ", " (getAuthors st.nodeResults))
                                               , br'
                                               , p [] [button [className "btn btn-primary", style {marginBottom : "18px"}] [text "Remove"]]
                                               ]
@@ -509,6 +518,13 @@ specOld = simpleSpec performAction render'
               div [] []   -- ends sidepanel column here
            ]
          ]
+
+getTitle :: Array NodeResults -> Array String 
+getTitle ary = map (\(NodeResults s)-> s.title) ary
+
+getAuthors :: Array NodeResults -> Array String 
+getAuthors ary = map (\(NodeResults s ) -> s.authors) ary
+
 
 getNodes :: Int -> Aff GraphData
 getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId
