@@ -1,14 +1,11 @@
 module Gargantext.Pages.Corpus where
 
 
-import Data.Either (Either(..))
-import Data.Lens (Lens', Prism', lens, prism)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import React as React
 import React (ReactClass, ReactElement)
-import Thermite ( Render, Spec, createClass, defaultPerformAction, focus
-                , simpleSpec, noState )
+import Thermite (Spec, Render, simpleSpec, createClass, defaultPerformAction)
 --------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..))
