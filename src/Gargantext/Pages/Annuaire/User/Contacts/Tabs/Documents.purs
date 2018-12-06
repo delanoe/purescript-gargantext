@@ -29,7 +29,7 @@ import Gargantext.Prelude
 import Gargantext.Config (Path(..), NodeType(..), TabType(..), TabSubType(..), toUrl, End(..), OrderBy(..))
 import Gargantext.Config.REST (get, put, post, deleteWithBody)
 import Gargantext.Utils.DecodeMaybe ((.|))
-import Gargantext.Components.Charts.Options.ECharts (chart)
+--import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
@@ -171,8 +171,8 @@ layoutDocview = simpleSpec performAction render
       , br'
       , div [className "container1"]
         [ div [className "row"]
-          [ chart globalPublis
-          , div [className "col-md-12"]
+          [ -- chart globalPublis
+           div [className "col-md-12"]
             [ pageLoader
                 { path: initialPageParams nodeId
                 , contact
