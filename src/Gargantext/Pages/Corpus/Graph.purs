@@ -4,23 +4,25 @@ import Effect.Unsafe
 import Gargantext.Prelude
 
 import Affjax (defaultRequest, request)
-import Affjax.ResponseFormat (printResponseFormatError)
+import Affjax.ResponseFormat (ResponseFormat(..), printResponseFormatError)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
 import Data.Argonaut (decodeJson)
 import Data.Array (length, mapWithIndex, (!!))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Int (fromString, toNumber)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, attempt)
+import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Config as Config
-import Gargantext.Config.REST (get)
+import Gargantext.Config.REST (get, post)
 import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
@@ -50,6 +52,19 @@ newtype State = State
   , selectedNode :: Maybe SelectedNode
   , showSidePanel :: Boolean
   , showControls :: Boolean
+  , nodeResults :: Array NodeResults 
+  }
+
+newtype NodeQuery  = NodeQuery 
+  {
+    query :: Array String
+  , parentId :: Int
+  }
+newtype NodeResults = NodeResults 
+  {
+    rid :: Int 
+  , title :: String 
+  , authors :: String 
   }
 
 initialState :: State
@@ -61,6 +76,7 @@ initialState = State
   , selectedNode : Nothing
   , showSidePanel : false
   , showControls : false
+  , nodeResults : []
   }
 
 graphSpec :: Spec State {} Action
@@ -75,8 +91,11 @@ performAction (LoadGraph fp) _ _ = void do
       -- graph.
   modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
-performAction (SelectNode node) _ _ = void do
-  modifyState $ \(State s) -> State s {selectedNode = pure node}
+performAction (SelectNode (SelectedNode node)) _ _ = void do
+  response <- lift $selectNodeApi $ NodeQuery {query : [node.label], parentId : fromMaybe 0 $ fromString $ node.id}
+  
+  modifyState $ \(State s) -> State s {nodeResults = response }
+  --modifyState $ \(State s) -> State s {selectedNode = pure $ SelectedNode node}
 
 performAction (ShowSidePanel b) _ (State state) = void do
   modifyState $ \(State s) -> State s {showSidePanel = b }
@@ -372,6 +391,7 @@ specOld = simpleSpec performAction render'
                              , style : sStyle { height : "95%"}
                              , onClickNode : \e -> unsafePerformEffect $ do
                                 _ <- log " hello 2"
+                                --_ <- attempt $ selectNodeApi $ NodeQuery {query : [], parentId : 0}
                                 --logs $ unsafeCoerce e
                                 _ <- d $ ShowSidePanel true
                                 _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
@@ -492,3 +512,27 @@ specOld = simpleSpec performAction render'
 
 getNodes :: Int -> Aff GraphData
 getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId
+
+selectNodeApi :: NodeQuery -> Aff (Array NodeResults)
+selectNodeApi = post $ getUrl <> "search"
+
+instance encodeJsonNQuery :: EncodeJson NodeQuery where
+  encodeJson (NodeQuery post)
+     = "query" := post.query
+    ~> "parent_id" := post.parentId
+    ~> jsonEmptyObject
+
+
+instance decodeJsonNResults :: DecodeJson NodeResults where
+  decodeJson json = do
+    obj <- decodeJson json
+    rid <- obj .? "id"
+    title  <- obj .? "title"
+    authors <- obj .? "authors"
+    pure $ NodeResults {rid,title,authors}
+
+
+getUrl :: String
+getUrl = back.baseUrl <> back.prePath
+  where 
+    back = Config.endConfig.back
