@@ -19,32 +19,9 @@ import Gargantext.Config      (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..))
 import Gargantext.Pages.Corpus.Tabs.Types (Props) as Tabs
-import Gargantext.Pages.Corpus.Tabs.States (State, initialState) as Tabs
-import Gargantext.Pages.Corpus.Tabs.Actions (Action) as Tabs
-import Gargantext.Pages.Corpus.Tabs.Specs (statefulTabs) as Tabs
+import Gargantext.Pages.Corpus.Tabs.Specs (pureTabs) as Tabs
 -------------------------------------------------------------------
 type Props = Tabs.Props
-
-type State = { tabsView    :: Tabs.State
-             }
-
-initialState :: Props -> State
-initialState _props =
-  { tabsView    : Tabs.initialState {} }
-
-------------------------------------------------------------------------
-_tabsView :: forall a b. Lens' { tabsView :: a | b } a
-_tabsView = lens (\s -> s.tabsView) (\s ss -> s{tabsView = ss})
-------------------------------------------------------------------------
-
-data Action
-  = TabsA   Tabs.Action
-
-_tabsAction :: Prism' Action Tabs.Action
-_tabsAction = prism TabsA \ action ->
-  case action of
-    TabsA taction -> Right taction
-    -- _-> Left action
 
 ------------------------------------------------------------------------
 layout :: Spec {} {nodeId :: Int} Void
@@ -53,12 +30,11 @@ layout = simpleSpec defaultPerformAction render
     render :: Render {} {nodeId :: Int} Void
     render _ {nodeId} _ _ =
       [ corpusLoader { path: nodeId
-                     , component: createClass "Layout" layout' initialState
+                     , component: createClass "Layout" layout' (const {})
                      } ]
 
-layout' :: Spec State Props Action
-layout' = noState corpusHeaderSpec
-       <> focus _tabsView _tabsAction Tabs.statefulTabs
+layout' :: Spec {} Props Void
+layout' = corpusHeaderSpec <> Tabs.pureTabs
 
 corpusHeaderSpec :: Spec {} Props Void
 corpusHeaderSpec = simpleSpec defaultPerformAction render

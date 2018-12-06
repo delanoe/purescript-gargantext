@@ -1,6 +1,8 @@
-module Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable
+-- TODO copy of Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable where
+module Gargantext.Pages.Annuaire.User.Contacts.Tabs.Ngrams.NgramsTable
   (Mode(..), ngramsTableSpec)
   where
+
 
 import Control.Monad.State (class MonadState, execState)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
@@ -49,10 +51,10 @@ import Gargantext.Components.Table as T
 import Gargantext.Prelude
 import Gargantext.Config
 import Gargantext.Config.REST
+import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact)
 import Gargantext.Components.Loader as Loader
-import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), PropsRow)
 
-type Props = { mode :: Mode | PropsRow }
+type Props = Loader.InnerProps Int Contact ( mode :: Mode )
 
 type PageParams = {nodeId :: Int, params :: T.Params, mode :: Mode}
 
@@ -296,7 +298,7 @@ data Action
   | SetTermTypeFilter (Maybe TermType)
   | SetSearchQuery String
 
-data Mode = Authors | Sources | Institutes | Terms
+data Mode = Patents | Books | Communication
 
 derive instance genericMode :: Generic Mode _
 
@@ -488,17 +490,16 @@ initialPageParams nodeId mode = {nodeId, params: T.initialParams, mode}
 
 type PageLoaderProps =
   { path :: PageParams
---, corpusInfo :: Maybe (NodePoly CorpusInfo)
+--, annuaireInfo :: Maybe (NodePoly AnnuaireInfo)
   }
 
-getTable :: CTabNgramType -> Maybe Int -> Aff NgramsTable
-getTable tab = get <<< toUrl Back (Ngrams (TabCorpus (TabNgramType tab)) Nothing)
+getTable :: PTabNgramType -> Maybe Int -> Aff NgramsTable
+getTable tab = get <<< toUrl Back (Ngrams (TabPairing (TabNgramType tab)) Nothing)
 
-modeTabType :: Mode -> CTabNgramType
-modeTabType Authors = CTabAuthors
-modeTabType Sources = CTabSources
-modeTabType Institutes = CTabInstitutes
-modeTabType Terms = CTabTerms
+modeTabType :: Mode -> PTabNgramType
+modeTabType Patents = PTabPatents
+modeTabType Books = PTabBooks
+modeTabType Communication = PTabCommunication
 
 loadPage :: PageParams -> Aff NgramsTable
 loadPage {nodeId, mode} = getTable (modeTabType mode) (Just nodeId) -- TODO this ignores params
@@ -514,7 +515,7 @@ ngramsTableSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
     render _ {path: nodeId, mode} _ _ =
-      -- TODO: ignored ignored loaded: corpusInfo
+      -- TODO: ignored ignored loaded: annuaireInfo
       [ ngramsLoader { path: initialPageParams nodeId mode
                      , component: createClass "NgramsTableLayout" ngramsTableSpec' initialState
                      } ]

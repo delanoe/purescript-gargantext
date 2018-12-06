@@ -9,7 +9,6 @@ import Gargantext.Components.Login                  as LN
 
 import Gargantext.Pages.Corpus.Document       as D
 import Gargantext.Pages.Corpus.Graph     as GE
-import Gargantext.Pages.Annuaire.User.Contacts      as C
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Router                               (Routes(..))
@@ -19,7 +18,6 @@ type AppState =
   , loginState   :: LN.State
   , addCorpusState :: AC.State
   , searchState    :: S.State
-  , userPageState  :: C.State
   , documentState  :: D.State
   , search         :: String
   , showLogin      :: Boolean
@@ -36,7 +34,6 @@ initAppState = do
     , loginState
     , addCorpusState : AC.initialState
     , searchState    : S.initialState
-    , userPageState  : C.initialState
     , documentState  : D.initialState {}
     , search         : ""
     , showLogin      : false
@@ -54,9 +51,6 @@ _addCorpusState = lens (\s -> s.addCorpusState) (\s ss -> s{addCorpusState = ss}
 
 _searchState :: Lens' AppState S.State
 _searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
-
-_userPageState :: Lens' AppState C.State
-_userPageState = lens (\s -> s.userPageState) (\s ss -> s{userPageState = ss})
 
 _documentViewState :: Lens' AppState D.State
 _documentViewState = lens (\s -> s.documentState) (\s ss -> s{documentState = ss})

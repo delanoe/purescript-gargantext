@@ -98,10 +98,18 @@ endBaseUrl end c = (endOf end c).baseUrl
 endPathUrl :: End -> EndConfig -> Path -> Maybe Id -> UrlPath
 endPathUrl end = pathUrl <<< endOf end
 
+tabTypeDocs :: TabType -> UrlPath
+tabTypeDocs (TabCorpus  t) = "table?view="   <> show t
+tabTypeDocs (TabPairing t) = "pairing?view=" <> show t
+
+tabTypeNgrams :: TabType -> UrlPath
+tabTypeNgrams (TabCorpus  t) = "listGet?ngramsType=" <> show t
+tabTypeNgrams (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
+
 pathUrl :: Config -> Path -> Maybe Id -> UrlPath
 pathUrl c (Tab t o l s) i =
     pathUrl c (NodeAPI Node) i <>
-      "/" <> "table?view=" <> show t <> "&offset=" <> show o
+      "/" <> tabTypeDocs t <> "&offset=" <> show o
           <> "&limit=" <> show l <> os
   where
     os = maybe "" (\x -> "&order=" <> show x) s
@@ -112,7 +120,7 @@ pathUrl c (Children n o l s) i =
   where
     os = maybe "" (\x -> "&order=" <> show x) s
 pathUrl c (Ngrams t listid) i =
-    pathUrl c (NodeAPI Node) i <> "/" <> "listGet?ngramsType=" <> show t <> listid'
+    pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgrams t <> listid'
   where
     listid' = maybe "" (\x -> "&list=" <> show x) listid
 pathUrl c Auth Nothing = c.prePath <> "auth"
@@ -171,13 +179,11 @@ instance showNodeType :: Show NodeType where
   show Nodes         = "Nodes"
   show Tree          = "NodeTree"
 
-
-
 data Path
   = Auth
   | Tab      TabType  Offset Limit (Maybe OrderBy)
   | Children NodeType Offset Limit (Maybe OrderBy)
-  | Ngrams TabType (Maybe TermList)
+  | Ngrams   TabType (Maybe TermList)
   | NodeAPI NodeType
 
 data End = Back | Front
@@ -201,15 +207,31 @@ instance showApiVersion :: Show ApiVersion where
   show V11 = "v1.1"
 ------------------------------------------------------------
 
-data TabType = TabDocs | TabTerms | TabSources | TabAuthors | TabInstitutes | TabTrash
+data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
 
-instance showTabType :: Show TabType where
-  show TabDocs       = "Docs"
-  show TabTerms      = "Terms"
-  show TabSources    = "Sources"
-  show TabAuthors    = "Authors"
-  show TabInstitutes = "Institutes"
-  show TabTrash      = "Trash"
+instance showCTabNgramType :: Show CTabNgramType where
+  show CTabTerms      = "Terms"
+  show CTabSources    = "Sources"
+  show CTabAuthors    = "Authors"
+  show CTabInstitutes = "Institutes"
+
+data PTabNgramType = PTabPatents | PTabBooks | PTabCommunication
+
+instance showPTabNgramType :: Show PTabNgramType where
+  show PTabPatents       = "Patents"
+  show PTabBooks         = "Books"
+  show PTabCommunication = "Communication"
+
+data TabSubType a = TabDocs | TabNgramType a | TabTrash
+
+instance showTabSubType :: Show a => Show (TabSubType a) where
+  show TabDocs          = "Docs"
+  show (TabNgramType a) = show a
+  show TabTrash         = "Trash"
+
+data TabType
+  = TabCorpus  (TabSubType CTabNgramType)
+  | TabPairing (TabSubType PTabNgramType)
 
 ------------------------------------------------------------
 nodeTypeUrl :: NodeType -> Url

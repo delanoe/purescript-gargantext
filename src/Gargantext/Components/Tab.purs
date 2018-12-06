@@ -13,7 +13,7 @@ import Thermite ( PerformAction, Render, Spec
                 , _render, modifyState, focus
                 , simpleSpec, withState)
 
-type State = Int
+type State = { activeTab :: Int }
 
 data Action = ChangeTab Int
 
@@ -22,16 +22,16 @@ tabs :: forall state props action.
   -> List (Tuple String (Spec state props action))
                       -> Spec state props action
 tabs l p ls = withState \st ->
+  let {activeTab} = view l st in
   fold
-  [ focus l p $ simpleSpec performAction (render (activeTab st)  ls)
-  , wrapper $ fold $ mapWithIndex        (   tab (activeTab st)) ls
+  [ focus l p $ simpleSpec performAction (render activeTab  ls)
+  , wrapper $ fold $ mapWithIndex        (   tab activeTab) ls
   ]
   where
     performAction :: forall props.
       PerformAction State props Action
-    performAction (ChangeTab i) _ _ =
-      void $ modifyState $ const i
-    activeTab = view l
+    performAction (ChangeTab activeTab) _ _ =
+      void $ modifyState $ const {activeTab}
     wrapper = over _render \render d p s c ->
       [div [className "tab-content"] $ render d p s c]
 
@@ -49,7 +49,7 @@ tab sid iid (Tuple name spec) = over _render tabRender spec
 
 
 render :: forall state props action.
-  State -> List (Tuple String (Spec state props action))
+  Int -> List (Tuple String (Spec state props action))
                           -> Render State props Action
 render at ls d p s c =
   [ nav []

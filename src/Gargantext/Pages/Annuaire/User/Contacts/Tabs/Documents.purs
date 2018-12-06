@@ -1,4 +1,5 @@
-module Gargantext.Pages.Corpus.Tabs.Documents where
+-- TODO copy of Gargantext.Pages.Corpus.Tabs.Documents
+module Gargantext.Pages.Annuaire.User.Contacts.Tabs.Documents where
 
 import Data.Array (take, drop)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
@@ -25,7 +26,7 @@ import React as React
 import React (ReactClass, ReactElement, Children)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (Path(..), NodeType(..), TabSubType(..), TabType(..), toUrl, End(..), OrderBy(..))
+import Gargantext.Config (Path(..), NodeType(..), TabType(..), TabSubType(..), toUrl, End(..), OrderBy(..))
 import Gargantext.Config.REST (get, put, post, deleteWithBody)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Components.Charts.Options.ECharts (chart)
@@ -33,7 +34,7 @@ import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
 import Gargantext.Pages.Corpus.Dashboard (globalPublis)
-import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo(..), Props)
+import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact, Props)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import React.DOM (a, br', button, div, i, input, p, text)
 import React.DOM.Props (_type, className, href, name, onClick, placeholder, style, value)
@@ -141,7 +142,7 @@ filterSpec = simpleSpec defaultPerformAction render
 docViewSpec :: Spec {} Props Void
 docViewSpec = hideState (const initialState) layoutDocview
 
--- | Main layout of the Documents Tab of a Corpus
+-- | Main layout of the Documents Tab of an Annuaire
 layoutDocview :: Spec State Props Action
 layoutDocview = simpleSpec performAction render
   where
@@ -164,7 +165,7 @@ layoutDocview = simpleSpec performAction render
       --       `checked: Set.member n state.documentIdsToDelete`
 
     render :: Render State Props Action
-    render dispatch {path: nodeId, loaded: corpusInfo} _ _ =
+    render dispatch {path: nodeId, loaded: contact} _ _ =
       [ p [] []
       , div [ style {textAlign : "center"}] [input [placeholder "Filter here"]]
       , br'
@@ -174,7 +175,7 @@ layoutDocview = simpleSpec performAction render
           , div [className "col-md-12"]
             [ pageLoader
                 { path: initialPageParams nodeId
-                , corpusInfo
+                , contact
                 , dispatch
                 }
             ]
@@ -202,7 +203,7 @@ loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   --res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
-  res <- get $ toUrl Back (Tab (TabCorpus TabDocs) offset limit (convOrderBy <$> orderBy)) (Just nodeId)
+  res <- get $ toUrl Back (Tab (TabPairing TabDocs) offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let docs = res2corpus <$> res
   --_ <- logs "Ok: loading page documents"
   --_ <- logs $ map show docs
@@ -230,20 +231,20 @@ loadPage {nodeId, params: {limit, offset, orderBy}} = do
 
 type PageLoaderProps row =
   { path :: PageParams
-  , corpusInfo :: NodePoly CorpusInfo
+  , contact :: Contact
   , dispatch :: Action -> Effect Unit
   | row
   }
 
 renderPage :: forall props path.
               Render (Loader.State {nodeId :: Int | path} (Array DocumentsView))
-                     { corpusInfo :: NodePoly CorpusInfo
+                     { contact :: Contact
                      , dispatch :: Action -> Effect Unit
                      | props
                      }
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage loaderDispatch {corpusInfo, dispatch} {currentPath: {nodeId}, loaded: Just res} _ =
+renderPage loaderDispatch {contact, dispatch} {currentPath: {nodeId}, loaded: Just res} _ =
   [ T.tableElt
       { rows
       , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, params})
@@ -256,12 +257,7 @@ renderPage loaderDispatch {corpusInfo, dispatch} {currentPath: {nodeId}, loaded:
           , "Source"
           , "Delete"
           ]
-      , totalRecords: maybe 47361 -- TODO
-                        identity
-                        ((\(NodePoly n) -> n.hyperdata)
-                         >>>
-                         (\(CorpusInfo c) -> c.totalRecords)
-                        <$> Just corpusInfo) -- TODO
+      , totalRecords: 47361 -- TODO
       }
   ]
   where

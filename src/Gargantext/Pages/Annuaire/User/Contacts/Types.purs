@@ -11,10 +11,12 @@ import Data.Map (Map(..))
 import React (ReactElement)
 import React.DOM (div)
 
+import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Newtype
 
+-- TODO: should it be a NodePoly HyperdataContact ?
 newtype Contact = Contact {
   id :: Int
   , typename :: Maybe Int
@@ -166,29 +168,5 @@ instance decodeUser :: DecodeJson Contact where
                    , hyperdata
                    }
 
-data Action
-  = TabA Tab.Action
-  | FetchContact Int
-
-type State =
-  { activeTab :: Int
-  , contact :: Maybe Contact
-  }
-
-initialState :: State
-initialState =
-  { activeTab : 0
-  , contact: Nothing
-  }
-
-_contact :: Lens' State (Maybe Contact)
-_contact = lens (\s -> s.contact) (\s ss -> s{contact = ss})
-
-_tablens :: Lens' State Tab.State
-_tablens = lens (\s -> s.activeTab) (\s ss -> s {activeTab = ss})
-
-_tabAction :: Prism' Action Tab.Action
-_tabAction = prism TabA \ action ->
-  case action of
-    TabA laction -> Right laction
-    _-> Left action
+type PropsRow = Loader.InnerPropsRow Int Contact ()
+type Props = Record PropsRow
