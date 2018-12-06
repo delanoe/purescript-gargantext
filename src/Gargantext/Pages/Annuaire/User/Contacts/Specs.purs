@@ -147,6 +147,12 @@ infoRender (Tuple title content) =
   , span [] [text content]
   ]
 
+-- | Below an example of a loader, use all code below and adapt it
+-- to your code
+-- layoutUser is exported by the module
+-- only one subnode: contactLoader which as 2 parameters
+--   - path (nodeId)
+--   - components (which has to be drawn when loaded
 layoutUser :: Spec {} {nodeId :: Int} Void
 layoutUser = simpleSpec defaultPerformAction render
   where
@@ -156,6 +162,9 @@ layoutUser = simpleSpec defaultPerformAction render
                       , component: createClass "LayoutUser" layoutUser' (const {})
                       } ]
 
+-- | Take the spec and transform it in React Class
+-- put here how to draw the Composant
+-- props loaded: what has been loaded by the component loader
 layoutUser' :: Spec {} Props Void
 layoutUser' = simpleSpec defaultPerformAction render
            <> Tabs.pureTabs
@@ -166,11 +175,14 @@ layoutUser' = simpleSpec defaultPerformAction render
           display (fromMaybe "no name" name) (contactInfos hyperdata)
       ]
 
+-- | toUrl to get data
 getContact :: Int -> Aff Contact
 getContact id = get $ toUrl Back Node $ Just id
 
+-- | Change name for you
 contactLoaderClass :: ReactClass (Loader.Props Int Contact)
 contactLoaderClass = Loader.createLoaderClass "ContactLoader" getContact
 
+-- | Change type according to what has been loaded
 contactLoader :: Loader.Props' Int Contact -> ReactElement
 contactLoader props = React.createElement contactLoaderClass props []
