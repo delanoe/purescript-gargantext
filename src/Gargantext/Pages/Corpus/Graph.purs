@@ -1,40 +1,43 @@
 module Gargantext.Pages.Corpus.Graph where
 
+import Effect.Unsafe
 import Gargantext.Prelude
 
 import Affjax (defaultRequest, request)
-import Affjax.ResponseFormat (printResponseFormatError)
+import Affjax.ResponseFormat (ResponseFormat(..), printResponseFormatError)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
 import Data.Argonaut (decodeJson)
 import Data.Array (length, mapWithIndex, (!!))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Int (fromString, toNumber)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
-import Effect.Aff (Aff)
+import Data.String (joinWith)
+import Effect.Aff (Aff, attempt)
+import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Config as Config
-import Gargantext.Config.REST (get)
+import Gargantext.Config.REST (get, post)
 import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick,placeholder, style, title, value)
+import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
-
 
 
 data Action
   = LoadGraph Int         
   | SelectNode SelectedNode
-  | ShowSidePanel 
+  | ShowSidePanel Boolean
   | ShowControls
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
@@ -50,6 +53,20 @@ newtype State = State
   , selectedNode :: Maybe SelectedNode
   , showSidePanel :: Boolean
   , showControls :: Boolean
+  , nodeResults :: Array NodeResults
+  , corpusId :: Int 
+  }
+
+newtype NodeQuery  = NodeQuery 
+  {
+    query :: Array String
+  , parentId :: Int
+  }
+newtype NodeResults = NodeResults 
+  {
+    rid :: Int 
+  , title :: String 
+  , authors :: String 
   }
 
 initialState :: State
@@ -61,6 +78,8 @@ initialState = State
   , selectedNode : Nothing
   , showSidePanel : false
   , showControls : false
+  , nodeResults : []
+  , corpusId : 0
   }
 
 graphSpec :: Spec State {} Action
@@ -69,17 +88,24 @@ graphSpec = simpleSpec performAction render
 performAction :: PerformAction State {} Action
 performAction (LoadGraph fp) _ _ = void do
   _ <- logs fp
-  _ <- modifyState \(State s) -> State s { sigmaGraphData = Nothing}
+  _ <- modifyState \(State s) -> State s {corpusId = fp, sigmaGraphData = Nothing}
   resp <- lift $ getNodes fp
       -- TODO: here one might `catchError getNodes` to visually empty the
       -- graph.
   modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
-performAction (SelectNode node) _ _ = void do
-  modifyState $ \(State s) -> State s {selectedNode = pure node}
+performAction (SelectNode (SelectedNode node)) _ (State state) = void do
+  _ <- modifyState $ \(State s) -> State s {selectedNode = pure $ SelectedNode node}
+  response <- lift $ attempt $ selectNodeApi $ NodeQuery {query : [node.label], parentId : state.corpusId}
+  case response of
+    Left err -> do
+      _ <- liftEffect $ log $ show err
+      modifyState identity
+    Right resp -> do
+      modifyState $ \(State s) -> State s {nodeResults = resp}
 
-performAction (ShowSidePanel) _ (State state) = void do
-  modifyState $ \(State s) -> State s {showSidePanel = not (state.showSidePanel) }
+performAction (ShowSidePanel b) _ (State state) = void do
+  modifyState $ \(State s) -> State s {showSidePanel = b }
 
 
 performAction (ShowControls) _ (State state) = void do
@@ -115,10 +141,11 @@ render d p (State s) c =
               , renderer : canvas
               , settings : mySettings
               , style : sStyle { height : "95%"}
-              -- , onClickNode : \e -> do
-              --   logs $ unsafeCoerce e
-              --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-              --   pure unit
+              , onClickNode : \e -> unsafePerformEffect $ do
+                 _ <- log "hello"
+                 -- _ <- logs $ unsafeCoerce e
+                 _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+                 pure unit
               -- TODO: fix this!
               }
         [ sigmaEnableWebGL
@@ -283,8 +310,8 @@ specOld = simpleSpec performAction render'
              [text "Show Controls"]
              , button [className "btn btn-primary"
                , style {position:"relative",top:"-25px",left: "1380px"}
-               ,onClick \_ -> d ShowSidePanel
-               ] [text "showSidePanel"]
+               ,onClick \_ -> d $ ShowSidePanel $ not st.showSidePanel
+               ] [text "Show SidePanel"]
              ]
           , if (st.showControls) then 
               div [className "col-md-12", style {marginBottom : "21px"}]
@@ -358,7 +385,7 @@ specOld = simpleSpec performAction render'
            ]
          , div [className "row"]
            [ div [if (st.showSidePanel) then className "col-md-10" else className "col-md-11"]
-             [ div [style {border : "1px black solid", height: "90%"}] $
+             [ div [style {height: "90%"}] $
                [ 
                ]
                <>
@@ -369,10 +396,13 @@ specOld = simpleSpec performAction render'
                              , renderer : canvas
                              , settings : mySettings
                              , style : sStyle { height : "95%"}
-                             -- , onClickNode : \e -> do
-                             --   logs $ unsafeCoerce e
-                             --   d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-                             --   pure unit
+                             , onClickNode : \e -> unsafePerformEffect $ do
+                                _ <- log " hello 2"
+                                --_ <- attempt $ selectNodeApi $ NodeQuery {query : [], parentId : 0}
+                                --logs $ unsafeCoerce e
+                                _ <- d $ ShowSidePanel true
+                                _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+                                pure unit
                              }
                        [ sigmaEnableWebGL
                        , forceAtlas2 forceAtlas2Config
@@ -388,8 +418,10 @@ specOld = simpleSpec performAction render'
              [ div [className "row"]
                [ div [_id "sidepanel" , style {borderBottom : "1px solid black"}]
                [ case st.selectedNode of
-                    Nothing -> span [] []
-                    Just selectedNode -> p [] [text $ "selected Node : " <> getter _.label selectedNode
+                    Nothing -> span [] [ text "dummy text"]
+                    Just selectedNode -> p [] [ text $ "selected Node : " <> getter _.label selectedNode
+                                              , text $ (joinWith ", " ( getTitle st.nodeResults))
+                                              , text $ (joinWith ", " (getAuthors st.nodeResults))
                                               , br'
                                               , p [] [button [className "btn btn-primary", style {marginBottom : "18px"}] [text "Remove"]]
                                               ]
@@ -487,5 +519,36 @@ specOld = simpleSpec performAction render'
            ]
          ]
 
+getTitle :: Array NodeResults -> Array String 
+getTitle ary = map (\(NodeResults s)-> s.title) ary
+
+getAuthors :: Array NodeResults -> Array String 
+getAuthors ary = map (\(NodeResults s ) -> s.authors) ary
+
+
 getNodes :: Int -> Aff GraphData
 getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId
+
+selectNodeApi :: NodeQuery -> Aff (Array NodeResults)
+selectNodeApi = post $ getUrl <> "search"
+
+instance encodeJsonNQuery :: EncodeJson NodeQuery where
+  encodeJson (NodeQuery post)
+     = "query" := post.query
+    ~> "parent_id" := post.parentId
+    ~> jsonEmptyObject
+
+
+instance decodeJsonNResults :: DecodeJson NodeResults where
+  decodeJson json = do
+    obj <- decodeJson json
+    rid <- obj .? "id"
+    title  <- obj .? "title"
+    authors <- obj .? "authors"
+    pure $ NodeResults {rid,title,authors}
+
+
+getUrl :: String
+getUrl = back.baseUrl <> back.prePath
+  where 
+    back = Config.endConfig.back
