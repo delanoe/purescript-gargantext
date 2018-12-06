@@ -378,7 +378,7 @@ specOld = simpleSpec performAction render'
            ]
          , div [className "row"]
            [ div [if (st.showSidePanel) then className "col-md-10" else className "col-md-11"]
-             [ div [style {border : "1px black solid", height: "90%"}] $
+             [ div [style {height: "90%"}] $
                [ 
                ]
                <>
