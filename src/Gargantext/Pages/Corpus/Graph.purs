@@ -7,7 +7,6 @@ import Affjax (defaultRequest, request)
 import Affjax.ResponseFormat (ResponseFormat(..), printResponseFormatError)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
-import Control.Monad.State (withState)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
 import Data.Argonaut (decodeJson)
 import Data.Array (fold, length, mapWithIndex, (!!))
@@ -33,7 +32,7 @@ import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
-import Thermite (PerformAction, Render, Spec, cmapProps, defaultPerformAction, defaultRender, modifyState, noState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 
 
