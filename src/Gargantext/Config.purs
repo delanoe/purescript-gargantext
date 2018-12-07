@@ -209,6 +209,8 @@ instance showApiVersion :: Show ApiVersion where
 
 data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
 
+derive instance eqCTabNgramType :: Eq CTabNgramType
+
 instance showCTabNgramType :: Show CTabNgramType where
   show CTabTerms      = "Terms"
   show CTabSources    = "Sources"
@@ -217,12 +219,16 @@ instance showCTabNgramType :: Show CTabNgramType where
 
 data PTabNgramType = PTabPatents | PTabBooks | PTabCommunication
 
+derive instance eqPTabNgramType :: Eq PTabNgramType
+
 instance showPTabNgramType :: Show PTabNgramType where
   show PTabPatents       = "Patents"
   show PTabBooks         = "Books"
   show PTabCommunication = "Communication"
 
 data TabSubType a = TabDocs | TabNgramType a | TabTrash
+
+derive instance eqTabSubType :: Eq a => Eq (TabSubType a)
 
 instance showTabSubType :: Show a => Show (TabSubType a) where
   show TabDocs          = "Docs"
@@ -232,6 +238,12 @@ instance showTabSubType :: Show a => Show (TabSubType a) where
 data TabType
   = TabCorpus  (TabSubType CTabNgramType)
   | TabPairing (TabSubType PTabNgramType)
+
+derive instance eqTabType :: Eq TabType
+
+instance showTabType :: Show TabType where
+  show (TabCorpus  t) = "Corpus"  <> show t
+  show (TabPairing t) = "Pairing" <> show t
 
 ------------------------------------------------------------
 nodeTypeUrl :: NodeType -> Url
