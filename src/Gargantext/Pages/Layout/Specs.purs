@@ -54,14 +54,14 @@ pagesComponent s = case s.currentRoute of
     selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
-    
+
     selectSpec (Corpus   i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState Corpus.layout
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec (Document i)      = layout0 $ focus _documentViewState _documentViewAction  Annotation.docview
     selectSpec (PGraphExplorer i)= layout1 $ focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
-    
+
     selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
     selectSpec (UserPage i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState C.layoutUser
     selectSpec (ContactPage i)   = layout0 $ cmapProps (const {nodeId: i}) $ noState C.layoutUser
@@ -92,8 +92,8 @@ layout0 layout =
               outerLayout1
       , rs bs
       ]
-    ls   = over _render \render d p s c -> [ 
-         div [ className "col-md-2"] (render d p s c)  
+    ls   = over _render \render d p s c -> [
+         div [ className "col-md-2"] (render d p s c)
       ]
     rs   = over _render \render d p s c -> [ div [ className "col-md-10"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
@@ -117,7 +117,8 @@ layout1 :: Spec AppState {} Action
 layout1 layout =
   fold
   [ layoutSidebar divSearchBar
-  , outerLayout
+  , layout
+  -- , outerLayout
   , layoutFooter
   ]
   where
@@ -133,11 +134,11 @@ layout1 layout =
               outerLayout1
       , rs bs
       ]
-    ls   = over _render \render d p s c -> [  
-      
-        button [onClick $ \e -> d ShowTree, className "btn btn-primary",style {position:"relative", top: "99px",left:"-264px",zIndex : "1000"}] [text "ShowTree"]
-      
-        , div [if (s.showTree) then className "col-md-2" else className "col-md-2"] if (s.showTree) then (render d p s c) else [] 
+    ls   = over _render \render d p s c -> [
+
+        button [onClick $ \e -> d ToggleTree, className "btn btn-primary",style {position:"relative", top: "99px",left:"-264px",zIndex : "1000"}] [text "ShowTree"]
+
+        , div [if (s.showTree) then className "col-md-2" else className "col-md-2"] if (s.showTree) then (render d p s c) else []
       ]
     rs   = over _render \render d p s c -> [ div [if (s.showTree) then className "col-md-10" else className "col-md-12"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]

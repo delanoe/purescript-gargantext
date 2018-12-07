@@ -7,9 +7,10 @@ import Affjax (defaultRequest, request)
 import Affjax.ResponseFormat (ResponseFormat(..), printResponseFormatError)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
+import Control.Monad.State (withState)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
 import Data.Argonaut (decodeJson)
-import Data.Array (length, mapWithIndex, (!!))
+import Data.Array (fold, length, mapWithIndex, (!!))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
@@ -22,6 +23,8 @@ import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Components.Login.Types (TreeId)
+import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get, post)
 import Gargantext.Utils (getter)
@@ -30,15 +33,16 @@ import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
+import Thermite (PerformAction, Render, Spec, cmapProps, defaultPerformAction, defaultRender, modifyState, noState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 
 data Action
-  = LoadGraph Int         
+  = LoadGraph Int
   | SelectNode SelectedNode
   | ShowSidePanel Boolean
-  | ShowControls
+  | ToggleControls
+  | ToggleTree
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -53,20 +57,22 @@ newtype State = State
   , selectedNode :: Maybe SelectedNode
   , showSidePanel :: Boolean
   , showControls :: Boolean
+  , showTree :: Boolean
   , nodeResults :: Array NodeResults
-  , corpusId :: Int 
+  , corpusId :: Int
+  , treeId :: Maybe TreeId
   }
 
-newtype NodeQuery  = NodeQuery 
+newtype NodeQuery  = NodeQuery
   {
     query :: Array String
   , parentId :: Int
   }
-newtype NodeResults = NodeResults 
+newtype NodeResults = NodeResults
   {
-    rid :: Int 
-  , title :: String 
-  , authors :: String 
+    rid :: Int
+  , title :: String
+  , authors :: String
   }
 
 initialState :: State
@@ -78,8 +84,10 @@ initialState = State
   , selectedNode : Nothing
   , showSidePanel : false
   , showControls : false
+  , showTree : false
   , nodeResults : []
   , corpusId : 0
+  , treeId : Nothing
   }
 
 graphSpec :: Spec State {} Action
@@ -108,8 +116,12 @@ performAction (ShowSidePanel b) _ (State state) = void do
   modifyState $ \(State s) -> State s {showSidePanel = b }
 
 
-performAction (ShowControls) _ (State state) = void do
+performAction (ToggleControls) _ (State state) = void do
   modifyState $ \(State s) -> State s {showControls = not (state.showControls) }
+
+performAction (ToggleTree) _ (State state) = void do
+  modifyState $ \(State s) -> State s {showTree = not (state.showTree) }
+
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -131,9 +143,6 @@ convert (GraphData r) = SigmaGraphData { nodes, edges}
 
 render :: Render State {} Action
 render d p (State s) c =
-  [ 
-  ]
-  <>
   case s.sigmaGraphData of
     Nothing -> []
     Just gData ->
@@ -296,25 +305,46 @@ dispLegend ary = div [] $ map dl ary
 
 
 specOld :: Spec State {} Action
-specOld = simpleSpec performAction render'
+specOld = fold [simpleSpec performAction render']
   where
+    treeSpec :: Spec State {} Action
+    treeSpec = withState \(State st) ->
+      case st.treeId of
+        Nothing ->
+          simpleSpec defaultPerformAction defaultRender
+        Just treeId ->
+          (cmapProps (const {root: treeId}) (noState Tree.treeview))
     render' :: Render State {} Action
     render' d _ (State st) _ =
-      [  div [className "row"] 
+      [ div [className "container-fluid", style {"padding-top" : "100px"}]
+      [ div [className "row", style {"padding-bottom" : "10px"}]
       [
-           div [className "col-md-12"] 
+           div [className "col-md-4"]
            [ button [className "btn btn-primary"
-             , onClick \_ -> d ShowControls
-             ,style {position:"relative",top:"-25px",left: "737px"}
-             ] 
-             [text "Show Controls"]
-             , button [className "btn btn-primary"
-               , style {position:"relative",top:"-25px",left: "1380px"}
-               ,onClick \_ -> d $ ShowSidePanel $ not st.showSidePanel
-               ] [text "Show SidePanel"]
+             , onClick \_ -> d ToggleTree
              ]
-          , if (st.showControls) then 
-              div [className "col-md-12", style {marginBottom : "21px"}]
+             [text $ if st.showTree then "Hide Tree" else "Show Tree"]
+            ]
+          , div [className "col-md-4"]
+           [
+             button [className "btn btn-primary center-block"
+             , onClick \_ -> d ToggleControls
+             ]
+             [text $ if st.showControls then "Hide Controls" else "Show Controls"]
+
+            ]
+          , div [className "col-md-4"]
+          [ div [className "pull-right"]
+            [ button [className "btn btn-primary"
+               ,onClick \_ -> d $ ShowSidePanel $ not st.showSidePanel
+               ] [text $ if st.showSidePanel then "Hide Side Panel" else "Show Side Panel"]
+            ]
+          ]
+      ],
+      div [className "row"]
+      [
+           if (st.showControls) then
+              div [className "col-md-12", style {"padding-bottom" : "10px"}]
             [ menu [_id "toolbar"]
               [ ul'
                 [
@@ -377,16 +407,16 @@ specOld = simpleSpec performAction render'
                 , li'
                   [ button [className "btn btn-primary"] [text "Save"] -- TODO: Implement Save!
                   ]
-                
+
                 ]
               ]
             ]
             else div [] []
            ]
          , div [className "row"]
-           [ div [if (st.showSidePanel) then className "col-md-10" else className "col-md-11"]
+           [ div [if (st.showSidePanel && st.showTree) then className "col-md-8" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
              [ div [style {height: "90%"}] $
-               [ 
+               [
                ]
                <>
                case st.sigmaGraphData of
@@ -413,8 +443,8 @@ specOld = simpleSpec performAction render'
                  if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
              ]
          --, button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"39px",position : "relative",zIndex:"1000", top: "-59px"}] [text "Show SidePanel"]
-         , if (st.showSidePanel) then 
-            div [_id "sp-container",className "col-md-2", style {border : "1px black solid", backgroundColor : "beige", position:"absolute",right: "0px",top:"265px"}]
+         , if (st.showSidePanel) then
+            div [_id "sp-container", className "col-md-2", style {border : "1px black solid", backgroundColor : "beige"}]
              [ div [className "row"]
                [ div [_id "sidepanel" , style {borderBottom : "1px solid black"}]
                [ case st.selectedNode of
@@ -514,15 +544,16 @@ specOld = simpleSpec performAction render'
                 ]
                ]
              ]
-            else 
+            else
               div [] []   -- ends sidepanel column here
            ]
          ]
+      ]
 
-getTitle :: Array NodeResults -> Array String 
+getTitle :: Array NodeResults -> Array String
 getTitle ary = map (\(NodeResults s)-> s.title) ary
 
-getAuthors :: Array NodeResults -> Array String 
+getAuthors :: Array NodeResults -> Array String
 getAuthors ary = map (\(NodeResults s ) -> s.authors) ary
 
 
@@ -550,5 +581,5 @@ instance decodeJsonNResults :: DecodeJson NodeResults where
 
 getUrl :: String
 getUrl = back.baseUrl <> back.prePath
-  where 
+  where
     back = Config.endConfig.back
