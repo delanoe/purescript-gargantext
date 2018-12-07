@@ -107,6 +107,17 @@ li:hover a#rename {
     display:block;
 }
 
+li a#rename-leaf {
+    display:none;
+    position:absolute;
+    text-decoration:none;
+}
+
+li:hover a#rename-leaf {
+    display:block;
+}
+
+
 .glyphitem {top: 0;
 
 display: inline-block;
@@ -157,7 +168,7 @@ text-align: center;
     text-decoration:none;
 }
 
-#sp-container 
+#sp-container
 { -webkit-transition: width 2s; /* For Safari 3.1 to 6.0 */
     transition: width 2s;
 

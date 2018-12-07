@@ -214,7 +214,7 @@ nodeOptionsView activated = case activated of
 nodeOptionsRename :: (Action -> Effect Unit) ->  Boolean ->  ID -> Array ReactElement
 nodeOptionsRename d activated  id =  case activated of
                          true -> [ a [className "glyphicon glyphicon-pencil", style {marginLeft : "15px"}
-                                        
+
                                         ] []
                                  ]
                          false -> []
@@ -252,16 +252,15 @@ treeview = simpleSpec defaultPerformAction render
 
 renameTreeView :: (Action -> Effect Unit) -> FTree -> Int -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =
-        
        div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
        [  div [_id "arrow"] []
        , div [className "panel panel-default", style {border:"1px solid rgba(0,0,0,0.2)", boxShadow : "0 2px 5px rgba(0,0,0,0.2)"}]
            [
              div [className "panel-heading", style {float:"left", width: "100%"}]
              [
-               if (showRenameBox) then div [_id "afterClick"] 
-               [ 
-                 div [className "col-md-12"] 
+               if (showRenameBox) then div [_id "afterClick"]
+               [
+                 div [className "col-md-12"]
                [
                  input [ _type "text"
                     , placeholder "Rename Node"
@@ -271,7 +270,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                     , onInput \e -> d (RenameNode (unsafeEventValue e) nid)
                     ]
                ]
-              , div [className "col-md-12"] 
+              , div [className "col-md-12"]
               [ div [className "row", style {marginTop : "11px"}]
                 [ div [className "col-md-6"] [
                      a [className "btn btn-danger"
@@ -280,7 +279,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                     , style {float:"left"}
                     ] [text "Rename"]
                     ]
-                , div [className "col-md-6"] 
+                , div [className "col-md-6"]
                   [a [className "btn btn-primary"
                      , _type "button"
                      , onClick \_ -> d $ (CancelRename nid)
@@ -289,14 +288,14 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 
                   ]
                 ]
-              
+
                 ]
-               
+
             ]
-              else 
-                div [ _id "beforeClick", className "col-md-12"] 
+              else
+                div [ _id "beforeClick", className "col-md-12"]
              [  div [className "row"]
-                [ div [className "col-md-6"] [text name] 
+                [ div [className "col-md-6"] [text name]
                 , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil col-md-2", _id "rename1", title "Rename", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
                 ]
              ]
@@ -307,10 +306,10 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
            ,  div [className "col-md-4"] [ a [style {color:"black", paddingTop: "6px", paddingBottom: "6px"}, className "glyphitem glyphicon glyphicon-trash", _id "rename2",title "Delete", onClick $ (\_-> d $ (DeleteNode id))] [ ]]
 
            ]
-          
+
           ]
         ]
-       
+
 
 
 createNodeView :: (Action -> Effect Unit) -> FTree -> Int -> ReactElement
@@ -357,16 +356,9 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
   ul []
   [
     li [] $
-    [
-     a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-     ,  a [ href (toUrl Front nodeType (Just id)), style {position:"absolute",left:"44px"}]
-      ( [ text (name <> "    ")
-        ]
-      )
-    
-    ,  a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
-       [ 
-       ]
+    [ a [className "glyphicon glyphicon-cog", _id "rename-leaf",onClick $ (\_-> d $ (ShowPopOver id))] []
+    , a [ href (toUrl Front nodeType (Just id)), style {"margin-left":"22px"}]
+      [ text (name <> "    ") ]
      , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
     , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
     ]
@@ -376,10 +368,10 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,cre
     ul []
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-       , a [ href (toUrl Front nodeType (Just id)), style {position:"absolute",left:"44px"}]
-         [ text $ " " <> name <> " " ]
+       , a [ href (toUrl Front nodeType (Just id)), style {"margin-left":"22px"}]
+         [ text name ]
 ,      a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
-       [ 
+       [
        ]
      , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
     , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
