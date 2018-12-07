@@ -62,7 +62,8 @@ modalSpec sm t = over _render \render d p s c ->
       [ div [ className "modal-content"]
         [ div [ className "modal-header"]
           [ h5 [ className "modal-title" ]
-            [ text t ]
+            [ -- text t
+            ]
           , button [ _type "button"
                    , className "close"
                    , _data { dismiss : "modal"}
@@ -103,7 +104,7 @@ renderSpec = simpleSpec performAction render
     render :: Render State {} Action
     render dispatch _ state _ =
       [ div [className "row"]
-        [ div [className "col-sm-10 col-sm-push-1 col-md-6 col-md-push-3 col-lg-6 col-lg-push-3"]
+        [ div [className "col-md-10 col-md-push-1"]
           [ h2 [className "text-primary center m-a-2"]
             [ i [className "material-icons md-36"] [text "control_point"]
             , span [className "icon-text"] [text "Gargantext"]
@@ -113,7 +114,7 @@ renderSpec = simpleSpec performAction render
               [ div [className "card-block"]
                 [ div [className "center"]
                   [ h4 [className "m-b-0"]
-                    [ span [className "icon-text"] [ text "Connexion"] ]
+                    [ span [className "icon-text"] [ text "Login"] ]
                   , p [className "text-muted"]
                     [ text $ "Login to your account or",
                       a [ target "blank",href "https://iscpif.fr/services/applyforourservices/"] [text " ask to get an access"]
@@ -138,7 +139,7 @@ renderSpec = simpleSpec performAction render
                       [ div [className "checkbox"]
                         [ input [_id "terms-accept", _type "checkbox", value "", className "checkbox"]
                         , text "I accept the terms of uses ",
-                          a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text "[Read the terms of use]"]
+                          a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text " [ Read the terms of use ] "]
                         ]
                       , button [_id "login-button",className "btn btn-primary btn-rounded", _type "submit", onClick \_ -> dispatch $ PostAuth] [text "Login"]
                       ]
