@@ -5,7 +5,7 @@ import Data.Lens (over)
 import Data.Maybe (Maybe(Nothing, Just))
 import Effect (Effect)
 import React (ReactElement)
-import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul)
+import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul,i)
 import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
 import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
 import Unsafe.Coerce (unsafeCoerce)
@@ -54,14 +54,14 @@ pagesComponent s = case s.currentRoute of
     selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
-    
+
     selectSpec (Corpus   i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState Corpus.layout
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec (Document i)      = layout0 $ focus _documentViewState _documentViewAction  Annotation.docview
     selectSpec (PGraphExplorer i)= layout1 $ focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
-    
+
     selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
     selectSpec (UserPage i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState C.layoutUser
     selectSpec (ContactPage i)   = layout0 $ cmapProps (const {nodeId: i}) $ noState C.layoutUser
@@ -92,10 +92,16 @@ layout0 layout =
               outerLayout1
       , rs bs
       ]
-    ls   = over _render \render d p s c -> [ 
-         div [ className "col-md-2"] (render d p s c)  
+    ls   = over _render \render d p s c -> [
+         div [ className "col-md-2"] (render d p s c)
       ]
-    rs   = over _render \render d p s c -> [ div [ className "col-md-10"] (render d p s c) ]
+    rs   = over _render \render d p s c -> [
+          div [ case (s.loginState.authData) of
+          Just a ->
+            className "col-md-10"
+          Nothing ->
+            className "col-md-12"
+        ] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
     as = noState Tree.treeview
@@ -133,11 +139,11 @@ layout1 layout =
               outerLayout1
       , rs bs
       ]
-    ls   = over _render \render d p s c -> [  
-      
+    ls   = over _render \render d p s c -> [
+
         button [onClick $ \e -> d ShowTree, className "btn btn-primary",style {position:"relative", top: "99px",left:"-264px",zIndex : "1000"}] [text "ShowTree"]
-      
-        , div [if (s.showTree) then className "col-md-2" else className "col-md-2"] if (s.showTree) then (render d p s c) else [] 
+
+        , div [if (s.showTree) then className "col-md-2" else className "col-md-2"] if (s.showTree) then (render d p s c) else []
       ]
     rs   = over _render \render d p s c -> [ div [if (s.showTree) then className "col-md-10" else className "col-md-12"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
@@ -308,7 +314,11 @@ divSearchBar = simpleSpec performAction render
                                             }
                                     , onChange \e -> dispatch $ Search (unsafeCoerce e).target.value
                                     ]
-                            ,  button [onClick \e -> dispatch Go, className "btn btn-primary"] [text "Enter"]
+                           -- ,  button [onClick \e -> dispatch Go, className "btn btn-primary"] [text "Enter"]
+                            , span [onClick \e -> dispatch Go, style {color : "#039BE5"}]
+                            [
+                              i [className "material-icons md-36"] [text "control_point"]
+                            ]
                             ]
                   ]
 

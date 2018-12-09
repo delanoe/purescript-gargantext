@@ -315,9 +315,8 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
               , text "Extracted Terms"
               ]
             , div [className "row"]
-              [ div [className "savediv pull-left col-md-2", style { marginTop :"1.5em"}]
-                [ span [className "needsaveicon glyphicon glyphicon-import"] []
-                , button [_id "ImportListOrSaveAll", className "btn btn-warning", style {fontSize : "120%"}]
+              [ div [className "savediv pull-left col-md-2", style { marginTop :"35px"}]
+                [  button [_id "ImportListOrSaveAll", className "btn btn-warning", style {fontSize : "120%"}]
                   [ text "Import a Termlist" ]
                 ]
               , div [className "col-md-4", style {marginTop : "37px"}]
@@ -330,21 +329,20 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
                         ]
                 ]
               , div [_id "filter_terms", className "col-md-6", style{ marginTop : "2.1em",paddingLeft :"1em"}]
-                [ div [className "row", style {marginTop : "6px"}]
-                  [ div [className "col-md-3"]
+                [ div [className "col-md-10 list-group", style {marginTop : "6px"}]
+                  [ li [className " list-group-item"]
                     [ select  [ _id "picklistmenu"
                               , className "form-control custom-select"
                               , onChange (\e -> dispatch (SetTermListFilter $ readTermList $ unsafeEventValue e))
                               ] $ map optps1 termLists
                     ]
-                  , div [className "col-md-3"]
+                  , li [className "list-group-item"]
                     [ select  [ _id "picktermtype"
                               , className "form-control custom-select"
-                              , style {marginLeft : "1em"}
                               , onChange (\e -> dispatch (SetTermTypeFilter $ readTermType $ unsafeEventValue e))
                               ] $ map optps1 termTypes
                     ]
-                  , div [className "col-md-3"] [ props.pageSizeControl ]
+                  , li [className " list-group-item"] [ props.pageSizeControl ]
                   ]
                 ]
               , div [className "col-md-6", style {marginTop : "24px", marginBottom : "14px"}]
@@ -371,8 +369,8 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
               , button [className "btn btn-secondary", onClick $ const $ dispatch $ SetParentResetChildren Nothing] [text "Cancel"]
               ]) ngramsParent)
           , div [ _id "terms_table", className "panel-body" ]
-                [ table [ className "table able table-bordered" ]
-                  [ thead [ className "tableHeader table-bordered"] [props.tableHead]
+                [ table [ className "table able" ]
+                  [ thead [ className "tableHeader"] [props.tableHead]
                   , tbody [] props.tableBody
                   ]
                 ]

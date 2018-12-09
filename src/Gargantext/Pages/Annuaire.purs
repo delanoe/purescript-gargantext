@@ -1,28 +1,25 @@
 module Gargantext.Pages.Annuaire where
 
-import Data.Array (head)
+import Gargantext.Prelude
+
 import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
-import Data.Lens (Prism', prism)
+import Data.Array (head)
 import Data.Either (Either(..))
+import Data.Lens (Prism', prism)
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
-import React (ReactClass, ReactElement, Children)
-import React as React
-import React.DOM (a, br', div, input, p, text)
-import React.DOM.Props (href)
 import Effect.Class (liftEffect)
-import Thermite ( Render, Spec
-                , createClass, simpleSpec, defaultPerformAction
-                )
-
-------------------------------------------------------------------------------
-import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as T
-import Gargantext.Config      (toUrl, Path(..), NodeType(..), End(..))
+import Gargantext.Config (toUrl, Path(..), NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperdataContact(..), ContactWhere(..))
+import React (ReactClass, ReactElement, Children)
+import React as React
+import React.DOM (a, br', div, input, p, text)
+import React.DOM.Props (className, href, style)
+import Thermite (Render, Spec, createClass, simpleSpec, defaultPerformAction)
 ------------------------------------------------------------------------------
 
 type Props = Loader.InnerProps Int AnnuaireInfo ()
@@ -91,7 +88,7 @@ loadedAnnuaireSpec = simpleSpec defaultPerformAction render
         , user: ""
         } <>
       [ p [] []
-      , div [] [ text "    Filter ", input []]
+      , div [className "col-md-3"] [ text "    Filter ", input [className "form-control", style {"width" : "250px", "display": "inline-block"}]]
       , br'
       , pageLoader
           { path: initialPageParams nodeId
@@ -157,7 +154,7 @@ renderContactCells (Just (Contact { id, hyperdata : (HyperdataContact contact@{w
   , a [ href (toUrl Front NodeContact (Just id)) ] [ text $ maybe "name" identity contact.title ]
   , text $ maybe "No ContactWhere" renderContactWhereOrg  (head $ ou)
   , text $ maybe "No ContactWhere" renderContactWhereDept (head $ ou)
-  , text $ maybe "No ContactWhere" renderContactWhereRole (head $ ou)
+  , div [className "nooverflow"] [text $ maybe "No ContactWhere" renderContactWhereRole (head $ ou)]
   ]
   where
     maybe' = maybe "" identity
