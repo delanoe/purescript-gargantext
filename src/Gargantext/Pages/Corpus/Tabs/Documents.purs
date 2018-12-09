@@ -44,7 +44,7 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_
 -- TODO: Fav is pending
 -- TODO: Sort is Pending
 -- TODO: Filter is Pending
--- TODO: When a pagination link is clicked, reload data. 
+-- TODO: When a pagination link is clicked, reload data.
 
 type State =
   { documentIdsToDelete :: Set Int
@@ -166,7 +166,7 @@ layoutDocview = simpleSpec performAction render
     render :: Render State Props Action
     render dispatch {path: nodeId, loaded: corpusInfo} _ _ =
       [ p [] []
-      , div [ style {textAlign : "center"}] [input [placeholder "Filter here"]]
+      , div [ className "col-md-2",style {textAlign : "center", marginLeft : "0px",paddingLeft:"0px"}] [input [className "form-control",placeholder "Filter here"]]
       , br'
       , div [className "container1"]
         [ div [className "row"]
@@ -329,7 +329,7 @@ searchResults squery = post "http://localhost:8008/count" unit
 
 
 
-newtype FavoriteQuery = FavoriteQuery 
+newtype FavoriteQuery = FavoriteQuery
                         { favorites :: Array Int
                         }
 

@@ -84,18 +84,18 @@ getDept = maybe "Empty Department" getDept' <<< head
     getDept' obj = joinWith ", " $ (\(ContactWhere {labTeamDepts: l}) ->l) obj
 
 getOffice :: Array ContactWhere -> String
-getOffice = fromMaybe "Empty Office" 
-          <<< maybe Nothing (\(ContactWhere {office:x}) -> x) 
+getOffice = fromMaybe "Empty Office"
+          <<< maybe Nothing (\(ContactWhere {office:x}) -> x)
           <<< head
 
 getCity :: Array ContactWhere -> String
-getCity = fromMaybe "Empty City" 
-          <<< maybe Nothing (\(ContactWhere {city:x}) -> x) 
+getCity = fromMaybe "Empty City"
+          <<< maybe Nothing (\(ContactWhere {city:x}) -> x)
           <<< head
 
 getCountry :: Array ContactWhere -> String
-getCountry = fromMaybe "Empty Country" 
-          <<< maybe Nothing (\(ContactWhere {country:x}) -> x) 
+getCountry = fromMaybe "Empty Country"
+          <<< maybe Nothing (\(ContactWhere {country:x}) -> x)
           <<< head
 
 -- | ContactWhere / Touch infos
@@ -115,19 +115,19 @@ getMail' = fromMaybe "no mail" <<< _.mail <<< unwrap
 -- | TODO format data in better design (UI) shape
 contactInfos :: HyperdataContact -> Array ReactElement
 contactInfos (HyperdataContact {who:who, ou:ou}) =
-  [ ul [className "list-group"] (infoRender (Tuple "Last Name"    $ " " <> getLastName  who))
-  , ul [className "list-group"] (infoRender (Tuple "First name"   $ " " <> getFirstName who))
-  , ul [className "list-group"] (infoRender (Tuple "Organization" $ " " <> getOrga      ou ))
-  , ul [className "list-group"] (infoRender (Tuple "Lab/Team/Dept"$ " " <> getOrga      ou ))
-  , ul [className "list-group"] (infoRender (Tuple "Office"       $ " " <> getOffice      ou ))
-  , ul [className "list-group"] (infoRender (Tuple "City"         $ " " <> getCity      ou ))
-  , ul [className "list-group"] (infoRender (Tuple "Country"      $ " " <> getCountry      ou ))
-  , ul [className "list-group"] (infoRender (Tuple "Role"         $ " " <> getRole      ou ))
-  , ul [className "list-group"] (infoRender (Tuple "Phone"        $ " " <> getPhone     ou ))
-  , ul [className "list-group"] (infoRender (Tuple "Mail"         $ " " <> getMail      ou ))
+  [ li [className "list-group-item"] (infoRender (Tuple "Last Name"    $ " " <> getLastName  who))
+  , li [className "list-group-item"] (infoRender (Tuple "First name"   $ " " <> getFirstName who))
+  , li [className "list-group-item"] (infoRender (Tuple "Organization" $ " " <> getOrga      ou ))
+  , li [className "list-group-item"] (infoRender (Tuple "Lab/Team/Dept"$ " " <> getOrga      ou ))
+  , li [className "list-group-item"] (infoRender (Tuple "Office"       $ " " <> getOffice      ou ))
+  , li [className "list-group-item"] (infoRender (Tuple "City"         $ " " <> getCity      ou ))
+  , li [className "list-group-item"] (infoRender (Tuple "Country"      $ " " <> getCountry      ou ))
+  , li [className "list-group-item"] (infoRender (Tuple "Role"         $ " " <> getRole      ou ))
+  , li [className "list-group-item"] (infoRender (Tuple "Phone"        $ " " <> getPhone     ou ))
+  , li [className "list-group-item"] (infoRender (Tuple "Mail"         $ " " <> getMail      ou ))
   ]
 
-  
+
   {- $
     listInfo <.~$> hyperdata
   where
@@ -171,7 +171,7 @@ layoutUser' = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
     render dispatch {loaded: Contact {name, hyperdata}} _ _ =
-      [ div [className "col-md-12"] $
+      [ ul [className "col-md-12 list-group"] $
           display (fromMaybe "no name" name) (contactInfos hyperdata)
       ]
 
