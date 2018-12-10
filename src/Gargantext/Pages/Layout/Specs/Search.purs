@@ -49,8 +49,8 @@ searchSpec = simpleSpec performAction render
            [ div [className "col-md-10" ]
              [ br'
              , br'
-             , div [ className "form-group"]
-                   [ input [ className "form-control"
+             , div [ className "form-group"][]
+                   {-[ input [ className "form-control"
                            , _id "id_password"
                            , name "query"
                            , placeholder "Query, URL or FILE (works best with Firefox or Chromium browsers)"
@@ -60,6 +60,7 @@ searchSpec = simpleSpec performAction render
                            ]
                     , br'
                     ]
+                    -}
               ]
             , div [ className "col-md-2"]
                   [ br'

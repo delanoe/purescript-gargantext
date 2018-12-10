@@ -306,21 +306,20 @@ divSearchBar = simpleSpec performAction render
         searchbar' = ul [ className "nav navbar-nav col-md-6 col-md-offset-3"
                         , style { "marginLeft" : "15%"}
                         ] [ div [className "navbar-form"]
-                            [ input [ className   "search-query"
+                            [ input [ {-className   "search-query"
                                     , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
                                     , _type "text"
                                     , style { height: "35px"
                                             , width: "400px"
                                             }
                                     , onChange \e -> dispatch $ Search (unsafeCoerce e).target.value
+                                    -}
                                     ]
                            -- ,  button [onClick \e -> dispatch Go, className "btn btn-primary"] [text "Enter"]
-                            , span [onClick \e -> dispatch Go, style {color : "#039BE5"}]
-                            [
-                              i [className "material-icons md-36"] [text "control_point"]
+                            , span []--onClick \e -> dispatch Go, style {color : "#039BE5"}]
+                            [ i [className "material-icons md-36"] [text "control_point"]]
                             ]
-                            ]
-                  ]
+                          ]
 
 divDropdownRight :: (Action -> Effect Unit) -> AppState -> ReactElement
 divDropdownRight d s =
