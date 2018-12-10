@@ -17,7 +17,7 @@ import Gargantext.Types
 import Gargantext.Components.Node (NodePoly)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Prelude
-import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
+import Gargantext.Config (CTabNgramType(..), End(..), Offset, Limit, Path(..), TabSubType(..), TabType(..), toUrl)
 import Gargantext.Config.REST (get)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo)
@@ -35,8 +35,10 @@ type Props = NT.Props (NodePoly CorpusInfo) Mode
 
 type PageParams = NT.PageParams Mode
 
-getTable :: CTabNgramType -> Maybe Int -> Aff NT.NgramsTable
-getTable tab = get <<< toUrl Back (Ngrams (TabCorpus (TabNgramType tab)) Nothing)
+getTable :: CTabNgramType -> Maybe Int -> Offset -> Limit -> Aff NT.NgramsTable
+getTable tab nodeId offset limit =
+  get $ toUrl Back (Ngrams (TabCorpus (TabNgramType tab))
+                           offset limit Nothing) nodeId
 
 modeTabType :: Mode -> CTabNgramType
 modeTabType Authors = CTabAuthors
@@ -45,7 +47,9 @@ modeTabType Institutes = CTabInstitutes
 modeTabType Terms = CTabTerms
 
 loadPage :: PageParams -> Aff NT.NgramsTable
-loadPage {nodeId, mode} = getTable (modeTabType mode) (Just nodeId) -- TODO this ignores params
+loadPage {nodeId, mode, params: {offset, limit}} =
+  getTable (modeTabType mode) (Just nodeId) offset limit
+  -- TODO this ignores orderBy
 
 ngramsLoaderClass :: Loader.LoaderClass PageParams NT.NgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "CorpusNgramsLoader" loadPage

@@ -102,6 +102,12 @@ tabTypeDocs :: TabType -> UrlPath
 tabTypeDocs (TabCorpus  t) = "table?view="   <> show t
 tabTypeDocs (TabPairing t) = "pairing?view=" <> show t
 
+limitUrl :: Limit -> UrlPath
+limitUrl l = "&limit=" <> show l
+
+offsetUrl :: Offset -> UrlPath
+offsetUrl o = "&offset=" <> show o
+
 tabTypeNgrams :: TabType -> UrlPath
 tabTypeNgrams (TabCorpus  t) = "listGet?ngramsType=" <> show t
 tabTypeNgrams (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
@@ -109,18 +115,17 @@ tabTypeNgrams (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
 pathUrl :: Config -> Path -> Maybe Id -> UrlPath
 pathUrl c (Tab t o l s) i =
     pathUrl c (NodeAPI Node) i <>
-      "/" <> tabTypeDocs t <> "&offset=" <> show o
-          <> "&limit=" <> show l <> os
+      "/" <> tabTypeDocs t <> offsetUrl o <> limitUrl l <> os
   where
     os = maybe "" (\x -> "&order=" <> show x) s
 pathUrl c (Children n o l s) i =
     pathUrl c (NodeAPI Node) i <>
-      "/" <> "children?type=" <> show n <> "&offset=" <> show o
-          <> "&limit=" <> show l <> os
+      "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> os
   where
     os = maybe "" (\x -> "&order=" <> show x) s
-pathUrl c (Ngrams t listid) i =
-    pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgrams t <> listid'
+pathUrl c (Ngrams t o l listid) i =
+    pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgrams t
+      <> offsetUrl o <> limitUrl l <> listid'
   where
     listid' = maybe "" (\x -> "&list=" <> show x) listid
 pathUrl c Auth Nothing = c.prePath <> "auth"
@@ -183,7 +188,7 @@ data Path
   = Auth
   | Tab      TabType  Offset Limit (Maybe OrderBy)
   | Children NodeType Offset Limit (Maybe OrderBy)
-  | Ngrams   TabType (Maybe TermList)
+  | Ngrams   TabType  Offset Limit (Maybe TermList)
   | NodeAPI NodeType
 
 data End = Back | Front
@@ -241,9 +246,10 @@ data TabType
 
 derive instance eqTabType :: Eq TabType
 
+derive instance genericTabType :: Generic TabType _
+
 instance showTabType :: Show TabType where
-  show (TabCorpus  t) = "Corpus"  <> show t
-  show (TabPairing t) = "Pairing" <> show t
+  show = genericShow
 
 ------------------------------------------------------------
 nodeTypeUrl :: NodeType -> Url

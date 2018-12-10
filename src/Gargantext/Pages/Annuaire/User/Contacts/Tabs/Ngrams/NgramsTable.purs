@@ -18,7 +18,7 @@ import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Types
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Prelude
-import Gargantext.Config (PTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
+import Gargantext.Config (PTabNgramType(..), Offset, Limit, End(..), Path(..), TabSubType(..), TabType(..), toUrl)
 import Gargantext.Config.REST (get)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact)
@@ -36,8 +36,10 @@ type Props = NT.Props Contact Mode
 
 type PageParams = NT.PageParams Mode
 
-getTable :: PTabNgramType -> Maybe Int -> Aff NT.NgramsTable
-getTable tab = get <<< toUrl Back (Ngrams (TabPairing (TabNgramType tab)) Nothing)
+getTable :: PTabNgramType -> Maybe Int -> Offset -> Limit -> Aff NT.NgramsTable
+getTable tab nodeId offset limit =
+  get $ toUrl Back (Ngrams (TabPairing (TabNgramType tab))
+                           offset limit Nothing) nodeId
 
 modeTabType :: Mode -> PTabNgramType
 modeTabType Patents = PTabPatents
@@ -45,7 +47,9 @@ modeTabType Books = PTabBooks
 modeTabType Communication = PTabCommunication
 
 loadPage :: PageParams -> Aff NT.NgramsTable
-loadPage {nodeId, mode} = getTable (modeTabType mode) (Just nodeId) -- TODO this ignores params
+loadPage {nodeId, mode, params: {offset, limit}} =
+  getTable (modeTabType mode) (Just nodeId) offset limit
+  -- TODO this ignores orderBy
 
 ngramsLoaderClass :: Loader.LoaderClass PageParams NT.NgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "ContactsNgramsLoader" loadPage
