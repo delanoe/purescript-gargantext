@@ -1,8 +1,4 @@
--- TODO copy of Gargantext.Pages.Corpus.Tabs.Documents
-module Gargantext.Pages.Annuaire.User.Contacts.Tabs.Documents where
-
-import Data.Array (take, drop)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (:=), (~>))
+module Gargantext.Components.DocsTable where
 
 import Affjax (defaultRequest, request)
 import Affjax.RequestBody (RequestBody(..))
@@ -26,18 +22,14 @@ import React as React
 import React (ReactClass, ReactElement, Children)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (Path(..), NodeType(..), TabType(..), TabSubType(..), toUrl, End(..), OrderBy(..))
+import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl)
 import Gargantext.Config.REST (get, put, post, deleteWithBody)
-import Gargantext.Utils.DecodeMaybe ((.|))
---import Gargantext.Components.Charts.Options.ECharts (chart)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
-import Gargantext.Pages.Corpus.Dashboard (globalPublis)
-import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact, Props)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import React.DOM (a, br', button, div, i, input, p, text)
-import React.DOM.Props (_type, className, href, name, onClick, placeholder, style, value)
+import React.DOM.Props (_type, className, href, onClick, placeholder, style)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
@@ -45,7 +37,18 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_
 -- TODO: Fav is pending
 -- TODO: Sort is Pending
 -- TODO: Filter is Pending
--- TODO: When a pagination link is clicked, reload data. 
+
+type NodeID = Int
+type TotalRecords = Int
+
+type Props =
+  { nodeId :: Int
+  , totalRecords :: Int
+  , chart :: ReactElement
+  , tabType :: TabType
+  -- ^ tabType is not ideal here since it is too much entangled with tabs and
+  -- ngramtable. Let's see how this evolves.
+  }
 
 type State =
   { documentIdsToDelete :: Set Int
@@ -132,7 +135,7 @@ instance decodeResponse :: DecodeJson Response where
 
 
 -- | Filter
-filterSpec :: Spec State Props Action
+filterSpec :: forall state props action. Spec state props action
 filterSpec = simpleSpec defaultPerformAction render
   where
     render d p s c = [div [] [ text "    Filter "
@@ -142,17 +145,17 @@ filterSpec = simpleSpec defaultPerformAction render
 docViewSpec :: Spec {} Props Void
 docViewSpec = hideState (const initialState) layoutDocview
 
--- | Main layout of the Documents Tab of an Annuaire
+-- | Main layout of the Documents Tab of a Corpus
 layoutDocview :: Spec State Props Action
 layoutDocview = simpleSpec performAction render
   where
     performAction :: PerformAction State Props Action
-    performAction (MarkFavorites nids) {path : nodeId} _ =
+    performAction (MarkFavorites nids) {nodeId} _ =
       void $ lift $ putFavorites nodeId (FavoriteQuery {favorites: nids})
     --TODO add array of delete rows here
     performAction (ToggleDocumentToDelete nid) _ _ =
       modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
-    performAction Trash {path: nodeId} {documentIdsToDelete} =
+    performAction Trash {nodeId} {documentIdsToDelete} =
       void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
       -- TODO: what to do now that the documents are deleted
       -- * should we reload? NO (if you change page, yes and come back yes)
@@ -165,17 +168,17 @@ layoutDocview = simpleSpec performAction render
       --       `checked: Set.member n state.documentIdsToDelete`
 
     render :: Render State Props Action
-    render dispatch {path: nodeId, loaded: contact} _ _ =
+    render dispatch {nodeId, tabType, totalRecords, chart} _ _ =
       [ p [] []
       , div [ style {textAlign : "center"}] [input [placeholder "Filter here"]]
       , br'
       , div [className "container1"]
         [ div [className "row"]
-          [ -- chart globalPublis
-           div [className "col-md-12"]
+          [ chart
+          , div [className "col-md-12"]
             [ pageLoader
-                { path: initialPageParams nodeId
-                , contact
+                { path: initialPageParams {nodeId, tabType}
+                , totalRecords
                 , dispatch
                 }
             ]
@@ -194,16 +197,15 @@ layoutDocview = simpleSpec performAction render
 mock :: Boolean
 mock = false
 
-type PageParams = {nodeId :: Int, params :: T.Params}
+type PageParams = {nodeId :: Int, tabType :: TabType, params :: T.Params}
 
-initialPageParams :: Int -> PageParams
-initialPageParams nodeId = {nodeId, params: T.initialParams}
+initialPageParams :: {nodeId :: Int, tabType :: TabType} -> PageParams
+initialPageParams {nodeId, tabType} = {nodeId, tabType, params: T.initialParams}
 
 loadPage :: PageParams -> Aff (Array DocumentsView)
-loadPage {nodeId, params: {limit, offset, orderBy}} = do
+loadPage {nodeId, tabType, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
-  --res <- get $ toUrl Back (Children Url_Document offset limit) nodeId
-  res <- get $ toUrl Back (Tab (TabPairing TabDocs) offset limit (convOrderBy <$> orderBy)) (Just nodeId)
+  res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let docs = res2corpus <$> res
   --_ <- logs "Ok: loading page documents"
   --_ <- logs $ map show docs
@@ -231,23 +233,23 @@ loadPage {nodeId, params: {limit, offset, orderBy}} = do
 
 type PageLoaderProps row =
   { path :: PageParams
-  , contact :: Contact
+  , totalRecords :: Int
   , dispatch :: Action -> Effect Unit
   | row
   }
 
 renderPage :: forall props path.
-              Render (Loader.State {nodeId :: Int | path} (Array DocumentsView))
-                     { contact :: Contact
+              Render (Loader.State {nodeId :: Int, tabType :: TabType | path} (Array DocumentsView))
+                     { totalRecords :: Int
                      , dispatch :: Action -> Effect Unit
                      | props
                      }
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage loaderDispatch {contact, dispatch} {currentPath: {nodeId}, loaded: Just res} _ =
+renderPage loaderDispatch {totalRecords, dispatch} {currentPath: {nodeId, tabType}, loaded: Just res} _ =
   [ T.tableElt
       { rows
-      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, params})
+      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, params})
       , container: T.defaultContainer { title: "Documents" }
       , colNames:
           T.ColumnName <$>
@@ -257,7 +259,7 @@ renderPage loaderDispatch {contact, dispatch} {currentPath: {nodeId}, loaded: Ju
           , "Source"
           , "Delete"
           ]
-      , totalRecords: 47361 -- TODO
+      , totalRecords
       }
   ]
   where
