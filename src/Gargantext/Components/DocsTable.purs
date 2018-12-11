@@ -6,7 +6,7 @@ import Affjax.ResponseFormat (printResponseFormatError)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
-import Data.Array (drop, take, (:))
+import Data.Array (drop, take, (:), filter)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -29,10 +29,9 @@ import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
 import Gargantext.Utils.DecodeMaybe ((.|))
 import React.DOM (a, br', button, div, i, input, p, text)
-import React.DOM.Props (_type, className, href, onClick, placeholder, style, target)
+import React.DOM.Props (_type, className, href, onClick, placeholder, style, checked, target)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
--- TODO: Pagination Details are not available from the BackEnd
 -- TODO: Search is pending
 -- TODO: Fav is pending
 -- TODO: Sort is Pending
@@ -49,15 +48,16 @@ type Props =
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.
   }
--- TODO: When a pagination link is clicked, reload data.
 
 type State =
   { documentIdsToDelete :: Set Int
+  , documentIdsDeleted  :: Set Int
   }
 
 initialState :: State
 initialState =
   { documentIdsToDelete: mempty
+  , documentIdsDeleted:  mempty
   }
 
 data Action
@@ -156,20 +156,15 @@ layoutDocview = simpleSpec performAction render
     --TODO add array of delete rows here
     performAction (ToggleDocumentToDelete nid) _ _ =
       modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
-    performAction Trash {nodeId} {documentIdsToDelete} =
+    performAction Trash {nodeId} {documentIdsToDelete} = do
       void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
-      -- TODO: what to do now that the documents are deleted
-      -- * should we reload? NO (if you change page, yes and come back yes)
-      -- * should we locally update our data? YES
-      -- * should we reset documentIdsToDelete? YES
-      -- * if so, how to un-check the checkboxes since the inputs are uncontrolled?
-      --   + There is no need to uncheck them if they disapear because we
-      --     either reload or local update our data. YES
-      --   + Sync the checked value using (why check, just reset documentsIdsToDelete)
-      --       `checked: Set.member n state.documentIdsToDelete`
+      modifyState_ \{documentIdsToDelete, documentIdsDeleted} ->
+        { documentIdsToDelete: mempty
+        , documentIdsDeleted: documentIdsDeleted <> documentIdsToDelete
+        }
 
     render :: Render State Props Action
-    render dispatch {nodeId, tabType, totalRecords, chart} _ _ =
+    render dispatch {nodeId, tabType, totalRecords, chart} deletionState _ =
       [ br'
       , div [ style {textAlign : "center"}] [ text "    Filter "
                      , input [className "form-control", style {width : "120px", display : "inline-block"}, placeholder "Filter here"]
@@ -183,6 +178,7 @@ layoutDocview = simpleSpec performAction render
             [ pageLoader
                 { path: initialPageParams {nodeId, tabType}
                 , totalRecords
+                , deletionState
                 , dispatch
                 }
             ]
@@ -239,6 +235,7 @@ type PageLoaderProps row =
   { path :: PageParams
   , totalRecords :: Int
   , dispatch :: Action -> Effect Unit
+  , deletionState :: State
   | row
   }
 
@@ -246,11 +243,14 @@ renderPage :: forall props path.
               Render (Loader.State {nodeId :: Int, tabType :: TabType | path} (Array DocumentsView))
                      { totalRecords :: Int
                      , dispatch :: Action -> Effect Unit
+                     , deletionState :: State
                      | props
                      }
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage loaderDispatch {totalRecords, dispatch} {currentPath: {nodeId, tabType}, loaded: Just res} _ =
+renderPage loaderDispatch { totalRecords, dispatch
+                          , deletionState: {documentIdsToDelete, documentIdsDeleted}}
+                          {currentPath: {nodeId, tabType}, loaded: Just res} _ =
   [ T.tableElt
       { rows
       , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, params})
@@ -269,6 +269,8 @@ renderPage loaderDispatch {totalRecords, dispatch} {currentPath: {nodeId, tabTyp
   where
     fa true  = "fas "
     fa false = "far "
+    isChecked _id = Set.member _id documentIdsToDelete
+    isDeleted (DocumentsView {_id}) = Set.member _id documentIdsDeleted
     rows = (\(DocumentsView r) ->
                 { row:
                     [ div []
@@ -289,10 +291,12 @@ renderPage loaderDispatch {totalRecords, dispatch} {currentPath: {nodeId, tabTyp
                         div [style {textDecoration : "line-through"}] [ text r.source]
                       else
                         div [] [ text r.source]
-                    , input [ _type "checkbox", onClick $ (\_ -> dispatch $ ToggleDocumentToDelete r._id)]
+                    , input [ _type "checkbox"
+                            , checked (isChecked r._id)
+                            , onClick $ (\_ -> dispatch $ ToggleDocumentToDelete r._id)]
                     ]
                 , delete: true
-                }) <$> res
+                }) <$> filter (not <<< isDeleted) res
 
 pageLoaderClass :: ReactClass (PageLoaderProps (children :: Children))
 pageLoaderClass = Loader.createLoaderClass' "PageLoader" loadPage renderPage
