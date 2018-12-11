@@ -29,7 +29,7 @@ import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
 import Gargantext.Utils.DecodeMaybe ((.|))
 import React.DOM (a, br', button, div, i, input, p, text)
-import React.DOM.Props (_type, className, href, onClick, placeholder, style)
+import React.DOM.Props (_type, className, href, onClick, placeholder, style, target)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
 -- TODO: Pagination Details are not available from the BackEnd
@@ -281,9 +281,10 @@ renderPage loaderDispatch {totalRecords, dispatch} {currentPath: {nodeId, tabTyp
                       else
                         div [ ][text r.date]
                     , if (r.delete) then
-                        a [ href (toUrl Front Url_Document (Just r._id)), style {textDecoration : "line-through"} ] [ text r.title ]
+                        a [ href (toUrl Front Url_Document (Just r._id)), style {textDecoration : "line-through"}, target "blank"
+                        ] [ text r.title ]
                       else
-                        a [ href (toUrl Front Url_Document (Just r._id)) ] [ text r.title ]
+                        a [ href (toUrl Front Url_Document (Just r._id)), target "blank" ] [ text r.title ]
                     , if (r.delete) then
                         div [style {textDecoration : "line-through"}] [ text r.source]
                       else

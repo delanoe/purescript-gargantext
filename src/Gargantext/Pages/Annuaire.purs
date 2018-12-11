@@ -18,7 +18,7 @@ import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperdataCont
 import React (ReactClass, ReactElement, Children)
 import React as React
 import React.DOM (a, br', div, input, p, text)
-import React.DOM.Props (className, href, style)
+import React.DOM.Props (className, href, style, target)
 import Thermite (Render, Spec, createClass, simpleSpec, defaultPerformAction)
 ------------------------------------------------------------------------------
 
@@ -151,7 +151,7 @@ renderContactCells :: Maybe Contact -> Array ReactElement
 renderContactCells Nothing = []
 renderContactCells (Just (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) })) =
   [ text ""
-  , a [ href (toUrl Front NodeContact (Just id)) ] [ text $ maybe "name" identity contact.title ]
+  , a [ href (toUrl Front NodeContact (Just id)), target "blank" ] [ text $ maybe "name" identity contact.title ]
   , text $ maybe "No ContactWhere" renderContactWhereOrg  (head $ ou)
   , text $ maybe "No ContactWhere" renderContactWhereDept (head $ ou)
   , div [className "nooverflow"] [text $ maybe "No ContactWhere" renderContactWhereRole (head $ ou)]
