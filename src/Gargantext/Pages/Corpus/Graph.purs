@@ -13,16 +13,18 @@ import Data.Array (fold, length, mapWithIndex, (!!))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
+import Data.Int as Int
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String (joinWith)
+import Effect (Effect)
 import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
-import Gargantext.Components.Login.Types (TreeId)
+import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get, post)
@@ -34,6 +36,9 @@ import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, s
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
+import Web.HTML (window)
+import Web.HTML.Window (localStorage)
+import Web.Storage.Storage (getItem)
 
 
 data Action
@@ -97,9 +102,16 @@ performAction (LoadGraph fp) _ _ = void do
   _ <- logs fp
   _ <- modifyState \(State s) -> State s {corpusId = fp, sigmaGraphData = Nothing}
   resp <- lift $ getNodes fp
+  treeResp <- liftEffect $ getAuthData
+  case treeResp of
+    Just (AuthData {token,tree_id }) ->
+      modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Just tree_id}
+    Nothing ->
+      modifyState identity
+      --modifyState \(State s) -> State s { graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Just 998769}
       -- TODO: here one might `catchError getNodes` to visually empty the
       -- graph.
-  modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
+  --modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
 performAction (SelectNode (SelectedNode node)) _ (State state) = void do
   _ <- modifyState $ \(State s) -> State s {selectedNode = pure $ SelectedNode node}
@@ -304,7 +316,7 @@ dispLegend ary = div [] $ map dl ary
 
 
 specOld :: Spec State {} Action
-specOld = fold [simpleSpec performAction render']
+specOld = fold [treeSpec, simpleSpec performAction render']
   where
     treeSpec :: Spec State {} Action
     treeSpec = withState \(State st) ->
@@ -582,3 +594,16 @@ getUrl :: String
 getUrl = back.baseUrl <> back.prePath
   where
     back = Config.endConfig.back
+
+
+
+getAuthData :: Effect (Maybe AuthData)
+getAuthData = do
+  w  <- window
+  ls <- localStorage w
+  mto <- getItem "token" ls
+  mti <- getItem "tree_id" ls
+  pure do
+    token <- mto
+    tree_id <- Int.fromString =<< mti
+    pure $ AuthData {token, tree_id}
