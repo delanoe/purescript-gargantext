@@ -69,7 +69,8 @@ getLastName' = fromMaybe "Empty last name"  <<< _.lastName <<< unwrap
 -- TODO factor below
 getRole :: Array ContactWhere -> String
 getRole obj = joinWith ", " $ getRole' <$> obj
-getRole' = fromMaybe "no role" <<< _.role <<< unwrap
+  where
+    getRole' = fromMaybe "Empty role" <<< _.role <<< unwrap
 
 getOrga :: Array ContactWhere -> String
 getOrga = maybe "Emtpy Contact-Where" getOrga' <<< head
@@ -103,14 +104,14 @@ getTouch :: Array ContactWhere -> Maybe ContactTouch
 getTouch = maybe Nothing (\(ContactWhere {touch:x}) -> x) <<< head
 
 getPhone :: Array ContactWhere -> String
-getPhone obj = fromMaybe "" $ getPhone' <$> (getTouch obj)
+getPhone obj = fromMaybe "Empty touch info" $ getPhone' <$> (getTouch obj)
 getPhone' :: ContactTouch -> String
-getPhone' = fromMaybe "no phone" <<< _.phone <<< unwrap
+getPhone' = fromMaybe "Empty phone" <<< _.phone <<< unwrap
 
 getMail :: Array ContactWhere -> String
-getMail obj = fromMaybe "" $ getMail' <$> (getTouch obj)
+getMail obj = fromMaybe "Empty info" $ getMail' <$> (getTouch obj)
 getMail' :: ContactTouch -> String
-getMail' = fromMaybe "no mail" <<< _.mail <<< unwrap
+getMail' = fromMaybe "Empty mail" <<< _.mail <<< unwrap
 
 -- | TODO format data in better design (UI) shape
 contactInfos :: HyperdataContact -> Array ReactElement
@@ -119,9 +120,9 @@ contactInfos (HyperdataContact {who:who, ou:ou}) =
   , li [className "list-group-item"] (infoRender (Tuple "First name"   $ " " <> getFirstName who))
   , li [className "list-group-item"] (infoRender (Tuple "Organization" $ " " <> getOrga      ou ))
   , li [className "list-group-item"] (infoRender (Tuple "Lab/Team/Dept"$ " " <> getOrga      ou ))
-  , li [className "list-group-item"] (infoRender (Tuple "Office"       $ " " <> getOffice      ou ))
+  , li [className "list-group-item"] (infoRender (Tuple "Office"       $ " " <> getOffice    ou ))
   , li [className "list-group-item"] (infoRender (Tuple "City"         $ " " <> getCity      ou ))
-  , li [className "list-group-item"] (infoRender (Tuple "Country"      $ " " <> getCountry      ou ))
+  , li [className "list-group-item"] (infoRender (Tuple "Country"      $ " " <> getCountry   ou ))
   , li [className "list-group-item"] (infoRender (Tuple "Role"         $ " " <> getRole      ou ))
   , li [className "list-group-item"] (infoRender (Tuple "Phone"        $ " " <> getPhone     ou ))
   , li [className "list-group-item"] (infoRender (Tuple "Mail"         $ " " <> getMail      ou ))
