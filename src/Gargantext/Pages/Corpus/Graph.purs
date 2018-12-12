@@ -108,8 +108,8 @@ performAction (LoadGraph fp) _ _ = void do
     Just (AuthData {token,tree_id }) ->
       modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Just tree_id}
     Nothing ->
-      modifyState identity
-      --modifyState \(State s) -> State s { graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Just 998769}
+
+      modifyState \(State s) -> State s { graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Nothing}
       -- TODO: here one might `catchError getNodes` to visually empty the
       -- graph.
   --modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
