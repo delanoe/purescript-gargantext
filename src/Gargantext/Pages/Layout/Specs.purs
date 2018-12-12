@@ -59,7 +59,7 @@ pagesComponent s = case s.currentRoute of
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec (Document i)      = layout0 $ focus _documentViewState _documentViewAction  Annotation.docview
-    selectSpec (PGraphExplorer i)= layout1 $ focus _graphExplorerState _graphExplorerAction  GE.specOld
+    selectSpec (PGraphExplorer i)= layout1  $ focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
 
     selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
@@ -123,7 +123,8 @@ layout1 :: Spec AppState {} Action
 layout1 layout =
   fold
   [ layoutSidebar divSearchBar
-  , outerLayout
+  , layout
+  -- , outerLayout
   , layoutFooter
   ]
   where
@@ -141,7 +142,7 @@ layout1 layout =
       ]
     ls   = over _render \render d p s c -> [
 
-        button [onClick $ \e -> d ShowTree, className "btn btn-primary",style {position:"relative", top: "99px",left:"-264px",zIndex : "1000"}] [text "ShowTree"]
+        button [onClick $ \e -> d ToggleTree, className "btn btn-primary",style {position:"relative", top: "99px",left:"-264px",zIndex : "1000"}] [text "ShowTree"]
 
         , div [if (s.showTree) then className "col-md-2" else className "col-md-2"] if (s.showTree) then (render d p s c) else []
       ]

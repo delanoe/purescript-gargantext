@@ -177,3 +177,7 @@ text-align: center;
     overflow: visible;
     height: auto;
 }
+
+#graph-tree .tree {
+    margin-top: 27px;
+}

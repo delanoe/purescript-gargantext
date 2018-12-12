@@ -35,7 +35,7 @@ data Action
   | ShowLogin
   | Logout
   | ShowAddcorpus
-  | ShowTree 
+  | ToggleTree
 
 
 performAction :: PerformAction AppState {} Action
@@ -44,7 +44,7 @@ performAction (SetRoute route)  _ _ = void do
 performAction (Search s)  _ _ = void do
   modifyState $ _ {search = s}
 
-performAction (ShowTree)  _ (state) = void do -- TODO
+performAction (ToggleTree)  _ (state) = void do -- TODO
   modifyState $ _ {showTree = not (state.showTree)}
 
 performAction (ShowLogin)  _ _ = void do
