@@ -17,6 +17,7 @@ import Data.Int as Int
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String (joinWith)
+import Data.Lens (over)
 import Effect (Effect)
 import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
@@ -34,7 +35,7 @@ import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
-import Thermite (PerformAction, Render, Spec, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, noState, simpleSpec, withState)
+import Thermite (PerformAction, Render, Spec, _render,cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -316,8 +317,24 @@ dispLegend ary = div [] $ map dl ary
 
 
 specOld :: Spec State {} Action
-specOld = fold [treeSpec, simpleSpec performAction render']
+specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
   where
+    treespec = over _render \frender d p (State s) c ->
+
+                [ div [ className "col-md-2", _id "graph-tree", style {marginTop:"104px"}] $
+                  [
+                     button [className "btn btn-primary" , onClick \_ -> d ToggleTree]
+                     [text $ if s.showTree then "Hide Tree" else "Show Tree"]
+                  ]
+                  <>
+                  if s.showTree then (frender d p (State s) c) else []
+                ]
+
+
+
+    graphspec   = over _render \frender d p s c -> [
+         div [ className "col-md-10"] (frender d p s c)
+      ]
     treeSpec :: Spec State {} Action
     treeSpec = withState \(State st) ->
       case st.treeId of
@@ -331,10 +348,7 @@ specOld = fold [treeSpec, simpleSpec performAction render']
       [ div [className "row", style {"padding-bottom" : "10px"}]
       [
            div [className "col-md-4"]
-           [ button [className "btn btn-primary"
-             , onClick \_ -> d ToggleTree
-             ]
-             [text $ if st.showTree then "Hide Tree" else "Show Tree"]
+           [
             ]
           , div [className "col-md-4"]
            [
@@ -425,7 +439,7 @@ specOld = fold [treeSpec, simpleSpec performAction render']
             else div [] []
            ]
          , div [className "row"]
-           [ div [if (st.showSidePanel && st.showTree) then className "col-md-8" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
+           [ div [if (st.showSidePanel && st.showTree) then className "col-md-10" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
              [ div [style {height: "90%"}] $
                [
                ]
