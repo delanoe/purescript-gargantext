@@ -108,6 +108,9 @@ limitUrl l = "&limit=" <> show l
 offsetUrl :: Offset -> UrlPath
 offsetUrl o = "&offset=" <> show o
 
+orderUrl :: forall a. Show a => Maybe a -> UrlPath
+orderUrl = maybe "" (\x -> "&order=" <> show x)
+
 tabTypeNgrams :: TabType -> UrlPath
 tabTypeNgrams (TabCorpus  t) = "listGet?ngramsType=" <> show t
 tabTypeNgrams (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
@@ -115,14 +118,10 @@ tabTypeNgrams (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
 pathUrl :: Config -> Path -> Maybe Id -> UrlPath
 pathUrl c (Tab t o l s) i =
     pathUrl c (NodeAPI Node) i <>
-      "/" <> tabTypeDocs t <> offsetUrl o <> limitUrl l <> os
-  where
-    os = maybe "" (\x -> "&order=" <> show x) s
+      "/" <> tabTypeDocs t <> offsetUrl o <> limitUrl l <> orderUrl s
 pathUrl c (Children n o l s) i =
     pathUrl c (NodeAPI Node) i <>
-      "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> os
-  where
-    os = maybe "" (\x -> "&order=" <> show x) s
+      "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
 pathUrl c (Ngrams t o l listid) i =
     pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgrams t
       <> offsetUrl o <> limitUrl l <> listid'
@@ -131,7 +130,9 @@ pathUrl c (Ngrams t o l listid) i =
 pathUrl c Auth Nothing = c.prePath <> "auth"
 pathUrl c Auth (Just _) = "impossible" -- TODO better types
 pathUrl c (NodeAPI nt) i = c.prePath <> nodeTypeUrl nt <> (maybe "" (\i' -> "/" <> show i') i)
-
+pathUrl c (Search {limit,offset,orderBy}) _TODO =
+  c.prePath <> "search/?dummy=dummy"
+    <> offsetUrl offset <> limitUrl limit <> orderUrl orderBy
 
 
 ------------------------------------------------------------
@@ -190,6 +191,12 @@ data Path
   | Children NodeType Offset Limit (Maybe OrderBy)
   | Ngrams   TabType  Offset Limit (Maybe TermList)
   | NodeAPI NodeType
+  | Search  { {-id :: Int
+            , query    :: Array String
+            ,-} limit  :: Limit
+            , offset   :: Offset
+            , orderBy  :: Maybe OrderBy
+            }
 
 data End = Back | Front
 type Id  = Int
