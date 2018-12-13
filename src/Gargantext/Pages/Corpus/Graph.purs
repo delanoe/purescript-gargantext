@@ -23,6 +23,7 @@ import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
+import Gargantext.Components.RandomText (words)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
@@ -561,7 +562,10 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
               , div []
                 [ p [] []
                 , div [className "col-md-12"]
-                  [ GT.tabsElt {sides}
+                  [ case st.selectedNode of
+                      Just (SelectedNode {label}) ->
+                        GT.tabsElt {query: words label, sides}
+                      Nothing -> p [] []
                   , p [] []
                   ]
                 ]
