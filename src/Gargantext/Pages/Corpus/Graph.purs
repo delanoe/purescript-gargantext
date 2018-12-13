@@ -29,6 +29,7 @@ import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get, post)
+import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
@@ -82,7 +83,7 @@ newtype NodeResults = NodeResults
 
 initialState :: State
 initialState = State
-  { graphData : GraphData {nodes : [], edges : []}
+  { graphData : GraphData {nodes: [], edges: [], sides: []}
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []
@@ -343,7 +344,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
         Just treeId ->
           (cmapProps (const {root: treeId}) (noState Tree.treeview))
     render' :: Render State {} Action
-    render' d _ (State st) _ =
+    render' d _ (State st@{graphData: GraphData {sides}}) _ =
       [ div [className "container-fluid", style {"padding-top" : "100px"}]
       [ div [className "row", style {"padding-bottom" : "10px"}]
       [
@@ -559,15 +560,12 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                ]
               , div []
                 [ p [] []
-                , div [className "col-md-12"][ case st.selectedNode of
-                    Nothing -> span [] []
-                    Just selectedNode -> p [] [text $ "BOUKLI HACENE Ghouthi, GRIPON Vincent, FARRUGIA Nicolas, ARZEL Matthieu, ", a [href "http://localhost:2015/#/userPage/1"][text "JEZEQUEL Michel. "], text "Finding All Matches in a Database using Binary Neural Networks. COGNITIVE 2017 : The Ninth International Conference on Advanced Cognitive Technologies and Applications, 19-23 february 2017, AthÃ¨nes, Greece, 2017, pp. 59-64"]
-                 , p []
-                 [
-                 ]
-               ]
+                , div [className "col-md-12"]
+                  [ GT.tabsElt {sides}
+                  , p [] []
+                  ]
                 ]
-               ]
+              ]
              ]
             else
               div [] []   -- ends sidepanel column here

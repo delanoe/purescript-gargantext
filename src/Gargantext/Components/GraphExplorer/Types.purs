@@ -29,9 +29,18 @@ newtype Edge = Edge
 
 derive instance newtypeEdge :: Newtype Edge _
 
+type CorpusId    = Int
+type CorpusLabel = String
+
+newtype GraphSideCorpus = GraphSideCorpus
+  { corpusId    :: CorpusId
+  , corpusLabel :: CorpusLabel
+  }
+
 newtype GraphData = GraphData
   { nodes :: Array Node
   , edges :: Array Edge
+  , sides :: Array GraphSideCorpus
   }
 
 derive instance newtypeGraphData :: Newtype GraphData _
@@ -41,7 +50,9 @@ instance decodeJsonGraphData :: DecodeJson GraphData where
     obj <- decodeJson json
     nodes <- obj .? "nodes"
     edges <- obj .? "edges"
-    pure $ GraphData { nodes, edges }
+    -- TODO: sides
+    -- sides <- obj .? "corpusId"
+    pure $ GraphData { nodes, edges, sides: [GraphSideCorpus { corpusId: 1004223, corpusLabel: "Patents" }, GraphSideCorpus { corpusId: 998770, corpusLabel: "Books" }] }
 
 instance decodeJsonNode :: DecodeJson Node where
   decodeJson json = do
