@@ -53,7 +53,7 @@ instance decodeJsonGraphData :: DecodeJson GraphData where
     -- TODO: sides
     metadata <- obj .? "metadata"
     corpusIds <- metadata .? "corpusId"
-    let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Patents" }
+    let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Pubs / Patents" }
     let sides = side <$> corpusIds
     pure $ GraphData { nodes, edges, sides }
 

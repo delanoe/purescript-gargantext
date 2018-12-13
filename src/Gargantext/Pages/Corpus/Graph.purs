@@ -323,7 +323,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
   where
     treespec = over _render \frender d p (State s) c ->
 
-                [ div [ className "col-md-2", _id "graph-tree", style {marginTop:"104px"}] $
+                [ div [ className "col-md-1", _id "graph-tree", style {marginTop:"104px"}] $
                   [
                      button [className "btn btn-primary" , onClick \_ -> d ToggleTree]
                      [text $ if s.showTree then "Hide Tree" else "Show Tree"]
@@ -335,7 +335,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
 
 
     graphspec   = over _render \frender d p s c -> [
-         div [ className "col-md-10"] (frender d p s c)
+         div [ className "col-md-9"] (frender d p s c)
       ]
     treeSpec :: Spec State {} Action
     treeSpec = withState \(State st) ->
@@ -471,16 +471,16 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
              ]
          --, button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"39px",position : "relative",zIndex:"1000", top: "-59px"}] [text "Show SidePanel"]
          , if (st.showSidePanel) then
-            div [_id "sp-container", className "col-md-2", style {border : "1px black solid", backgroundColor : "beige"}]
+            div [_id "sp-container", className "col-md-2", style {border : "1px white solid", backgroundColor : "white"}]
              [ div [className "row"]
-               [ div [_id "sidepanel" , style {borderBottom : "1px solid black"}]
+               [ div [_id "sidepanel" , style {borderBottom : "1px solid white"}]
                [ case st.selectedNode of
-                    Nothing -> span [] [ text "dummy text"]
-                    Just selectedNode -> p [] [ text $ "selected Node : " <> getter _.label selectedNode
+                    Nothing -> span [] [ text "Empty text"]
+                    Just selectedNode -> p [] [ text $ "Nodes : " <> getter _.label selectedNode
                                               , text $ (joinWith ", " ( getTitle st.nodeResults))
                                               , text $ (joinWith ", " (getAuthors st.nodeResults))
-                                              , br'
-                                              , p [] [button [className "btn btn-primary", style {marginBottom : "18px"}] [text "Remove"]]
+                                              --, br'
+                                              --, p [] [button [className "btn btn-primary", style {marginBottom : "18px"}] [text "Remove"]]
                                               ]
                ]
 --             , div [className "col-md-12"]
@@ -517,7 +517,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
 --                     ]
 --                   ]
 --                 ]
-             , div [className "col-md-12", _id "horizontal-checkbox"]
+             {-, div [className "col-md-12", _id "horizontal-checkbox"]
                [ ul [ style {display: "inline",float : "left" }]
                  [ li []
                    [ span [] [text "Pubs"]
@@ -558,7 +558,8 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                    ]
                  ]
 
-               ]
+               ] --}
+
               , div []
                 [ p [] []
                 , div [className "col-md-12"]
@@ -610,7 +611,6 @@ getUrl :: String
 getUrl = back.baseUrl <> back.prePath
   where
     back = Config.endConfig.back
-
 
 
 getAuthData :: Effect (Maybe AuthData)
