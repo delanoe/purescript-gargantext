@@ -37,7 +37,7 @@ import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', h2,button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
-import Thermite (PerformAction, Render, Spec, _render,cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, noState, simpleSpec, withState)
+import Thermite (PerformAction, Render, Spec, _render,cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -65,21 +65,8 @@ newtype State = State
   , showSidePanel :: Boolean
   , showControls :: Boolean
   , showTree :: Boolean
-  , nodeResults :: Array NodeResults
   , corpusId :: Int
   , treeId :: Maybe TreeId
-  }
-
-newtype NodeQuery  = NodeQuery
-  {
-    query :: Array String
-  , parentId :: Int
-  }
-newtype NodeResults = NodeResults
-  {
-    rid :: Int
-  , title :: String
-  , authors :: String
   }
 
 initialState :: State
@@ -92,7 +79,6 @@ initialState = State
   , showSidePanel : false
   , showControls : false
   , showTree : false
-  , nodeResults : []
   , corpusId : 0
   , treeId : Nothing
   }
@@ -116,15 +102,8 @@ performAction (LoadGraph fp) _ _ = void do
       -- graph.
   --modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
-performAction (SelectNode (SelectedNode node)) _ (State state) = void do
-  _ <- modifyState $ \(State s) -> State s {selectedNode = pure $ SelectedNode node}
-  response <- lift $ attempt $ selectNodeApi $ NodeQuery {query : [node.label], parentId : state.corpusId}
-  case response of
-    Left err -> do
-      _ <- liftEffect $ log $ show err
-      modifyState identity
-    Right resp -> do
-      modifyState $ \(State s) -> State s {nodeResults = resp}
+performAction (SelectNode (SelectedNode node)) _ (State state) =
+  modifyState_ $ \(State s) -> State s {selectedNode = pure $ SelectedNode node}
 
 performAction (ShowSidePanel b) _ (State state) = void do
   modifyState $ \(State s) -> State s {showSidePanel = b }
@@ -465,7 +444,6 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                              , style : sStyle { height : "95%"}
                              , onClickNode : \e -> unsafePerformEffect $ do
                                 _ <- log " hello 2"
-                                --_ <- attempt $ selectNodeApi $ NodeQuery {query : [], parentId : 0}
                                 --logs $ unsafeCoerce e
                                 _ <- d $ ShowSidePanel true
                                 _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
@@ -482,17 +460,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
          --, button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"39px",position : "relative",zIndex:"1000", top: "-59px"}] [text "Show SidePanel"]
          , if (st.showSidePanel) then
             div [_id "sp-container", className "col-md-2", style {border : "1px white solid", backgroundColor : "white"}]
-             [ div [className "row"]
-               [ div [_id "sidepanel" , style {borderBottom : "1px solid white"}]
-               [ case st.selectedNode of
-                    Nothing -> span [] [ text "Empty text"]
-                    Just selectedNode -> p [] [ text $ "Nodes : " <> getter _.label selectedNode
-                                              , text $ (joinWith ", " ( getTitle st.nodeResults))
-                                              , text $ (joinWith ", " (getAuthors st.nodeResults))
-                                              --, br'
-                                              --, p [] [button [className "btn btn-primary", style {marginBottom : "18px"}] [text "Remove"]]
-                                              ]
-               ]
+             [ div [className "row"] $
 --             , div [className "col-md-12"]
 --               [
 --                 ul [className "nav nav-tabs"
@@ -570,7 +538,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
 
                ] --}
 
-              , div []
+              [ div []
                 [ p [] []
                 , div [className "col-md-12"]
                   [ case st.selectedNode of
@@ -588,40 +556,9 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
          ]
       ]
 
-getTitle :: Array NodeResults -> Array String
-getTitle ary = map (\(NodeResults s)-> s.title) ary
-
-getAuthors :: Array NodeResults -> Array String
-getAuthors ary = map (\(NodeResults s ) -> s.authors) ary
-
 
 getNodes :: Int -> Aff GraphData
 getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId
-
-selectNodeApi :: NodeQuery -> Aff (Array NodeResults)
-selectNodeApi = post $ getUrl <> "search"
-
-instance encodeJsonNQuery :: EncodeJson NodeQuery where
-  encodeJson (NodeQuery post)
-     = "query" := post.query
-    ~> "parent_id" := post.parentId
-    ~> jsonEmptyObject
-
-
-instance decodeJsonNResults :: DecodeJson NodeResults where
-  decodeJson json = do
-    obj <- decodeJson json
-    rid <- obj .? "id"
-    title  <- obj .? "title"
-    authors <- obj .? "authors"
-    pure $ NodeResults {rid,title,authors}
-
-
-getUrl :: String
-getUrl = back.baseUrl <> back.prePath
-  where
-    back = Config.endConfig.back
-
 
 getAuthData :: Effect (Maybe AuthData)
 getAuthData = do
