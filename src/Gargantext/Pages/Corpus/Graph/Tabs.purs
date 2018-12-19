@@ -7,6 +7,7 @@ import Data.Tuple (Tuple(..))
 import Gargantext.Config (TabType(..), TabSubType(..))
 import Gargantext.Components.GraphExplorer.Types (GraphSideCorpus(..))
 import Gargantext.Components.FacetsTable as FT
+import Gargantext.Components.Table as T
 import Gargantext.Components.Tab as Tab
 import React (ReactElement, ReactClass, Children, createElement)
 import Thermite ( Spec, PerformAction, Render, _performAction, _render
@@ -28,11 +29,12 @@ pureTabs = hideState (const {activeTab: 0}) statefulTabs
 tab :: forall props state. Array String -> GraphSideCorpus -> Tuple String (Spec state props Tab.Action)
 tab query (GraphSideCorpus {corpusId: nodeId, corpusLabel}) =
   Tuple corpusLabel $
-    cmapProps (const {nodeId, query, chart, totalRecords: 4736}) $
+    cmapProps (const {nodeId, query, chart, totalRecords: 4736, container}) $
       noState FT.docViewSpec
   where
     -- TODO totalRecords: probably need to insert a corpusLoader.
     chart = mempty
+    container = T.graphContainer {title: corpusLabel}
 
 statefulTabs :: Spec Tab.State Props Tab.Action
 statefulTabs =

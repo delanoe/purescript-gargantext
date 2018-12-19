@@ -64,6 +64,7 @@ type Props =
   , query :: Array String
   , totalRecords :: Int
   , chart :: ReactElement
+  , container :: T.TableContainerProps -> Array ReactElement
   }
 
 type State =
@@ -168,6 +169,7 @@ instance decodeResponse :: DecodeJson Response where
 
 
 -- | Filter
+-- TODO: unused
 filterSpec :: forall state props action. Spec state props action
 filterSpec = simpleSpec defaultPerformAction render
   where
@@ -196,7 +198,7 @@ layoutDocview = simpleSpec performAction render
         }
 
     render :: Render State Props Action
-    render dispatch {nodeId, query, totalRecords, chart} deletionState _ =
+    render dispatch {nodeId, query, totalRecords, chart, container} deletionState _ =
       [ br'
       , div [ style {textAlign : "center"}] [ text "    Filter "
                      , input [className "form-control", style {width : "120px", display : "inline-block"}, placeholder "Filter here"]
@@ -212,6 +214,7 @@ layoutDocview = simpleSpec performAction render
                 , totalRecords
                 , deletionState
                 , dispatch
+                , container
                 }
             ]
           , div [className "col-md-12"]
@@ -245,7 +248,7 @@ layoutDocviewGraph = simpleSpec performAction render
         }
 
     render :: Render State Props Action
-    render dispatch {nodeId, query, totalRecords, chart} deletionState _ =
+    render dispatch {nodeId, query, totalRecords, chart, container} deletionState _ =
       [ br'
 
       , p [] [text ""]
@@ -259,6 +262,7 @@ layoutDocviewGraph = simpleSpec performAction render
                 , totalRecords
                 , deletionState
                 , dispatch
+                , container
                 }
             , button [ style {backgroundColor: "peru", padding : "9px", color : "white", border : "white", float: "right"}
                       , onClick $ (\_ -> dispatch Trash)
@@ -311,6 +315,7 @@ type PageLoaderProps row =
   , totalRecords :: Int
   , dispatch :: Action -> Effect Unit
   , deletionState :: State
+  , container :: T.TableContainerProps -> Array ReactElement
   | row
   }
 
@@ -319,17 +324,18 @@ renderPage :: forall props path.
                      { totalRecords :: Int
                      , dispatch :: Action -> Effect Unit
                      , deletionState :: State
+                     , container :: T.TableContainerProps -> Array ReactElement
                      | props
                      }
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage loaderDispatch { totalRecords, dispatch
+renderPage loaderDispatch { totalRecords, dispatch, container
                           , deletionState: {documentIdsToDelete, documentIdsDeleted}}
                           {currentPath: {nodeId, query}, loaded: Just res} _ =
   [ T.tableElt
       { rows
       , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, query, params})
-      , container: T.graphContainer { title: "Documents" }
+      , container
       , colNames:
           T.ColumnName <$>
           [ ""
