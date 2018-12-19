@@ -190,17 +190,15 @@ defaultContainer {title} props =
 -- TODO: this needs to be in Gargantext.Pages.Corpus.Graph.Tabs
 graphContainer :: {title :: String} -> TableContainerProps -> Array ReactElement
 graphContainer {title} props =
-  [ div [className "row"]
-    [ div [className "col-md-12"] [b [] [text title]]
-    , div [className "col-md-12", style {marginTop : "10px"}] [props.pageSizeControl]
-    , div [className "col-md-12", style {marginTop : "10px"}] [props.pageSizeDescription]
- -- TODO better rendering of the paginationLinks
- -- , div [className "col-md-12", style {marginTop : "10px"}] [props.paginationLinks]
-    ]
-  , table [ className "table"]
+  [ -- TODO title in tabs name (above)
+    table [ className "table"]
     [ thead [className "thead-dark"] [ props.tableHead ]
     , tbody [] props.tableBody
     ]
+   -- TODO better rendering of the paginationLinks
+   -- , props.pageSizeControl
+   -- , props.pageSizeDescription
+   -- , props.paginationLinks
   ]
 
 
