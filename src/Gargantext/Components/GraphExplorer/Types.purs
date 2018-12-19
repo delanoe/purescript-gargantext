@@ -5,7 +5,7 @@ import Prelude
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Array (concat, fromFoldable, group, sort, take)
 import Data.Newtype (class Newtype)
-
+import Data.Maybe (Maybe(..), maybe)
 newtype Node = Node
   { id_ :: String
   , size :: Int
@@ -41,9 +41,18 @@ newtype GraphData = GraphData
   { nodes :: Array Node
   , edges :: Array Edge
   , sides :: Array GraphSideCorpus
+  , metaData :: Maybe MetaData
   }
 
 derive instance newtypeGraphData :: Newtype GraphData _
+
+newtype MetaData = MetaData
+  {
+    title :: String
+  , legend :: Array Legend
+  , corpusId :: Array Int
+  }
+
 
 instance decodeJsonGraphData :: DecodeJson GraphData where
   decodeJson json = do
@@ -53,9 +62,10 @@ instance decodeJsonGraphData :: DecodeJson GraphData where
     -- TODO: sides
     metadata <- obj .? "metadata"
     corpusIds <- metadata .? "corpusId"
+    metaData <- obj .? "metadata"
     let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Pubs / Patents" }
     let sides = side <$> corpusIds
-    pure $ GraphData { nodes, edges, sides }
+    pure $ GraphData { nodes, edges, sides, metaData }
 
 instance decodeJsonNode :: DecodeJson Node where
   decodeJson json = do
@@ -66,6 +76,24 @@ instance decodeJsonNode :: DecodeJson Node where
     size <- obj .? "size"
     attributes <- obj .? "attributes"
     pure $ Node { id_, type_, size, label, attributes }
+
+
+instance decodeJsonMetaData :: DecodeJson MetaData where
+  decodeJson json = do
+    obj <- decodeJson json
+    title <- obj .? "title"
+    legend <- obj .? "legend"
+    corpusId <- obj .? "corpusId"
+    pure $ MetaData { title, legend, corpusId }
+
+
+instance decodeJsonLegend :: DecodeJson Legend where
+  decodeJson json = do
+    obj <- decodeJson json
+    id_ <- obj .? "id"
+    label <- obj .? "label"
+    pure $ Legend { id_, label }
+
 
 instance decodeJsonCluster :: DecodeJson Cluster where
   decodeJson json = do

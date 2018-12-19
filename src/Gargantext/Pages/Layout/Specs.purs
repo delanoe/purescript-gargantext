@@ -356,7 +356,7 @@ layoutFooter :: Spec AppState {} Action
 layoutFooter = simpleSpec performAction render
   where
     render :: Render AppState {} Action
-    render dispatch _ state _ = [div [ className "container1" ] [ hr', footerLegalInfo']]
+    render dispatch _ state _ = [div [ className "container" ] [ hr', footerLegalInfo']]
       where
         footerLegalInfo' = footer [] [ p [] [ text "Gargantext "
                                    , span [className "glyphicon glyphicon-registration-mark" ] []

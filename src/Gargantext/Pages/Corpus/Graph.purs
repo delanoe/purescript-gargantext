@@ -25,7 +25,7 @@ import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..),Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
@@ -35,7 +35,7 @@ import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
-import React.DOM (a, br', button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
+import React.DOM (a, br', h2,button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, _render,cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
@@ -84,7 +84,7 @@ newtype NodeResults = NodeResults
 
 initialState :: State
 initialState = State
-  { graphData : GraphData {nodes: [], edges: [], sides: []}
+  { graphData : GraphData {nodes: [], edges: [], sides: [], metaData : Just $ MetaData{title : "", legend : [], corpusId : []}}
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []
@@ -323,7 +323,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
   where
     treespec = over _render \frender d p (State s) c ->
 
-                [ div [ className "col-md-1", _id "graph-tree", style {marginTop:"104px"}] $
+                [ div [ className "col-md-1", _id "graph-tree", style {marginTop:"151px"}] $
                   [
                      button [className "btn btn-primary" , onClick \_ -> d ToggleTree]
                      [text $ if s.showTree then "Hide Tree" else "Show Tree"]
@@ -345,9 +345,19 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
         Just treeId ->
           (cmapProps (const {root: treeId}) (noState Tree.treeview))
     render' :: Render State {} Action
-    render' d _ (State st@{graphData: GraphData {sides}}) _ =
+    render' d _ (State st@{graphData: GraphData {sides,metaData  }}) _ =
       [ div [className "container-fluid", style {"padding-top" : "100px"}]
-      [ div [className "row", style {"padding-bottom" : "10px"}]
+      [ div [ className "row"]
+        [ h2 [ style {textAlign : "center", position : "relative", top: "-38px"}]
+          [-- :  MetaData {title}
+            case metaData of
+              Just( MetaData {title }) ->
+                text $ "Graph " <> title
+              Nothing ->
+                text "Title"
+          ]
+        ]
+       , div [className "row", style {"padding-bottom" : "10px", marginTop : "-24px"}]
       [
            div [className "col-md-4"]
            [
