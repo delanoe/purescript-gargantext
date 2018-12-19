@@ -176,7 +176,7 @@ filterSpec = simpleSpec defaultPerformAction render
                      ]]
 
 docViewSpec :: Spec {} Props Void
-docViewSpec = hideState (const initialState) layoutDocview
+docViewSpec = hideState (const initialState) layoutDocviewGraph
 
 -- | Main layout of the Documents Tab of a Corpus
 layoutDocview :: Spec State Props Action
@@ -225,6 +225,54 @@ layoutDocview = simpleSpec performAction render
           ]
         ]
       ]
+
+
+
+layoutDocviewGraph :: Spec State Props Action
+layoutDocviewGraph = simpleSpec performAction render
+  where
+    performAction :: PerformAction State Props Action
+    performAction (MarkFavorites nids) {nodeId} _ =
+      void $ lift $ putFavorites nodeId (FavoriteQuery {favorites: nids})
+    --TODO add array of delete rows here
+    performAction (ToggleDocumentToDelete nid) _ _ =
+      modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
+    performAction Trash {nodeId} {documentIdsToDelete} = do
+      void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
+      modifyState_ \{documentIdsToDelete, documentIdsDeleted} ->
+        { documentIdsToDelete: mempty
+        , documentIdsDeleted: documentIdsDeleted <> documentIdsToDelete
+        }
+
+    render :: Render State Props Action
+    render dispatch {nodeId, query, totalRecords, chart} deletionState _ =
+      [ br'
+
+      , p [] [text ""]
+      , br'
+      , div [className "container-fluid"]
+        [ div [className "row"]
+          [ chart
+          , div [className "col-md-12"]
+            [ pageLoader
+                { path: initialPageParams {nodeId, query}
+                , totalRecords
+                , deletionState
+                , dispatch
+                }
+            , button [ style {backgroundColor: "peru", padding : "9px", color : "white", border : "white", float: "right"}
+                      , onClick $ (\_ -> dispatch Trash)
+                      ]
+               [  i [className "glyphitem glyphicon glyphicon-trash", style {marginRight : "9px"}] []
+               ,  text "Trash it !"
+               ]
+            ]
+
+          ]
+        ]
+      ]
+
+
 
 type PageParams = {nodeId :: Int, query :: Array String, params :: T.Params}
 
@@ -281,7 +329,7 @@ renderPage loaderDispatch { totalRecords, dispatch
   [ T.tableElt
       { rows
       , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, query, params})
-      , container: T.defaultContainer { title: "Documents" }
+      , container: T.graphContainer { title: "Documents" }
       , colNames:
           T.ColumnName <$>
           [ ""
