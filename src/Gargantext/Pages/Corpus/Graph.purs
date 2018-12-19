@@ -96,7 +96,6 @@ performAction (LoadGraph fp) _ _ = void do
     Just (AuthData {token,tree_id }) ->
       modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Just tree_id}
     Nothing ->
-
       modifyState \(State s) -> State s { graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Nothing}
       -- TODO: here one might `catchError getNodes` to visually empty the
       -- graph.
@@ -155,8 +154,9 @@ render d p (State s) c =
         , edgeShapes {"default" : edgeShape.curve}
         ]
       ]
-  <>
-  [dispLegend s.legendData]
+  -- TODO clean unused code: this seems to be not used
+  -- <>
+  -- [dispLegend s.legendData]
 
 forceAtlas2Config :: { slowDown :: Number
                     , startingIterations :: Number
@@ -290,9 +290,9 @@ nOverlap ns =  { nodes : ns
 dispLegend :: Array Legend -> ReactElement
 dispLegend ary = div [] $ map dl ary
   where
-    dl (Legend {id_, label}) =
+    dl (Legend {id_, color, label}) =
       p []
-      [ span [style {width : 10, height : 10, backgroundColor : intColor id_, display: "inline-block"}] []
+      [ span [style {width : 10, height : 10, backgroundColor : intColor id_ , display: "inline-block"}] []
       , text $ " " <> label
       ]
 

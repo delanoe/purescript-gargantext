@@ -46,6 +46,7 @@ newtype GraphData = GraphData
 
 derive instance newtypeGraphData :: Newtype GraphData _
 
+
 newtype MetaData = MetaData
   {
     title :: String
@@ -91,8 +92,9 @@ instance decodeJsonLegend :: DecodeJson Legend where
   decodeJson json = do
     obj <- decodeJson json
     id_ <- obj .? "id"
+    color <- obj .? "color"
     label <- obj .? "label"
-    pure $ Legend { id_, label }
+    pure $ Legend { id_, color, label }
 
 
 instance decodeJsonCluster :: DecodeJson Cluster where
@@ -110,7 +112,7 @@ instance decodeJsonEdge :: DecodeJson Edge where
     weight <- obj .? "weight"
     pure $ Edge { id_, source, target, weight }
 
-newtype Legend = Legend  {id_ ::Int , label :: String}
+newtype Legend = Legend  {id_ ::Int , color :: String, label :: String}
 
 instance eqLegend :: Eq Legend where
   eq (Legend l1) (Legend l2) = eq l1.id_ l2.id_
@@ -119,16 +121,9 @@ instance ordLegend :: Ord Legend where
   compare (Legend l1) (Legend l2) = compare l1.id_ l2.id_
 
 getLegendData :: GraphData -> Array Legend
-getLegendData (GraphData {nodes, edges}) = nn
+getLegendData (GraphData {nodes, edges, metaData}) = getLegend metaData
   where
-    --mp (NonEmptyArray a ary) = [a] <> (if length ary > 0 then [unsafePartial $ fromJust $ head ary] else [])
-    n = sort $ map t' nodes
-    g = group n
-    nn = take 5 $ concat $ map fromFoldable g -- TODO: fix this after checking the output
-
-t' :: Node -> Legend
-t' (Node r) = Legend { id_ : clustDefault, label : r.label}
-  where
-    (Cluster {clustDefault}) = r.attributes
+    getLegend (Just (MetaData {legend})) = legend
+    getLegend Nothing  = []
 
 

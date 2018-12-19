@@ -68,9 +68,9 @@ getLastName' = fromMaybe "Empty last name"  <<< _.lastName <<< unwrap
 -- | ContactWhere infos
 -- TODO factor below
 getRole :: Array ContactWhere -> String
-getRole obj = joinWith ", " $ getRole' <$> obj
+getRole = maybe "Empty Contact-Where" getRole' <<< head
   where
-    getRole' = fromMaybe "Empty role" <<< _.role <<< unwrap
+    getRole' = fromMaybe "Empty Role" <<< _.role <<< unwrap
 
 getOrga :: Array ContactWhere -> String
 getOrga = maybe "Emtpy Contact-Where" getOrga' <<< head
