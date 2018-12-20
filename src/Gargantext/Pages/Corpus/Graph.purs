@@ -9,24 +9,24 @@ import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
 import Data.Argonaut (decodeJson)
-import Data.Array (fold, length, mapWithIndex, (!!))
+import Data.Array (difference, fold, insert, intersect, length, mapWithIndex, (!!))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
 import Data.Int as Int
+import Data.Lens (over)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String (joinWith)
-import Data.Lens (over)
 import Effect (Effect)
 import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Components.RandomText (words)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..),Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
+import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get, post)
@@ -35,14 +35,13 @@ import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
-import React.DOM (a, br', h2,button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
+import React.DOM (a, br', h2, button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
 import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
-import Thermite (PerformAction, Render, Spec, _render,cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
+import Thermite (PerformAction, Render, Spec, _render, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem)
-
 
 data Action
   = LoadGraph Int
@@ -55,13 +54,18 @@ newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
 derive instance eqSelectedNode :: Eq SelectedNode
 derive instance newtypeSelectedNode :: Newtype SelectedNode _
+derive instance ordSelectedNode :: Ord SelectedNode
+
+instance showSelectedNode :: Show SelectedNode where
+  show (SelectedNode node) = node.label
+
 
 newtype State = State
   { graphData :: GraphData
   , filePath :: String
   , sigmaGraphData :: Maybe SigmaGraphData
   , legendData :: Array Legend
-  , selectedNode :: Maybe SelectedNode
+  , selectedNodes :: Array SelectedNode
   , showSidePanel :: Boolean
   , showControls :: Boolean
   , showTree :: Boolean
@@ -75,7 +79,7 @@ initialState = State
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []
-  , selectedNode : Nothing
+  , selectedNodes : []
   , showSidePanel : false
   , showControls : false
   , showTree : false
@@ -101,8 +105,15 @@ performAction (LoadGraph fp) _ _ = void do
       -- graph.
   --modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
-performAction (SelectNode (SelectedNode node)) _ (State state) =
-  modifyState_ $ \(State s) -> State s {selectedNode = pure $ SelectedNode node}
+performAction (SelectNode selectedNode@(SelectedNode node)) _ (State state) =
+  modifyState_ $ \(State s) -> State s {selectedNodes = updateSet s.selectedNodes selectedNode}
+  where
+    updateSet :: Array SelectedNode -> SelectedNode -> Array SelectedNode
+    updateSet ary node =
+      if length (intersect ary [node]) > 0 then
+        difference ary [node]
+      else
+        insert node ary
 
 performAction (ShowSidePanel b) _ (State state) = void do
   modifyState $ \(State s) -> State s {showSidePanel = b }
@@ -541,10 +552,14 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
               [ div []
                 [ p [] []
                 , div [className "col-md-12"]
-                  [ case st.selectedNode of
-                      Just (SelectedNode {label}) ->
-                        GT.tabsElt {query: words label, sides}
-                      Nothing -> p [] []
+                  [ if length st.selectedNodes > 0 then
+                      p [] [text $ printSet st.selectedNodes] -- handle list of labels!
+                      --GT.tabsElt {query: show <$> st.selectedNodes, sides}
+                    else
+                      p [] []
+                      -- Just (SelectedNode {label}) ->
+
+                      -- Nothing -> p [] []
                   , p [] []
                   ]
                 ]
@@ -555,6 +570,9 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
            ]
          ]
       ]
+
+printSet :: Array SelectedNode -> String
+printSet set = joinWith ", " $ show <$> set
 
 
 getNodes :: Int -> Aff GraphData
