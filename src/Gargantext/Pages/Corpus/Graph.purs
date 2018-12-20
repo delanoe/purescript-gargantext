@@ -17,7 +17,9 @@ import Data.Int as Int
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String (joinWith)
-import Data.Lens (over)
+import Data.Symbol (SProxy(..))
+import Data.Lens (over, (+~), Lens, Lens')
+import Data.Lens.Record (prop)
 import Effect (Effect)
 import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
@@ -50,12 +52,24 @@ data Action
   | ShowSidePanel Boolean
   | ToggleControls
   | ToggleTree
+  | BiggerLabels
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
 derive instance eqSelectedNode :: Eq SelectedNode
 derive instance newtypeSelectedNode :: Newtype SelectedNode _
 
+-- _settings :: forall s t a b. Lens { settings :: a | s } { settings :: b | t } a b
+_settings :: forall s a. Lens' { settings :: a | s } a
+_settings = prop (SProxy :: SProxy "settings")
+
+_labelSizeRatio' :: forall s a. Lens' { labelSizeRatio :: a | s } a
+_labelSizeRatio' = prop (SProxy :: SProxy "labelSizeRatio")
+
+_labelSizeRatio :: Lens' SigmaSettings Number
+_labelSizeRatio f = unsafeCoerce $ _labelSizeRatio' f
+
+-- TODO remove newtype here
 newtype State = State
   { graphData :: GraphData
   , filePath :: String
@@ -67,6 +81,7 @@ newtype State = State
   , showTree :: Boolean
   , corpusId :: Int
   , treeId :: Maybe TreeId
+  , settings :: SigmaSettings
   }
 
 initialState :: State
@@ -81,8 +96,11 @@ initialState = State
   , showTree : false
   , corpusId : 0
   , treeId : Nothing
+  , settings : mySettings
   }
 
+-- This one is not used: specOld is the one being used.
+-- TODO: code duplication
 graphSpec :: Spec State {} Action
 graphSpec = simpleSpec performAction render
 
@@ -114,6 +132,9 @@ performAction (ToggleControls) _ (State state) = void do
 performAction (ToggleTree) _ (State state) = void do
   modifyState $ \(State s) -> State s {showTree = not (state.showTree) }
 
+performAction BiggerLabels _ _ =
+  modifyState_ $ \(State s) ->
+    State $ ((_settings <<< _labelSizeRatio) +~ 1.0) s
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -134,13 +155,12 @@ convert (GraphData r) = SigmaGraphData { nodes, edges}
     edgeFn (Edge e) = sigmaEdge {id : e.id_, source : e.source, target : e.target}
 
 render :: Render State {} Action
-render d p (State s) c =
-  case s.sigmaGraphData of
+render d p (State {sigmaGraphData, settings, legendData}) c =
+  case sigmaGraphData of
     Nothing -> []
-    Just gData ->
-      [ sigma { graph: gData
+    Just graph ->
+      [ sigma { graph, settings
               , renderer : canvas
-              , settings : mySettings
               , style : sStyle { height : "95%"}
               , onClickNode : \e -> unsafePerformEffect $ do
                  _ <- log "hello"
@@ -156,7 +176,7 @@ render d p (State s) c =
       ]
   -- TODO clean unused code: this seems to be not used
   -- <>
-  -- [dispLegend s.legendData]
+  -- [dispLegend legendData]
 
 forceAtlas2Config :: { slowDown :: Number
                     , startingIterations :: Number
@@ -324,7 +344,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
         Just treeId ->
           (cmapProps (const {root: treeId}) (noState Tree.treeview))
     render' :: Render State {} Action
-    render' d _ (State st@{graphData: GraphData {sides,metaData  }}) _ =
+    render' d _ (State st@{settings, graphData: GraphData {sides,metaData  }}) _ =
       [ div [className "container-fluid", style {"padding-top" : "100px"}]
       [ div [ className "row"]
         [ h2 [ style {textAlign : "center", position : "relative", top: "-38px"}]
@@ -369,6 +389,11 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   ]
                 , li'
                   [ button [className "btn btn-primary btn-sm"] [text "Change Level"]
+                  ]
+                , li'
+                  [ button [className "btn btn-primary btn-sm"
+                           ,onClick \_ -> d BiggerLabels]
+                           [text "Bigger Labels"]
                   ]
 
 
@@ -437,10 +462,9 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                <>
                case st.sigmaGraphData of
                    Nothing -> []
-                   Just gData ->
-                     [ sigma { graph: gData
+                   Just graph ->
+                     [ sigma { graph, settings
                              , renderer : canvas
-                             , settings : mySettings
                              , style : sStyle { height : "95%"}
                              , onClickNode : \e -> unsafePerformEffect $ do
                                 _ <- log " hello 2"

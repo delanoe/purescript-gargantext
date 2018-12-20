@@ -4523,10 +4523,9 @@ react-echarts-v3@^1.0.19:
     element-resize-detector latest
     lodash latest
 
-react-sigma@^1.2.30:
-  version "1.2.30"
-  resolved "https://registry.yarnpkg.com/react-sigma/-/react-sigma-1.2.30.tgz#794f88e796c4f763158afe404d10d9635f848846"
-  integrity sha512-8KVwKwHO9vrX1VohusZZm8ldMab32EHLZKkU1TrAnvSOHv6it6EEMwPOOtkJZOirnydKM0cXpxfFQv2LdBFAqQ==
+"react-sigma@git://github.com/np/react-sigma.git#shouldComponentUpdate":
+  version "1.2.29"
+  resolved "git://github.com/np/react-sigma.git#0023eb24248c7bc61aec872bc26552e3d569b974"
 
 react@^16.4.2:
   version "16.4.2"

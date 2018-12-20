@@ -8,7 +8,7 @@
         "react": "^16.4.2",
         "react-dom": "^16.4.2",
         "react-echarts-v3": "^1.0.19",
-        "react-sigma": "^1.2.30"
+        "react-sigma": "git://github.com/np/react-sigma.git#shouldComponentUpdate"
     },
     "browserify": {
         "transform": [
