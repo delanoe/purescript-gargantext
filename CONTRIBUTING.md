@@ -1,29 +1,25 @@
-#+Title: Contributing
+# Guidelines to Contribute to the project
 
 ## Humanities
 
 ### Social contract
 
-1. Use and promote welcoming behavior to respect Code of Conduct
+1. Use and promote welcoming behavior to respect the [Code of Conduct](https://gitlab.iscpif.fr/humanities/gargantext/blob/master/CODE_OF_CONDUCT.md)
 
-2. We are Team as whole: here to help to each others
+2. We are a team as whole: here to help each others
   - knowing the unknown is a value but ignoring the unknown is a failure
     - do not ask to ask: just ask
     - there is no stupid question(s)
     - there is no unique solution(s)
 
 3. Watch deadlines individually and collectively
-  - at 0% of the time of the task, agree on the /estimate of time to fix
-    the issue.
+  - at 0% of the time of the task, agree on the /estimate of time to fix the issue.
   - at 50% of the estimated time of the task, push your last commit with ID of the issue.
     - if the commit has [WIP] label: everything is fine as expected
     - if the commit has [HELP] label: it warns members of the project some
     - if the commit is not pushed, it warns the project manager something is going wrong
-  - at 100% of the time of the task, push your commit with ID of the
-    issue with the label [PR] for Pull Request and fill /spent time as
-    comment on the issue
-    - if the commit is not pushed, it warns all the team something is
-      going wrong.
+  - at 100% of the time of the task, push your commit with ID of the issue with the label [PR] for Pull Request and fill /spent time as comment on the issue
+    - if the commit is not pushed, it warns all the team something is going wrong.
 
 
 ### Facing issues
@@ -31,16 +27,14 @@
 If you get stuck on a bug:
 * Set a timer for 1h
 * Make it reproducible
-  * Commit a version with the issue even if the code is work-in-progress [WIP].
+  * Commit a version with the issue even if the code is work-in-progress [WIP] and if help is needed [HELP].
 * Try to identify the root cause of the issue:
   * Using the browser inspector
   * Identify the code path
-* If it takes too long fill an issue and mark it as blocking.
-  Mention it on IRC and go to another task.
+* If it takes too long fill an issue and mark it as blocking. Mention it on IRC and go to another task.
 
 
-
-## Coordination tools
+### Coordination tools
 
 ### IRC Interactions
 - OFTC #gargantext
@@ -56,76 +50,36 @@ Git is the main Concurrent Version system used by the project.
 #### Git branches
 
 Main branches are:
-* master/prod : stable version used by end users
-* testing     : candidate version for stable, tested by end users
-* dev         : unstable version for developers only
+* `master/prod` : stable version used by end users
+* `testing`     : candidate version for stable, tested by end users
+* `dev`         : unstable version for developers only
 
 ##### Git Tips
-* fix the conflicts on your own branch before ask for [PR]
-* `git rebase dev`, make sure you do not diverge
+* fix the conflicts on your own branch before asking for [PR]
+    * `git rebase dev` daily to make sure you do not diverge
 * do not add temporary files in your commits
-* `git add -p` : to review what you are about to commit
-
-#### Git Tips
-
-yarn first then psc-package are used to manage dependencies
-
-to build use ./build
-to rebuild (after a major upgrade) use ./rebuild
-to add a new dependency: psc-package install PACKAGE
-
-use git, commit and pull request :)
+    * `git add -p` to review what you are about to commit
+* Settings to avoid trailing whitespaces and tab characters:
+  `git config --global core.whitespace blank-at-eof,blank-at-eol,tab-in-indent`
+  `git config --global apply.whitespace fix`
 
 
+## Technicals
 
 
-# Source files organisation
+### Code main guidelines
 
-## Code Design
-- 2 spaces or more if needed by the compilator
-- line length < ? chars
+#### Code Design
 
-## Map of the source code
+Please configure your editor accordingly (ask for tips if needed or put your tips here)
 
-TODO
+##### Line length
+* all line length should be < 120 chars
 
-## Components/Specs
-
-* Small: one file in `Gargantext/Components/X.purs`
-* Medium/Big:
-
-```
-  Gargantext/Components/
-    X.purs
-    X/Types.purs
-    X/Specs.purs (only if big)
-```
-
-# Purescript
-
-## Minor style rules
-
-```
-f $ do --> f do
-
-f (do ...) --> f do
-
-if (expr == true) --> if expr
-```
-
-## Using the `Show` class
-
-* Always use generic deriving.
-* If we want a different output than the generic one it
-  means that we should use a different class than `Show`.
-
-## When to newtype?
-
-* When we need type class instances.
-* When the type is generic (`Int`, `String`).
-* In particular a `newtype` is not needed for records such as `State`.
-
-## Identation
+##### Identation
+* 2 spaces or more if needed by the compiler
+    * i.e. Tab character is avoided
+    * avoid trailing spaces, mostly spaces at the end of lines (remove it)
 
 * HTML nodes:
 
@@ -158,16 +112,82 @@ if (expr == true) --> if expr
   }
 ```
 
-# Routing (backend & frontend)
 
-## Backend
+
+#### Building
+
+* to build use `./build`
+* to rebuild (after a major upgrade) use `./rebuild`
+* to add a new dependency: `psc-package install PACKAGE`
+
+installation note: yarn first then psc-package are used to manage dependencies
+
+
+#### Map of the source code
+
+TODO
+
+#### Components/Specs
+
+* Small: one file in `Gargantext/Components/X.purs`
+* Medium/Big:
+
+```
+  Gargantext/Components/
+    X.purs
+    X/Types.purs
+    X/Specs.purs (only if big)
+```
+
+Components modules should contain:
+
+Assuming the component is called comp.
+
+`type Props` unless it is `{}`
+`type State` unless it is `{}`
+`type Action` unless it is `Void`
+
+```
+compSpec :: Spec ...
+compClass :: ReactClass ...
+compElt :: Props -> ReactElement
+```
+
+### Purescript specific
+
+#### Minor style rules
+
+```
+f $ do --> f do
+
+f (do ...) --> f do
+
+if (expr == true) --> if expr
+```
+
+#### Using the `Show` class
+
+* Always use generic deriving.
+* If we want a different output than the generic one it
+  means that we should use a different class than `Show`.
+
+#### When to newtype?
+
+* When we need type class instances.
+* When the type is generic (`Int`, `String`).
+* In particular a `newtype` is not needed for records such as `State`.
+
+
+### Routing (backend & frontend)
+
+#### Backend
 
 Use `toUrl`
 Use `Config.REST` (`get`, `put`...)
 
-# Thermite usage
+### Thermite usage
 
-## Minor style rules
+#### Minor style rules
 
 ```
 cotransform --> modifyState
@@ -176,3 +196,4 @@ void modifyState --> modifyState_
 
 performAction should be a local function
 ```
+
