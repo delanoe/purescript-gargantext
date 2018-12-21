@@ -50,9 +50,25 @@ Git is the main Concurrent Version system used by the project.
 #### Git branches
 
 Main branches are:
-* `master/prod` : stable version used by end users
-* `testing`     : candidate version for stable, tested by end users
-* `dev`         : unstable version for developers only
+* `master`  : stable and prod version used by end users
+* `testing` : candidate version for stable, tested by end users
+* `dev`     : unstable version for developers only
+
+#### Adding a new feature / fixing an issue
+
+1. You should have an open issue in gitlab with number ~#XXX~.
+2. ~git checkout -b issue-XXX-issue-short-description~
+3. work... ~git commit~ many times
+4. Optionally you can clean up your git log history with ~git rebase -i master~
+5. Test locally ~./build.sh (TODO && ./build/run-tests.sh)
+6. ~git push -u~ will push and create the branch on gitlab
+7. Open a PR. In the PR reference the issue by writing (~Close #XXX~ or
+   ~Connects to #XXX~).
+8. Make changes according to PR feedbacks
+9. Either use the =Squash & Merge button= in github or manually rebase. Please
+   take the time to write a good commit message. For example be inspired by
+   https://chris.beams.io/posts/git-commit/
+
 
 ##### Git Tips
 * fix the conflicts on your own branch before asking for [PR]
