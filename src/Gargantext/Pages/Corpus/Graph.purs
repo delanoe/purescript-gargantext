@@ -1,7 +1,7 @@
 module Gargantext.Pages.Corpus.Graph where
 
 import Effect.Unsafe
-import Gargantext.Prelude
+import Gargantext.Prelude hiding (max,min)
 
 import Affjax (defaultRequest, request)
 import Affjax.ResponseFormat (ResponseFormat(..), printResponseFormatError)
@@ -14,21 +14,21 @@ import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
 import Data.Int as Int
+import Data.Lens (over, (+~), (.~), Lens, Lens')
+import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String (joinWith)
 import Data.Symbol (SProxy(..))
-import Data.Lens (over, (+~), Lens, Lens')
-import Data.Lens.Record (prop)
 import Effect (Effect)
 import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Components.RandomText (words)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..),Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
+import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get, post)
@@ -37,9 +37,9 @@ import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
-import React.DOM (a, br', h2,button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
-import Thermite (PerformAction, Render, Spec, _render,cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
+import React.DOM (a, br', h2, button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
+import React.DOM.Props (_id, _type, checked, className, href, max, min, name, onChange, onClick, placeholder, style, title, value)
+import Thermite (PerformAction, Render, Spec, _render, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -53,6 +53,7 @@ data Action
   | ToggleControls
   | ToggleTree
   | BiggerLabels
+  | ChangeNodeSize Number
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -68,6 +69,18 @@ _labelSizeRatio' = prop (SProxy :: SProxy "labelSizeRatio")
 
 _labelSizeRatio :: Lens' SigmaSettings Number
 _labelSizeRatio f = unsafeCoerce $ _labelSizeRatio' f
+
+_maxNodeSize' :: forall s a. Lens' { maxNodeSize :: a | s} a
+_maxNodeSize' = prop (SProxy :: SProxy "maxNodeSize")
+
+_maxNodeSize :: Lens' SigmaSettings Number
+_maxNodeSize f = unsafeCoerce $ _maxNodeSize' f
+
+_minNodeSize' :: forall s a. Lens' { minNodeSize :: a | s} a
+_minNodeSize' = prop (SProxy :: SProxy "minNodeSize")
+
+_minNodeSize :: Lens' SigmaSettings Number
+_minNodeSize f = unsafeCoerce $ _minNodeSize' f
 
 -- TODO remove newtype here
 newtype State = State
@@ -135,6 +148,11 @@ performAction (ToggleTree) _ (State state) = void do
 performAction BiggerLabels _ _ =
   modifyState_ $ \(State s) ->
     State $ ((_settings <<< _labelSizeRatio) +~ 1.0) s
+
+performAction (ChangeNodeSize size) _ _ =
+  modifyState_ $ \(State s) -> do
+    let maxNoded = ((_settings <<< _maxNodeSize) .~ size) s
+    State $ ((_settings <<< _minNodeSize) .~ (size * 0.20)) maxNoded
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -442,7 +460,12 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   ]
 
                 , li [className "col-md-2"]
-                  [ span [] [text "Nodes"],input [_type "range", _id "myRange", value "90"]
+                  [ span [] [text "Nodes"],input [_type "range"
+                                                 , _id "myRange"
+                                                 , max "20"
+                                                 , min "0"
+                                                 , onChange \e -> d $ ChangeNodeSize (unsafeCoerce e).target.value
+                                                 ]
                   ]
                 , li [className "col-md-2"]
                   [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
