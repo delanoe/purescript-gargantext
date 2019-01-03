@@ -7,15 +7,10 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import React (ReactElement, ReactClass)
+import React (ReactElement)
 import React as React
-import React.DOM hiding (style, map)
-import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
-import React.DOM.Props as DOM
-import Thermite (PerformAction, Spec, StateCoTransformer, Render, _render, modifyState_, defaultPerformAction, focusState, hideState, simpleSpec, createClass)
-import Unsafe.Coerce (unsafeCoerce)
+import Thermite (Render, Spec, createClass, defaultPerformAction, simpleSpec)
 
-import Gargantext.Types
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Prelude
 import Gargantext.Config (PTabNgramType(..), Offset, Limit, End(..), Path(..), TabSubType(..), TabType(..), toUrl)
