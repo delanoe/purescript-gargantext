@@ -31,7 +31,7 @@ type Props = NT.Props (NodePoly CorpusInfo) Mode
 
 type PageParams = NT.PageParams Mode
 
-getTable :: CTabNgramType -> Maybe Int -> Offset -> Limit -> Aff NT.NgramsTable
+getTable :: CTabNgramType -> Maybe Int -> Offset -> Limit -> Aff NT.VersionedNgramsTable
 getTable tab nodeId offset limit =
   get $ toUrl Back (Ngrams (TabCorpus (TabNgramType tab))
                            offset limit Nothing) nodeId
@@ -42,18 +42,18 @@ modeTabType Sources = CTabSources
 modeTabType Institutes = CTabInstitutes
 modeTabType Terms = CTabTerms
 
-loadPage :: PageParams -> Aff NT.NgramsTable
+loadPage :: PageParams -> Aff NT.VersionedNgramsTable
 loadPage {nodeId, mode, params: {offset, limit}} =
   getTable (modeTabType mode) (Just nodeId) offset limit
   -- TODO this ignores orderBy
 
-ngramsLoaderClass :: Loader.LoaderClass PageParams NT.NgramsTable
+ngramsLoaderClass :: Loader.LoaderClass PageParams NT.VersionedNgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "CorpusNgramsLoader" loadPage
 
-ngramsLoader :: Loader.Props' PageParams NT.NgramsTable -> ReactElement
+ngramsLoader :: Loader.Props' PageParams NT.VersionedNgramsTable -> ReactElement
 ngramsLoader props = React.createElement ngramsLoaderClass props []
 
-ngramsTableClass :: Loader.InnerClass PageParams NT.NgramsTable
+ngramsTableClass :: Loader.InnerClass PageParams NT.VersionedNgramsTable
 ngramsTableClass = createClass "CorpusNgramsTable" NT.ngramsTableSpec NT.initialState
 
 ngramsTableSpec :: Spec {} Props Void
