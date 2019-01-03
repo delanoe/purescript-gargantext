@@ -253,8 +253,8 @@ mySettings = sigmaSettings { verbose : true
                            , twNodeRendBorderColor: "#222"
 
                           -- edges
-                          , minEdgeSize: 400.0              -- in fact used in tina as edge size
-                          , maxEdgeSize: 1000.0
+                          , minEdgeSize: 0.0              -- in fact used in tina as edge size
+                          , maxEdgeSize: 0.0
                           --, defaultEdgeType: "curve"      -- 'curve' or 'line' (curve only iff ourRendering)
                           , twEdgeDefaultOpacity: 0.4       -- initial opacity added to src/tgt colors
                           , minNodeSize: 1.0
