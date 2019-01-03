@@ -31,10 +31,11 @@ type Props = NT.Props (NodePoly CorpusInfo) Mode
 
 type PageParams = NT.PageParams Mode
 
-getTable :: CTabNgramType -> Maybe Int -> Offset -> Limit -> Aff NT.VersionedNgramsTable
-getTable tab nodeId offset limit =
-  get $ toUrl Back (Ngrams (TabCorpus (TabNgramType tab))
-                           offset limit Nothing) nodeId
+getTable :: { tab :: CTabNgramType, nodeId :: Int, offset :: Offset, limit :: Limit }
+         -> Aff NT.VersionedNgramsTable
+getTable {tab, nodeId, offset, limit} =
+  get $ toUrl Back (GetNgrams (TabCorpus (TabNgramType tab))
+                              offset limit Nothing) (Just nodeId)
 
 modeTabType :: Mode -> CTabNgramType
 modeTabType Authors = CTabAuthors
@@ -44,7 +45,7 @@ modeTabType Terms = CTabTerms
 
 loadPage :: PageParams -> Aff NT.VersionedNgramsTable
 loadPage {nodeId, mode, params: {offset, limit}} =
-  getTable (modeTabType mode) (Just nodeId) offset limit
+  getTable {tab: modeTabType mode, nodeId, offset, limit}
   -- TODO this ignores orderBy
 
 ngramsLoaderClass :: Loader.LoaderClass PageParams NT.VersionedNgramsTable

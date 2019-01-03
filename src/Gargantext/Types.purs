@@ -1,7 +1,9 @@
 module Gargantext.Types where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
+                     , jsonEmptyObject, (:=), (~>), (.?), (.??) )
 import Data.Maybe (Maybe(..))
+import Data.Either (Either(..))
 import Gargantext.Prelude
 
 data TermType = MonoTerm | MultiTerm
@@ -27,8 +29,19 @@ data TermList = GraphTerm | StopTerm | CandidateTerm
 
 derive instance eqTermList :: Eq TermList
 
+instance encodeJsonTermList :: EncodeJson TermList where
+  encodeJson GraphTerm     = encodeJson "GraphList"
+  encodeJson StopTerm      = encodeJson "StopList"
+  encodeJson CandidateTerm = encodeJson "CandidateList"
+
 instance decodeJsonTermList :: DecodeJson TermList where
-  decodeJson json = pure GraphTerm  -- TODO
+  decodeJson json = do
+    s <- decodeJson json
+    case s of
+      "GraphList"     -> pure GraphTerm
+      "StopList"      -> pure StopTerm
+      "CandidateList" -> pure CandidateTerm
+      _               -> Left "Unexpected list name"
 
 type ListTypeId = Int
 
