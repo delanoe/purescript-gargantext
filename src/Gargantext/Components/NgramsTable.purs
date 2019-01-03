@@ -4,6 +4,9 @@ module Gargantext.Components.NgramsTable
   , PatchMap
   , NgramsPatch
   , NgramsTable
+  , VersionedNgramsTable
+  , Version
+  , Versioned(..)
   , Action
   , initialPageParams
   , initialState
@@ -55,7 +58,7 @@ type PageParams mode = {nodeId :: Int, params :: T.Params, mode :: mode}
 initialPageParams :: forall mode. Int -> mode -> PageParams mode
 initialPageParams nodeId mode = {nodeId, params: T.initialParams, mode}
 
-type Props' mode = Loader.InnerProps (PageParams mode) NgramsTable ()
+type Props' mode = Loader.InnerProps (PageParams mode) VersionedNgramsTable ()
 
 type NgramsTerm = String
 
@@ -87,6 +90,20 @@ instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
     pure $ NgramsElement {ngrams, list, occurrences, parent, children}
 
+type Version = Int
+
+newtype Versioned a = Versioned
+  { version :: Version
+  , data    :: a
+  }
+
+instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
+  decodeJson json = do
+    obj     <- decodeJson json
+    version <- obj .? "version"
+    data_   <- obj .? "data"
+    pure $ Versioned {version, data: data_}
+
 -- type NgramsTable = Array (NTree NgramsElement)
 -- type NgramsTable = Array NgramsElement
 newtype NgramsTable = NgramsTable (Map NgramsTerm NgramsElement)
@@ -110,6 +127,8 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
          $ f <$> (elements :: Array NgramsElement)
     where
       f e@(NgramsElement e') = Tuple e'.ngrams e
+
+type VersionedNgramsTable = Versioned NgramsTable
 
 data Replace a
   = Keep
@@ -424,10 +443,12 @@ ngramsTableSpec = simpleSpec performAction render
 
     render :: Render State (Props' mode) Action
     render dispatch { path: {nodeId, mode}
-                    , loaded: initTable
+                    , loaded: Versioned { version, data: initTable }
                     , dispatch: loaderDispatch }
                     { ngramsTablePatch, ngramsParent, ngramsChildren, searchQuery }
-                    _reactChildren =
+                    _reactChildren
+      | version /= 1 = [ p [] [text "Invalid version"] ]
+      | otherwise    =
       [ T.tableElt
           { rows
           , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, params, mode})
