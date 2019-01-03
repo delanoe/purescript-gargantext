@@ -52,7 +52,7 @@ data Action
   | ShowSidePanel Boolean
   | ToggleControls
   | ToggleTree
-  | BiggerLabels
+  | ChangeLabelSize Number
   | ChangeNodeSize Number
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
@@ -145,14 +145,14 @@ performAction (ToggleControls) _ (State state) = void do
 performAction (ToggleTree) _ (State state) = void do
   modifyState $ \(State s) -> State s {showTree = not (state.showTree) }
 
-performAction BiggerLabels _ _ =
+performAction (ChangeLabelSize size) _ _ =
   modifyState_ $ \(State s) ->
-    State $ ((_settings <<< _labelSizeRatio) +~ 1.0) s
+    State $ ((_settings <<< _labelSizeRatio) .~ size) s
 
 performAction (ChangeNodeSize size) _ _ =
   modifyState_ $ \(State s) -> do
     let maxNoded = ((_settings <<< _maxNodeSize) .~ size) s
-    State $ ((_settings <<< _minNodeSize) .~ (size * 0.20)) maxNoded
+    State $ ((_settings <<< _minNodeSize) .~ (size * 0.10)) maxNoded
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -253,7 +253,8 @@ mySettings = sigmaSettings { verbose : true
                            , twNodeRendBorderColor: "#222"
 
                           -- edges
-                          , minEdgeSize: 1.0              -- in fact used in tina as edge size
+                          , minEdgeSize: 400.0              -- in fact used in tina as edge size
+                          , maxEdgeSize: 1000.0
                           --, defaultEdgeType: "curve"      -- 'curve' or 'line' (curve only iff ourRendering)
                           , twEdgeDefaultOpacity: 0.4       -- initial opacity added to src/tgt colors
                           , minNodeSize: 1.0
@@ -410,13 +411,6 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                 , li'
                   [ button [className "btn btn-primary btn-sm"] [text "Change Level"]
                   ]
-                , li'
-                  [ button [className "btn btn-primary btn-sm"
-                           ,onClick \_ -> d BiggerLabels]
-                           [text "Bigger Labels"]
-                  ]
-
-
                  ,li [style {display : "inline-block"}]
                   [ form'
                     [ input [_type "file"
@@ -453,15 +447,20 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                     ]
                   ]
                 , li [className "col-md-2"]
-                  [ span [] [text "selector size"],input [_type "range", _id "myRange", value "90"]
+                  [ span [] [text "Selector"],input [_type "range", _id "myRange", value "90"]
                   ]
                 , li [className "col-md-2"]
-                  [ span [] [text "label size"],input [_type "range", _id "myRange", value "90"]
+                  [ span [] [text "Labels"],input [_type "range"
+                                                 , _id "labelSizeRange"
+                                                 , max "10"
+                                                 , min "1"
+                                                 , onChange \e -> d $ ChangeLabelSize (unsafeCoerce e).target.value
+                                                 ]
                   ]
 
                 , li [className "col-md-2"]
                   [ span [] [text "Nodes"],input [_type "range"
-                                                 , _id "myRange"
+                                                 , _id "nodeSizeRange"
                                                  , max "20"
                                                  , min "0"
                                                  , onChange \e -> d $ ChangeNodeSize (unsafeCoerce e).target.value
