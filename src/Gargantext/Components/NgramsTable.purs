@@ -169,10 +169,13 @@ applyReplace (Replace { old, new }) a
   | otherwise = a
 
 instance encodeJsonReplace :: EncodeJson a => EncodeJson (Replace a) where
-  encodeJson Keep = jsonEmptyObject
+  encodeJson Keep
+    = "tag" := "Keep"
+   ~> jsonEmptyObject
   encodeJson (Replace {old, new})
     = "old" := old
    ~> "new" := new
+   ~> "tag" := "Replace"
    ~> jsonEmptyObject
 
 instance decodeJsonReplace :: (DecodeJson a, Eq a) => DecodeJson (Replace a) where
