@@ -8,12 +8,8 @@ import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import React (ReactElement)
 import React as React
-import React.DOM hiding (style, map)
-import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, onInput, placeholder, scope, selected, style, value)
-import React.DOM.Props as DOM
 import Thermite (Render, Spec, createClass, defaultPerformAction, simpleSpec)
 
-import Gargantext.Types
 import Gargantext.Components.Node (NodePoly)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Prelude
