@@ -214,21 +214,21 @@ mySettings = sigmaSettings { verbose : true
                            , drawNodes: true
                            , labelSize : "proportional"
                            --, nodesPowRatio: 0.3
-                           ,  batchEdgesDrawing: false
-                           ,  hideEdgesOnMove: true
+                           , batchEdgesDrawing: false
+                           , hideEdgesOnMove: true
 
-                           ,  enableHovering: true
-                           ,  singleHover: true
-                           ,  enableEdgeHovering: false
+                           , enableHovering: true
+                           , singleHover: true
+                           , enableEdgeHovering: false
 
-                           ,  autoResize: true
-                           ,  autoRescale: true
-                           ,  rescaleIgnoreSize: false
+                           , autoResize: true
+                           , autoRescale: true
+                           , rescaleIgnoreSize: false
 
-                           ,  mouseEnabled: true
-                           ,  touchEnabled: true
+                           , mouseEnabled: true
+                           , touchEnabled: true
 
-                           ,  animationsTime: 1500.0
+                           , animationsTime: 1500.0
 
                            , defaultNodeColor: "#ddd"
                            , twNodeRendBorderSize: 0.5          -- node borders (only iff ourRendering)
@@ -238,6 +238,8 @@ mySettings = sigmaSettings { verbose : true
                           , minEdgeSize: 1.0              -- in fact used in tina as edge size
                           --, defaultEdgeType: "curve"      -- 'curve' or 'line' (curve only iff ourRendering)
                           , twEdgeDefaultOpacity: 0.4       -- initial opacity added to src/tgt colors
+                          , minNodeSize: 1.0
+                          , maxNodeSize: 10.0
 --
 --  -- labels
                           , font: "Droid Sans"                -- font params
@@ -245,7 +247,7 @@ mySettings = sigmaSettings { verbose : true
                           , defaultLabelColor: "#000"         -- labels text color
                           , labelSizeRatio: 2.0               -- label size in ratio of node size
                           , labelThreshold: 2.0               -- min node cam size to start showing label
-                          , labelMaxSize: 10.0                -- (old tina: showLabelsIfZoom)
+                          , labelMaxSize: 3.0                -- (old tina: showLabelsIfZoom)
 
                           -- hovered nodes
                           , defaultHoverLabelBGColor: "#fff"
