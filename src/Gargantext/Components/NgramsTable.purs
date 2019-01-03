@@ -15,7 +15,10 @@ module Gargantext.Components.NgramsTable
   where
 
 import Control.Monad.State (class MonadState, execState)
-import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
+import Control.Monad.Cont.Trans (lift)
+import Data.Argonaut ( Json, class DecodeJson, decodeJson, class EncodeJson
+                     , jsonEmptyObject, fromObject, (:=), (~>), (.?), (.??) )
+import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
 import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
@@ -38,8 +41,10 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
+import Effect.Exception (error)
+import Effect.Aff (Aff, throwError)
+import Foreign.Object as FO
 import React (ReactElement)
-import React as React
 import React.DOM (a, button, div, h2, i, input, li, option, p, select, span, table, tbody, text, thead, ul)
 import React.DOM.Props (_id, _type, checked, className, name, onChange, onClick, onInput, placeholder, style, value)
 import React.DOM.Props as DOM
@@ -47,6 +52,8 @@ import Thermite (PerformAction, Render, Spec, StateCoTransformer, modifyState_, 
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Types (TermList(..), TermType, readTermList, readTermType, termLists, termTypes)
+import Gargantext.Config (toUrl, End(..), Path(..))
+import Gargantext.Config.REST (put)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
@@ -96,6 +103,12 @@ newtype Versioned a = Versioned
   { version :: Version
   , data    :: a
   }
+
+instance encodeJsonVersioned :: EncodeJson a => EncodeJson (Versioned a) where
+  encodeJson (Versioned {version, data: data_})
+     = "version" := version
+    ~> "data" := data_
+    ~> jsonEmptyObject
 
 instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
   decodeJson json = do
@@ -155,6 +168,23 @@ applyReplace (Replace { old, new }) a
   | a == old  = new
   | otherwise = a
 
+instance encodeJsonReplace :: EncodeJson a => EncodeJson (Replace a) where
+  encodeJson Keep = jsonEmptyObject
+  encodeJson (Replace {old, new})
+    = "old" := old
+   ~> "new" := new
+   ~> jsonEmptyObject
+
+instance decodeJsonReplace :: (DecodeJson a, Eq a) => DecodeJson (Replace a) where
+  decodeJson json = do
+    obj  <- decodeJson json
+    mold <- obj .?? "old"
+    mnew <- obj .?? "new"
+    case Tuple mold mnew of
+      Tuple (Just old) (Just new) -> pure $ replace old new
+      Tuple Nothing Nothing       -> pure Keep
+      _                           -> Left "decodeJsonReplace"
+
 -- Representing a PatchSet as `Map a Boolean` would have the advantage
 -- of enforcing rem and add to be disjoint.
 newtype PatchSet a = PatchSet
@@ -170,6 +200,22 @@ instance semigroupPatchSet :: Ord a => Semigroup (PatchSet a) where
 
 instance monoidPatchSet :: Ord a => Monoid (PatchSet a) where
   mempty = PatchSet { rem: Set.empty, add: Set.empty }
+
+instance encodeJsonPatchSet :: EncodeJson a => EncodeJson (PatchSet a) where
+  encodeJson (PatchSet {rem, add})
+    = "rem" := (Set.toUnfoldable rem :: Array a)
+   ~> "add" := (Set.toUnfoldable add :: Array a)
+   ~> jsonEmptyObject
+
+instance decodeJsonPatchSet :: (Ord a, DecodeJson a) => DecodeJson (PatchSet a) where
+  decodeJson json = do
+    obj <- decodeJson json
+    rem <- mkSet <$> (obj .? "rem")
+    add <- mkSet <$> (obj .? "add")
+    pure $ PatchSet { rem, add }
+   where
+    mkSet :: forall b. Ord b => Array b -> Set b
+    mkSet = Set.fromFoldable
 
 applyPatchSet :: forall a. Ord a => PatchSet a -> Set a -> Set a
 applyPatchSet (PatchSet p) s = Set.difference s p.rem <> p.add
@@ -192,6 +238,19 @@ instance semigroupNgramsPatch :: Semigroup NgramsPatch where
 
 instance monoidNgramsPatch :: Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
+
+instance encodeJsonNgramsPatch :: EncodeJson NgramsPatch where
+  encodeJson (NgramsPatch { patch_children, patch_list })
+     = "patch_children" := patch_children
+    ~> "patch_list"     := patch_list
+    ~> jsonEmptyObject
+
+instance decodeJsonNgramsPatch :: DecodeJson NgramsPatch where
+  decodeJson json = do
+    obj            <- decodeJson json
+    patch_list     <- obj .? "patch_list"
+    patch_children <- obj .? "patch_children"
+    pure $ NgramsPatch { patch_list, patch_children }
 
 applyNgramsPatch :: NgramsPatch -> NgramsElement -> NgramsElement
 applyNgramsPatch (NgramsPatch p) (NgramsElement e) = NgramsElement
@@ -237,6 +296,21 @@ instance traversablePatchMap :: Traversable (PatchMap k) where
 
 instance traversableWithIndexPatchMap :: TraversableWithIndex k (PatchMap k) where
   traverseWithIndex f (PatchMap m) = PatchMap <$> traverseWithIndex f m
+
+instance encodeJsonPatchMap :: EncodeJson p => EncodeJson (PatchMap String p) where
+  encodeJson (PatchMap m) =
+    fromObject $
+      FO.fromFoldable $
+        ([] :: Array (Tuple String Json))
+        -- (Map.toUnfoldable $ (encodeJson <$> m :: Map String Json) :: Array _)
+
+instance decodeJsonPatchMap :: DecodeJson p => DecodeJson (PatchMap String p) where
+  decodeJson json = do
+    obj <- decodeJson json
+    pure $ PatchMap $ Map.fromFoldableWithIndex (obj :: FO.Object p)
+
+isEmptyPatchMap :: forall k p. PatchMap k p -> Boolean
+isEmptyPatchMap (PatchMap p) = Map.isEmpty p
 
 applyPatchMap :: forall k p v. Ord k => (p -> v -> v) -> PatchMap k p -> Map k v -> Map k v
 applyPatchMap applyPatchValue (PatchMap p) = mapWithIndex f
@@ -399,8 +473,17 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
     ]
   ]
 
-commitPatch :: NgramsTablePatch -> StateCoTransformer State Unit
-commitPatch pt = modifyState_ $ \s -> s { ngramsTablePatch = pt <> s.ngramsTablePatch }
+putTable :: {nodeId :: Int} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
+putTable {nodeId} = put (toUrl Back (PutNgrams Nothing) $ Just nodeId)
+
+commitPatch :: {nodeId :: Int} -> NgramsTablePatch -> StateCoTransformer State Unit
+commitPatch props pt = do
+  Versioned {version, data: new_patch} <- lift $ putTable props $ Versioned {version: 1, data: pt}
+  when (version /= 1) $
+    throwError $ error "commitPatch: expected version 1 only"
+  when (not $ isEmptyPatchMap new_patch) $
+    throwError $ error "commitPatch: expected empty patch only"
+  modifyState_ $ \s -> s { ngramsTablePatch = pt <> s.ngramsTablePatch }
 
 toggleMap :: forall a. a -> Maybe a -> Maybe a
 toggleMap _ (Just _) = Nothing
@@ -420,20 +503,19 @@ ngramsTableSpec = simpleSpec performAction render
       modifyState_ $ setParentResetChildren p
     performAction (ToggleChild b c) _ _ =
       modifyState_ $ _ngramsChildren <<< at c %~ toggleMap b
-    performAction (SetTermListItem n pl) _ _ = commitPatch pt
+    performAction (SetTermListItem n pl) {path: {nodeId}} _ = commitPatch {nodeId} pt
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
         pt = PatchMap $ Map.singleton n pe
     performAction AddTermChildren _ {ngramsParent: Nothing} =
         -- impossible but harmless
         pure unit
-    performAction AddTermChildren _
+    performAction AddTermChildren {path: {nodeId}}
                   { ngramsParent: Just parent
                   , ngramsChildren
-                  , ngramsTablePatch
                   } = do
         modifyState_ $ setParentResetChildren Nothing
-        commitPatch pt
+        commitPatch {nodeId} pt
       where
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }

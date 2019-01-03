@@ -122,11 +122,15 @@ pathUrl c (Tab t o l s) i =
 pathUrl c (Children n o l s) i =
     pathUrl c (NodeAPI Node) i <>
       "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
-pathUrl c (Ngrams t o l listid) i =
+pathUrl c (GetNgrams t o l listid) i =
     pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgrams t
       <> offsetUrl o <> limitUrl l <> listid'
   where
     listid' = maybe "" (\x -> "&list=" <> show x) listid
+pathUrl c (PutNgrams listid) i =
+    pathUrl c (NodeAPI Node) i <> "/list" <> listid'
+  where
+    listid' = maybe "" (\x -> "?list=" <> show x) listid
 pathUrl c Auth Nothing = c.prePath <> "auth"
 pathUrl c Auth (Just _) = "impossible" -- TODO better types
 pathUrl c (NodeAPI nt) i = c.prePath <> nodeTypeUrl nt <> (maybe "" (\i' -> "/" <> show i') i)
@@ -189,7 +193,8 @@ data Path
   = Auth
   | Tab      TabType  Offset Limit (Maybe OrderBy)
   | Children NodeType Offset Limit (Maybe OrderBy)
-  | Ngrams   TabType  Offset Limit (Maybe TermList)
+  | GetNgrams TabType  Offset Limit (Maybe TermList)
+  | PutNgrams (Maybe TermList)
   | NodeAPI NodeType
   | Search  { {-id :: Int
             , query    :: Array String
