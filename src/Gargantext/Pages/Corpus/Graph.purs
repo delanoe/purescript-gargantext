@@ -14,7 +14,7 @@ import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
 import Data.Int as Int
-import Data.Lens (over, (+~), (.~), Lens, Lens')
+import Data.Lens (over, (+~), (^.), (.~), Lens, Lens')
 import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
@@ -38,7 +38,7 @@ import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', h2, button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_id, _type, checked, className, href, max, min, name, onChange, onClick, placeholder, style, title, value)
+import React.DOM.Props (_id, _type, checked, className, defaultValue, href, max, min, name, onChange, onClick, placeholder, style, title, value)
 import Thermite (PerformAction, Render, Spec, _render, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
@@ -452,8 +452,9 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                 , li [className "col-md-2"]
                   [ span [] [text "Labels"],input [_type "range"
                                                  , _id "labelSizeRange"
-                                                 , max "10"
-                                                 , min "1"
+                                                 , max "4"
+                                                 , defaultValue <<< show $ settings ^. _labelSizeRatio
+                                                 , min "0"
                                                  , onChange \e -> d $ ChangeLabelSize (unsafeCoerce e).target.value
                                                  ]
                   ]
@@ -462,6 +463,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   [ span [] [text "Nodes"],input [_type "range"
                                                  , _id "nodeSizeRange"
                                                  , max "20"
+                                                 , defaultValue <<< show $ settings ^. _maxNodeSize
                                                  , min "0"
                                                  , onChange \e -> d $ ChangeNodeSize (unsafeCoerce e).target.value
                                                  ]
