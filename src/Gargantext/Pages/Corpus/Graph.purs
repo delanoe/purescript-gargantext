@@ -1,7 +1,7 @@
 module Gargantext.Pages.Corpus.Graph where
 
 import Effect.Unsafe
-import Gargantext.Prelude
+import Gargantext.Prelude hiding (max,min)
 
 import Affjax (defaultRequest, request)
 import Affjax.ResponseFormat (ResponseFormat(..), printResponseFormatError)
@@ -14,21 +14,21 @@ import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
 import Data.Int as Int
+import Data.Lens (over, (+~), (^.), (.~), Lens, Lens')
+import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String (joinWith)
 import Data.Symbol (SProxy(..))
-import Data.Lens (over, (+~), Lens, Lens')
-import Data.Lens.Record (prop)
 import Effect (Effect)
 import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Components.RandomText (words)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..),Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
+import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get, post)
@@ -37,9 +37,9 @@ import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
-import React.DOM (a, br', h2,button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_id, _type, checked, className, href, name, onChange, onClick, placeholder, style, title, value)
-import Thermite (PerformAction, Render, Spec, _render,cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
+import React.DOM (a, br', h2, button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
+import React.DOM.Props (_id, _type, checked, className, defaultValue, href, max, min, name, onChange, onClick, placeholder, style, title, value)
+import Thermite (PerformAction, Render, Spec, _render, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -52,7 +52,8 @@ data Action
   | ShowSidePanel Boolean
   | ToggleControls
   | ToggleTree
-  | BiggerLabels
+  | ChangeLabelSize Number
+  | ChangeNodeSize Number
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -68,6 +69,18 @@ _labelSizeRatio' = prop (SProxy :: SProxy "labelSizeRatio")
 
 _labelSizeRatio :: Lens' SigmaSettings Number
 _labelSizeRatio f = unsafeCoerce $ _labelSizeRatio' f
+
+_maxNodeSize' :: forall s a. Lens' { maxNodeSize :: a | s} a
+_maxNodeSize' = prop (SProxy :: SProxy "maxNodeSize")
+
+_maxNodeSize :: Lens' SigmaSettings Number
+_maxNodeSize f = unsafeCoerce $ _maxNodeSize' f
+
+_minNodeSize' :: forall s a. Lens' { minNodeSize :: a | s} a
+_minNodeSize' = prop (SProxy :: SProxy "minNodeSize")
+
+_minNodeSize :: Lens' SigmaSettings Number
+_minNodeSize f = unsafeCoerce $ _minNodeSize' f
 
 -- TODO remove newtype here
 newtype State = State
@@ -132,9 +145,14 @@ performAction (ToggleControls) _ (State state) = void do
 performAction (ToggleTree) _ (State state) = void do
   modifyState $ \(State s) -> State s {showTree = not (state.showTree) }
 
-performAction BiggerLabels _ _ =
+performAction (ChangeLabelSize size) _ _ =
   modifyState_ $ \(State s) ->
-    State $ ((_settings <<< _labelSizeRatio) +~ 1.0) s
+    State $ ((_settings <<< _labelSizeRatio) .~ size) s
+
+performAction (ChangeNodeSize size) _ _ =
+  modifyState_ $ \(State s) -> do
+    let maxNoded = ((_settings <<< _maxNodeSize) .~ size) s
+    State $ ((_settings <<< _minNodeSize) .~ (size * 0.10)) maxNoded
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -214,30 +232,33 @@ mySettings = sigmaSettings { verbose : true
                            , drawNodes: true
                            , labelSize : "proportional"
                            --, nodesPowRatio: 0.3
-                           ,  batchEdgesDrawing: false
-                           ,  hideEdgesOnMove: true
+                           , batchEdgesDrawing: false
+                           , hideEdgesOnMove: true
 
-                           ,  enableHovering: true
-                           ,  singleHover: true
-                           ,  enableEdgeHovering: false
+                           , enableHovering: true
+                           , singleHover: true
+                           , enableEdgeHovering: false
 
-                           ,  autoResize: true
-                           ,  autoRescale: true
-                           ,  rescaleIgnoreSize: false
+                           , autoResize: true
+                           , autoRescale: true
+                           , rescaleIgnoreSize: false
 
-                           ,  mouseEnabled: true
-                           ,  touchEnabled: true
+                           , mouseEnabled: true
+                           , touchEnabled: true
 
-                           ,  animationsTime: 1500.0
+                           , animationsTime: 1500.0
 
                            , defaultNodeColor: "#ddd"
                            , twNodeRendBorderSize: 0.5          -- node borders (only iff ourRendering)
                            , twNodeRendBorderColor: "#222"
 
                           -- edges
-                          , minEdgeSize: 1.0              -- in fact used in tina as edge size
+                          , minEdgeSize: 0.0              -- in fact used in tina as edge size
+                          , maxEdgeSize: 0.0
                           --, defaultEdgeType: "curve"      -- 'curve' or 'line' (curve only iff ourRendering)
                           , twEdgeDefaultOpacity: 0.4       -- initial opacity added to src/tgt colors
+                          , minNodeSize: 1.0
+                          , maxNodeSize: 10.0
 --
 --  -- labels
                           , font: "Droid Sans"                -- font params
@@ -245,7 +266,7 @@ mySettings = sigmaSettings { verbose : true
                           , defaultLabelColor: "#000"         -- labels text color
                           , labelSizeRatio: 2.0               -- label size in ratio of node size
                           , labelThreshold: 2.0               -- min node cam size to start showing label
-                          , labelMaxSize: 10.0                -- (old tina: showLabelsIfZoom)
+                          , labelMaxSize: 3.0                -- (old tina: showLabelsIfZoom)
 
                           -- hovered nodes
                           , defaultHoverLabelBGColor: "#fff"
@@ -390,13 +411,6 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                 , li'
                   [ button [className "btn btn-primary btn-sm"] [text "Change Level"]
                   ]
-                , li'
-                  [ button [className "btn btn-primary btn-sm"
-                           ,onClick \_ -> d BiggerLabels]
-                           [text "Bigger Labels"]
-                  ]
-
-
                  ,li [style {display : "inline-block"}]
                   [ form'
                     [ input [_type "file"
@@ -433,14 +447,26 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                     ]
                   ]
                 , li [className "col-md-2"]
-                  [ span [] [text "selector size"],input [_type "range", _id "myRange", value "90"]
+                  [ span [] [text "Selector"],input [_type "range", _id "myRange", value "90"]
                   ]
                 , li [className "col-md-2"]
-                  [ span [] [text "label size"],input [_type "range", _id "myRange", value "90"]
+                  [ span [] [text "Labels"],input [_type "range"
+                                                 , _id "labelSizeRange"
+                                                 , max "4"
+                                                 , defaultValue <<< show $ settings ^. _labelSizeRatio
+                                                 , min "0"
+                                                 , onChange \e -> d $ ChangeLabelSize (unsafeCoerce e).target.value
+                                                 ]
                   ]
 
                 , li [className "col-md-2"]
-                  [ span [] [text "Nodes"],input [_type "range", _id "myRange", value "90"]
+                  [ span [] [text "Nodes"],input [_type "range"
+                                                 , _id "nodeSizeRange"
+                                                 , max "20"
+                                                 , defaultValue <<< show $ settings ^. _maxNodeSize
+                                                 , min "0"
+                                                 , onChange \e -> d $ ChangeNodeSize (unsafeCoerce e).target.value
+                                                 ]
                   ]
                 , li [className "col-md-2"]
                   [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
