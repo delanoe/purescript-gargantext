@@ -16,7 +16,7 @@ module Gargantext.Components.NgramsTable
 
 import Control.Monad.State (class MonadState, execState)
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut ( Json, class DecodeJson, decodeJson, class EncodeJson
+import Data.Argonaut ( Json, class DecodeJson, decodeJson, class EncodeJson, encodeJson
                      , jsonEmptyObject, fromObject, (:=), (~>), (.?), (.??) )
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
@@ -206,12 +206,14 @@ instance monoidPatchSet :: Ord a => Monoid (PatchSet a) where
 
 instance encodeJsonPatchSet :: EncodeJson a => EncodeJson (PatchSet a) where
   encodeJson (PatchSet {rem, add})
+    -- TODO only include non empty fields
     = "rem" := (Set.toUnfoldable rem :: Array a)
    ~> "add" := (Set.toUnfoldable add :: Array a)
    ~> jsonEmptyObject
 
 instance decodeJsonPatchSet :: (Ord a, DecodeJson a) => DecodeJson (PatchSet a) where
   decodeJson json = do
+    -- TODO handle empty fields
     obj <- decodeJson json
     rem <- mkSet <$> (obj .? "rem")
     add <- mkSet <$> (obj .? "add")
@@ -243,6 +245,7 @@ instance monoidNgramsPatch :: Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
 
 instance encodeJsonNgramsPatch :: EncodeJson NgramsPatch where
+  -- TODO only include non empty fields
   encodeJson (NgramsPatch { patch_children, patch_list })
      = "patch_children" := patch_children
     ~> "patch_list"     := patch_list
@@ -251,6 +254,7 @@ instance encodeJsonNgramsPatch :: EncodeJson NgramsPatch where
 instance decodeJsonNgramsPatch :: DecodeJson NgramsPatch where
   decodeJson json = do
     obj            <- decodeJson json
+    -- TODO handle empty fields
     patch_list     <- obj .? "patch_list"
     patch_children <- obj .? "patch_children"
     pure $ NgramsPatch { patch_list, patch_children }
@@ -302,10 +306,7 @@ instance traversableWithIndexPatchMap :: TraversableWithIndex k (PatchMap k) whe
 
 instance encodeJsonPatchMap :: EncodeJson p => EncodeJson (PatchMap String p) where
   encodeJson (PatchMap m) =
-    fromObject $
-      FO.fromFoldable $
-        ([] :: Array (Tuple String Json))
-        -- (Map.toUnfoldable $ (encodeJson <$> m :: Map String Json) :: Array _)
+    encodeJson $ FO.fromFoldable $ (Map.toUnfoldable m :: Array _)
 
 instance decodeJsonPatchMap :: DecodeJson p => DecodeJson (PatchMap String p) where
   decodeJson json = do
