@@ -14,7 +14,7 @@ import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
 import Data.Int as Int
-import Data.Lens (over, (+~), (^.), (.~), Lens, Lens')
+import Data.Lens (Lens, Lens', over, (%~), (+~), (.~), (^.))
 import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
@@ -54,6 +54,7 @@ data Action
   | ToggleTree
   | ChangeLabelSize Number
   | ChangeNodeSize Number
+  | DisplayEdges
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -81,6 +82,13 @@ _minNodeSize' = prop (SProxy :: SProxy "minNodeSize")
 
 _minNodeSize :: Lens' SigmaSettings Number
 _minNodeSize f = unsafeCoerce $ _minNodeSize' f
+
+_drawEdges' :: forall s a. Lens' { drawEdges :: a | s} a
+_drawEdges' = prop (SProxy :: SProxy "drawEdges")
+
+_drawEdges :: Lens' SigmaSettings Boolean
+_drawEdges f = unsafeCoerce $ _drawEdges' f
+
 
 -- TODO remove newtype here
 newtype State = State
@@ -153,6 +161,10 @@ performAction (ChangeNodeSize size) _ _ =
   modifyState_ $ \(State s) -> do
     let maxNoded = ((_settings <<< _maxNodeSize) .~ size) s
     State $ ((_settings <<< _minNodeSize) .~ (size * 0.10)) maxNoded
+
+performAction DisplayEdges _ _ =
+  modifyState_ $ \(State s) -> do
+    State $ ((_settings <<< _drawEdges) %~ not) s
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -228,7 +240,7 @@ mySettings :: SigmaSettings
 mySettings = sigmaSettings { verbose : true
                            , drawLabels: true
                            , drawEdgeLabels: true
-                           , drawEdges: true
+                           , drawEdges: false
                            , drawNodes: true
                            , labelSize : "proportional"
                            --, nodesPowRatio: 0.3
@@ -407,6 +419,14 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                 [
                   li'
                   [ button [className "btn btn-success btn-sm"] [text "Change Type"]
+                  ]
+                ,
+                  li'
+                  [ button [
+                         className "btn btn-primary btn-sm"
+                       , onClick \_ -> d DisplayEdges
+                           ]
+                    [text "Toggle Edges"]
                   ]
                 , li'
                   [ button [className "btn btn-primary btn-sm"] [text "Change Level"]
