@@ -111,9 +111,13 @@ offsetUrl o = "&offset=" <> show o
 orderUrl :: forall a. Show a => Maybe a -> UrlPath
 orderUrl = maybe "" (\x -> "&order=" <> show x)
 
-tabTypeNgrams :: TabType -> UrlPath
-tabTypeNgrams (TabCorpus  t) = "listGet?ngramsType=" <> show t
-tabTypeNgrams (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
+tabTypeNgramsGet :: TabType -> UrlPath
+tabTypeNgramsGet (TabCorpus  t) = "listGet?ngramsType=" <> show t
+tabTypeNgramsGet (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
+
+tabTypeNgramsPut :: TabType -> UrlPath
+tabTypeNgramsPut (TabCorpus  t) = "list?ngramsType=" <> show t
+tabTypeNgramsPut (TabPairing t) = "list?ngramsType=" <> show t -- TODO
 
 pathUrl :: Config -> Path -> Maybe Id -> UrlPath
 pathUrl c (Tab t o l s) i =
@@ -123,14 +127,14 @@ pathUrl c (Children n o l s) i =
     pathUrl c (NodeAPI Node) i <>
       "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
 pathUrl c (GetNgrams t o l listid) i =
-    pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgrams t
+    pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsGet t
       <> offsetUrl o <> limitUrl l <> listid'
   where
     listid' = maybe "" (\x -> "&list=" <> show x) listid
-pathUrl c (PutNgrams listid) i =
-    pathUrl c (NodeAPI Node) i <> "/list" <> listid'
+pathUrl c (PutNgrams t listid) i =
+    pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsPut t <> listid'
   where
-    listid' = maybe "" (\x -> "?list=" <> show x) listid
+    listid' = maybe "" (\x -> "&list=" <> show x) listid
 pathUrl c Auth Nothing = c.prePath <> "auth"
 pathUrl c Auth (Just _) = "impossible" -- TODO better types
 pathUrl c (NodeAPI nt) i = c.prePath <> nodeTypeUrl nt <> (maybe "" (\i' -> "/" <> show i') i)
@@ -194,7 +198,7 @@ data Path
   | Tab      TabType  Offset Limit (Maybe OrderBy)
   | Children NodeType Offset Limit (Maybe OrderBy)
   | GetNgrams TabType  Offset Limit (Maybe TermList)
-  | PutNgrams (Maybe TermList)
+  | PutNgrams TabType (Maybe TermList)
   | NodeAPI NodeType
   | Search  { {-id :: Int
             , query    :: Array String
