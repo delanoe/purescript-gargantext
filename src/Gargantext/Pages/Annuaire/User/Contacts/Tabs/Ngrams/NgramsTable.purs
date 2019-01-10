@@ -27,33 +27,35 @@ instance showMode :: Show Mode where
 
 derive instance eqMode :: Eq Mode
 
-type Props = NT.Props Contact Mode
-
-type PageParams = NT.PageParams Mode
-
-getTable :: { tab :: PTabNgramType, nodeId :: Int, offset :: Offset, limit :: Limit }
-         -> Aff NT.VersionedNgramsTable
-getTable {tab, nodeId, offset, limit} =
-  get $ toUrl Back (GetNgrams (TabPairing (TabNgramType tab))
-                              offset limit Nothing) (Just nodeId)
-
 modeTabType :: Mode -> PTabNgramType
 modeTabType Patents = PTabPatents
 modeTabType Books = PTabBooks
 modeTabType Communication = PTabCommunication
 
-loadPage :: PageParams -> Aff NT.VersionedNgramsTable
-loadPage {nodeId, mode, params: {offset, limit}} =
-  getTable {tab: modeTabType mode, nodeId, offset, limit}
+type Props = NT.Props Contact Mode
+
+-- TODO: Move to Components.NgramsTable
+getTable :: { tabType :: TabType, nodeId :: Int, offset :: Offset, limit :: Limit }
+         -> Aff NT.VersionedNgramsTable
+getTable {tabType, nodeId, offset, limit} =
+  get $ toUrl Back (GetNgrams tabType offset limit Nothing) (Just nodeId)
+
+-- TODO: Move to Components.NgramsTable
+loadPage :: NT.PageParams -> Aff NT.VersionedNgramsTable
+loadPage {nodeId, tabType, params: {offset, limit}} =
+  getTable {tabType, nodeId, offset, limit}
   -- TODO this ignores orderBy
 
-ngramsLoaderClass :: Loader.LoaderClass PageParams NT.VersionedNgramsTable
+-- TODO: Move to Components.NgramsTable?
+ngramsLoaderClass :: Loader.LoaderClass NT.PageParams NT.VersionedNgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "ContactsNgramsLoader" loadPage
 
-ngramsLoader :: Loader.Props' PageParams NT.VersionedNgramsTable -> ReactElement
+-- TODO: Move to Components.NgramsTable?
+ngramsLoader :: Loader.Props' NT.PageParams NT.VersionedNgramsTable -> ReactElement
 ngramsLoader props = React.createElement ngramsLoaderClass props []
 
-ngramsTableClass :: Loader.InnerClass PageParams NT.VersionedNgramsTable
+-- TODO: Move to Components.NgramsTable?
+ngramsTableClass :: Loader.InnerClass NT.PageParams NT.VersionedNgramsTable
 ngramsTableClass = createClass "ContactsNgramsTable" NT.ngramsTableSpec NT.initialState
 
 ngramsTableSpec :: Spec {} Props Void
@@ -62,6 +64,8 @@ ngramsTableSpec = simpleSpec defaultPerformAction render
     render :: Render {} Props Void
     render _ {path: nodeId, mode} _ _ =
       -- TODO: ignored loaded
-      [ ngramsLoader { path: NT.initialPageParams nodeId mode
+      [ ngramsLoader { path: NT.initialPageParams nodeId tabType
                      , component: ngramsTableClass
                      } ]
+      where
+        tabType = TabPairing $ TabNgramType $ modeTabType mode
