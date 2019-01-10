@@ -29,32 +29,33 @@ derive instance eqMode :: Eq Mode
 
 type Props = NT.Props (NodePoly CorpusInfo) Mode
 
-type PageParams = NT.PageParams Mode
-
-getTable :: { tab :: CTabNgramType, nodeId :: Int, offset :: Offset, limit :: Limit }
-         -> Aff NT.VersionedNgramsTable
-getTable {tab, nodeId, offset, limit} =
-  get $ toUrl Back (GetNgrams (TabCorpus (TabNgramType tab))
-                              offset limit Nothing) (Just nodeId)
-
 modeTabType :: Mode -> CTabNgramType
 modeTabType Authors = CTabAuthors
 modeTabType Sources = CTabSources
 modeTabType Institutes = CTabInstitutes
 modeTabType Terms = CTabTerms
 
-loadPage :: PageParams -> Aff NT.VersionedNgramsTable
-loadPage {nodeId, mode, params: {offset, limit}} =
-  getTable {tab: modeTabType mode, nodeId, offset, limit}
+getTable :: { tabType :: TabType, nodeId :: Int, offset :: Offset, limit :: Limit }
+         -> Aff NT.VersionedNgramsTable
+getTable {tabType, nodeId, offset, limit} =
+  get $ toUrl Back (GetNgrams tabType offset limit Nothing) (Just nodeId)
+
+-- TODO: Move to Components.NgramsTable?
+loadPage :: NT.PageParams -> Aff NT.VersionedNgramsTable
+loadPage {nodeId, tabType, params: {offset, limit}} =
+  getTable {tabType, nodeId, offset, limit}
   -- TODO this ignores orderBy
 
-ngramsLoaderClass :: Loader.LoaderClass PageParams NT.VersionedNgramsTable
+-- TODO: Move to Components.NgramsTable?
+ngramsLoaderClass :: Loader.LoaderClass NT.PageParams NT.VersionedNgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "CorpusNgramsLoader" loadPage
 
-ngramsLoader :: Loader.Props' PageParams NT.VersionedNgramsTable -> ReactElement
+-- TODO: Move to Components.NgramsTable?
+ngramsLoader :: Loader.Props' NT.PageParams NT.VersionedNgramsTable -> ReactElement
 ngramsLoader props = React.createElement ngramsLoaderClass props []
 
-ngramsTableClass :: Loader.InnerClass PageParams NT.VersionedNgramsTable
+-- TODO: Move to Components.NgramsTable?
+ngramsTableClass :: Loader.InnerClass NT.PageParams NT.VersionedNgramsTable
 ngramsTableClass = createClass "CorpusNgramsTable" NT.ngramsTableSpec NT.initialState
 
 ngramsTableSpec :: Spec {} Props Void
@@ -63,6 +64,8 @@ ngramsTableSpec = simpleSpec defaultPerformAction render
     render :: Render {} Props Void
     render _ {path: nodeId, mode} _ _ =
       -- TODO: ignored loaded param
-      [ ngramsLoader { path: NT.initialPageParams nodeId mode
+      [ ngramsLoader { path: NT.initialPageParams nodeId tabType
                      , component: ngramsTableClass
                      } ]
+      where
+        tabType = TabCorpus $ TabNgramType $ modeTabType mode

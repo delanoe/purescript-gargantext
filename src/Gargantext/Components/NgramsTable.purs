@@ -16,7 +16,7 @@ module Gargantext.Components.NgramsTable
 
 import Control.Monad.State (class MonadState, execState)
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut ( Json, class DecodeJson, decodeJson, class EncodeJson
+import Data.Argonaut ( Json, class DecodeJson, decodeJson, class EncodeJson, encodeJson
                      , jsonEmptyObject, fromObject, (:=), (~>), (.?), (.??) )
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
@@ -52,7 +52,7 @@ import Thermite (PerformAction, Render, Spec, StateCoTransformer, modifyState_, 
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Types (TermList(..), TermType, readTermList, readTermType, termLists, termTypes)
-import Gargantext.Config (toUrl, End(..), Path(..))
+import Gargantext.Config (toUrl, End(..), Path(..), TabType)
 import Gargantext.Config.REST (put)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
@@ -60,12 +60,16 @@ import Gargantext.Components.Loader as Loader
 
 type Props a mode = Loader.InnerProps Int a ( mode :: mode )
 
-type PageParams mode = {nodeId :: Int, params :: T.Params, mode :: mode}
+type PageParams =
+  { nodeId :: Int
+  , params :: T.Params
+  , tabType :: TabType
+  }
 
-initialPageParams :: forall mode. Int -> mode -> PageParams mode
-initialPageParams nodeId mode = {nodeId, params: T.initialParams, mode}
+initialPageParams :: Int -> TabType -> PageParams
+initialPageParams nodeId tabType = {nodeId, params: T.initialParams, tabType}
 
-type Props' mode = Loader.InnerProps (PageParams mode) VersionedNgramsTable ()
+type Props' = Loader.InnerProps PageParams VersionedNgramsTable ()
 
 type NgramsTerm = String
 
@@ -206,12 +210,14 @@ instance monoidPatchSet :: Ord a => Monoid (PatchSet a) where
 
 instance encodeJsonPatchSet :: EncodeJson a => EncodeJson (PatchSet a) where
   encodeJson (PatchSet {rem, add})
+    -- TODO only include non empty fields
     = "rem" := (Set.toUnfoldable rem :: Array a)
    ~> "add" := (Set.toUnfoldable add :: Array a)
    ~> jsonEmptyObject
 
 instance decodeJsonPatchSet :: (Ord a, DecodeJson a) => DecodeJson (PatchSet a) where
   decodeJson json = do
+    -- TODO handle empty fields
     obj <- decodeJson json
     rem <- mkSet <$> (obj .? "rem")
     add <- mkSet <$> (obj .? "add")
@@ -243,6 +249,7 @@ instance monoidNgramsPatch :: Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
 
 instance encodeJsonNgramsPatch :: EncodeJson NgramsPatch where
+  -- TODO only include non empty fields
   encodeJson (NgramsPatch { patch_children, patch_list })
      = "patch_children" := patch_children
     ~> "patch_list"     := patch_list
@@ -251,6 +258,7 @@ instance encodeJsonNgramsPatch :: EncodeJson NgramsPatch where
 instance decodeJsonNgramsPatch :: DecodeJson NgramsPatch where
   decodeJson json = do
     obj            <- decodeJson json
+    -- TODO handle empty fields
     patch_list     <- obj .? "patch_list"
     patch_children <- obj .? "patch_children"
     pure $ NgramsPatch { patch_list, patch_children }
@@ -302,10 +310,7 @@ instance traversableWithIndexPatchMap :: TraversableWithIndex k (PatchMap k) whe
 
 instance encodeJsonPatchMap :: EncodeJson p => EncodeJson (PatchMap String p) where
   encodeJson (PatchMap m) =
-    fromObject $
-      FO.fromFoldable $
-        ([] :: Array (Tuple String Json))
-        -- (Map.toUnfoldable $ (encodeJson <$> m :: Map String Json) :: Array _)
+    encodeJson $ FO.fromFoldable $ (Map.toUnfoldable m :: Array _)
 
 instance decodeJsonPatchMap :: DecodeJson p => DecodeJson (PatchMap String p) where
   decodeJson json = do
@@ -476,10 +481,10 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
     ]
   ]
 
-putTable :: {nodeId :: Int} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
-putTable {nodeId} = put (toUrl Back (PutNgrams Nothing) $ Just nodeId)
+putTable :: {nodeId :: Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
+putTable {nodeId, tabType} = put (toUrl Back (PutNgrams tabType Nothing) $ Just nodeId)
 
-commitPatch :: {nodeId :: Int} -> NgramsTablePatch -> StateCoTransformer State Unit
+commitPatch :: {nodeId :: Int, tabType :: TabType} -> NgramsTablePatch -> StateCoTransformer State Unit
 commitPatch props pt = do
   Versioned {version, data: new_patch} <- lift $ putTable props $ Versioned {version: 1, data: pt}
   when (version /= 1) $
@@ -492,13 +497,13 @@ toggleMap :: forall a. a -> Maybe a -> Maybe a
 toggleMap _ (Just _) = Nothing
 toggleMap b Nothing  = Just b
 
-ngramsTableSpec :: forall mode. Spec State (Props' mode) Action
+ngramsTableSpec :: Spec State Props' Action
 ngramsTableSpec = simpleSpec performAction render
   where
     setParentResetChildren :: Maybe NgramsTerm -> State -> State
     setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
 
-    performAction :: PerformAction State (Props' mode) Action
+    performAction :: PerformAction State Props' Action
     performAction (SetTermListFilter c) _ _ = modifyState_ $ _ { termListFilter = c }
     performAction (SetTermTypeFilter c) _ _ = modifyState_ $ _ { termTypeFilter = c }
     performAction (SetSearchQuery s) _ _ = modifyState_ $ _ { searchQuery = s }
@@ -506,19 +511,19 @@ ngramsTableSpec = simpleSpec performAction render
       modifyState_ $ setParentResetChildren p
     performAction (ToggleChild b c) _ _ =
       modifyState_ $ _ngramsChildren <<< at c %~ toggleMap b
-    performAction (SetTermListItem n pl) {path: {nodeId}} _ = commitPatch {nodeId} pt
+    performAction (SetTermListItem n pl) {path: {nodeId, tabType}} _ = commitPatch {nodeId, tabType} pt
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
         pt = PatchMap $ Map.singleton n pe
     performAction AddTermChildren _ {ngramsParent: Nothing} =
         -- impossible but harmless
         pure unit
-    performAction AddTermChildren {path: {nodeId}}
+    performAction AddTermChildren {path: {nodeId, tabType}}
                   { ngramsParent: Just parent
                   , ngramsChildren
                   } = do
         modifyState_ $ setParentResetChildren Nothing
-        commitPatch {nodeId} pt
+        commitPatch {nodeId, tabType} pt
       where
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }
@@ -526,8 +531,8 @@ ngramsTableSpec = simpleSpec performAction render
         -- TODO ROOT-UPDATE
         -- patch the root of the child to be equal to the root of the parent.
 
-    render :: Render State (Props' mode) Action
-    render dispatch { path: {nodeId, mode}
+    render :: Render State Props' Action
+    render dispatch { path: {nodeId, tabType}
                     , loaded: Versioned { version, data: initTable }
                     , dispatch: loaderDispatch }
                     { ngramsTablePatch, ngramsParent, ngramsChildren, searchQuery }
@@ -536,7 +541,7 @@ ngramsTableSpec = simpleSpec performAction render
       | otherwise    =
       [ T.tableElt
           { rows
-          , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, params, mode})
+          , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, params, tabType})
           , container: tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable}
           , colNames:
               T.ColumnName <$>
