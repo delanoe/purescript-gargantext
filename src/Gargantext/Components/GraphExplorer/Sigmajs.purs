@@ -2,8 +2,11 @@ module Gargantext.Components.GraphExplorer.Sigmajs where
 
 import Prelude
 
+import Data.Nullable (Nullable)
+import Data.Unit (Unit)
 import Effect (Effect)
-import React (Children, ReactClass, ReactElement, createElement, unsafeCreateElement)
+import React (Children, ReactClass, ReactElement, ReactRef, createElement, unsafeCreateElement)
+import React.DOM.Props (Props)
 import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Types (class Optional)
 
@@ -242,12 +245,14 @@ sigmaSettings :: forall o. Optional o SigmaSettingProps => { | o } -> SigmaSetti
 sigmaSettings = unsafeCoerce
 
 foreign import data SigmaStyle :: Type
+foreign import myGoto :: Nullable ReactRef -> Effect Unit
 
 type SigmaProps =
   ( renderer :: Renderer
   , settings :: SigmaSettings
   , style :: SigmaStyle
   , graph :: SigmaGraphData
+  , ref :: (Nullable ReactRef -> Effect Unit) -> Props
   , onClickNode :: SigmaNodeEvent -> Unit
   , onOverNode :: SigmaNodeEvent -> Unit
   , onOutNode :: SigmaNodeEvent -> Effect Unit
@@ -311,12 +316,11 @@ newtype ScalingMode = ScalingMode String
 scalingMode :: { inside :: ScalingMode
 , outside :: ScalingMode
 }
+
 scalingMode =
   { inside : ScalingMode "inside"
   , outside : ScalingMode "outside"
   }
-
-
 
 type SigmaSettingProps =
   ( clone :: Boolean

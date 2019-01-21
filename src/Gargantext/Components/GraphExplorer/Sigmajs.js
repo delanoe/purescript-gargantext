@@ -39,3 +39,9 @@ exports.sigmaEnableWebGLClass = SJS.SigmaEnableWebGL;
 exports.forceLinkClass = FL.default;
 
 }
+
+const myGoto = function(sigma){
+    alert("My goto ffi");
+};
+
+exports.myGoto = myGoto;
