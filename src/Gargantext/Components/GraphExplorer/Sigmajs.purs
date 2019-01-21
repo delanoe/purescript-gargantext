@@ -3,7 +3,6 @@ module Gargantext.Components.GraphExplorer.Sigmajs where
 import Prelude
 
 import Data.Nullable (Nullable)
-import Data.Unit (Unit)
 import Effect (Effect)
 import React (Children, ReactClass, ReactElement, ReactRef, createElement, unsafeCreateElement)
 import React.DOM.Props (Props)
@@ -252,7 +251,7 @@ type SigmaProps =
   , settings :: SigmaSettings
   , style :: SigmaStyle
   , graph :: SigmaGraphData
-  , ref :: (Nullable ReactRef -> Effect Unit) -> Props
+  , ref :: Nullable ReactRef -> Effect Unit
   , onClickNode :: SigmaNodeEvent -> Unit
   , onOverNode :: SigmaNodeEvent -> Unit
   , onOutNode :: SigmaNodeEvent -> Effect Unit
@@ -285,9 +284,6 @@ edgeShape =
   , parallel : EdgeShape "parallel"
   , tapered : EdgeShape "tapered"
   }
-
-
-
 
 newtype NodeShape = NodeShape String
 

@@ -41,7 +41,7 @@ exports.forceLinkClass = FL.default;
 }
 
 const myGoto = function(sigma){
-    alert("My goto ffi");
+    console.log("My goto ffi");
 };
 
 exports.myGoto = myGoto;
