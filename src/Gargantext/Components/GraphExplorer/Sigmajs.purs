@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Nullable (Nullable)
 import Effect (Effect)
-import React (Children, ReactClass, ReactElement, ReactRef, createElement, unsafeCreateElement)
+import React (Children, ReactClass, ReactElement, ReactRef, SyntheticEventHandler, createElement, unsafeCreateElement)
 import React.DOM.Props (Props)
 import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Types (class Optional)
@@ -244,14 +244,14 @@ sigmaSettings :: forall o. Optional o SigmaSettingProps => { | o } -> SigmaSetti
 sigmaSettings = unsafeCoerce
 
 foreign import data SigmaStyle :: Type
-foreign import myGoto :: Nullable ReactRef -> Effect Unit
+foreign import myGoto :: SyntheticEventHandler (Nullable ReactRef)
 
 type SigmaProps =
   ( renderer :: Renderer
   , settings :: SigmaSettings
   , style :: SigmaStyle
   , graph :: SigmaGraphData
-  , ref :: Nullable ReactRef -> Effect Unit
+  , ref :: SyntheticEventHandler (Nullable ReactRef)
   , onClickNode :: SigmaNodeEvent -> Unit
   , onOverNode :: SigmaNodeEvent -> Unit
   , onOutNode :: SigmaNodeEvent -> Effect Unit

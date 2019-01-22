@@ -41,7 +41,7 @@ exports.forceLinkClass = FL.default;
 }
 
 const myGoto = function(sigma){
-    console.log("My goto ffi");
+    const camera = sigma.sigma.cameras[0];
 };
 
 exports.myGoto = myGoto;

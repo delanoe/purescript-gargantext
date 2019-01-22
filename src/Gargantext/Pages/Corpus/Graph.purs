@@ -191,10 +191,10 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
     Just graph ->
       [ sigma { graph, settings
               , renderer : canvas
-              , style : sStyle { height : "95%"}
+              , style : sStyle { height : "96%"}
               , ref: myGoto
               , onClickNode : \e -> unsafePerformEffect $ do
-                 _ <- log "hello"
+                 _ <- log "this should be deleted"
                  -- _ <- logs $ unsafeCoerce e
                  _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
                  pure unit
@@ -512,7 +512,8 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                    Just graph ->
                      [ sigma { graph, settings
                              , renderer : canvas
-                             , style : sStyle { height : "95%"}
+                             , style : sStyle { height : "96%"}
+                             , ref: myGoto
                              , onClickNode : \e -> unsafePerformEffect $ do
                                 _ <- log " hello 2"
                                 --logs $ unsafeCoerce e
