@@ -357,6 +357,7 @@ applyNgramsTablePatch p (NgramsTable m) =
 
 type State =
   { ngramsTablePatch :: NgramsTablePatch
+  , ngramsVersion    :: Version
   , ngramsParent     :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
   , ngramsChildren   :: Map NgramsTerm Boolean
                      -- ^ Used only when grouping.
@@ -370,9 +371,11 @@ type State =
 
 _ngramsChildren = prop (SProxy :: SProxy "ngramsChildren")
 
-initialState :: forall props. props -> State
-initialState _ =
+initialState :: forall props. { loaded :: VersionedNgramsTable | props }
+             -> State
+initialState {loaded: Versioned {version}} =
   { ngramsTablePatch: mempty
+  , ngramsVersion:    version
   , ngramsParent:     Nothing
   , ngramsChildren:   mempty
   , searchQuery:      ""
@@ -484,14 +487,14 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
 putTable :: {nodeId :: Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
 putTable {nodeId, tabType} = put (toUrl Back (PutNgrams tabType Nothing) $ Just nodeId)
 
-commitPatch :: {nodeId :: Int, tabType :: TabType} -> NgramsTablePatch -> StateCoTransformer State Unit
-commitPatch props pt = do
-  Versioned {version, data: new_patch} <- lift $ putTable props $ Versioned {version: 1, data: pt}
-  when (version /= 1) $
-    throwError $ error "commitPatch: expected version 1 only"
-  when (not $ isEmptyPatchMap new_patch) $
-    throwError $ error "commitPatch: expected empty patch only"
-  modifyState_ $ \s -> s { ngramsTablePatch = pt <> s.ngramsTablePatch }
+commitPatch :: {nodeId :: Int, tabType :: TabType} -> Versioned NgramsTablePatch -> StateCoTransformer State Unit
+commitPatch props pt@(Versioned {data: tablePatch}) = do
+  Versioned {version: newVersion, data: newPatch} <- lift $ putTable props pt
+  modifyState_ $ \s ->
+    s { ngramsVersion    = newVersion
+      , ngramsTablePatch = newPatch <> tablePatch <> s.ngramsTablePatch
+      }
+    -- TODO: check that pt.version == s.ngramsTablePatch.version
 
 toggleMap :: forall a. a -> Maybe a -> Maybe a
 toggleMap _ (Just _) = Nothing
@@ -511,7 +514,8 @@ ngramsTableSpec = simpleSpec performAction render
       modifyState_ $ setParentResetChildren p
     performAction (ToggleChild b c) _ _ =
       modifyState_ $ _ngramsChildren <<< at c %~ toggleMap b
-    performAction (SetTermListItem n pl) {path: {nodeId, tabType}} _ = commitPatch {nodeId, tabType} pt
+    performAction (SetTermListItem n pl) {path: {nodeId, tabType}} {ngramsVersion} =
+        commitPatch {nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
         pt = PatchMap $ Map.singleton n pe
@@ -521,9 +525,10 @@ ngramsTableSpec = simpleSpec performAction render
     performAction AddTermChildren {path: {nodeId, tabType}}
                   { ngramsParent: Just parent
                   , ngramsChildren
+                  , ngramsVersion
                   } = do
         modifyState_ $ setParentResetChildren Nothing
-        commitPatch {nodeId, tabType} pt
+        commitPatch {nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }
@@ -533,12 +538,10 @@ ngramsTableSpec = simpleSpec performAction render
 
     render :: Render State Props' Action
     render dispatch { path: {nodeId, tabType}
-                    , loaded: Versioned { version, data: initTable }
+                    , loaded: Versioned { data: initTable }
                     , dispatch: loaderDispatch }
                     { ngramsTablePatch, ngramsParent, ngramsChildren, searchQuery }
-                    _reactChildren
-      | version /= 1 = [ p [] [text "Invalid version"] ]
-      | otherwise    =
+                    _reactChildren =
       [ T.tableElt
           { rows
           , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, params, tabType})
