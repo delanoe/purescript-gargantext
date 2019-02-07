@@ -16,7 +16,7 @@ import Gargantext.Prelude
 import Gargantext.Config (CTabNgramType(..), End(..), Offset, Limit, Path(..), TabSubType(..), TabType(..), toUrl)
 import Gargantext.Config.REST (get)
 import Gargantext.Components.Loader as Loader
-import Gargantext.Pages.Corpus.Tabs.Types (CorpusInfo)
+import Gargantext.Pages.Corpus.Tabs.Types (CorpusData)
 
 data Mode = Authors | Sources | Institutes | Terms
 
@@ -27,7 +27,7 @@ instance showMode :: Show Mode where
 
 derive instance eqMode :: Eq Mode
 
-type Props = NT.Props (NodePoly CorpusInfo) Mode
+type Props = NT.Props CorpusData Mode
 
 modeTabType :: Mode -> CTabNgramType
 modeTabType Authors = CTabAuthors
@@ -35,15 +35,19 @@ modeTabType Sources = CTabSources
 modeTabType Institutes = CTabInstitutes
 modeTabType Terms = CTabTerms
 
-getTable :: { tabType :: TabType, nodeId :: Int, offset :: Offset, limit :: Limit }
+getTable :: { tabType :: TabType
+            , nodeId :: Int
+            , listIds :: Array Int
+            , offset :: Offset
+            , limit :: Limit }
          -> Aff NT.VersionedNgramsTable
-getTable {tabType, nodeId, offset, limit} =
-  get $ toUrl Back (GetNgrams tabType offset limit Nothing) (Just nodeId)
+getTable {tabType, nodeId, listIds, offset, limit} =
+  get $ toUrl Back (GetNgrams tabType offset limit listIds Nothing) (Just nodeId)
 
 -- TODO: Move to Components.NgramsTable?
 loadPage :: NT.PageParams -> Aff NT.VersionedNgramsTable
-loadPage {nodeId, tabType, params: {offset, limit}} =
-  getTable {tabType, nodeId, offset, limit}
+loadPage {nodeId, listIds, tabType, params: {offset, limit}} =
+  getTable {tabType, nodeId, listIds, offset, limit}
   -- TODO this ignores orderBy
 
 -- TODO: Move to Components.NgramsTable?
@@ -62,9 +66,8 @@ ngramsTableSpec :: Spec {} Props Void
 ngramsTableSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
-    render _ {path: nodeId, mode} _ _ =
-      -- TODO: ignored loaded param
-      [ ngramsLoader { path: NT.initialPageParams nodeId tabType
+    render _ {path: nodeId, loaded: {defaultListId}, mode} _ _ =
+      [ ngramsLoader { path: NT.initialPageParams nodeId [defaultListId] tabType
                      , component: ngramsTableClass
                      } ]
       where
