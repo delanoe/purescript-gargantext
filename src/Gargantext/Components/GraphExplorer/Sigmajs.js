@@ -40,8 +40,9 @@ exports.forceLinkClass = FL.default;
 
 }
 
-const myGoto = function(sigma){
-    const camera = sigma.sigma.cameras[0];
+const applyOnCamera = function(f, props){
+    const camera = props.sigma.cameras[0];
+    f(camera);
 };
 
-exports.myGoto = myGoto;
+exports.applyOnCamera = applyOnCamera;

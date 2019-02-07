@@ -25,7 +25,7 @@ import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, myGoto, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Sigmajs (Camera, Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, applyOnCamera, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
@@ -55,6 +55,7 @@ data Action
   | ChangeLabelSize Number
   | ChangeNodeSize Number
   | DisplayEdges
+  | SaveCamera Camera
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -89,6 +90,9 @@ _drawEdges' = prop (SProxy :: SProxy "drawEdges")
 _drawEdges :: Lens' SigmaSettings Boolean
 _drawEdges f = unsafeCoerce $ _drawEdges' f
 
+_camera :: forall s a. Lens' { camera :: a | s } a
+_camera = prop (SProxy :: SProxy "camera")
+
 
 -- TODO remove newtype here
 newtype State = State
@@ -103,6 +107,7 @@ newtype State = State
   , corpusId :: Int
   , treeId :: Maybe TreeId
   , settings :: SigmaSettings
+  , camera :: Maybe Camera
   }
 
 initialState :: State
@@ -118,6 +123,7 @@ initialState = State
   , corpusId : 0
   , treeId : Nothing
   , settings : mySettings
+  , camera : Nothing
   }
 
 -- This one is not used: specOld is the one being used.
@@ -166,6 +172,10 @@ performAction DisplayEdges _ _ =
   modifyState_ $ \(State s) -> do
     State $ ((_settings <<< _drawEdges) %~ not) s
 
+performAction (SaveCamera c) _ _ =
+  modifyState_ $ \(State s) -> do
+    State $ ((_camera) .~ (Just c)) s
+
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
   where
@@ -192,7 +202,7 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
       [ sigma { graph, settings
               , renderer : canvas
               , style : sStyle { height : "96%"}
-              , ref: myGoto
+              , ref: applyOnCamera (d <<< SaveCamera)
               , onClickNode : \e -> unsafePerformEffect $ do
                  _ <- log "this should be deleted"
                  -- _ <- logs $ unsafeCoerce e
@@ -502,7 +512,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
             else div [] []
            ]
          , div [className "row"]
-           [ div [if (st.showSidePanel && st.showTree) then className "col-md-10" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
+           [div [if (st.showSidePanel && st.showTree) then className "col-md-10" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
              [ div [style {height: "90%"}] $
                [
                ]
@@ -512,8 +522,8 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                    Just graph ->
                      [ sigma { graph, settings
                              , renderer : canvas
-                             , style : sStyle { height : "96%"}
-                             , ref: myGoto
+                             , style : sStyle { height : "95%"}
+                             , ref: applyOnCamera $ d <<< SaveCamera
                              , onClickNode : \e -> unsafePerformEffect $ do
                                 _ <- log " hello 2"
                                 --logs $ unsafeCoerce e

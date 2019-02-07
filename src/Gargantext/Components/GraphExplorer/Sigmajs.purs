@@ -6,6 +6,7 @@ import Data.Nullable (Nullable)
 import Effect (Effect)
 import React (Children, ReactClass, ReactElement, ReactRef, SyntheticEventHandler, createElement, unsafeCreateElement)
 import React.DOM.Props (Props)
+import Thermite (EventHandler)
 import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Types (class Optional)
 
@@ -244,7 +245,16 @@ sigmaSettings :: forall o. Optional o SigmaSettingProps => { | o } -> SigmaSetti
 sigmaSettings = unsafeCoerce
 
 foreign import data SigmaStyle :: Type
-foreign import myGoto :: SyntheticEventHandler (Nullable ReactRef)
+
+type Camera =
+  {
+    x :: Number,
+    y :: Number,
+    ratio :: Number,
+    angle :: Number
+  }
+
+foreign import applyOnCamera :: forall a. (a -> EventHandler) -> SyntheticEventHandler (Nullable ReactRef)
 
 type SigmaProps =
   ( renderer :: Renderer
