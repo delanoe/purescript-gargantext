@@ -11,6 +11,7 @@ module Gargantext.Config where
 
 import Prelude
 import Data.Argonaut (class DecodeJson, decodeJson)
+import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Map (Map)
@@ -126,11 +127,12 @@ pathUrl c (Tab t o l s) i =
 pathUrl c (Children n o l s) i =
     pathUrl c (NodeAPI Node) i <>
       "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
-pathUrl c (GetNgrams t o l listid) i =
+pathUrl c (GetNgrams t o l listIds listTypeId) i =
     pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsGet t
-      <> offsetUrl o <> limitUrl l <> listid'
+      <> offsetUrl o <> limitUrl l <> listIds' <> listTypeId'
   where
-    listid' = maybe "" (\x -> "&list=" <> show x) listid
+    listIds'    = foldMap (\x -> "&list=" <> show x) listIds
+    listTypeId' = foldMap (\x -> "&listType=" <> show x) listTypeId
 pathUrl c (PutNgrams t listid) i =
     pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsPut t <> listid'
   where
@@ -174,6 +176,7 @@ data NodeType = NodeUser
               | Node
               | Nodes
               | Tree
+              | NodeList
 
 
 instance showNodeType :: Show NodeType where
@@ -192,12 +195,15 @@ instance showNodeType :: Show NodeType where
   show Node          = "Node"
   show Nodes         = "Nodes"
   show Tree          = "NodeTree"
+  show NodeList      = "NodeList"
+
+type ListId = Int
 
 data Path
   = Auth
   | Tab      TabType  Offset Limit (Maybe OrderBy)
   | Children NodeType Offset Limit (Maybe OrderBy)
-  | GetNgrams TabType  Offset Limit (Maybe TermList)
+  | GetNgrams TabType  Offset Limit (Array ListId) (Maybe TermList)
   | PutNgrams TabType (Maybe TermList)
   | NodeAPI NodeType
   | Search  { {-id :: Int
@@ -283,6 +289,7 @@ nodeTypeUrl Nodes      = "nodes"
 nodeTypeUrl NodeUser  = "user"
 nodeTypeUrl NodeContact = "contact"
 nodeTypeUrl Tree      = "tree"
+nodeTypeUrl NodeList  = "list"
 
 readNodeType :: String -> NodeType
 readNodeType "NodeAnnuaire"  = Annuaire
@@ -298,6 +305,7 @@ readNodeType "NodeCorpusV3"  = CorpusV3
 readNodeType "NodeUser"      = NodeUser
 readNodeType "NodeContact"   = NodeContact
 readNodeType "Tree"          = Tree
+readNodeType "NodeList"      = NodeList
 readNodeType _               = Error
 {-
 ------------------------------------------------------------
