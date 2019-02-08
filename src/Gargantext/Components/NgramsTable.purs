@@ -62,12 +62,13 @@ type Props a mode = Loader.InnerProps Int a ( mode :: mode )
 
 type PageParams =
   { nodeId :: Int
+  , listIds :: Array Int
   , params :: T.Params
   , tabType :: TabType
   }
 
-initialPageParams :: Int -> TabType -> PageParams
-initialPageParams nodeId tabType = {nodeId, params: T.initialParams, tabType}
+initialPageParams :: Int -> Array Int -> TabType -> PageParams
+initialPageParams nodeId listIds tabType = {nodeId, listIds, params: T.initialParams, tabType}
 
 type Props' = Loader.InnerProps PageParams VersionedNgramsTable ()
 
@@ -537,14 +538,14 @@ ngramsTableSpec = simpleSpec performAction render
         -- patch the root of the child to be equal to the root of the parent.
 
     render :: Render State Props' Action
-    render dispatch { path: {nodeId, tabType}
+    render dispatch { path: {nodeId, listIds, tabType}
                     , loaded: Versioned { data: initTable }
                     , dispatch: loaderDispatch }
                     { ngramsTablePatch, ngramsParent, ngramsChildren, searchQuery }
                     _reactChildren =
       [ T.tableElt
           { rows
-          , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, params, tabType})
+          , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, listIds, params, tabType})
           , container: tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable}
           , colNames:
               T.ColumnName <$>
