@@ -38,4 +38,11 @@ instance decodeNodePoly :: (DecodeJson a)
                  , hyperdata: hyperdata'
                  }
 
+newtype HyperdataList = HyperdataList { preferences :: String}
+
+instance decodeHyperdataList :: DecodeJson HyperdataList where
+  decodeJson json = do
+    obj <- decodeJson json
+    pref <- obj .? "preferences"
+    pure $ HyperdataList { preferences : pref}
 

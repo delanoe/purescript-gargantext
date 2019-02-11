@@ -10,7 +10,7 @@ import React (ReactClass, ReactElement)
 import Thermite (Spec, Render, simpleSpec, createClass, defaultPerformAction)
 --------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Components.Node (NodePoly(..), HyperdataList(..))
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Loader (createLoaderClass)
 import Gargantext.Components.Table as Table
@@ -60,7 +60,7 @@ getCorpus :: Int -> Aff CorpusData
 getCorpus corpusId = do
   corpusNode <- get $ toUrl Back Corpus $ Just corpusId
   defaultListIds <- get $ toUrl Back (Children NodeList 0 1 Nothing) $ Just corpusId
-  case (head defaultListIds :: Maybe (NodePoly Unit)) of
+  case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
       pure {corpusNode, defaultListId}
     Nothing ->
