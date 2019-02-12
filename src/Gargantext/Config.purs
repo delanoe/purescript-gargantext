@@ -204,7 +204,7 @@ data Path
   | Tab      TabType  Offset Limit (Maybe OrderBy)
   | Children NodeType Offset Limit (Maybe OrderBy)
   | GetNgrams TabType  Offset Limit (Array ListId) (Maybe TermList)
-  | PutNgrams TabType (Maybe TermList)
+  | PutNgrams TabType (Maybe ListId)
   | NodeAPI NodeType
   | Search  { {-id :: Int
             , query    :: Array String

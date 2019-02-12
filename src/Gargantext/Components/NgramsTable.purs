@@ -16,6 +16,7 @@ module Gargantext.Components.NgramsTable
 
 import Control.Monad.State (class MonadState, execState)
 import Control.Monad.Cont.Trans (lift)
+import Data.Array (head)
 import Data.Argonaut ( Json, class DecodeJson, decodeJson, class EncodeJson, encodeJson
                      , jsonEmptyObject, fromObject, (:=), (~>), (.?), (.??) )
 import Data.Either (Either(..))
@@ -485,10 +486,12 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
     ]
   ]
 
-putTable :: {nodeId :: Int, listId :: Maybe Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
-putTable {nodeId, listId, tabType} = put (toUrl Back (PutNgrams tabType listId) $ Just nodeId)
+putTable :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
+putTable {nodeId, listIds, tabType} =
+  put (toUrl Back (PutNgrams tabType (head listIds)) $ Just nodeId)
 
-commitPatch :: {nodeId :: Int, listId :: Maybe Int, tabType :: TabType} -> Versioned NgramsTablePatch -> StateCoTransformer State Unit
+commitPatch :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType}
+            -> Versioned NgramsTablePatch -> StateCoTransformer State Unit
 commitPatch props pt@(Versioned {data: tablePatch}) = do
   Versioned {version: newVersion, data: newPatch} <- lift $ putTable props pt
   modifyState_ $ \s ->
@@ -515,8 +518,8 @@ ngramsTableSpec = simpleSpec performAction render
       modifyState_ $ setParentResetChildren p
     performAction (ToggleChild b c) _ _ =
       modifyState_ $ _ngramsChildren <<< at c %~ toggleMap b
-    performAction (SetTermListItem n pl) {path: {nodeId, tabType}} {ngramsVersion} =
-        commitPatch {nodeId, listId, tabType} (Versioned {version: ngramsVersion, data: pt})
+    performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
+        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         listId = Just 10 -- List.head listIds
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
@@ -524,13 +527,13 @@ ngramsTableSpec = simpleSpec performAction render
     performAction AddTermChildren _ {ngramsParent: Nothing} =
         -- impossible but harmless
         pure unit
-    performAction AddTermChildren {path: {nodeId, tabType}}
+    performAction AddTermChildren {path: {nodeId, listIds, tabType}}
                   { ngramsParent: Just parent
                   , ngramsChildren
                   , ngramsVersion
                   } = do
         modifyState_ $ setParentResetChildren Nothing
-        commitPatch {nodeId, listId, tabType} (Versioned {version: ngramsVersion, data: pt})
+        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         listId = Just 10 -- List.head listIds
         pc = patchSetFromMap ngramsChildren
