@@ -485,10 +485,10 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
     ]
   ]
 
-putTable :: {nodeId :: Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
-putTable {nodeId, tabType} = put (toUrl Back (PutNgrams tabType Nothing) $ Just nodeId)
+putTable :: {nodeId :: Int, listId :: Maybe Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
+putTable {nodeId, listId, tabType} = put (toUrl Back (PutNgrams tabType listId) $ Just nodeId)
 
-commitPatch :: {nodeId :: Int, tabType :: TabType} -> Versioned NgramsTablePatch -> StateCoTransformer State Unit
+commitPatch :: {nodeId :: Int, listId :: Maybe Int, tabType :: TabType} -> Versioned NgramsTablePatch -> StateCoTransformer State Unit
 commitPatch props pt@(Versioned {data: tablePatch}) = do
   Versioned {version: newVersion, data: newPatch} <- lift $ putTable props pt
   modifyState_ $ \s ->
@@ -516,8 +516,9 @@ ngramsTableSpec = simpleSpec performAction render
     performAction (ToggleChild b c) _ _ =
       modifyState_ $ _ngramsChildren <<< at c %~ toggleMap b
     performAction (SetTermListItem n pl) {path: {nodeId, tabType}} {ngramsVersion} =
-        commitPatch {nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
+        commitPatch {nodeId, listId, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
+        listId = Just 10 -- List.head listIds
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
         pt = PatchMap $ Map.singleton n pe
     performAction AddTermChildren _ {ngramsParent: Nothing} =
@@ -529,8 +530,9 @@ ngramsTableSpec = simpleSpec performAction render
                   , ngramsVersion
                   } = do
         modifyState_ $ setParentResetChildren Nothing
-        commitPatch {nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
+        commitPatch {nodeId, listId, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
+        listId = Just 10 -- List.head listIds
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }
         pt = PatchMap $ Map.fromFoldable [Tuple parent pe]
