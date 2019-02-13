@@ -33,6 +33,7 @@ import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get, post)
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
+import Gargantext.Prelude (flip)
 import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
@@ -56,6 +57,7 @@ data Action
   | ChangeNodeSize Number
   | DisplayEdges
   | SaveCamera Camera
+--  | Zoom Boolean
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -176,6 +178,10 @@ performAction (SaveCamera c) _ _ =
   modifyState_ $ \(State s) -> do
     State $ ((_camera) .~ (Just c)) s
 
+--performAction (Zoom True) _ _ =
+--  modifyState_ $ \() -> do
+--    State $
+
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
   where
@@ -199,10 +205,11 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
   case sigmaGraphData of
     Nothing -> []
     Just graph ->
-      [ sigma { graph, settings
+      [ sigma { graph
+              , settings
               , renderer : canvas
               , style : sStyle { height : "96%"}
-              , ref: applyOnCamera (d <<< SaveCamera)
+              , ref: flip applyOnCamera <<< d <<< SaveCamera
               , onClickNode : \e -> unsafePerformEffect $ do
                  _ <- log "this should be deleted"
                  -- _ <- logs $ unsafeCoerce e
@@ -503,7 +510,11 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
                   ]
                 , li'
-                  [ button [className "btn btn-primary"] [text "Save"] -- TODO: Implement Save!
+                  [ button [className "btn btn-primary"
+                            , onClick \_ -> do
+                                             _ <- log "Hey there" -- $ show st.camera
+                                             pure unit
+                           ] [text "Save"] -- TODO: Implement Save!
                   ]
 
                 ]
@@ -523,7 +534,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                      [ sigma { graph, settings
                              , renderer : canvas
                              , style : sStyle { height : "95%"}
-                             , ref: applyOnCamera $ d <<< SaveCamera
+                             , ref: flip applyOnCamera <<< d <<< SaveCamera
                              , onClickNode : \e -> unsafePerformEffect $ do
                                 _ <- log " hello 2"
                                 --logs $ unsafeCoerce e

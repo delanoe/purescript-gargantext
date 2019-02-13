@@ -4,8 +4,8 @@ import Prelude
 
 import Data.Nullable (Nullable)
 import Effect (Effect)
+import Effect.Uncurried (EffectFn2, runEffectFn2)
 import React (Children, ReactClass, ReactElement, ReactRef, SyntheticEventHandler, createElement, unsafeCreateElement)
-import React.DOM.Props (Props)
 import Thermite (EventHandler)
 import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Types (class Optional)
@@ -254,14 +254,17 @@ type Camera =
     angle :: Number
   }
 
-foreign import applyOnCamera :: forall a. (a -> EventHandler) -> SyntheticEventHandler (Nullable ReactRef)
+foreign import applyOnCameraImpl :: forall a. EffectFn2 (Nullable ReactRef) (a -> EventHandler) Unit
+
+applyOnCamera :: forall a. (Nullable ReactRef) -> (a -> EventHandler) -> Effect Unit
+applyOnCamera = runEffectFn2 applyOnCameraImpl
 
 type SigmaProps =
   ( renderer :: Renderer
   , settings :: SigmaSettings
   , style :: SigmaStyle
   , graph :: SigmaGraphData
-  , ref :: SyntheticEventHandler (Nullable ReactRef)
+  , ref :: (Nullable ReactRef) -> Effect Unit
   , onClickNode :: SigmaNodeEvent -> Unit
   , onOverNode :: SigmaNodeEvent -> Unit
   , onOutNode :: SigmaNodeEvent -> Effect Unit
