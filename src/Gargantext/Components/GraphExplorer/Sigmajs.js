@@ -40,10 +40,17 @@ exports.forceLinkClass = FL.default;
 
 }
 
-const applyOnCamera = function(props, f){
+const applyOnCamera = function(props){
     console.log(props);
     //const camera = props.sigma.cameras[0];
     //f(camera)
 };
 
-exports.applyOnCamera = applyOnCamera;
+
+/*const applyOnCamera = function(props, f){
+    console.log(props);
+    //const camera = props.sigma.cameras[0];
+    //f(camera)
+};
+*/
+exports.applyOnCameraImpl = applyOnCamera;

@@ -254,17 +254,19 @@ type Camera =
     angle :: Number
   }
 
-foreign import applyOnCameraImpl :: forall a. EffectFn2 (Nullable ReactRef) (a -> EventHandler) Unit
+foreign import applyOnCameraImpl :: SyntheticEventHandler (Nullable ReactRef)
+applyOnCamera = applyOnCameraImpl
+--foreign import applyOnCameraImpl :: forall a. EffectFn2 (Nullable ReactRef) (a -> EventHandler) Unit
 
-applyOnCamera :: forall a. (Nullable ReactRef) -> (a -> EventHandler) -> Effect Unit
-applyOnCamera = runEffectFn2 applyOnCameraImpl
+-- applyOnCamera :: forall a. (Nullable ReactRef) -> (a -> EventHandler) -> Effect Unit
+-- applyOnCamera = runEffectFn2 applyOnCameraImpl
 
 type SigmaProps =
   ( renderer :: Renderer
   , settings :: SigmaSettings
   , style :: SigmaStyle
   , graph :: SigmaGraphData
-  , ref :: (Nullable ReactRef) -> Effect Unit
+  , ref :: SyntheticEventHandler (Nullable ReactRef)
   , onClickNode :: SigmaNodeEvent -> Unit
   , onOverNode :: SigmaNodeEvent -> Unit
   , onOutNode :: SigmaNodeEvent -> Effect Unit
