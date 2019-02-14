@@ -27,6 +27,7 @@ endConfig = endConfig' V10
 endConfig' :: ApiVersion -> EndConfig
 endConfig' v = { front : frontRelative
                , back  : backLocal v  }
+--               , back  : backDemo v  }
 
 ------------------------------------------------------------------------
 frontRelative :: Config
@@ -60,6 +61,11 @@ backLocal :: ApiVersion -> Config
 backLocal v = { baseUrl: "http://localhost:8008"
               , prePath: "/api/" <> show v <> "/"
               }
+
+backDemo :: ApiVersion -> Config
+backDemo v = { baseUrl: "https://demo.gargantext.org"
+            , prePath: "/api/" <> show v <> "/"
+            }
 
 backDev :: ApiVersion -> Config
 backDev v = { baseUrl: "https://dev.gargantext.org"
