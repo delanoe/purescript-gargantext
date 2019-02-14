@@ -19,12 +19,12 @@ you need the backend (haskell-gargantext) installation too.
 
 ### Installation steps
 
-1. Add `.node_modules/.bin` to your path
+1. Add `node_modules/.bin` to your path
 2. Execute `./build`
 
 In one command:
 
-```PATH="$PWD/.node_modules/.bin:$PATH" ./build```
+```PATH="$PWD/node_modules/.bin:$PATH" ./build```
 
 ## Note to the contributors
 
