@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Nullable (Nullable)
 import Effect (Effect)
-import Effect.Uncurried (EffectFn2, runEffectFn2)
+import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn1, runEffectFn2)
 import React (Children, ReactClass, ReactElement, ReactRef, SyntheticEventHandler, createElement, unsafeCreateElement)
 import Thermite (EventHandler)
 import Unsafe.Coerce (unsafeCoerce)
@@ -254,13 +254,14 @@ type Camera =
     angle :: Number
   }
 
-foreign import applyOnCameraImpl :: SyntheticEventHandler (Nullable ReactRef)
-applyOnCamera = applyOnCameraImpl
---foreign import applyOnCameraImpl :: forall a. EffectFn2 (Nullable ReactRef) (a -> EventHandler) Unit
+-- foreign import applyOnCameraImpl :: EffectFn2 (a → b) (Nullable ReactRef)
+-- applyOnCamera = applyOnCameraImpl
+foreign import applyOnCameraImpl :: forall a. EffectFn2 (Nullable ReactRef) (a -> EventHandler) Unit
 
--- applyOnCamera :: forall a. (Nullable ReactRef) -> (a -> EventHandler) -> Effect Unit
--- applyOnCamera = runEffectFn2 applyOnCameraImpl
-
+applyOnCamera :: forall a. (a -> EventHandler) -> EffectFn1 (Nullable ReactRef) Unit
+applyOnCamera a = mkEffectFn1 h
+  where h ::  Nullable ReactRef -> Effect Unit
+        h r = runEffectFn2 applyOnCameraImpl r a
 type SigmaProps =
   ( renderer :: Renderer
   , settings :: SigmaSettings

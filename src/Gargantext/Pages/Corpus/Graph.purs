@@ -209,8 +209,8 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
               , settings
               , renderer : canvas
               , style : sStyle { height : "96%"}
-              , ref: applyOnCamera
-              --, ref: flip applyOnCamera $ d <<< SaveCamera
+              -- , ref: applyOnCamera
+              , ref: applyOnCamera $ (d <<< SaveCamera)
               , onClickNode : \e -> unsafePerformEffect $ do
                  _ <- log "this should be deleted"
                  -- _ <- logs $ unsafeCoerce e
@@ -535,8 +535,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                      [ sigma { graph, settings
                              , renderer : canvas
                              , style : sStyle { height : "95%"}
-                             , ref: applyOnCamera
-                            -- , ref: flip applyOnCamera $ d <<< SaveCamera
+                             , ref: applyOnCamera (d <<< SaveCamera)
                              , onClickNode : \e -> unsafePerformEffect $ do
                                 _ <- log " hello 2"
                                 --logs $ unsafeCoerce e
