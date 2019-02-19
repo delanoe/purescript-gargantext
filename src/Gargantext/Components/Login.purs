@@ -114,7 +114,7 @@ renderSpec = simpleSpec performAction render
               [ div [className "card-block"]
                 [ div [className "center"]
                   [ h4 [className "m-b-0"]
-                    [ span [className "icon-text"] [ text "Login"] ]
+                    [ span [className "icon-text"] [ text "Welcome :)"] ]
                   , p [className "text-muted"]
                     [ text $ "Login to your account or",
                       a [ target "blank",href "https://iscpif.fr/services/applyforourservices/"] [text " ask to get an access"]
