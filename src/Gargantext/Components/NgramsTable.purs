@@ -421,7 +421,8 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
               , text "Extracted Terms"
               ]
             , div [className "row"]
-              [ div [className "savediv pull-left col-md-2", style { marginTop :"35px"}]
+              [
+              {-div [className "savediv pull-left col-md-2", style { marginTop :"35px"}]
                 [  button [_id "ImportListOrSaveAll", className "btn btn-warning", style {fontSize : "120%"}]
                   [ text "Import a Termlist" ]
                 ]
@@ -434,7 +435,8 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
                         , onInput \e -> dispatch (SetSearchQuery (unsafeEventValue e))
                         ]
                 ]
-              , div [_id "filter_terms", className "col-md-6", style{ marginTop : "2.1em",paddingLeft :"1em"}]
+              ,-}
+                div [_id "filter_terms", className "col-md-6", style{ marginTop : "2.1em",paddingLeft :"1em"}]
                 [ div [className "col-md-10 list-group", style {marginTop : "6px"}]
                   [ li [className " list-group-item"]
                     [ select  [ _id "picklistmenu"
