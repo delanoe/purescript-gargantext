@@ -55,6 +55,7 @@ import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Types (TermList(..), TermType, readTermList, readTermType, termLists, termTypes)
 import Gargantext.Config (toUrl, End(..), Path(..), TabType)
 import Gargantext.Config.REST (put)
+import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
@@ -400,6 +401,7 @@ data Action
   | SetTermListFilter (Maybe TermList)
   | SetTermTypeFilter (Maybe TermType)
   | SetSearchQuery String
+  | Refresh
 
 type Dispatch = Action -> Effect Unit
 
@@ -520,6 +522,8 @@ ngramsTableSpec = simpleSpec performAction render
       modifyState_ $ setParentResetChildren p
     performAction (ToggleChild b c) _ _ =
       modifyState_ $ _ngramsChildren <<< at c %~ toggleMap b
+    performAction Refresh {path: {nodeId, listIds, tabType}} {ngramsVersion} = do
+        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
     performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
@@ -550,7 +554,10 @@ ngramsTableSpec = simpleSpec performAction render
                     , dispatch: loaderDispatch }
                     { ngramsTablePatch, ngramsParent, ngramsChildren, searchQuery }
                     _reactChildren =
-      [ T.tableElt
+      [ autoUpdateElt { duration: 3000
+                      , effect:   dispatch Refresh
+                      }
+      , T.tableElt
           { rows
           , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, listIds, params, tabType})
           , container: tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable}
