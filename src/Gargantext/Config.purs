@@ -127,12 +127,21 @@ pathUrl c (Tab t o l s) i =
 pathUrl c (Children n o l s) i =
     pathUrl c (NodeAPI Node) i <>
       "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
-pathUrl c (GetNgrams t o l listIds listTypeId) i =
+pathUrl c (GetNgrams
+            { tabType: t
+            , offset: o
+            , limit: l
+            , listIds
+            , termListFilter: tlf
+            , termTypeFilter: ttf
+            , searchQuery: q
+            }) i =
     pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsGet t
-      <> offsetUrl o <> limitUrl l <> listIds' <> listTypeId'
-  where
-    listIds'    = foldMap (\x -> "&list=" <> show x) listIds
-    listTypeId' = foldMap (\x -> "&listType=" <> show x) listTypeId
+      <> offsetUrl o <> limitUrl l
+      <> foldMap (\x -> "&list=" <> show x) listIds
+      <> foldMap (\x -> "&listType=" <> show x) tlf
+      <> foldMap (\x -> "&termType=" <> show x) ttf
+      <> if q == "" then "" else ("&search=" <> q)
 pathUrl c (PutNgrams t listid) i =
     pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsPut t <> listid'
   where
@@ -203,7 +212,16 @@ data Path
   = Auth
   | Tab      TabType  Offset Limit (Maybe OrderBy)
   | Children NodeType Offset Limit (Maybe OrderBy)
-  | GetNgrams TabType  Offset Limit (Array ListId) (Maybe TermList)
+  | GetNgrams
+      { tabType        :: TabType
+      , offset         :: Offset
+      , limit          :: Limit
+      , orderBy        :: Maybe OrderBy
+      , listIds        :: Array ListId
+      , termListFilter :: Maybe TermList
+      , termTypeFilter :: Maybe TermType
+      , searchQuery    :: String
+      }
   | PutNgrams TabType (Maybe ListId)
   | NodeAPI NodeType
   | Search  { {-id :: Int

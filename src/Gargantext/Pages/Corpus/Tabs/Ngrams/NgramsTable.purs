@@ -13,7 +13,7 @@ import Thermite (Render, Spec, createClass, defaultPerformAction, simpleSpec)
 import Gargantext.Components.Node (NodePoly)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Prelude
-import Gargantext.Config (CTabNgramType(..), End(..), Offset, Limit, Path(..), TabSubType(..), TabType(..), toUrl)
+import Gargantext.Config (CTabNgramType(..), End(..), Offset, Limit, OrderBy(..), Path(..), TabSubType(..), TabType(..), toUrl)
 import Gargantext.Config.REST (get)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Pages.Corpus.Tabs.Types (CorpusData)
@@ -37,9 +37,17 @@ modeTabType Terms = CTabTerms
 
 -- TODO: Move to Components.NgramsTable?
 loadPage :: NT.PageParams -> Aff NT.VersionedNgramsTable
-loadPage {nodeId, listIds, tabType, params: {offset, limit}} =
-  get $ toUrl Back (GetNgrams tabType offset limit listIds Nothing) (Just nodeId)
-  -- TODO this ignores orderBy
+loadPage { nodeId, listIds, termListFilter, termTypeFilter
+         , searchQuery, tabType, params: {offset, limit, orderBy}} =
+  get $ toUrl Back
+          (GetNgrams { tabType, offset, limit, listIds
+                     , orderBy: convOrderBy <$> orderBy
+                     , termListFilter, termTypeFilter
+                     , searchQuery
+                     })
+          (Just nodeId)
+  where
+    convOrderBy _ = DateAsc -- TODO
 
 -- TODO: Move to Components.NgramsTable?
 ngramsLoaderClass :: Loader.LoaderClass NT.PageParams NT.VersionedNgramsTable
