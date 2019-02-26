@@ -66,10 +66,21 @@ type PageParams =
   , listIds :: Array Int
   , params :: T.Params
   , tabType :: TabType
+  , searchQuery :: String
+  , termListFilter :: Maybe TermList -- Nothing means all
+  , termTypeFilter :: Maybe TermType -- Nothing means all
   }
 
 initialPageParams :: Int -> Array Int -> TabType -> PageParams
-initialPageParams nodeId listIds tabType = {nodeId, listIds, params: T.initialParams, tabType}
+initialPageParams nodeId listIds tabType =
+  { nodeId
+  , listIds
+  , params: T.initialParams
+  , tabType
+  , termTypeFilter: Nothing
+  , termListFilter: Nothing
+  , searchQuery: ""
+  }
 
 type Props' = Loader.InnerProps PageParams VersionedNgramsTable ()
 
@@ -366,9 +377,6 @@ type State =
                      --   This updates the children of `ngramsParent`,
                      --   ngrams set to `true` are to be added, and `false` to
                      --   be removed.
-  , searchQuery      :: String
-  , termListFilter   :: Maybe TermList -- Nothing means all
-  , termTypeFilter   :: Maybe TermType -- Nothing means all
   }
 
 _ngramsChildren = prop (SProxy :: SProxy "ngramsChildren")
@@ -380,9 +388,6 @@ initialState {loaded: Versioned {version}} =
   , ngramsVersion:    version
   , ngramsParent:     Nothing
   , ngramsChildren:   mempty
-  , searchQuery:      ""
-  , termListFilter:   Nothing
-  , termTypeFilter:   Nothing
   }
 
 data Action
@@ -397,21 +402,29 @@ data Action
   -- ^ The NgramsTable argument is here as a cache of `ngramsTablePatch`
   -- applied to `initTable`.
   -- TODO more docs
-  | SetTermListFilter (Maybe TermList)
-  | SetTermTypeFilter (Maybe TermType)
-  | SetSearchQuery String
   | Refresh
 
 type Dispatch = Action -> Effect Unit
 
-tableContainer :: { searchQuery :: String
+type LoaderAction = Loader.Action PageParams
+
+type LoaderDispatch = LoaderAction -> Effect Unit
+
+tableContainer :: { pageParams :: PageParams
                   , dispatch :: Dispatch
+                  , loaderDispatch :: LoaderDispatch
                   , ngramsParent :: Maybe NgramsTerm
                   , ngramsChildren :: Map NgramsTerm Boolean
                   , ngramsTable :: NgramsTable
                   }
                -> T.TableContainerProps -> Array ReactElement
-tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable: ngramsTableCache} props =
+tableContainer { pageParams
+               , dispatch
+               , loaderDispatch
+               , ngramsParent
+               , ngramsChildren
+               , ngramsTable: ngramsTableCache
+               } props =
   [ div [className "container-fluid"]
     [ div [className "jumbotron1"]
       [ div [className "row"]
@@ -427,28 +440,29 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
                 [  button [_id "ImportListOrSaveAll", className "btn btn-warning", style {fontSize : "120%"}]
                   [ text "Import a Termlist" ]
                 ]
-              , div [className "col-md-4", style {marginTop : "37px"}]
+              ,-}
+                div [className "col-md-4", style {marginTop : "37px"}]
                 [ input [ className "form-control "
-                        , _id "id_password"
                         , name "search", placeholder "Search"
                         , _type "value"
-                        , value searchQuery
-                        , onInput \e -> dispatch (SetSearchQuery (unsafeEventValue e))
+                        , value pageParams.searchQuery
+                        , onInput \e -> setSearchQuery (unsafeEventValue e)
                         ]
                 ]
-              ,-}
-                div [_id "filter_terms", className "col-md-6", style{ marginTop : "2.1em",paddingLeft :"1em"}]
+              , div [_id "filter_terms", className "col-md-6", style{ marginTop : "2.1em",paddingLeft :"1em"}]
                 [ div [className "col-md-10 list-group", style {marginTop : "6px"}]
                   [ li [className " list-group-item"]
                     [ select  [ _id "picklistmenu"
                               , className "form-control custom-select"
-                              , onChange (\e -> dispatch (SetTermListFilter $ readTermList $ unsafeEventValue e))
+                           --   , value ?
+                              , onChange (\e -> setTermListFilter $ readTermList $ unsafeEventValue e)
                               ] $ map optps1 termLists
                     ]
                   , li [className "list-group-item"]
                     [ select  [ _id "picktermtype"
                               , className "form-control custom-select"
-                              , onChange (\e -> dispatch (SetTermTypeFilter $ readTermType $ unsafeEventValue e))
+                           --   , value ?
+                              , onChange (\e -> setTermTypeFilter $ readTermType $ unsafeEventValue e)
                               ] $ map optps1 termTypes
                     ]
                   , li [className " list-group-item"] [ props.pageSizeControl ]
@@ -488,6 +502,11 @@ tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable
       ]
     ]
   ]
+  where
+    setPageParams f = loaderDispatch $ Loader.SetPath $ f pageParams
+    setSearchQuery    x = setPageParams $ _ { searchQuery = x }
+    setTermListFilter x = setPageParams $ _ { termListFilter = x }
+    setTermTypeFilter x = setPageParams $ _ { termTypeFilter = x }
 
 putTable :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
 putTable {nodeId, listIds, tabType} =
@@ -514,9 +533,6 @@ ngramsTableSpec = simpleSpec performAction render
     setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
 
     performAction :: PerformAction State Props' Action
-    performAction (SetTermListFilter c) _ _ = modifyState_ $ _ { termListFilter = c }
-    performAction (SetTermTypeFilter c) _ _ = modifyState_ $ _ { termTypeFilter = c }
-    performAction (SetSearchQuery s) _ _ = modifyState_ $ _ { searchQuery = s }
     performAction (SetParentResetChildren p) _ _ =
       modifyState_ $ setParentResetChildren p
     performAction (ToggleChild b c) _ _ =
@@ -548,18 +564,18 @@ ngramsTableSpec = simpleSpec performAction render
         -- patch the root of the child to be equal to the root of the parent.
 
     render :: Render State Props' Action
-    render dispatch { path: {nodeId, listIds, tabType}
+    render dispatch { path: pageParams
                     , loaded: Versioned { data: initTable }
                     , dispatch: loaderDispatch }
-                    { ngramsTablePatch, ngramsParent, ngramsChildren, searchQuery }
+                    { ngramsTablePatch, ngramsParent, ngramsChildren }
                     _reactChildren =
       [ autoUpdateElt { duration: 3000
                       , effect:   dispatch Refresh
                       }
       , T.tableElt
           { rows
-          , setParams: \params -> loaderDispatch (Loader.SetPath {nodeId, listIds, params, tabType})
-          , container: tableContainer {searchQuery, dispatch, ngramsParent, ngramsChildren, ngramsTable}
+          , setParams
+          , container: tableContainer {pageParams, loaderDispatch, dispatch, ngramsParent, ngramsChildren, ngramsTable}
           , colNames:
               T.ColumnName <$>
               [ "Graph"
@@ -571,6 +587,8 @@ ngramsTableSpec = simpleSpec performAction render
           }
       ]
           where
+            setParams params =
+              loaderDispatch $ Loader.SetPath $ pageParams {params = params}
             ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
             rows = convertRow <$> Map.toUnfoldable (Map.filter displayRow (ngramsTable ^. _NgramsTable))
             isRoot (NgramsElement e) = e.parent == Nothing
