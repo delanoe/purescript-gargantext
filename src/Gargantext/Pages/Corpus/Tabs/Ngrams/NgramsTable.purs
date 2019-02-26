@@ -35,19 +35,10 @@ modeTabType Sources = CTabSources
 modeTabType Institutes = CTabInstitutes
 modeTabType Terms = CTabTerms
 
-getTable :: { tabType :: TabType
-            , nodeId :: Int
-            , listIds :: Array Int
-            , offset :: Offset
-            , limit :: Limit }
-         -> Aff NT.VersionedNgramsTable
-getTable {tabType, nodeId, listIds, offset, limit} =
-  get $ toUrl Back (GetNgrams tabType offset limit listIds Nothing) (Just nodeId)
-
 -- TODO: Move to Components.NgramsTable?
 loadPage :: NT.PageParams -> Aff NT.VersionedNgramsTable
 loadPage {nodeId, listIds, tabType, params: {offset, limit}} =
-  getTable {tabType, nodeId, listIds, offset, limit}
+  get $ toUrl Back (GetNgrams tabType offset limit listIds Nothing) (Just nodeId)
   -- TODO this ignores orderBy
 
 -- TODO: Move to Components.NgramsTable?
