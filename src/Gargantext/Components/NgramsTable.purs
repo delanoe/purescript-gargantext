@@ -17,8 +17,8 @@ module Gargantext.Components.NgramsTable
 import Control.Monad.State (class MonadState, execState)
 import Control.Monad.Cont.Trans (lift)
 import Data.Array (head)
-import Data.Argonaut ( Json, class DecodeJson, decodeJson, class EncodeJson, encodeJson
-                     , jsonEmptyObject, fromObject, (:=), (~>), (.?), (.??) )
+import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
+                     , jsonEmptyObject, (:=), (~>), (.?), (.??) )
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
@@ -42,8 +42,7 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Exception (error)
-import Effect.Aff (Aff, throwError)
+import Effect.Aff (Aff)
 import Foreign.Object as FO
 import React (ReactElement)
 import React.DOM (a, button, div, h2, i, input, li, option, p, select, span, table, tbody, text, thead, ul)
