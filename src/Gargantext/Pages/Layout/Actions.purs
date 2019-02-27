@@ -16,6 +16,7 @@ import Gargantext.Pages.Corpus.Document       as D
 import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
+import Gargantext.Pages.Layout.Specs.SearchBar      as SB
 import Gargantext.Pages.Layout.States                  (AppState)
 import Gargantext.Prelude
 import Gargantext.Router                               (Routes)
@@ -25,29 +26,26 @@ import Gargantext.Router                               (Routes)
 data Action
   = LoginA     LN.Action
   | SetRoute   Routes
-    | SearchA    S.Action
-    | Search             String
-    | AddCorpusA AC.Action
-    | GraphExplorerA     GE.Action
-    | DocumentViewA D.Action
+  | SearchA    S.Action
+  | AddCorpusA AC.Action
+  | GraphExplorerA     GE.Action
+  | DocumentViewA D.Action
   | AnnuaireAction     Annuaire.Action
-  | Go
+  | SearchBarAction SB.Action
   | ShowLogin
   | Logout
-  | ShowAddcorpus
+  | ShowAddCorpus
   | ToggleTree
 
 
 performAction :: PerformAction AppState {} Action
 performAction (SetRoute route)  _ _ = void do
   modifyState $ _ {currentRoute = pure route}
-performAction (Search s)  _ _ = void do
-  modifyState $ _ {search = s}
 
 performAction (ToggleTree)  _ (state) = void do -- TODO
   modifyState $ _ {showTree = not (state.showTree)}
 
-performAction (ShowLogin)  _ _ = void do
+performAction ShowLogin  _ _ = void do
   liftEffect $ modalShow "loginModal"
   modifyState $ _ {showLogin = true}
 
@@ -60,23 +58,21 @@ performAction Logout _ _ = do
 
 ---------------------------------------------------------
 -- TODO chose one of them
-performAction (ShowAddcorpus)  _ _ = void do
+performAction ShowAddCorpus  _ _ = void do
   liftEffect $ modalShow "addCorpus"
   modifyState $ _ {showCorpus = true}
 
-performAction Go  _ _ = void do
-  liftEffect $ modalShow "addCorpus"
-  modifyState $ _ {showCorpus = true}
- -- _ <- lift $ setHash "/addCorpus"
-  --modifyState id
 ---------------------------------------------------------
 
-performAction (LoginA        _) _ _ = pure unit
-performAction (AddCorpusA    _) _ _ = pure unit
-performAction (SearchA       _) _ _ = pure unit
-performAction (DocumentViewA _) _ _ = pure unit
-performAction (GraphExplorerA     _) _ _ = pure unit
-performAction (AnnuaireAction     _) _ _ = pure unit
+performAction (LoginA          _) _ _ = pure unit
+performAction (AddCorpusA      _) _ _ = pure unit
+performAction (SearchA         _) _ _ = pure unit
+performAction (DocumentViewA   _) _ _ = pure unit
+performAction (GraphExplorerA  _) _ _ = pure unit
+performAction (AnnuaireAction  _) _ _ = pure unit
+performAction (SearchBarAction _) _ _ = pure unit
+  -- liftEffect $ modalShow "addCorpus"
+  -- modifyState $ _ {showCorpus = true}
 
 ----------------------------------------------------------
 
@@ -103,6 +99,12 @@ _annuaireAction = prism AnnuaireAction \action ->
   case action of
        AnnuaireAction a -> Right a
        _                -> Left  action
+
+_searchBarAction :: Prism' Action SB.Action
+_searchBarAction = prism SearchBarAction \action ->
+  case action of
+       SearchBarAction a -> Right a
+       _                 -> Left  action
 
 _documentViewAction :: Prism' Action D.Action
 _documentViewAction = prism DocumentViewA \action ->
