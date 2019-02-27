@@ -2,18 +2,36 @@ module Gargantext.Pages.Corpus.Tabs.Specs where
 
 import Prelude hiding (div)
 
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
 
 import Gargantext.Config (TabType(..), TabSubType(..))
+import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
 import Gargantext.Pages.Corpus.Tabs.Types (Props)
 
-import Gargantext.Pages.Corpus.Tabs.Ngrams.NgramsTable as NV
 import Gargantext.Pages.Corpus.Dashboard (globalPublis)
+import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Charts.Options.ECharts (chart) as ECharts
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Tab as Tab
 import Thermite (Spec, hideState, noState, cmapProps)
+
+data Mode = Authors | Sources | Institutes | Terms
+
+derive instance genericMode :: Generic Mode _
+
+instance showMode :: Show Mode where
+  show = genericShow
+
+derive instance eqMode :: Eq Mode
+
+modeTabType :: Mode -> CTabNgramType
+modeTabType Authors = CTabAuthors
+modeTabType Sources = CTabSources
+modeTabType Institutes = CTabInstitutes
+modeTabType Terms = CTabTerms
 
 pureTabs :: Spec {} Props Void
 pureTabs = hideState (const {activeTab: 0}) statefulTabs
@@ -22,10 +40,10 @@ statefulTabs :: Spec Tab.State Props Tab.Action
 statefulTabs =
   Tab.tabs identity identity $ fromFoldable
     [ Tuple "Documents"  $ docs
-    , Tuple "Authors"    $ ngramsViewSpec {mode: NV.Authors}
-    , Tuple "Sources"    $ ngramsViewSpec {mode: NV.Sources}
-    , Tuple "Institutes" $ ngramsViewSpec {mode: NV.Institutes}
-    , Tuple "Terms"      $ ngramsViewSpec {mode: NV.Terms}
+    , Tuple "Authors"    $ ngramsViewSpec {mode: Authors}
+    , Tuple "Sources"    $ ngramsViewSpec {mode: Sources}
+    , Tuple "Institutes" $ ngramsViewSpec {mode: Institutes}
+    , Tuple "Terms"      $ ngramsViewSpec {mode: Terms}
     , Tuple "Trash"      $ docs -- TODO pass-in trash mode
     ]
   where
@@ -35,7 +53,10 @@ statefulTabs =
                        {nodeId, chart, tabType: TabCorpus TabDocs, totalRecords: 4736}) $
            noState DT.docViewSpec
 
-ngramsViewSpec :: {mode :: NV.Mode} -> Spec Tab.State Props Tab.Action
+ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
 ngramsViewSpec {mode} =
-  cmapProps (\{loaded, path, dispatch} -> {mode,loaded,path, dispatch})
-            (noState NV.ngramsTableSpec)
+  cmapProps (\{loaded: {defaultListId}, path, dispatch} ->
+              {loaded: {defaultListId}, path, dispatch, tabType})
+            (noState NT.mainNgramsTableSpec)
+  where
+    tabType = TabCorpus $ TabNgramType $ modeTabType mode

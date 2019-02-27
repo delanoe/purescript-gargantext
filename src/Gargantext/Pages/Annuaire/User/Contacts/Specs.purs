@@ -14,15 +14,17 @@ import Data.Unfoldable (class Unfoldable)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.String (joinWith)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, throwError)
+import Effect.Exception (error)
 import Thermite (Render, Spec, defaultPerformAction, simpleSpec, createClass)
 import React as React
 import React (ReactClass, ReactElement)
 import React.DOM (div, h3, img, li, span, text, ul, text)
 import React.DOM.Props (_id, className, src)
 import Gargantext.Prelude
-import Gargantext.Config (toUrl, End(..), NodeType(..))
+import Gargantext.Config (toUrl, End(..), NodeType(..), Path(..))
 import Gargantext.Config.REST (get)
+import Gargantext.Components.Node (NodePoly(..), HyperdataList(..))
 import Gargantext.Components.Loader as Loader
 import Gargantext.Pages.Annuaire.User.Contacts.Types
 import Gargantext.Pages.Annuaire.User.Contacts.Tabs.Specs as Tabs
@@ -171,19 +173,26 @@ layoutUser' = simpleSpec defaultPerformAction render
            <> Tabs.pureTabs
   where
     render :: Render {} Props Void
-    render dispatch {loaded: Contact {name, hyperdata}} _ _ =
+    render dispatch {loaded: {contactNode: Contact {name, hyperdata}}} _ _ =
       [ ul [className "col-md-12 list-group"] $
           display (fromMaybe "no name" name) (contactInfos hyperdata)
       ]
 
 -- | toUrl to get data
-getContact :: Int -> Aff Contact
-getContact id = get $ toUrl Back Node $ Just id
+getContact :: Int -> Aff ContactData
+getContact id = do
+  contactNode <- get $ toUrl Back Node $ Just id
+  defaultListIds <- get $ toUrl Back (Children NodeList 0 1 Nothing) $ Just id
+  case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
+    Just (NodePoly { id: defaultListId }) ->
+      pure {contactNode, defaultListId}
+    Nothing ->
+      throwError $ error "Missing default list"
 
 -- | Change name for you
-contactLoaderClass :: ReactClass (Loader.Props Int Contact)
+contactLoaderClass :: ReactClass (Loader.Props Int ContactData)
 contactLoaderClass = Loader.createLoaderClass "ContactLoader" getContact
 
 -- | Change type according to what has been loaded
-contactLoader :: Loader.Props' Int Contact -> ReactElement
+contactLoader :: Loader.Props' Int ContactData -> ReactElement
 contactLoader props = React.createElement contactLoaderClass props []

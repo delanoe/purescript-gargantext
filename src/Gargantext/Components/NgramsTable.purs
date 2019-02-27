@@ -1,6 +1,5 @@
 module Gargantext.Components.NgramsTable
-  ( Props
-  , PageParams
+  ( PageParams
   , PatchMap
   , NgramsPatch
   , NgramsTable
@@ -11,6 +10,11 @@ module Gargantext.Components.NgramsTable
   , initialPageParams
   , initialState
   , ngramsTableSpec
+  , ngramsLoaderClass
+  , ngramsLoader
+  , ngramsTableClass
+  , MainNgramsTableProps
+  , mainNgramsTableSpec
   )
   where
 
@@ -45,21 +49,20 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Foreign.Object as FO
 import React (ReactElement)
+import React as React
 import React.DOM (a, button, div, h2, i, input, li, option, p, select, span, table, tbody, text, thead, ul)
 import React.DOM.Props (_id, _type, checked, className, name, onChange, onClick, onInput, placeholder, style, value)
 import React.DOM.Props as DOM
-import Thermite (PerformAction, Render, Spec, StateCoTransformer, modifyState_, simpleSpec)
+import Thermite (PerformAction, Render, Spec, StateCoTransformer, defaultPerformAction, modifyState_, simpleSpec, createClass)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Types (TermList(..), TermType, readTermList, readTermType, termLists, termTypes)
-import Gargantext.Config (toUrl, End(..), Path(..), TabType)
-import Gargantext.Config.REST (put)
+import Gargantext.Config (toUrl, End(..), Path(..), TabType(..), OrderBy(..))
+import Gargantext.Config.REST (get, put)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
-
-type Props a mode = Loader.InnerProps Int a ( mode :: mode )
 
 type PageParams =
   { nodeId :: Int
@@ -616,6 +619,42 @@ ngramsTableSpec = simpleSpec performAction render
                   renderNgramsItem { ngramsTable, ngrams, occurrences, ngramsParent, termList: list, dispatch }
               , delete: false
               }
+
+loadPage :: PageParams -> Aff VersionedNgramsTable
+loadPage { nodeId, listIds, termListFilter, termTypeFilter
+         , searchQuery, tabType, params: {offset, limit, orderBy}} =
+  get $ toUrl Back
+          (GetNgrams { tabType, offset, limit, listIds
+                     , orderBy: convOrderBy <$> orderBy
+                     , termListFilter, termTypeFilter
+                     , searchQuery
+                     })
+          (Just nodeId)
+  where
+    convOrderBy _ = DateAsc -- TODO
+
+ngramsLoaderClass :: Loader.LoaderClass PageParams VersionedNgramsTable
+ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadPage
+
+ngramsLoader :: Loader.Props' PageParams VersionedNgramsTable -> ReactElement
+ngramsLoader props = React.createElement ngramsLoaderClass props []
+
+ngramsTableClass :: Loader.InnerClass PageParams VersionedNgramsTable
+ngramsTableClass = createClass "NgramsTable" ngramsTableSpec initialState
+
+type MainNgramsTableProps =
+  Loader.InnerProps Int { defaultListId :: Int }
+                        ( tabType :: TabType )
+
+mainNgramsTableSpec :: Spec {} MainNgramsTableProps Void
+mainNgramsTableSpec = simpleSpec defaultPerformAction render
+  where
+    render :: Render {} MainNgramsTableProps Void
+    render _ {path: nodeId, loaded: {defaultListId}, tabType} _ _ =
+      [ ngramsLoader
+          { path: initialPageParams nodeId [defaultListId] tabType
+          , component: ngramsTableClass
+          } ]
 
 tree :: { ngramsTable :: NgramsTable
         , ngramsStyle :: Array DOM.Props

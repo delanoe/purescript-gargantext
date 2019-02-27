@@ -168,5 +168,7 @@ instance decodeUser :: DecodeJson Contact where
                    , hyperdata
                    }
 
-type PropsRow = Loader.InnerPropsRow Int Contact ()
+type ContactData = {contactNode :: Contact, defaultListId :: Int}
+
+type PropsRow = Loader.InnerPropsRow Int ContactData ()
 type Props = Record PropsRow
