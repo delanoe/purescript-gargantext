@@ -133,14 +133,17 @@ pathUrl c (GetNgrams
             , limit: l
             , listIds
             , termListFilter: tlf
-            , termTypeFilter: ttf
+            , termSizeFilter: tsf
             , searchQuery: q
             }) i =
     pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsGet t
       <> offsetUrl o <> limitUrl l
       <> foldMap (\x -> "&list=" <> show x) listIds
       <> foldMap (\x -> "&listType=" <> show x) tlf
-      <> foldMap (\x -> "&termType=" <> show x) ttf
+      <> foldMap (\x -> case x of
+                          MonoTerm  -> "&minTermSize=0&maxTermSize=1"
+                          MultiTerm -> "&minTermSize=2"
+                 ) tsf
       <> if q == "" then "" else ("&search=" <> q)
 pathUrl c (PutNgrams t listid) i =
     pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsPut t <> listid'
@@ -219,7 +222,7 @@ data Path
       , orderBy        :: Maybe OrderBy
       , listIds        :: Array ListId
       , termListFilter :: Maybe TermList
-      , termTypeFilter :: Maybe TermType
+      , termSizeFilter :: Maybe TermSize
       , searchQuery    :: String
       }
   | PutNgrams TabType (Maybe ListId)

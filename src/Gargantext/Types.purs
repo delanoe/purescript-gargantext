@@ -6,21 +6,21 @@ import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
 import Gargantext.Prelude
 
-data TermType = MonoTerm | MultiTerm
+data TermSize = MonoTerm | MultiTerm
 
-derive instance eqTermType :: Eq TermType
+derive instance eqTermSize :: Eq TermSize
 
-instance showTermType :: Show TermType where
+instance showTermSize :: Show TermSize where
   show MonoTerm  = "MonoTerm"
   show MultiTerm = "MultiTerm"
 
-readTermType :: String -> Maybe TermType
-readTermType "MonoTerm"  = Just MonoTerm
-readTermType "MultiTerm" = Just MultiTerm
-readTermType _           = Nothing
+readTermSize :: String -> Maybe TermSize
+readTermSize "MonoTerm"  = Just MonoTerm
+readTermSize "MultiTerm" = Just MultiTerm
+readTermSize _           = Nothing
 
-termTypes :: Array { desc :: String, mval :: Maybe TermType }
-termTypes = [ { desc: "All types",        mval: Nothing        }
+termSizes :: Array { desc :: String, mval :: Maybe TermSize }
+termSizes = [ { desc: "All types",        mval: Nothing        }
             , { desc: "One-word terms",   mval: Just MonoTerm  }
             , { desc: "Multi-word terms", mval: Just MultiTerm }
             ]

@@ -56,7 +56,7 @@ import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, StateCoTransformer, defaultPerformAction, modifyState_, simpleSpec, createClass)
 import Unsafe.Coerce (unsafeCoerce)
 
-import Gargantext.Types (TermList(..), TermType, readTermList, readTermType, termLists, termTypes)
+import Gargantext.Types (TermList(..), TermSize, readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Config (toUrl, End(..), Path(..), TabType(..), OrderBy(..))
 import Gargantext.Config.REST (get, put)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
@@ -71,7 +71,7 @@ type PageParams =
   , tabType :: TabType
   , searchQuery :: String
   , termListFilter :: Maybe TermList -- Nothing means all
-  , termTypeFilter :: Maybe TermType -- Nothing means all
+  , termSizeFilter :: Maybe TermSize -- Nothing means all
   }
 
 initialPageParams :: Int -> Array Int -> TabType -> PageParams
@@ -80,7 +80,7 @@ initialPageParams nodeId listIds tabType =
   , listIds
   , params: T.initialParams
   , tabType
-  , termTypeFilter: Nothing
+  , termSizeFilter: Nothing
   , termListFilter: Nothing
   , searchQuery: ""
   }
@@ -465,8 +465,8 @@ tableContainer { pageParams
                     [ select  [ _id "picktermtype"
                               , className "form-control custom-select"
                            --   , value ?
-                              , onChange (\e -> setTermTypeFilter $ readTermType $ unsafeEventValue e)
-                              ] $ map optps1 termTypes
+                              , onChange (\e -> setTermSizeFilter $ readTermSize $ unsafeEventValue e)
+                              ] $ map optps1 termSizes
                     ]
                   , li [className " list-group-item"] [ props.pageSizeControl ]
                   ]
@@ -509,7 +509,7 @@ tableContainer { pageParams
     setPageParams f = loaderDispatch $ Loader.SetPath $ f pageParams
     setSearchQuery    x = setPageParams $ _ { searchQuery = x }
     setTermListFilter x = setPageParams $ _ { termListFilter = x }
-    setTermTypeFilter x = setPageParams $ _ { termTypeFilter = x }
+    setTermSizeFilter x = setPageParams $ _ { termSizeFilter = x }
 
 putTable :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
 putTable {nodeId, listIds, tabType} =
@@ -621,12 +621,12 @@ ngramsTableSpec = simpleSpec performAction render
               }
 
 loadPage :: PageParams -> Aff VersionedNgramsTable
-loadPage { nodeId, listIds, termListFilter, termTypeFilter
+loadPage { nodeId, listIds, termListFilter, termSizeFilter
          , searchQuery, tabType, params: {offset, limit, orderBy}} =
   get $ toUrl Back
           (GetNgrams { tabType, offset, limit, listIds
                      , orderBy: convOrderBy <$> orderBy
-                     , termListFilter, termTypeFilter
+                     , termListFilter, termSizeFilter
                      , searchQuery
                      })
           (Just nodeId)
