@@ -25,6 +25,7 @@ import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
+import Effect.Uncurried (runEffectFn1, runEffectFn2)
 import Gargantext.Components.GraphExplorer.Sigmajs (Camera, Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, applyOnCamera, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
@@ -130,8 +131,10 @@ initialState = State
 
 -- This one is not used: specOld is the one being used.
 -- TODO: code duplication
+  {-
 graphSpec :: Spec State {} Action
 graphSpec = simpleSpec performAction render
+-}
 
 performAction :: PerformAction State {} Action
 performAction (LoadGraph fp) _ _ = void do
@@ -183,7 +186,7 @@ performAction (SaveCamera c) _ _ =
 --    State $
 
 convert :: GraphData -> SigmaGraphData
-convert (GraphData r) = SigmaGraphData { nodes, edges}
+convert (GraphData r) = SigmaGraphData {nodes, edges}
   where
     nodes = mapWithIndex nodeFn r.nodes
     nodeFn i (Node n) =
@@ -199,7 +202,7 @@ convert (GraphData r) = SigmaGraphData { nodes, edges}
         cDef (Cluster {clustDefault}) = clustDefault
     edges = map edgeFn r.edges
     edgeFn (Edge e) = sigmaEdge {id : e.id_, source : e.source, target : e.target}
-
+{--
 render :: Render State {} Action
 render d p (State {sigmaGraphData, settings, legendData}) c =
   case sigmaGraphData of
@@ -210,7 +213,7 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
               , renderer : canvas
               , style : sStyle { height : "96%"}
               -- , ref: applyOnCamera
-              , ref: applyOnCamera $ (d <<< SaveCamera)
+              , ref: applyOnCamera $ d <<< SaveCamera
               , onClickNode : \e -> unsafePerformEffect $ do
                  _ <- log "this should be deleted"
                  -- _ <- logs $ unsafeCoerce e
@@ -226,6 +229,7 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
   -- TODO clean unused code: this seems to be not used
   -- <>
   -- [dispLegend legendData]
+--}
 
 forceAtlas2Config :: { slowDown :: Number
                     , startingIterations :: Number
@@ -535,13 +539,14 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                      [ sigma { graph, settings
                              , renderer : canvas
                              , style : sStyle { height : "95%"}
-                             , ref: applyOnCamera (d <<< SaveCamera)
-                             , onClickNode : \e -> unsafePerformEffect $ do
-                                _ <- log " hello 2"
-                                --logs $ unsafeCoerce e
-                                _ <- d $ ShowSidePanel true
-                                _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
-                                pure unit
+                             , ref: applyOnCamera log -- d <<< SaveCamera
+                             , onClickNode : \e ->
+                             unsafePerformEffect $ do
+                               _ <- log " hello 2"
+                               _ <- log $ show st.camera
+                               _ <- d $ ShowSidePanel true
+                               _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+                               pure unit
                              }
                        [ sigmaEnableWebGL
                        , forceAtlas2 forceAtlas2Config
