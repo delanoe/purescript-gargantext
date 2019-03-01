@@ -26,21 +26,22 @@ termSizes = [ { desc: "All types",        mval: Nothing        }
             ]
 
 data TermList = GraphTerm | StopTerm | CandidateTerm
+-- TODO use generic JSON instance
 
 derive instance eqTermList :: Eq TermList
 
 instance encodeJsonTermList :: EncodeJson TermList where
-  encodeJson GraphTerm     = encodeJson "GraphList"
-  encodeJson StopTerm      = encodeJson "StopList"
-  encodeJson CandidateTerm = encodeJson "CandidateList"
+  encodeJson GraphTerm     = encodeJson "GraphTerm"
+  encodeJson StopTerm      = encodeJson "StopTerm"
+  encodeJson CandidateTerm = encodeJson "CandidateTerm"
 
 instance decodeJsonTermList :: DecodeJson TermList where
   decodeJson json = do
     s <- decodeJson json
     case s of
-      "GraphList"     -> pure GraphTerm
-      "StopList"      -> pure StopTerm
-      "CandidateList" -> pure CandidateTerm
+      "GraphTerm"     -> pure GraphTerm
+      "StopTerm"      -> pure StopTerm
+      "CandidateTerm" -> pure CandidateTerm
       _               -> Left "Unexpected list name"
 
 type ListTypeId = Int
@@ -51,15 +52,15 @@ listTypeId StopTerm      = 2
 listTypeId CandidateTerm = 3
 
 instance showTermList :: Show TermList where
-  show GraphTerm     = "Graph"
-  show StopTerm      = "Stop"
-  show CandidateTerm = "Candidate"
+  show GraphTerm     = "GraphTerm"
+  show StopTerm      = "StopTerm"
+  show CandidateTerm = "CandidateTerm"
 
 readTermList :: String -> Maybe TermList
-readTermList "Graph"     = Just GraphTerm
-readTermList "Stop"      = Just StopTerm
-readTermList "Candidate" = Just CandidateTerm
-readTermList _           = Nothing
+readTermList "GraphTerm"     = Just GraphTerm
+readTermList "StopTerm"      = Just StopTerm
+readTermList "CandidateTerm" = Just CandidateTerm
+readTermList _               = Nothing
 
 termLists :: Array { desc :: String, mval :: Maybe TermList }
 termLists = [ { desc: "All terms",   mval: Nothing      }
