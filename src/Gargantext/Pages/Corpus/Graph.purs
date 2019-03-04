@@ -179,7 +179,8 @@ performAction DisplayEdges _ _ =
 
 performAction (SaveCamera c) _ _ =
   modifyState_ $ \(State s) -> do
-    State $ ((_camera) .~ (Just c)) s
+    State $ ((_camera) .~ cam) s
+    where cam = Just {x: 0.0, y: 0.0, ratio: 0.0, angle: 0.0}
 
 --performAction (Zoom True) _ _ =
 --  modifyState_ $ \() -> do
@@ -539,7 +540,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                      [ sigma { graph, settings
                              , renderer : canvas
                              , style : sStyle { height : "95%"}
-                             , ref: applyOnCamera log -- d <<< SaveCamera
+                             , ref: applyOnCamera $ d <<< SaveCamera
                              , onClickNode : \e ->
                              unsafePerformEffect $ do
                                _ <- log " hello 2"

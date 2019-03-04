@@ -254,14 +254,13 @@ type Camera =
     angle :: Number
   }
 
--- foreign import applyOnCameraImpl :: EffectFn2 (a → b) (Nullable ReactRef)
--- applyOnCamera = applyOnCameraImpl
 foreign import applyOnCameraImpl :: forall a. EffectFn2 (Nullable ReactRef) (a -> EventHandler) Unit
 
 applyOnCamera :: forall a. (a -> EventHandler) -> EffectFn1 (Nullable ReactRef) Unit
 applyOnCamera a = mkEffectFn1 h
   where h ::  Nullable ReactRef -> Effect Unit
         h r = runEffectFn2 applyOnCameraImpl r a
+
 type SigmaProps =
   ( renderer :: Renderer
   , settings :: SigmaSettings

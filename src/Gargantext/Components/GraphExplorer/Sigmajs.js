@@ -45,7 +45,7 @@ const applyOnCamera = function(props, f){
         const camera = props.sigma.cameras[0];
         // console.log(camera);
         // console.log(f);
-        f(camera);
+        f(camera)();
     }
 };
 
