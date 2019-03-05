@@ -8,7 +8,7 @@ import React (ReactElement)
 import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul,i)
 import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
 import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
-import Unsafe.Coerce (unsafeCoerce)
+-- import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
 import Gargantext.Components.Data.Lang (Lang(..))
@@ -23,10 +23,11 @@ import Gargantext.Pages.Corpus.Document as Annotation
 import Gargantext.Pages.Corpus.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Graph as GE
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, performAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _searchBarAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search    as S
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState)
+import Gargantext.Pages.Layout.Specs.SearchBar as SB
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _searchBarState)
 import Gargantext.Router (Routes(..))
 
 layoutSpec :: Spec AppState {} Action
@@ -61,7 +62,6 @@ pagesComponent s = case s.currentRoute of
     selectSpec (Document i)      = layout0 $ focus _documentViewState _documentViewAction  Annotation.docview
     selectSpec (PGraphExplorer i)= layout1  $ focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
-
     selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
     selectSpec (UserPage i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState C.layoutUser
     selectSpec (ContactPage i)   = layout0 $ cmapProps (const {nodeId: i}) $ noState C.layoutUser
@@ -75,11 +75,12 @@ layout0 :: Spec AppState {} Action
         -> Spec AppState {} Action
 layout0 layout =
   fold
-  [ layoutSidebar divSearchBar
+  [ searchBar
   , outerLayout
   , layoutFooter
   ]
   where
+    searchBar = layoutSidebar $ focus _searchBarState _searchBarAction SB.renderSpec
     outerLayout1 = simpleSpec defaultPerformAction defaultRender
     outerLayout :: Spec AppState {} Action
     outerLayout =
@@ -122,12 +123,13 @@ layout1 :: Spec AppState {} Action
         -> Spec AppState {} Action
 layout1 layout =
   fold
-  [ layoutSidebar divSearchBar
+  [ searchBar
   , layout
   -- , outerLayout
   , layoutFooter
   ]
   where
+    searchBar = layoutSidebar $ focus _searchBarState _searchBarAction SB.renderSpec
     outerLayout1 = simpleSpec defaultPerformAction defaultRender
     outerLayout :: Spec AppState {} Action
     outerLayout =
@@ -163,8 +165,7 @@ layout1 layout =
       ]
 
 
-layoutSidebar :: Spec AppState {} Action
-              -> Spec AppState {} Action
+layoutSidebar :: Spec AppState {} Action -> Spec AppState {} Action
 layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
@@ -296,31 +297,6 @@ liNav (LiNav { title : title'
                       , text $ " " <> text'
                       ]
                 ]
-
--- TODO put the search form in the center of the navBar
-divSearchBar :: Spec AppState {} Action
-divSearchBar = simpleSpec performAction render
-  where
-    render :: Render AppState {} Action
-    render dispatch _ state _ = [div [ className "" ] [ searchbar']]
-      where
-        searchbar' = ul [ className "nav navbar-nav col-md-6 col-md-offset-3"
-                        , style { "marginLeft" : "15%"}
-                        ] [ {-div [className "navbar-form"]
-                            [ input [ className   "search-query"
-                                    , placeholder "Query, URL or FILE (works with Firefox or Chromium browsers)"
-                                    , _type "text"
-                                    , style { height: "35px"
-                                            , width: "400px"
-                                            }
-                                    , onChange \e -> dispatch $ Search (unsafeCoerce e).target.value
-                                    ]
-                           --,  button [onClick \e -> dispatch Go, className "btn btn-primary"] [text "Enter"]
-                            , span [onClick \e -> dispatch Go, style {color : "#039BE5"}]
-                            [ i [className "material-icons md-36"] [text "control_point"]]
-                            ]
-                            -}
-                          ]
 
 divDropdownRight :: (Action -> Effect Unit) -> AppState -> ReactElement
 divDropdownRight d s =
