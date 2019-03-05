@@ -51,7 +51,7 @@ import Foreign.Object as FO
 import React (ReactElement)
 import React as React
 import React.DOM (a, button, div, h2, i, input, li, option, p, select, span, table, tbody, text, thead, ul)
-import React.DOM.Props (_id, _type, checked, className, name, onChange, onClick, onInput, placeholder, style, value)
+import React.DOM.Props (_id, _type, checked, className, name, onChange, onClick, onInput, placeholder, style, defaultValue, value)
 import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, StateCoTransformer, defaultPerformAction, modifyState_, simpleSpec, createClass)
 import Unsafe.Coerce (unsafeCoerce)
@@ -81,7 +81,7 @@ initialPageParams nodeId listIds tabType =
   , params: T.initialParams
   , tabType
   , termSizeFilter: Nothing
-  , termListFilter: Nothing
+  , termListFilter: Just GraphTerm
   , searchQuery: ""
   }
 
@@ -457,14 +457,14 @@ tableContainer { pageParams
                   [ li [className " list-group-item"]
                     [ select  [ _id "picklistmenu"
                               , className "form-control custom-select"
-                           --   , value ?
+                              , defaultValue (show pageParams.termListFilter)
                               , onChange (\e -> setTermListFilter $ readTermList $ unsafeEventValue e)
                               ] $ map optps1 termLists
                     ]
                   , li [className "list-group-item"]
                     [ select  [ _id "picktermtype"
                               , className "form-control custom-select"
-                           --   , value ?
+                              , defaultValue (show pageParams.termSizeFilter)
                               , onChange (\e -> setTermSizeFilter $ readTermSize $ unsafeEventValue e)
                               ] $ map optps1 termSizes
                     ]
@@ -600,7 +600,7 @@ ngramsTableSpec = simpleSpec performAction render
             --   * cats -> cat -> animal
             --   * We are editing cats: ngramsParent == Just "cats"
             --   * animal should not be listed since this would create a cycle!
-            displayRow e@(NgramsElement {ngrams, children, parent}) =
+            displayRow e@(NgramsElement {ngrams, children}) =
               isRoot e
                 -- ^ Display only nodes with parents
                       && (ngramsChildren ^. at ngrams /= Just true)
