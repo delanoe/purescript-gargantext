@@ -457,14 +457,14 @@ tableContainer { pageParams
                   [ li [className " list-group-item"]
                     [ select  [ _id "picklistmenu"
                               , className "form-control custom-select"
-                              , defaultValue (show pageParams.termListFilter)
+                              , value (maybe "" show pageParams.termListFilter)
                               , onChange (\e -> setTermListFilter $ readTermList $ unsafeEventValue e)
                               ] $ map optps1 termLists
                     ]
                   , li [className "list-group-item"]
                     [ select  [ _id "picktermtype"
                               , className "form-control custom-select"
-                              , defaultValue (show pageParams.termSizeFilter)
+                              , value (maybe "" show pageParams.termSizeFilter)
                               , onChange (\e -> setTermSizeFilter $ readTermSize $ unsafeEventValue e)
                               ] $ map optps1 termSizes
                     ]
