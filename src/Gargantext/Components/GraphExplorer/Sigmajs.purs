@@ -23,6 +23,9 @@ foreign import sigmaClass :: ReactClass {children :: Children}
 foreign import sigmaEnableSVGClass :: forall props. ReactClass props
 foreign import sigmaEnableWebGLClass :: ReactClass {children :: Children}
 
+filterNodesBy :: forall o. Optional o FilterNodesByOptProps  =>  {| o} -> ReactElement
+filterNodesBy props = unsafeCreateElement filterClass (unsafeCoerce props) []
+
 neoCypher :: forall o. Optional o NeoCypherOptProps  => NeoCypherReqProps o -> ReactElement
 neoCypher props = unsafeCreateElement neoCypherClass (unsafeCoerce props) []
 
@@ -68,7 +71,18 @@ foreign import data SigmaSettings :: Type
 class Optional (r :: # Type) (s :: # Type)
 instance srInstance :: Union r t s => Optional r s
 
+filterNodes :: forall r. Number -> {size :: Number | r}  -> Boolean
+filterNodes minNode {size} =
+  size >= minNode
 
+filterEdges :: forall r. Number -> {weight :: Number | r}  -> Boolean
+filterEdges minEdgeWeight {weight} =
+  weight >= minEdgeWeight
+
+type FilterNodesByOptProps =
+  ( nodesBy :: forall r. {size :: Number | r} -> Boolean
+  , edgesBy :: forall r. {weight :: Number | r} -> Boolean
+  )
 
 type NeoCypherOptProps =
   ( producers :: String
@@ -331,7 +345,7 @@ type SigmaSettingProps =
   , defaultNodeType :: String
   , defaultEdgeType :: String
   , defaultLabelColor :: String
-  , defaultEdgeCOlor :: String
+  , defaultEdgeColor :: String
   , defaultNodeColor :: String
   , defaultLabelSize :: String
   , edgeColor :: String

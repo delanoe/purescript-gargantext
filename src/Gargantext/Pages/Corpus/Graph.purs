@@ -25,7 +25,7 @@ import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, filterEdges, filterNodes, filterNodesBy, forceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
@@ -38,13 +38,13 @@ import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', h2, button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_id, _type, checked, className, defaultValue, href, max, min, name, onChange, onClick, placeholder, style, title, value)
+import React.DOM.Props (_id, _type, checked, className, defaultValue, href, max, min, name, onChange, onClick, placeholder, step, style, title, value)
 import Thermite (PerformAction, Render, Spec, _render, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
+import Type.Data.Boolean (kind Boolean)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem)
-
 
 data Action
   = LoadGraph Int
@@ -54,6 +54,9 @@ data Action
   | ToggleTree
   | ChangeLabelSize Number
   | ChangeNodeSize Number
+  | ChangeEdgeWeight Number
+  | ToggleDrawEdges
+  | ToggleAppend
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -82,6 +85,25 @@ _minNodeSize' = prop (SProxy :: SProxy "minNodeSize")
 _minNodeSize :: Lens' SigmaSettings Number
 _minNodeSize f = unsafeCoerce $ _minNodeSize' f
 
+_maxEdgeSize' :: forall s a. Lens' { maxEdgeSize :: a | s} a
+_maxEdgeSize' = prop (SProxy :: SProxy "maxEdgeSize")
+
+_maxEdgeSize :: Lens' SigmaSettings Number
+_maxEdgeSize f = unsafeCoerce $ _maxEdgeSize' f
+
+_minEdgeSize' :: forall s a. Lens' { minEdgeSize :: a | s} a
+_minEdgeSize' = prop (SProxy :: SProxy "minEdgeSize")
+
+_minEdgeSize :: Lens' SigmaSettings Number
+_minEdgeSize f = unsafeCoerce $ _minEdgeSize' f
+
+_drawEdges' :: forall s a. Lens' { drawEdges :: a | s} a
+_drawEdges' = prop (SProxy :: SProxy "drawEdges")
+
+_drawEdges :: Lens' SigmaSettings Boolean
+_drawEdges f = unsafeCoerce $ _drawEdges' f
+
+
 -- TODO remove newtype here
 newtype State = State
   { graphData :: GraphData
@@ -95,6 +117,9 @@ newtype State = State
   , corpusId :: Int
   , treeId :: Maybe TreeId
   , settings :: SigmaSettings
+  , minNodeSize :: Number
+  , minEdgeWeight :: Number
+  , appendNodes :: Boolean
   }
 
 initialState :: State
@@ -110,6 +135,9 @@ initialState = State
   , corpusId : 0
   , treeId : Nothing
   , settings : mySettings
+  , minNodeSize : 0.0
+  , minEdgeWeight : 0.0
+  , appendNodes : false
   }
 
 -- This one is not used: specOld is the one being used.
@@ -151,8 +179,24 @@ performAction (ChangeLabelSize size) _ _ =
 
 performAction (ChangeNodeSize size) _ _ =
   modifyState_ $ \(State s) -> do
-    let maxNoded = ((_settings <<< _maxNodeSize) .~ size) s
-    State $ ((_settings <<< _minNodeSize) .~ (size * 0.10)) maxNoded
+    -- let maxNoded = ((_settings <<< _maxNodeSize) .~ size) s
+    -- State $ ((_settings <<< _minNodeSize) .~ (size * 0.10)) maxNoded
+    State $ s {minNodeSize = size}
+
+performAction (ChangeEdgeWeight size) _ _ =
+  modifyState_ $ \(State s) -> do
+    -- let maxNoded = ((_settings <<< _maxEdgeSize) .~ size) s
+    -- State $ ((_settings <<< _minEdgeSize) .~ (size * 0.10)) maxNoded
+    State $ s {minEdgeWeight = size}
+
+performAction ToggleDrawEdges _ _ =
+  modifyState_ $ \(State s) -> do
+    let      drawEdges =  not $ (s ^. _settings) ^. _drawEdges
+    State $ ((_settings <<< _drawEdges) .~ drawEdges) s
+
+performAction ToggleAppend _ _ =
+  modifyState_ $ \(State s) -> do
+  State $ s {appendNodes = not s.appendNodes}
 
 convert :: GraphData -> SigmaGraphData
 convert (GraphData r) = SigmaGraphData { nodes, edges}
@@ -173,7 +217,7 @@ convert (GraphData r) = SigmaGraphData { nodes, edges}
     edgeFn (Edge e) = sigmaEdge {id : e.id_, source : e.source, target : e.target}
 
 render :: Render State {} Action
-render d p (State {sigmaGraphData, settings, legendData}) c =
+render d p (State {sigmaGraphData, settings, legendData, minNodeSize, minEdgeWeight}) c =
   case sigmaGraphData of
     Nothing -> []
     Just graph ->
@@ -188,8 +232,9 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
               -- TODO: fix this!
               }
         [ sigmaEnableWebGL
-        , forceAtlas2 forceAtlas2Config
         , edgeShapes {"default" : edgeShape.curve}
+        , forceAtlas2 forceAtlas2Config
+        , filterNodesBy {"nodesBy" : filterNodes minNodeSize, "edgesBy" : filterEdges minEdgeWeight}
         ]
       ]
   -- TODO clean unused code: this seems to be not used
@@ -253,8 +298,8 @@ mySettings = sigmaSettings { verbose : true
                            , twNodeRendBorderColor: "#222"
 
                           -- edges
-                          , minEdgeSize: 0.0              -- in fact used in tina as edge size
-                          , maxEdgeSize: 0.0
+                          , minEdgeSize: 1.0              -- in fact used in tina as edge size
+                          , maxEdgeSize: 10.0
                           --, defaultEdgeType: "curve"      -- 'curve' or 'line' (curve only iff ourRendering)
                           , twEdgeDefaultOpacity: 0.4       -- initial opacity added to src/tgt colors
                           , minNodeSize: 1.0
@@ -338,6 +383,14 @@ dispLegend ary = div [] $ map dl ary
       ]
 
 
+
+renderItem :: forall t2 t3.
+  { country :: String
+  | t3
+  }
+  -> t2 -> ReactElement
+renderItem  i h= div [] [text i.country]
+
 specOld :: Spec State {} Action
 specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
   where
@@ -365,7 +418,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
         Just treeId ->
           (cmapProps (const {root: treeId}) (noState Tree.treeview))
     render' :: Render State {} Action
-    render' d _ (State st@{settings, graphData: GraphData {sides,metaData  }}) _ =
+    render' d _ (State st@{appendNodes, minNodeSize, minEdgeWeight, settings, graphData: GraphData {sides,metaData  }}) _ =
       [ div [className "container-fluid", style {"padding-top" : "100px"}]
       [ div [ className "row"]
         [ h2 [ style {textAlign : "center", position : "relative", top: "-38px"}]
@@ -447,14 +500,18 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                     ]
                   ]
                 , li [className "col-md-2"]
+                  [ button [className "btn btn-primary", onClick $ \e -> d ToggleDrawEdges ] [text "Draw Edges"]
+                  ]
+                , li [className "col-md-2"]
                   [ span [] [text "Selector"],input [_type "range", _id "myRange", value "90"]
                   ]
                 , li [className "col-md-2"]
                   [ span [] [text "Labels"],input [_type "range"
                                                  , _id "labelSizeRange"
-                                                 , max "4"
-                                                 , defaultValue <<< show $ settings ^. _labelSizeRatio
-                                                 , min "0"
+                                                 , max "4.0"
+                                                 , value <<< show $ settings ^. _labelSizeRatio
+                                                 , min "0.25"
+                                                 , step "0.25"
                                                  , onChange \e -> d $ ChangeLabelSize (unsafeCoerce e).target.value
                                                  ]
                   ]
@@ -462,14 +519,32 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                 , li [className "col-md-2"]
                   [ span [] [text "Nodes"],input [_type "range"
                                                  , _id "nodeSizeRange"
-                                                 , max "20"
-                                                 , defaultValue <<< show $ settings ^. _maxNodeSize
+                                                 , max "100"
+                                                 , value <<< show $ minNodeSize --settings ^. _maxNodeSize
                                                  , min "0"
+                                                 , step "1"
                                                  , onChange \e -> d $ ChangeNodeSize (unsafeCoerce e).target.value
                                                  ]
                   ]
                 , li [className "col-md-2"]
-                  [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
+                  [ span [] [text "Edges"],input [_type "range"
+                                                  , _id "edgeSizeRange"
+                                                  , max "1"
+                                                  , value <<< show $ minEdgeWeight
+                                                  , min "0.0"
+                                                  , step "0.005"
+                                                  , onChange \e -> d $ ChangeEdgeWeight (unsafeCoerce e).target.value
+                                                 ]
+                                                 , text $ show minEdgeWeight
+                  ]
+                , li [className "col-md-2"]
+                  [ input [_type "checkbox"
+                          , _id "appendNodes"
+                          , checked $ appendNodes
+                          , onClick \e -> d $ ToggleAppend
+                          ]
+                    , text $ " Add"
+                    -- ,
                   ]
                 , li'
                   [ button [className "btn btn-primary"] [text "Save"] -- TODO: Implement Save!
@@ -502,6 +577,8 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                        [ sigmaEnableWebGL
                        , forceAtlas2 forceAtlas2Config
                        , edgeShapes {"default" : edgeShape.curve}
+                       , filterNodesBy {"nodesBy" : filterNodes minNodeSize, "edgesBy" : filterEdges minEdgeWeight}
+
                        ]
                      ]
                  <>

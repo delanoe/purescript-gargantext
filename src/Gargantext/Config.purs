@@ -45,7 +45,7 @@ frontHaskell = { baseUrl: "http://localhost:8008"
                }
 
 frontDev :: Config
-frontDev = { baseUrl: "https://dev.gargantext.org"
+frontDev = { baseUrl: "https://demo.gargantext.org"
            , prePath: "/#/"
            }
 
@@ -62,7 +62,7 @@ backLocal v = { baseUrl: "http://localhost:8008"
               }
 
 backDev :: ApiVersion -> Config
-backDev v = { baseUrl: "https://dev.gargantext.org"
+backDev v = { baseUrl: "https://demo.gargantext.org"
             , prePath: "/api/" <> show v <> "/"
             }
 
