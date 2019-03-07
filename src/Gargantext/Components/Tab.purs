@@ -44,7 +44,10 @@ tab sid iid (Tuple name spec) = over _render tabRender spec
       [ div [ className $ "tab-pane " <>
         if sid ==iid 
            then " show active" 
-           else " fade"] $ renderer d p s c
+           else " fade"] $
+        if sid == iid
+          then renderer d p s c
+          else []
       ]
 
 
