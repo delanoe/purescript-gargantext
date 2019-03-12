@@ -28,7 +28,7 @@ import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
 import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
 import Data.Newtype (class Newtype)
-import Data.Lens (Iso', Lens', (%~), (.=), (^.), (^..))
+import Data.Lens (Iso', Lens', (%~), (.=), (^.), (^..), to)
 import Data.Lens.Common (_Just)
 import Data.Lens.At (class At, at)
 import Data.Lens.Index (class Index, ix)
@@ -39,6 +39,7 @@ import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
+import Data.Monoid.Additive (Additive(..))
 import Data.Traversable (class Traversable, traverse, traverse_, sequence)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Set (Set)
@@ -100,6 +101,10 @@ newtype NgramsElement = NgramsElement
 _parent = prop (SProxy :: SProxy "parent")
 _children :: forall row. Lens' { children :: Set NgramsTerm | row } (Set NgramsTerm)
 _children = prop (SProxy :: SProxy "children")
+_occurrences :: forall row. Lens' { occurrences :: Int | row } Int
+_occurrences = prop (SProxy :: SProxy "occurrences")
+_list :: forall a row. Lens' { list :: a | row } a
+_list = prop (SProxy :: SProxy "list")
 
 derive instance newtypeNgramsElement :: Newtype NgramsElement _
 
@@ -283,7 +288,7 @@ applyNgramsPatch :: NgramsPatch -> NgramsElement -> NgramsElement
 applyNgramsPatch (NgramsPatch p) (NgramsElement e) = NgramsElement
   { ngrams:      e.ngrams
   , list:        applyReplace p.patch_list e.list
-  , occurrences: e.occurrences -- TODO: is this correct ?
+  , occurrences: e.occurrences
   , parent:      e.parent
   , children:    applyPatchSet p.patch_children e.children
   }
@@ -614,9 +619,9 @@ ngramsTableSpec = simpleSpec performAction render
                             Nothing -> true)
               || -- Unless they are scheduled to be removed.
                  (ngramsChildren ^. at ngrams == Just false)
-            convertRow (Tuple ngrams (NgramsElement { occurrences, list })) =
+            convertRow (Tuple ngrams ngramsElement) =
               { row:
-                  renderNgramsItem { ngramsTable, ngrams, occurrences, ngramsParent, termList: list, dispatch }
+                  renderNgramsItem { ngramsTable, ngrams, ngramsParent, ngramsElement, dispatch }
               , delete: false
               }
 
@@ -681,6 +686,14 @@ tree params@{ngramsTable, ngramsStyle, ngramsClick} label =
 
     forest = ul [] <<< map (tree params) <<< List.toUnfoldable
 
+sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
+sumOccurrences' ngramsTable label =
+    ngramsTable ^. ix label <<< to (sumOccurrences ngramsTable)
+
+sumOccurrences :: NgramsTable -> NgramsElement -> Additive Int
+sumOccurrences ngramsTable (NgramsElement {occurrences, children}) =
+    Additive occurrences <> children ^. folded <<< to (sumOccurrences' ngramsTable)
+
 renderNgramsTree :: { ngrams      :: NgramsTerm
                     , ngramsTable :: NgramsTable
                     , ngramsStyle :: Array DOM.Props
@@ -693,12 +706,11 @@ renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick } =
 
 renderNgramsItem :: { ngrams :: NgramsTerm
                     , ngramsTable :: NgramsTable
-                    , occurrences :: Int
-                    , termList :: TermList
+                    , ngramsElement :: NgramsElement
                     , ngramsParent :: Maybe NgramsTerm
                     , dispatch :: Action -> Effect Unit
                     } -> Array ReactElement
-renderNgramsItem { ngramsTable, ngrams, occurrences, termList, ngramsParent, dispatch } =
+renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent, dispatch } =
   [ checkbox GraphTerm
   , checkbox StopTerm
   , if ngramsParent == Nothing
@@ -711,6 +723,8 @@ renderNgramsItem { ngramsTable, ngrams, occurrences, termList, ngramsParent, dis
   , text $ show occurrences
   ]
   where
+    Additive occurrences = sumOccurrences ngramsTable ngramsElement
+    termList    = ngramsElement ^. _NgramsElement <<< _list
     ngramsStyle = [termStyle termList]
     ngramsClick = Just <<< dispatch <<< SetParentResetChildren <<< Just
     checkbox termList' =
