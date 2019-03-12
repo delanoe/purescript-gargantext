@@ -5,11 +5,13 @@ import Prelude hiding (div)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List (fromFoldable)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
 import Gargantext.Config (TabType(..), TabSubType(..))
 import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
 import Gargantext.Pages.Corpus.Tabs.Types (Props)
+import Gargantext.Pages.Corpus.Metrics (metricsSpec)
 
 import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 import Gargantext.Components.NgramsTable as NT
@@ -55,8 +57,13 @@ statefulTabs =
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
 ngramsViewSpec {mode} =
-  cmapProps (\{loaded: {defaultListId}, path, dispatch} ->
-              {loaded: {defaultListId}, path, dispatch, tabType})
-            (noState NT.mainNgramsTableSpec)
+  noState (
+    cmapProps (\{loaded: {defaultListId}, path: corpusId} ->
+                {corpusId, listId: defaultListId, tabType, limit: Nothing})
+              metricsSpec <>
+    cmapProps (\{loaded: {defaultListId}, path, dispatch} ->
+                {loaded: {defaultListId}, path, dispatch, tabType})
+              NT.mainNgramsTableSpec
+  )
   where
     tabType = TabCorpus $ TabNgramType $ modeTabType mode

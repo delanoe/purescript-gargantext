@@ -112,6 +112,10 @@ offsetUrl o = "&offset=" <> show o
 orderUrl :: forall a. Show a => Maybe a -> UrlPath
 orderUrl = maybe "" (\x -> "&order=" <> show x)
 
+showTabType' :: TabType -> String
+showTabType' (TabCorpus  t) = show t
+showTabType' (TabPairing t) = show t
+
 tabTypeNgramsGet :: TabType -> UrlPath
 tabTypeNgramsGet (TabCorpus  t) = "listGet?ngramsType=" <> show t
 tabTypeNgramsGet (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
@@ -155,7 +159,11 @@ pathUrl c (NodeAPI nt) i = c.prePath <> nodeTypeUrl nt <> (maybe "" (\i' -> "/" 
 pathUrl c (Search {limit,offset,orderBy}) _TODO =
   c.prePath <> "search/?dummy=dummy"
     <> offsetUrl offset <> limitUrl limit <> orderUrl orderBy
-
+pathUrl c (CorpusMetrics {tabType, listId, limit}) i =
+    pathUrl c (NodeAPI Corpus) i <> "/metrics"
+      <> "&list=" <> show listId
+      <> "&ngramsType=" <> showTabType' tabType
+      <> maybe "" (\x -> "&limit=" <> show x) limit
 
 ------------------------------------------------------------
 
@@ -233,6 +241,10 @@ data Path
             , offset   :: Offset
             , orderBy  :: Maybe OrderBy
             }
+  | CorpusMetrics { tabType :: TabType
+                  , listId  :: ListId
+                  , limit   :: Maybe Limit
+                  }
 
 data End = Back | Front
 type Id  = Int
