@@ -1,7 +1,11 @@
 module Gargantext.Pages.Corpus.Metrics where
 
+import Data.Set as Set
+import Data.Array (foldl)
+import Data.Tuple (Tuple(..))
+import Data.Map (fromFoldableWith, Map(), keys, lookup)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
 import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
 import Gargantext.Config.REST (get)
@@ -54,19 +58,27 @@ loadedMetricsSpec = simpleSpec defaultPerformAction render
     render :: Render {} (Loader.InnerProps Path Loaded ()) Void
     render dispatch {loaded} {} _ = [chart (scatterOptions loaded)]
 
-scatterOptions :: Loaded -> Options
+scatterOptions :: Array Metric -> Options
 scatterOptions ds = Options
   { mainTitle : "TODO Scatter test"
   , subTitle  : "TODO Scatter subtitle"
   , xAxis     : xAxis [] -- $ SeriesD2 $ seriesD2 Scatter 5.0 (_.x <$> ds)
-  , yAxis     : [ SeriesD2 $ seriesD2 Scatter 5.0 (_y <$> ds) ]
+  , yAxis     : map2series ( metric2map ds )
   , yAxisFormat : (YAxisFormat { position : ""
                                , visible  : true
                                })
   , addZoom     : false
   }
   where
-    _y (Metric {x,y}) = [x,y]
+    metric2map :: Array Metric -> Map TermList (Array (Array Number))
+    metric2map ds = fromFoldableWith (<>) $ map (\(Metric {x:x,y:y,cat:cat}) -> Tuple cat [[x,y]]) ds
+
+    --{-
+    map2series :: Map TermList (Array (Array Number)) -> Array Serie
+    map2series ms = map (\k -> maybe (toSeries [[]]) toSeries $ lookup k ms) ((Set.toUnfoldable $ keys ms) :: (Array TermList))
+      where
+        toSeries xs = SeriesD2 $ seriesD2 Scatter 5.0 xs
+    --}
 
 getMetrics :: Path -> Aff Loaded
 getMetrics {corpusId, listId, limit, tabType} = do

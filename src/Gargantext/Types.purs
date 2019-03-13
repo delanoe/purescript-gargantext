@@ -29,6 +29,7 @@ data TermList = GraphTerm | StopTerm | CandidateTerm
 -- TODO use generic JSON instance
 
 derive instance eqTermList :: Eq TermList
+derive instance ordTermList :: Ord TermList
 
 instance encodeJsonTermList :: EncodeJson TermList where
   encodeJson GraphTerm     = encodeJson "GraphTerm"
