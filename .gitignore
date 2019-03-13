@@ -8,11 +8,15 @@
 /.purs*
 /.psa*
 /.spago
-
+bundle.js
+# webpack splays purescript modules in dist. we don't want these to be
+# added, but we do want static assets to be added
 /dist/*
 !/dist/styles/
+/dist/styles/*map
 !/dist/examples/
 !/dist/fonts/
 !/dist/images/
 !/dist/js/
+# css source maps
 /dist/styles/*map
