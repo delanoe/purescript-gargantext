@@ -26,7 +26,7 @@ endConfig = endConfig' V10
 
 endConfig' :: ApiVersion -> EndConfig
 endConfig' v = { front : frontRelative
-               , back  : backDev v  }
+               , back  : backLocal v  }
 
 ------------------------------------------------------------------------
 frontRelative :: Config
@@ -161,7 +161,7 @@ pathUrl c (Search {limit,offset,orderBy}) _TODO =
     <> offsetUrl offset <> limitUrl limit <> orderUrl orderBy
 pathUrl c (CorpusMetrics {tabType, listId, limit}) i =
     pathUrl c (NodeAPI Corpus) i <> "/metrics"
-      <> "&list=" <> show listId
+      <> "?list=" <> show listId
       <> "&ngramsType=" <> showTabType' tabType
       <> maybe "" (\x -> "&limit=" <> show x) limit
 
