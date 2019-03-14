@@ -108,9 +108,9 @@ scatterEx :: Options
 scatterEx = Options { mainTitle : "Scatter test"
                        , subTitle  : "Scatter subtitle"
                        , xAxis     : xAxis []
-                       , yAxis     : [ SeriesD2 $ seriesD2 Scatter 10.0 [[2.0,3.0],[3.0,4.0]]
-                                     , SeriesD2 $ seriesD2 Scatter 5.0 [[1.0,3.0],[5.0,4.0]]
-                                     , SeriesD2 $ seriesD2 Scatter 10.0 [[10.0,3.0],[8.0,4.0]]
+                       , yAxis     : [ SeriesD2 $ seriesD2 "name1" Scatter 10.0 [[2.0,3.0],[3.0,4.0]]
+                                     , SeriesD2 $ seriesD2 "name2" Scatter 5.0 [[1.0,3.0],[5.0,4.0]]
+                                     , SeriesD2 $ seriesD2 "name3" Scatter 10.0 [[10.0,3.0],[8.0,4.0]]
                                      ]
                        , yAxisFormat : (YAxisFormat { position : ""
                                                     , visible  : true

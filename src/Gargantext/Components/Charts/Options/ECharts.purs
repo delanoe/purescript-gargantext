@@ -163,10 +163,11 @@ series sh name ss =  { name: name
   , "data": ss
   }
 
-seriesD2 :: Chart -> Number -> Array (Array Number) -> D2
-seriesD2 sh size ds = { "symbolSize" : size
+seriesD2 :: String -> Chart -> Number -> Array (Array Number) -> D2
+seriesD2 n sh size ds = { "symbolSize" : size
                       , "data"       : ds
                       , "type"       : seriesType sh
+                      , name : n
                     }
 
 

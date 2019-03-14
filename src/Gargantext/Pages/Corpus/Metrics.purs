@@ -75,9 +75,9 @@ scatterOptions ds = Options
 
     --{-
     map2series :: Map TermList (Array (Array Number)) -> Array Serie
-    map2series ms = map (\k -> maybe (toSeries [[]]) toSeries $ lookup k ms) ((Set.toUnfoldable $ keys ms) :: (Array TermList))
+    map2series ms = map (\k -> maybe (toSeries k [[]]) (toSeries k) $ lookup k ms) ((Set.toUnfoldable $ keys ms) :: (Array TermList))
       where
-        toSeries xs = SeriesD2 $ seriesD2 Scatter 5.0 xs
+        toSeries k xs = SeriesD2 $ seriesD2 (show k) Scatter 5.0 xs
     --}
 
 getMetrics :: Path -> Aff Loaded

@@ -59,7 +59,8 @@ type D1 =
 
 -- | Scatter Dimension 2 data
 type D2 =
-  { "symbolSize" :: Number
+  { name :: String
+  , "symbolSize" :: Number
   , "data" :: Array (Array Number)
   , "type" :: SeriesType
   }
