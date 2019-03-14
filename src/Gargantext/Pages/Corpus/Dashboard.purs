@@ -4,10 +4,8 @@ import Prelude hiding (div)
 
 import Data.Array (zip)
 import Data.Tuple (Tuple(..))
-import Gargantext.Components.Charts.Options.ECharts
+import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series
-import Gargantext.Components.Charts.Options.Type (Option)
-import Data.Unit (Unit)
 import Data.Int (toNumber)
 import React.DOM (div, h1, text)
 import React.DOM.Props (className)
@@ -29,23 +27,24 @@ render dispatch _ state _ = [
     , chart treeEx
   ]
     where
-      myData = [SeriesD1 $ series Bar "Bar Data"  [ {name: "val1", value: 50.0}
-                                           , {name: "val2", value: 70.0}
-                                           , {name: "val3", value: 80.0}
-                                           ]
-                                           ]
+      myData = [seriesBarD1 {name: "Bar Data"}
+                            [ {name: "val1", value: 50.0}
+                            , {name: "val2", value: 70.0}
+                            , {name: "val3", value: 80.0}
+                            ]
+               ]
 
       focus :: String -> Options
-      focus school = Options { mainTitle : ("Focus " <> school)
-                         , subTitle  : "Total scientific publications"
-                         , xAxis     : xAxis ["2015", "2016", "2017"]
-                         , yAxis     : myData
-                         , yAxisFormat : (YAxisFormat { position : "left"
-                                                      , visible  : true
-                                                      })
-
-                         , addZoom   : false
-                         }
+      focus school = Options
+        { mainTitle : "Focus " <> school
+        , subTitle  : "Total scientific publications"
+        , xAxis     : xAxis' ["2015", "2016", "2017"]
+        , yAxis     : yAxis' { position: "left"
+                             , show: true
+                             }
+        , series    : myData
+        , addZoom   : false
+        }
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -58,15 +57,14 @@ naturePublis_y :: Array {name :: String, value :: Number}
 naturePublis_y = map (\(Tuple n v) -> {name: n, value: toNumber v }) (zip naturePublis_x naturePublis_y')
 
 naturePublis :: Options
-naturePublis = Options { mainTitle : "Nature of publications"
-                  , subTitle  : "Distribution by type"
-                  , xAxis     : xAxis []
-                  , yAxis     : [SeriesD1 $ series Funnel "Funnel Data" naturePublis_y]
-                  , yAxisFormat : (YAxisFormat { position : "left"
-                                               , visible  : false
-                                             })
-                  , addZoom   : false
-                }
+naturePublis = Options
+  { mainTitle : "Nature of publications"
+  , subTitle  : "Distribution by type"
+  , xAxis     : xAxis' []
+  , yAxis     : yAxis' { position: "left", show: false }
+  , series    : [seriesFunnelD1 { name: "Funnel Data" } naturePublis_y]
+  , addZoom   : false
+  }
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -77,15 +75,14 @@ globalPublis_y = [1,4,2,1,1,2,1,1,8,38,234,76,40,82,75,202,1475,1092,1827,2630,4
 
 
 globalPublis :: Options
-globalPublis = (Options { mainTitle : "Global Scientific Publications"
-                     , subTitle  : "Distribution of scientific publications by IMT's Schools over time"
-                     , xAxis     : xAxis (map show globalPublis_x)
-                     , yAxis     : [SeriesD1 $ series Bar "Number of publication of IMT / year" $ map (\n -> {name: "", value: toNumber n }) globalPublis_y]
-                     , yAxisFormat : (YAxisFormat { position : "left"
-                                                  , visible  : true
-                                                })
-                     , addZoom  : true
-                   })
+globalPublis = Options
+  { mainTitle : "Global Scientific Publications"
+  , subTitle  : "Distribution of scientific publications by IMT's Schools over time"
+  , xAxis     : xAxis' (map show globalPublis_x)
+  , yAxis     : yAxis' { position: "left", show: true }
+  , series    : [seriesBarD1 {name: "Number of publication of IMT / year"} $ map (\n -> {name: "", value: toNumber n }) globalPublis_y]
+  , addZoom   : true
+  }
 
 
 
@@ -94,48 +91,50 @@ distriBySchool_y = [Tuple "Télécom Bretagne" 1150,Tuple "Télécom SudParis" 9
                    ,Tuple "Télécom Ecole de Management" 52,Tuple "Mines Albi-Carmaux" 6]
 
 distriBySchool :: Options
-distriBySchool = Options { mainTitle : "School production in 2017"
-                       , subTitle  : "Distribution by school"
-                       , xAxis     : xAxis []
-                       , yAxis     : [ SeriesD1 $ series Pie "Pie data" (map (\(Tuple n v) -> {name: n, value: toNumber v}) distriBySchool_y)]
-                       , yAxisFormat : (YAxisFormat { position : ""
-                                                    , visible  : false
-                                                  })
-                       , addZoom     : false
-                     }
+distriBySchool = Options
+  { mainTitle : "School production in 2017"
+  , subTitle  : "Distribution by school"
+  , xAxis     : xAxis' []
+  , yAxis     : yAxis' { position : "", show: false }
+  , series    : [ seriesPieD1 {name: "Pie data"} (map (\(Tuple n v) -> {name: n, value: toNumber v}) distriBySchool_y)]
+  , addZoom   : false
+  }
 
 scatterEx :: Options
-scatterEx = Options { mainTitle : "Scatter test"
-                       , subTitle  : "Scatter subtitle"
-                       , xAxis     : xAxis []
-                       , yAxis     : [ SeriesD2 $ seriesD2 "name1" Scatter 10.0 [[2.0,3.0],[3.0,4.0]]
-                                     , SeriesD2 $ seriesD2 "name2" Scatter 5.0 [[1.0,3.0],[5.0,4.0]]
-                                     , SeriesD2 $ seriesD2 "name3" Scatter 10.0 [[10.0,3.0],[8.0,4.0]]
-                                     ]
-                       , yAxisFormat : (YAxisFormat { position : ""
-                                                    , visible  : true
-                                                  })
-                       , addZoom     : false
-                     }
-
+scatterEx = Options
+  { mainTitle : "Scatter test"
+  , subTitle  : "Scatter subtitle"
+  , xAxis     : xAxis' []
+  , yAxis     : yAxis' { position: "", show: true }
+  , series    : [ seriesScatterD2 {name: "name1", symbolSize: 10.0} [[2.0,3.0],[3.0,4.0]]
+                , seriesScatterD2 {name: "name2", symbolSize: 5.0 } [[1.0,3.0],[5.0,4.0]]
+                , seriesScatterD2 {name: "name3", symbolSize: 10.0} [[10.0,3.0],[8.0,4.0]]
+                ]
+  , addZoom   : false
+  }
 
 sankeyEx :: Options
-sankeyEx = Options { mainTitle : ""
-                       , subTitle  : ""
-                       , xAxis     : xAxis []
-                       , yAxis     : [ mkSankey [{name : "a"}, {name : "b"}, {name:"c"}, {name:"d"}]
-                       [{source : "a", target : "b", value :2.0}
-                       , {source : "a", target : "c", value :1.0}
-                       , {source : "b", target : "c", value :1.0}
-                       , {source : "b", target : "d", value :3.0}
-                       ]
-                                     ]
-                       , yAxisFormat : (YAxisFormat { position : ""
-                                                    , visible  : false
-                                                  })
-                       , addZoom     : false
-                     }
-
+sankeyEx = Options
+  { mainTitle : ""
+  , subTitle  : ""
+  , xAxis     : xAxis' []
+  , yAxis     : yAxis' { position: "", show: false }
+  , series    :
+     [ seriesSankey
+         { "data":
+             [ {name : "a"}, {name : "b"}
+             , {name:"c"}, {name:"d"} ]
+         , links:
+             [ {source : "a", target : "b", value :2.0}
+             , {source : "a", target : "c", value :1.0}
+             , {source : "b", target : "c", value :1.0}
+             , {source : "b", target : "d", value :3.0}
+             ]
+         , layout: "none"
+         }
+     ]
+  , addZoom   : false
+  }
 
 treeData :: Array TreeData
 treeData = [ treeNode "nodeA" 10.0 [ treeLeaf "nodeAa" 4.0
@@ -183,28 +182,24 @@ treeData' = [ treeNode "nodeA" 10.0 [ treeLeaf "nodeAa" 4.0
 
 
 treeMapEx :: Options
-treeMapEx = Options { mainTitle : ""
-                    , subTitle  : ""
-                    , xAxis     : xAxis []
-                    , yAxis     : [mkTree TreeMap treeData]
-                    , yAxisFormat : (YAxisFormat { position : ""
-                                                    , visible  : false
-                                                  })
-                    , addZoom     : false
-                     }
-
+treeMapEx = Options
+  { mainTitle : ""
+  , subTitle  : ""
+  , xAxis     : xAxis' []
+  , yAxis     : yAxis' { position: "", show: false }
+  , series    : [mkTree TreeMap treeData]
+  , addZoom   : false
+  }
 
 treeEx :: Options
-treeEx = Options { mainTitle : "Tree"
-                    , subTitle  : "Radial"
-                    , xAxis     : xAxis []
-                    , yAxis     : [mkTree TreeRadial treeData']
-                    , yAxisFormat : (YAxisFormat { position : ""
-                                                    , visible  : false
-                                                  })
-                    , addZoom     : false
-                     }
-
+treeEx = Options
+  { mainTitle : "Tree"
+  , subTitle  : "Radial"
+  , xAxis     : xAxis' []
+  , yAxis     : yAxis' { position: "", show: false }
+  , series    : [mkTree TreeRadial treeData']
+  , addZoom   : false
+  }
 
 layoutDashboard :: Spec {} {} Void
 layoutDashboard = simpleSpec defaultPerformAction render

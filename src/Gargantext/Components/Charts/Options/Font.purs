@@ -15,15 +15,15 @@ module Gargantext.Components.Charts.Options.Font
 import Prelude (Unit, ($), (<<<), (<>))
 
 import Data.Generic.Rep
-import Data.Generic.Rep.Show
+import Data.Generic.Rep.Show (genericShow)
 import CSS (FontStyle(..), FontWeight(..), Prefixed(..), Value(..))
 import Data.String (toLower)
-import Gargantext.Components.Charts.Options.Color (ChartColor)
+import Gargantext.Components.Charts.Options.Color (Color)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
 
 
 type TextStyle =
-  { color      :: ChartColor
+  { color      :: Color
   , fontStyle  :: ChartFontStyle
   , fontWeight :: ChartFontWeight
   , fontFamily :: String
@@ -33,10 +33,10 @@ type TextStyle =
   , lineHeight    :: Position Unit
   , width         :: Position Unit
   , height        :: Position Unit
-  , textBorderColor :: ChartColor
+  , textBorderColor :: Color
   , textBorderWidth :: Number
-  , textShadowColor :: ChartColor
-  , textShadowBlur  :: ChartColor
+  , textShadowColor :: Color
+  , textShadowBlur  :: Color
   , textShadowOffsetX :: Number
   , textShadowOffsetY :: Number
   }
