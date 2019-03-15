@@ -140,9 +140,9 @@ instance decodeResponse :: DecodeJson Response where
 filterSpec :: forall state props action. Spec state props action
 filterSpec = simpleSpec defaultPerformAction render
   where
-    render d p s c = [div [ className "col-md-2", style {textAlign : "center", marginLeft : "0px", paddingLeft : "0px"}] [ text "    Filter "
+    render d p s c = [] {-[div [ className "col-md-2", style {textAlign : "center", marginLeft : "0px", paddingLeft : "0px"}] [ text "    Filter "
                      , input [className "form-control", placeholder "Filter here"]
-                     ]]
+                     ]] -}
 
 docViewSpec :: Spec {} Props Void
 docViewSpec = hideState (const initialState) layoutDocview
@@ -166,13 +166,14 @@ layoutDocview = simpleSpec performAction render
 
     render :: Render State Props Action
     render dispatch {nodeId, tabType, totalRecords, chart} deletionState _ =
-      [ br'
+      [ {- br'
       , div [ style {textAlign : "center"}] [ text "    Filter "
                      , input [className "form-control", style {width : "120px", display : "inline-block"}, placeholder "Filter here"]
                      ]
       , p [] [text ""]
       , br'
-      , div [className "container1"]
+      -}
+      div [className "container1"]
         [ div [className "row"]
           [ chart
           , div [className "col-md-12"]
