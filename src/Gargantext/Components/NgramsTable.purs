@@ -449,7 +449,7 @@ tableContainer { pageParams
                   [ text "Import a Termlist" ]
                 ]
               ,-}
-                div [className "col-md-4", style {marginTop : "37px"}]
+                div [className "col-md-3", style {marginTop : "6px"}]
                 [ input [ className "form-control "
                         , name "search", placeholder "Search"
                         , _type "value"
@@ -457,28 +457,32 @@ tableContainer { pageParams
                         , onInput \e -> setSearchQuery (unsafeEventValue e)
                         ]
                 ]
-              , div [_id "filter_terms", className "col-md-6", style{ marginTop : "2.1em",paddingLeft :"1em"}]
-                [ div [className "col-md-10 list-group", style {marginTop : "6px"}]
-                  [ li [className " list-group-item"]
-                    [ select  [ _id "picklistmenu"
-                              , className "form-control custom-select"
-                              , value (maybe "" show pageParams.termListFilter)
-                              , onChange (\e -> setTermListFilter $ readTermList $ unsafeEventValue e)
-                              ] $ map optps1 termLists
-                    ]
-                  , li [className "list-group-item"]
-                    [ select  [ _id "picktermtype"
-                              , className "form-control custom-select"
-                              , value (maybe "" show pageParams.termSizeFilter)
-                              , onChange (\e -> setTermSizeFilter $ readTermSize $ unsafeEventValue e)
-                              ] $ map optps1 termSizes
-                    ]
-                  , li [className " list-group-item"] [ props.pageSizeControl ]
-                  ]
-                ]
-              , div [className "col-md-6", style {marginTop : "24px", marginBottom : "14px"}]
-                [ props.pageSizeDescription
-                , props.paginationLinks
+              , div [className "col-md-2", style {marginTop : "6px"}]
+                      [ li [className " list-group-item"]
+                        [ select  [ _id "picklistmenu"
+                                  , className "form-control custom-select"
+                                  , value (maybe "" show pageParams.termListFilter)
+                                  , onChange (\e -> setTermListFilter $ readTermList $ unsafeEventValue e)
+                                  ] $ map optps1 termLists
+                        ]
+                      ]
+              , div [className "col-md-2", style {marginTop : "6px"}]
+                      [ li [className "list-group-item"]
+                        [ select  [ _id "picktermtype"
+                                  , className "form-control custom-select"
+                                  , value (maybe "" show pageParams.termSizeFilter)
+                                  , onChange (\e -> setTermSizeFilter $ readTermSize $ unsafeEventValue e)
+                                  ] $ map optps1 termSizes
+                        ]
+                      ]
+
+              , div [className "col-md-4", style {marginTop : "6px", marginBottom : "1px"}]
+                [ li [className " list-group-item"] [ props.pageSizeDescription
+                                                    , props.pageSizeControl
+                                                    , text " items / "
+                                                    , props.paginationLinks
+                                                    ]
+                --, li [className " list-group-item"] [ props.pageSizeControl ]
                 ]
               ]
             ]

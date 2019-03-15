@@ -218,7 +218,7 @@ tableElt props = createElement tableClass props []
 sizeDD :: PageSizes -> (Action -> Effect Unit) -> ReactElement
 sizeDD ps d
   = span []
-    [ text "Show : "
+    [ text " "
     , select [onChange (\e -> d (ChangePageSize $ string2PageSize $ (unsafeCoerce e).target.value))] $ map (optps ps) aryPS
     ]
 
@@ -239,7 +239,7 @@ effectLink eff msg = a [onClick $ const eff] [text msg]
 pagination :: ChangePageAction -> Int -> Int -> ReactElement
 pagination changePage tp cp
   = span [] $
-    [ text "Pages: ", prev, first, ldots]
+    [ text " ", prev, first, ldots]
     <>
     lnums
     <>
@@ -250,9 +250,9 @@ pagination changePage tp cp
     [ rdots, last, next ]
     where
       prev = if cp == 1 then
-               text " Previous "
+               text " Prev. "
              else
-               changePageLink (cp - 1) "Previous"
+               changePageLink (cp - 1) "Prev."
       next = if cp == tp then
                text " Next "
              else
