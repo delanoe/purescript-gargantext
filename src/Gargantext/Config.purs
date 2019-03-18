@@ -66,6 +66,11 @@ backDev v = { baseUrl: "https://dev.gargantext.org"
             , prePath: "/api/" <> show v <> "/"
             }
 
+backDemo :: ApiVersion -> Config
+backDemo v = { baseUrl: "https://demo.gargantext.org"
+             , prePath: "/api/" <> show v <> "/"
+             }
+
 backProd :: ApiVersion -> Config
 backProd v = { baseUrl: "https://gargantext.org"
              , prePath: "/api/" <> show v <> "/"
