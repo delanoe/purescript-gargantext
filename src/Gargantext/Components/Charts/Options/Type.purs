@@ -2,17 +2,20 @@ module Gargantext.Components.Charts.Options.Type where
 
 import Prelude
 
-import CSS (Color)
 import Data.Maybe (Maybe)
-import Gargantext.Components.Charts.Options.Color (ChartColor)
+import Gargantext.Components.Charts.Options.Color (Color)
 import Gargantext.Components.Charts.Options.Data (DataN, DataV)
 import Gargantext.Components.Charts.Options.Font (TextStyle)
 import Gargantext.Components.Charts.Options.Legend (LegendType, Orient, SelectedMode)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Gargantext.Components.Charts.Options.Series (Series)
+import Gargantext.Types (class Optional)
 import React as R
+import Unsafe.Coerce (unsafeCoerce)
+
 newtype ChartAlign = ChartAlign String
 
+-- TODO: Not sure that Maybe is working here => use Optional
 type Echarts =
   { className   :: Maybe String
   , style       :: Maybe String  -- objealect-black-altdarkmincnaquadahherry-blossomect,
@@ -60,12 +63,12 @@ type Title =
   , top :: Position TopRelativePosition -- default 'auto'
   , right :: Position Unit -- default 'auto'
   , bottom :: Position Unit -- default 'auto'
-  , backgroundColor :: ChartColor -- default 'transparent''
-  , borderColor :: ChartColor -- default '#ccc'
+  , backgroundColor :: Color -- default 'transparent''
+  , borderColor :: Color -- default '#ccc'
   , borderWidth :: Number -- default '1'
   , borderRadius :: Number -- default 0; data NumberOrArray = Number | Array Number
   , shadowBlur :: Number
-  , shadowColor :: ChartColor
+  , shadowColor :: Color
   , shadowOffsetX :: Number
   , shadowOffsetY :: Number
   }
@@ -111,7 +114,7 @@ type Legend =
   , itemHeight :: Number
   , formatter :: Maybe String
   , selectedMode :: SelectedMode
-  , inactiveColor :: ChartColor
+  , inactiveColor :: Color
   , selected :: Maybe String -- object
   , textStyle :: TextStyle
   , "data" :: Array DataN
@@ -122,26 +125,39 @@ type Tooltip =
   , formatter :: Maybe String -- TODO function
   }
 
-type XAxis =
-  { "data"   :: Array DataV
-  , "type"   :: String
-  , axisTick :: AxisTick
-  , show :: Boolean
-  }
-
 type AxisTick =
-  {
-    alignWithLabel :: Boolean
+  { alignWithLabel :: Boolean
   }
 
-type YAxis =
-  { "type"    :: String
+data XAxis
+
+type XAxisOptional =
+  ( "data"    :: Array DataV
+  , "type"    :: String
+  , axisTick  :: AxisTick
   , name      :: String
   , min       :: Int
   , position  :: String
   , axisLabel :: AxisLabel
-  , show :: Boolean
-  }
+  , show      :: Boolean
+  )
+
+xAxis :: forall o. Optional o XAxisOptional => Record o -> XAxis
+xAxis = unsafeCoerce
+
+data YAxis
+
+type YAxisOptional =
+  ( "type"    :: String
+  , name      :: String
+  , min       :: Int
+  , position  :: String
+  , axisLabel :: AxisLabel
+  , show      :: Boolean
+  )
+
+yAxis :: forall o. Optional o YAxisOptional => Record o -> YAxis
+yAxis = unsafeCoerce
 
 type AxisLabel =
   { formatter :: String -- string or function

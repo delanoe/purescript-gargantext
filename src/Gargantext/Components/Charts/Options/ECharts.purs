@@ -2,17 +2,17 @@ module Gargantext.Components.Charts.Options.ECharts where
 
 import Prelude
 
-import CSS (black, italic, violet)
+import CSS (italic)
 import CSS.Common (normal)
 import Data.Array (length)
 import Data.Maybe (Maybe(..))
-import Gargantext.Components.Charts.Options.Color (chartColor, transparent)
+import Gargantext.Components.Charts.Options.Color (transparent, violet, black)
 import Gargantext.Components.Charts.Options.Data (DataN, DataS, DataV)
 import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
 import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-import Gargantext.Components.Charts.Options.Series (Serie(..), Series(..), toSeries, SeriesName, Chart(..), seriesType, D1, D2)
-import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis)
+import Gargantext.Components.Charts.Options.Series (Series, SeriesName, Chart(..), seriesType, seriesD1)
+import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis, xAxis, yAxis)
 import React (unsafeCreateElementDynamic)
 import React as R
 import Unsafe.Coerce (unsafeCoerce)
@@ -25,23 +25,24 @@ chart = echarts <<< chartWith <<< opts
 
 
 chartWith :: Option -> Echarts
-chartWith opts = { className : Nothing
-                 , style     : Nothing
-                 , theme     : Nothing
-                 , group     : Nothing
-                 , option    : opts
-                 , initOpts  : Nothing
-                 , notMerge  : Nothing
-                 , lazyUpdate: Nothing
-                 , loading   : Nothing
-                 , optsLoading: Nothing
-                 , onReady    : Nothing
-                 , resizable  : Nothing
-                 , onEvents   : Nothing
-                 }
+chartWith option =
+  { option
+  , className : Nothing
+  , style     : Nothing
+  , theme     : Nothing
+  , group     : Nothing
+  , initOpts  : Nothing
+  , notMerge  : Nothing
+  , lazyUpdate: Nothing
+  , loading   : Nothing
+  , optsLoading: Nothing
+  , onReady    : Nothing
+  , resizable  : Nothing
+  , onEvents   : Nothing
+  }
 
 echarts :: Echarts -> R.ReactElement
-echarts chart = unsafeCreateElementDynamic (unsafeCoerce eChartsClass) chart []
+echarts c = unsafeCreateElementDynamic (unsafeCoerce eChartsClass) c []
 
 type MainTitle = String
 type SubTitle  = String
@@ -67,12 +68,12 @@ title mainTitle subTitle =
    ,top: relativePosition (Relative Top)
    ,right: numberPosition 60.0
    ,bottom: percentPosition 40.0
-   ,backgroundColor: chartColor transparent
-   ,borderColor: chartColor transparent
+   ,backgroundColor: transparent
+   ,borderColor: transparent
    ,borderWidth: 0.0
    ,borderRadius: 0.0
    ,shadowBlur: 0.0
-   ,shadowColor: chartColor transparent
+   ,shadowColor: transparent
    ,shadowOffsetX: 0.0
    ,shadowOffsetY: 0.0
   }
@@ -99,7 +100,7 @@ legend =
    , itemHeight: 14.0
    , formatter: Nothing
    , selectedMode: selectedMode $ Bool true
-   , inactiveColor: chartColor violet
+   , inactiveColor: violet
    , selected: Nothing
    , textStyle: textStyle
    , "data": [data1]
@@ -115,22 +116,10 @@ data3 :: DataN
 data3 = {name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle'}
 
 
-xAxis :: Array String -> XAxis
-xAxis [] = unsafeCoerce {}
-xAxis xs = { "data": xData xs
-           , "type": "category"
-           , axisTick: {alignWithLabel: true}
-           , show: if (length xs == 0) then false else true
-           }
-  where
-    xData :: Array String -> Array DataV
-    xData xs = map (\x -> {value : x, textStyle : textStyle'}) xs
 
-
-yDataVoid :: YAxis
-yDataVoid =
-  {
-    "type": ""
+yAxisVoid :: YAxis
+yAxisVoid = yAxis
+  { "type": ""
   , name: ""
   , min: 0
   , position: ""
@@ -138,10 +127,9 @@ yDataVoid =
   , show: false
   }
 
-yData1 :: YAxis
-yData1 =
-  {
-    "type": "value"
+yAxis1 :: YAxis
+yAxis1 = yAxis
+  { "type": "value"
   , name: "data"
   , min: 0
   , position: "left"
@@ -151,67 +139,64 @@ yData1 =
 
 tooltip' :: Tooltip
 tooltip' =
-  {
-    trigger: "axis"
+  { trigger:   "axis"
   , formatter: Nothing
   }
 
+xAxis' :: Array String -> XAxis
+xAxis' [] = unsafeCoerce {}
+xAxis' xs = xAxis
+            { "data": xData xs
+            , "type": "category"
+            , axisTick: {alignWithLabel: true}
+            , show: length xs /= 0
+            }
+  where
+    xData :: Array String -> Array DataV
+    xData = map (\x -> {value : x, textStyle : textStyle'})
 
-series :: Chart -> SeriesName -> Array DataS -> D1
-series sh name ss =  { name: name
-  , "type": seriesType sh
-  , "data": ss
+-- TODO try to use Optional
+yAxis' :: { position :: String
+          , show     :: Boolean
+          } -> YAxis
+yAxis' {position, show} = yAxis
+  { "type": "value"
+  , name: "data"
+  , min: 0
+  , axisLabel: {formatter: "{value}"}
+  , position
+  , show
   }
 
-seriesD2 :: String -> Chart -> Number -> Array (Array Number) -> D2
-seriesD2 n sh size ds = { "symbolSize" : size
-                      , "data"       : ds
-                      , "type"       : seriesType sh
-                      , name : n
-                    }
-
-
-
-data YAxisFormat = YAxisFormat { position :: String
-                               , visible  :: Boolean
-                             }
-
-data Options = Options { mainTitle   :: MainTitle
-                       , subTitle    :: SubTitle
-                       , xAxis       :: XAxis
-                       , yAxis       :: Array Serie
-                       , yAxisFormat :: YAxisFormat
-                       , addZoom     :: Boolean
-                     }
+data Options = Options
+  { mainTitle :: MainTitle
+  , subTitle  :: SubTitle
+  , xAxis     :: XAxis
+  , yAxis     :: YAxis
+  , series    :: Array Series
+  , addZoom   :: Boolean
+  }
 
 opts :: Options -> Option
-opts (Options { mainTitle : mainTitle
-              , subTitle : subTitle
-              , xAxis : xs
-              , yAxis : ss
-              , yAxisFormat : (YAxisFormat { position : position
-                                           , visible  : visible
-                                         })
-              , addZoom : addZoom}) =
+opts (Options { mainTitle
+              , subTitle
+              , xAxis
+              , yAxis
+              , series
+              , addZoom
+              }) =
   { title: title mainTitle subTitle
-  , legend : legend
+  , legend
   , tooltip: { trigger: "axis"
              , formatter: Nothing
              }
-  , grid   : {containLabel: true}
-  , xAxis  : xs
-  , series : map toSeries $ ss
-  , yAxis  : { "type": "value"
-              , name: "data"
-              , min: 0
-              , position: position
-              , axisLabel: {formatter: "{value}"}
-              , show: visible
-              }
+  , grid: {containLabel: true}
+  , series
+  , xAxis
+  , yAxis
   , dataZoom: if addZoom then [zoom Slider, zoom Inside] else []
-  , children : unsafeCoerce []
+  , children : unsafeCoerce [] -- TODO
   }
-
 
 data Zoom = Slider | Inside
 
@@ -229,10 +214,9 @@ zoom z = {
   }
 
 
-seriesPie :: D1
-seriesPie =
-  {
-    name: "Pie name"
+seriesPie :: Series
+seriesPie = seriesD1
+  { name: "Pie name"
   , "type": seriesType Pie
   , "data": [{name: "t1", value: 50.0},
              {name: "t2", value: 45.0},
@@ -246,7 +230,7 @@ seriesPie =
 textStyle2 :: TextStyle
 textStyle2 =
   {
-    color: chartColor black
+    color: black
     ,fontStyle: chartFontStyle italic
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
@@ -256,10 +240,10 @@ textStyle2 =
     ,lineHeight: percentPosition 0.0
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
-    ,textBorderColor: chartColor black
+    ,textBorderColor: black
     ,textBorderWidth: 0.0
-    ,textShadowColor: chartColor black
-    ,textShadowBlur: chartColor black
+    ,textShadowColor: black
+    ,textShadowBlur: black
     ,textShadowOffsetX: 0.0
     ,textShadowOffsetY: 0.0
   }
@@ -267,7 +251,7 @@ textStyle2 =
 textStyle' :: TextStyle
 textStyle' =
   {
-    color: chartColor black
+    color: black
     ,fontStyle: chartFontStyle normal
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
@@ -277,10 +261,10 @@ textStyle' =
     ,lineHeight: percentPosition 0.0
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
-    ,textBorderColor: chartColor black
+    ,textBorderColor: black
     ,textBorderWidth: 1.0
-    ,textShadowColor: chartColor black
-    ,textShadowBlur: chartColor black
+    ,textShadowColor: black
+    ,textShadowBlur: black
     ,textShadowOffsetX: 0.0
     ,textShadowOffsetY: 0.0
   }
@@ -288,7 +272,7 @@ textStyle' =
 textStyle :: TextStyle
 textStyle =
   {
-    color: chartColor black
+    color: black
     ,fontStyle: chartFontStyle normal
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
@@ -298,10 +282,10 @@ textStyle =
     ,lineHeight: percentPosition 0.0
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
-    ,textBorderColor: chartColor black
+    ,textBorderColor: black
     ,textBorderWidth: 1.0
-    ,textShadowColor: chartColor black
-    ,textShadowBlur: chartColor black
+    ,textShadowColor: black
+    ,textShadowBlur: black
     ,textShadowOffsetX: 0.0
     ,textShadowOffsetY: 0.0
   }

@@ -3,9 +3,9 @@ module Gargantext.Components.GraphExplorer.Sigmajs where
 import Prelude
 
 import Effect (Effect)
-import Prim.Row (class Union)
 import React (Children, ReactClass, ReactElement, createElement, unsafeCreateElement)
 import Unsafe.Coerce (unsafeCoerce)
+import Gargantext.Types (class Optional)
 
 foreign import edgeShapesClass  :: forall props. ReactClass props
 foreign import filterClass      :: forall props. ReactClass props
@@ -63,12 +63,6 @@ nodeShapes props = unsafeCreateElement nodeShapesClass (unsafeCoerce props) []
 foreign import data SigmaNode :: Type
 foreign import data SigmaEdge :: Type
 foreign import data SigmaSettings :: Type
-
--- | Proof that row `r` is a subset of row `s`
-class Optional (r :: # Type) (s :: # Type)
-instance srInstance :: Union r t s => Optional r s
-
-
 
 type NeoCypherOptProps =
   ( producers :: String

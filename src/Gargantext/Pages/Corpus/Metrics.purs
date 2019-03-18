@@ -1,9 +1,9 @@
 module Gargantext.Pages.Corpus.Metrics where
 
-import Data.Set as Set
 import Data.Array (foldl)
 import Data.Tuple (Tuple(..))
-import Data.Map (fromFoldableWith, Map(), keys, lookup)
+import Data.Map as Map
+import Data.Map (Map)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
@@ -12,10 +12,12 @@ import Gargantext.Config.REST (get)
 import React (ReactClass, ReactElement, createElement)
 import Thermite (Spec, Render, defaultPerformAction, simpleSpec, createClass)
 import Gargantext.Prelude
-import Gargantext.Types (TermList)
+import Gargantext.Types (TermList(..))
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Charts.Options.ECharts
+import Gargantext.Components.Charts.Options.Type
 import Gargantext.Components.Charts.Options.Series
+import Gargantext.Components.Charts.Options.Color
 
 type Path =
   { corpusId :: Int
@@ -59,25 +61,33 @@ loadedMetricsSpec = simpleSpec defaultPerformAction render
     render dispatch {loaded} {} _ = [chart (scatterOptions loaded)]
 
 scatterOptions :: Array Metric -> Options
-scatterOptions ds = Options
+scatterOptions metrics = Options
   { mainTitle : "TODO Scatter test"
   , subTitle  : "TODO Scatter subtitle"
-  , xAxis     : xAxis [] -- $ SeriesD2 $ seriesD2 Scatter 5.0 (_.x <$> ds)
-  , yAxis     : map2series ( metric2map ds )
-  , yAxisFormat : (YAxisFormat { position : ""
-                               , visible  : true
-                               })
-  , addZoom     : false
+  , xAxis     : xAxis { min: 0 }
+  , yAxis     : yAxis' { position : "", show: true }
+  , series    : map2series $ metric2map metrics
+  , addZoom   : false
   }
   where
-    metric2map :: Array Metric -> Map TermList (Array (Array Number))
-    metric2map ds = fromFoldableWith (<>) $ map (\(Metric {x:x,y:y,cat:cat}) -> Tuple cat [[x,y]]) ds
+    metric2map :: Array Metric -> Map TermList (Array Metric)
+    metric2map ds = Map.fromFoldableWith (<>) $ (\(Metric m) -> Tuple m.cat [Metric m]) <$> ds
 
     --{-
-    map2series :: Map TermList (Array (Array Number)) -> Array Serie
-    map2series ms = map (\k -> maybe (toSeries k [[]]) (toSeries k) $ lookup k ms) ((Set.toUnfoldable $ keys ms) :: (Array TermList))
+    map2series :: Map TermList (Array Metric) -> Array Series
+    map2series ms = toSeries =<< Map.toUnfoldable ms
       where
-        toSeries k xs = SeriesD2 $ seriesD2 (show k) Scatter 5.0 xs
+        -- TODO colors are not respected yet
+        toSeries (Tuple k ms) = toSeries' color <$> ms
+          where
+            color =
+              case k of
+                StopTerm -> red
+                GraphTerm -> blue
+                CandidateTerm -> magenta
+        toSeries' color (Metric {label,x,y}) =
+          seriesScatterD2 {name: label, symbolSize: 5.0, itemStyle: itemStyle {color}}
+                          [[x,y]]
     --}
 
 getMetrics :: Path -> Aff Loaded

@@ -1,11 +1,21 @@
 module Gargantext.Components.Charts.Options.Series where
 
-import Effect.Exception (error, Error(..))
 import Unsafe.Coerce (unsafeCoerce)
 import Prelude
 
+import Gargantext.Types (class Optional)
+import Gargantext.Components.Charts.Options.Color (Color)
 import Gargantext.Components.Charts.Options.Data (DataS)
 
+
+data ItemStyle
+
+type ItemStyleOptional =
+  ( color :: Color
+  )
+
+itemStyle :: forall o. Optional o ItemStyleOptional => Record o -> ItemStyle
+itemStyle = unsafeCoerce
 
 newtype SeriesType = SeriesType String
 
@@ -48,36 +58,54 @@ seriesType :: Chart -> SeriesType
 seriesType = SeriesType <<< show
 
 
-type Series = {}
-data Serie = SeriesD1 D1 | SeriesD2 D2 | SerieSankey Sankey | SerieTree Tree
+data Series
 
-type D1 =
-  { name   :: String
-  , "type" :: SeriesType
+unsafeSeries :: forall o. { | o } -> Series
+unsafeSeries = unsafeCoerce
+
+type RequiredD1 o =
+  { "type" :: SeriesType
   , "data" :: Array DataS
+  | o
+  }
+
+type OptionalD1 =
+  ( name   :: String
+  -- many more...
+  )
+
+seriesD1 :: forall o. Optional o OptionalD1 => RequiredD1 o -> Series
+seriesD1 = unsafeSeries
+
+seriesFunnelD1 :: forall o. Optional o OptionalD1 => Record o -> Array DataS -> Series
+seriesFunnelD1 o ds = seriesD1 ((unsafeCoerce o :: RequiredD1 o) { "data" = ds, "type" = seriesType Funnel })
+
+seriesBarD1 :: forall o. Optional o OptionalD1 => Record o -> Array DataS -> Series
+seriesBarD1 o ds = seriesD1 ((unsafeCoerce o :: RequiredD1 o) { "data" = ds, "type" = seriesType Bar })
+
+seriesPieD1 :: forall o. Optional o OptionalD1 => Record o -> Array DataS -> Series
+seriesPieD1 o ds = seriesD1 ((unsafeCoerce o :: RequiredD1 o) { "data" = ds, "type" = seriesType Pie })
+
+type RequiredD2 o =
+  { "data" :: Array (Array Number)
+  , "type" :: SeriesType
+  | o
   }
 
 -- | Scatter Dimension 2 data
-type D2 =
-  { name :: String
-  , "symbolSize" :: Number
-  , "data" :: Array (Array Number)
-  , "type" :: SeriesType
-  }
+type OptionalD2 =
+  ( name       :: String
+  , symbolSize :: Number
+  , itemStyle  :: ItemStyle
+  -- many more...
+  )
 
-toSeries :: Serie -> Series
-toSeries (SeriesD1 a)    = unsafeCoerce a
-toSeries (SeriesD2 a)    = unsafeCoerce a
-toSeries (SerieSankey a) = unsafeCoerce a
-toSeries (SerieTree   a) = unsafeCoerce a
+seriesD2 :: forall o. Optional o OptionalD2 => RequiredD2 o -> Series
+seriesD2 = unsafeSeries
 
--- | Sankey Chart
--- https://ecomfe.github.io/echarts-examples/public/editor.html?c=sankey-simple
-type Sankey = { "type" :: SeriesType
-              , layout :: String
-              , "data" :: Array Node
-              , "links" :: Array Link
-              }
+seriesScatterD2 :: forall o. Optional o OptionalD2 => Record o -> Array (Array Number) -> Series
+seriesScatterD2 o ds =
+  seriesD2 ((unsafeCoerce o :: RequiredD2 o) { "data" = ds, "type" = seriesType Scatter })
 
 type Node = { name :: String}
 type Link = { source :: String
@@ -85,12 +113,20 @@ type Link = { source :: String
             , value  :: Number
             }
 
-mkSankey :: Array Node -> Array Link -> Serie
-mkSankey ns ls = SerieSankey { "type"  : seriesType Sankey
-                             , layout  : "none"
-                             , "data"  : ns
-                             , "links" : ls
-                             }
+-- | Sankey Chart
+-- https://ecomfe.github.io/echarts-examples/public/editor.html?c=sankey-simple
+type RequiredSankey o =
+  { "data" :: Array Node
+  , links  :: Array Link
+  | o
+  }
+
+type OptionalSankey =
+  ( layout :: String
+  )
+
+seriesSankey :: forall o. Optional o OptionalSankey => RequiredSankey o -> Series
+seriesSankey o = unsafeSeries ((unsafeCoerce o) { "type" = seriesType Sankey })
 
 -- | * Trees Chart
 -- All these Trees are hierarchical Trees structure (or diagram)
@@ -115,16 +151,24 @@ instance showTrees :: Show Trees where
 -- TreeMap example implementation:
 -- https://ecomfe.github.io/echarts-examples/public/editor.html?c=treemap-simple
 
-type Tree = { "type" :: SeriesType
-            , "data" :: Array TreeData
-            , layout :: String
-            }
+type RequiredTree o =
+  { "type" :: SeriesType
+  , "data" :: Array TreeData
+  | o
+  }
 
-mkTree :: Trees -> Array TreeData -> Serie
-mkTree t ts = SerieTree { "type" : SeriesType (show t)
-                        , "data" : map toJsTree ts
-                        , layout : layout
-                        }
+type OptionalTree =
+  ( layout :: String
+  )
+
+seriesTree :: forall o. Optional o OptionalTree => RequiredTree o -> Series
+seriesTree = unsafeSeries
+
+mkTree :: Trees -> Array TreeData -> Series
+mkTree t ts = seriesTree { "type" : SeriesType (show t)
+                         , "data" : map toJsTree ts
+                         , layout : layout
+                         }
               where
                 layout = case t of
                            TreeRadial -> "radial"

@@ -5,6 +5,7 @@ import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJso
 import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
 import Gargantext.Prelude
+import Prim.Row (class Union)
 
 data TermSize = MonoTerm | MultiTerm
 
@@ -70,3 +71,6 @@ termLists = [ { desc: "All terms",   mval: Nothing      }
             , { desc: "Candidate terms", mval: Just CandidateTerm }
             ]
 
+-- | Proof that row `r` is a subset of row `s`
+class Optional (r :: # Type) (s :: # Type)
+instance optionalInstance :: Union r t s => Optional r s
