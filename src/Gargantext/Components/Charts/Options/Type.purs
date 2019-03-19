@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe)
 import Gargantext.Components.Charts.Options.Color (Color)
-import Gargantext.Components.Charts.Options.Data (DataN, DataV)
+import Gargantext.Components.Charts.Options.Data (DataN, DataAxis)
 import Gargantext.Components.Charts.Options.Font (TextStyle)
 import Gargantext.Components.Charts.Options.Legend (LegendType, Orient, SelectedMode)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
@@ -132,7 +132,7 @@ type AxisTick =
 data XAxis
 
 type XAxisOptional =
-  ( "data"    :: Array DataV
+  ( "data"    :: Array DataAxis
   , "type"    :: String
   , axisTick  :: AxisTick
   , name      :: String

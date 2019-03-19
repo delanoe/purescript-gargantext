@@ -8,7 +8,7 @@ type DataN =
   , textStyle :: TextStyle
   }
 
-type DataV =
+type DataAxis =
   { value :: String
   , textStyle :: TextStyle
   }

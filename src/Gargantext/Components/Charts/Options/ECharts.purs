@@ -7,7 +7,7 @@ import CSS.Common (normal)
 import Data.Array (length)
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.Charts.Options.Color (transparent, violet, black)
-import Gargantext.Components.Charts.Options.Data (DataN, DataS, DataV)
+import Gargantext.Components.Charts.Options.Data (DataN, DataS, DataAxis)
 import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
 import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
@@ -152,7 +152,7 @@ xAxis' xs = xAxis
             , show: length xs /= 0
             }
   where
-    xData :: Array String -> Array DataV
+    xData :: Array String -> Array DataAxis
     xData = map (\x -> {value : x, textStyle : textStyle'})
 
 -- TODO try to use Optional
