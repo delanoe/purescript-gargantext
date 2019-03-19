@@ -12,9 +12,14 @@ import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.HTTP.Method (Method(..))
+import Data.Lens
+import Data.Lens.At (at)
+import Data.Lens.Record (prop)
+import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
+import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -53,16 +58,22 @@ type Props =
 type State =
   { documentIdsToDelete :: Set Int
   , documentIdsDeleted  :: Set Int
+  , localFavorites      :: Map Int Boolean
   }
 
 initialState :: State
 initialState =
   { documentIdsToDelete: mempty
   , documentIdsDeleted:  mempty
+  , localFavorites:      mempty
   }
 
+_documentIdsToDelete = prop (SProxy :: SProxy "documentIdsToDelete")
+_documentIdsDeleted = prop (SProxy :: SProxy "documentIdsDeleted")
+_localFavorites = prop (SProxy :: SProxy "localFavorites")
+
 data Action
-  = MarkFavorites (Array Int)
+  = MarkFavorites Int Boolean
   | ToggleDocumentToDelete Int
   | Trash
 
@@ -129,7 +140,7 @@ instance decodeResponse :: DecodeJson Response where
     cid        <- obj .? "id"
     created    <- pure "2018"
     --created    <- obj .? "date"
-    favorite   <- pure true
+    favorite   <- obj .? "favorite"
     ngramCount <- obj .? "id"
     hyperdata  <- obj .? "hyperdata"
     pure $ Response { cid, created, favorite, ngramCount, hyperdata }
@@ -152,17 +163,19 @@ layoutDocview :: Spec State Props Action
 layoutDocview = simpleSpec performAction render
   where
     performAction :: PerformAction State Props Action
-    performAction (MarkFavorites nids) {nodeId} _ =
-      void $ lift $ putFavorites nodeId (FavoriteQuery {favorites: nids})
+    performAction (MarkFavorites nid fav) {nodeId} _ = do
+      modifyState_ $ _localFavorites <<< at nid ?~ fav
+      void $ lift $ if fav
+        then putFavorites    nodeId (FavoriteQuery {favorites: [nid]})
+        else deleteFavorites nodeId (FavoriteQuery {favorites: [nid]})
     --TODO add array of delete rows here
     performAction (ToggleDocumentToDelete nid) _ _ =
       modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
     performAction Trash {nodeId} {documentIdsToDelete} = do
       void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
-      modifyState_ \{documentIdsToDelete, documentIdsDeleted} ->
-        { documentIdsToDelete: mempty
-        , documentIdsDeleted: documentIdsDeleted <> documentIdsToDelete
-        }
+      modifyState_ $
+        (_documentIdsToDelete .~ mempty) >>>
+        (_documentIdsDeleted <>~ documentIdsToDelete)
 
     render :: Render State Props Action
     render dispatch {nodeId, tabType, totalRecords, chart} deletionState _ =
@@ -251,7 +264,7 @@ renderPage :: forall props path.
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
 renderPage loaderDispatch { totalRecords, dispatch
-                          , deletionState: {documentIdsToDelete, documentIdsDeleted}}
+                          , deletionState: {documentIdsToDelete, documentIdsDeleted, localFavorites}}
                           {currentPath: {nodeId, tabType}, loaded: Just res} _ =
   [ T.tableElt
       { rows
@@ -273,11 +286,13 @@ renderPage loaderDispatch { totalRecords, dispatch
     fa false = "far "
     isChecked _id = Set.member _id documentIdsToDelete
     isDeleted (DocumentsView {_id}) = Set.member _id documentIdsDeleted
+    isFavorite {_id,fav} = maybe fav identity (localFavorites ^. at _id)
     rows = (\(DocumentsView r) ->
+                let isFav = isFavorite r in
                 { row:
                     [ div []
-                      [ a [className $ fa r.fav <> "fa-star" ,onClick $ (\_->
-                          dispatch $ MarkFavorites [r._id])] []
+                      [ a [className $ fa isFav <> "fa-star" ,onClick $ (\_->
+                          dispatch $ MarkFavorites r._id (not isFav))] []
                       ]
                     -- TODO show date: Year-Month-Day only
                     , if (r.delete) then
