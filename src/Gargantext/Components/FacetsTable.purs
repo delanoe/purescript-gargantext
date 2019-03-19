@@ -1,3 +1,6 @@
+-- TODO: this module should replace DocsTable
+--       However the fix for favorites in commit 91cb6bd9906e128b3129b1db01ef6ef5ae13f7f8
+--       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
 import Affjax (defaultRequest, request)
