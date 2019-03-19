@@ -59,7 +59,7 @@ ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
 ngramsViewSpec {mode} =
   noState (
     cmapProps (\{loaded: {defaultListId}, path: corpusId} ->
-                {corpusId, listId: defaultListId, tabType, limit: Nothing})
+                          {corpusId, listId: defaultListId, tabType, limit: (Just 1000)}) -- TODO limit should be select in the chart by default it is 1000
               metricsSpec <>
     cmapProps (\{loaded: {defaultListId}, path, dispatch} ->
                 {loaded: {defaultListId}, path, dispatch, tabType})
