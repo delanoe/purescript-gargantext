@@ -28,11 +28,11 @@ import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
 import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
 import Data.Newtype (class Newtype)
-import Data.Lens (Iso', Lens', (%~), (.=), (^.), (^..), to)
+import Data.Lens (Iso', Lens', (?=), (%=), (%~), (.~), (^?), (^.), (^..), to, use, view)
 import Data.Lens.Common (_Just)
 import Data.Lens.At (class At, at)
 import Data.Lens.Index (class Index, ix)
-import Data.Lens.Fold (folded)
+import Data.Lens.Fold (folded, traverseOf_)
 import Data.Lens.Record (prop)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.List as List
@@ -95,10 +95,13 @@ newtype NgramsElement = NgramsElement
   , list        :: TermList
   , occurrences :: Int
   , parent      :: Maybe NgramsTerm
+  , root        :: Maybe NgramsTerm
   , children    :: Set NgramsTerm
   }
 
 _parent = prop (SProxy :: SProxy "parent")
+_root = prop (SProxy :: SProxy "root")
+_ngrams = prop (SProxy :: SProxy "ngrams")
 _children :: forall row. Lens' { children :: Set NgramsTerm | row } (Set NgramsTerm)
 _children = prop (SProxy :: SProxy "children")
 _occurrences :: forall row. Lens' { occurrences :: Int | row } Int
@@ -118,9 +121,10 @@ instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
     list        <- obj .?  "list"
     occurrences <- obj .?  "occurrences"
     parent      <- obj .?? "parent"
+    root        <- obj .?? "root"
     children'   <- obj .?  "children"
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
-    pure $ NgramsElement {ngrams, list, occurrences, parent, children}
+    pure $ NgramsElement {ngrams, list, occurrences, parent, root, children}
 
 type Version = Int
 
@@ -290,6 +294,7 @@ applyNgramsPatch (NgramsPatch p) (NgramsElement e) = NgramsElement
   , list:        applyReplace p.patch_list e.list
   , occurrences: e.occurrences
   , parent:      e.parent
+  , root:        e.root
   , children:    applyPatchSet p.patch_children e.children
   }
 
@@ -351,11 +356,22 @@ applyPatchMap applyPatchValue (PatchMap p) = mapWithIndex f
 
 type NgramsTablePatch = PatchMap NgramsTerm NgramsPatch
 
+type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
+
 type ReParent a = forall m. MonadState NgramsTable m => a -> m Unit
 
-reParent :: Maybe NgramsTerm -> ReParent NgramsTerm
-reParent parent child =
-  at child <<< _Just <<< _NgramsElement <<< _parent .= parent
+reRootChildren :: NgramsTerm -> ReParent NgramsTerm
+reRootChildren root ngram = do
+  nre <- use (at ngram)
+  traverseOf_ (_Just <<< _NgramsElement <<< _children <<< folded) (\child -> do
+    at child <<< _Just <<< _NgramsElement <<< _root ?= root
+    reRootChildren root child) nre
+
+reParent :: Maybe RootParent -> ReParent NgramsTerm
+reParent mrp child = do
+  at child <<< _Just <<< _NgramsElement %= ((_parent .~ (view _parent <$> mrp)) <<<
+                                            (_root   .~ (view _root   <$> mrp)))
+  reRootChildren (maybe child identity (mrp ^? _Just <<< _root)) child
 
 -- reParentNgramsPatch :: NgramsTerm -> ReParent NgramsPatch
 -- ^ GHC would have accepted this type. Here reParentNgramsPatch checks but
@@ -363,8 +379,13 @@ reParent parent child =
 reParentNgramsPatch :: forall m. MonadState NgramsTable m
                     => NgramsTerm -> NgramsPatch -> m Unit
 reParentNgramsPatch parent (NgramsPatch {patch_children: PatchSet {rem, add}}) = do
+  -- root_of_parent <- use (at parent <<< _Just <<< _NgramsElement <<< _root)
+  -- ^ TODO this does not type checks, we do the following two lines instead:
+  s <- use (at parent)
+  let root_of_parent = s ^. (_Just <<< _NgramsElement <<< _root)
+  let rp = { root: maybe parent identity root_of_parent, parent }
   traverse_ (reParent Nothing) rem
-  traverse_ (reParent $ Just parent) add
+  traverse_ (reParent $ Just rp) add
 
 reParentNgramsTablePatch :: ReParent NgramsTablePatch
 reParentNgramsTablePatch = void <<< traverseWithIndex reParentNgramsPatch
@@ -373,8 +394,6 @@ applyNgramsTablePatch :: NgramsTablePatch -> NgramsTable -> NgramsTable
 applyNgramsTablePatch p (NgramsTable m) =
   execState (reParentNgramsTablePatch p) $
   NgramsTable $ applyPatchMap applyNgramsPatch p m
-    -- TODO: update the .root fields...
-    -- See ROOT-UPDATE
 
 type State =
   { ngramsTablePatch :: NgramsTablePatch
@@ -494,9 +513,9 @@ tableContainer { pageParams
                                  <<< _NgramsElement
                                  <<< _children
                                  %~ applyPatchSet (patchSetFromMap ngramsChildren)
-                ngramsClick child
-                  | child == ngrams = Nothing
-                  | otherwise       = Just $ dispatch $ ToggleChild false child
+                ngramsClick {depth: 1, ngrams: child} =
+                  Just $ dispatch $ ToggleChild false child
+                ngramsClick _ = Nothing
               in
               [ p[] [text $ "Editing " <> ngrams]
               , renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick }
@@ -603,26 +622,22 @@ ngramsTableSpec = simpleSpec performAction render
               loaderDispatch $ Loader.SetPath $ pageParams {params = params}
             ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
             rows = convertRow <$> Map.toUnfoldable (Map.filter displayRow (ngramsTable ^. _NgramsTable))
-            isRoot (NgramsElement e) = e.parent == Nothing
-            -- TODO: There is a missing case where we display a row that we should not.
-            -- Assumptions:
-            --   * cats -> cat -> animal
-            --   * We are editing cats: ngramsParent == Just "cats"
-            --   * animal should not be listed since this would create a cycle!
-            displayRow e@(NgramsElement {ngrams, children}) =
-              isRoot e
-                -- ^ Display only nodes with parents
-                      && (ngramsChildren ^. at ngrams /= Just true)
-                      -- ^ and which are not scheduled to be added already.
-                      && (case ngramsParent of
-                            Just p ->
-                              ngrams /= p &&
-                              -- ^ and which is not the node being currently edited.
-                              not (Set.member p children)
-                              -- ^ ... or one of its children.
-                            Nothing -> true)
+
+            ngramsParentRoot :: Maybe String
+            ngramsParentRoot =
+              (\np -> ngramsTable ^. at np <<< _Just <<< _NgramsElement <<< _root) =<< ngramsParent
+
+            displayRow (NgramsElement {ngrams, root}) =
+                 root == Nothing
+              -- ^ Display only nodes without parents
+              && ngramsChildren ^. at ngrams /= Just true
+              -- ^ and which are not scheduled to be added already
+              && Just ngrams /= ngramsParent
+              -- ^ and which are not our new parent
+              && Just ngrams /= ngramsParentRoot
+              -- ^ and which are not the root of our new parent
               || -- Unless they are scheduled to be removed.
-                 (ngramsChildren ^. at ngrams == Just false)
+                 ngramsChildren ^. at ngrams == Just false
             convertRow (Tuple ngrams ngramsElement) =
               { row:
                   renderNgramsItem { ngramsTable, ngrams, ngramsParent, ngramsElement, dispatch }
@@ -665,19 +680,22 @@ mainNgramsTableSpec = simpleSpec defaultPerformAction render
           , component: ngramsTableClass
           } ]
 
+type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
+type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
+
 tree :: { ngramsTable :: NgramsTable
         , ngramsStyle :: Array DOM.Props
-        , ngramsClick :: NgramsTerm -> Maybe (Effect Unit)
-        } -> NgramsTerm -> ReactElement
-tree params@{ngramsTable, ngramsStyle, ngramsClick} label =
+        , ngramsClick :: NgramsClick
+        } -> NgramsDepth -> ReactElement
+tree params@{ngramsTable, ngramsStyle, ngramsClick} nd@{ngrams} =
   li [ style {width : "100%"} ]
      [ i icon []
-     , tag [text $ " " <> label]
+     , tag [text $ " " <> ngrams]
      , forest cs
      ]
   where
     tag =
-      case ngramsClick label of
+      case ngramsClick nd of
         Just effect ->
           a (ngramsStyle <> [onClick $ const effect])
         Nothing ->
@@ -686,9 +704,11 @@ tree params@{ngramsTable, ngramsStyle, ngramsClick} label =
     icon = gray <> [className $ "fas fa-caret-" <> if open then "down" else "right"]
     open = not leaf || false {- TODO -}
     gray = if leaf then [style {color: "#adb5bd"}] else []
-    cs   = ngramsTable ^.. ix label <<< _NgramsElement <<< _children <<< folded
+    cs   = ngramsTable ^.. ix ngrams <<< _NgramsElement <<< _children <<< folded
 
-    forest = ul [] <<< map (tree params) <<< List.toUnfoldable
+    forest =
+      let depth = nd.depth + 1 in
+      ul [] <<< map (\ngrams -> tree params {depth, ngrams}) <<< List.toUnfoldable
 
 sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
 sumOccurrences' ngramsTable label =
@@ -701,11 +721,11 @@ sumOccurrences ngramsTable (NgramsElement {occurrences, children}) =
 renderNgramsTree :: { ngrams      :: NgramsTerm
                     , ngramsTable :: NgramsTable
                     , ngramsStyle :: Array DOM.Props
-                    , ngramsClick :: NgramsTerm -> Maybe (Effect Unit)
+                    , ngramsClick :: NgramsClick
                     } -> ReactElement
 renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick } =
   ul [] [
-    span [className "tree"] [tree {ngramsTable, ngramsStyle, ngramsClick} ngrams]
+    span [className "tree"] [tree {ngramsTable, ngramsStyle, ngramsClick} {ngrams, depth: 0}]
   ]
 
 renderNgramsItem :: { ngrams :: NgramsTerm
@@ -730,7 +750,7 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent, dispatch } 
     Additive occurrences = sumOccurrences ngramsTable ngramsElement
     termList    = ngramsElement ^. _NgramsElement <<< _list
     ngramsStyle = [termStyle termList]
-    ngramsClick = Just <<< dispatch <<< SetParentResetChildren <<< Just
+    ngramsClick = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
     checkbox termList' =
       let chkd = termList == termList'
           termList'' = if chkd then CandidateTerm else termList'
