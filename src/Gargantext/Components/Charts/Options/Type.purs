@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe)
 import Gargantext.Components.Charts.Options.Color (Color)
-import Gargantext.Components.Charts.Options.Data (DataN, DataAxis)
+import Gargantext.Components.Charts.Options.Data (DataLegend, DataAxis)
 import Gargantext.Components.Charts.Options.Font (TextStyle)
 import Gargantext.Components.Charts.Options.Legend (LegendType, Orient, SelectedMode)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
@@ -117,7 +117,7 @@ type Legend =
   , inactiveColor :: Color
   , selected :: Maybe String -- object
   , textStyle :: TextStyle
-  , "data" :: Array DataN
+  , "data" :: Array DataLegend
   }
 
 type Tooltip =

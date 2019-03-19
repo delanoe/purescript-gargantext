@@ -2,7 +2,7 @@ module Gargantext.Components.Charts.Options.Data where
 
 import Gargantext.Components.Charts.Options.Font (TextStyle, Icon)
 
-type DataN =
+type DataLegend =
   { name :: String
   , icon :: Icon
   , textStyle :: TextStyle

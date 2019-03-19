@@ -7,7 +7,7 @@ import CSS.Common (normal)
 import Data.Array (length)
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.Charts.Options.Color (transparent, violet, black)
-import Gargantext.Components.Charts.Options.Data (DataN, DataS, DataAxis)
+import Gargantext.Components.Charts.Options.Data (DataLegend, DataS, DataAxis)
 import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
 import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
@@ -106,13 +106,13 @@ legend =
    , "data": [data1]
   }
 
-data1 :: DataN
+data1 :: DataLegend
 data1 = {name: "Map terms coverage", icon: icon $ Shape Circle, textStyle: textStyle'}
 
-data2 :: DataN
+data2 :: DataLegend
 data2 = {name: "Favorites", icon: icon $ Shape Circle, textStyle: textStyle'}
 
-data3 :: DataN
+data3 :: DataLegend
 data3 = {name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle'}
 
 
