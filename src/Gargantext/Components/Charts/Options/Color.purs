@@ -8,6 +8,8 @@ module Gargantext.Components.Charts.Options.Color
        , magenta
        , violet
        , black
+       , grey
+       , green
        ) where
 
 import Prelude
@@ -41,3 +43,9 @@ violet = cssColor CSS.violet
 
 black :: Color
 black = stringColor "black"
+
+grey :: Color
+grey = stringColor "grey"
+
+green :: Color
+green = stringColor "green"

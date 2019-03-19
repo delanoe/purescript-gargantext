@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe)
 import Gargantext.Components.Charts.Options.Color (Color)
 import Gargantext.Components.Charts.Options.Data (DataLegend, DataAxis)
-import Gargantext.Components.Charts.Options.Font (TextStyle)
+import Gargantext.Components.Charts.Options.Font (TextStyle, Tooltip)
 import Gargantext.Components.Charts.Options.Legend (LegendType, Orient, SelectedMode)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Gargantext.Components.Charts.Options.Series (Series)
@@ -118,11 +118,6 @@ type Legend =
   , selected :: Maybe String -- object
   , textStyle :: TextStyle
   , "data" :: Array DataLegend
-  }
-
-type Tooltip =
-  { trigger   :: String
-  , formatter :: Maybe String -- TODO function
   }
 
 type AxisTick =

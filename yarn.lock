@@ -1021,11 +1021,6 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
-batch-processor@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/batch-processor/-/batch-processor-1.0.0.tgz#75c95c32b748e0850d10c2b168f6bdbe9891ace8"
-  integrity sha1-dclcMrdI4IUNEMKxaPa9vpiRrOg=
-
 beeper@^1.0.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/beeper/-/beeper-1.1.1.tgz#e6d5ea8c5dad001304a70b22638447f69cb2f809"
@@ -2089,12 +2084,12 @@ echarts-for-react@^2.0.14:
     fast-deep-equal "^2.0.1"
     size-sensor "^0.2.0"
 
-echarts@^3.8.5:
-  version "3.8.5"
-  resolved "https://registry.yarnpkg.com/echarts/-/echarts-3.8.5.tgz#58e4a51d2743c6fb75257b0dc0a9cf9f5378ac0e"
-  integrity sha512-E+nnROMfCeiLeoT/fZyX8SE8mKzwkTjyemyoBF543oqjRtjTSKQAVDEihMXy4oC6pJS0tYGdMqCA2ATk8onyRg==
+echarts@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/echarts/-/echarts-4.1.0.tgz#d588c95f73c1a9928b9c73d5b769751c3185bcdc"
+  integrity sha512-gP1e1fNnAj9KJpTDLXV21brklbfJlqeINmpQDJCDta9TX3cPoqyQOiDVcEPzbOVHqgBRgTOwNxC5iGwJ89014A==
   dependencies:
-    zrender "3.7.4"
+    zrender "4.0.4"
 
 ecstatic@^3.0.0:
   version "3.3.0"
@@ -2105,13 +2100,6 @@ ecstatic@^3.0.0:
     mime "^1.6.0"
     minimist "^1.1.0"
     url-join "^2.0.5"
-
-element-resize-detector@latest:
-  version "1.1.14"
-  resolved "https://registry.yarnpkg.com/element-resize-detector/-/element-resize-detector-1.1.14.tgz#af064a0a618a820ad570a95c5eec5b77be0128c1"
-  integrity sha1-rwZKCmGKggrVcKlcXuxbd74BKME=
-  dependencies:
-    batch-processor "^1.0.0"
 
 elliptic@^6.0.0:
   version "6.4.1"
@@ -3557,7 +3545,7 @@ lodash.templatesettings@^3.0.0:
     lodash._reinterpolate "^3.0.0"
     lodash.escape "^3.0.0"
 
-lodash@^4.17.4, lodash@latest:
+lodash@^4.17.4:
   version "4.17.5"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.5.tgz#99a92d65c0272debe8c96b6057bc8fbfa3bed511"
   integrity sha512-svL3uiZf1RwhH+cWrfZn3A4+U58wbP0tGVTLQPbjplZxZ8ROD9VLuNgsRniTlLe7OlSqR79RUehXgpBW/s0IQw==
@@ -4514,14 +4502,6 @@ react-dom@^16.4.2:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
     prop-types "^15.6.0"
-
-react-echarts-v3@^1.0.19:
-  version "1.0.19"
-  resolved "https://registry.yarnpkg.com/react-echarts-v3/-/react-echarts-v3-1.0.19.tgz#04148f16e3e7f01c2f6f3e6f0654bb32f238c2dc"
-  integrity sha512-2ro1lU/nfuIVxdrdvK0ZL2/tgxHmDMEeDY++JYfvDqZci//i9fGvBaKDJC/ZHgGmknffqXESoAOwZSgVgc0XOA==
-  dependencies:
-    element-resize-detector latest
-    lodash latest
 
 "react-sigma@git://github.com/np/react-sigma.git#shouldComponentUpdate":
   version "1.2.29"
@@ -5870,7 +5850,7 @@ zen-observable@^0.6.0, zen-observable@^0.6.1:
   resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.6.1.tgz#01dbed3bc8d02cbe9ee1112c83e04c807f647244"
   integrity sha512-DKjFTL7siVLIUMZOFZ0alqMEdTsXPUxoCZzrvB2tdWEVN/6606Qh1nCfSTCAOZMrtcPzzFI3BXmwBKLAew52NA==
 
-zrender@3.7.4:
-  version "3.7.4"
-  resolved "https://registry.yarnpkg.com/zrender/-/zrender-3.7.4.tgz#f847d53948481ef6d42906d1ea9aeec7acbefdf2"
-  integrity sha512-5Nz7+L1wIoL0+Pp/iOP56jD6eD017qC9VRSgUBheXBiAHgOBJZ4uh4/g6e83acIwa8RKSyZf/FlceKu5ntUuxQ==
+zrender@4.0.4:
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/zrender/-/zrender-4.0.4.tgz#910e60d888f00c9599073f23758dd23345fe48fd"
+  integrity sha512-03Vd/BDl/cPXp8E61f5+Xbgr/a4vDyFA+uUtUc1s+5KgcPbyY2m+78R/9LQwkR6QwFYHG8qk25Q8ESGs/qpkZw==

@@ -7,12 +7,12 @@ import CSS.Common (normal)
 import Data.Array (length)
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.Charts.Options.Color (transparent, violet, black)
-import Gargantext.Components.Charts.Options.Data (DataLegend, DataS, DataAxis)
-import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon)
+import Gargantext.Components.Charts.Options.Data (DataLegend, DataAxis, dataSerie)
+import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon, mkTooltip, Tooltip)
 import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-import Gargantext.Components.Charts.Options.Series (Series, SeriesName, Chart(..), seriesType, seriesD1)
-import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, Tooltip, XAxis, YAxis, xAxis, yAxis)
+import Gargantext.Components.Charts.Options.Series (Series, SeriesName, Chart(..), seriesPieD1)
+import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, XAxis, YAxis, xAxis, yAxis)
 import React (unsafeCreateElementDynamic)
 import React as R
 import Unsafe.Coerce (unsafeCoerce)
@@ -137,12 +137,6 @@ yAxis1 = yAxis
   , show: true
   }
 
-tooltip' :: Tooltip
-tooltip' =
-  { trigger:   "axis"
-  , formatter: Nothing
-  }
-
 xAxis' :: Array String -> XAxis
 xAxis' [] = unsafeCoerce {}
 xAxis' xs = xAxis
@@ -175,7 +169,11 @@ data Options = Options
   , yAxis     :: YAxis
   , series    :: Array Series
   , addZoom   :: Boolean
+  , tooltip   :: Tooltip
   }
+
+tooltipTriggerAxis :: Tooltip
+tooltipTriggerAxis = mkTooltip {trigger: "axis"}
 
 opts :: Options -> Option
 opts (Options { mainTitle
@@ -183,13 +181,12 @@ opts (Options { mainTitle
               , xAxis
               , yAxis
               , series
+              , tooltip
               , addZoom
               }) =
   { title: title mainTitle subTitle
   , legend
-  , tooltip: { trigger: "axis"
-             , formatter: Nothing
-             }
+  , tooltip
   , grid: {containLabel: true}
   , series
   , xAxis
@@ -215,16 +212,14 @@ zoom z = {
 
 
 seriesPie :: Series
-seriesPie = seriesD1
-  { name: "Pie name"
-  , "type": seriesType Pie
-  , "data": [{name: "t1", value: 50.0},
-             {name: "t2", value: 45.0},
-             {name: "t3", value: 65.0},
-             {name: "t4", value: 15.0},
-             {name: "t5", value: 23.0}
-             ]
-  }
+seriesPie = seriesPieD1
+  { name: "Pie name" }
+  (dataSerie <$> [ {name: "t1", value: 50.0}
+                 , {name: "t2", value: 45.0}
+                 , {name: "t3", value: 65.0}
+                 , {name: "t4", value: 15.0}
+                 , {name: "t5", value: 23.0}
+                 ])
 
 
 textStyle2 :: TextStyle

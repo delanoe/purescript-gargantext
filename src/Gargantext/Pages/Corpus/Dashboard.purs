@@ -2,9 +2,10 @@ module Gargantext.Pages.Corpus.Dashboard where
 
 import Prelude hiding (div)
 
-import Data.Array (zip)
+import Data.Array (zipWith)
 import Data.Tuple (Tuple(..))
-import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
+import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis', tooltipTriggerAxis)
+import Gargantext.Components.Charts.Options.Data
 import Gargantext.Components.Charts.Options.Series
 import Data.Int (toNumber)
 import React.DOM (div, h1, text)
@@ -28,9 +29,9 @@ render dispatch _ state _ = [
   ]
     where
       myData = [seriesBarD1 {name: "Bar Data"}
-                            [ {name: "val1", value: 50.0}
-                            , {name: "val2", value: 70.0}
-                            , {name: "val3", value: 80.0}
+                            [ dataSerie {name: "val1", value: 50.0}
+                            , dataSerie {name: "val2", value: 70.0}
+                            , dataSerie {name: "val3", value: 80.0}
                             ]
                ]
 
@@ -44,6 +45,7 @@ render dispatch _ state _ = [
                              }
         , series    : myData
         , addZoom   : false
+        , tooltip   : tooltipTriggerAxis -- Necessary?
         }
 
 -----------------------------------------------------------------------------------------------------------
@@ -53,8 +55,8 @@ naturePublis_x = ["Com","Articles","Thèses","Reports"]
 naturePublis_y' :: Array Int
 naturePublis_y' = [23901,17417,1188,1176]
 
-naturePublis_y :: Array {name :: String, value :: Number}
-naturePublis_y = map (\(Tuple n v) -> {name: n, value: toNumber v }) (zip naturePublis_x naturePublis_y')
+naturePublis_y :: Array DataD1
+naturePublis_y = zipWith (\n v -> dataSerie {name: n, value: toNumber v }) naturePublis_x naturePublis_y'
 
 naturePublis :: Options
 naturePublis = Options
@@ -64,6 +66,7 @@ naturePublis = Options
   , yAxis     : yAxis' { position: "left", show: false }
   , series    : [seriesFunnelD1 { name: "Funnel Data" } naturePublis_y]
   , addZoom   : false
+  , tooltip   : tooltipTriggerAxis -- Necessary?
   }
 
 -----------------------------------------------------------------------------------------------------------
@@ -80,8 +83,9 @@ globalPublis = Options
   , subTitle  : "Distribution of scientific publications by IMT's Schools over time"
   , xAxis     : xAxis' (map show globalPublis_x)
   , yAxis     : yAxis' { position: "left", show: true }
-  , series    : [seriesBarD1 {name: "Number of publication of IMT / year"} $ map (\n -> {name: "", value: toNumber n }) globalPublis_y]
+  , series    : [seriesBarD1 {name: "Number of publication of IMT / year"} $ map (\n -> dataSerie {name: "", value: toNumber n }) globalPublis_y]
   , addZoom   : true
+  , tooltip   : tooltipTriggerAxis -- Necessary?
   }
 
 
@@ -96,8 +100,9 @@ distriBySchool = Options
   , subTitle  : "Distribution by school"
   , xAxis     : xAxis' []
   , yAxis     : yAxis' { position : "", show: false }
-  , series    : [ seriesPieD1 {name: "Pie data"} (map (\(Tuple n v) -> {name: n, value: toNumber v}) distriBySchool_y)]
+  , series    : [ seriesPieD1 {name: "Pie data"} (map (\(Tuple n v) -> dataSerie {name: n, value: toNumber v}) distriBySchool_y)]
   , addZoom   : false
+  , tooltip   : tooltipTriggerAxis -- Necessary?
   }
 
 scatterEx :: Options
@@ -106,11 +111,12 @@ scatterEx = Options
   , subTitle  : "Scatter subtitle"
   , xAxis     : xAxis' []
   , yAxis     : yAxis' { position: "", show: true }
-  , series    : [ seriesScatterD2 {name: "name1", symbolSize: 10.0} [[2.0,3.0],[3.0,4.0]]
-                , seriesScatterD2 {name: "name2", symbolSize: 5.0 } [[1.0,3.0],[5.0,4.0]]
-                , seriesScatterD2 {name: "name3", symbolSize: 10.0} [[10.0,3.0],[8.0,4.0]]
+  , series    : [ seriesScatterD2 {name: "name1", symbolSize: 10.0} (dataSerieV <$> [[2.0,3.0],[3.0,4.0]])
+                , seriesScatterD2 {name: "name2", symbolSize: 5.0 } (dataSerieV <$> [[1.0,3.0],[5.0,4.0]])
+                , seriesScatterD2 {name: "name3", symbolSize: 10.0} (dataSerieV <$> [[10.0,3.0],[8.0,4.0]])
                 ]
   , addZoom   : false
+  , tooltip   : tooltipTriggerAxis -- Necessary?
   }
 
 sankeyEx :: Options
@@ -133,6 +139,7 @@ sankeyEx = Options
          , layout: "none"
          }
      ]
+  , tooltip   : tooltipTriggerAxis -- Necessary?
   , addZoom   : false
   }
 
@@ -189,6 +196,7 @@ treeMapEx = Options
   , yAxis     : yAxis' { position: "", show: false }
   , series    : [mkTree TreeMap treeData]
   , addZoom   : false
+  , tooltip   : tooltipTriggerAxis -- Necessary?
   }
 
 treeEx :: Options
@@ -199,6 +207,7 @@ treeEx = Options
   , yAxis     : yAxis' { position: "", show: false }
   , series    : [mkTree TreeRadial treeData']
   , addZoom   : false
+  , tooltip   : tooltipTriggerAxis -- Necessary?
   }
 
 layoutDashboard :: Spec {} {} Void

@@ -18,6 +18,8 @@ import Gargantext.Components.Charts.Options.ECharts
 import Gargantext.Components.Charts.Options.Type
 import Gargantext.Components.Charts.Options.Series
 import Gargantext.Components.Charts.Options.Color
+import Gargantext.Components.Charts.Options.Font
+import Gargantext.Components.Charts.Options.Data
 
 type Path =
   { corpusId :: Int
@@ -62,12 +64,13 @@ loadedMetricsSpec = simpleSpec defaultPerformAction render
 
 scatterOptions :: Array Metric -> Options
 scatterOptions metrics = Options
-  { mainTitle : "TODO Scatter test"
-  , subTitle  : "TODO Scatter subtitle"
+  { mainTitle : "Ngrams Selection Metrics"
+  , subTitle  : "Inc/Exc, Spe/Gen, TFICF"
   , xAxis     : xAxis { min: 0 }
   , yAxis     : yAxis' { position : "", show: true }
   , series    : map2series $ metric2map metrics
   , addZoom   : false
+  , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
   }
   where
     metric2map :: Array Metric -> Map TermList (Array Metric)
@@ -75,19 +78,22 @@ scatterOptions metrics = Options
 
     --{-
     map2series :: Map TermList (Array Metric) -> Array Series
-    map2series ms = toSeries =<< Map.toUnfoldable ms
+    map2series ms = toSeries <$> Map.toUnfoldable ms
       where
         -- TODO colors are not respected yet
-        toSeries (Tuple k ms) = toSeries' color <$> ms
+        toSeries (Tuple k ms) =
+            seriesScatterD2 {symbolSize: 5.0} (toSerie color <$> ms)
           where
             color =
               case k of
                 StopTerm -> red
-                GraphTerm -> blue
-                CandidateTerm -> magenta
-        toSeries' color (Metric {label,x,y}) =
-          seriesScatterD2 {name: label, symbolSize: 5.0, itemStyle: itemStyle {color}}
-                          [[x,y]]
+                GraphTerm -> green
+                CandidateTerm -> grey
+            toSerie color (Metric {label,x,y}) =
+              dataSerie { name: label, itemStyle: itemStyle {color}
+                     -- , label: {show: true}
+                        , value: [x,y]
+                        }
     --}
 
 getMetrics :: Path -> Aff Loaded

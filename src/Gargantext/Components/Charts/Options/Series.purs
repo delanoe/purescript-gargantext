@@ -1,21 +1,12 @@
 module Gargantext.Components.Charts.Options.Series where
 
+import Record.Unsafe (unsafeSet)
 import Unsafe.Coerce (unsafeCoerce)
 import Prelude
 
 import Gargantext.Types (class Optional)
-import Gargantext.Components.Charts.Options.Color (Color)
-import Gargantext.Components.Charts.Options.Data (DataS)
-
-
-data ItemStyle
-
-type ItemStyleOptional =
-  ( color :: Color
-  )
-
-itemStyle :: forall o. Optional o ItemStyleOptional => Record o -> ItemStyle
-itemStyle = unsafeCoerce
+import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
+import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
 
 newtype SeriesType = SeriesType String
 
@@ -58,54 +49,53 @@ seriesType :: Chart -> SeriesType
 seriesType = SeriesType <<< show
 
 
-data Series
+-- | Scatter Dimension 2 data
+type OptionalSeries =
+  ( name       :: String
+  , symbolSize :: Number
+  , itemStyle  :: ItemStyle
+    -- ^ Graphic style of, *emphasis* is the style when it is highlighted, like being hovered by mouse, or highlighted via legend connect.
+    --   https://ecomfe.github.io/echarts-doc/public/en/option.html#series-scatter.itemStyle
+  , tooltip    :: Tooltip
 
-unsafeSeries :: forall o. { | o } -> Series
-unsafeSeries = unsafeCoerce
-
-type RequiredD1 o =
-  { "type" :: SeriesType
-  , "data" :: Array DataS
-  | o
-  }
-
-type OptionalD1 =
-  ( name   :: String
   -- many more...
   )
 
-seriesD1 :: forall o. Optional o OptionalD1 => RequiredD1 o -> Series
+data Series
+
+unsafeSeries :: forall o. Record o -> Series
+unsafeSeries = unsafeCoerce
+
+type RequiredSeriesD1 o =
+  { "type" :: SeriesType
+  , "data" :: Array DataD1
+  | o
+  }
+
+seriesD1 :: forall o. Optional o OptionalSeries => RequiredSeriesD1 o -> Series
 seriesD1 = unsafeSeries
 
-seriesFunnelD1 :: forall o. Optional o OptionalD1 => Record o -> Array DataS -> Series
-seriesFunnelD1 o ds = seriesD1 ((unsafeCoerce o :: RequiredD1 o) { "data" = ds, "type" = seriesType Funnel })
+seriesFunnelD1 :: forall o. Optional o OptionalSeries => Record o -> Array DataD1 -> Series
+seriesFunnelD1 o ds = unsafeSeries (unsafeSet "data" ds (unsafeSet "type" (seriesType Funnel) o))
 
-seriesBarD1 :: forall o. Optional o OptionalD1 => Record o -> Array DataS -> Series
-seriesBarD1 o ds = seriesD1 ((unsafeCoerce o :: RequiredD1 o) { "data" = ds, "type" = seriesType Bar })
+seriesBarD1 :: forall o. Optional o OptionalSeries => Record o -> Array DataD1 -> Series
+seriesBarD1 o ds = unsafeSeries (unsafeSet "data" ds (unsafeSet "type" (seriesType Bar) o))
 
-seriesPieD1 :: forall o. Optional o OptionalD1 => Record o -> Array DataS -> Series
-seriesPieD1 o ds = seriesD1 ((unsafeCoerce o :: RequiredD1 o) { "data" = ds, "type" = seriesType Pie })
+seriesPieD1 :: forall o. Optional o OptionalSeries => Record o -> Array DataD1 -> Series
+seriesPieD1 o ds = unsafeSeries (unsafeSet "data" ds (unsafeSet "type" (seriesType Pie) o))
 
-type RequiredD2 o =
-  { "data" :: Array (Array Number)
+type RequiredSeriesD2 o =
+  { "data" :: Array DataD2
   , "type" :: SeriesType
   | o
   }
 
--- | Scatter Dimension 2 data
-type OptionalD2 =
-  ( name       :: String
-  , symbolSize :: Number
-  , itemStyle  :: ItemStyle
-  -- many more...
-  )
-
-seriesD2 :: forall o. Optional o OptionalD2 => RequiredD2 o -> Series
+seriesD2 :: forall o. Optional o OptionalSeries => RequiredSeriesD2 o -> Series
 seriesD2 = unsafeSeries
 
-seriesScatterD2 :: forall o. Optional o OptionalD2 => Record o -> Array (Array Number) -> Series
+seriesScatterD2 :: forall o. Optional o OptionalSeries => Record o -> Array DataD2 -> Series
 seriesScatterD2 o ds =
-  seriesD2 ((unsafeCoerce o :: RequiredD2 o) { "data" = ds, "type" = seriesType Scatter })
+  unsafeCoerce (unsafeSet "data" ds (unsafeSet "type" (seriesType Scatter) o))
 
 type Node = { name :: String}
 type Link = { source :: String
