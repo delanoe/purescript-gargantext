@@ -138,7 +138,7 @@ instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
     obj        <- decodeJson json
     cid        <- obj .? "id"
-    created    <- pure "2018"
+    created    <- pure "2019"
     --created    <- obj .? "date"
     favorite   <- obj .? "favorite"
     ngramCount <- obj .? "id"
