@@ -79,11 +79,11 @@ globalPublis_y = [1,4,2,1,1,2,1,1,8,38,234,76,40,82,75,202,1475,1092,1827,2630,4
 
 globalPublis :: Options
 globalPublis = Options
-  { mainTitle : "Global Scientific Publications"
-  , subTitle  : "Distribution of scientific publications by IMT's Schools over time"
+  { mainTitle : "Histogram"
+  , subTitle  : "Distribution of scientific publications over time"
   , xAxis     : xAxis' (map show globalPublis_x)
   , yAxis     : yAxis' { position: "left", show: true }
-  , series    : [seriesBarD1 {name: "Number of publication of IMT / year"} $ map (\n -> dataSerie {name: "", value: toNumber n }) globalPublis_y]
+  , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: toNumber n }) globalPublis_y]
   , addZoom   : true
   , tooltip   : tooltipTriggerAxis -- Necessary?
   }

@@ -65,7 +65,7 @@ loadedMetricsSpec = simpleSpec defaultPerformAction render
 scatterOptions :: Array Metric -> Options
 scatterOptions metrics = Options
   { mainTitle : "Ngrams Selection Metrics"
-  , subTitle  : "Inc/Exc, Spe/Gen, TFICF"
+  , subTitle  : "Local metrics (Inc/Exc, Spe/Gen), Global metrics (TFICF maillage)"
   , xAxis     : xAxis { min: 0 }
   , yAxis     : yAxis' { position : "", show: true }
   , series    : map2series $ metric2map metrics
