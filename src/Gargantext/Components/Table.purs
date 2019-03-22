@@ -286,7 +286,7 @@ pagination changePage tp cp
       changePageLink' :: Int -> ReactElement
       changePageLink' i = changePageLink i (show i)
 
-data PageSizes = PS10 | PS20 | PS50 | PS100
+data PageSizes = PS10 | PS20 | PS50 | PS100 | PS200
 
 derive instance eqPageSizes :: Eq PageSizes
 
@@ -295,21 +295,24 @@ instance showPageSize :: Show PageSizes where
   show PS20  = "20"
   show PS50  = "50"
   show PS100 = "100"
+  show PS200 = "200"
 
 pageSizes2Int :: PageSizes -> Int
 pageSizes2Int PS10  = 10
 pageSizes2Int PS20  = 20
 pageSizes2Int PS50  = 50
 pageSizes2Int PS100 = 100
+pageSizes2Int PS200 = 200
 
 aryPS :: Array PageSizes
-aryPS = [PS10, PS20, PS50, PS100]
+aryPS = [PS10, PS20, PS50, PS100, PS200]
 
 string2PageSize :: String -> PageSizes
 string2PageSize "10" = PS10
 string2PageSize "20" = PS20
 string2PageSize "50" = PS50
 string2PageSize "100" = PS100
+string2PageSize "200" = PS200
 string2PageSize _    = PS10
 
 optps :: PageSizes -> PageSizes -> ReactElement
