@@ -19,7 +19,7 @@ You can edit this file as you like.
     , "random"
     , "affjax"
     , "console"
-    -- , "sequences"
+    , "sequences"
     , "strings"
     , "string-parsers"
     , "prelude" ]
