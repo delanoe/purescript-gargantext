@@ -21,6 +21,8 @@
     "random",
     "affjax",
     "console",
+    "strings",
+    "string-parsers",
     "prelude"
   ]
 }
