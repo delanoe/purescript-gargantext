@@ -125,7 +125,7 @@ let additions =
   { sequences =
        mkPackage
          [ "prelude", "unsafe-coerce", "partial", "unfoldable", "lazy", "arrays", "profunctor", "maybe", "tuples", "newtype" ]
-         "https://github.com/hdgarrood.git"
+         "https://github.com/hdgarrood/purescript-sequences.git"
          "v2.1.0" }
 
 in  upstream ⫽ overrides ⫽ additions
