@@ -40,22 +40,22 @@ newtype Run = Run { text :: String, list :: Maybe TermList } -- lists :: Array T
 
 -- TODO: Context Menu
 -- | A Blank Run is not part an n-gram, but it does have a context menu
-renderBlank :: Run -> ReactElement
-renderBlank = wrap $ span [className "run run-blank"] <<< text
+renderBlank :: String -> ReactElement
+renderBlank = (wrap $ span [className "run run-blank"]) <<< text
 
 -- TODO: Context Menu
-renderHilite :: Run -> ReactElement
-renderHilite r = span [className "run run-pretty", title tooltip] [text r.text]
+renderHilite :: String -> TermList -> ReactElement
+renderHilite txt list = span [className "run run-pretty", title tooltip] [text txt]
 -- (wrap wrapping) $ foldl wrapColour head r.lists
-  where tooltip = "Occurs in the " <> termListName r.list
+  where tooltip = "Occurs in the " <> termListName list
         -- lists = names r.lists
         -- head = span [className "run run-pretty", title (tooltip lists)] [text r.text]
         -- wrapping = span [className "run run-pretty"]
 
 render :: Run -> ReactElement
-render r
-  | r.lists == [] = renderBlank r.text
-  | otherwise = renderHilite r
+render (Run r)
+  | Just l <- r.list = renderHilite r.text l
+  | otherwise = renderBlank r.text
 
 data Action = AddTerm Term | RemoveTerm Term
 
