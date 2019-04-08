@@ -37,11 +37,15 @@ package(){
 }
 
 pulp(){
-  dockerrun node pulp "$@"
+  dockerrun node pulp --psc-package "$@"
 }
 
 repl(){
-  dockerrun -ti node pulp repl "$@"
+  dockerrun -ti node pulp --psc-package repl "$@"
+}
+
+check(){
+  pulp test "$@"
 }
 
 setup(){
@@ -50,7 +54,7 @@ setup(){
 }
 
 build(){
-  pulp --psc-package browserify --to dist/bundle.js
+  pulp browserify --to dist/bundle.js
 }
 
 serve(){
