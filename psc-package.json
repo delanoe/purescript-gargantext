@@ -3,6 +3,9 @@
   "set": "master",
   "source": "https://github.com/np/package-sets.git",
   "depends": [
+    "spec-quickcheck",
+    "spec-discovery",
+    "uint",
     "js-timers",
     "psci-support",
     "css",

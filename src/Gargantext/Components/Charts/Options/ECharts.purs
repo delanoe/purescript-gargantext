@@ -5,7 +5,6 @@ import Prelude
 import CSS (italic)
 import CSS.Common (normal)
 import Data.Array (length)
-import Data.Maybe (Maybe(..))
 import Gargantext.Components.Charts.Options.Color (transparent, violet, black)
 import Gargantext.Components.Charts.Options.Data (DataLegend, DataAxis, dataSerie)
 import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon, mkTooltip, Tooltip)
@@ -27,18 +26,18 @@ chart = echarts <<< chartWith <<< opts
 chartWith :: Option -> Echarts
 chartWith option =
   { option
-  , className : Nothing
-  , style     : Nothing
-  , theme     : Nothing
-  , group     : Nothing
-  , initOpts  : Nothing
-  , notMerge  : Nothing
-  , lazyUpdate: Nothing
-  , loading   : Nothing
-  , optsLoading: Nothing
-  , onReady    : Nothing
-  , resizable  : Nothing
-  , onEvents   : Nothing
+--, className : Nothing
+--, style     : Nothing
+--, theme     : Nothing
+--, group     : Nothing
+--, initOpts  : Nothing
+--, notMerge  : Nothing
+--, lazyUpdate: Nothing
+--, loading   : Nothing
+--, optsLoading: Nothing
+--, onReady    : Nothing
+--, resizable  : Nothing
+--, onEvents   : Nothing
   }
 
 echarts :: Echarts -> R.ReactElement
@@ -98,10 +97,10 @@ legend =
    , itemGap: 10.0
    , itemWidth: 25.0
    , itemHeight: 14.0
-   , formatter: Nothing
+ --, formatter: Nothing
    , selectedMode: selectedMode $ Bool true
    , inactiveColor: violet
-   , selected: Nothing
+ --- selected: Nothing
    , textStyle: textStyle
    , "data": [data1]
   }
