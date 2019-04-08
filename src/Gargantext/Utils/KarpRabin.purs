@@ -35,6 +35,7 @@ import Data.String as S
 import Data.String (CodePoint)
 import Data.Tuple (Tuple(..))
 import Data.UInt (UInt, shl, fromInt)
+import Partial.Unsafe (unsafePartial)
 
 import Prelude
 
@@ -89,16 +90,15 @@ fromCodePoint c = fromInt (fromEnum c)
 
 -- | @'indicesOfAny'@ finds all occurrences of any of several non-empty patterns
 --   in a strict target string. If no non-empty patterns are given,
---   the result is an empty array. Otherwise the result list contains
+--   the result is an empty array. Otherwise the result array contains
 --   the pairs of all indices where any of the (non-empty) patterns start
 --   and the array of all patterns starting at that index, the patterns being
 --   represented by their (zero-based) position in the pattern array.
 --   Empty patterns are filtered out before processing begins.
-indicesOfAny :: Partial
-             => Array String                 -- ^ Array of non-empty patterns
-             -> String                       -- ^ String to search
-             -> List (Tuple Int (Array Int)) -- ^ List of matches
-indicesOfAny pats = if A.null nepats then const L.Nil
+indicesOfAny :: Array String                  -- ^ Array of non-empty patterns
+             -> String                        -- ^ String to search
+             -> Array (Tuple Int (Array Int)) -- ^ Array of matches
+indicesOfAny pats = if A.null nepats then const []
                                      else strictMatcher nepats
       where
         nepats = A.filter (not <<< S.null) pats
@@ -118,8 +118,8 @@ minimum1 a fa =
     Nothing -> a
     Just b  -> min a b
 
-strictMatcher :: Partial => Array String -> String -> List (Tuple Int (Array Int))
-strictMatcher pats = search
+strictMatcher :: Array String -> String -> Array (Tuple Int (Array Int))
+strictMatcher pats = unsafePartial search
   where
     hLen = minimum1 32 (S.length <$> pats)
     hLen' = fromInt hLen
@@ -141,8 +141,9 @@ strictMatcher pats = search
     hashMap =
       M.fromFoldableWith (flip (<>))
                          (A.mapWithIndex (\i a -> Tuple (hash a) [i]) pats)
-    search str = if strLen < hLen then L.Nil
-                                  else go 0 shash
+    search :: Partial => String -> Array (Tuple Int (Array Int))
+    search str = if strLen < hLen then []
+                                  else A.fromFoldable (go 0 shash)
           where
             strLen = S.length str
             maxIdx = strLen - hLen
