@@ -1,5 +1,24 @@
 'use strict';
 
+var dummyClass = 'DummyClass';
+exports.edgeShapesClass = dummyClass;
+exports.filterClass = dummyClass;
+exports.forceAtlas2Class = dummyClass;
+exports.loadGEXFClass = dummyClass;
+exports.loadJSONClass = dummyClass;
+exports.nOverlapClass = dummyClass;
+exports.neoCypherClass = dummyClass;
+exports.neoGraphItemsProducersClass = dummyClass;
+exports.nodeShapesClass = dummyClass;
+exports.randomizeNodePositionsClass = dummyClass;
+exports.relativeSizeClass = dummyClass;
+exports.sigmaClass = dummyClass;
+exports.sigmaEnableSVGClass = dummyClass;
+exports.sigmaEnableWebGLClass = dummyClass;
+exports.forceLinkClass = dummyClass;
+
+if (typeof window !== 'undefined') {
+
 const SJS = require('react-sigma');
 const FL = require('react-sigma/lib/ForceLink');
 
@@ -18,3 +37,5 @@ exports.sigmaClass = SJS.Sigma;
 exports.sigmaEnableSVGClass = SJS.SigmaEnableSVG;
 exports.sigmaEnableWebGLClass = SJS.SigmaEnableWebGL;
 exports.forceLinkClass = FL.default;
+
+}
