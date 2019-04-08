@@ -2,7 +2,6 @@ module Gargantext.Components.Charts.Options.Type where
 
 import Prelude
 
-import Data.Maybe (Maybe)
 import Gargantext.Components.Charts.Options.Color (Color)
 import Gargantext.Components.Charts.Options.Data (DataLegend, DataAxis)
 import Gargantext.Components.Charts.Options.Font (TextStyle, Tooltip)
@@ -15,21 +14,22 @@ import Unsafe.Coerce (unsafeCoerce)
 
 newtype ChartAlign = ChartAlign String
 
--- TODO: Not sure that Maybe is working here => use Optional
+-- TODO: Maybe is not working here => use Optional
+
 type Echarts =
-  { className   :: Maybe String
-  , style       :: Maybe String  -- objealect-black-altdarkmincnaquadahherry-blossomect,
-  , theme       :: Maybe String
-  , group       :: Maybe String
-  , option      :: Option       --  PropTypes.object.isRequired,
-  , initOpts    :: Maybe String -- PropTypes.object,
-  , notMerge    :: Maybe Boolean
-  , lazyUpdate  :: Maybe Boolean
-  , loading     :: Maybe Boolean
-  , optsLoading :: Maybe OptsLoading --  PropTypes.object,
-  , onReady     :: Maybe String   --  PropTypes.func,
-  , resizable   :: Maybe Boolean  -- PropTypes.bool,
-  , onEvents    :: Maybe String   -- PropTypes.object
+  { option      :: Option       --  PropTypes.object.isRequired,
+--, className   :: Maybe String
+--, style       :: Maybe String  -- objealect-black-altdarkmincnaquadahherry-blossomect,
+--, theme       :: Maybe String
+--, group       :: Maybe String
+--, initOpts    :: Maybe String -- PropTypes.object,
+--, notMerge    :: Maybe Boolean
+--, lazyUpdate  :: Maybe Boolean
+--, loading     :: Maybe Boolean
+--, optsLoading :: Maybe OptsLoading --  PropTypes.object,
+--, onReady     :: Maybe String   --  PropTypes.func,
+--, resizable   :: Maybe Boolean  -- PropTypes.bool,
+--, onEvents    :: Maybe String   -- PropTypes.object
   }
 
 type Option =
@@ -112,10 +112,10 @@ type Legend =
   , itemGap :: Number
   , itemWidth :: Number
   , itemHeight :: Number
-  , formatter :: Maybe String
+--, formatter :: Maybe String
   , selectedMode :: SelectedMode
   , inactiveColor :: Color
-  , selected :: Maybe String -- object
+--, selected :: Maybe String -- object
   , textStyle :: TextStyle
   , "data" :: Array DataLegend
   }
