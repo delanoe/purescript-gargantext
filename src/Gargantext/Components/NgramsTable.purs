@@ -2,7 +2,9 @@ module Gargantext.Components.NgramsTable
   ( PageParams
   , PatchMap
   , NgramsPatch
-  , NgramsTable
+  , NgramsElement
+  , NgramsTerm
+  , NgramsTable(..)
   , VersionedNgramsTable
   , Version
   , Versioned(..)
@@ -15,6 +17,7 @@ module Gargantext.Components.NgramsTable
   , ngramsTableClass
   , MainNgramsTableProps
   , mainNgramsTableSpec
+  , termStyle
   )
   where
 
