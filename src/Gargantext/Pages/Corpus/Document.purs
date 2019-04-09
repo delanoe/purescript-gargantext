@@ -5,6 +5,7 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyO
 import Data.Generic.Rep (class Generic)
 import Data.Lens (Lens', lens, (?~))
 import Data.Generic.Rep.Show (genericShow)
+import Data.Map as M
 import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))
 import Effect.Aff (Aff)
@@ -19,24 +20,28 @@ import Gargantext.Prelude
 import Gargantext.Config          (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.Node (NodePoly(..))
-
+import Gargantext.Components.NgramsTable (NgramsTable(..))
+import Gargantext.Components.Annotated.AnnotatedField as AnnotatedField
 
 type State =
   { document   :: Maybe (NodePoly Document)
+  , annotatedDocument :: AnnotatedDocument
+  , ngramsTable :: NgramsTable
   , inputValue :: String
   }
 
 initialState :: {} -> State
 initialState {} =
-  { document   : Nothing
-  , inputValue : ""
+  { document: Nothing
+  , annotatedDocument: defaultAnnotatedDocument
+  , ngramsTable: NgramsTable M.empty
+  , inputValue: ""
   }
 
 data Action
   = Load Int
   | ChangeString String
   | SetInput String
-
 
 newtype Status = Status { failed    :: Int
                         , succeeded :: Int
@@ -95,27 +100,35 @@ defaultDocumentV3 =
              , title              : Nothing
              }
 
-data Document =
-  Document { abstract           :: Maybe String
-           , authors            :: Maybe String
-           , bdd                :: Maybe String
-           , doi                :: Maybe String
-           , language_iso2      :: Maybe String
-           -- , page               :: Maybe Int
-           , publication_date   :: Maybe String
-           --, publication_second :: Maybe Int
-           --, publication_minute :: Maybe Int
-           --, publication_hour   :: Maybe Int
-           , publication_day    :: Maybe Int
-           , publication_month  :: Maybe Int
-           , publication_year   :: Maybe Int
-           , source             :: Maybe String
-           , institutes         :: Maybe String
-           , title              :: Maybe String
-           , uniqId             :: Maybe String
-           --, url                :: Maybe String
-           --, text               :: Maybe String
-           }
+data Document
+  = Document
+    { abstract           :: Maybe String
+    , authors            :: Maybe String
+    , bdd                :: Maybe String
+    , doi                :: Maybe String
+    , language_iso2      :: Maybe String
+    -- , page               :: Maybe Int
+    , publication_date   :: Maybe String
+    --, publication_second :: Maybe Int
+    --, publication_minute :: Maybe Int
+    --, publication_hour   :: Maybe Int
+    , publication_day    :: Maybe Int
+    , publication_month  :: Maybe Int
+    , publication_year   :: Maybe Int
+    , source             :: Maybe String
+    , institutes         :: Maybe String
+    , title              :: Maybe String
+    , uniqId             :: Maybe String
+    --, url                :: Maybe String
+    --, text               :: Maybe String
+    }
+
+data AnnotatedDocument
+  = AnnotatedDocument
+    { abstract :: AnnotatedField.State }
+
+defaultAnnotatedDocument :: AnnotatedDocument
+defaultAnnotatedDocument = AnnotatedDocument { abstract: AnnotatedField.defaultState }
 
 defaultNodeDocument :: NodePoly Document
 defaultNodeDocument =
@@ -286,86 +299,7 @@ docview = simpleSpec performAction render
           [
             div [className "row"]
             [
-              div [className "col-md-4", style {border : "1px solid black", padding : "34px"}]
-              [
-                div [className "row"]
-                [
-                  div [ className "col-md-12 input-group mb-3"] 
-                      [ select [ className "form-control custom-select"
-                               , onChange (\e -> dispatch (ChangeString $ (unsafeCoerce e).target.value))
-                               ] $ map optps aryPS 
-                      ]
-                ]
-              , div [className "row", style { marginTop : "35px"}]
-                [
-                  nav [ ]
-                  [ div [ className "nav nav-tabs", _id "nav-tab", role "tablist"]
-                    [ a [ className "nav-item nav-link active"
-                        , _id "nav-home-tab"
-                        , _data {toggle : "tab"},href "#nav-home"
-                        , role "tab"
-                        , aria {controls : "nav-home"}
-                        , aria {selected:true}
-                        ] [ text "STOPLIST"]
-                    , a [ className "nav-item nav-link"
-                        , _id "nav-profile-tab"
-                        , _data {toggle : "tab"}
-                        , href "#nav-profile"
-                        , role "tab"
-                        , aria {controls : "nav-profile"}
-                        , aria {selected:true}
-                        ] [ text "MAINLIST"]
-                    , a [ className "nav-item nav-link"
-                        , _id "nav-contact-tab"
-                        , _data {toggle : "tab"}
-                        , href "#nav-contact"
-                        , role "tab"
-                        , aria {controls : "nav-contact"}
-                        , aria {selected:true}
-                        ] [ text "MAPLIST"]
-
-                    ]
-                  ]
-                , div [className "tab-content" , _id "nav-tabContent"]
-                  [
-                    div [ className "tab-pane fade show active"
-                        , role "tabpanel"
-                        , aria {labelledby : "nav-home-tab"}
-                        , _id "nav-home"
-                        ]
-                    [
-                      h6 [] [text "Add a free term to STOPLIST"]
-                    ,  div [className "form-group"]
-                       [ input [ className "form-control"
-                               , _id "id_password"
-                               , name "password"
-                               , placeholder "Any text"
-                               , _type "value"
-                               , value state.inputValue,onInput \e -> dispatch (SetInput (unsafeEventValue e))
-                               ]
-                       , div [className "clearfix"] []
-                       ]
-                    , button [ className "btn btn-primary"
-                             , _type "button"
-                             ] [text "Create and Add"]
-                    ]
-
-                  , div [ className "tab-pane fade show"
-                        , role "tabpanel"
-                        , aria {labelledby : "nav-profile-tab"}
-                        , _id "nav-profile"
-                        ]
-                    [ ]
-                  , div [ className "tab-pane fade show"
-                        , role "tabpanel"
-                        , aria {labelledby : "nav-contact-tab"}
-                        , _id "nav-contact"
-                        ]
-                    [ ]
-                  ]
-                ]
-              ]
-            , div [className "col-md-8"]
+              div [className "col-md-8"]
               [ h4 [] [text' document.title]
               , ul [className "list-group"]
                 [ li' [ span [] [text' document.source]
@@ -382,8 +316,7 @@ docview = simpleSpec performAction render
                       ]
                 ]
               , badge "abstract"
-              , p [] [text' document.abstract]
-              
+              , abstract
               , div [className "jumbotron"]
                 [ p [] [text "Empty Full Text"]
                 ]
@@ -392,12 +325,19 @@ docview = simpleSpec performAction render
           ]
       ]
         where
+          abs = findInDocument (\(Document d) -> d.abstract) state
+          abstract = AnnotatedField.annotatedField { ngrams: state.ngramsTable, text: abs }
           li' = li [className "list-group-item justify-content-between"]
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]
 
           NodePoly {hyperdata : Document document} = 
             maybe defaultNodeDocument identity state.document
+
+findInDocument :: (Document -> Maybe String) -> State -> Maybe String
+findInDocument f state =
+  do (NodePoly d) <- state.document
+     f d.hyperdata
 
 aryPS :: Array String
 aryPS = ["Map", "Main", "Stop"]
