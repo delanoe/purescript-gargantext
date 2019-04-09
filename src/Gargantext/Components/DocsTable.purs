@@ -47,10 +47,10 @@ type NodeID = Int
 type TotalRecords = Int
 
 type Props =
-  { nodeId :: Int
+  { nodeId       :: Int
   , totalRecords :: Int
-  , chart :: ReactElement
-  , tabType :: TabType
+  , chart        :: ReactElement
+  , tabType      :: TabType
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.
   }
@@ -69,8 +69,8 @@ initialState =
   }
 
 _documentIdsToDelete = prop (SProxy :: SProxy "documentIdsToDelete")
-_documentIdsDeleted = prop (SProxy :: SProxy "documentIdsDeleted")
-_localFavorites = prop (SProxy :: SProxy "localFavorites")
+_documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
+_localFavorites      = prop (SProxy :: SProxy "localFavorites")
 
 data Action
   = MarkFavorites Int Boolean

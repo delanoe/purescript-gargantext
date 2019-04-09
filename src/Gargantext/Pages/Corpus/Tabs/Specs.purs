@@ -30,10 +30,10 @@ instance showMode :: Show Mode where
 derive instance eqMode :: Eq Mode
 
 modeTabType :: Mode -> CTabNgramType
-modeTabType Authors = CTabAuthors
-modeTabType Sources = CTabSources
+modeTabType Authors    = CTabAuthors
+modeTabType Sources    = CTabSources
 modeTabType Institutes = CTabInstitutes
-modeTabType Terms = CTabTerms
+modeTabType Terms      = CTabTerms
 
 pureTabs :: Spec {} Props Void
 pureTabs = hideState (const {activeTab: 0}) statefulTabs
@@ -46,14 +46,21 @@ statefulTabs =
     , Tuple "Sources"    $ ngramsViewSpec {mode: Sources}
     , Tuple "Institutes" $ ngramsViewSpec {mode: Institutes}
     , Tuple "Terms"      $ ngramsViewSpec {mode: Terms}
-    , Tuple "Trash"      $ docs -- TODO pass-in trash mode
+    , Tuple "Trash"      $ trash
     ]
   where
     -- TODO totalRecords
     chart = ECharts.chart globalPublis
+    
     docs = cmapProps (\{path: nodeId} ->
                        {nodeId, chart, tabType: TabCorpus TabDocs, totalRecords: 4736}) $
            noState DT.docViewSpec
+
+    trash = cmapProps (\{path: nodeId} ->
+                       {nodeId, chart, tabType: TabCorpus TabTrash, totalRecords: 4736}) $
+           noState DT.docViewSpec
+
+
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
 ngramsViewSpec {mode} =
