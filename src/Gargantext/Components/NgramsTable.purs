@@ -1,23 +1,24 @@
 module Gargantext.Components.NgramsTable
   ( PageParams
   , PatchMap
+  , Action
+  , MainNgramsTableProps
+  , NgramsElement(..)
   , NgramsPatch
   , NgramsTable(..)
-  , NgramsElement(..)
   , NgramsTerm
-  , VersionedNgramsTable
   , Version
   , Versioned(..)
-  , Action
+  , VersionedNgramsTable
+  , highlightNgrams
   , initialPageParams
   , initialState
-  , ngramsTableSpec
-  , ngramsLoaderClass
-  , ngramsLoader
-  , ngramsTableClass
-  , MainNgramsTableProps
   , mainNgramsTableSpec
-  , highlightNgrams
+  , ngramsLoader
+  , ngramsLoaderClass
+  , ngramsTableClass
+  , ngramsTableSpec
+  , termStyle
   )
   where
 
