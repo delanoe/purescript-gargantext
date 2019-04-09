@@ -18,6 +18,9 @@ import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Charts.Options.ECharts (chart) as ECharts
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Tab as Tab
+
+import React (ReactElement)
+import React.DOM (div)
 import Thermite (Spec, hideState, noState, cmapProps)
 
 data Mode = Authors | Sources | Institutes | Terms
@@ -55,9 +58,9 @@ statefulTabs =
     docs = cmapProps (\{path: nodeId} ->
                        {nodeId, chart, tabType: TabCorpus TabDocs, totalRecords: 4736}) $
            noState DT.docViewSpec
-
+    
     trash = cmapProps (\{path: nodeId} ->
-                       {nodeId, chart, tabType: TabCorpus TabTrash, totalRecords: 4736}) $
+                       {nodeId, chart: div [][], tabType: TabCorpus TabTrash, totalRecords: 4736}) $
            noState DT.docViewSpec
 
 
