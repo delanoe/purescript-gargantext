@@ -2,7 +2,9 @@ module Gargantext.Components.NgramsTable
   ( PageParams
   , PatchMap
   , NgramsPatch
-  , NgramsTable
+  , NgramsTable(..)
+  , NgramsElement(..)
+  , NgramsTerm
   , VersionedNgramsTable
   , Version
   , Versioned(..)
@@ -15,12 +17,14 @@ module Gargantext.Components.NgramsTable
   , ngramsTableClass
   , MainNgramsTableProps
   , mainNgramsTableSpec
+  , highlightNgrams
   )
   where
 
 import Control.Monad.State (class MonadState, execState)
 import Control.Monad.Cont.Trans (lift)
 import Data.Array (head)
+import Data.Array as A
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
                      , jsonEmptyObject, (:=), (~>), (.?), (.??) )
 import Data.Either (Either(..))
@@ -36,6 +40,7 @@ import Data.Lens.Fold (folded, traverseOf_)
 import Data.Lens.Record (prop)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.List as List
+import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
@@ -44,6 +49,7 @@ import Data.Traversable (class Traversable, traverse, traverse_, sequence)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Set (Set)
 import Data.Set as Set
+import Data.String as S
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
@@ -56,7 +62,10 @@ import React.DOM.Props (_id, _type, checked, className, name, onChange, onClick,
 import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, StateCoTransformer, defaultPerformAction, modifyState_, simpleSpec, createClass)
 import Unsafe.Coerce (unsafeCoerce)
+import Partial (crashWith)
+import Partial.Unsafe (unsafePartial)
 
+import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Types (TermList(..), TermSize, readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Config (toUrl, End(..), Path(..), TabType(..), OrderBy(..))
 import Gargantext.Config.REST (get, put)
@@ -90,6 +99,7 @@ type Props' = Loader.InnerProps PageParams VersionedNgramsTable ()
 
 type NgramsTerm = String
 
+-----------------------------------------------------------------------------------
 newtype NgramsElement = NgramsElement
   { ngrams      :: NgramsTerm
   , list        :: TermList
@@ -126,6 +136,7 @@ instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
     pure $ NgramsElement {ngrams, list, occurrences, parent, root, children}
 
+-----------------------------------------------------------------------------------
 type Version = Int
 
 newtype Versioned a = Versioned
@@ -169,9 +180,49 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
          $ f <$> (elements :: Array NgramsElement)
     where
       f e@(NgramsElement e') = Tuple e'.ngrams e
+-----------------------------------------------------------------------------------
+
+-- This initial version does not pay attention to word boundaries.
+highlightNgrams :: NgramsTable -> String -> Array (Tuple String (Maybe TermList))
+highlightNgrams (NgramsTable table) input =
+    let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
+    A.reverse (A.fromFoldable (consNonEmpty sN.s sN.l))
+  where
+    pats = A.fromFoldable (Map.keys table)
+    ixs  = indicesOfAny pats input
+
+    consNonEmpty x xs
+      | S.null x  = xs
+      | otherwise = Tuple x Nothing : xs
+
+    -- NOTE that only the first matching pattern is used, the others are ignored!
+    goFold :: Partial => _ -> Tuple Int (Array Int) -> _
+    goFold { i0, s, l } (Tuple i pis) =
+      case A.index pis 0 of
+        Nothing ->
+          { i0, s, l }
+        Just pi ->
+          case A.index pats pi of
+            Nothing ->
+              crashWith "highlightNgrams: out of bounds pattern"
+            Just pat ->
+              let lpat = S.length pat in
+              case Map.lookup pat table of
+                Nothing ->
+                  crashWith "highlightNgrams: pattern missing from table"
+                Just (NgramsElement ne) ->
+                  let s1 = S.splitAt (i - i0) s in
+                  let s2 = S.splitAt lpat s1.after in
+                  { i0: i + lpat
+                  , s:  s2.after
+                  , l:  Tuple s2.before (Just ne.list) : consNonEmpty s1.before l
+                  }
+
+-----------------------------------------------------------------------------------
 
 type VersionedNgramsTable = Versioned NgramsTable
 
+-----------------------------------------------------------------------------------
 data Replace a
   = Keep
   | Replace { old :: a, new :: a }
@@ -394,6 +445,8 @@ applyNgramsTablePatch :: NgramsTablePatch -> NgramsTable -> NgramsTable
 applyNgramsTablePatch p (NgramsTable m) =
   execState (reParentNgramsTablePatch p) $
   NgramsTable $ applyPatchMap applyNgramsPatch p m
+
+-----------------------------------------------------------------------------------
 
 type State =
   { ngramsTablePatch :: NgramsTablePatch
