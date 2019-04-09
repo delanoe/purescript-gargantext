@@ -1,5 +1,6 @@
--- | The ContextMenu component renders a generic context menu
-module Gargantext.Component.ContextMenu.ContextMenu where
+-- | The SimpleItem is a simple context menu item consisting of a link
+-- | It handles automatically closing the context menu for you
+module Gargantext.Component.ContextMenu.SimpleItem where
   -- (MenuProps, Action(..), separator) where
 
 import Prelude hiding (div)
@@ -7,7 +8,6 @@ import Effect (Effect)
 import Data.String (joinWith)
 import React
   ( class ReactComponentSpec
-  , Context, ContextProvider, ContextConsumer
   , ReactClass, ReactElement, ReactClassConstructor, Children
   , component, createElement )
 import React.DOM (a, div, li, ul')
@@ -20,20 +20,34 @@ import Thermite
   , _render )
 import Gargantext.Utils.React (WithChildren, wrap)
 
+-- separator :: ReactElement
+-- separator = div [ className "context-menu-separator" ] []
+
 -- type State' = { open :: Boolean }
 -- newtype State = State State'
 
 -- defaultState :: State
 -- defaultState = State { open: false }
 
--- type MenuProps = { classes :: String, items :: Array (Effect Unit -> ReactElement) }
--- type ItemProps p = { hideMenu :: Context (Effect Unit) | p }
+-- type MenuProps = { classes :: String }
+-- type ItemProps p = { hideMenu :: Effect () | p }
 
 -- data Action = Show | Hide
 
+-- menuClass :: String
+-- menuClass = "context-menu"
 
--- contextMenu :: MenuProps -> ReactElement
--- contextMenu props = createElement contextMenuClass props []
+-- menuShownClass :: String
+-- menuShownClass = "context-menu-shown"
+
+-- menuHiddenClass :: String
+-- menuHiddenClass = "context-menu-hidden"
+
+-- itemClass :: String
+-- itemClass = "context-menu-item"
+
+-- contextMenu :: MenuProps -> Array ReactElement -> ReactElement
+-- contextMenu = createElement contextMenuClass
 
 -- -- TODO: register callbacks
 -- componentDidMount :: Effect Unit
@@ -50,6 +64,13 @@ import Gargantext.Utils.React (WithChildren, wrap)
 -- -- | Wraps an item in an li tag with the item classname
 -- wrapItem :: ReactElement -> ReactElement
 -- wrapItem = wrap $ li [ className itemClass ]
+
+-- renderMenuItem :: Render State MenuItem Action MenuItem
+-- renderMenuItem _ Separator _ _ = li [ className "menu-item-separator" ]
+-- renderMenuItem d (MenuItem i) _ _ = wrap outer inner
+--   where outer = li [ className "context-menu-item" ]
+--         inner = a [ onClick callback, style i.style ] [text i.label]
+--         callback _ = d Hide *> i.callback
 
 -- -- TODO: Aria and accessibility
 -- renderMenu :: Render State MenuProps Action
@@ -86,28 +107,8 @@ import Gargantext.Utils.React (WithChildren, wrap)
 
 -- -- Items
 
--- simpleItem :: Label -> ClassName -> Effect Unit -> ContextConsumer (Effect Unit) -> ReactElement
+-- simpleItem :: Label -> ClassName -> Effect Unit -> Effect Unit -> ReactElement
 -- simpleItem label cls cb hide = a [ onClick (hide *> cb), className cls ] [ text label ]
 
--- separator :: Effect Unit -> ReactElement
--- separator _ = li [ className "menu-item-separator" ] []
-
-
-
--- -- CSS Classes
-
--- menuClass :: String
--- menuClass = "context-menu"
-
--- menuShownClass :: String
--- menuShownClass = "context-menu-shown"
-
--- menuHiddenClass :: String
--- menuHiddenClass = "context-menu-hidden"
-
--- itemClass :: String
--- itemClass = "context-menu-item"
-
--- separatorClass :: String
--- separatorClass = "context-menu-item"
-
+-- separator :: ReactElement
+-- separator = li [ className "menu-item-separator" ] []
