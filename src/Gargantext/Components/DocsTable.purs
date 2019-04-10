@@ -303,10 +303,13 @@ renderPage loaderDispatch { totalRecords, dispatch
                       else
                         div [ ][text r.date]
                     , if (toDelete $ DocumentsView r) then
-                        a [ href (toUrl Front Url_Document (Just r._id)), style {textDecoration : "line-through"}, target "blank"
+                        a [ href (toUrl Front Url_Document (Just r._id))
+                          , style {textDecoration : "line-through"}
+                          , target "_blank"
                         ] [ text r.title ]
                       else
-                        a [ href (toUrl Front Url_Document (Just r._id)), target "blank" ] [ text r.title ]
+                        a [ href (toUrl Front Url_Document (Just r._id))
+                        , target "_blank" ] [ text r.title ]
                     , if (toDelete $ DocumentsView r) then
                         div [style {textDecoration : "line-through"}] [ text r.source]
                       else
