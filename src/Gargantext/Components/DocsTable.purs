@@ -294,7 +294,7 @@ renderPage loaderDispatch { totalRecords, dispatch
                     [ div []
                       [ a [ className $ fa isFav <> "fa-star"
                           , if (toDelete $ DocumentsView r) then style {textDecoration : "line-through"}
-                                                            else style {textDecoration : ""}
+                                                            else style {textDecoration : "none"}
                           , onClick $ (\_-> dispatch $ MarkFavorites r._id (not isFav))] []
                       ]
                     -- TODO show date: Year-Month-Day only
