@@ -29,7 +29,7 @@ import Thermite ( PerformAction, Render, Spec
                 , _render, modifyState, focus, focusState
                 , simpleSpec, withState)
 import Gargantext.Types (TermList(..))
-import Gargantext.Components.NgramsTable (NgramsTable, termStyle)
+import Gargantext.Components.NgramsTable (NgramsTable(..), highlightNgrams, termStyle)
 import Gargantext.Utils.React (WithChildren)
 import Gargantext.Utils.Selection (getSelection, toString)
 import React.SyntheticEvent (SyntheticMouseEvent, pageX, pageY)
@@ -77,18 +77,14 @@ annotatedFieldClass = createClass "AnnotatedField" spec compile
 
 compile :: Props -> State
 compile {text, ngrams} = { runs: runs text, contextMenu: { visible: false } }
-  where runs (Just txt) = hilite ngrams txt
+  where runs (Just txt) = highlight ngrams txt
         runs _ = Nil
 
 -- highlightNgrams :: NgramsTable -> String -> Array (Tuple String (Maybe TermList))
 
 -- TODO HOOK IN string search
-hilite :: NgramsTable -> String -> List Run
-hilite _ _ = List.fromFoldable
-  [ Tuple "Hello" (Just CandidateTerm)
-  , Tuple " " Nothing
-  , Tuple "World" (Just CandidateTerm) ]
--- hilite = map tupleRun <<< highlightNgrams
+highlight :: NgramsTable -> String -> List Run
+highlight n t = List.fromFoldable $ highlightNgrams n t
 
 contextMenuHandler :: (Action -> Effect Unit) -> SyntheticMouseEvent -> Effect Unit
 contextMenuHandler d e =
