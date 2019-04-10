@@ -1,0 +1,22 @@
+{ name = "gargantext"
+, dependencies =
+    [ "affjax"
+    , "argonaut"
+    , "console"
+    , "css"
+    , "effect"
+    , "foldable-traversable"
+    , "foreign-object"
+    , "generics-rep"
+    , "integers"
+    , "js-timers"
+    , "prelude"
+    , "psci-support"
+    , "random"
+    , "routing"
+    , "sequences"
+    , "strings"
+    , "thermite"
+    , "unicode"
+    , "web-html" ]
+, packages = ./packages.dhall }

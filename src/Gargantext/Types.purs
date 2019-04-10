@@ -9,6 +9,8 @@ import Prim.Row (class Union)
 
 data TermSize = MonoTerm | MultiTerm
 
+data Term = Term String TermList
+
 derive instance eqTermSize :: Eq TermSize
 
 instance showTermSize :: Show TermSize where
@@ -57,6 +59,12 @@ instance showTermList :: Show TermList where
   show GraphTerm     = "GraphTerm"
   show StopTerm      = "StopTerm"
   show CandidateTerm = "CandidateTerm"
+
+-- TODO: Can we replace the show instance above with this?
+termListName :: TermList -> String
+termListName GraphTerm = "Graph List"
+termListName StopTerm = "Stop List"
+termListName CandidateTerm = "Candidate List"
 
 readTermList :: String -> Maybe TermList
 readTermList "GraphTerm"     = Just GraphTerm

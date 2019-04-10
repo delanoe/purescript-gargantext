@@ -18,6 +18,7 @@ module Gargantext.Components.NgramsTable
   , MainNgramsTableProps
   , mainNgramsTableSpec
   , highlightNgrams
+  , termStyle
   )
   where
 
