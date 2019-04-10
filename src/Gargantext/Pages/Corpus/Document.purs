@@ -5,7 +5,9 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyO
 import Data.Generic.Rep (class Generic)
 import Data.Lens (Lens', lens, (?~))
 import Data.Generic.Rep.Show (genericShow)
-import Data.Map as M
+import Data.Map as Map
+import Data.Set as Set
+import Data.Tuple (Tuple(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))
 import Effect.Aff (Aff)
@@ -20,8 +22,20 @@ import Gargantext.Prelude
 import Gargantext.Config          (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.NgramsTable (NgramsTable(..))
+import Gargantext.Components.NgramsTable (NgramsTable(..), NgramsElement(..))
 import Gargantext.Components.Annotated.AnnotatedField as AnnotatedField
+import Gargantext.Types (TermList(..))
+
+nge :: String -> Tuple String NgramsElement
+nge word = Tuple word elem where
+  elem = NgramsElement
+    { ngrams: word, list: CandidateTerm
+    , occurrences: 1, parent: Nothing
+    , root: Nothing, children: Set.empty }
+
+testTable :: NgramsTable
+testTable = NgramsTable $ Map.fromFoldable $ nge <$> words
+  where words = [ "the", "quick", "brown", "fox", "jumped", "over", "lazy", "dog" ]
 
 type State =
   { document   :: Maybe (NodePoly Document)
@@ -34,7 +48,7 @@ initialState :: {} -> State
 initialState {} =
   { document: Nothing
   , annotatedDocument: defaultAnnotatedDocument
-  , ngramsTable: NgramsTable M.empty
+  , ngramsTable: testTable
   , inputValue: ""
   }
 
