@@ -15,8 +15,12 @@
     , "random"
     , "routing"
     , "sequences"
+    , "spec"
+    , "spec-quickcheck"
+    , "spec-discovery"
     , "strings"
     , "thermite"
+    , "uint"
     , "unicode"
     , "web-html" ]
 , packages = ./packages.dhall }
