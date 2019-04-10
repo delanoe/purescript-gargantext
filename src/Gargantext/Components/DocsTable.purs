@@ -239,8 +239,8 @@ loadPage {nodeId, tabType, params: {limit, offset, orderBy}} = do
       , ngramCount : r.ngramCount
       , delete : false
      }
-    convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
-    convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
+    convOrderBy (T.ASC  (T.ColumnName "Date"))  = DateAsc
+    convOrderBy (T.DESC (T.ColumnName "Date"))  = DateDesc
     convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
     convOrderBy (T.DESC (T.ColumnName "Title")) = TitleDesc
 
@@ -285,26 +285,29 @@ renderPage loaderDispatch { totalRecords, dispatch
     fa true  = "fas "
     fa false = "far "
     isChecked _id = Set.member _id documentIdsToDelete
+    toDelete  (DocumentsView {_id}) = Set.member _id documentIdsToDelete
     isDeleted (DocumentsView {_id}) = Set.member _id documentIdsDeleted
     isFavorite {_id,fav} = maybe fav identity (localFavorites ^. at _id)
     rows = (\(DocumentsView r) ->
                 let isFav = isFavorite r in
                 { row:
                     [ div []
-                      [ a [className $ fa isFav <> "fa-star" ,onClick $ (\_->
-                          dispatch $ MarkFavorites r._id (not isFav))] []
+                      [ a [ className $ fa isFav <> "fa-star"
+                          , if (toDelete $ DocumentsView r) then style {textDecoration : "line-through"}
+                                                            else style {textDecoration : ""}
+                          , onClick $ (\_-> dispatch $ MarkFavorites r._id (not isFav))] []
                       ]
                     -- TODO show date: Year-Month-Day only
-                    , if (r.delete) then
+                    , if (toDelete $ DocumentsView r) then
                         div [ style {textDecoration : "line-through"}][text r.date]
                       else
                         div [ ][text r.date]
-                    , if (r.delete) then
+                    , if (toDelete $ DocumentsView r) then
                         a [ href (toUrl Front Url_Document (Just r._id)), style {textDecoration : "line-through"}, target "blank"
                         ] [ text r.title ]
                       else
                         a [ href (toUrl Front Url_Document (Just r._id)), target "blank" ] [ text r.title ]
-                    , if (r.delete) then
+                    , if (toDelete $ DocumentsView r) then
                         div [style {textDecoration : "line-through"}] [ text r.source]
                       else
                         div [] [ text r.source]
