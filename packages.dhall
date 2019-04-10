@@ -126,6 +126,22 @@ let additions =
        mkPackage
          [ "prelude", "unsafe-coerce", "partial", "unfoldable", "lazy", "arrays", "profunctor", "maybe", "tuples", "newtype" ]
          "https://github.com/hdgarrood/purescript-sequences.git"
-         "v2.1.0" }
+         "v2.1.0"
+  ,	spec-discovery =
+       mkPackage
+	   [ "prelude", "effect", "arrays", "spec", "node-fs" ]
+	   "https://github.com/purescript-spec/purescript-spec-discovery"
+	   "v3.1.0"
+  ,	spec-quickcheck =
+       mkPackage
+	   [ "prelude", "aff", "random", "quickcheck", "spec" ]
+	   "https://github.com/purescript-spec/purescript-spec-quickcheck"
+	   "v3.1.0"
+   , uint =	
+       mkPackage
+	   [ "maybe", "math", "generics-rep" ]
+	   "https://github.com/zaquest/purescript-uint"
+	   "v5.1.1"
+  }
 
 in  upstream ⫽ overrides ⫽ additions
