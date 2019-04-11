@@ -12,9 +12,9 @@ import Gargantext.Config (TabType(..), TabSubType(..))
 import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
 import Gargantext.Pages.Corpus.Tabs.Types (Props)
 
-import Gargantext.Pages.Corpus.Metrics (metricsSpec)
-import Gargantext.Pages.Corpus.Pie  (pieSpec)
-import Gargantext.Pages.Corpus.Tree (treeSpec)
+import Gargantext.Pages.Corpus.Chart.Metrics (metricsSpec)
+import Gargantext.Pages.Corpus.Chart.Pie  (pieSpec)
+import Gargantext.Pages.Corpus.Chart.Tree (treeSpec)
 
 import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 import Gargantext.Components.NgramsTable as NT

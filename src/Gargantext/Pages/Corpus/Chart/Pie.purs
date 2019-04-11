@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Metrics where
+module Gargantext.Pages.Corpus.Chart.Pie where
 
 import Data.Array (foldl)
 import Data.Tuple (Tuple(..))
@@ -20,6 +20,9 @@ import Gargantext.Components.Charts.Options.Series
 import Gargantext.Components.Charts.Options.Color
 import Gargantext.Components.Charts.Options.Font
 import Gargantext.Components.Charts.Options.Data
+
+import Gargantext.Pages.Corpus.Dashboard (distriBySchool)
+
 
 type Path =
   { corpusId :: Int
@@ -60,7 +63,8 @@ loadedMetricsSpec :: Spec {} (Loader.InnerProps Path Loaded ()) Void
 loadedMetricsSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} (Loader.InnerProps Path Loaded ()) Void
-    render dispatch {loaded} {} _ = [chart (scatterOptions loaded)]
+    render dispatch {loaded} {} _ = [chart distriBySchool]
+    --render dispatch {loaded} {} _ = [chart (scatterOptions loaded)]
 
 scatterOptions :: Array Metric -> Options
 scatterOptions metrics = Options
@@ -107,8 +111,8 @@ metricsLoaderClass = Loader.createLoaderClass "MetricsLoader" getMetrics
 metricsLoader :: Loader.Props' Path Loaded -> ReactElement
 metricsLoader props = createElement metricsLoaderClass props []
 
-metricsSpec :: Spec {} Path Void
-metricsSpec = simpleSpec defaultPerformAction render
+pieSpec :: Spec {} Path Void
+pieSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Path Void
     render dispatch path {} _ =

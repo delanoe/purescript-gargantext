@@ -41,7 +41,7 @@ render dispatch _ state _ = [
         , subTitle  : "Total scientific publications"
         , xAxis     : xAxis' ["2015", "2016", "2017"]
         , yAxis     : yAxis' { position: "left"
-                             , show: true
+                             , show: false
                              }
         , series    : myData
         , addZoom   : false

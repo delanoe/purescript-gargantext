@@ -63,7 +63,7 @@ title mainTitle subTitle =
    ,itemGap: 0.0
    ,zlevel: 2.0
    ,z: 2.0
-   ,left: relativePosition (Relative LeftPos)
+   ,left: relativePosition (Relative RightPos)
    ,top: relativePosition (Relative Top)
    ,right: numberPosition 60.0
    ,bottom: percentPosition 40.0

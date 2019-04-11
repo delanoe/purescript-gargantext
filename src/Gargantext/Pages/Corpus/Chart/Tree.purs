@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Pie where
+module Gargantext.Pages.Corpus.Chart.Tree where
 
 import Data.Array (foldl)
 import Data.Tuple (Tuple(..))
@@ -21,7 +21,7 @@ import Gargantext.Components.Charts.Options.Color
 import Gargantext.Components.Charts.Options.Font
 import Gargantext.Components.Charts.Options.Data
 
-import Gargantext.Pages.Corpus.Dashboard (distriBySchool)
+import Gargantext.Pages.Corpus.Dashboard (treeMapEx)
 
 
 type Path =
@@ -63,7 +63,7 @@ loadedMetricsSpec :: Spec {} (Loader.InnerProps Path Loaded ()) Void
 loadedMetricsSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} (Loader.InnerProps Path Loaded ()) Void
-    render dispatch {loaded} {} _ = [chart distriBySchool]
+    render dispatch {loaded} {} _ = [chart treeMapEx]
     --render dispatch {loaded} {} _ = [chart (scatterOptions loaded)]
 
 scatterOptions :: Array Metric -> Options
@@ -111,8 +111,8 @@ metricsLoaderClass = Loader.createLoaderClass "MetricsLoader" getMetrics
 metricsLoader :: Loader.Props' Path Loaded -> ReactElement
 metricsLoader props = createElement metricsLoaderClass props []
 
-pieSpec :: Spec {} Path Void
-pieSpec = simpleSpec defaultPerformAction render
+treeSpec :: Spec {} Path Void
+treeSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Path Void
     render dispatch path {} _ =
