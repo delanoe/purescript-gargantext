@@ -14,24 +14,28 @@ module Gargantext.Components.Annotated.AnnotatedField where
 import Prelude hiding (div)
 import Data.Unit (Unit, unit)
 import Data.Array (fromFoldable)
-import Data.Maybe (Maybe(..), isJust)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), maybe)
 import Data.Lens (Lens', Prism', over, view, lens)
 import Data.List as List
 import Data.List (List(..), mapWithIndex, toUnfoldable, sortBy)
 import Data.Ordering (Ordering(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
+import Effect.Class.Console (log)
+import Effect.Unsafe (unsafePerformEffect)
 import React (Children, ReactElement, ReactClass, createElement)
 import React.DOM (a, div, p, span, nav, text)
 import React.DOM.Props (className, onContextMenu)
 import Thermite ( PerformAction, Render, Spec
-                , defaultPerformAction, createClass
-                , _render, modifyState, focus, focusState
+                , defaultPerformAction, createClass, createReactSpec
+                , _render, modifyState, writeState, focus, focusState
                 , simpleSpec, withState)
 import Gargantext.Types (TermList(..))
 import Gargantext.Components.NgramsTable (NgramsTable(..), highlightNgrams, termStyle)
 import Gargantext.Utils.React (WithChildren)
 import Gargantext.Utils.Selection (getSelection, toString)
+import React as React
 import React.SyntheticEvent (SyntheticMouseEvent, pageX, pageY)
 
 newtype PageOffset = PageOffset { x :: Number, y :: Number }
@@ -44,9 +48,12 @@ type Props' = ( ngrams :: NgramsTable, text :: Maybe String )
 type Props = { | Props' }
 
 data Action
-  = OnContextMenu PageOffset String
+  = ForceRefresh
+  | OnContextMenu PageOffset String
   | AddTerm String TermList
 
+defaultProps :: Props
+defaultProps = { ngrams: NgramsTable Map.empty, text: Nothing }
 defaultState :: State
 defaultState = { runs: Nil, contextMenu: { visible: false } } -- contextMenu: ContextMenu.defaultState }
 
@@ -54,20 +61,41 @@ annotatedField :: Props -> ReactElement
 annotatedField p = createElement annotatedFieldClass p []
 
 annotatedFieldClass :: ReactClass (WithChildren Props')
-annotatedFieldClass = createClass "AnnotatedField" spec compile
+annotatedFieldClass =
+  React.component "AnnotatedField"
+    (\this -> do
+       -- log $ "AnnotatedField: constructing"
+       s <- spec this
+       pure { state : s.state
+            , render: s.render
+            , componentDidUpdate: \old _s _snap -> do
+                new <- React.getProps this
+                when (old.ngrams /= new.ngrams || old.text /= new.text) do
+                  -- log "AnnotatedField: forcing refresh"
+                  dispatcher this ForceRefresh
+            })
   where
-    spec :: Spec State Props Action
-    spec = simpleSpec performAction render
+    performAction :: PerformAction State Props Action
+    performAction ForceRefresh = forceRefresh
+    performAction _ = \_ _ -> pure unit
     -- performAction (ShowContextMenu i) = showContextMenu i
     -- performAction (AddTerm t l) = addTerm t l
-    performAction :: PerformAction State Props Action
-    performAction = defaultPerformAction
+    -- performAction = defaultPerformAction
     render :: Render State Props Action
     render d _p s _c = [ p [className "annotated-field"] $ children d s.runs ]
     children d = fromFoldable <<< map (renderRun $ contextMenuHandler d)
     renderRun menu (Tuple txt lst)
       | Just list <- lst = span [termStyle list, onContextMenu menu] [text txt]
       | otherwise = span [] [text txt]
+    {spec, dispatcher} = createReactSpec (simpleSpec performAction render) compile
+
+-- performAction handlers
+
+forceRefresh props state =
+  do wrote <- writeState (compile props)
+     log $ msg wrote
+     pure unit
+  where msg = maybe "AnnotatedField: failed to write new state" (const "AnnotatedField: wrote new state")
 
 -- showContextMenu :: PerformAction State Props String
 -- showContextMenu p s = pure unit
@@ -76,13 +104,16 @@ annotatedFieldClass = createClass "AnnotatedField" spec compile
 -- addTerm t l p s = pure unit
 
 compile :: Props -> State
-compile {text, ngrams} = { runs: runs text, contextMenu: { visible: false } }
-  where runs (Just txt) = highlight ngrams txt
+compile props =
+  unsafePerformEffect $
+    do let ret = { runs: runs props.text, contextMenu: { visible: false } }
+       log "Compiling..."
+       pure ret
+  where runs (Just txt) = highlight props.ngrams txt
         runs _ = Nil
 
 -- highlightNgrams :: NgramsTable -> String -> Array (Tuple String (Maybe TermList))
 
--- TODO HOOK IN string search
 highlight :: NgramsTable -> String -> List Run
 highlight n t = List.fromFoldable $ highlightNgrams n t
 
