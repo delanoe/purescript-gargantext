@@ -109,39 +109,57 @@ let additions =
 -}
 
 let mkPackage =
-      https://raw.githubusercontent.com/spacchetti/spacchetti/20181209/src/mkPackage.dhall sha256:8e1c6636f8a089f972b21cde0cef4b33fa36a2e503ad4c77928aabf92d2d4ec9
+      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.3-20190409/src/mkPackage.dhall sha256:0b197efa1d397ace6eb46b243ff2d73a3da5638d8d0ac8473e8e4a8fc528cf57
 
 let upstream =
-      https://raw.githubusercontent.com/spacchetti/spacchetti/20181209/src/packages.dhall sha256:c63285af67ae74feb2f6eb67521712441928d2726ea10e2040774849ca765027
+      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.3-20190409/src/packages.dhall sha256:d327eb707262c9087f8d5caf471690bf69afc8f6307618d9c2ceab13755fb194
 
 let overrides =
-  { thermite =
-       mkPackage
-         [ "aff", "coroutines", "web-dom", "freet", "profunctor-lenses", "react", "react-dom" ]
-         "https://github.com/np/purescript-thermite.git"
-         "hide" }
+      { thermite =
+          mkPackage
+          [ "aff"
+          , "coroutines"
+          , "web-dom"
+          , "freet"
+          , "profunctor-lenses"
+          , "react"
+          , "react-dom"
+          ]
+          "https://github.com/np/purescript-thermite.git"
+          "hide"
+      }
 
-let additions = 
-  { sequences =
-       mkPackage
-         [ "prelude", "unsafe-coerce", "partial", "unfoldable", "lazy", "arrays", "profunctor", "maybe", "tuples", "newtype" ]
-         "https://github.com/hdgarrood/purescript-sequences.git"
-         "v2.1.0"
-  ,	spec-discovery =
-       mkPackage
-	   [ "prelude", "effect", "arrays", "spec", "node-fs" ]
-	   "https://github.com/purescript-spec/purescript-spec-discovery"
-	   "v3.1.0"
-  ,	spec-quickcheck =
-       mkPackage
-	   [ "prelude", "aff", "random", "quickcheck", "spec" ]
-	   "https://github.com/purescript-spec/purescript-spec-quickcheck"
-	   "v3.1.0"
-   , uint =	
-       mkPackage
-	   [ "maybe", "math", "generics-rep" ]
-	   "https://github.com/zaquest/purescript-uint"
-	   "v5.1.1"
-  }
+let additions =
+      { sequences =
+          mkPackage
+          [ "prelude"
+          , "unsafe-coerce"
+          , "partial"
+          , "unfoldable"
+          , "lazy"
+          , "arrays"
+          , "profunctor"
+          , "maybe"
+          , "tuples"
+          , "newtype"
+          ]
+          "https://github.com/hdgarrood/purescript-sequences.git"
+          "v2.1.0"
+      , spec-discovery =
+          mkPackage
+          [ "prelude", "effect", "arrays", "spec", "node-fs" ]
+          "https://github.com/purescript-spec/purescript-spec-discovery"
+          "v3.1.0"
+      , spec-quickcheck =
+          mkPackage
+          [ "prelude", "aff", "random", "quickcheck", "spec" ]
+          "https://github.com/purescript-spec/purescript-spec-quickcheck"
+          "v3.1.0"
+      , uint =
+          mkPackage
+          [ "maybe", "math", "generics-rep" ]
+          "https://github.com/zaquest/purescript-uint"
+          "v5.1.1"
+      }
 
-in  upstream ⫽ overrides ⫽ additions
+in  upstream // overrides // additions
