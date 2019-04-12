@@ -1,7 +1,7 @@
 module Gargantext.Pages.Corpus.Document where
 
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
+import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
 import Data.Generic.Rep (class Generic)
 import Data.Lens (Lens', lens, (?~))
 import Data.Generic.Rep.Show (genericShow)
@@ -9,11 +9,10 @@ import Data.Map as Map
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
 import Data.Maybe (Maybe(..), maybe)
-import Data.Either (Either(..))
 import Effect.Aff (Aff)
 import React (ReactElement)
-import React.DOM (a, button, div, h4, h6, input, li, nav, option, p, select, span, text, ul)
-import React.DOM.Props (_data, _id, _type, aria, className, href, name, onChange, onInput, placeholder, role, style, value)
+import React.DOM (div, h4, li, option, p, span, text, ul)
+import React.DOM.Props (className, value)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 import Control.Monad.Trans.Class (lift)
