@@ -1,7 +1,7 @@
 module Gargantext.Pages.Corpus.Document where
 
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Lens (Lens', lens, (?~))
 import Data.Generic.Rep.Show (genericShow)
@@ -195,9 +195,9 @@ instance decodeStatus :: DecodeJson Status
   where
     decodeJson json = do
       obj <- decodeJson json
-      failed <- obj .? "failed"
-      succeeded <- obj .? "succeeded"
-      remaining <- obj .? "remaining"
+      failed <- obj .: "failed"
+      succeeded <- obj .: "succeeded"
+      remaining <- obj .: "remaining"
       pure $ Status {failed, succeeded, remaining}
 
 
@@ -205,23 +205,23 @@ instance decodeDocumentV3 :: DecodeJson DocumentV3
   where
     decodeJson json = do
       obj <- decodeJson json
-      abstract <- obj .?? "abstract"
-      authors  <- obj .? "authors"
-      --error    <- obj .? "error"
-      language_iso2 <- obj .? "language_iso2"
-      language_iso3 <- obj .? "language_iso3"
-      language_name <- obj .? "language_name"
-      publication_date   <- obj .? "publication_date"
-      publication_day    <- obj .? "publication_day"
-      publication_hour   <- obj .? "publication_hour"
-      publication_minute <- obj .? "publication_minute"
-      publication_month  <- obj .? "publication_month"
-      publication_second <- obj .? "publication_second"
-      publication_year   <- obj .? "publication_year"
-      realdate_full_     <- obj .? "realdate_full_"
-      source   <- obj .? "source"
-      statuses <- obj .? "statuses"
-      title    <- obj .? "title"
+      abstract <- obj .:? "abstract"
+      authors  <- obj .: "authors"
+      --error    <- obj .: "error"
+      language_iso2 <- obj .: "language_iso2"
+      language_iso3 <- obj .: "language_iso3"
+      language_name <- obj .: "language_name"
+      publication_date   <- obj .: "publication_date"
+      publication_day    <- obj .: "publication_day"
+      publication_hour   <- obj .: "publication_hour"
+      publication_minute <- obj .: "publication_minute"
+      publication_month  <- obj .: "publication_month"
+      publication_second <- obj .: "publication_second"
+      publication_year   <- obj .: "publication_year"
+      realdate_full_     <- obj .: "realdate_full_"
+      source   <- obj .: "source"
+      statuses <- obj .: "statuses"
+      title    <- obj .: "title"
       pure $ DocumentV3 { abstract
                         , authors
                         --, error
@@ -245,25 +245,25 @@ instance decodeDocument :: DecodeJson Document
   where
     decodeJson json = do
       obj <- decodeJson json
-      abstract <- obj .?? "abstract"
-      authors  <- obj .?? "authors"
-      bdd      <- obj .?? "bdd"
-      doi      <- obj .?? "doi"
-      language_iso2 <- obj .?? "language_iso2"
-      -- page          <- obj .?? "page"
-      publication_date   <- obj .?? "publication_date"
-      --publication_second <- obj .?? "publication_second"
-      --publication_minute <- obj .?? "publication_minute"
-      --publication_hour   <- obj .?? "publication_hour"
-      publication_day    <- obj .?? "publication_day"
-      publication_month  <- obj .?? "publication_month"
-      publication_year   <- obj .?? "publication_year"
-      source             <- obj .?? "sources"
-      institutes         <- obj .?? "institutes"
-      title              <- obj .?? "title"
-      uniqId             <- obj .?? "uniqId"
-      --url                <- obj .? "url"
-      --text               <- obj .? "text"
+      abstract <- obj .:? "abstract"
+      authors  <- obj .:? "authors"
+      bdd      <- obj .:? "bdd"
+      doi      <- obj .:? "doi"
+      language_iso2 <- obj .:? "language_iso2"
+      -- page          <- obj .:? "page"
+      publication_date   <- obj .:? "publication_date"
+      --publication_second <- obj .:? "publication_second"
+      --publication_minute <- obj .:? "publication_minute"
+      --publication_hour   <- obj .:? "publication_hour"
+      publication_day    <- obj .:? "publication_day"
+      publication_month  <- obj .:? "publication_month"
+      publication_year   <- obj .:? "publication_year"
+      source             <- obj .:? "sources"
+      institutes         <- obj .:? "institutes"
+      title              <- obj .:? "title"
+      uniqId             <- obj .:? "uniqId"
+      --url                <- obj .: "url"
+      --text               <- obj .: "text"
       pure $ Document { abstract
                       , authors
                       , bdd
