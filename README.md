@@ -19,10 +19,10 @@ Institute of Paris Île-de-France (ISC-PIF) and its partners.
 ### Installing dependencies
 
 Before building gargantext, you must install the dependencies. We use
-[yarn](https://yarnpkg.com/en/) for this. They have excellent[install
-instructions](https://yarnpkg.com/en/docs/install).
+[yarn](https://yarnpkg.com/en/) for this. They have excellent
+[installation instructions](https://yarnpkg.com/en/docs/install).
 
-Then you must install the javascript and purescript dependencies:
+Once you have yarn installed, you may install everything else simply:
 
 ```shell
 yarn install && yarn install-ps
@@ -32,6 +32,12 @@ yarn install && yarn install-ps
 
 ```shell
 yarn build
+```
+
+### Getting a purescript repl
+
+```shell
+yarn repl
 ```
 
 ## Note to the contributors
