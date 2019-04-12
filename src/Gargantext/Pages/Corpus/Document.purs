@@ -29,7 +29,7 @@ import Gargantext.Types (TermList(..))
 nge :: String -> Tuple String NgramsElement
 nge word = Tuple word elem where
   elem = NgramsElement
-    { ngrams: word, list: CandidateTerm
+    { ngrams: word, list: StopTerm
     , occurrences: 1, parent: Nothing
     , root: Nothing, children: Set.empty }
 
@@ -314,7 +314,7 @@ docview = simpleSpec performAction render
             div [className "row"]
             [
               div [className "col-md-8"]
-              [ h4 [] [text' document.title]
+              [ h4 [] [annotate document.title]
               , ul [className "list-group"]
                 [ li' [ span [] [text' document.source]
                       , badge "source"
@@ -330,7 +330,7 @@ docview = simpleSpec performAction render
                       ]
                 ]
               , badge "abstract"
-              , abstract
+              , annotate document.abstract
               , div [className "jumbotron"]
                 [ p [] [text "Empty Full Text"]
                 ]
@@ -339,12 +339,10 @@ docview = simpleSpec performAction render
           ]
       ]
         where
-          abs = findInDocument (\(Document d) -> d.abstract) state
-          abstract = AnnotatedField.annotatedField { ngrams: state.ngramsTable, text: abs }
+          annotate t = AnnotatedField.annotatedField { ngrams: state.ngramsTable, text: t }
           li' = li [className "list-group-item justify-content-between"]
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]
-
           NodePoly {hyperdata : Document document} = 
             maybe defaultNodeDocument identity state.document
 

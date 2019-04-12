@@ -110,6 +110,10 @@ newtype NgramsElement = NgramsElement
   , children    :: Set NgramsTerm
   }
 
+derive instance eqNgramsElement :: Eq NgramsElement
+derive instance eqNgramsTable :: Eq NgramsTable
+
+
 _parent = prop (SProxy :: SProxy "parent")
 _root = prop (SProxy :: SProxy "root")
 _ngrams = prop (SProxy :: SProxy "ngrams")
