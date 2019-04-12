@@ -8,3 +8,11 @@
 /.purs*
 /.psa*
 /.spago
+
+/dist/*
+!/dist/styles/
+!/dist/examples/
+!/dist/fonts/
+!/dist/images/
+!/dist/js/
+/dist/styles/*map
