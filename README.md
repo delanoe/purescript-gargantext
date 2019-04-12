@@ -28,13 +28,13 @@ Once you have yarn installed, you may install everything else simply:
 yarn install && yarn install-ps
 ```
 
-### Building
+You may now build:
 
 ```shell
 yarn build
 ```
 
-### Getting a purescript repl
+And run a repl:
 
 ```shell
 yarn repl
@@ -44,7 +44,32 @@ yarn repl
 
 Please follow CONTRIBUTING.md
 
-## Introduction
+### How do I?
+
+#### Add a javascript dependency?
+
+Add it to `package.json`, under `dependencies` if it is needed at
+runtime or `devDependencies` if it is not.
+
+#### Add a purescript dependency?
+
+Add it to `psc-package.json` without the `purescript-` prefix.
+
+If is not in the package set, you will need to read the next section.
+
+#### Add a custom or override package to the local package set?
+
+You need to add an entry to the relevant map in
+`packages.dhall`. There are comments in the file explaining how it
+works. It's written in dhall, so you can use comments and such.
+
+#### Upgrade the base package set local is based on to latest?
+
+```shell
+yarn rebase-set
+```
+
+## Theory Introduction
 
 Making sense of out text isn't actually that hard, but it does require
 a little background knowledge to understand.
