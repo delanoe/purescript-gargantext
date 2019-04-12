@@ -24,10 +24,11 @@ import Effect.Class.Console (log)
 import Effect.Unsafe (unsafePerformEffect)
 import React (ReactElement, ReactClass, createElement)
 import React.DOM (p, span, text)
-import React.DOM.Props (className, onContextMenu)
+import React.DOM.Props as Props
+import React.DOM.Props (className, onContextMenu, style)
 import Thermite (PerformAction, Render, createReactSpec, simpleSpec, writeState)
-import Gargantext.Types (TermList)
-import Gargantext.Components.NgramsTable (NgramsTable(..), highlightNgrams, termStyle)
+import Gargantext.Types (TermList(..))
+import Gargantext.Components.NgramsTable (NgramsTable(..), highlightNgrams)
 import Gargantext.Utils.React (WithChildren)
 import Gargantext.Utils.Selection (getSelection, toString)
 import React as React
@@ -121,6 +122,11 @@ contextMenuHandler d e =
           do x <- pageX e
              y <- pageY e
              pure $ PageOffset { x, y }
+
+termStyle :: TermList -> Props.Props
+termStyle GraphTerm     = style {backgroundColor: "green"}
+termStyle StopTerm      = style {backgroundColor: "red", textDecoration : "line-through"}
+termStyle CandidateTerm = style {backgroundColor: "black"}
 
 _runs :: Lens' State (List Run)
 _runs = lens (\a -> a.runs) (\a r -> a { runs = r })
