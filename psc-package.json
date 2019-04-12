@@ -1,7 +1,7 @@
 {
   "name": "gargantext",
-  "set": "master",
-  "source": "https://github.com/np/package-sets.git",
+  "set": "local",
+  "source": ".psc-package",
   "depends": [
     "spec-quickcheck",
     "spec-discovery",
