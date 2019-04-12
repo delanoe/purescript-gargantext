@@ -1,4 +1,8 @@
 {
-    "presets": ["es2015"]
-
+  sourceMaps: "inline",
+  presets: [
+    ["@babel/preset-env", {"useBuiltIns": "usage", "corejs": 3}],
+    "@babel/preset-react"
+  ],
+  plugins: []
 }
