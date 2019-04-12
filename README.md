@@ -63,10 +63,16 @@ You need to add an entry to the relevant map in
 `packages.dhall`. There are comments in the file explaining how it
 works. It's written in dhall, so you can use comments and such.
 
+You will then need to rebuild the package set:
+
+```shell
+yarn rebuild-set
+```
+
 #### Upgrade the base package set local is based on to latest?
 
 ```shell
-yarn rebase-set
+yarn rebase-set && yarn rebuild-set
 ```
 
 ## Theory Introduction
@@ -124,7 +130,7 @@ unigram/1-gram
 : A one-word n-gram, e.g. `cow`, `coffee`
 bigram/2-gram
 : A two-word n-gram, e.g. `coffee cup`
-trigram
+trigram/3-gram
 : A three-word n-gram, e.g. `coffee cup holder`
 <!-- skip-grams are not yet supported -->
 <!-- skip-gram -->
