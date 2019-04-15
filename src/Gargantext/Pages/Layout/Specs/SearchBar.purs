@@ -1,37 +1,17 @@
 module Gargantext.Pages.Layout.Specs.SearchBar
   (State, Action(..), initialState, performAction, renderSpec) where
 
-import Data.Foldable (fold, intercalate)
 import Data.Lens (Lens', lens, over, (^.), (.~))
-import Data.Maybe (Maybe(Nothing, Just))
-import Effect (Effect)
+import Data.Newtype as N
 import Effect.Class.Console (log)
-import React (ReactElement)
-import React.DOM (a, button, div, footer, hr', img, input, li, p, span, text, ul,i)
-import React.DOM.Props (_data, _id, _type, aria, className, href, onChange, onClick, placeholder, role, src, style, tabIndex, target, title)
-import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
+import Effect.Class                                    (liftEffect)
+import React.DOM (button, div, i, input, li, text, ul)
+import React.DOM.Props (_type, className, onChange, onClick, placeholder, style)
+import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
-import Gargantext.Components.Data.Lang (Lang(..))
-import Gargantext.Components.Login.Types (AuthData(..))
-import Gargantext.Components.Login as LN
-import Gargantext.Components.Tree  as Tree
-import Gargantext.Folder           as F
-import Gargantext.Pages.Annuaire   as A
-import Gargantext.Pages.Annuaire.User.Contacts as C
-import Gargantext.Pages.Corpus     as Corpus
-import Gargantext.Pages.Corpus.Document as Annotation
-import Gargantext.Pages.Corpus.Dashboard as Dsh
-import Gargantext.Pages.Corpus.Graph as GE
-import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Specs.AddCorpus as AC
-import Gargantext.Pages.Layout.Specs.Search    as S
-import Gargantext.Router (Routes(..))
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
 import Gargantext.Components.Modals.Modal              (modalShow)
-import Effect.Class                                    (liftEffect)
-import Data.Newtype as N
 
 type State' = { open :: Boolean, searchTerm :: String }
 
