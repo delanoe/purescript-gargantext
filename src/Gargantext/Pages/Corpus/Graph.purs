@@ -20,13 +20,14 @@ import Data.Maybe (Maybe(..), fromJust, fromMaybe, isNothing)
 import Data.Newtype (class Newtype)
 import Data.String (joinWith)
 import Data.Symbol (SProxy(..))
+import Data.Traversable (for_)
 import Effect (Effect)
 import Effect.Aff (Aff, attempt)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Uncurried (runEffectFn1, runEffectFn2)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, getCameraProps, goTo, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, CameraProps, getCameraProps, goTo, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
@@ -35,6 +36,7 @@ import Gargantext.Config as Config
 import Gargantext.Config.REST (get, post)
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Prelude (flip)
+import Gargantext.Types (class Optional)
 import Gargantext.Utils (getter)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
@@ -325,6 +327,12 @@ defaultPalette' = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","
 intColor :: Int -> Color
 intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
 
+modCamera0 :: forall o. Optional o CameraProps =>
+              (Record CameraProps -> Record o) -> Effect Unit
+modCamera0 f = do
+  s <- getSigmaRef
+  for_ (cameras s !! 0) $ \cam ->
+    void $ goTo cam (f $ getCameraProps cam)
 
 type NOverlapConfig =
   { nodes :: Array SigmaNode
@@ -503,6 +511,11 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
                   ]
                 , li'
+                  [ button [ className "btn btn-primary"
+                           , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
+                           ] [text "Center"]
+                  ]
+                , li'
                   [ button [className "btn btn-primary"
                             , onClick \_ -> do
                                              _ <- log "Hey there" -- $ show st.camera
@@ -513,7 +526,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
               ]
             ]
             else div [] []
-           ]
+         ]
          , div [className "row"]
            [div [if (st.showSidePanel && st.showTree) then className "col-md-10" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
              [ div [style {height: "90%"}] $
@@ -529,14 +542,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                              , ref: setSigmaRef
                              , onClickNode : \e ->
                              unsafePerformEffect $ do
-                               _ <- log " hello 2"
-                               s <- getSigmaRef
-                               case (cameras s !! 0) of
-                                 Just cam -> do
-                                   let camP = getCameraProps cam
-                                   _ <- log $ show camP
-                                   void $ goTo cam {ratio: camP.ratio / 2.0}
-                                 Nothing  -> pure unit
+                               modCamera0 $ \{ratio} -> {ratio: ratio / 2.0}
                                _ <- d $ ShowSidePanel true
                                _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
                                pure unit
