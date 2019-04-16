@@ -16,7 +16,7 @@ import Data.Int (fromString, toNumber)
 import Data.Int as Int
 import Data.Lens (Lens, Lens', over, (%~), (+~), (.~), (^.))
 import Data.Lens.Record (prop)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe, isNothing)
 import Data.Newtype (class Newtype)
 import Data.String (joinWith)
 import Data.Symbol (SProxy(..))
@@ -26,7 +26,7 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Uncurried (runEffectFn1, runEffectFn2)
-import Gargantext.Components.GraphExplorer.Sigmajs (Camera, Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, applyOnCamera, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, getCameraProps, goTo, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
@@ -57,7 +57,6 @@ data Action
   | ChangeLabelSize Number
   | ChangeNodeSize Number
   | DisplayEdges
-  | SaveCamera Camera
 --  | Zoom Boolean
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
@@ -93,10 +92,6 @@ _drawEdges' = prop (SProxy :: SProxy "drawEdges")
 _drawEdges :: Lens' SigmaSettings Boolean
 _drawEdges f = unsafeCoerce $ _drawEdges' f
 
-_camera :: forall s a. Lens' { camera :: a | s } a
-_camera = prop (SProxy :: SProxy "camera")
-
-
 -- TODO remove newtype here
 newtype State = State
   { graphData :: GraphData
@@ -110,7 +105,6 @@ newtype State = State
   , corpusId :: Int
   , treeId :: Maybe TreeId
   , settings :: SigmaSettings
-  , camera :: Maybe Camera
   }
 
 initialState :: State
@@ -126,7 +120,6 @@ initialState = State
   , corpusId : 0
   , treeId : Nothing
   , settings : mySettings
-  , camera : Nothing
   }
 
 -- This one is not used: specOld is the one being used.
@@ -177,11 +170,6 @@ performAction DisplayEdges _ _ =
   modifyState_ $ \(State s) -> do
     State $ ((_settings <<< _drawEdges) %~ not) s
 
-performAction (SaveCamera c) _ _ =
-  modifyState_ $ \(State s) -> do
-    State $ ((_camera) .~ cam) s
-    where cam = Just {x: 0.0, y: 0.0, ratio: 0.0, angle: 0.0}
-
 --performAction (Zoom True) _ _ =
 --  modifyState_ $ \() -> do
 --    State $
@@ -213,8 +201,7 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
               , settings
               , renderer : canvas
               , style : sStyle { height : "96%"}
-              -- , ref: applyOnCamera
-              , ref: applyOnCamera $ d <<< SaveCamera
+              , ref: saveSigmaRef
               , onClickNode : \e -> unsafePerformEffect $ do
                  _ <- log "this should be deleted"
                  -- _ <- logs $ unsafeCoerce e
@@ -522,7 +509,6 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                                              pure unit
                            ] [text "Save"] -- TODO: Implement Save!
                   ]
-
                 ]
               ]
             ]
@@ -540,11 +526,17 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                      [ sigma { graph, settings
                              , renderer : canvas
                              , style : sStyle { height : "95%"}
-                             , ref: applyOnCamera $ d <<< SaveCamera
+                             , ref: setSigmaRef
                              , onClickNode : \e ->
                              unsafePerformEffect $ do
                                _ <- log " hello 2"
-                               _ <- log $ show st.camera
+                               s <- getSigmaRef
+                               case (cameras s !! 0) of
+                                 Just cam -> do
+                                   let camP = getCameraProps cam
+                                   _ <- log $ show camP
+                                   void $ goTo cam {ratio: camP.ratio / 2.0}
+                                 Nothing  -> pure unit
                                _ <- d $ ShowSidePanel true
                                _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
                                pure unit

@@ -4,8 +4,9 @@ import Prelude
 
 import Data.Nullable (Nullable)
 import Effect (Effect)
-import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn1, runEffectFn2)
+import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn1, runEffectFn1)
 import React (Children, ReactClass, ReactElement, ReactRef, SyntheticEventHandler, createElement, unsafeCreateElement)
+import Record.Unsafe (unsafeGet)
 import Thermite (EventHandler)
 import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Types (class Optional)
@@ -246,20 +247,29 @@ sigmaSettings = unsafeCoerce
 
 foreign import data SigmaStyle :: Type
 
-type Camera =
-  {
-    x :: Number,
-    y :: Number,
-    ratio :: Number,
-    angle :: Number
-  }
+type CameraProps =
+  ( x :: Number
+  , y :: Number
+  , ratio :: Number
+  , angle :: Number
+  )
 
-foreign import applyOnCameraImpl :: forall a. EffectFn2 (Nullable ReactRef) (a -> EventHandler) Unit
+foreign import data SigmaInstance' :: # Type
+foreign import data CameraInstance' :: # Type
+type SigmaInstance = { | SigmaInstance' }
+type CameraInstance = { | CameraInstance' }
+foreign import setSigmaRef :: EffectFn1 (Nullable ReactRef) Unit
+foreign import getSigmaRef :: Effect SigmaInstance
+cameras :: SigmaInstance -> Array CameraInstance
+cameras = unsafeGet "cameras"
 
-applyOnCamera :: forall a. (a -> EventHandler) -> EffectFn1 (Nullable ReactRef) Unit
-applyOnCamera a = mkEffectFn1 h
-  where h ::  Nullable ReactRef -> Effect Unit
-        h r = runEffectFn2 applyOnCameraImpl r a
+getCameraProps :: CameraInstance -> { | CameraProps }
+getCameraProps = unsafeCoerce
+
+foreign import goToImpl :: forall o. CameraInstance -> EffectFn1 { | o } CameraInstance
+
+goTo :: forall o. Optional o CameraProps => CameraInstance -> { | o } -> Effect CameraInstance
+goTo cam = runEffectFn1 (goToImpl cam)
 
 type SigmaProps =
   ( renderer :: Renderer

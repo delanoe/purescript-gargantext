@@ -40,13 +40,18 @@ exports.forceLinkClass = FL.default;
 
 }
 
-const applyOnCamera = function(props, f){
-    if (props != null) {
-        const camera = props.sigma.cameras[0];
-        // console.log(camera);
-        // console.log(f);
-        f(camera)();
-    }
+exports.setSigmaRef = function(props) {
+  if (props.sigma) {
+    window.sigmaGargInstance = props.sigma;
+  }
+};
+exports.getSigmaRef = function() {
+  return window.sigmaGargInstance;
+};
+exports.goToImpl = function(cam) {
+  return function(props) {
+    console.log("goTo", cam, props);
+    return cam.goTo(props);
+  };
 };
 
-exports.applyOnCameraImpl = applyOnCamera;
