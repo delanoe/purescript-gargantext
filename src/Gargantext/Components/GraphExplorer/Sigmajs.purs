@@ -271,6 +271,8 @@ foreign import goToImpl :: forall o. CameraInstance -> EffectFn1 { | o } CameraI
 goTo :: forall o. Optional o CameraProps => CameraInstance -> { | o } -> Effect CameraInstance
 goTo cam = runEffectFn1 (goToImpl cam)
 
+foreign import pauseForceAtlas2 :: Effect Unit
+
 type SigmaProps =
   ( renderer :: Renderer
   , settings :: SigmaSettings

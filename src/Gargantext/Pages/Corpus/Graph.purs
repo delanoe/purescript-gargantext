@@ -27,7 +27,7 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Uncurried (runEffectFn1, runEffectFn2)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, CameraProps, getCameraProps, goTo, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, CameraProps, getCameraProps, goTo, pauseForceAtlas2, sStyle, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
@@ -253,7 +253,7 @@ mySettings :: SigmaSettings
 mySettings = sigmaSettings { verbose : true
                            , drawLabels: true
                            , drawEdgeLabels: true
-                           , drawEdges: false
+                           , drawEdges: true
                            , drawNodes: true
                            , labelSize : "proportional"
                            --, nodesPowRatio: 0.3
@@ -514,6 +514,11 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   [ button [ className "btn btn-primary"
                            , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
                            ] [text "Center"]
+                  ]
+                , li'
+                  [ button [ className "btn btn-primary"
+                           , onClick \_ -> pauseForceAtlas2
+                           ] [text "Pause"]
                   ]
                 , li'
                   [ button [className "btn btn-primary"
