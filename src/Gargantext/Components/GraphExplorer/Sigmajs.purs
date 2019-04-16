@@ -260,6 +260,7 @@ type SigmaInstance = { | SigmaInstance' }
 type CameraInstance = { | CameraInstance' }
 foreign import setSigmaRef :: EffectFn1 (Nullable ReactRef) Unit
 foreign import getSigmaRef :: Effect SigmaInstance
+foreign import sigmaOnMouseMove :: forall o. o -> Effect Unit
 cameras :: SigmaInstance -> Array CameraInstance
 cameras = unsafeGet "cameras"
 
