@@ -12,6 +12,7 @@ import Gargantext.Config (TabType(..), TabSubType(..))
 import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
 import Gargantext.Pages.Corpus.Tabs.Types (Props)
 
+import Gargantext.Pages.Corpus.Chart.Histo (histoSpec)
 import Gargantext.Pages.Corpus.Chart.Metrics (metricsSpec)
 import Gargantext.Pages.Corpus.Chart.Pie  (pieSpec)
 import Gargantext.Pages.Corpus.Chart.Tree (treeSpec)
@@ -56,16 +57,20 @@ statefulTabs =
     ]
   where
     -- TODO totalRecords
-    chart = ECharts.chart globalPublis
-    
-    docs = cmapProps (\{path: nodeId} ->
-                       {nodeId, chart          , tabType: TabCorpus TabDocs, totalRecords: 4736}) $
-           noState DT.docViewSpec
-    
-    trash = cmapProps (\{path: nodeId} ->
-                       {nodeId, chart: div [][], tabType: TabCorpus TabTrash, totalRecords: 4736}) $
-           noState DT.docViewSpec
 
+    docs = noState ( cmapProps (\{path: corpusId} -> {corpusId : corpusId}) histoSpec
+                              <>
+                     (cmapProps (\{path: nodeId} -> { nodeId : nodeId
+                                         , chart  : div [][] -- ECharts.chart globalPublis
+                                         , tabType: TabCorpus TabDocs
+                                         , totalRecords: 4736}) $ noState DT.docViewSpec
+                                    )
+                    )
+    
+    trash = cmapProps (\{path: nodeId} -> { nodeId
+                                          , chart: div [][]
+                                          , tabType: TabCorpus TabTrash
+                                          , totalRecords: 4736}) $ noState DT.docViewSpec
 
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action

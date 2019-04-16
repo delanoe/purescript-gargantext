@@ -19,6 +19,7 @@ import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
+import Data.Int (fromString)
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
@@ -81,7 +82,7 @@ newtype DocumentsView
   = DocumentsView
     { _id    :: Int
     , url    :: String
-    , date   :: String
+    , date   :: Int
     , title  :: String
     , source :: String
     , fav    :: Boolean
@@ -98,7 +99,6 @@ instance showDocumentsView :: Show DocumentsView where
 
 newtype Response = Response
   { cid        :: Int
-  , created    :: String
   , hyperdata  :: Hyperdata
   , favorite   :: Boolean
   , ngramCount :: Int
@@ -108,6 +108,7 @@ newtype Response = Response
 newtype Hyperdata = Hyperdata
   { title  :: String
   , source :: String
+  , pub_year   :: Int
   }
 
 --instance decodeHyperdata :: DecodeJson Hyperdata where
@@ -130,20 +131,19 @@ newtype Hyperdata = Hyperdata
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj    <- decodeJson json
-    title  <- obj .| "title"
-    source <- obj .| "source"
-    pure $ Hyperdata { title,source }
+    title  <- obj .? "title"
+    source <- obj .? "source"
+    pub_year <- obj .? "publication_year"
+    pure $ Hyperdata { title,source, pub_year}
 
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
     obj        <- decodeJson json
     cid        <- obj .? "id"
-    created    <- pure "2019"
-    --created    <- obj .? "date"
     favorite   <- obj .? "favorite"
     ngramCount <- obj .? "id"
     hyperdata  <- obj .? "hyperdata"
-    pure $ Response { cid, created, favorite, ngramCount, hyperdata }
+    pure $ Response { cid, favorite, ngramCount, hyperdata }
 
 
 
@@ -168,7 +168,6 @@ layoutDocview = simpleSpec performAction render
       void $ lift $ if fav
         then putFavorites    nodeId (FavoriteQuery {favorites: [nid]})
         else deleteFavorites nodeId (FavoriteQuery {favorites: [nid]})
-    --TODO add array of delete rows here
     performAction (ToggleDocumentToDelete nid) _ _ =
       modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
     performAction Trash {nodeId} {documentIdsToDelete} = do
@@ -232,7 +231,7 @@ loadPage {nodeId, tabType, params: {limit, offset, orderBy}} = do
     res2corpus (Response r) =
       DocumentsView { _id : r.cid
       , url    : ""
-      , date   :  r.created
+      , date   : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
       , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
       , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
       , fav    : r.favorite
@@ -299,9 +298,9 @@ renderPage loaderDispatch { totalRecords, dispatch
                       ]
                     -- TODO show date: Year-Month-Day only
                     , if (toDelete $ DocumentsView r) then
-                        div [ style {textDecoration : "line-through"}][text r.date]
+                        div [ style {textDecoration : "line-through"}][text (show r.date)]
                       else
-                        div [ ][text r.date]
+                        div [ ][text (show r.date)]
                     , if (toDelete $ DocumentsView r) then
                         a [ href (toUrl Front Url_Document (Just r._id))
                           , style {textDecoration : "line-through"}
@@ -329,11 +328,11 @@ pageLoader props = React.createElement pageLoaderClass props []
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
-sampleData' = DocumentsView {_id : 1, url : "", date : "date3", title : "title", source : "source", fav : false, ngramCount : 1, delete : false}
+sampleData' = DocumentsView {_id : 1, url : "", date : 2010, title : "title", source : "source", fav : false, ngramCount : 1, delete : false}
 
 sampleData :: Array DocumentsView
 --sampleData = replicate 10 sampleData'
-sampleData = map (\(Tuple t s) -> DocumentsView {_id : 1, url : "", date : "2017", title: t, source: s, fav : false, ngramCount : 10, delete : false}) sampleDocuments
+sampleData = map (\(Tuple t s) -> DocumentsView {_id : 1, url : "", date : 2017, title: t, source: s, fav : false, ngramCount : 10, delete : false}) sampleDocuments
 
 sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
