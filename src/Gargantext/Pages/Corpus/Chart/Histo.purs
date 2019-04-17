@@ -22,9 +22,6 @@ import Gargantext.Components.Charts.Options.Color
 import Gargantext.Components.Charts.Options.Font
 import Gargantext.Components.Charts.Options.Data
 
-import Gargantext.Pages.Corpus.Dashboard (distriBySchool)
-
-
 type Path =
   { corpusId :: Int
   }
@@ -57,7 +54,6 @@ loadedMetricsSpec :: Spec {} (Loader.InnerProps Path Loaded ()) Void
 loadedMetricsSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} (Loader.InnerProps Path Loaded ()) Void
-    -- render dispatch {loaded} {} _ = [chart distriBySchool]
     render dispatch {loaded:histoMetrics} {} _ = [chart (chartOptions histoMetrics)]
 
 chartOptions :: HistoMetrics -> Options

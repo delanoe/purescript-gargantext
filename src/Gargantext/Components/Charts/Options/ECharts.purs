@@ -146,7 +146,7 @@ xAxis' xs = xAxis
             }
   where
     xData :: Array String -> Array DataAxis
-    xData = map (\x -> {value : x, textStyle : textStyle'})
+    xData = map (\x -> {value : x, textStyle : textStyle})
 
 -- TODO try to use Optional
 yAxis' :: { position :: String
@@ -228,7 +228,7 @@ textStyle2 =
     ,fontStyle: chartFontStyle italic
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
-    ,fontSize: 12
+    ,fontSize: 11
     ,align: relativePosition $ Relative RightPos
     ,verticalAlign: relativePosition $ Relative Bottom
     ,lineHeight: percentPosition 0.0
@@ -270,14 +270,14 @@ textStyle =
     ,fontStyle: chartFontStyle normal
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
-    ,fontSize: 20
+    ,fontSize: 15
     ,align: relativePosition $ Relative LeftPos
     ,verticalAlign: relativePosition $ Relative Top
     ,lineHeight: percentPosition 0.0
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
     ,textBorderColor: black
-    ,textBorderWidth: 1.0
+    ,textBorderWidth: 0.0
     ,textShadowColor: black
     ,textShadowBlur: black
     ,textShadowOffsetX: 0.0
