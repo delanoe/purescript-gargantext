@@ -24,6 +24,7 @@ import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable (NgramsTable(..), NgramsElement(..))
 import Gargantext.Components.Annotated.AnnotatedField as AnnotatedField
 import Gargantext.Types (TermList(..))
+import Gargantext.Utils.React ( crapify )
 
 nge :: String -> Tuple String NgramsElement
 nge word = Tuple word elem where
@@ -38,7 +39,6 @@ testTable = NgramsTable $ Map.fromFoldable $ nge <$> words
 
 type State =
   { document   :: Maybe (NodePoly Document)
-  , annotatedDocument :: AnnotatedDocument
   , ngramsTable :: NgramsTable
   , inputValue :: String
   }
@@ -46,7 +46,6 @@ type State =
 initialState :: {} -> State
 initialState {} =
   { document: Nothing
-  , annotatedDocument: defaultAnnotatedDocument
   , ngramsTable: testTable
   , inputValue: ""
   }
@@ -135,13 +134,6 @@ data Document
     --, url                :: Maybe String
     --, text               :: Maybe String
     }
-
-data AnnotatedDocument
-  = AnnotatedDocument
-    { abstract :: AnnotatedField.State }
-
-defaultAnnotatedDocument :: AnnotatedDocument
-defaultAnnotatedDocument = AnnotatedDocument { abstract: AnnotatedField.defaultState }
 
 defaultNodeDocument :: NodePoly Document
 defaultNodeDocument =
@@ -338,7 +330,7 @@ docview = simpleSpec performAction render
           ]
       ]
         where
-          annotate t = AnnotatedField.annotatedField { ngrams: state.ngramsTable, text: t }
+          annotate t = crapify $ AnnotatedField.annotatedField { ngrams: state.ngramsTable, text: t }
           li' = li [className "list-group-item justify-content-between"]
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]
