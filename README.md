@@ -8,32 +8,77 @@ processing, text-mining, complex networks analysis and interactive data
 visualization to pave the way toward new kinds of interactions with your
 digital corpora.
 
-This software is a free software, developed by the CNRS Complex Systems
+You will not find this software very useful without also running or being
+granted access to a [backend](https://gitlab.iscpif.fr/gargantext/haskell-gargantext).
+
+This software is free software, developed by the CNRS Complex Systems
 Institute of Paris Île-de-France (ISC-PIF) and its partners.
 
-## Installation of this library
+## Development
 
-### Dependencies warning
-This library purescript-gargantext is the Front End part of Gargantext.
-you need the backend (haskell-gargantext) installation too.
+### Installing dependencies
 
-### Installation steps
+Before building gargantext, you must install the dependencies. We use
+[yarn](https://yarnpkg.com/en/) for this. They have excellent
+[installation instructions](https://yarnpkg.com/en/docs/install).
 
-1. Add `node_modules/.bin` to your path
-2. Execute `./build`
+Once you have yarn installed, you may install everything else simply:
 
-In one command:
+```shell
+yarn install && yarn install-ps
+```
 
-```PATH="$PWD/node_modules/.bin:$PATH" ./build```
+You may now build:
+
+```shell
+yarn build
+```
+
+And run a repl:
+
+```shell
+yarn repl
+```
 
 ## Note to the contributors
 
 Please follow CONTRIBUTING.md
 
-## Introduction
+### How do I?
+
+#### Add a javascript dependency?
+
+Add it to `package.json`, under `dependencies` if it is needed at
+runtime or `devDependencies` if it is not.
+
+#### Add a purescript dependency?
+
+Add it to `psc-package.json` without the `purescript-` prefix.
+
+If is not in the package set, you will need to read the next section.
+
+#### Add a custom or override package to the local package set?
+
+You need to add an entry to the relevant map in
+`packages.dhall`. There are comments in the file explaining how it
+works. It's written in dhall, so you can use comments and such.
+
+You will then need to rebuild the package set:
+
+```shell
+yarn rebuild-set
+```
+
+#### Upgrade the base package set local is based on to latest?
+
+```shell
+yarn rebase-set && yarn rebuild-set
+```
+
+## Theory Introduction
 
 Making sense of out text isn't actually that hard, but it does require
-a little background knowledge to understand.x
+a little background knowledge to understand.
 
 ### N-grams
 
@@ -61,6 +106,8 @@ N-grams are matched case insensitively and across whole words. Examples:
 
 You may read more about n-grams [on wikipedia](https://en.wikipedia.org/wiki/N-gram).
 
+<!-- TODO: Discuss punctuation -->
+
 Gargantext allows you to define n-grams interactively in your browser
 and explore the relationships they uncover across a corpus of text.
 
@@ -83,7 +130,7 @@ unigram/1-gram
 : A one-word n-gram, e.g. `cow`, `coffee`
 bigram/2-gram
 : A two-word n-gram, e.g. `coffee cup`
-trigram
+trigram/3-gram
 : A three-word n-gram, e.g. `coffee cup holder`
 <!-- skip-grams are not yet supported -->
 <!-- skip-gram -->

@@ -1,47 +1,37 @@
 {
+    "scripts": {
+        "rebase-set": "spago package-set-upgrade && spago psc-package insdhall",
+        "rebuild-set": "spago psc-package-insdhall",
+        "install-ps": "psc-package install",
+        "build": "pulp --psc-package browserify -t dist/bundle.js",
+        "repl": "pulp --psc-package repl"
+    },
     "dependencies": {
+        "@babel/polyfill": "^7.0.0",
+        "core-js": "^3",
         "create-react-class": "^15.6.3",
         "echarts": "^4.1.0",
         "echarts-for-react": "^2.0.14",
         "imports-loader": "^0.8.0",
         "prop-types": "15.6.2",
-        "react": "^16.4.2",
-        "react-dom": "^16.4.2",
+        "react": "^16.8.2",
+        "react-dom": "^16.8.2",
         "react-sigma": "git://github.com/np/react-sigma.git#shouldComponentUpdate"
     },
-    "browserify": {
-        "transform": [
-            [
-                "babelify",
-                {
-                    "presets": [
-                        "es2015",
-                        "stage-0",
-                        "react"
-                    ]
-                }
-            ]
-        ]
-    },
-    "babel": {
-        "presets": [
-            "es2015",
-            "stage-0",
-            "react"
-        ]
-    },
     "devDependencies": {
-        "babel-core": "^6.26.0",
-        "babel-preset-es2015": "^6.24.1",
-        "babel-preset-react": "^6.24.1",
-        "babel-preset-stage-0": "^6.24.1",
-        "babel-runtime": "^6.26.0",
-        "babelify": "^8.0.0",
-        "bower": "^1.8.4",
+        "@babel/cli": "^7.1.5",
+        "@babel/core": "^7.1.6",
+        "@babel/preset-env": "^7.1.6",
+        "@babel/preset-react": "^7.0.0",
+        "@babel/preset-stage-2": "^7.0.0",
+        "babel-core": "^7.0.0-bridge",
+        "react-testing-library": "^6.1.2",
+        "envify": "^4.1.0",
         "http-server": "^0.11.1",
-        "psc-package": "^0.3.2",
-        "pulp": "^12.3.0",
-        "purescript": "^0.12.0"
+        "psc-package": "^3.0.1",
+        "pulp": "^12.4.0",
+        "purescript": "^0.12.4",
+        "spago": "^0.7.5"
     },
     "version": "0.0.0"
 }
