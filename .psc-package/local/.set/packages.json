@@ -564,6 +564,19 @@
     "repo": "https://github.com/slamdata/purescript-dom-indexed.git",
     "version": "v7.0.0"
   },
+  "dom-simple": {
+    "dependencies": [
+      "arrays",
+      "console",
+      "effect",
+      "functions",
+      "nullable",
+      "prelude",
+      "unsafe-coerce"
+    ],
+    "repo": "https://github.com/irresponsible/purescript-dom-simple",
+    "version": "master"
+  },
   "effect": {
     "dependencies": [
       "prelude"
@@ -2005,6 +2018,19 @@
     ],
     "repo": "https://github.com/purescript-contrib/purescript-react-dom.git",
     "version": "v6.0.1"
+  },
+  "reactix": {
+    "dependencies": [
+      "console",
+      "dom-simple",
+      "effect",
+      "functions",
+      "nullable",
+      "prelude",
+      "unsafe-coerce"
+    ],
+    "repo": "https://github.com/irresponsible/purescript-reactix",
+    "version": "master"
   },
   "read": {
     "dependencies": [

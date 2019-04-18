@@ -155,6 +155,16 @@ let additions =
           [ "prelude", "aff", "random", "quickcheck", "spec" ]
           "https://github.com/purescript-spec/purescript-spec-quickcheck"
           "v3.1.0"
+      , dom-simple =
+          mkPackage
+		  [ "arrays", "console", "effect", "functions", "nullable", "prelude", "unsafe-coerce" ]
+		  "https://github.com/irresponsible/purescript-dom-simple"
+		  "master"
+      , reactix =
+          mkPackage
+          [ "console", "dom-simple", "effect", "functions", "nullable", "prelude", "unsafe-coerce" ]
+          "https://github.com/irresponsible/purescript-reactix"
+          "master"
       , uint =
           mkPackage
           [ "maybe", "math", "generics-rep" ]

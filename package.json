@@ -25,6 +25,7 @@
         "@babel/preset-react": "^7.0.0",
         "@babel/preset-stage-2": "^7.0.0",
         "babel-core": "^7.0.0-bridge",
+        "react-testing-library": "^6.1.2",
         "envify": "^4.1.0",
         "http-server": "^0.11.1",
         "psc-package": "^3.0.1",
