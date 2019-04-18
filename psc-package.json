@@ -23,6 +23,8 @@
     "console",
     "strings",
     "string-parsers",
-    "prelude"
+    "prelude",
+    "dom-simple",
+    "reactix"
   ]
 }
