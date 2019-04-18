@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "rebase-set": "spago package-set-upgrade",
+        "rebase-set": "spago package-set-upgrade && spago psc-package insdhall",
         "rebuild-set": "spago psc-package-insdhall",
         "install-ps": "psc-package install",
         "build": "pulp --psc-package browserify -t dist/bundle.js",
