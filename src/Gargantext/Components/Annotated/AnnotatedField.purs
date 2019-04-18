@@ -44,7 +44,7 @@ annotatedField = R.createLeaf annotatedFieldComponent
 annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = R.pureLeaf "AnnotatedField" cpt
   where
-    cpt props = R.createDOMElement "p" { className: "annotated-field" } $ children props
+    cpt props = RDOM.p { className: "annotated-field" } $ children props
     children props = A.fromFoldable (annotateRun <$> compile props)
 
 type RunProps = ( list :: Maybe TermList, text :: String )
@@ -55,8 +55,8 @@ annotateRun (Tuple text list) = R.createLeaf annotatedRunComponent { text, list 
 annotatedRunComponent :: R.Component RunProps
 annotatedRunComponent = R.pureLeaf "AnnotatedRun" cpt
   where cpt { text, list } = maybe (unstyled text) (styled text) list
-        styled text list = R.createDOMElement "span" { style: termStyle list } [ RDOM.text text ]
-        unstyled text = R.createDOMElement "span" {} [ RDOM.text text ]
+        styled text list = RDOM.span { style: termStyle list } [ RDOM.text text ]
+        unstyled text = RDOM.span {} [ RDOM.text text ]
 
 compile :: Record Props -> List Run
 compile props = runs props.text
