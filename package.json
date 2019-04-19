@@ -4,7 +4,8 @@
         "rebuild-set": "spago psc-package-insdhall",
         "install-ps": "psc-package install",
         "build": "pulp --psc-package browserify -t dist/bundle.js",
-        "repl": "pulp --psc-package repl"
+        "repl": "pulp --psc-package repl",
+        "clean": "rm -Rf output"
     },
     "dependencies": {
         "@babel/polyfill": "^7.0.0",
