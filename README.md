@@ -18,6 +18,32 @@ Institute of Paris Île-de-France (ISC-PIF) and its partners.
 
 ### Installing dependencies
 
+#### Debian
+
+##### Testing Distribution and above
+```shell
+sudo apt update && sudo apt install nodejs yarn
+```
+
+##### Stable Distribution
+```shell
+curl -sL https://deb.nodesource.com/setup_11.x | sudo bash -
+sudo apt update && sudo apt install nodejs
+```
+
+```shell
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+sudo apt update && sudo apt install yarn
+```
+
+### OSX
+```shell
+brew install node yarn
+```
+
+### Installing dependencies
+
 Before building gargantext, you must install the dependencies. We use
 [yarn](https://yarnpkg.com/en/) for this. They have excellent
 [installation instructions](https://yarnpkg.com/en/docs/install).
