@@ -24,6 +24,7 @@ import Gargantext.Components.Charts.Options.Data
 
 type Path =
   { corpusId :: Int
+  , tabType  :: TabType
   }
 
 newtype ChartMetrics = ChartMetrics
@@ -62,7 +63,7 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , subTitle  : "Distribution of publications over time"
   , xAxis     : xAxis' dates'
   , yAxis     : yAxis' { position: "left", show: true }
-  , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: n }) count']
+  , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: n, itemStyle : itemStyle {color:grey}}) count']
   , addZoom   : true
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
   }
@@ -74,8 +75,8 @@ metricsLoader props = createElement metricsLoaderClass props []
     metricsLoaderClass = Loader.createLoaderClass "MetricsLoader" getMetrics
 
     getMetrics :: Path -> Aff HistoMetrics
-    getMetrics {corpusId} = do
-      ChartMetrics ms <- get $ toUrl Back (Chart {chartType: Histo}) $ Just corpusId
+    getMetrics {corpusId, tabType} = do
+      ChartMetrics ms <- get $ toUrl Back (Chart {chartType: Histo, tabType: tabType}) $ Just corpusId
       pure ms."data"
 
 histoSpec :: Spec {} Path Void

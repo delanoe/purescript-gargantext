@@ -1,8 +1,9 @@
 module Gargantext.Pages.Corpus.Chart.Pie where
 
-import Data.Array (foldl)
+import Data.Array (foldl, zip)
 import Data.Tuple (Tuple(..))
 import Data.Map as Map
+import Data.Int (toNumber)
 import Data.Map (Map)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Maybe (Maybe(..), maybe)
@@ -21,95 +22,81 @@ import Gargantext.Components.Charts.Options.Color
 import Gargantext.Components.Charts.Options.Font
 import Gargantext.Components.Charts.Options.Data
 
-import Gargantext.Pages.Corpus.Dashboard (distriBySchool)
-
-
 type Path =
   { corpusId :: Int
-  , listId   :: Int
   , tabType  :: TabType
-  , limit    :: Maybe Int
   }
 
-newtype Metric = Metric
-  { label :: String
-  , x     :: Number
-  , y     :: Number
-  , cat   :: TermList
+newtype ChartMetrics = ChartMetrics
+  { "data" :: HistoMetrics
   }
 
-instance decodeMetric :: DecodeJson Metric where
-  decodeJson json = do
-    obj   <- decodeJson json
-    label <- obj .? "label"
-    x     <- obj .? "x"
-    y     <- obj .? "y"
-    cat   <- obj .? "cat"
-    pure $ Metric { label, x, y, cat }
-
-newtype Metrics = Metrics
-  { "data" :: Array Metric
-  }
-
-instance decodeMetrics :: DecodeJson Metrics where
+instance decodeChartMetrics :: DecodeJson ChartMetrics where
   decodeJson json = do
     obj <- decodeJson json
     d   <- obj .? "data"
-    pure $ Metrics { "data": d }
+    pure $ ChartMetrics { "data": d }
 
-type Loaded  = Array Metric
+newtype HistoMetrics = HistoMetrics
+  { dates :: Array String
+  , count :: Array Number
+  }
+
+instance decodeHistoMetrics :: DecodeJson HistoMetrics where
+  decodeJson json = do
+    obj   <- decodeJson json
+    d <- obj .? "dates"
+    c <- obj .? "count"
+    pure $ HistoMetrics { dates : d , count: c}
+
+type Loaded = HistoMetrics
 
 loadedMetricsSpec :: Spec {} (Loader.InnerProps Path Loaded ()) Void
 loadedMetricsSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} (Loader.InnerProps Path Loaded ()) Void
-    render dispatch {loaded} {} _ = [chart distriBySchool]
-    --render dispatch {loaded} {} _ = [chart (scatterOptions loaded)]
+    render dispatch {loaded : metricsData} {} _ = [chart (chartOptions metricsData)]
 
-scatterOptions :: Array Metric -> Options
-scatterOptions metrics = Options
-  { mainTitle : "Ngrams Selection Metrics"
-  , subTitle  : "Local metrics (Inc/Exc, Spe/Gen), Global metrics (TFICF maillage)"
-  , xAxis     : xAxis { min: 0 }
-  , yAxis     : yAxis' { position : "", show: true }
-  , series    : map2series $ metric2map metrics
+chartOptions :: HistoMetrics -> Options
+chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
+  { mainTitle : "Bar"
+  , subTitle  : "Count of GraphTerm"
+  , xAxis     : xAxis' dates'
+  , yAxis     : yAxis' { position: "left", show: true }
+  , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", itemStyle: itemStyle {color:blue}, value: n }) count']
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
   }
+
+loadedMetricsSpecPie :: Spec {} (Loader.InnerProps Path Loaded ()) Void
+loadedMetricsSpecPie = simpleSpec defaultPerformAction render
   where
-    metric2map :: Array Metric -> Map TermList (Array Metric)
-    metric2map ds = Map.fromFoldableWith (<>) $ (\(Metric m) -> Tuple m.cat [Metric m]) <$> ds
+    render :: Render {} (Loader.InnerProps Path Loaded ()) Void
+    render dispatch {loaded : metricsData} {} _ = [chart (chartOptionsPie metricsData)]
 
-    --{-
-    map2series :: Map TermList (Array Metric) -> Array Series
-    map2series ms = toSeries <$> Map.toUnfoldable ms
-      where
-        -- TODO colors are not respected yet
-        toSeries (Tuple k ms) =
-            seriesScatterD2 {symbolSize: 5.0} (toSerie color <$> ms)
-          where
-            color =
-              case k of
-                StopTerm -> red
-                GraphTerm -> green
-                CandidateTerm -> grey
-            toSerie color (Metric {label,x,y}) =
-              dataSerie { name: label, itemStyle: itemStyle {color}
-                     -- , label: {show: true}
-                        , value: [x,y]
-                        }
-    --}
+chartOptionsPie :: HistoMetrics -> Options
+chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
+  { mainTitle : "Pie"
+  , subTitle  : "Distribution by GraphTerm"
+  , xAxis     : xAxis' []
+  , yAxis     : yAxis' { position: "", show: false }
+  , series    : [seriesPieD1 {name: "Data"} $ map (\(Tuple n v) -> dataSerie {name: n, value:v}) $ zip dates' count']
+  -- , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: n }) count']
+  , addZoom   : false
+  , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
+  }
 
-getMetrics :: Path -> Aff Loaded
-getMetrics {corpusId, listId, limit, tabType} = do
-  Metrics ms <- get $ toUrl Back (CorpusMetrics {listId, tabType, limit}) $ Just corpusId
-  pure ms."data"
 
-metricsLoaderClass :: ReactClass (Loader.Props Path Loaded)
-metricsLoaderClass = Loader.createLoaderClass "MetricsLoader" getMetrics
-
-metricsLoader :: Loader.Props' Path Loaded -> ReactElement
+metricsLoader :: Loader.Props' Path HistoMetrics -> ReactElement
 metricsLoader props = createElement metricsLoaderClass props []
+  where
+    metricsLoaderClass :: ReactClass (Loader.Props Path HistoMetrics)
+    metricsLoaderClass = Loader.createLoaderClass "MetricsLoader" getMetrics
+
+    getMetrics :: Path -> Aff HistoMetrics
+    getMetrics {corpusId, tabType:tabType} = do
+      ChartMetrics ms <- get $ toUrl Back (Chart {chartType: ChartPie, tabType: tabType}) $ Just corpusId
+      pure ms."data"
 
 pieSpec :: Spec {} Path Void
 pieSpec = simpleSpec defaultPerformAction render
@@ -118,5 +105,16 @@ pieSpec = simpleSpec defaultPerformAction render
     render dispatch path {} _ =
       [ metricsLoader
         { path
+        , component: createClass "LoadedMetrics" loadedMetricsSpecPie (const {})
+        } ]
+
+barSpec :: Spec {} Path Void
+barSpec = simpleSpec defaultPerformAction render
+  where
+    render :: Render {} Path Void
+    render dispatch path {} _ =
+      [ metricsLoader
+        { path
         , component: createClass "LoadedMetrics" loadedMetricsSpec (const {})
         } ]
+

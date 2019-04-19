@@ -170,10 +170,10 @@ pathUrl c (CorpusMetrics {tabType, listId, limit}) i =
       <> "&ngramsType=" <> showTabType' tabType
       <> maybe "" (\x -> "&limit=" <> show x) limit
 -- TODO fix this url path
-pathUrl c (Chart {chartType}) i =
-    pathUrl c (NodeAPI Corpus) i <> "/chart"
+pathUrl c (Chart {chartType, tabType}) i =
+    pathUrl c (NodeAPI Corpus) i <> "/" <> show chartType
+      <> "?ngramsType=" <> showTabType' tabType
       -- <> "?list=1" -- <> show listId
-      -- <> "&ngramsType=Sources" -- <> showTabType' tabType
       -- <> maybe "" (\x -> "&limit=" <> show x) limit
 
 
@@ -258,11 +258,18 @@ data Path
                   , limit   :: Maybe Limit
                   }
   | Chart { chartType :: ChartType
+          , tabType   :: TabType
      --            , listId  :: ListId
       --           , limit   :: Maybe Limit
                  }
 
-data ChartType = Histo | Scatter
+data ChartType = Histo | Scatter | ChartPie
+
+instance showChartType :: Show ChartType
+  where
+    show Histo    = "chart"
+    show Scatter  = "scatter"
+    show ChartPie = "pie"
 
 data End = Back | Front
 type Id  = Int

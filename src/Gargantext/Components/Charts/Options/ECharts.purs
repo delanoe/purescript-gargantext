@@ -115,7 +115,6 @@ data3 :: DataLegend
 data3 = {name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle'}
 
 
-
 yAxisVoid :: YAxis
 yAxisVoid = yAxis
   { "type": ""
@@ -126,23 +125,13 @@ yAxisVoid = yAxis
   , show: false
   }
 
-yAxis1 :: YAxis
-yAxis1 = yAxis
-  { "type": "value"
-  , name: "data"
-  , min: 0
-  , position: "left"
-  , axisLabel: {formatter: "{value}"}
-  , show: true
-  }
-
 xAxis' :: Array String -> XAxis
 xAxis' [] = unsafeCoerce {}
 xAxis' xs = xAxis
             { "data": xData xs
             , "type": "category"
             , axisTick: {alignWithLabel: true}
-            , show: length xs /= 0
+            , show: true
             }
   where
     xData :: Array String -> Array DataAxis
