@@ -69,7 +69,8 @@ exports.pauseForceAtlas2 = function() {
 exports.cursor_size = 10;
 
 // TODO
-exports.shift_key = false;
+// exports.shift_key = false;
+exports.shift_key = true;
 
 exports.trackMouse = function() {
     var partialGraph = window.sigmaGargInstance;

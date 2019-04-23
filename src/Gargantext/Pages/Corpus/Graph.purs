@@ -18,6 +18,7 @@ import Data.Lens (Lens, Lens', over, (%~), (+~), (.~), (^.))
 import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, isNothing)
 import Data.Newtype (class Newtype)
+import Data.Number as Num
 import Data.String (joinWith)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (for_)
@@ -43,6 +44,7 @@ import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (a, br', h2, button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
 import React.DOM.Props (_id, _type, checked, className, defaultValue, href, max, min, name, onChange, onClick, placeholder, style, title, value, onMouseMove)
+import React.SyntheticEvent (SyntheticUIEvent, target)
 import Thermite (PerformAction, Render, Spec, _render, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
@@ -94,6 +96,10 @@ _drawEdges' = prop (SProxy :: SProxy "drawEdges")
 _drawEdges :: Lens' SigmaSettings Boolean
 _drawEdges f = unsafeCoerce $ _drawEdges' f
 
+numberTargetValue :: SyntheticUIEvent -> Number
+numberTargetValue e =
+  unsafePartial (fromJust (Num.fromString ((unsafeCoerce (unsafePerformEffect (target e))).value)))
+
 -- TODO remove newtype here
 newtype State = State
   { graphData :: GraphData
@@ -108,6 +114,8 @@ newtype State = State
   , treeId :: Maybe TreeId
   , settings :: SigmaSettings
   }
+
+derive instance newtypeState :: Newtype State _
 
 initialState :: State
 initialState = State
@@ -164,9 +172,10 @@ performAction (ChangeLabelSize size) _ _ =
     State $ ((_settings <<< _labelSizeRatio) .~ size) s
 
 performAction (ChangeNodeSize size) _ _ =
-  modifyState_ $ \(State s) -> do
-    let maxNoded = ((_settings <<< _maxNodeSize) .~ size) s
-    State $ ((_settings <<< _minNodeSize) .~ (size * 0.10)) maxNoded
+  modifyState_ $ \(State s) ->
+    s # _settings <<< _maxNodeSize .~ (size * 10.0)
+      # _settings <<< _minNodeSize .~ size
+      # State
 
 performAction DisplayEdges _ _ =
   modifyState_ $ \(State s) -> do
@@ -493,18 +502,18 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                                                  , _id "labelSizeRange"
                                                  , max "4"
                                                  , defaultValue <<< show $ settings ^. _labelSizeRatio
-                                                 , min "0"
-                                                 , onChange \e -> d $ ChangeLabelSize (unsafeCoerce e).target.value
+                                                 , min "1"
+                                                 , onChange \e -> d $ ChangeLabelSize (numberTargetValue e)
                                                  ]
                   ]
 
                 , li [className "col-md-2"]
                   [ span [] [text "Nodes"],input [_type "range"
                                                  , _id "nodeSizeRange"
-                                                 , max "20"
-                                                 , defaultValue <<< show $ settings ^. _maxNodeSize
-                                                 , min "0"
-                                                 , onChange \e -> d $ ChangeNodeSize (unsafeCoerce e).target.value
+                                                 , max "4"
+                                                 , defaultValue <<< show $ settings ^. _minNodeSize
+                                                 , min "1"
+                                                 , onChange \e -> d $ ChangeNodeSize (numberTargetValue e)
                                                  ]
                   ]
                 , li [className "col-md-2"]
@@ -514,6 +523,17 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   [ button [ className "btn btn-primary"
                            , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
                            ] [text "Center"]
+                  ]
+                , li [className "col-md-2"]
+                  [ span [] [text "Zoom"],input [ _type "range"
+                                                , _id "cameraRatio"
+                                                , max "100"
+                                                , defaultValue "0"
+                                                , min "0"
+                                                , onChange \e -> do
+                                                    let ratio = (100.0 - numberTargetValue e) / 100.0
+                                                    modCamera0 (const {ratio})
+                                                ]
                   ]
                 , li'
                   [ button [ className "btn btn-primary"
@@ -548,7 +568,6 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                              , ref: setSigmaRef
                              , onClickNode : \e ->
                              unsafePerformEffect $ do
-                               modCamera0 $ \{ratio} -> {ratio: ratio / 2.0}
                                _ <- d $ ShowSidePanel true
                                _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
                                pure unit
