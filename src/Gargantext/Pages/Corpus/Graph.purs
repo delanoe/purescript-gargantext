@@ -299,7 +299,7 @@ mySettings = sigmaSettings { verbose : true
                            , mouseEnabled: true
                            , touchEnabled: true
 
-                           , animationsTime: 1500.0
+                           , animationsTime: (5500.0)
 
                            , defaultNodeColor: "#ddd"
                            , twNodeRendBorderSize: 0.5          -- node borders (only iff ourRendering)
@@ -310,8 +310,8 @@ mySettings = sigmaSettings { verbose : true
                           , maxEdgeSize: 0.0
                           --, defaultEdgeType: "curve"      -- 'curve' or 'line' (curve only iff ourRendering)
                           , twEdgeDefaultOpacity: 0.4       -- initial opacity added to src/tgt colors
-                          , minNodeSize: 1.0
-                          , maxNodeSize: 10.0
+                          , minNodeSize: 5.0
+                          , maxNodeSize: 30.0
 --
 --  -- labels
                           , font: "Droid Sans"                -- font params
@@ -402,7 +402,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
   where
     treespec = over _render \frender d p (State s) c ->
 
-                [ div [ className "col-md-1", _id "graph-tree", style {marginTop:"151px"}] $
+                [ div [ className "col-md-1", _id "graph-tree", style {marginTop: "65px"}] $
                   [
                      button [className "btn btn-primary" , onClick \_ -> d ToggleTree]
                      [text $ if s.showTree then "Hide Tree" else "Show Tree"]
@@ -423,11 +423,13 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
           simpleSpec defaultPerformAction defaultRender
         Just treeId ->
           (cmapProps (const {root: treeId}) (noState Tree.treeview))
+    
+    
     render' :: Render State {} Action
     render' d _ (State st@{settings, graphData: GraphData {sides,metaData  }}) _ =
-      [ div [className "container-fluid", style {"padding-top" : "100px"}]
-      [ div [ className "row"]
-        [ h2 [ style {textAlign : "center", position : "relative", top: "-38px"}]
+      [ div [className "container-fluid", style {"padding-top" : "90px" }]
+      [ {-div [ className "row"]
+        [ h2 [ style {textAlign : "center", position : "relative", top: "-1px"}]
           [-- :  MetaData {title}
             case metaData of
               Just( MetaData {title }) ->
@@ -436,7 +438,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                 text "Title"
           ]
         ]
-       , div [className "row", style {"padding-bottom" : "10px", marginTop : "-24px"}]
+        , -} div [className "row", style {"padding-bottom" : "10px", marginTop : "-24px"}]
       [
            div [className "col-md-4"]
            [
@@ -464,10 +466,8 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
             [ menu [_id "toolbar"]
               [ ul'
                 [
-                  li'
-                  [ button [className "btn btn-success btn-sm"] [text "Change Type"]
-                  ]
-                ,
+                --  li' [ button [className "btn btn-success btn-sm"] [text "Change Type"] ]
+                -- ,
                   li'
                   [ button [
                          className "btn btn-primary btn-sm"
@@ -475,10 +475,8 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                            ]
                     [text "Toggle Edges"]
                   ]
-                , li'
-                  [ button [className "btn btn-primary btn-sm"] [text "Change Level"]
-                  ]
-                 ,li [style {display : "inline-block"}]
+                -- , li' [ button [className "btn btn-primary btn-sm"] [text "Change Level"] ]
+                {- ,li [style {display : "inline-block"}]
                   [ form'
                     [ input [_type "file"
                             , name "file"
@@ -488,14 +486,15 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                     -- , text $ show st.readyState
                     ]
                   ]
-                , li' [ input [_type "button"
+                -}
+                {-, li' [ input [_type "button"
                               , className "btn btn-warning btn-sm"
                               ,value "Run Demo"
                             --  , onClick \_ -> d SetGraph, disabled (st.readyState /= DONE)
                               ]
                       ]
-
-                , li'
+                      -}
+                {-, li'
                   [ form'
                     [ div [className "col-lg-2"]
                       [
@@ -507,16 +506,18 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                             [ span [className "glyphicon glyphicon-search"] []
                             ]
                           ]
-                          ,input [_type "text", className "form-control", placeholder "select topics"]
+                          , input [_type "text", className "form-control", placeholder "select topics"]
                         ]
                       ]
 
                     ]
                   ]
-                , li [className "col-md-2"]
+                -}
+                {-, li [className "col-md-2"]
                   [ span [] [text "Selector"],input [_type "range", _id "myRange", value "90"]
                   ]
-                , li [className "col-md-2"]
+                -}
+                , li [className "col-md-1"]
                   [ span [] [text "Labels"],input [_type "range"
                                                  , _id "labelSizeRange"
                                                  , max "4"
@@ -526,24 +527,25 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                                                  ]
                   ]
 
-                , li [className "col-md-2"]
+                , li [className "col-md-1"]
                   [ span [] [text "Nodes"],input [_type "range"
                                                  , _id "nodeSizeRange"
-                                                 , max "4"
+                                                 , max "15"
                                                  , defaultValue <<< show $ settings ^. _minNodeSize
-                                                 , min "1"
+                                                 , min "5"
                                                  , onChange \e -> d $ ChangeNodeSize (numberTargetValue e)
                                                  ]
                   ]
-                , li [className "col-md-2"]
+                {-, li [className "col-md-2"]
                   [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
                   ]
+                -}
                 , li'
                   [ button [ className "btn btn-primary"
                            , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
                            ] [text "Center"]
                   ]
-                , li [className "col-md-2"]
+                , li [className "col-md-1"]
                   [ span [] [text "Zoom"],input [ _type "range"
                                                 , _id "cameraRatio"
                                                 , max "100"
@@ -554,7 +556,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                                                     modCamera0 (const {ratio})
                                                 ]
                   ]
-                , li [className "col-me-2"]
+                , li [className "col-md-1"]
                   [ span [] [text "MultiNode"]
                   , input
                     [ _type "checkbox"
@@ -566,15 +568,16 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                 , li'
                   [ button [ className "btn btn-primary"
                            , onClick \_ -> pauseForceAtlas2
-                           ] [text "Pause"]
+                           ] [text "Spatialization"]
                   ]
-                , li'
+                {-, li'
                   [ button [className "btn btn-primary"
                             , onClick \_ -> do
                                              _ <- log "Hey there" -- $ show st.camera
                                              pure unit
                            ] [text "Save"] -- TODO: Implement Save!
                   ]
+                -}
                 ]
               ]
             ]
@@ -582,7 +585,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
          ]
          , div [className "row"]
            [div [if (st.showSidePanel && st.showTree) then className "col-md-10" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
-             [ div [style {height: "90%"}
+             [ div [style {height: "95%"}
                    ,onMouseMove sigmaOnMouseMove] $
                [
                ]
