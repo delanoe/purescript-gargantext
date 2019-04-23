@@ -9,7 +9,7 @@ import Affjax.ResponseFormat (printResponseFormatError)
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
-import Data.Array (drop, take, (:), filter)
+import Data.Array (drop, take, (:), filter, (!!))
 import Data.Either (Either(..))
 import Data.Foldable (intercalate)
 import Data.Generic.Rep (class Generic)
@@ -30,6 +30,7 @@ import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType,
 import Gargantext.Config.REST (put, post, deleteWithBody)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Table as T
+import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import React.DOM (a, br', button, div, i, input, p, text, span)
 import React.DOM.Props (_type, className, href, onClick, placeholder, style, checked, target)
@@ -43,14 +44,19 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_
 type NodeID = Int
 type TotalRecords = Int
 
+-- Example:
+--   [["machine","learning"],["artificial","intelligence"]]
+-- This searches for documents with "machine learning" or "artificial intelligence"
+type TextQuery = Array (Array String)
+
 newtype SearchQuery = SearchQuery
-  { query :: Array String
+  { query :: TextQuery
   , id    :: Int
   }
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
   encodeJson (SearchQuery post)
-     = "query"     := post.query
+     = "query"     := post.query !! 0 -- TODO anoe
     ~> "corpus_id" := post.id
     ~> jsonEmptyObject
 
@@ -64,7 +70,7 @@ instance decodeSearchResults :: DecodeJson SearchResults where
 
 type Props =
   { nodeId :: Int
-  , query :: Array String
+  , query :: TextQuery
   , totalRecords :: Int
   , chart :: ReactElement
   , container :: T.TableContainerProps -> Array ReactElement
@@ -283,9 +289,9 @@ layoutDocviewGraph = simpleSpec performAction render
 
 
 
-type PageParams = {nodeId :: Int, query :: Array String, params :: T.Params}
+type PageParams = {nodeId :: Int, query :: TextQuery, params :: T.Params}
 
-initialPageParams :: {nodeId :: Int, query :: Array String} -> PageParams
+initialPageParams :: {nodeId :: Int, query :: TextQuery} -> PageParams
 initialPageParams {nodeId, query} = {nodeId, query, params: T.initialParams}
 
 loadPage :: PageParams -> Aff (Array DocumentsView)
@@ -325,7 +331,7 @@ type PageLoaderProps row =
   }
 
 renderPage :: forall props path.
-              Render (Loader.State {nodeId :: Int, query :: Array String | path} (Array DocumentsView))
+              Render (Loader.State {nodeId :: Int, query :: TextQuery | path} (Array DocumentsView))
                      { totalRecords :: Int
                      , dispatch :: Action -> Effect Unit
                      , deletionState :: State
@@ -425,9 +431,3 @@ deleteFavorites nodeId = deleteWithBody (toUrl Back Node (Just nodeId) <> "/favo
 
 deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Array Int)
 deleteDocuments nodeId = deleteWithBody (toUrl Back Node (Just nodeId) <> "/documents")
-
--- TODO: not optimal but Data.Set lacks some function (Set.alter)
-toggleSet :: forall a. Ord a => a -> Set a -> Set a
-toggleSet a s
-  | Set.member a s = Set.delete a s
-  | otherwise      = Set.insert a s
