@@ -9,17 +9,19 @@ import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
 import Data.Argonaut (decodeJson)
-import Data.Array (fold, length, mapWithIndex, (!!))
+import Data.Array (fold, length, mapWithIndex, (!!), null)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
 import Data.Int as Int
-import Data.Lens (Lens, Lens', over, (%~), (+~), (.~), (^.))
+import Data.Lens (Lens, Lens', over, (%~), (+~), (.~), (^.), review)
 import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, isNothing)
 import Data.Newtype (class Newtype)
 import Data.Number as Num
 import Data.String (joinWith)
+import Data.Set (Set)
+import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Traversable (for_)
 import Effect (Effect)
@@ -38,7 +40,7 @@ import Gargantext.Config.REST (get, post)
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Prelude (flip)
 import Gargantext.Types (class Optional)
-import Gargantext.Utils (getter)
+import Gargantext.Utils (getter, toggleSet)
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
@@ -51,7 +53,6 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem)
 
-
 data Action
   = LoadGraph Int
   | SelectNode SelectedNode
@@ -61,12 +62,21 @@ data Action
   | ChangeLabelSize Number
   | ChangeNodeSize Number
   | DisplayEdges
+  | ToggleMultiNodeSelection
 --  | Zoom Boolean
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
 derive instance eqSelectedNode :: Eq SelectedNode
 derive instance newtypeSelectedNode :: Newtype SelectedNode _
+derive instance ordSelectedNode :: Ord SelectedNode
+
+instance showSelectedNode :: Show SelectedNode where
+  show (SelectedNode node) = node.label
+
+
+_multiNodeSelection :: forall s a. Lens' { multiNodeSelection :: a | s } a
+_multiNodeSelection = prop (SProxy :: SProxy "multiNodeSelection")
 
 -- _settings :: forall s t a b. Lens { settings :: a | s } { settings :: b | t } a b
 _settings :: forall s a. Lens' { settings :: a | s } a
@@ -106,7 +116,8 @@ newtype State = State
   , filePath :: String
   , sigmaGraphData :: Maybe SigmaGraphData
   , legendData :: Array Legend
-  , selectedNode :: Maybe SelectedNode
+  , selectedNodes :: Set SelectedNode
+  , multiNodeSelection :: Boolean
   , showSidePanel :: Boolean
   , showControls :: Boolean
   , showTree :: Boolean
@@ -123,7 +134,8 @@ initialState = State
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []
-  , selectedNode : Nothing
+  , selectedNodes : Set.empty
+  , multiNodeSelection : false
   , showSidePanel : false
   , showControls : false
   , showTree : false
@@ -154,8 +166,11 @@ performAction (LoadGraph fp) _ _ = void do
       -- graph.
   --modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
-performAction (SelectNode (SelectedNode node)) _ (State state) =
-  modifyState_ $ \(State s) -> State s {selectedNode = pure $ SelectedNode node}
+performAction (SelectNode selectedNode@(SelectedNode node)) _ (State state) =
+  modifyState_ $ \(State s) ->
+    State s {selectedNodes = toggleSet selectedNode
+                              (if s.multiNodeSelection then s.selectedNodes
+                                                       else Set.empty) }
 
 performAction (ShowSidePanel b) _ (State state) = void do
   modifyState $ \(State s) -> State s {showSidePanel = b }
@@ -180,6 +195,10 @@ performAction (ChangeNodeSize size) _ _ =
 performAction DisplayEdges _ _ =
   modifyState_ $ \(State s) -> do
     State $ ((_settings <<< _drawEdges) %~ not) s
+
+performAction ToggleMultiNodeSelection _ _ =
+  modifyState_ $ \(State s) -> do
+    State $ s # _multiNodeSelection %~ not
 
 --performAction (Zoom True) _ _ =
 --  modifyState_ $ \() -> do
@@ -535,6 +554,15 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                                                     modCamera0 (const {ratio})
                                                 ]
                   ]
+                , li [className "col-me-2"]
+                  [ span [] [text "MultiNode"]
+                  , input
+                    [ _type "checkbox"
+                    , className "checkbox"
+                    -- , checked
+                    , onChange $ const $ d ToggleMultiNodeSelection
+                    ]
+                  ]
                 , li'
                   [ button [ className "btn btn-primary"
                            , onClick \_ -> pauseForceAtlas2
@@ -569,7 +597,8 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                              , onClickNode : \e ->
                              unsafePerformEffect $ do
                                _ <- d $ ShowSidePanel true
-                               _ <- d $ SelectNode $ SelectedNode {id : (unsafeCoerce e).data.node.id, label : (unsafeCoerce e).data.node.label}
+                               let {id, label} = (unsafeCoerce e).data.node
+                               _ <- d $ SelectNode $ SelectedNode {id, label}
                                pure unit
                              }
                        [ sigmaEnableWebGL
@@ -664,10 +693,11 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
               [ div []
                 [ p [] []
                 , div [className "col-md-12"]
-                  [ case st.selectedNode of
-                      Just (SelectedNode {label}) ->
-                        GT.tabsElt {query: words label, sides}
-                      Nothing -> p [] []
+                  [ let query = (\(SelectedNode {label}) -> words label) <$> Set.toUnfoldable st.selectedNodes in
+                    if null query then
+                      p [] []
+                    else
+                      GT.tabsElt {query, sides}
                   , p [] []
                   ]
                 ]

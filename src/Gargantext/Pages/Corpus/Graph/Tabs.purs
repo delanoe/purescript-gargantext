@@ -6,7 +6,7 @@ import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
 import Gargantext.Config (TabType(..), TabSubType(..))
 import Gargantext.Components.GraphExplorer.Types (GraphSideCorpus(..))
-import Gargantext.Components.FacetsTable as FT
+import Gargantext.Components.FacetsTable (TextQuery, docViewSpec)
 import Gargantext.Components.Table as T
 import Gargantext.Components.Tab as Tab
 import React (ReactElement, ReactClass, Children, createElement)
@@ -14,23 +14,23 @@ import Thermite ( Spec, PerformAction, Render, _performAction, _render
                 , hideState, noState, cmapProps, simpleSpec, createClass
                 )
 
-type Props = { query :: Array String, sides :: Array GraphSideCorpus }
+type Props = { query :: TextQuery, sides :: Array GraphSideCorpus }
 
 tabsElt :: Props -> ReactElement
 tabsElt props = createElement tabsClass props []
 
 -- TODO no need for Children here
-tabsClass :: ReactClass { query :: Array String, sides :: Array GraphSideCorpus, children :: Children }
+tabsClass :: ReactClass { query :: TextQuery, sides :: Array GraphSideCorpus, children :: Children }
 tabsClass = createClass "GraphTabs" pureTabs (const {})
 
 pureTabs :: Spec {} Props Void
 pureTabs = hideState (const {activeTab: 0}) statefulTabs
 
-tab :: forall props state. Array String -> GraphSideCorpus -> Tuple String (Spec state props Tab.Action)
+tab :: forall props state. TextQuery -> GraphSideCorpus -> Tuple String (Spec state props Tab.Action)
 tab query (GraphSideCorpus {corpusId: nodeId, corpusLabel}) =
   Tuple corpusLabel $
     cmapProps (const {nodeId, query, chart, totalRecords: 4736, container}) $
-      noState FT.docViewSpec
+      noState docViewSpec
   where
     -- TODO totalRecords: probably need to insert a corpusLoader.
     chart = mempty
