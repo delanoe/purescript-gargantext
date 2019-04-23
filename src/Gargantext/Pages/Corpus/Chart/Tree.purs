@@ -55,7 +55,7 @@ scatterOptions nodes = Options
   { mainTitle : "Tree"
   , subTitle  : "Tree Sub Title"
   , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position : "", show: false }
+  , yAxis     : yAxis' { position : "", show: false, min:0}
   , series    : [ mkTree TreeMap nodes]
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }

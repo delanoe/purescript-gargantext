@@ -42,6 +42,7 @@ render dispatch _ state _ = [
         , xAxis     : xAxis' ["2015", "2016", "2017"]
         , yAxis     : yAxis' { position: "left"
                              , show: false
+                             , min : 0
                              }
         , series    : myData
         , addZoom   : false
@@ -63,7 +64,7 @@ naturePublis = Options
   { mainTitle : "Nature of publications"
   , subTitle  : "Distribution by type"
   , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "left", show: false }
+  , yAxis     : yAxis' { position: "left", show: false, min:0}
   , series    : [seriesFunnelD1 { name: "Funnel Data" } naturePublis_y]
   , addZoom   : false
   , tooltip   : tooltipTriggerAxis -- Necessary?
@@ -82,7 +83,7 @@ globalPublis = Options
   { mainTitle : "Histogram"
   , subTitle  : "Distribution of publications over time"
   , xAxis     : xAxis' (map show globalPublis_x)
-  , yAxis     : yAxis' { position: "left", show: true }
+  , yAxis     : yAxis' { position: "left", show: true, min:0}
   , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: toNumber n }) globalPublis_y]
   , addZoom   : true
   , tooltip   : tooltipTriggerAxis -- Necessary?
@@ -99,7 +100,7 @@ distriBySchool = Options
   { mainTitle : "School production in 2017"
   , subTitle  : "Distribution by school"
   , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position : "", show: false }
+  , yAxis     : yAxis' { position : "", show: false, min:0}
   , series    : [ seriesPieD1 {name: "Pie data"} (map (\(Tuple n v) -> dataSerie {name: n, value: toNumber v}) distriBySchool_y)]
   , addZoom   : false
   , tooltip   : tooltipTriggerAxis -- Necessary?
@@ -110,7 +111,7 @@ scatterEx = Options
   { mainTitle : "Scatter test"
   , subTitle  : "Scatter subtitle"
   , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "", show: true }
+  , yAxis     : yAxis' { position: "", show: true, min:0}
   , series    : [ seriesScatterD2 {name: "name1", symbolSize: 10.0} (dataSerieV <$> [[2.0,3.0],[3.0,4.0]])
                 , seriesScatterD2 {name: "name2", symbolSize: 5.0 } (dataSerieV <$> [[1.0,3.0],[5.0,4.0]])
                 , seriesScatterD2 {name: "name3", symbolSize: 10.0} (dataSerieV <$> [[10.0,3.0],[8.0,4.0]])
@@ -124,7 +125,7 @@ sankeyEx = Options
   { mainTitle : ""
   , subTitle  : ""
   , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "", show: false }
+  , yAxis     : yAxis' { position: "", show: false, min:0}
   , series    :
      [ seriesSankey
          { "data":
@@ -193,7 +194,7 @@ treeMapEx = Options
   { mainTitle : ""
   , subTitle  : ""
   , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "", show: false }
+  , yAxis     : yAxis' { position: "", show: false, min:0}
   , series    : [mkTree TreeMap treeData]
   , addZoom   : false
   , tooltip   : tooltipTriggerAxis -- Necessary?
@@ -204,7 +205,7 @@ treeEx = Options
   { mainTitle : "Tree"
   , subTitle  : "Radial"
   , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "", show: false }
+  , yAxis     : yAxis' { position: "", show: false, min:0}
   , series    : [mkTree TreeRadial treeData']
   , addZoom   : false
   , tooltip   : tooltipTriggerAxis -- Necessary?

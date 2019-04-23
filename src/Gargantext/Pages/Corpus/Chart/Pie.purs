@@ -62,7 +62,7 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Bar"
   , subTitle  : "Count of GraphTerm"
   , xAxis     : xAxis' dates'
-  , yAxis     : yAxis' { position: "left", show: true }
+  , yAxis     : yAxis' { position: "left", show: true, min:0}
   , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", itemStyle: itemStyle {color:blue}, value: n }) count']
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
@@ -79,7 +79,7 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Pie"
   , subTitle  : "Distribution by GraphTerm"
   , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "", show: false }
+  , yAxis     : yAxis' { position: "", show: false, min:0}
   , series    : [seriesPieD1 {name: "Data"} $ map (\(Tuple n v) -> dataSerie {name: n, value:v}) $ zip dates' count']
   -- , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: n }) count']
   , addZoom   : false

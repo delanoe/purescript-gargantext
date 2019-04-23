@@ -62,7 +62,7 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Histogram"
   , subTitle  : "Distribution of publications over time"
   , xAxis     : xAxis' dates'
-  , yAxis     : yAxis' { position: "left", show: true }
+  , yAxis     : yAxis' { position: "left", show: true, min:0}
   , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: n, itemStyle : itemStyle {color:grey}}) count']
   , addZoom   : true
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }

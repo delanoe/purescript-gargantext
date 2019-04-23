@@ -66,8 +66,8 @@ scatterOptions :: Array Metric -> Options
 scatterOptions metrics = Options
   { mainTitle : "Ngrams Selection Metrics"
   , subTitle  : "Local metrics (Inc/Exc, Spe/Gen), Global metrics (TFICF maillage)"
-  , xAxis     : xAxis { min: 0 }
-  , yAxis     : yAxis' { position : "", show: true }
+  , xAxis     : xAxis { min: -1 }
+  , yAxis     : yAxis' { position : "", show: true, min : -2}
   , series    : map2series $ metric2map metrics
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }

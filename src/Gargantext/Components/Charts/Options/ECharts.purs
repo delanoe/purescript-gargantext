@@ -126,7 +126,7 @@ yAxisVoid = yAxis
   }
 
 xAxis' :: Array String -> XAxis
-xAxis' [] = unsafeCoerce {}
+xAxis' [] = unsafeCoerce {show:false}
 xAxis' xs = xAxis
             { "data": xData xs
             , "type": "category"
@@ -140,11 +140,12 @@ xAxis' xs = xAxis
 -- TODO try to use Optional
 yAxis' :: { position :: String
           , show     :: Boolean
+          , min      :: Int
           } -> YAxis
-yAxis' {position, show} = yAxis
+yAxis' {position, show, min} = yAxis
   { "type": "value"
   , name: "data"
-  , min: 0
+  , min: min
   , axisLabel: {formatter: "{value}"}
   , position
   , show
