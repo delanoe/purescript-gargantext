@@ -69,14 +69,14 @@ exports.pauseForceAtlas2 = function() {
 exports.cursor_size = 10;
 
 // TODO
-exports.shift_key = false;
-//exports.shift_key = true;
+//exports.shift_key = false;
+exports.shift_key = true;
 
 exports.trackMouse = function(e) {
-    var partialGraph = window.sigmaGargInstance;
-    console.log('FUN t.minimap:trackMouse');
 
     if(!exports.shift_key) {
+      var partialGraph = window.sigmaGargInstance;
+      console.log('FUN t.minimap:trackMouse');
       // new sigma.js 2D mouse context
       var ctx = partialGraph.renderers[0].contexts.mouse;
       ctx.globalCompositeOperation = "source-over";
