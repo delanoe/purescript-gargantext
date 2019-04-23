@@ -51,16 +51,16 @@ filterNTree p (NTree x ary) =
 
 type FTree = NTree LNode
 
-data Action =  ShowPopOver ID
+data Action =  ShowPopOver   ID
               | ToggleFolder ID
-              | RenameNode  String ID
-              | Submit ID String
-              | DeleteNode ID
-              | Create  ID
+              | RenameNode   String ID
+              | Submit       ID String
+              | DeleteNode   ID
+              | Create       ID
               | SetNodeValue String ID
               | ToggleCreateNode ID
-              | ShowRenameBox ID
-              | CancelRename ID
+              | ShowRenameBox    ID
+              | CancelRename     ID
 
 
 type State = { state :: FTree }

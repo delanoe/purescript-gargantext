@@ -63,7 +63,7 @@ title mainTitle subTitle =
    ,itemGap: 0.0
    ,zlevel: 2.0
    ,z: 2.0
-   ,left: relativePosition (Relative LeftPos)
+   ,left: relativePosition (Relative RightPos)
    ,top: relativePosition (Relative Top)
    ,right: numberPosition 60.0
    ,bottom: percentPosition 40.0
@@ -115,7 +115,6 @@ data3 :: DataLegend
 data3 = {name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle'}
 
 
-
 yAxisVoid :: YAxis
 yAxisVoid = yAxis
   { "type": ""
@@ -126,27 +125,17 @@ yAxisVoid = yAxis
   , show: false
   }
 
-yAxis1 :: YAxis
-yAxis1 = yAxis
-  { "type": "value"
-  , name: "data"
-  , min: 0
-  , position: "left"
-  , axisLabel: {formatter: "{value}"}
-  , show: true
-  }
-
 xAxis' :: Array String -> XAxis
 xAxis' [] = unsafeCoerce {}
 xAxis' xs = xAxis
             { "data": xData xs
             , "type": "category"
             , axisTick: {alignWithLabel: true}
-            , show: length xs /= 0
+            , show: true
             }
   where
     xData :: Array String -> Array DataAxis
-    xData = map (\x -> {value : x, textStyle : textStyle'})
+    xData = map (\x -> {value : x, textStyle : textStyle})
 
 -- TODO try to use Optional
 yAxis' :: { position :: String
@@ -228,7 +217,7 @@ textStyle2 =
     ,fontStyle: chartFontStyle italic
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
-    ,fontSize: 12
+    ,fontSize: 11
     ,align: relativePosition $ Relative RightPos
     ,verticalAlign: relativePosition $ Relative Bottom
     ,lineHeight: percentPosition 0.0
@@ -270,14 +259,14 @@ textStyle =
     ,fontStyle: chartFontStyle normal
     ,fontWeight: chartFontWeight normal
     ,fontFamily: "sans-serif"
-    ,fontSize: 20
+    ,fontSize: 15
     ,align: relativePosition $ Relative LeftPos
     ,verticalAlign: relativePosition $ Relative Top
     ,lineHeight: percentPosition 0.0
     ,width: percentPosition 100.0
     ,height: percentPosition 100.0
     ,textBorderColor: black
-    ,textBorderWidth: 1.0
+    ,textBorderWidth: 0.0
     ,textShadowColor: black
     ,textShadowBlur: black
     ,textShadowOffsetX: 0.0

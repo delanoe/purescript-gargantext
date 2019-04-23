@@ -41,7 +41,7 @@ render dispatch _ state _ = [
         , subTitle  : "Total scientific publications"
         , xAxis     : xAxis' ["2015", "2016", "2017"]
         , yAxis     : yAxis' { position: "left"
-                             , show: true
+                             , show: false
                              }
         , series    : myData
         , addZoom   : false
@@ -143,46 +143,46 @@ sankeyEx = Options
   , addZoom   : false
   }
 
-treeData :: Array TreeData
-treeData = [ treeNode "nodeA" 10.0 [ treeLeaf "nodeAa" 4.0
-                                   , treeLeaf "nodeAb" 5.0
-                                   , treeNode "nodeAc" 1.0 [ treeLeaf "nodeAca" 0.5
-                                                           , treeLeaf "nodeAcb" 0.5
+treeData :: Array TreeNode
+treeData = [ treeNode "nodeA" 10 [ treeNode "nodeAa" 4 []
+                                   , treeNode "nodeAb" 5 []
+                                   , treeNode "nodeAc" 1 [ treeNode "nodeAca" 5 []
+                                                           , treeNode "nodeAcb" 5 []
                                                           ]
                                    ]
-           , treeNode "nodeB" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
-           , treeNode "nodeC" 20.0 [ treeNode "nodeCa" 20.0 [ treeLeaf "nodeCa1" 10.0
-                                                            , treeLeaf "nodeCa2" 10.0
+           , treeNode "nodeB" 20 [ treeNode "nodeBa" 20 [ treeNode "nodeBa1" 20 [] ]]
+           , treeNode "nodeC" 20 [ treeNode "nodeCa" 20 [ treeNode "nodeCa1" 10 []
+                                                            , treeNode "nodeCa2" 10 []
                                                             ]
                                    ]
-           , treeNode "nodeD" 20.0 [ treeNode "nodeDa" 20.0 [ treeLeaf "nodeDa1" 2.0
-                                                            , treeLeaf "nodeDa2" 2.0
-                                                            , treeLeaf "nodeDa3" 2.0
-                                                            , treeLeaf "nodeDa4" 2.0
-                                                            , treeLeaf "nodeDa5" 2.0
-                                                            , treeLeaf "nodeDa6" 2.0
-                                                            , treeLeaf "nodeDa7" 2.0
-                                                            , treeLeaf "nodeDa8" 2.0
-                                                            , treeLeaf "nodeDa9" 2.0
-                                                            , treeLeaf "nodeDa10" 2.0
+           , treeNode "nodeD" 20 [ treeNode "nodeDa" 20 [ treeNode "nodeDa1" 2 []
+                                                            , treeNode "nodeDa2" 2 []
+                                                            , treeNode "nodeDa3" 2 []
+                                                            , treeNode "nodeDa4" 2 []
+                                                            , treeNode "nodeDa5" 2 []
+                                                            , treeNode "nodeDa6" 2 []
+                                                            , treeNode "nodeDa7" 2 []
+                                                            , treeNode "nodeDa8" 2 []
+                                                            , treeNode "nodeDa9" 2 []
+                                                            , treeNode "nodeDa10" 2 []
                                                             ]
                                      ]
           ]
 
 
-treeData' :: Array TreeData
-treeData' = [ treeNode "nodeA" 10.0 [ treeLeaf "nodeAa" 4.0
-                                    , treeLeaf "nodeAb" 5.0
-                                    , treeNode "nodeAc" 1.0 [ treeLeaf "nodeAca" 0.5
-                                                           , treeLeaf "nodeAcb" 0.5
+treeData' :: Array TreeNode
+treeData' = [ treeNode "nodeA" 10 [ treeLeaf "nodeAa" 4
+                                    , treeLeaf "nodeAb" 5
+                                    , treeNode "nodeAc" 1 [ treeLeaf "nodeAca" 5
+                                                           , treeLeaf "nodeAcb" 5
                                                           ]
-                                   , treeNode "nodeB" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
-                                   , treeNode "nodeC" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
-                                   , treeNode "nodeD" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
-                                   , treeNode "nodeE" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
-                                   , treeNode "nodeF" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
-                                   , treeNode "nodeG" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
-                                   , treeNode "nodeH" 20.0 [ treeNode "nodeBa" 20.0 [ treeLeaf "nodeBa1" 20.0]]
+                                   , treeNode "nodeB" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+                                   , treeNode "nodeC" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+                                   , treeNode "nodeD" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+                                   , treeNode "nodeE" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+                                   , treeNode "nodeF" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+                                   , treeNode "nodeG" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+                                   , treeNode "nodeH" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
                                    ]
           ]
 

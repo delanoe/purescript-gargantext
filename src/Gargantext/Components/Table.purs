@@ -176,10 +176,9 @@ tableSpec = simpleSpec performAction render
 defaultContainer :: {title :: String} -> TableContainerProps -> Array ReactElement
 defaultContainer {title} props =
   [ div [className "row"]
-    [ div [className "col-md-1"] [b [] [text title]]
-    , div [className "col-md-2"] [props.pageSizeControl]
-    , div [className "col-md-3"] [props.pageSizeDescription]
-    , div [className "col-md-3"] [props.paginationLinks]
+    [ div [className "col-md-4"] [props.pageSizeDescription]
+    , div [className "col-md-4"] [props.paginationLinks]
+    , div [className "col-md-4"] [props.pageSizeControl]
     ]
   , table [ className "table"]
     [ thead [className "thead-dark"] [ props.tableHead ]
@@ -218,8 +217,9 @@ tableElt props = createElement tableClass props []
 sizeDD :: PageSizes -> (Action -> Effect Unit) -> ReactElement
 sizeDD ps d
   = span []
-    [ text " "
-    , select [onChange (\e -> d (ChangePageSize $ string2PageSize $ (unsafeCoerce e).target.value))] $ map (optps ps) aryPS
+    [ select [ className "form-control"
+             , onChange (\e -> d (ChangePageSize $ string2PageSize $ (unsafeCoerce e).target.value))
+             ] $ map (optps ps) aryPS
     ]
 
 textDescription :: Int -> PageSizes -> Int -> ReactElement
