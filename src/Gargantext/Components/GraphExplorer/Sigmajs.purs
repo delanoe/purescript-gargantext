@@ -6,6 +6,7 @@ import Data.Nullable (Nullable)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn1, runEffectFn1)
 import React (Children, ReactClass, ReactElement, ReactRef, SyntheticEventHandler, createElement, unsafeCreateElement)
+import React.SyntheticEvent (SyntheticMouseEvent)
 import Record.Unsafe (unsafeGet)
 import Thermite (EventHandler)
 import Unsafe.Coerce (unsafeCoerce)
@@ -260,7 +261,7 @@ type SigmaInstance = { | SigmaInstance' }
 type CameraInstance = { | CameraInstance' }
 foreign import setSigmaRef :: EffectFn1 (Nullable ReactRef) Unit
 foreign import getSigmaRef :: Effect SigmaInstance
-foreign import sigmaOnMouseMove :: forall o. o -> Effect Unit
+foreign import sigmaOnMouseMove :: {cursorSize :: Number} -> SyntheticMouseEvent -> Effect Unit
 cameras :: SigmaInstance -> Array CameraInstance
 cameras = unsafeGet "cameras"
 

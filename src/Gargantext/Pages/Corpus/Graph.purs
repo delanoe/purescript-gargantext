@@ -63,6 +63,7 @@ data Action
   | ChangeNodeSize Number
   | DisplayEdges
   | ToggleMultiNodeSelection
+  | ChangeCursorSize Number
 --  | Zoom Boolean
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
@@ -74,6 +75,8 @@ derive instance ordSelectedNode :: Ord SelectedNode
 instance showSelectedNode :: Show SelectedNode where
   show (SelectedNode node) = node.label
 
+_cursorSize :: forall s a. Lens' { cursorSize :: a | s } a
+_cursorSize = prop (SProxy :: SProxy "cursorSize")
 
 _multiNodeSelection :: forall s a. Lens' { multiNodeSelection :: a | s } a
 _multiNodeSelection = prop (SProxy :: SProxy "multiNodeSelection")
@@ -117,6 +120,7 @@ newtype State = State
   , sigmaGraphData :: Maybe SigmaGraphData
   , legendData :: Array Legend
   , selectedNodes :: Set SelectedNode
+  , cursorSize :: Number
   , multiNodeSelection :: Boolean
   , showSidePanel :: Boolean
   , showControls :: Boolean
@@ -135,6 +139,7 @@ initialState = State
   , sigmaGraphData : Nothing
   , legendData : []
   , selectedNodes : Set.empty
+  , cursorSize : 0.0
   , multiNodeSelection : false
   , showSidePanel : false
   , showControls : false
@@ -199,6 +204,11 @@ performAction DisplayEdges _ _ =
 performAction ToggleMultiNodeSelection _ _ =
   modifyState_ $ \(State s) -> do
     State $ s # _multiNodeSelection %~ not
+
+performAction (ChangeCursorSize size) _ _ =
+  modifyState_ $ \(State s) ->
+    State $ s # _cursorSize .~ size
+
 
 --performAction (Zoom True) _ _ =
 --  modifyState_ $ \() -> do
@@ -513,10 +523,16 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                     ]
                   ]
                 -}
-                {-, li [className "col-md-2"]
-                  [ span [] [text "Selector"],input [_type "range", _id "myRange", value "90"]
+                , li [className "col-md-1"]
+                  [ span [] [text "Selector"]
+                  , input [ _type "range"
+                          , _id "cursorSizeRange"
+                          , min "0"
+                          , max "100"
+                          , defaultValue (show st.cursorSize)
+                          , onChange \e -> d $ ChangeCursorSize (numberTargetValue e)
+                          ]
                   ]
-                -}
                 , li [className "col-md-1"]
                   [ span [] [text "Labels"],input [_type "range"
                                                  , _id "labelSizeRange"
@@ -586,7 +602,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
          , div [className "row"]
            [div [if (st.showSidePanel && st.showTree) then className "col-md-10" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
              [ div [style {height: "95%"}
-                   ,onMouseMove sigmaOnMouseMove] $
+                   ,onMouseMove (sigmaOnMouseMove {cursorSize: st.cursorSize})] $
                [
                ]
                <>

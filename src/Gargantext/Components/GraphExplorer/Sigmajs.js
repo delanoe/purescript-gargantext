@@ -50,7 +50,6 @@ exports.getSigmaRef = function() {
 };
 exports.goToImpl = function(cam) {
   return function(props) {
-    console.log("goTo", cam, props);
     return cam.goTo(props);
   };
 };
@@ -66,17 +65,10 @@ exports.pauseForceAtlas2 = function() {
   }
 };
 
-exports.cursor_size = 10;
+var trackMouse = function(cursorSize, e) {
 
-// TODO
-//exports.shift_key = false;
-exports.shift_key = true;
-
-exports.trackMouse = function(e) {
-
-    if(!exports.shift_key) {
+    if(!e.shiftKey) {
       var partialGraph = window.sigmaGargInstance;
-      console.log('FUN t.minimap:trackMouse');
       // new sigma.js 2D mouse context
       var ctx = partialGraph.renderers[0].contexts.mouse;
       ctx.globalCompositeOperation = "source-over";
@@ -91,7 +83,7 @@ exports.trackMouse = function(e) {
       var coord = window.sigma.utils.mouseCoords(e)
       var x = (coord.x + coord.clientX) / 2 // ; // sigma.utils.getX(e);
       var y = (coord.y + coord.clientY) /2 // ; // sigma.utils.getY(e);
-      console.log(coord);
+      console.log('trackMouse', coord);
       // optional: make more labels appear on circle hover (/!\ costly /!\ esp. on large graphs)
 //      if (partialGraph.conf.moreLabelsUnderArea) {
 //        // convert screen => mouse => cam
@@ -119,8 +111,7 @@ exports.trackMouse = function(e) {
       ctx.fillStyle = "#71C3FF";
       ctx.globalAlpha = 0.5;
       ctx.beginPath();
-      ctx.arc(x, y, 30.0, 0, Math.PI * 2, true);
-      //ctx.arc(x, y, partialGraph.gui.circleSize, 0, Math.PI * 2, true);
+      ctx.arc(x, y, cursorSize, 0, Math.PI * 2, true);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
@@ -130,11 +121,12 @@ exports.trackMouse = function(e) {
 
 };
 
-exports.sigmaOnMouseMove = function(e) {
+exports.sigmaOnMouseMove = function(props) {
+  return function(e) {
     return function() {
-      console.log('sigmaOnMouseMove');
       if(typeof(window.sigmaGargInstance) !== "undefined") {
-          if(exports.cursor_size>0) exports.trackMouse(e);
+          if(props.cursorSize > 0) trackMouse(props.cursorSize, e);
       }
     };
+  };
 };
