@@ -41,7 +41,7 @@ exports.forceLinkClass = FL.default;
 }
 
 exports.setSigmaRef = function(props) {
-  if (props.sigma) {
+  if (props && props.sigma) {
     window.sigmaGargInstance = props.sigma;
   }
 };

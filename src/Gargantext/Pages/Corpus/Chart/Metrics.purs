@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Metrics where
+module Gargantext.Pages.Corpus.Chart.Metrics where
 
 import Data.Array (foldl)
 import Data.Tuple (Tuple(..))

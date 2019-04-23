@@ -1,9 +1,12 @@
 module Gargantext.Components.Charts.Options.Series where
 
+import Data.Maybe
+import Data.Array (foldl)
 import Record.Unsafe (unsafeSet)
 import Unsafe.Coerce (unsafeCoerce)
 import Prelude
 
+import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Gargantext.Types (class Optional)
 import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
 import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
@@ -143,7 +146,7 @@ instance showTrees :: Show Trees where
 
 type RequiredTree o =
   { "type" :: SeriesType
-  , "data" :: Array TreeData
+  , "data" :: Array TreeNode
   | o
   }
 
@@ -154,9 +157,9 @@ type OptionalTree =
 seriesTree :: forall o. Optional o OptionalTree => RequiredTree o -> Series
 seriesTree = unsafeSeries
 
-mkTree :: Trees -> Array TreeData -> Series
+mkTree :: Trees -> Array TreeNode -> Series
 mkTree t ts = seriesTree { "type" : SeriesType (show t)
-                         , "data" : map toJsTree ts
+                         , "data" : map (toJsTree Nothing) ts
                          , layout : layout
                          }
               where
@@ -165,30 +168,42 @@ mkTree t ts = seriesTree { "type" : SeriesType (show t)
                            _          -> "none"
 
 -- ** Data Structure of the Trees
-data TreeData = TreeLeaf TreeLeaf
-              | TreeNode TreeNode
+data TreeData = Array TreeNode
 
-toJsTree :: TreeData -> TreeData
-toJsTree (TreeLeaf x) = unsafeCoerce x
-toJsTree (TreeNode x) = unsafeCoerce { name : x.name
-                                     , value : x.value
-                                     , children : (map toJsTree x.children)
-                                     }
 
-type TreeNode =  { name     :: String
-                 , value    :: Number
-                 , children :: Array TreeData
+treeValue :: TreeNode -> Int
+treeValue (TreeNode x) = foldl (+) 0 $ [x.value] <> map treeValue x.children
+
+toJsTree :: Maybe String -> TreeNode -> TreeNode
+toJsTree maybeSurname (TreeNode x) =
+  unsafeCoerce { name : name
+               , value : foldl (+) 0 $ [x.value] <> map treeValue x.children
+               , children : (map (toJsTree (Just name)) x.children)
+               }
+    where
+      name = maybe "" (\x -> x <> ">") maybeSurname  <> x.name
+
+data TreeNode = TreeNode { name     :: String
+                 , value    :: Int
+                 , children :: Array TreeNode
                  }
 
-type TreeLeaf = { name :: String
-                , value :: Number
-                }
 
-treeNode :: String -> Number -> Array TreeData -> TreeData
+instance decodeTreeNode :: DecodeJson TreeNode where
+  decodeJson json = do
+    obj <- decodeJson json
+    name <- obj .? "label"
+    value <- obj .? "value"
+    children <- obj .? "children"
+    pure $ TreeNode {name, value, children}
+
+
+
+treeNode :: String -> Int -> Array TreeNode -> TreeNode
 treeNode n v ts = TreeNode {name : n, value:v, children:ts}
 
-treeLeaf :: String -> Number -> TreeData
-treeLeaf n v = TreeLeaf { name : n, value : v}
+treeLeaf :: String -> Int -> TreeNode
+treeLeaf n v = TreeNode { name : n, value : v, children : []}
 
 
 -- | TODO
