@@ -1,0 +1,12 @@
+.annotation-run.candidate-term, .annotation-menu .candidate-term{
+    color: #000;
+    background-color: #aaa;
+}
+.annotation-run.graph-term, .annotation-menu .graph-term {
+    color: #000;
+    background-color: #0f0;
+}
+.annotation-run.stop-term, .annotation-menu .stop-term {
+    color: #000;
+    background-color: #f00;
+}
