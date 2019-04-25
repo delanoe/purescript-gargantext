@@ -22,9 +22,9 @@ import Gargantext.Config          (toUrl, NodeType(..), End(..))
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable (NgramsTable(..), NgramsElement(..))
-import Gargantext.Components.Annotated.AnnotatedField as AnnotatedField
+import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Types (TermList(..))
-import Gargantext.Utils.React ( crapify )
+import Gargantext.Utils.Reactix ( scuff )
 
 nge :: String -> Tuple String NgramsElement
 nge word = Tuple word elem where
@@ -330,7 +330,7 @@ docview = simpleSpec performAction render
           ]
       ]
         where
-          annotate t = crapify $ AnnotatedField.annotatedField { ngrams: state.ngramsTable, text: t }
+          annotate t = scuff $ AnnotatedField.annotatedField { ngrams: state.ngramsTable, text: t }
           li' = li [className "list-group-item justify-content-between"]
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]

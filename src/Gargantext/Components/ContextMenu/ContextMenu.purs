@@ -1,33 +1,34 @@
 -- | The ContextMenu component renders a generic context menu
-module Gargantext.Component.ContextMenu.ContextMenu where
+module Gargantext.Components.ContextMenu.ContextMenu where
   -- (MenuProps, Action(..), separator) where
 
 import Prelude hiding (div)
 import Effect (Effect)
-import Data.String (joinWith)
-import React
-  ( class ReactComponentSpec
-  , Context, ContextProvider, ContextConsumer
-  , ReactClass, ReactElement, ReactClassConstructor, Children
-  , component, createElement )
-import React.DOM (a, div, li, ul')
-import React.DOM as DOM -- for Props
-import React.DOM.Props (className, onContextMenu, onMouseOut, onBlur)
-import Thermite
-  ( Render, PerformAction
-  , simpleSpec, modifyState_
-  , createReactSpec, defaultRender
-  , _render )
-import Gargantext.Utils.React (WithChildren, wrap)
+import Reactix as R
+import Reactix.DOM.Raw as RDOM
 
--- type State' = { open :: Boolean }
--- newtype State = State State'
+import Gargantext.Utils.Reactix as R'
 
--- defaultState :: State
--- defaultState = State { open: false }
+contextMenu :: Array R.Element -> R.Element
+contextMenu = R.createTree contextMenuCpt {}
 
--- type MenuProps = { classes :: String, items :: Array (Effect Unit -> ReactElement) }
--- type ItemProps p = { hideMenu :: Context (Effect Unit) | p }
+contextMenuCpt :: R.Component (R'.WithChildren ())
+contextMenuCpt = R.hooksTree "ContextMenu" cpt
+  where
+    cpt :: forall m. R'.HooksTree m ()
+    cpt _props children = pure $
+      R'.nav { className: "context-menu" }
+        [ R'.ul { className: "context-menu-items" } children ]
+
+contextMenuItem :: Array R.Element -> R.Element
+contextMenuItem = R.createTree contextMenuItemCpt {}
+
+contextMenuItemCpt :: R.Component (R'.WithChildren ())
+contextMenuItemCpt = R.hooksTree "ContextMenuItem" cpt
+  where
+    cpt :: forall m. R'.HooksTree m ()
+    cpt _props children = pure $ R'.li { className: "context-menu-item" } children
+
 
 -- data Action = Show | Hide
 

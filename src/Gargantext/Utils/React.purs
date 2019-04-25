@@ -14,9 +14,6 @@ type WithChildren props = { children :: Children | props }
 wrap :: (Array ReactElement -> ReactElement) -> ReactElement -> ReactElement
 wrap f e = f [e]
 
-crapify :: R.Element -> ReactElement
-crapify = unsafeCoerce
-
 -- many ::
 --   forall props extra state action.
 --      Spec state { extra :: extra | WithIndex props } action
