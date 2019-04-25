@@ -569,13 +569,14 @@
       "arrays",
       "console",
       "effect",
+      "ffi-simple",
       "functions",
       "nullable",
       "prelude",
       "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-dom-simple",
-    "version": "master"
+    "version": "v0.1.1"
   },
   "effect": {
     "dependencies": [
@@ -682,6 +683,17 @@
     ],
     "repo": "https://github.com/justinwoo/purescript-expect-inferred.git",
     "version": "v1.0.0"
+  },
+  "ffi-simple": {
+    "dependencies": [
+      "prelude",
+      "effect",
+      "functions",
+      "nullable",
+      "unsafe-coerce"
+    ],
+    "repo": "https://github.com/irresponsible/purescript-ffi-simple",
+    "version": "v0.1.2"
   },
   "filterable": {
     "dependencies": [
@@ -2024,13 +2036,14 @@
       "console",
       "dom-simple",
       "effect",
+      "ffi-simple",
       "functions",
       "nullable",
       "prelude",
       "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-reactix",
-    "version": "master"
+    "version": "v0.1.0"
   },
   "read": {
     "dependencies": [
