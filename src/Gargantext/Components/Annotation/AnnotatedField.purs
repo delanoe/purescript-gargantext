@@ -20,6 +20,7 @@ import Data.Tuple ( Tuple(..) )
 import Effect ( Effect )
 import Reactix as R
 import Reactix.DOM.Raw as RDOM
+import Reactix.SyntheticEvent as E
 
 import Gargantext.Types ( TermList(..) )
 import Gargantext.Components.Annotation.Utils ( termClass )
@@ -37,13 +38,13 @@ defaultProps :: Record Props
 defaultProps = { ngrams: NgramsTable Map.empty, text: Nothing }
 
 annotatedField :: Record Props -> R.Element
-annotatedField = R.createLeaf annotatedFieldComponent
+annotatedField p = R.createElement annotatedFieldComponent p []
 
 annotatedFieldComponent :: R.Component Props
-annotatedFieldComponent = R.pureLeaf "AnnotatedField" cpt
+annotatedFieldComponent = R.staticComponent "AnnotatedField" cpt
   where
     runs props = annotateRun <$> compile props
-    cpt props =
+    cpt props _ =
       RDOM.div { className: "annotated-field-wrapper" }
         [ annotationMenu { termList: Nothing }
         , RDOM.div { className: "annotated-field-runs" } (annotateRun <$> compile props) ]
@@ -51,11 +52,11 @@ annotatedFieldComponent = R.pureLeaf "AnnotatedField" cpt
 type RunProps = ( list :: Maybe TermList, text :: String )
 
 annotateRun :: Run -> R.Element
-annotateRun (Tuple text list) = R.createLeaf annotatedRunComponent { text, list }
+annotateRun (Tuple text list) = R.createElement annotatedRunComponent { text, list } []
 
 annotatedRunComponent :: R.Component RunProps
-annotatedRunComponent = R.pureLeaf "AnnotatedRun" cpt
-  where cpt { text, list } = maybe (unstyled text) (styled text) list
+annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
+  where cpt { text, list } _ = maybe (unstyled text) (styled text) list
         styled text list = RDOM.span { className: className list } [ RDOM.text text ]
         unstyled text = RDOM.span {} [ RDOM.text text ]
         className list = "annotation-run " <> termClass list
@@ -65,16 +66,16 @@ compile props = runs props.text
   where runs (Just text) = highlightNgrams props.ngrams text
         runs _ = []
 
-maybeShowMenu :: SyntheticEvent -> NgramsTable -> (Maybe TermList -> Effect Unit) -> Effect Unit
+maybeShowMenu :: E.MouseEvent -> NgramsTable -> (Maybe TermList -> Effect Unit) -> Effect Unit
 maybeShowMenu e n a = Sel.getSelection >>= traverse_ (a <<< findNgram n <<< Sel.toString)
 
-showMenu
+-- showMenu
 
 
 findNgram :: NgramsTable -> String -> Maybe TermList
 findNgram _ _ = Nothing
 
--- contextMenuHandler :: (Action -> Effect Unit) -> SyntheticMouseEvent -> Effect Unit
+-- contextMenuHandler :: (Action -> Effect Unit) -> MouseEvent -> Effect Unit
 -- contextMenuHandler d e =
 --   do sel <- getSelection
 --      case toString <$> sel of

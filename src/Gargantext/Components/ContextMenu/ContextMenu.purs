@@ -10,23 +10,21 @@ import Reactix.DOM.Raw as RDOM
 import Gargantext.Utils.Reactix as R'
 
 contextMenu :: Array R.Element -> R.Element
-contextMenu = R.createTree contextMenuCpt {}
+contextMenu = R.createElement contextMenuCpt {}
 
-contextMenuCpt :: R.Component (R'.WithChildren ())
-contextMenuCpt = R.hooksTree "ContextMenu" cpt
+contextMenuCpt :: R.Component ()
+contextMenuCpt = R.hooksComponent "ContextMenu" cpt
   where
-    cpt :: forall m. R'.HooksTree m ()
     cpt _props children = pure $
       R'.nav { className: "context-menu" }
         [ R'.ul { className: "context-menu-items" } children ]
 
 contextMenuItem :: Array R.Element -> R.Element
-contextMenuItem = R.createTree contextMenuItemCpt {}
+contextMenuItem = R.createElement contextMenuItemCpt {}
 
-contextMenuItemCpt :: R.Component (R'.WithChildren ())
-contextMenuItemCpt = R.hooksTree "ContextMenuItem" cpt
+contextMenuItemCpt :: R.Component ()
+contextMenuItemCpt = R.hooksComponent "ContextMenuItem" cpt
   where
-    cpt :: forall m. R'.HooksTree m ()
     cpt _props children = pure $ R'.li { className: "context-menu-item" } children
 
 
