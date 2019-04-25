@@ -155,11 +155,16 @@ let additions =
           [ "prelude", "aff", "random", "quickcheck", "spec" ]
           "https://github.com/purescript-spec/purescript-spec-quickcheck"
           "v3.1.0"
+      , ffi-simple =
+          mkPackage
+		  [ "prelude", "effect", "functions", "nullable", "unsafe-coerce" ]
+		  "https://github.com/irresponsible/purescript-ffi-simple"
+		  "0.1.2"
       , dom-simple =
           mkPackage
 		  [ "arrays", "console", "effect", "functions", "nullable", "prelude", "unsafe-coerce" ]
 		  "https://github.com/irresponsible/purescript-dom-simple"
-		  "master"
+		  "0.1.0"
       , reactix =
           mkPackage
           [ "console", "dom-simple", "effect", "functions", "nullable", "prelude", "unsafe-coerce" ]
