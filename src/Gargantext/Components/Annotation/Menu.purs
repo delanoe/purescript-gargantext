@@ -22,14 +22,13 @@ type Props = ( termList :: Maybe TermList )
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
 annotationMenu :: Record Props -> R.Element
-annotationMenu = R.createLeaf annotationMenuCpt
+annotationMenu p = R.createElement annotationMenuCpt p []
 
 annotationMenuCpt :: R.Component Props
-annotationMenuCpt = R.hooksLeaf "Annotation.Menu" cpt
+annotationMenuCpt = R.hooksComponent "Annotation.Menu" cpt
   where
-    cpt :: forall m. R'.HooksLeaf m Props
-    cpt { termList } = pure $
-      R'.div { className: "annotation-menu" } [ CM.contextMenu $ children termList ]
+    cpt { termList } _ = pure $
+      RDOM.div { className: "annotation-menu" } [ CM.contextMenu $ children termList ]
     children l = A.mapMaybe (\l' -> addToList l' l) [ GraphTerm, CandidateTerm, StopTerm ]
 
 -- | Given the TermList to render the item for and the Maybe TermList the item may belong to, possibly render the menuItem
