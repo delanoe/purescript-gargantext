@@ -1,5 +1,5 @@
 module Gargantext.Utils.Reactix
-  ( buff, scuff, nav, ul, li, a, div )
+  ( buff, scuff, nav, ul, li, a)
   where
 
 import React ( ReactElement )
