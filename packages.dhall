@@ -159,17 +159,17 @@ let additions =
           mkPackage
 		  [ "prelude", "effect", "functions", "nullable", "unsafe-coerce" ]
 		  "https://github.com/irresponsible/purescript-ffi-simple"
-		  "0.1.2"
+		  "v0.1.2"
       , dom-simple =
           mkPackage
 		  [ "arrays", "console", "effect", "functions", "nullable", "prelude", "unsafe-coerce" ]
 		  "https://github.com/irresponsible/purescript-dom-simple"
-		  "0.1.0"
+		  "v0.1.1"
       , reactix =
           mkPackage
-          [ "console", "dom-simple", "effect", "functions", "nullable", "prelude", "unsafe-coerce" ]
+          [ "console", "dom-simple", "effect", "functions", "nullable", "prelude", "unsafe-coerce", "ffi-simple"]
           "https://github.com/irresponsible/purescript-reactix"
-          "master"
+          "v0.1.0"
       , uint =
           mkPackage
           [ "maybe", "math", "generics-rep" ]
