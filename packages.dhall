@@ -169,7 +169,7 @@ let additions =
           mkPackage
           [ "console", "dom-simple", "effect", "functions", "nullable", "prelude", "unsafe-coerce", "ffi-simple"]
           "https://github.com/irresponsible/purescript-reactix"
-          "v0.1.0"
+          "v0.1.1"
       , uint =
           mkPackage
           [ "maybe", "math", "generics-rep" ]
