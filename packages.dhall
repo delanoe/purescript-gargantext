@@ -162,7 +162,7 @@ let additions =
 		  "v0.1.2"
       , dom-simple =
           mkPackage
-		  [ "arrays", "console", "effect", "functions", "nullable", "prelude", "unsafe-coerce" ]
+		  [ "arrays", "console", "effect", "ffi-simple", "functions", "nullable", "prelude", "unsafe-coerce" ]
 		  "https://github.com/irresponsible/purescript-dom-simple"
 		  "v0.1.1"
       , reactix =
