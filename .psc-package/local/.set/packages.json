@@ -2036,11 +2036,11 @@
       "console",
       "dom-simple",
       "effect",
-      "ffi-simple",
       "functions",
       "nullable",
       "prelude",
-      "unsafe-coerce"
+      "unsafe-coerce",
+      "ffi-simple"
     ],
     "repo": "https://github.com/irresponsible/purescript-reactix",
     "version": "v0.1.0"
