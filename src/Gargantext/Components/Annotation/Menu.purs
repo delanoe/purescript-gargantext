@@ -4,40 +4,41 @@ module Gargantext.Components.Annotation.Menu where
 
 import Prelude ( Unit, (==), ($), (<>), unit, pure )
 import Data.Array as A
-import Data.Maybe ( Maybe(..) )
+import Data.Maybe ( Maybe(..), maybe' )
 import Effect ( Effect )
 import Effect.Uncurried ( mkEffectFn1 )
 import Reactix as R
-import Reactix.DOM.Raw as RDOM
-import Unsafe.Coerce ( unsafeCoerce )
+import Reactix.DOM.HTML as HTML
+import Reactix.SyntheticEvent as E
 
 import Gargantext.Types ( TermList(..), termListName )
-import Gargantext.Utils.Reactix as R'
 import Gargantext.Components.Annotation.Utils ( termClass )
 
 import Gargantext.Components.ContextMenu.ContextMenu as CM
 
-type Props = ( termList :: Maybe TermList )
+type Props = ( list :: Maybe TermList )
+
+type AnnotationMenu = { x :: Number, y :: Number, list :: Maybe TermList }
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
-annotationMenu :: Record Props -> R.Element
-annotationMenu p = R.createElement annotationMenuCpt p []
+annotationMenu :: (Maybe AnnotationMenu -> Effect Unit) -> AnnotationMenu -> R.Element
+annotationMenu setMenu { x,y,list } =
+  CM.contextMenu { x,y,setMenu } [ R.createElement annotationMenuCpt {list} [] ]
 
 annotationMenuCpt :: R.Component Props
 annotationMenuCpt = R.hooksComponent "Annotation.Menu" cpt
   where
-    cpt { termList } _ = pure $
-      RDOM.div { className: "annotation-menu" } [ CM.contextMenu $ children termList ]
+    cpt { list } _ = pure $ R.fragment $ children list
     children l = A.mapMaybe (\l' -> addToList l' l) [ GraphTerm, CandidateTerm, StopTerm ]
 
--- | Given the TermList to render the item for and the Maybe TermList the item may belong to, possibly render the menuItem
+-- | Given the TermList to render the item for zand the Maybe TermList the item may belong to, possibly render the menuItem
 addToList :: TermList -> Maybe TermList -> Maybe R.Element
 addToList t (Just t')
   | t == t' = Nothing
   | true = addToList t Nothing
 addToList t _ = Just $ CM.contextMenuItem [ link ]
-  where link = R'.a { onClick: click, className: className } [ RDOM.text label ]
+  where link = HTML.a { onClick: click, className: className } [ HTML.text label ]
         label = "Add to " <> termListName t
         className = termClass t
         click = mkEffectFn1 $ \_ -> addToTermList t
