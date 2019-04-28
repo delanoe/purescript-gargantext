@@ -13,22 +13,25 @@ module Gargantext.Components.Annotation.AnnotatedField where
 
 import Prelude
 import Data.Map as Map
-import Data.Maybe ( Maybe(..), maybe )
+import Data.Maybe ( Maybe(..), maybe, maybe' )
 import Data.Lens ( Lens', lens )
 import Data.Traversable ( traverse_ )
 import Data.Tuple ( Tuple(..) )
+import Data.Tuple.Nested ( (/\) )
+import DOM.Simple.Console
+import DOM.Simple.Event as DE
 import Effect ( Effect )
+import Effect.Uncurried (mkEffectFn1)
 import Reactix as R
-import Reactix.DOM.Raw as RDOM
+import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
 import Gargantext.Types ( TermList(..) )
 import Gargantext.Components.Annotation.Utils ( termClass )
 import Gargantext.Components.NgramsTable ( NgramsTable(..), highlightNgrams )
-import Gargantext.Components.Annotation.Menu ( annotationMenu )
+import Gargantext.Components.ContextMenu.ContextMenu as CM
+import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu )
 import Gargantext.Utils.Selection as Sel
-
-newtype PageOffset = PageOffset { x :: Number, y :: Number }
 
 type Run = Tuple String (Maybe TermList)
 
@@ -41,13 +44,53 @@ annotatedField :: Record Props -> R.Element
 annotatedField p = R.createElement annotatedFieldComponent p []
 
 annotatedFieldComponent :: R.Component Props
-annotatedFieldComponent = R.staticComponent "AnnotatedField" cpt
+annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
   where
-    runs props = annotateRun <$> compile props
-    cpt props _ =
-      RDOM.div { className: "annotated-field-wrapper" }
-        [ annotationMenu { termList: Nothing }
-        , RDOM.div { className: "annotated-field-runs" } (annotateRun <$> compile props) ]
+    runs props =
+      HTML.div { className: "annotated-field-runs" } $
+        annotateRun <$> compile props
+    cpt props _ = do
+      menu /\ setMenu <- R.useState $ \_ -> pure Nothing
+      let wrapperProps =
+            { className: "annotated-field-wrapper"
+            , onContextMenu: mkEffectFn1 (maybeShowMenu setMenu props.ngrams) }
+      pure $ HTML.div wrapperProps [ maybeAddMenu setMenu (runs props) menu]
+
+maybeAddMenu
+  :: (Maybe AnnotationMenu -> Effect Unit)
+  -> R.Element
+  -> Maybe AnnotationMenu
+  -> R.Element
+maybeAddMenu setMenu e (Just props) = annotationMenu setMenu props <> e
+maybeAddMenu _ e _ = e
+
+compile :: Record Props -> Array Run
+compile props = runs props.text
+  where runs = maybe [] (highlightNgrams props.ngrams)
+
+maybeShowMenu
+  :: forall t
+  .  (Maybe AnnotationMenu -> Effect Unit)
+  -> NgramsTable
+  -> E.SyntheticEvent DE.MouseEvent
+  -> Effect Unit
+maybeShowMenu setMenu ngrams event = do
+  s <- Sel.getSelection
+  case s of
+    Just sel -> do
+      case Sel.toString sel of
+        "" -> pure unit
+        sel' -> do
+          let x = E.clientX event
+          let y = E.clientY event
+          E.preventDefault event
+          setMenu $ Just { x, y, list: findNgram ngrams sel' }
+    Nothing -> pure unit
+
+findNgram :: NgramsTable -> String -> Maybe TermList
+findNgram _ _ = Nothing
+
+-- Runs
 
 type RunProps = ( list :: Maybe TermList, text :: String )
 
@@ -56,40 +99,9 @@ annotateRun (Tuple text list) = R.createElement annotatedRunComponent { text, li
 
 annotatedRunComponent :: R.Component RunProps
 annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
-  where cpt { text, list } _ = maybe (unstyled text) (styled text) list
-        styled text list = RDOM.span { className: className list } [ RDOM.text text ]
-        unstyled text = RDOM.span {} [ RDOM.text text ]
+  where cpt { text, list } _ = maybe' (\_ -> unstyled text) (styled text) list
+        styled text list = HTML.span { className: className list } [ HTML.text text ]
+        unstyled text = HTML.span {} [ HTML.text text ]
         className list = "annotation-run " <> termClass list
 
-compile :: Record Props -> Array Run
-compile props = runs props.text
-  where runs (Just text) = highlightNgrams props.ngrams text
-        runs _ = []
 
-maybeShowMenu :: E.MouseEvent -> NgramsTable -> (Maybe TermList -> Effect Unit) -> Effect Unit
-maybeShowMenu e n a = Sel.getSelection >>= traverse_ (a <<< findNgram n <<< Sel.toString)
-
--- showMenu
-
-
-findNgram :: NgramsTable -> String -> Maybe TermList
-findNgram _ _ = Nothing
-
--- contextMenuHandler :: (Action -> Effect Unit) -> MouseEvent -> Effect Unit
--- contextMenuHandler d e =
---   do sel <- getSelection
---      case toString <$> sel of
---        Just s -> submit s
---        Nothing -> pure unit
---   where submit s = offset >>= \o -> d $ OnContextMenu o s
---         offset =
---           do x <- pageX e
---              y <- pageY e
---              pure $ PageOffset { x, y }
-
-
--- _runs :: Lens' State (Array Run)
--- _runs = lens (\a -> a.runs) (\a r -> a { runs = r })
-
--- _contextMenu :: Lens' State ???
--- _contextMenu = lens (\a -> a.contextMenu) (\a m -> a { contextMenu = m })

@@ -3,21 +3,91 @@ module Gargantext.Components.ContextMenu.ContextMenu where
   -- (MenuProps, Action(..), separator) where
 
 import Prelude hiding (div)
+import Data.Maybe ( Maybe(..) )
+import Data.Nullable ( Nullable, null, toMaybe )
+import Data.Tuple ( Tuple(..) )
+import Data.Tuple.Nested ( (/\) )
+import Data.Traversable ( traverse_ )
+import DOM.Simple as DOM
+import DOM.Simple.Console
+import DOM.Simple.Event as DE
+import DOM.Simple.EventListener ( Callback, callback )
+import DOM.Simple.Element as Element
+import DOM.Simple.Window ( window )
+import DOM.Simple.Document ( document )
+import DOM.Simple.Document as Document
+import DOM.Simple.Types ( DOMRect )
 import Effect (Effect)
+import Effect.Uncurried ( mkEffectFn1 )
+import FFI.Simple ( (...), (..), delay )
 import Reactix as R
-import Reactix.DOM.Raw as RDOM
+import Reactix.DOM.HTML as HTML
+import Reactix.SyntheticEvent as E
 
 import Gargantext.Utils.Reactix as R'
 
-contextMenu :: Array R.Element -> R.Element
-contextMenu = R.createElement contextMenuCpt {}
+type Props t = ( x :: Number, y :: Number, setMenu :: Maybe t -> Effect Unit)
 
-contextMenuCpt :: R.Component ()
+getPortalHost :: R.Hooks DOM.Element
+getPortalHost = R.unsafeHooksEffect $ delay unit $ \_ -> pure $ document ... "getElementById" $ ["menu-portal"]
+
+contextMenu :: forall t. Record (Props t) -> Array R.Element -> R.Element
+contextMenu = R.createElement contextMenuCpt
+
+contextMenuCpt :: forall t. R.Component (Props t)
 contextMenuCpt = R.hooksComponent "ContextMenu" cpt
   where
-    cpt _props children = pure $
-      R'.nav { className: "context-menu" }
-        [ R'.ul { className: "context-menu-items" } children ]
+    cpt menu children = do
+      host <- getPortalHost
+      root <- R.useRef null
+      rect /\ setRect <- R.useState $ \_ -> pure Nothing
+      R.useLayoutEffect1 (R.readRef root) $ \_ -> do
+        traverse_
+          (\r -> setRect $ Just (Element.boundingRect r))
+          (toMaybe $ R.readRef root)
+        pure $ \_ -> pure unit
+      R.useLayoutEffect2 root rect (contextMenuEffect menu.setMenu root)
+      let cs = [ HTML.ul { className: "context-menu-items" } children ]
+      pure $ R.createPortal [ elems root menu rect $ cs ] host
+    elems ref menu (Just rect) = HTML.nav { ref , className: "context-menu", style: position menu rect}
+    elems ref _ _ = HTML.nav { ref, className: "context-menu" }
+
+contextMenuEffect
+  :: forall t
+  .  (Maybe t -> Effect Unit)
+  -> R.Ref (Nullable DOM.Element)
+  -> Unit -> Effect (Unit -> Effect Unit)
+contextMenuEffect setMenu ref _ =
+  case toMaybe $ R.readRef ref of
+    Just elem -> do
+      let onClick = documentClickHandler setMenu elem
+      let onScroll = documentScrollHandler setMenu
+      DOM.addEventListener document "click" onClick
+      DOM.addEventListener document "scroll" onScroll
+      pure $ \_ -> do
+        DOM.removeEventListener document "click" onClick
+        DOM.removeEventListener document "scroll" onScroll
+    Nothing -> pure $ \_ -> pure unit
+          
+documentClickHandler :: forall t. (Maybe t -> Effect Unit) -> DOM.Element -> Callback DE.MouseEvent
+documentClickHandler hide menu =
+  R'.named "hideMenuOnClickOutside" $ callback $ \e ->
+    if Element.contains menu (DE.target e)
+      then pure unit
+      else hide Nothing
+
+documentScrollHandler :: forall t. (Maybe t -> Effect Unit) -> Callback DE.MouseEvent
+documentScrollHandler hide =
+  R'.named "hideMenuOnScroll" $ callback $ \e -> hide Nothing
+
+position :: forall t. Record (Props t) -> DOMRect -> { left :: Number, top :: Number }
+position mouse {width: menuWidth, height: menuHeight} = {left, top}
+  where left = if isRight then mouse.x else mouse.x - menuWidth
+        top = if isAbove then mouse.y else mouse.y - menuHeight
+        isRight = screenWidth - mouse.x > menuWidth -- is there enough space to show above
+        isAbove = screenHeight - mouse.y > menuHeight -- is there enough space to show to the right?
+        screenWidth = window .. "innerWidth"
+        screenHeight = window .. "innerHeight"
 
 contextMenuItem :: Array R.Element -> R.Element
 contextMenuItem = R.createElement contextMenuItemCpt {}
@@ -25,73 +95,7 @@ contextMenuItem = R.createElement contextMenuItemCpt {}
 contextMenuItemCpt :: R.Component ()
 contextMenuItemCpt = R.hooksComponent "ContextMenuItem" cpt
   where
-    cpt _props children = pure $ R'.li { className: "context-menu-item" } children
-
-
--- data Action = Show | Hide
-
-
--- contextMenu :: MenuProps -> ReactElement
--- contextMenu props = createElement contextMenuClass props []
-
--- -- TODO: register callbacks
--- componentDidMount :: Effect Unit
--- componentDidMount = pure unit
-
--- -- TODO: unregister callbacks
--- componentWillUnmount :: Effect Unit
--- componentWillUnmount = pure unit
-
--- -- 
--- childRender :: forall s p a. Spec s p a -> Spec s p a
--- childRender = over _render (\c -> wrapItem <<< c)
-
--- -- | Wraps an item in an li tag with the item classname
--- wrapItem :: ReactElement -> ReactElement
--- wrapItem = wrap $ li [ className itemClass ]
-
--- -- TODO: Aria and accessibility
--- renderMenu :: Render State MenuProps Action
--- renderMenu d m s c = pure $ wrap outer $ ul' inner
---   where outer = div [className (classes s.open m.classes)]
---         inner = map (\i -> renderMenuItem d i ) c
-
--- visibilityClass :: Boolean -> String
--- visibilityClass true = contextMenuShown
--- visibilityClass false = contextMenuHidden
-
--- classes :: Boolean -> String -> String
--- classes visible user = joinWith " " [menuClass, visibilityClass visible, user]
-
--- -- Class
-
--- contextMenuClass :: ReactClass (WithChildren State')
--- contextMenuClass = component "ContextMenu" createContextMenuClass
-
--- createContextMenuClass ::
---   forall given snapshot spec.
---   ReactComponentSpec MenuProps State snapshot given spec
---     => ReactClassConstructor MenuProps State given
---     -> ReactClass MenuProps
--- createContextMenuClass this = pure
---   { state: defaultState
---   , render: renderMenu
---   , componentDidMount: componentDidMount
---   , componentWillUnmount: componentWillUnmount
---   }
-
--- type Label = String
--- type ClassName = String
-
--- -- Items
-
--- simpleItem :: Label -> ClassName -> Effect Unit -> ContextConsumer (Effect Unit) -> ReactElement
--- simpleItem label cls cb hide = a [ onClick (hide *> cb), className cls ] [ text label ]
-
--- separator :: Effect Unit -> ReactElement
--- separator _ = li [ className "menu-item-separator" ] []
-
-
+    cpt _props children = pure $ HTML.li { className: "context-menu-item" } children
 
 -- -- CSS Classes
 
