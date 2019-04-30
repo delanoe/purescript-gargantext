@@ -53,6 +53,7 @@ statefulTabs =
     , Tuple "Authors"    $ ngramsViewSpec {mode: Authors   }
     , Tuple "Institutes" $ ngramsViewSpec {mode: Institutes}
     , Tuple "Terms"      $ ngramsViewSpec {mode: Terms     }
+    , Tuple ""           $ trash -- TODO empty here
     , Tuple "Trash"      $ trash
     ]
   where
@@ -66,7 +67,6 @@ statefulTabs =
                                          , totalRecords: 4737}) $ noState DT.docViewSpec
                                     )
                     )
-    
     trash = cmapProps (\{path: nodeId} -> { nodeId
                                           , chart: div [][]
                                           , tabType: TabCorpus TabTrash
