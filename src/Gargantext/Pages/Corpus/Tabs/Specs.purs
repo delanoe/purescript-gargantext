@@ -61,9 +61,9 @@ statefulTabs =
     docs = noState ( cmapProps (\{path: corpusId} -> {corpusId : corpusId, tabType: TabCorpus TabDocs}) histoSpec
                               <>
                      (cmapProps (\{path: nodeId} -> { nodeId : nodeId
-                                         , chart  : div [][] -- ECharts.chart globalPublis
+                                         , chart  : div [][]
                                          , tabType: TabCorpus TabDocs
-                                         , totalRecords: 4736}) $ noState DT.docViewSpec
+                                         , totalRecords: 4737}) $ noState DT.docViewSpec
                                     )
                     )
     

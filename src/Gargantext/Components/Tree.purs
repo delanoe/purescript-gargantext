@@ -22,10 +22,10 @@ import Effect.Console (log)
 import Prelude (identity)
 import React (ReactClass, ReactElement)
 import React as React
-import React.DOM (a, button, div, h5, i, input, li, span, text, ul)
+import React.DOM (a, button, div, h5, i, input, li, span, text, ul, b, u)
 import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, placeholder, style, defaultValue, _data)
 import React.DOM.Props as DOM
-import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState_, simpleSpec)
+import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState_, simpleSpec, modifyState)
 
 import Gargantext.Config (toUrl, End(..), NodeType(..))
 import Gargantext.Config.REST (get, put, post, delete, deleteWithBody)
@@ -61,16 +61,19 @@ data Action =  ShowPopOver   ID
               | ToggleCreateNode ID
               | ShowRenameBox    ID
               | CancelRename     ID
+              | CurrentNode      ID
 
 
-type State = { state :: FTree }
+type State = { state       :: FTree 
+             , currentNode :: Maybe Int
+             }
 
 -- TODO remove
 initialState :: State
-initialState = { state: NTree (LNode {id : 3, name : "hello", nodeType : Node, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) [] }
+initialState = { state: NTree (LNode {id : 3, name : "hello", nodeType : Node, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) [] , currentNode : Nothing}
 
 mapFTree :: (FTree -> FTree) -> State -> State
-mapFTree f {state} = {state: f state}
+mapFTree f {state, currentNode} = {state: f state, currentNode: currentNode}
 
 -- TODO: make it a local function
 performAction :: forall props. PerformAction State props Action
@@ -107,6 +110,10 @@ performAction (Create  nid) _ _ =
 
 performAction (SetNodeValue v nid) _ _ =
   modifyState_ $ mapFTree $ setNodeValue nid v
+
+performAction (CurrentNode nid) _ _ =
+  modifyState_ $ \{state: s} -> {state: s, currentNode : Just nid}
+
 
 toggleIf :: Boolean -> Boolean -> Boolean
 toggleIf true  = not
@@ -225,15 +232,15 @@ loadedTreeview :: Spec State LoadedTreeViewProps Action
 loadedTreeview = simpleSpec performAction render
   where
     render :: Render State LoadedTreeViewProps Action
-    render dispatch _ {state} _ =
+    render dispatch _ {state, currentNode} _ =
       [ div [className "tree"]
-        [ toHtml dispatch state
+        [ toHtml dispatch state currentNode
 
         ]
       ]
 
 treeViewClass :: ReactClass (Loader.InnerProps Int FTree (children :: React.Children))
-treeViewClass = createClass "TreeView" loadedTreeview (\{loaded: t} -> {state: t})
+treeViewClass = createClass "TreeView" loadedTreeview (\{loaded: t} -> {state: t, currentNode: Nothing})
 
 treeLoaderClass :: Loader.LoaderClass Int FTree
 treeLoaderClass = Loader.createLoaderClass "TreeLoader" loadNode
@@ -351,25 +358,30 @@ getCreateNodeValue :: FTree -> String
 getCreateNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, nodeValue, showRenameBox}) ary) = nodeValue
 
 
-toHtml :: (Action -> Effect Unit) -> FTree -> ReactElement
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue, showRenameBox }) []) =
+toHtml :: (Action -> Effect Unit) -> FTree -> Maybe Int -> ReactElement
+toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue, showRenameBox }) []) n =
   ul []
   [
     li [] $
     [ a [className "glyphicon glyphicon-cog", _id "rename-leaf",onClick $ (\_-> d $ (ShowPopOver id))] []
-    , a [ href (toUrl Front nodeType (Just id)), style {"margin-left":"22px"}]
-      [ text (name <> "    ") ]
+    , a [ href (toUrl Front nodeType (Just id)), style {"margin-left":"22px"}
+        , onClick $ (\e -> d $ CurrentNode id)
+        ]
+      [ if n == (Just id) then u [] [b [] [text (name <> "    ")]] else text (name <> "    ") ]
      , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
     , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
     ]
   ]
 --- need to add renameTreeview value to this function
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue, showRenameBox}) ary) =
+toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue, showRenameBox}) ary) n=
     ul []
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
-       , a [ href (toUrl Front nodeType (Just id)), style {"margin-left":"22px"}]
-         [ text name ]
+       , a [ href (toUrl Front nodeType (Just id)), style {"margin-left":"22px"}
+           , onClick $ (\e -> d $ CurrentNode id)
+           ]
+         --[ text name ]
+         [ if n == (Just id) then u [] [b [] [text name]] else text name ]
 ,      a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
        [
        ]
@@ -378,7 +390,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,cre
 
       ] <>
       if open then
-        map (toHtml d) ary
+        map (\s -> toHtml d s n) ary
         else []
     )
   ]

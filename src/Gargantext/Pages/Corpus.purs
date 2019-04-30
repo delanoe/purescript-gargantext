@@ -58,7 +58,7 @@ corpusHeaderSpec = simpleSpec defaultPerformAction render
 
 getCorpus :: Int -> Aff CorpusData
 getCorpus corpusId = do
-  corpusNode <- get $ toUrl Back Corpus $ Just corpusId
+  corpusNode     <- get $ toUrl Back Corpus $ Just corpusId
   defaultListIds <- get $ toUrl Back (Children NodeList 0 1 Nothing) $ Just corpusId
   case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
