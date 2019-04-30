@@ -412,7 +412,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
   where
     treespec = over _render \frender d p (State s) c ->
 
-                [ div [ className "col-md-1", _id "graph-tree", style {marginTop: "65px"}] $
+                [ div [ className "col-md-2", _id "graph-tree", style {marginTop: "65px"}] $
                   [
                      button [className "btn btn-primary" , onClick \_ -> d ToggleTree]
                      [text $ if s.showTree then "Hide Tree" else "Show Tree"]
