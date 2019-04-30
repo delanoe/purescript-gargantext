@@ -367,7 +367,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
     , a [ href (toUrl Front nodeType (Just id)), style {"margin-left":"22px"}
         , onClick $ (\e -> d $ CurrentNode id)
         ]
-      [ if n == (Just id) then u [] [b [] [text (name <> "    ")]] else text (name <> "    ") ]
+      [ if n == (Just id) then u [] [b [] [text ("| " <> name <> " |    ")]] else text (name <> "    ") ]
      , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
     , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
     ]
@@ -381,7 +381,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,cre
            , onClick $ (\e -> d $ CurrentNode id)
            ]
          --[ text name ]
-         [ if n == (Just id) then u [] [b [] [text name]] else text name ]
+         [ if n == (Just id) then u [] [b [] [text $ "| " <> name <> " |"]] else text name ]
 ,      a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
        [
        ]
