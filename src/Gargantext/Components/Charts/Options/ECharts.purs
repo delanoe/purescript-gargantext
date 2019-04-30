@@ -213,63 +213,60 @@ seriesPie = seriesPieD1
 
 textStyle2 :: TextStyle
 textStyle2 =
-  {
-    color: black
-    ,fontStyle: chartFontStyle italic
-    ,fontWeight: chartFontWeight normal
-    ,fontFamily: "sans-serif"
-    ,fontSize: 11
-    ,align: relativePosition $ Relative RightPos
-    ,verticalAlign: relativePosition $ Relative Bottom
-    ,lineHeight: percentPosition 0.0
-    ,width: percentPosition 100.0
-    ,height: percentPosition 100.0
-    ,textBorderColor: black
-    ,textBorderWidth: 0.0
-    ,textShadowColor: black
-    ,textShadowBlur: black
-    ,textShadowOffsetX: 0.0
-    ,textShadowOffsetY: 0.0
+  { color: black
+  , fontStyle: chartFontStyle italic
+  , fontWeight: chartFontWeight normal
+  , fontFamily: "sans-serif"
+  , fontSize: 11
+  , align: relativePosition $ Relative RightPos
+  , verticalAlign: relativePosition $ Relative Bottom
+  , lineHeight: percentPosition 0.0
+  , width: percentPosition 100.0
+  , height: percentPosition 100.0
+  , textBorderColor: black
+  , textBorderWidth: 0.0
+  , textShadowColor: black
+  , textShadowBlur: black
+  , textShadowOffsetX: 0.0
+  , textShadowOffsetY: 0.0
   }
 
 textStyle' :: TextStyle
 textStyle' =
-  {
-    color: black
-    ,fontStyle: chartFontStyle normal
-    ,fontWeight: chartFontWeight normal
-    ,fontFamily: "sans-serif"
-    ,fontSize: 15
-    ,align: relativePosition $ Relative LeftPos
-    ,verticalAlign: relativePosition $ Relative Top
-    ,lineHeight: percentPosition 0.0
-    ,width: percentPosition 100.0
-    ,height: percentPosition 100.0
-    ,textBorderColor: black
-    ,textBorderWidth: 1.0
-    ,textShadowColor: black
-    ,textShadowBlur: black
-    ,textShadowOffsetX: 0.0
-    ,textShadowOffsetY: 0.0
+  { color: black
+  , fontStyle: chartFontStyle normal
+  , fontWeight: chartFontWeight normal
+  , fontFamily: "sans-serif"
+  , fontSize: 15
+  , align: relativePosition $ Relative LeftPos
+  , verticalAlign: relativePosition $ Relative Top
+  , lineHeight: percentPosition 0.0
+  , width: percentPosition 100.0
+  , height: percentPosition 100.0
+  , textBorderColor: black
+  , textBorderWidth: 1.0
+  , textShadowColor: black
+  , textShadowBlur: black
+  , textShadowOffsetX: 0.0
+  , textShadowOffsetY: 0.0
   }
 
 textStyle :: TextStyle
 textStyle =
-  {
-    color: black
-    ,fontStyle: chartFontStyle normal
-    ,fontWeight: chartFontWeight normal
-    ,fontFamily: "sans-serif"
-    ,fontSize: 15
-    ,align: relativePosition $ Relative LeftPos
-    ,verticalAlign: relativePosition $ Relative Top
-    ,lineHeight: percentPosition 0.0
-    ,width: percentPosition 100.0
-    ,height: percentPosition 100.0
-    ,textBorderColor: black
-    ,textBorderWidth: 0.0
-    ,textShadowColor: black
-    ,textShadowBlur: black
-    ,textShadowOffsetX: 0.0
-    ,textShadowOffsetY: 0.0
+  { color: black
+  , fontStyle: chartFontStyle normal
+  , fontWeight: chartFontWeight normal
+  , fontFamily: "sans-serif"
+  , fontSize: 15
+  , align: relativePosition $ Relative LeftPos
+  , verticalAlign: relativePosition $ Relative Top
+  , lineHeight: percentPosition 0.0
+  , width: percentPosition 100.0
+  , height: percentPosition 100.0
+  , textBorderColor: black
+  , textBorderWidth: 1.0
+  , textShadowColor: black
+  , textShadowBlur: black
+  , textShadowOffsetX: 0.0
+  , textShadowOffsetY: 0.0
   }
