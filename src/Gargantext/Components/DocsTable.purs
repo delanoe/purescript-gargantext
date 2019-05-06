@@ -313,7 +313,7 @@ renderPage loaderDispatch { totalRecords, dispatch, listId
                           , target "_blank"
                         ] [ text r.title ]
                       else
-                        a [ href (toUrl Front Url_Document (Just r._id))
+                        a [ href (toLink $  R.Document listId r._id)
                         , target "_blank" ] [ text r.title ]
                     , if (toDelete $ DocumentsView r) then
                         div [style {textDecoration : "line-through"}] [ text r.source]

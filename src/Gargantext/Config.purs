@@ -127,7 +127,7 @@ showTabType' (TabPairing t) = show t
 
 tabTypeNgramsGet :: TabType -> UrlPath
 tabTypeNgramsGet (TabCorpus   t) = "listGet?ngramsType=" <> show t
-tabTypeNgramsGet (TabDocument t) = "listGet?ngramsType=" <> show t
+tabTypeNgramsGet (TabDocument t) = "ngrams?ngramsType=" <> show t
 tabTypeNgramsGet (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
 
 tabTypeNgramsPut :: TabType -> UrlPath
