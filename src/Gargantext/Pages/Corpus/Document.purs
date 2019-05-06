@@ -51,7 +51,7 @@ initialState {} =
   }
 
 data Action
-  = Load Int
+  = Load Int Int
   | ChangeString String
   | SetInput String
 
@@ -279,11 +279,10 @@ instance decodeDocument :: DecodeJson Document
 
 ------------------------------------------------------------------------
 performAction :: PerformAction State {} Action
-performAction (Load nId) _ _ = do
+performAction (Load lId nId) _ _ = do
   node <- lift $ getNode (Just nId)
-  let listIds = [1]
   (Versioned {version:_version, data:table}) <- lift $ loadNgramsTable {nodeId : nId
-                                  , listIds : listIds
+                                  , listIds : [lId]
                                   , params : { offset : 0, limit : 100, orderBy: Nothing}
                                   , tabType : (TabDocument (TabNgramType CTabTerms))
                                   , searchQuery : ""

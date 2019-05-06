@@ -49,9 +49,9 @@ dispatchAction dispatcher _ (Annuaire id) = do
 dispatchAction dispatcher _ (Folder id) = do
   dispatcher $ SetRoute $ Folder id
 
-dispatchAction dispatcher _ (Document n) = do
-  dispatcher $ SetRoute $ Document n
-  dispatcher $ DocumentViewA $ Document.Load n
+dispatchAction dispatcher _ (Document i n) = do
+  dispatcher $ SetRoute $ Document i n
+  dispatcher $ DocumentViewA $ Document.Load i n
 
 dispatchAction dispatcher _ (PGraphExplorer nid) = do
   dispatcher $ SetRoute $ PGraphExplorer nid
