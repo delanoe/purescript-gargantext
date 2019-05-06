@@ -14,6 +14,9 @@ module Gargantext.Components.NgramsTable
   , initialPageParams
   , initialState
   , mainNgramsTableSpec
+  , loadNgramsTable
+  , ngramsTableSpec
+  , ngramsLoaderClass
   , ngramsLoader
   , ngramsLoaderClass
   , ngramsTableClass
@@ -68,7 +71,7 @@ import Partial.Unsafe (unsafePartial)
 
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Types (TermList(..), TermSize, readTermList, readTermSize, termLists, termSizes)
-import Gargantext.Config (toUrl, End(..), Path(..), TabType(..), OrderBy(..))
+import Gargantext.Config (toUrl, End(..), Path(..), TabType(..), OrderBy(..), NodeType(..))
 import Gargantext.Config.REST (get, put)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Table as T
@@ -115,12 +118,15 @@ derive instance eqNgramsTable :: Eq NgramsTable
 
 
 _parent = prop (SProxy :: SProxy "parent")
-_root = prop (SProxy :: SProxy "root")
+_root   = prop (SProxy :: SProxy "root")
 _ngrams = prop (SProxy :: SProxy "ngrams")
+
 _children :: forall row. Lens' { children :: Set NgramsTerm | row } (Set NgramsTerm)
 _children = prop (SProxy :: SProxy "children")
+
 _occurrences :: forall row. Lens' { occurrences :: Int | row } Int
 _occurrences = prop (SProxy :: SProxy "occurrences")
+
 _list :: forall a row. Lens' { list :: a | row } a
 _list = prop (SProxy :: SProxy "list")
 
@@ -702,8 +708,8 @@ ngramsTableSpec = simpleSpec performAction render
               , delete: false
               }
 
-loadPage :: PageParams -> Aff VersionedNgramsTable
-loadPage { nodeId, listIds, termListFilter, termSizeFilter
+loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
+loadNgramsTable { nodeId, listIds, termListFilter, termSizeFilter
          , searchQuery, tabType, params: {offset, limit, orderBy}} =
   get $ toUrl Back
           (GetNgrams { tabType, offset, limit, listIds
@@ -716,7 +722,7 @@ loadPage { nodeId, listIds, termListFilter, termSizeFilter
     convOrderBy _ = DateAsc -- TODO
 
 ngramsLoaderClass :: Loader.LoaderClass PageParams VersionedNgramsTable
-ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadPage
+ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadNgramsTable
 
 ngramsLoader :: Loader.Props' PageParams VersionedNgramsTable -> ReactElement
 ngramsLoader props = React.createElement ngramsLoaderClass props []

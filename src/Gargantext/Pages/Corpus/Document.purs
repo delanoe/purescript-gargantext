@@ -18,10 +18,10 @@ import Unsafe.Coerce (unsafeCoerce)
 import Control.Monad.Trans.Class (lift)
 
 import Gargantext.Prelude
-import Gargantext.Config          (toUrl, NodeType(..), End(..))
+import Gargantext.Config          (toUrl, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..))
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.NgramsTable (NgramsTable(..), NgramsElement(..))
+import Gargantext.Components.NgramsTable (NgramsTable(..), NgramsElement(..), loadNgramsTable, Versioned(..))
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Types (TermList(..))
 import Gargantext.Utils.Reactix ( scuff )
@@ -38,15 +38,15 @@ testTable = NgramsTable $ Map.fromFoldable $ nge <$> words
   where words = [ "the", "quick", "brown", "fox", "jumped", "over", "lazy", "dog" ]
 
 type State =
-  { document   :: Maybe (NodePoly Document)
-  , ngramsTable :: NgramsTable
-  , inputValue :: String
+  { document    :: Maybe (NodePoly Document)
+  , ngramsTable :: Maybe NgramsTable
+  , inputValue  :: String
   }
 
 initialState :: {} -> State
 initialState {} =
   { document: Nothing
-  , ngramsTable: testTable
+  , ngramsTable: (Just testTable)
   , inputValue: ""
   }
 
@@ -281,7 +281,18 @@ instance decodeDocument :: DecodeJson Document
 performAction :: PerformAction State {} Action
 performAction (Load nId) _ _ = do
   node <- lift $ getNode (Just nId)
-  void $ modifyState $ _document ?~ node
+  let listIds = [1]
+  (Versioned {version:_version, data:table}) <- lift $ loadNgramsTable {nodeId : nId
+                                  , listIds : listIds
+                                  , params : { offset : 0, limit : 100, orderBy: Nothing}
+                                  , tabType : (TabDocument (TabNgramType CTabTerms))
+                                  , searchQuery : ""
+                                  , termListFilter : Nothing
+                                  , termSizeFilter : Nothing
+                                   }
+  
+  void $ modifyState $ _document    ?~ node
+  void $ modifyState $ _ngramsTable ?~ table
   logs $ "Node Document " <> show nId <> " fetched."
 performAction (ChangeString ps) _ _ = pure unit
 performAction (SetInput ps) _ _ = void <$> modifyState $ _ { inputValue = ps }
@@ -292,6 +303,11 @@ getNode = get <<< toUrl Back Node
 
 _document :: Lens' State (Maybe (NodePoly Document))
 _document = lens (\s -> s.document) (\s ss -> s{document = ss})
+
+_ngramsTable :: Lens' State (Maybe NgramsTable)
+_ngramsTable = lens (\s -> s.ngramsTable) (\s ss -> s{ngramsTable = ss})
+
+
 ------------------------------------------------------------------------
 
 docview :: Spec State {} Action
@@ -330,7 +346,7 @@ docview = simpleSpec performAction render
           ]
       ]
         where
-          annotate t = scuff $ AnnotatedField.annotatedField { ngrams: state.ngramsTable, text: t }
+          annotate t = scuff $ AnnotatedField.annotatedField { ngrams: maybe (NgramsTable Map.empty) identity state.ngramsTable, text: t }
           li' = li [className "list-group-item justify-content-between"]
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]

@@ -107,6 +107,7 @@ endPathUrl end = pathUrl <<< endOf end
 
 tabTypeDocs :: TabType -> UrlPath
 tabTypeDocs (TabCorpus  t) = "table?view="   <> show t
+tabTypeDocs (TabDocument t)= "table?view="   <> show t
 tabTypeDocs (TabPairing t) = "pairing?view=" <> show t
 
 limitUrl :: Limit -> UrlPath
@@ -119,15 +120,18 @@ orderUrl :: forall a. Show a => Maybe a -> UrlPath
 orderUrl = maybe "" (\x -> "&order=" <> show x)
 
 showTabType' :: TabType -> String
-showTabType' (TabCorpus  t) = show t
+showTabType' (TabCorpus   t) = show t
+showTabType' (TabDocument t) = show t
 showTabType' (TabPairing t) = show t
 
 tabTypeNgramsGet :: TabType -> UrlPath
-tabTypeNgramsGet (TabCorpus  t) = "listGet?ngramsType=" <> show t
+tabTypeNgramsGet (TabCorpus   t) = "listGet?ngramsType=" <> show t
+tabTypeNgramsGet (TabDocument t) = "listGet?ngramsType=" <> show t
 tabTypeNgramsGet (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
 
 tabTypeNgramsPut :: TabType -> UrlPath
-tabTypeNgramsPut (TabCorpus  t) = "list?ngramsType=" <> show t
+tabTypeNgramsPut (TabCorpus   t) = "list?ngramsType=" <> show t
+tabTypeNgramsPut (TabDocument t) = "list?ngramsType=" <> show t
 tabTypeNgramsPut (TabPairing t) = "list?ngramsType=" <> show t -- TODO
 
 pathUrl :: Config -> Path -> Maybe Id -> UrlPath
@@ -146,7 +150,9 @@ pathUrl c (GetNgrams
             , termSizeFilter: tsf
             , searchQuery: q
             }) i =
-    pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsGet t
+      base
+      <> "/" 
+      <> tabTypeNgramsGet t
       <> offsetUrl o <> limitUrl l
       <> foldMap (\x -> "&list=" <> show x) listIds
       <> foldMap (\x -> "&listType=" <> show x) tlf
@@ -155,6 +161,12 @@ pathUrl c (GetNgrams
                           MultiTerm -> "&minTermSize=2"
                  ) tsf
       <> if q == "" then "" else ("&search=" <> q)
+        where
+          base =  case t of
+                    TabCorpus _ -> pathUrl c (NodeAPI Node) i
+                    _           -> pathUrl c (NodeAPI Url_Document) i
+
+
 pathUrl c (PutNgrams t listid) i =
     pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsPut t <> listid'
   where
@@ -198,10 +210,9 @@ data NodeType = NodeUser
               | Annuaire
                 | NodeContact
               | Corpus
---                | NodeDocument
+                  | Url_Document
               | CorpusV3
               | Dashboard
-              | Url_Document
               | Error
               | Folder
               | Graph
@@ -220,7 +231,6 @@ instance showNodeType :: Show NodeType where
   show CorpusV3      = "NodeCorpusV3"
   show Dashboard     = "NodeDashboard"
   show Url_Document  = "NodeDocument"
-  --show NodeDocument  = "NodeDocument"
   show Error         = "NodeError"
   show Folder        = "NodeFolder"
   show Graph         = "NodeGraph"
@@ -323,8 +333,9 @@ instance showTabSubType :: Show a => Show (TabSubType a) where
   show TabTrash         = "Trash"
 
 data TabType
-  = TabCorpus  (TabSubType CTabNgramType)
-  | TabPairing (TabSubType PTabNgramType)
+  = TabCorpus   (TabSubType CTabNgramType)
+  | TabPairing  (TabSubType PTabNgramType)
+  | TabDocument (TabSubType CTabNgramType)
 
 derive instance eqTabType :: Eq TabType
 
