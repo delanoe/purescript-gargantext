@@ -52,6 +52,7 @@ type Props =
   , totalRecords :: Int
   , chart        :: ReactElement
   , tabType      :: TabType
+  , listId       :: Int
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.
   }
@@ -177,7 +178,7 @@ layoutDocview = simpleSpec performAction render
         (_documentIdsDeleted <>~ documentIdsToDelete)
 
     render :: Render State Props Action
-    render dispatch {nodeId, tabType, totalRecords, chart} deletionState _ =
+    render dispatch {nodeId, tabType, listId, totalRecords, chart} deletionState _ =
       [ {- br'
       , div [ style {textAlign : "center"}] [ text "    Filter "
                      , input [className "form-control", style {width : "120px", display : "inline-block"}, placeholder "Filter here"]
@@ -190,7 +191,8 @@ layoutDocview = simpleSpec performAction render
           [ chart
           , div [className "col-md-12"]
             [ pageLoader
-                { path: initialPageParams {nodeId, tabType}
+                { path: initialPageParams {nodeId, tabType, listId}
+                , listId
                 , totalRecords
                 , deletionState
                 , dispatch
@@ -211,13 +213,14 @@ layoutDocview = simpleSpec performAction render
 mock :: Boolean
 mock = false
 
-type PageParams = {nodeId :: Int, tabType :: TabType, params :: T.Params}
+type PageParams = {nodeId :: Int, listId :: Int, tabType :: TabType, params :: T.Params}
 
-initialPageParams :: {nodeId :: Int, tabType :: TabType} -> PageParams
-initialPageParams {nodeId, tabType} = {nodeId, tabType, params: T.initialParams}
+initialPageParams :: {nodeId :: Int, listId :: Int, tabType :: TabType} -> PageParams
+initialPageParams {nodeId, listId, tabType} =
+  {nodeId, tabType, listId, params: T.initialParams}
 
 loadPage :: PageParams -> Aff (Array DocumentsView)
-loadPage {nodeId, tabType, params: {limit, offset, orderBy}} = do
+loadPage {nodeId, tabType, listId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let docs = res2corpus <$> res
@@ -250,24 +253,26 @@ type PageLoaderProps row =
   , totalRecords :: Int
   , dispatch :: Action -> Effect Unit
   , deletionState :: State
+  , listId :: Int
   | row
   }
 
 renderPage :: forall props path.
-              Render (Loader.State {nodeId :: Int, tabType :: TabType | path} (Array DocumentsView))
+              Render (Loader.State {nodeId :: Int, listId :: Int, tabType :: TabType | path} (Array DocumentsView))
                      { totalRecords :: Int
                      , dispatch :: Action -> Effect Unit
                      , deletionState :: State
+                     , listId :: Int
                      | props
                      }
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage loaderDispatch { totalRecords, dispatch
+renderPage loaderDispatch { totalRecords, dispatch, listId
                           , deletionState: {documentIdsToDelete, documentIdsDeleted, localFavorites}}
                           {currentPath: {nodeId, tabType}, loaded: Just res} _ =
   [ T.tableElt
       { rows
-      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, params})
+      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, params})
       , container: T.defaultContainer { title: "Documents" }
       , colNames:
           T.ColumnName <$>

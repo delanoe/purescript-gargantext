@@ -44,8 +44,11 @@ statefulTabs =
   where
     chart = mempty
     -- TODO totalRecords
-    docs = cmapProps (\{path: nodeId} ->
-                       {nodeId, chart, tabType: TabPairing TabDocs, totalRecords: 4736}) $
+    docs = cmapProps (\{path: nodeId, loaded} ->
+                       { nodeId, chart
+                       , tabType: TabPairing TabDocs
+                       , totalRecords: 4736
+                       , listId: loaded.defaultListId}) $
            noState DT.docViewSpec
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action

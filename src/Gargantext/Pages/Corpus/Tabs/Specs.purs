@@ -61,16 +61,20 @@ statefulTabs =
 
     docs = noState ( cmapProps (\{path: corpusId} -> {corpusId : corpusId, tabType: TabCorpus TabDocs}) histoSpec
                               <>
-                     (cmapProps (\{path: nodeId} -> { nodeId : nodeId
-                                         , chart  : div [][]
-                                         , tabType: TabCorpus TabDocs
-                                         , totalRecords: 4737}) $ noState DT.docViewSpec
-                                    )
+                     (cmapProps (\{path: nodeId, loaded: loaded} ->
+                                  { nodeId : nodeId
+                                  , chart  : div [][]
+                                  , tabType: TabCorpus TabDocs
+                                  , totalRecords: 4737
+                                  , listId: loaded.defaultListId}) $ noState DT.docViewSpec
+                                  )
                     )
-    trash = cmapProps (\{path: nodeId} -> { nodeId
-                                          , chart: div [][]
-                                          , tabType: TabCorpus TabTrash
-                                          , totalRecords: 4736}) $ noState DT.docViewSpec
+    trash = cmapProps (\{path: nodeId, loaded: loaded} ->
+                        { nodeId
+                        , chart: div [][]
+                        , tabType: TabCorpus TabTrash
+                        , totalRecords: 4736
+                        , listId: loaded.defaultListId}) $ noState DT.docViewSpec
 
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
