@@ -29,12 +29,13 @@ import React as React
 import React (ReactClass, ReactElement, Children)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl)
+import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl, toLink)
 import Gargantext.Config.REST (get, put, post, deleteWithBody)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
 import Gargantext.Utils.DecodeMaybe ((.|))
+import Gargantext.Router as R
 import React.DOM (a, br', button, div, i, input, p, text)
 import React.DOM.Props (_type, className, href, onClick, placeholder, style, checked, target)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
@@ -307,7 +308,7 @@ renderPage loaderDispatch { totalRecords, dispatch, listId
                       else
                         div [ ][text (show r.date)]
                     , if (toDelete $ DocumentsView r) then
-                        a [ href (toUrl Front Url_Document (Just r._id))
+                        a [ href (toLink $ R.Document listId r._id)
                           , style {textDecoration : "line-through"}
                           , target "_blank"
                         ] [ text r.title ]

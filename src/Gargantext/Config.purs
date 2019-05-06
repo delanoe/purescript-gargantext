@@ -18,6 +18,7 @@ import Data.Map (Map)
 import Data.Map as DM
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
+import Gargantext.Router as R
 
 import Gargantext.Types
 
@@ -191,6 +192,25 @@ pathUrl c (Chart {chartType, tabType}) i =
 
 
 ------------------------------------------------------------
+
+routesPath R.Home = ""
+routesPath R.Login = "login"
+routesPath R.SearchView = "search"
+routesPath (R.Folder i) = "folder/" <> show i
+routesPath (R.Corpus i) = "corpus/" <> show i
+routesPath R.AddCorpus = "addCorpus"
+routesPath (R.Document l i) = "list/" <> show l <> "/document/" <> show i
+routesPath (R.PGraphExplorer i) = "#/"
+routesPath R.Dashboard = "dashboard"
+routesPath (R.Annuaire i) = "annuaire/" <> show i
+routesPath (R.UserPage i) = "user/" <> show i
+routesPath (R.ContactPage i) = "contact/" <> show i
+
+class Linkable a where
+  toLink :: a -> String
+
+instance linkableRoutes :: Linkable R.Routes where
+  toLink l = endConfig.front.baseUrl <> endConfig.front.prePath <> routesPath l
 
 class ToUrl a where
   toUrl :: End -> a -> Maybe Id -> Url
