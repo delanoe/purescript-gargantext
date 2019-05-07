@@ -208,7 +208,10 @@ highlightNgrams (NgramsTable table) input =
 
     -- NOTE that only the first matching pattern is used, the others are ignored!
     goFold :: Partial => _ -> Tuple Int (Array Int) -> _
-    goFold { i0, s, l } (Tuple i pis) =
+    goFold { i0, s, l } (Tuple i pis)
+      | i < i0    =
+        { i0, s, l }
+      | otherwise =
       case A.index pis 0 of
         Nothing ->
           { i0, s, l }
