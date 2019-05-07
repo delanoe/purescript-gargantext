@@ -49,8 +49,9 @@ check(){
 }
 
 setup(){
-  yarn  install &&
-  bower install
+  yarn install     &&
+  yarn rebuild-set &&
+  yarn install-ps
 }
 
 build(){
