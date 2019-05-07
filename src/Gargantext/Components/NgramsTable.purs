@@ -193,14 +193,21 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
       f e@(NgramsElement e') = Tuple e'.ngrams e
 -----------------------------------------------------------------------------------
 
--- This initial version does not pay attention to word boundaries.
+-- TODO: while this function works well with word boundaries,
+--       it inserts too many spaces.
 highlightNgrams :: NgramsTable -> String -> Array (Tuple String (Maybe TermList))
-highlightNgrams (NgramsTable table) input =
+highlightNgrams (NgramsTable table) input0 =
     let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
     A.reverse (A.fromFoldable (consNonEmpty sN.s sN.l))
   where
+    sp x = " " <> S.replaceAll (S.Pattern " ") (S.Replacement "  ") x <> " "
+    unsp x =
+      case S.stripSuffix (S.Pattern " ") x of
+        Nothing -> x
+        Just x1 -> S.replaceAll (S.Pattern "  ") (S.Replacement " ") (S.drop 1 x1)
+    input = sp input0
     pats = A.fromFoldable (Map.keys table)
-    ixs  = indicesOfAny pats input
+    ixs  = indicesOfAny (sp <$> pats) input
 
     consNonEmpty x xs
       | S.null x  = xs
@@ -210,6 +217,7 @@ highlightNgrams (NgramsTable table) input =
     goFold :: Partial => _ -> Tuple Int (Array Int) -> _
     goFold { i0, s, l } (Tuple i pis)
       | i < i0    =
+        -- Skip this pattern which is overlapping with a previous one.
         { i0, s, l }
       | otherwise =
       case A.index pis 0 of
@@ -220,7 +228,7 @@ highlightNgrams (NgramsTable table) input =
             Nothing ->
               crashWith "highlightNgrams: out of bounds pattern"
             Just pat ->
-              let lpat = S.length pat in
+              let lpat = S.length (sp pat) in
               case Map.lookup pat table of
                 Nothing ->
                   crashWith "highlightNgrams: pattern missing from table"
@@ -228,7 +236,10 @@ highlightNgrams (NgramsTable table) input =
                   let s1 = S.splitAt (i - i0) s in
                   { i0: i + lpat
                   , s:  S.drop lpat s1.after
-                  , l:  Tuple pat (Just ne.list) : consNonEmpty s1.before l
+                  , l:  Tuple " " Nothing :
+                        Tuple pat (Just ne.list) :
+                        Tuple " " Nothing :
+                        consNonEmpty (unsp s1.before) l
                   }
 
 -----------------------------------------------------------------------------------

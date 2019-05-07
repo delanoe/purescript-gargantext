@@ -24,19 +24,30 @@ spec = do
           }
       tne ngrams list = Tuple ngrams (ne ngrams list)
   describe "NgramsTable.highlightNgrams" do
-    it "partially works" do
+    it "works on a simple example" do
       let table = NgramsTable
                     (Map.fromFoldable [tne "graph"     GraphTerm
-                                      ,tne "stop"      StopTerm
+                                      ,tne "which"     StopTerm
+                                      ,tne "stops"     StopTerm
                                       ,tne "candidate" CandidateTerm
                                       ])
-          input = "this is a biography which stops at every candidate"
-          output = [Tuple "this is a bio" Nothing
+          input = "this is a graph about a biography which stops at every candidate"
+          output = [Tuple "this is a" Nothing
+                   ,Tuple " " Nothing
                    ,Tuple "graph" (Just GraphTerm)
-                   ,Tuple "y which " Nothing
-                   ,Tuple "stop" (Just StopTerm)
-                   ,Tuple "s at every " Nothing
-                   ,Tuple "candidate" (Just CandidateTerm)]
+                   ,Tuple " " Nothing
+                   ,Tuple "about a biography" Nothing
+                   ,Tuple " " Nothing
+                   ,Tuple "which" (Just StopTerm)
+                   ,Tuple " " Nothing
+                   ,Tuple " " Nothing
+                   ,Tuple "stops" (Just StopTerm)
+                   ,Tuple " " Nothing
+                   ,Tuple "at every" Nothing
+                   ,Tuple " " Nothing
+                   ,Tuple "candidate" (Just CandidateTerm)
+                   ,Tuple " " Nothing
+                   ]
       highlightNgrams table input `shouldEqual` output
 
     it "works when pattern overlaps" do
@@ -48,18 +59,43 @@ spec = do
                                       ,tne "the"    GraphTerm
                                       ,tne "state"  GraphTerm
                                       ])
-          input = "SCIPION is a new state of the"
-          output = [Tuple "SCIPION " Nothing
+          input = "This is a new state of the"
+          output = [Tuple "This" Nothing
+                   ,Tuple " " Nothing
                    ,Tuple "is" (Just StopTerm)
+                   ,Tuple " " Nothing
                    ,Tuple " " Nothing
                    ,Tuple "a" (Just StopTerm)
                    ,Tuple " " Nothing
+                   ,Tuple " " Nothing
                    ,Tuple "new" (Just GraphTerm)
+                   ,Tuple " " Nothing
                    ,Tuple " " Nothing
                    ,Tuple "state" (Just GraphTerm)
                    ,Tuple " " Nothing
+                   ,Tuple " " Nothing
                    ,Tuple "of" (Just StopTerm)
                    ,Tuple " " Nothing
+                   ,Tuple " " Nothing
                    ,Tuple "the" (Just GraphTerm)
+                   ,Tuple " " Nothing
+                   ]
+      highlightNgrams table input `shouldEqual` output
+
+    it "works when pattern overlaps 2" do
+      let table = NgramsTable
+                    (Map.fromFoldable [tne "from"   GraphTerm
+                                      ,tne "i"      StopTerm
+                                      ,tne "images" GraphTerm
+                                      ])
+          input = "This is from space images"
+          output = [Tuple "This is" Nothing
+                   ,Tuple " " Nothing
+                   ,Tuple "from" (Just GraphTerm)
+                   ,Tuple " " Nothing
+                   ,Tuple "space" Nothing
+                   ,Tuple " " Nothing
+                   ,Tuple "images" (Just GraphTerm)
+                   ,Tuple " " Nothing
                    ]
       highlightNgrams table input `shouldEqual` output
