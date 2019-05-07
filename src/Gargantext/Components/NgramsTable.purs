@@ -226,10 +226,9 @@ highlightNgrams (NgramsTable table) input =
                   crashWith "highlightNgrams: pattern missing from table"
                 Just (NgramsElement ne) ->
                   let s1 = S.splitAt (i - i0) s in
-                  let s2 = S.splitAt lpat s1.after in
                   { i0: i + lpat
-                  , s:  s2.after
-                  , l:  Tuple s2.before (Just ne.list) : consNonEmpty s1.before l
+                  , s:  S.drop lpat s1.after
+                  , l:  Tuple pat (Just ne.list) : consNonEmpty s1.before l
                   }
 
 -----------------------------------------------------------------------------------
