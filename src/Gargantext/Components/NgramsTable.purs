@@ -697,7 +697,7 @@ ngramsTableSpec = simpleSpec performAction render
               [ "Graph"
               , "Stop"
               , "Terms"
-              , "Score (Occurences)" -- see convOrderBy
+              , "Score (Occurrences)" -- see convOrderBy
               ]
           , totalRecords: 47361 -- TODO
           }

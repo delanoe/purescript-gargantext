@@ -120,6 +120,9 @@ offsetUrl o = "&offset=" <> show o
 orderUrl :: forall a. Show a => Maybe a -> UrlPath
 orderUrl = maybe "" (\x -> "&order=" <> show x)
 
+orderByUrl :: forall a. Show a => Maybe a -> UrlPath
+orderByUrl = maybe "" (\x -> "&orderBy=" <> show x)
+
 showTabType' :: TabType -> String
 showTabType' (TabCorpus   t) = show t
 showTabType' (TabDocument t) = show t
@@ -145,6 +148,7 @@ pathUrl c (Children n o l s) i =
 pathUrl c (GetNgrams
             { tabType: t
             , offset: o
+            , orderBy
             , limit: l
             , listIds
             , termListFilter: tlf
@@ -152,9 +156,10 @@ pathUrl c (GetNgrams
             , searchQuery: q
             }) i =
       base
-      <> "/" 
+      <> "/"
       <> tabTypeNgramsGet t
       <> offsetUrl o <> limitUrl l
+      <> orderByUrl orderBy
       <> foldMap (\x -> "&list=" <> show x) listIds
       <> foldMap (\x -> "&listType=" <> show x) tlf
       <> foldMap (\x -> case x of
