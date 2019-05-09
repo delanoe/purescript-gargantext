@@ -43,7 +43,7 @@ next b origin word =
   do traverse_ (pushSpace b) $ preceding b origin word
      pushWord b word
      pure true
-     
+    
 preceding :: Breaking -> Int -> String -> Maybe String
 preceding b origin word = p $ (lastIndex b) - (length word)
   where p o

@@ -31,7 +31,7 @@ import Data.Array (head)
 import Data.Array as A
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
                      , jsonEmptyObject, (:=), (~>), (.?), (.??) )
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
 import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
@@ -54,6 +54,8 @@ import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
+import Data.String.Regex as R
+import Data.String.Regex.Flags as R
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
@@ -207,7 +209,11 @@ highlightNgrams (NgramsTable table) input0 =
         Just x1 -> S.replaceAll (S.Pattern "  ") (S.Replacement " ") (S.drop 1 x1)
     input = sp input0
     pats = A.fromFoldable (Map.keys table)
-    ixs  = indicesOfAny (sp <$> pats) input
+    ixs  = indicesOfAny (sp <$> pats) (S.toLower $ R.replace theRegex " " input)
+      where
+        theRegex = case R.regex "[.,;:!?'\\{}()]" (R.global <> R.multiline) of
+            Left e  -> unsafePartial $ crashWith e
+            Right r -> r
 
     consNonEmpty x xs
       | S.null x  = xs
