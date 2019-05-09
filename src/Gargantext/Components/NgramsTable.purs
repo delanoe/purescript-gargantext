@@ -697,7 +697,7 @@ ngramsTableSpec = simpleSpec performAction render
               [ "Graph"
               , "Stop"
               , "Terms"
-              , "Occurences (nb)"
+              , "Score (Occurences)" -- see convOrderBy
               ]
           , totalRecords: 47361 -- TODO
           }
@@ -740,7 +740,10 @@ loadNgramsTable { nodeId, listIds, termListFilter, termSizeFilter
                      })
           (Just nodeId)
   where
-    convOrderBy _ = DateAsc -- TODO
+    convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc
+    convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
+    convOrderBy (T.ASC  _) = TermAsc
+    convOrderBy (T.DESC _) = TermDesc
 
 ngramsLoaderClass :: Loader.LoaderClass PageParams VersionedNgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadNgramsTable

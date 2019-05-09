@@ -310,7 +310,8 @@ type Limit  = Int
 type Offset = Int
 data OrderBy = DateAsc  | DateDesc
              | TitleAsc | TitleDesc
-             | ScoreDesc  | ScoreAsc
+             | ScoreAsc | ScoreDesc
+             | TermAsc  | TermDesc
 
 derive instance genericOrderBy :: Generic OrderBy _
 
