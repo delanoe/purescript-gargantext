@@ -6,7 +6,7 @@ import Data.Maybe (Maybe(Nothing, Just))
 import Effect (Effect)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr', img, li, p, span, text, ul)
-import React.DOM.Props (_data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title)
+import React.DOM.Props (_data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title, height, width)
 import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
 -- import Unsafe.Coerce (unsafeCoerce)
 
@@ -170,10 +170,12 @@ layoutSidebar = over _render \render d p s c ->
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
             , role "navigation"
-            ] [ div [className "container-fluid"]
+            ] [ div [className "container-fluid"
+                    ]
                     [ div [ className "navbar-inner" ]
                           [ divLogo
-                          ,  div [ className "collapse navbar-collapse"]
+                          ,  div [ className "collapse navbar-collapse"
+                                 ]
                              $ [ divDropdownLeft]
                              <> render d p s c <>
                              [ divDropdownRight d s ]
@@ -188,6 +190,8 @@ divLogo = a [ className "navbar-brand logoSmall"
             , href "#/"
             ] [ img [ src "images/logoSmall.png"
                     , title "Back to home."
+                    , width  "30"
+                    , height "28"
                     ]
               ]
 
