@@ -38,7 +38,7 @@ layoutLanding' hd = simpleSpec performAction render
     render :: Render State {} Action
     render dispatch _ state _ =
       [ div [ className "container1" ] [ jumboTitle hd false                 ]
-      , div [ className "container1" ] [] -- put research here
+      , div [ className "container1" ] [] -- TODO put research form
       , div [ className "container1" ] [ blocksRandomText' hd                ]
       ]
 ------------------------------------------------------------------------
@@ -77,21 +77,14 @@ docButton (Button b) = a [ className "btn btn-outline-primary btn-sm spacing-cla
 jumboTitle :: LandingData -> Boolean -> ReactElement
 jumboTitle (LandingData hd) b = div jumbo
                    [ div [className "row"             ]
-                     [ div [ className "col-md-8 content"]
-                           [ div [ className "left" ]
+                     [ div [ className "col-md-12 content"]
+                           [ div [ className "center" ]
                                [ div [_id "logo-designed" ]
                                  [ img [ src "images/logo.png"
                                        , title hd.logoTitle
                                        ]
                                  ]
                                ]
-                           ]
-                     , div [ className "col-md-4 content"]
-                           [ img [ src "images/Gargantextuel.jpg"
-                                   , _id "funnyimg"
-                                   , title hd.imageTitle
-                                   ]
-
                            ]
                      ]
                    ]
