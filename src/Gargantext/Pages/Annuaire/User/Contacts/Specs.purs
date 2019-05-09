@@ -182,12 +182,14 @@ layoutUser' = simpleSpec defaultPerformAction render
 getContact :: Int -> Aff ContactData
 getContact id = do
   contactNode <- get $ toUrl Back Node $ Just id
-  defaultListIds <- get $ toUrl Back (Children NodeList 0 1 Nothing) $ Just id
-  case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
-    Just (NodePoly { id: defaultListId }) ->
-      pure {contactNode, defaultListId}
-    Nothing ->
-      throwError $ error "Missing default list"
+  -- TODO: we need a default list for the pairings
+  --defaultListIds <- get $ toUrl Back (Children NodeList 0 1 Nothing) $ Just id
+  --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
+  --  Just (NodePoly { id: defaultListId }) ->
+  --    pure {contactNode, defaultListId}
+  --  Nothing ->
+  --    throwError $ error "Missing default list"
+  pure {contactNode, defaultListId: 424242}
 
 -- | Change name for you
 contactLoaderClass :: ReactClass (Loader.Props Int ContactData)
