@@ -90,10 +90,10 @@ ngramsViewSpec {mode} =
     chart Sources    = cmapProps (\{path: corpusId} -> {corpusId : corpusId, tabType}) barSpec
     
     chart Institutes = cmapProps (\{loaded: {defaultListId}, path: corpusId} ->
-                          {corpusId, listId: defaultListId, tabType, limit: (Just 10000)})
+                          {corpusId, listId: defaultListId, tabType, limit: (Just 1000)})
                       treeSpec
     
     chart Terms      = cmapProps (\{loaded: {defaultListId}, path: corpusId} ->
-                          {corpusId, listId: defaultListId, tabType, limit: (Just 10000)})
+                          {corpusId, listId: defaultListId, tabType, limit: (Just 1000)})
                           -- TODO limit should be select in the chart by default it is 1000
                       metricsSpec
