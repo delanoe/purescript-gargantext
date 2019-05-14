@@ -24,6 +24,7 @@ module Gargantext.Components.Charts.Options.Font
   , MagicType
   , Save
   , Restore
+  , Brush
   ) where
 
 import Prelude (Unit, ($), (<<<), (<>))
@@ -121,8 +122,9 @@ type TooltipOptional =
 mkToolBox :: ToolBox
 mkToolBox = { feature: { dataView    : { show: true, readOnly : false, title : "Data"}
                        , saveAsImage : { show : true, pixelRatio : 10, title : "Image"}
-                       -- , magicType   : { show : true, "type" : ["line", "bar", "pie", "stack", "tiled"], title : "Type"}
+                       --, magicType   : { show : true, "type" : ["line", "bar", "pie", "stack", "tiled"], title : "Type"}
                        --, restore     : {show : true, title : "Restore"}
+                       --, brush : {"type" : ["rect", "polygon", "lineX", "lineY", "keep", "clear"]}
                      }
             , orient : "vertical"
           }
@@ -135,6 +137,7 @@ type Feature = { dataView :: DataView
                , saveAsImage   :: Save
                --, magicType :: MagicType
                --, restore :: Restore
+               --, brush :: Brush
                }
 
 ---------------------------------------
@@ -157,6 +160,7 @@ type DataView = { show :: Boolean
                 , title :: String
               }
 
+type Brush = { "type" :: Array String }
 ---------------------------------------
 
 mkTooltip :: forall o. Optional o TooltipOptional => Record o -> Tooltip
