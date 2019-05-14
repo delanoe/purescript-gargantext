@@ -122,7 +122,7 @@ mkToolBox :: ToolBox
 mkToolBox = { feature: { dataView    : { show: true, readOnly : false, title : "View data"}
                        , saveAsImage : { show : true, pixelRatio : 10, title : "Save as image"}
                        -- , magicType   : { show : true, "type" : ["line", "bar", "pie", "stack", "tiled"], title : "Type"}
-                       , restore     : {show : true, title : "Restore"}
+                       --, restore     : {show : true, title : "Restore"}
                      }
             , orient : "vertical"
           }
@@ -134,7 +134,7 @@ type ToolBox = { feature :: Feature 
 type Feature = { dataView :: DataView
                , saveAsImage   :: Save
                --, magicType :: MagicType
-               , restore :: Restore
+               --, restore :: Restore
                }
 
 ---------------------------------------
