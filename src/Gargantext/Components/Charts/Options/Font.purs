@@ -119,8 +119,8 @@ type TooltipOptional =
 -----------------------------------------------------------------
 -- | ToolBox
 mkToolBox :: ToolBox
-mkToolBox = { feature: { dataView    : { show: true, readOnly : false, title : "View data"}
-                       , saveAsImage : { show : true, pixelRatio : 10, title : "Save as image"}
+mkToolBox = { feature: { dataView    : { show: true, readOnly : false, title : "Data"}
+                       , saveAsImage : { show : true, pixelRatio : 10, title : "Image"}
                        -- , magicType   : { show : true, "type" : ["line", "bar", "pie", "stack", "tiled"], title : "Type"}
                        --, restore     : {show : true, title : "Restore"}
                      }
