@@ -4,7 +4,7 @@ import Prelude
 
 import Gargantext.Components.Charts.Options.Color (Color)
 import Gargantext.Components.Charts.Options.Data (DataLegend, DataAxis)
-import Gargantext.Components.Charts.Options.Font (TextStyle, Tooltip)
+import Gargantext.Components.Charts.Options.Font (TextStyle, Tooltip, ToolBox)
 import Gargantext.Components.Charts.Options.Legend (LegendType, Orient, SelectedMode)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
 import Gargantext.Components.Charts.Options.Series (Series)
@@ -42,6 +42,7 @@ type Option =
   , series   :: Array Series
   , dataZoom :: Array DataZoom
   , children :: R.Children
+  , toolbox   :: ToolBox
   }
 
 type Title =

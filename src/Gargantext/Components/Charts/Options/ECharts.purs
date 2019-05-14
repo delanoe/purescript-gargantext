@@ -7,7 +7,7 @@ import CSS.Common (normal)
 import Data.Array (length)
 import Gargantext.Components.Charts.Options.Color (transparent, violet, black)
 import Gargantext.Components.Charts.Options.Data (DataLegend, DataAxis, dataSerie)
-import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon, mkTooltip, Tooltip)
+import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon, mkTooltip, Tooltip, ToolBox, mkToolBox)
 import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
 import Gargantext.Components.Charts.Options.Series (Series, SeriesName, Chart(..), seriesPieD1)
@@ -162,7 +162,7 @@ data Options = Options
   }
 
 tooltipTriggerAxis :: Tooltip
-tooltipTriggerAxis = mkTooltip {trigger: "axis"}
+tooltipTriggerAxis = mkTooltip { trigger: "axis"}
 
 opts :: Options -> Option
 opts (Options { mainTitle
@@ -182,6 +182,7 @@ opts (Options { mainTitle
   , yAxis
   , dataZoom: if addZoom then [zoom Slider, zoom Inside] else []
   , children : unsafeCoerce [] -- TODO
+  , toolbox: mkToolBox
   }
 
 data Zoom = Slider | Inside

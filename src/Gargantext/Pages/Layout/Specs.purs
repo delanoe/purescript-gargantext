@@ -85,7 +85,8 @@ layout0 layout =
     outerLayout :: Spec AppState {} Action
     outerLayout =
       cont $ fold
-      [ withState \st ->
+      [ -- over _render \render d p s c ->  [logLinks d s] ,
+       withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
               ls $ cmapProps (const {root: tree_id}) as
@@ -302,15 +303,11 @@ liNav (LiNav { title : title'
                       ]
                 ]
 
-divDropdownRight :: (Action -> Effect Unit) -> AppState -> ReactElement
-divDropdownRight d s =
-  ul [className "nav navbar-nav pull-right"]
-     [ li [className "dropdown"]
-       [ case s.loginState.authData of
+
+logLinks :: (Action -> Effect Unit) -> AppState -> ReactElement
+logLinks d s = case s.loginState.authData of
            Nothing -> loginLink
            Just _  -> logoutLink
-       ]
-     ]
   where
     loginLink =
       a [ aria {hidden : true}
@@ -331,6 +328,14 @@ divDropdownRight d s =
         -- TODO hover: bold
         ]
         [text " Logout"]
+
+
+divDropdownRight :: (Action -> Effect Unit) -> AppState -> ReactElement
+divDropdownRight d s =
+  ul [className "nav navbar-nav pull-right"]
+     [ li [className "dropdown"]
+          [ logLinks d s ]
+    ]
 
 layoutFooter :: Spec AppState {} Action
 layoutFooter = simpleSpec performAction render

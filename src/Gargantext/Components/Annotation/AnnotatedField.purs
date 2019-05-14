@@ -47,8 +47,7 @@ annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
   where
     runs props =
-      HTML.div { className: "annotated-field-runs" } $
-        annotateRun <$> compile props
+      HTML.div { className: "annotated-field-runs" } (map annotateRun $ compile props)
     cpt props _ = do
       menu /\ setMenu <- R.useState $ \_ -> pure Nothing
       let wrapperProps =
@@ -99,9 +98,9 @@ annotateRun (Tuple text list) = R.createElement annotatedRunComponent { text, li
 
 annotatedRunComponent :: R.Component RunProps
 annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
-  where cpt { text, list } _ = maybe' (\_ -> unstyled text) (styled text) list
-        styled text list = HTML.span { className: className list } [ HTML.text text ]
-        unstyled text = HTML.span {} [ HTML.text text ]
-        className list = "annotation-run " <> termClass list
+  where cpt    { text, list } _ = maybe' (\_ -> unstyled text) (styled text) list
+        styled   text  list     = HTML.span { className: className list } [ HTML.text text ]
+        unstyled text           = HTML.span {} [ HTML.text text ]
+        className      list     = "annotation-run " <> termClass list
 
 

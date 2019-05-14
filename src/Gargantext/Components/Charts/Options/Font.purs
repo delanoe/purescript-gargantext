@@ -17,6 +17,13 @@ module Gargantext.Components.Charts.Options.Font
   , Tooltip
   , TooltipOptional
   , mkTooltip
+  , ToolBox
+  , mkToolBox
+  , Feature
+  , DataView
+  , MagicType
+  , Save
+  , Restore
   ) where
 
 import Prelude (Unit, ($), (<<<), (<>))
@@ -108,6 +115,49 @@ type TooltipOptional =
   , show      :: Boolean
   , formatter :: Formatter
   )
+
+-----------------------------------------------------------------
+-- | ToolBox
+mkToolBox :: ToolBox
+mkToolBox = { feature: { dataView    : { show: true, readOnly : false, title : "View data"}
+                       , saveAsImage : { show : true, pixelRatio : 10, title : "Save as image"}
+                       -- , magicType   : { show : true, "type" : ["line", "bar", "pie", "stack", "tiled"], title : "Type"}
+                       , restore     : {show : true, title : "Restore"}
+                     }
+            , orient : "vertical"
+          }
+
+
+---------------------------------------
+type ToolBox = { feature :: Feature 
+               , orient  :: String}
+type Feature = { dataView :: DataView
+               , saveAsImage   :: Save
+               --, magicType :: MagicType
+               , restore :: Restore
+               }
+
+---------------------------------------
+type Save = { show :: Boolean
+            , pixelRatio :: Int
+            , title :: String
+          }
+
+type Restore = { show :: Boolean
+               , title :: String}
+
+type MagicType = { show :: Boolean
+                 , "type" :: Array String  -- TODO use line bar types
+                 , title :: String
+               }
+---------------------------------------
+
+type DataView = { show :: Boolean
+                , readOnly :: Boolean
+                , title :: String
+              }
+
+---------------------------------------
 
 mkTooltip :: forall o. Optional o TooltipOptional => Record o -> Tooltip
 mkTooltip = unsafeCoerce
