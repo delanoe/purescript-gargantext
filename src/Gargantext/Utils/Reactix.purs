@@ -35,3 +35,8 @@ named = flip $ defineProperty "name"
 
 overState :: forall t. (t -> t) -> R.State t -> Effect Unit
 overState f (state /\ setState) = setState $ f state
+
+useLayoutEffect1' :: forall a. a -> (Unit -> Effect Unit) -> R.Hooks Unit
+useLayoutEffect1' a f = R.useLayoutEffect1 a $ \_ ->
+  do f unit
+     pure $ \_ -> pure unit

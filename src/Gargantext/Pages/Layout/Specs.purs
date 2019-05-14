@@ -178,9 +178,9 @@ searchBar = simpleSpec defaultPerformAction render
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"
                                  ]
-                             $ [ divDropdownLeft ]
-                             <> [R'.scuff (SB.searchBar SB.defaultProps)] <>
-                             [ divDropdownRight d s ]
+                             $  [ divDropdownLeft ]
+                             <> [ R'.scuff (SB.searchBar SB.defaultProps) ]
+                             <> [ divDropdownRight d s ]
                           ]
                     ]
               ]

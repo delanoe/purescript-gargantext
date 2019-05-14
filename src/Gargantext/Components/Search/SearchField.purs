@@ -1,4 +1,5 @@
-module Gargantext.Components.Search.SearchField where
+module Gargantext.Components.Search.SearchField
+  ( Search, Props, searchField, searchFieldComponent )where
 
 import Prelude hiding (div)
 import Data.Map as Map
@@ -21,11 +22,16 @@ import Reactix.SyntheticEvent as E
 
 select = R.createElement "select"
 
+type Search = { category :: String, term :: String }
+
+defaultSearch :: Search
+defaultSearch = { category: "PubMed", term: "" }
+
 type Props =
   -- list of categories to search, or parsers to use on uploads
   ( categories :: Array String 
-  -- State hook for a search term, how we get data in and out
-  , term :: R.State String
+  -- State hook for a search, how we get data in and out
+  , search :: R.State (Maybe Search)
   )
 
 searchField :: Record Props -> R.Element
@@ -38,24 +44,37 @@ searchFieldComponent :: R.Memo Props
 searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
   where
     cpt props _ = do
-      elemRef <- R.useRef $ null
+      let search = maybe defaultSearch identity (fst props.search)
+      cat <- R.useState $ \_ -> pure search.category
+      term <- R.useState $ \_ -> pure search.term
       pure $
         div { className: "search-field" }
-        [ select { className: "category" } (cat <$> props.categories)
-        , searchInput elemRef props.term
-        , submitButton elemRef props.term
+        [ categoryInput cat props.categories
+        , searchInput term
+        , submitButton cat term props.search
         ]
-    cat name = option { value: name } [text name]
-    hasChanged p p' = (p.categories /= p'.categories) || (fst p.term /= fst p.term)
+    hasChanged p p' = (p.categories /= p'.categories) || (fst p.search /= fst p.search)
 
-searchInput :: R.Ref (Nullable DOM.Element) -> R.State String -> R.Element
-searchInput ref (term /\ setTerm) =
+categoryInput :: R.State String -> Array String -> R.Element
+categoryInput (cat /\ setCat) cats =
+  select { className: "category", onChange } (item <$> cats)
+  where
+    onChange = mkEffectFn1 $ \e -> setCat (e .. "target" .. "value")
+    item name = option { value: name } [ text name ]
+
+searchInput :: R.State String -> R.Element
+searchInput (term /\ setTerm) =
   input { defaultValue: term
         , type: "text"
-        , ref: ref
-        , placeholder: placeholder }
+        , onChange
+        , placeholder }
+  where onChange = mkEffectFn1 $ \e -> setTerm $ e .. "target" .. "value"
 
-submitButton :: R.Ref (Nullable DOM.Element) -> R.State String -> R.Element
-submitButton ref (_ /\ setTerm) = button { onClick: click } [ text "Search" ]
+
+submitButton :: R.State String -> R.State String -> R.State (Maybe Search) -> R.Element
+submitButton (cat /\ _) (term /\ _) (_ /\ setSearch) = button { onClick: click } [ text "Search" ]
   where
-    click = mkEffectFn1 $ \_ -> setTerm $ (R.readRef ref) .. "value"
+    click = mkEffectFn1 $ \_ -> do
+      case term of
+        "" -> setSearch Nothing
+        _ -> setSearch $ Just { category: cat, term: term }
