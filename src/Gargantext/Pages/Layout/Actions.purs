@@ -16,7 +16,6 @@ import Gargantext.Pages.Corpus.Document       as D
 import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
-import Gargantext.Pages.Layout.Specs.SearchBar      as SB
 import Gargantext.Pages.Layout.States                  (AppState)
 import Gargantext.Prelude
 import Gargantext.Router                               (Routes)
@@ -31,7 +30,6 @@ data Action
   | GraphExplorerA     GE.Action
   | DocumentViewA D.Action
   | AnnuaireAction     Annuaire.Action
-  | SearchBarAction SB.Action
   | ShowLogin
   | Logout
   | ShowAddCorpus
@@ -70,7 +68,6 @@ performAction (SearchA         _) _ _ = pure unit
 performAction (DocumentViewA   _) _ _ = pure unit
 performAction (GraphExplorerA  _) _ _ = pure unit
 performAction (AnnuaireAction  _) _ _ = pure unit
-performAction (SearchBarAction _) _ _ = pure unit
   -- liftEffect $ modalShow "addCorpus"
   -- modifyState $ _ {showCorpus = true}
 
@@ -99,12 +96,6 @@ _annuaireAction = prism AnnuaireAction \action ->
   case action of
        AnnuaireAction a -> Right a
        _                -> Left  action
-
-_searchBarAction :: Prism' Action SB.Action
-_searchBarAction = prism SearchBarAction \action ->
-  case action of
-       SearchBarAction a -> Right a
-       _                 -> Left  action
 
 _documentViewAction :: Prism' Action D.Action
 _documentViewAction = prism DocumentViewA \action ->

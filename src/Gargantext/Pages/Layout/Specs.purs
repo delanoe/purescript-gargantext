@@ -23,12 +23,13 @@ import Gargantext.Pages.Corpus.Document as Annotation
 import Gargantext.Pages.Corpus.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Graph as GE
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, _searchBarAction, performAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _documentViewAction, _graphExplorerAction, _loginAction, _searchAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search    as S
 import Gargantext.Pages.Layout.Specs.SearchBar as SB
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState, _searchBarState)
+import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _documentViewState, _graphExplorerState, _loginState, _searchState)
 import Gargantext.Router (Routes(..))
+import Gargantext.Utils.Reactix as R'
 
 layoutSpec :: Spec AppState {} Action
 layoutSpec =
@@ -80,7 +81,6 @@ layout0 layout =
   , layoutFooter
   ]
   where
-    searchBar = layoutSidebar $ focus _searchBarState _searchBarAction SB.renderSpec
     outerLayout1 = simpleSpec defaultPerformAction defaultRender
     outerLayout :: Spec AppState {} Action
     outerLayout =
@@ -130,7 +130,6 @@ layout1 layout =
   , layoutFooter
   ]
   where
-    searchBar = layoutSidebar $ focus _searchBarState _searchBarAction SB.renderSpec
     outerLayout1 = simpleSpec defaultPerformAction defaultRender
     outerLayout :: Spec AppState {} Action
     outerLayout =
@@ -166,8 +165,10 @@ layout1 layout =
       ]
 
 
-layoutSidebar :: Spec AppState {} Action -> Spec AppState {} Action
-layoutSidebar = over _render \render d p s c ->
+searchBar :: Spec AppState {} Action
+searchBar = simpleSpec defaultPerformAction render
+  where
+    render d p s c =
       [ div [ _id "dafixedtop"
             , className "navbar navbar-inverse navbar-fixed-top"
             , role "navigation"
@@ -177,8 +178,8 @@ layoutSidebar = over _render \render d p s c ->
                           [ divLogo
                           ,  div [ className "collapse navbar-collapse"
                                  ]
-                             $ [ divDropdownLeft]
-                             <> render d p s c <>
+                             $ [ divDropdownLeft ]
+                             <> [R'.scuff (SB.searchBar SB.defaultProps)] <>
                              [ divDropdownRight d s ]
                           ]
                     ]

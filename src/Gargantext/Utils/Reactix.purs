@@ -8,6 +8,7 @@ import Data.Traversable ( traverse_ )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
 import DOM.Simple.Event as DE
+import Effect (Effect)
 import FFI.Simple ( (...), defineProperty )
 import React ( ReactElement )
 import Reactix as R
@@ -31,3 +32,6 @@ mousePosition e = Point { x: RE.clientX e, y: RE.clientY e }
 -- | This is naughty, it quietly mutates the input and returns it
 named :: forall o. String -> o -> o
 named = flip $ defineProperty "name"
+
+overState :: forall t. (t -> t) -> R.State t -> Effect Unit
+overState f (state /\ setState) = setState $ f state

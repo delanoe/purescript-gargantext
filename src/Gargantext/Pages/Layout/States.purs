@@ -11,7 +11,6 @@ import Gargantext.Pages.Corpus.Document       as D
 import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
-import Gargantext.Pages.Layout.Specs.SearchBar      as SB
 import Gargantext.Router                               (Routes(..))
 
 type AppState =
@@ -20,7 +19,6 @@ type AppState =
   , addCorpusState     :: AC.State
   , searchState        :: S.State
   , documentState      :: D.State
-  , searchBarState     :: SB.State
   , showLogin          :: Boolean
   , showCorpus         :: Boolean
   , graphExplorerState :: GE.State
@@ -36,7 +34,6 @@ initAppState = do
     , addCorpusState : AC.initialState
     , searchState    : S.initialState
     , documentState  : D.initialState {}
-    , searchBarState : SB.initialState
     , showLogin      : false
     , showCorpus     : false
     , graphExplorerState : GE.initialState
@@ -54,9 +51,6 @@ _addCorpusState = lens (\s -> s.addCorpusState) (\s ss -> s{addCorpusState = ss}
 
 _searchState :: Lens' AppState S.State
 _searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
-
-_searchBarState :: Lens' AppState SB.State
-_searchBarState = lens (\s -> s.searchBarState) (\s ss -> s{searchBarState = ss})
 
 _documentViewState :: Lens' AppState D.State
 _documentViewState = lens (\s -> s.documentState) (\s ss -> s{documentState = ss})
