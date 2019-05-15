@@ -1,6 +1,8 @@
 module Gargantext.Pages.Corpus.Chart.Pie where
 
-import Data.Array (foldl, zip)
+import Data.String (take, joinWith, Pattern(..), split, length)
+import Data.Array (foldl, zip, filter)
+import Data.Array as A
 import Data.Tuple (Tuple(..))
 import Data.Map as Map
 import Data.Int (toNumber)
@@ -61,7 +63,7 @@ chartOptions :: HistoMetrics -> Options
 chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Bar"
   , subTitle  : "Count of GraphTerm"
-  , xAxis     : xAxis' dates'
+  , xAxis     : xAxis' $ map (\t -> joinWith " " $ map (take 3) $ A.take 3 $ filter (\s -> length s > 3) $ split (Pattern " ") t) dates'
   , yAxis     : yAxis' { position: "left", show: true, min:0}
   , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", itemStyle: itemStyle {color:blue}, value: n }) count']
   , addZoom   : false
