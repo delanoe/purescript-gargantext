@@ -22,6 +22,10 @@ import Gargantext.Router as R
 
 import Gargantext.Types
 
+urlPlease :: End -> String -> String
+urlPlease end path = theEnd.baseUrl <> theEnd.prePath <> path
+  where theEnd = endOf end endConfig
+
 endConfig :: EndConfig
 endConfig = endConfig' V10
 
