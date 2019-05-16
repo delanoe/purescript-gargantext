@@ -22,16 +22,14 @@ import Reactix.SyntheticEvent as E
 
 select = R.createElement "select"
 
-type Search = { category :: String, term :: String }
+type Search = { term :: String }
 
 defaultSearch :: Search
-defaultSearch = { category: "PubMed", term: "" }
+defaultSearch = { term: "" }
 
 type Props =
-  -- list of categories to search, or parsers to use on uploads
-  ( categories :: Array String 
   -- State hook for a search, how we get data in and out
-  , search :: R.State (Maybe Search)
+  ( search :: R.State (Maybe Search)
   )
 
 searchField :: Record Props -> R.Element
@@ -45,22 +43,13 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
   where
     cpt props _ = do
       let search = maybe defaultSearch identity (fst props.search)
-      cat <- R.useState $ \_ -> pure search.category
       term <- R.useState $ \_ -> pure search.term
       pure $
         div { className: "search-field" }
-        [ categoryInput cat props.categories
-        , searchInput term
-        , submitButton cat term props.search
+        [ searchInput term
+        , submitButton term props.search
         ]
-    hasChanged p p' = (p.categories /= p'.categories) || (fst p.search /= fst p.search)
-
-categoryInput :: R.State String -> Array String -> R.Element
-categoryInput (cat /\ setCat) cats =
-  select { className: "category", onChange } (item <$> cats)
-  where
-    onChange = mkEffectFn1 $ \e -> setCat (e .. "target" .. "value")
-    item name = option { value: name } [ text name ]
+    hasChanged p p' = fst p.search /= fst p'.search
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
@@ -71,10 +60,11 @@ searchInput (term /\ setTerm) =
   where onChange = mkEffectFn1 $ \e -> setTerm $ e .. "target" .. "value"
 
 
-submitButton :: R.State String -> R.State String -> R.State (Maybe Search) -> R.Element
-submitButton (cat /\ _) (term /\ _) (_ /\ setSearch) = button { onClick: click } [ text "Search" ]
+submitButton :: R.State String -> R.State (Maybe Search) -> R.Element
+submitButton (term /\ _) (_ /\ setSearch) = button { onClick: click } [ text "Search" ]
   where
     click = mkEffectFn1 $ \_ -> do
       case term of
         "" -> setSearch Nothing
-        _ -> setSearch $ Just { category: cat, term: term }
+        _ -> setSearch $ Just { term: term }
+

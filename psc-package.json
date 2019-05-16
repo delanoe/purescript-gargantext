@@ -25,6 +25,7 @@
     "string-parsers",
     "prelude",
     "dom-simple",
-    "reactix"
+    "reactix",
+    "uri"
   ]
 }

@@ -109,10 +109,10 @@ let additions =
 -}
 
 let mkPackage =
-      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.3-20190409/src/mkPackage.dhall sha256:0b197efa1d397ace6eb46b243ff2d73a3da5638d8d0ac8473e8e4a8fc528cf57
+      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.5-20190508/src/mkPackage.dhall sha256:0b197efa1d397ace6eb46b243ff2d73a3da5638d8d0ac8473e8e4a8fc528cf57
 
 let upstream =
-      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.3-20190409/src/packages.dhall sha256:d327eb707262c9087f8d5caf471690bf69afc8f6307618d9c2ceab13755fb194
+      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.5-20190508/src/packages.dhall sha256:8ef3a6d6d123e05933997426da68ef07289e1cbbdd2a844b5d10c9159deef65a
 
 let overrides =
       { thermite =
@@ -157,17 +157,33 @@ let additions =
           "v3.1.0"
       , ffi-simple =
           mkPackage
-		  [ "prelude", "effect", "functions", "nullable", "unsafe-coerce" ]
-		  "https://github.com/irresponsible/purescript-ffi-simple"
-                  "v0.2.2"
+          [ "prelude", "effect", "functions", "nullable", "unsafe-coerce" ]
+          "https://github.com/irresponsible/purescript-ffi-simple"
+          "v0.2.2"
       , dom-simple =
           mkPackage
-		  [ "arrays", "console", "effect", "ffi-simple", "functions", "nullable", "prelude", "unsafe-coerce" ]
-		  "https://github.com/irresponsible/purescript-dom-simple"
-		  "v0.2.4"
+          [ "arrays"
+          , "console"
+          , "effect"
+          , "ffi-simple"
+          , "functions"
+          , "nullable"
+          , "prelude"
+          , "unsafe-coerce"
+          ]
+          "https://github.com/irresponsible/purescript-dom-simple"
+          "v0.2.4"
       , reactix =
           mkPackage
-          [ "console", "dom-simple", "effect", "functions", "nullable", "prelude", "unsafe-coerce", "ffi-simple"]
+          [ "console"
+          , "dom-simple"
+          , "effect"
+          , "functions"
+          , "nullable"
+          , "prelude"
+          , "unsafe-coerce"
+          , "ffi-simple"
+          ]
           "https://github.com/irresponsible/purescript-reactix"
           "v0.2.0"
       , uint =
@@ -175,6 +191,11 @@ let additions =
           [ "maybe", "math", "generics-rep" ]
           "https://github.com/zaquest/purescript-uint"
           "v5.1.1"
+      , uri =
+          mkPackage
+          [ "these", "arrays", "profunctor-lenses", "unfoldable", "parsing", "integers", "globals", "generics-rep" ]
+          "https://github.com/slamdata/purescript-uri"
+          "v7.0.0"
       }
 
 in  upstream // overrides // additions

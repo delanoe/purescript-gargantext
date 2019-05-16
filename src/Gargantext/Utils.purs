@@ -7,6 +7,10 @@ import Data.Set as Set
 import Data.Set (Set)
 import Data.Lens (Lens', lens)
 
+-- | Astonishingly, not in the prelude
+id :: forall a. a -> a
+id a = a
+
 setterv :: forall nt record field. Newtype nt record => (record -> field -> record) -> field -> nt -> nt
 setterv fn v t = (setter (flip fn v) t)
 

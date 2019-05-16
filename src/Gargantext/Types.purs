@@ -4,14 +4,19 @@ import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJso
                      , jsonEmptyObject, (:=), (~>), (.?), (.??) )
 import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
-import Gargantext.Prelude
 import Prim.Row (class Union)
+import URI.Query (Query)
+import Gargantext.Prelude
 
 data TermSize = MonoTerm | MultiTerm
 
 data Term = Term String TermList
 
 derive instance eqTermSize :: Eq TermSize
+
+-- | Converts a data structure to a query string
+class ToQuery a where
+  toQuery :: a -> Query
 
 instance showTermSize :: Show TermSize where
   show MonoTerm  = "MonoTerm"
