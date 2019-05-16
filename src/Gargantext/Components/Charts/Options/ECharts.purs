@@ -143,7 +143,7 @@ yAxis' :: { position :: String
           } -> YAxis
 yAxis' {position, show, min} = yAxis
   { "type": "value"
-  , name: "data"
+  , name: ""
   , min: min
   , axisLabel: {formatter: "{value}"}
   , position
