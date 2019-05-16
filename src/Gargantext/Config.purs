@@ -132,16 +132,6 @@ showTabType' (TabCorpus   t) = show t
 showTabType' (TabDocument t) = show t
 showTabType' (TabPairing t) = show t
 
-tabTypeNgramsGet :: TabType -> UrlPath
-tabTypeNgramsGet (TabCorpus   t) = "listGet?ngramsType=" <> show t
-tabTypeNgramsGet (TabDocument t) = "ngrams?ngramsType=" <> show t
-tabTypeNgramsGet (TabPairing t) = "listGet?ngramsType=" <> show t -- TODO
-
-tabTypeNgramsPut :: TabType -> UrlPath
-tabTypeNgramsPut (TabCorpus   t) = "list?ngramsType=" <> show t
-tabTypeNgramsPut (TabDocument t) = "list?ngramsType=" <> show t
-tabTypeNgramsPut (TabPairing t) = "list?ngramsType=" <> show t -- TODO
-
 pathUrl :: Config -> Path -> Maybe Id -> UrlPath
 pathUrl c (Tab t o l s) i =
     pathUrl c (NodeAPI Node) i <>
@@ -160,8 +150,7 @@ pathUrl c (GetNgrams
             , searchQuery: q
             }) i =
       base
-      <> "/"
-      <> tabTypeNgramsGet t
+      <> "/ngrams?ngramsType=" <> showTabType' t
       <> offsetUrl o <> limitUrl l
       <> orderByUrl orderBy
       <> foldMap (\x -> "&list=" <> show x) listIds
@@ -178,7 +167,7 @@ pathUrl c (GetNgrams
 
 
 pathUrl c (PutNgrams t listid) i =
-    pathUrl c (NodeAPI Node) i <> "/" <> tabTypeNgramsPut t <> listid'
+    pathUrl c (NodeAPI Node) i <> "/ngrams?ngramsType=" <> showTabType' t <> listid'
   where
     listid' = maybe "" (\x -> "&list=" <> show x) listid
 pathUrl c Auth Nothing = c.prePath <> "auth"
@@ -189,7 +178,7 @@ pathUrl c (Search {limit,offset,orderBy}) _TODO =
     <> offsetUrl offset <> limitUrl limit <> orderUrl orderBy
 pathUrl c (CorpusMetrics {tabType, listId, limit}) i =
     pathUrl c (NodeAPI Corpus) i <> "/metrics"
-      <> "?list=" <> show listId
+      <> "?ngrams=" <> show listId
       <> "&ngramsType=" <> showTabType' tabType
       <> maybe "" (\x -> "&limit=" <> show x) limit
 -- TODO fix this url path
@@ -286,6 +275,7 @@ data Path
       , searchQuery    :: String
       }
   | PutNgrams TabType (Maybe ListId)
+  -- ^ The name is not good. In particular this URL is used both in PUT and POST.
   | NodeAPI NodeType
   | Search  { {-id :: Int
             , query    :: Array String
