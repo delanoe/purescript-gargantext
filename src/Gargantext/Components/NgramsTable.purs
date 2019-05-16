@@ -74,7 +74,7 @@ import Partial.Unsafe (unsafePartial)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Types (TermList(..), TermSize, readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Config (toUrl, End(..), Path(..), TabType(..), OrderBy(..), NodeType(..))
-import Gargantext.Config.REST (get, put)
+import Gargantext.Config.REST (get, put, post)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
@@ -515,6 +515,7 @@ data Action
   -- applied to `initTable`.
   -- TODO more docs
   | Refresh
+  | AddNewNgram NgramsTerm
 
 type Dispatch = Action -> Effect Unit
 
@@ -607,6 +608,13 @@ tableContainer { pageParams
               , button [className "btn btn-primary", onClick $ const $ dispatch $ AddTermChildren] [text "Save"]
               , button [className "btn btn-secondary", onClick $ const $ dispatch $ SetParentResetChildren Nothing] [text "Cancel"]
               ]) ngramsParent)
+          , div [] (
+              if A.null props.tableBody && pageParams.searchQuery /= "" then [
+                button [ className "btn btn-primary"
+                       , onClick $ const $ dispatch $ AddNewNgram pageParams.searchQuery
+                       ] [text $ "Add " <> pageParams.searchQuery]
+              ] else []
+            )
           , div [ _id "terms_table", className "panel-body" ]
                 [ table [ className "table able" ]
                   [ thead [ className "tableHeader"] [props.tableHead]
@@ -678,6 +686,8 @@ ngramsTableSpec = simpleSpec performAction render
         pt = PatchMap $ Map.fromFoldable [Tuple parent pe]
         -- TODO ROOT-UPDATE
         -- patch the root of the child to be equal to the root of the parent.
+    performAction (AddNewNgram ngram) {path: {nodeId, listIds, tabType}} _ =
+      lift $ post (toUrl Back (PutNgrams tabType (head listIds)) $ Just nodeId) [ngram]
 
     render :: Render State Props' Action
     render dispatch { path: pageParams
