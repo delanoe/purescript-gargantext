@@ -11,10 +11,10 @@ type DataLegend =
   , textStyle :: TextStyle
   }
 
-type DataAxis =
-  { value :: String
+type DataAxis = Array String
+  {- value :: String
   , textStyle :: TextStyle
-  }
+  -}
 
 type RequiredData v o =
   { value :: v

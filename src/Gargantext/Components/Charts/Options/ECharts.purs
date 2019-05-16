@@ -2,6 +2,7 @@ module Gargantext.Components.Charts.Options.ECharts where
 
 import Prelude
 
+import Data.String (take)
 import CSS (italic)
 import CSS.Common (normal)
 import Data.Array (length)
@@ -128,14 +129,12 @@ yAxisVoid = yAxis
 xAxis' :: Array String -> XAxis
 xAxis' [] = unsafeCoerce {show:false}
 xAxis' xs = xAxis
-            { "data": xData xs
+            { "data": xs
             , "type": "category"
             , axisTick: {alignWithLabel: true}
             , show: true
+            , axisLabel: {formatter: "{value}"}
             }
-  where
-    xData :: Array String -> Array DataAxis
-    xData = map (\x -> {value : x, textStyle : textStyle})
 
 -- TODO try to use Optional
 yAxis' :: { position :: String
@@ -144,7 +143,7 @@ yAxis' :: { position :: String
           } -> YAxis
 yAxis' {position, show, min} = yAxis
   { "type": "value"
-  , name: "data"
+  , name: ""
   , min: min
   , axisLabel: {formatter: "{value}"}
   , position
@@ -258,10 +257,10 @@ textStyle =
   , fontStyle: chartFontStyle normal
   , fontWeight: chartFontWeight normal
   , fontFamily: "sans-serif"
-  , fontSize: 15
+  , fontSize: 10
   , align: relativePosition $ Relative LeftPos
   , verticalAlign: relativePosition $ Relative Top
-  , lineHeight: percentPosition 0.0
+  , lineHeight: percentPosition 10.0
   , width: percentPosition 100.0
   , height: percentPosition 100.0
   , textBorderColor: black

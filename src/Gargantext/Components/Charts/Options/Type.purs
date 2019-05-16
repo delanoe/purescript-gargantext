@@ -128,7 +128,7 @@ type AxisTick =
 data XAxis
 
 type XAxisOptional =
-  ( "data"    :: Array DataAxis
+  ( "data"    :: Array String -- DataAxis
   , "type"    :: String
   , axisTick  :: AxisTick
   , name      :: String

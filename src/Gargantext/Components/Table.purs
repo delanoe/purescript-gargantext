@@ -153,8 +153,8 @@ tableSpec = simpleSpec performAction render
         cs :: Array ReactElement
         cs =
           case currentOrderBy of
-            Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC ",  lnk Nothing (columnName c)]
-            Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ", lnk Nothing (columnName c)]
+            Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ",  lnk Nothing (columnName c)]
+            Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "ASC ", lnk Nothing (columnName c)]
             _ -> [lnk (Just (ASC c)) (columnName c)]
 
     render :: Render State Props Action
