@@ -23,13 +23,10 @@ import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Search.SearchField (Search, searchField)
 import Gargantext.Utils (id)
 
-type Props = ( open :: Boolean )
-
-defaultCategories :: Array String
-defaultCategories = ["PubMed", "HAL"]
+type Props = ( open :: Boolean, databases :: Array Database )
 
 defaultProps :: Record Props
-defaultProps = { open: true } --, categories: defaultCategories }
+defaultProps = { open: true, databases: allDatabases }
 
 searchBar :: Record Props -> R.Element
 searchBar p = R.createElement searchBarComponent p []
@@ -43,12 +40,12 @@ searchBarComponent = R.hooksComponent "SearchBar" cpt
       onSearchChange search
       pure $ H.div { className: "search-bar-container" }
         [ toggleButton open
-        , searchFieldContainer open search ]
+        , searchFieldContainer open props.databases search ]
 
-searchFieldContainer :: R.State Boolean -> R.State (Maybe Search) -> R.Element
-searchFieldContainer (true /\ _) search =
-  H.div { className: "search-bar open" } [ searchField { search } ]
-searchFieldContainer (false /\ _) _ = H.div {className: "search-bar closed"} []
+searchFieldContainer :: R.State Boolean -> Array Database -> R.State (Maybe Search) -> R.Element
+searchFieldContainer (true /\ _) databases search =
+  H.div { className: "search-bar open" } [ searchField { databases, search } ]
+searchFieldContainer (false /\ _) _ _ = H.div {className: "search-bar closed"} []
 
 onSearchChange :: R.State (Maybe Search) -> R.Hooks Unit
 onSearchChange (search /\ setSearch) =
