@@ -318,6 +318,8 @@ loadPage {nodeId, query, params: {limit, offset, orderBy}} = do
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
     convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
     convOrderBy (T.DESC (T.ColumnName "Title")) = TitleDesc
+    convOrderBy (T.ASC  (T.ColumnName "Source")) = SourceAsc
+    convOrderBy (T.DESC (T.ColumnName "Source")) = SourceDesc
 
     convOrderBy _ = DateAsc -- TODO
 

@@ -317,6 +317,7 @@ data OrderBy = DateAsc  | DateDesc
              | TitleAsc | TitleDesc
              | ScoreAsc | ScoreDesc
              | TermAsc  | TermDesc
+             | SourceAsc | SourceDesc
 
 derive instance genericOrderBy :: Generic OrderBy _
 
