@@ -19,6 +19,22 @@ import Gargantext.Pages.Layout.Specs.AddCorpus.States (Response, State)
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 
+data Database = PubMed | HAL
+
+instance showDatabase :: Show Database where
+  show PubMed = "PubMed"
+  show HAL = "HAL"
+
+readDatabase :: String -> Maybe Database
+readDatabase "PubMed" = Just PubMed
+readDatabase "HAL" = Just HAL
+readDatabase _ = Nothing
+
+derive instance eqDatabase :: Eq Database
+
+allDatabases :: Array Database
+allDatabases = [PubMed, HAL]
+
 data SearchOrder
   = DateAsc
   | DateDesc
@@ -37,6 +53,7 @@ instance showSearchOrder :: Show SearchOrder where
 
 newtype SearchQuery = SearchQuery
   { query :: Array String
+  , databases :: Array Database
   , corpus_id :: Maybe Int
   , offset :: Maybe Int
   , limit :: Maybe Int
@@ -47,6 +64,7 @@ derive instance newtypeSearchQuery :: Newtype SearchQuery _
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
   { query: []
+  , databases: allDatabases
   , corpus_id: Nothing
   , offset: Nothing
   , limit: Nothing
