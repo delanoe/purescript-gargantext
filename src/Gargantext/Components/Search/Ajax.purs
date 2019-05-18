@@ -12,7 +12,7 @@ import Gargantext.Config (urlPlease, End(Back))
 import URI.Query as Q
 
 searchUrl :: SearchQuery -> String
-searchUrl q = urlPlease Back $ "search" <> Q.print (toQuery q)
+searchUrl q = urlPlease Back $ "new" <> Q.print (toQuery q)
 
 search :: forall a. DecodeJson a => SearchQuery -> Aff a
 search q = do

@@ -52,7 +52,7 @@ instance showSearchOrder :: Show SearchOrder where
   show ScoreDesc = "ScoreDesc"
 
 newtype SearchQuery = SearchQuery
-  { query :: Array String
+  { query :: String
   , databases :: Array Database
   , corpus_id :: Maybe Int
   , offset :: Maybe Int
@@ -63,7 +63,7 @@ derive instance newtypeSearchQuery :: Newtype SearchQuery _
 
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
-  { query: []
+  { query: ""
   , databases: allDatabases
   , corpus_id: Nothing
   , offset: Nothing
