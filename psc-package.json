@@ -11,6 +11,7 @@
     "psci-support",
     "css",
     "generics-rep",
+    "maybe",
     "routing",
     "foreign-object",
     "argonaut",
