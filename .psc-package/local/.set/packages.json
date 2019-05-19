@@ -704,6 +704,7 @@
     "dependencies": [
       "prelude",
       "effect",
+      "maybe",
       "functions",
       "nullable",
       "unsafe-coerce"
