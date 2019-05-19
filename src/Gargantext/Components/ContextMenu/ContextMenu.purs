@@ -57,10 +57,10 @@ contextMenuEffect
   .  (Maybe t -> Effect Unit)
   -> R.Ref (Nullable DOM.Element)
   -> Unit -> Effect (Unit -> Effect Unit)
-contextMenuEffect setMenu ref _ =
-  case toMaybe $ R.readRef ref of
-    Just elem -> do
-      let onClick = documentClickHandler setMenu elem
+contextMenuEffect setMenu rootRef _ =
+  case R.readNullableRef rootRef of
+    Just root -> do
+      let onClick = documentClickHandler setMenu root
       let onScroll = documentScrollHandler setMenu
       DOM.addEventListener document "click" onClick
       DOM.addEventListener document "scroll" onScroll
