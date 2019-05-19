@@ -710,7 +710,7 @@
       "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-ffi-simple",
-    "version": "v0.2.2"
+    "version": "v0.2.3"
   },
   "filterable": {
     "dependencies": [

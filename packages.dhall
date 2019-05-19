@@ -159,7 +159,7 @@ let additions =
           mkPackage
           [ "prelude", "effect", "maybe", "functions", "nullable", "unsafe-coerce" ]
           "https://github.com/irresponsible/purescript-ffi-simple"
-          "v0.2.2"
+          "v0.2.3"
       , dom-simple =
           mkPackage
           [ "arrays"
