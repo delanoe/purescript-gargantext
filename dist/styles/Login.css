@@ -178,6 +178,9 @@ text-align: center;
     height: auto;
 }
 
+.tree {
+    margin-top: 10px;
+}
 #graph-tree .tree {
     margin-top: 27px;
 }

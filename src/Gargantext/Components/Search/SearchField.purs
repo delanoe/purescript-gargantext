@@ -58,22 +58,24 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
 
 databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
 databaseInput (db /\ setDB) dbs =
-  select { className: "database", onChange } (item <$> dbs)
+  div {} [ select { className: "database", onChange } (item <$> dbs) ]
   where
     onChange = mkEffectFn1 $ \e -> setDB (readDatabase (e .. "target" .. "value"))
     item db = option { value: (show db) } [ text (show db) ]
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
-  input { defaultValue: term
-        , type: "text"
-        , onChange
-        , placeholder }
+  div {} [ input { defaultValue: term
+                 , type: "text"
+                 , style: { maxWidth: "110px" }
+                 , onChange
+                 , placeholder } ]
   where onChange = mkEffectFn1 $ \e -> setTerm $ e .. "target" .. "value"
 
 
 submitButton :: R.State (Maybe Database) -> R.State String -> R.State (Maybe Search) -> R.Element
-submitButton (database /\ _) (term /\ _) (_ /\ setSearch) = button { onClick: click } [ text "Search" ]
+submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
+  div {} [ button { onClick: click } [ text "Search" ] ]
   where
     click = mkEffectFn1 $ \_ -> do
       case term of

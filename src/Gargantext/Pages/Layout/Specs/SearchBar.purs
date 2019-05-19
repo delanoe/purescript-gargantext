@@ -62,7 +62,7 @@ onSearchChange (search /\ setSearch) =
 toggleButton :: R.State Boolean -> R.Element
 toggleButton open =
   H.button { onClick: onToggleExpanded open, className: "search-bar-toggle" }
-    [ H.i { className: "material-icons md-36"
+    [ H.i { className: "material-icons md-24"
           , style: { marginTop: "-5px", color: "#000" } }
           [ H.text "control_point" ] ]
 
