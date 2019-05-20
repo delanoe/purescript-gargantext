@@ -77,7 +77,7 @@ maybeShowMenu setMenu ngrams event = do
   s <- Sel.getSelection
   case s of
     Just sel -> do
-      case Sel.toString sel of
+      case Sel.selectionToString sel of
         "" -> pure unit
         sel' -> do
           let x = E.clientX event
