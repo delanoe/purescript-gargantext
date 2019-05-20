@@ -49,6 +49,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid.Additive (Additive(..))
+import Data.Ord.Down (Down(..))
 import Data.Traversable (class Traversable, traverse, traverse_, sequence)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Set (Set)
@@ -57,7 +58,7 @@ import Data.String as S
 import Data.String.Regex as R
 import Data.String.Regex.Flags as R
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), snd)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Foreign.Object as FO
@@ -716,7 +717,16 @@ ngramsTableSpec = simpleSpec performAction render
             setParams params =
               loaderDispatch $ Loader.SetPath $ pageParams {params = params}
             ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
-            rows = convertRow <$> Map.toUnfoldable (Map.filter displayRow (ngramsTable ^. _NgramsTable))
+            orderWith =
+              case convOrderBy <$> pageParams.params.orderBy of
+                Just ScoreAsc  -> A.sortWith \x -> (snd x) ^. _NgramsElement <<< _occurrences
+                Just ScoreDesc -> A.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
+                _              -> identity -- the server ordering is enough here
+
+            rows = convertRow <$> orderWith (addOcc <$> Map.toUnfoldable (Map.filter displayRow (ngramsTable ^. _NgramsTable)))
+            addOcc (Tuple ne ngramsElement) =
+              let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
+              Tuple ne (ngramsElement # _NgramsElement <<< _occurrences .~ occurrences)
 
             ngramsParentRoot :: Maybe String
             ngramsParentRoot =
@@ -734,10 +744,14 @@ ngramsTableSpec = simpleSpec performAction render
               || -- Unless they are scheduled to be removed.
                  ngramsChildren ^. at ngrams == Just false
             convertRow (Tuple ngrams ngramsElement) =
-              { row:
-                  renderNgramsItem { ngramsTable, ngrams, ngramsParent, ngramsElement, dispatch }
+              { row: renderNgramsItem { ngramsTable, ngrams, ngramsParent, ngramsElement, dispatch}
               , delete: false
               }
+
+convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc
+convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
+convOrderBy (T.ASC  _) = TermAsc
+convOrderBy (T.DESC _) = TermDesc
 
 loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
 loadNgramsTable { nodeId, listIds, termListFilter, termSizeFilter
@@ -749,11 +763,6 @@ loadNgramsTable { nodeId, listIds, termListFilter, termSizeFilter
                      , searchQuery
                      })
           (Just nodeId)
-  where
-    convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc
-    convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
-    convOrderBy (T.ASC  _) = TermAsc
-    convOrderBy (T.DESC _) = TermDesc
 
 ngramsLoaderClass :: Loader.LoaderClass PageParams VersionedNgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadNgramsTable
@@ -842,10 +851,9 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent, dispatch } 
         [ i [className "fas fa-plus"] []
         , span ngramsStyle [text $ " " <> ngrams]
         ]
-  , text $ show occurrences
+  , text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
   ]
   where
-    Additive occurrences = sumOccurrences ngramsTable ngramsElement
     termList    = ngramsElement ^. _NgramsElement <<< _list
     ngramsStyle = [termStyle termList]
     ngramsClick = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
