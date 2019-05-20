@@ -13,18 +13,25 @@ module Gargantext.Components.Annotation.AnnotatedField where
 
 import Prelude
 import Data.Map as Map
-import Data.Maybe ( Maybe(..), maybe, maybe' )
-import Data.Lens ( Lens', lens )
-import Data.Traversable ( traverse_ )
-import Data.Tuple ( Tuple(..) )
-import Data.Tuple.Nested ( (/\) )
+import Data.Maybe (Maybe(..), maybe, maybe', fromMaybe)
+import Data.Lens (Lens', lens)
+import Data.Nullable (Nullable, null, toMaybe)
+import Data.Ord (max)
+import Data.Traversable (traverse, traverse_)
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
+import DOM.Simple as DOM
 import DOM.Simple.Console
+import DOM.Simple.Document ( document )
+import DOM.Simple.Document as Document
+import DOM.Simple.Node as Node
+import DOM.Simple.Types (Element)
+import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
-import Effect ( Effect )
-import Effect.Uncurried (mkEffectFn1)
+import Effect (Effect)
+import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import Reactix as R
 import Reactix.DOM.HTML as HTML
-import Reactix.SyntheticEvent as E
 
 import Gargantext.Types ( TermList(..) )
 import Gargantext.Components.Annotation.Utils ( termClass )
@@ -49,42 +56,65 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
     runs props =
       HTML.div { className: "annotated-field-runs" } (map annotateRun $ compile props)
     cpt props _ = do
-      menu /\ setMenu <- R.useState $ \_ -> pure Nothing
-      let wrapperProps =
-            { className: "annotated-field-wrapper"
-            , onContextMenu: mkEffectFn1 (maybeShowMenu setMenu props.ngrams) }
-      pure $ HTML.div wrapperProps [ maybeAddMenu setMenu (runs props) menu]
+      menu <- R.useState $ \_ -> pure Nothing
+      root <- R.useRef null
+      useAnnotationEffect root menu props.ngrams
+      pure $ HTML.div { className } [ maybeAddMenu menu (runs props) ]
+    className = "annotated-field-wrapper"
+
+useAnnotationEffect
+  :: R.Ref (Nullable Element)
+  -> R.State (Maybe AnnotationMenu)
+  -> NgramsTable
+  -> R.Hooks Unit
+useAnnotationEffect rootRef menu ngrams =
+  R.useLayoutEffect1 (R.readNullableRef rootRef) h
+  where
+    h _ =
+      case R.readNullableRef rootRef of
+        Just root -> do
+          let handler = onSelectionChange root menu ngrams
+          DOM.addEventListener document "selectionchange" handler
+          pure $ \_ -> DOM.removeEventListener document "selectionchange" handler
+        Nothing -> pure $ \_ -> pure unit
+
+-- | TODO: handle multiple ranges
+onSelectionChange
+  :: Element
+  -> R.State (Maybe AnnotationMenu)
+  -> NgramsTable
+  -> Element.Callback DE.SelectionEvent
+onSelectionChange root (_ /\ setMenu) ngrams =
+  Element.callback $ \event ->
+    Sel.getSelection >>= traverse (getMenu event) >>= traverse_ setMenu
+  where
+    getMenu event sel = getMenu' event sel (Sel.selectionToString sel)
+    getMenu' event sel sel'
+      | not (selEmpty sel sel') = do
+        range <- Sel.getRange sel 0
+        if not (liesWithin $ Sel.commonAncestorContainer range)
+           then pure Nothing
+           else do
+             let rect = Sel.boundingRect range
+             DE.preventDefault event
+             -- top and right are the most pessimistic values because the menu is biased
+             -- towards being positioned above and to the right of the cursor
+             pure $ Just { x: rect.top, y: rect.right, list: findNgram ngrams sel' }
+      | true = pure Nothing
+    liesWithin = Element.contains root
+    selEmpty _ "" = true
+    selEmpty sel _ = Sel.rangeCount sel > 0 && not (Sel.isSelectionCollapsed sel)
 
 maybeAddMenu
-  :: (Maybe AnnotationMenu -> Effect Unit)
+  :: R.State (Maybe AnnotationMenu)
   -> R.Element
-  -> Maybe AnnotationMenu
   -> R.Element
-maybeAddMenu setMenu e (Just props) = annotationMenu setMenu props <> e
-maybeAddMenu _ e _ = e
+maybeAddMenu ((Just props) /\ setMenu) e = annotationMenu setMenu props <> e
+maybeAddMenu _ e = e
 
 compile :: Record Props -> Array Run
 compile props = runs props.text
   where runs = maybe [] (highlightNgrams props.ngrams)
-
-maybeShowMenu
-  :: forall t
-  .  (Maybe AnnotationMenu -> Effect Unit)
-  -> NgramsTable
-  -> E.SyntheticEvent DE.MouseEvent
-  -> Effect Unit
-maybeShowMenu setMenu ngrams event = do
-  s <- Sel.getSelection
-  case s of
-    Just sel -> do
-      case Sel.toString sel of
-        "" -> pure unit
-        sel' -> do
-          let x = E.clientX event
-          let y = E.clientY event
-          E.preventDefault event
-          setMenu $ Just { x, y, list: findNgram ngrams sel' }
-    Nothing -> pure unit
 
 findNgram :: NgramsTable -> String -> Maybe TermList
 findNgram _ _ = Nothing
