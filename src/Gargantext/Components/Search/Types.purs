@@ -37,7 +37,7 @@ readDatabase _ = Nothing
 derive instance eqDatabase :: Eq Database
 
 allDatabases :: Array Database
-allDatabases = [PubMed, HAL, All]
+allDatabases = [All, HAL, IsTex, PubMed]
 
 data SearchOrder
   = DateAsc
