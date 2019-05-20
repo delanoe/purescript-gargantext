@@ -561,6 +561,13 @@ tableContainer { pageParams
                         , value pageParams.searchQuery
                         , onInput \e -> setSearchQuery (unsafeEventValue e)
                         ]
+                , div [] (
+                    if A.null props.tableBody && pageParams.searchQuery /= "" then [
+                      button [ className "btn btn-primary"
+                             , onClick $ const $ dispatch $ AddNewNgram pageParams.searchQuery
+                             ] [text $ "Add " <> pageParams.searchQuery]
+                    ] else []
+                  )
                 ]
               , div [className "col-md-2", style {marginTop : "6px"}]
                       [ li [className " list-group-item"]
@@ -608,13 +615,6 @@ tableContainer { pageParams
               , button [className "btn btn-primary", onClick $ const $ dispatch $ AddTermChildren] [text "Save"]
               , button [className "btn btn-secondary", onClick $ const $ dispatch $ SetParentResetChildren Nothing] [text "Cancel"]
               ]) ngramsParent)
-          , div [] (
-              if A.null props.tableBody && pageParams.searchQuery /= "" then [
-                button [ className "btn btn-primary"
-                       , onClick $ const $ dispatch $ AddNewNgram pageParams.searchQuery
-                       ] [text $ "Add " <> pageParams.searchQuery]
-              ] else []
-            )
           , div [ _id "terms_table", className "panel-body" ]
                 [ table [ className "table able" ]
                   [ thead [ className "tableHeader"] [props.tableHead]
