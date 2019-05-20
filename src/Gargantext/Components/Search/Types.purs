@@ -19,21 +19,23 @@ import Gargantext.Pages.Layout.Specs.AddCorpus.States (Response, State)
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 
-data Database = PubMed | HAL
+data Database = PubMed | HAL | All
 
 instance showDatabase :: Show Database where
   show PubMed = "PubMed"
   show HAL = "HAL"
+  show All = "All"
 
 readDatabase :: String -> Maybe Database
 readDatabase "PubMed" = Just PubMed
 readDatabase "HAL" = Just HAL
+readDatabase "All" = Just All
 readDatabase _ = Nothing
 
 derive instance eqDatabase :: Eq Database
 
 allDatabases :: Array Database
-allDatabases = [PubMed, HAL]
+allDatabases = [PubMed, HAL, All]
 
 data SearchOrder
   = DateAsc
