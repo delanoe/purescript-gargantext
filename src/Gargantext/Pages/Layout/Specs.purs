@@ -76,7 +76,8 @@ layout0 :: Spec AppState {} Action
         -> Spec AppState {} Action
 layout0 layout =
   fold
-  [ outerLayout
+  [ searchBar
+  , outerLayout
   , layoutFooter
   ]
   where
@@ -124,7 +125,8 @@ layout1 :: Spec AppState {} Action
         -> Spec AppState {} Action
 layout1 layout =
   fold
-  [ layout
+  [ searchBar
+  , layout
   -- , outerLayout
   , layoutFooter
   ]
@@ -335,7 +337,7 @@ divDropdownRight d s =
   ul [className "nav navbar-nav pull-right"]
      [ li [className "dropdown"]
           [ logLinks d s ]
-    ]
+     ]
 
 layoutFooter :: Spec AppState {} Action
 layoutFooter = simpleSpec performAction render
