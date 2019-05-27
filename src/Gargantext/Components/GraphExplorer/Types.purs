@@ -11,6 +11,8 @@ newtype Node = Node
   , size :: Int
   , type_ :: String
   , label :: String
+  -- , x_coord :: Number ?   -- TODO JL add the right records for (x,y) coordinates interpreted by sigma-js
+  -- , y_coord :: Number ?   -- TODO AD add the right records for the backend
   , attributes :: Cluster
   }
 
