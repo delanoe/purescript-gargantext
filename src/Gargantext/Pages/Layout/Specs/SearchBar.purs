@@ -26,7 +26,7 @@ import Gargantext.Utils (id)
 type Props = ( open :: Boolean, databases :: Array Database )
 
 defaultProps :: Record Props
-defaultProps = { open: true, databases: allDatabases }
+defaultProps = { open: false, databases: allDatabases }
 
 searchBar :: Record Props -> R.Element
 searchBar p = R.createElement searchBarComponent p []
