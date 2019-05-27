@@ -185,7 +185,7 @@ type SigmaEdgeEvent =
        { node :: SigmaEdge
        , captor ::
             { clientX :: Number
-            ,  clientY :: Number
+            , clientY :: Number
             }
        }
   }

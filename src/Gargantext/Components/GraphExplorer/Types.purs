@@ -11,8 +11,8 @@ newtype Node = Node
   , size :: Int
   , type_ :: String
   , label :: String
-  -- , x_coord :: Number ?   -- TODO JL add the right records for (x,y) coordinates interpreted by sigma-js
-  -- , y_coord :: Number ?   -- TODO AD add the right records for the backend
+  , x :: Number
+  , y :: Number
   , attributes :: Cluster
   }
 
@@ -78,7 +78,9 @@ instance decodeJsonNode :: DecodeJson Node where
     label <- obj .? "label"
     size <- obj .? "size"
     attributes <- obj .? "attributes"
-    pure $ Node { id_, type_, size, label, attributes }
+    x <- obj .? "x_coord"
+    y <- obj .? "y_coord"
+    pure $ Node { id_, type_, size, label, attributes, x, y }
 
 
 instance decodeJsonMetaData :: DecodeJson MetaData where
