@@ -76,8 +76,7 @@ layout0 :: Spec AppState {} Action
         -> Spec AppState {} Action
 layout0 layout =
   fold
-  [ searchBar
-  , outerLayout
+  [ outerLayout
   , layoutFooter
   ]
   where
@@ -95,9 +94,7 @@ layout0 layout =
       , rs bs
       ]
     ls   = over _render \render d p s c -> [
-         div [ className "col-md-2", style {paddingTop: "60px"} ]
-           $ [ R'.scuff (SB.searchBar SB.defaultProps) ]
-           <> (render d p s c)
+         div [ className "col-md-2", style {paddingTop: "60px"} ] $ render d p s c
          
       ]
     rs   = over _render \render d p s c -> [
@@ -127,8 +124,7 @@ layout1 :: Spec AppState {} Action
         -> Spec AppState {} Action
 layout1 layout =
   fold
-  [ searchBar
-  , layout
+  [ layout
   -- , outerLayout
   , layoutFooter
   ]
@@ -182,6 +178,7 @@ searchBar = simpleSpec defaultPerformAction render
                           ,  div [ className "collapse navbar-collapse"
                                  ]
                              $  [ divDropdownLeft ]
+                             <> [ R'.scuff (SB.searchBar SB.defaultProps) ]
                              <> [ divDropdownRight d s ]
                           ]
                     ]
