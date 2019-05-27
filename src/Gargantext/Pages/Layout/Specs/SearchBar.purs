@@ -63,7 +63,7 @@ toggleButton :: R.State Boolean -> R.Element
 toggleButton open =
   H.button { onClick: onToggleExpanded open, className: "search-bar-toggle" }
     [ H.i { className: "material-icons md-24"
-          , style: { marginTop: "-5px", color: "#000" } }
+          , style: { marginTop: "-2px", color: "#000" } }
           [ H.text "control_point" ] ]
 
 onToggleExpanded :: forall e. R.State Boolean -> EffectFn1 e Unit
