@@ -14,7 +14,7 @@ import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import Effect ( Effect )
 import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..))
+import FFI.Simple ((..), (.=))
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.DOM.HTML (text, button, div, input, option, form, span, ul, li, a)
@@ -59,19 +59,21 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
 
 databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
 databaseInput (db /\ setDB) dbs =
-  div { className: "input-group-btn search-panel" }
-      [ button { className: "btn dropdown-toggle", data: {"toggle": "dropdown"} }
-               [ span {} [ text "x" ] ]
-      , input { type: "hidden"
-              , onChange }
-      , ul { className: "dropdown-menu", role: "menu" } (liItem <$> dbs)
+  div { className: "input-group-btn search-panel dropdown" }
+      [
+        dropdownBtn db
+        , ul {className: "dropdown-menu", role: "menu"} (liItem <$> dbs)
       ]
-  --select { className: "database", onChange } (item <$> dbs)
   where
-    onChange = mkEffectFn1 $ \e -> setDB (readDatabase (e .. "target" .. "value"))
-    --item db = option { value: (show db) } [ text (show db) ]
-    liItem db = li {}
+    liItem db = li {onClick}
                    [ a {href: "#"} [text (show db) ] ]
+                where
+                  onClick = mkEffectFn1 $ \_ -> setDB db
+    dropdownBtnProps = { id: "search-dropdown"
+                        , className: "btn btn-default dropdown-toggle"
+                        , type: "button"} .= "data-toggle" $ "dropdown"
+    dropdownBtn (Just db) = button dropdownBtnProps [ span {} [ text (show db) ] ]
+    dropdownBtn (Nothing) = button dropdownBtnProps [ span {} [ text "---" ] ]
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =

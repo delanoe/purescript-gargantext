@@ -41,7 +41,6 @@
   margin: 2px;
   border: 0;
 }
-.search-field {
-  /* display: grid; */
-  /* grid-template-columns: auto auto auto; */
+.search-bar.closed {
+  display: none;
 }

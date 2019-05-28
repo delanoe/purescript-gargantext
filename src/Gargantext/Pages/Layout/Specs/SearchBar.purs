@@ -43,9 +43,10 @@ searchBarComponent = R.hooksComponent "SearchBar" cpt
         , searchFieldContainer open props.databases search ]
 
 searchFieldContainer :: R.State Boolean -> Array Database -> R.State (Maybe Search) -> R.Element
-searchFieldContainer (true /\ _) databases search =
-  H.div { className: "search-bar open" } [ searchField { databases, search } ]
-searchFieldContainer (false /\ _) _ _ = H.div {className: "search-bar closed"} []
+searchFieldContainer (open /\ _) databases search =
+  H.div { className: "search-bar " <> openClass } [ searchField { databases, search } ]
+  where
+    openClass = if open then "open" else "closed"
 
 onSearchChange :: R.State (Maybe Search) -> R.Hooks Unit
 onSearchChange (search /\ setSearch) =
