@@ -65,15 +65,15 @@ databaseInput (db /\ setDB) dbs =
         , ul {className: "dropdown-menu", role: "menu"} (liItem <$> dbs)
       ]
   where
-    liItem db = li {onClick}
+    liItem db = li { onClick }
                    [ a {href: "#"} [text (show db) ] ]
                 where
-                  onClick = mkEffectFn1 $ \_ -> setDB db
+                  onClick = mkEffectFn1 $ \_ -> setDB $ Just db
     dropdownBtnProps = { id: "search-dropdown"
                         , className: "btn btn-default dropdown-toggle"
                         , type: "button"} .= "data-toggle" $ "dropdown"
     dropdownBtn (Just db) = button dropdownBtnProps [ span {} [ text (show db) ] ]
-    dropdownBtn (Nothing) = button dropdownBtnProps [ span {} [ text "---" ] ]
+    dropdownBtn (Nothing) = button dropdownBtnProps [ span {} [ text "-" ] ]
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
