@@ -17,7 +17,7 @@ import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML as HTML
-import Reactix.DOM.HTML (text, button, div, input, option, form, span, ul, li, data', datalist)
+import Reactix.DOM.HTML (text, button, div, input, option, form, span, ul, li, a)
 import Reactix.SyntheticEvent as E
 import Gargantext.Components.Search.Types
 
@@ -60,23 +60,26 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
 databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
 databaseInput (db /\ setDB) dbs =
   div { className: "input-group-btn search-panel" }
-      [ button { className: "btn dropdown-toggle", data': {toggle: "dropdown"} }
+      [ button { className: "btn dropdown-toggle", data: {"toggle": "dropdown"} }
                [ span {} [ text "x" ] ]
+      , input { type: "hidden"
+              , onChange }
       , ul { className: "dropdown-menu", role: "menu" } (liItem <$> dbs)
       ]
   --select { className: "database", onChange } (item <$> dbs)
   where
     onChange = mkEffectFn1 $ \e -> setDB (readDatabase (e .. "target" .. "value"))
     --item db = option { value: (show db) } [ text (show db) ]
-    liItem db = li {} [ text (show db) ]
+    liItem db = li {}
+                   [ a {href: "#"} [text (show db) ] ]
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
   input { defaultValue: term
-                 , className: "form-control"
-                 , type: "text"
-                 , onChange
-                 , placeholder }
+        , className: "form-control"
+        , type: "text"
+        , onChange
+        , placeholder }
   where onChange = mkEffectFn1 $ \e -> setTerm $ e .. "target" .. "value"
 
 
