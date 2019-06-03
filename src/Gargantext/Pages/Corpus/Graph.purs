@@ -223,8 +223,8 @@ convert (GraphData r) = SigmaGraphData {nodes, edges}
         { id    : n.id_
         , size  : toNumber n.size
         , label : n.label
-        , x     : cos (toNumber i)
-        , y     : sin (toNumber i)
+        , x     : n.x -- cos (toNumber i)
+        , y     : n.y -- sin (toNumber i)
         , color : intColor $ cDef n.attributes
         }
       where
