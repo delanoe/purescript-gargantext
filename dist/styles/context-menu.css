@@ -28,14 +28,19 @@
   height: 100%;
 }
 .search-bar-container {
+  margin-top: 11px;
   text-align: center;
-}
-.search-bar-toggle {
-  padding: 3px;
-  border: 0;
-  
-}
-.search-field {
+  max-width: 800px;
+  height: 33px;
+  float: left;
   display: grid;
   grid-template-columns: auto auto auto;
+}
+.search-bar-toggle {
+  padding: 2px;
+  margin: 2px;
+  border: 0;
+}
+.search-bar.closed {
+  display: none;
 }

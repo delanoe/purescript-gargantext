@@ -26,7 +26,7 @@ import Gargantext.Utils (id)
 type Props = ( open :: Boolean, databases :: Array Database )
 
 defaultProps :: Record Props
-defaultProps = { open: true, databases: allDatabases }
+defaultProps = { open: false, databases: allDatabases }
 
 searchBar :: Record Props -> R.Element
 searchBar p = R.createElement searchBarComponent p []
@@ -43,9 +43,10 @@ searchBarComponent = R.hooksComponent "SearchBar" cpt
         , searchFieldContainer open props.databases search ]
 
 searchFieldContainer :: R.State Boolean -> Array Database -> R.State (Maybe Search) -> R.Element
-searchFieldContainer (true /\ _) databases search =
-  H.div { className: "search-bar open" } [ searchField { databases, search } ]
-searchFieldContainer (false /\ _) _ _ = H.div {className: "search-bar closed"} []
+searchFieldContainer (open /\ _) databases search =
+  H.div { className: "search-bar " <> openClass } [ searchField { databases, search } ]
+  where
+    openClass = if open then "open" else "closed"
 
 onSearchChange :: R.State (Maybe Search) -> R.Hooks Unit
 onSearchChange (search /\ setSearch) =
@@ -63,7 +64,7 @@ toggleButton :: R.State Boolean -> R.Element
 toggleButton open =
   H.button { onClick: onToggleExpanded open, className: "search-bar-toggle" }
     [ H.i { className: "material-icons md-24"
-          , style: { marginTop: "-5px", color: "#000" } }
+          , style: { marginTop: "-2px", color: "#000" } }
           [ H.text "control_point" ] ]
 
 onToggleExpanded :: forall e. R.State Boolean -> EffectFn1 e Unit

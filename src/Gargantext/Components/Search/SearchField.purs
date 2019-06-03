@@ -14,10 +14,10 @@ import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import Effect ( Effect )
 import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..))
+import FFI.Simple ((..), (.=))
 import Reactix as R
 import Reactix.DOM.HTML as HTML
-import Reactix.DOM.HTML (text, button, div, input, option)
+import Reactix.DOM.HTML (text, button, div, input, option, form, span, ul, li, a)
 import Reactix.SyntheticEvent as E
 import Gargantext.Components.Search.Types
 
@@ -49,33 +49,45 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
       term <- R.useState $ \_ -> pure search.term
       db   <- R.useState $ \_ -> pure Nothing
       pure $
-        div { className: "search-field" }
-        [ databaseInput db props.databases
-        , searchInput term
-        , submitButton db term props.search
-        ]
+          div { className: "search-field input-group" }
+              [ databaseInput db props.databases
+              , searchInput term
+              , span { className: "input-group-btn" }
+                     [ submitButton db term props.search ]
+              ]
     hasChanged p p' = (fst p.search /= fst p'.search) || (p.databases /= p'.databases)
 
 databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
 databaseInput (db /\ setDB) dbs =
-  div {} [ select { className: "database", onChange } (item <$> dbs) ]
+  div { className: "input-group-btn search-panel dropdown" }
+      [
+        dropdownBtn db
+        , ul {className: "dropdown-menu", role: "menu"} (liItem <$> dbs)
+      ]
   where
-    onChange = mkEffectFn1 $ \e -> setDB (readDatabase (e .. "target" .. "value"))
-    item db = option { value: (show db) } [ text (show db) ]
+    liItem db = li { onClick }
+                   [ a {href: "#"} [text (show db) ] ]
+                where
+                  onClick = mkEffectFn1 $ \_ -> setDB $ Just db
+    dropdownBtnProps = { id: "search-dropdown"
+                        , className: "btn btn-default dropdown-toggle"
+                        , type: "button"} .= "data-toggle" $ "dropdown"
+    dropdownBtn (Just db) = button dropdownBtnProps [ span {} [ text (show db) ] ]
+    dropdownBtn (Nothing) = button dropdownBtnProps [ span {} [ text "-" ] ]
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
-  div {} [ input { defaultValue: term
-                 , type: "text"
-                 , style: { maxWidth: "110px" }
-                 , onChange
-                 , placeholder } ]
+  input { defaultValue: term
+        , className: "form-control"
+        , type: "text"
+        , onChange
+        , placeholder }
   where onChange = mkEffectFn1 $ \e -> setTerm $ e .. "target" .. "value"
 
 
 submitButton :: R.State (Maybe Database) -> R.State String -> R.State (Maybe Search) -> R.Element
 submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
-  div {} [ button { onClick: click } [ text "Search" ] ]
+  button { className: "btn btn-default", type: "button", onClick: click } [ text "Search" ]
   where
     click = mkEffectFn1 $ \_ -> do
       case term of

@@ -95,9 +95,7 @@ layout0 layout =
       , rs bs
       ]
     ls   = over _render \render d p s c -> [
-         div [ className "col-md-2", style {paddingTop: "60px"} ]
-           $ [ R'.scuff (SB.searchBar SB.defaultProps) ]
-           <> (render d p s c)
+         div [ className "col-md-2", style {paddingTop: "60px"} ] $ render d p s c
          
       ]
     rs   = over _render \render d p s c -> [
@@ -182,6 +180,7 @@ searchBar = simpleSpec defaultPerformAction render
                           ,  div [ className "collapse navbar-collapse"
                                  ]
                              $  [ divDropdownLeft ]
+                             <> [ R'.scuff (SB.searchBar SB.defaultProps) ]
                              <> [ divDropdownRight d s ]
                           ]
                     ]
@@ -338,7 +337,7 @@ divDropdownRight d s =
   ul [className "nav navbar-nav pull-right"]
      [ li [className "dropdown"]
           [ logLinks d s ]
-    ]
+     ]
 
 layoutFooter :: Spec AppState {} Action
 layoutFooter = simpleSpec performAction render
