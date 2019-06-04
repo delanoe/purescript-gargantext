@@ -61,7 +61,8 @@ newtype SearchQuery = SearchQuery
   , corpus_id :: Maybe Int
   , offset :: Maybe Int
   , limit :: Maybe Int
-  , order :: Maybe SearchOrder }
+  , order :: Maybe SearchOrder
+  , files_id :: Array String }
 
 derive instance newtypeSearchQuery :: Newtype SearchQuery _
 
@@ -72,7 +73,8 @@ defaultSearchQuery = SearchQuery
   , corpus_id: Nothing
   , offset: Nothing
   , limit: Nothing
-  , order: Nothing }
+  , order: Nothing
+  , files_id: [] }
 
 instance searchQueryToQuery :: ToQuery SearchQuery where
   toQuery (SearchQuery {offset, limit, order}) =

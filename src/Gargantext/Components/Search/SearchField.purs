@@ -1,5 +1,5 @@
 module Gargantext.Components.Search.SearchField
-  ( Search, Props, searchField, searchFieldComponent )where
+  ( File, Query(..), Search, Props, searchField, searchFieldComponent )where
 
 import Prelude hiding (div)
 import Data.Map as Map
@@ -13,20 +13,26 @@ import DOM.Simple.Console
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import Effect ( Effect )
+import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..), (.=))
 import Reactix as R
 import Reactix.DOM.HTML as HTML
-import Reactix.DOM.HTML (text, button, div, input, option, form, span, ul, li, a)
+import Reactix.DOM.HTML (text, button, div, input, option, form, span, ul, li, a, i)
 import Reactix.SyntheticEvent as E
 import Gargantext.Components.Search.Types
 
+type File = { name :: String, contents :: String }
+data Query = Term String
+           | QueryFile File
+derive instance eqQuery :: Eq Query
+
 select = R.createElement "select"
 
-type Search = { database :: Maybe Database, term :: String }
+type Search = { database :: Maybe Database, query :: Query }
 
 defaultSearch :: Search
-defaultSearch = { database: Nothing, term: "" }
+defaultSearch = { database: Nothing, query: Term "" }
 
 type Props =
   -- list of databases to search, or parsers to use on uploads
@@ -46,14 +52,14 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
   where
     cpt props _ = do
       let search = maybe defaultSearch identity (fst props.search)
-      term <- R.useState $ \_ -> pure search.term
+      query <- R.useState $ \_ -> pure search.query
       db   <- R.useState $ \_ -> pure Nothing
       pure $
           div { className: "search-field input-group" }
               [ databaseInput db props.databases
-              , searchInput term
+              , searchDrop query
               , span { className: "input-group-btn" }
-                     [ submitButton db term props.search ]
+                     [ submitButton db query props.search ]
               ]
     hasChanged p p' = (fst p.search /= fst p'.search) || (p.databases /= p'.databases)
 
@@ -75,22 +81,50 @@ databaseInput (db /\ setDB) dbs =
     dropdownBtn (Just db) = button dropdownBtnProps [ span {} [ text (show db) ] ]
     dropdownBtn (Nothing) = button dropdownBtnProps [ span {} [ text "-" ] ]
 
-searchInput :: R.State String -> R.Element
-searchInput (term /\ setTerm) =
+searchDrop :: R.State Query -> R.Element
+searchDrop ((Term term) /\ setQuery) =
   input { defaultValue: term
         , className: "form-control"
         , type: "text"
         , onChange
+        , onDrop
         , placeholder }
-  where onChange = mkEffectFn1 $ \e -> setTerm $ e .. "target" .. "value"
+  where
+    onChange = mkEffectFn1 $ \e -> setQuery $ Term $ e .. "target" .. "value"
+    onDrop = mkEffectFn1 $ \(e :: E.SyntheticEvent DE.MouseEvent) -> do
+      liftEffect $ log2 "drop:" (f e)
+      E.preventDefault e
+      E.stopPropagation e  -- to keep Firefox happy, otherwise it redirects
+      setQuery $ QueryFile $ file e
+      where
+        f e = (e .. "dataTransfer" .. "files" .. "0")
+        file e = {name: (f e) .. "name", contents: ""}
+searchDrop ((QueryFile file) /\ setQuery) =
+  span { className: "input-group" } [
+    span {className: "label label-default"} [
+       text $ file.name
+       , i { className: "remove glyphicon glyphicon-remove-sign glyphicon-white"} []
+    ]
+  ]
 
 
-submitButton :: R.State (Maybe Database) -> R.State String -> R.State (Maybe Search) -> R.Element
-submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
-  button { className: "btn btn-default", type: "button", onClick: click } [ text "Search" ]
+submitButton :: R.State (Maybe Database) -> R.State Query -> R.State (Maybe Search) -> R.Element
+submitButton (database /\ _) ((Term query) /\ _) (_ /\ setSearch) =
+  button { className: "btn btn-default"
+         , type: "button"
+         , onClick: click } [ text "Search" ]
   where
     click = mkEffectFn1 $ \_ -> do
-      case term of
-        "" -> setSearch Nothing
-        _ -> setSearch $ Just { database, term }
+      setSearch $ case query of
+        "" -> Nothing
+        _       -> Just { database, Term query }
+submitButton (database /\ _) ((QueryFile file) /\ _) (_ /\ setSearch) =
+  button { className: "btn btn-default"
+         , type: "button"
+         , onClick: click } [ text "Upload" ]
+  where
+    click = mkEffectFn1 $ \_ -> do
+      setSearch $ case query of
+        "" -> Nothing
+        _       -> Just { database, Term query }
 

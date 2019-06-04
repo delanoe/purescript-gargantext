@@ -18,5 +18,14 @@ search :: forall a. DecodeJson a => SearchQuery -> Aff a
 search q = do
   let url = searchUrl q
   liftEffect $ log2 "url:" url
-  post (searchUrl q) q
+  post url q
 
+
+uploadUrl :: String
+uploadUrl = urlPlease Back $ "upload"
+
+upload :: forall a. DecodeJson a => SearchQuery -> Aff a
+upload q = do
+  let url = uploadUrl
+  liftEffect $ log2 "upload url: " url
+  post url q

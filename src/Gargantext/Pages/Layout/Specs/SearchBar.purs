@@ -14,19 +14,19 @@ import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import Thermite (Spec, defaultPerformAction, simpleSpec)
 import Reactix as R
 import DOM.Simple.Console
+import FFI.Simple ((..), (.=))
 import Effect.Aff (launchAff)
 import Gargantext.Utils.Reactix as R'
 import Reactix.DOM.HTML as H
 import Gargantext.Components.Search.Types
 import Gargantext.Components.Search.Ajax as Ajax
 import Gargantext.Components.Modals.Modal (modalShow)
-import Gargantext.Components.Search.SearchField (Search, searchField)
-import Gargantext.Utils (id)
+import Gargantext.Components.Search.SearchField (Query(..), Search, searchField)
 
-type Props = ( open :: Boolean, databases :: Array Database )
+type Props = ( open :: Boolean, databases :: Array Database, query :: Maybe Query )
 
 defaultProps :: Record Props
-defaultProps = { open: false, databases: allDatabases }
+defaultProps = { open: false, databases: allDatabases, query: Nothing }
 
 searchBar :: Record Props -> R.Element
 searchBar p = R.createElement searchBarComponent p []
@@ -44,7 +44,7 @@ searchBarComponent = R.hooksComponent "SearchBar" cpt
 
 searchFieldContainer :: R.State Boolean -> Array Database -> R.State (Maybe Search) -> R.Element
 searchFieldContainer (open /\ _) databases search =
-  H.div { className: "search-bar " <> openClass } [ searchField { databases, search } ]
+  H.div {className: "search-bar " <> openClass} [ searchField { databases, search } ]
   where
     openClass = if open then "open" else "closed"
 
@@ -54,11 +54,13 @@ onSearchChange (search /\ setSearch) =
   where
     triggerSearch q =  do
       launchAff $ do
-        liftEffect $ log2 "Searching term: " q.term
+        liftEffect $ log2 "Searching query: " q.query
         (r :: Unit) <- Ajax.search (searchQuery q)
         liftEffect $ log2 "Return:" r
         liftEffect $ modalShow "addCorpus"
-    searchQuery {term} = over SearchQuery (_ {query=term}) defaultSearchQuery
+    searchQuery {query} = case query of
+      (Term term)      -> over SearchQuery (_ {query=term}) defaultSearchQuery
+      (QueryFile file) -> over SearchQuery (_ {query=file.contents}) defaultSearchQuery
 
 toggleButton :: R.State Boolean -> R.Element
 toggleButton open =
