@@ -59,6 +59,7 @@ newtype SearchQuery = SearchQuery
   { query :: String
   , databases :: Array Database
   , corpus_id :: Maybe Int
+  , files_id  :: Array String
   , offset :: Maybe Int
   , limit :: Maybe Int
   , order :: Maybe SearchOrder }
@@ -70,6 +71,7 @@ defaultSearchQuery = SearchQuery
   { query: ""
   , databases: allDatabases
   , corpus_id: Nothing
+  , files_id : []
   , offset: Nothing
   , limit: Nothing
   , order: Nothing }
@@ -83,7 +85,8 @@ instance searchQueryToQuery :: ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, corpus_id})
-    =   "query"       :=  query
-    ~>  "corpus_id"   :=  fromMaybe 0 corpus_id
+  encodeJson (SearchQuery {query, corpus_id, files_id})
+    =   "query"      :=  query
+    ~>  "corpus_id"  :=  fromMaybe 0 corpus_id
+    ~>  "files_id"   :=  files_id
     ~> jsonEmptyObject
