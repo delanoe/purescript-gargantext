@@ -27,7 +27,7 @@ import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, pl
 import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState_, simpleSpec, modifyState)
 
-import Gargantext.Config (toUrl, End(..), NodeType(..))
+import Gargantext.Config (EndConfig, endConfig, toUrl, End(..), NodeType(..))
 import Gargantext.Config.REST (get, put, post, delete, deleteWithBody)
 import Gargantext.Components.Loader as Loader
 
@@ -64,16 +64,19 @@ data Action =  ShowPopOver   ID
               | CurrentNode      ID
 
 
-type State = { state       :: FTree 
+type State = { state       :: FTree
              , currentNode :: Maybe Int
+             , endConfig   :: EndConfig
              }
 
 -- TODO remove
 initialState :: State
-initialState = { state: NTree (LNode {id : 3, name : "hello", nodeType : Node, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) [] , currentNode : Nothing}
+initialState = { state: NTree (LNode {id : 3, name : "hello", nodeType : Node, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) []
+               , currentNode : Nothing
+               , endConfig: endConfig}
 
 mapFTree :: (FTree -> FTree) -> State -> State
-mapFTree f {state, currentNode} = {state: f state, currentNode: currentNode}
+mapFTree f {state, currentNode, endConfig} = {state: f state, currentNode: currentNode, endConfig: endConfig}
 
 -- TODO: make it a local function
 performAction :: forall props. PerformAction State props Action
@@ -112,7 +115,7 @@ performAction (SetNodeValue v nid) _ _ =
   modifyState_ $ mapFTree $ setNodeValue nid v
 
 performAction (CurrentNode nid) _ _ =
-  modifyState_ $ \{state: s} -> {state: s, currentNode : Just nid}
+  modifyState_ $ \{state: s, endConfig: ec} -> {state: s, currentNode : Just nid, endConfig: ec}
 
 
 toggleIf :: Boolean -> Boolean -> Boolean
@@ -232,15 +235,13 @@ loadedTreeview :: Spec State LoadedTreeViewProps Action
 loadedTreeview = simpleSpec performAction render
   where
     render :: Render State LoadedTreeViewProps Action
-    render dispatch _ {state, currentNode} _ =
+    render dispatch _ {state, currentNode, endConfig} _ =
       [ div [className "tree"]
-        [ toHtml dispatch state currentNode
-
-        ]
+            [ toHtml dispatch state currentNode endConfig ]
       ]
 
 treeViewClass :: ReactClass (Loader.InnerProps Int FTree (children :: React.Children))
-treeViewClass = createClass "TreeView" loadedTreeview (\{loaded: t} -> {state: t, currentNode: Nothing})
+treeViewClass = createClass "TreeView" loadedTreeview (\{loaded: t} -> {state: t, currentNode: Nothing, endConfig: endConfig})
 
 treeLoaderClass :: Loader.LoaderClass Int FTree
 treeLoaderClass = Loader.createLoaderClass "TreeLoader" loadNode
@@ -358,8 +359,8 @@ getCreateNodeValue :: FTree -> String
 getCreateNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, nodeValue, showRenameBox}) ary) = nodeValue
 
 
-toHtml :: (Action -> Effect Unit) -> FTree -> Maybe Int -> ReactElement
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue, showRenameBox }) []) n =
+toHtml :: (Action -> Effect Unit) -> FTree -> Maybe Int -> EndConfig -> ReactElement
+toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue, showRenameBox }) []) n ec =
   ul []
   [
     li [] $
@@ -373,7 +374,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
     ]
   ]
 --- need to add renameTreeview value to this function
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue, showRenameBox}) ary) n=
+toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue, showRenameBox}) ary) n ec =
     ul []
   [ li [] $
     ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
@@ -390,7 +391,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,cre
 
       ] <>
       if open then
-        map (\s -> toHtml d s n) ary
+        map (\s -> toHtml d s n ec) ary
         else []
     )
   ]
