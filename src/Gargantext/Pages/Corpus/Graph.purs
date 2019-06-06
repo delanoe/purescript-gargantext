@@ -224,7 +224,7 @@ convert (GraphData r) = SigmaGraphData {nodes, edges}
         , size  : toNumber n.size
         , label : n.label
         , x     : n.x -- cos (toNumber i)
-        , y     : n.y -- sin (toNumber i)
+        , y     : n.confluence -- sin (toNumber i)
         , color : intColor $ cDef n.attributes
         }
       where
@@ -278,7 +278,7 @@ forceAtlas2Config = { -- fixedY : false
                       , iterationsPerRender : 4.0
                       , barnesHutOptimize   : true
                       , linLogMode : true  -- false
-                      , edgeWeightInfluence : 0.0
+                      , edgeWeightInfluence : 1.0
                       , gravity : 1.0
                       , strongGravityMode : false
                       , scalingRatio : 4.0

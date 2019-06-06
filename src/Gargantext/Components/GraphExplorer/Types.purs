@@ -27,6 +27,7 @@ newtype Edge = Edge
   , source :: String
   , target :: String
   , weight :: Number
+  , confluence :: Number
   }
 
 derive instance newtypeEdge :: Newtype Edge _
@@ -114,7 +115,8 @@ instance decodeJsonEdge :: DecodeJson Edge where
     source <- obj .? "source"
     target <- obj .? "target"
     weight <- obj .? "weight"
-    pure $ Edge { id_, source, target, weight }
+    confluence <- obj .? "confluence"
+    pure $ Edge { id_, source, target, weight, confluence }
 
 newtype Legend = Legend  {id_ ::Int , color :: String, label :: String}
 
