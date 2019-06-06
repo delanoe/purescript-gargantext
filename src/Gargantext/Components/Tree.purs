@@ -14,7 +14,8 @@ import Data.Argonaut.Core (Json)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype)
+import Data.Newtype (class Newtype, over)
+import DOM.Simple.Console
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -27,7 +28,7 @@ import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, pl
 import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState_, simpleSpec, modifyState)
 
-import Gargantext.Config (toUrl, End(..), NodeType(..))
+import Gargantext.Config (toUrl, End(..), NodeType(..), urlPlease)
 import Gargantext.Config.REST (get, put, post, delete, deleteWithBody)
 import Gargantext.Components.Loader as Loader
 
@@ -51,12 +52,13 @@ filterNTree p (NTree x ary) =
 
 type FTree = NTree LNode
 
-data Action =  ShowPopOver   ID
+data Action =   ShowPopOver  ID
               | ToggleFolder ID
               | RenameNode   String ID
               | Submit       ID String
               | DeleteNode   ID
               | Create       ID
+              | CreateSubmit       ID String
               | SetNodeValue String ID
               | ToggleCreateNode ID
               | ShowRenameBox    ID
@@ -64,13 +66,24 @@ data Action =  ShowPopOver   ID
               | CurrentNode      ID
 
 
-type State = { state       :: FTree 
+type State = { state       :: FTree
              , currentNode :: Maybe Int
              }
 
 -- TODO remove
+initialNode = { id : 3
+              , name : "hello"
+              , nodeType : Node
+              , open : true
+              , popOver : false
+              , renameNodeValue : ""
+              , createNode : false
+              , nodeValue : "InitialNode"
+              , showRenameBox : false}
+
 initialState :: State
-initialState = { state: NTree (LNode {id : 3, name : "hello", nodeType : Node, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "InitialNode", showRenameBox : false}) [] , currentNode : Nothing}
+initialState = { state: NTree (LNode initialNode) []
+               , currentNode : Nothing}
 
 mapFTree :: (FTree -> FTree) -> State -> State
 mapFTree f {state, currentNode} = {state: f state, currentNode: currentNode}
@@ -90,7 +103,8 @@ performAction (ShowRenameBox id) _ _ =
 performAction (CancelRename id) _ _ =
   modifyState_ $ mapFTree $ map $ showPopOverNode id
 
-performAction (ToggleCreateNode id) _ _ =
+performAction (ToggleCreateNode id) _ _ = do
+  modifyState_ $ mapFTree $ map $ hidePopOverNode id
   modifyState_ $ mapFTree $ showCreateNode id
 
 performAction (DeleteNode nid) _ _ = do
@@ -105,7 +119,11 @@ performAction (Submit rid name) _  _  = do
 performAction (RenameNode  r nid) _ _ =
   modifyState_ $ mapFTree $ rename nid r
 
-performAction (Create  nid) _ _ =
+performAction (CreateSubmit nid name) _ _ = do
+  void $ lift $ createNode $ CreateValue {name}
+  modifyState_ $ mapFTree $ map $ hidePopOverNode nid
+
+performAction (Create  nid) _ _ = do
   modifyState_ $ mapFTree $ showCreateNode nid
 
 performAction (SetNodeValue v nid) _ _ =
@@ -128,6 +146,10 @@ popOverNode :: Int -> LNode -> LNode
 popOverNode sid (LNode node) =
   LNode $ node { popOver = toggleIf (sid == node.id) node.popOver
                , showRenameBox = false }
+
+hidePopOverNode :: Int -> LNode -> LNode
+hidePopOverNode sid (LNode node) =
+  LNode $ node { popOver = false }
 
 showPopOverNode :: Int -> LNode -> LNode
 showPopOverNode sid (LNode node) =
@@ -300,27 +322,62 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 
             ]
               else
-                div [ _id "beforeClick", className "col-md-12"]
-             [  div [className "row"]
-                [ div [className "col-md-6"] [text name]
-                , a [ style {color:"black"},className "glyphitem glyphicon glyphicon-pencil col-md-2", _id "rename1", title "Rename", onClick $ (\_-> d $ (ShowRenameBox id))] [ ]
-                ]
+                 div [ _id "beforeClick", className "col-md-12"]
+                 [ div [className "row"]
+                       [ div [className "col-md-6"]
+                             [text name]
+                       , a [ style {color:"black"}
+                           , className "glyphitem glyphicon glyphicon-pencil col-md-2"
+                           , _id "rename1"
+                           , title "Rename"
+                           , onClick $ (\_-> d $ (ShowRenameBox id))]
+                           []
+                       ]
+                 ]
              ]
-             ]
-           ,div [className "panel-body", style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
-            [   div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-download-alt", _id "rename1", title "Download [WIP]"] [ ]]
-           , div [className "col-md-4"] [a [ style {color:"black", paddingTop: "6px", paddingBottom: "6px"},className "glyphitem glyphicon glyphicon-duplicate", _id "rename1", title "Duplicate [WIP]"] [ ]]
-           ,  div [className "col-md-4"] [ a [style {color:"black", paddingTop: "6px", paddingBottom: "6px"}, className "glyphitem glyphicon glyphicon-trash", _id "rename2",title "Delete", onClick $ (\_-> d $ (DeleteNode id))] [ ]]
-
+           , div [ className "panel-body"
+                 , style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
+                 [ div [className "col-md-4"]
+                       [a [ style iconAStyle
+                          , className (glyphicon "plus")
+                          , _id "rename1"
+                          , title "Create"
+                          , onClick $ (\_ -> d $ (ToggleCreateNode id))]
+                          []
+                       ]
+                 , div [className "col-md-4"]
+                       [a [ style iconAStyle
+                          , className (glyphicon "download-alt")
+                          , _id "rename1"
+                          , title "Download [WIP]"]
+                          []
+                       ]
+                 , div [className "col-md-4"]
+                       [a [ style iconAStyle
+                          , className (glyphicon "duplicate")
+                          , _id "rename1"
+                          , title "Duplicate [WIP]"]
+                          []
+                       ]
+                 , div [className "col-md-4"]
+                       [ a [ style iconAStyle
+                           , className (glyphicon "trash")
+                           , _id "rename2"
+                           , title "Delete"
+                           , onClick $ (\_-> d $ (DeleteNode id))]
+                         []
+                       ]
+                 ]
            ]
-
-          ]
-        ]
+       ]
+  where
+    iconAStyle = {color:"black", paddingTop: "6px", paddingBottom: "6px"}
+    glyphicon t = "glyphitem glyphicon glyphicon-" <> t
 
 
 
 createNodeView :: (Action -> Effect Unit) -> FTree -> Int -> ReactElement
-createNodeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue }) ary) nid  =
+createNodeView d s@(NTree (LNode {id, name, nodeType, open, popOver, nodeValue }) ary) nid  =
        div [className ""]
         [  div [className "panel panel-default"]
            [
@@ -340,7 +397,7 @@ createNodeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
           , div [className "panel-footer"]
             [ button [className "btn btn-success"
                      , _type "button"
-                     , onClick \_ -> d $ (Create nid )
+                     , onClick \_ -> d $ (CreateSubmit nid nodeValue)
                      ] [text "Create"]
             ]
           ]
@@ -436,6 +493,21 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
   encodeJson (RenameValue {name})
      = "r_name" := name
     ~> jsonEmptyObject
+
+newtype CreateValue = CreateValue
+  {
+    name :: String
+  }
+
+instance encodeJsonCreateValue :: EncodeJson CreateValue where
+  encodeJson (CreateValue {name})
+     = "query" := name
+    ~> "corpus_id" := 0
+    ~> "files_id" := ([] :: Array String)
+    ~> jsonEmptyObject
+
+createNode :: CreateValue -> Aff (Array Int)
+createNode = post $ urlPlease Back $ "new"
 
 renameNode :: Int -> RenameValue -> Aff (Array Int)
 renameNode renameNodeId = put $ toUrl Back Node (Just renameNodeId) <> "/rename"

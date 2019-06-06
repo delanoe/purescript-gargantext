@@ -226,9 +226,9 @@ instance toUrlPath :: ToUrl Path where
 
 data NodeType = NodeUser
               | Annuaire
-                | NodeContact
+              | NodeContact
               | Corpus
-                  | Url_Document
+              | Url_Document
               | CorpusV3
               | Dashboard
               | Error
