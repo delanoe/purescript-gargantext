@@ -224,7 +224,7 @@ convert (GraphData r) = SigmaGraphData {nodes, edges}
         , size  : toNumber n.size
         , label : n.label
         , x     : n.x -- cos (toNumber i)
-        , y     : n.confluence -- sin (toNumber i)
+        , y     : n.y -- sin (toNumber i)
         , color : intColor $ cDef n.attributes
         }
       where
