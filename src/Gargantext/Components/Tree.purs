@@ -14,7 +14,7 @@ import Data.Argonaut.Core (Json)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype, over)
+import Data.Newtype (class Newtype)
 import DOM.Simple.Console
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -506,7 +506,7 @@ instance encodeJsonCreateValue :: EncodeJson CreateValue where
     ~> "files_id" := ([] :: Array String)
     ~> jsonEmptyObject
 
-createNode :: CreateValue -> Aff (Array Int)
+createNode :: CreateValue -> Aff Int
 createNode = post $ urlPlease Back $ "new"
 
 renameNode :: Int -> RenameValue -> Aff (Array Int)
