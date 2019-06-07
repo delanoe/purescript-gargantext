@@ -32,6 +32,9 @@ newtype Edge = Edge
 
 derive instance newtypeEdge :: Newtype Edge _
 
+-- | A 'fully closed interval' in CS parlance
+type InclusiveRange t = { min :: t, max :: t }
+
 type CorpusId    = Int
 type CorpusLabel = String
 

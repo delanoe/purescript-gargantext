@@ -9,7 +9,7 @@ import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
 import Data.Argonaut (decodeJson)
-import Data.Array (fold, length, mapWithIndex, (!!), null)
+import Data.Array (filter, fold, length, mapWithIndex, (!!), null)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromString, toNumber)
@@ -41,6 +41,7 @@ import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Prelude (flip)
 import Gargantext.Types (class Optional)
 import Gargantext.Utils (getter, toggleSet)
+import Gargantext.Utils.Range as Range
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
@@ -115,7 +116,10 @@ numberTargetValue e =
 
 -- TODO remove newtype here
 newtype State = State
-  { graphData :: GraphData
+  { rawGraphData :: GraphData
+  , graphData :: GraphData
+  , edgeFilters :: EdgeFilters
+  , nodeFilters :: NodeFilters
   , filePath :: String
   , sigmaGraphData :: Maybe SigmaGraphData
   , legendData :: Array Legend
@@ -132,9 +136,16 @@ newtype State = State
 
 derive instance newtypeState :: Newtype State _
 
+emptyGraphData :: GraphData
+emptyGraphData = GraphData { nodes: [], edges: [], sides: [], metaData }
+  where metaData = Just $ MetaData { title : "", legend : [], corpusId : [] }
+
 initialState :: State
 initialState = State
-  { graphData : GraphData {nodes: [], edges: [], sides: [], metaData : Just $ MetaData{title : "", legend : [], corpusId : []}}
+  { rawGraphData : emptyGraphData
+  , graphData : emptyGraphData
+  , edgeFilters : defaultEdgeFilters
+  , nodeFilters : defaultNodeFilters
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []
@@ -156,27 +167,68 @@ graphSpec :: Spec State {} Action
 graphSpec = simpleSpec performAction render
 -}
 
+type ControlsData = {  }
+
+type EdgeFilters =
+  { confluence :: Range.Closed Number }
+
+defaultEdgeFilters :: EdgeFilters
+defaultEdgeFilters = { confluence: Range.closedProbability }
+
+type NodeFilters = {}
+
+defaultNodeFilters :: NodeFilters
+defaultNodeFilters = {}
+
+filterNode :: NodeFilters -> Node -> Boolean
+filterNode _ n = true
+
+filterNodes :: NodeFilters -> Array Node -> Array Node
+filterNodes f = filter (filterNode f)
+
+filterEdge :: EdgeFilters -> Edge -> Boolean
+filterEdge f (Edge e) = Range.within f.confluence e.confluence
+
+filterEdges :: EdgeFilters -> Array Edge -> Array Edge
+filterEdges f = filter (filterEdge f)
+
+filterGraphData :: State -> GraphData -> GraphData
+filterGraphData (State s) (GraphData g) = GraphData $
+  g { nodes = filterNodes s.nodeFilters g.nodes
+    , edges = filterEdges s.edgeFilters g.edges }
+
 performAction :: PerformAction State {} Action
 performAction (LoadGraph fp) _ _ = void do
   _ <- logs fp
   _ <- modifyState \(State s) -> State s {corpusId = fp, sigmaGraphData = Nothing}
-  resp <- lift $ getNodes fp
+  rawGraphData <- lift $ getNodes fp
   treeResp <- liftEffect $ getAuthData
   case treeResp of
     Just (AuthData {token,tree_id }) ->
-      modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Just tree_id}
+      modifyState \(State s) ->
+        State $
+          s { rawGraphData = rawGraphData
+            , graphData = filterGraphData (State s) rawGraphData
+            , sigmaGraphData = Just $ sigmafy rawGraphData
+            , legendData = getLegendData rawGraphData
+            , treeId = Just tree_id}
     Nothing ->
-      modifyState \(State s) -> State s { graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Nothing}
-      -- TODO: here one might `catchError getNodes` to visually empty the
+      modifyState \(State s) ->
+        State $
+          s { rawGraphData = rawGraphData
+            , graphData = filterGraphData (State s) rawGraphData
+            , sigmaGraphData = Just $ sigmafy rawGraphData
+            , legendData = getLegendData rawGraphData
+            , treeId = Nothing}
+        -- TODO: here one might `catchError getNodes` to visually empty the
       -- graph.
-  --modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
+  --modifyState \(State s) -> State s {rawGraphData, graphData=filterGraphData (State s) rawGraphData, sigmaGraphData = Just $ sigmafy rawGraphData, legendData = getLegendData rawGraphData}
 
 performAction (SelectNode selectedNode@(SelectedNode node)) _ (State state) =
   modifyState_ $ \(State s) ->
     State s {selectedNodes = toggleSet selectedNode
                               (if s.multiNodeSelection then s.selectedNodes
                                                        else Set.empty) }
-
 performAction (ShowSidePanel b) _ (State state) = void do
   modifyState $ \(State s) -> State s {showSidePanel = b }
 
@@ -214,8 +266,8 @@ performAction (ChangeCursorSize size) _ _ =
 --  modifyState_ $ \() -> do
 --    State $
 
-convert :: GraphData -> SigmaGraphData
-convert (GraphData r) = SigmaGraphData {nodes, edges}
+sigmafy :: GraphData -> SigmaGraphData
+sigmafy (GraphData r) = SigmaGraphData {nodes, edges}
   where
     nodes = mapWithIndex nodeFn r.nodes
     nodeFn i (Node n) =
