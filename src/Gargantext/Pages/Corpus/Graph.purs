@@ -30,6 +30,7 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Uncurried (runEffectFn1, runEffectFn2)
+import DOM.Simple.Console (log2)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, CameraProps, getCameraProps, goTo, pauseForceAtlas2, sStyle, sigmaOnMouseMove, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
@@ -173,7 +174,7 @@ type EdgeFilters =
   { confluence :: Range.Closed Number }
 
 defaultEdgeFilters :: EdgeFilters
-defaultEdgeFilters = { confluence: Range.closedProbability }
+defaultEdgeFilters = { confluence: Range.Closed { min : 0.4, max: 1.0 } } -- Range.closedProbability }
 
 type NodeFilters = {}
 
@@ -202,27 +203,22 @@ performAction (LoadGraph fp) _ _ = void do
   _ <- logs fp
   _ <- modifyState \(State s) -> State s {corpusId = fp, sigmaGraphData = Nothing}
   rawGraphData <- lift $ getNodes fp
+  liftEffect $ log2 "rawGraphData:" rawGraphData
   treeResp <- liftEffect $ getAuthData
-  case treeResp of
-    Just (AuthData {token,tree_id }) ->
-      modifyState \(State s) ->
-        State $
-          s { rawGraphData = rawGraphData
-            , graphData = filterGraphData (State s) rawGraphData
-            , sigmaGraphData = Just $ sigmafy rawGraphData
-            , legendData = getLegendData rawGraphData
-            , treeId = Just tree_id}
-    Nothing ->
-      modifyState \(State s) ->
-        State $
-          s { rawGraphData = rawGraphData
-            , graphData = filterGraphData (State s) rawGraphData
-            , sigmaGraphData = Just $ sigmafy rawGraphData
-            , legendData = getLegendData rawGraphData
-            , treeId = Nothing}
+  modifyState \(State s) ->
+    let graphData = filterGraphData (State s) rawGraphData in
+    State $
+      s { rawGraphData = rawGraphData
+        , graphData = graphData
+        , sigmaGraphData = Just $ sigmafy graphData
+        , legendData = getLegendData graphData
+        , treeId = map treeId treeResp
+        }
         -- TODO: here one might `catchError getNodes` to visually empty the
       -- graph.
   --modifyState \(State s) -> State s {rawGraphData, graphData=filterGraphData (State s) rawGraphData, sigmaGraphData = Just $ sigmafy rawGraphData, legendData = getLegendData rawGraphData}
+  where treeId (AuthData {tree_id}) = tree_id
+
 
 performAction (SelectNode selectedNode@(SelectedNode node)) _ (State state) =
   modifyState_ $ \(State s) ->
@@ -622,6 +618,18 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                                                 , onChange \e -> do
                                                     let ratio = (100.0 - numberTargetValue e) / 100.0
                                                     modCamera0 (const {ratio})
+                                                ]
+                  ]
+                , li [className "col-md-1"]
+                  [ span [] [text "Confluence"]
+                   ,input [ _type "range"
+                          , _id "confluence"
+                          , max "1.0"
+                          , defaultValue "1.0"
+                          , min "1.0"
+                          , onChange \e -> do
+                            let ratio = (100.0 - numberTargetValue e) / 100.0
+                            modCamera0 (const {ratio})
                                                 ]
                   ]
                 , li [className "col-md-1"]
