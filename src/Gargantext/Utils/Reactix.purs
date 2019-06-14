@@ -7,7 +7,9 @@ import Data.Nullable ( Nullable, null, toMaybe )
 import Data.Traversable ( traverse_ )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
+import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
+import DOM.Simple as DOM
 import Effect (Effect)
 import FFI.Simple ( (...), defineProperty )
 import React ( ReactElement )
@@ -40,3 +42,13 @@ useLayoutEffect1' :: forall a. a -> (Unit -> Effect Unit) -> R.Hooks Unit
 useLayoutEffect1' a f = R.useLayoutEffect1 a $ \_ ->
   do f unit
      pure $ \_ -> pure unit
+
+useLayoutRef :: forall a b. (a -> b) -> b -> R.Ref a -> R.Hooks (R.Ref b)
+useLayoutRef fn init ref = do
+  new <- R.useRef init
+  let old = R.readRef ref
+  useLayoutEffect1' old $ \_ -> R.setRef new (fn old)
+  pure new
+
+usePositionRef :: R.Ref (Nullable DOM.Element) -> R.Hooks (R.Ref (Maybe DOM.DOMRect))
+usePositionRef = useLayoutRef (map Element.boundingRect <<< toMaybe) Nothing
