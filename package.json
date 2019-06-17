@@ -26,12 +26,12 @@
         "@babel/preset-react": "^7.0.0",
         "@babel/preset-stage-2": "^7.0.0",
         "babel-core": "^7.0.0-bridge",
-        "react-testing-library": "^6.1.2",
         "envify": "^4.1.0",
         "http-server": "^0.11.1",
         "psc-package": "^3.0.1",
         "pulp": "^12.4.0",
         "purescript": "^0.12.4",
+        "react-testing-library": "^6.1.2",
         "spago": "^0.7.5"
     },
     "version": "0.0.0"

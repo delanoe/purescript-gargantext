@@ -570,6 +570,16 @@
     "repo": "https://github.com/purescript/purescript-distributive.git",
     "version": "v4.0.0"
   },
+  "dom-filereader": {
+    "dependencies": [
+      "aff",
+      "arraybuffer-types",
+      "web-file",
+      "web-html"
+    ],
+    "repo": "https://github.com/nwolverson/purescript-dom-filereader",
+    "version": "v5.0.0"
+  },
   "dom-indexed": {
     "dependencies": [
       "media-types",

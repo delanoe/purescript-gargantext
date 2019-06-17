@@ -1,35 +1,32 @@
 module Gargantext.Components.Tree where
 
 import Prelude hiding (div)
-import Unsafe.Coerce
+import Unsafe.Coerce (unsafeCoerce)
 
-import Affjax (defaultRequest, printResponseFormatError, request)
-import Affjax.RequestBody (RequestBody(..))
-import Affjax.ResponseFormat as ResponseFormat
-import CSS (backgroundColor, borderRadius, boxShadow, justifyContent, marginTop)
 import Control.Monad.Cont.Trans (lift)
 import Data.Array (filter)
-import Data.Argonaut (class DecodeJson, class EncodeJson, Json, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
-import Data.Argonaut.Core (Json)
-import Data.Either (Either(..))
-import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
-import DOM.Simple.Console
+import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, runAff)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
-import Prelude (identity)
+import FFI.Simple ((..))
+import Partial.Unsafe (unsafePartial)
 import React (ReactClass, ReactElement)
 import React as React
 import React.DOM (a, button, div, h5, i, input, li, span, text, ul, b, u)
-import React.DOM.Props (_id, _type, className, href, title, onClick, onInput, placeholder, style, defaultValue, _data)
+import React.DOM.Props (_id, _type, className, href, title, onClick, onDrop, onDragOver, onInput, placeholder, style, defaultValue, _data)
 import React.DOM.Props as DOM
-import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, defaultRender, modifyState_, simpleSpec, modifyState)
+import React.SyntheticEvent as E
+import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, simpleSpec, modifyState_)
+import Web.File.File (toBlob)
+import Web.File.FileReader.Aff (readAsText)
+import Web.File.FileList (FileList, item)
 
 import Gargantext.Config (toUrl, End(..), NodeType(..), urlPlease)
-import Gargantext.Config.REST (get, put, post, delete, deleteWithBody)
+import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
 import Gargantext.Components.Loader as Loader
 
 type Name = String
@@ -51,6 +48,7 @@ filterNTree p (NTree x ary) =
   NTree x $ map (filterNTree p) $ filter (\(NTree a _) -> p a) ary
 
 type FTree = NTree LNode
+type FileHash = String
 
 data Action =   ShowPopOver  ID
               | ToggleFolder ID
@@ -64,13 +62,24 @@ data Action =   ShowPopOver  ID
               | ShowRenameBox    ID
               | CancelRename     ID
               | CurrentNode      ID
+              | UploadFile ID String
 
 
 type State = { state       :: FTree
-             , currentNode :: Maybe Int
+             , currentNode :: Maybe ID
              }
 
 -- TODO remove
+initialNode :: { createNode :: Boolean
+               , id :: ID
+               , name :: String
+               , nodeType :: NodeType
+               , nodeValue :: String
+               , open :: Boolean
+               , popOver :: Boolean
+               , renameNodeValue :: String
+               , showRenameBox :: Boolean
+               }
 initialNode = { id : 3
               , name : "hello"
               , nodeType : Node
@@ -132,31 +141,35 @@ performAction (SetNodeValue v nid) _ _ =
 performAction (CurrentNode nid) _ _ =
   modifyState_ $ \{state: s} -> {state: s, currentNode : Just nid}
 
+performAction (UploadFile nid contents) _ _ = do
+  hashes <- lift $ uploadFile nid contents
+  liftEffect $ log2 "uploaded:" hashes
+
 
 toggleIf :: Boolean -> Boolean -> Boolean
 toggleIf true  = not
 toggleIf false = const false
 
-onNode :: Int -> (LNode -> LNode) -> LNode -> LNode
+onNode :: ID -> (LNode -> LNode) -> LNode -> LNode
 onNode id f l@(LNode node)
   | node.id == id = f l
   | otherwise     = l
 
-popOverNode :: Int -> LNode -> LNode
+popOverNode :: ID -> LNode -> LNode
 popOverNode sid (LNode node) =
   LNode $ node { popOver = toggleIf (sid == node.id) node.popOver
                , showRenameBox = false }
 
-hidePopOverNode :: Int -> LNode -> LNode
+hidePopOverNode :: ID -> LNode -> LNode
 hidePopOverNode sid (LNode node) =
   LNode $ node { popOver = false }
 
-showPopOverNode :: Int -> LNode -> LNode
+showPopOverNode :: ID -> LNode -> LNode
 showPopOverNode sid (LNode node) =
   LNode $ node {showRenameBox = toggleIf (sid == node.id) node.showRenameBox}
 
 -- TODO: DRY, NTree.map
-showCreateNode :: Int -> NTree LNode -> NTree LNode
+showCreateNode :: ID -> NTree LNode -> NTree LNode
 showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
   NTree (LNode {id,name, nodeType, open , popOver, renameNodeValue, createNode : createNode', nodeValue, showRenameBox}) $ map (showCreateNode sid) ary
   where
@@ -164,7 +177,7 @@ showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 
 ----TODO get id and value to send API to call
 
--- getCreateNode :: Int -> NTree LNode -> String
+-- getCreateNode :: ID -> NTree LNode -> String
 -- getCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue}) ary) =
 --   createNode
 --   where
@@ -172,21 +185,21 @@ showCreateNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 --     createNode' = if sid == id then  nodeValue else ""
 
 -- TODO: DRY, NTree.map
-rename :: Int ->  String -> NTree LNode  -> NTree LNode
+rename :: ID ->  String -> NTree LNode  -> NTree LNode
 rename sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary)  =
   NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue : rvalue, createNode, nodeValue, showRenameBox}) $ map (rename sid  v) ary
   where
     rvalue = if sid == id then  v   else ""
 
 -- TODO: DRY, NTree.map
-setNodeValue :: Int ->  String -> NTree LNode  -> NTree LNode
+setNodeValue :: ID ->  String -> NTree LNode  -> NTree LNode
 setNodeValue sid v (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary)  =
   NTree (LNode {id,name, nodeType, open , popOver , renameNodeValue , createNode, nodeValue : nvalue, showRenameBox}) $ map (setNodeValue sid  v) ary
   where
     nvalue = if sid == id then  v   else ""
 
 -- TODO: DRY, NTree.map
-toggleNode :: Int -> NTree LNode -> NTree LNode
+toggleNode :: ID -> NTree LNode -> NTree LNode
 toggleNode sid (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) =
   NTree (LNode {id,name, nodeType, open : nopen, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) $ map (toggleNode sid) ary
   where
@@ -207,12 +220,12 @@ exampleTree = NTree (LNode {id : 1, name : "", nodeType : Node, open : false, po
 --   --, corpus   3 "IMT publications"
 --   ]
 
--- annuaire :: Int -> String -> NTree (Tuple String String)
+-- annuaire :: ID -> String -> NTree (Tuple String String)
 -- annuaire n name = NTree n false name
 --     [ NTree (Tuple "IMT community"    "#/docView")
 --     ]
 
--- corpus :: Int -> String -> NTree (Tuple String String)
+-- corpus :: ID -> String -> NTree (Tuple String String)
 -- corpus n name = NTree (LNode {id : n, name, nodeType : "", open : false})
 --     [ NTree (Tuple "Facets"    "#/corpus") []
 --     , NTree (Tuple "Dashboard" "#/dashboard") []
@@ -279,7 +292,7 @@ treeview = simpleSpec defaultPerformAction render
                    , component: treeViewClass
                    } ]
 
-renameTreeView :: (Action -> Effect Unit) -> FTree -> Int -> ReactElement
+renameTreeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =
        div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
        [  div [_id "arrow"] []
@@ -376,7 +389,7 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 
 
 
-createNodeView :: (Action -> Effect Unit) -> FTree -> Int -> ReactElement
+createNodeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement
 createNodeView d s@(NTree (LNode {id, name, nodeType, open, popOver, nodeValue }) ary) nid  =
        div [className ""]
         [  div [className "panel panel-default"]
@@ -415,71 +428,88 @@ getCreateNodeValue :: FTree -> String
 getCreateNodeValue (NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, nodeValue, showRenameBox}) ary) = nodeValue
 
 
-toHtml :: (Action -> Effect Unit) -> FTree -> Maybe Int -> ReactElement
+toHtml :: (Action -> Effect Unit) -> FTree -> Maybe ID -> ReactElement
 toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode,nodeValue, showRenameBox }) []) n =
   ul []
   [
-    li [] $
+    li [] $ [span []
     [ a [className "glyphicon glyphicon-cog", _id "rename-leaf",onClick $ (\_-> d $ (ShowPopOver id))] []
     , a [ href (toUrl Front nodeType (Just id)), style {"margin-left":"22px"}
         , onClick $ (\e -> d $ CurrentNode id)
         ]
       [ if n == (Just id) then u [] [b [] [text ("| " <> name <> " |    ")]] else text (name <> "    ") ]
-     , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
+    , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
     , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
     ]
-  ]
+  ]]
 --- need to add renameTreeview value to this function
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue,createNode, nodeValue, showRenameBox}) ary) n=
+toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, createNode, nodeValue, showRenameBox}) ary) n =
     ul []
   [ li [] $
-    ( [ a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
+    ( [span [onDrop dropHandler, onDragOver onDragOverHandler] [
+         a [onClick $ (\e-> d $ ToggleFolder id)] [i [fldr open] []]
        , a [ href (toUrl Front nodeType (Just id)), style {"margin-left":"22px"}
            , onClick $ (\e -> d $ CurrentNode id)
            ]
          --[ text name ]
          [ if n == (Just id) then u [] [b [] [text $ "| " <> name <> " |"]] else text name ]
-,      a [className "glyphicon glyphicon-cog", _id "rename",onClick $ (\_-> d $ (ShowPopOver id))]
-       [
-       ]
-     , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
-    , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
+       , a [ className "glyphicon glyphicon-cog"
+         , _id "rename"
+         , onClick $ (\_-> d $ (ShowPopOver id))
+         ] []
+       , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
+       , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
 
-      ] <>
-      if open then
+       ]
+      ] <> if open then
         map (\s -> toHtml d s n) ary
-        else []
+      else []
     )
   ]
-
+  where
+    dropHandler = \e -> unsafePartial $ do
+      let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
+      liftEffect $ log2 "drop:" ff
+      -- prevent redirection when file is dropped
+      E.preventDefault e
+      E.stopPropagation e
+      let blob = toBlob $ ff
+      void $ runAff (\_ -> pure unit) do
+        contents <- readAsText blob
+        liftEffect $ d $ UploadFile id contents
+    onDragOverHandler = \e -> do
+      -- prevent redirection when file is dropped
+      -- https://stackoverflow.com/a/6756680/941471
+      E.preventDefault e
+      E.stopPropagation e
 
 
 fldr :: Boolean -> DOM.Props
 fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
 
 
-newtype LNode = LNode {id :: Int, name :: String, nodeType :: NodeType, open :: Boolean, popOver :: Boolean, renameNodeValue :: String, nodeValue :: String, createNode :: Boolean, showRenameBox :: Boolean}
+newtype LNode = LNode {id :: ID, name :: String, nodeType :: NodeType, open :: Boolean, popOver :: Boolean, renameNodeValue :: String, nodeValue :: String, createNode :: Boolean, showRenameBox :: Boolean}
 
 derive instance newtypeLNode :: Newtype LNode _
 
 instance decodeJsonLNode :: DecodeJson LNode where
   decodeJson json = do
     obj <- decodeJson json
-    id_ <- obj .? "id"
-    name <- obj .? "name"
-    nodeType <- obj .? "type"
+    id_ <- obj .: "id"
+    name <- obj .: "name"
+    nodeType <- obj .: "type"
     pure $ LNode {id : id_, name, nodeType, open : true, popOver : false, renameNodeValue : "", createNode : false, nodeValue : "", showRenameBox : false}
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
   decodeJson json = do
     obj <- decodeJson json
-    node <- obj .? "node"
-    nodes <- obj .? "children"
+    node <- obj .: "node"
+    nodes <- obj .: "children"
     node' <- decodeJson node
     nodes' <- decodeJson nodes
     pure $ NTree node' nodes'
 
-loadNode :: Int -> Aff FTree
+loadNode :: ID -> Aff FTree
 loadNode = get <<< toUrl Back Tree <<< Just
 
 ----- TREE CRUD Operations
@@ -506,21 +536,27 @@ instance encodeJsonCreateValue :: EncodeJson CreateValue where
     ~> "files_id" := ([] :: Array String)
     ~> jsonEmptyObject
 
-createNode :: CreateValue -> Aff Int
+type UploadFileContents = String
+
+createNode :: CreateValue -> Aff ID
 createNode = post $ urlPlease Back $ "new"
 
-renameNode :: Int -> RenameValue -> Aff (Array Int)
+renameNode :: ID -> RenameValue -> Aff (Array ID)
 renameNode renameNodeId = put $ toUrl Back Node (Just renameNodeId) <> "/rename"
 
-deleteNode :: Int -> Aff Int
+deleteNode :: ID -> Aff ID
 deleteNode = delete <<< toUrl Back Node <<< Just
 
+uploadFile :: ID -> UploadFileContents -> Aff (Array FileHash)
+uploadFile id = postWwwUrlencoded $ toUrl Back Node (Just id) <> "/upload"
+--uploadFile = postWwwUrlencoded $ urlPlease Back $ "upload"
+
 -- UNUSED
--- deleteNodes :: TODO -> Aff Int
+-- deleteNodes :: TODO -> Aff ID
 -- deleteNodes = deleteWithBody (toUrl Back Nodes Nothing)
 
 -- UNUSED
--- createNode :: TODO -> Aff Int
+-- createNode :: TODO -> Aff ID
 -- createNode = post (toUrl Back Node Nothing)
 
 fnTransform :: LNode -> FTree

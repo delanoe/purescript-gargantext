@@ -173,6 +173,15 @@ let additions =
           ]
           "https://github.com/irresponsible/purescript-dom-simple"
           "v0.2.4"
+      , dom-filereader =
+	      mkPackage
+		  [ "aff"
+		  , "arraybuffer-types"
+		  , "web-file"
+		  , "web-html"
+		  ]
+		  "https://github.com/nwolverson/purescript-dom-filereader"
+		  "v5.0.0"
       , reactix =
           mkPackage
           [ "console"
