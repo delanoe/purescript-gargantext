@@ -31,6 +31,8 @@ scuff = unsafeCoerce
 mousePosition :: RE.SyntheticEvent DE.MouseEvent -> Point
 mousePosition e = Point { x: RE.clientX e, y: RE.clientY e }
 
+domMousePosition :: DE.MouseEvent -> Point
+domMousePosition = mousePosition <<< unsafeCoerce
 -- | This is naughty, it quietly mutates the input and returns it
 named :: forall o. String -> o -> o
 named = flip $ defineProperty "name"
