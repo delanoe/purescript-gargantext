@@ -1,6 +1,5 @@
 module Gargantext.Pages.Corpus.Document where
 
-
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Lens (Lens', lens, (?~))
@@ -26,34 +25,19 @@ import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Types (TermList(..))
 import Gargantext.Utils.Reactix ( scuff )
 
-nge :: String -> Tuple String NgramsElement
-nge word = Tuple word elem where
-  elem = NgramsElement
-    { ngrams: word, list: StopTerm
-    , occurrences: 1, parent: Nothing
-    , root: Nothing, children: Set.empty }
-
-testTable :: NgramsTable
-testTable = NgramsTable $ Map.fromFoldable $ nge <$> words
-  where words = [ "the", "quick", "brown", "fox", "jumped", "over", "lazy", "dog" ]
-
 type State =
   { document    :: Maybe (NodePoly Document)
   , ngramsTable :: Maybe NgramsTable
-  , inputValue  :: String
   }
 
 initialState :: {} -> State
 initialState {} =
   { document: Nothing
-  , ngramsTable: (Just testTable)
-  , inputValue: ""
+  , ngramsTable: Nothing
   }
 
 data Action
   = Load Int Int
-  | ChangeString String
-  | SetInput String
 
 newtype Status = Status { failed    :: Int
                         , succeeded :: Int
@@ -289,13 +273,9 @@ performAction (Load lId nId) _ _ = do
                                   , termListFilter : Nothing
                                   , termSizeFilter : Nothing
                                    }
-  
   void $ modifyState $ _document    ?~ node
   void $ modifyState $ _ngramsTable ?~ table
   logs $ "Node Document " <> show nId <> " fetched."
-performAction (ChangeString ps) _ _ = pure unit
-performAction (SetInput ps) _ _ = void <$> modifyState $ _ { inputValue = ps }
-
 
 getNode :: Maybe Int -> Aff (NodePoly Document)
 getNode = get <<< toUrl Back Node
@@ -305,7 +285,6 @@ _document = lens (\s -> s.document) (\s ss -> s{document = ss})
 
 _ngramsTable :: Lens' State (Maybe NgramsTable)
 _ngramsTable = lens (\s -> s.ngramsTable) (\s ss -> s{ngramsTable = ss})
-
 
 ------------------------------------------------------------------------
 
@@ -325,12 +304,10 @@ docview = simpleSpec performAction render
                 [ li' [ span [] [text' document.source]
                       , badge "source"
                       ]
-                
                 -- TODO add href to /author/ if author present in
                 , li' [ span [] [text' document.authors]
                       , badge "authors"
                       ]
-                
                 , li' [ span [] [text' document.publication_date]
                       , badge "date"
                       ]
@@ -349,23 +326,5 @@ docview = simpleSpec performAction render
           li' = li [className "list-group-item justify-content-between"]
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]
-          NodePoly {hyperdata : Document document} = 
+          NodePoly {hyperdata : Document document} =
             maybe defaultNodeDocument identity state.document
-
-findInDocument :: (Document -> Maybe String) -> State -> Maybe String
-findInDocument f state =
-  do (NodePoly d) <- state.document
-     f d.hyperdata
-
-aryPS :: Array String
-aryPS = ["Map", "Main", "Stop"]
-
-aryPS1 :: Array String
-aryPS1 = ["Nothing Selected","STOPLIST", "MAINLIST", "MAPLIST"]
-
-
-optps :: String -> ReactElement
-optps val = option [ value  val ] [text  val]
-
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value
