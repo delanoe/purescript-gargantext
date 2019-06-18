@@ -1,5 +1,6 @@
 module Gargantext.Components.NgramsTable.Core
   ( PageParams
+  , CoreParams
   , PatchMap
   , NgramsElement(..)
   , _NgramsElement
@@ -12,6 +13,7 @@ module Gargantext.Components.NgramsTable.Core
   , Versioned(..)
   , VersionedNgramsTable
   , CoreState
+  , LoadedNgramsTableProps
   , highlightNgrams
   , initialPageParams
   , loadNgramsTable
@@ -83,16 +85,20 @@ import Gargantext.Components.Table as T
 import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
 
+type CoreParams s =
+  { nodeId  :: Int
+  , listIds :: Array Int
+  , tabType :: TabType
+  | s
+  }
 
 type PageParams =
-  { nodeId :: Int
-  , listIds :: Array Int
-  , params :: T.Params
-  , tabType :: TabType
-  , searchQuery :: String
-  , termListFilter :: Maybe TermList -- Nothing means all
-  , termSizeFilter :: Maybe TermSize -- Nothing means all
-  }
+  CoreParams
+    ( params :: T.Params
+    , searchQuery :: String
+    , termListFilter :: Maybe TermList -- Nothing means all
+    , termSizeFilter :: Maybe TermSize -- Nothing means all
+    )
 
 initialPageParams :: Int -> Array Int -> TabType -> PageParams
 initialPageParams nodeId listIds tabType =
@@ -518,7 +524,7 @@ convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
 
-addNewNgram :: NgramsTerm -> PageParams -> Aff Unit
+addNewNgram :: forall s. NgramsTerm -> CoreParams s -> Aff Unit
 addNewNgram ngram {nodeId, listIds, tabType} =
   post (toUrl Back (PutNgrams tabType (head listIds)) $ Just nodeId) [ngram]
 
@@ -527,3 +533,5 @@ ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadNgramsTable
 
 ngramsLoader :: Loader.Props' PageParams VersionedNgramsTable -> ReactElement
 ngramsLoader props = React.createElement ngramsLoaderClass props []
+
+type LoadedNgramsTableProps = Loader.InnerProps PageParams VersionedNgramsTable ()

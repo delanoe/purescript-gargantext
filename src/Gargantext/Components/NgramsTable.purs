@@ -41,8 +41,6 @@ import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.NgramsTable.Core
 
-type Props' = Loader.InnerProps PageParams VersionedNgramsTable ()
-
 type State =
   CoreState
   ( ngramsParent     :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
@@ -198,13 +196,13 @@ toggleMap :: forall a. a -> Maybe a -> Maybe a
 toggleMap _ (Just _) = Nothing
 toggleMap b Nothing  = Just b
 
-ngramsTableSpec :: Spec State Props' Action
+ngramsTableSpec :: Spec State LoadedNgramsTableProps Action
 ngramsTableSpec = simpleSpec performAction render
   where
     setParentResetChildren :: Maybe NgramsTerm -> State -> State
     setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
 
-    performAction :: PerformAction State Props' Action
+    performAction :: PerformAction State LoadedNgramsTableProps Action
     performAction (SetParentResetChildren p) _ _ =
       modifyState_ $ setParentResetChildren p
     performAction (ToggleChild b c) _ _ =
@@ -237,7 +235,7 @@ ngramsTableSpec = simpleSpec performAction render
     performAction (AddNewNgram ngram) {path: params} _ =
       lift $ addNewNgram ngram params
 
-    render :: Render State Props' Action
+    render :: Render State LoadedNgramsTableProps Action
     render dispatch { path: pageParams
                     , loaded: Versioned { data: initTable }
                     , dispatch: loaderDispatch }
