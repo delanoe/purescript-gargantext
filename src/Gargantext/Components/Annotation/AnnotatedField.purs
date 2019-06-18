@@ -14,22 +14,18 @@ module Gargantext.Components.Annotation.AnnotatedField where
 import Prelude
 import Data.Map as Map
 import Data.Maybe ( Maybe(..), maybe, maybe' )
-import Data.Lens ( Lens', lens )
-import Data.Traversable ( traverse_ )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
-import DOM.Simple.Console
 import DOM.Simple.Event as DE
 import Effect ( Effect )
-import Effect.Uncurried (mkEffectFn1)
+import Effect.Uncurried ( mkEffectFn1 )
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
-import Gargantext.Types ( TermList(..) )
+import Gargantext.Types ( TermList )
 import Gargantext.Components.Annotation.Utils ( termClass )
-import Gargantext.Components.NgramsTable ( NgramsTable(..), highlightNgrams )
-import Gargantext.Components.ContextMenu.ContextMenu as CM
+import Gargantext.Components.NgramsTable.Core ( NgramsTable(..), highlightNgrams )
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu )
 import Gargantext.Utils.Selection as Sel
 
@@ -68,8 +64,7 @@ compile props = runs props.text
   where runs = maybe [] (highlightNgrams props.ngrams)
 
 maybeShowMenu
-  :: forall t
-  .  (Maybe AnnotationMenu -> Effect Unit)
+  :: (Maybe AnnotationMenu -> Effect Unit)
   -> NgramsTable
   -> E.SyntheticEvent DE.MouseEvent
   -> Effect Unit

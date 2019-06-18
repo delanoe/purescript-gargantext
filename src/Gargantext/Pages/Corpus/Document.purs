@@ -21,7 +21,7 @@ import Gargantext.Prelude
 import Gargantext.Config          (toUrl, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..))
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.NgramsTable (NgramsTable(..), NgramsElement(..), loadNgramsTable, Versioned(..))
+import Gargantext.Components.NgramsTable.Core (NgramsTable(..), NgramsElement(..), loadNgramsTable, Versioned(..))
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Types (TermList(..))
 import Gargantext.Utils.Reactix ( scuff )
