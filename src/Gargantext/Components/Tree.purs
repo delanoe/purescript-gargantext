@@ -294,99 +294,91 @@ treeview = simpleSpec defaultPerformAction render
 
 renameTreeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =
-       div [className "col-md-12", _id "rename-tooltip",className "btn btn-secondary", _data {toggle  : "tooltip", placement : "right"}, title "Settings on right"]
-       [  div [_id "arrow"] []
-       , div [className "panel panel-default", style {border:"1px solid rgba(0,0,0,0.2)", boxShadow : "0 2px 5px rgba(0,0,0,0.2)"}]
-           [
-             div [className "panel-heading", style {float:"left", width: "100%"}]
-             [
-               if (showRenameBox) then div [_id "afterClick"]
-               [
-                 div [className "col-md-12"]
-               [
-                 input [ _type "text"
-                    , placeholder "Rename Node"
-                    , defaultValue $ name
-                    , style {float: "left"}
-                    , className "col-md-2 form-control"
-                    , onInput \e -> d (RenameNode (unsafeEventValue e) nid)
-                    ]
-               ]
-              , div [className "col-md-12"]
-              [ div [className "row", style {marginTop : "11px"}]
-                [ div [className "col-md-6"] [
-                     a [className "btn btn-danger"
-                    , _type "button"
-                    , onClick \_ -> d $ (Submit nid renameNodeValue)
-                    , style {float:"left"}
-                    ] [text "Rename"]
-                    ]
-                , div [className "col-md-6"]
-                  [a [className "btn btn-primary"
-                     , _type "button"
-                     , onClick \_ -> d $ (CancelRename nid)
-                     , style {float:"left", backgroundColor: "white", color:"black"}
-                     ] [text "cancel"]
-
-                  ]
-                ]
-
-                ]
-
-            ]
-              else
-                 div [ _id "beforeClick", className "col-md-12"]
-                 [ div [className "row"]
-                       [ div [className "col-md-6"]
-                             [text name]
-                       , a [ style {color:"black"}
-                           , className "glyphitem glyphicon glyphicon-pencil col-md-2"
-                           , _id "rename1"
-                           , title "Rename"
-                           , onClick $ (\_-> d $ (ShowRenameBox id))]
-                           []
-                       ]
-                 ]
-             ]
-           , div [ className "panel-body"
-                 , style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
-                 [ div [className "col-md-4"]
-                       [a [ style iconAStyle
-                          , className (glyphicon "plus")
-                          , _id "rename1"
-                          , title "Create"
-                          , onClick $ (\_ -> d $ (ToggleCreateNode id))]
-                          []
-                       ]
-                 , div [className "col-md-4"]
-                       [a [ style iconAStyle
-                          , className (glyphicon "download-alt")
-                          , _id "rename1"
-                          , title "Download [WIP]"]
-                          []
-                       ]
-                 , div [className "col-md-4"]
-                       [a [ style iconAStyle
-                          , className (glyphicon "duplicate")
-                          , _id "rename1"
-                          , title "Duplicate [WIP]"]
-                          []
-                       ]
-                 , div [className "col-md-4"]
-                       [ a [ style iconAStyle
-                           , className (glyphicon "trash")
-                           , _id "rename2"
-                           , title "Delete"
-                           , onClick $ (\_-> d $ (DeleteNode id))]
-                         []
-                       ]
-                 ]
-           ]
-       ]
+  div [ className ""
+      , _id "rename-tooltip"
+      , _data {toggle  : "tooltip", placement : "right"}
+      , title "Settings on right"] $
+  [ div [_id "arrow"] []
+  , div [ className "panel panel-default"
+        , style {border:"1px solid rgba(0,0,0,0.2)", boxShadow : "0 2px 5px rgba(0,0,0,0.2)"}]
+    [ div [className "panel-heading"]
+      [ div [ className "row" ] $
+        [ div [className (if (showRenameBox) then "col-md-10" else "col-md-8")]
+          [ if (showRenameBox) then renameBox else renameBoxLabel ]
+        ] <> [ if (showRenameBox) then editIconDummy else editIcon ] <> [
+          div [ className "col-md-2" ]
+          [ a [className "btn glyphitem glyphicon glyphicon-remove"
+              , onClick $ \_ -> d $ ShowPopOver nid] []
+          ]
+        ]
+      ]
+    , div [ className "panel-body"
+          , style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
+      [ div [className "col-md-4"]
+        [a [ style iconAStyle
+           , className (glyphicon "plus")
+           , _id "rename1"
+           , title "Create"
+           , onClick $ (\_ -> d $ (ToggleCreateNode id))]
+         []
+        ]
+      , div [className "col-md-4"]
+        [a [ style iconAStyle
+           , className (glyphicon "download-alt")
+           , _id "rename1"
+           , title "Download [WIP]"]
+         []
+        ]
+      , div [className "col-md-4"]
+        [a [ style iconAStyle
+           , className (glyphicon "duplicate")
+           , _id "rename1"
+           , title "Duplicate [WIP]"]
+         []
+        ]
+      , div [className "col-md-4"]
+        [ a [ style iconAStyle
+            , className (glyphicon "trash")
+            , _id "rename2"
+            , title "Delete"
+            , onClick $ (\_-> d $ (DeleteNode id))]
+          []
+        ]
+      ]
+    ]
+  ]
   where
     iconAStyle = {color:"black", paddingTop: "6px", paddingBottom: "6px"}
     glyphicon t = "glyphitem glyphicon glyphicon-" <> t
-
+    editIcon = div [ className "col-md-2" ]
+                [ a [ style {color:"black"}
+                    , className "btn glyphitem glyphicon glyphicon-pencil"
+                    , _id "rename1"
+                    , title "Rename"
+                    , onClick $ (\_-> d $ (ShowRenameBox id))]
+                  []
+                ]
+    editIconDummy = div [] []
+    renameBox = div [ className "from-group row-no-padding" ]
+                [ div [className "col-md-8"]
+                  [ input [ _type "text"
+                          , placeholder "Rename Node"
+                          , defaultValue $ name
+                          , className "form-control"
+                          , onInput \e -> d (RenameNode (unsafeEventValue e) nid)
+                          ]
+                  ]
+                , a [className "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
+                    , _type "button"
+                    , onClick \_ -> d $ (Submit nid renameNodeValue)
+                    ] []
+                , a [className "btn glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
+                    , _type "button"
+                    , onClick \_ -> d $ (CancelRename nid)
+                    , style {backgroundColor: "white", color:"black"}
+                    ] []
+                ]
+    renameBoxLabel = div [] [ text name ]
 
 
 createNodeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement

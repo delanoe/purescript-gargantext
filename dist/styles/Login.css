@@ -184,3 +184,12 @@ text-align: center;
 #graph-tree .tree {
     margin-top: 27px;
 }
+
+.nopadding {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.row-no-padding > [class*="col-"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
