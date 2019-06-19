@@ -307,8 +307,9 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
           [ if (showRenameBox) then renameBox else renameBoxLabel ]
         ] <> [ if (showRenameBox) then editIconDummy else editIcon ] <> [
           div [ className "col-md-2" ]
-          [ a [className "btn glyphitem glyphicon glyphicon-remove"
-              , onClick $ \_ -> d $ ShowPopOver nid] []
+          [ a [className "btn text-danger glyphitem glyphicon glyphicon-remove"
+              , onClick $ \_ -> d $ ShowPopOver nid
+              , title "Close"] []
           ]
         ]
       ]
@@ -371,11 +372,12 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
                 , a [className "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
                     , _type "button"
                     , onClick \_ -> d $ (Submit nid renameNodeValue)
+                    , title "Rename"
                     ] []
-                , a [className "btn glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
+                , a [className "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
                     , _type "button"
                     , onClick \_ -> d $ (CancelRename nid)
-                    , style {backgroundColor: "white", color:"black"}
+                    , title "Cancel"
                     ] []
                 ]
     renameBoxLabel = div [] [ text name ]
