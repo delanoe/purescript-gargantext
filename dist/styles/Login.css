@@ -90,6 +90,17 @@ li#rename  #rename-a{
     z-index: 1000;
 
 }
+#create-node-tooltip {
+    position : absolute;
+    left : 96px;
+    top:-64px;
+    background-color: white;
+    z-index: 1000;
+
+}
+#create-node-tooltip .panel-body input {
+    min-width: 200px;
+}
 
 li a#rename {
     display:none;

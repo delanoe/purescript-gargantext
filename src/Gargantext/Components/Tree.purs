@@ -296,7 +296,7 @@ renameTreeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement
 renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, showRenameBox }) ary) nid  =
   div [ className ""
       , _id "rename-tooltip"
-      , _data {toggle  : "tooltip", placement : "right"}
+      , _data {toggle: "tooltip", placement: "right"}
       , title "Settings on right"] $
   [ div [_id "arrow"] []
   , div [ className "panel panel-default"
@@ -385,31 +385,41 @@ renameTreeView d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeV
 
 createNodeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement
 createNodeView d s@(NTree (LNode {id, name, nodeType, open, popOver, nodeValue }) ary) nid  =
-       div [className ""]
-        [  div [className "panel panel-default"]
-           [
-             div [className "panel-heading"]
-             [
-               h5 [] [text "Create Node"]
-             ]
-           ,div [className "panel-body"]
-            [
-              input [ _type "text"
-                    , placeholder "Create Node"
-                    , defaultValue $ getCreateNodeValue s
-                    , className "col-md-12 form-control"
-                    , onInput \e -> d (SetNodeValue (unsafeEventValue e) nid)
-                    ]
-            ]
-          , div [className "panel-footer"]
-            [ button [className "btn btn-success"
-                     , _type "button"
-                     , onClick \_ -> d $ (CreateSubmit nid nodeValue)
-                     ] [text "Create"]
-            ]
+  div [ className ""
+      , _id "create-node-tooltip"
+      , _data {toggle: "tooltip", placement: "right"}
+      , title "Create new node"] $
+  [ div [className "panel panel-default"]
+    [
+      div [className "panel-heading"]
+      [
+        div [className "row"]
+        [ div [ className "col-md-10"]
+          [ h5 [] [text  "Create Node"] ]
+        , div [className "col-md-2"]
+          [ a [className "btn text-danger glyphitem glyphicon glyphicon-remove"
+              , onClick $ \_ -> d $ ToggleCreateNode nid
+              , title "Close"] []
           ]
         ]
-
+      ]
+    ,div [className "panel-body"]
+     [
+       input [ _type "text"
+             , placeholder "Create Node"
+             , defaultValue $ getCreateNodeValue s
+             , className "col-md-12 form-control"
+             , onInput \e -> d (SetNodeValue (unsafeEventValue e) nid)
+             ]
+     ]
+    , div [className "panel-footer"]
+      [ button [className "btn btn-success"
+               , _type "button"
+               , onClick \_ -> d $ (CreateSubmit nid nodeValue)
+               ] [text "Create"]
+      ]
+    ]
+  ]
 
 
 renameTreeViewDummy :: (Action -> Effect Unit) -> FTree -> ReactElement
