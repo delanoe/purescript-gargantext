@@ -363,8 +363,8 @@ renderPage loaderDispatch { totalRecords, dispatch, container
   ]
   where
     -- TODO: how to interprete other scores?
-    fa 0 = "far "
-    fa _ = "fas "
+    gi 0 = "glyphicon glyphicon-star-empty"
+    gi _ = "glyphicon glyphicon-star"
     isChecked id = Set.member id documentIdsToDelete
     isDeleted (DocumentsView {id}) = Set.member id documentIdsDeleted
     pairUrl (Pair {id,label})
@@ -379,7 +379,7 @@ renderPage loaderDispatch { totalRecords, dispatch, container
                 in
                 { row:
                     [ div []
-                      [ a [ className $ fa score <> "fa-star"
+                      [ a [ className $ gi score
                           , onClick $ const $ dispatch $ MarkFavorites [id]
                           ] []
                       ]

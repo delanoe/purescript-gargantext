@@ -236,7 +236,7 @@ menuElements' = menuElements-- title, icon, text
   [ -- ===========================================================
     [ LiNav { title : "Quick start, tutorials and methodology"
             , href  : "https://iscpif.fr/gargantext/your-first-map/"
-            , icon  : "fas fa-book"
+            , icon  : "glyphicon glyphicon-book"
             , text  : "Documentation"
             }
     , LiNav { title : "Report bug here"
@@ -260,7 +260,7 @@ menuElements' = menuElements-- title, icon, text
     ,------------------------------------------------------------
     [ LiNav { title : "More about us (you)"
             , href  : "https://iscpif.fr"
-            , icon  : "fas fa-question-circle"
+            , icon  : "glyphicon glyphicon-question-sign"
             , text  : "About"
             }
     ]

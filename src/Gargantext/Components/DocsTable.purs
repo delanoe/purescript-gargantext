@@ -289,8 +289,8 @@ renderPage loaderDispatch { totalRecords, dispatch, listId
       }
   ]
   where
-    fa true  = "fas "
-    fa false = "far "
+    gi true  = "glyphicon glyphicon-star"
+    gi false = "glyphicon glyphicon-star-empty"
     isChecked _id = Set.member _id documentIdsToDelete
     toDelete  (DocumentsView {_id}) = Set.member _id documentIdsToDelete
     isDeleted (DocumentsView {_id}) = Set.member _id documentIdsDeleted
@@ -299,7 +299,7 @@ renderPage loaderDispatch { totalRecords, dispatch, listId
                 let isFav = isFavorite r in
                 { row:
                     [ div []
-                      [ a [ className $ fa isFav <> "fa-star"
+                      [ a [ className $ gi isFav
                           , if (toDelete $ DocumentsView r) then style {textDecoration : "line-through"}
                                                             else style {textDecoration : "none"}
                           , onClick $ (\_-> dispatch $ MarkFavorites r._id (not isFav))] []

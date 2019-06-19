@@ -246,9 +246,9 @@ nodeOptionsCorp activated = case activated of
 -- on hover make other options available:
 nodeOptionsView :: Boolean -> Array ReactElement
 nodeOptionsView activated = case activated of
-                         true -> [ i [className "fas fa-sync-alt" ] []
-                                 , i [className "fas fa-upload"   ] []
-                                 , i [className "fas fa-share-alt"] []
+                         true -> [ i [className "glyphicon glyphicon-refresh" ] []
+                                 , i [className "glyphicon glyphicon-upload"   ] []
+                                 , i [className "glyphicon glyphicon-share"] []
                                  ]
                          false -> []
 
@@ -485,7 +485,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, renameNodeValue, cr
 
 
 fldr :: Boolean -> DOM.Props
-fldr open = if open then className "fas fa-folder-open" else className "fas fa-folder"
+fldr open = if open then className "glyphicon glyphicon-folder-open" else className "glyphicon glyphicon-folder-close"
 
 
 newtype LNode = LNode {id :: ID, name :: String, nodeType :: NodeType, open :: Boolean, popOver :: Boolean, renameNodeValue :: String, nodeValue :: String, createNode :: Boolean, showRenameBox :: Boolean}
