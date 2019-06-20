@@ -12,7 +12,8 @@
 module Gargantext.Components.Annotation.AnnotatedField where
 
 import Prelude
-import Data.Map as Map
+import Data.Lens ((^?), _Just)
+import Data.Lens.At (at)
 import Data.Maybe ( Maybe(..), maybe, maybe' )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
@@ -90,7 +91,7 @@ maybeShowMenu setMenu setTermList ngrams event = do
     Nothing -> pure unit
 
 findNgram :: NgramsTable -> String -> Maybe TermList
-findNgram _ _ = Nothing
+findNgram (NgramsTable m) s = m ^? at s <<< _Just <<< _NgramsElement <<< _list
 
 -- Runs
 
