@@ -525,8 +525,9 @@ convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
 
 addNewNgram :: forall s. NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
-addNewNgram ngram mayList {nodeId, listIds, tabType} =
-  post (toUrl Back (PutNgrams tabType (head listIds) mayList) $ Just nodeId) [ngram]
+addNewNgram ngram mayList {nodeId, listIds, tabType} = do
+  (_ :: Array Unit) <- post (toUrl Back (PutNgrams tabType (head listIds) mayList) $ Just nodeId) [ngram]
+  pure unit
 
 ngramsLoaderClass :: Loader.LoaderClass PageParams VersionedNgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadNgramsTable
