@@ -1,59 +1,55 @@
 module Gargantext.Pages.Corpus.Document where
 
-
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
-import Data.Lens (Lens', lens, (?~))
 import Data.Generic.Rep.Show (genericShow)
 import Data.Map as Map
-import Data.Set as Set
-import Data.Tuple (Tuple(..))
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
-import React (ReactElement)
-import React.DOM (div, h4, li, option, p, span, text, ul)
-import React.DOM.Props (className, value)
-import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
-import Unsafe.Coerce (unsafeCoerce)
+import React (ReactElement, ReactClass)
+import React as React
+import React.DOM (div, h4, li, p, span, text, ul)
+import React.DOM.Props (className)
+import Thermite (PerformAction, Render, Spec, simpleSpec, cmapProps, defaultPerformAction, createClass)
 import Control.Monad.Trans.Class (lift)
 
 import Gargantext.Prelude
 import Gargantext.Config          (toUrl, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..))
 import Gargantext.Config.REST     (get)
+import Gargantext.Components.AutoUpdate (autoUpdateElt)
+import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.NgramsTable (NgramsTable(..), NgramsElement(..), loadNgramsTable, Versioned(..))
+import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
-import Gargantext.Types (TermList(..))
+import Gargantext.Types (TermList)
 import Gargantext.Utils.Reactix ( scuff )
 
-nge :: String -> Tuple String NgramsElement
-nge word = Tuple word elem where
-  elem = NgramsElement
-    { ngrams: word, list: StopTerm
-    , occurrences: 1, parent: Nothing
-    , root: Nothing, children: Set.empty }
+type DocPath = { nodeId :: Int, listIds :: Array Int, tabType :: TabType }
 
-testTable :: NgramsTable
-testTable = NgramsTable $ Map.fromFoldable $ nge <$> words
-  where words = [ "the", "quick", "brown", "fox", "jumped", "over", "lazy", "dog" ]
+type NodeDocument = NodePoly Document
 
-type State =
-  { document    :: Maybe (NodePoly Document)
-  , ngramsTable :: Maybe NgramsTable
-  , inputValue  :: String
+type LoadedData =
+  { document    :: NodeDocument
+  , ngramsTable :: VersionedNgramsTable }
+
+type LoadedDataProps = Loader.InnerProps DocPath LoadedData ()
+
+-- This is a subpart of NgramsTable.State.
+type State = CoreState ()
+
+initialState :: forall props others
+              . { loaded :: { ngramsTable :: VersionedNgramsTable | others } | props }
+             -> State
+initialState {loaded: {ngramsTable: Versioned {version}}} =
+  { ngramsTablePatch: mempty
+  , ngramsVersion:    version
   }
 
-initialState :: {} -> State
-initialState {} =
-  { document: Nothing
-  , ngramsTable: (Just testTable)
-  , inputValue: ""
-  }
-
+-- This is a subset of NgramsTable.Action.
 data Action
-  = Load Int Int
-  | ChangeString String
-  | SetInput String
+  = SetTermListItem NgramsTerm (Replace TermList)
+  | AddNewNgram NgramsTerm TermList
+  | Refresh
 
 newtype Status = Status { failed    :: Int
                         , succeeded :: Int
@@ -135,7 +131,7 @@ data Document
     --, text               :: Maybe String
     }
 
-defaultNodeDocument :: NodePoly Document
+defaultNodeDocument :: NodeDocument
 defaultNodeDocument =
   NodePoly { id : 0
            , typename : 0
@@ -277,95 +273,99 @@ instance decodeDocument :: DecodeJson Document
                       --, text
                       }
 
-------------------------------------------------------------------------
-performAction :: PerformAction State {} Action
-performAction (Load lId nId) _ _ = do
-  node <- lift $ getNode (Just nId)
-  (Versioned {version:_version, data:table}) <- lift $ loadNgramsTable {nodeId : nId
-                                  , listIds : [lId]
-                                  , params : { offset : 0, limit : 100, orderBy: Nothing}
-                                  , tabType : (TabDocument (TabNgramType CTabTerms))
-                                  , searchQuery : ""
-                                  , termListFilter : Nothing
-                                  , termSizeFilter : Nothing
-                                   }
-  
-  void $ modifyState $ _document    ?~ node
-  void $ modifyState $ _ngramsTable ?~ table
-  logs $ "Node Document " <> show nId <> " fetched."
-performAction (ChangeString ps) _ _ = pure unit
-performAction (SetInput ps) _ _ = void <$> modifyState $ _ { inputValue = ps }
-
-
-getNode :: Maybe Int -> Aff (NodePoly Document)
-getNode = get <<< toUrl Back Node
-
-_document :: Lens' State (Maybe (NodePoly Document))
-_document = lens (\s -> s.document) (\s ss -> s{document = ss})
-
-_ngramsTable :: Lens' State (Maybe NgramsTable)
-_ngramsTable = lens (\s -> s.ngramsTable) (\s ss -> s{ngramsTable = ss})
-
-
-------------------------------------------------------------------------
-
-docview :: Spec State {} Action
-docview = simpleSpec performAction render
+docViewSpec :: Spec State LoadedDataProps Action
+docViewSpec = simpleSpec performAction render
   where
-    render :: Render State {} Action
-    render dispatch _ state _ =
-      [
-          div [className "container1"]
+    performAction :: PerformAction State LoadedDataProps Action
+    performAction Refresh {path: {nodeId, listIds, tabType}} {ngramsVersion} = do
+        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
+    performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
+        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+      where
+        pe = NgramsPatch { patch_list: pl, patch_children: mempty }
+        pt = PatchMap $ Map.singleton n pe
+    performAction (AddNewNgram ngram termList) {path: params} _ =
+      lift $ addNewNgram ngram (Just termList) params
+
+    render :: Render State LoadedDataProps Action
+    render dispatch { path: pageParams
+                    , loaded: { ngramsTable: Versioned { data: initTable }, document }
+                    , dispatch: loaderDispatch }
+                    { ngramsTablePatch }
+                    _reactChildren =
+      [ autoUpdateElt { duration: 3000
+                      , effect:   dispatch Refresh
+                      }
+      , div [className "container1"]
+        [
+          div [className "row"]
           [
-            div [className "row"]
-            [
-              div [className "col-md-8"]
-              [ h4 [] [annotate document.title]
-              , ul [className "list-group"]
-                [ li' [ span [] [text' document.source]
-                      , badge "source"
-                      ]
-                
-                -- TODO add href to /author/ if author present in
-                , li' [ span [] [text' document.authors]
-                      , badge "authors"
-                      ]
-                
-                , li' [ span [] [text' document.publication_date]
-                      , badge "date"
-                      ]
-                ]
-              , badge "abstract"
-              , annotate document.abstract
-              , div [className "jumbotron"]
-                [ p [] [text "Empty Full Text"]
-                ]
+            div [className "col-md-8"]
+            [ h4 [] [annotate doc.title]
+            , ul [className "list-group"]
+              [ li' [ span [] [text' doc.source]
+                    , badge "source"
+                    ]
+              -- TODO add href to /author/ if author present in
+              , li' [ span [] [text' doc.authors]
+                    , badge "authors"
+                    ]
+              , li' [ span [] [text' doc.publication_date]
+                    , badge "date"
+                    ]
+              ]
+            , badge "abstract"
+            , annotate doc.abstract
+            , div [className "jumbotron"]
+              [ p [] [text "Empty Full Text"]
               ]
             ]
           ]
+        ]
       ]
         where
-          annotate t = scuff $ AnnotatedField.annotatedField { ngrams: maybe (NgramsTable Map.empty) identity state.ngramsTable, text: t }
+          ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
+          setTermList ngram Nothing        newList = dispatch $ AddNewNgram ngram newList
+          setTermList ngram (Just oldList) newList = dispatch $ SetTermListItem ngram (replace oldList newList)
+          annotate text = scuff $ AnnotatedField.annotatedField { ngrams: ngramsTable, setTermList, text }
           li' = li [className "list-group-item justify-content-between"]
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]
-          NodePoly {hyperdata : Document document} = 
-            maybe defaultNodeDocument identity state.document
+          NodePoly {hyperdata : Document doc} = document
 
-findInDocument :: (Document -> Maybe String) -> State -> Maybe String
-findInDocument f state =
-  do (NodePoly d) <- state.document
-     f d.hyperdata
+layout :: Spec {} {nodeId :: Int, listId :: Int} Void
+layout = cmapProps (\{nodeId, listId} -> {nodeId, listIds: [listId], tabType})
+       $ simpleSpec defaultPerformAction render
+  where
+    tabType = TabDocument (TabNgramType CTabTerms)
+    render :: Render {} DocPath Void
+    render _ path _ _ =
+      [ documentLoader
+        { path
+        , component: createClass "DocumentView" docViewSpec initialState
+        } ]
 
-aryPS :: Array String
-aryPS = ["Map", "Main", "Stop"]
+------------------------------------------------------------------------
 
-aryPS1 :: Array String
-aryPS1 = ["Nothing Selected","STOPLIST", "MAINLIST", "MAPLIST"]
+loadDocument :: Int -> Aff NodeDocument
+loadDocument = get <<< toUrl Back Node <<< Just
 
+loadData :: DocPath -> Aff LoadedData
+loadData {nodeId, listIds, tabType} = do
+  document <- loadDocument nodeId
+  ngramsTable <- loadNgramsTable
+    { nodeId
+    , listIds: listIds
+    , params: { offset : 0, limit : 100, orderBy: Nothing}
+    , tabType
+    , searchQuery : ""
+    , termListFilter : Nothing
+    , termSizeFilter : Nothing
+    }
+  pure {document, ngramsTable}
 
-optps :: String -> ReactElement
-optps val = option [ value  val ] [text  val]
+documentLoaderClass :: ReactClass (Loader.Props DocPath LoadedData)
+documentLoaderClass = Loader.createLoaderClass "DocumentLoader" loadData
 
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value
+documentLoader :: Loader.Props' DocPath LoadedData -> ReactElement
+documentLoader props = React.createElement documentLoaderClass props []

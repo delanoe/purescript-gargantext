@@ -2,7 +2,7 @@
 module Gargantext.Components.Annotation.Menu where
 
 
-import Prelude ( Unit, (==), ($), (<>), unit, pure )
+import Prelude ( Unit, (==), ($), (<>), unit, pure, otherwise )
 import Data.Array as A
 import Data.Maybe ( Maybe(..), maybe' )
 import Effect ( Effect )
@@ -15,35 +15,36 @@ import Gargantext.Types ( TermList(..), termListName )
 import Gargantext.Components.Annotation.Utils ( termClass )
 
 import Gargantext.Components.ContextMenu.ContextMenu as CM
+import Gargantext.Utils.Selection (Selection, selectionToString)
 
-type Props = ( list :: Maybe TermList )
+type Props =
+  ( sel :: Selection
+  , list :: Maybe TermList
+  , setList :: TermList -> Effect Unit
+  )
 
-type AnnotationMenu = { x :: Number, y :: Number, list :: Maybe TermList }
+type AnnotationMenu = { x :: Number, y :: Number | Props }
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
 annotationMenu :: (Maybe AnnotationMenu -> Effect Unit) -> AnnotationMenu -> R.Element
-annotationMenu setMenu { x,y,list } =
-  CM.contextMenu { x,y,setMenu } [ R.createElement annotationMenuCpt {list} [] ]
+annotationMenu setMenu { x,y,sel,list,setList } =
+  CM.contextMenu { x,y,setMenu } [
+    R.createElement annotationMenuCpt {sel,list,setList} []
+  ]
 
 annotationMenuCpt :: R.Component Props
 annotationMenuCpt = R.hooksComponent "Annotation.Menu" cpt
   where
-    cpt { list } _ = pure $ R.fragment $ children list
-    children l = A.mapMaybe (\l' -> addToList l' l) [ GraphTerm, CandidateTerm, StopTerm ]
+    cpt props _ = pure $ R.fragment $ children props
+    children props = A.mapMaybe (addToList props) [ GraphTerm, CandidateTerm, StopTerm ]
 
 -- | Given the TermList to render the item for zand the Maybe TermList the item may belong to, possibly render the menuItem
-addToList :: TermList -> Maybe TermList -> Maybe R.Element
-addToList t (Just t')
-  | t == t' = Nothing
-  | true = addToList t Nothing
-addToList t _ = Just $ CM.contextMenuItem [ link ]
+addToList :: Record Props -> TermList -> Maybe R.Element
+addToList {list: Just t'} t
+  | t == t'   = Nothing
+addToList {setList} t = Just $ CM.contextMenuItem [ link ]
   where link = HTML.a { onClick: click, className: className } [ HTML.text label ]
         label = "Add to " <> termListName t
         className = termClass t
-        click = mkEffectFn1 $ \_ -> addToTermList t
-
--- TODO: what happens when we add to a term list?
-addToTermList :: TermList -> Effect Unit
-addToTermList _ = pure unit
-
+        click = mkEffectFn1 $ \_ -> setList t

@@ -166,10 +166,11 @@ pathUrl c (GetNgrams
                     _           -> pathUrl c (NodeAPI Url_Document) i
 
 
-pathUrl c (PutNgrams t listid) i =
-    pathUrl c (NodeAPI Node) i <> "/ngrams?ngramsType=" <> showTabType' t <> listid'
-  where
-    listid' = maybe "" (\x -> "&list=" <> show x) listid
+pathUrl c (PutNgrams t listid termList) i =
+    pathUrl c (NodeAPI Node) i <> "/ngrams?ngramsType="
+      <> showTabType' t
+      <> maybe "" (\x -> "&list=" <> show x) listid
+      <> foldMap (\x -> "&listType=" <> show x) termList
 pathUrl c Auth Nothing = c.prePath <> "auth"
 pathUrl c Auth (Just _) = "impossible" -- TODO better types
 pathUrl c (NodeAPI nt) i = c.prePath <> nodeTypeUrl nt <> (maybe "" (\i' -> "/" <> show i') i)
@@ -274,7 +275,7 @@ data Path
       , termSizeFilter :: Maybe TermSize
       , searchQuery    :: String
       }
-  | PutNgrams TabType (Maybe ListId)
+  | PutNgrams TabType (Maybe ListId) (Maybe TermList)
   -- ^ The name is not good. In particular this URL is used both in PUT and POST.
   | NodeAPI NodeType
   | Search  { {-id :: Int

@@ -12,33 +12,35 @@
 module Gargantext.Components.Annotation.AnnotatedField where
 
 import Prelude
-import Data.Map as Map
+import Data.Lens ((^?), _Just)
+import Data.Lens.At (at)
 import Data.Maybe ( Maybe(..), maybe, maybe' )
-import Data.Lens ( Lens', lens )
-import Data.Traversable ( traverse_ )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
-import DOM.Simple.Console
 import DOM.Simple.Event as DE
 import Effect ( Effect )
-import Effect.Uncurried (mkEffectFn1)
+import Effect.Uncurried ( mkEffectFn1 )
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
-import Gargantext.Types ( TermList(..) )
+import Gargantext.Types ( TermList )
 import Gargantext.Components.Annotation.Utils ( termClass )
-import Gargantext.Components.NgramsTable ( NgramsTable(..), highlightNgrams )
-import Gargantext.Components.ContextMenu.ContextMenu as CM
+import Gargantext.Components.NgramsTable.Core ( NgramsTerm, NgramsTable(..), _NgramsElement, _list, highlightNgrams )
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu )
 import Gargantext.Utils.Selection as Sel
 
 type Run = Tuple String (Maybe TermList)
 
-type Props = ( ngrams :: NgramsTable, text :: Maybe String )
+type Props =
+  ( ngrams      :: NgramsTable
+  , setTermList :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit
+  , text        :: Maybe String
+  )
 
-defaultProps :: Record Props
-defaultProps = { ngrams: NgramsTable Map.empty, text: Nothing }
+-- UNUSED
+-- defaultProps :: Record Props
+-- defaultProps = { ngrams: NgramsTable Map.empty, text: Nothing, setTermList: \_ _ _ -> pure unit }
 
 annotatedField :: Record Props -> R.Element
 annotatedField p = R.createElement annotatedFieldComponent p []
@@ -46,14 +48,15 @@ annotatedField p = R.createElement annotatedFieldComponent p []
 annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
   where
-    runs props =
-      HTML.div { className: "annotated-field-runs" } (map annotateRun $ compile props)
-    cpt props _ = do
+    cpt {ngrams,setTermList,text} _ = do
       menu /\ setMenu <- R.useState $ \_ -> pure Nothing
       let wrapperProps =
             { className: "annotated-field-wrapper"
-            , onContextMenu: mkEffectFn1 (maybeShowMenu setMenu props.ngrams) }
-      pure $ HTML.div wrapperProps [ maybeAddMenu setMenu (runs props) menu]
+            , onContextMenu: mkEffectFn1 (maybeShowMenu setMenu setTermList ngrams)
+            }
+          runs =
+            HTML.div { className: "annotated-field-runs" } $ map annotateRun $ compile ngrams text
+      pure $ HTML.div wrapperProps [maybeAddMenu setMenu runs menu]
 
 maybeAddMenu
   :: (Maybe AnnotationMenu -> Effect Unit)
@@ -63,17 +66,16 @@ maybeAddMenu
 maybeAddMenu setMenu e (Just props) = annotationMenu setMenu props <> e
 maybeAddMenu _ e _ = e
 
-compile :: Record Props -> Array Run
-compile props = runs props.text
-  where runs = maybe [] (highlightNgrams props.ngrams)
+compile :: NgramsTable -> Maybe String -> Array Run
+compile ngrams = maybe [] (highlightNgrams ngrams)
 
 maybeShowMenu
-  :: forall t
-  .  (Maybe AnnotationMenu -> Effect Unit)
+  :: (Maybe AnnotationMenu -> Effect Unit)
+  -> (NgramsTerm -> Maybe TermList -> TermList -> Effect Unit)
   -> NgramsTable
   -> E.SyntheticEvent DE.MouseEvent
   -> Effect Unit
-maybeShowMenu setMenu ngrams event = do
+maybeShowMenu setMenu setTermList ngrams event = do
   s <- Sel.getSelection
   case s of
     Just sel -> do
@@ -81,13 +83,15 @@ maybeShowMenu setMenu ngrams event = do
         "" -> pure unit
         sel' -> do
           let x = E.clientX event
-          let y = E.clientY event
+              y = E.clientY event
+              list = findNgram ngrams sel'
+              setList = setTermList sel' list
           E.preventDefault event
-          setMenu $ Just { x, y, list: findNgram ngrams sel' }
+          setMenu $ Just { x, y, sel, list, setList }
     Nothing -> pure unit
 
 findNgram :: NgramsTable -> String -> Maybe TermList
-findNgram _ _ = Nothing
+findNgram (NgramsTable m) s = m ^? at s <<< _Just <<< _NgramsElement <<< _list
 
 -- Runs
 

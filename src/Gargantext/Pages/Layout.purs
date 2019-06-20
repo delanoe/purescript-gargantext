@@ -6,7 +6,6 @@ import Gargantext.Pages.Layout.Actions (Action(..))
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 -- import Gargantext.Pages.Corpus.Tabs as TV
 
-import Gargantext.Pages.Corpus.Document       as Document
 import Gargantext.Pages.Corpus.Graph          as GE
 -- import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
 
@@ -51,7 +50,6 @@ dispatchAction dispatcher _ (Folder id) = do
 
 dispatchAction dispatcher _ (Document i n) = do
   dispatcher $ SetRoute $ Document i n
-  dispatcher $ DocumentViewA $ Document.Load i n
 
 dispatchAction dispatcher _ (PGraphExplorer nid) = do
   dispatcher $ SetRoute $ PGraphExplorer nid
