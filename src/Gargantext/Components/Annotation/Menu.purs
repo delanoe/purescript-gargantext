@@ -15,16 +15,23 @@ import Gargantext.Types ( TermList(..), termListName )
 import Gargantext.Components.Annotation.Utils ( termClass )
 
 import Gargantext.Components.ContextMenu.ContextMenu as CM
+import Gargantext.Utils.Selection (Selection, selectionToString)
 
-type Props = ( list :: Maybe TermList )
+type Props =
+  ( sel :: Selection
+  , list :: Maybe TermList
+  , setList :: TermList -> Effect Unit
+  )
 
 type AnnotationMenu = { x :: Number, y :: Number | Props }
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
 annotationMenu :: (Maybe AnnotationMenu -> Effect Unit) -> AnnotationMenu -> R.Element
-annotationMenu setMenu { x,y,list } =
-  CM.contextMenu { x,y,setMenu } [ R.createElement annotationMenuCpt {list} [] ]
+annotationMenu setMenu { x,y,sel,list,setList } =
+  CM.contextMenu { x,y,setMenu } [
+    R.createElement annotationMenuCpt {sel,list,setList} []
+  ]
 
 annotationMenuCpt :: R.Component Props
 annotationMenuCpt = R.hooksComponent "Annotation.Menu" cpt
@@ -36,13 +43,8 @@ annotationMenuCpt = R.hooksComponent "Annotation.Menu" cpt
 addToList :: Record Props -> TermList -> Maybe R.Element
 addToList {list: Just t'} t
   | t == t'   = Nothing
-addToList props t = Just $ CM.contextMenuItem [ link ]
+addToList {setList} t = Just $ CM.contextMenuItem [ link ]
   where link = HTML.a { onClick: click, className: className } [ HTML.text label ]
         label = "Add to " <> termListName t
         className = termClass t
-        click = mkEffectFn1 $ \_ -> addToTermList props t
-
--- TODO: what happens when we add to a term list?
-addToTermList :: Record Props -> TermList -> Effect Unit
-addToTermList _ _ = pure unit
-
+        click = mkEffectFn1 $ \_ -> setList t

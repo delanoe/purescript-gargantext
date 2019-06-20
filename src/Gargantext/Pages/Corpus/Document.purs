@@ -48,7 +48,7 @@ initialState {loaded: {ngramsTable: Versioned {version}}} =
 -- This is a subset of NgramsTable.Action.
 data Action
   = SetTermListItem NgramsTerm (Replace TermList)
-  | AddNewNgram NgramsTerm
+  | AddNewNgram NgramsTerm TermList
   | Refresh
 
 newtype Status = Status { failed    :: Int
@@ -284,8 +284,8 @@ docViewSpec = simpleSpec performAction render
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
         pt = PatchMap $ Map.singleton n pe
-    performAction (AddNewNgram ngram) {path: params} _ =
-      lift $ addNewNgram ngram params
+    performAction (AddNewNgram ngram termList) {path: params} _ =
+      lift $ addNewNgram ngram (Just termList) params
 
     render :: Render State LoadedDataProps Action
     render dispatch { path: pageParams
@@ -325,7 +325,9 @@ docViewSpec = simpleSpec performAction render
       ]
         where
           ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
-          annotate text = scuff $ AnnotatedField.annotatedField { ngrams: ngramsTable, text }
+          setTermList ngram Nothing        newList = dispatch $ AddNewNgram ngram newList
+          setTermList ngram (Just oldList) newList = dispatch $ SetTermListItem ngram (replace oldList newList)
+          annotate text = scuff $ AnnotatedField.annotatedField { ngrams: ngramsTable, setTermList, text }
           li' = li [className "list-group-item justify-content-between"]
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]

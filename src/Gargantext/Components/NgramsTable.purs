@@ -233,7 +233,7 @@ ngramsTableSpec = simpleSpec performAction render
         -- TODO ROOT-UPDATE
         -- patch the root of the child to be equal to the root of the parent.
     performAction (AddNewNgram ngram) {path: params} _ =
-      lift $ addNewNgram ngram params
+      lift $ addNewNgram ngram Nothing params
 
     render :: Render State LoadedNgramsTableProps Action
     render dispatch { path: pageParams

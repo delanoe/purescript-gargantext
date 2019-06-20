@@ -496,7 +496,7 @@ type CoreState s =
 
 putTable :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
 putTable {nodeId, listIds, tabType} =
-  put (toUrl Back (PutNgrams tabType (head listIds)) $ Just nodeId)
+  put (toUrl Back (PutNgrams tabType (head listIds) Nothing) $ Just nodeId)
 
 commitPatch :: forall s. {nodeId :: Int, listIds :: Array Int, tabType :: TabType}
             -> Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
@@ -524,9 +524,9 @@ convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
 
-addNewNgram :: forall s. NgramsTerm -> CoreParams s -> Aff Unit
-addNewNgram ngram {nodeId, listIds, tabType} =
-  post (toUrl Back (PutNgrams tabType (head listIds)) $ Just nodeId) [ngram]
+addNewNgram :: forall s. NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
+addNewNgram ngram mayList {nodeId, listIds, tabType} =
+  post (toUrl Back (PutNgrams tabType (head listIds) mayList) $ Just nodeId) [ngram]
 
 ngramsLoaderClass :: Loader.LoaderClass PageParams VersionedNgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadNgramsTable
