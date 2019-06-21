@@ -6,8 +6,13 @@ import Unsafe.Coerce (unsafeCoerce)
 import Control.Monad.Cont.Trans (lift)
 import Data.Array (filter)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
+import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, runAff)
@@ -16,11 +21,13 @@ import FFI.Simple ((..))
 import Partial.Unsafe (unsafePartial)
 import React (ReactClass, ReactElement)
 import React as React
-import React.DOM (a, button, div, h5, i, input, li, span, text, ul, b, u)
+import React.DOM (a, button, div, h5, i, input, li, span, text, ul, b, u, select, option)
 import React.DOM.Props (_id, _type, className, href, title, onClick, onDrop, onDragOver, onInput, placeholder, style, defaultValue, _data)
 import React.DOM.Props as DOM
 import React.SyntheticEvent as E
 import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, simpleSpec, modifyState_)
+import URI.Extra.QueryPairs as QP
+import URI.Query as Q
 import Web.File.File (toBlob)
 import Web.File.FileReader.Aff (readAsText)
 import Web.File.FileList (FileList, item)
@@ -28,6 +35,8 @@ import Web.File.FileList (FileList, item)
 import Gargantext.Config (toUrl, End(..), NodeType(..), urlPlease)
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
 import Gargantext.Components.Loader as Loader
+import Gargantext.Types (class ToQuery, toQuery)
+import Gargantext.Utils (id)
 
 type Name = String
 type Open = Boolean
@@ -48,9 +57,21 @@ filterNTree p (NTree x ary) =
   NTree x $ map (filterNTree p) $ filter (\(NTree a _) -> p a) ary
 
 type FTree = NTree LNode
+
+-- file upload types
 data FileType = CSV | PresseRIS
-type UploadFileContents = String
+derive instance genericFileType :: Generic FileType _
+instance eqFileType :: Eq FileType where
+    eq = genericEq
+instance showFileType :: Show FileType where
+    show = genericShow
+newtype UploadFileContents = UploadFileContents String
+data DroppedFile = DroppedFile {
+    contents :: UploadFileContents
+  , fileType :: Maybe FileType
+    }
 type FileHash = String
+
 
 data Action =   ShowPopOver  ID
               | ToggleFolder ID
@@ -81,8 +102,7 @@ initialNode :: { createNode :: Boolean
                , open :: Boolean
                , popOver :: Boolean
                , renameNodeValue :: String
-               , droppedFileContents :: Maybe UploadFileContents
-               , showFileTypeBox :: Boolean
+               , droppedFile :: Maybe DroppedFile
                , showRenameBox :: Boolean
                }
 initialNode = { id : 3
@@ -93,8 +113,7 @@ initialNode = { id : 3
               , renameNodeValue : ""
               , createNode : false
               , nodeValue : "InitialNode"
-              , droppedFileContents : Nothing
-              , showFileTypeBox : false
+              , droppedFile : Nothing
               , showRenameBox : false}
 
 initialState :: State
@@ -179,8 +198,10 @@ showPopOverNode sid (LNode node) =
   LNode $ node {showRenameBox = toggleIf (sid == node.id) node.showRenameBox}
 
 toggleFileTypeBox :: ID -> UploadFileContents -> LNode -> LNode
-toggleFileTypeBox sid contents (LNode node@{droppedFileContents: _, showFileTypeBox: true}) = LNode $ node {showFileTypeBox = true, droppedFileContents = Just contents}
-toggleFileTypeBox sid _ (LNode node) = LNode $ node {showFileTypeBox = false, droppedFileContents = Nothing}
+toggleFileTypeBox sid contents (LNode node@{id, droppedFile: Nothing}) | sid == id = LNode $ node {droppedFile = droppedFile}
+  where
+    droppedFile = Just $ DroppedFile {contents: contents, fileType: Nothing}
+toggleFileTypeBox sid _ (LNode node) = LNode $ node {droppedFile = Nothing}
 
 -- TODO: DRY, NTree.map
 showCreateNode :: ID -> NTree LNode -> NTree LNode
@@ -233,8 +254,7 @@ exampleTree = NTree (LNode { id : 1
                            , renameNodeValue : ""
                            , createNode : false
                            , nodeValue : ""
-                           , droppedFileContents: Nothing
-                           , showFileTypeBox: false
+                           , droppedFile: Nothing
                            , showRenameBox : false}) []
 
 -- exampleTree :: NTree LNode
@@ -317,7 +337,7 @@ treeview = simpleSpec defaultPerformAction render
                    } ]
 
 renameTreeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement
-renameTreeView d s@(NTree (LNode {id, name, renameNodeValue, showRenameBox }) ary) nid  =
+renameTreeView d s@(NTree (LNode {id, name, renameNodeValue, popOver: true, showRenameBox }) ary) nid  =
   div [ className ""
       , _id "rename-tooltip"
       , _data {toggle: "tooltip", placement: "right"}
@@ -405,17 +425,17 @@ renameTreeView d s@(NTree (LNode {id, name, renameNodeValue, showRenameBox }) ar
                     ] []
                 ]
     renameBoxLabel = div [] [ text name ]
+renameTreeView _ _ _ = div [] []
 
 
 createNodeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement
-createNodeView d s@(NTree (LNode { nodeValue }) ary) nid  =
+createNodeView d s@(NTree (LNode { createNode: true, nodeValue }) ary) nid  =
   div [ className ""
       , _id "create-node-tooltip"
       , _data {toggle: "tooltip", placement: "right"}
       , title "Create new node"] $
   [ div [className "panel panel-default"]
-    [
-      div [className "panel-heading"]
+    [ div [className "panel-heading"]
       [
         div [className "row"]
         [ div [ className "col-md-10"]
@@ -427,7 +447,7 @@ createNodeView d s@(NTree (LNode { nodeValue }) ary) nid  =
           ]
         ]
       ]
-    ,div [className "panel-body"]
+    , div [className "panel-body"]
      [
        input [ _type "text"
              , placeholder "Create Node"
@@ -444,10 +464,46 @@ createNodeView d s@(NTree (LNode { nodeValue }) ary) nid  =
       ]
     ]
   ]
+createNodeView _ _ _ = div [] []
 
 
-renameTreeViewDummy :: (Action -> Effect Unit) -> FTree -> ReactElement
-renameTreeViewDummy d s = div [] []
+fileTypeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement
+fileTypeView d s@(NTree (LNode {droppedFile: Just (DroppedFile {contents, fileType: Nothing})}) ary) nid =
+  div [ className ""
+      , _id "file-type-tooltip"
+      , _data {toggle: "tooltip", placement: "right"}
+      , title "Choose file type"] $
+  [ div [className "panel panel-default"]
+    [ div [className "panel-heading"]
+      [
+        div [className "row"]
+        [ div [ className "col-md-10"]
+          [ h5 [] [text  "Choose file type"] ]
+        , div [className "col-md-2"]
+          [ a [className "btn text-danger glyphitem glyphicon glyphicon-remove"
+              , onClick $ \_ -> d $ PrepareUploadFile nid contents
+              , title "Close"] []
+          ]
+        ]
+      ]
+    , div [className "panel-body"]
+     [
+       select [ className "col-md-12 form-control"
+              --, onInput \e -> d (SetNodeValue (unsafeEventValue e) nid)
+              ]
+       (map renderOption [CSV, PresseRIS])
+     ]
+    , div [className "panel-footer"]
+      [ button [className "btn btn-success"
+               , _type "button"
+               , onClick \_ -> d $ (UploadFile nid CSV contents)
+               ] [text "Upload"]
+      ]
+    ]
+  ]
+  where
+    renderOption opt = option [] [ text $ show opt ]
+fileTypeView d s@(NTree (LNode node) ary) nid = div [] []
 
 popOverValue :: FTree -> Boolean
 popOverValue (NTree (LNode {popOver}) ary) = popOver
@@ -457,7 +513,7 @@ getCreateNodeValue (NTree (LNode {nodeValue}) ary) = nodeValue
 
 
 toHtml :: (Action -> Effect Unit) -> FTree -> Maybe ID -> ReactElement
-toHtml d s@(NTree (LNode {id, name, nodeType, popOver, createNode}) []) n =
+toHtml d s@(NTree (LNode {id, name, nodeType}) []) n =
   ul []
   [
     li [] $ [span []
@@ -466,12 +522,13 @@ toHtml d s@(NTree (LNode {id, name, nodeType, popOver, createNode}) []) n =
         , onClick $ (\e -> d $ CurrentNode id)
         ]
       [ if n == (Just id) then u [] [b [] [text ("| " <> name <> " |    ")]] else text (name <> "    ") ]
-    , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
-    , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
+    , renameTreeView d s id
+    , createNodeView d s id
+    , fileTypeView d s id
     ]
   ]]
 --- need to add renameTreeview value to this function
-toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, createNode}) ary) n =
+toHtml d s@(NTree (LNode {id, name, nodeType, open}) ary) n =
     ul []
   [ li [] $
     ( [span [onDrop dropHandler, onDragOver onDragOverHandler] [
@@ -485,9 +542,9 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, createNode}) ary) n
          , _id "rename"
          , onClick $ (\_-> d $ (ShowPopOver id))
          ] []
-       , if (popOver == true) then (renameTreeView d s id) else (renameTreeViewDummy d s)
-       , if (createNode == true) then (createNodeView d s id) else (renameTreeViewDummy d s)
-
+       , renameTreeView d s id
+       , createNodeView d s id
+       , fileTypeView d s id
        ]
       ] <> if open then
         map (\s -> toHtml d s n) ary
@@ -504,7 +561,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open, popOver, createNode}) ary) n
       let blob = toBlob $ ff
       void $ runAff (\_ -> pure unit) do
         contents <- readAsText blob
-        liftEffect $ d $ PrepareUploadFile id contents
+        liftEffect $ d $ PrepareUploadFile id (UploadFileContents contents)
     onDragOverHandler = \e -> do
       -- prevent redirection when file is dropped
       -- https://stackoverflow.com/a/6756680/941471
@@ -524,8 +581,7 @@ newtype LNode = LNode { id :: ID
                       , renameNodeValue :: String
                       , nodeValue :: String
                       , createNode :: Boolean
-                      , droppedFileContents :: Maybe UploadFileContents
-                      , showFileTypeBox :: Boolean
+                      , droppedFile :: Maybe DroppedFile
                       , showRenameBox :: Boolean}
 
 derive instance newtypeLNode :: Newtype LNode _
@@ -544,8 +600,7 @@ instance decodeJsonLNode :: DecodeJson LNode where
                  , renameNodeValue : ""
                  , createNode : false
                  , nodeValue : ""
-                 , droppedFileContents: Nothing
-                 , showFileTypeBox: false
+                 , droppedFile: Nothing
                  , showRenameBox : false}
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
@@ -593,11 +648,22 @@ renameNode renameNodeId = put $ toUrl Back Node (Just renameNodeId) <> "/rename"
 deleteNode :: ID -> Aff ID
 deleteNode = delete <<< toUrl Back Node <<< Just
 
--- TODO: fileType
+newtype FileUploadQuery = FileUploadQuery {
+    fileType :: FileType
+  }
+derive instance newtypeSearchQuery :: Newtype FileUploadQuery _
+instance fileUploadQueryToQuery :: ToQuery FileUploadQuery where
+  toQuery (FileUploadQuery {fileType}) =
+    QP.print id id $ QP.QueryPairs $
+         pair "fileType" fileType
+    where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
+          pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
+
 uploadFile :: ID -> FileType -> UploadFileContents -> Aff (Array FileHash)
-uploadFile id fileType fileContents = postWwwUrlencoded url fileContents
+uploadFile id fileType (UploadFileContents fileContents) = postWwwUrlencoded url fileContents
   where
-    url = toUrl Back Node (Just id) <> "/upload"
+    q = FileUploadQuery { fileType: fileType }
+    url = toUrl Back Node (Just id) <> "/upload" <> Q.print (toQuery q)
 
 -- UNUSED
 -- deleteNodes :: TODO -> Aff ID
