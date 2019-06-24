@@ -67,7 +67,6 @@ newtype LNode = LNode { id :: ID
                       , nodeType :: NodeType
                       , open :: Boolean
                       , popOver :: Boolean
-                      , renameNodeValue :: String
                       , nodeValue :: String
                       , createNode :: Boolean
                       , droppedFile :: Maybe DroppedFile
@@ -86,7 +85,6 @@ instance decodeJsonLNode :: DecodeJson LNode where
                  , nodeType
                  , open : true
                  , popOver : false
-                 , renameNodeValue : ""
                  , createNode : false
                  , nodeValue : ""
                  , droppedFile: Nothing
@@ -125,7 +123,6 @@ type FileHash = String
 
 data Action =   ShowPopOver  ID
               | ToggleFolder ID
-              | RenameNode   String ID
               | Submit       ID String
               | DeleteNode   ID
               | Create       ID
@@ -173,9 +170,6 @@ performAction (Submit rid name) _  _  = do
   void $ lift $ renameNode rid $ RenameValue {name}
   modifyState_ $ mapFTree $ map $ popOverNode rid
                               <<< onNode rid (\(LNode node) -> LNode (node { name = name }))
-
-performAction (RenameNode  r nid) _ _ =
-  modifyState_ $ mapFTree $ rename nid r
 
 performAction (CreateSubmit nid name nodeType) _ _ = do
   void $ lift $ createNode nid $ CreateValue {name, nodeType}
@@ -232,13 +226,6 @@ showCreateNode sid (NTree (LNode node@{id, createNode}) ary) =
   NTree (LNode $ node {createNode = createNode'}) $ map (showCreateNode sid) ary
   where
     createNode' = if sid == id then not createNode else createNode
-
--- TODO: DRY, NTree.map
-rename :: ID ->  String -> NTree LNode  -> NTree LNode
-rename sid v (NTree (LNode node@{id}) ary)  =
-  NTree (LNode $ node {renameNodeValue = rvalue}) $ map (rename sid  v) ary
-  where
-    rvalue = if sid == id then  v   else ""
 
 -- TODO: DRY, NTree.map
 setNodeValue :: ID ->  String -> NTree LNode  -> NTree LNode
@@ -315,96 +302,134 @@ treeview = simpleSpec defaultPerformAction render
                    , component: treeViewClass
                    } ]
 
-renameTreeView :: (Action -> Effect Unit) -> FTree -> ID -> ReactElement
-renameTreeView d s@(NTree (LNode {id, name, renameNodeValue, popOver: true, showRenameBox }) ary) nid  =
-  div [ className ""
-      , _id "rename-tooltip"
-      , _data {toggle: "tooltip", placement: "right"}
-      , title "Settings on right"] $
-  [ div [_id "arrow"] []
-  , div [ className "panel panel-default"
-        , style {border:"1px solid rgba(0,0,0,0.2)", boxShadow : "0 2px 5px rgba(0,0,0,0.2)"}]
-    [ div [className "panel-heading"]
-      [ div [ className "row" ] $
-        [ div [className (if (showRenameBox) then "col-md-10" else "col-md-8")]
-          [ renameBox showRenameBox ]
-        ] <> [ editIcon showRenameBox ] <> [
-          div [ className "col-md-2" ]
-          [ a [className "btn text-danger glyphitem glyphicon glyphicon-remove"
-              , onClick $ \_ -> d $ ShowPopOver nid
-              , title "Close"] []
+
+nodePopupView :: (Action -> Effect Unit) -> FTree -> R.Element
+nodePopupView d s@(NTree (LNode {id, name, popOver: true, showRenameBox }) ary) = R.createElement el {} []
+  where
+    el = R.hooksComponent "NodePopupView" cpt
+    cpt props _ = do
+      pure $ H.div tooltipProps $
+        [ H.div {id: "arrow"} []
+        , H.div { className: "panel panel-default"
+                , style: { border:"1px solid rgba(0,0,0,0.2)"
+                         , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"}
+                }
+          [ panelHeading
+          , panelBody
           ]
         ]
-      ]
-    , div [ className "panel-body"
-          , style {display:"flex", justifyContent : "center", backgroundColor: "white", border: "none"}]
-      [ div [className "col-md-4"]
-        [a [ style iconAStyle
-           , className (glyphicon "plus")
-           , _id "create"
-           , title "Create"
-           , onClick $ (\_ -> d $ (ToggleCreateNode id))]
-         []
-        ]
-      , div [className "col-md-4"]
-        [a [ style iconAStyle
-           , className (glyphicon "download-alt")
-           , _id "download"
-           , title "Download [WIP]"]
-         []
-        ]
-      , div [className "col-md-4"]
-        [a [ style iconAStyle
-           , className (glyphicon "duplicate")
-           , _id "duplicate"
-           , title "Duplicate [WIP]"]
-         []
-        ]
-      , div [className "col-md-4"]
-        [ a [ style iconAStyle
-            , className (glyphicon "trash")
-            , _id "rename2"
-            , title "Delete"
-            , onClick $ (\_-> d $ (DeleteNode id))]
-          []
-        ]
-      ]
-    ]
-  ]
-  where
-    iconAStyle = {color:"black", paddingTop: "6px", paddingBottom: "6px"}
-    glyphicon t = "glyphitem glyphicon glyphicon-" <> t
-    editIcon false = div [ className "col-md-2" ]
-                [ a [ style {color:"black"}
-                    , className "btn glyphitem glyphicon glyphicon-pencil"
-                    , _id "rename1"
-                    , title "Rename"
-                    , onClick $ (\_-> d $ (ShowRenameBox id))]
-                  []
+      where
+        tooltipProps = ({ className: ""
+                        , id: "node-popup-tooltip"
+                        , title: "Node settings"
+                        } .= "data-toggle" $ "tooltip") .= "data-placement" $ "right"
+        iconAStyle = {color:"black", paddingTop: "6px", paddingBottom: "6px"}
+        panelHeading =
+          H.div {className: "panel-heading"}
+          [ H.div {className: "row" }
+            (
+              [ H.div {className: if (showRenameBox) then "col-md-10" else "col-md-8"}
+                [ renameBox d s ]
+              ] <> [ editIcon showRenameBox ] <> [
+                H.div {className: "col-md-2"}
+                [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove"
+                      , onClick: mkEffectFn1 $ \_ -> d $ ShowPopOver id
+                      , title: "Close"} []
                 ]
-    editIcon true = div [] []
-    renameBox true = div [ className "from-group row-no-padding" ]
-                     [ div [className "col-md-8"]
-                       [ input [ _type "text"
-                               , placeholder "Rename Node"
-                               , defaultValue $ name
-                               , className "form-control"
-                               , onInput \e -> d (RenameNode (unsafeEventValue e) nid)
-                               ]
-                       ]
-                     , a [className "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
-                         , _type "button"
-                         , onClick \_ -> d $ (Submit nid renameNodeValue)
-                         , title "Rename"
-                         ] []
-                     , a [className "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
-                         , _type "button"
-                         , onClick \_ -> d $ (CancelRename nid)
-                         , title "Cancel"
-                         ] []
-                     ]
-    renameBox false = div [] [ text name ]
-renameTreeView _ _ _ = div [] []
+              ]
+            )
+          ]
+        glyphicon t = "glyphitem glyphicon glyphicon-" <> t
+        editIcon false = H.div {className: "col-md-2"}
+                         [ H.a {style: {color:"black"}
+                               , className: "btn glyphitem glyphicon glyphicon-pencil"
+                               , id: "rename1"
+                               , title: "Rename"
+                               , onClick: mkEffectFn1 $ (\_-> d $ (ShowRenameBox id))}
+                           []
+                         ]
+        editIcon true = H.div {} []
+        panelBody =
+          H.div {className: "panel-body"
+                , style: { display:"flex"
+                         , justifyContent : "center"
+                         , backgroundColor: "white"
+                         , border: "none"}}
+          [ H.div {className: "col-md-4"}
+            [ H.a {style: iconAStyle
+                  , className: (glyphicon "plus")
+                  , id: "create"
+                  , title: "Create"
+                  , onClick: mkEffectFn1 $ (\_ -> d $ (ToggleCreateNode id))}
+              []
+            ]
+          , H.div {className: "col-md-4"}
+            [ H.a {style: iconAStyle
+                  , className: (glyphicon "download-alt")
+                  , id: "download"
+                  , title: "Download [WIP]"}
+              []
+            ]
+          , H.div {className: "col-md-4"}
+            [ H.a {style: iconAStyle
+                  , className: (glyphicon "duplicate")
+                  , id: "duplicate"
+                  , title: "Duplicate [WIP]"}
+              []
+            ]
+          , H.div {className: "col-md-4"}
+            [ H.a {style: iconAStyle
+                  , className: (glyphicon "trash")
+                  , id: "rename2"
+                  , title: "Delete"
+                  , onClick: mkEffectFn1 $ (\_-> d $ (DeleteNode id))}
+              []
+            ]
+          ]
+nodePopupView _ _ = R.createElement el {} []
+  where
+    el = R.hooksComponent "CreateNodeView" cpt
+    cpt props _ = pure $ H.div {} []
+
+
+renameBox :: (Action -> Effect Unit) -> FTree -> R.Element
+renameBox d s@(NTree (LNode {id, name, showRenameBox: true}) _) = R.createElement el {} []
+  where
+    el = R.hooksComponent "RenameBox" cpt
+    cpt props _ = do
+      renameNodeName <- R.useState $ \_ -> pure name
+      pure $ H.div {className: "from-group row-no-padding"}
+        [ renameInput renameNodeName
+        , renameBtn renameNodeName
+        , cancelBtn
+        ]
+      where
+        renameInput (_ /\ setRenameNodeName) =
+          H.div {className: "col-md-8"}
+          [ H.input { _type: "text"
+                    , placeholder: "Rename Node"
+                    , defaultValue: name
+                    , className: "form-control"
+                    , onInput: mkEffectFn1 $ \e -> setRenameNodeName $ e .. "target" .. "value"
+                    }
+          ]
+        renameBtn (newName /\ _) =
+          H.a {className: "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
+              , _type: "button"
+              , onClick: mkEffectFn1 $ \_ -> d $ (Submit id newName)
+              , title: "Rename"
+              } []
+        cancelBtn =
+          H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
+              , _type: "button"
+              , onClick: mkEffectFn1 $ \_ -> d $ (CancelRename id)
+              , title: "Cancel"
+              } []
+renameBox _ s@(NTree (LNode {name}) _) = R.createElement el {} []
+  where
+    el = R.hooksComponent "RenameBox" cpt
+    cpt props _ = pure $ H.div {} [ H.text name ]
+
 
 createNodeView :: (Action -> Effect Unit) -> FTree -> R.Element
 createNodeView d s@(NTree (LNode {id, createNode: true, nodeValue}) _) = R.createElement el {} []
@@ -539,7 +564,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) []) n =
         , onClick $ (\e -> d $ CurrentNode id)
         ]
       [ if n == (Just id) then u [] [b [] [text ("| " <> name <> " |    ")]] else text (name <> "    ") ]
-    , renameTreeView d s id
+    , (R2.scuff $ nodePopupView d s)
     , (R2.scuff $ createNodeView d s)
     , (R2.scuff $ fileTypeView d s)
     ]
@@ -559,7 +584,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType, open}) ary) n =
          , _id "rename"
          , onClick $ (\_-> d $ (ShowPopOver id))
          ] []
-       , renameTreeView d s id
+       , (R2.scuff $ nodePopupView d s)
        , (R2.scuff $ createNodeView d s)
        , (R2.scuff $ fileTypeView d s)
        ]

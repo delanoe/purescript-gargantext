@@ -82,7 +82,7 @@ li#rename  #rename-a{
 }
 
 
-#rename-tooltip {
+#node-popup-tooltip {
     position : absolute;
     left : 96px;
     top:-64px;
@@ -161,7 +161,7 @@ text-align: center;
     transform: scale(1.4);
 }
 
-#rename-tooltip:hover {
+#node-popup-tooltip:hover {
     border:none;
 }
 
@@ -177,7 +177,7 @@ text-align: center;
     left: -9px;
 }
 
-#rename-tooltip a:hover
+#node-popup-tooltip a:hover
 {
     text-decoration:none;
 }
