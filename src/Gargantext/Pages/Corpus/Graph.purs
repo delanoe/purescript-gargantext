@@ -34,6 +34,7 @@ import DOM.Simple.Console (log2)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, CameraProps, getCameraProps, goTo, pauseForceAtlas2, sStyle, sigmaOnMouseMove, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
+import Gargantext.Components.RangeSlider as RangeSlider
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
@@ -43,6 +44,7 @@ import Gargantext.Prelude (flip)
 import Gargantext.Types (class Optional)
 import Gargantext.Utils (getter, toggleSet)
 import Gargantext.Utils.Range as Range
+import Gargantext.Utils.Reactix as R2
 import Math (cos, sin)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
@@ -621,16 +623,17 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                                                 ]
                   ]
                 , li [className "col-md-1"]
-                  [ span [] [text "Confluence"]
-                   ,input [ _type "range"
-                          , _id "confluence"
-                          , max "1.0"
-                          , defaultValue "1.0"
-                          , min "1.0"
-                          , onChange \e -> do
-                            let ratio = (100.0 - numberTargetValue e) / 100.0
-                            modCamera0 (const {ratio})
-                                                ]
+                  [ span [] [ text "Confluence" ]
+                  , R2.scuff $ RangeSlider.rangeSlider (confluenceProps \_ -> pure unit)
+                  -- ,input [ _type "range"
+                  --         , _id "confluence"
+                  --         , max "1.0"
+                  --         , defaultValue "1.0"
+                  --         , min "1.0"
+                  --         , onChange \e -> do
+                  --           let ratio = (100.0 - numberTargetValue e) / 100.0
+                  --           modCamera0 (const {ratio})
+                  --                               ]
                   ]
                 , li [className "col-md-1"]
                   [ span [] [text "MultiNode"]
@@ -787,6 +790,16 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
            ]
          ]
       ]
+
+confluenceProps :: (Range.Closed Number -> Effect Unit) -> Record RangeSlider.Props
+confluenceProps onChange =
+  { onChange
+  , bounds: Range.closedProbability
+  , initialValue: Range.closedProbability
+  , epsilon: 0.05
+  , step: 0.05
+  , width: 60.0
+  , height: 25.0 }
 
 
 getNodes :: Int -> Aff GraphData
