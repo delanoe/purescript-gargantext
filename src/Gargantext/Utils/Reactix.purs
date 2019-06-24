@@ -12,6 +12,8 @@ import Effect (Effect)
 import FFI.Simple ( (...), defineProperty )
 import React ( ReactElement )
 import Reactix as R
+import Reactix.DOM.HTML (ElemFactory)
+import Reactix.React (createElement)
 import Reactix.SyntheticEvent as RE
 import Unsafe.Coerce ( unsafeCoerce )
 newtype Point = Point { x :: Number, y :: Number }
@@ -40,3 +42,7 @@ useLayoutEffect1' :: forall a. a -> (Unit -> Effect Unit) -> R.Hooks Unit
 useLayoutEffect1' a f = R.useLayoutEffect1 a $ \_ ->
   do f unit
      pure $ \_ -> pure unit
+
+
+select :: ElemFactory
+select = createElement "select"

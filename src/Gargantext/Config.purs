@@ -10,7 +10,7 @@ toUrl Front Corpus 1 == "http://localhost:2015/#/corpus/1"
 module Gargantext.Config where
 
 import Prelude
-import Data.Argonaut (class DecodeJson, decodeJson)
+import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson)
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -258,6 +258,57 @@ instance showNodeType :: Show NodeType where
   show Tree          = "NodeTree"
   show NodeList      = "NodeList"
 
+readNodeType :: String -> NodeType
+readNodeType "NodeAnnuaire"  = Annuaire
+readNodeType "NodeDashboard" = Dashboard
+readNodeType "Document"      = Url_Document
+readNodeType "NodeFolder"    = Folder
+readNodeType "NodeGraph"     = Graph
+readNodeType "Individu"      = Individu
+readNodeType "Node"          = Node
+readNodeType "Nodes"         = Nodes
+readNodeType "NodeCorpus"    = Corpus
+readNodeType "NodeCorpusV3"  = CorpusV3
+readNodeType "NodeUser"      = NodeUser
+readNodeType "NodeContact"   = NodeContact
+readNodeType "Tree"          = Tree
+readNodeType "NodeList"      = NodeList
+readNodeType _               = Error
+{-
+------------------------------------------------------------
+instance ordNodeType :: Ord NodeType where
+  compare n1 n2 = compare (show n1) (show n2)
+
+instance eqNodeType :: Eq NodeType where
+  eq n1 n2  = eq (show n1) (show n2)
+-}
+------------------------------------------------------------
+instance decodeJsonNodeType :: DecodeJson NodeType where
+  decodeJson json = do
+    obj <- decodeJson json
+    pure $ readNodeType obj
+
+instance encodeJsonNodeType :: EncodeJson NodeType where
+  encodeJson nodeType = encodeJson $ show nodeType
+
+nodeTypeUrl :: NodeType -> Url
+nodeTypeUrl Annuaire  = "annuaire"
+nodeTypeUrl Corpus    = "corpus"
+nodeTypeUrl CorpusV3  = "corpus"
+nodeTypeUrl Dashboard = "dashboard"
+nodeTypeUrl Url_Document  = "document"
+nodeTypeUrl Error     = "ErrorNodeType"
+nodeTypeUrl Folder    = "folder"
+nodeTypeUrl Graph     = "graph"
+nodeTypeUrl Individu  = "individu"
+nodeTypeUrl Node      = "node"
+nodeTypeUrl Nodes      = "nodes"
+nodeTypeUrl NodeUser  = "user"
+nodeTypeUrl NodeContact = "contact"
+nodeTypeUrl Tree      = "tree"
+nodeTypeUrl NodeList  = "list"
+------------------------------------------------------------
+
 type ListId = Int
 
 data Path
@@ -365,50 +416,3 @@ derive instance genericTabType :: Generic TabType _
 instance showTabType :: Show TabType where
   show = genericShow
 
-------------------------------------------------------------
-nodeTypeUrl :: NodeType -> Url
-nodeTypeUrl Annuaire  = "annuaire"
-nodeTypeUrl Corpus    = "corpus"
-nodeTypeUrl CorpusV3  = "corpus"
-nodeTypeUrl Dashboard = "dashboard"
-nodeTypeUrl Url_Document  = "document"
-nodeTypeUrl Error     = "ErrorNodeType"
-nodeTypeUrl Folder    = "folder"
-nodeTypeUrl Graph     = "graph"
-nodeTypeUrl Individu  = "individu"
-nodeTypeUrl Node      = "node"
-nodeTypeUrl Nodes      = "nodes"
-nodeTypeUrl NodeUser  = "user"
-nodeTypeUrl NodeContact = "contact"
-nodeTypeUrl Tree      = "tree"
-nodeTypeUrl NodeList  = "list"
-
-readNodeType :: String -> NodeType
-readNodeType "NodeAnnuaire"  = Annuaire
-readNodeType "NodeDashboard" = Dashboard
-readNodeType "Document"      = Url_Document
-readNodeType "NodeFolder"    = Folder
-readNodeType "NodeGraph"     = Graph
-readNodeType "Individu"      = Individu
-readNodeType "Node"          = Node
-readNodeType "Nodes"         = Nodes
-readNodeType "NodeCorpus"    = Corpus
-readNodeType "NodeCorpusV3"  = CorpusV3
-readNodeType "NodeUser"      = NodeUser
-readNodeType "NodeContact"   = NodeContact
-readNodeType "Tree"          = Tree
-readNodeType "NodeList"      = NodeList
-readNodeType _               = Error
-{-
-------------------------------------------------------------
-instance ordNodeType :: Ord NodeType where
-  compare n1 n2 = compare (show n1) (show n2)
-
-instance eqNodeType :: Eq NodeType where
-  eq n1 n2  = eq (show n1) (show n2)
--}
-------------------------------------------------------------
-instance decodeJsonNodeType :: DecodeJson NodeType where
-  decodeJson json = do
-    obj <- decodeJson json
-    pure $ readNodeType obj
