@@ -2,20 +2,22 @@ module Gargantext.Utils.Reactix
   where
 
 import Prelude
-import Data.Maybe ( Maybe(..) )
-import Data.Nullable ( Nullable, null, toMaybe )
-import Data.Traversable ( traverse_ )
-import Data.Tuple ( Tuple(..) )
-import Data.Tuple.Nested ( (/\) )
+
 import DOM.Simple.Event as DE
+import Data.Maybe (Maybe(..))
+import Data.Nullable (Nullable, null, toMaybe)
+import Data.Traversable (traverse_)
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import FFI.Simple ( (...), defineProperty )
-import React ( ReactElement )
+import Effect.Uncurried (mkEffectFn1)
+import FFI.Simple ((...), defineProperty)
+import React (ReactElement)
 import Reactix as R
 import Reactix.DOM.HTML (ElemFactory)
 import Reactix.React (createElement)
 import Reactix.SyntheticEvent as RE
-import Unsafe.Coerce ( unsafeCoerce )
+import Unsafe.Coerce (unsafeCoerce)
 newtype Point = Point { x :: Number, y :: Number }
 
 -- | Turns a ReactElement into a Reactix Element
@@ -46,3 +48,5 @@ useLayoutEffect1' a f = R.useLayoutEffect1 a $ \_ ->
 
 select :: ElemFactory
 select = createElement "select"
+
+effToggler (value /\ setValue) = mkEffectFn1 $ \_ -> setValue $ not value
