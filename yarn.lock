@@ -1233,7 +1233,7 @@ caniuse-lite@^1.0.30000955:
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30000957.tgz#fb1026bf184d7d62c685205358c3b24b9e29f7b3"
   integrity sha512-8wxNrjAzyiHcLXN/iunskqQnJquQQ6VX8JHfW5kLgAPRSiSuKZiNfmIkP5j7jgyXqAQBSoXyJxfnbCFS0ThSiQ==
 
-chalk@^2.0.0, chalk@^2.0.1, chalk@^2.4.1, chalk@^2.4.2:
+chalk@^2.0.0, chalk@^2.4.1, chalk@^2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-2.4.2.tgz#cd42541677a54333cf541a49108c1432b44c9424"
   integrity sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==
@@ -1660,7 +1660,7 @@ domain-browser@^1.2.0:
   resolved "https://registry.yarnpkg.com/domain-browser/-/domain-browser-1.2.0.tgz#3d31f50191a6749dd1375a7f522e823d42e54eda"
   integrity sha512-jnjyiM6eRyZl2H+W8Q/zLMA481hzi0eszAaBUzIVnmYVDBbnLxVNnfu1HgEBvCbL+71FrxMl3E6lpKH7Ge3OXA==
 
-download-or-build-purescript@0.3.4, download-or-build-purescript@^0.3.1:
+download-or-build-purescript@^0.3.4:
   version "0.3.4"
   resolved "https://registry.yarnpkg.com/download-or-build-purescript/-/download-or-build-purescript-0.3.4.tgz#0f0f09b0848e16d1649f1d8ee4b2bfd0268a0758"
   integrity sha512-8P4vNgbLTZi07s3uRnUCI+kE7lAERyIexVYwAHsAw7AQhooFnVbypq/yiP1vSZVibQ4Fl74LdOWnJKbqe9Mnow==
@@ -2245,15 +2245,15 @@ inspect-with-kind@^1.0.4, inspect-with-kind@^1.0.5:
     kind-of "^6.0.2"
 
 install-purescript-cli@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/install-purescript-cli/-/install-purescript-cli-0.4.0.tgz#8324dccbb0bb24e393c3f2d9de0da9878d2ed783"
-  integrity sha512-P2DB3MxXSZZCIVXCt+OMIhA4Jvqkwz7zLA4WXzjsRC3Zyjg5vS4Fxk9oKIIDRLOSSr+hS5bKNO8Iw2XheXz9Pw==
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/install-purescript-cli/-/install-purescript-cli-0.4.2.tgz#380198208038f59a09216f1c75d6773d9b0cbc9c"
+  integrity sha512-y62GvwsMksz7aSJQsK2pPelmBByp0eDgpI+uFheEU05wpekM6WtCgq7WkTAc+Ar/nt+7Y5lYzGOqSOWnGAEIBQ==
   dependencies:
     chalk "^2.4.2"
-    download-or-build-purescript "0.3.4"
-    install-purescript "^0.6.1"
-    log-symbols "^2.2.0"
-    log-update "^3.1.0"
+    filesize "^4.1.2"
+    install-purescript "^0.7.0"
+    log-symbols "^3.0.0"
+    log-update "^3.2.0"
     minimist "^1.2.0"
     ms "^2.1.1"
     neat-stack "^1.0.1"
@@ -2266,13 +2266,13 @@ install-purescript-cli@^0.4.0:
     tty-width-frame "^1.0.2"
     vertical-meter "^1.0.0"
 
-install-purescript@^0.6.1:
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/install-purescript/-/install-purescript-0.6.1.tgz#6c6038db0e15c81f347cafcab64a9b583977ad39"
-  integrity sha512-72y0446jKDZXm7R4/uwTPnxNVvBlqZqXMFfQylWvmqvnw327cEINxAhI21dhJb+04XJcUSZpXf4A03GzSR1Xxw==
+install-purescript@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/install-purescript/-/install-purescript-0.7.0.tgz#2297fe1ed3612b0d0e204002a357c8b82cb06c47"
+  integrity sha512-AOmIq8rPEOLn5Bo8RQngvDXWeo6USKIt+28UhcAmQJNvj63MqdNBIQRTgNyypbsniv7d7VWjz53pw2+kTgh3mg==
   dependencies:
     arch "^2.1.1"
-    download-or-build-purescript "^0.3.1"
+    download-or-build-purescript "^0.3.4"
     file-to-npm-cache "^0.1.0"
     inspect-with-kind "^1.0.5"
     is-plain-obj "^1.1.0"
@@ -2280,7 +2280,7 @@ install-purescript@^0.6.1:
     pump "^3.0.0"
     run-in-dir "^0.3.0"
     tar "^4.4.8"
-    zen-observable "^0.8.13"
+    zen-observable "^0.8.14"
 
 interpret@^1.0.0:
   version "1.2.0"
@@ -2584,14 +2584,14 @@ lodash@^4.17.11:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
   integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
 
-log-symbols@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/log-symbols/-/log-symbols-2.2.0.tgz#5740e1c5d6f0dfda4ad9323b5332107ef6b4c40a"
-  integrity sha512-VeIAFslyIerEJLXHziedo2basKbMKtTw3vfn5IzG0XTjhAVEJyNHnL2p7vc+wBDSdQuUpNw3M2u6xb9QsAY5Eg==
+log-symbols@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/log-symbols/-/log-symbols-3.0.0.tgz#f3a08516a5dea893336a7dee14d18a1cfdab77c4"
+  integrity sha512-dSkNGuI7iG3mfvDzUuYZyvk5dD9ocYCYzNU6CYDE6+Xqd+gwme6Z00NS3dUh8mq/73HaEtT7m6W+yUPtU6BZnQ==
   dependencies:
-    chalk "^2.0.1"
+    chalk "^2.4.2"
 
-log-update@^3.1.0:
+log-update@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/log-update/-/log-update-3.2.0.tgz#719f24293250d65d0165f4e2ec2ed805ff062eec"
   integrity sha512-KJ6zAPIHWo7Xg1jYror6IUDFJBq1bQ4Bi4wAEp2y/0ScjBBVi/g0thr0sUVhuvuXauWzczt7T2QHghPDNnKBuw==
@@ -3283,9 +3283,9 @@ punycode@^1.3.2:
   integrity sha1-wNWmOycYgArY4esPpSachN1BhF4=
 
 purescript@^0.12.4:
-  version "0.12.4"
-  resolved "https://registry.yarnpkg.com/purescript/-/purescript-0.12.4.tgz#885a82f02270cb7ffdd1fda8ddf5e6071c86c6b2"
-  integrity sha512-VwIKmjcVQzk9cHuzu1ESyjKpZr+mRIjEhZbk5q8N7G17Deog/eJ3EZ/7s8Z/x9rmeYQmd2WPgRN0W5MpWPcvug==
+  version "0.12.5"
+  resolved "https://registry.yarnpkg.com/purescript/-/purescript-0.12.5.tgz#cee74afc29ede8a8d895237243e86ff9c87f3932"
+  integrity sha512-L0N0KrRgZm8pXYqT8Dc5m6BzjnYvkOaxx9Tms874NUivm8DYSs3oLtDrnNM8cVrjCCXCvS0g8l73CKNymaL6qw==
   dependencies:
     install-purescript-cli "^0.4.0"
 
@@ -4299,7 +4299,7 @@ yallist@^3.0.0, yallist@^3.0.2:
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-3.0.3.tgz#b4b049e314be545e3ce802236d6cd22cd91c3de9"
   integrity sha512-S+Zk8DEWE6oKpV+vI3qWkaK+jSbIK86pCwe2IF/xwIpQ8jEuxpw9NyaGjmp9+BoJv5FV2piqCDcoCtStppiq2A==
 
-zen-observable@^0.8.13, zen-observable@^0.8.9:
+zen-observable@^0.8.13, zen-observable@^0.8.14, zen-observable@^0.8.9:
   version "0.8.14"
   resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.8.14.tgz#d33058359d335bc0db1f0af66158b32872af3bf7"
   integrity sha512-kQz39uonEjEESwh+qCi83kcC3rZJGh4mrZW7xjkSQYXkq//JZHTtKo+6yuVloTgMtzsIWOJrjIrKvk/dqm0L5g==
