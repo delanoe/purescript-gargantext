@@ -496,7 +496,7 @@ fileTypeView d s@(NTree (LNode {id, droppedFile: Just (DroppedFile {contents, fi
               [ H.h5 {} [H.text "Choose file type"] ]
             , H.div {className: "col-md-2"}
               [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove"
-                    --, onClick $ \_ -> d $ PrepareUploadFile nid contents
+                    , onClick: mkEffectFn1 $ \_ -> d $ PrepareUploadFile id contents
                     , title: "Close"} []
               ]
             ]
