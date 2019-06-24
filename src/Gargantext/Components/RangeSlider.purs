@@ -14,6 +14,7 @@ import DOM.Simple.Document (document)
 import DOM.Simple.EventListener as EL
 import DOM.Simple.Types (DOMRect, Element)
 import DOM.Simple.Event as Event
+import DOM.Simple.Console (log, log2)
 import Data.Tuple.Nested ((/\))
 import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import Gargantext.Utils.Math (roundToMultiple)
@@ -50,6 +51,7 @@ rangeSliderCpt :: R.Component Props
 rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
   where
     cpt props _ = do
+      R.useEffect' $ \_ -> log2 "Props: " props
       -- scale bar
       scaleElem <- R.useRef null -- dom ref
       scalePos <- R2.usePositionRef scaleElem
@@ -70,8 +72,9 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
       -- the handler functions for trapping mouse events, so they can be removed
       mouseMoveHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
       mouseUpHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
-      let destroy =
-            do destroyEventHandler "mousemove" mouseMoveHandler
+      let destroy = \_ ->
+            do log "RangeSlider: Destroying event handlers"
+               destroyEventHandler "mousemove" mouseMoveHandler
                destroyEventHandler "mouseup" mouseUpHandler
       R2.useLayoutEffect1' dragKnob $ \_ -> do
         case dragKnob of
@@ -81,11 +84,12 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
             let onMouseMove = EL.callback $ \(event :: Event.MouseEvent) ->
               case reproject drag scalePos value (R2.domMousePosition event) of
                   Just val -> setKnob knob setValue value val
-                  Nothing -> destroy
-            let onMouseUp = EL.callback $ \(_event :: Event.MouseEvent) -> destroy
+                  Nothing -> destroy unit
+            let onMouseUp = EL.callback $ \(_event :: Event.MouseEvent) -> destroy unit
+            log "RangeSlider: Creating event handlers"
             EL.addEventListener document "mousemove" onMouseMove
             EL.addEventListener document "mouseup" onMouseUp
-          Nothing -> destroy
+          Nothing -> destroy unit
       pure $ H.div { className, aria }
         [ renderScale scaleElem props value'
         , renderKnob lowElem  value'.min ("Minimum value:" <> show value'.min) MinKnob setDragKnob
@@ -129,9 +133,9 @@ renderScale ref {width,height} {min, max} =
     aria = { label: "Scale running from " <> show min <> " to " <> show max }
 
 renderKnob ref val label knob set =
-  H.div { ref, tabindex, className, aria, onMouseDown } [ H.text (show val) ]
+  H.div { ref, tabIndex, className, aria, onMouseDown } [ H.text (show val) ]
   where
-    tabindex = 0
+    tabIndex = 0
     className = "knob"
     aria = { label }
     onMouseDown = mkEffectFn1 $ \_ -> set (Just knob)
@@ -151,7 +155,7 @@ rectRange rect = Range.Closed { min, max }
 
 initialValue :: Record Props -> NumberRange
 initialValue props = roundRange props.epsilon props.bounds props.initialValue
-  
+
 round :: Number -> NumberRange -> Number -> Number
 round epsilon bounds = roundToMultiple epsilon <<< Range.clamp bounds
 
