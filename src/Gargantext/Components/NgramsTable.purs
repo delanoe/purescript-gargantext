@@ -169,9 +169,10 @@ tableContainer { pageParams
                 ngramsClick {depth: 1, ngrams: child} =
                   Just $ dispatch $ ToggleChild false child
                 ngramsClick _ = Nothing
+                ngramsEdit _ = Nothing
               in
               [ p[] [text $ "Editing " <> ngrams]
-              , renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick }
+              , renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
               , button [className "btn btn-primary", onClick $ const $ dispatch $ AddTermChildren] [text "Save"]
               , button [className "btn btn-secondary", onClick $ const $ dispatch $ SetParentResetChildren Nothing] [text "Cancel"]
               ]) ngramsParent)
@@ -315,14 +316,16 @@ type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 
 tree :: { ngramsTable :: NgramsTable
         , ngramsStyle :: Array DOM.Props
+        , ngramsEdit  :: NgramsClick
         , ngramsClick :: NgramsClick
         } -> NgramsDepth -> ReactElement
-tree params@{ngramsTable, ngramsStyle, ngramsClick} nd@{ngrams} =
+tree params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick} nd@{ngrams} =
   li [ style {width : "100%"} ]
-     [ i icon []
+    ([ i icon []
      , tag [text $ " " <> ngrams]
-     , forest cs
-     ]
+     ] <> maybe [] edit (ngramsEdit nd) <>
+     [ forest cs
+     ])
   where
     tag =
       case ngramsClick nd of
@@ -330,6 +333,9 @@ tree params@{ngramsTable, ngramsStyle, ngramsClick} nd@{ngrams} =
           a (ngramsStyle <> [onClick $ const effect])
         Nothing ->
           span ngramsStyle
+    edit effect = [ text " "
+                  , i [ className "glyphicon glyphicon-pencil"
+                      , onClick $ const effect ] [] ]
     leaf = List.null cs
     icon = gray <> [className $ "fas fa-caret-" <> if open then "down" else "right"]
     open = not leaf || false {- TODO -}
@@ -352,10 +358,11 @@ renderNgramsTree :: { ngrams      :: NgramsTerm
                     , ngramsTable :: NgramsTable
                     , ngramsStyle :: Array DOM.Props
                     , ngramsClick :: NgramsClick
+                    , ngramsEdit  :: NgramsClick
                     } -> ReactElement
-renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick } =
+renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit } =
   ul [] [
-    span [className "tree"] [tree {ngramsTable, ngramsStyle, ngramsClick} {ngrams, depth: 0}]
+    span [className "tree"] [tree {ngramsTable, ngramsStyle, ngramsClick, ngramsEdit} {ngrams, depth: 0}]
   ]
 
 renderNgramsItem :: { ngrams :: NgramsTerm
@@ -368,7 +375,7 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent, dispatch } 
   [ checkbox GraphTerm
   , checkbox StopTerm
   , if ngramsParent == Nothing
-    then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick }
+    then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
     else
       a [onClick $ const $ dispatch $ ToggleChild true ngrams]
         [ i [className "fas fa-plus"] []
@@ -379,7 +386,8 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent, dispatch } 
   where
     termList    = ngramsElement ^. _NgramsElement <<< _list
     ngramsStyle = [termStyle termList]
-    ngramsClick = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
+    ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
+    ngramsClick = Just <<< cycleTermListItem <<< view _ngrams
     checkbox termList' =
       let chkd = termList == termList'
           termList'' = if chkd then CandidateTerm else termList'
@@ -389,16 +397,23 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent, dispatch } 
         , className "checkbox"
         , checked chkd
      -- , title "Mark as completed"
-        , onChange $ const $ setTermList (replace termList termList'')
+        , onChange $ const $ setTermList (replace termList termList'') ngrams
         ]
 
-    setTermList Keep = pure unit
-    setTermList rep@(Replace {old,new}) = dispatch $ SetTermListItem ngrams rep
+    setTermList Keep                    _ = pure unit
+    setTermList rep@(Replace {old,new}) n = dispatch $ SetTermListItem n rep
+
+    cycleTermListItem = setTermList (replace termList (nextTermList termList))
 
 termStyle :: TermList -> DOM.Props
 termStyle GraphTerm     = style {color: "green"}
 termStyle StopTerm      = style {color: "red", textDecoration : "line-through"}
 termStyle CandidateTerm = style {color: "black"}
+
+nextTermList :: TermList -> TermList
+nextTermList GraphTerm     = StopTerm
+nextTermList StopTerm      = CandidateTerm
+nextTermList CandidateTerm = GraphTerm
 
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> ReactElement
 optps1 { desc, mval } = option [value val] [text desc]
