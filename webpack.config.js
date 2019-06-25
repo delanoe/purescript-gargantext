@@ -44,7 +44,7 @@ module.exports = (env) =>
         disableHostCheck: true,
         contentBase: dist,
         compress: true,
-        port: 9000
+        port: 8000
       },
       output: {
         path: dist,
