@@ -1,1 +1,64 @@
-../src/index.html
+<!doctype>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>CNRS GarganText</title>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="https://use.fontawesome.com/releases/v5.0.8/styles/all.css" rel="stylesheet">
+        <link href="styles/login.min.css" rel="stylesheet">
+        <link href="styles/bootstrap.min.css" rel="stylesheet">
+        <!-- <link href="styles/lavish-bootstrap.css" rel="stylesheet"> -->
+        <link rel="stylesheet" type="text/css" href="styles/context-menu.css"/>
+        <link rel="stylesheet" type="text/css" href="styles/menu.css"/>
+        <link href="styles/Login.css" rel="stylesheet">
+        <style>
+         * {margin: 0; padding: 0; list-style: none;}
+         .tree ul li {
+             margin-left: 15px;
+             position: relative;
+             padding-left: 5px;
+         }
+         #toolbar {display : inline;}
+         #toolbar ul li {display : inline }
+         #toolbar ul li form {display : inline}
+         .tree { margin-top : 20px;}
+         .tree ul li::before {
+             content: " ";
+             position: absolute;
+             width: 1px;
+             background-color: #000;
+             top: 5px;
+             bottom: -12px;
+             left: -10px;
+         }
+         body > .tree ul > li:first-child::before {top: 12px;}
+         .tree ul li:not(:first-child):last-child::before {display: none;}
+         .tree ul li:only-child::before {
+             display: list-item;
+             content: " ";
+             position: absolute;
+             width: 1px;
+             background-color: "#000";
+             top: 5px;
+             bottom: 7px;
+             height: 7px;
+             left: -10px;
+         }
+         .tree ul li::after {
+             content: " ";
+             position: absolute;
+             left: -10px;
+             width: 10px;
+             height: 1px;
+             background-color: "#000";
+             top: 12px;
+         }
+	      </style>
+    </head>
+    <body>
+        <div id="app" class ="container-fluid"></div>
+        <div id="menu-portal"></div>
+        <script src="bundle.js"></script>
+        <script src="js/bootstrap-native.min.js"></script>
+    </body>
+</html>
