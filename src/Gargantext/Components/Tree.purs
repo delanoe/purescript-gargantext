@@ -19,7 +19,7 @@ import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..), (.=))
-import Gargantext.Components.Loader as Loader
+import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Config (toUrl, End(..), NodeType(..), readNodeType)
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
 import Gargantext.Types (class ToQuery, toQuery)
@@ -209,12 +209,12 @@ nodeOptionsRename d activated  id =  case activated of
                                  ]
                          false -> []
 
-type LoadedTreeViewProps = Loader.InnerProps Int FTree ()
+type TreeViewProps = { tree :: FTree }
 
-loadedTreeview :: Spec State LoadedTreeViewProps Action
+loadedTreeview :: Spec State TreeViewProps Action
 loadedTreeview = simpleSpec performAction render
   where
-    render :: Render State LoadedTreeViewProps Action
+    render :: Render State TreeViewProps Action
     render dispatch _ {state, currentNode} _ =
       [ div [className "tree"]
         [ --toHtml dispatch state currentNode
@@ -222,23 +222,17 @@ loadedTreeview = simpleSpec performAction render
         ]
       ]
 
-treeViewClass :: ReactClass (Loader.InnerProps Int FTree (children :: React.Children))
-treeViewClass = createClass "TreeView" loadedTreeview (\{loaded: t} -> {state: t, currentNode: Nothing})
-
-treeLoaderClass :: Loader.LoaderClass Int FTree
-treeLoaderClass = Loader.createLoaderClass "TreeLoader" loadNode
-
-treeLoader :: Loader.Props' Int FTree -> ReactElement
-treeLoader props = React.createElement treeLoaderClass props []
+treeViewClass :: ReactClass { tree :: FTree, children :: React.Children }
+treeViewClass = createClass "TreeView" loadedTreeview (\{tree} -> {state: tree, currentNode: Nothing})
 
 treeview :: Spec {} Props Void
 treeview = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
     render _ {root} _ _ =
-      [ treeLoader { path: root
-                   , component: treeViewClass
-                   } ]
+      R.hooksComponent "TreeView" \props children ->
+        useLoader root loadNode \currentPath loaded ->
+          React.createElement treeViewClass {tree: loaded}
 
 
 --nodePopupView :: forall s. (Action -> Effect Unit) -> FTree -> RAction s -> R.Element
@@ -594,8 +588,8 @@ fldr :: Boolean -> String
 fldr open = if open then "fas fa-folder-open" else "fas fa-folder"
 
 
-loadNode :: ID -> Aff FTree
-loadNode = get <<< toUrl Back Tree <<< Just
+loadNode :: ID -> Effect FTree
+loadNode a = lift ((get <<< toUrl Back Tree <<< Just) a)
 
 ----- TREE CRUD Operations
 
