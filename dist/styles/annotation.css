@@ -1,3 +1,6 @@
+.annotation-run {
+    cursor: pointer;
+}
 .annotation-run.candidate-term, .context-menu .candidate-term{
     color: #000;
     background-color: #aaa;
