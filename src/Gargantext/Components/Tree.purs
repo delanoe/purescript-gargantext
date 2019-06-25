@@ -271,7 +271,7 @@ nodePopupView d nodeState@(s@(NTree (LNode {id, name, popOver: true, createOpen}
                 [ renameBox d nodeState renameBoxOpen ]
               ] <> [ editIcon renameBoxOpen ] <> [
                 H.div {className: "col-md-2"}
-                [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove"
+                [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
                       , onClick: mkEffectFn1 $ \_ -> setNodeState $ setPopOver false s
                       , title: "Close"} []
                 ]
@@ -350,7 +350,7 @@ renameBox d (s@(NTree (LNode {id, name}) _) /\ setNodeState) (true /\ setRenameB
       where
         renameInput (_ /\ setRenameNodeName) =
           H.div {className: "col-md-8"}
-          [ H.input { _type: "text"
+          [ H.input { type: "text"
                     , placeholder: "Rename Node"
                     , defaultValue: name
                     , className: "form-control"
@@ -359,7 +359,7 @@ renameBox d (s@(NTree (LNode {id, name}) _) /\ setNodeState) (true /\ setRenameB
           ]
         renameBtn (newName /\ _) =
           H.a {className: "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
-              , _type: "button"
+              , type: "button"
               , onClick: mkEffectFn1 $ \_ -> do
                     setNodeState $ setPopOver false $ setName newName s
                     d $ (Submit id newName)
@@ -367,7 +367,7 @@ renameBox d (s@(NTree (LNode {id, name}) _) /\ setNodeState) (true /\ setRenameB
               } []
         cancelBtn =
           H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
-              , _type: "button"
+              , type: "button"
               , onClick: mkEffectFn1 $ \_ -> setRenameBoxOpen false
               , title: "Cancel"
               } []
@@ -401,7 +401,7 @@ createNodeView d (s@(NTree (LNode {id, nodeValue, createOpen: true}) _) /\ setNo
             [ H.div {className: "col-md-10"}
               [ H.h5 {} [H.text "Create Node"] ]
             , H.div {className: "col-md-2"}
-              [ H.a { className: "btn text-danger glyphitem glyphicon glyphicon-remove"
+              [ H.a { className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
                     , onClick: mkEffectFn1 $ \_ -> setNodeState $ setCreateOpen false s
                     , title: "Close"} []
               ]
@@ -409,21 +409,23 @@ createNodeView d (s@(NTree (LNode {id, nodeValue, createOpen: true}) _) /\ setNo
           ]
         panelBody (_ /\ setNodeName) (nt /\ setNodeType) =
           H.div {className: "panel-body"}
-          [ H.div {className: "row form-group"}
+          [ H.div {className: "row"}
             [ H.div {className: "col-md-12"}
-              [ H.div {className: "row"}
-                [ H.input { _type: "text"
-                          , placeholder: "Create Node"
-                          , defaultValue: getCreateNodeValue s
-                          , className: "col-md-12 form-control"
-                          , onInput: mkEffectFn1 $ \e -> setNodeName $ e .. "target" .. "value"
-                          }
-                ]
-              , H.div {className: "row"}
-                [ R2.select { className: "col-md-12 form-control"
-                             , onChange: mkEffectFn1 $ \e -> setNodeType $ readNodeType $ e .. "target" .. "value"
+              [ H.form {className: "form-horizontal"}
+                [ H.div {className: "form-group"}
+                  [ H.input { type: "text"
+                            , placeholder: "Node name"
+                            , defaultValue: getCreateNodeValue s
+                            , className: "form-control"
+                            , onInput: mkEffectFn1 $ \e -> setNodeName $ e .. "target" .. "value"
                             }
-                  (map renderOption [Corpus, Folder])
+                  ]
+                , H.div {className: "form-group"}
+                  [ R2.select { className: "form-control"
+                              , onChange: mkEffectFn1 $ \e -> setNodeType $ readNodeType $ e .. "target" .. "value"
+                              }
+                    (map renderOption [Corpus, Folder])
+                  ]
                 ]
               ]
             ]
@@ -432,7 +434,7 @@ createNodeView d (s@(NTree (LNode {id, nodeValue, createOpen: true}) _) /\ setNo
         panelFooter (name /\ _) (nt /\ _) =
           H.div {className: "panel-footer"}
           [ H.button {className: "btn btn-success"
-                     , _type: "button"
+                     , type: "button"
                      , onClick: mkEffectFn1 $ \_ -> d $ (CreateSubmit id name nt)
                      } [H.text "Create"]
           ]
@@ -465,7 +467,7 @@ fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fil
             [ H.div {className: "col-md-10"}
               [ H.h5 {} [H.text "Choose file type"] ]
             , H.div {className: "col-md-2"}
-              [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove"
+              [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
                     , onClick: mkEffectFn1 $ \_ -> setDroppedFile $ Nothing
                     , title: "Close"} []
               ]
@@ -487,14 +489,14 @@ fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fil
             case fileType of
               Just ft ->
                 H.button {className: "btn btn-success"
-                         , _type: "button"
+                         , type: "button"
                          , onClick: mkEffectFn1 $ \_ -> do
                              setDroppedFile $ Nothing
                              d $ (UploadFile id ft contents)
                          } [H.text "Upload"]
               Nothing ->
                 H.button {className: "btn btn-success disabled"
-                         , _type: "button"
+                         , type: "button"
                          } [H.text "Upload"]
           ]
 fileTypeView _ _ (Nothing /\ _) = R.createElement el {} []
