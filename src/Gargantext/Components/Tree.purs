@@ -446,7 +446,7 @@ createNodeView _ _ = R.createElement el {} []
 
 
 --fileTypeView :: (Action -> Effect Unit) -> FTree -> R.Element
-fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) = R.createElement el {} []
+fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ /\ setIsDragOver) = R.createElement el {} []
   where
     el = R.hooksComponent "FileTypeView" cpt
     cpt props _ = do
@@ -468,7 +468,9 @@ fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fil
               [ H.h5 {} [H.text "Choose file type"] ]
             , H.div {className: "col-md-2"}
               [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
-                    , onClick: mkEffectFn1 $ \_ -> setDroppedFile $ Nothing
+                    , onClick: mkEffectFn1 $ \_ -> do
+                        setDroppedFile Nothing
+                        setIsDragOver false
                     , title: "Close"} []
               ]
             ]
@@ -499,7 +501,7 @@ fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fil
                          , type: "button"
                          } [H.text "Upload"]
           ]
-fileTypeView _ _ (Nothing /\ _) = R.createElement el {} []
+fileTypeView _ _ (Nothing /\ _) _ = R.createElement el {} []
   where
     el = R.hooksComponent "FileTypeView" cpt
     cpt props _ = pure $ H.div {} []
@@ -536,7 +538,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
           , popOverIcon nodeState
           , nodePopupView d nodeState
           , createNodeView d nodeState
-          , fileTypeView d nodeState droppedFile
+          , fileTypeView d nodeState droppedFile isDragOver
           ]
         folderIcon folderOpen@(open /\ _) =
           H.a {onClick: R2.effToggler folderOpen}
