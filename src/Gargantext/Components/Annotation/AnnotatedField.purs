@@ -26,7 +26,7 @@ import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
 import Gargantext.Types ( TermList )
-import Gargantext.Components.Annotation.Utils ( termClass )
+import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 import Gargantext.Components.NgramsTable.Core ( NgramsTerm, NgramsTable(..), _NgramsElement, _list, highlightNgrams )
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
 import Gargantext.Utils.Selection as Sel
@@ -122,6 +122,6 @@ annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
       HTML.span { className: className list
                 , onClick: mkEffectFn1 $ \e -> onSelect text (Just list) e} [ HTML.text text ]
       where
-        className     list        = "annotation-run " <> termClass list
+        className     list        = "annotation-run bg-" <> termBootstrapClass list
 
 
