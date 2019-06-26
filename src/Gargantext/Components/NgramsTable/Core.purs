@@ -60,6 +60,7 @@ import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
+import Data.String.Common (trim)
 import Data.Traversable (class Traversable, traverse, traverse_, sequence)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Set (Set)
@@ -208,8 +209,11 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
 highlightNgrams :: NgramsTable -> String -> Array (Tuple String (Maybe TermList))
 highlightNgrams (NgramsTable table) input0 =
     let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
-    A.reverse (A.fromFoldable (consNonEmpty sN.s sN.l))
+    map trimmer $ A.reverse (A.fromFoldable (consNonEmpty sN.s sN.l))
   where
+    -- we need to trim so that the highlighting is without endings
+    trimmer (Tuple t (Just l)) = Tuple (trim t) (Just l)
+    trimmer x = x
     sp x = " " <> S.replaceAll (S.Pattern " ") (S.Replacement "  ") x <> " "
     unsp x =
       case S.stripSuffix (S.Pattern " ") x of
