@@ -19,7 +19,7 @@ import DOM.Simple.Document as Document
 import DOM.Simple.Types ( DOMRect )
 import Effect (Effect)
 import Effect.Uncurried ( mkEffectFn1 )
-import FFI.Simple ( (...), (..), delay )
+import FFI.Simple ( (...), (..), (.=), delay )
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
@@ -47,10 +47,17 @@ contextMenuCpt = R.hooksComponent "ContextMenu" cpt
           (toMaybe $ R.readRef root)
         pure $ \_ -> pure unit
       R.useLayoutEffect2 root rect (contextMenuEffect menu.setMenu root)
-      let cs = [ HTML.ul { className: "context-menu-items" } children ]
+      let cs = [
+            HTML.div { className: "popover-content" }
+            [ HTML.div { className: "panel panel-default" }
+              [ HTML.ul { className: "list-group" }
+                children
+              ]
+            ]
+      ]
       pure $ R.createPortal [ elems root menu rect $ cs ] host
-    elems ref menu (Just rect) = HTML.nav { ref , className: "context-menu", style: position menu rect}
-    elems ref _ _ = HTML.nav { ref, className: "context-menu" }
+    elems ref menu (Just rect) = HTML.div (({ ref , className: "context-menu", style: position menu rect} .= "data-toggle" $ "popover") .= "data-placement" $ "right")
+    elems ref _ _ = HTML.div (({ ref, className: "context-menu" } .= "data-toggle" $ "popover") .= "data-placement" $ "right")
 
 contextMenuEffect
   :: forall t
@@ -68,7 +75,7 @@ contextMenuEffect setMenu rootRef _ =
         DOM.removeEventListener document "click" onClick
         DOM.removeEventListener document "scroll" onScroll
     Nothing -> pure $ \_ -> pure unit
-          
+
 documentClickHandler :: forall t. (Maybe t -> Effect Unit) -> DOM.Element -> Callback DE.MouseEvent
 documentClickHandler hide menu =
   R2.named "hideMenuOnClickOutside" $ callback $ \e ->
