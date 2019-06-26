@@ -15,6 +15,7 @@ import Prelude
 import Data.Lens ((^?), _Just)
 import Data.Lens.At (at)
 import Data.Maybe ( Maybe(..), maybe, maybe' )
+import Data.String as S
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
 import DOM.Simple.Event as DE
@@ -57,7 +58,7 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
             let x = E.clientX event
                 y = E.clientY event
                 setList t = do
-                  setTermList text' (Just list) t
+                  setTermList (S.toLower text') (Just list) t
                   setMenu Nothing
             setMenu $ Just {x, y, list: Just list, menuType: SetTermListItem, setList}
 
