@@ -17,9 +17,7 @@ import Data.Lens.At (at)
 import Data.Maybe ( Maybe(..), maybe, maybe' )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
-import DOM.Simple.Console ( log, log2 )
 import DOM.Simple.Event as DE
-import Effect.Class ( liftEffect )
 import Effect ( Effect )
 import Effect.Uncurried ( mkEffectFn1 )
 import Reactix as R
@@ -58,7 +56,9 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
           onSelect text' (Just list) event = do
             let x = E.clientX event
                 y = E.clientY event
-                setList = setTermList text' (Just list)
+                setList t = do
+                  setTermList text' (Just list) t
+                  setMenu Nothing
             setMenu $ Just {x, y, list: Just list, menuType: SetTermListItem, setList}
 
           mapCompile (Tuple t l) = {text: t, list: l, onSelect}
@@ -79,7 +79,9 @@ maybeShowMenu setMenu setTermList ngrams event = do
           let x = E.clientX event
               y = E.clientY event
               list = findNgram ngrams sel'
-              setList = setTermList sel' list
+              setList t = do
+                setTermList sel' list t
+                setMenu Nothing
           E.preventDefault event
           setMenu $ Just { x, y, list, menuType: NewNgram, setList }
     Nothing -> pure unit
