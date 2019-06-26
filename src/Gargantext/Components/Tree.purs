@@ -538,26 +538,28 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
         folderIcon folderOpen@(open /\ _) =
           H.a {onClick: R2.effToggler folderOpen}
           [ H.i {className: fldr open} [] ]
-        dropProps (_ /\ setDroppedFile) = {
-            onDrop: dropHandler
+        dropProps (droppedFile /\ setDroppedFile) = {
+            className: dropClass droppedFile
+          , onDrop: dropHandler setDroppedFile
           , onDragOver: onDragOverHandler
           }
-          where
-            dropHandler = mkEffectFn1 $ \e -> unsafePartial $ do
-              let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
-              liftEffect $ log2 "drop:" ff
-              -- prevent redirection when file is dropped
-              E.preventDefault e
-              E.stopPropagation e
-              let blob = toBlob $ ff
-              void $ runAff (\_ -> pure unit) do
-                contents <- readAsText blob
-                liftEffect $ setDroppedFile $ Just $ DroppedFile {contents: (UploadFileContents contents), fileType: Just CSV}
-            onDragOverHandler = mkEffectFn1 $ \e -> do
-              -- prevent redirection when file is dropped
-              -- https://stackoverflow.com/a/6756680/941471
-              E.preventDefault e
-              E.stopPropagation e
+        dropClass (Just _) = "file-dropped"
+        dropClass Nothing = ""
+        dropHandler setDroppedFile = mkEffectFn1 $ \e -> unsafePartial $ do
+          let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
+          liftEffect $ log2 "drop:" ff
+          -- prevent redirection when file is dropped
+          E.preventDefault e
+          E.stopPropagation e
+          let blob = toBlob $ ff
+          void $ runAff (\_ -> pure unit) do
+            contents <- readAsText blob
+            liftEffect $ setDroppedFile $ Just $ DroppedFile {contents: (UploadFileContents contents), fileType: Just CSV}
+        onDragOverHandler = mkEffectFn1 $ \e -> do
+          -- prevent redirection when file is dropped
+          -- https://stackoverflow.com/a/6756680/941471
+          E.preventDefault e
+          E.stopPropagation e
 
 
 childNodes :: forall s. (Action -> Effect Unit) -> Maybe ID -> (Array (NTree LNode)) -> Tuple Boolean (Boolean -> Effect s) -> Array R.Element
