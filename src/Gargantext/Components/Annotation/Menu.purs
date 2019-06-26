@@ -20,8 +20,7 @@ import Gargantext.Utils.Selection (Selection, selectionToString)
 data MenuType = NewNgram | SetTermListItem
 
 type Props =
-  ( sel :: Selection
-  , list :: Maybe TermList
+  ( list :: Maybe TermList
   , menuType :: MenuType
   , setList :: TermList -> Effect Unit
   )
@@ -31,9 +30,9 @@ type AnnotationMenu = { x :: Number, y :: Number | Props }
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
 annotationMenu :: (Maybe AnnotationMenu -> Effect Unit) -> AnnotationMenu -> R.Element
-annotationMenu setMenu { x,y,sel,list,menuType,setList } =
+annotationMenu setMenu { x,y,list,menuType,setList } =
   CM.contextMenu { x,y,setMenu } [
-    R.createElement annotationMenuCpt {sel,list,menuType,setList} []
+    R.createElement annotationMenuCpt {list,menuType,setList} []
   ]
 
 annotationMenuCpt :: R.Component Props

@@ -37,6 +37,7 @@ type Props =
   , setTermList  :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit
   , text         :: Maybe String
   )
+type MouseEvent = E.SyntheticEvent DE.MouseEvent
 
 -- UNUSED
 -- defaultProps :: Record Props
@@ -49,22 +50,26 @@ annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
   where
     cpt {ngrams,setTermList,text} _ = do
-      menu /\ setMenu <- R.useState $ \_ -> pure (Nothing :: Maybe AnnotationMenu)
+      menu /\ setMenu <- R.useState $ \_ -> pure Nothing
       let wrapperProps =
             { className: "annotated-field-wrapper" }
 
-          onSelect _ Nothing event = maybeShowMenu text setMenu setTermList event
+          onSelect _ Nothing event = maybeShowMenu setMenu setTermList ngrams event
           onSelect text' (Just list) event = do
             let x = E.clientX event
                 y = E.clientY event
                 setList = setTermList text' (Just list)
-            setMenu $ Just {x, y, text: text', list, menuType: SetTermListItem, setList}
+            setMenu $ Just {x, y, list: Just list, menuType: SetTermListItem, setList}
+
+          mapCompile (Tuple t l) = {text: t, list: l, onSelect}
+          compiled = map mapCompile $ compile ngrams text
 
           runs =
-            HTML.div { className: "annotated-field-runs" } $ map annotateRun (compile ngrams text) onSelect
+            HTML.div { className: "annotated-field-runs" } $ map annotateRun compiled
       pure $ HTML.div wrapperProps [maybeAddMenu setMenu runs menu]
 
-maybeShowMenu text setMenu setTermList event = do
+
+maybeShowMenu setMenu setTermList ngrams event = do
   s <- Sel.getSelection
   case s of
     Just sel -> do
@@ -73,10 +78,10 @@ maybeShowMenu text setMenu setTermList event = do
         sel' -> do
           let x = E.clientX event
               y = E.clientY event
-              list = findNgram text sel'
+              list = findNgram ngrams sel'
               setList = setTermList sel' list
           E.preventDefault event
-          setMenu $ Just { x, y, sel, list, menuType: NewNgram, setList }
+          setMenu $ Just { x, y, list, menuType: NewNgram, setList }
     Nothing -> pure unit
 
 maybeAddMenu
@@ -87,7 +92,7 @@ maybeAddMenu
 maybeAddMenu setMenu e (Just props) = annotationMenu setMenu props <> e
 maybeAddMenu _ e _ = e
 
---compile :: NgramsTable -> Maybe String -> Array Run
+compile :: NgramsTable -> Maybe String -> Array (Tuple String (Maybe TermList))
 compile ngrams = maybe [] (highlightNgrams ngrams)
 
 findNgram :: NgramsTable -> String -> Maybe TermList
@@ -98,19 +103,13 @@ findNgram (NgramsTable m) s = m ^? at s <<< _Just <<< _NgramsElement <<< _list
 type Run =
   ( text :: String
   , list :: (Maybe TermList)
-  --, onSelect :: a
+  , onSelect :: String -> Maybe TermList -> MouseEvent -> Effect Unit
   )
 
 annotateRun :: Record Run -> R.Element
-annotateRun {text, list, onSelect} = R.createElement annotatedRunComponent { text, list, onSelect } []
+annotateRun p = R.createElement annotatedRunComponent p []
 
-type RunProps =
-  ( text :: String
-  , list :: Maybe TermList
-            --, onSelect :: a
-  )
-
-annotatedRunComponent :: R.Component RunProps
+annotatedRunComponent :: R.Component Run
 annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
   where
     cpt    { text, list: Nothing, onSelect }     _ =
@@ -118,8 +117,7 @@ annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
 
     cpt    { text, list: (Just list), onSelect } _ =
       HTML.span { className: className list
-                , onClick: mkEffectFn1 $ \e -> onSelect text (Just list) e
-                } [ HTML.text text ]
+                , onClick: mkEffectFn1 $ \e -> onSelect text (Just list) e} [ HTML.text text ]
       where
         className     list        = "annotation-run " <> termClass list
 
