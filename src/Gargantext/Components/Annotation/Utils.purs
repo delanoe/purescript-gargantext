@@ -10,4 +10,4 @@ termClass CandidateTerm = "candidate-term"
 termBootstrapClass :: TermList -> String
 termBootstrapClass GraphTerm = "success"
 termBootstrapClass StopTerm = "danger"
-termBootstrapClass CandidateTerm = "info"
+termBootstrapClass CandidateTerm = "warning"
