@@ -516,36 +516,41 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
       nodeState <- R.useState $ \_ -> pure s
       folderOpen <- R.useState $ \_ -> pure true
       droppedFile <- R.useState $ \_ -> pure (Nothing :: Maybe DroppedFile)
+      isDragOver <- R.useState $ \_ -> pure false
 
       pure $ H.ul {}
         [ H.li {}
-          ( [H.span (dropProps droppedFile)
-             [ folderIcon folderOpen
-             , H.a { href: (toUrl Front nodeType (Just id))
-                   , style: {"margin-left": "22px"}
-                   , onClick: mkEffectFn1 $ (\e -> d $ CurrentNode id)
-                   }
-               [ nodeText s n ]
-             , popOverIcon nodeState
-             , nodePopupView d nodeState
-             , createNodeView d nodeState
-             , fileTypeView d nodeState droppedFile
-             ]
-            ] <> childNodes d n ary folderOpen
+          ( [ mainSpan nodeState folderOpen droppedFile isDragOver ]
+            <> childNodes d n ary folderOpen
           )
         ]
       where
+        mainSpan nodeState folderOpen droppedFile isDragOver =
+          H.span (dropProps droppedFile isDragOver)
+          [ folderIcon folderOpen
+          , H.a { href: (toUrl Front nodeType (Just id))
+                , style: {"margin-left": "22px"}
+                , onClick: mkEffectFn1 $ (\e -> d $ CurrentNode id)
+                }
+            [ nodeText s n ]
+          , popOverIcon nodeState
+          , nodePopupView d nodeState
+          , createNodeView d nodeState
+          , fileTypeView d nodeState droppedFile
+          ]
         folderIcon folderOpen@(open /\ _) =
           H.a {onClick: R2.effToggler folderOpen}
           [ H.i {className: fldr open} [] ]
-        dropProps (droppedFile /\ setDroppedFile) = {
-            className: dropClass droppedFile
-          , onDrop: dropHandler setDroppedFile
-          , onDragOver: onDragOverHandler
+        dropProps droppedFile isDragOver = {
+            className: dropClass droppedFile isDragOver
+          , onDrop: dropHandler droppedFile
+          , onDragOver: onDragOverHandler isDragOver
+          , onDragLeave: onDragLeave isDragOver
           }
-        dropClass (Just _) = "file-dropped"
-        dropClass Nothing = ""
-        dropHandler setDroppedFile = mkEffectFn1 $ \e -> unsafePartial $ do
+        dropClass (Just _ /\ _)  _           = "file-dropped"
+        dropClass _              (true /\ _) = "file-dropped"
+        dropClass (Nothing /\ _) _           = ""
+        dropHandler (_ /\ setDroppedFile) = mkEffectFn1 $ \e -> unsafePartial $ do
           let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
           liftEffect $ log2 "drop:" ff
           -- prevent redirection when file is dropped
@@ -555,11 +560,13 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
           void $ runAff (\_ -> pure unit) do
             contents <- readAsText blob
             liftEffect $ setDroppedFile $ Just $ DroppedFile {contents: (UploadFileContents contents), fileType: Just CSV}
-        onDragOverHandler = mkEffectFn1 $ \e -> do
+        onDragOverHandler (_ /\ setIsDragOver) = mkEffectFn1 $ \e -> do
           -- prevent redirection when file is dropped
           -- https://stackoverflow.com/a/6756680/941471
           E.preventDefault e
           E.stopPropagation e
+          setIsDragOver true
+        onDragLeave (_ /\ setIsDragOver) = mkEffectFn1 $ \_ -> setIsDragOver false
 
 
 childNodes :: forall s. (Action -> Effect Unit) -> Maybe ID -> (Array (NTree LNode)) -> Tuple Boolean (Boolean -> Effect s) -> Array R.Element
