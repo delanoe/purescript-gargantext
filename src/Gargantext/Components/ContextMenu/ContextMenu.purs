@@ -24,7 +24,7 @@ import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
-import Gargantext.Utils.Reactix as R'
+import Gargantext.Utils.Reactix as R2
 
 type Props t = ( x :: Number, y :: Number, setMenu :: Maybe t -> Effect Unit)
 
@@ -71,14 +71,14 @@ contextMenuEffect setMenu rootRef _ =
           
 documentClickHandler :: forall t. (Maybe t -> Effect Unit) -> DOM.Element -> Callback DE.MouseEvent
 documentClickHandler hide menu =
-  R'.named "hideMenuOnClickOutside" $ callback $ \e ->
+  R2.named "hideMenuOnClickOutside" $ callback $ \e ->
     if Element.contains menu (DE.target e)
       then pure unit
       else hide Nothing
 
 documentScrollHandler :: forall t. (Maybe t -> Effect Unit) -> Callback DE.MouseEvent
 documentScrollHandler hide =
-  R'.named "hideMenuOnScroll" $ callback $ \e -> hide Nothing
+  R2.named "hideMenuOnScroll" $ callback $ \e -> hide Nothing
 
 position :: forall t. Record (Props t) -> DOMRect -> { left :: Number, top :: Number }
 position mouse {width: menuWidth, height: menuHeight} = {left, top}

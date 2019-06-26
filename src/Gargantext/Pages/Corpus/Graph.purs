@@ -1,53 +1,40 @@
 module Gargantext.Pages.Corpus.Graph where
 
-import Effect.Unsafe
+import Effect.Unsafe (unsafePerformEffect)
 import Gargantext.Prelude hiding (max,min)
 
-import Affjax (defaultRequest, request)
-import Affjax.ResponseFormat (ResponseFormat(..), printResponseFormatError)
-import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.?), (.??), (:=), (~>))
-import Data.Argonaut (decodeJson)
 import Data.Array (fold, length, mapWithIndex, (!!), null)
-import Data.Either (Either(..))
-import Data.HTTP.Method (Method(..))
-import Data.Int (fromString, toNumber)
+import Data.Int (toNumber)
 import Data.Int as Int
-import Data.Lens (Lens, Lens', over, (%~), (+~), (.~), (^.), review)
+import Data.Lens (Lens', over, (%~), (.~), (^.))
 import Data.Lens.Record (prop)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe, isNothing)
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Number as Num
-import Data.String (joinWith)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Traversable (for_)
 import Effect (Effect)
-import Effect.Aff (Aff, attempt)
-import Effect.Aff.Class (liftAff)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
-import Effect.Uncurried (runEffectFn1, runEffectFn2)
 import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, CameraProps, getCameraProps, goTo, pauseForceAtlas2, sStyle, sigmaOnMouseMove, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
-import Gargantext.Config.REST (get, post)
+import Gargantext.Config.REST (get)
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
-import Gargantext.Prelude (flip)
 import Gargantext.Types (class Optional)
-import Gargantext.Utils (getter, toggleSet)
-import Math (cos, sin)
+import Gargantext.Utils (toggleSet)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
-import React.DOM (a, br', h2, button, div, form', input, li, li', menu, option, p, select, span, text, ul, ul')
-import React.DOM.Props (_id, _type, checked, className, defaultValue, href, max, min, name, onChange, onClick, placeholder, style, title, value, onMouseMove)
+import React.DOM (button, div, input, li, li', menu, p, span, text, ul')
+import React.DOM.Props (_id, _type, className, defaultValue, max, min, onChange, onClick, style, onMouseMove)
 import React.SyntheticEvent (SyntheticUIEvent, target)
-import Thermite (PerformAction, Render, Spec, _render, cmapProps, createClass, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
+import Thermite (PerformAction, Render, Spec, _render, cmapProps, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)

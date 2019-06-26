@@ -82,13 +82,35 @@ li#rename  #rename-a{
 }
 
 
-#rename-tooltip {
+#node-popup-tooltip {
     position : absolute;
     left : 96px;
     top:-64px;
     background-color: white;
     z-index: 1000;
 
+}
+#create-node-tooltip {
+    position : absolute;
+    left : 96px;
+    top:-64px;
+    background-color: white;
+    z-index: 1000;
+
+}
+#create-node-tooltip .panel-body input {
+    min-width: 200px;
+}
+#file-type-tooltip {
+    position : absolute;
+    left : 96px;
+    top:-64px;
+    background-color: white;
+    z-index: 1000;
+
+}
+#file-type-tooltip .panel-body select {
+    min-width: 200px;
 }
 
 li a#rename {
@@ -106,6 +128,7 @@ li a#rename-leaf {
     display:none;
     position:absolute;
     text-decoration:none;
+    margin-left: 20px;
 }
 
 li:hover a#rename-leaf {
@@ -139,7 +162,7 @@ text-align: center;
     transform: scale(1.4);
 }
 
-#rename-tooltip:hover {
+#node-popup-tooltip:hover {
     border:none;
 }
 
@@ -155,7 +178,7 @@ text-align: center;
     left: -9px;
 }
 
-#rename-tooltip a:hover
+#node-popup-tooltip a:hover
 {
     text-decoration:none;
 }
@@ -183,4 +206,13 @@ text-align: center;
 }
 #graph-tree .tree {
     margin-top: 27px;
+}
+
+.nopadding {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.row-no-padding > [class*="col-"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }

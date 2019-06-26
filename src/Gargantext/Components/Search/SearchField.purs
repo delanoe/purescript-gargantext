@@ -93,4 +93,3 @@ submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
       case term of
         "" -> setSearch Nothing
         _ -> setSearch $ Just { database, term }
-
