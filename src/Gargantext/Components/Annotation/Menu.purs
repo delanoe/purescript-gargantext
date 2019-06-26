@@ -12,7 +12,7 @@ import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
 import Gargantext.Types ( TermList(..), termListName )
-import Gargantext.Components.Annotation.Utils ( termClass )
+import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 
 import Gargantext.Components.ContextMenu.ContextMenu as CM
 import Gargantext.Utils.Selection (Selection, selectionToString)
@@ -50,5 +50,5 @@ addToList {menuType, setList} t = Just $ CM.contextMenuItem [ link ]
     link = HTML.a { onClick: click, className: className } [ HTML.text (label menuType) ]
     label NewNgram = "Add to " <> termListName t
     label SetTermListItem = "Change to" <> termListName t
-    className = "list-group-item " <> (termClass t)
+    className = "list-group-item list-group-item-" <> (termBootstrapClass t)
     click = mkEffectFn1 $ \_ -> setList t
