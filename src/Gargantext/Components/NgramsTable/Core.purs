@@ -60,7 +60,6 @@ import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
-import Data.String.Common (trim)
 import Data.Traversable (class Traversable, traverse, traverse_, sequence)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Set (Set)
@@ -212,7 +211,7 @@ highlightNgrams (NgramsTable table) input0 =
     map trimmer $ A.reverse (A.fromFoldable (consNonEmpty sN.s sN.l))
   where
     -- we need to trim so that the highlighting is without endings
-    trimmer (Tuple t (Just l)) = Tuple (trim t) (Just l)
+    trimmer (Tuple t (Just l)) = Tuple (S.trim t) (Just l)
     trimmer x = x
     sp x = " " <> S.replaceAll (S.Pattern " ") (S.Replacement "  ") x <> " "
     unsp x =
@@ -221,11 +220,10 @@ highlightNgrams (NgramsTable table) input0 =
         Just x1 -> S.replaceAll (S.Pattern "  ") (S.Replacement " ") (S.drop 1 x1)
     input = sp input0
     pats = A.fromFoldable (Map.keys table)
+    theRegex = case R.regex "[.,;:!?'\\{}()]" (R.global <> R.multiline) of
+      Left e  -> unsafePartial $ crashWith e
+      Right r -> r
     ixs  = indicesOfAny (sp <$> pats) (S.toLower $ R.replace theRegex " " input)
-      where
-        theRegex = case R.regex "[.,;:!?'\\{}()]" (R.global <> R.multiline) of
-            Left e  -> unsafePartial $ crashWith e
-            Right r -> r
 
     consNonEmpty x xs
       | S.null x  = xs
