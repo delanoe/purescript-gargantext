@@ -50,5 +50,5 @@ addToList {menuType, setList} t = Just $ CM.contextMenuItem [ link ]
     link = HTML.a { onClick: click, className: className } [ HTML.text (label menuType) ]
     label NewNgram = "Add to " <> termListName t
     label SetTermListItem = "Change to" <> termListName t
-    className = termClass t
+    className = "list-group-item " <> (termClass t)
     click = mkEffectFn1 $ \_ -> setList t

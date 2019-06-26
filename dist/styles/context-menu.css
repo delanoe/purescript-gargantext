@@ -1,33 +1,15 @@
 .context-menu {
-  display: block;
-  position: fixed;
-  z-index: 9999;
-  background: #fff;
-  border: 1px solid #000;
-  border-radius: 3px;
-  padding: 0;
+    position : absolute;
+    left : 96px;
+    top:-64px;
+    background-color: white;
+    z-index: 1000;
+
 }
-.context-menu-items {
-  display: block;
-  position: relative;
-  margin: 0;
-  padding: 0;
+.context-menu a.list-group-item {
+    cursor: pointer;
 }
-.context-menu-item {
-  display: block;
-  margin: 10px;
-  text-align: center;
-  margin: 0;
-  padding: 0;
-  cursor: pointer;
-}
-.context-menu-item a {
-  display: block;
-  padding: 10px 20px;
-  text-align: center;
-  font-size: 16px;
-  height: 100%;
-}
+
 .search-bar-container {
   margin-top: 11px;
   text-align: center;
