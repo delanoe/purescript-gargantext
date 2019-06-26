@@ -205,7 +205,7 @@ text-align: center;
     margin-top: 10px;
 }
 .tree .file-dropped {
-    background-color: aliceblue;
+    background-color: #d8dfe5;
 }
 #graph-tree .tree {
     margin-top: 27px;
