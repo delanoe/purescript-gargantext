@@ -40,10 +40,6 @@ import React.DOM (a, br', button, div, i, input, p, text)
 import React.DOM.Props (_type, className, href, onClick, placeholder, style, checked, target)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
--- TODO: Search is pending
--- TODO: Fav is pending
--- TODO: Sort is Pending
--- TODO: Filter is Pending
 
 type NodeID = Int
 type TotalRecords = Int

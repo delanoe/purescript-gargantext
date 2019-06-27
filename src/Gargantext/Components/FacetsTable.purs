@@ -36,10 +36,6 @@ import React.DOM (a, br', button, div, i, input, p, text, span)
 import React.DOM.Props (_type, className, href, onClick, placeholder, style, checked, target)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
--- TODO: Search is pending
--- TODO: Fav is pending
--- TODO: Sort is Pending
--- TODO: Filter is Pending
 
 type NodeID = Int
 type TotalRecords = Int
@@ -297,7 +293,7 @@ initialPageParams {nodeId, query} = {nodeId, query, params: T.initialParams}
 loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, query, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
-  let url = toUrl Back (Search { offset, limit, orderBy: convOrderBy <$> orderBy }) Nothing
+  let url = toUrl Back (Search { offset, limit, orderBy: convOrderBy <$> orderBy }) (Just nodeId)
   SearchResults res <- post url $ SearchQuery {id: nodeId, query}
   pure $ res2corpus <$> res.results
   where
