@@ -15,7 +15,7 @@ import FFI.Simple ((...), defineProperty)
 import React (ReactElement)
 import Reactix as R
 import Reactix.DOM.HTML (ElemFactory)
-import Reactix.React (createElement)
+import Reactix.React (createDOMElement)
 import Reactix.SyntheticEvent as RE
 import Unsafe.Coerce (unsafeCoerce)
 newtype Point = Point { x :: Number, y :: Number }
@@ -47,6 +47,6 @@ useLayoutEffect1' a f = R.useLayoutEffect1 a $ \_ ->
 
 
 select :: ElemFactory
-select = createElement "select"
+select = createDOMElement "select"
 
 effToggler (value /\ setValue) = mkEffectFn1 $ \_ -> setValue $ not value

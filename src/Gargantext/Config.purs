@@ -174,9 +174,11 @@ pathUrl c (PutNgrams t listid termList) i =
 pathUrl c Auth Nothing = c.prePath <> "auth"
 pathUrl c Auth (Just _) = "impossible" -- TODO better types
 pathUrl c (NodeAPI nt) i = c.prePath <> nodeTypeUrl nt <> (maybe "" (\i' -> "/" <> show i') i)
-pathUrl c (Search {limit,offset,orderBy}) _TODO =
-  c.prePath <> "search/?dummy=dummy"
-    <> offsetUrl offset <> limitUrl limit <> orderUrl orderBy
+pathUrl c (Search {limit,offset,orderBy}) i =
+    pathUrl c (NodeAPI Corpus) i
+      <> "/search?dummy=dummy"
+      -- dummy is here just because offsetUrl starts with &...
+      <> offsetUrl offset <> limitUrl limit <> orderUrl orderBy
 pathUrl c (CorpusMetrics {tabType, listId, limit}) i =
     pathUrl c (NodeAPI Corpus) i <> "/metrics"
       <> "?ngrams=" <> show listId
