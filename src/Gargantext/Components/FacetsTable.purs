@@ -47,13 +47,11 @@ type TextQuery = Array (Array String)
 
 newtype SearchQuery = SearchQuery
   { query :: TextQuery
-  , id    :: Int
   }
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
   encodeJson (SearchQuery post)
      = "query"     := post.query !! 0 -- TODO anoe
-    ~> "corpus_id" := post.id
     ~> jsonEmptyObject
 
 newtype SearchResults = SearchResults { results :: Array Response }
@@ -116,11 +114,14 @@ instance showDocumentsView :: Show DocumentsView where
   show = genericShow
 
 newtype Response = Response
-  { id        :: Int
-  , date      :: String
-  , hyperdata :: Hyperdata
-  , score     :: Int
-  , pairs     :: Array Pair
+  { id         :: Int
+  , created    :: String
+  , hyperdata  :: Hyperdata
+  , favorite   :: Boolean
+  , ngramCount :: Int
+-- , date      :: String
+-- , score     :: Int
+-- , pairs     :: Array Pair
   }
 
 
@@ -135,15 +136,6 @@ newtype Hyperdata = Hyperdata
 --    title  <- obj .? "title"
 --    source <- obj .? "source"
 --    pure $ Hyperdata { title,source }
---instance decodeResponse :: DecodeJson Response where
---  decodeJson json = do
---    obj        <- decodeJson json
---    cid        <- obj .? "id"
---    created    <- obj .? "created"
---    favorite   <- obj .? "favorite"
---    ngramCount <- obj .? "ngramCount"
---    hyperdata  <- obj .? "hyperdata"
---    pure $ Response { cid, created, favorite, ngramCount, hyperdata }
 
 
 instance decodePair :: DecodeJson Pair where
@@ -160,6 +152,7 @@ instance decodeHyperdata :: DecodeJson Hyperdata where
     source <- obj .| "source"
     pure $ Hyperdata { title,source }
 
+{-
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
     obj       <- decodeJson json
@@ -170,8 +163,17 @@ instance decodeResponse :: DecodeJson Response where
     hyperdata <- obj .? "hyperdata"
     pairs     <- obj .? "pairs"
     pure $ Response { id, date, score, hyperdata, pairs }
+-}
 
-
+instance decodeResponse :: DecodeJson Response where
+  decodeJson json = do
+    obj        <- decodeJson json
+    id         <- obj .? "id"
+    created    <- obj .? "created"
+    hyperdata  <- obj .? "hyperdata"
+    favorite   <- obj .? "favorite"
+    ngramCount <- obj .? "ngramCount"
+    pure $ Response { id, created, hyperdata, favorite, ngramCount }
 
 -- | Filter
 -- TODO: unused
@@ -294,12 +296,13 @@ loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, query, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   let url = toUrl Back (Search { offset, limit, orderBy: convOrderBy <$> orderBy }) (Just nodeId)
-  SearchResults res <- post url $ SearchQuery {id: nodeId, query}
+  SearchResults res <- post url $ SearchQuery {query}
   pure $ res2corpus <$> res.results
   where
     res2corpus :: Response -> DocumentsView
-    res2corpus (Response { id, date, score, pairs
+    res2corpus (Response { id, created: date, ngramCount: score
                          , hyperdata: Hyperdata {title, source}
+                      -- favorite TODO
                          }) =
       DocumentsView
         { id
@@ -307,8 +310,8 @@ loadPage {nodeId, query, params: {limit, offset, orderBy}} = do
         , title
         , source
         , score
-        , pairs
-        , delete : false
+        , pairs: []
+        , delete: false
         }
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
