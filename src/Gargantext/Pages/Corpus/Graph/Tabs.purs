@@ -29,7 +29,7 @@ pureTabs = hideState (const {activeTab: 0}) statefulTabs
 tab :: forall props state. TextQuery -> GraphSideCorpus -> Tuple String (Spec state props Tab.Action)
 tab query (GraphSideCorpus {corpusId: nodeId, corpusLabel}) =
   Tuple corpusLabel $
-    cmapProps (const {nodeId, query, chart, totalRecords: 4736, container}) $
+    cmapProps (const {nodeId, listId: 0, query, chart, totalRecords: 4736, container}) $
       noState docViewSpec
   where
     -- TODO totalRecords: probably need to insert a corpusLoader.
