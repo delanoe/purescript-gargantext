@@ -119,9 +119,19 @@ newtype State = State
 
 derive instance newtypeState :: Newtype State _
 
+initialMetadata :: MetaData
+initialMetadata = MetaData { title : "", legend : [], corpusId : [] }
+
+initialGraphData :: GraphData
+initialGraphData = GraphData
+  { nodes: []
+  , edges: []
+  , sides: []
+  , metaData : Just initialMetadata }
+
 initialState :: State
 initialState = State
-  { graphData : GraphData {nodes: [], edges: [], sides: [], metaData : Just $ MetaData{title : "", legend : [], corpusId : []}}
+  { graphData : initialGraphData
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []
