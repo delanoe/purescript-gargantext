@@ -3,6 +3,7 @@ module Gargantext.Components.GraphExplorer.Sigmajs where
 import Prelude
 
 import Data.Nullable (Nullable)
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn1, runEffectFn1)
 import React (Children, ReactClass, ReactElement, ReactRef, SyntheticEventHandler, createElement, unsafeCreateElement)
@@ -10,6 +11,7 @@ import React.SyntheticEvent (SyntheticMouseEvent)
 import Record.Unsafe (unsafeGet)
 import Thermite (EventHandler)
 import Unsafe.Coerce (unsafeCoerce)
+import FFI.Simple ((...))
 import Gargantext.Types (class Optional)
 
 foreign import edgeShapesClass  :: forall props. ReactClass props
@@ -246,6 +248,11 @@ sigmaEdge = unsafeCoerce
 sigmaSettings :: forall o. Optional o SigmaSettingProps => { | o } -> SigmaSettings
 sigmaSettings = unsafeCoerce
 
+reviseSettings :: SigmaSettings -> SigmaSettings
+reviseSettings = objectCreate
+
+foreign import objectCreate :: forall a. a -> a
+
 foreign import data SigmaStyle :: Type
 
 type CameraProps =
@@ -262,6 +269,12 @@ type CameraInstance = { | CameraInstance' }
 foreign import setSigmaRef :: EffectFn1 (Nullable ReactRef) Unit
 foreign import getSigmaRef :: Effect SigmaInstance
 foreign import sigmaOnMouseMove :: {cursorSize :: Number} -> SyntheticMouseEvent -> Effect Unit
+
+refresh :: SigmaInstance -> Effect Unit
+refresh s = do
+  log "Force refreshing sigma instance"
+  pure (s ... "refresh" $ [])
+
 cameras :: SigmaInstance -> Array CameraInstance
 cameras = unsafeGet "cameras"
 
@@ -436,4 +449,5 @@ type SigmaSettingProps =
   , twNodesGreyOpacity    :: Number
   , twBorderGreyColor     :: String
   , twEdgeGreyColor       :: String
+  , gargRevision :: Int
   )
