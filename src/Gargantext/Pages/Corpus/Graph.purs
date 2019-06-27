@@ -121,7 +121,7 @@ derive instance newtypeState :: Newtype State _
 
 initialState :: State
 initialState = State
-  { graphData : GraphData {nodes: [], edges: [], sides: [], metaData : Just $ MetaData{title : "", legend : [], corpusId : []}}
+  { graphData : GraphData {nodes: [], edges: [], sides: [], metaData : Just $ MetaData{title : "", legend : [], corpusId : [], listId : 0}}
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []

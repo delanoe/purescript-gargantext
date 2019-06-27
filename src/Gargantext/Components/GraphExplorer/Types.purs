@@ -31,12 +31,14 @@ newtype Edge = Edge
 
 derive instance newtypeEdge :: Newtype Edge _
 
+type ListId      = Int
 type CorpusId    = Int
 type CorpusLabel = String
 
 newtype GraphSideCorpus = GraphSideCorpus
   { corpusId    :: CorpusId
   , corpusLabel :: CorpusLabel
+  , listId      :: ListId
   }
 
 newtype GraphData = GraphData
@@ -54,6 +56,7 @@ newtype MetaData = MetaData
     title :: String
   , legend :: Array Legend
   , corpusId :: Array Int
+  , listId   :: ListId
   }
 
 
@@ -65,8 +68,9 @@ instance decodeJsonGraphData :: DecodeJson GraphData where
     -- TODO: sides
     metadata <- obj .? "metadata"
     corpusIds <- metadata .? "corpusId"
+    listId'   <- metadata .? "listId"
     metaData <- obj .? "metadata"
-    let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Publications" }
+    let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Publications", listId : listId'}
     let sides = side <$> corpusIds
     pure $ GraphData { nodes, edges, sides, metaData }
 
@@ -89,7 +93,8 @@ instance decodeJsonMetaData :: DecodeJson MetaData where
     title <- obj .? "title"
     legend <- obj .? "legend"
     corpusId <- obj .? "corpusId"
-    pure $ MetaData { title, legend, corpusId }
+    listId <- obj .? "listId"
+    pure $ MetaData { title, legend, corpusId, listId}
 
 
 instance decodeJsonLegend :: DecodeJson Legend where

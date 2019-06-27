@@ -165,6 +165,8 @@ pathUrl c (GetNgrams
                     TabCorpus _ -> pathUrl c (NodeAPI Node) i
                     _           -> pathUrl c (NodeAPI Url_Document) i
 
+pathUrl c (ListDocument lId) dId =
+  pathUrl c (NodeAPI NodeList) lId <> "/document/" <> (show $ maybe 0 identity dId)
 
 pathUrl c (PutNgrams t listid termList) i =
     pathUrl c (NodeAPI Node) i <> "/ngrams?ngramsType="
@@ -241,7 +243,6 @@ data NodeType = NodeUser
               | Nodes
               | Tree
               | NodeList
-
 
 instance showNodeType :: Show NodeType where
   show NodeUser      = "NodeUser"
@@ -330,6 +331,7 @@ data Path
   | PutNgrams TabType (Maybe ListId) (Maybe TermList)
   -- ^ The name is not good. In particular this URL is used both in PUT and POST.
   | NodeAPI NodeType
+  | ListDocument (Maybe ListId)
   | Search  { {-id :: Int
             , query    :: Array String
             ,-}

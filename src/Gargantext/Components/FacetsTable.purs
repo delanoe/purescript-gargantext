@@ -385,7 +385,7 @@ renderPage loaderDispatch { totalRecords, dispatch, container
                       ]
                     -- TODO show date: Year-Month-Day only
                     , div strikeIfDeleted [text date]
-                    , a (strikeIfDeleted <> [ href (toUrl Front Url_Document (Just id))
+                    , a (strikeIfDeleted <> [ href (toUrl Front (ListDocument (Just listId)) (Just id))
                                             , target "blank"])
                         [ text title ]
                     , div strikeIfDeleted [text source]
