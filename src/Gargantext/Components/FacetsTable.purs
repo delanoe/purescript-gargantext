@@ -64,6 +64,7 @@ instance decodeSearchResults :: DecodeJson SearchResults where
 
 type Props =
   { nodeId :: Int
+  , listId :: Int
   , query :: TextQuery
   , totalRecords :: Int
   , chart :: ReactElement
@@ -206,7 +207,7 @@ layoutDocview = simpleSpec performAction render
         }
 
     render :: Render State Props Action
-    render dispatch {nodeId, query, totalRecords, chart, container} deletionState _ =
+    render dispatch {nodeId, listId, query, totalRecords, chart, container} deletionState _ =
       [ {- br'
       , div [ style {textAlign : "center"}] [ text "    Filter "
                      , input [className "form-control", style {width : "120px", display : "inline-block"}, placeholder "Filter here"]
@@ -219,7 +220,7 @@ layoutDocview = simpleSpec performAction render
           [ chart
           , div [className "col-md-12"]
             [ pageLoader
-                { path: initialPageParams {nodeId, query}
+                { path: initialPageParams {nodeId, listId, query}
                 , totalRecords
                 , deletionState
                 , dispatch
@@ -257,7 +258,7 @@ layoutDocviewGraph = simpleSpec performAction render
         }
 
     render :: Render State Props Action
-    render dispatch {nodeId, query, totalRecords, chart, container} deletionState _ =
+    render dispatch {nodeId, listId, query, totalRecords, chart, container} deletionState _ =
       [ br'
 
       , p [] [text ""]
@@ -267,7 +268,7 @@ layoutDocviewGraph = simpleSpec performAction render
           [ chart
           , div [className "col-md-12"]
             [ pageLoader
-                { path: initialPageParams {nodeId, query}
+                { path: initialPageParams {nodeId, listId, query}
                 , totalRecords
                 , deletionState
                 , dispatch
@@ -287,15 +288,15 @@ layoutDocviewGraph = simpleSpec performAction render
 
 
 
-type PageParams = {nodeId :: Int, query :: TextQuery, params :: T.Params}
+type PageParams = {nodeId :: Int, listId :: Int, query :: TextQuery, params :: T.Params}
 
-initialPageParams :: {nodeId :: Int, query :: TextQuery} -> PageParams
-initialPageParams {nodeId, query} = {nodeId, query, params: T.initialParams}
+initialPageParams :: {nodeId :: Int, listId :: Int, query :: TextQuery} -> PageParams
+initialPageParams {nodeId, listId, query} = {nodeId, listId, query, params: T.initialParams}
 
 loadPage :: PageParams -> Aff (Array DocumentsView)
-loadPage {nodeId, query, params: {limit, offset, orderBy}} = do
+loadPage {nodeId, listId, query, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
-  let url = toUrl Back (Search { offset, limit, orderBy: convOrderBy <$> orderBy }) (Just nodeId)
+  let url = toUrl Back (Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy }) (Just nodeId)
   SearchResults res <- post url $ SearchQuery {query}
   pure $ res2corpus <$> res.results
   where
@@ -332,7 +333,7 @@ type PageLoaderProps row =
   }
 
 renderPage :: forall props path.
-              Render (Loader.State {nodeId :: Int, query :: TextQuery | path} (Array DocumentsView))
+              Render (Loader.State {nodeId :: Int, listId :: Int, query :: TextQuery | path} (Array DocumentsView))
                      { totalRecords :: Int
                      , dispatch :: Action -> Effect Unit
                      , deletionState :: State
@@ -343,10 +344,10 @@ renderPage :: forall props path.
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
 renderPage loaderDispatch { totalRecords, dispatch, container
                           , deletionState: {documentIdsToDelete, documentIdsDeleted}}
-                          {currentPath: {nodeId, query}, loaded: Just res} _ =
+                          {currentPath: {nodeId, listId, query}, loaded: Just res} _ =
   [ T.tableElt
       { rows
-      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, query, params})
+      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, listId, query, params})
       , container
       , colNames:
           T.ColumnName <$>
