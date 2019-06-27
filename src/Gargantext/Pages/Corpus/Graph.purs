@@ -16,10 +16,11 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Traversable (for_)
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, CameraProps, getCameraProps, goTo, pauseForceAtlas2, sStyle, sigmaOnMouseMove, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, CameraProps, getCameraProps, goTo, pauseForceAtlas2, sStyle, sigmaOnMouseMove, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings, refresh, reviseSettings)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
@@ -119,9 +120,19 @@ newtype State = State
 
 derive instance newtypeState :: Newtype State _
 
+initialMetadata :: MetaData
+initialMetadata = MetaData { title : "", legend : [], corpusId : [] }
+
+initialGraphData :: GraphData
+initialGraphData = GraphData
+  { nodes: []
+  , edges: []
+  , sides: []
+  , metaData : Just initialMetadata }
+
 initialState :: State
 initialState = State
-  { graphData : GraphData {nodes: [], edges: [], sides: [], metaData : Just $ MetaData{title : "", legend : [], corpusId : []}}
+  { graphData : initialGraphData
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []
@@ -136,6 +147,20 @@ initialState = State
   , settings : mySettings
   }
 
+revise :: State -> State
+revise (State s) = State $ s { settings = reviseSettings s.settings }
+
+maybeRevise :: State -> Boolean -> State
+maybeRevise s true = revise s
+maybeRevise s false = s
+
+selectNode :: SelectedNode -> State -> State
+selectNode selectedNode (State s) = maybeRevise state (s.selectedNodes /= selectedNodes)
+  where
+    set = if s.multiNodeSelection then s.selectedNodes else Set.empty
+    selectedNodes = toggleSet selectedNode set
+    sigmaGraphData = Just $ convert selectedNodes s.graphData
+    state = State $ s { sigmaGraphData=sigmaGraphData }
 -- This one is not used: specOld is the one being used.
 -- TODO: code duplication
   {-
@@ -151,19 +176,26 @@ performAction (LoadGraph fp) _ _ = void do
   treeResp <- liftEffect $ getAuthData
   case treeResp of
     Just (AuthData {token,tree_id }) ->
-      modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Just tree_id}
+      modifyState \(State s) ->
+        State s
+        { graphData = resp
+        , sigmaGraphData = Just $ convert Set.empty resp
+        , legendData = getLegendData resp
+        , treeId = Just tree_id }
     Nothing ->
-      modifyState \(State s) -> State s { graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Nothing}
+      modifyState \(State s) ->
+        State s
+          { graphData = resp
+          , sigmaGraphData = Just $ convert Set.empty resp
+          , legendData = getLegendData resp
+          , treeId = Nothing}
       -- TODO: here one might `catchError getNodes` to visually empty the
       -- graph.
   --modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
-performAction (SelectNode selectedNode@(SelectedNode node)) _ (State state) =
-  modifyState_ $ \(State s) ->
-    State s {selectedNodes = toggleSet selectedNode
-                              (if s.multiNodeSelection then s.selectedNodes
-                                                       else Set.empty) }
-
+performAction (SelectNode selectedNode@(SelectedNode node)) _ (State state) = void do
+  modifyState_ (selectNode selectedNode)
+    
 performAction (ShowSidePanel b) _ (State state) = void do
   modifyState $ \(State s) -> State s {showSidePanel = b }
 
@@ -201,8 +233,11 @@ performAction (ChangeCursorSize size) _ _ =
 --  modifyState_ $ \() -> do
 --    State $
 
-convert :: GraphData -> SigmaGraphData
-convert (GraphData r) = SigmaGraphData {nodes, edges}
+selNode :: Node -> SelectedNode
+selNode (Node n) = SelectedNode { id: n.id_, label: n.label }
+
+convert :: Set.Set SelectedNode -> GraphData -> SigmaGraphData
+convert selectedNodes (GraphData r) = SigmaGraphData {nodes, edges}
   where
     nodes = mapWithIndex nodeFn r.nodes
     nodeFn i (Node n) =
@@ -212,12 +247,18 @@ convert (GraphData r) = SigmaGraphData {nodes, edges}
         , label : n.label
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)
-        , color : intColor $ cDef n.attributes
+        , color
+        -- , labelColor
         }
       where
+        isSelected = Set.member (selNode (Node n)) selectedNodes
         cDef (Cluster {clustDefault}) = clustDefault
+        -- labelColor = if isSelected then Color "red" else intColor $ cDef n.attributes
+        color = if isSelected then Color "#ff0000" else intColor $ cDef n.attributes
     edges = map edgeFn r.edges
     edgeFn (Edge e) = sigmaEdge {id : e.id_, source : e.source, target : e.target}
+    
+
 {--
 render :: Render State {} Action
 render d p (State {sigmaGraphData, settings, legendData}) c =

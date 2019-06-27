@@ -1,5 +1,7 @@
 'use strict';
 
+exports.objectCreate = function(a) { return Object.create(a); };
+
 var dummyClass = 'DummyClass';
 exports.edgeShapesClass = dummyClass;
 exports.filterClass = dummyClass;
