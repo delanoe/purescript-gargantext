@@ -238,6 +238,7 @@ data NodeType = NodeUser
               | Error
               | Folder
               | Graph
+              | Phylo
               | Individu
               | Node
               | Nodes
@@ -255,6 +256,7 @@ instance showNodeType :: Show NodeType where
   show Error         = "NodeError"
   show Folder        = "NodeFolder"
   show Graph         = "NodeGraph"
+  show Phylo         = "NodePhylo"
   show Individu      = "NodeIndividu"
   show Node          = "Node"
   show Nodes         = "Nodes"
@@ -267,6 +269,7 @@ readNodeType "NodeDashboard" = Dashboard
 readNodeType "Document"      = Url_Document
 readNodeType "NodeFolder"    = Folder
 readNodeType "NodeGraph"     = Graph
+readNodeType "NodePhylo"     = Phylo
 readNodeType "Individu"      = Individu
 readNodeType "Node"          = Node
 readNodeType "Nodes"         = Nodes
@@ -303,6 +306,7 @@ nodeTypeUrl Url_Document  = "document"
 nodeTypeUrl Error     = "ErrorNodeType"
 nodeTypeUrl Folder    = "folder"
 nodeTypeUrl Graph     = "graph"
+nodeTypeUrl Phylo     = "phylo"
 nodeTypeUrl Individu  = "individu"
 nodeTypeUrl Node      = "node"
 nodeTypeUrl Nodes      = "nodes"
