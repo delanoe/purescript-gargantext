@@ -107,18 +107,18 @@ renderTableHeaderLayout {title, desc, query, date, user} =
     ]
   , div [className "row"] [ div [className "jumbotron1", style {padding : "12px 0px 20px 12px"}]
         [ div [ className "col-md-8 content"]
-              [ p [] [ i [className "fa fa-globe"] []
+              [ p [] [ i [className "glyphicon glyphicon-globe"] []
                      , text $ " " <> desc
                      ]
-              , p [] [ i [className "fab fa-searchengin"] []
+              , p [] [ i [className "glyphicon glyphicon-zoom-in"] []
                      , text $ " " <> query
                      ]
               ]
         , div [ className "col-md-4 content"]
-              [ p [] [ i [className "fa fa-calendar"] []
+              [ p [] [ i [className "glyphicon glyphicon-calendar"] []
                      , text $ " " <> date
                      ]
-              , p [] [ i [className "fa fa-user"] []
+              , p [] [ i [className "glyphicon glyphicon-user"] []
                      , text $ " " <> user
                      ]
               ]

@@ -194,9 +194,9 @@ nodeOptionsCorp activated = case activated of
 -- on hover make other options available:
 nodeOptionsView :: Boolean -> Array ReactElement
 nodeOptionsView activated = case activated of
-                         true -> [ i [className "fas fa-sync-alt" ] []
-                                 , i [className "fas fa-upload"   ] []
-                                 , i [className "fas fa-share-alt"] []
+                         true -> [ i [className "glyphicon glyphicon-refresh" ] []
+                                 , i [className "glyphicon glyphicon-upload"   ] []
+                                 , i [className "glyphicon glyphicon-share"] []
                                  ]
                          false -> []
 
@@ -442,8 +442,6 @@ createNodeView _ _ = R.createElement el {} []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt props _ = pure $ H.div {} []
-
-
 
 --fileTypeView :: (Action -> Effect Unit) -> FTree -> R.Element
 fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ /\ setIsDragOver) = R.createElement el {} []

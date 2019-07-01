@@ -337,7 +337,7 @@ tree params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick} nd@{ngrams} =
                   , i [ className "glyphicon glyphicon-pencil"
                       , onClick $ const effect ] [] ]
     leaf = List.null cs
-    icon = gray <> [className $ "fas fa-caret-" <> if open then "down" else "right"]
+    icon = gray <> [className $ "glyphicon glyphicon-chevron-" <> if open then "down" else "right"]
     open = not leaf || false {- TODO -}
     gray = if leaf then [style {color: "#adb5bd"}] else []
     cs   = ngramsTable ^.. ix ngrams <<< _NgramsElement <<< _children <<< folded
@@ -378,7 +378,7 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent, dispatch } 
     then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
     else
       a [onClick $ const $ dispatch $ ToggleChild true ngrams]
-        [ i [className "fas fa-plus"] []
+        [ i [className "glyphicon glyphicon-plus"] []
         , span ngramsStyle [text $ " " <> ngrams]
         ]
   , text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
