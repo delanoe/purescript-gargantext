@@ -48,6 +48,9 @@ dispatchAction dispatcher _ (Annuaire id) = do
 dispatchAction dispatcher _ (Folder id) = do
   dispatcher $ SetRoute $ Folder id
 
+dispatchAction dispatcher _ (CorpusDocument c i n) = do
+  dispatcher $ SetRoute $ CorpusDocument c i n
+
 dispatchAction dispatcher _ (Document i n) = do
   dispatcher $ SetRoute $ Document i n
 

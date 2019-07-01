@@ -21,6 +21,7 @@ data Routes
     | Corpus           Int
       | AddCorpus
       | Document       Int Int
+      | CorpusDocument Int Int Int
       | PGraphExplorer Int
       | Dashboard
     | Annuaire         Int
@@ -34,6 +35,7 @@ routing = oneOf
   , AddCorpus        <$   route "addCorpus"
   , Folder           <$> (route "folder"     *> int)
   , Corpus           <$> (route "corpus"     *> int)
+  , CorpusDocument       <$> (route "corpus" *> int) <*> (lit "list" *> int) <*> (lit "document" *> int)
      , Document       <$> (route "list" *> int) <*> (lit "document" *> int)
      , Dashboard      <$   route "dashboard"
      , PGraphExplorer <$> (route "graph"      *> int)
@@ -42,10 +44,10 @@ routing = oneOf
     , ContactPage       <$> (route "contact" *> int)
   , Home             <$   lit ""
   ]
-  
+
  where
     route str      = lit "" *> lit str
-  
+
     int :: Match Int
     int = floor <$> num
 
@@ -55,6 +57,7 @@ instance showRoutes :: Show Routes where
   show SearchView       = "Search"
   show (UserPage i)     = "User"     <> show i
   show (ContactPage i)  = "Contact"  <> show i
+  show (CorpusDocument _ _ i)     = "Document" <> show i
   show (Document _ i)     = "Document" <> show i
   show (Corpus i)       = "Corpus"   <> show i
   show (Annuaire i)     = "Annuaire" <> show i

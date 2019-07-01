@@ -50,6 +50,7 @@ type Props =
   , chart        :: ReactElement
   , tabType      :: TabType
   , listId       :: Int
+  , corpusId     :: Maybe Int
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.
   }
@@ -175,7 +176,7 @@ layoutDocview = simpleSpec performAction render
         (_documentIdsDeleted <>~ documentIdsToDelete)
 
     render :: Render State Props Action
-    render dispatch {nodeId, tabType, listId, totalRecords, chart} deletionState _ =
+    render dispatch {nodeId, tabType, listId, corpusId, totalRecords, chart} deletionState _ =
       [ {- br'
       , div [ style {textAlign : "center"}] [ text "    Filter "
                      , input [className "form-control", style {width : "120px", display : "inline-block"}, placeholder "Filter here"]
@@ -188,8 +189,9 @@ layoutDocview = simpleSpec performAction render
           [ chart
           , div [className "col-md-12"]
             [ pageLoader
-                { path: initialPageParams {nodeId, tabType, listId}
+                { path: initialPageParams {nodeId, tabType, listId, corpusId}
                 , listId
+                , corpusId
                 , totalRecords
                 , deletionState
                 , dispatch
@@ -210,14 +212,14 @@ layoutDocview = simpleSpec performAction render
 mock :: Boolean
 mock = false
 
-type PageParams = {nodeId :: Int, listId :: Int, tabType :: TabType, params :: T.Params}
+type PageParams = {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType, params :: T.Params}
 
-initialPageParams :: {nodeId :: Int, listId :: Int, tabType :: TabType} -> PageParams
-initialPageParams {nodeId, listId, tabType} =
-  {nodeId, tabType, listId, params: T.initialParams}
+initialPageParams :: {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType} -> PageParams
+initialPageParams {nodeId, listId, corpusId, tabType} =
+  {nodeId, tabType, listId, corpusId, params: T.initialParams}
 
 loadPage :: PageParams -> Aff (Array DocumentsView)
-loadPage {nodeId, tabType, listId, params: {limit, offset, orderBy}} = do
+loadPage {nodeId, tabType, listId, corpusId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let docs = res2corpus <$> res
@@ -253,25 +255,27 @@ type PageLoaderProps row =
   , dispatch :: Action -> Effect Unit
   , deletionState :: State
   , listId :: Int
+  , corpusId :: Maybe Int
   | row
   }
 
 renderPage :: forall props path.
-              Render (Loader.State {nodeId :: Int, listId :: Int, tabType :: TabType | path} (Array DocumentsView))
+              Render (Loader.State {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType | path} (Array DocumentsView))
                      { totalRecords :: Int
                      , dispatch :: Action -> Effect Unit
                      , deletionState :: State
                      , listId :: Int
+                     , corpusId :: Maybe Int
                      | props
                      }
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage loaderDispatch { totalRecords, dispatch, listId
+renderPage loaderDispatch { totalRecords, dispatch, listId, corpusId
                           , deletionState: {documentIdsToDelete, documentIdsDeleted, localFavorites}}
                           {currentPath: {nodeId, tabType}, loaded: Just res} _ =
   [ T.tableElt
       { rows
-      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, params})
+      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params})
       , container: T.defaultContainer { title: "Documents" }
       , colNames:
           T.ColumnName <$>
@@ -287,38 +291,40 @@ renderPage loaderDispatch { totalRecords, dispatch, listId
   where
     gi true  = "glyphicon glyphicon-star"
     gi false = "glyphicon glyphicon-star-empty"
-    isChecked _id = Set.member _id documentIdsToDelete
     toDelete  (DocumentsView {_id}) = Set.member _id documentIdsToDelete
     isDeleted (DocumentsView {_id}) = Set.member _id documentIdsDeleted
     isFavorite {_id,fav} = maybe fav identity (localFavorites ^. at _id)
+    corpusDocument (Just corpusId) = R.CorpusDocument corpusId
+    corpusDocument _ = R.Document
     rows = (\(DocumentsView r) ->
-                let isFav = isFavorite r in
+                let isFav = isFavorite r
+                    toDel = toDelete $ DocumentsView r in
                 { row:
                     [ div []
                       [ a [ className $ gi isFav
-                          , if (toDelete $ DocumentsView r) then style {textDecoration : "line-through"}
-                                                            else style {textDecoration : "none"}
+                          , if toDel then style {textDecoration : "line-through"}
+                                     else style {textDecoration : "none"}
                           , onClick $ (\_-> dispatch $ MarkFavorites r._id (not isFav))] []
                       ]
                     -- TODO show date: Year-Month-Day only
-                    , if (toDelete $ DocumentsView r) then
+                    , if toDel then
                         div [ style {textDecoration : "line-through"}][text (show r.date)]
                       else
                         div [ ][text (show r.date)]
-                    , if (toDelete $ DocumentsView r) then
-                        a [ href (toLink $ R.Document listId r._id)
+                    , if toDel then
+                        a [ href (toLink $ (corpusDocument corpusId) listId r._id)
                           , style {textDecoration : "line-through"}
                           , target "_blank"
                         ] [ text r.title ]
                       else
-                        a [ href (toLink $  R.Document listId r._id)
+                        a [ href (toLink $ (corpusDocument corpusId) listId r._id)
                         , target "_blank" ] [ text r.title ]
-                    , if (toDelete $ DocumentsView r) then
+                    , if toDel then
                         div [style {textDecoration : "line-through"}] [ text r.source]
                       else
                         div [] [ text r.source]
                     , input [ _type "checkbox"
-                            , checked (isChecked r._id)
+                            , checked toDel
                             , onClick $ (\_ -> dispatch $ ToggleDocumentToDelete r._id)]
                     ]
                 , delete: true

@@ -24,7 +24,7 @@ import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Types (TermList)
 import Gargantext.Utils.Reactix ( scuff )
 
-type DocPath = { nodeId :: Int, listIds :: Array Int, tabType :: TabType }
+type DocPath = { nodeId :: Int, listIds :: Array Int, corpusId :: Maybe Int, tabType :: TabType }
 
 type NodeDocument = NodePoly Document
 
@@ -333,8 +333,8 @@ docViewSpec = simpleSpec performAction render
           badge s = span [className "badge badge-default badge-pill"] [text s]
           NodePoly {hyperdata : Document doc} = document
 
-layout :: Spec {} {nodeId :: Int, listId :: Int} Void
-layout = cmapProps (\{nodeId, listId} -> {nodeId, listIds: [listId], tabType})
+layout :: Spec {} {nodeId :: Int, listId :: Int, corpusId :: Maybe Int} Void
+layout = cmapProps (\{nodeId, listId, corpusId} -> {nodeId, listIds: [listId], corpusId, tabType})
        $ simpleSpec defaultPerformAction render
   where
     tabType = TabDocument (TabNgramType CTabTerms)

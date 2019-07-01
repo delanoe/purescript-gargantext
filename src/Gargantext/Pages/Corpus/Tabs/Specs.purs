@@ -8,7 +8,6 @@ import Data.List (fromFoldable)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
-import Gargantext.Config (TabType(..), TabSubType(..))
 import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
 import Gargantext.Pages.Corpus.Tabs.Types (Props)
 
@@ -59,22 +58,24 @@ statefulTabs =
   where
     -- TODO totalRecords
 
-    docs = noState ( cmapProps (\{path: corpusId} -> {corpusId : corpusId, tabType: TabCorpus TabDocs}) histoSpec
+    docs = noState ( cmapProps (\{path: corpusId} -> {corpusId, tabType: TabCorpus TabDocs}) histoSpec
                               <>
-                     (cmapProps (\{path: nodeId, loaded: loaded} ->
-                                  { nodeId : nodeId
+                     (cmapProps (\{path: nodeId, loaded} ->
+                                  { nodeId
                                   , chart  : div [][]
                                   , tabType: TabCorpus TabDocs
                                   , totalRecords: 4737
-                                  , listId: loaded.defaultListId}) $ noState DT.docViewSpec
+                                  , listId: loaded.defaultListId
+                                  , corpusId: Just nodeId}) $ noState DT.docViewSpec
                                   )
                     )
-    trash = cmapProps (\{path: nodeId, loaded: loaded} ->
+    trash = cmapProps (\{path: nodeId, loaded} ->
                         { nodeId
                         , chart: div [][]
                         , tabType: TabCorpus TabTrash
                         , totalRecords: 4736
-                        , listId: loaded.defaultListId}) $ noState DT.docViewSpec
+                        , listId: loaded.defaultListId
+                        , corpusId: Nothing}) $ noState DT.docViewSpec
 
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
@@ -86,13 +87,13 @@ ngramsViewSpec {mode} =
   )
   where
     tabType = TabCorpus $ TabNgramType $ modeTabType mode
-    chart Authors    = cmapProps (\{path: corpusId} -> {corpusId : corpusId, tabType}) pieSpec
-    chart Sources    = cmapProps (\{path: corpusId} -> {corpusId : corpusId, tabType}) barSpec
-    
+    chart Authors    = cmapProps (\{path: corpusId} -> {corpusId, tabType}) pieSpec
+    chart Sources    = cmapProps (\{path: corpusId} -> {corpusId, tabType}) barSpec
+
     chart Institutes = cmapProps (\{loaded: {defaultListId}, path: corpusId} ->
                           {corpusId, listId: defaultListId, tabType, limit: (Just 1000)})
                       treeSpec
-    
+
     chart Terms      = cmapProps (\{loaded: {defaultListId}, path: corpusId} ->
                           {corpusId, listId: defaultListId, tabType, limit: (Just 1000)})
                           -- TODO limit should be select in the chart by default it is 1000
