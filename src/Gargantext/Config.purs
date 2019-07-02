@@ -31,7 +31,9 @@ endConfig = endConfig' V10
 
 endConfig' :: ApiVersion -> EndConfig
 endConfig' v = { front : frontRelative
-               , back  : backLocal v  }
+               , back  : backLocal v
+               , static : staticRelative
+             }
 --               , back  : backDemo v  }
 
 ------------------------------------------------------------------------
@@ -39,6 +41,11 @@ frontRelative :: Config
 frontRelative = { baseUrl: ""
                 , prePath: "/#/"
                 }
+
+staticRelative :: Config
+staticRelative = { baseUrl: ""
+                 , prePath : "/"
+               }
 
 frontCaddy :: Config
 frontCaddy = { baseUrl: "http://localhost:2015"
@@ -85,6 +92,7 @@ backProd v = { baseUrl: "https://gargantext.org"
 
 type EndConfig = { front :: Config
                  , back  :: Config
+                 , static :: Config
                  }
 
 type Config = { baseUrl :: String
@@ -100,9 +108,10 @@ type Url      = String
 doUrl :: UrlBase -> UrlPath -> UrlParam -> Url
 doUrl b p ps = b <> p <> ps
 
-endOf :: forall cfg. End -> { front :: cfg, back :: cfg } -> cfg
+endOf :: forall cfg. End -> { front :: cfg, back :: cfg, static :: cfg } -> cfg
 endOf Back  = _.back
 endOf Front = _.front
+endOf Static = _.static
 
 endBaseUrl :: End -> EndConfig -> UrlBase
 endBaseUrl end c = (endOf end c).baseUrl
@@ -139,6 +148,7 @@ pathUrl c (Tab t o l s) i =
 pathUrl c (Children n o l s) i =
     pathUrl c (NodeAPI Node) i <>
       "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
+pathUrl c (NodeAPI Phylo) pId = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId)
 pathUrl c (GetNgrams
             { tabType: t
             , offset: o
@@ -164,7 +174,6 @@ pathUrl c (GetNgrams
           base =  case t of
                     TabCorpus _ -> pathUrl c (NodeAPI Node) i
                     _           -> pathUrl c (NodeAPI Url_Document) i
-
 pathUrl c (ListDocument lId) dId =
   pathUrl c (NodeAPI NodeList) lId <> "/document/" <> (show $ maybe 0 identity dId)
 
@@ -244,6 +253,8 @@ data NodeType = NodeUser
               | Nodes
               | Tree
               | NodeList
+
+derive instance eqNodeType :: Eq NodeType
 
 instance showNodeType :: Show NodeType where
   show NodeUser      = "NodeUser"
@@ -363,7 +374,7 @@ instance showChartType :: Show ChartType
     show ChartPie = "pie"
     show ChartTree = "tree"
 
-data End = Back | Front
+data End = Back | Front | Static
 type Id  = Int
 
 type Limit  = Int
