@@ -61,10 +61,7 @@ filterNTree p (NTree x ary) =
 
 newtype LNode = LNode { id :: ID
                       , name :: String
-                      , nodeType :: NodeType
-                      , popOver :: Boolean
-                      , nodeValue :: String
-                      , createOpen :: Boolean}
+                      , nodeType :: NodeType}
 
 derive instance newtypeLNode :: Newtype LNode _
 
@@ -76,10 +73,7 @@ instance decodeJsonLNode :: DecodeJson LNode where
     nodeType <- obj .: "type"
     pure $ LNode { id : id_
                  , name
-                 , nodeType
-                 , popOver : false
-                 , nodeValue : ""
-                 , createOpen : false}
+                 , nodeType}
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
   decodeJson json = do
@@ -91,15 +85,6 @@ instance decodeJsonFTree :: DecodeJson (NTree LNode) where
     pure $ NTree node' nodes'
 
 type FTree = NTree LNode
-
-setName :: String -> NTree LNode -> NTree LNode
-setName v (NTree (LNode s@{name}) ary) = NTree (LNode $ s {name = v}) ary
-
-setPopOver :: Boolean -> NTree LNode -> NTree LNode
-setPopOver v (NTree (LNode s@{popOver}) ary) = NTree (LNode $ s {popOver = v}) ary
-
-setCreateOpen :: Boolean -> NTree LNode -> NTree LNode
-setCreateOpen v (NTree (LNode s@{createOpen}) ary) = NTree (LNode $ s {createOpen = v}) ary
 
 -- file upload types
 data FileType = CSV | PresseRIS
@@ -124,7 +109,6 @@ type FileHash = String
 data Action =   Submit       ID String
               | DeleteNode   ID
               | CreateSubmit       ID String NodeType
-              | SetNodeValue String ID
               | CurrentNode      ID
               | UploadFile ID FileType UploadFileContents
 
@@ -151,9 +135,6 @@ performAction (CreateSubmit nid name nodeType) _ _ = do
   void $ lift $ createNode nid $ CreateValue {name, nodeType}
   --modifyState_ $ mapFTree $ map $ hidePopOverNode nid
 
-performAction (SetNodeValue v nid) _ _ =
-  modifyState_ $ mapFTree $ setNodeValue nid v
-
 performAction (CurrentNode nid) _ _ =
   modifyState_ $ \{state: s} -> {state: s, currentNode : Just nid}
 
@@ -173,12 +154,6 @@ setNodeName nid n (NTree (LNode node@{id}) ary) =
   NTree (LNode $ node {name = nname}) $ map (setNodeName nid n) ary
   where
     nname = if nid == id then  n   else node.name
-
-setNodeValue :: ID ->  String -> NTree LNode  -> NTree LNode
-setNodeValue sid v (NTree (LNode node@{id}) ary)  =
-  NTree (LNode $ node {nodeValue = nvalue}) $ map (setNodeValue sid  v) ary
-  where
-    nvalue = if sid == id then  v   else ""
 
 
 
@@ -250,10 +225,9 @@ type NodePopupProps =
 
 nodePopupView ::   (Action -> Effect Unit)
                  -> Record NodePopupProps
-                 -> R.State Boolean
-                 -> R.State Boolean
+                 -> R.State (Maybe NodePopup)
                  -> R.Element
-nodePopupView d p (true /\ setPopupOpen) (_ /\ setCreateOpen) = R.createElement el p []
+nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
   where
     el = R.hooksComponent "NodePopupView" cpt
     cpt {id, name} _ = do
@@ -284,7 +258,7 @@ nodePopupView d p (true /\ setPopupOpen) (_ /\ setCreateOpen) = R.createElement 
             , editIcon renameBoxOpen
             , H.div {className: "col-md-2"}
               [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
-                    , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const false
+                    , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const Nothing
                     , title: "Close"} []
               ]
             ]
@@ -347,13 +321,11 @@ nodePopupView d p (true /\ setPopupOpen) (_ /\ setCreateOpen) = R.createElement 
                     , className: (glyphicon "plus")
                     , id: "create"
                     , title: "Create"
-                    , onClick: mkEffectFn1 $ \_ -> do
-                        setCreateOpen $ const true
-                        setPopupOpen $ const false
+                    , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const $ Just CreatePopup
                     }
                 []
               ]
-nodePopupView _ p (false /\ _) _ = R.createElement el p []
+nodePopupView _ p _ = R.createElement el p []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt _ _ = pure $ H.div {} []
@@ -409,7 +381,7 @@ renameBox _ p (false /\ _) = R.createElement el p []
 
 -- END Rename Box
 
-createNodeView d p (true /\ setCreateOpen) = R.createElement el p []
+createNodeView d p (Just CreatePopup /\ setPopupOpen) = R.createElement el p []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt {id, name} _ = do
@@ -435,7 +407,7 @@ createNodeView d p (true /\ setCreateOpen) = R.createElement el p []
               [ H.h5 {} [H.text "Create Node"] ]
             , H.div {className: "col-md-2"}
               [ H.a { className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
-                    , onClick: mkEffectFn1 $ \_ -> setCreateOpen $ const false
+                    , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const Nothing
                     , title: "Close"} []
               ]
             ]
@@ -471,11 +443,11 @@ createNodeView d p (true /\ setCreateOpen) = R.createElement el p []
           [ H.button {className: "btn btn-success"
                      , type: "button"
                      , onClick: mkEffectFn1 $ \_ -> do
-                         setCreateOpen $ const false
+                         setPopupOpen $ const Nothing
                          d $ (CreateSubmit id name nt)
                      } [H.text "Create"]
           ]
-createNodeView _ _ (false /\ _) = R.createElement el {} []
+createNodeView _ _ _ = R.createElement el {} []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt props _ = pure $ H.div {} []
@@ -552,7 +524,7 @@ fileTypeView _ _ (Nothing /\ _) _ = R.createElement el {} []
 
 
 toHtml :: (Action -> Effect Unit) -> FTree -> Maybe ID -> R.Element
-toHtml d s@(NTree _ ary) n = R.createElement el {} []
+toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     cpt props _ = do
@@ -560,17 +532,29 @@ toHtml d s@(NTree _ ary) n = R.createElement el {} []
 
       pure $ H.ul {}
         [ H.li {}
-          ( [ nodeMainSpan d s n folderOpen ]
+          ( [ nodeMainSpan d {id, name, nodeType} n folderOpen ]
             <> childNodes d n ary folderOpen
           )
         ]
 
-nodeMainSpan d s@(NTree (LNode {id, name, nodeType}) _) n folderOpen = R.createElement el {} []
+type NodeMainSpanProps =
+  ( id :: ID
+  , name :: String
+  , nodeType :: NodeType)
+
+data NodePopup = CreatePopup | NodePopup
+
+nodeMainSpan :: (Action -> Effect Unit)
+             -> Record NodeMainSpanProps
+             -> Maybe ID
+             -> R.State Boolean
+             -> R.Element
+nodeMainSpan d p n folderOpen = R.createElement el p []
   where
     el = R.hooksComponent "NodeMainSpan" cpt
-    cpt props _ = do
-      createOpen <- R.useState' false
-      popupOpen <- R.useState' false
+    cpt {id, name, nodeType} _ = do
+      -- only 1 popup at a time is allowed to be opened
+      popupOpen <- R.useState' (Nothing :: Maybe NodePopup)
       droppedFile <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver <- R.useState' false
 
@@ -582,8 +566,8 @@ nodeMainSpan d s@(NTree (LNode {id, name, nodeType}) _) n folderOpen = R.createE
               }
           [ nodeText {isSelected: n == (Just id), name} ]
         , popOverIcon popupOpen
-        , nodePopupView d {id, name} popupOpen createOpen
-        , createNodeView d {id, name} createOpen
+        , nodePopupView d {id, name} popupOpen
+        , createNodeView d {id, name} popupOpen
         , fileTypeView d {id} droppedFile isDragOver
         ]
     folderIcon folderOpen@(open /\ _) =
@@ -592,8 +576,11 @@ nodeMainSpan d s@(NTree (LNode {id, name, nodeType}) _) n folderOpen = R.createE
     popOverIcon (popOver /\ setPopOver) =
       H.a { className: "glyphicon glyphicon-cog"
           , id: "rename-leaf"
-          , onClick: mkEffectFn1 $ \_ -> setPopOver $ const $ not popOver
+          , onClick: mkEffectFn1 $ \_ -> setPopOver $ toggle
           } []
+      where
+        toggle Nothing = Just NodePopup
+        toggle _       = Nothing
     dropProps droppedFile isDragOver = {
         className: dropClass droppedFile isDragOver
       , onDrop: dropHandler droppedFile
