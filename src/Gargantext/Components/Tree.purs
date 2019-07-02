@@ -229,10 +229,12 @@ treeview :: Spec {} Props Void
 treeview = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
-    render _ {root} _ _ =
-      R.hooksComponent "TreeView" \props children ->
+    render _ props _ _ = [R2.scuff $ R.createElement cpt props []]
+
+    cpt =
+      R.hooksComponent "TreeView" \{root} _children ->
         useLoader root loadNode \currentPath loaded ->
-          React.createElement treeViewClass {tree: loaded}
+          R2.buff $ React.createElement treeViewClass {tree: loaded} []
 
 
 --nodePopupView :: forall s. (Action -> Effect Unit) -> FTree -> RAction s -> R.Element
@@ -588,8 +590,9 @@ fldr :: Boolean -> String
 fldr open = if open then "fas fa-folder-open" else "fas fa-folder"
 
 
-loadNode :: ID -> Effect FTree
-loadNode a = lift ((get <<< toUrl Back Tree <<< Just) a)
+loadNode :: ID -> Aff FTree
+-- loadNode a = lift ((get <<< toUrl Back Tree <<< Just) a)
+loadNode = get <<< toUrl Back Tree <<< Just
 
 ----- TREE CRUD Operations
 

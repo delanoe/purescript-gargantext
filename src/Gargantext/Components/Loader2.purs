@@ -1,11 +1,11 @@
 module Gargantext.Components.Loader2 where
 
---import Control.Monad.Cont.Trans (lift)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Tuple.Nested ((/\))
 import Gargantext.Prelude
-import Effect (Effect)
---import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
+import Effect.Class (liftEffect)
+import Effect.Exception (error)
 import Reactix as R
 
 type State path loaded = { currentPath :: path, loaded :: Maybe loaded }
@@ -15,22 +15,26 @@ useLoader
   .  Eq path
   => Show path
   => path
-  -> (path -> Effect loaded)
-  -> (path -> loaded -> Array R.Element)
-  -> R.Hooks (Array R.Element)
+  -> (path -> Aff loaded)
+  -> (path -> loaded -> R.Element)
+  -> R.Hooks R.Element
 useLoader newPath loader render = do
   {currentPath, loaded} /\ setState <- R.useState' { currentPath: newPath, loaded: Nothing }
 
-  -- What about cleanup handlers?
-  R.useEffect' $ \_ ->
-    when (isNothing loaded || newPath /= currentPath) do
+  R.useEffect $ \_ ->
+    if (isNothing loaded || newPath /= currentPath) then do
       logs $ "useLoader " <> show {newPath, currentPath, loadedIsNothing: isNothing loaded}
-      freshlyLoaded <- loader newPath
-      setState { currentPath: newPath, loaded: Just freshlyLoaded }
+
+      fiber <- launchAff do
+        freshlyLoaded <- loader newPath
+        liftEffect $ setState { currentPath: newPath, loaded: Just freshlyLoaded }
+      pure $ \_ -> launchAff_ $ killFiber (error "useLoader") fiber
+    else do
+      pure $ \_ -> pure unit
 
   pure case loaded of
     Nothing ->
       -- TODO load spinner
-      []
+      R.fragment []
     Just loadedData ->
       render currentPath loadedData
