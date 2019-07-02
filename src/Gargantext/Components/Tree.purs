@@ -17,7 +17,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, runAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, mkEffectFn1)
-import FFI.Simple ((..), (.=))
+import FFI.Simple ((..))
 import Gargantext.Components.Loader as Loader
 import Gargantext.Config (toUrl, End(..), NodeType(..), readNodeType)
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
@@ -145,6 +145,7 @@ performAction (DeleteNode nid) _ _ = do
 
 performAction (Submit rid name) _  _  = do
   void $ lift $ renameNode rid $ RenameValue {name}
+  modifyState_ $ mapFTree $ setNodeName rid name
 
 performAction (CreateSubmit nid name nodeType) _ _ = do
   void $ lift $ createNode nid $ CreateValue {name, nodeType}
@@ -177,6 +178,12 @@ onNode id f l@(LNode node)
 --toggleFileTypeBox sid _ (LNode node) = LNode $ node {droppedFile = Nothing}
 
 -- TODO: DRY, NTree.map
+setNodeName :: ID -> String -> NTree LNode -> NTree LNode
+setNodeName nid n (NTree (LNode node@{id}) ary) =
+  NTree (LNode $ node {name = nname}) $ map (setNodeName nid n) ary
+  where
+    nname = if nid == id then  n   else node.name
+
 setNodeValue :: ID ->  String -> NTree LNode  -> NTree LNode
 setNodeValue sid v (NTree (LNode node@{id}) ary)  =
   NTree (LNode $ node {nodeValue = nvalue}) $ map (setNodeValue sid  v) ary
@@ -263,10 +270,11 @@ nodePopupView d nodeState@(s@(NTree (LNode {id, name, popOver: true, createOpen}
           ]
         ]
       where
-        tooltipProps = ({ className: ""
-                        , id: "node-popup-tooltip"
-                        , title: "Node settings"
-                        } .= "data-toggle" $ "tooltip") .= "data-placement" $ "right"
+        tooltipProps = { className: ""
+                       , id: "node-popup-tooltip"
+                       , title: "Node settings"
+                       , data: {toggle: "tooltip", placement: "right"}
+                       }
         iconAStyle = {color:"black", paddingTop: "6px", paddingBottom: "6px"}
         rowClass true = "col-md-10"
         rowClass false = "col-md-8"
@@ -372,8 +380,8 @@ renameBox d (s@(NTree (LNode {id, name}) _) /\ setNodeState) (true /\ setRenameB
           H.a {className: "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
               , type: "button"
               , onClick: mkEffectFn1 $ \_ -> do
-                    setNodeState (setPopOver false <<< setName newName)
-                    d (Submit id newName)
+                    setNodeState $ const (setPopOver false s)
+                    d $ Submit id newName
               , title: "Rename"
               } []
         cancelBtn =
@@ -403,9 +411,11 @@ createNodeView d (s@(NTree (LNode {id, nodeValue, createOpen: true}) _) /\ setNo
           ]
         ]
       where
-        tooltipProps = ({ className: ""
-                        , id: "create-node-tooltip"
-                        , title: "Create new node"} .= "data-toggle" $ "tooltip") .= "data-placement" $ "right"
+        tooltipProps = { className: ""
+                       , id: "create-node-tooltip"
+                       , title: "Create new node"
+                       , data: {toggle: "tooltip", placement: "right"}
+                       }
         panelHeading =
           H.div {className: "panel-heading"}
           [ H.div {className: "row"}
@@ -469,9 +479,11 @@ fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fil
           ]
         ]
       where
-        tooltipProps = ({ className: ""
-                        , id: "file-type-tooltip"
-                        , title: "Choose file type"} .= "data-toggle" $ "tooltip") .= "data-placement" $ "right"
+        tooltipProps = { className: ""
+                       , id: "file-type-tooltip"
+                       , title: "Choose file type"
+                       , data: {toggle: "tooltip", placement: "right"}
+                       }
         panelHeading =
           H.div {className: "panel-heading"}
           [ H.div {className: "row"}
@@ -548,7 +560,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
                 , style: {"margin-left": "22px"}
                 , onClick: mkEffectFn1 $ (\e -> d $ CurrentNode id)
                 }
-            [ nodeText s n ]
+            [ nodeText {isSelected: n == (Just id), name} ]
           , popOverIcon nodeState
           , nodePopupView d nodeState
           , createNodeView d nodeState
@@ -595,11 +607,22 @@ childNodes d n _ (false /\ _) = []
 childNodes d n ary (true /\ _) = map (\cs -> toHtml d cs n) ary
 
 
-nodeText :: FTree -> Maybe Int -> R.Element
-nodeText (NTree (LNode {id, name}) _) n = if n == (Just id) then
-              H.u {} [H.b {} [H.text ("| " <> name <> " |    ")]]
-            else
-              H.text (name <> "    ")
+-- START node text
+
+type NodeTextProps =
+  ( isSelected :: Boolean
+  , name :: String )
+
+nodeText :: Record NodeTextProps -> R.Element
+nodeText p = R.createElement el p []
+  where
+    el = R.hooksComponent "NodeText" cpt
+    cpt {isSelected: true, name} _ = do
+      pure $ H.u {} [H.b {} [H.text ("| " <> name <> " |    ")]]
+    cpt {isSelected: false, name} _ = do
+      pure $ H.text (name <> "    ")
+
+-- END node text
 
 
 popOverIcon :: R.State FTree -> R.Element
