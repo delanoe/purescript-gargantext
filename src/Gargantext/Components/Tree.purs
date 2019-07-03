@@ -300,18 +300,27 @@ nodePopupView d nodeState@(s@(NTree (LNode {id, name, popOver: true, createOpen}
           [ createButton
           , H.div {className: "col-md-4"}
             [ H.a {style: iconAStyle
-                  , className: (glyphicon "download-alt")
+                  , className: (glyphicon "download")
                   , id: "download"
                   , title: "Download [WIP]"}
               []
             ]
           , H.div {className: "col-md-4"}
             [ H.a {style: iconAStyle
-                  , className: (glyphicon "duplicate")
-                  , id: "duplicate"
-                  , title: "Duplicate [WIP]"}
+                  , className: (glyphicon "upload")
+                  , id: "upload"
+                  , title: "Upload [WIP]"}
               []
             ]
+          
+          , H.div {className: "col-md-4"}
+            [ H.a {style: iconAStyle
+                  , className: (glyphicon "refresh")
+                  , id: "refresh"
+                  , title: "Refresh [WIP]"}
+              []
+            ]
+
           , H.div {className: "col-md-4"}
             [ H.a {style: iconAStyle
                   , className: (glyphicon "trash")
