@@ -16,8 +16,7 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, runAff)
 import Effect.Class (liftEffect)
-import Effect.Exception (error)
-import Effect.Uncurried (mkEffectFn1)
+import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import FFI.Simple ((..), (.=))
 import Gargantext.Components.Loader as Loader
 import Gargantext.Config (toUrl, End(..), NodeType(..), readNodeType)
@@ -93,8 +92,13 @@ instance decodeJsonFTree :: DecodeJson (NTree LNode) where
 
 type FTree = NTree LNode
 
+setName :: String -> NTree LNode -> NTree LNode
 setName v (NTree (LNode s@{name}) ary) = NTree (LNode $ s {name = v}) ary
+
+setPopOver :: Boolean -> NTree LNode -> NTree LNode
 setPopOver v (NTree (LNode s@{popOver}) ary) = NTree (LNode $ s {popOver = v}) ary
+
+setCreateOpen :: Boolean -> NTree LNode -> NTree LNode
 setCreateOpen v (NTree (LNode s@{createOpen}) ary) = NTree (LNode $ s {createOpen = v}) ary
 
 -- file upload types
@@ -241,12 +245,13 @@ treeview = simpleSpec defaultPerformAction render
                    } ]
 
 
---nodePopupView :: forall s. (Action -> Effect Unit) -> FTree -> RAction s -> R.Element
-nodePopupView d nodeState@(s@(NTree (LNode {id, name, popOver: true, createOpen}) _) /\ setNodeState) = R.createElement el {} []
+nodePopupView :: (Action -> Effect Unit) -> R.State (NTree LNode) -> R.Element
+nodePopupView d nodeState@(s@(NTree (LNode {id, name, popOver: true, createOpen}) _) /\ setNodeState) =
+  R.createElement el {} []
   where
     el = R.hooksComponent "NodePopupView" cpt
     cpt props _ = do
-      renameBoxOpen <- R.useState $ \_ -> pure false
+      renameBoxOpen <- R.useState' false
       pure $ H.div tooltipProps $
         [ H.div {id: "arrow"} []
         , H.div { className: "panel panel-default"
@@ -263,21 +268,17 @@ nodePopupView d nodeState@(s@(NTree (LNode {id, name, popOver: true, createOpen}
                         , title: "Node settings"
                         } .= "data-toggle" $ "tooltip") .= "data-placement" $ "right"
         iconAStyle = {color:"black", paddingTop: "6px", paddingBottom: "6px"}
+        rowClass true = "col-md-10"
+        rowClass false = "col-md-8"
         panelHeading renameBoxOpen@(open /\ _) =
           H.div {className: "panel-heading"}
           [ H.div {className: "row" }
-            (
-              [ H.div {className: if (open) then "col-md-10" else "col-md-8"}
-                [ renameBox d nodeState renameBoxOpen ]
-              ] <> [ editIcon renameBoxOpen ] <> [
-                H.div {className: "col-md-2"}
-                [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
-                      , onClick: mkEffectFn1 $ \_ -> setNodeState $ setPopOver false s
-                      , title: "Close"} []
-                ]
-              ]
-            )
-          ]
+            [ H.div {className: rowClass open} [ renameBox d nodeState renameBoxOpen ]
+            , editIcon renameBoxOpen
+            , H.div {className: "col-md-2"}
+              [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
+                    , onClick: mkEffectFn1 $ \_ -> setNodeState $ const (setPopOver false s)
+                    , title: "Close"} [] ] ] ]
         glyphicon t = "glyphitem glyphicon glyphicon-" <> t
         editIcon (false /\ setRenameBoxOpen) =
           H.div {className: "col-md-2"}
@@ -285,7 +286,7 @@ nodePopupView d nodeState@(s@(NTree (LNode {id, name, popOver: true, createOpen}
                 , className: "btn glyphitem glyphicon glyphicon-pencil"
                 , id: "rename1"
                 , title: "Rename"
-                , onClick: mkEffectFn1 $ \_ -> setRenameBoxOpen true
+                , onClick: mkEffectFn1 $ \_ -> setRenameBoxOpen (const true)
                 }
             []
           ]
@@ -327,7 +328,7 @@ nodePopupView d nodeState@(s@(NTree (LNode {id, name, popOver: true, createOpen}
                     , className: (glyphicon "plus")
                     , id: "create"
                     , title: "Create"
-                    , onClick: mkEffectFn1 $ \_ -> setNodeState $ setCreateOpen (not createOpen) $ setPopOver false s
+                    , onClick: mkEffectFn1 $ \_ -> setNodeState (const $ setCreateOpen (not createOpen) $ setPopOver false s)
                     }
                 []
               ]
@@ -337,11 +338,12 @@ nodePopupView _ _ = R.createElement el {} []
     cpt props _ = pure $ H.div {} []
 
 
+renameBox :: (Action -> Effect Unit) -> R.State (NTree LNode) -> R.State Boolean -> R.Element
 renameBox d (s@(NTree (LNode {id, name}) _) /\ setNodeState) (true /\ setRenameBoxOpen) = R.createElement el {} []
   where
     el = R.hooksComponent "RenameBox" cpt
     cpt props _ = do
-      renameNodeName <- R.useState $ \_ -> pure name
+      renameNodeName <- R.useState' name
       pure $ H.div {className: "from-group row-no-padding"}
         [ renameInput renameNodeName
         , renameBtn renameNodeName
@@ -354,21 +356,21 @@ renameBox d (s@(NTree (LNode {id, name}) _) /\ setNodeState) (true /\ setRenameB
                     , placeholder: "Rename Node"
                     , defaultValue: name
                     , className: "form-control"
-                    , onInput: mkEffectFn1 $ \e -> setRenameNodeName $ e .. "target" .. "value"
+                    , onInput: mkEffectFn1 $ \e -> setRenameNodeName (const $ e .. "target" .. "value")
                     }
           ]
         renameBtn (newName /\ _) =
           H.a {className: "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
               , type: "button"
               , onClick: mkEffectFn1 $ \_ -> do
-                    setNodeState $ setPopOver false $ setName newName s
-                    d $ (Submit id newName)
+                    setNodeState (setPopOver false <<< setName newName)
+                    d (Submit id newName)
               , title: "Rename"
               } []
         cancelBtn =
           H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
               , type: "button"
-              , onClick: mkEffectFn1 $ \_ -> setRenameBoxOpen false
+              , onClick: mkEffectFn1 $ \_ -> setRenameBoxOpen (const false)
               , title: "Cancel"
               } []
 renameBox _ (s@(NTree (LNode {name}) _) /\ _) (false /\ _) = R.createElement el {} []
@@ -377,13 +379,13 @@ renameBox _ (s@(NTree (LNode {name}) _) /\ _) (false /\ _) = R.createElement el 
     cpt props _ = pure $ H.div {} [ H.text name ]
 
 
---createNodeView :: (Action -> Effect Unit) -> FTree -> R.Element
+createNodeView :: (Action -> Effect Unit) -> R.State FTree -> R.Element
 createNodeView d (s@(NTree (LNode {id, nodeValue, createOpen: true}) _) /\ setNodeState) = R.createElement el {} []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt props _ = do
-      nodeName <- R.useState $ \_ -> pure ""
-      nodeType <- R.useState $ \_ -> pure Corpus
+      nodeName <- R.useState' ""
+      nodeType <- R.useState' Corpus
       pure $ H.div tooltipProps $
         [ H.div {className: "panel panel-default"}
           [ panelHeading
@@ -402,11 +404,12 @@ createNodeView d (s@(NTree (LNode {id, nodeValue, createOpen: true}) _) /\ setNo
               [ H.h5 {} [H.text "Create Node"] ]
             , H.div {className: "col-md-2"}
               [ H.a { className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
-                    , onClick: mkEffectFn1 $ \_ -> setNodeState $ setCreateOpen false s
+                    , onClick: mkEffectFn1 $ \_ -> setNodeState (setCreateOpen false)
                     , title: "Close"} []
               ]
             ]
           ]
+        panelBody :: R.State String -> R.State NodeType -> R.Element
         panelBody (_ /\ setNodeName) (nt /\ setNodeType) =
           H.div {className: "panel-body"}
           [ H.div {className: "row"}
@@ -417,12 +420,12 @@ createNodeView d (s@(NTree (LNode {id, nodeValue, createOpen: true}) _) /\ setNo
                             , placeholder: "Node name"
                             , defaultValue: getCreateNodeValue s
                             , className: "form-control"
-                            , onInput: mkEffectFn1 $ \e -> setNodeName $ e .. "target" .. "value"
+                            , onInput: mkEffectFn1 $ \e -> setNodeName (const $ e .. "target" .. "value")
                             }
                   ]
                 , H.div {className: "form-group"}
                   [ R2.select { className: "form-control"
-                              , onChange: mkEffectFn1 $ \e -> setNodeType $ readNodeType $ e .. "target" .. "value"
+                              , onChange: mkEffectFn1 $ \e -> setNodeType (const $ readNodeType $ e .. "target" .. "value")
                               }
                     (map renderOption [Corpus, Folder])
                   ]
@@ -431,6 +434,7 @@ createNodeView d (s@(NTree (LNode {id, nodeValue, createOpen: true}) _) /\ setNo
             ]
           ]
         renderOption (opt :: NodeType) = H.option {} [ H.text $ show opt ]
+        panelFooter :: R.State String  -> R.State NodeType -> R.Element
         panelFooter (name /\ _) (nt /\ _) =
           H.div {className: "panel-footer"}
           [ H.button {className: "btn btn-success"
@@ -443,7 +447,7 @@ createNodeView _ _ = R.createElement el {} []
     el = R.hooksComponent "CreateNodeView" cpt
     cpt props _ = pure $ H.div {} []
 
---fileTypeView :: (Action -> Effect Unit) -> FTree -> R.Element
+fileTypeView :: (Action -> Effect Unit) -> R.State FTree -> R.State (Maybe DroppedFile) -> R.State Boolean -> R.Element
 fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ /\ setIsDragOver) = R.createElement el {} []
   where
     el = R.hooksComponent "FileTypeView" cpt
@@ -467,8 +471,8 @@ fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fil
             , H.div {className: "col-md-2"}
               [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
                     , onClick: mkEffectFn1 $ \_ -> do
-                        setDroppedFile Nothing
-                        setIsDragOver false
+                        setDroppedFile (const Nothing)
+                        setIsDragOver (const false)
                     , title: "Close"} []
               ]
             ]
@@ -481,7 +485,7 @@ fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fil
           ]
           where
             onChange = mkEffectFn1 $ \e ->
-              setDroppedFile $ Just $ DroppedFile $ {contents, fileType: readFileType $ e .. "target" .. "value"}
+              setDroppedFile (const $ Just $ DroppedFile $ {contents, fileType: readFileType $ e .. "target" .. "value"})
         renderOption opt = H.option {} [ H.text $ show opt ]
         panelFooter =
           H.div {className: "panel-footer"}
@@ -491,7 +495,7 @@ fileTypeView d (s@(NTree (LNode {id}) _) /\ _) (Just (DroppedFile {contents, fil
                 H.button {className: "btn btn-success"
                          , type: "button"
                          , onClick: mkEffectFn1 $ \_ -> do
-                             setDroppedFile $ Nothing
+                             setDroppedFile (const Nothing)
                              d $ (UploadFile id ft contents)
                          } [H.text "Upload"]
               Nothing ->
@@ -513,10 +517,10 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     cpt props _ = do
-      nodeState <- R.useState $ \_ -> pure s
-      folderOpen <- R.useState $ \_ -> pure true
-      droppedFile <- R.useState $ \_ -> pure (Nothing :: Maybe DroppedFile)
-      isDragOver <- R.useState $ \_ -> pure false
+      nodeState <- R.useState' s
+      folderOpen <- R.useState' true
+      droppedFile <- R.useState' Nothing
+      isDragOver <- R.useState' false
 
       pure $ H.ul {}
         [ H.li {}
@@ -525,6 +529,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
           )
         ]
       where
+        mainSpan :: R.State FTree -> R.State Boolean -> R.State (Maybe DroppedFile) -> R.State Boolean -> R.Element
         mainSpan nodeState folderOpen droppedFile isDragOver =
           H.span (dropProps droppedFile isDragOver)
           [ folderIcon folderOpen
@@ -540,18 +545,20 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
           , createNodeView d nodeState
           , fileTypeView d nodeState droppedFile isDragOver
           ]
+        folderIcon :: R.State Boolean -> R.Element
         folderIcon folderOpen@(open /\ _) =
           H.a {onClick: R2.effToggler folderOpen}
           [ H.i {className: fldr open} [] ]
         dropProps droppedFile isDragOver = {
             className: dropClass droppedFile isDragOver
           , onDrop: dropHandler droppedFile
-          , onDragOver: onDragOverHandler isDragOver
-          , onDragLeave: onDragLeave isDragOver
+          , onDragOver: dragOverHandler isDragOver
+          , onDragLeave: dragLeave isDragOver
           }
         dropClass (Just _ /\ _)  _           = "file-dropped"
         dropClass _              (true /\ _) = "file-dropped"
         dropClass (Nothing /\ _) _           = ""
+        dropHandler :: forall e. R.State (Maybe DroppedFile) -> EffectFn1 (E.SyntheticEvent_ e) Unit
         dropHandler (_ /\ setDroppedFile) = mkEffectFn1 $ \e -> unsafePartial $ do
           let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
           liftEffect $ log2 "drop:" ff
@@ -561,32 +568,36 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
           let blob = toBlob $ ff
           void $ runAff (\_ -> pure unit) do
             contents <- readAsText blob
-            liftEffect $ setDroppedFile $ Just $ DroppedFile {contents: (UploadFileContents contents), fileType: Just CSV}
-        onDragOverHandler (_ /\ setIsDragOver) = mkEffectFn1 $ \e -> do
+            liftEffect $ setDroppedFile (const $ Just $ DroppedFile {contents: (UploadFileContents contents), fileType: Just CSV})
+        dragOverHandler :: forall e. R.State Boolean -> EffectFn1 (E.SyntheticEvent_ e) Unit
+        dragOverHandler (_ /\ setIsDragOver) = mkEffectFn1 $ \e -> do
           -- prevent redirection when file is dropped
           -- https://stackoverflow.com/a/6756680/941471
           E.preventDefault e
           E.stopPropagation e
-          setIsDragOver true
-        onDragLeave (_ /\ setIsDragOver) = mkEffectFn1 $ \_ -> setIsDragOver false
+          setIsDragOver (const true)
+        dragLeave :: forall e. R.State Boolean -> EffectFn1 e Unit
+        dragLeave (_ /\ setIsDragOver) = mkEffectFn1 $ \_ -> setIsDragOver (const false)
 
 
-childNodes :: forall s. (Action -> Effect Unit) -> Maybe ID -> (Array (NTree LNode)) -> Tuple Boolean (Boolean -> Effect s) -> Array R.Element
+childNodes :: forall s. (Action -> Effect Unit) -> Maybe ID -> (Array (NTree LNode)) -> R.State Boolean -> Array R.Element
 childNodes d n [] _ = []
 childNodes d n _ (false /\ _) = []
 childNodes d n ary (true /\ _) = map (\cs -> toHtml d cs n) ary
 
 
+nodeText :: FTree -> Maybe Int -> R.Element
 nodeText (NTree (LNode {id, name}) _) n = if n == (Just id) then
               H.u {} [H.b {} [H.text ("| " <> name <> " |    ")]]
             else
               H.text (name <> "    ")
 
 
+popOverIcon :: R.State FTree -> R.Element
 popOverIcon (s@(NTree (LNode {popOver}) _) /\ setNodeState) =
   H.a { className: "glyphicon glyphicon-cog"
       , id: "rename-leaf"
-      , onClick: mkEffectFn1 $ \_ -> setNodeState $ setPopOver (not popOver) s
+      , onClick: mkEffectFn1 $ \_ -> setNodeState (setPopOver (not popOver))
       } []
 
 

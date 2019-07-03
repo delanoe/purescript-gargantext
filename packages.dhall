@@ -194,7 +194,7 @@ let additions =
           , "ffi-simple"
           ]
           "https://github.com/irresponsible/purescript-reactix"
-          "v0.3.1"
+          "v0.4.0"
       , uint =
           mkPackage
           [ "maybe", "math", "generics-rep" ]

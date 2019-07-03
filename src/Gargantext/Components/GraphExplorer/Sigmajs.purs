@@ -3,6 +3,8 @@ module Gargantext.Components.GraphExplorer.Sigmajs where
 import Prelude
 
 import Data.Nullable (Nullable)
+import Data.Sequence (Seq)
+import Data.Sequence as Seq
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn1, runEffectFn1)
 import React (Children, ReactClass, ReactElement, ReactRef, SyntheticEventHandler, createElement, unsafeCreateElement)

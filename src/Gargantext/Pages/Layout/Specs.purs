@@ -29,7 +29,7 @@ import Gargantext.Pages.Layout.Specs.Search    as S
 import Gargantext.Pages.Layout.Specs.SearchBar as SB
 import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _graphExplorerState, _loginState, _searchState)
 import Gargantext.Router (Routes(..))
-import Gargantext.Utils.Reactix as R'
+import Gargantext.Utils.Reactix (scuff)
 
 layoutSpec :: Spec AppState {} Action
 layoutSpec =
@@ -180,7 +180,7 @@ searchBar = simpleSpec defaultPerformAction render
                           ,  div [ className "collapse navbar-collapse"
                                  ]
                              $  [ divDropdownLeft ]
-                             <> [ R'.scuff (SB.searchBar SB.defaultProps) ]
+                             <> [ scuff (SB.searchBar SB.defaultProps) ]
                              <> [ divDropdownRight d s ]
                           ]
                     ]

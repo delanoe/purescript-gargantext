@@ -21,6 +21,7 @@
     "random",
     "reactix",
     "routing",
+    "sequences",
     "spec-discovery",
     "spec-quickcheck",
     "string-parsers",

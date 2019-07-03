@@ -10,7 +10,7 @@ import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Uncurried (mkEffectFn1)
+import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import FFI.Simple ((...), defineProperty)
 import React (ReactElement)
 import Reactix as R
@@ -38,15 +38,11 @@ named :: forall o. String -> o -> o
 named = flip $ defineProperty "name"
 
 overState :: forall t. (t -> t) -> R.State t -> Effect Unit
-overState f (state /\ setState) = setState $ f state
-
-useLayoutEffect1' :: forall a. a -> (Unit -> Effect Unit) -> R.Hooks Unit
-useLayoutEffect1' a f = R.useLayoutEffect1 a $ \_ ->
-  do f unit
-     pure $ \_ -> pure unit
+overState f (_state /\ setState) = setState f
 
 
 select :: ElemFactory
 select = createDOMElement "select"
 
-effToggler (value /\ setValue) = mkEffectFn1 $ \_ -> setValue $ not value
+effToggler :: forall e. R.State Boolean -> EffectFn1 e Unit
+effToggler (_value /\ setValue) = mkEffectFn1 $ \e -> setValue not

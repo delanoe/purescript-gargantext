@@ -2,7 +2,7 @@
 module Gargantext.Components.Annotation.Menu where
 
 
-import Prelude ( Unit, (==), ($), (<>), unit, pure, otherwise )
+import Prelude ( Unit, (==), ($), (<>), unit, pure, otherwise, const )
 import Data.Array as A
 import Data.Maybe ( Maybe(..), maybe' )
 import Effect ( Effect )
@@ -22,14 +22,14 @@ data MenuType = NewNgram | SetTermListItem
 type Props =
   ( list :: Maybe TermList
   , menuType :: MenuType
-  , setList :: TermList -> Effect Unit
+  , setList :: TermList -> Effect Unit -- not a state hook setter
   )
 
 type AnnotationMenu = { x :: Number, y :: Number | Props }
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
-annotationMenu :: (Maybe AnnotationMenu -> Effect Unit) -> AnnotationMenu -> R.Element
+annotationMenu :: ((Maybe AnnotationMenu -> Maybe AnnotationMenu) -> Effect Unit) -> AnnotationMenu -> R.Element
 annotationMenu setMenu { x,y,list,menuType,setList } =
   CM.contextMenu { x,y,setMenu } [
     R.createElement annotationMenuCpt {list,menuType,setList} []

@@ -49,7 +49,7 @@ annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
   where
     cpt {ngrams,setTermList,text} _ = do
-      menu /\ setMenu <- R.useState $ \_ -> pure Nothing
+      menu /\ setMenu <- R.useState $ const Nothing
       let wrapperProps =
             { className: "annotated-field-wrapper" }
 
@@ -59,8 +59,8 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
                 y = E.clientY event
                 setList t = do
                   setTermList (S.toLower text') (Just list) t
-                  setMenu Nothing
-            setMenu $ Just {x, y, list: Just list, menuType: SetTermListItem, setList}
+                  setMenu (const Nothing)
+            setMenu (const $ Just {x, y, list: Just list, menuType: SetTermListItem, setList} )
 
           mapCompile (Tuple t l) = {text: t, list: l, onSelect}
           compiled = map mapCompile $ compile ngrams text
@@ -82,13 +82,13 @@ maybeShowMenu setMenu setTermList ngrams event = do
               list = findNgram ngrams sel'
               setList t = do
                 setTermList sel' list t
-                setMenu Nothing
+                setMenu (const Nothing)
           E.preventDefault event
-          setMenu $ Just { x, y, list, menuType: NewNgram, setList }
+          setMenu (const $ Just { x, y, list, menuType: NewNgram, setList })
     Nothing -> pure unit
 
 maybeAddMenu
-  :: (Maybe AnnotationMenu -> Effect Unit)
+  :: ((Maybe AnnotationMenu -> Maybe AnnotationMenu) -> Effect Unit)
   -> R.Element
   -> Maybe AnnotationMenu
   -> R.Element
