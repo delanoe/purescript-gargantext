@@ -60,9 +60,8 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
 databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
 databaseInput (db /\ setDB) dbs =
   div { className: "input-group-btn search-panel dropdown" }
-      [
-        dropdownBtn db
-        , ul {className: "dropdown-menu", role: "menu"} (liItem <$> dbs)
+      [ dropdownBtn db
+      , ul {className: "dropdown-menu", role: "menu"} (liItem <$> dbs)
       ]
   where
     liItem db = li { onClick }
@@ -92,4 +91,4 @@ submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
     click = mkEffectFn1 $ \_ -> do
       case term of
         "" -> setSearch (const Nothing)
-        _ -> setSearch (const $ Just { database, term })
+        _  -> setSearch (const $ Just { database, term })

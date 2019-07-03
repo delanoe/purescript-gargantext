@@ -1,8 +1,9 @@
 module Gargantext.Components.Search.Types where
 
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
+import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Array (head)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
@@ -22,10 +23,10 @@ import URI.Extra.QueryPairs as QP
 data Database = All | PubMed | HAL | IsTex
 
 instance showDatabase :: Show Database where
-  show All = "All"
+  show All    = "All"
   show PubMed = "PubMed"
-  show HAL = "HAL"
-  show IsTex = "IsTex"
+  show HAL    = "HAL"
+  show IsTex  = "IsTex"
 
 readDatabase :: String -> Maybe Database
 readDatabase "All" = Just All
@@ -35,6 +36,10 @@ readDatabase "IsTex" = Just IsTex
 readDatabase _ = Nothing
 
 derive instance eqDatabase :: Eq Database
+
+instance encodeJsonDatabase :: EncodeJson Database where
+  encodeJson a = encodeJson (show a)
+
 
 allDatabases :: Array Database
 allDatabases = [All, HAL, IsTex, PubMed]
@@ -85,8 +90,9 @@ instance searchQueryToQuery :: ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, corpus_id, files_id})
-    =   "query"      :=  query
-    ~>  "corpus_id"  :=  fromMaybe 0 corpus_id
-    ~>  "files_id"   :=  files_id
+  encodeJson (SearchQuery {query, databases, corpus_id, files_id})
+    =   "query"      := query
+    ~> "databases"   := databases
+    ~>  "corpus_id"  := fromMaybe 0 corpus_id
+    ~>  "files_id"   := files_id
     ~> jsonEmptyObject
