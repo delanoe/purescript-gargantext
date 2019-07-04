@@ -11,7 +11,6 @@ import Data.Tuple (fst)
 import Data.Tuple.Nested ( (/\) )
 import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, mkEffectFn1)
-import Thermite (Spec, defaultPerformAction, simpleSpec)
 import Reactix as R
 import DOM.Simple.Console
 import Effect.Aff (launchAff)
@@ -53,11 +52,13 @@ onSearchChange (search /\ setSearch) =
   where
     triggerSearch q =  do
       launchAff $ do
+        liftEffect $ log2 "Searching db: " $ show q.database
         liftEffect $ log2 "Searching term: " q.term
         (r :: Unit) <- Ajax.search (searchQuery q)
         liftEffect $ log2 "Return:" r
         liftEffect $ modalShow "addCorpus"
-    searchQuery {term} = over SearchQuery (_ {query=term}) defaultSearchQuery
+    searchQuery {database: Nothing, term} = over SearchQuery (_ {query=term}) defaultSearchQuery
+    searchQuery {database: Just db, term} = over SearchQuery (_ {databases=[db], query=term}) defaultSearchQuery
 
 toggleButton :: R.State Boolean -> R.Element
 toggleButton open =

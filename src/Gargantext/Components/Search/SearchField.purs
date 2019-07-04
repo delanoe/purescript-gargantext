@@ -46,8 +46,8 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
   where
     cpt props _ = do
       let search = maybe defaultSearch identity (fst props.search)
-      term <- R.useState $ \_ -> search.term
-      db   <- R.useState $ \_ -> Nothing
+      term <- R.useState' search.term
+      db   <- R.useState' (Nothing :: Maybe Database)
       pure $
           div { className: "search-field input-group" }
               [ databaseInput db props.databases
@@ -64,10 +64,9 @@ databaseInput (db /\ setDB) dbs =
       , ul {className: "dropdown-menu", role: "menu"} (liItem <$> dbs)
       ]
   where
-    liItem db = li { onClick }
-                   [ a {href: "#"} [text (show db) ] ]
-                where
-                  onClick = mkEffectFn1 $ \_ -> setDB (const $ Just db)
+    liItem db = li { onClick } [ a {href: "#"} [text (show db) ] ]
+      where
+        onClick = mkEffectFn1 $ \_ -> setDB $ const $ Just db
     dropdownBtnProps = { id: "search-dropdown"
                         , className: "btn btn-default dropdown-toggle"
                         , type: "button"
@@ -83,7 +82,7 @@ searchInput (term /\ setTerm) =
         , type: "text"
         , onChange
         , placeholder }
-  where onChange = mkEffectFn1 $ \e -> setTerm (const $ e .. "target" .. "value")
+  where onChange = mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
 
 
 submitButton :: R.State (Maybe Database) -> R.State String -> R.State (Maybe Search) -> R.Element
@@ -92,5 +91,5 @@ submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
   where
     click = mkEffectFn1 $ \_ -> do
       case term of
-        "" -> setSearch (const Nothing)
-        _  -> setSearch (const $ Just { database, term })
+        "" -> setSearch $ const Nothing
+        _  -> setSearch $ const $ Just { database, term }
