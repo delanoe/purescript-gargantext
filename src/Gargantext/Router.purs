@@ -34,8 +34,8 @@ routing = oneOf
   , SearchView       <$   route "search"
   , AddCorpus        <$   route "addCorpus"
   , Folder           <$> (route "folder"     *> int)
+  , CorpusDocument   <$> (route "corpus" *> int) <*> (lit "list" *> int) <*> (lit "document" *> int)
   , Corpus           <$> (route "corpus"     *> int)
-  , CorpusDocument       <$> (route "corpus" *> int) <*> (lit "list" *> int) <*> (lit "document" *> int)
      , Document       <$> (route "list" *> int) <*> (lit "document" *> int)
      , Dashboard      <$   route "dashboard"
      , PGraphExplorer <$> (route "graph"      *> int)
