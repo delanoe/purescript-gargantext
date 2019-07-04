@@ -616,7 +616,7 @@ nodeMainSpan d p n folderOpen = R.createElement el p []
 
 
 fldr :: Boolean -> String
-fldr open = if open then "fas fa-folder-open" else "fas fa-folder"
+fldr open = if open then "glyphicon glyphicon-folder-open" else "glyphicon glyphicon-folder-close"
 
 
 childNodes :: forall s. (Action -> Effect Unit) -> Maybe ID -> (Array (NTree LNode)) -> R.State Boolean -> Array R.Element
