@@ -31,12 +31,23 @@ curl -sL https://deb.nodesource.com/setup_11.x | sudo bash -
 sudo apt update && sudo apt install nodejs
 ```
 
-(For Ubuntu):
+(For Ubuntu)
 ```shell
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
 sudo apt update && sudo apt install yarn
 ```
+
+To upgrade to latest version (and not current stable) version, you can use
+(Use n module from npm in order to upgrade node)
+
+```shell
+sudo npm cache clean -f
+sudo npm install -g n
+sudo n stable
+sudo n latest
+```
+
 
 ### OSX
 ```shell
