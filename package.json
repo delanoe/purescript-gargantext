@@ -4,6 +4,7 @@
         "rebuild-set": "spago psc-package-insdhall",
         "install-ps": "psc-package install",
         "build": "pulp --psc-package browserify -t dist/bundle.js",
+        "dev": "webpack-dev-server --env dev --mode development",
         "repl": "pulp --psc-package repl",
         "clean": "rm -Rf output"
     },
@@ -19,6 +20,9 @@
         "react-dom": "^16.8.2",
         "react-sigma": "git://github.com/np/react-sigma.git#shouldComponentUpdate"
     },
+    "eslintConfig": {
+        "extends": "react-app"
+    },
     "devDependencies": {
         "@babel/cli": "^7.1.5",
         "@babel/core": "^7.1.6",
@@ -26,13 +30,30 @@
         "@babel/preset-react": "^7.0.0",
         "@babel/preset-stage-2": "^7.0.0",
         "babel-core": "^7.0.0-bridge",
+        "babel-loader": "^8.0.4",
+        "clean-webpack-plugin": "^1.0.0",
+        "css-loader": "^2.1.0",
         "envify": "^4.1.0",
+        "executive": "^1.6.3",
+        "file-loader": "^3.0.1",
+        "html-loader": "^0.5.5",
+        "html-webpack-plugin": "^4.0.0-beta.5",
         "http-server": "^0.11.1",
+        "mini-css-extract-plugin": "^0.5.0",
         "psc-package": "^3.0.1",
         "pulp": "^12.4.0",
         "purescript": "^0.12.4",
+        "purs-loader": "^3.3.0",
         "react-testing-library": "^6.1.2",
-        "spago": "^0.7.5"
-    },
-    "version": "0.0.0"
+        "source-map-loader": "^0.2.4",
+        "spago": "^0.7.5",
+        "style-loader": "^0.23.1",
+        "uglify-js": "^3.4.9",
+        "uglifyify": "^5.0.1",
+        "webpack": "^4.26.0",
+        "webpack-cli": "^3.1.2",
+        "webpack-dev-server": "^3.1.10",
+        "webpack-node-externals": "^1.7.2",
+        "xhr2": "^0.1.4"
+    }
 }
