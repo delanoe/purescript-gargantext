@@ -18,12 +18,6 @@ import Effect.Aff (Aff, runAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
-import Gargantext.Components.Loader2 (useLoader)
-import Gargantext.Config (toUrl, End(..), NodeType(..), readNodeType)
-import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
-import Gargantext.Types (class ToQuery, toQuery)
-import Gargantext.Utils (id)
-import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
 import React (ReactClass, ReactElement)
 import React as React
@@ -40,12 +34,20 @@ import Web.File.File (toBlob)
 import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
+import Gargantext.Components.Loader2 (useLoader)
+import Gargantext.Config (toUrl, End(..), NodeType(..), readNodeType)
+import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
+import Gargantext.Router as Router
+import Gargantext.Types (class ToQuery, toQuery)
+import Gargantext.Utils (id)
+import Gargantext.Utils.Reactix as R2
+
 type Name = String
 type Open = Boolean
 type URL  = String
 type ID   = Int
 
-type Props = { root :: ID }
+type Props = { root :: ID, mCurrentRoute :: Maybe Router.Routes }
 
 data NTree a = NTree a (Array (NTree a))
 
@@ -185,7 +187,14 @@ nodeOptionsRename d activated  id =  case activated of
                                  ]
                          false -> []
 
-type TreeViewProps = { tree :: FTree }
+type TreeViewProps = { tree :: FTree, mCurrentRoute :: Maybe Router.Routes }
+
+
+mCorpusId :: Maybe Router.Routes -> Maybe Int
+mCorpusId (Just (Router.Corpus id)) = Just id
+mCorpusId (Just (Router.CorpusDocument id _ _)) = Just id
+mCorpusId _ = Nothing
+
 
 loadedTreeview :: Spec State TreeViewProps Action
 loadedTreeview = simpleSpec performAction render
@@ -198,8 +207,10 @@ loadedTreeview = simpleSpec performAction render
         ]
       ]
 
-treeViewClass :: ReactClass { tree :: FTree, children :: React.Children }
-treeViewClass = createClass "TreeView" loadedTreeview (\{tree} -> {state: tree, currentNode: Nothing})
+treeViewClass :: ReactClass { tree :: FTree, mCurrentRoute :: Maybe Router.Routes, children :: React.Children }
+treeViewClass = createClass "TreeView" loadedTreeview cpt
+  where
+    cpt {tree, mCurrentRoute} = {state: tree, currentNode: mCorpusId mCurrentRoute}
 
 -- loadedTreeView p = R.createElement el p []
 --   where
@@ -217,9 +228,9 @@ treeview = simpleSpec defaultPerformAction render
     render _ props _ _ = [R2.scuff $ R.createElement cpt props []]
 
     cpt =
-      R.hooksComponent "TreeView" \{root} _children ->
+      R.hooksComponent "TreeView" \{root, mCurrentRoute} _children ->
         useLoader root loadNode \currentPath loaded ->
-          R2.buff $ React.createElement treeViewClass {tree: loaded} []
+          R2.buff $ React.createElement treeViewClass {tree: loaded, mCurrentRoute} []
           --R2.scuff $ loadedTreeView {tree: loaded}
 
 

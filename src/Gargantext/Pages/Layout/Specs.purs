@@ -90,7 +90,7 @@ layout0 layout =
        withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id}) as
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) as
             Nothing ->
               outerLayout1
       , rs bs
@@ -138,7 +138,7 @@ layout1 layout =
       [ withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id}) as
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) as
             Nothing ->
               outerLayout1
       , rs bs
