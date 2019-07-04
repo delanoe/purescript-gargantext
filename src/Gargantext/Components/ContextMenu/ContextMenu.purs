@@ -19,7 +19,7 @@ import DOM.Simple.Document as Document
 import DOM.Simple.Types ( DOMRect )
 import Effect (Effect)
 import Effect.Uncurried ( mkEffectFn1 )
-import FFI.Simple ( (...), (..), (.=), delay )
+import FFI.Simple ( (...), (..), delay )
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
@@ -56,8 +56,17 @@ contextMenuCpt = R.hooksComponent "ContextMenu" cpt
             ]
       ]
       pure $ R.createPortal [ elems root menu rect $ cs ] host
-    elems ref menu (Just rect) = HTML.div (({ ref , className: "context-menu", style: position menu rect} .= "data-toggle" $ "popover") .= "data-placement" $ "right")
-    elems ref _ _ = HTML.div (({ ref, className: "context-menu" } .= "data-toggle" $ "popover") .= "data-placement" $ "right")
+    elems ref menu (Just rect) = HTML.div
+        { ref
+        , className: "context-menu"
+        , style: position menu rect
+        , data: {toggle: "popover", placement: "right"}
+        }
+    elems ref _ _ = HTML.div
+        { ref
+        , className: "context-menu"
+        , data: {toggle: "popover", placement: "right"}
+        }
 
 contextMenuEffect
   :: forall t

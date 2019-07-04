@@ -6,6 +6,7 @@ import Prelude hiding (div)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List (fromFoldable)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
 import Gargantext.Config (TabType(..), TabSubType(..), PTabNgramType(..))
@@ -48,7 +49,8 @@ statefulTabs =
                        { nodeId, chart
                        , tabType: TabPairing TabDocs
                        , totalRecords: 4736
-                       , listId: loaded.defaultListId}) $
+                       , listId: loaded.defaultListId
+                       , corpusId: Nothing}) $
            noState DT.docViewSpec
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action

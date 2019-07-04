@@ -1,4 +1,0 @@
-#!/bin/bash
-
-rm -rf .psc-package output bower_components node_modules
-./build

@@ -14,13 +14,10 @@ import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Map (Map)
-import Data.Map as DM
 import Data.Maybe (Maybe(..), maybe)
-import Data.Tuple (Tuple(..))
 import Gargantext.Router as R
 
-import Gargantext.Types
+import Gargantext.Types (TermList, TermSize(..))
 
 urlPlease :: End -> String -> String
 urlPlease end path = theEnd.baseUrl <> theEnd.prePath <> path
@@ -59,6 +56,11 @@ frontHaskell = { baseUrl: "http://localhost:8008"
 
 frontDev :: Config
 frontDev = { baseUrl: "https://dev.gargantext.org"
+           , prePath: "/#/"
+           }
+
+frontDemo :: Config
+frontDemo = { baseUrl: "https://demo.gargantext.org"
            , prePath: "/#/"
            }
 
@@ -210,6 +212,7 @@ routesPath R.SearchView = "search"
 routesPath (R.Folder i) = "folder/" <> show i
 routesPath (R.Corpus i) = "corpus/" <> show i
 routesPath R.AddCorpus = "addCorpus"
+routesPath (R.CorpusDocument c l i) = "corpus/" <> show c <> "/list/" <> show l <> "/document/" <> show i
 routesPath (R.Document l i) = "list/" <> show l <> "/document/" <> show i
 routesPath (R.PGraphExplorer i) = "#/"
 routesPath R.Dashboard = "dashboard"

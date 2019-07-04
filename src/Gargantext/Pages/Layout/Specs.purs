@@ -60,7 +60,8 @@ pagesComponent s = case s.currentRoute of
     selectSpec (Corpus   i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState Corpus.layout
     selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
     selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
-    selectSpec (Document l i)    = layout0 $ cmapProps (const {nodeId: i, listId: l}) $ noState Annotation.layout
+    selectSpec (CorpusDocument c l i) = layout0 $ cmapProps (const {nodeId: i, listId: l, corpusId: Just c}) $ noState Annotation.layout
+    selectSpec (Document l i)    = layout0 $ cmapProps (const {nodeId: i, listId: l, corpusId: Nothing}) $ noState Annotation.layout
     selectSpec (PGraphExplorer i)= layout1  $ focus _graphExplorerState _graphExplorerAction  GE.specOld
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
     selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
@@ -89,14 +90,13 @@ layout0 layout =
        withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id}) as
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) as
             Nothing ->
               outerLayout1
       , rs bs
       ]
     ls   = over _render \render d p s c -> [
          div [ className "col-md-2", style {paddingTop: "60px"} ] $ render d p s c
-         
       ]
     rs   = over _render \render d p s c -> [
           div [ case (s.loginState.authData) of
@@ -138,7 +138,7 @@ layout1 layout =
       [ withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id}) as
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) as
             Nothing ->
               outerLayout1
       , rs bs

@@ -45,4 +45,4 @@ select :: ElemFactory
 select = createDOMElement "select"
 
 effToggler :: forall e. R.State Boolean -> EffectFn1 e Unit
-effToggler (_value /\ setValue) = mkEffectFn1 $ \e -> setValue not
+effToggler (value /\ setValue) = mkEffectFn1 $ \e -> setValue $ const $ not value

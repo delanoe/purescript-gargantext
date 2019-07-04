@@ -14,7 +14,7 @@ import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import Effect ( Effect )
 import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..), (.=))
+import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.DOM.HTML (text, button, div, input, option, form, span, ul, li, a)
@@ -70,7 +70,9 @@ databaseInput (db /\ setDB) dbs =
                   onClick = mkEffectFn1 $ \_ -> setDB (const $ Just db)
     dropdownBtnProps = { id: "search-dropdown"
                         , className: "btn btn-default dropdown-toggle"
-                        , type: "button"} .= "data-toggle" $ "dropdown"
+                        , type: "button"
+                        , data: {toggle: "dropdown"}
+                        }
     dropdownBtn (Just db) = button dropdownBtnProps [ span {} [ text (show db) ] ]
     dropdownBtn (Nothing) = button dropdownBtnProps [ span {} [ text "-" ] ]
 
