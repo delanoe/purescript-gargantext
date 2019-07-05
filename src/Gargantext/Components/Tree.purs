@@ -27,7 +27,7 @@ import React.DOM.Props (className, style)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Thermite (PerformAction, Render, Spec, createClass, defaultPerformAction, simpleSpec, modifyState_)
+import Thermite (Spec)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 import Unsafe.Coerce (unsafeCoerce)
@@ -188,12 +188,8 @@ treeLoadView setReload p = R.createElement el p []
         loadedTreeView setReload {tree: loaded, mCurrentRoute}
 
 treeview :: Spec {} Props Void
-treeview = simpleSpec defaultPerformAction render
+treeview = R2.elSpec $ R.hooksComponent "TreeView" cpt
   where
-    render :: Render {} Props Void
-    render _ props _ _ = [R2.scuff $ R.createElement el props []]
-
-    el = R.hooksComponent "TreeView" cpt
     cpt {root, mCurrentRoute} _children = do
       -- NOTE: this is a hack to reload the tree view on demand
       setReload <- R.useState' 0
