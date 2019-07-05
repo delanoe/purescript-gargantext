@@ -184,7 +184,7 @@ treeLoadView setReload p = R.createElement el p []
   where
     el = R.hooksComponent "TreeLoadView" cpt
     cpt {root, mCurrentRoute} _ = do
-      useLoader root loadNode $ \currentPath loaded ->
+      useLoader root loadNode $ \{loaded} ->
         loadedTreeView setReload {tree: loaded, mCurrentRoute}
 
 treeview :: Spec {} Props Void

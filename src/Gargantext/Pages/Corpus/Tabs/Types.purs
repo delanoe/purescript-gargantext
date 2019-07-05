@@ -45,8 +45,7 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
 
 type CorpusData = {corpusNode :: NodePoly CorpusInfo, defaultListId :: Int}
 
--- TODO type Props = {nodeId :: Int, info :: Maybe (NodePoly CorpusInfo) }
-type PropsRow = Loader.InnerPropsRow Int CorpusData ()
+type PropsRow = ( corpusId :: Int, corpusData :: CorpusData )
 type Props = Record PropsRow
 
 -- TODO include Gargantext.Pages.Corpus.Tabs.States

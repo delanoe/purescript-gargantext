@@ -16,20 +16,20 @@ import Data.Newtype (unwrap)
 import Data.String (joinWith)
 import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
-import Thermite (Render, Spec, defaultPerformAction, simpleSpec, createClass)
+import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
 import React as React
 import React (ReactClass, ReactElement)
 import React.DOM (div, h3, img, li, span, text, ul, text)
 import React.DOM.Props (_id, className, src)
+import Reactix as R
 import Gargantext.Prelude
 import Gargantext.Config (toUrl, End(..), NodeType(..), Path(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList(..))
-import Gargantext.Components.Loader as Loader
+import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Pages.Annuaire.User.Contacts.Types
 import Gargantext.Pages.Annuaire.User.Contacts.Tabs.Specs as Tabs
-
---type Props = Loader.InnerProps Int Contact
+import Gargantext.Utils.Reactix as R2
 
 display :: String -> Array ReactElement -> Array ReactElement
 display title elems =
@@ -153,30 +153,16 @@ infoRender (Tuple title content) =
 -- | Below an example of a loader, use all code below and adapt it
 -- to your code
 -- layoutUser is exported by the module
--- only one subnode: contactLoader which as 2 parameters
---   - path (nodeId)
---   - components (which has to be drawn when loaded
 layoutUser :: Spec {} {nodeId :: Int} Void
-layoutUser = simpleSpec defaultPerformAction render
-  where
-    render :: Render {} {nodeId :: Int} Void
-    render _ {nodeId} _ _ =
-      [ contactLoader { path: nodeId
-                      , component: createClass "LayoutUser" layoutUser' (const {})
-                      } ]
-
--- | Take the spec and transform it in React Class
--- put here how to draw the Composant
--- props loaded: what has been loaded by the component loader
-layoutUser' :: Spec {} Props Void
-layoutUser' = simpleSpec defaultPerformAction render
-           <> Tabs.pureTabs
-  where
-    render :: Render {} Props Void
-    render dispatch {loaded: {contactNode: Contact {name, hyperdata}}} _ _ =
-      [ ul [className "col-md-12 list-group"] $
-          display (fromMaybe "no name" name) (contactInfos hyperdata)
-      ]
+layoutUser =
+  R2.elSpec $ R.hooksComponent "LayoutUser" \{nodeId} _ ->
+    useLoader nodeId getContact $ \{loaded: contactData} ->
+      let {contactNode: Contact {name, hyperdata}} = contactData in
+      R2.toElement
+        [ ul [className "col-md-12 list-group"] $
+            display (fromMaybe "no name" name) (contactInfos hyperdata)
+        , Tabs.elt {nodeId, contactData}
+        ]
 
 -- | toUrl to get data
 getContact :: Int -> Aff ContactData
@@ -190,11 +176,3 @@ getContact id = do
   --  Nothing ->
   --    throwError $ error "Missing default list"
   pure {contactNode, defaultListId: 424242}
-
--- | Change name for you
-contactLoaderClass :: ReactClass (Loader.Props Int ContactData)
-contactLoaderClass = Loader.createLoaderClass "ContactLoader" getContact
-
--- | Change type according to what has been loaded
-contactLoader :: Loader.Props' Int ContactData -> ReactElement
-contactLoader props = React.createElement contactLoaderClass props []

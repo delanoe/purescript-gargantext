@@ -8,6 +8,8 @@ import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Reactix as R
 
+type Props path loaded = { path :: path, loaded :: loaded }
+
 type State path loaded = { currentPath :: path, loaded :: Maybe loaded }
 
 useLoader
@@ -16,7 +18,7 @@ useLoader
   => Show path
   => path
   -> (path -> Aff loaded)
-  -> (path -> loaded -> R.Element)
+  -> (Props path loaded -> R.Element)
   -> R.Hooks R.Element
 useLoader newPath loader render = do
   {currentPath, loaded} /\ setState <- R.useState' { currentPath: newPath, loaded: Nothing }
@@ -37,4 +39,4 @@ useLoader newPath loader render = do
       -- TODO load spinner
       R.fragment []
     Just loadedData ->
-      render currentPath loadedData
+      render {path: currentPath, loaded: loadedData}

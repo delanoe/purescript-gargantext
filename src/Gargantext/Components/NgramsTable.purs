@@ -298,14 +298,17 @@ ngramsTableClass :: Loader.InnerClass PageParams VersionedNgramsTable
 ngramsTableClass = createClass "NgramsTable" ngramsTableSpec initialState
 
 type MainNgramsTableProps =
-  Loader.InnerProps Int { defaultListId :: Int }
-                        ( tabType :: TabType )
+  { nodeId        :: Int
+    -- ^ This node can be a corpus or contact.
+  , defaultListId :: Int
+  , tabType       :: TabType
+  }
 
 mainNgramsTableSpec :: Spec {} MainNgramsTableProps Void
 mainNgramsTableSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} MainNgramsTableProps Void
-    render _ {path: nodeId, loaded: {defaultListId}, tabType} _ _ =
+    render _ {nodeId, defaultListId, tabType} _ _ =
       [ ngramsLoader
           { path: initialPageParams nodeId [defaultListId] tabType
           , component: ngramsTableClass

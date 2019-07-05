@@ -13,8 +13,10 @@ import Gargantext.Config (TabType(..), TabSubType(..), PTabNgramType(..))
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
-import Gargantext.Pages.Annuaire.User.Contacts.Types (Props)
-import Thermite (Spec, focus, hideState, noState, cmapProps)
+import Gargantext.Pages.Annuaire.User.Contacts.Types (ContactData)
+
+import React (Children, ReactElement, ReactClass, createElement)
+import Thermite (Spec, focus, hideState, noState, cmapProps, createClass)
 
 data Mode = Patents | Books | Communication
 
@@ -29,6 +31,19 @@ modeTabType :: Mode -> PTabNgramType
 modeTabType Patents = PTabPatents
 modeTabType Books = PTabBooks
 modeTabType Communication = PTabCommunication
+
+type PropsRow =
+  ( nodeId :: Int
+  , contactData :: ContactData
+  )
+
+type Props = Record PropsRow
+
+elt :: Props -> ReactElement
+elt props = createElement tabsClass props []
+
+tabsClass :: ReactClass { children :: Children | PropsRow }
+tabsClass = createClass "ContactsTabs" pureTabs (const {})
 
 pureTabs :: Spec {} Props Void
 pureTabs = hideState (const {activeTab: 0}) statefulTabs
@@ -45,18 +60,18 @@ statefulTabs =
   where
     chart = mempty
     -- TODO totalRecords
-    docs = cmapProps (\{path: nodeId, loaded} ->
+    docs = cmapProps (\{nodeId, contactData: {defaultListId}} ->
                        { nodeId, chart
                        , tabType: TabPairing TabDocs
                        , totalRecords: 4736
-                       , listId: loaded.defaultListId
+                       , listId: defaultListId
                        , corpusId: Nothing}) $
            noState DT.docViewSpec
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
 ngramsViewSpec {mode} =
-  cmapProps (\{loaded: {defaultListId}, path, dispatch} ->
-              {loaded: {defaultListId}, path, dispatch, tabType})
+  cmapProps (\{contactData: {defaultListId}, nodeId} ->
+              {defaultListId, nodeId, tabType})
             (noState NT.mainNgramsTableSpec)
     where
       tabType = TabPairing $ TabNgramType $ modeTabType mode

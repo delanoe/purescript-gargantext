@@ -87,6 +87,7 @@ import Gargantext.Components.Loader as Loader
 
 type CoreParams s =
   { nodeId  :: Int
+    -- ^ This node can be a corpus or contact.
   , listIds :: Array Int
   , tabType :: TabType
   | s

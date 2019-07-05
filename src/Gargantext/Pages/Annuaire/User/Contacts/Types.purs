@@ -162,13 +162,9 @@ instance decodeUser :: DecodeJson Contact where
     name <- obj .?? "name"
     date <- obj .?| "date"
     hyperdata <- obj .? "hyperdata"
-    
     pure $ Contact { id, typename, userId
                    , parentId, name, date
                    , hyperdata
                    }
 
 type ContactData = {contactNode :: Contact, defaultListId :: Int}
-
-type PropsRow = Loader.InnerPropsRow Int ContactData ()
-type Props = Record PropsRow
