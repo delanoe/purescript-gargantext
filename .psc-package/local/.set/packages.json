@@ -2092,17 +2092,17 @@
   },
   "reactix": {
     "dependencies": [
-      "console",
+      "aff",
       "dom-simple",
       "effect",
+      "ffi-simple",
       "functions",
       "nullable",
       "prelude",
-      "unsafe-coerce",
-      "ffi-simple"
+      "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-reactix",
-    "version": "v0.4.0"
+    "version": "v0.4.1"
   },
   "read": {
     "dependencies": [

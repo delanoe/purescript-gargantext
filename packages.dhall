@@ -184,17 +184,17 @@ let additions =
 		  "v5.0.0"
       , reactix =
           mkPackage
-          [ "console"
+          [ "aff"
           , "dom-simple"
           , "effect"
+          , "ffi-simple"
           , "functions"
           , "nullable"
           , "prelude"
           , "unsafe-coerce"
-          , "ffi-simple"
           ]
           "https://github.com/irresponsible/purescript-reactix"
-          "v0.4.0"
+          "v0.4.1"
       , uint =
           mkPackage
           [ "maybe", "math", "generics-rep" ]
