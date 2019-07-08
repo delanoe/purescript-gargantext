@@ -119,7 +119,7 @@ data Action =   Submit       String
 
 
 type State = { tree         :: FTree
-             , mCurrentNode :: Maybe ID
+             -- , mCurrentNode :: Maybe ID
              }
 
 mapFTree :: (FTree -> FTree) -> State -> State
@@ -128,29 +128,29 @@ mapFTree f s@{tree} = s {tree = f tree}
 -- TODO: make it a local function
 --performAction :: forall props. PerformAction State props Action
 
-performAction :: R.State Int -> R.State State -> Action -> Aff Unit
+performAction :: R.State Int -> R.State State -> R.State (Maybe ID) -> Action -> Aff Unit
 
-performAction (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setState) DeleteNode = do
+performAction (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setState) _ DeleteNode = do
   void $ deleteNode id
   --modifyState_ $ mapFTree $ filterNTree (\(LNode {id}) -> id /= nid)
   --liftEffect $ setState $ mapFTree $ filterNTree $ \(LNode {id: nid}) -> nid /= id
   liftEffect $ setReload $ \r -> r + 1
 
-performAction _ ({tree: NTree (LNode {id}) _} /\ setState) (Submit name)  = do
+performAction _ ({tree: NTree (LNode {id}) _} /\ setState) _ (Submit name)  = do
   void $ renameNode id $ RenameValue {name}
   --modifyState_ $ mapFTree $ setNodeName rid name
   liftEffect $ setState $ \s@{tree: NTree (LNode node) arr} -> s {tree = NTree (LNode node {name = name}) arr}
 
-performAction (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setState) (CreateSubmit name nodeType) = do
+performAction (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setState) _ (CreateSubmit name nodeType) = do
   void $ createNode id $ CreateValue {name, nodeType}
   --modifyState_ $ mapFTree $ map $ hidePopOverNode nid
   liftEffect $ setReload $ \r -> r + 1
 
-performAction _ ({tree: NTree (LNode {id}) _} /\ setState) CurrentNode =
+performAction _ ({tree: NTree (LNode {id}) _} /\ _) (_ /\ setMCurrentNode) CurrentNode =
   --modifyState_ $ \{state: s} -> {state: s, mCurrentNode : Just nid}
-  liftEffect $ setState $ \s -> s {mCurrentNode = Just id}
+  liftEffect $ setMCurrentNode $ const $ Just id
 
-performAction _ ({tree: NTree (LNode {id}) _} /\ _) (UploadFile fileType contents) = do
+performAction _ ({tree: NTree (LNode {id}) _} /\ _) _ (UploadFile fileType contents) = do
   hashes <- uploadFile id fileType contents
   liftEffect $ log2 "uploaded:" hashes
 
@@ -172,10 +172,11 @@ loadedTreeView setReload p = R.createElement el p []
   where
     el = R.hooksComponent "LoadedTreeView" cpt
     cpt {tree, mCurrentRoute} _ = do
-      setState <- R.useState' {tree, mCurrentNode}
+      setMCurrentNode <- R.useState' mCurrentNode
+      setState <- R.useState' {tree}
 
       pure $ H.div {className: "tree"}
-        [ toHtml setReload setState ]
+        [ toHtml setReload setState setMCurrentNode ]
       where
         mCurrentNode = mCorpusId mCurrentRoute
 
@@ -199,19 +200,19 @@ treeview = R2.elSpec $ R.hooksComponent "TreeView" cpt
 
 -- START toHtml
 
-toHtml :: R.State Int -> R.State State -> R.Element
+toHtml :: R.State Int -> R.State State -> R.State (Maybe ID) -> R.Element
 --toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
-toHtml setReload setState@({tree: (NTree (LNode {id, name, nodeType}) ary), mCurrentNode} /\ _) = R.createElement el {} []
+toHtml setReload setState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) setMCurrentNode@(mCurrentNode /\ _) = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
-    pAction = performAction setReload setState
+    pAction = performAction setReload setState setMCurrentNode
     cpt props _ = do
       folderOpen <- R.useState' true
 
       pure $ H.ul {}
         [ H.li {}
           ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentNode} folderOpen ]
-            <> childNodes setReload mCurrentNode ary folderOpen
+            <> childNodes setReload setMCurrentNode folderOpen ary
           )
         ]
 
@@ -289,18 +290,18 @@ fldr :: Boolean -> String
 fldr open = if open then "glyphicon glyphicon-folder-open" else "glyphicon glyphicon-folder-close"
 
 
-childNodes :: R.State Int -> Maybe ID -> Array FTree -> R.State Boolean -> Array R.Element
-childNodes _ _ [] _ = []
-childNodes _ _ _ (false /\ _) = []
-childNodes setReload mCurrentNode ary (true /\ _) = map (\ctree -> childNode {tree: ctree, mCurrentNode}) ary
+childNodes :: R.State Int -> R.State (Maybe ID) -> R.State Boolean -> Array FTree -> Array R.Element
+childNodes _ _ _ [] = []
+childNodes _ _ (false /\ _) _ = []
+childNodes setReload setMCurrentNode (true /\ _) ary = map (\ctree -> childNode {tree: ctree}) ary
   where
     childNode :: State -> R.Element
     childNode props = R.createElement el props []
     el = R.hooksComponent "ChildNodeView" cpt
-    cpt {tree, mCurrentNode} _ = do
-      setState <- R.useState' {tree, mCurrentNode}
+    cpt {tree} _ = do
+      setState <- R.useState' {tree}
 
-      pure $ toHtml setReload setState
+      pure $ toHtml setReload setState setMCurrentNode
 
 -- END toHtml
 
