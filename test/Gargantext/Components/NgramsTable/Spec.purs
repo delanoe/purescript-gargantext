@@ -3,7 +3,7 @@ module Gargantext.Components.NgramsTable.Spec where
 import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Gargantext.Components.NgramsTable (highlightNgrams, NgramsElement(..), NgramsTable(..))
+import Gargantext.Components.NgramsTable.Core (highlightNgrams, NgramsElement(..), NgramsTable(..))
 import Gargantext.Types  (TermList(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -32,21 +32,14 @@ spec = do
                                       ,tne "candidate" CandidateTerm
                                       ])
           input = "this is a graph about a biography which stops at every candidate"
-          output = [Tuple "this is a" Nothing
-                   ,Tuple " " Nothing
+          output = [Tuple "this is a " Nothing
                    ,Tuple "graph" (Just GraphTerm)
-                   ,Tuple " " Nothing
-                   ,Tuple "about a biography" Nothing
-                   ,Tuple " " Nothing
+                   ,Tuple " about a biography " Nothing
                    ,Tuple "which" (Just StopTerm)
                    ,Tuple " " Nothing
-                   ,Tuple " " Nothing
                    ,Tuple "stops" (Just StopTerm)
-                   ,Tuple " " Nothing
-                   ,Tuple "at every" Nothing
-                   ,Tuple " " Nothing
+                   ,Tuple " at every " Nothing
                    ,Tuple "candidate" (Just CandidateTerm)
-                   ,Tuple " " Nothing
                    ]
       highlightNgrams table input `shouldEqual` output
 
@@ -60,25 +53,18 @@ spec = do
                                       ,tne "state"  GraphTerm
                                       ])
           input = "This is a new state of the"
-          output = [Tuple "This" Nothing
-                   ,Tuple " " Nothing
+          output = [Tuple "This " Nothing
                    ,Tuple "is" (Just StopTerm)
-                   ,Tuple " " Nothing
                    ,Tuple " " Nothing
                    ,Tuple "a" (Just StopTerm)
                    ,Tuple " " Nothing
-                   ,Tuple " " Nothing
                    ,Tuple "new" (Just GraphTerm)
-                   ,Tuple " " Nothing
                    ,Tuple " " Nothing
                    ,Tuple "state" (Just GraphTerm)
                    ,Tuple " " Nothing
-                   ,Tuple " " Nothing
                    ,Tuple "of" (Just StopTerm)
                    ,Tuple " " Nothing
-                   ,Tuple " " Nothing
                    ,Tuple "the" (Just GraphTerm)
-                   ,Tuple " " Nothing
                    ]
       highlightNgrams table input `shouldEqual` output
 
@@ -89,13 +75,19 @@ spec = do
                                       ,tne "images" GraphTerm
                                       ])
           input = "This is from space images"
-          output = [Tuple "This is" Nothing
-                   ,Tuple " " Nothing
+          output = [Tuple "This is " Nothing
                    ,Tuple "from" (Just GraphTerm)
-                   ,Tuple " " Nothing
-                   ,Tuple "space" Nothing
-                   ,Tuple " " Nothing
+                   ,Tuple " space " Nothing
                    ,Tuple "images" (Just GraphTerm)
-                   ,Tuple " " Nothing
+                   ]
+      highlightNgrams table input `shouldEqual` output
+
+    it "works with punctuation" do
+      let table = NgramsTable
+                    (Map.fromFoldable [tne "graph" GraphTerm])
+          input = "before graph, after"
+          output = [Tuple "before " Nothing
+                   ,Tuple "graph" (Just GraphTerm)
+                   ,Tuple ", after" Nothing
                    ]
       highlightNgrams table input `shouldEqual` output

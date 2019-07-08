@@ -69,6 +69,7 @@ import Data.String.Regex as R
 import Data.String.Regex.Flags as R
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
+-- import Debug.Trace
 import Effect.Aff (Aff)
 import Foreign.Object as FO
 import React (ReactElement)
@@ -207,23 +208,30 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
 --       it inserts too many spaces.
 highlightNgrams :: NgramsTable -> String -> Array (Tuple String (Maybe TermList))
 highlightNgrams (NgramsTable table) input0 =
+    -- trace {pats, input0, input, ixs} \_ ->
     let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
-    map trimmer $ A.reverse (A.fromFoldable (consNonEmpty sN.s sN.l))
+    A.reverse (A.fromFoldable (consNonEmpty (undb (init sN.s)) sN.l))
   where
-    -- we need to trim so that the highlighting is without endings
-    trimmer (Tuple t (Just l)) = Tuple (S.trim t) (Just l)
-    trimmer x = x
-    sp x = " " <> S.replaceAll (S.Pattern " ") (S.Replacement "  ") x <> " "
-    unsp x =
-      case S.stripSuffix (S.Pattern " ") x of
-        Nothing -> x
-        Just x1 -> S.replaceAll (S.Pattern "  ") (S.Replacement " ") (S.drop 1 x1)
-    input = sp input0
+    spR x = " " <> R.replace theRegex "$1$1" x <> " "
+    reR = R.replace theRegex " "
+    db = S.replace (S.Pattern " ") (S.Replacement "  ")
+    sp x = " " <> db x <> " "
+    undb = R.replace theRegex2 "$1"
+    init x = S.take (S.length x - 1) x
+    input = spR input0
     pats = A.fromFoldable (Map.keys table)
-    theRegex = case R.regex "[.,;:!?'\\{}()]" (R.global <> R.multiline) of
+    word_boundaries = "[ .,;:!?'\\{}()]"
+    theRegex = case R.regex ("(" <> word_boundaries <> ")") (R.global <> R.multiline) of
       Left e  -> unsafePartial $ crashWith e
       Right r -> r
-    ixs  = indicesOfAny (sp <$> pats) (S.toLower $ R.replace theRegex " " input)
+    theRegex2 = case R.regex ("(" <> word_boundaries <> ")\\1") (R.global <> R.multiline) of
+      Left e  -> unsafePartial $ crashWith e
+      Right r -> r
+    ixs  = indicesOfAny (sp <$> pats) (S.toLower $ reR input)
+
+    consOnJustTail s xs@(Tuple _ (Just _) : _) =
+      Tuple s Nothing : xs
+    consOnJustTail _ xs = xs
 
     consNonEmpty x xs
       | S.null x  = xs
@@ -244,20 +252,25 @@ highlightNgrams (NgramsTable table) input0 =
             Nothing ->
               crashWith "highlightNgrams: out of bounds pattern"
             Just pat ->
-              let lpat = S.length (sp pat) in
+              let lpat = S.length (db pat) in
               case Map.lookup pat table of
                 Nothing ->
                   crashWith "highlightNgrams: pattern missing from table"
                 Just (NgramsElement ne) ->
-                  let s1 = S.splitAt (i - i0) s
-                      s2 = S.splitAt lpat s1.after in
-                  -- s2.before and pat might differ by casing only!
-                  { i0: i + lpat
-                  , s:  s2.after
-                  , l:  Tuple " " Nothing :
-                        Tuple s2.before (Just ne.list) :
-                        Tuple " " Nothing :
-                        consNonEmpty (unsp s1.before) l
+                  let
+                    s1    = S.splitAt (i - i0) s
+                    s2    = S.splitAt lpat     (S.drop 1 s1.after)
+                    s3    = S.splitAt 1        s2.after
+                    unspB = if i0 == 0 then S.drop 1 else identity
+                    s3b   = s3.before
+                  in
+                  -- trace {s, i, i0, s1, s2, s3, pat, lpat, s3b} \_ ->
+                  -- `undb s2.before` and pat might differ by casing only!
+                  { i0: i + lpat + 2
+                  , s:  s3.after
+                  , l:  Tuple (undb s2.before) (Just ne.list) :
+                        consOnJustTail s3b
+                        (consNonEmpty (unspB (undb s1.before)) l)
                   }
 
 -----------------------------------------------------------------------------------
