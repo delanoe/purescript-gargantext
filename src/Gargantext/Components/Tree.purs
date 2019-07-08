@@ -114,12 +114,10 @@ type FileHash = String
 data Action =   Submit       String
               | DeleteNode
               | CreateSubmit String NodeType
-              | CurrentNode
               | UploadFile   FileType UploadFileContents
 
 
 type State = { tree         :: FTree
-             -- , mCurrentNode :: Maybe ID
              }
 
 mapFTree :: (FTree -> FTree) -> State -> State
@@ -128,29 +126,25 @@ mapFTree f s@{tree} = s {tree = f tree}
 -- TODO: make it a local function
 --performAction :: forall props. PerformAction State props Action
 
-performAction :: R.State Int -> R.State State -> R.State (Maybe ID) -> Action -> Aff Unit
+performAction :: R.State Int -> R.State State -> Action -> Aff Unit
 
-performAction (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setState) _ DeleteNode = do
+performAction (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setState) DeleteNode = do
   void $ deleteNode id
   --modifyState_ $ mapFTree $ filterNTree (\(LNode {id}) -> id /= nid)
   --liftEffect $ setState $ mapFTree $ filterNTree $ \(LNode {id: nid}) -> nid /= id
   liftEffect $ setReload $ \r -> r + 1
 
-performAction _ ({tree: NTree (LNode {id}) _} /\ setState) _ (Submit name)  = do
+performAction _ ({tree: NTree (LNode {id}) _} /\ setState) (Submit name)  = do
   void $ renameNode id $ RenameValue {name}
   --modifyState_ $ mapFTree $ setNodeName rid name
   liftEffect $ setState $ \s@{tree: NTree (LNode node) arr} -> s {tree = NTree (LNode node {name = name}) arr}
 
-performAction (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setState) _ (CreateSubmit name nodeType) = do
+performAction (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setState) (CreateSubmit name nodeType) = do
   void $ createNode id $ CreateValue {name, nodeType}
   --modifyState_ $ mapFTree $ map $ hidePopOverNode nid
   liftEffect $ setReload $ \r -> r + 1
 
-performAction _ ({tree: NTree (LNode {id}) _} /\ _) (_ /\ setMCurrentNode) CurrentNode =
-  --modifyState_ $ \{state: s} -> {state: s, mCurrentNode : Just nid}
-  liftEffect $ setMCurrentNode $ const $ Just id
-
-performAction _ ({tree: NTree (LNode {id}) _} /\ _) _ (UploadFile fileType contents) = do
+performAction _ ({tree: NTree (LNode {id}) _} /\ _) (UploadFile fileType contents) = do
   hashes <- uploadFile id fileType contents
   liftEffect $ log2 "uploaded:" hashes
 
@@ -172,13 +166,10 @@ loadedTreeView setReload p = R.createElement el p []
   where
     el = R.hooksComponent "LoadedTreeView" cpt
     cpt {tree, mCurrentRoute} _ = do
-      setMCurrentNode <- R.useState' mCurrentNode
       setState <- R.useState' {tree}
 
       pure $ H.div {className: "tree"}
-        [ toHtml setReload setState setMCurrentNode ]
-      where
-        mCurrentNode = mCorpusId mCurrentRoute
+        [ toHtml setReload setState mCurrentRoute ]
 
 treeLoadView :: R.State Int -> Props -> R.Element
 treeLoadView setReload p = R.createElement el p []
@@ -200,19 +191,19 @@ treeview = R2.elSpec $ R.hooksComponent "TreeView" cpt
 
 -- START toHtml
 
-toHtml :: R.State Int -> R.State State -> R.State (Maybe ID) -> R.Element
+toHtml :: R.State Int -> R.State State -> Maybe Router.Routes -> R.Element
 --toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
-toHtml setReload setState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) setMCurrentNode@(mCurrentNode /\ _) = R.createElement el {} []
+toHtml setReload setState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) mCurrentRoute = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
-    pAction = performAction setReload setState setMCurrentNode
+    pAction = performAction setReload setState
     cpt props _ = do
       folderOpen <- R.useState' true
 
       pure $ H.ul {}
         [ H.li {}
-          ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentNode} folderOpen ]
-            <> childNodes setReload setMCurrentNode folderOpen ary
+          ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute} folderOpen ]
+            <> childNodes setReload folderOpen mCurrentRoute ary
           )
         ]
 
@@ -220,7 +211,7 @@ type NodeMainSpanProps =
   ( id :: ID
   , name :: Name
   , nodeType :: NodeType
-  , mCurrentNode :: Maybe ID)
+  , mCurrentRoute :: Maybe Router.Routes)
 
 nodeMainSpan :: (Action -> Aff Unit)
              -> Record NodeMainSpanProps
@@ -229,7 +220,7 @@ nodeMainSpan :: (Action -> Aff Unit)
 nodeMainSpan d p folderOpen = R.createElement el p []
   where
     el = R.hooksComponent "NodeMainSpan" cpt
-    cpt {id, name, nodeType, mCurrentNode} _ = do
+    cpt {id, name, nodeType, mCurrentRoute} _ = do
       -- only 1 popup at a time is allowed to be opened
       popupOpen <- R.useState' (Nothing :: Maybe NodePopup)
       droppedFile <- R.useState' (Nothing :: Maybe DroppedFile)
@@ -239,9 +230,8 @@ nodeMainSpan d p folderOpen = R.createElement el p []
         [ folderIcon folderOpen
         , H.a { href: (toUrl Front nodeType (Just id))
               , style: {"margin-left": "22px"}
-              , onClick: mkEffectFn1 $ \e -> launchAff $ d $ CurrentNode
               }
-          [ nodeText {isSelected: mCurrentNode == (Just id), name} ]
+          [ nodeText {isSelected: (mCorpusId mCurrentRoute) == (Just id), name} ]
         , popOverIcon popupOpen
         , nodePopupView d {id, name} popupOpen
         , createNodeView d {id, name} popupOpen
@@ -290,10 +280,10 @@ fldr :: Boolean -> String
 fldr open = if open then "glyphicon glyphicon-folder-open" else "glyphicon glyphicon-folder-close"
 
 
-childNodes :: R.State Int -> R.State (Maybe ID) -> R.State Boolean -> Array FTree -> Array R.Element
+childNodes :: R.State Int -> R.State Boolean -> Maybe Router.Routes -> Array FTree -> Array R.Element
 childNodes _ _ _ [] = []
-childNodes _ _ (false /\ _) _ = []
-childNodes setReload setMCurrentNode (true /\ _) ary = map (\ctree -> childNode {tree: ctree}) ary
+childNodes _ (false /\ _) _ _ = []
+childNodes setReload (true /\ _) mCurrentRoute ary = map (\ctree -> childNode {tree: ctree}) ary
   where
     childNode :: State -> R.Element
     childNode props = R.createElement el props []
@@ -301,7 +291,7 @@ childNodes setReload setMCurrentNode (true /\ _) ary = map (\ctree -> childNode 
     cpt {tree} _ = do
       setState <- R.useState' {tree}
 
-      pure $ toHtml setReload setState setMCurrentNode
+      pure $ toHtml setReload setState mCurrentRoute
 
 -- END toHtml
 
