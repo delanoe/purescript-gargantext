@@ -58,7 +58,7 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
             let x = E.clientX event
                 y = E.clientY event
                 setList t = do
-                  setTermList (S.toLower text') (Just list) t
+                  setTermList text' (Just list) t
                   setMenu (const Nothing)
             setMenu (const $ Just {x, y, list: Just list, menuType: SetTermListItem, setList} )
 

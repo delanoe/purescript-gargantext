@@ -7,6 +7,8 @@ module Gargantext.Components.NgramsTable.Core
   , NgramsPatch(..)
   , NgramsTable(..)
   , NgramsTablePatch
+  , NewElems
+  , NgramsPatches
   , _NgramsTable
   , NgramsTerm
   , Version
@@ -27,6 +29,9 @@ module Gargantext.Components.NgramsTable.Core
   , patchSetFromMap
   , applyPatchSet
   , applyNgramsTablePatch
+  , singletonPatchMap
+  , fromNgramsPatches
+  , singletonNgramsTablePatch
   , _list
   , _occurrences
   , _children
@@ -450,6 +455,9 @@ instance decodeJsonPatchMap :: DecodeJson p => DecodeJson (PatchMap String p) wh
     obj <- decodeJson json
     pure $ PatchMap $ Map.fromFoldableWithIndex (obj :: FO.Object p)
 
+singletonPatchMap :: forall k p. k -> p -> PatchMap k p
+singletonPatchMap k p = PatchMap (Map.singleton k p)
+
 isEmptyPatchMap :: forall k p. PatchMap k p -> Boolean
 isEmptyPatchMap (PatchMap p) = Map.isEmpty p
 
@@ -461,7 +469,20 @@ applyPatchMap applyPatchValue (PatchMap p) = mapWithIndex f
         Nothing -> v
         Just pv -> applyPatchValue pv v
 
-type NgramsTablePatch = PatchMap NgramsTerm NgramsPatch
+type NgramsPatches = PatchMap NgramsTerm NgramsPatch
+
+type NewElems = Map NgramsTerm TermList
+
+type NgramsTablePatch =
+  { ngramsNewElems :: NewElems
+  , ngramsPatches  :: NgramsPatches
+  }
+
+fromNgramsPatches :: NgramsPatches -> NgramsTablePatch
+fromNgramsPatches ngramsPatches = {ngramsNewElems: mempty, ngramsPatches}
+
+singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
+singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap (S.toLower n) p
 
 type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
 
@@ -494,13 +515,26 @@ reParentNgramsPatch parent (NgramsPatch {patch_children: PatchSet {rem, add}}) =
   traverse_ (reParent Nothing) rem
   traverse_ (reParent $ Just rp) add
 
-reParentNgramsTablePatch :: ReParent NgramsTablePatch
+reParentNgramsTablePatch :: ReParent NgramsPatches
 reParentNgramsTablePatch = void <<< traverseWithIndex reParentNgramsPatch
 
+newElemsTable :: NewElems -> Map NgramsTerm NgramsElement
+newElemsTable = mapWithIndex newElem
+  where
+    newElem ngrams list =
+      NgramsElement
+        { ngrams
+        , list
+        , occurrences: 1
+        , parent:      Nothing
+        , root:        Nothing
+        , children:    mempty
+        }
+
 applyNgramsTablePatch :: NgramsTablePatch -> NgramsTable -> NgramsTable
-applyNgramsTablePatch p (NgramsTable m) =
-  execState (reParentNgramsTablePatch p) $
-  NgramsTable $ applyPatchMap applyNgramsPatch p m
+applyNgramsTablePatch { ngramsPatches, ngramsNewElems: n } (NgramsTable m) =
+  execState (reParentNgramsTablePatch ngramsPatches) $
+  NgramsTable $ applyPatchMap applyNgramsPatch ngramsPatches (newElemsTable n <> m)
 
 -----------------------------------------------------------------------------------
 
@@ -510,17 +544,34 @@ type CoreState s =
   | s
   }
 
-putTable :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsTablePatch -> Aff (Versioned NgramsTablePatch)
-putTable {nodeId, listIds, tabType} =
+postNewNgrams :: forall s. Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
+postNewNgrams newNgrams mayList {nodeId, listIds, tabType} =
+  when (not (A.null newNgrams)) $ do
+    (_ :: Array Unit) <- post (toUrl Back (PutNgrams tabType (head listIds) mayList) $ Just nodeId) newNgrams
+    pure unit
+
+postNewElems :: forall s. NewElems -> CoreParams s -> Aff Unit
+postNewElems newElems params = void $ traverseWithIndex postNewElem newElems
+  where
+    postNewElem ngrams list = postNewNgrams [ngrams] (Just list) params
+
+addNewNgram :: NgramsTerm -> TermList -> NgramsTablePatch
+addNewNgram ngrams list = { ngramsPatches: mempty
+                          , ngramsNewElems: Map.singleton (S.toLower ngrams) list }
+
+putNgramsPatches :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
+putNgramsPatches {nodeId, listIds, tabType} =
   put (toUrl Back (PutNgrams tabType (head listIds) Nothing) $ Just nodeId)
 
 commitPatch :: forall s. {nodeId :: Int, listIds :: Array Int, tabType :: TabType}
             -> Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
-commitPatch props pt@(Versioned {data: tablePatch}) = do
-  Versioned {version: newVersion, data: newPatch} <- lift $ putTable props pt
+commitPatch props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNewElems}}) = do
+  let pt = Versioned { version, data: ngramsPatches }
+  lift $ postNewElems ngramsNewElems props
+  Versioned {version: newVersion, data: newPatch} <- lift $ putNgramsPatches props pt
   modifyState_ $ \s ->
     s { ngramsVersion    = newVersion
-      , ngramsTablePatch = newPatch <> tablePatch <> s.ngramsTablePatch
+      , ngramsTablePatch = fromNgramsPatches newPatch <> tablePatch <> s.ngramsTablePatch
       }
     -- TODO: check that pt.version == s.ngramsTablePatch.version
 
@@ -539,11 +590,6 @@ convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc
 convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
-
-addNewNgram :: forall s. NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
-addNewNgram ngram mayList {nodeId, listIds, tabType} = do
-  (_ :: Array Unit) <- post (toUrl Back (PutNgrams tabType (head listIds) mayList) $ Just nodeId) [ngram]
-  pure unit
 
 ngramsLoaderClass :: Loader.LoaderClass PageParams VersionedNgramsTable
 ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadNgramsTable

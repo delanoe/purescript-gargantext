@@ -3,7 +3,6 @@ module Gargantext.Pages.Corpus.Document where
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
 import React (ReactClass, Children)
@@ -11,7 +10,6 @@ import React.DOM (div, h4, li, p, span, text, ul)
 import React.DOM.Props (className)
 import Reactix as R
 import Thermite (PerformAction, Render, Spec, simpleSpec, cmapProps, createClass)
-import Control.Monad.Trans.Class (lift)
 
 import Gargantext.Prelude
 import Gargantext.Config          (toUrl, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..))
@@ -286,9 +284,11 @@ docViewSpec = simpleSpec performAction render
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
-        pt = PatchMap $ Map.singleton n pe
-    performAction (AddNewNgram ngram termList) {path: params} _ =
-      lift $ addNewNgram ngram (Just termList) params
+        pt = singletonNgramsTablePatch n pe
+    performAction (AddNewNgram ngram termList) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
+        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+      where
+        pt = addNewNgram ngram termList
 
     render :: Render State Props Action
     render dispatch { loaded: { ngramsTable: Versioned { data: initTable }, document } }

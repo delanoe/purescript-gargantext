@@ -213,9 +213,8 @@ ngramsTableSpec = simpleSpec performAction render
     performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
-        listId = Just 10 -- List.head listIds
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
-        pt = PatchMap $ Map.singleton n pe
+        pt = singletonNgramsTablePatch n pe
     performAction AddTermChildren _ {ngramsParent: Nothing} =
         -- impossible but harmless
         pure unit
@@ -227,14 +226,13 @@ ngramsTableSpec = simpleSpec performAction render
         modifyState_ $ setParentResetChildren Nothing
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
-        listId = Just 10 -- List.head listIds
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }
-        pt = PatchMap $ Map.fromFoldable [Tuple parent pe]
-        -- TODO ROOT-UPDATE
-        -- patch the root of the child to be equal to the root of the parent.
-    performAction (AddNewNgram ngram) {path: params} _ =
-      lift $ addNewNgram ngram Nothing params
+        pt = singletonNgramsTablePatch parent pe
+    performAction (AddNewNgram ngram) {path: {listIds, nodeId, tabType}} {ngramsVersion} =
+        commitPatch {listIds, nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
+      where
+        pt = addNewNgram ngram CandidateTerm
 
     render :: Render State LoadedNgramsTableProps Action
     render dispatch { path: pageParams

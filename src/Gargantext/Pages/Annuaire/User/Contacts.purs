@@ -4,4 +4,4 @@ module Gargantext.Pages.Annuaire.User.Contacts
        where
 
 import Gargantext.Pages.Annuaire.User.Contacts.Types
-import Gargantext.Pages.Annuaire.User.Contacts.Specs
+import Gargantext.Pages.Annuaire.User.Contacts.Specs (layoutUser)
