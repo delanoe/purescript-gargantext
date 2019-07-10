@@ -28,7 +28,8 @@ endConfig = endConfig' V10
 
 endConfig' :: ApiVersion -> EndConfig
 endConfig' v = { front : frontRelative
-               , back  : backLocal v
+               --, back  : backLocal v
+               , back: backDev v
                , static : staticRelative
              }
 --               , back  : backDemo v  }

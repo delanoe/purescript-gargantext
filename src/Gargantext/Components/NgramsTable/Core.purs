@@ -16,6 +16,7 @@ module Gargantext.Components.NgramsTable.Core
   , VersionedNgramsTable
   , CoreState
   , LoadedNgramsTableProps
+  , nGramsRegex
   , highlightNgrams
   , initialPageParams
   , loadNgramsTable
@@ -210,6 +211,14 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
       f e@(NgramsElement e') = Tuple e'.ngrams e
 -----------------------------------------------------------------------------------
 
+nGramWordBoundaries = "[ .,;:!?'\\{}()]"
+nGramsRegex = case R.regex ("(" <> nGramWordBoundaries <> ")") (R.global <> R.multiline) of
+  Left e  -> unsafePartial $ crashWith e
+  Right r -> r
+nGramsRegex2 = case R.regex ("(" <> nGramWordBoundaries <> ")\\1") (R.global <> R.multiline) of
+  Left e  -> unsafePartial $ crashWith e
+  Right r -> r
+
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
 highlightNgrams :: NgramsTable -> String -> Array (Tuple String (Maybe TermList))
@@ -218,21 +227,14 @@ highlightNgrams (NgramsTable table) input0 =
     let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
     A.reverse (A.fromFoldable (consNonEmpty (undb (init sN.s)) sN.l))
   where
-    spR x = " " <> R.replace theRegex "$1$1" x <> " "
-    reR = R.replace theRegex " "
+    spR x = " " <> R.replace nGramsRegex "$1$1" x <> " "
+    reR = R.replace nGramsRegex " "
     db = S.replace (S.Pattern " ") (S.Replacement "  ")
     sp x = " " <> db x <> " "
-    undb = R.replace theRegex2 "$1"
+    undb = R.replace nGramsRegex2 "$1"
     init x = S.take (S.length x - 1) x
     input = spR input0
     pats = A.fromFoldable (Map.keys table)
-    word_boundaries = "[ .,;:!?'\\{}()]"
-    theRegex = case R.regex ("(" <> word_boundaries <> ")") (R.global <> R.multiline) of
-      Left e  -> unsafePartial $ crashWith e
-      Right r -> r
-    theRegex2 = case R.regex ("(" <> word_boundaries <> ")\\1") (R.global <> R.multiline) of
-      Left e  -> unsafePartial $ crashWith e
-      Right r -> r
     ixs  = indicesOfAny (sp <$> pats) (S.toLower $ reR input)
 
     consOnJustTail s xs@(Tuple _ (Just _) : _) =
