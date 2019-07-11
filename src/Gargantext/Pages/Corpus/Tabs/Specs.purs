@@ -16,7 +16,6 @@ import Gargantext.Pages.Corpus.Chart.Metrics (metricsSpec)
 import Gargantext.Pages.Corpus.Chart.Pie  (pieSpec, barSpec)
 import Gargantext.Pages.Corpus.Chart.Tree (treeSpec)
 
-import Gargantext.Pages.Corpus.Dashboard (globalPublis)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Charts.Options.ECharts (chart) as ECharts
 import Gargantext.Components.DocsTable as DT

@@ -20,7 +20,6 @@ import Effect.Exception (error)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Partial.Unsafe (unsafePartial)
-import React (ReactClass, ReactElement)
 import React as React
 import React.DOM (a, div, i)
 import React.DOM.Props (className, style)
