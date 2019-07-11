@@ -1,7 +1,6 @@
 module Gargantext.Components.NgramsTable.Core
   ( PageParams
   , CoreParams
-  , PatchMap
   , NgramsElement(..)
   , _NgramsElement
   , NgramsPatch(..)
@@ -11,12 +10,13 @@ module Gargantext.Components.NgramsTable.Core
   , NgramsPatches
   , _NgramsTable
   , NgramsTerm
+  , normNgram
+  , findNgramTermList
   , Version
   , Versioned(..)
   , VersionedNgramsTable
   , CoreState
   , LoadedNgramsTableProps
-  , nGramsRegex
   , highlightNgrams
   , initialPageParams
   , loadNgramsTable
@@ -211,11 +211,14 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
       f e@(NgramsElement e') = Tuple e'.ngrams e
 -----------------------------------------------------------------------------------
 
-nGramWordBoundaries = "[ .,;:!?'\\{}()]"
-nGramsRegex = case R.regex ("(" <> nGramWordBoundaries <> ")") (R.global <> R.multiline) of
+wordBoundaryChars :: String
+wordBoundaryChars = "[ .,;:!?'\\{}()]"
+
+wordBoundaryReg = case R.regex ("(" <> wordBoundaryChars <> ")") (R.global <> R.multiline) of
   Left e  -> unsafePartial $ crashWith e
   Right r -> r
-nGramsRegex2 = case R.regex ("(" <> nGramWordBoundaries <> ")\\1") (R.global <> R.multiline) of
+
+wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <> R.multiline) of
   Left e  -> unsafePartial $ crashWith e
   Right r -> r
 
@@ -227,15 +230,15 @@ highlightNgrams (NgramsTable table) input0 =
     let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
     A.reverse (A.fromFoldable (consNonEmpty (undb (init sN.s)) sN.l))
   where
-    spR x = " " <> R.replace nGramsRegex "$1$1" x <> " "
-    reR = R.replace nGramsRegex " "
+    spR x = " " <> R.replace wordBoundaryReg "$1$1" x <> " "
+    reR = R.replace wordBoundaryReg " "
     db = S.replace (S.Pattern " ") (S.Replacement "  ")
     sp x = " " <> db x <> " "
-    undb = R.replace nGramsRegex2 "$1"
+    undb = R.replace wordBoundaryReg2 "$1"
     init x = S.take (S.length x - 1) x
     input = spR input0
     pats = A.fromFoldable (Map.keys table)
-    ixs  = indicesOfAny (sp <$> pats) (S.toLower $ reR input)
+    ixs = indicesOfAny (sp <$> pats) (normNgram input)
 
     consOnJustTail s xs@(Tuple _ (Just _) : _) =
       Tuple s Nothing : xs
@@ -483,8 +486,14 @@ type NgramsTablePatch =
 fromNgramsPatches :: NgramsPatches -> NgramsTablePatch
 fromNgramsPatches ngramsPatches = {ngramsNewElems: mempty, ngramsPatches}
 
+normNgram :: String -> NgramsTerm
+normNgram = S.toLower <<< R.replace wordBoundaryReg " "
+
+findNgramTermList :: NgramsTable -> String -> Maybe TermList
+findNgramTermList (NgramsTable m) s = m ^? at (normNgram s) <<< _Just <<< _NgramsElement <<< _list
+
 singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
-singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap (S.toLower n) p
+singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap (normNgram n) p
 
 type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
 
@@ -559,7 +568,7 @@ postNewElems newElems params = void $ traverseWithIndex postNewElem newElems
 
 addNewNgram :: NgramsTerm -> TermList -> NgramsTablePatch
 addNewNgram ngrams list = { ngramsPatches: mempty
-                          , ngramsNewElems: Map.singleton (S.toLower ngrams) list }
+                          , ngramsNewElems: Map.singleton (normNgram ngrams) list }
 
 putNgramsPatches :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
 putNgramsPatches {nodeId, listIds, tabType} =

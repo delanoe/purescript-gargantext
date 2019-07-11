@@ -207,6 +207,7 @@ pathUrl c (Chart {chartType, tabType}) i =
 
 ------------------------------------------------------------
 
+routesPath :: R.Routes -> String
 routesPath R.Home = ""
 routesPath R.Login = "login"
 routesPath R.SearchView = "search"
