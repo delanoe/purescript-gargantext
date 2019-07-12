@@ -26,6 +26,7 @@ import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
+import Gargantext.Config (CTabNgramType(..))
 import Gargantext.Types ( TermList )
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 import Gargantext.Components.NgramsTable.Core ( NgramsTerm, NgramsTable(..), _NgramsElement, _list, highlightNgrams, findNgramTermList )
@@ -80,7 +81,7 @@ maybeShowMenu setMenu setTermList ngrams event = do
         sel' -> do
           let x = E.clientX event
               y = E.clientY event
-              list = findNgramTermList ngrams sel'
+              list = findNgramTermList CTabTerms ngrams sel'
               setList t = do
                 setTermList sel' list t
                 setMenu (const Nothing)
@@ -97,7 +98,7 @@ maybeAddMenu setMenu e (Just props) = annotationMenu setMenu props <> e
 maybeAddMenu _ e _ = e
 
 compile :: NgramsTable -> Maybe String -> Array (Tuple String (Maybe TermList))
-compile ngrams = maybe [] (highlightNgrams ngrams)
+compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
 
 -- Runs
 

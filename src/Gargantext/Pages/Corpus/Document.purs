@@ -12,7 +12,7 @@ import Reactix as R
 import Thermite (PerformAction, Render, Spec, simpleSpec, cmapProps, createClass)
 
 import Gargantext.Prelude
-import Gargantext.Config          (toUrl, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..))
+import Gargantext.Config          (toUrl, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..), CTabNgramType(..))
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader2 (useLoader)
@@ -284,11 +284,11 @@ docViewSpec = simpleSpec performAction render
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
-        pt = singletonNgramsTablePatch n pe
+        pt = singletonNgramsTablePatch CTabTerms n pe
     performAction (AddNewNgram ngram termList) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
-        pt = addNewNgram ngram termList
+        pt = addNewNgram CTabTerms ngram termList
 
     render :: Render State Props Action
     render dispatch { loaded: { ngramsTable: Versioned { data: initTable }, document } }

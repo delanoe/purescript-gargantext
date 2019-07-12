@@ -34,7 +34,7 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Types (TermList(..), readTermList, readTermSize, termLists, termSizes)
-import Gargantext.Config (OrderBy(..), TabType)
+import Gargantext.Config (OrderBy(..), TabType, CTabNgramType(..))
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
@@ -197,8 +197,8 @@ toggleMap :: forall a. a -> Maybe a -> Maybe a
 toggleMap _ (Just _) = Nothing
 toggleMap b Nothing  = Just b
 
-ngramsTableSpec :: Spec State LoadedNgramsTableProps Action
-ngramsTableSpec = simpleSpec performAction render
+ngramsTableSpec :: CTabNgramType -> Spec State LoadedNgramsTableProps Action
+ngramsTableSpec ntype = simpleSpec performAction render
   where
     setParentResetChildren :: Maybe NgramsTerm -> State -> State
     setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
@@ -214,7 +214,7 @@ ngramsTableSpec = simpleSpec performAction render
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
-        pt = singletonNgramsTablePatch n pe
+        pt = singletonNgramsTablePatch ntype n pe
     performAction AddTermChildren _ {ngramsParent: Nothing} =
         -- impossible but harmless
         pure unit
@@ -228,11 +228,11 @@ ngramsTableSpec = simpleSpec performAction render
       where
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }
-        pt = singletonNgramsTablePatch parent pe
+        pt = singletonNgramsTablePatch ntype parent pe
     performAction (AddNewNgram ngram) {path: {listIds, nodeId, tabType}} {ngramsVersion} =
         commitPatch {listIds, nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
-        pt = addNewNgram ngram CandidateTerm
+        pt = addNewNgram ntype ngram CandidateTerm
 
     render :: Render State LoadedNgramsTableProps Action
     render dispatch { path: pageParams
@@ -292,8 +292,8 @@ ngramsTableSpec = simpleSpec performAction render
               , delete: false
               }
 
-ngramsTableClass :: Loader.InnerClass PageParams VersionedNgramsTable
-ngramsTableClass = createClass "NgramsTable" ngramsTableSpec initialState
+ngramsTableClass :: CTabNgramType -> Loader.InnerClass PageParams VersionedNgramsTable
+ngramsTableClass ct = createClass "NgramsTable" (ngramsTableSpec ct) initialState
 
 type MainNgramsTableProps =
   { nodeId        :: Int
@@ -302,14 +302,14 @@ type MainNgramsTableProps =
   , tabType       :: TabType
   }
 
-mainNgramsTableSpec :: Spec {} MainNgramsTableProps Void
-mainNgramsTableSpec = simpleSpec defaultPerformAction render
+mainNgramsTableSpec :: CTabNgramType -> Spec {} MainNgramsTableProps Void
+mainNgramsTableSpec nt = simpleSpec defaultPerformAction render
   where
     render :: Render {} MainNgramsTableProps Void
     render _ {nodeId, defaultListId, tabType} _ _ =
       [ ngramsLoader
           { path: initialPageParams nodeId [defaultListId] tabType
-          , component: ngramsTableClass
+          , component: (ngramsTableClass nt)
           } ]
 
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}

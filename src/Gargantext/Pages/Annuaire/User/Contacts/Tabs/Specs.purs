@@ -9,7 +9,7 @@ import Data.List (fromFoldable)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
-import Gargantext.Config (TabType(..), TabSubType(..), PTabNgramType(..))
+import Gargantext.Config (TabType(..), TabSubType(..), PTabNgramType(..), CTabNgramType(..))
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
@@ -31,6 +31,14 @@ modeTabType :: Mode -> PTabNgramType
 modeTabType Patents = PTabPatents
 modeTabType Books = PTabBooks
 modeTabType Communication = PTabCommunication
+
+-- TODO fix this type
+modeTabType' :: Mode -> CTabNgramType
+modeTabType' Patents = CTabAuthors
+modeTabType' Books = CTabAuthors
+modeTabType' Communication = CTabAuthors
+
+
 
 type PropsRow =
   ( nodeId :: Int
@@ -72,6 +80,6 @@ ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
 ngramsViewSpec {mode} =
   cmapProps (\{contactData: {defaultListId}, nodeId} ->
               {defaultListId, nodeId, tabType})
-            (noState NT.mainNgramsTableSpec)
+            (noState (NT.mainNgramsTableSpec (modeTabType' mode)))
     where
       tabType = TabPairing $ TabNgramType $ modeTabType mode

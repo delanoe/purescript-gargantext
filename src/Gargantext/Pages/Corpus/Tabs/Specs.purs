@@ -91,7 +91,7 @@ ngramsViewSpec {mode} =
   noState $ chart mode <>
     cmapProps (\{corpusData: {defaultListId}, corpusId: nodeId} ->
                 {defaultListId, nodeId, tabType})
-              NT.mainNgramsTableSpec
+              (NT.mainNgramsTableSpec (modeTabType mode))
 
   where
     tabType = TabCorpus $ TabNgramType $ modeTabType mode

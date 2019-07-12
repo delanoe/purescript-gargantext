@@ -86,7 +86,7 @@ import Partial.Unsafe (unsafePartial)
 
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Types (TermList(..), TermSize)
-import Gargantext.Config (toUrl, End(..), Path(..), TabType, OrderBy(..))
+import Gargantext.Config (toUrl, End(..), Path(..), TabType, OrderBy(..), CTabNgramType(..))
 import Gargantext.Config.REST (get, put, post)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
@@ -224,8 +224,8 @@ wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <
 
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
-highlightNgrams :: NgramsTable -> String -> Array (Tuple String (Maybe TermList))
-highlightNgrams (NgramsTable table) input0 =
+highlightNgrams :: CTabNgramType -> NgramsTable -> String -> Array (Tuple String (Maybe TermList))
+highlightNgrams ntype (NgramsTable table) input0 =
     -- trace {pats, input0, input, ixs} \_ ->
     let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
     A.reverse (A.fromFoldable (consNonEmpty (undb (init sN.s)) sN.l))
@@ -238,7 +238,7 @@ highlightNgrams (NgramsTable table) input0 =
     init x = S.take (S.length x - 1) x
     input = spR input0
     pats = A.fromFoldable (Map.keys table)
-    ixs = indicesOfAny (sp <$> pats) (normNgram input)
+    ixs = indicesOfAny (sp <$> pats) (normNgram ntype input)
 
     consOnJustTail s xs@(Tuple _ (Just _) : _) =
       Tuple s Nothing : xs
@@ -486,14 +486,18 @@ type NgramsTablePatch =
 fromNgramsPatches :: NgramsPatches -> NgramsTablePatch
 fromNgramsPatches ngramsPatches = {ngramsNewElems: mempty, ngramsPatches}
 
-normNgram :: String -> NgramsTerm
-normNgram = S.toLower <<< R.replace wordBoundaryReg " "
+normNgram :: CTabNgramType -> String -> NgramsTerm
+normNgram CTabAuthors = identity
+normNgram CTabSources = identity
+normNgram CTabInstitutes = identity
+normNgram CTabTerms      = S.toLower <<< R.replace wordBoundaryReg " "
 
-findNgramTermList :: NgramsTable -> String -> Maybe TermList
-findNgramTermList (NgramsTable m) s = m ^? at (normNgram s) <<< _Just <<< _NgramsElement <<< _list
 
-singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
-singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap (normNgram n) p
+findNgramTermList :: CTabNgramType -> NgramsTable -> String -> Maybe TermList
+findNgramTermList ntype (NgramsTable m) s = m ^? at (normNgram ntype s) <<< _Just <<< _NgramsElement <<< _list
+
+singletonNgramsTablePatch :: CTabNgramType -> NgramsTerm -> NgramsPatch -> NgramsTablePatch
+singletonNgramsTablePatch m n p = fromNgramsPatches $ singletonPatchMap (normNgram m n) p
 
 type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
 
@@ -566,9 +570,9 @@ postNewElems newElems params = void $ traverseWithIndex postNewElem newElems
   where
     postNewElem ngrams list = postNewNgrams [ngrams] (Just list) params
 
-addNewNgram :: NgramsTerm -> TermList -> NgramsTablePatch
-addNewNgram ngrams list = { ngramsPatches: mempty
-                          , ngramsNewElems: Map.singleton (normNgram ngrams) list }
+addNewNgram :: CTabNgramType -> NgramsTerm -> TermList -> NgramsTablePatch
+addNewNgram ntype ngrams list = { ngramsPatches: mempty
+                          , ngramsNewElems: Map.singleton (normNgram ntype ngrams) list }
 
 putNgramsPatches :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
 putNgramsPatches {nodeId, listIds, tabType} =
