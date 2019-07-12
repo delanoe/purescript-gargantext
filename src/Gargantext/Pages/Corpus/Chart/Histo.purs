@@ -1,26 +1,32 @@
 module Gargantext.Pages.Corpus.Chart.Histo where
 
-import Data.Array (foldl)
-import Data.Tuple (Tuple(..))
-import Data.Map as Map
-import Data.Int (toNumber)
-import Data.Map (Map)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Array (foldl)
+import Data.Int (toNumber)
+import Data.Map as Map
+import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)
+import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
 import Gargantext.Config.REST (get)
 import React (ReactClass, ReactElement, createElement)
-import Thermite (Spec, Render, defaultPerformAction, simpleSpec, createClass)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Thermite (Spec)
+
 import Gargantext.Prelude
 import Gargantext.Types (TermList(..))
 import Gargantext.Components.Loader as Loader
+import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Charts.Options.ECharts
 import Gargantext.Components.Charts.Options.Type
 import Gargantext.Components.Charts.Options.Series
 import Gargantext.Components.Charts.Options.Color
 import Gargantext.Components.Charts.Options.Font
 import Gargantext.Components.Charts.Options.Data
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Pages.Corpus.Chart.Utils as U
 
 type Path =
   { corpusId :: Int
@@ -51,12 +57,6 @@ instance decodeHistoMetrics :: DecodeJson HistoMetrics where
 
 type Loaded = HistoMetrics
 
-loadedMetricsSpec :: Spec {} (Loader.InnerProps Path Loaded ()) Void
-loadedMetricsSpec = simpleSpec defaultPerformAction render
-  where
-    render :: Render {} (Loader.InnerProps Path Loaded ()) Void
-    render dispatch {loaded:histoMetrics} {} _ = [chart (chartOptions histoMetrics)]
-
 chartOptions :: HistoMetrics -> Options
 chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Histogram"
@@ -68,23 +68,27 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
   }
 
-metricsLoader :: Loader.Props' Path HistoMetrics -> ReactElement
-metricsLoader props = createElement metricsLoaderClass props []
-  where
-    metricsLoaderClass :: ReactClass (Loader.Props Path HistoMetrics)
-    metricsLoaderClass = Loader.createLoaderClass "MetricsLoader" getMetrics
 
-    getMetrics :: Path -> Aff HistoMetrics
-    getMetrics {corpusId, tabType} = do
-      ChartMetrics ms <- get $ toUrl Back (Chart {chartType: Histo, tabType: tabType}) $ Just corpusId
-      pure ms."data"
+getMetrics :: Path -> Aff HistoMetrics
+getMetrics {corpusId, tabType} = do
+  ChartMetrics ms <- get $ toUrl Back (Chart {chartType: Histo, tabType: tabType}) $ Just corpusId
+  pure ms."data"
 
 histoSpec :: Spec {} Path Void
-histoSpec = simpleSpec defaultPerformAction render
+histoSpec = R2.elSpec $ R.hooksComponent "LoadedMetricsHisto" cpt
   where
-    render :: Render {} Path Void
-    render dispatch path {} _ =
-      [ metricsLoader
-        { path
-        , component: createClass "LoadedMetrics" loadedMetricsSpec (const {})
-        } ]
+    cpt p _ = do
+      setReload <- R.useState' 0
+
+      pure $ metricsLoadView setReload p
+
+metricsLoadView :: R.State Int -> Path -> R.Element
+metricsLoadView setReload p = R.createElement el p []
+  where
+    el = R.hooksComponent "MetricsLoadedHistoView" cpt
+    cpt p _ = do
+      useLoader p getMetrics $ \{loaded} ->
+        loadedMetricsView setReload loaded
+
+loadedMetricsView :: R.State Int -> HistoMetrics -> R.Element
+loadedMetricsView setReload loaded = U.reloadButtonWrap setReload $ R2.buff $ chart $ chartOptions loaded
