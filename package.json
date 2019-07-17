@@ -3,6 +3,7 @@
         "rebase-set": "spago package-set-upgrade && spago psc-package-insdhall",
         "rebuild-set": "spago psc-package-insdhall",
         "install-ps": "psc-package install",
+        "compile": "pulp --psc-package build",
         "build": "pulp --psc-package browserify -t dist/bundle.js",
         "repl": "pulp --psc-package repl",
         "clean": "rm -Rf output"
@@ -15,9 +16,9 @@
         "echarts-for-react": "^2.0.14",
         "imports-loader": "^0.8.0",
         "prop-types": "15.6.2",
-        "react": "^16.8.2",
-        "react-dom": "^16.8.2",
-        "react-sigma": "git://github.com/np/react-sigma.git#shouldComponentUpdate"
+        "react": "^16.8.6",
+        "react-dom": "^16.8.6",
+        "sigma": "^1.2.1"
     },
     "devDependencies": {
         "@babel/cli": "^7.1.5",
