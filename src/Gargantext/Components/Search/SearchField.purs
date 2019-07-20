@@ -23,10 +23,10 @@ import Gargantext.Components.Search.Types
 
 select = R.createElement "select"
 
-type Search = { database :: Maybe Database, term :: String }
+type Search = { database :: Database, term :: String }
 
 defaultSearch :: Search
-defaultSearch = { database: Nothing, term: "" }
+defaultSearch = { database: All, term: "" }
 
 type Props =
   -- list of databases to search, or parsers to use on uploads
@@ -47,7 +47,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
     cpt props _ = do
       let search = maybe defaultSearch identity (fst props.search)
       term <- R.useState' search.term
-      db   <- R.useState' (Nothing :: Maybe Database)
+      db   <- R.useState' All
       pure $
           div { className: "search-field input-group" }
               [ databaseInput db props.databases
@@ -57,7 +57,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
               ]
     hasChanged p p' = (fst p.search /= fst p'.search) || (p.databases /= p'.databases)
 
-databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
+databaseInput :: R.State Database -> Array Database -> R.Element
 databaseInput (db /\ setDB) dbs =
   div { className: "input-group-btn search-panel dropdown" }
       [ dropdownBtn db
@@ -66,14 +66,13 @@ databaseInput (db /\ setDB) dbs =
   where
     liItem db = li { onClick } [ a {href: "#"} [text (show db) ] ]
       where
-        onClick = mkEffectFn1 $ \_ -> setDB $ const $ Just db
+        onClick = mkEffectFn1 $ \_ -> setDB $ const db
     dropdownBtnProps = { id: "search-dropdown"
                         , className: "btn btn-default dropdown-toggle"
                         , type: "button"
                         , data: {toggle: "dropdown"}
                         }
-    dropdownBtn (Just db) = button dropdownBtnProps [ span {} [ text (show db) ] ]
-    dropdownBtn (Nothing) = button dropdownBtnProps [ span {} [ text "-" ] ]
+    dropdownBtn db = button dropdownBtnProps [ span {} [ text (show db) ] ]
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
@@ -85,7 +84,7 @@ searchInput (term /\ setTerm) =
   where onChange = mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
 
 
-submitButton :: R.State (Maybe Database) -> R.State String -> R.State (Maybe Search) -> R.Element
+submitButton :: R.State Database -> R.State String -> R.State (Maybe Search) -> R.Element
 submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
   button { className: "btn btn-default", type: "button", onClick: click } [ text "Search" ]
   where

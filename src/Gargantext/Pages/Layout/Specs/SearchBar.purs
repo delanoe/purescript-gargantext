@@ -57,8 +57,7 @@ onSearchChange (search /\ setSearch) =
         r <- Ajax.search (searchQuery q)
         liftEffect $ log2 "Return:" r
         liftEffect $ modalShow "addCorpus"
-    searchQuery {database: Nothing, term} = over SearchQuery (_ {query=term}) defaultSearchQuery
-    searchQuery {database: Just db, term} = over SearchQuery (_ {databases=[db], query=term}) defaultSearchQuery
+    searchQuery {database: db, term} = over SearchQuery (_ {databases=[db], query=term}) defaultSearchQuery
 
 toggleButton :: R.State Boolean -> R.Element
 toggleButton open =
