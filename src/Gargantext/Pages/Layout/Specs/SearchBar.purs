@@ -54,7 +54,7 @@ onSearchChange (search /\ setSearch) =
       launchAff $ do
         liftEffect $ log2 "Searching db: " $ show q.database
         liftEffect $ log2 "Searching term: " q.term
-        (r :: Unit) <- Ajax.search (searchQuery q)
+        r <- Ajax.search (searchQuery q)
         liftEffect $ log2 "Return:" r
         liftEffect $ modalShow "addCorpus"
     searchQuery {database: Nothing, term} = over SearchQuery (_ {query=term}) defaultSearchQuery

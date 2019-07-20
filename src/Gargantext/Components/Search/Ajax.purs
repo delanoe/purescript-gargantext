@@ -14,7 +14,7 @@ import URI.Query as Q
 searchUrl :: SearchQuery -> String
 searchUrl q = urlPlease Back $ "new" <> Q.print (toQuery q)
 
-search :: forall a. DecodeJson a => SearchQuery -> Aff a
+search :: SearchQuery -> Aff Int
 search q = do
   let url = searchUrl q
   liftEffect $ log2 "url:" url
