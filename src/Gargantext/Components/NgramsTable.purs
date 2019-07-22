@@ -249,7 +249,7 @@ ngramsTableSpec ntype = simpleSpec performAction render
           , container: tableContainer {pageParams, loaderDispatch, dispatch, ngramsParent, ngramsChildren, ngramsTable}
           , colNames:
               T.ColumnName <$>
-              [ "Graph"
+              [ "Map"
               , "Stop"
               , "Terms"
               , "Score (Occurrences)" -- see convOrderBy

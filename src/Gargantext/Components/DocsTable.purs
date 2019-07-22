@@ -279,11 +279,11 @@ renderPage loaderDispatch { totalRecords, dispatch, listId, corpusId
       , container: T.defaultContainer { title: "Documents" }
       , colNames:
           T.ColumnName <$>
-          [ ""
+          [ "Map"
+          , "Stop"
           , "Date"
           , "Title"
           , "Source"
-          , "Delete"
           ]
       , totalRecords
       }
@@ -304,8 +304,13 @@ renderPage loaderDispatch { totalRecords, dispatch, listId, corpusId
                       [ a [ className $ gi isFav
                           , if toDel then style {textDecoration : "line-through"}
                                      else style {textDecoration : "none"}
-                          , onClick $ (\_-> dispatch $ MarkFavorites r._id (not isFav))] []
+                          , onClick $ (\_-> dispatch $ MarkFavorites r._id (not isFav))
+                          ] []
                       ]
+                    , input [ _type "checkbox"
+                            , checked toDel
+                            , onClick $ (\_ -> dispatch $ ToggleDocumentToDelete r._id)
+                            ]
                     -- TODO show date: Year-Month-Day only
                     , if toDel then
                         div [ style {textDecoration : "line-through"}][text (show r.date)]
@@ -323,9 +328,7 @@ renderPage loaderDispatch { totalRecords, dispatch, listId, corpusId
                         div [style {textDecoration : "line-through"}] [ text r.source]
                       else
                         div [] [ text r.source]
-                    , input [ _type "checkbox"
-                            , checked toDel
-                            , onClick $ (\_ -> dispatch $ ToggleDocumentToDelete r._id)]
+                    
                     ]
                 , delete: true
                 }) <$> filter (not <<< isDeleted) res
