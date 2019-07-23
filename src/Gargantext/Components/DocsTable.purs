@@ -30,7 +30,7 @@ import React (ReactClass, ReactElement, Children)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl, toLink)
-import Gargantext.Config.REST (get, put, post, deleteWithBody)
+import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
@@ -56,25 +56,23 @@ type Props =
   }
 
 type State =
-  { documentIdsToDelete :: Set Int
-  , documentIdsDeleted  :: Set Int
+  { documentIdsDeleted  :: Set Int
   , localFavorites      :: Map Int Boolean
   }
 
 initialState :: State
 initialState =
-  { documentIdsToDelete: mempty
-  , documentIdsDeleted:  mempty
+  { documentIdsDeleted:  mempty
   , localFavorites:      mempty
   }
 
-_documentIdsToDelete = prop (SProxy :: SProxy "documentIdsToDelete")
 _documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
 _localFavorites      = prop (SProxy :: SProxy "localFavorites")
 
 data Action
   = MarkFavorites Int Boolean
-  | ToggleDocumentToDelete Int
+  -- | ToggleDocumentToDelete Int
+  | ToggleDeleteDocument Int
   | Trash
 
 newtype DocumentsView
@@ -165,15 +163,16 @@ layoutDocview = simpleSpec performAction render
     performAction (MarkFavorites nid fav) {nodeId} _ = do
       modifyState_ $ _localFavorites <<< at nid ?~ fav
       void $ lift $ if fav
-        then putFavorites    nodeId (FavoriteQuery {favorites: [nid]})
-        else deleteFavorites nodeId (FavoriteQuery {favorites: [nid]})
-    performAction (ToggleDocumentToDelete nid) _ _ =
-      modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
-    performAction Trash {nodeId} {documentIdsToDelete} = do
-      void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
-      modifyState_ $
-        (_documentIdsToDelete .~ mempty) >>>
-        (_documentIdsDeleted <>~ documentIdsToDelete)
+        then putFavorites    nodeId $ FavoriteQuery {favorites: [nid]}
+        else deleteFavorites nodeId $ FavoriteQuery {favorites: [nid]}
+    performAction (ToggleDeleteDocument nid) {nodeId} {documentIdsDeleted} = do
+      modifyState_ $ _ {documentIdsDeleted = toggleSet nid documentIdsDeleted}
+      void $ lift $ if (Set.member nid documentIdsDeleted)
+        then deleteDocuments nodeId $ DocumentQuery {documents: [nid]}
+        else putDocuments nodeId $ DocumentQuery {documents: [nid]}
+    performAction Trash {nodeId} {documentIdsDeleted} = do
+      ids <- lift $ deleteAllDocuments nodeId
+      modifyState_ $ _ {documentIdsDeleted = Set.union documentIdsDeleted $ Set.fromFoldable ids}
 
     render :: Render State Props Action
     render dispatch {nodeId, tabType, listId, corpusId, totalRecords, chart} deletionState _ =
@@ -271,7 +270,7 @@ renderPage :: forall props path.
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
 renderPage loaderDispatch { totalRecords, dispatch, listId, corpusId
-                          , deletionState: {documentIdsToDelete, documentIdsDeleted, localFavorites}}
+                          , deletionState: {documentIdsDeleted, localFavorites}}
                           {currentPath: {nodeId, tabType}, loaded: Just res} _ =
   [ T.tableElt
       { rows
@@ -291,32 +290,31 @@ renderPage loaderDispatch { totalRecords, dispatch, listId, corpusId
   where
     gi true  = "glyphicon glyphicon-star"
     gi false = "glyphicon glyphicon-star-empty"
-    toDelete  (DocumentsView {_id}) = Set.member _id documentIdsToDelete
     isDeleted (DocumentsView {_id}) = Set.member _id documentIdsDeleted
     isFavorite {_id,fav} = maybe fav identity (localFavorites ^. at _id)
     corpusDocument (Just corpusId) = R.CorpusDocument corpusId
     corpusDocument _ = R.Document
     rows = (\(DocumentsView r) ->
                 let isFav = isFavorite r
-                    toDel = toDelete $ DocumentsView r in
+                    isDel = isDeleted $ DocumentsView r in
                 { row:
                     [ div []
                       [ a [ className $ gi isFav
-                          , if toDel then style {textDecoration : "line-through"}
+                          , if isDel then style {textDecoration : "line-through"}
                                      else style {textDecoration : "none"}
                           , onClick $ (\_-> dispatch $ MarkFavorites r._id (not isFav))
                           ] []
                       ]
                     , input [ _type "checkbox"
-                            , checked toDel
-                            , onClick $ (\_ -> dispatch $ ToggleDocumentToDelete r._id)
+                            , checked isDel
+                            , onClick $ (\_ -> dispatch $ ToggleDeleteDocument r._id)
                             ]
                     -- TODO show date: Year-Month-Day only
-                    , if toDel then
+                    , if isDel then
                         div [ style {textDecoration : "line-through"}][text (show r.date)]
                       else
                         div [ ][text (show r.date)]
-                    , if toDel then
+                    , if isDel then
                         a [ href (toLink $ (corpusDocument corpusId) listId r._id)
                           , style {textDecoration : "line-through"}
                           , target "_blank"
@@ -324,11 +322,10 @@ renderPage loaderDispatch { totalRecords, dispatch, listId, corpusId
                       else
                         a [ href (toLink $ (corpusDocument corpusId) listId r._id)
                         , target "_blank" ] [ text r.title ]
-                    , if toDel then
+                    , if isDel then
                         div [style {textDecoration : "line-through"}] [ text r.source]
                       else
                         div [] [ text r.source]
-                    
                     ]
                 , delete: true
                 }) <$> filter (not <<< isDeleted) res
@@ -372,33 +369,46 @@ searchResults squery = post "http://localhost:8008/count" unit
 
 
 newtype FavoriteQuery = FavoriteQuery
-                        { favorites :: Array Int
-                        }
+  {
+    favorites :: Array Int
+  }
 
 instance encodeJsonFQuery :: EncodeJson FavoriteQuery where
   encodeJson (FavoriteQuery post)
      = "favorites" := post.favorites
        ~> jsonEmptyObject
 
-newtype DeleteDocumentQuery = DeleteDocumentQuery
-  {
-    documents :: Array Int
-  }
+favoritesUrl :: Int -> String
+favoritesUrl nodeId = toUrl Back Node (Just nodeId) <> "/favorites"
+
+putFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
+putFavorites nodeId = put $ favoritesUrl nodeId
+
+deleteFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
+deleteFavorites nodeId = deleteWithBody $ favoritesUrl nodeId
+
+newtype DocumentQuery = DocumentQuery
+                        {
+                          documents :: Array Int
+                        }
 
 
-instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
-  encodeJson (DeleteDocumentQuery post)
+instance encodeJsonDDQuery :: EncodeJson DocumentQuery where
+  encodeJson (DocumentQuery post)
      = "documents" := post.documents
        ~> jsonEmptyObject
 
-putFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
-putFavorites nodeId = put (toUrl Back Node (Just nodeId) <> "/favorites")
+documentsUrl :: Int -> String
+documentsUrl nodeId = toUrl Back Node (Just nodeId) <> "/documents"
 
-deleteFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
-deleteFavorites nodeId = deleteWithBody (toUrl Back Node (Just nodeId) <> "/favorites")
+putDocuments :: Int -> DocumentQuery -> Aff (Array Int)
+putDocuments nodeId = put $ documentsUrl nodeId
 
-deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Array Int)
-deleteDocuments nodeId = deleteWithBody (toUrl Back Node (Just nodeId) <> "/documents")
+deleteDocuments :: Int -> DocumentQuery -> Aff (Array Int)
+deleteDocuments nodeId = deleteWithBody $ documentsUrl nodeId
+
+deleteAllDocuments :: Int -> Aff (Array Int)
+deleteAllDocuments nodeId = delete $ documentsUrl nodeId
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)
 toggleSet :: forall a. Ord a => a -> Set a -> Set a
