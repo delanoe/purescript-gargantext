@@ -194,7 +194,7 @@ let additions =
           , "unsafe-coerce"
           ]
           "https://github.com/irresponsible/purescript-reactix"
-          "v0.4.1"
+          "v0.4.2"
       , uint =
           mkPackage
           [ "maybe", "math", "generics-rep" ]
