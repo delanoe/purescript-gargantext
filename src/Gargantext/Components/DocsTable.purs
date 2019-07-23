@@ -196,12 +196,13 @@ layoutDocview = simpleSpec performAction render
                 , dispatch
                 }
             ]
-          , div [className "col-md-12"]
-             [ button [ style {backgroundColor: "peru", padding : "9px", color : "white", border : "white", float: "right"}
+          , div [className "col-md-1 col-md-offset-11"]
+             [ button [ className "btn"
+                      , style {backgroundColor: "peru", color : "white", border : "white"}
                       , onClick $ (\_ -> dispatch Trash)
                       ]
-               [  i [className "glyphitem glyphicon glyphicon-trash", style {marginRight : "9px"}] []
-               ,  text "Trash it !"
+               [  i [className "glyphitem glyphicon glyphicon-trash"] []
+               ,  text "Trash all"
                ]
              ]
           ]
