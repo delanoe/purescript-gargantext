@@ -43,7 +43,9 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     let totalRecords = 47361 -- TODO
     pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
 
-type CorpusData = {corpusNode :: NodePoly CorpusInfo, defaultListId :: Int}
+type CorpusData = { corpusId :: Int
+                  , corpusNode :: NodePoly CorpusInfo
+                  , defaultListId :: Int}
 
 type PropsRow = ( corpusId :: Int, corpusData :: CorpusData )
 type Props = Record PropsRow

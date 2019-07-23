@@ -334,7 +334,7 @@ nodeTypeUrl Nodes     = "nodes"
 nodeTypeUrl NodeUser  = "user"
 nodeTypeUrl NodeContact = "contact"
 nodeTypeUrl Tree      = "tree"
-nodeTypeUrl NodeList  = "list"
+nodeTypeUrl NodeList  = "lists"
 nodeTypeUrl Texts     = "texts"
 ------------------------------------------------------------
 

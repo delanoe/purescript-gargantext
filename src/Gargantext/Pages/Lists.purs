@@ -21,9 +21,9 @@ import Gargantext.Utils.Reactix as R2
 layout :: Spec {} {nodeId :: Int} Void
 layout =
   R2.elSpec $ R.hooksComponent "ListsLoader" \{nodeId} _ ->
-    useLoader nodeId getCorpus $ \{path: corpusId
-                                  ,loaded: corpusData} ->
-      let {corpusNode:
+    useLoader nodeId getCorpus $ \{loaded: corpusData} ->
+      let {corpusId
+          ,corpusNode:
             NodePoly { name: title
                      , date: date'
                      , hyperdata: CorpusInfo corpus
@@ -41,11 +41,13 @@ layout =
 ------------------------------------------------------------------------
 
 getCorpus :: Int -> Aff CorpusData
-getCorpus corpusId = do
+getCorpus listId = do
+  -- fetch corpus via lists parentId
+  (NodePoly {parentId: corpusId} :: NodePoly {})       <- get $ toUrl Back Corpus $ Just listId
   corpusNode     <- get $ toUrl Back Corpus $ Just corpusId
   defaultListIds <- get $ toUrl Back (Children NodeList 0 1 Nothing) $ Just corpusId
   case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
-      pure {corpusNode, defaultListId}
+      pure {corpusId, corpusNode, defaultListId}
     Nothing ->
       throwError $ error "Missing default list"
