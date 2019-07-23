@@ -46,3 +46,9 @@ select = createDOMElement "select"
 
 effToggler :: forall e. R.State Boolean -> EffectFn1 e Unit
 effToggler (_value /\ setValue) = mkEffectFn1 $ \e -> setValue not
+
+nullRef :: forall t. R.Hooks (R.Ref (Nullable t))
+nullRef = R.useRef null
+
+nothingRef :: forall t. R.Hooks (R.Ref (Maybe t))
+nothingRef = R.useRef Nothing

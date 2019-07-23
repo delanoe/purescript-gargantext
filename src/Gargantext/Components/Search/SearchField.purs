@@ -46,8 +46,8 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
   where
     cpt props _ = do
       let search = maybe defaultSearch identity (fst props.search)
-      term <- R.useState $ \_ -> search.term
-      db   <- R.useState $ \_ -> Nothing
+      term <- R.useState' search.term
+      db   <- R.useState' Nothing
       pure $
           div { className: "search-field input-group" }
               [ databaseInput db props.databases

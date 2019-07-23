@@ -4,7 +4,9 @@ import Effect.Unsafe (unsafePerformEffect)
 import Gargantext.Prelude hiding (max,min)
 
 import Control.Monad.Cont.Trans (lift)
-import Data.Array (fold, length, mapWithIndex, (!!), null)
+import Data.Array (fold, length, (!!), null)
+import Data.FoldableWithIndex (foldMapWithIndex)
+import Data.Foldable (foldMap)
 import Data.Int (toNumber)
 import Data.Int as Int
 import Data.Lens (Lens', over, (%~), (.~), (^.))
@@ -12,6 +14,7 @@ import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Number as Num
+import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
@@ -19,16 +22,19 @@ import Data.Traversable (for_)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, SigmaGraphData(SigmaGraphData), SigmaNode, SigmaSettings, canvas, edgeShape, edgeShapes, forceAtlas2, setSigmaRef, getSigmaRef, cameras, CameraProps, getCameraProps, goTo, pauseForceAtlas2, sStyle, sigmaOnMouseMove, sigma, sigmaEasing, sigmaEdge, sigmaEnableWebGL, sigmaNode, sigmaSettings)
+import Gargantext.Hooks.Sigmax.Types as Sigmax
+import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaEasing, SigmaNode, cameras, getCameraProps, getSigmaRef, goTo, pauseForceAtlas2, sigmaEasing, sigmaOnMouseMove)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
+import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Types (class Optional)
 import Gargantext.Utils (toggleSet)
+import Gargantext.Utils.Reactix (scuff)
 import Partial.Unsafe (unsafePartial)
 import React (ReactElement)
 import React.DOM (button, div, input, li, li', menu, p, span, text, ul')
@@ -68,32 +74,32 @@ _cursorSize = prop (SProxy :: SProxy "cursorSize")
 _multiNodeSelection :: forall s a. Lens' { multiNodeSelection :: a | s } a
 _multiNodeSelection = prop (SProxy :: SProxy "multiNodeSelection")
 
--- _settings :: forall s t a b. Lens { settings :: a | s } { settings :: b | t } a b
-_settings :: forall s a. Lens' { settings :: a | s } a
-_settings = prop (SProxy :: SProxy "settings")
+-- _sigmaSettings :: forall s t a b. Lens { settings :: a | s } { settings :: b | t } a b
+_sigmaSettings :: forall s a. Lens' { sigmaSettings :: a | s } a
+_sigmaSettings = prop (SProxy :: SProxy "sigmaSettings")
 
 _labelSizeRatio' :: forall s a. Lens' { labelSizeRatio :: a | s } a
 _labelSizeRatio' = prop (SProxy :: SProxy "labelSizeRatio")
 
-_labelSizeRatio :: Lens' SigmaSettings Number
+_labelSizeRatio :: Lens' {|Graph.SigmaSettings} Number
 _labelSizeRatio f = unsafeCoerce $ _labelSizeRatio' f
 
 _maxNodeSize' :: forall s a. Lens' { maxNodeSize :: a | s} a
 _maxNodeSize' = prop (SProxy :: SProxy "maxNodeSize")
 
-_maxNodeSize :: Lens' SigmaSettings Number
+_maxNodeSize :: Lens' {|Graph.SigmaSettings} Number
 _maxNodeSize f = unsafeCoerce $ _maxNodeSize' f
 
 _minNodeSize' :: forall s a. Lens' { minNodeSize :: a | s} a
 _minNodeSize' = prop (SProxy :: SProxy "minNodeSize")
 
-_minNodeSize :: Lens' SigmaSettings Number
+_minNodeSize :: Lens' {|Graph.SigmaSettings} Number
 _minNodeSize f = unsafeCoerce $ _minNodeSize' f
 
 _drawEdges' :: forall s a. Lens' { drawEdges :: a | s} a
 _drawEdges' = prop (SProxy :: SProxy "drawEdges")
 
-_drawEdges :: Lens' SigmaSettings Boolean
+_drawEdges :: Lens' {|Graph.SigmaSettings} Boolean
 _drawEdges f = unsafeCoerce $ _drawEdges' f
 
 numberTargetValue :: SyntheticUIEvent -> Number
@@ -104,7 +110,7 @@ numberTargetValue e =
 newtype State = State
   { graphData :: GraphData
   , filePath :: String
-  , sigmaGraphData :: Maybe SigmaGraphData
+  , sigmaGraphData :: Maybe Graph.Graph
   , legendData :: Array Legend
   , selectedNodes :: Set SelectedNode
   , cursorSize :: Number
@@ -114,7 +120,7 @@ newtype State = State
   , showTree :: Boolean
   , corpusId :: Int
   , treeId :: Maybe TreeId
-  , settings :: SigmaSettings
+  , sigmaSettings :: {|Graph.SigmaSettings}
   }
 
 derive instance newtypeState :: Newtype State _
@@ -133,7 +139,7 @@ initialState = State
   , showTree : false
   , corpusId : 0
   , treeId : Nothing
-  , settings : mySettings
+  , sigmaSettings : Graph.sigmaSettings
   }
 
 -- This one is not used: specOld is the one being used.
@@ -176,17 +182,17 @@ performAction (ToggleTree) _ (State state) = void do
 
 performAction (ChangeLabelSize size) _ _ =
   modifyState_ $ \(State s) ->
-    State $ ((_settings <<< _labelSizeRatio) .~ size) s
+    State $ ((_sigmaSettings <<< _labelSizeRatio) .~ size) s
 
 performAction (ChangeNodeSize size) _ _ =
   modifyState_ $ \(State s) ->
-    s # _settings <<< _maxNodeSize .~ (size * 10.0)
-      # _settings <<< _minNodeSize .~ size
+    s # _sigmaSettings <<< _maxNodeSize .~ (size * 10.0)
+      # _sigmaSettings <<< _minNodeSize .~ size
       # State
 
 performAction DisplayEdges _ _ =
   modifyState_ $ \(State s) -> do
-    State $ ((_settings <<< _drawEdges) %~ not) s
+    State $ ((_sigmaSettings <<< _drawEdges) %~ not) s
 
 performAction ToggleMultiNodeSelection _ _ =
   modifyState_ $ \(State s) -> do
@@ -201,23 +207,24 @@ performAction (ChangeCursorSize size) _ _ =
 --  modifyState_ $ \() -> do
 --    State $
 
-convert :: GraphData -> SigmaGraphData
-convert (GraphData r) = SigmaGraphData {nodes, edges}
+
+convert :: GraphData -> Graph.Graph
+convert (GraphData r) = Sigmax.Graph {nodes, edges}
   where
-    nodes = mapWithIndex nodeFn r.nodes
+    nodes = foldMapWithIndex nodeFn r.nodes
     nodeFn i (Node n) =
-      sigmaNode
+      Seq.singleton
         { id    : n.id_
         , size  : toNumber n.size
         , label : n.label
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)
-        , color : intColor $ cDef n.attributes
+        , color : intColor (cDef n.attributes)
         }
       where
         cDef (Cluster {clustDefault}) = clustDefault
-    edges = map edgeFn r.edges
-    edgeFn (Edge e) = sigmaEdge {id : e.id_, source : e.source, target : e.target}
+    edges = foldMap edgeFn r.edges
+    edgeFn (Edge e) = Seq.singleton {id : e.id_, source : e.source, target : e.target}
 {--
 render :: Render State {} Action
 render d p (State {sigmaGraphData, settings, legendData}) c =
@@ -246,110 +253,17 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
   -- [dispLegend legendData]
 --}
 
-forceAtlas2Config :: { slowDown :: Number
-                    , startingIterations :: Number
-                    , iterationsPerRender :: Number
-                    , barnesHutOptimize :: Boolean
-                    , linLogMode :: Boolean
-                    , edgeWeightInfluence :: Number
-                    , gravity :: Number
-                    , strongGravityMode :: Boolean
-                    , scalingRatio :: Number
-                    , skipHidden :: Boolean
-                    , adjustSizes :: Boolean
-                    , outboundAttractionDistribution :: Boolean
-                    }
-forceAtlas2Config = { -- fixedY : false
-                       slowDown : 0.7
-                      , startingIterations : 2.0
-                      , iterationsPerRender : 4.0
-                      , barnesHutOptimize   : true
-                      , linLogMode : true  -- false
-                      , edgeWeightInfluence : 0.0
-                      , gravity : 1.0
-                      , strongGravityMode : false
-                      , scalingRatio : 4.0
-                      , skipHidden: false
-                      , adjustSizes : false
-                      , outboundAttractionDistribution: false
-                      }
-
-mySettings :: SigmaSettings
-mySettings = sigmaSettings { verbose : true
-                           , drawLabels: true
-                           , drawEdgeLabels: true
-                           , drawEdges: true
-                           , drawNodes: true
-                           , labelSize : "proportional"
-                           --, nodesPowRatio: 0.3
-                           , batchEdgesDrawing: false
-                           , hideEdgesOnMove: true
-
-                           , enableHovering: true
-                           , singleHover: true
-                           , enableEdgeHovering: false
-
-                           , autoResize: true
-                           , autoRescale: true
-                           , rescaleIgnoreSize: false
-
-                           , mouseEnabled: true
-                           , touchEnabled: true
-
-                           , animationsTime: (5500.0)
-
-                           , defaultNodeColor: "#ddd"
-                           , twNodeRendBorderSize: 0.5          -- node borders (only iff ourRendering)
-                           , twNodeRendBorderColor: "#222"
-
-                          -- edges
-                          , minEdgeSize: 0.0              -- in fact used in tina as edge size
-                          , maxEdgeSize: 0.0
-                          --, defaultEdgeType: "curve"      -- 'curve' or 'line' (curve only iff ourRendering)
-                          , twEdgeDefaultOpacity: 0.4       -- initial opacity added to src/tgt colors
-                          , minNodeSize: 5.0
-                          , maxNodeSize: 30.0
---
---  -- labels
-                          , font: "Droid Sans"                -- font params
-                          , fontStyle: "bold"
-                          , defaultLabelColor: "#000"         -- labels text color
-                          , labelSizeRatio: 2.0               -- label size in ratio of node size
-                          , labelThreshold: 2.0               -- min node cam size to start showing label
-                          , labelMaxSize: 3.0                -- (old tina: showLabelsIfZoom)
-
-                          -- hovered nodes
-                          , defaultHoverLabelBGColor: "#fff"
-                          , defaultHoverLabelColor: "#000"
-                          , borderSize: 3.0                   -- for ex, bigger border when hover
-                          , nodeBorderColor: "node"           -- choices: 'default' color vs. node color
-                          , defaultNodeBorderColor: "black"   -- <- if nodeBorderColor = 'default'
-                          -- selected nodes <=> special label
-                          , twSelectedColor: "default"     -- "node" for a label bg like the node color, "default" for white background
-                         -- not selected <=> (1-greyness)
 
 
-                          , twNodesGreyOpacity: 5.5           -- smaller value: more grey
-                          , twBorderGreyColor: "rgba(100, 100, 100, 0.5)"
-                          , twEdgeGreyColor: "rgba(100, 100, 100, 0.25)"
-                          , zoomMin: 0.0
-                          , zoomMax: 1.7
-                          , zoomingRatio: 3.2
-                          , mouseZoomDuration: 150.0
-                          }
 
-
-defaultPalette :: Array Color
-defaultPalette = map Color defaultPalette'
-
-defaultPalette' :: Array String
-defaultPalette' = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#33c8f3","#739e9a","#caeca3","#f6f7e5","#f9bcca","#ccb069","#c9ffde","#c58683","#6c9eb0","#ffd3cf","#ccffc7","#52a1b0","#d2ecff","#99fffe","#9295ae","#5ea38b","#fff0b3","#d99e68"]
+defaultPalette :: Array String
+defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#33c8f3","#739e9a","#caeca3","#f6f7e5","#f9bcca","#ccb069","#c9ffde","#c58683","#6c9eb0","#ffd3cf","#ccffc7","#52a1b0","#d2ecff","#99fffe","#9295ae","#5ea38b","#fff0b3","#d99e68"]
 
 -- clusterColor :: Cluster -> Color
 -- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `mod` length defaultPalette)
 
 
-intColor :: Int -> Color
+intColor :: Int -> String
 intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
 
 modCamera0 :: forall o. Optional o CameraProps =>
@@ -423,7 +337,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
     
     
     render' :: Render State {} Action
-    render' d _ (State st@{settings, graphData: GraphData {sides,metaData  }}) _ =
+    render' d _ (State st@{sigmaSettings, graphData: GraphData {sides,metaData  }}) _ =
       [ div [className "container-fluid", style {"padding-top" : "90px" }]
       [ {-div [ className "row"]
         [ h2 [ style {textAlign : "center", position : "relative", top: "-1px"}]
@@ -524,7 +438,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   [ span [] [text "Labels"],input [_type "range"
                                                  , _id "labelSizeRange"
                                                  , max "4"
-                                                 , defaultValue <<< show $ settings ^. _labelSizeRatio
+                                                 , defaultValue <<< show $ sigmaSettings ^. _labelSizeRatio
                                                  , min "1"
                                                  , onChange \e -> d $ ChangeLabelSize (numberTargetValue e)
                                                  ]
@@ -534,7 +448,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   [ span [] [text "Nodes"],input [_type "range"
                                                  , _id "nodeSizeRange"
                                                  , max "15"
-                                                 , defaultValue <<< show $ settings ^. _minNodeSize
+                                                 , defaultValue <<< show $ sigmaSettings ^. _minNodeSize
                                                  , min "5"
                                                  , onChange \e -> d $ ChangeNodeSize (numberTargetValue e)
                                                  ]
@@ -596,22 +510,19 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                case st.sigmaGraphData of
                    Nothing -> []
                    Just graph ->
-                     [ sigma { graph, settings
-                             , renderer : canvas
-                             , style : sStyle { height : "95%"}
-                             , ref: setSigmaRef
-                             , onClickNode : \e ->
-                             unsafePerformEffect $ do
-                               _ <- d $ ShowSidePanel true
-                               let {id, label} = (unsafeCoerce e).data.node
-                               _ <- d $ SelectNode $ SelectedNode {id, label}
-                               pure unit
-                             }
-                       [ sigmaEnableWebGL
-                       , forceAtlas2 forceAtlas2Config
-                       , edgeShapes {"default" : edgeShape.curve}
-                       ]
-                     ]
+                     let forceAtlas2Settings = Graph.forceAtlas2Settings in
+                     let opts = { graph, sigmaSettings, forceAtlas2Settings } in
+                     [ scuff $ Graph.graph opts ]
+                                          
+                     -- [ sigma { graph, settings
+                     --         , style : sStyle { height : "95%"}
+                     --         , onClickNode : \e ->
+                     --         unsafePerformEffect $ do
+                     --           _ <- d $ ShowSidePanel true
+                     --           let {id, label} = (unsafeCoerce e).data.node
+                     --           _ <- d $ SelectNode $ SelectedNode {id, label}
+                     --           pure unit
+                     -- ]
                  <>
                  if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
              ]
@@ -620,7 +531,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
             div [_id "sp-container", className "col-md-2", style {border : "1px white solid", backgroundColor : "white"}]
              [ div [className "row"] $
 --             , div [className "col-md-12"]
---               [
+--               [a
 --                 ul [className "nav nav-tabs"
 --                    , _id "myTab"
 --                    , role "tablist"
@@ -714,7 +625,6 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
            ]
          ]
       ]
-
 
 getNodes :: Int -> Aff GraphData
 getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId

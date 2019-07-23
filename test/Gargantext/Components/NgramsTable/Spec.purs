@@ -3,7 +3,7 @@ module Gargantext.Components.NgramsTable.Spec where
 import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Gargantext.Components.NgramsTable (highlightNgrams, NgramsElement(..), NgramsTable(..))
+import Gargantext.Components.NgramsTable.Core (highlightNgrams, NgramsElement(..), NgramsTable(..))
 import Gargantext.Types  (TermList(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)

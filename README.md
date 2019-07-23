@@ -16,47 +16,36 @@ Institute of Paris Île-de-France (ISC-PIF) and its partners.
 
 ## Development
 
-### Installing dependencies
+### System Dependencies
 
-#### Debian
+* NodeJS (11+)
+* Yarn (Recent)
+* A webserver (anything that can serve a static directory will do)
 
-##### Testing Distribution and above
+#### NodeJS Installation
+
+On debian testing, debian unstable or ubuntu:
+
 ```shell
 sudo apt update && sudo apt install nodejs yarn
 ```
 
-##### Stable Distribution
+On debian stable:
+
 ```shell
 curl -sL https://deb.nodesource.com/setup_11.x | sudo bash -
 sudo apt update && sudo apt install nodejs
 ```
 
-(For Ubuntu):
+On Mac OS (with Homebrew):
+
 ```shell
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt update && sudo apt install yarn
+brew install node
 ```
 
-### OSX
-```shell
-brew install node yarn
-```
+#### Yarn installation
 
-### Installing dependencies
-
-#### Debian
-
-##### Testing Distribution and above
-```shell
-sudo apt update && sudo apt install nodejs yarn
-```
-
-##### Stable Distribution
-```shell
-curl -sL https://deb.nodesource.com/setup_11.x | sudo bash -
-sudo apt update && sudo apt install nodejs
-```
+On ubuntu:
 
 ```shell
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
@@ -64,34 +53,60 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 sudo apt update && sudo apt install yarn
 ```
 
-### OSX
+On Mac OS (with Homebrew):
+
 ```shell
-brew install node yarn
+brew install yarn
 ```
 
-### Installing dependencies
+#### Webservers
 
-Before building gargantext, you must install the dependencies. We use
-[yarn](https://yarnpkg.com/en/) for this. They have excellent
-[installation instructions](https://yarnpkg.com/en/docs/install).
+Some options:
 
-Once you have yarn installed, you may install everything else simply:
+* The `python3` builtin webserver 
+* Caddy
+
+### Purescript and Javascript dependencies
+
+Once you have node and yarn installed, you may install deps with:
 
 ```shell
 yarn install && yarn install-ps
 ```
 
-You may now build:
+### Development
+
+You can compile the purescript code with:
+
+```shell
+yarn compile
+```
+
+Or run a repl:
+
+```shell
+yarn repl
+```
+
+To test in the browser, you need to build a browser bundle:
 
 ```shell
 yarn build
 ```
 
-And run a repl:
+It is *not* necessary to `yarn compile` before running `yarn build`.
 
-```shell
-yarn repl
-```
+You can then serve the `dist` directory with your favourite webserver.
+
+Examples:
+
+* `python3 -m http.server dist`
+
+<!-- To get a live-reloading development server -->
+
+<!-- ```shell -->
+<!-- yarn live -->
+<!-- ``` -->
 
 ## Note to the contributors
 
@@ -127,6 +142,8 @@ yarn rebuild-set
 ```shell
 yarn rebase-set && yarn rebuild-set
 ```
+
+This will occasionally result in swearing when you go on to build.
 
 ## Theory Introduction
 
