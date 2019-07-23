@@ -24,6 +24,8 @@ data Routes
       | CorpusDocument Int Int Int
       | PGraphExplorer Int
       | Dashboard
+      | Texts          Int
+      | Lists          Int
     | Annuaire         Int
       | UserPage       Int
       | ContactPage       Int
@@ -39,6 +41,8 @@ routing = oneOf
      , Document       <$> (route "list" *> int) <*> (lit "document" *> int)
      , Dashboard      <$   route "dashboard"
      , PGraphExplorer <$> (route "graph"      *> int)
+     , Texts          <$> (route "texts" *> int)
+     , Lists          <$> (route "lists" *> int)
   , Annuaire         <$> (route "annuaire"   *> int)
     , UserPage          <$> (route "user"    *> int)
     , ContactPage       <$> (route "contact" *> int)
@@ -64,4 +68,6 @@ instance showRoutes :: Show Routes where
   show (Folder   i)     = "Folder"   <> show i
   show Dashboard        = "Dashboard"
   show (PGraphExplorer i) = "graphExplorer" <> show i
+  show (Texts i)          = "texts" <> show i
+  show (Lists i)          = "lists" <> show i
   show Home             = "Home"

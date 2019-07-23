@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Tabs.Specs where
+module Gargantext.Pages.Lists.Tabs.Specs where
 
 import Prelude hiding (div)
 
@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
 import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
-import Gargantext.Pages.Corpus.Tabs.Types (Props, PropsRow)
+import Gargantext.Pages.Lists.Tabs.Types (Props, PropsRow)
 
 import Gargantext.Pages.Corpus.Chart.Histo (histoSpec)
 import Gargantext.Pages.Corpus.Chart.Metrics (metricsSpec)
@@ -45,7 +45,7 @@ elt :: Props -> ReactElement
 elt props = createElement tabsClass props []
 
 tabsClass :: ReactClass { children :: Children | PropsRow }
-tabsClass = createClass "CorpusTabs" pureTabs (const {})
+tabsClass = createClass "CorpusTabs" pureTabs $ const {}
 
 pureTabs :: Spec {} Props Void
 pureTabs = hideState (const {activeTab: 0}) statefulTabs
@@ -53,13 +53,10 @@ pureTabs = hideState (const {activeTab: 0}) statefulTabs
 statefulTabs :: Spec Tab.State Props Tab.Action
 statefulTabs =
   Tab.tabs identity identity $ fromFoldable
-    [ Tuple "Documents"  $ docs
-    , Tuple "Sources"    $ ngramsViewSpec {mode: Sources   }
+    [ Tuple "Sources"    $ ngramsViewSpec {mode: Sources   }
     , Tuple "Authors"    $ ngramsViewSpec {mode: Authors   }
     , Tuple "Institutes" $ ngramsViewSpec {mode: Institutes}
     , Tuple "Terms"      $ ngramsViewSpec {mode: Terms     }
-    , Tuple ""           $ trash -- TODO empty here
-    , Tuple "Trash"      $ trash
     ]
   where
     -- TODO totalRecords

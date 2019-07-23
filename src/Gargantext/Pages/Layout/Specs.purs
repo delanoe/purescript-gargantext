@@ -18,10 +18,12 @@ import Gargantext.Components.Tree  as Tree
 import Gargantext.Folder           as F
 import Gargantext.Pages.Annuaire   as A
 import Gargantext.Pages.Annuaire.User.Contacts as C
-import Gargantext.Pages.Corpus     as Corpus
+import Gargantext.Pages.Corpus as Corpus
 import Gargantext.Pages.Corpus.Document as Annotation
 import Gargantext.Pages.Corpus.Dashboard as Dsh
 import Gargantext.Pages.Corpus.Graph as GE
+import Gargantext.Pages.Lists as Lists
+import Gargantext.Pages.Texts as Texts
 import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _graphExplorerAction, _loginAction, _searchAction, performAction)
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
@@ -63,6 +65,8 @@ pagesComponent s = case s.currentRoute of
     selectSpec (CorpusDocument c l i) = layout0 $ cmapProps (const {nodeId: i, listId: l, corpusId: Just c}) $ noState Annotation.layout
     selectSpec (Document l i)    = layout0 $ cmapProps (const {nodeId: i, listId: l, corpusId: Nothing}) $ noState Annotation.layout
     selectSpec (PGraphExplorer i)= layout1  $ focus _graphExplorerState _graphExplorerAction  GE.specOld
+    selectSpec (Texts i)         = layout0 $ cmapProps (const {nodeId: i}) $ noState Texts.layout
+    selectSpec (Lists i)         = layout0 $ cmapProps (const {nodeId: i}) $ noState Lists.layout
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
     selectSpec (Annuaire i)      = layout0 $ cmapProps (const {annuaireId: i}) $ noState A.layout
     selectSpec (UserPage i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState C.layoutUser

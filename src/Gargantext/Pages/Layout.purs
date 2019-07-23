@@ -59,5 +59,11 @@ dispatchAction dispatcher _ (PGraphExplorer nid) = do
   dispatcher $ GraphExplorerA $ GE.LoadGraph nid
   --dispatcher $ GraphExplorerA $ GE.LoadGraph "imtNew.json"
 
+dispatchAction dispatcher _ (Texts nid) = do
+  dispatcher $ SetRoute $ Texts nid
+
+dispatchAction dispatcher _ (Lists nid) = do
+  dispatcher $ SetRoute $ Lists nid
+
 dispatchAction dispatcher _ Dashboard = do
   dispatcher $ SetRoute Dashboard

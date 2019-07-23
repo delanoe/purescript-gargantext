@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Tabs.Types where
+module Gargantext.Pages.Texts.Tabs.Types where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
 import Data.Maybe (Maybe(..))

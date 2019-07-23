@@ -217,6 +217,8 @@ routesPath R.AddCorpus = "addCorpus"
 routesPath (R.CorpusDocument c l i) = "corpus/" <> show c <> "/list/" <> show l <> "/document/" <> show i
 routesPath (R.Document l i) = "list/" <> show l <> "/document/" <> show i
 routesPath (R.PGraphExplorer i) = "#/"
+routesPath (R.Texts i) = "texts/" <> show i
+routesPath (R.Lists i) = "lists/" <> show i
 routesPath R.Dashboard = "dashboard"
 routesPath (R.Annuaire i) = "annuaire/" <> show i
 routesPath (R.UserPage i) = "user/" <> show i
@@ -258,6 +260,7 @@ data NodeType = NodeUser
               | Nodes
               | Tree
               | NodeList
+              | Texts
 
 derive instance eqNodeType :: Eq NodeType
 
@@ -278,6 +281,7 @@ instance showNodeType :: Show NodeType where
   show Nodes         = "Nodes"
   show Tree          = "NodeTree"
   show NodeList      = "NodeList"
+  show Texts         = "NodeTexts"
 
 readNodeType :: String -> NodeType
 readNodeType "NodeAnnuaire"  = Annuaire
@@ -295,6 +299,7 @@ readNodeType "NodeUser"      = NodeUser
 readNodeType "NodeContact"   = NodeContact
 readNodeType "Tree"          = Tree
 readNodeType "NodeList"      = NodeList
+readNodeType "NodeTexts"     = Texts
 readNodeType _               = Error
 {-
 ------------------------------------------------------------
@@ -325,11 +330,12 @@ nodeTypeUrl Graph     = "graph"
 nodeTypeUrl Phylo     = "phylo"
 nodeTypeUrl Individu  = "individu"
 nodeTypeUrl Node      = "node"
-nodeTypeUrl Nodes      = "nodes"
+nodeTypeUrl Nodes     = "nodes"
 nodeTypeUrl NodeUser  = "user"
 nodeTypeUrl NodeContact = "contact"
 nodeTypeUrl Tree      = "tree"
 nodeTypeUrl NodeList  = "list"
+nodeTypeUrl Texts     = "texts"
 ------------------------------------------------------------
 
 type ListId = Int
