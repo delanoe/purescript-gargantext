@@ -10,7 +10,7 @@ toUrl Front Corpus 1 == "http://localhost:2015/#/corpus/1"
 module Gargantext.Config where
 
 import Prelude
-import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson)
+import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject)
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -122,11 +122,6 @@ endBaseUrl end c = (endOf end c).baseUrl
 endPathUrl :: End -> EndConfig -> Path -> Maybe Id -> UrlPath
 endPathUrl end = pathUrl <<< endOf end
 
-tabTypeDocs :: TabType -> UrlPath
-tabTypeDocs (TabCorpus  t) = "table?view="   <> show t
-tabTypeDocs (TabDocument t)= "table?view="   <> show t
-tabTypeDocs (TabPairing t) = "pairing?view=" <> show t
-
 limitUrl :: Limit -> UrlPath
 limitUrl l = "&limit=" <> show l
 
@@ -144,10 +139,26 @@ showTabType' (TabCorpus   t) = show t
 showTabType' (TabDocument t) = show t
 showTabType' (TabPairing t) = show t
 
+data TabPostQuery = TabPostQuery {
+    offset :: Int
+  , limit :: Int
+  , orderBy :: Maybe OrderBy
+  , tabType :: TabType
+  , mQuery :: Maybe String
+  }
+
+instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
+  encodeJson (TabPostQuery post) =
+        "view"       := showTabType' post.tabType
+     ~> "offset"     := post.offset
+     ~> "limit"      := post.limit
+     ~> "orderBy"    := show post.orderBy
+     ~> "query"      := post.mQuery
+     ~> jsonEmptyObject
+
 pathUrl :: Config -> Path -> Maybe Id -> UrlPath
-pathUrl c (Tab t o l s) i =
-    pathUrl c (NodeAPI Node) i <>
-      "/" <> tabTypeDocs t <> offsetUrl o <> limitUrl l <> orderUrl s
+pathUrl c (Tab t) i =
+    pathUrl c (NodeAPI Node) i <> "/" <> showTabType' t
 pathUrl c (Children n o l s) i =
     pathUrl c (NodeAPI Node) i <>
       "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
@@ -342,7 +353,7 @@ type ListId = Int
 
 data Path
   = Auth
-  | Tab      TabType  Offset Limit (Maybe OrderBy)
+  | Tab      TabType
   | Children NodeType Offset Limit (Maybe OrderBy)
   | GetNgrams
       { tabType        :: TabType

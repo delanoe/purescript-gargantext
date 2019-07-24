@@ -28,9 +28,10 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import React as React
 import React (ReactClass, ReactElement, Children)
+import Unsafe.Coerce (unsafeCoerce)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl, toLink)
+import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, TabPostQuery(..), toUrl, toLink)
 import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Node (NodePoly(..))
@@ -38,7 +39,7 @@ import Gargantext.Components.Table as T
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Router as R
 import React.DOM (a, br', button, div, i, input, p, text)
-import React.DOM.Props (_type, className, href, onClick, placeholder, style, checked, target)
+import React.DOM.Props (_type, className, href, onClick, onChange, placeholder, style, checked, target)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
 
@@ -79,12 +80,14 @@ type Props =
 type State =
   { documentIdsDeleted  :: Set Int
   , localCategories     :: Map Int Category
+  , mQuery               :: Maybe String
   }
 
 initialState :: State
 initialState =
   { documentIdsDeleted:  mempty
   , localCategories:     mempty
+  , mQuery:               Nothing
   }
 
 _documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
@@ -93,6 +96,7 @@ _localCategories     = prop (SProxy :: SProxy "localCategories")
 data Action
   = MarkCategory Int Category
   | TrashAll
+  | ChangeQuery (Maybe String)
 
 newtype DocumentsView
   = DocumentsView
@@ -172,20 +176,28 @@ layoutDocview = simpleSpec performAction render
     performAction TrashAll {nodeId} {documentIdsDeleted} = do
       ids <- lift $ deleteAllDocuments nodeId
       modifyState_ $ _ {documentIdsDeleted = Set.union documentIdsDeleted $ Set.fromFoldable ids}
+    performAction (ChangeQuery mQuery) _ _ = do
+      modifyState_ $ _ {mQuery = mQuery}
 
     render :: Render State Props Action
-    render dispatch {nodeId, tabType, listId, corpusId, totalRecords, chart} deletionState _ =
+    render dispatch {nodeId, tabType, listId, corpusId, totalRecords, chart} state@{mQuery} _ =
       [
       div [className "container1"]
         [ div [className "row"]
           [ chart
+          , div []
+            [
+              input [ _type "text"
+                    , onChange $ \e -> dispatch $ ChangeQuery $ if (unsafeEventValue e) == "" then Nothing else Just $ unsafeEventValue e
+                    , placeholder $ maybe "" identity mQuery]
+            ]
           , div [className "col-md-12"]
             [ pageLoader
-                { path: initialPageParams {nodeId, tabType, listId, corpusId}
+                { path: initialPageParams {nodeId, tabType, listId, corpusId, mQuery}
                 , listId
                 , corpusId
                 , totalRecords
-                , deletionState
+                , state
                 , dispatch
                 }
             ]
@@ -205,16 +217,29 @@ layoutDocview = simpleSpec performAction render
 mock :: Boolean
 mock = false
 
-type PageParams = {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType, params :: T.Params}
+type PageParams = { nodeId :: Int
+                  , listId :: Int
+                  , corpusId :: Maybe Int
+                  , tabType :: TabType
+                  , mQuery   :: Maybe String
+                  , params :: T.Params}
 
-initialPageParams :: {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType} -> PageParams
-initialPageParams {nodeId, listId, corpusId, tabType} =
-  {nodeId, tabType, listId, corpusId, params: T.initialParams}
+initialPageParams :: {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType, mQuery :: Maybe String} -> PageParams
+initialPageParams {nodeId, listId, corpusId, tabType, mQuery} =
+  {nodeId, tabType, mQuery, listId, corpusId, params: T.initialParams}
 
 loadPage :: PageParams -> Aff (Array DocumentsView)
-loadPage {nodeId, tabType, listId, corpusId, params: {limit, offset, orderBy}} = do
+loadPage {nodeId, tabType, mQuery, listId, corpusId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
-  res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
+  -- res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
+  let url = (toUrl Back Node (Just nodeId)) <> "/search"
+  res <- post url $ TabPostQuery {
+      offset
+    , limit
+    , orderBy: convOrderBy <$> orderBy
+    , tabType
+    , mQuery
+    }
   let docs = res2corpus <$> res
   pure $
     if mock then take limit $ drop offset sampleData else
@@ -243,17 +268,17 @@ type PageLoaderProps row =
   { path :: PageParams
   , totalRecords :: Int
   , dispatch :: Action -> Effect Unit
-  , deletionState :: State
+  , state :: State
   , listId :: Int
   , corpusId :: Maybe Int
   | row
   }
 
 renderPage :: forall props path.
-              Render (Loader.State {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType | path} (Array DocumentsView))
+              Render (Loader.State {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType, mQuery :: Maybe String | path} (Array DocumentsView))
                      { totalRecords :: Int
                      , dispatch :: Action -> Effect Unit
-                     , deletionState :: State
+                     , state :: State
                      , listId :: Int
                      , corpusId :: Maybe Int
                      | props
@@ -261,11 +286,12 @@ renderPage :: forall props path.
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
 renderPage loaderDispatch { totalRecords, dispatch, listId, corpusId
-                          , deletionState: {documentIdsDeleted, localCategories}}
-                          {currentPath: {nodeId, tabType}, loaded: Just res} _ =
-  [ T.tableElt
+                          , state: {documentIdsDeleted, localCategories}}
+                          {currentPath: {nodeId, tabType, mQuery}, loaded: Just res} _ =
+  [
+    T.tableElt
       { rows
-      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params})
+      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, mQuery})
       , container: T.defaultContainer { title: "Documents" }
       , colNames:
           T.ColumnName <$>
@@ -388,3 +414,6 @@ toggleSet :: forall a. Ord a => a -> Set a -> Set a
 toggleSet a s
   | Set.member a s = Set.delete a s
   | otherwise      = Set.insert a s
+
+unsafeEventValue :: forall event. event -> String
+unsafeEventValue e = (unsafeCoerce e).target.value
