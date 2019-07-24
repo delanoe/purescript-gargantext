@@ -427,7 +427,7 @@ instance showPTabNgramType :: Show PTabNgramType where
   show PTabBooks         = "Books"
   show PTabCommunication = "Communication"
 
-data TabSubType a = TabDocs | TabNgramType a | TabTrash
+data TabSubType a = TabDocs | TabNgramType a | TabTrash | TabMoreLikeFav | TabMoreLikeTrash
 
 derive instance eqTabSubType :: Eq a => Eq (TabSubType a)
 
@@ -435,6 +435,8 @@ instance showTabSubType :: Show a => Show (TabSubType a) where
   show TabDocs          = "Docs"
   show (TabNgramType a) = show a
   show TabTrash         = "Trash"
+  show TabMoreLikeFav   = "MoreFav"
+  show TabMoreLikeTrash = "MoreTrash"
 
 data TabType
   = TabCorpus   (TabSubType CTabNgramType)
