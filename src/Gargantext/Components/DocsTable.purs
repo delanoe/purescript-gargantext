@@ -16,30 +16,33 @@ import Data.HTTP.Method (Method(..))
 import Data.Lens
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
-import Data.Map (Map)
+import Data.Map (Map, insert)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Int (fromString)
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
+import Effect.Uncurried (mkEffectFn1)
 import React as React
 import React (ReactClass, ReactElement, Children)
+import Reactix as R
+import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, TabPostQuery(..), toUrl, toLink)
 import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
-import Gargantext.Components.Loader as Loader
+import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as T
 import Gargantext.Utils.DecodeMaybe ((.|))
-import Gargantext.Router as R
-import React.DOM (a, br', button, div, i, input, p, text)
-import React.DOM.Props (_type, className, href, onClick, onChange, placeholder, style, checked, target)
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Router as Router
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
 
@@ -77,26 +80,25 @@ type Props =
   -- ngramtable. Let's see how this evolves.
   }
 
-type State =
-  { documentIdsDeleted  :: Set Int
-  , localCategories     :: Map Int Category
-  , mQuery               :: Maybe String
+type PageLoaderProps =
+  { nodeId    :: Int
+  , totalRecords :: Int
+  , tabType      :: TabType
+  , listId       :: Int
+  , corpusId     :: Maybe Int
+  , mQuery       :: MQuery
   }
 
-initialState :: State
-initialState =
-  { documentIdsDeleted:  mempty
-  , localCategories:     mempty
-  , mQuery:               Nothing
-  }
+type DocumentIdsDeleted = Set Int
+type LocalCategories = Map Int Category
+type MQuery = Maybe String
 
 _documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
 _localCategories     = prop (SProxy :: SProxy "localCategories")
 
 data Action
   = MarkCategory Int Category
-  | TrashAll
-  | ChangeQuery (Maybe String)
+
 
 newtype DocumentsView
   = DocumentsView
@@ -155,64 +157,51 @@ instance decodeResponse :: DecodeJson Response where
     pure $ Response { cid, category: decodeCategory favorite, ngramCount, hyperdata }
 
 
-
--- | Filter
-filterSpec :: forall state props action. Spec state props action
-filterSpec = simpleSpec defaultPerformAction render
-  where
-    render d p s c = []
-
 docViewSpec :: Spec {} Props Void
-docViewSpec = hideState (const initialState) layoutDocview
+docViewSpec = R2.elSpec $ R.hooksComponent "DocView" cpt
+  where
+    cpt p _children = do
+      documentIdsDeleted <- R.useState' (mempty :: DocumentIdsDeleted)
+      localCategories <- R.useState' (mempty :: LocalCategories)
+      mQuery <- R.useState' (Nothing :: MQuery)
+      tableParams <- R.useState' T.initialParams
+
+      pure $ layoutDocview documentIdsDeleted localCategories mQuery tableParams p
 
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: Spec State Props Action
-layoutDocview = simpleSpec performAction render
+layoutDocview :: R.State DocumentIdsDeleted -> R.State LocalCategories -> R.State MQuery -> R.State T.Params -> Props -> R.Element
+layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (mQuery /\ setMQuery) tableParams@(params /\ _) p = R.createElement el p []
   where
-    performAction :: PerformAction State Props Action
-    performAction (MarkCategory nid cat) {nodeId} _ = do
-      modifyState_ $ _localCategories <<< at nid ?~ cat
-      void $ lift $ putCategories  nodeId $ CategoryQuery {nodeIds: [nid], category: cat}
-    performAction TrashAll {nodeId} {documentIdsDeleted} = do
-      ids <- lift $ deleteAllDocuments nodeId
-      modifyState_ $ _ {documentIdsDeleted = Set.union documentIdsDeleted $ Set.fromFoldable ids}
-    performAction (ChangeQuery mQuery) _ _ = do
-      modifyState_ $ _ {mQuery = mQuery}
-
-    render :: Render State Props Action
-    render dispatch {nodeId, tabType, listId, corpusId, totalRecords, chart} state@{mQuery} _ =
-      [
-      div [className "container1"]
-        [ div [className "row"]
-          [ chart
-          , div []
-            [
-              input [ _type "text"
-                    , onChange $ \e -> dispatch $ ChangeQuery $ if (unsafeEventValue e) == "" then Nothing else Just $ unsafeEventValue e
-                    , placeholder $ maybe "" identity mQuery]
+    el = R.hooksComponent "LayoutDocView" cpt
+    cpt {nodeId, tabType, listId, corpusId, totalRecords, chart} _children = do
+      pure $ H.div {className: "container1"}
+        [ H.div {className: "row"}
+          [ R2.buff chart
+          , H.div {}
+            [ H.input { type: "text"
+                      , onChange: onChangeQuery
+                      , placeholder: maybe "" identity mQuery}
             ]
-          , div [className "col-md-12"]
-            [ pageLoader
-                { path: initialPageParams {nodeId, tabType, listId, corpusId, mQuery}
-                , listId
-                , corpusId
-                , totalRecords
-                , state
-                , dispatch
-                }
+          , H.div {className: "col-md-12"}
+            [ pageLoader localCategories tableParams {nodeId, totalRecords, tabType, listId, corpusId, mQuery}
             ]
-          , div [className "col-md-1 col-md-offset-11"]
-             [ button [ className "btn"
-                      , style {backgroundColor: "peru", color : "white", border : "white"}
-                      , onClick $ (\_ -> dispatch TrashAll)
-                      ]
-               [  i [className "glyphitem glyphicon glyphicon-trash"] []
-               ,  text "Trash all"
-               ]
-             ]
+          , H.div {className: "col-md-1 col-md-offset-11"}
+            [ H.button { className: "btn"
+                       , style: {backgroundColor: "peru", color : "white", border : "white"}
+                       , onClick: onClickTrashAll nodeId
+                       }
+              [  H.i {className: "glyphitem glyphicon glyphicon-trash"} []
+              ,  H.text "Trash all"
+              ]
+            ]
           ]
         ]
-      ]
+    onChangeQuery = mkEffectFn1 $ \e -> do
+      setMQuery $ const $ if (unsafeEventValue e) == "" then Nothing else Just $ unsafeEventValue e
+    onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
+      launchAff $ deleteAllDocuments nodeId
+      -- TODO
+      -- setDocumentIdsDeleted $ \dids -> Set.union dids (Set.fromFoldable ids)
 
 mock :: Boolean
 mock = false
@@ -223,10 +212,6 @@ type PageParams = { nodeId :: Int
                   , tabType :: TabType
                   , mQuery   :: Maybe String
                   , params :: T.Params}
-
-initialPageParams :: {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType, mQuery :: Maybe String} -> PageParams
-initialPageParams {nodeId, listId, corpusId, tabType, mQuery} =
-  {nodeId, tabType, mQuery, listId, corpusId, params: T.initialParams}
 
 loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, tabType, mQuery, listId, corpusId, params: {limit, offset, orderBy}} = do
@@ -264,84 +249,73 @@ loadPage {nodeId, tabType, mQuery, listId, corpusId, params: {limit, offset, ord
 
     convOrderBy _ = DateAsc -- TODO
 
-type PageLoaderProps row =
-  { path :: PageParams
-  , totalRecords :: Int
-  , dispatch :: Action -> Effect Unit
-  , state :: State
-  , listId :: Int
-  , corpusId :: Maybe Int
-  | row
-  }
-
-renderPage :: forall props path.
-              Render (Loader.State {nodeId :: Int, listId :: Int, corpusId :: Maybe Int, tabType :: TabType, mQuery :: Maybe String | path} (Array DocumentsView))
-                     { totalRecords :: Int
-                     , dispatch :: Action -> Effect Unit
-                     , state :: State
-                     , listId :: Int
-                     , corpusId :: Maybe Int
-                     | props
-                     }
-                     (Loader.Action PageParams)
-renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage loaderDispatch { totalRecords, dispatch, listId, corpusId
-                          , state: {documentIdsDeleted, localCategories}}
-                          {currentPath: {nodeId, tabType, mQuery}, loaded: Just res} _ =
-  [
-    T.tableElt
-      { rows
-      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, mQuery})
-      , container: T.defaultContainer { title: "Documents" }
-      , colNames:
-          T.ColumnName <$>
-          [ "Map"
-          , "Stop"
-          , "Date"
-          , "Title"
-          , "Source"
-          ]
-      , totalRecords
-      }
-  ]
+renderPage :: R.State LocalCategories -> R.State T.Params -> PageLoaderProps -> Array DocumentsView -> R.Element
+renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res = R.createElement el p []
   where
+    el = R.hooksComponent "RenderPage" cpt
+
     gi Favorite  = "glyphicon glyphicon-star"
     gi _ = "glyphicon glyphicon-star-empty"
-    trashStyle Trash = style {textDecoration: "line-through"}
-    trashStyle _ = style {textDecoration: "none"}
+    trashStyle Trash = {textDecoration: "line-through"}
+    trashStyle _ = {textDecoration: "none"}
     getCategory {_id, category} = maybe category identity (localCategories ^. at _id)
-    corpusDocument (Just corpusId) = R.CorpusDocument corpusId
-    corpusDocument _ = R.Document
-    rows = (\(DocumentsView r) ->
-                let cat = getCategory r
-                    isDel = Trash == cat in
-                { row:
-                    [ div []
-                      [ a [ className $ gi cat
-                          , trashStyle cat
-                          , onClick $ \_-> dispatch $ MarkCategory r._id $ favCategory cat
-                          ] []
-                      ]
-                    , input [ _type "checkbox"
-                            , checked isDel
-                            , onClick $ \_ -> dispatch $ MarkCategory r._id $ trashCategory cat
-                            ]
-                    -- TODO show date: Year-Month-Day only
-                    , div [ trashStyle cat ][text (show r.date)]
-                    , a [ href (toLink $ (corpusDocument corpusId) listId r._id)
-                        , trashStyle cat
-                        , target "_blank"
-                        ] [ text r.title ]
-                    , div [trashStyle cat] [ text r.source ]
-                    ]
-                , delete: true
-                }) <$> res
+    corpusDocument (Just corpusId) = Router.CorpusDocument corpusId
+    corpusDocument _ = Router.Document
 
-pageLoaderClass :: ReactClass (PageLoaderProps (children :: Children))
-pageLoaderClass = Loader.createLoaderClass' "PageLoader" loadPage renderPage
+    cpt {nodeId, corpusId, listId} _children = do
+      pure $ R2.buff $ T.tableElt
+          { rows
+          -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, mQuery})
+          , setParams: \params -> setTableParams $ const params
+          , container: T.defaultContainer { title: "Documents" }
+          , colNames:
+            T.ColumnName <$>
+            [ "Map"
+            , "Stop"
+            , "Date"
+            , "Title"
+            , "Source"
+            ]
+            -- , totalRecords
+          , totalRecords: 1000  -- TODO
+          }
+      where
+        rows = (\(DocumentsView r) ->
+                    let cat = getCategory r
+                        isDel = Trash == cat in
+                    { row: map R2.scuff $ [
+                          H.div {}
+                          [ H.a { className: gi cat
+                                , style: trashStyle cat
+                                , onClick: onClick Favorite r._id cat
+                                } []
+                          ]
+                        , H.input { type: "checkbox"
+                                  , checked: isDel
+                                  , onClick: onClick Trash r._id cat
+                                  }
+                        -- TODO show date: Year-Month-Day only
+                        , H.div { style: trashStyle cat } [ H.text (show r.date) ]
+                        , H.a { href: toLink $ (corpusDocument corpusId) listId r._id
+                              , style: trashStyle cat
+                              , target: "_blank"
+                              } [ H.text r.title ]
+                        , H.div { style: trashStyle cat} [ H.text r.source ]
+                        ]
+                    , delete: true
+                    }) <$> res
+        onClick catType nid cat = mkEffectFn1 $ \_-> do
+          let newCat = if (catType == Favorite) then (favCategory cat) else (trashCategory cat)
+          setLocalCategories $ insert nid newCat
+          void $ launchAff $ putCategories nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
 
-pageLoader :: PageLoaderProps () -> ReactElement
-pageLoader props = React.createElement pageLoaderClass props []
+pageLoader :: R.State LocalCategories -> R.State T.Params -> PageLoaderProps -> R.Element
+pageLoader localCategories tableParams@(pageParams /\ _) p = R.createElement el p []
+  where
+    el = R.hooksComponent "PageLoader" cpt
+    cpt p@{nodeId, listId, corpusId, tabType, mQuery} _children = do
+      useLoader {nodeId, listId, corpusId, tabType, mQuery, params: pageParams} loadPage $ \{loaded} ->
+        renderPage localCategories tableParams p loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
