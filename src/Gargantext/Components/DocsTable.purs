@@ -22,7 +22,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Int (fromString)
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
@@ -164,13 +164,13 @@ docViewSpec = R2.elSpec $ R.hooksComponent "DocView" cpt
       documentIdsDeleted <- R.useState' (mempty :: DocumentIdsDeleted)
       localCategories <- R.useState' (mempty :: LocalCategories)
       mQuery <- R.useState' (Nothing :: MQuery)
-      tableParams <- R.useState' T.initialParams
+      tableParams <- R.useState' T.initialTableParams
 
       pure $ layoutDocview documentIdsDeleted localCategories mQuery tableParams p
 
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: R.State DocumentIdsDeleted -> R.State LocalCategories -> R.State MQuery -> R.State T.Params -> Props -> R.Element
-layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (mQuery /\ setMQuery) tableParams@(params /\ _) p = R.createElement el p []
+layoutDocview :: R.State DocumentIdsDeleted -> R.State LocalCategories -> R.State MQuery -> R.State T.TableParams -> Props -> R.Element
+layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (mQuery /\ setMQuery) tableParams p = R.createElement el p []
   where
     el = R.hooksComponent "LayoutDocView" cpt
     cpt {nodeId, tabType, listId, corpusId, totalRecords, chart} _children = do
@@ -249,8 +249,8 @@ loadPage {nodeId, tabType, mQuery, listId, corpusId, params: {limit, offset, ord
 
     convOrderBy _ = DateAsc -- TODO
 
-renderPage :: R.State LocalCategories -> R.State T.Params -> PageLoaderProps -> Array DocumentsView -> R.Element
-renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res = R.createElement el p []
+renderPage :: R.State LocalCategories -> R.State T.TableParams -> PageLoaderProps -> Array DocumentsView -> R.Element
+renderPage (localCategories /\ setLocalCategories) tableParams p res = R.createElement el p []
   where
     el = R.hooksComponent "RenderPage" cpt
 
@@ -263,10 +263,8 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
     corpusDocument _ = Router.Document
 
     cpt {nodeId, corpusId, listId} _children = do
-      pure $ R2.buff $ T.tableElt
+      pure $ T.tableElt tableParams
           { rows
-          -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, mQuery})
-          , setParams: \params -> setTableParams $ const params
           , container: T.defaultContainer { title: "Documents" }
           , colNames:
             T.ColumnName <$>
@@ -283,7 +281,7 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
         rows = (\(DocumentsView r) ->
                     let cat = getCategory r
                         isDel = Trash == cat in
-                    { row: map R2.scuff $ [
+                    { row: [
                           H.div {}
                           [ H.a { className: gi cat
                                 , style: trashStyle cat
@@ -309,12 +307,12 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
           setLocalCategories $ insert nid newCat
           void $ launchAff $ putCategories nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
 
-pageLoader :: R.State LocalCategories -> R.State T.Params -> PageLoaderProps -> R.Element
-pageLoader localCategories tableParams@(pageParams /\ _) p = R.createElement el p []
+pageLoader :: R.State LocalCategories -> R.State T.TableParams -> PageLoaderProps -> R.Element
+pageLoader localCategories tableParams p = R.createElement el p []
   where
     el = R.hooksComponent "PageLoader" cpt
     cpt p@{nodeId, listId, corpusId, tabType, mQuery} _children = do
-      useLoader {nodeId, listId, corpusId, tabType, mQuery, params: pageParams} loadPage $ \{loaded} ->
+      useLoader {nodeId, listId, corpusId, tabType, mQuery, params: T.toParams $ fst tableParams} loadPage $ \{loaded} ->
         renderPage localCategories tableParams p loaded
 
 ---------------------------------------------------------

@@ -5,31 +5,45 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.Tuple (fst, snd)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import React (ReactElement, ReactClass, Children, createElement)
-import React.DOM (a, b, b', p, i, h3, hr, div, option, select, span, table, tbody, td, text, th, thead, tr)
-import React.DOM.Props (className, href, onChange, onClick, scope, selected, value, style)
+import Effect.Uncurried (EffectFn1, mkEffectFn1)
+import Reactix as R
+import Reactix.DOM.HTML as H
 import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec, StateCoTransformer, createClass)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
+import Gargantext.Utils.Reactix as R2
 
 type TableContainerProps =
-  { pageSizeControl     :: ReactElement
-  , pageSizeDescription :: ReactElement
-  , paginationLinks     :: ReactElement
-  , tableHead           :: ReactElement
-  , tableBody           :: Array ReactElement
+  { pageSizeControl     :: R.Element
+  , pageSizeDescription :: R.Element
+  , paginationLinks     :: R.Element
+  , tableHead           :: R.Element
+  , tableBody           :: Array R.Element
   }
 
-type Rows = Array { row    :: Array ReactElement
+type Rows = Array { row    :: Array R.Element
                   , delete :: Boolean
                   }
 
+type CurrentPage = Int
 type OrderBy = Maybe (OrderByDirection ColumnName)
 
+type TableParams = {currentPage :: CurrentPage, pageSize :: PageSizes, orderBy :: OrderBy}
+
+initialTableParams = {
+    currentPage: 1
+  , pageSize: PS10
+  , orderBy: Nothing
+  }
+
 type Params = { offset :: Int, limit :: Int, orderBy :: OrderBy }
+
+initialParams = toParams initialTableParams
 
 newtype ColumnName = ColumnName String
 
@@ -55,43 +69,11 @@ derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 type Props' =
   ( colNames     :: Array ColumnName
   , totalRecords :: Int
-  , setParams    :: Params -> Effect Unit
   , rows         :: Rows
-  , container    :: TableContainerProps -> Array ReactElement
+  , container    :: TableContainerProps -> R.Element
   )
 
 type Props = Record Props'
-
-type State =
-  { currentPage :: Int
-  , pageSize    :: PageSizes
-  , orderBy     :: OrderBy
-  }
-
-initialState :: State
-initialState =
-  { currentPage  : 1
-  , pageSize     : PS10
-  , orderBy      : Nothing
-  }
-
-initialParams :: Params
-initialParams = stateParams initialState
-
-data Action
-  = ChangePageSize PageSizes
-  | ChangePage     Int
-  | ChangeOrderBy  OrderBy
-
-type ChangePageAction = Int -> Effect Unit
-
--- | Action
--- ChangePageSize
-changePageSize :: PageSizes -> State -> State
-changePageSize ps td =
-  td { pageSize      = ps
-     , currentPage   = 1
-     }
 
 -- TODO: Not sure this is the right place for this function.
 renderTableHeaderLayout :: { title :: String
@@ -99,192 +81,211 @@ renderTableHeaderLayout :: { title :: String
                            , query :: String
                            , date  :: String
                            , user  :: String
-                           } -> Array ReactElement
+                           } -> Array R.Element
 renderTableHeaderLayout {title, desc, query, date, user} =
-  [ div [className "row"]
-    [ div [className "col-md-3"] [ h3 [] [text title] ]
-    , div [className "col-md-9"] [ hr [style {height : "2px",backgroundColor : "black"}] ]
+  [ H.div {className: "row"}
+    [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
+    , H.div {className: "col-md-9"} [ H.hr {style: {height : "2px",backgroundColor : "black"}} ]
     ]
-  , div [className "row"] [ div [className "jumbotron1", style {padding : "12px 0px 20px 12px"}]
-        [ div [ className "col-md-8 content"]
-              [ p [] [ i [className "glyphicon glyphicon-globe"] []
-                     , text $ " " <> desc
+  , H.div {className: "row"} [ H.div {className: "jumbotron1", style: {padding : "12px 0px 20px 12px"}}
+        [ H.div { className: "col-md-8 content"}
+              [ H.p {} [ H.i {className: "glyphicon glyphicon-globe"} []
+                     , H.text $ " " <> desc
                      ]
-              , p [] [ i [className "glyphicon glyphicon-zoom-in"] []
-                     , text $ " " <> query
+              , H.p {} [ H.i {className: "glyphicon glyphicon-zoom-in"} []
+                     , H.text $ " " <> query
                      ]
               ]
-        , div [ className "col-md-4 content"]
-              [ p [] [ i [className "glyphicon glyphicon-calendar"] []
-                     , text $ " " <> date
+        , H.div { className: "col-md-4 content"}
+              [ H.p {} [ H.i {className: "glyphicon glyphicon-calendar"} []
+                     , H.text $ " " <> date
                      ]
-              , p [] [ i [className "glyphicon glyphicon-user"] []
-                     , text $ " " <> user
+              , H.p {} [ H.i {className: "glyphicon glyphicon-user"} []
+                     , H.text $ " " <> user
                      ]
               ]
         ]
     ]
   ]
 
-tableSpec :: Spec State Props Action
-tableSpec = simpleSpec performAction render
+-- tableSpec :: Spec State Props Action
+-- tableSpec = simpleSpec performAction render
+tableSpec :: R.State TableParams -> Props -> R.Element
+tableSpec tableParams p = R.createElement el p []
   where
-    modifyStateAndReload :: (State -> State) -> Props -> State -> StateCoTransformer State Unit
-    modifyStateAndReload f {setParams} state = do
-      logs "modifyStateAndReload" -- TODO rename
-      modifyState_ f
-      liftEffect $ setParams $ stateParams $ f state
-
-    performAction :: PerformAction State Props Action
-    performAction (ChangePageSize ps) =
-      modifyStateAndReload $ changePageSize ps
-    performAction (ChangePage p) =
-      modifyStateAndReload $ _ { currentPage = p }
-    performAction (ChangeOrderBy mc) =
-      modifyStateAndReload $ _ { orderBy = mc }
-
-    renderColHeader :: (OrderBy -> Effect Unit)
-                    -> OrderBy
-                    -> ColumnName -> ReactElement
-    renderColHeader changeOrderBy currentOrderBy c =
-      th [scope "col"] [ b' cs ]
+    el = R.hooksComponent "tableSpec" cpt
+    cpt {container, colNames, totalRecords, rows} _ = do
+      pure $ container
+        { pageSizeControl: sizeDD tableParams
+        , pageSizeDescription: textDescription tableParams totalRecords
+        , paginationLinks: pagination tableParams totalPages
+        , tableHead:
+          H.tr {} (renderColHeader tableParams <$> colNames)
+        , tableBody:
+          map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
+        }
       where
-        lnk mc = effectLink (changeOrderBy mc)
-        cs :: Array ReactElement
+        ps = pageSizes2Int ((fst tableParams).pageSize)
+        totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
+
+    renderColHeader :: R.State TableParams -> ColumnName -> R.Element
+    renderColHeader ({orderBy} /\ setTableParams) c =
+      -- H.th {scope: "col"} [H.text $ columnName c]
+      H.th {scope: "col"} [H.b {} cs]
+      where
+        lnk mc = effectLink $ \_ -> setTableParams $ \tp -> tp {orderBy = mc}
+        cs :: Array R.Element
         cs =
-          case currentOrderBy of
-            Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ",  lnk Nothing (columnName c)]
+          case orderBy of
+            Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ", lnk Nothing (columnName c)]
             Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "ASC ", lnk Nothing (columnName c)]
             _ -> [lnk (Just (ASC c)) (columnName c)]
 
-    render :: Render State Props Action
-    render dispatch {container, colNames, totalRecords, rows}
-                    {pageSize, currentPage, orderBy} _ =
-      container
-        { pageSizeControl: sizeDD pageSize dispatch
-        , pageSizeDescription: textDescription currentPage pageSize totalRecords
-        , paginationLinks: pagination (dispatch <<< ChangePage) totalPages currentPage
-        , tableHead:
-            tr [] (renderColHeader (dispatch <<< ChangeOrderBy) orderBy <$> colNames)
-        , tableBody:
-            map (tr [] <<< map (\c -> td [] [c]) <<< _.row) rows
-        }
-      where
-        ps = pageSizes2Int pageSize
-        totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
-
-defaultContainer :: {title :: String} -> TableContainerProps -> Array ReactElement
-defaultContainer {title} props =
-  [ div [className "row"]
-    [ div [className "col-md-4"] [props.pageSizeDescription]
-    , div [className "col-md-4"] [props.paginationLinks]
-    , div [className "col-md-4"] [props.pageSizeControl]
-    ]
-  , table [ className "table"]
-    [ thead [className "thead-dark"] [ props.tableHead ]
-    , tbody [] props.tableBody
-    ]
-  ]
+defaultContainer :: {title :: String} -> TableContainerProps -> R.Element
+defaultContainer {title} props = R.createElement el props []
+  where
+    el = R.hooksComponent "defaultContainer" cpt
+    cpt p _ = do
+      pure $ H.div {} [
+        H.div {className: "row"}
+        [ H.div {className: "col-md-4"} [props.pageSizeDescription]
+        , H.div {className: "col-md-4"} [props.paginationLinks]
+        , H.div {className: "col-md-4"} [props.pageSizeControl]
+        ]
+      , H.table { className: "table"}
+        [ H.thead {className: "thead-dark"} [ props.tableHead ]
+        , H.tbody {} props.tableBody
+        ]
+      ]
 
 -- TODO: this needs to be in Gargantext.Pages.Corpus.Graph.Tabs
-graphContainer :: {title :: String} -> TableContainerProps -> Array ReactElement
-graphContainer {title} props =
-  [ -- TODO title in tabs name (above)
-    table [ className "table"]
-    [ thead [className "thead-dark"] [ props.tableHead ]
-    , tbody [] props.tableBody
-    ]
-   -- TODO better rendering of the paginationLinks
-   -- , props.pageSizeControl
-   -- , props.pageSizeDescription
-   -- , props.paginationLinks
-  ]
+graphContainer :: {title :: String} -> TableContainerProps -> R.Element
+graphContainer {title} props = R.createElement el props []
+  where
+    el = R.hooksComponent "GraphContainer" cpt
+    cpt p _ = do
+      --[ -- TODO title in tabs name (above)
+      pure $ H.table { className: "table"}
+        [ H.thead {className: "thead-dark"} [ props.tableHead ]
+        , H.tbody {} props.tableBody
+        ]
+      -- TODO better rendering of the paginationLinks
+      -- , props.pageSizeControl
+      -- , props.pageSizeDescription
+      -- , props.paginationLinks
+      --]
 
 
 
-stateParams :: State -> Params
-stateParams {pageSize, currentPage, orderBy} = {offset, limit, orderBy}
+toParams :: TableParams -> Params
+toParams {pageSize, currentPage, orderBy} = {offset, limit, orderBy}
   where
     limit = pageSizes2Int pageSize
     offset = limit * (currentPage - 1)
 
-tableClass :: ReactClass {children :: Children | Props'}
-tableClass = createClass "Table" tableSpec (const initialState)
+toTableParams :: Params -> TableParams
+toTableParams {offset, limit, orderBy} = {pageSize, currentPage, orderBy}
+  where
+    pageSize = string2PageSize $ show limit
+    currentPage = offset / limit + 1
 
-tableElt :: Props -> ReactElement
-tableElt props = createElement tableClass props []
+tableElt :: R.State TableParams -> Props -> R.Element
+tableElt tableParams p = R.createElement el p []
+  where
+    el = R.hooksComponent "TableElt" cpt
+    cpt props _ = do
+      pure $ tableSpec tableParams props
 
-sizeDD :: PageSizes -> (Action -> Effect Unit) -> ReactElement
-sizeDD ps d
-  = span []
-    [ select [ className "form-control"
-             , onChange (\e -> d (ChangePageSize $ string2PageSize $ (unsafeCoerce e).target.value))
-             ] $ map (optps ps) aryPS
-    ]
+tableEltFromParams :: Params -> Props -> R.Element
+tableEltFromParams params p = R.createElement el p []
+  where
+    el = R.hooksComponent "TableEltFromParams" cpt
+    cpt props _ = do
+      tableParams <- R.useState' $ toTableParams params
 
-textDescription :: Int -> PageSizes -> Int -> ReactElement
-textDescription currPage pageSize totalRecords
-  =  div [className "row1"]
-          [ div [className ""] -- TODO or col-md-6 ?
-                [ text $ "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords ]
-          ]
-    where
-      start = (currPage - 1) * pageSizes2Int pageSize + 1
-      end' = currPage * pageSizes2Int pageSize
-      end  = if end' > totalRecords then totalRecords else end'
+      pure $ tableElt tableParams props
 
-effectLink :: Effect Unit -> String -> ReactElement
-effectLink eff msg = a [onClick $ const eff] [text msg]
+sizeDD :: R.State TableParams -> R.Element
+sizeDD tp@({pageSize} /\ setTableParams) = R.createElement el {} []
+  where
+    el = R.hooksComponent "SizeDD" cpt
+    cpt {} _ = do
+      pure $ H.span {}
+        [ R2.select { className: "form-control"
+                    , onChange: onChange
+                    } $ map (optps pageSize) aryPS
+        ]
+    onChange = mkEffectFn1 $ \e -> setTableParams $ \tp ->
+      tp {pageSize = string2PageSize $ (unsafeCoerce e).target.value}
 
-pagination :: ChangePageAction -> Int -> Int -> ReactElement
-pagination changePage tp cp
-  = span [] $
-    [ text " ", prev, first, ldots]
-    <>
-    lnums
-    <>
-    [b' [text $ " " <> show cp <> " "]]
-    <>
-    rnums
-    <>
-    [ rdots, last, next ]
-    where
-      prev = if cp == 1 then
-               text " Prev. "
-             else
-               changePageLink (cp - 1) "Prev."
-      next = if cp == tp then
-               text " Next "
-             else
-               changePageLink (cp + 1) "Next"
-      first = if cp == 1 then
-                text ""
+textDescription :: R.State TableParams -> Int -> R.Element
+textDescription ({currentPage, pageSize} /\ _) totalRecords = R.createElement el {} []
+  where
+    el = R.hooksComponent "TextDescription" cpt
+    cpt {} _ = do
+      pure $ H.div {className: "row1"}
+        [ H.div {className: ""} -- TODO or col-md-6 ?
+          [ H.text $ "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords ]
+        ]
+    start = (currentPage - 1) * pageSizes2Int pageSize + 1
+    end' = currentPage * pageSizes2Int pageSize
+    end  = if end' > totalRecords then totalRecords else end'
+
+effectLink :: forall e. (e -> Effect Unit) -> String -> R.Element
+effectLink eff msg = H.a {onClick: mkEffectFn1 eff} [H.text msg]
+
+pagination :: R.State TableParams -> Int -> R.Element
+pagination tp@({currentPage} /\ setTableParams) totalPages = R.createElement el {} []
+  where
+    el = R.hooksComponent "TablePagination" cpt
+    cpt {} _ =
+      pure $ H.span {} $
+        [ H.text " ", prev, first, ldots]
+        <>
+        lnums
+        <>
+        [H.b {} [H.text $ " " <> show currentPage <> " "]]
+        <>
+        rnums
+        <>
+        [ rdots, last, next ]
+      where
+        prev = if currentPage == 1 then
+                H.text " Prev. "
               else
-                changePageLink' 1
-      last = if cp == tp then
-               text ""
-             else
-               changePageLink' tp
-      ldots = if cp >= 5 then
-                text " ... "
+                changePageLink (currentPage - 1) "Prev."
+        next = if currentPage == totalPages then
+                H.text " Next "
+              else
+                changePageLink (currentPage + 1) "Next"
+        first = if currentPage == 1 then
+                  H.text ""
                 else
-                text ""
-      rdots = if cp + 3 < tp then
-                text " ... "
-                else
-                text ""
-      lnums = map changePageLink' $ filter (1  < _) [cp - 2, cp - 1]
-      rnums = map changePageLink' $ filter (tp > _) [cp + 1, cp + 2]
+                  changePageLink' 1
+        last = if currentPage == totalPages then
+                H.text ""
+              else
+                changePageLink' totalPages
+        ldots = if currentPage >= 5 then
+                  H.text " ... "
+                  else
+                  H.text ""
+        rdots = if currentPage + 3 < totalPages then
+                  H.text " ... "
+                  else
+                  H.text ""
+        lnums = map changePageLink' $ filter (1  < _) [currentPage - 2, currentPage - 1]
+        rnums = map changePageLink' $ filter (totalPages > _) [currentPage + 1, currentPage + 2]
 
-      changePageLink :: Int -> String -> ReactElement
-      changePageLink i s = span []
-          [ text " "
-          , effectLink (changePage i) s
-          , text " "
-          ]
+        changePageLink :: Int -> String -> R.Element
+        changePageLink i s = H.span {}
+            [ H.text " "
+            , effectLink (\_ -> setTableParams $ \tp -> tp { currentPage = i }) s
+            , H.text " "
+            ]
 
-      changePageLink' :: Int -> ReactElement
-      changePageLink' i = changePageLink i (show i)
+        changePageLink' :: Int -> R.Element
+        changePageLink' i = changePageLink i (show i)
 
 data PageSizes = PS10 | PS20 | PS50 | PS100 | PS200
 
@@ -315,5 +316,5 @@ string2PageSize "100" = PS100
 string2PageSize "200" = PS200
 string2PageSize _    = PS10
 
-optps :: PageSizes -> PageSizes -> ReactElement
-optps cv val = option [ selected (cv == val), value $ show val ] [text $ show val]
+optps :: PageSizes -> PageSizes -> R.Element
+optps cv val = H.option { selected: (cv == val), value: show val } [H.text $ show val]

@@ -19,8 +19,11 @@ import React (ReactClass, ReactElement, Children)
 import React as React
 import React.DOM (a, br', div, input, p, text)
 import React.DOM.Props (className, href, style, target)
+import Reactix as R
 import Thermite (Render, Spec, createClass, simpleSpec, defaultPerformAction)
 ------------------------------------------------------------------------------
+
+import Gargantext.Utils.Reactix as R2
 
 type Props = Loader.InnerProps Int AnnuaireInfo ()
 
@@ -80,14 +83,14 @@ loadedAnnuaireSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
     render _ {path: nodeId, loaded: annuaireInfo@AnnuaireInfo {name, date}} _ _ =
-      T.renderTableHeaderLayout
+      (R2.scuff <$> T.renderTableHeaderLayout
         { title: name
         , desc: name
         , query: ""
         , date: "Last update: " <> date
         , user: ""
-        } <>
-      [ p [] []
+        }) <>
+      [p [] []
       , div [className "col-md-3"] [ text "    Filter ", input [className "form-control", style {"width" : "250px", "display": "inline-block"}]]
       , br'
       , pageLoader
@@ -113,8 +116,8 @@ renderPage :: forall props path.
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
 renderPage dispatch {annuaireInfo} { currentPath: {nodeId}
                                    , loaded: Just (AnnuaireTable {annuaireTable: res})
-                                   } _ = [ T.tableElt { rows
-                                       , setParams: \params -> liftEffect $ dispatch (Loader.SetPath {nodeId, params})
+                                   } _ = [ R2.scuff $ T.tableEltFromParams T.initialParams { rows
+                                       --, setParams: \params -> liftEffect $ dispatch (Loader.SetPath {nodeId, params})
                                        , container: T.defaultContainer { title: "Annuaire" } -- TODO
                                        , colNames: T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
                                        , totalRecords: 4361 -- TODO
@@ -122,7 +125,7 @@ renderPage dispatch {annuaireInfo} { currentPath: {nodeId}
                                      ]
                         where
                           --rows = (\c -> {row: [text $ show c.id], delete: false}) <$> res
-                          rows = (\c -> {row: renderContactCells c, delete: false}) <$> res
+                          rows = (\c -> {row: map R2.buff $ renderContactCells c, delete: false}) <$> res
 
 {-
 showRow :: Maybe Contact -> ReactElement

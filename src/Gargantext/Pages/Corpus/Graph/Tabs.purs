@@ -13,6 +13,7 @@ import React (ReactElement, ReactClass, Children, createElement)
 import Thermite ( Spec, PerformAction, Render, _performAction, _render
                 , hideState, noState, cmapProps, simpleSpec, createClass
                 )
+import Gargantext.Utils.Reactix as R2
 
 type Props = { query :: TextQuery, sides :: Array GraphSideCorpus }
 

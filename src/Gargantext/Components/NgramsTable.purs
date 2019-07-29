@@ -30,6 +30,7 @@ import React (ReactElement)
 import React.DOM (a, button, div, h2, i, input, li, option, p, select, span, table, tbody, text, thead, ul)
 import React.DOM.Props (_id, _type, checked, className, name, onChange, onClick, onInput, placeholder, style, value)
 import React.DOM.Props as DOM
+import Reactix as R
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, createClass)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -40,6 +41,7 @@ import Gargantext.Components.Table as T
 import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.NgramsTable.Core
+import Gargantext.Utils.Reactix as R2
 
 type State =
   CoreState
@@ -90,7 +92,7 @@ tableContainer :: { pageParams :: PageParams
                   , ngramsChildren :: Map NgramsTerm Boolean
                   , ngramsTable :: NgramsTable
                   }
-               -> T.TableContainerProps -> Array ReactElement
+               -> T.TableContainerProps -> R.Element
 tableContainer { pageParams
                , dispatch
                , loaderDispatch
@@ -98,7 +100,7 @@ tableContainer { pageParams
                , ngramsChildren
                , ngramsTable: ngramsTableCache
                } props =
-  [ div [className "container-fluid"]
+  R2.buff $ div [className "container-fluid"]
     [ div [className "jumbotron1"]
       [ div [className "row"]
         [ div [className "panel panel-default"]
@@ -149,10 +151,10 @@ tableContainer { pageParams
                       ]
 
               , div [className "col-md-4", style {marginTop : "6px", marginBottom : "1px"}]
-                [ li [className " list-group-item"] [ props.pageSizeDescription
-                                                    , props.pageSizeControl
+                [ li [className " list-group-item"] [ R2.scuff props.pageSizeDescription
+                                                    , R2.scuff props.pageSizeControl
                                                     , text " items / "
-                                                    , props.paginationLinks
+                                                    , R2.scuff props.paginationLinks
                                                     ]
                 --, li [className " list-group-item"] [ props.pageSizeControl ]
                 ]
@@ -178,15 +180,14 @@ tableContainer { pageParams
               ]) ngramsParent)
           , div [ _id "terms_table", className "panel-body" ]
                 [ table [ className "table able" ]
-                  [ thead [ className "tableHeader"] [props.tableHead]
-                  , tbody [] props.tableBody
+                  [ thead [ className "tableHeader"] [R2.scuff props.tableHead]
+                  , tbody [] $ R2.scuff <$> props.tableBody
                   ]
                 ]
           ]
         ]
       ]
     ]
-  ]
   where
     setPageParams f = loaderDispatch $ Loader.SetPath $ f pageParams
     setSearchQuery    x = setPageParams $ _ { searchQuery = x }
@@ -243,9 +244,9 @@ ngramsTableSpec ntype = simpleSpec performAction render
       [ autoUpdateElt { duration: 3000
                       , effect:   dispatch Refresh
                       }
-      , T.tableElt
+      , R2.scuff $ T.tableEltFromParams pageParams.params
           { rows
-          , setParams
+          --, setParams
           , container: tableContainer {pageParams, loaderDispatch, dispatch, ngramsParent, ngramsChildren, ngramsTable}
           , colNames:
               T.ColumnName <$>
@@ -288,7 +289,7 @@ ngramsTableSpec ntype = simpleSpec performAction render
               || -- Unless they are scheduled to be removed.
                  ngramsChildren ^. at ngrams == Just false
             convertRow (Tuple ngrams ngramsElement) =
-              { row: renderNgramsItem { ngramsTable, ngrams, ngramsParent, ngramsElement, dispatch}
+              { row: map R2.buff $ renderNgramsItem { ngramsTable, ngrams, ngramsParent, ngramsElement, dispatch}
               , delete: false
               }
 

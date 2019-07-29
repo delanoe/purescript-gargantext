@@ -24,6 +24,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import React as React
 import React (ReactClass, ReactElement, Children)
+import Reactix as R
 ------------------------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl)
@@ -32,6 +33,7 @@ import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Table as T
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.DecodeMaybe ((.|))
+import Gargantext.Utils.Reactix as R2
 import React.DOM (a, br', button, div, i, input, p, text, span)
 import React.DOM.Props (_type, className, href, onClick, placeholder, style, checked, target)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
@@ -68,7 +70,7 @@ type Props =
   , query :: TextQuery
   , totalRecords :: Int
   , chart :: ReactElement
-  , container :: T.TableContainerProps -> Array ReactElement
+  , container :: T.TableContainerProps -> R.Element
   }
 
 type State =
@@ -328,28 +330,23 @@ type PageLoaderProps row =
   , totalRecords :: Int
   , dispatch :: Action -> Effect Unit
   , deletionState :: State
-  , container :: T.TableContainerProps -> Array ReactElement
+  , container :: T.TableContainerProps -> R.Element
   | row
   }
 
 renderPage :: forall props path.
               Render (Loader.State {nodeId :: Int, listId :: Int, query :: TextQuery | path} (Array DocumentsView))
-                     { totalRecords :: Int
-                     , dispatch :: Action -> Effect Unit
-                     , deletionState :: State
-                     , container :: T.TableContainerProps -> Array ReactElement
-                     | props
-                     }
+                     (PageLoaderProps props)
                      (Loader.Action PageParams)
 renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage loaderDispatch { totalRecords, dispatch, container
+renderPage loaderDispatch { totalRecords, dispatch, container, path: {params}
                           , deletionState: {documentIdsToDelete, documentIdsDeleted}}
                           {currentPath: {nodeId, listId, query}, loaded: Just res} _ =
-  [ T.tableElt
-      { rows
-      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, listId, query, params})
-      , container
-      , colNames:
+  [ R2.scuff $ T.tableEltFromParams params
+        { rows
+          --, setParams: \p -> liftEffect $ loaderDispatch $ Loader.SetPath {nodeId, listId, query, params: p}
+        , container
+        , colNames:
           T.ColumnName <$>
           [ ""
           , "Date"
@@ -358,8 +355,8 @@ renderPage loaderDispatch { totalRecords, dispatch, container
           , "Authors"
           , "Delete"
           ]
-      , totalRecords
-      }
+        , totalRecords
+        }
   ]
   where
     -- TODO: how to interprete other scores?
@@ -378,7 +375,7 @@ renderPage loaderDispatch { totalRecords, dispatch, container
                     | otherwise = []
                 in
                 { row:
-                    [ div []
+                    map R2.buff [ div []
                       [ a [ className $ gi score
                           , onClick $ const $ dispatch $ MarkFavorites [id]
                           ] []

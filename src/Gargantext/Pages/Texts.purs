@@ -37,7 +37,7 @@ layout =
           , date:  date'
           , user:  corpus.authors
           }
-        <> [Tabs.elt {corpusId, corpusData}]
+        <> [R2.buff $ Tabs.elt {corpusId, corpusData}]
 ------------------------------------------------------------------------
 
 getCorpus :: Int -> Aff CorpusData
