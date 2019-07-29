@@ -218,11 +218,11 @@ loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   -- res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let url = (toUrl Back Node (Just nodeId)) <> "/search"
+  let url = (toUrl Back Node (Just nodeId)) <> "/table"
   res <- post url $ TabPostQuery {
       offset
     , limit
-    , orderBy: convOrderBy <$> orderBy
+    , orderBy: convOrderBy orderBy
     , tabType
     , query
     }
@@ -241,12 +241,12 @@ loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orde
       , category : r.category
       , ngramCount : r.ngramCount
      }
-    convOrderBy (T.ASC  (T.ColumnName "Date"))  = DateAsc
-    convOrderBy (T.DESC (T.ColumnName "Date"))  = DateDesc
-    convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
-    convOrderBy (T.DESC (T.ColumnName "Title")) = TitleDesc
-    convOrderBy (T.ASC  (T.ColumnName "Source")) = SourceAsc
-    convOrderBy (T.DESC (T.ColumnName "Source")) = SourceDesc
+    convOrderBy (Just (T.ASC  (T.ColumnName "Date")))  = DateAsc
+    convOrderBy (Just (T.DESC (T.ColumnName "Date")))  = DateDesc
+    convOrderBy (Just (T.ASC  (T.ColumnName "Title"))) = TitleAsc
+    convOrderBy (Just (T.DESC (T.ColumnName "Title"))) = TitleDesc
+    convOrderBy (Just (T.ASC  (T.ColumnName "Source"))) = SourceAsc
+    convOrderBy (Just (T.DESC (T.ColumnName "Source"))) = SourceDesc
 
     convOrderBy _ = DateAsc -- TODO
 
