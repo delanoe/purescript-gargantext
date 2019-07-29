@@ -157,9 +157,10 @@ instance decodeResponse :: DecodeJson Response where
     pure $ Response { cid, category: decodeCategory favorite, ngramCount, hyperdata }
 
 
-docViewSpec :: Spec {} Props Void
-docViewSpec = R2.elSpec $ R.hooksComponent "DocView" cpt
+docViewSpec :: Props -> R.Element
+docViewSpec p = R.createElement el p []
   where
+    el = R.hooksComponent "DocView" cpt
     cpt p _children = do
       documentIdsDeleted <- R.useState' (mempty :: DocumentIdsDeleted)
       localCategories <- R.useState' (mempty :: LocalCategories)

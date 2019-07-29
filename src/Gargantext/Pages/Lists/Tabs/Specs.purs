@@ -58,28 +58,6 @@ statefulTabs =
     , Tuple "Institutes" $ ngramsViewSpec {mode: Institutes}
     , Tuple "Terms"      $ ngramsViewSpec {mode: Terms     }
     ]
-  where
-    -- TODO totalRecords
-
-    docs = noState ( cmapProps (\{corpusId} -> {corpusId, tabType: TabCorpus TabDocs}) histoSpec
-                              <>
-                     (cmapProps (\{corpusId, corpusData: {defaultListId}} ->
-                                  { nodeId: corpusId
-                                  -- ^ TODO merge nodeId and corpusId in DT
-                                  , chart  : H.div {} []
-                                  , tabType: TabCorpus TabDocs
-                                  , totalRecords: 4737
-                                  , listId: defaultListId
-                                  , corpusId: Just corpusId}) $ noState DT.docViewSpec
-                                  )
-                    )
-    trash = cmapProps (\{corpusId, corpusData: {defaultListId}} ->
-                        { nodeId: corpusId
-                        , chart  : H.div {} []
-                        , tabType: TabCorpus TabTrash
-                        , totalRecords: 4736
-                        , listId: defaultListId
-                        , corpusId: Nothing}) $ noState DT.docViewSpec
 
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action

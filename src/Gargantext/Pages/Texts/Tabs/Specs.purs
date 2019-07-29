@@ -22,6 +22,7 @@ import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.Reactix as R2
 
+import Reactix as R
 import Reactix.DOM.HTML as H
 import React (ReactElement, ReactClass, createElement, Children)
 import Thermite (Spec, hideState, noState, cmapProps, createClass)
@@ -61,41 +62,68 @@ statefulTabs =
 
     docs = noState ( cmapProps (\{corpusId} -> {corpusId, tabType: TabCorpus TabDocs}) histoSpec
                               <>
-                     (cmapProps (\{corpusId, corpusData: {defaultListId}} ->
-                                  { nodeId: corpusId
-                                  -- ^ TODO merge nodeId and corpusId in DT
-                                  , chart  : H.div {} []
-                                  , tabType: TabCorpus TabDocs
-                                  , totalRecords: 4737
-                                  , listId: defaultListId
-                                  , corpusId: Just corpusId}) $ noState DT.docViewSpec
-                                  )
+                     (cmapProps identity $ docViewSpec TabDocs)
                     )
 
-    moreLikeFav = noState (cmapProps (\{corpusId, corpusData: {defaultListId}} ->
-                                  { nodeId: corpusId
-                                    -- ^ TODO merge nodeId and corpusId in DT
-                                  , chart  : H.div {} []
-                                  , tabType: TabCorpus TabMoreLikeFav
-                                  , totalRecords: 4737
-                                  , listId: defaultListId
-                                  , corpusId: Just corpusId}) $ noState DT.docViewSpec
-                    )
+    moreLikeFav = noState $ cmapProps identity $ docViewSpec TabMoreLikeFav
 
-    moreLikeTrash = noState (cmapProps (\{corpusId, corpusData: {defaultListId}} ->
-                                        { nodeId: corpusId
-                                          -- ^ TODO merge nodeId and corpusId in DT
-                                        , chart  : H.div {} []
-                                        , tabType: TabCorpus TabMoreLikeTrash
-                                        , totalRecords: 4737
-                                        , listId: defaultListId
-                                        , corpusId: Just corpusId}) $ noState DT.docViewSpec
-                          )
+    moreLikeTrash = noState $ cmapProps identity $ docViewSpec TabMoreLikeTrash
 
-    trash = cmapProps (\{corpusId, corpusData: {defaultListId}} ->
-                        { nodeId: corpusId
-                        , chart  : H.div {} []
-                        , tabType: TabCorpus TabTrash
-                        , totalRecords: 4736
-                        , listId: defaultListId
-                        , corpusId: Nothing}) $ noState DT.docViewSpec
+    trash = noState $ cmapProps identity $ docViewSpec TabTrash
+
+
+--docViewSpec :: forall a. TabSubType a -> Props -> R.Element
+docViewSpec :: forall a. TabSubType a -> Spec {} Props Void
+docViewSpec tst = R2.elSpec $ R.hooksComponent "DocViewSpecWithCorpus" cpt
+  where
+    cpt {corpusId, corpusData: {defaultListId}} _children = do
+      pure $ DT.docViewSpec $ params tst
+
+      where
+        params :: forall a. TabSubType a -> DT.Props
+        params TabDocs = {
+          nodeId: corpusId
+          -- ^ TODO merge nodeId and corpusId in DT
+        , chart  : H.div {} []
+        , tabType: TabCorpus TabDocs
+        , totalRecords: 4737
+        , listId: defaultListId
+        , corpusId: Just corpusId
+        }
+        params TabMoreLikeFav = {
+          nodeId: corpusId
+          -- ^ TODO merge nodeId and corpusId in DT
+        , chart  : H.div {} []
+        , tabType: TabCorpus TabMoreLikeFav
+        , totalRecords: 4737
+        , listId: defaultListId
+        , corpusId: Just corpusId
+        }
+        params TabMoreLikeTrash = {
+          nodeId: corpusId
+          -- ^ TODO merge nodeId and corpusId in DT
+        , chart  : H.div {} []
+        , tabType: TabCorpus TabMoreLikeTrash
+        , totalRecords: 4737
+        , listId: defaultListId
+        , corpusId: Just corpusId
+        }
+        params TabTrash = {
+          nodeId: corpusId
+          -- ^ TODO merge nodeId and corpusId in DT
+        , chart  : H.div {} []
+        , tabType: TabCorpus TabTrash
+        , totalRecords: 4737
+        , listId: defaultListId
+        , corpusId: Nothing
+        }
+        -- DUMMY
+        params _ = {
+          nodeId: corpusId
+          -- ^ TODO merge nodeId and corpusId in DT
+        , chart  : H.div {} []
+        , tabType: TabCorpus TabTrash
+        , totalRecords: 4737
+        , listId: defaultListId
+        , corpusId: Nothing
+        }

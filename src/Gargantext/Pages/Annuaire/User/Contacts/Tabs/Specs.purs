@@ -14,7 +14,10 @@ import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Pages.Annuaire.User.Contacts.Types (ContactData)
+import Gargantext.Utils.Reactix as R2
 
+import Reactix as R
+import Reactix.DOM.HTML as H
 import React (Children, ReactElement, ReactClass, createElement)
 import Thermite (Spec, focus, hideState, noState, cmapProps, createClass)
 
@@ -68,13 +71,14 @@ statefulTabs =
   where
     chart = mempty
     -- TODO totalRecords
-    docs = cmapProps (\{nodeId, contactData: {defaultListId}} ->
-                       { nodeId, chart
-                       , tabType: TabPairing TabDocs
-                       , totalRecords: 4736
-                       , listId: defaultListId
-                       , corpusId: Nothing}) $
-           noState DT.docViewSpec
+    docs = noState $ R2.elSpec $ R.hooksComponent "DocViewSpecWithCorpus" $ \{nodeId, contactData: {defaultListId}} _ -> do
+      pure $ DT.docViewSpec
+        { nodeId
+        , chart
+        , tabType: TabPairing TabDocs
+        , totalRecords: 4736
+        , listId: defaultListId
+        , corpusId: Nothing}
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
 ngramsViewSpec {mode} =
