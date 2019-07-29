@@ -218,7 +218,7 @@ loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, tabType, mQuery, listId, corpusId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   -- res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let url = (toUrl Back Node (Just nodeId)) <> "/search"
+  let url = (toUrl Back Node (Just nodeId)) <> "/table"
   res <- post url $ TabPostQuery {
       offset
     , limit
