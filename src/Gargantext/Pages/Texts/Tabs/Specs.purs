@@ -22,8 +22,8 @@ import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.Reactix as R2
 
+import Reactix.DOM.HTML as H
 import React (ReactElement, ReactClass, createElement, Children)
-import React.DOM (div)
 import Thermite (Spec, hideState, noState, cmapProps, createClass)
 
 data Mode = MoreLikeFav | MoreLikeTrash
@@ -64,7 +64,7 @@ statefulTabs =
                      (cmapProps (\{corpusId, corpusData: {defaultListId}} ->
                                   { nodeId: corpusId
                                   -- ^ TODO merge nodeId and corpusId in DT
-                                  , chart  : div [][]
+                                  , chart  : H.div {} []
                                   , tabType: TabCorpus TabDocs
                                   , totalRecords: 4737
                                   , listId: defaultListId
@@ -75,7 +75,7 @@ statefulTabs =
     moreLikeFav = noState (cmapProps (\{corpusId, corpusData: {defaultListId}} ->
                                   { nodeId: corpusId
                                     -- ^ TODO merge nodeId and corpusId in DT
-                                  , chart  : div [][]
+                                  , chart  : H.div {} []
                                   , tabType: TabCorpus TabMoreLikeFav
                                   , totalRecords: 4737
                                   , listId: defaultListId
@@ -85,7 +85,7 @@ statefulTabs =
     moreLikeTrash = noState (cmapProps (\{corpusId, corpusData: {defaultListId}} ->
                                         { nodeId: corpusId
                                           -- ^ TODO merge nodeId and corpusId in DT
-                                        , chart  : div [][]
+                                        , chart  : H.div {} []
                                         , tabType: TabCorpus TabMoreLikeTrash
                                         , totalRecords: 4737
                                         , listId: defaultListId
@@ -94,7 +94,7 @@ statefulTabs =
 
     trash = cmapProps (\{corpusId, corpusData: {defaultListId}} ->
                         { nodeId: corpusId
-                        , chart: div [][]
+                        , chart  : H.div {} []
                         , tabType: TabCorpus TabTrash
                         , totalRecords: 4736
                         , listId: defaultListId

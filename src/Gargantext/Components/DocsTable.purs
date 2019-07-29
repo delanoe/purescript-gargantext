@@ -72,7 +72,7 @@ trashCategory Favorite = Trash
 type Props =
   { nodeId       :: Int
   , totalRecords :: Int
-  , chart        :: ReactElement
+  , chart        :: R.Element
   , tabType      :: TabType
   , listId       :: Int
   , corpusId     :: Maybe Int
@@ -176,7 +176,7 @@ layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (m
     cpt {nodeId, tabType, listId, corpusId, totalRecords, chart} _children = do
       pure $ H.div {className: "container1"}
         [ H.div {className: "row"}
-          [ R2.buff chart
+          [ chart
           , H.div {}
             [ H.input { type: "text"
                       , onChange: onChangeQuery
