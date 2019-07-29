@@ -717,7 +717,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
 
 
 getNodes :: Int -> Aff GraphData
-getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId
+getNodes graphId = get $ Config.toUrl Config.endConfigStateful Config.Back Config.Graph $ Just graphId
 
 getAuthData :: Effect (Maybe AuthData)
 getAuthData = do

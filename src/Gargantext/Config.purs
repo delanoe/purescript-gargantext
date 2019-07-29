@@ -23,6 +23,10 @@ urlPlease :: End -> String -> String
 urlPlease end path = theEnd.baseUrl <> theEnd.prePath <> path
   where theEnd = endOf end endConfig
 
+-- TODO temporary variable, to make refactoring easier
+endConfigStateful :: EndConfig
+endConfigStateful = endConfig
+
 endConfig :: EndConfig
 endConfig = endConfig' V10
 
@@ -236,22 +240,22 @@ routesPath (R.UserPage i) = "user/" <> show i
 routesPath (R.ContactPage i) = "contact/" <> show i
 
 class Linkable a where
-  toLink :: a -> String
+  toLink :: EndConfig -> a -> String
 
 instance linkableRoutes :: Linkable R.Routes where
-  toLink l = endConfig.front.baseUrl <> endConfig.front.prePath <> routesPath l
+  toLink ec l = ec.front.baseUrl <> endConfig.front.prePath <> routesPath l
 
 class ToUrl a where
-  toUrl :: End -> a -> Maybe Id -> Url
+  toUrl :: EndConfig -> End -> a -> Maybe Id -> Url
 
 instance toUrlNodeType :: ToUrl NodeType where
-  toUrl e nt i = toUrl e (NodeAPI nt) i
+  toUrl ec e nt i = toUrl ec e (NodeAPI nt) i
 
 instance toUrlPath :: ToUrl Path where
-  toUrl e p i = doUrl base path params
+  toUrl ec e p i = doUrl base path params
     where
-      base   = endBaseUrl e endConfig
-      path   = endPathUrl e endConfig p i
+      base   = endBaseUrl e ec
+      path   = endPathUrl e ec p i
       params = ""
 ------------------------------------------------------------
 

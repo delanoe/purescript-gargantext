@@ -12,7 +12,7 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as T
-import Gargantext.Config (toUrl, Path(..), NodeType(..), End(..))
+import Gargantext.Config (toUrl, endConfigStateful, Path(..), NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperdataContact(..), ContactWhere(..))
 import React (ReactClass, ReactElement, Children)
@@ -128,7 +128,7 @@ renderPage dispatch {annuaireInfo} { currentPath: {nodeId}
 showRow :: Maybe Contact -> ReactElement
 showRow Nothing = tr [][]
 showRow (Just (Contact {id: id, hyperdata: (HyperdataContact contact) })) = tr [] []
-  [ td [] [ a [ href (toUrl Front NodeUser (Just id)) ] [
+  [ td [] [ a [ href (toUrl endConfigStateful Front NodeUser (Just id)) ] [
                text $ maybe "name" identity contact.title
                ]
           ]
@@ -151,7 +151,7 @@ renderContactCells :: Maybe Contact -> Array ReactElement
 renderContactCells Nothing = []
 renderContactCells (Just (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) })) =
   [ text ""
-  , a [ href (toUrl Front NodeContact (Just id)), target "blank" ] [ text $ maybe "name" identity contact.title ]
+  , a [ href (toUrl endConfigStateful Front NodeContact (Just id)), target "blank" ] [ text $ maybe "name" identity contact.title ]
   , text $ maybe "No ContactWhere" renderContactWhereOrg  (head $ ou)
   , text $ maybe "No ContactWhere" renderContactWhereDept (head $ ou)
   , div [className "nooverflow"] [text $ maybe "No ContactWhere" renderContactWhereRole (head $ ou)]
@@ -220,7 +220,7 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
 ------------------------------------------------------------------------
 loadPage :: PageParams -> Aff AnnuaireTable
 loadPage {nodeId, params: { offset, limit, orderBy }} =
-    get $ toUrl Back (Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-})
+    get $ toUrl endConfigStateful Back (Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-})
                      (Just nodeId)
  -- TODO orderBy
  -- where
@@ -230,7 +230,7 @@ loadPage {nodeId, params: { offset, limit, orderBy }} =
  --   convOrderBy _ = NameAsc -- TODO
 
 getAnnuaireInfo :: Int -> Aff AnnuaireInfo
-getAnnuaireInfo id = get $ toUrl Back Node (Just id)
+getAnnuaireInfo id = get $ toUrl endConfigStateful Back Node (Just id)
 ------------------------------------------------------------------------------
 
 annuaireLoaderClass :: ReactClass (Loader.Props Int AnnuaireInfo)

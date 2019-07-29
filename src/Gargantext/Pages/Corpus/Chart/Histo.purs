@@ -8,7 +8,7 @@ import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
-import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
+import Gargantext.Config
 import Gargantext.Config.REST (get)
 import React (ReactClass, ReactElement, createElement)
 import Reactix as R
@@ -71,7 +71,7 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
 
 getMetrics :: Path -> Aff HistoMetrics
 getMetrics {corpusId, tabType} = do
-  ChartMetrics ms <- get $ toUrl Back (Chart {chartType: Histo, tabType: tabType}) $ Just corpusId
+  ChartMetrics ms <- get $ toUrl endConfigStateful Back (Chart {chartType: Histo, tabType: tabType}) $ Just corpusId
   pure ms."data"
 
 histoSpec :: Spec {} Path Void

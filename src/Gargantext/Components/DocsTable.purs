@@ -35,7 +35,7 @@ import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, TabPostQuery(..), toUrl, toLink)
+import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, TabPostQuery(..), toUrl, endConfigStateful, toLink)
 import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Node (NodePoly(..))
@@ -217,8 +217,8 @@ type PageParams = { nodeId :: Int
 loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
-  -- res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let url = (toUrl Back Node (Just nodeId)) <> "/table"
+  -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
+  let url = (toUrl endConfigStateful Back Node (Just nodeId)) <> "/table"
   res <- post url $ TabPostQuery {
       offset
     , limit
@@ -297,7 +297,7 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
                                   }
                         -- TODO show date: Year-Month-Day only
                         , H.div { style: trashStyle cat } [ H.text (show r.date) ]
-                        , H.a { href: toLink $ (corpusDocument corpusId) listId r._id
+                        , H.a { href: toLink endConfigStateful $ (corpusDocument corpusId) listId r._id
                               , style: trashStyle cat
                               , target: "_blank"
                               } [ H.text r.title ]
@@ -373,13 +373,13 @@ instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
     ~> jsonEmptyObject
 
 categoryUrl :: Int -> String
-categoryUrl nodeId = toUrl Back Node (Just nodeId) <> "/category"
+categoryUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/category"
 
 putCategories :: Int -> CategoryQuery -> Aff (Array Int)
 putCategories nodeId = put $ categoryUrl nodeId
 
 documentsUrl :: Int -> String
-documentsUrl nodeId = toUrl Back Node (Just nodeId) <> "/documents"
+documentsUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/documents"
 
 deleteAllDocuments :: Int -> Aff (Array Int)
 deleteAllDocuments nodeId = delete $ documentsUrl nodeId

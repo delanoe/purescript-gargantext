@@ -8,7 +8,7 @@ import Data.List (fromFoldable)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
-import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
+import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..))
 import Gargantext.Pages.Texts.Tabs.Types (Props, PropsRow)
 
 import Gargantext.Pages.Corpus.Chart.Histo (histoSpec)

@@ -35,7 +35,7 @@ import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Components.Loader2 (useLoader)
-import Gargantext.Config (toUrl, End(..), NodeType(..), readNodeType)
+import Gargantext.Config (toUrl, endConfigStateful, End(..), NodeType(..), readNodeType)
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
 import Gargantext.Router as Router
 import Gargantext.Types (class ToQuery, toQuery)
@@ -227,7 +227,7 @@ nodeMainSpan d p folderOpen = R.createElement el p []
 
       pure $ H.span (dropProps droppedFile isDragOver)
         [ folderIcon folderOpen
-        , H.a { href: (toUrl Front nodeType (Just id))
+        , H.a { href: (toUrl endConfigStateful Front nodeType (Just id))
               , style: {"margin-left": "22px"}
               }
           [ nodeText {isSelected: (mCorpusId mCurrentRoute) == (Just id), name} ]
@@ -631,8 +631,8 @@ nodeText p = R.createElement el p []
 -- END node text
 
 loadNode :: ID -> Aff FTree
--- loadNode a = lift ((get <<< toUrl Back Tree <<< Just) a)
-loadNode = get <<< toUrl Back Tree <<< Just
+-- loadNode a = lift ((get <<< toUrl endConfigStateful Back Tree <<< Just) a)
+loadNode = get <<< toUrl endConfigStateful Back Tree <<< Just
 
 ----- TREE CRUD Operations
 
@@ -660,13 +660,13 @@ instance encodeJsonCreateValue :: EncodeJson CreateValue where
 
 createNode :: ID -> CreateValue -> Aff ID
 --createNode = post $ urlPlease Back $ "new"
-createNode parentId = post $ toUrl Back Node (Just parentId)
+createNode parentId = post $ toUrl endConfigStateful Back Node (Just parentId)
 
 renameNode :: ID -> RenameValue -> Aff (Array ID)
-renameNode renameNodeId = put $ toUrl Back Node (Just renameNodeId) <> "/rename"
+renameNode renameNodeId = put $ toUrl endConfigStateful Back Node (Just renameNodeId) <> "/rename"
 
 deleteNode :: ID -> Aff ID
-deleteNode = delete <<< toUrl Back Node <<< Just
+deleteNode = delete <<< toUrl endConfigStateful Back Node <<< Just
 
 newtype FileUploadQuery = FileUploadQuery {
     fileType :: FileType
@@ -683,15 +683,15 @@ uploadFile :: ID -> FileType -> UploadFileContents -> Aff (Array FileHash)
 uploadFile id fileType (UploadFileContents fileContents) = postWwwUrlencoded url fileContents
   where
     q = FileUploadQuery { fileType: fileType }
-    url = toUrl Back Node (Just id) <> "/upload" <> Q.print (toQuery q)
+    url = toUrl endConfigStateful Back Node (Just id) <> "/upload" <> Q.print (toQuery q)
 
 -- UNUSED
 -- deleteNodes :: TODO -> Aff ID
--- deleteNodes = deleteWithBody (toUrl Back Nodes Nothing)
+-- deleteNodes = deleteWithBody (toUrl endConfigStateful Back Nodes Nothing)
 
 -- UNUSED
 -- createNode :: TODO -> Aff ID
--- createNode = post (toUrl Back Node Nothing)
+-- createNode = post (toUrl endConfigStateful Back Node Nothing)
 
 fnTransform :: LNode -> FTree
 fnTransform n = NTree n []

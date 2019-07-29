@@ -11,7 +11,7 @@ import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Table as Table
-import Gargantext.Config      (toUrl, Path(..), NodeType(..), End(..))
+import Gargantext.Config      (toUrl, endConfigStateful, Path(..), NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Texts.Tabs.Types (CorpusData, CorpusInfo(..))
 import Gargantext.Pages.Texts.Tabs.Specs (elt) as Tabs
@@ -43,9 +43,9 @@ layout =
 getCorpus :: Int -> Aff CorpusData
 getCorpus textsId = do
   -- fetch corpus via texts parentId
-  (NodePoly {parentId: corpusId} :: NodePoly {})       <- get $ toUrl Back Corpus $ Just textsId
-  corpusNode     <- get $ toUrl Back Corpus $ Just corpusId
-  defaultListIds <- get $ toUrl Back (Children NodeList 0 1 Nothing) $ Just corpusId
+  (NodePoly {parentId: corpusId} :: NodePoly {})       <- get $ toUrl endConfigStateful Back Corpus $ Just textsId
+  corpusNode     <- get $ toUrl endConfigStateful Back Corpus $ Just corpusId
+  defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just corpusId
   case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
       pure {corpusId, corpusNode, defaultListId}

@@ -86,7 +86,7 @@ import Partial.Unsafe (unsafePartial)
 
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Types (TermList(..), TermSize)
-import Gargantext.Config (toUrl, End(..), Path(..), TabType, OrderBy(..), CTabNgramType(..))
+import Gargantext.Config (toUrl, endConfigStateful, End(..), Path(..), TabType, OrderBy(..), CTabNgramType(..))
 import Gargantext.Config.REST (get, put, post)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
@@ -562,7 +562,7 @@ type CoreState s =
 postNewNgrams :: forall s. Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
 postNewNgrams newNgrams mayList {nodeId, listIds, tabType} =
   when (not (A.null newNgrams)) $ do
-    (_ :: Array Unit) <- post (toUrl Back (PutNgrams tabType (head listIds) mayList) $ Just nodeId) newNgrams
+    (_ :: Array Unit) <- post (toUrl endConfigStateful Back (PutNgrams tabType (head listIds) mayList) $ Just nodeId) newNgrams
     pure unit
 
 postNewElems :: forall s. NewElems -> CoreParams s -> Aff Unit
@@ -576,7 +576,7 @@ addNewNgram ntype ngrams list = { ngramsPatches: mempty
 
 putNgramsPatches :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
 putNgramsPatches {nodeId, listIds, tabType} =
-  put (toUrl Back (PutNgrams tabType (head listIds) Nothing) $ Just nodeId)
+  put (toUrl endConfigStateful Back (PutNgrams tabType (head listIds) Nothing) $ Just nodeId)
 
 commitPatch :: forall s. {nodeId :: Int, listIds :: Array Int, tabType :: TabType}
             -> Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
@@ -593,7 +593,7 @@ commitPatch props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNe
 loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
 loadNgramsTable { nodeId, listIds, termListFilter, termSizeFilter
          , searchQuery, tabType, params: {offset, limit, orderBy}} =
-  get $ toUrl Back
+  get $ toUrl endConfigStateful Back
           (GetNgrams { tabType, offset, limit, listIds
                      , orderBy: convOrderBy <$> orderBy
                      , termListFilter, termSizeFilter
