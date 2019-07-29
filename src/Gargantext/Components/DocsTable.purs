@@ -86,12 +86,12 @@ type PageLoaderProps =
   , tabType      :: TabType
   , listId       :: Int
   , corpusId     :: Maybe Int
-  , mQuery       :: MQuery
+  , query       :: Query
   }
 
 type DocumentIdsDeleted = Set Int
 type LocalCategories = Map Int Category
-type MQuery = Maybe String
+type Query = String
 
 _documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
 _localCategories     = prop (SProxy :: SProxy "localCategories")
@@ -164,14 +164,14 @@ docViewSpec p = R.createElement el p []
     cpt p _children = do
       documentIdsDeleted <- R.useState' (mempty :: DocumentIdsDeleted)
       localCategories <- R.useState' (mempty :: LocalCategories)
-      mQuery <- R.useState' (Nothing :: MQuery)
+      query <- R.useState' ("" :: Query)
       tableParams <- R.useState' T.initialParams
 
-      pure $ layoutDocview documentIdsDeleted localCategories mQuery tableParams p
+      pure $ layoutDocview documentIdsDeleted localCategories query tableParams p
 
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: R.State DocumentIdsDeleted -> R.State LocalCategories -> R.State MQuery -> R.State T.Params -> Props -> R.Element
-layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (mQuery /\ setMQuery) tableParams@(params /\ _) p = R.createElement el p []
+layoutDocview :: R.State DocumentIdsDeleted -> R.State LocalCategories -> R.State Query -> R.State T.Params -> Props -> R.Element
+layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (query /\ setQuery) tableParams@(params /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "LayoutDocView" cpt
     cpt {nodeId, tabType, listId, corpusId, totalRecords, chart} _children = do
@@ -181,10 +181,10 @@ layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (m
           , H.div {}
             [ H.input { type: "text"
                       , onChange: onChangeQuery
-                      , placeholder: maybe "" identity mQuery}
+                      , placeholder: query}
             ]
           , H.div {className: "col-md-12"}
-            [ pageLoader localCategories tableParams {nodeId, totalRecords, tabType, listId, corpusId, mQuery}
+            [ pageLoader localCategories tableParams {nodeId, totalRecords, tabType, listId, corpusId, query}
             ]
           , H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
@@ -198,7 +198,7 @@ layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (m
           ]
         ]
     onChangeQuery = mkEffectFn1 $ \e -> do
-      setMQuery $ const $ if (unsafeEventValue e) == "" then Nothing else Just $ unsafeEventValue e
+      setQuery $ const $ unsafeEventValue e
     onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
       launchAff $ deleteAllDocuments nodeId
       -- TODO
@@ -211,11 +211,11 @@ type PageParams = { nodeId :: Int
                   , listId :: Int
                   , corpusId :: Maybe Int
                   , tabType :: TabType
-                  , mQuery   :: Maybe String
+                  , query   :: Query
                   , params :: T.Params}
 
 loadPage :: PageParams -> Aff (Array DocumentsView)
-loadPage {nodeId, tabType, mQuery, listId, corpusId, params: {limit, offset, orderBy}} = do
+loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   -- res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let url = (toUrl Back Node (Just nodeId)) <> "/search"
@@ -224,7 +224,7 @@ loadPage {nodeId, tabType, mQuery, listId, corpusId, params: {limit, offset, ord
     , limit
     , orderBy: convOrderBy <$> orderBy
     , tabType
-    , mQuery
+    , query
     }
   let docs = res2corpus <$> res
   pure $
@@ -266,7 +266,7 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
     cpt {nodeId, corpusId, listId} _children = do
       pure $ R2.buff $ T.tableElt
           { rows
-          -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, mQuery})
+          -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
           , setParams: \params -> setTableParams $ const params
           , container: T.defaultContainer { title: "Documents" }
           , colNames:
@@ -314,8 +314,8 @@ pageLoader :: R.State LocalCategories -> R.State T.Params -> PageLoaderProps -> 
 pageLoader localCategories tableParams@(pageParams /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "PageLoader" cpt
-    cpt p@{nodeId, listId, corpusId, tabType, mQuery} _children = do
-      useLoader {nodeId, listId, corpusId, tabType, mQuery, params: pageParams} loadPage $ \{loaded} ->
+    cpt p@{nodeId, listId, corpusId, tabType, query} _children = do
+      useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} loadPage $ \{loaded} ->
         renderPage localCategories tableParams p loaded
 
 ---------------------------------------------------------
