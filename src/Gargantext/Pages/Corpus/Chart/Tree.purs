@@ -3,7 +3,7 @@ module Gargantext.Pages.Corpus.Chart.Tree where
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
+import Gargantext.Config
 import Gargantext.Config.REST (get)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -54,7 +54,7 @@ scatterOptions nodes = Options
 
 getMetrics :: Path -> Aff Loaded
 getMetrics {corpusId, listId, limit, tabType} = do
-  Metrics ms <- get $ toUrl Back (Chart {chartType : ChartTree, tabType: tabType}) $ Just corpusId
+  Metrics ms <- get $ toUrl endConfigStateful Back (Chart {chartType : ChartTree, tabType: tabType}) $ Just corpusId
   pure ms."data"
 
 treeSpec :: Spec {} Path Void

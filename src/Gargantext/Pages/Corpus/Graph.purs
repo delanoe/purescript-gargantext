@@ -516,4 +516,6 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
 --            ]
 --          ]
 --       ]
+getNodes :: Int -> Aff GraphData
+getNodes graphId = get $ Config.toUrl Config.endConfigStateful Config.Back Config.Graph $ Just graphId
 

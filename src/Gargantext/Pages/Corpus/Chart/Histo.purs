@@ -3,7 +3,7 @@ module Gargantext.Pages.Corpus.Chart.Histo where
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
+import Gargantext.Config
 import Gargantext.Config.REST (get)
 import Reactix as R
 import Thermite (Spec)
@@ -61,7 +61,7 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
 
 getMetrics :: Path -> Aff HistoMetrics
 getMetrics {corpusId, tabType} = do
-  ChartMetrics ms <- get $ toUrl Back (Chart {chartType: Histo, tabType: tabType}) $ Just corpusId
+  ChartMetrics ms <- get $ toUrl endConfigStateful Back (Chart {chartType: Histo, tabType: tabType}) $ Just corpusId
   pure ms."data"
 
 histoSpec :: Spec {} Path Void

@@ -19,8 +19,8 @@ import React as React
 import React (ReactClass, ReactElement, Children)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), toUrl, toLink)
-import Gargantext.Config.REST (post, deleteWithBody)
+import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl, endConfigStateful)
+import Gargantext.Config.REST (put, post, deleteWithBody)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
@@ -292,7 +292,7 @@ initialPageParams {nodeId, listId, query} = {nodeId, listId, query, params: T.in
 loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, listId, query, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
-  let url = toUrl Back (Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy }) (Just nodeId)
+  let url = toUrl endConfigStateful Back (Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy }) (Just nodeId)
   SearchResults res <- post url $ SearchQuery {query}
   pure $ res2corpus <$> res.results
   where
@@ -365,7 +365,7 @@ renderPage loaderDispatch { totalRecords, dispatch, container
     isChecked id = Set.member id documentIdsToDelete
     isDeleted (DocumentsView {id}) = Set.member id documentIdsDeleted
     pairUrl (Pair {id,label})
-      | id > 1    = [a [href (toUrl Front NodeContact (Just id)), target "blank"] [text label]]
+      | id > 1    = [a [href (toUrl endConfigStateful Front NodeContact (Just id)), target "blank"] [text label]]
       | otherwise = [text label]
     comma = span [] [text ", "]
     rows = (\(DocumentsView {id,score,title,source,date,pairs,delete,category}) ->
@@ -413,5 +413,11 @@ instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
      = "documents" := post.documents
        ~> jsonEmptyObject
 
+putFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
+putFavorites nodeId = put (toUrl endConfigStateful Back Node (Just nodeId) <> "/favorites")
+
+deleteFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
+deleteFavorites nodeId = deleteWithBody (toUrl endConfigStateful Back Node (Just nodeId) <> "/favorites")
+
 deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Array Int)
-deleteDocuments nodeId = deleteWithBody (toUrl Back Node (Just nodeId) <> "/documents")
+deleteDocuments nodeId = deleteWithBody (toUrl endConfigStateful Back Node (Just nodeId) <> "/documents")

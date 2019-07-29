@@ -21,6 +21,7 @@ import Thermite (Spec)
 
 import Gargantext.Prelude
 import Gargantext.Config (toUrl, End(..), NodeType(..))
+import Gargantext.Config (toUrl, endConfigStateful, End(..), NodeType(..), Path(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Pages.Annuaire.User.Contacts.Types
@@ -167,9 +168,9 @@ layoutUser =
 -- | toUrl to get data
 getContact :: Int -> Aff ContactData
 getContact id = do
-  contactNode <- get $ toUrl Back Node $ Just id
+  contactNode <- get $ toUrl endConfigStateful Back Node $ Just id
   -- TODO: we need a default list for the pairings
-  --defaultListIds <- get $ toUrl Back (Children NodeList 0 1 Nothing) $ Just id
+  --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
   --  Just (NodePoly { id: defaultListId }) ->
   --    pure {contactNode, defaultListId}

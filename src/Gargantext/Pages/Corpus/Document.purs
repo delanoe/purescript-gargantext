@@ -12,7 +12,7 @@ import Reactix as R
 import Thermite (PerformAction, Render, Spec, simpleSpec, cmapProps, createClass)
 
 import Gargantext.Prelude
-import Gargantext.Config          (toUrl, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..))
+import Gargantext.Config          (toUrl, endConfigStateful, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..), CTabNgramType(..))
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader2 (useLoader)
@@ -353,7 +353,7 @@ layout =
 ------------------------------------------------------------------------
 
 loadDocument :: Int -> Aff NodeDocument
-loadDocument = get <<< toUrl Back Node <<< Just
+loadDocument = get <<< toUrl endConfigStateful Back Node <<< Just
 
 loadData :: DocPath -> Aff LoadedData
 loadData {nodeId, listIds, tabType} = do

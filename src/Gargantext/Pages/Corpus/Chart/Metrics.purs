@@ -6,7 +6,7 @@ import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
-import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
+import Gargantext.Config
 import Gargantext.Config.REST (get)
 import Reactix as R
 
@@ -93,7 +93,7 @@ scatterOptions metrics = Options
 
 getMetrics :: Path -> Aff Loaded
 getMetrics {corpusId, listId, limit, tabType} = do
-  Metrics ms <- get $ toUrl Back (CorpusMetrics {listId, tabType, limit}) $ Just corpusId
+  Metrics ms <- get $ toUrl endConfigStateful Back (CorpusMetrics {listId, tabType, limit}) $ Just corpusId
   pure ms."data"
 
 

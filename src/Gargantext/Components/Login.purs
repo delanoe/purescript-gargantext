@@ -19,7 +19,7 @@ import Web.Storage.Storage (getItem, setItem, removeItem)
 
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (toUrl, Path(..), End(..))
+import Gargantext.Config (toUrl, endConfigStateful, Path(..), End(..))
 import Gargantext.Config.REST (post)
 import Gargantext.Components.Modals.Modal (modalHide)
 import Gargantext.Components.Login.Types
@@ -245,4 +245,4 @@ setAuthData (Just (AuthData {tree_id, token})) = do
   setItem "tree_id" (show tree_id) ls
 
 postAuthRequest :: AuthRequest -> Aff AuthResponse
-postAuthRequest = post $ toUrl Back Auth Nothing
+postAuthRequest = post $ toUrl endConfigStateful Back Auth Nothing

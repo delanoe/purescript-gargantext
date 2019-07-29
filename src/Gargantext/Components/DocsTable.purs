@@ -23,8 +23,8 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), TabType, TabPostQuery(..), toUrl, toLink)
-import Gargantext.Config.REST (delete, post)
+import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, TabPostQuery(..), toUrl, endConfigStateful, toLink)
+import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
@@ -211,8 +211,8 @@ type PageParams = { nodeId :: Int
 loadPage :: PageParams -> Aff (Array DocumentsView)
 loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
-  -- res <- get $ toUrl Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let url = (toUrl Back Node (Just nodeId)) <> "/table"
+  -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
+  let url = (toUrl endConfigStateful Back Node (Just nodeId)) <> "/table"
   res <- post url $ TabPostQuery {
       offset
     , limit
@@ -356,8 +356,26 @@ searchResults :: SearchQuery -> Aff Int
 searchResults squery = post "http://localhost:8008/count" unit
   -- TODO
 
+
+newtype CategoryQuery = CategoryQuery {
+    nodeIds :: Array Int
+  , category :: Category
+  }
+
+instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
+  encodeJson (CategoryQuery post) =
+       "ntc_nodesId" := post.nodeIds
+    ~> "ntc_category" := encodeJson post.category
+    ~> jsonEmptyObject
+
+categoryUrl :: Int -> String
+categoryUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/category"
+
+putCategories :: Int -> CategoryQuery -> Aff (Array Int)
+putCategories nodeId = put $ categoryUrl nodeId
+
 documentsUrl :: Int -> String
-documentsUrl nodeId = toUrl Back Node (Just nodeId) <> "/documents"
+documentsUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/documents"
 
 deleteAllDocuments :: Int -> Aff (Array Int)
 deleteAllDocuments nodeId = delete $ documentsUrl nodeId
