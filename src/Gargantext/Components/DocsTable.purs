@@ -271,7 +271,7 @@ renderPage (_ /\ setTableParams) p res = R.createElement el p []
     corpusDocument (Just corpusId) = Router.CorpusDocument corpusId
     corpusDocument _ = Router.Document
 
-    cpt {nodeId, corpusId, listId} _children = do
+    cpt {nodeId, corpusId, listId, totalRecords} _children = do
       localCategories <- R.useState' (mempty :: LocalCategories)
 
       pure $ R2.buff $ T.tableElt
@@ -287,8 +287,7 @@ renderPage (_ /\ setTableParams) p res = R.createElement el p []
             , "Title"
             , "Source"
             ]
-            -- , totalRecords
-          , totalRecords: 1000  -- TODO
+          , totalRecords
           }
       where
         getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
