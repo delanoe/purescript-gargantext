@@ -29,6 +29,7 @@ import Gargantext.Prelude
 import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl)
 import Gargantext.Config.REST (put, post, deleteWithBody)
 import Gargantext.Components.Loader as Loader
+import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.DecodeMaybe ((.|))
@@ -83,9 +84,9 @@ initialState =
   }
 
 data Action
-  = MarkFavorites (Array Int)
+  = MarkCategory Category (Array Int)
   | ToggleDocumentToDelete Int
-  | Trash
+  | TrashDocuments
 
 newtype Pair = Pair
   { id    :: Int
@@ -106,8 +107,8 @@ newtype DocumentsView
     , score  :: Int
     , pairs  :: Array Pair
     , delete :: Boolean
+    , category :: Category
     }
-
 
 derive instance genericDocumentsView :: Generic DocumentsView _
 
@@ -118,7 +119,7 @@ newtype Response = Response
   { id         :: Int
   , created    :: String
   , hyperdata  :: Hyperdata
-  , favorite   :: Boolean
+  , category   :: Category
   , ngramCount :: Int
 -- , date      :: String
 -- , score     :: Int
@@ -174,7 +175,7 @@ instance decodeResponse :: DecodeJson Response where
     hyperdata  <- obj .? "hyperdata"
     favorite   <- obj .? "favorite"
     ngramCount <- obj .? "ngramCount"
-    pure $ Response { id, created, hyperdata, favorite, ngramCount }
+    pure $ Response { id, created, hyperdata, category: decodeCategory favorite, ngramCount }
 
 -- | Filter
 -- TODO: unused
@@ -194,12 +195,12 @@ layoutDocview :: Spec State Props Action
 layoutDocview = simpleSpec performAction render
   where
     performAction :: PerformAction State Props Action
-    performAction (MarkFavorites nids) {nodeId} _ =
-      void $ lift $ putFavorites nodeId (FavoriteQuery {favorites: nids})
+    performAction (MarkCategory category nids) {nodeId} _ =
+      void $ lift $ putCategories nodeId $ CategoryQuery {nodeIds: nids, category: favCategory category}
     --TODO add array of delete rows here
     performAction (ToggleDocumentToDelete nid) _ _ =
       modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
-    performAction Trash {nodeId} {documentIdsToDelete} = do
+    performAction TrashDocuments {nodeId} {documentIdsToDelete} = do
       void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
       modifyState_ \{documentIdsToDelete, documentIdsDeleted} ->
         { documentIdsToDelete: mempty
@@ -229,7 +230,7 @@ layoutDocview = simpleSpec performAction render
             ]
           , div [className "col-md-12"]
              [ button [ style {backgroundColor: "peru", padding : "9px", color : "white", border : "white", float: "right"}
-                      , onClick $ (\_ -> dispatch Trash)
+                      , onClick $ (\_ -> dispatch TrashDocuments)
                       ]
                [  i [className "glyphitem glyphicon glyphicon-trash", style {marginRight : "9px"}] []
                ,  text "Trash it !"
@@ -245,12 +246,12 @@ layoutDocviewGraph :: Spec State Props Action
 layoutDocviewGraph = simpleSpec performAction render
   where
     performAction :: PerformAction State Props Action
-    performAction (MarkFavorites nids) {nodeId} _ =
-      void $ lift $ putFavorites nodeId (FavoriteQuery {favorites: nids})
+    performAction (MarkCategory category nids) {nodeId} _ =
+      void $ lift $ putCategories nodeId $ CategoryQuery {nodeIds: nids, category: favCategory category}
     --TODO add array of delete rows here
     performAction (ToggleDocumentToDelete nid) _ _ =
       modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
-    performAction Trash {nodeId} {documentIdsToDelete} = do
+    performAction TrashDocuments {nodeId} {documentIdsToDelete} = do
       void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
       modifyState_ \{documentIdsToDelete, documentIdsDeleted} ->
         { documentIdsToDelete: mempty
@@ -275,7 +276,7 @@ layoutDocviewGraph = simpleSpec performAction render
                 , container
                 }
             , button [ style {backgroundColor: "peru", padding : "9px", color : "white", border : "white", float: "right"}
-                      , onClick $ (\_ -> dispatch Trash)
+                      , onClick $ (\_ -> dispatch TrashDocuments)
                       ]
                [  i [className "glyphitem glyphicon glyphicon-trash", style {marginRight : "9px"}] []
                ,  text "Trash it !"
@@ -303,7 +304,7 @@ loadPage {nodeId, listId, query, params: {limit, offset, orderBy}} = do
     res2corpus :: Response -> DocumentsView
     res2corpus (Response { id, created: date, ngramCount: score
                          , hyperdata: Hyperdata {title, source}
-                      -- favorite TODO
+                         , category
                          }) =
       DocumentsView
         { id
@@ -313,6 +314,7 @@ loadPage {nodeId, listId, query, params: {limit, offset, orderBy}} = do
         , score
         , pairs: []
         , delete: false
+        , category
         }
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
@@ -363,7 +365,7 @@ renderPage loaderDispatch { totalRecords, dispatch, container
   ]
   where
     -- TODO: how to interprete other scores?
-    gi 0 = "glyphicon glyphicon-star-empty"
+    gi Favorite = "glyphicon glyphicon-star-empty"
     gi _ = "glyphicon glyphicon-star"
     isChecked id = Set.member id documentIdsToDelete
     isDeleted (DocumentsView {id}) = Set.member id documentIdsDeleted
@@ -371,7 +373,7 @@ renderPage loaderDispatch { totalRecords, dispatch, container
       | id > 1    = [a [href (toUrl Front NodeContact (Just id)), target "blank"] [text label]]
       | otherwise = [text label]
     comma = span [] [text ", "]
-    rows = (\(DocumentsView {id,score,title,source,date,pairs,delete}) ->
+    rows = (\(DocumentsView {id,score,title,source,date,pairs,delete,category}) ->
                 let
                   strikeIfDeleted
                     | delete    = [style {textDecoration : "line-through"}]
@@ -379,8 +381,8 @@ renderPage loaderDispatch { totalRecords, dispatch, container
                 in
                 { row:
                     [ div []
-                      [ a [ className $ gi score
-                          , onClick $ const $ dispatch $ MarkFavorites [id]
+                      [ a [ className $ gi category
+                          , onClick $ const $ dispatch $ MarkCategory category [id]
                           ] []
                       ]
                     -- TODO show date: Year-Month-Day only
@@ -405,15 +407,6 @@ pageLoader props = React.createElement pageLoaderClass props []
 
 ---------------------------------------------------------
 
-newtype FavoriteQuery = FavoriteQuery
-                        { favorites :: Array Int
-                        }
-
-instance encodeJsonFQuery :: EncodeJson FavoriteQuery where
-  encodeJson (FavoriteQuery post)
-     = "favorites" := post.favorites
-       ~> jsonEmptyObject
-
 newtype DeleteDocumentQuery = DeleteDocumentQuery
   {
     documents :: Array Int
@@ -424,12 +417,6 @@ instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
   encodeJson (DeleteDocumentQuery post)
      = "documents" := post.documents
        ~> jsonEmptyObject
-
-putFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
-putFavorites nodeId = put (toUrl Back Node (Just nodeId) <> "/favorites")
-
-deleteFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
-deleteFavorites nodeId = deleteWithBody (toUrl Back Node (Just nodeId) <> "/favorites")
 
 deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Array Int)
 deleteDocuments nodeId = deleteWithBody (toUrl Back Node (Just nodeId) <> "/documents")

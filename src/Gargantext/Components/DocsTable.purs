@@ -10,7 +10,6 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson
 import Data.Array (drop, take, (:), filter)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.HTTP.Method (Method(..))
 import Data.Lens
@@ -41,6 +40,7 @@ import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType,
 import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
@@ -50,26 +50,6 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_
 
 type NodeID = Int
 type TotalRecords = Int
-data Category = Trash | Normal | Favorite
-derive instance genericFavorite :: Generic Category _
-instance showCategory :: Show Category where
-  show = genericShow
-instance eqCategory :: Eq Category where
-  eq = genericEq
-instance encodeJsonCategory :: EncodeJson Category where
-  encodeJson Trash = encodeJson 0
-  encodeJson Normal = encodeJson 1
-  encodeJson Favorite = encodeJson 2
-
-favCategory :: Category -> Category
-favCategory Normal = Favorite
-favCategory Trash = Favorite
-favCategory Favorite = Normal
-
-trashCategory :: Category -> Category
-trashCategory Normal = Trash
-trashCategory Trash = Normal
-trashCategory Favorite = Trash
 
 type Props =
   { nodeId       :: Int
@@ -142,12 +122,6 @@ instance decodeHyperdata :: DecodeJson Hyperdata where
     source <- obj .? "source"
     pub_year <- obj .? "publication_year"
     pure $ Hyperdata { title,source, pub_year}
-
-decodeCategory :: Int -> Category
-decodeCategory 0 = Trash
-decodeCategory 1 = Normal
-decodeCategory 2 = Favorite
-decodeCategory _ = Normal
 
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
@@ -396,24 +370,6 @@ instance encodeJsonSQuery :: EncodeJson SearchQuery where
 searchResults :: SearchQuery -> Aff Int
 searchResults squery = post "http://localhost:8008/count" unit
   -- TODO
-
-
-newtype CategoryQuery = CategoryQuery {
-    nodeIds :: Array Int
-  , category :: Category
-  }
-
-instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
-  encodeJson (CategoryQuery post) =
-       "ntc_nodesId" := post.nodeIds
-    ~> "ntc_category" := encodeJson post.category
-    ~> jsonEmptyObject
-
-categoryUrl :: Int -> String
-categoryUrl nodeId = toUrl Back Node (Just nodeId) <> "/category"
-
-putCategories :: Int -> CategoryQuery -> Aff (Array Int)
-putCategories nodeId = put $ categoryUrl nodeId
 
 documentsUrl :: Int -> String
 documentsUrl nodeId = toUrl Back Node (Just nodeId) <> "/documents"
