@@ -24,6 +24,7 @@ import Data.Int (fromString)
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
@@ -31,6 +32,7 @@ import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import React as React
 import React (ReactClass, ReactElement, Children)
 import Reactix as R
+import Reactix.SyntheticEvent as RE
 import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 ------------------------------------------------------------------------
@@ -210,7 +212,7 @@ searchBar (query /\ setQuery) = R.createElement el {} []
         [ H.div {className: "col col-md-3 form-group"}
           [ H.input { type: "text"
                     , className: "form-control"
-                    , on: {change: onSearchChange queryText}
+                    , on: {change: onSearchChange queryText, keyUp: onSearchKeyup queryText}
                     , placeholder: query}
           ]
         , H.div {className: "col col-md-1"}
@@ -224,6 +226,13 @@ searchBar (query /\ setQuery) = R.createElement el {} []
     onSearchChange :: forall e. R.State Query -> e -> Effect Unit
     onSearchChange (_ /\ setQueryText) = \e ->
       setQueryText $ const $ R2.unsafeEventValue e
+
+    onSearchKeyup :: R.State Query -> DE.KeyboardEvent -> Effect Unit
+    onSearchKeyup (queryText /\ _) = \e ->
+      if DE.key e == "Enter" then
+        setQuery $ const queryText
+      else
+        pure $ unit
 
     onSearchClick :: forall e. R.State Query -> e -> Effect Unit
     onSearchClick (queryText /\ _) = \e ->
