@@ -5,6 +5,8 @@ import Prelude hiding (div)
 import Data.Lens                                       (Lens', lens)
 import Data.Maybe                                      (Maybe(..))
 import Effect (Effect)
+import Gargantext.Components.Login                  as LN
+import Gargantext.Config (EndConfig, endConfigStateful)
 
 import Gargantext.Components.Login                  as LN
 --import Gargantext.Components.Login.Types            as LNT
@@ -19,6 +21,7 @@ type AppState =
   , showCorpus         :: Boolean
   --, graphExplorerState :: Record GET.StateGlue
   , showTree           :: Boolean
+  , endConfig          :: EndConfig
   }
 
 initAppState :: Effect AppState
@@ -32,6 +35,7 @@ initAppState = do
     , showCorpus     : false
     --, graphExplorerState : GET.initialStateGlue
     , showTree : false
+    , endConfig : endConfigStateful
     }
 
 

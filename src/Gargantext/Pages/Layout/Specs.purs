@@ -28,9 +28,13 @@ import Gargantext.Pages.Texts as Texts
 import Gargantext.Pages.Home as L
 import Gargantext.Pages.Layout.Actions (Action(..), _graphExplorerAction, _loginAction, performAction)
 import Gargantext.Pages.Layout.Specs.SearchBar as SB
-import Gargantext.Pages.Layout.States (AppState, _loginState, _graphExplorerState)
+import Gargantext.Pages.Layout.States (AppState, _graphExplorerState, _searchState, _loginState, _addCorpusState)
 import Gargantext.Router (Routes(..))
 import Gargantext.Utils.Reactix as R2
+
+-- TODO
+-- rewrite layoutSpec to use state (with EndConfig)
+-- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
 
 layoutSpec :: Spec AppState {} Action
 layoutSpec =
@@ -101,6 +105,7 @@ layout0 layout =
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
               ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) $ noState $ Tree.treeview
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) $ Tree.treeview
             Nothing ->
               outerLayout1
       , rs bs
@@ -117,6 +122,7 @@ layout0 layout =
         ] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
+    --as = noState Tree.treeview
     bs = innerLayout $ layout
 
     innerLayout :: Spec AppState {} Action

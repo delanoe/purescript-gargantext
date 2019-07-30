@@ -20,7 +20,7 @@ import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Thermite (Spec)
+import Thermite as T
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 import Web.File.File (toBlob)
@@ -30,6 +30,7 @@ import Web.File.FileReader.Aff (readAsText)
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Config (toUrl, endConfigStateful, End(..), NodeType(..), readNodeType)
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
+import Gargantext.Pages.Layout.States (AppState)
 import Gargantext.Router as Router
 import Gargantext.Types (class ToQuery, toQuery)
 import Gargantext.Utils (id)
@@ -179,7 +180,6 @@ elTreeview props = R.createElement el props []
 
 treeview :: Spec {} Props Void
 treeview = R2.elSpec $ R.hooksComponent "TreeView" treeviewCpt
-
 
 treeviewCpt {root, mCurrentRoute} _children = do
   -- NOTE: this is a hack to reload the tree view on demand
