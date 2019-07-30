@@ -92,7 +92,6 @@ type PageLoaderProps =
   , query       :: Query
   }
 
-type DocumentIdsDeleted = Set Int
 type LocalCategories = Map Int Category
 type Query = String
 
@@ -165,16 +164,14 @@ docViewSpec p = R.createElement el p []
   where
     el = R.hooksComponent "DocView" cpt
     cpt p _children = do
-      documentIdsDeleted <- R.useState' (mempty :: DocumentIdsDeleted)
-      localCategories <- R.useState' (mempty :: LocalCategories)
       query <- R.useState' ("" :: Query)
       tableParams <- R.useState' T.initialParams
 
-      pure $ layoutDocview documentIdsDeleted localCategories query tableParams p
+      pure $ layoutDocview query tableParams p
 
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: R.State DocumentIdsDeleted -> R.State LocalCategories -> R.State Query -> R.State T.Params -> Props -> R.Element
-layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories query tableParams@(params /\ _) p = R.createElement el p []
+layoutDocview :: R.State Query -> R.State T.Params -> Props -> R.Element
+layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "LayoutDocView" cpt
     cpt {nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch} _children = do
@@ -183,7 +180,7 @@ layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories qu
           [ chart
           , if showSearch then searchBar query else H.div {} []
           , H.div {className: "col-md-12"}
-            [ pageLoader localCategories tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
+            [ pageLoader tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
           , H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
                        , style: {backgroundColor: "peru", color : "white", border : "white"}
@@ -198,8 +195,6 @@ layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories qu
 
     onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
       launchAff $ deleteAllDocuments nodeId
-      -- TODO
-      -- setDocumentIdsDeleted $ \dids -> Set.union dids (Set.fromFoldable ids)
 
 searchBar :: R.State Query -> R.Element
 searchBar (query /\ setQuery) = R.createElement el {} []
@@ -284,8 +279,8 @@ loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orde
 
     convOrderBy _ = DateAsc -- TODO
 
-renderPage :: R.State LocalCategories -> R.State T.Params -> PageLoaderProps -> Array DocumentsView -> R.Element
-renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res = R.createElement el p []
+renderPage :: R.State T.Params -> PageLoaderProps -> Array DocumentsView -> R.Element
+renderPage (_ /\ setTableParams) p res = R.createElement el p []
   where
     el = R.hooksComponent "RenderPage" cpt
 
@@ -293,13 +288,14 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
     gi _ = "glyphicon glyphicon-star-empty"
     trashStyle Trash = {textDecoration: "line-through"}
     trashStyle _ = {textDecoration: "none"}
-    getCategory {_id, category} = maybe category identity (localCategories ^. at _id)
     corpusDocument (Just corpusId) = Router.CorpusDocument corpusId
     corpusDocument _ = Router.Document
 
     cpt {nodeId, corpusId, listId} _children = do
+      localCategories <- R.useState' (mempty :: LocalCategories)
+
       pure $ R2.buff $ T.tableElt
-          { rows
+          { rows: rows localCategories
           -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
           , setParams: \params -> setTableParams $ const params
           , container: T.defaultContainer { title: "Documents" }
@@ -315,19 +311,20 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
           , totalRecords: 1000  -- TODO
           }
       where
-        rows = (\(DocumentsView r) ->
-                    let cat = getCategory r
+        getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
+        rows localCategories = (\(DocumentsView r) ->
+                    let cat = getCategory localCategories r
                         isDel = Trash == cat in
                     { row: map R2.scuff $ [
                           H.div {}
                           [ H.a { className: gi cat
                                 , style: trashStyle cat
-                                , onClick: onClick Favorite r._id cat
+                                , on: {click: onClick localCategories Favorite r._id cat}
                                 } []
                           ]
                         , H.input { type: "checkbox"
                                   , checked: isDel
-                                  , onClick: onClick Trash r._id cat
+                                  , on: {click: onClick localCategories Trash r._id cat}
                                   }
                         -- TODO show date: Year-Month-Day only
                         , H.div { style: trashStyle cat } [ H.text (show r.date) ]
@@ -339,18 +336,18 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
                         ]
                     , delete: true
                     }) <$> res
-        onClick catType nid cat = mkEffectFn1 $ \_-> do
+        onClick (_ /\ setLocalCategories) catType nid cat = \_-> do
           let newCat = if (catType == Favorite) then (favCategory cat) else (trashCategory cat)
           setLocalCategories $ insert nid newCat
           void $ launchAff $ putCategories nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
 
-pageLoader :: R.State LocalCategories -> R.State T.Params -> PageLoaderProps -> R.Element
-pageLoader localCategories tableParams@(pageParams /\ _) p = R.createElement el p []
+pageLoader :: R.State T.Params -> PageLoaderProps -> R.Element
+pageLoader tableParams@(pageParams /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "PageLoader" cpt
     cpt p@{nodeId, listId, corpusId, tabType, query} _children = do
       useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} loadPage $ \{loaded} ->
-        renderPage localCategories tableParams p loaded
+        renderPage tableParams p loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
