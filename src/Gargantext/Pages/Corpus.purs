@@ -23,4 +23,4 @@ layout :: Spec {} {nodeId :: Int} Void
 layout = R2.elSpec $ R.hooksComponent "CorpusLoader" cpt
   where
     cpt {nodeId} _children = do
-      pure $ H.div {} [H.text "Empty page"]
+      pure $ H.div {} [H.text "Soon: corpus synthesis here (when all others charts/featurs will be stabilized)."]

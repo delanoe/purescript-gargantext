@@ -208,13 +208,12 @@ searchBar (query /\ setQuery) = R.createElement el {} []
           [ H.input { type: "text"
                     , className: "form-control"
                     , on: {change: onSearchChange queryText, keyUp: onSearchKeyup queryText}
-                    , placeholder: query}
+                    , placeholder: query
+                    , defaultValue: query}
           ]
         , H.div {className: "col col-md-1"}
-          [ H.button { type: "submit"
-                    , className: "btn btn-default"
-                    , on: {click: onSearchClick queryText}}
-            [ H.text "Search" ]
+          [ searchButton queryText
+          , if query /= "" then clearButton else H.div {} []
           ]
         ]
 
@@ -229,9 +228,16 @@ searchBar (query /\ setQuery) = R.createElement el {} []
       else
         pure $ unit
 
-    onSearchClick :: forall e. R.State Query -> e -> Effect Unit
-    onSearchClick (queryText /\ _) = \e ->
-      setQuery $ const queryText
+    searchButton (queryText /\ _) =
+      H.button { type: "submit"
+               , className: "btn btn-default"
+               , on: {click: \e -> setQuery $ const queryText}}
+      [ H.span {className: "glyphicon glyphicon-search"} [] ]
+
+    clearButton =
+      H.button { className: "btn btn-danger"
+               , on: {click: \e -> setQuery $ const ""}}
+      [ H.span {className: "glyphicon glyphicon-remove"} [] ]
 
 mock :: Boolean
 mock = false
