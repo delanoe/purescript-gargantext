@@ -11,7 +11,6 @@ import Effect.Aff (Aff)
 import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
 import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
 import Thermite (PerformAction, Render, Spec, _render, modifyState_, simpleSpec)
-import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, setItem, removeItem)
@@ -152,39 +151,6 @@ renderSpec = simpleSpec performAction render
           ]
         ]
       ]
-
-      -- div [ className "modal fade myModal"
-      --                    , role "dialog"
---                    , _data {show : true}
---                    ][ div [ className "modal-dialog"
---                           , role "document"
---                           ] [ div [ className "modal-content"]
---                                   [ div [ className "modal-header"]
---                                         [ h5 [ className "modal-title"
---                                              ]
---                                              [ text "CorpusView"
---                                              ]
---                                         , button [ _type "button"
---                                                  , className "close"
---                                                  , _data { dismiss : "modal"}
---                                                  ] [ span [ aria {hidden : true}]
---                                                           [ text "X"]
---                                                    ]
---                                         ]
-
---                                   , div [ className "modal-body"]
---                                         [ ul [ className "list-group"] ( map fn1 state.authData ) ]
-
---                                   , div [className "modal-footer"]
---                                         [ button [ _type "button"
---                                                  , className "btn btn-secondary"
---                                                  , _data {dismiss : "modal"}
---                                                  ] [ text "GO"]
---                                         ]
---                                    ]
---                             ]
---                      ]
---         ]
 
 
 getAuthData :: Effect (Maybe AuthData)
