@@ -5,8 +5,8 @@ import Data.Lens (over)
 import Data.Maybe (Maybe(Nothing, Just))
 import Effect (Effect)
 import React (ReactElement)
-import React.DOM (a, button, div, footer, hr', img, li, p, span, text, ul)
-import React.DOM.Props (_data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title, height, width)
+import React.DOM (button, div, text)
+import React.DOM.Props (_id, className, onClick, role, style)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
@@ -85,7 +85,7 @@ layout0 layout =
   fold
   [ searchBar
   , outerLayout
-  , layoutFooter
+  , noState layoutFooter
   ]
   where
     outerLayout1 = simpleSpec defaultPerformAction defaultRender
@@ -132,7 +132,7 @@ layout1 layout =
   [ searchBar
   , layout
   -- , outerLayout
-  , layoutFooter
+  , noState layoutFooter
   ]
   where
     outerLayout1 = simpleSpec defaultPerformAction defaultRender
@@ -342,28 +342,29 @@ divDropdownRight d s =
     [ logLinks d s ]
   ]
 
-layoutFooter :: Spec AppState {} Action
-layoutFooter = simpleSpec performAction render
+layoutFooter :: Spec {} {} Void
+layoutFooter = R2.elSpec $ R.hooksComponent "LayoutFooter" cpt
   where
-    render :: Render AppState {} Action
-    render dispatch _ state _ = [div [ className "container" ] [ hr', footerLegalInfo']]
-      where
-        footerLegalInfo' = footer [] [ p [] [ text "Gargantext "
-                                   , span [className "glyphicon glyphicon-registration-mark" ] []
-                                   , text ", version 4.0"
-                                   , a [ href "http://www.cnrs.fr"
-                                       , target "blank"
-                                       , title "Project hosted by CNRS."
-                                       ]
-                                         [ text ", Copyrights "
-                                         , span [ className "glyphicon glyphicon-copyright-mark" ] []
-                                         , text " CNRS 2017-Present"
-                                         ]
-                                   , a [ href "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
-                                       , target "blank"
-                                       , title "Legal instructions of the project."
-                                       ]
-                                         [ text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
-                                         , text "."
-                                   ]
-                            ]
+    cpt {} _children = do
+      pure $ H.div { className: "container" } [ H.hr {}, footerLegalInfo']
+
+    footerLegalInfo' = H.footer {}
+                        [ H.p {} [ H.text "Gargantext "
+                                , H.span {className: "glyphicon glyphicon-registration-mark"} []
+                                , H.text ", version 4.0"
+                                , H.a { href: "http://www.cnrs.fr"
+                                      , target: "blank"
+                                      , title: "Project hosted by CNRS."
+                                      }
+                                  [ H.text ", Copyrights "
+                                  , H.span { className: "glyphicon glyphicon-copyright-mark" } []
+                                  , H.text " CNRS 2017-Present"
+                                  ]
+                                , H.a { href: "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
+                                      , target: "blank"
+                                      , title: "Legal instructions of the project."
+                                      }
+                                  [ H.text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
+                                , H.text "."
+                                ]
+                        ]
