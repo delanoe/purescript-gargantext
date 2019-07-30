@@ -110,7 +110,7 @@ renderCpt d s = R.createElement el {} []
       (state /\ setState) <- R.useState' s
 
       R.useEffect $
-        if (state.username /= s.username && state.password /= s.password) then do
+        if (state /= s) then do
           _ <- d $ SetCredentials state.username state.password
           pure $ d $ PostAuth
         else
