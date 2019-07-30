@@ -22,6 +22,7 @@ import Gargantext.Config (toUrl, Path(..), End(..))
 import Gargantext.Config.REST (post)
 import Gargantext.Components.Modals.Modal (modalHide)
 import Gargantext.Components.Login.Types
+import Gargantext.Utils.Reactix as R2
 
 -- TODO: ask for login (modal) or account creation after 15 mn when user
 -- is not logged and has made one search at least
@@ -128,10 +129,10 @@ renderSpec = simpleSpec performAction render
 
                   , div [className "form-group"]
                     [ p [] [text state.errorMessage]
-                    , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName (unsafeEventValue e))]
+                    , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName $ R2.unsafeEventValue e)]
                     ]
                   , div [className "form-group"]
-                    [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password,onInput \e -> dispatch (SetPassword (unsafeEventValue e))]
+                    [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password,onInput \e -> dispatch (SetPassword $ R2.unsafeEventValue e)]
                     , div [className "clearfix"] []
                     ]
                   , div [className "center"]
@@ -185,10 +186,6 @@ renderSpec = simpleSpec performAction render
 --                      ]
 --         ]
 
-
-
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value
 
 getAuthData :: Effect (Maybe AuthData)
 getAuthData = do

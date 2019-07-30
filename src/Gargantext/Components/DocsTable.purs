@@ -198,7 +198,7 @@ layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (q
           ]
         ]
     onChangeQuery = mkEffectFn1 $ \e -> do
-      setQuery $ const $ unsafeEventValue e
+      setQuery $ const $ R2.unsafeEventValue e
     onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
       launchAff $ deleteAllDocuments nodeId
       -- TODO
@@ -389,6 +389,3 @@ toggleSet :: forall a. Ord a => a -> Set a -> Set a
 toggleSet a s
   | Set.member a s = Set.delete a s
   | otherwise      = Set.insert a s
-
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value
