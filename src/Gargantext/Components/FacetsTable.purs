@@ -26,11 +26,12 @@ import React as React
 import React (ReactClass, ReactElement, Children)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl)
+import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl, toLink)
 import Gargantext.Config.REST (put, post, deleteWithBody)
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
+import Gargantext.Router as Router
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import React.DOM (a, br', button, div, i, input, p, text, span)
@@ -387,7 +388,7 @@ renderPage loaderDispatch { totalRecords, dispatch, container
                       ]
                     -- TODO show date: Year-Month-Day only
                     , div strikeIfDeleted [text date]
-                    , a (strikeIfDeleted <> [ href (toUrl Front (ListDocument (Just listId)) (Just id))
+                    , a (strikeIfDeleted <> [ href $ toLink $ Router.Document listId id
                                             , target "blank"])
                         [ text title ]
                     , div strikeIfDeleted [text source]
