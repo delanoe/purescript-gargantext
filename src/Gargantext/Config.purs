@@ -221,10 +221,8 @@ pathUrl c (Chart {chartType, tabType}) i =
 routesPath :: R.Routes -> String
 routesPath R.Home = ""
 routesPath R.Login = "login"
-routesPath R.SearchView = "search"
 routesPath (R.Folder i) = "folder/" <> show i
 routesPath (R.Corpus i) = "corpus/" <> show i
-routesPath R.AddCorpus = "addCorpus"
 routesPath (R.CorpusDocument c l i) = "corpus/" <> show c <> "/list/" <> show l <> "/document/" <> show i
 routesPath (R.Document l i) = "list/" <> show l <> "/document/" <> show i
 routesPath (R.PGraphExplorer i) = "#/"
