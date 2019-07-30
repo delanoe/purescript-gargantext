@@ -53,7 +53,7 @@ pagesComponent s = case s.currentRoute of
     Nothing    -> selectSpec Home -- TODO add Error page here: url requested does not exist (with funny Garg image)
   where
     selectSpec :: Routes -> Spec AppState {} Action
-    selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
+    selectSpec Home              = layout0 $ noState $ L.layoutLanding EN
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
 
