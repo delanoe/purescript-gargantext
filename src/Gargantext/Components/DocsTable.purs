@@ -76,6 +76,7 @@ type Props =
   , tabType      :: TabType
   , listId       :: Int
   , corpusId     :: Maybe Int
+  , showSearch   :: Boolean
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.
   }
@@ -174,11 +175,11 @@ layoutDocview :: R.State DocumentIdsDeleted -> R.State LocalCategories -> R.Stat
 layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories query tableParams@(params /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "LayoutDocView" cpt
-    cpt {nodeId, tabType, listId, corpusId, totalRecords, chart} _children = do
+    cpt {nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch} _children = do
       pure $ H.div {className: "container1"}
         [ H.div {className: "row"}
           [ chart
-          , searchBar query
+          , if showSearch then searchBar query else H.div {} []
           , H.div {className: "col-md-12"}
             [ pageLoader localCategories tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
           , H.div {className: "col-md-1 col-md-offset-11"}
