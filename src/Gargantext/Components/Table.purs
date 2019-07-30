@@ -14,6 +14,7 @@ import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec, StateCoT
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
+import Gargantext.Utils.Reactix as R2
 
 type TableContainerProps =
   { pageSizeControl     :: ReactElement
@@ -218,7 +219,7 @@ sizeDD :: PageSizes -> (Action -> Effect Unit) -> ReactElement
 sizeDD ps d
   = span []
     [ select [ className "form-control"
-             , onChange (\e -> d (ChangePageSize $ string2PageSize $ (unsafeCoerce e).target.value))
+             , onChange (\e -> d (ChangePageSize $ string2PageSize $ R2.unsafeEventValue e))
              ] $ map (optps ps) aryPS
     ]
 

@@ -7,7 +7,8 @@ import React.DOM (br', button, div, input, text)
 import React.DOM.Props (_id, _type, className, name, onClick, onInput, placeholder, value)
 import Routing.Hash (setHash)
 import Thermite (PerformAction, Render, Spec, modifyState, simpleSpec)
-import Unsafe.Coerce (unsafeCoerce)
+
+import Gargantext.Utils.Reactix as R2
 
 type State =
   {
@@ -26,20 +27,16 @@ data Action
   = GO
   | SetQuery String
 
+performAction :: PerformAction State {} Action
+performAction (SetQuery q) _ _ = void do
+  modifyState $ _ { query = q }
 
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value
+performAction GO _ _ = void do
+  liftEffect $ setHash "/addCorpus"
 
 searchSpec :: Spec State {} Action
 searchSpec = simpleSpec performAction render
   where
-    performAction :: PerformAction State {} Action
-    performAction (SetQuery q) _ _ = void do
-      modifyState $ _ { query = q }
-
-    performAction GO _ _ = void do
-      liftEffect $ setHash "/addCorpus"
-
     render :: Render State {} Action
     render dispatch _ state _ =
       [ div [className "container1"] []
@@ -56,7 +53,7 @@ searchSpec = simpleSpec performAction render
                            , placeholder "Query, URL or FILE (works best with Firefox or Chromium browsers)"
                            , _type "text"
                            , value state.query
-                           , onInput \e -> dispatch (SetQuery (unsafeEventValue e))
+                           , onInput \e -> dispatch (SetQuery (R2.unsafeEventValue e))
                            ]
                     , br'
                     ]

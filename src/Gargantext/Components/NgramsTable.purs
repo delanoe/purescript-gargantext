@@ -40,6 +40,7 @@ import Gargantext.Components.Table as T
 import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.NgramsTable.Core
+import Gargantext.Utils.Reactix as R2
 
 type State =
   CoreState
@@ -119,7 +120,7 @@ tableContainer { pageParams
                         , name "search", placeholder "Search"
                         , _type "value"
                         , value pageParams.searchQuery
-                        , onInput \e -> setSearchQuery (unsafeEventValue e)
+                        , onInput \e -> setSearchQuery (R2.unsafeEventValue e)
                         ]
                 , div [] (
                     if A.null props.tableBody && pageParams.searchQuery /= "" then [
@@ -134,7 +135,7 @@ tableContainer { pageParams
                         [ select  [ _id "picklistmenu"
                                   , className "form-control custom-select"
                                   , value (maybe "" show pageParams.termListFilter)
-                                  , onChange (\e -> setTermListFilter $ readTermList $ unsafeEventValue e)
+                                  , onChange (\e -> setTermListFilter $ readTermList $ R2.unsafeEventValue e)
                                   ] $ map optps1 termLists
                         ]
                       ]
@@ -143,7 +144,7 @@ tableContainer { pageParams
                         [ select  [ _id "picktermtype"
                                   , className "form-control custom-select"
                                   , value (maybe "" show pageParams.termSizeFilter)
-                                  , onChange (\e -> setTermSizeFilter $ readTermSize $ unsafeEventValue e)
+                                  , onChange (\e -> setTermSizeFilter $ readTermSize $ R2.unsafeEventValue e)
                                   ] $ map optps1 termSizes
                         ]
                       ]
@@ -420,6 +421,3 @@ optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> ReactElemen
 optps1 { desc, mval } = option [value val] [text desc]
   where
     val = maybe "" show mval
-
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value

@@ -695,6 +695,3 @@ uploadFile id fileType (UploadFileContents fileContents) = postWwwUrlencoded url
 
 fnTransform :: LNode -> FTree
 fnTransform n = NTree n []
-
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value

@@ -142,9 +142,9 @@ showTabType' (TabPairing t) = show t
 data TabPostQuery = TabPostQuery {
     offset :: Int
   , limit :: Int
-  , orderBy :: Maybe OrderBy
+  , orderBy :: OrderBy
   , tabType :: TabType
-  , mQuery :: Maybe String
+  , query :: String
   }
 
 instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
@@ -153,7 +153,7 @@ instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
      ~> "offset"     := post.offset
      ~> "limit"      := post.limit
      ~> "orderBy"    := show post.orderBy
-     ~> "query"      := post.mQuery
+     ~> "query"      := post.query
      ~> jsonEmptyObject
 
 pathUrl :: Config -> Path -> Maybe Id -> UrlPath

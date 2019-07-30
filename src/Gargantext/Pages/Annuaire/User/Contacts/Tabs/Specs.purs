@@ -78,7 +78,9 @@ statefulTabs =
         , tabType: TabPairing TabDocs
         , totalRecords: 4736
         , listId: defaultListId
-        , corpusId: Nothing}
+        , corpusId: Nothing
+        , showSearch: true
+        }
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
 ngramsViewSpec {mode} =
