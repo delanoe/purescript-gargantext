@@ -7,6 +7,8 @@ import Effect (Effect)
 import React (ReactElement)
 import React.DOM (a, button, div, footer, hr', img, li, p, span, text, ul)
 import React.DOM.Props (_data, _id, aria, className, href, onClick, role, src, style, tabIndex, target, title, height, width)
+import Reactix as R
+import Reactix.DOM.HTML as H
 import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
 -- import Unsafe.Coerce (unsafeCoerce)
 
@@ -31,7 +33,7 @@ import Gargantext.Pages.Layout.Specs.Search    as S
 import Gargantext.Pages.Layout.Specs.SearchBar as SB
 import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _graphExplorerState, _loginState, _searchState)
 import Gargantext.Router (Routes(..))
-import Gargantext.Utils.Reactix (scuff)
+import Gargantext.Utils.Reactix as R2
 
 layoutSpec :: Spec AppState {} Action
 layoutSpec =
@@ -94,7 +96,7 @@ layout0 layout =
        withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) as
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) $ noState $ Tree.treeview
             Nothing ->
               outerLayout1
       , rs bs
@@ -110,8 +112,6 @@ layout0 layout =
             className "col-md-12"
         ] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
-
-    as = noState Tree.treeview
 
     bs = innerLayout $ layout
 
@@ -142,7 +142,7 @@ layout1 layout =
       [ withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) as
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) $ noState $ Tree.treeview
             Nothing ->
               outerLayout1
       , rs bs
@@ -155,8 +155,6 @@ layout1 layout =
       ]
     rs   = over _render \render d p s c -> [ div [if (s.showTree) then className "col-md-10" else className "col-md-12"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
-
-    as = noState Tree.treeview
 
     bs = innerLayout $ layout
 
@@ -180,29 +178,29 @@ searchBar = simpleSpec defaultPerformAction render
             ] [ div [className "container-fluid"
                     ]
                     [ div [ className "navbar-inner" ]
-                          [ divLogo
+                          [ R2.scuff divLogo
                           ,  div [ className "collapse navbar-collapse"
                                  ]
-                             $  [ divDropdownLeft ]
-                             <> [ scuff (SB.searchBar SB.defaultProps) ]
-                             <> [ divDropdownRight d s ]
+                             $  [ R2.scuff divDropdownLeft ]
+                             <> [ R2.scuff (SB.searchBar SB.defaultProps) ]
+                             <> [ R2.scuff $ divDropdownRight d s ]
                           ]
                     ]
               ]
       ]
 
 
-divLogo :: ReactElement
-divLogo = a [ className "navbar-brand logoSmall"
-            , href "#/"
-            ] [ img [ src "images/logoSmall.png"
-                    , title "Back to home."
-                    , width  "30"
-                    , height "28"
-                    ]
-              ]
+divLogo :: R.Element
+divLogo = H.a { className: "navbar-brand logoSmall"
+              , href: "#/"
+              } [ H.img { src: "images/logoSmall.png"
+                        , title: "Back to home."
+                        , width:  "30"
+                        , height: "28"
+                        }
+                ]
 
-divDropdownLeft :: ReactElement
+divDropdownLeft :: R.Element
 divDropdownLeft = divDropdownLeft' (LiNav { title : "About Gargantext"
                                           , href  : "#"
                                           , icon  : "glyphicon glyphicon-info-sign"
@@ -210,32 +208,33 @@ divDropdownLeft = divDropdownLeft' (LiNav { title : "About Gargantext"
                                           }
                                     )
 
-divDropdownLeft' :: LiNav -> ReactElement
-divDropdownLeft' mb =  ul [className "nav navbar-nav"]
-                         [ ul [className "nav navbar-nav pull-left"]
-                              [ li [className "dropdown"]
-                                   [ menuButton mb
-                                   , menuElements'
-                                   ]
-                               ]
-                          ]
+divDropdownLeft' :: LiNav -> R.Element
+divDropdownLeft' mb =  H.ul {className: "nav navbar-nav"}
+                       [ H.ul {className: "nav navbar-nav pull-left"}
+                         [ H.li {className: "dropdown"}
+                           [ menuButton mb
+                           , menuElements'
+                           ]
+                         ]
+                       ]
 
-menuButton :: LiNav -> ReactElement
+menuButton :: LiNav -> R.Element
 menuButton (LiNav { title : title'
                   , href : href'
                   , icon : icon'
                   , text : text'
-                  }) = a [ className "dropdown-toggle navbar-text"
-                        , _data {toggle: "dropdown"}
-                        , href href', role "button"
-                        , title title'
-                        ][ span [ aria {hidden : true}
-                                , className icon'
-                                ] []
-                         , text (" " <> text')
-                         ]
+                  }) = H.a { className: "dropdown-toggle navbar-text"
+                           , data: {toggle: "dropdown"}
+                           , href: href'
+                           , role: "button"
+                           , title: title'
+                           } [ H.span { aria: {hidden : true}
+                                      , className: icon'
+                                      } []
+                             , H.text (" " <> text')
+                             ]
 
-menuElements' :: ReactElement
+menuElements' :: R.Element
 menuElements' = menuElements-- title, icon, text
   [ -- ===========================================================
     [ LiNav { title : "Quick start, tutorials and methodology"
@@ -271,14 +270,14 @@ menuElements' = menuElements-- title, icon, text
   ] -- ===========================================================
 
 -- | Menu in the sidebar, syntactic sugar
-menuElements :: Array (Array LiNav) -> ReactElement
+menuElements :: Array (Array LiNav) -> R.Element
 menuElements ns = dropDown $ intercalate divider $ map (map liNav) ns
   where
-    dropDown :: Array ReactElement -> ReactElement
-    dropDown = ul [className "dropdown-menu"]
+    dropDown :: Array R.Element -> R.Element
+    dropDown = H.ul {className: "dropdown-menu"}
 
-    divider :: Array ReactElement
-    divider = [li [className "divider"] []]
+    divider :: Array R.Element
+    divider = [H.li {className: "divider"} []]
 
 -- | surgar for target : "blank"
 --data LiNav_ = LiNav_ { title  :: String
@@ -294,54 +293,54 @@ data LiNav = LiNav { title :: String
                    , text  :: String
                    }
 
-liNav :: LiNav -> ReactElement
+liNav :: LiNav -> R.Element
 liNav (LiNav { title : title'
              , href  : href'
              , icon  : icon'
              , text  : text'
              }
-      ) = li [] [ a [ tabIndex (-1)
-                    , target "blank"
-                    , title title'
-                    , href href'
-                    ] [ span [ className icon' ] []
-                      , text $ " " <> text'
-                      ]
-                ]
+      ) = H.li {} [ H.a { tabIndex: (-1)
+                        , target: "blank"
+                        , title: title'
+                        , href: href'
+                        } [ H.span { className: icon' } []
+                          , H.text $ " " <> text'
+                          ]
+                  ]
 
 
-logLinks :: (Action -> Effect Unit) -> AppState -> ReactElement
+logLinks :: (Action -> Effect Unit) -> AppState -> R.Element
 logLinks d s = case s.loginState.authData of
            Nothing -> loginLink
            Just _  -> logoutLink
   where
     loginLink =
-      a [ aria {hidden : true}
-        , className "glyphicon glyphicon-log-in"
-        , onClick $ \e -> d ShowLogin
-        , style {color:"white"}
-        , title "Log in and save your time"
-        -- TODO hover: bold
-        ]
-        [text " Login / Signup"]
+      H.a { aria: {hidden : true}
+          , className: "glyphicon glyphicon-log-in"
+          , on: {click:  \e -> d ShowLogin}
+          , style: {color:"white"}
+          , title: "Log in and save your time"
+          -- TODO hover: bold
+          }
+          [H.text " Login / Signup"]
     -- TODO dropdown to logout
     logoutLink =
-      a [ aria {hidden : true}
-        , className "glyphicon glyphicon-log-out"
-        , onClick $ \e -> d Logout
-        , style {color:"white"}
-        , title "Log out" -- TODO
-        -- TODO hover: bold
-        ]
-        [text " Logout"]
+      H.a { aria: {hidden : true}
+          , className: "glyphicon glyphicon-log-out"
+          , on: {click: \e -> d Logout}
+          , style: {color:"white"}
+          , title: "Log out" -- TODO
+          -- TODO hover: bold
+          }
+          [H.text " Logout"]
 
 
-divDropdownRight :: (Action -> Effect Unit) -> AppState -> ReactElement
+divDropdownRight :: (Action -> Effect Unit) -> AppState -> R.Element
 divDropdownRight d s =
-  ul [className "nav navbar-nav pull-right"]
-     [ li [className "dropdown"]
-          [ logLinks d s ]
-     ]
+  H.ul {className: "nav navbar-nav pull-right"}
+  [ H.li {className: "dropdown"}
+    [ logLinks d s ]
+  ]
 
 layoutFooter :: Spec AppState {} Action
 layoutFooter = simpleSpec performAction render
