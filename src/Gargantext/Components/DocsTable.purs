@@ -10,7 +10,6 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson
 import Data.Array (drop, take, (:), filter)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.HTTP.Method (Method(..))
 import Data.Lens
@@ -22,15 +21,17 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Int (fromString)
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Effect.Uncurried (mkEffectFn1)
+import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import React as React
 import React (ReactClass, ReactElement, Children)
 import Reactix as R
+import Reactix.SyntheticEvent as RE
 import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 ------------------------------------------------------------------------
@@ -39,6 +40,7 @@ import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType,
 import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
@@ -48,26 +50,6 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_
 
 type NodeID = Int
 type TotalRecords = Int
-data Category = Trash | Normal | Favorite
-derive instance genericFavorite :: Generic Category _
-instance showCategory :: Show Category where
-  show = genericShow
-instance eqCategory :: Eq Category where
-  eq = genericEq
-instance encodeJsonCategory :: EncodeJson Category where
-  encodeJson Trash = encodeJson 0
-  encodeJson Normal = encodeJson 1
-  encodeJson Favorite = encodeJson 2
-
-favCategory :: Category -> Category
-favCategory Normal = Favorite
-favCategory Trash = Favorite
-favCategory Favorite = Normal
-
-trashCategory :: Category -> Category
-trashCategory Normal = Trash
-trashCategory Trash = Normal
-trashCategory Favorite = Trash
 
 type Props =
   { nodeId       :: Int
@@ -76,6 +58,7 @@ type Props =
   , tabType      :: TabType
   , listId       :: Int
   , corpusId     :: Maybe Int
+  , showSearch   :: Boolean
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.
   }
@@ -89,7 +72,6 @@ type PageLoaderProps =
   , query       :: Query
   }
 
-type DocumentIdsDeleted = Set Int
 type LocalCategories = Map Int Category
 type Query = String
 
@@ -141,12 +123,6 @@ instance decodeHyperdata :: DecodeJson Hyperdata where
     pub_year <- obj .? "publication_year"
     pure $ Hyperdata { title,source, pub_year}
 
-decodeCategory :: Int -> Category
-decodeCategory 0 = Trash
-decodeCategory 1 = Normal
-decodeCategory 2 = Favorite
-decodeCategory _ = Normal
-
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
     obj        <- decodeJson json
@@ -162,30 +138,23 @@ docViewSpec p = R.createElement el p []
   where
     el = R.hooksComponent "DocView" cpt
     cpt p _children = do
-      documentIdsDeleted <- R.useState' (mempty :: DocumentIdsDeleted)
-      localCategories <- R.useState' (mempty :: LocalCategories)
       query <- R.useState' ("" :: Query)
       tableParams <- R.useState' T.initialParams
 
-      pure $ layoutDocview documentIdsDeleted localCategories query tableParams p
+      pure $ layoutDocview query tableParams p
 
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: R.State DocumentIdsDeleted -> R.State LocalCategories -> R.State Query -> R.State T.Params -> Props -> R.Element
-layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (query /\ setQuery) tableParams@(params /\ _) p = R.createElement el p []
+layoutDocview :: R.State Query -> R.State T.Params -> Props -> R.Element
+layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "LayoutDocView" cpt
-    cpt {nodeId, tabType, listId, corpusId, totalRecords, chart} _children = do
+    cpt {nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch} _children = do
       pure $ H.div {className: "container1"}
         [ H.div {className: "row"}
           [ chart
-          , H.div {}
-            [ H.input { type: "text"
-                      , onChange: onChangeQuery
-                      , placeholder: query}
-            ]
+          , if showSearch then searchBar query else H.div {} []
           , H.div {className: "col-md-12"}
-            [ pageLoader localCategories tableParams {nodeId, totalRecords, tabType, listId, corpusId, query}
-            ]
+            [ pageLoader tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
           , H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
                        , style: {backgroundColor: "peru", color : "white", border : "white"}
@@ -197,12 +166,52 @@ layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (q
             ]
           ]
         ]
-    onChangeQuery = mkEffectFn1 $ \e -> do
-      setQuery $ const $ unsafeEventValue e
+
     onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
       launchAff $ deleteAllDocuments nodeId
-      -- TODO
-      -- setDocumentIdsDeleted $ \dids -> Set.union dids (Set.fromFoldable ids)
+
+searchBar :: R.State Query -> R.Element
+searchBar (query /\ setQuery) = R.createElement el {} []
+  where
+    el = R.hooksComponent "SearchBar" cpt
+    cpt {} _children = do
+      queryText <- R.useState' query
+
+      pure $ H.div {className: "row"}
+        [ H.div {className: "col col-md-3 form-group"}
+          [ H.input { type: "text"
+                    , className: "form-control"
+                    , on: {change: onSearchChange queryText, keyUp: onSearchKeyup queryText}
+                    , placeholder: query
+                    , defaultValue: query}
+          ]
+        , H.div {className: "col col-md-1"}
+          [ searchButton queryText
+          , if query /= "" then clearButton else H.div {} []
+          ]
+        ]
+
+    onSearchChange :: forall e. R.State Query -> e -> Effect Unit
+    onSearchChange (_ /\ setQueryText) = \e ->
+      setQueryText $ const $ R2.unsafeEventValue e
+
+    onSearchKeyup :: R.State Query -> DE.KeyboardEvent -> Effect Unit
+    onSearchKeyup (queryText /\ _) = \e ->
+      if DE.key e == "Enter" then
+        setQuery $ const queryText
+      else
+        pure $ unit
+
+    searchButton (queryText /\ _) =
+      H.button { type: "submit"
+               , className: "btn btn-default"
+               , on: {click: \e -> setQuery $ const queryText}}
+      [ H.span {className: "glyphicon glyphicon-search"} [] ]
+
+    clearButton =
+      H.button { className: "btn btn-danger"
+               , on: {click: \e -> setQuery $ const ""}}
+      [ H.span {className: "glyphicon glyphicon-remove"} [] ]
 
 mock :: Boolean
 mock = false
@@ -250,8 +259,8 @@ loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orde
 
     convOrderBy _ = DateAsc -- TODO
 
-renderPage :: R.State LocalCategories -> R.State T.Params -> PageLoaderProps -> Array DocumentsView -> R.Element
-renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res = R.createElement el p []
+renderPage :: R.State T.Params -> PageLoaderProps -> Array DocumentsView -> R.Element
+renderPage (_ /\ setTableParams) p res = R.createElement el p []
   where
     el = R.hooksComponent "RenderPage" cpt
 
@@ -259,13 +268,14 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
     gi _ = "glyphicon glyphicon-star-empty"
     trashStyle Trash = {textDecoration: "line-through"}
     trashStyle _ = {textDecoration: "none"}
-    getCategory {_id, category} = maybe category identity (localCategories ^. at _id)
     corpusDocument (Just corpusId) = Router.CorpusDocument corpusId
     corpusDocument _ = Router.Document
 
-    cpt {nodeId, corpusId, listId} _children = do
+    cpt {nodeId, corpusId, listId, totalRecords} _children = do
+      localCategories <- R.useState' (mempty :: LocalCategories)
+
       pure $ R2.buff $ T.tableElt
-          { rows
+          { rows: rows localCategories
           -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
           , setParams: \params -> setTableParams $ const params
           , container: T.defaultContainer { title: "Documents" }
@@ -277,23 +287,23 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
             , "Title"
             , "Source"
             ]
-            -- , totalRecords
-          , totalRecords: 1000  -- TODO
+          , totalRecords
           }
       where
-        rows = (\(DocumentsView r) ->
-                    let cat = getCategory r
+        getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
+        rows localCategories = (\(DocumentsView r) ->
+                    let cat = getCategory localCategories r
                         isDel = Trash == cat in
                     { row: map R2.scuff $ [
                           H.div {}
                           [ H.a { className: gi cat
                                 , style: trashStyle cat
-                                , onClick: onClick Favorite r._id cat
+                                , on: {click: onClick localCategories Favorite r._id cat}
                                 } []
                           ]
                         , H.input { type: "checkbox"
                                   , checked: isDel
-                                  , onClick: onClick Trash r._id cat
+                                  , on: {click: onClick localCategories Trash r._id cat}
                                   }
                         -- TODO show date: Year-Month-Day only
                         , H.div { style: trashStyle cat } [ H.text (show r.date) ]
@@ -305,18 +315,18 @@ renderPage (localCategories /\ setLocalCategories) (_ /\ setTableParams) p res =
                         ]
                     , delete: true
                     }) <$> res
-        onClick catType nid cat = mkEffectFn1 $ \_-> do
+        onClick (_ /\ setLocalCategories) catType nid cat = \_-> do
           let newCat = if (catType == Favorite) then (favCategory cat) else (trashCategory cat)
           setLocalCategories $ insert nid newCat
           void $ launchAff $ putCategories nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
 
-pageLoader :: R.State LocalCategories -> R.State T.Params -> PageLoaderProps -> R.Element
-pageLoader localCategories tableParams@(pageParams /\ _) p = R.createElement el p []
+pageLoader :: R.State T.Params -> PageLoaderProps -> R.Element
+pageLoader tableParams@(pageParams /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "PageLoader" cpt
     cpt p@{nodeId, listId, corpusId, tabType, query} _children = do
       useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} loadPage $ \{loaded} ->
-        renderPage localCategories tableParams p loaded
+        renderPage tableParams p loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
@@ -360,24 +370,6 @@ searchResults :: SearchQuery -> Aff Int
 searchResults squery = post "http://localhost:8008/count" unit
   -- TODO
 
-
-newtype CategoryQuery = CategoryQuery {
-    nodeIds :: Array Int
-  , category :: Category
-  }
-
-instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
-  encodeJson (CategoryQuery post) =
-       "ntc_nodesId" := post.nodeIds
-    ~> "ntc_category" := encodeJson post.category
-    ~> jsonEmptyObject
-
-categoryUrl :: Int -> String
-categoryUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/category"
-
-putCategories :: Int -> CategoryQuery -> Aff (Array Int)
-putCategories nodeId = put $ categoryUrl nodeId
-
 documentsUrl :: Int -> String
 documentsUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/documents"
 
@@ -389,6 +381,3 @@ toggleSet :: forall a. Ord a => a -> Set a -> Set a
 toggleSet a s
   | Set.member a s = Set.delete a s
   | otherwise      = Set.insert a s
-
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value

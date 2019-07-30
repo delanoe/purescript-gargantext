@@ -89,6 +89,7 @@ docViewSpec tst = R2.elSpec $ R.hooksComponent "DocViewSpecWithCorpus" cpt
         , totalRecords: 4737
         , listId: defaultListId
         , corpusId: Just corpusId
+        , showSearch: true
         }
         params TabMoreLikeFav = {
           nodeId: corpusId
@@ -98,6 +99,7 @@ docViewSpec tst = R2.elSpec $ R.hooksComponent "DocViewSpecWithCorpus" cpt
         , totalRecords: 4737
         , listId: defaultListId
         , corpusId: Just corpusId
+        , showSearch: false
         }
         params TabMoreLikeTrash = {
           nodeId: corpusId
@@ -107,6 +109,7 @@ docViewSpec tst = R2.elSpec $ R.hooksComponent "DocViewSpecWithCorpus" cpt
         , totalRecords: 4737
         , listId: defaultListId
         , corpusId: Just corpusId
+        , showSearch: false
         }
         params TabTrash = {
           nodeId: corpusId
@@ -116,6 +119,7 @@ docViewSpec tst = R2.elSpec $ R.hooksComponent "DocViewSpecWithCorpus" cpt
         , totalRecords: 4737
         , listId: defaultListId
         , corpusId: Nothing
+        , showSearch: true
         }
         -- DUMMY
         params _ = {
@@ -126,4 +130,5 @@ docViewSpec tst = R2.elSpec $ R.hooksComponent "DocViewSpecWithCorpus" cpt
         , totalRecords: 4737
         , listId: defaultListId
         , corpusId: Nothing
+        , showSearch: true
         }

@@ -419,8 +419,9 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
         Nothing ->
           simpleSpec defaultPerformAction defaultRender
         Just treeId ->
+          --cmapProps (const {root: treeId, mCurrentRoute: Nothing}) $ noState $ Tree.treeview
+          -- TODO
           simpleSpec defaultPerformAction defaultRender
-          --cmapProps (const {root: treeId, mCurrentRoute: Nothing}) (noState $ Tree.treeview Config.endConfigStateful)
     
     
     render' :: Render State {} Action
