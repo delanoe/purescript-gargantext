@@ -22,12 +22,12 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Int (fromString)
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Effect.Uncurried (mkEffectFn1)
+import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import React as React
 import React (ReactClass, ReactElement, Children)
 import Reactix as R
@@ -171,21 +171,16 @@ docViewSpec p = R.createElement el p []
 
 -- | Main layout of the Documents Tab of a Corpus
 layoutDocview :: R.State DocumentIdsDeleted -> R.State LocalCategories -> R.State Query -> R.State T.Params -> Props -> R.Element
-layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (query /\ setQuery) tableParams@(params /\ _) p = R.createElement el p []
+layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories query tableParams@(params /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "LayoutDocView" cpt
     cpt {nodeId, tabType, listId, corpusId, totalRecords, chart} _children = do
       pure $ H.div {className: "container1"}
         [ H.div {className: "row"}
           [ chart
-          , H.div {}
-            [ H.input { type: "text"
-                      , onChange: onChangeQuery
-                      , placeholder: query}
-            ]
+          , searchBar query
           , H.div {className: "col-md-12"}
-            [ pageLoader localCategories tableParams {nodeId, totalRecords, tabType, listId, corpusId, query}
-            ]
+            [ pageLoader localCategories tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
           , H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
                        , style: {backgroundColor: "peru", color : "white", border : "white"}
@@ -197,12 +192,41 @@ layoutDocview documentIdsDeleted@(_ /\ setDocumentIdsDeleted) localCategories (q
             ]
           ]
         ]
-    onChangeQuery = mkEffectFn1 $ \e -> do
-      setQuery $ const $ R2.unsafeEventValue e
+
     onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
       launchAff $ deleteAllDocuments nodeId
       -- TODO
       -- setDocumentIdsDeleted $ \dids -> Set.union dids (Set.fromFoldable ids)
+
+searchBar :: R.State Query -> R.Element
+searchBar (query /\ setQuery) = R.createElement el {} []
+  where
+    el = R.hooksComponent "SearchBar" cpt
+    cpt {} _children = do
+      queryText <- R.useState' query
+
+      pure $ H.div {className: "row"}
+        [ H.div {className: "col col-md-3 form-group"}
+          [ H.input { type: "text"
+                    , className: "form-control"
+                    , on: {change: onSearchChange queryText}
+                    , placeholder: query}
+          ]
+        , H.div {className: "col col-md-1"}
+          [ H.button { type: "submit"
+                    , className: "btn btn-default"
+                    , on: {click: onSearchClick queryText}}
+            [ H.text "Search" ]
+          ]
+        ]
+
+    onSearchChange :: forall e. R.State Query -> e -> Effect Unit
+    onSearchChange (_ /\ setQueryText) = \e ->
+      setQueryText $ const $ R2.unsafeEventValue e
+
+    onSearchClick :: forall e. R.State Query -> e -> Effect Unit
+    onSearchClick (queryText /\ _) = \e ->
+      setQuery $ const queryText
 
 mock :: Boolean
 mock = false
