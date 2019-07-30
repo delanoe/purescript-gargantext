@@ -10,7 +10,6 @@ import Gargantext.Pages.Corpus.Graph          as GE
 -- import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
 
 -- import Gargantext.Pages.Home as L
--- import Gargantext.Pages.Layout.Specs.Search as S
 import Gargantext.Router (Routes(..))
 
 dispatchAction :: forall ignored m.
