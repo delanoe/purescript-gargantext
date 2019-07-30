@@ -142,7 +142,7 @@ showTabType' (TabPairing t) = show t
 data TabPostQuery = TabPostQuery {
     offset :: Int
   , limit :: Int
-  , orderBy :: Maybe OrderBy
+  , orderBy :: OrderBy
   , tabType :: TabType
   , query :: String
   }
