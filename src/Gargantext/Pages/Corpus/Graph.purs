@@ -23,7 +23,7 @@ import Gargantext.Components.GraphExplorer.Sigmajs (Color(Color), SigmaEasing, S
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
-import Gargantext.Components.Tree as Tree
+--import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
@@ -419,7 +419,8 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
         Nothing ->
           simpleSpec defaultPerformAction defaultRender
         Just treeId ->
-          (cmapProps (const {root: treeId, mCurrentRoute: Nothing}) (noState Tree.treeview))
+          simpleSpec defaultPerformAction defaultRender
+          --cmapProps (const {root: treeId, mCurrentRoute: Nothing}) (noState $ Tree.treeview Config.endConfigStateful)
     
     
     render' :: Render State {} Action

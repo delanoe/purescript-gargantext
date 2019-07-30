@@ -29,9 +29,13 @@ import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _graphExpl
 import Gargantext.Pages.Layout.Specs.AddCorpus as AC
 import Gargantext.Pages.Layout.Specs.Search    as S
 import Gargantext.Pages.Layout.Specs.SearchBar as SB
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _graphExplorerState, _loginState, _searchState)
+import Gargantext.Pages.Layout.States (AppState, _graphExplorerState, _searchState, _loginState, _addCorpusState)
 import Gargantext.Router (Routes(..))
 import Gargantext.Utils.Reactix (scuff)
+
+-- TODO
+-- rewrite layoutSpec to use state (with EndConfig)
+-- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
 
 layoutSpec :: Spec AppState {} Action
 layoutSpec =
@@ -94,7 +98,7 @@ layout0 layout =
        withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) as
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) $ Tree.treeview
             Nothing ->
               outerLayout1
       , rs bs
@@ -111,7 +115,7 @@ layout0 layout =
         ] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
 
-    as = noState Tree.treeview
+    --as = noState Tree.treeview
 
     bs = innerLayout $ layout
 
@@ -142,7 +146,7 @@ layout1 layout =
       [ withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) as
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) $ Tree.treeview
             Nothing ->
               outerLayout1
       , rs bs
@@ -155,8 +159,6 @@ layout1 layout =
       ]
     rs   = over _render \render d p s c -> [ div [if (s.showTree) then className "col-md-10" else className "col-md-12"] (render d p s c) ]
     cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
-
-    as = noState Tree.treeview
 
     bs = innerLayout $ layout
 

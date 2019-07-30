@@ -26,7 +26,7 @@ import React.DOM.Props (className, style)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Thermite (Spec)
+import Thermite as T
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 import Unsafe.Coerce (unsafeCoerce)
@@ -37,6 +37,7 @@ import Web.File.FileReader.Aff (readAsText)
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Config (toUrl, endConfigStateful, End(..), NodeType(..), readNodeType)
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
+import Gargantext.Pages.Layout.States (AppState)
 import Gargantext.Router as Router
 import Gargantext.Types (class ToQuery, toQuery)
 import Gargantext.Utils (id)
@@ -178,9 +179,12 @@ treeLoadView setReload p = R.createElement el p []
       useLoader root loadNode $ \{loaded} ->
         loadedTreeView setReload {tree: loaded, mCurrentRoute}
 
-treeview :: Spec {} Props Void
-treeview = R2.elSpec $ R.hooksComponent "TreeView" cpt
+treeview :: T.Spec AppState Props Void
+--treeview = R2.elSpec $ R.hooksComponent "TreeView" cpt
+treeview = T.simpleSpec T.defaultPerformAction render
   where
+    render :: T.Render AppState Props Void
+    render _ props _ children = [R2.scuff $ R.createElement (R.hooksComponent "TreeView" cpt) props (R2.buff <$> children)]
     cpt {root, mCurrentRoute} _children = do
       -- NOTE: this is a hack to reload the tree view on demand
       setReload <- R.useState' 0

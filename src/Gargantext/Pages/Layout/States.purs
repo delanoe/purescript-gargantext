@@ -6,6 +6,7 @@ import Data.Lens                                       (Lens', lens)
 import Data.Maybe                                      (Maybe(Just))
 import Effect (Effect)
 import Gargantext.Components.Login                  as LN
+import Gargantext.Config (EndConfig, endConfigStateful)
 
 import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
@@ -21,6 +22,7 @@ type AppState =
   , showCorpus         :: Boolean
   , graphExplorerState :: GE.State
   , showTree           :: Boolean
+  , endConfig          :: EndConfig
   }
 
 initAppState :: Effect AppState
@@ -35,6 +37,7 @@ initAppState = do
     , showCorpus     : false
     , graphExplorerState : GE.initialState
     , showTree : false
+    , endConfig : endConfigStateful
     }
 
 
