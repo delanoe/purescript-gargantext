@@ -5,8 +5,8 @@ import Prelude hiding (div)
 import Data.Lens                                       (Lens', lens)
 import Data.Maybe                                      (Maybe(..))
 import Effect (Effect)
+import Gargantext.Config as C
 import Gargantext.Components.Login                  as LN
-import Gargantext.Config (EndConfig, endConfigStateful)
 
 import Gargantext.Components.Login                  as LN
 --import Gargantext.Components.Login.Types            as LNT
@@ -21,7 +21,7 @@ type AppState =
   , showCorpus         :: Boolean
   --, graphExplorerState :: Record GET.StateGlue
   , showTree           :: Boolean
-  , endConfig          :: EndConfig
+  , configState     :: C.State
   }
 
 initAppState :: Effect AppState
@@ -35,7 +35,7 @@ initAppState = do
     , showCorpus     : false
     --, graphExplorerState : GET.initialStateGlue
     , showTree : false
-    , endConfig : endConfigStateful
+    , configState : C.initialState
     }
 
 
@@ -44,13 +44,9 @@ initAppState = do
 _loginState :: Lens' AppState LN.State
 _loginState = lens (\s -> s.loginState) (\s ss -> s{loginState = ss})
 
-_graphExplorerState :: Lens' AppState (Record GET.StateGlue)
-_graphExplorerState = lens getter setter
-  where
-    getter :: AppState -> Record GET.StateGlue
-    getter s = {
-    }
-    --setter s ss = s {graphExplorerState = ss}
-    setter :: AppState -> (Record GET.StateGlue) -> AppState
-    setter s ss = s
+_configState :: Lens' AppState C.State
+_configState = lens (\s -> s.configState) (\s ss -> s{configState = ss})
+
+_graphExplorerState :: Lens' AppState GE.State
+_graphExplorerState = lens (\s -> s.graphExplorerState) (\s ss -> s{graphExplorerState = ss})
 

@@ -12,6 +12,7 @@ import Routing.Hash                                    (setHash)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Modals.Modal              (modalShow)
+import Gargantext.Config as C
 import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Layout.States                  (AppState)
 import Gargantext.Prelude
@@ -28,6 +29,7 @@ data Action
   | Logout
   | ShowAddCorpus
   | ToggleTree
+  | ConfigStateA C.StateAction
 
 
 performAction :: PerformAction AppState {} Action
@@ -62,12 +64,20 @@ performAction (AnnuaireAction  _) _ _ = pure unit
   -- liftEffect $ modalShow "addCorpus"
   -- modifyState $ _ {showCorpus = true}
 
+performAction (ConfigStateA _) _ _ = pure unit
+
 ----------------------------------------------------------
 
 _loginAction :: Prism' Action LN.Action
 _loginAction = prism LoginA \action ->
   case action of
     LoginA caction -> Right caction
+    _-> Left action
+
+_configStateAction :: Prism' Action C.StateAction
+_configStateAction = prism ConfigStateA \action ->
+  case action of
+    ConfigStateA caction -> Right caction
     _-> Left action
 
 _annuaireAction :: Prism' Action Annuaire.Action

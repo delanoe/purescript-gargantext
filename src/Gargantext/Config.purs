@@ -11,12 +11,15 @@ module Gargantext.Config where
 
 import Prelude
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject)
+import Data.Array (filter, head)
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..), maybe)
-import Gargantext.Router as R
+import Data.Maybe (Maybe(..), maybe, fromJust)
+import Partial.Unsafe (unsafePartial)
+import Thermite (PerformAction, modifyState_)
 
+import Gargantext.Router as R
 import Gargantext.Types (TermList, TermSize(..))
 
 urlPlease :: End -> String -> String
@@ -28,15 +31,63 @@ endConfigStateful :: EndConfig
 endConfigStateful = endConfig
 
 endConfig :: EndConfig
-endConfig = endConfig' V10
+endConfig = devEndConfig
 
-endConfig' :: ApiVersion -> EndConfig
-endConfig' v = { front : frontRelative
-               , back  : backLocal v
-               --, back: backDev v
-               , static : staticRelative
-             }
---               , back  : backDemo v  }
+devEndConfig :: EndConfig
+devEndConfig = devEndConfig' V10
+
+devEndConfig' :: ApiVersion -> EndConfig
+devEndConfig' v = { front : frontRelative
+                    , back: backDev v
+                    , static : staticRelative
+                  }
+
+localEndConfig :: EndConfig
+localEndConfig = localEndConfig' V10
+
+localEndConfig' :: ApiVersion -> EndConfig
+localEndConfig' v = { front : frontRelative
+                    , back  : backLocal v
+                    , static : staticRelative
+                    }
+
+
+type EndConfigOption = {
+    endConfig :: EndConfig
+  , displayName :: String
+  }
+
+endConfigOptions :: Array EndConfigOption
+endConfigOptions = [
+  {
+      endConfig: devEndConfig
+    , displayName: "dev"
+  }
+  , {
+       endConfig: localEndConfig
+     , displayName: "local"
+  }
+  ]
+
+endConfigDisplayName :: EndConfig -> String
+endConfigDisplayName endConfig = (unsafePartial $ fromJust h).displayName
+  where
+    h = head $ filter (\ec -> ec.endConfig == endConfig) endConfigOptions
+
+type State = {
+    endConfig :: EndConfig
+  }
+
+initialState :: State
+initialState = {
+  endConfig: endConfig
+  }
+
+data StateAction = UpdateState State
+
+statePerformAction :: forall props. PerformAction State props StateAction
+statePerformAction (UpdateState state) _ _ =
+  void $ modifyState_ $ const state
 
 ------------------------------------------------------------------------
 frontRelative :: Config

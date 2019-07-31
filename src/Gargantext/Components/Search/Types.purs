@@ -12,8 +12,9 @@ import Effect.Aff (Aff)
 
 import Gargantext.Prelude
 import Gargantext.Types (class ToQuery)
-import Gargantext.Config (End(..), NodeType(..), toUrl)
-import Gargantext.Config.REST (put)
+import Gargantext.Config (endConfigStateful, End(..), NodeType(..), Path(..), toUrl)
+import Gargantext.Config.REST (post, put)
+import Gargantext.Components.Modals.Modal (modalHide)
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 
@@ -167,7 +168,7 @@ instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
     ~> jsonEmptyObject
 
 categoryUrl :: Int -> String
-categoryUrl nodeId = toUrl Back Node (Just nodeId) <> "/category"
+categoryUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/category"
 
 putCategories :: Int -> CategoryQuery -> Aff (Array Int)
 putCategories nodeId = put $ categoryUrl nodeId
