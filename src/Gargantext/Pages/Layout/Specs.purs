@@ -3,6 +3,7 @@ module Gargantext.Pages.Layout.Specs where
 import Data.Foldable (fold, intercalate)
 import Data.Lens (over)
 import Data.Maybe (Maybe(Nothing, Just))
+import Data.Tuple.Nested((/\))
 import Effect (Effect)
 import React.DOM (button, div, text)
 import React.DOM.Props (_id, className, onClick, role, style)
@@ -11,11 +12,13 @@ import Reactix.DOM.HTML as H
 import Thermite (Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
 -- import Unsafe.Coerce (unsafeCoerce)
 
+import Gargantext.BootstrapNative (createDropdown)
 import Gargantext.Prelude
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Login.Types (AuthData(..))
 import Gargantext.Components.Login as LN
 import Gargantext.Components.Tree  as Tree
+import Gargantext.Config as C
 import Gargantext.Folder           as F
 import Gargantext.Pages.Annuaire   as A
 import Gargantext.Pages.Annuaire.User.Contacts as C
@@ -26,9 +29,9 @@ import Gargantext.Pages.Corpus.Graph as GE
 import Gargantext.Pages.Lists as Lists
 import Gargantext.Pages.Texts as Texts
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _graphExplorerAction, _loginAction, performAction)
+import Gargantext.Pages.Layout.Actions (Action(..), _graphExplorerAction, _loginAction, performAction, _configStateAction)
 import Gargantext.Pages.Layout.Specs.SearchBar as SB
-import Gargantext.Pages.Layout.States (AppState, _graphExplorerState, _loginState)
+import Gargantext.Pages.Layout.States (AppState, _graphExplorerState, _loginState, _configState)
 import Gargantext.Router (Routes(..))
 import Gargantext.Utils.Reactix as R2
 
@@ -94,7 +97,7 @@ layout0 layout =
        withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) $ Tree.treeview
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute, endConfig: st.configState.endConfig}) $ noState $ Tree.treeview
             Nothing ->
               outerLayout1
       , rs bs
@@ -140,7 +143,7 @@ layout1 layout =
       [ withState \st ->
           case st.loginState.authData of
             Just (AuthData {tree_id}) ->
-              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute}) $ Tree.treeview
+              ls $ cmapProps (const {root: tree_id, mCurrentRoute: st.currentRoute, endConfig: st.configState.endConfig}) $ noState $ Tree.treeview
             Nothing ->
               outerLayout1
       , rs bs
@@ -333,12 +336,51 @@ logLinks d s = case s.loginState.authData of
           [H.text " Logout"]
 
 
+endConfigChooser :: R.State C.State -> R.Element
+endConfigChooser (configState /\ setConfigState) = R.createElement el {} []
+  where
+    el = R.hooksComponent "EndConfigChooser" cpt
+    cpt {} _ = do
+      -- NOTE Need to rebind the component after rerender
+      R.useEffect $
+        pure $ createDropdown "end-config-chooser"
+
+      pure $ H.li {className: "dropdown"}
+        [ H.a { className: "navbar-text dropdown-toggle"
+              , href: "#"
+              , role: "button"
+              , data: {toggle: "dropdown"}
+              , id: "end-config-chooser"
+              }
+          [ H.text $ C.endConfigDisplayName configState.endConfig ]
+        , H.ul { className: "dropdown-menu"
+               } (liItem <$> C.endConfigOptions)
+        ]
+
+    liItem :: C.EndConfigOption -> R.Element
+    liItem {endConfig, displayName} =
+      --H.li {on: {click: \_ -> setConfigState $ \st -> st {endConfig = endConfig}}}
+      H.li {}
+      [ H.a {href: "#"} [H.text displayName] ]
+
+
 divDropdownRight :: (Action -> Effect Unit) -> AppState -> R.Element
-divDropdownRight d s =
-  H.ul {className: "nav navbar-nav pull-right"}
-  [ H.li {className: "dropdown"}
-    [ logLinks d s ]
-  ]
+divDropdownRight d s = R.createElement el {} []
+  where
+    el = R.hooksComponent "DivDropdownRight" cpt
+    cpt {} _children = do
+      (configState /\ setConfigState) <- R.useState' s.configState
+
+      R.useEffect $
+        if (configState /= s.configState) then do
+          pure $ d $ ConfigStateA $ C.UpdateState configState
+        else
+          pure $ pure $ unit
+
+      pure $ H.ul {className: "nav navbar-nav pull-right"}
+        [ endConfigChooser (configState /\ setConfigState)
+        , logLinks d s
+        ]
 
 layoutFooter :: Spec {} {} Void
 layoutFooter = R2.elSpec $ R.hooksComponent "LayoutFooter" cpt
