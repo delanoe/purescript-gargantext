@@ -33,8 +33,17 @@ endConfigStateful = endConfig
 endConfig :: EndConfig
 endConfig = devEndConfig
 
+demoEndConfig :: EndConfig
+demoEndConfig = demoEndConfig' V10
+
 devEndConfig :: EndConfig
 devEndConfig = devEndConfig' V10
+
+demoEndConfig' :: ApiVersion -> EndConfig
+demoEndConfig' v = { front : frontRelative
+                   , back: backDemo v
+                   , static : staticRelative
+                   }
 
 devEndConfig' :: ApiVersion -> EndConfig
 devEndConfig' v = { front : frontRelative
@@ -59,6 +68,11 @@ type EndConfigOption = {
 
 endConfigOptions :: Array EndConfigOption
 endConfigOptions = [
+  {
+    endConfig: demoEndConfig
+  , displayName: "demo"
+  }
+  ,
   {
       endConfig: devEndConfig
     , displayName: "dev"

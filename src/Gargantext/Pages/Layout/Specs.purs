@@ -371,8 +371,8 @@ endConfigChooser (configState /\ setConfigState) = R.createElement el {} []
 
     liItem :: C.EndConfigOption -> R.Element
     liItem {endConfig, displayName} =
-      --H.li {on: {click: \_ -> setConfigState $ \st -> st {endConfig = endConfig}}}
-      H.li {}
+      H.li {on: {click: \_ -> setConfigState $ \st -> st {endConfig = endConfig}}}
+      --H.li {}
       [ H.a {href: "#"} [H.text displayName] ]
 
 
