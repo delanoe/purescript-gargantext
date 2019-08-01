@@ -46,7 +46,7 @@ instance encodeJsonDatabase :: EncodeJson Database where
 
 
 allDatabases :: Array Database
-allDatabases = [All, HAL, IsTex, PubMed]
+allDatabases = [All, PubMed]
 
 data SearchOrder
   = DateAsc

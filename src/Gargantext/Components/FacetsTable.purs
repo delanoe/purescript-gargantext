@@ -175,8 +175,9 @@ instance decodeResponse :: DecodeJson Response where
     created    <- obj .? "created"
     hyperdata  <- obj .? "hyperdata"
     favorite   <- obj .? "favorite"
-    ngramCount <- obj .? "ngramCount"
-    pure $ Response { id, created, hyperdata, category: decodeCategory favorite, ngramCount }
+    --ngramCount <- obj .? "ngramCount"
+    let ngramCount = 1
+    pure $ Response { id, created, hyperdata, category: decodeCategory favorite, ngramCount}
 
 -- | Filter
 -- TODO: unused
