@@ -109,7 +109,7 @@ cleanupSigma sigma context = traverse_ kill (readSigma sigma)
     errorMsg = prefix <> "Error killing sigma:"
     successMsg = prefix <> "Killed sigma"
 
-addRenderer :: forall err. Sigma.Sigma -> Renderer -> Effect (Either err Unit)
+addRenderer :: forall err. Sigma.Sigma -> String -> Effect (Either err Unit)
 addRenderer sigma renderer = do
   ret <- Sigma.addRenderer sigma renderer
   (const unit <$> ret) <$ report ret

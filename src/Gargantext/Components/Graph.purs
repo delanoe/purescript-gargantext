@@ -57,7 +57,7 @@ graphCpt = R.hooksComponent "Graph" cpt
       ref <- R.useRef null
       sigma <- useSigma ref props.sigmaSettings
       useCanvasRenderer ref sigma
-      useData sigma props.graph
+      -- useData sigma props.graph
       useForceAtlas2 sigma props.forceAtlas2Settings
       pure $ RH.div { ref, style: {height: "95%"} } []
 
@@ -159,7 +159,7 @@ sigmaSettings =
   { animationsTime: 5500.0
   , autoRescale: true
   , autoResize: true
-  , batchEdgesDrawing: false
+  , batchEdgesDrawing: true
   , borderSize: 3.0                   -- for ex, bigger border when hover
   , defaultEdgeType: "curve"          -- 'curve' or 'line' (curve iff ourRendering)
   , defaultHoverLabelBGColor: "#fff"

@@ -107,3 +107,23 @@ killForceAtlas2 = runEffectFn1 _killForceAtlas2
 foreign import _startForceAtlas2 :: forall s. EffectFn2 Sigma s Unit
 foreign import _stopForceAtlas2 :: EffectFn1 Sigma Unit
 foreign import _killForceAtlas2 :: EffectFn1 Sigma Unit
+
+newtype SigmaEasing = SigmaEasing String
+
+sigmaEasing :: { linear :: SigmaEasing
+, quadraticIn :: SigmaEasing
+, quadraticOut :: SigmaEasing
+, quadraticInOut :: SigmaEasing
+, cubicIn :: SigmaEasing
+, cubicOut :: SigmaEasing
+, cubicInOut :: SigmaEasing
+}
+sigmaEasing =
+  { linear : SigmaEasing "linear"
+  , quadraticIn : SigmaEasing "quadraticIn"
+  , quadraticOut : SigmaEasing "quadraticOut"
+  , quadraticInOut : SigmaEasing "quadraticInOut"
+  , cubicIn : SigmaEasing "cubicIn"
+  , cubicOut : SigmaEasing "cubicOut"
+  , cubicInOut : SigmaEasing "cubicInOut"
+  }

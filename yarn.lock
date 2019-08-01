@@ -3336,7 +3336,7 @@ rc@^1.2.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-dom@^16.8.2:
+react-dom@^16.8.6:
   version "16.8.6"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.8.6.tgz#71d6303f631e8b0097f56165ef608f051ff6e10f"
   integrity sha512-1nL7PIq9LTL3fthPqwkvr2zY7phIPjYrT0jp4HjyEQrEROnw4dG41VVwi/wfoCneoleqrNX7iAD+pXebJZwrwA==
@@ -3363,7 +3363,7 @@ react-testing-library@^6.1.2:
     "@babel/runtime" "^7.4.2"
     dom-testing-library "^3.19.0"
 
-react@^16.8.2:
+react@^16.8.6:
   version "16.8.6"
   resolved "https://registry.yarnpkg.com/react/-/react-16.8.6.tgz#ad6c3a9614fd3a4e9ef51117f54d888da01f2bbe"
   integrity sha512-pC0uMkhLaHm11ZSJULfOBqV4tIZkx87ZLvbbQYunNixAAvjnC+snJCg0XQXn9VIsttVsbZP/H/ewzgsd5fxKXw==
@@ -3700,6 +3700,11 @@ shelljs@^0.8.2, shelljs@^0.8.3:
     glob "^7.0.0"
     interpret "^1.0.0"
     rechoir "^0.6.2"
+
+sigma@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/sigma/-/sigma-1.2.1.tgz#2ebf3df2971715afe49ad0c08945c574bb6c5771"
+  integrity sha512-9Z0m1pssXv6sndPMvOzXnM1mVO73YCWDE6X5bKxJyG+9J0B9zJkgtgoBM7cnxEaJMzmrbxPceKTVpwF7cS/xqA==
 
 signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"

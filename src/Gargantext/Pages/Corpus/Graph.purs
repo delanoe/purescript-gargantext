@@ -23,7 +23,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Hooks.Sigmax.Types as Sigmax
-import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaEasing, SigmaNode, cameras, getCameraProps, getSigmaRef, goTo, pauseForceAtlas2, sigmaEasing, sigmaOnMouseMove)
+import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaNode, cameras, getCameraProps, goTo, pauseForceAtlas2, sigmaOnMouseMove)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
@@ -266,37 +266,12 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#
 intColor :: Int -> String
 intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
 
-modCamera0 :: forall o. Optional o CameraProps =>
-              (Record CameraProps -> Record o) -> Effect Unit
-modCamera0 f = do
-  s <- getSigmaRef
-  for_ (cameras s !! 0) $ \cam ->
-    void $ goTo cam (f $ getCameraProps cam)
-
-type NOverlapConfig =
-  { nodes :: Array SigmaNode
-  , nodeMargin :: Number
-  , scaleNodes :: Number
-  , gridSize :: Number
-  , permittedExpansion :: Number
-  , speed :: Number
-  , maxIterations :: Number
-  , easing :: SigmaEasing
-  , duration :: Number
-  }
-
-
-nOverlap :: Array SigmaNode -> NOverlapConfig
-nOverlap ns =  { nodes : ns
-                   ,  nodeMargin : 0.4
-                   , scaleNodes : 1.5
-                   , gridSize : 300.0
-                   , permittedExpansion : 1.0
-                   , speed : 7.0
-                   , maxIterations : 8.0
-                   , easing : sigmaEasing.quadraticOut
-                   , duration : 1500.0
-                   }
+-- modCamera0 :: forall o. Optional o CameraProps =>
+--               (Record CameraProps -> Record o) -> Effect Unit
+-- modCamera0 f = do
+--   s <- getSigmaRef
+--   for_ (cameras s !! 0) $ \cam ->
+--     void $ goTo cam (f $ getCameraProps cam)
 
 dispLegend :: Array Legend -> ReactElement
 dispLegend ary = div [] $ map dl ary
@@ -457,22 +432,22 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                   [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
                   ]
                 -}
-                , li'
-                  [ button [ className "btn btn-primary"
-                           , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
-                           ] [text "Center"]
-                  ]
-                , li [className "col-md-1"]
-                  [ span [] [text "Zoom"],input [ _type "range"
-                                                , _id "cameraRatio"
-                                                , max "100"
-                                                , defaultValue "0"
-                                                , min "0"
-                                                , onChange \e -> do
-                                                    let ratio = (100.0 - numberTargetValue e) / 100.0
-                                                    modCamera0 (const {ratio})
-                                                ]
-                  ]
+                -- , li'
+                  -- [ button [ className "btn btn-primary"
+                  --          , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
+                  --          ] [text "Center"]
+                  -- ]
+                -- , li [className "col-md-1"]
+                --   [ span [] [text "Zoom"],input [ _type "range"
+                --                                 , _id "cameraRatio"
+                --                                 , max "100"
+                --                                 , defaultValue "0"
+                --                                 , min "0"
+                --                                 , onChange \e -> do
+                --                                     let ratio = (100.0 - numberTargetValue e) / 100.0pa
+                --                                     modCamera0 (const {ratio})
+                --                                 ]
+                --   ]
                 , li [className "col-md-1"]
                   [ span [] [text "MultiNode"]
                   , input

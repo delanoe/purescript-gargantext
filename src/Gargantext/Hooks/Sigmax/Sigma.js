@@ -1,9 +1,11 @@
 'use strict';
 
-const s = require('sigma').sigma;
+const sigma = require('sigma').sigma;
+const react_sigma = require('react-sigma');
+const FL = require('react-sigma/lib/ForceLink');
 
-if (typeof window === 'undefined') {
-  window.sigma = s;
+if (typeof window !== 'undefined') {
+  window.sigma = sigma;
 }
 
 function _sigma(left, right, opts) {
@@ -44,6 +46,7 @@ function killSigma(left, right, sigma) {
     return left(e);
   }
 }
+
 
 exports._sigma = _sigma;
 exports._graphRead = graphRead;
