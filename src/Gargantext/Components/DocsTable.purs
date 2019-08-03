@@ -179,7 +179,7 @@ searchBar (query /\ setQuery) = R.createElement el {} []
 
       pure $ H.div {className: "row"}
         [ H.div {className: "col col-md-3"} []
-        , H.div {className: "col col-md-1"} [searchButton queryText]
+        , H.div {className: "col col-md-1"} [if query /= "" then clearButton else H.div {} []]
         , H.div {className: "col col-md-3 form-group"}
           [ H.input { type: "text"
                     , className: "form-control"
@@ -187,7 +187,7 @@ searchBar (query /\ setQuery) = R.createElement el {} []
                     , placeholder: query
                     , defaultValue: query}
           ]
-        , H.div {className: "col col-md-1"} [if query /= "" then clearButton else H.div {} []]
+        , H.div {className: "col col-md-1"} [searchButton queryText]
         ]
 
     onSearchChange :: forall e. R.State Query -> e -> Effect Unit
