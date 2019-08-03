@@ -545,7 +545,7 @@ toHtml d s@(NTree (LNode {id, name, nodeType}) ary) n = R.createElement el {} []
           , H.a { href: if nodeType == Phylo then (toUrl Static nodeType (Just id))
                                              else (toUrl Front  nodeType (Just id))
                 , target : if nodeType == Phylo then "blank" else ""
-                , style: {"margin-left": "22px"}
+                , style: {marginLeft: "22px"}
                 , onClick: mkEffectFn1 $ (\e -> d $ CurrentNode id)
                 }
             [ nodeText s n ]

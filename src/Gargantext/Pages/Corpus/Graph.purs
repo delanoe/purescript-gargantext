@@ -313,7 +313,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
     
     render' :: Render State {} Action
     render' d _ (State st@{sigmaSettings, graphData: GraphData {sides,metaData  }}) _ =
-      [ div [className "container-fluid", style {"padding-top" : "90px" }]
+      [ div [className "container-fluid", style {paddingTop : "90px" }]
       [ {-div [ className "row"]
         [ h2 [ style {textAlign : "center", position : "relative", top: "-1px"}]
           [-- :  MetaData {title}
@@ -324,7 +324,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                 text "Title"
           ]
         ]
-        , -} div [className "row", style {"padding-bottom" : "10px", marginTop : "-24px"}]
+        , -} div [className "row", style {paddingBottom : "10px", marginTop : "-24px"}]
       [
            div [className "col-md-4"]
            [
