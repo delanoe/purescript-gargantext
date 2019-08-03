@@ -18,8 +18,7 @@
         "prop-types": "15.6.2",
         "react": "^16.8.6",
         "react-dom": "^16.8.6",
-        "react-sigma": "git://github.com/np/react-sigma.git#shouldComponentUpdate",
-        "sigma": "^1.2.1"
+        "sigma": "git://github.com/jjl/sigma.js#garg"
     },
     "devDependencies": {
         "@babel/cli": "^7.1.5",

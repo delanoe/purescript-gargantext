@@ -104,9 +104,13 @@ stopForceAtlas2 = runEffectFn1 _stopForceAtlas2
 killForceAtlas2 :: Sigma -> Effect Unit
 killForceAtlas2 = runEffectFn1 _killForceAtlas2
 
+isForceAtlas2Running :: Sigma -> Effect Boolean
+isForceAtlas2Running = runEffectFn1 _isForceAtlas2Running
+
 foreign import _startForceAtlas2 :: forall s. EffectFn2 Sigma s Unit
 foreign import _stopForceAtlas2 :: EffectFn1 Sigma Unit
 foreign import _killForceAtlas2 :: EffectFn1 Sigma Unit
+foreign import _isForceAtlas2Running :: EffectFn1 Sigma Boolean
 
 newtype SigmaEasing = SigmaEasing String
 

@@ -3701,10 +3701,8 @@ shelljs@^0.8.2, shelljs@^0.8.3:
     interpret "^1.0.0"
     rechoir "^0.6.2"
 
-sigma@^1.2.1:
+sigma@../sigma.js:
   version "1.2.1"
-  resolved "https://registry.yarnpkg.com/sigma/-/sigma-1.2.1.tgz#2ebf3df2971715afe49ad0c08945c574bb6c5771"
-  integrity sha512-9Z0m1pssXv6sndPMvOzXnM1mVO73YCWDE6X5bKxJyG+9J0B9zJkgtgoBM7cnxEaJMzmrbxPceKTVpwF7cS/xqA==
 
 signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"

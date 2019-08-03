@@ -1,12 +1,12 @@
 'use strict';
 
-const sigma = require('sigma').sigma;
-const react_sigma = require('react-sigma');
-const FL = require('react-sigma/lib/ForceLink');
+const sigma = require('sigma/src/garg.js').sigma;
 
 if (typeof window !== 'undefined') {
   window.sigma = sigma;
 }
+
+require('sigma/plugins/garg.js').init(sigma, window);
 
 function _sigma(left, right, opts) {
   try {
@@ -23,6 +23,7 @@ function graphRead(left, right, sigma, data) {
     return left(e);
   }
 }
+function refresh(sigma) { sigma.refresh(); }
 function addRenderer(left, right, sigma, renderer) {
   try {
     return right(sigma.addRenderer(renderer));
@@ -46,18 +47,22 @@ function killSigma(left, right, sigma) {
     return left(e);
   }
 }
-
+function clear(sigma) { sigma.graph.clear(); }
+function bind(sigma, event, handler) { sigma.bind(event, handler); }
+function startForceAtlas2(sigma, settings) { sigma.startForceAtlas2(settings); }
+function stopForceAtlas2(sigma) { sigma.stopForceAtlas2(); }
+function killForceAtlas2(sigma) { sigma.killForceAtlas2(); }
+function isForceAtlas2Running(sigma) { return sigma.isForceAtlas2Running(); }
 
 exports._sigma = _sigma;
 exports._graphRead = graphRead;
-exports._refresh = function refresh(sigma) { sigma.refresh(); };
+exports._refresh = refresh;
 exports._addRenderer = addRenderer;
 exports._killRenderer = killRenderer;
 exports._killSigma = killSigma
-exports._clear = function clear(sigma) { sigma.graph.clear(); };
-exports._bind = function bind(sigma, event, handler) { sigma.bind(event, handler); };
-exports._startForceAtlas2 = function startForceAtlas2(sigma, settings) {
-  sigma.startForceAtlas2(settings);
-};
-exports._stopForceAtlas2 = function stopForceAtlas2(sigma) { sigma.stopForceAtlas2(); };
-exports._killForceAtlas2 = function killForceAtlas2(sigma) { sigma.killForceAtlas2(); };
+exports._clear = clear;
+exports._bind = bind;
+exports._startForceAtlas2 = startForceAtlas2;
+exports._stopForceAtlas2 = stopForceAtlas2;
+exports._killForceAtlas2 = killForceAtlas2;
+exports._isForceAtlas2Running = isForceAtlas2Running;
