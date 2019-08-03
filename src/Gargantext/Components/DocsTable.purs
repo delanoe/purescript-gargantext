@@ -155,7 +155,8 @@ layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
           , if showSearch then searchBar query else H.div {} []
           , H.div {className: "col-md-12"}
             [ pageLoader tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
-          , H.div {className: "col-md-1 col-md-offset-11"}
+          
+          {-, H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
                        , style: {backgroundColor: "peru", color : "white", border : "white"}
                        , onClick: onClickTrashAll nodeId
@@ -164,6 +165,7 @@ layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
               ,  H.text "Trash all"
               ]
             ]
+           -}
           ]
         ]
 
