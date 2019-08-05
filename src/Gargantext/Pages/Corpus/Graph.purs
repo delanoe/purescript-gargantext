@@ -49,13 +49,8 @@ import Web.Storage.Storage (getItem)
 data Action
   = LoadGraph Int
   | SelectNode SelectedNode
-  | ShowSidePanel Boolean
-  | ToggleControls
-  | ToggleTree
   | ChangeLabelSize Number
   | ChangeNodeSize Number
-  | DisplayEdges
-  | ToggleMultiNodeSelection
   | ChangeCursorSize Number
 --  | Zoom Boolean
 
@@ -68,15 +63,6 @@ derive instance ordSelectedNode :: Ord SelectedNode
 instance showSelectedNode :: Show SelectedNode where
   show (SelectedNode node) = node.label
 
-_cursorSize :: forall s a. Lens' { cursorSize :: a | s } a
-_cursorSize = prop (SProxy :: SProxy "cursorSize")
-
-_multiNodeSelection :: forall s a. Lens' { multiNodeSelection :: a | s } a
-_multiNodeSelection = prop (SProxy :: SProxy "multiNodeSelection")
-
--- _sigmaSettings :: forall s t a b. Lens { settings :: a | s } { settings :: b | t } a b
-_sigmaSettings :: forall s a. Lens' { sigmaSettings :: a | s } a
-_sigmaSettings = prop (SProxy :: SProxy "sigmaSettings")
 
 _labelSizeRatio' :: forall s a. Lens' { labelSizeRatio :: a | s } a
 _labelSizeRatio' = prop (SProxy :: SProxy "labelSizeRatio")
@@ -95,12 +81,6 @@ _minNodeSize' = prop (SProxy :: SProxy "minNodeSize")
 
 _minNodeSize :: Lens' {|Graph.SigmaSettings} Number
 _minNodeSize f = unsafeCoerce $ _minNodeSize' f
-
-_drawEdges' :: forall s a. Lens' { drawEdges :: a | s} a
-_drawEdges' = prop (SProxy :: SProxy "drawEdges")
-
-_drawEdges :: Lens' {|Graph.SigmaSettings} Boolean
-_drawEdges f = unsafeCoerce $ _drawEdges' f
 
 numberTargetValue :: SyntheticUIEvent -> Number
 numberTargetValue e =
@@ -169,16 +149,6 @@ performAction (SelectNode selectedNode@(SelectedNode node)) _ (State state) =
     State s {selectedNodes = toggleSet selectedNode
                               (if s.multiNodeSelection then s.selectedNodes
                                                        else Set.empty) }
-
-performAction (ShowSidePanel b) _ (State state) = void do
-  modifyState $ \(State s) -> State s {showSidePanel = b }
-
-
-performAction (ToggleControls) _ (State state) = void do
-  modifyState $ \(State s) -> State s {showControls = not (state.showControls) }
-
-performAction (ToggleTree) _ (State state) = void do
-  modifyState $ \(State s) -> State s {showTree = not (state.showTree) }
 
 performAction (ChangeLabelSize size) _ _ =
   modifyState_ $ \(State s) ->
@@ -256,15 +226,6 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
 
 
 
-defaultPalette :: Array String
-defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#33c8f3","#739e9a","#caeca3","#f6f7e5","#f9bcca","#ccb069","#c9ffde","#c58683","#6c9eb0","#ffd3cf","#ccffc7","#52a1b0","#d2ecff","#99fffe","#9295ae","#5ea38b","#fff0b3","#d99e68"]
-
--- clusterColor :: Cluster -> Color
--- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `mod` length defaultPalette)
-
-
-intColor :: Int -> String
-intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
 
 -- modCamera0 :: forall o. Optional o CameraProps =>
 --               (Record CameraProps -> Record o) -> Effect Unit
@@ -273,12 +234,6 @@ intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaul
 --   for_ (cameras s !! 0) $ \cam ->
 --     void $ goTo cam (f $ getCameraProps cam)
 
-dispLegend :: Array Legend -> ReactElement
-dispLegend ary = div [] $ map dl ary
-  where
-    dl (Legend {id_, color, label}) =
-      p []
-      [ span [style {width : 10, height : 10, backgroundColor : intColor id_ , display: "inline-block"}] []
       , text $ " " <> label
       ]
 
@@ -314,8 +269,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
     render' :: Render State {} Action
     render' d _ (State st@{sigmaSettings, graphData: GraphData {sides,metaData  }}) _ =
       [ div [className "container-fluid", style {paddingTop : "90px" }]
-      [ {-div [ className "row"]
-        [ h2 [ style {textAlign : "center", position : "relative", top: "-1px"}]
+        [ {-div [ className "row"]
           [-- :  MetaData {title}
             case metaData of
               Just( MetaData {title }) ->
@@ -323,30 +277,11 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
               Nothing ->
                 text "Title"
           ]
-        ]
-        , -} div [className "row", style {paddingBottom : "10px", marginTop : "-24px"}]
-      [
-           div [className "col-md-4"]
-           [
-            ]
-          , div [className "col-md-4"]
-           [
-             button [className "btn btn-primary center-block"
-             , onClick \_ -> d ToggleControls
-             ]
-             [text $ if st.showControls then "Hide Controls" else "Show Controls"]
 
-            ]
-          , div [className "col-md-4"]
-          [ div [className "pull-right"]
-            [ button [className "btn btn-primary"
-               ,onClick \_ -> d $ ShowSidePanel $ not st.showSidePanel
-               ] [text $ if st.showSidePanel then "Hide Side Panel" else "Show Side Panel"]
-            ]
-          ]
-      ],
-      div [className "row"]
-      [
+]
+        , -}
+          div [className "row"]
+          [
            if (st.showControls) then
               div [className "col-md-12", style {"padding-bottom" : "10px"}]
             [ menu [_id "toolbar"]
@@ -354,13 +289,6 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                 [
                 --  li' [ button [className "btn btn-success btn-sm"] [text "Change Type"] ]
                 -- ,
-                  li'
-                  [ button [
-                         className "btn btn-primary btn-sm"
-                       , onClick \_ -> d DisplayEdges
-                           ]
-                    [text "Toggle Edges"]
-                  ]
                 -- , li' [ button [className "btn btn-primary btn-sm"] [text "Change Level"] ]
                 {- ,li [style {display : "inline-block"}]
                   [ form'
@@ -601,16 +529,3 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
          ]
       ]
 
-getNodes :: Int -> Aff GraphData
-getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId
-
-getAuthData :: Effect (Maybe AuthData)
-getAuthData = do
-  w  <- window
-  ls <- localStorage w
-  mto <- getItem "token" ls
-  mti <- getItem "tree_id" ls
-  pure do
-    token <- mto
-    tree_id <- Int.fromString =<< mti
-    pure $ AuthData {token, tree_id}

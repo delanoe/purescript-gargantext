@@ -153,6 +153,7 @@ useForceAtlas2 sigma settings =
     effect _ = dependOnSigma sigma sigmaNotFoundMsg withSigma
     withSigma sig = do
       log startingMsg
+      log sigma
       Sigma.startForceAtlas2 sig settings
       cleanupFirst sigma (Sigma.killForceAtlas2 sig)
     startingMsg = "[Graph] Starting ForceAtlas2"

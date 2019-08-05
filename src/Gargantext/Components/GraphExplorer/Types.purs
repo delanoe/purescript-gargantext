@@ -136,3 +136,14 @@ getLegendData (GraphData {nodes, edges, metaData}) = getLegend metaData
     getLegend Nothing  = []
 
 
+defaultPalette :: Array String
+defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#33c8f3","#739e9a","#caeca3","#f6f7e5","#f9bcca","#ccb069","#c9ffde","#c58683","#6c9eb0","#ffd3cf","#ccffc7","#52a1b0","#d2ecff","#99fffe","#9295ae","#5ea38b","#fff0b3","#d99e68"]
+
+-- clusterColor :: Cluster -> Color
+-- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `mod` length defaultPalette)
+
+
+intColor :: Int -> String
+intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
+
+  
