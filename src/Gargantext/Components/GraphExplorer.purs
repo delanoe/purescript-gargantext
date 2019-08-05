@@ -38,7 +38,7 @@ import Gargantext.Config.REST (get)
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Types (class Optional)
 import Gargantext.Utils (toggleSet)
-import Gargantext.Utils.Reactix (scuff)
+import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
@@ -48,6 +48,8 @@ import Reactix as R
 import Reactix.DOM.HTML as RH
 
 type Props s fa2 = ()
+
+spec = R2.scuff $ explorer {}
 
 explorer :: forall s fa2. Record (Props s fa2) -> R.Element
 explorer props = R.createElement explorerCpt props []

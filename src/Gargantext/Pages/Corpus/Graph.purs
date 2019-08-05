@@ -32,7 +32,6 @@ import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Layout.Actions (Action(..))
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Types (class Optional)
 import Gargantext.Utils (toggleSet)
@@ -131,48 +130,48 @@ graphSpec :: Spec State {} Action
 graphSpec = simpleSpec performAction render
 -}
 
-performAction :: PerformAction State {} Action
-performAction (LoadGraph fp) _ _ = void do
-  _ <- logs fp
-  _ <- modifyState \(State s) -> State s {corpusId = fp, sigmaGraphData = Nothing}
-  resp <- lift $ getNodes fp
-  treeResp <- liftEffect $ getAuthData
-  case treeResp of
-    Just (AuthData {token,tree_id }) ->
-      modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Just tree_id}
-    Nothing ->
-      modifyState \(State s) -> State s { graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Nothing}
-      -- TODO: here one might `catchError getNodes` to visually empty the
-      -- graph.
-  --modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
+-- performAction :: PerformAction State {} Action
+-- performAction (LoadGraph fp) _ _ = void do
+--   _ <- logs fp
+--   _ <- modifyState \(State s) -> State s {corpusId = fp, sigmaGraphData = Nothing}
+--   resp <- lift $ getNodes fp
+--   treeResp <- liftEffect $ getAuthData
+--   case treeResp of
+--     Just (AuthData {token,tree_id }) ->
+--       modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Just tree_id}
+--     Nothing ->
+--       modifyState \(State s) -> State s { graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp, treeId = Nothing}
+--       -- TODO: here one might `catchError getNodes` to visually empty the
+--       -- graph.
+--   --modifyState \(State s) -> State s {graphData = resp, sigmaGraphData = Just $ convert resp, legendData = getLegendData resp}
 
-performAction (SelectNode selectedNode@(SelectedNode node)) _ (State state) =
-  modifyState_ $ \(State s) ->
-    State s {selectedNodes = toggleSet selectedNode
-                              (if s.multiNodeSelection then s.selectedNodes
-                                                       else Set.empty) }
+-- performAction (SelectNode selectedNode@(SelectedNode node)) _ (State state) =
+--   modifyState_ $ \(State s) ->
+--     State s {selectedNodes = toggleSet selectedNode
+--                               (if s.multiNodeSelection then s.selectedNodes
+--                                                        else Set.empty) }
 
-performAction (ChangeLabelSize size) _ _ =
-  modifyState_ $ \(State s) ->
-    State $ ((_sigmaSettings <<< _labelSizeRatio) .~ size) s
+-- performAction (ChangeLabelSize size) _ _ =
+--   modifyState_ $ \(State s) ->
+--     State $ ((_sigmaSettings <<< _labelSizeRatio) .~ size) s
 
-performAction (ChangeNodeSize size) _ _ =
-  modifyState_ $ \(State s) ->
-    s # _sigmaSettings <<< _maxNodeSize .~ (size * 10.0)
-      # _sigmaSettings <<< _minNodeSize .~ size
-      # State
+-- performAction (ChangeNodeSize size) _ _ =
+--   modifyState_ $ \(State s) ->
+--     s # _sigmaSettings <<< _maxNodeSize .~ (size * 10.0)
+--       # _sigmaSettings <<< _minNodeSize .~ size
+--       # State
 
-performAction DisplayEdges _ _ =
-  modifyState_ $ \(State s) -> do
-    State $ ((_sigmaSettings <<< _drawEdges) %~ not) s
+-- performAction DisplayEdges _ _ =
+--   modifyState_ $ \(State s) -> do
+--     State $ ((_sigmaSettings <<< _drawEdges) %~ not) s
 
-performAction ToggleMultiNodeSelection _ _ =
-  modifyState_ $ \(State s) -> do
-    State $ s # _multiNodeSelection %~ not
+-- performAction ToggleMultiNodeSelection _ _ =
+--   modifyState_ $ \(State s) -> do
+--     State $ s # _multiNodeSelection %~ not
 
-performAction (ChangeCursorSize size) _ _ =
-  modifyState_ $ \(State s) ->
-    State $ s # _cursorSize .~ size
+-- performAction (ChangeCursorSize size) _ _ =
+--   modifyState_ $ \(State s) ->
+--     State $ s # _cursorSize .~ size
 
 
 --performAction (Zoom True) _ _ =
@@ -240,294 +239,294 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
       -- ]
 
 
-specOld :: Spec State {} Action
-specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
-  where
-    treespec = over _render \frender d p (State s) c ->
+-- specOld :: Spec State {} Action
+-- specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
+--   where
+--     treespec = over _render \frender d p (State s) c ->
 
-                [ div [ className "col-md-2", _id "graph-tree", style {marginTop: "65px"}] $
-                  [
-                     button [className "btn btn-primary" , onClick \_ -> d ToggleTree]
-                     [text $ if s.showTree then "Hide Tree" else "Show Tree"]
-                  ]
-                  <>
-                  if s.showTree then (frender d p (State s) c) else []
-                ]
-
-
-
-    graphspec   = over _render \frender d p s c -> [
-         div [ className "col-md-9"] (frender d p s c)
-      ]
-    treeSpec :: Spec State {} Action
-    treeSpec = withState \(State st) ->
-      case st.treeId of
-        Nothing ->
-          simpleSpec defaultPerformAction defaultRender
-        Just treeId ->
-          (cmapProps (const {root: treeId}) (noState Tree.treeview))
-    
-    
-    render' :: Render State {} Action
-    render' d _ (State st@{sigmaSettings, graphData: GraphData {sides,metaData  }}) _ =
-      [ div [className "container-fluid", style {paddingTop : "90px" }]
-        [ {-div [ className "row"]
-          [-- :  MetaData {title}
-            case metaData of
-              Just( MetaData {title }) ->
-                text $ "Graph " <> title
-              Nothing ->
-                text "Title"
-          ]
-
-]
-        , -}
-          div [className "row"]
-          [
-           if (st.showControls) then
-              div [className "col-md-12", style {"padding-bottom" : "10px"}]
-            [ menu [_id "toolbar"]
-              [ ul'
-                [
-                --  li' [ button [className "btn btn-success btn-sm"] [text "Change Type"] ]
-                -- ,
-                -- , li' [ button [className "btn btn-primary btn-sm"] [text "Change Level"] ]
-                {- ,li [style {display : "inline-block"}]
-                  [ form'
-                    [ input [_type "file"
-                            , name "file"
-                         --   , onChange (\e -> d $ SetFile (getFile e) (unsafeCoerce $ d <<< SetProgress))
-                            , className "btn btn-primary"]
-
-                    -- , text $ show st.readyState
-                    ]
-                  ]
-                -}
-                {-, li' [ input [_type "button"
-                              , className "btn btn-warning btn-sm"
-                              ,value "Run Demo"
-                            --  , onClick \_ -> d SetGraph, disabled (st.readyState /= DONE)
-                              ]
-                      ]
-                      -}
-                {-, li'
-                  [ form'
-                    [ div [className "col-lg-2"]
-                      [
-                        div [className "input-group"]
-                        [
-                          span [className "input-group-btn"]
-                          [
-                            button [className "btn btn-primary", _type "button"]
-                            [ span [className "glyphicon glyphicon-search"] []
-                            ]
-                          ]
-                          , input [_type "text", className "form-control", placeholder "select topics"]
-                        ]
-                      ]
-
-                    ]
-                  ]
-                -}
-                 li [className "col-md-1"]
-                  [ span [] [text "Selector"]
-                  , input [ _type "range"
-                          , _id "cursorSizeRange"
-                          , min "0"
-                          , max "100"
-                          , defaultValue (show st.cursorSize)
-                          , onChange \e -> d $ ChangeCursorSize (numberTargetValue e)
-                          ]
-                  ]
-                , li [className "col-md-1"]
-                  [ span [] [text "Labels"],input [_type "range"
-                                                 , _id "labelSizeRange"
-                                                 , max "4"
-                                                 , defaultValue <<< show $ sigmaSettings ^. _labelSizeRatio
-                                                 , min "1"
-                                                 , onChange \e -> d $ ChangeLabelSize (numberTargetValue e)
-                                                 ]
-                  ]
-
-                , li [className "col-md-1"]
-                  [ span [] [text "Nodes"],input [_type "range"
-                                                 , _id "nodeSizeRange"
-                                                 , max "15"
-                                                 , defaultValue <<< show $ sigmaSettings ^. _minNodeSize
-                                                 , min "5"
-                                                 , onChange \e -> d $ ChangeNodeSize (numberTargetValue e)
-                                                 ]
-                  ]
-                {-, li [className "col-md-2"]
-                  [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
-                  ]
-                -}
-                -- , li'
-                  -- [ button [ className "btn btn-primary"
-                  --          , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
-                  --          ] [text "Center"]
-                  -- ]
-                -- , li [className "col-md-1"]
-                --   [ span [] [text "Zoom"],input [ _type "range"
-                --                                 , _id "cameraRatio"
-                --                                 , max "100"
-                --                                 , defaultValue "0"
-                --                                 , min "0"
-                --                                 , onChange \e -> do
-                --                                     let ratio = (100.0 - numberTargetValue e) / 100.0pa
-                --                                     modCamera0 (const {ratio})
-                --                                 ]
-                --   ]
-                , li [className "col-md-1"]
-                  [ span [] [text "MultiNode"]
-                  , input
-                    [ _type "checkbox"
-                    , className "checkbox"
-                    -- , checked
-                    , onChange $ const $ d ToggleMultiNodeSelection
-                    ]
-                  ]
-                , li'
-                  [ button [ className "btn btn-primary"
-                           , onClick \_ -> pauseForceAtlas2
-                           ] [text "Spatialization"]
-                  ]
-                {-, li'
-                  [ button [className "btn btn-primary"
-                            , onClick \_ -> do
-                                             _ <- log "Hey there" -- $ show st.camera
-                                             pure unit
-                           ] [text "Save"] -- TODO: Implement Save!
-                  ]
-                -}
-                ]
-              ]
-            ]
-            else div [] []
-         ]
-         , div [className "row"]
-           [div [if (st.showSidePanel && st.showTree) then className "col-md-10" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
-             [ div [style {height: "95%"}
-                   ,onMouseMove (sigmaOnMouseMove {cursorSize: st.cursorSize})] $
-               [
-               ]
-               <>
-               case st.sigmaGraphData of
-                   Nothing -> []
-                   Just graph ->
-                     let forceAtlas2Settings = Graph.forceAtlas2Settings in
-                     let opts = { graph, sigmaSettings, forceAtlas2Settings } in
-                     [ scuff $ Graph.graph opts ]
-                                          
-                     -- [ sigma { graph, settings
-                     --         , style : sStyle { height : "95%"}
-                     --         , onClickNode : \e ->
-                     --         unsafePerformEffect $ do
-                     --           _ <- d $ ShowSidePanel true
-                     --           let {id, label} = (unsafeCoerce e).data.node
-                     --           _ <- d $ SelectNode $ SelectedNode {id, label}
-                     --           pure unit
-                     -- ]
-                 <>
-                 if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
-             ]
-         --, button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"39px",position : "relative",zIndex:"1000", top: "-59px"}] [text "Show SidePanel"]
-         , if (st.showSidePanel) then
-            div [_id "sp-container", className "col-md-2", style {border : "1px white solid", backgroundColor : "white"}]
-             [ div [className "row"] $
---             , div [className "col-md-12"]
---               [a
---                 ul [className "nav nav-tabs"
---                    , _id "myTab"
---                    , role "tablist"
---                    , style {marginBottom : "18px", marginTop : "18px"}
---                    ]
---                 [
---                   li [className "nav-item"]
+--                 [ div [ className "col-md-2", _id "graph-tree", style {marginTop: "65px"}] $
 --                   [
---                     a [className "nav-link active"
---                       , _id "home-tab"
---                       ,  _data {toggle : "tab"}
---                       , href "#home"
---                       , role "tab"
---                       , aria {controls :"home" , selected : "true"}
---                       ] [text "Neighbours"]
+--                      button [className "btn btn-primary" , onClick \_ -> d ToggleTree]
+--                      [text $ if s.showTree then "Hide Tree" else "Show Tree"]
 --                   ]
+--                   <>
+--                   if s.showTree then (frender d p (State s) c) else []
 --                 ]
---                 , div [className "tab-content", _id "myTabContent", style {borderBottom : "1px solid black", paddingBottom : "19px"}]
---                   [ div [ className "", _id "home", role "tabpanel" ]
---                     [ a [ className "badge badge-light"][text "objects"]
---                     , a [ className "badge badge-light"][text "evaluation"]
---                     , a [ className "badge badge-light"][text "dynamics"]
---                     , a [ className "badge badge-light"][text "virtual environments"]
---                     , a [ className "badge badge-light"][text "virtual reality"]
---                     , a [ className "badge badge-light"][text "performance analysis"]
---                     , a [ className "badge badge-light"][text "software engineering"]
---                     , a [ className "badge badge-light"][text "complex systems"]
---                     , a [ className "badge badge-light"][text "wireless communications"]
---
+
+
+
+--     graphspec   = over _render \frender d p s c -> [
+--          div [ className "col-md-9"] (frender d p s c)
+--       ]
+--     treeSpec :: Spec State {} Action
+--     treeSpec = withState \(State st) ->
+--       case st.treeId of
+--         Nothing ->
+--           simpleSpec defaultPerformAction defaultRender
+--         Just treeId ->
+--           (cmapProps (const {root: treeId}) (noState Tree.treeview))
+    
+    
+--     render' :: Render State {} Action
+--     render' d _ (State st@{sigmaSettings, graphData: GraphData {sides,metaData  }}) _ =
+--       [ div [className "container-fluid", style {paddingTop : "90px" }]
+--         [ {-div [ className "row"]
+--           [-- :  MetaData {title}
+--             case metaData of
+--               Just( MetaData {title }) ->
+--                 text $ "Graph " <> title
+--               Nothing ->
+--                 text "Title"
+--           ]
+
+-- ]
+--         , -}
+--           div [className "row"]
+--           [
+--            if (st.showControls) then
+--               div [className "col-md-12", style {"padding-bottom" : "10px"}]
+--             [ menu [_id "toolbar"]
+--               [ ul'
+--                 [
+--                 --  li' [ button [className "btn btn-success btn-sm"] [text "Change Type"] ]
+--                 -- ,
+--                 -- , li' [ button [className "btn btn-primary btn-sm"] [text "Change Level"] ]
+--                 {- ,li [style {display : "inline-block"}]
+--                   [ form'
+--                     [ input [_type "file"
+--                             , name "file"
+--                          --   , onChange (\e -> d $ SetFile (getFile e) (unsafeCoerce $ d <<< SetProgress))
+--                             , className "btn btn-primary"]
+
+--                     -- , text $ show st.readyState
 --                     ]
 --                   ]
+--                 -}
+--                 {-, li' [ input [_type "button"
+--                               , className "btn btn-warning btn-sm"
+--                               ,value "Run Demo"
+--                             --  , onClick \_ -> d SetGraph, disabled (st.readyState /= DONE)
+--                               ]
+--                       ]
+--                       -}
+--                 {-, li'
+--                   [ form'
+--                     [ div [className "col-lg-2"]
+--                       [
+--                         div [className "input-group"]
+--                         [
+--                           span [className "input-group-btn"]
+--                           [
+--                             button [className "btn btn-primary", _type "button"]
+--                             [ span [className "glyphicon glyphicon-search"] []
+--                             ]
+--                           ]
+--                           , input [_type "text", className "form-control", placeholder "select topics"]
+--                         ]
+--                       ]
+
+--                     ]
+--                   ]
+--                 -}
+--                  li [className "col-md-1"]
+--                   [ span [] [text "Selector"]
+--                   , input [ _type "range"
+--                           , _id "cursorSizeRange"
+--                           , min "0"
+--                           , max "100"
+--                           , defaultValue (show st.cursorSize)
+--                           , onChange \e -> d $ ChangeCursorSize (numberTargetValue e)
+--                           ]
+--                   ]
+--                 , li [className "col-md-1"]
+--                   [ span [] [text "Labels"],input [_type "range"
+--                                                  , _id "labelSizeRange"
+--                                                  , max "4"
+--                                                  , defaultValue <<< show $ sigmaSettings ^. _labelSizeRatio
+--                                                  , min "1"
+--                                                  , onChange \e -> d $ ChangeLabelSize (numberTargetValue e)
+--                                                  ]
+--                   ]
+
+--                 , li [className "col-md-1"]
+--                   [ span [] [text "Nodes"],input [_type "range"
+--                                                  , _id "nodeSizeRange"
+--                                                  , max "15"
+--                                                  , defaultValue <<< show $ sigmaSettings ^. _minNodeSize
+--                                                  , min "5"
+--                                                  , onChange \e -> d $ ChangeNodeSize (numberTargetValue e)
+--                                                  ]
+--                   ]
+--                 {-, li [className "col-md-2"]
+--                   [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
+--                   ]
+--                 -}
+--                 -- , li'
+--                   -- [ button [ className "btn btn-primary"
+--                   --          , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
+--                   --          ] [text "Center"]
+--                   -- ]
+--                 -- , li [className "col-md-1"]
+--                 --   [ span [] [text "Zoom"],input [ _type "range"
+--                 --                                 , _id "cameraRatio"
+--                 --                                 , max "100"
+--                 --                                 , defaultValue "0"
+--                 --                                 , min "0"
+--                 --                                 , onChange \e -> do
+--                 --                                     let ratio = (100.0 - numberTargetValue e) / 100.0pa
+--                 --                                     modCamera0 (const {ratio})
+--                 --                                 ]
+--                 --   ]
+--                 , li [className "col-md-1"]
+--                   [ span [] [text "MultiNode"]
+--                   , input
+--                     [ _type "checkbox"
+--                     , className "checkbox"
+--                     -- , checked
+--                     , onChange $ const $ d ToggleMultiNodeSelection
+--                     ]
+--                   ]
+--                 , li'
+--                   [ button [ className "btn btn-primary"
+--                            , onClick \_ -> pauseForceAtlas2
+--                            ] [text "Spatialization"]
+--                   ]
+--                 {-, li'
+--                   [ button [className "btn btn-primary"
+--                             , onClick \_ -> do
+--                                              _ <- log "Hey there" -- $ show st.camera
+--                                              pure unit
+--                            ] [text "Save"] -- TODO: Implement Save!
+--                   ]
+--                 -}
 --                 ]
-             {-, div [className "col-md-12", _id "horizontal-checkbox"]
-               [ ul [ style {display: "inline",float : "left" }]
-                 [ li []
-                   [ span [] [text "Pubs"]
-                     ,input [ _type "checkbox"
-                           , className "checkbox"
-                           , checked $ true
-                           , title "Mark as completed"
-                             --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
-                           ]
+--               ]
+--             ]
+--             else div [] []
+--          ]
+--          , div [className "row"]
+--            [div [if (st.showSidePanel && st.showTree) then className "col-md-10" else if (st.showSidePanel || st.showTree) then className "col-md-10" else className "col-md-12"]
+--              [ div [style {height: "95%"}
+--                    ,onMouseMove (sigmaOnMouseMove {cursorSize: st.cursorSize})] $
+--                [
+--                ]
+--                <>
+--                case st.sigmaGraphData of
+--                    Nothing -> []
+--                    Just graph ->
+--                      let forceAtlas2Settings = Graph.forceAtlas2Settings in
+--                      let opts = { graph, sigmaSettings, forceAtlas2Settings } in
+--                      [ scuff $ Graph.graph opts ]
+                                          
+--                      -- [ sigma { graph, settings
+--                      --         , style : sStyle { height : "95%"}
+--                      --         , onClickNode : \e ->
+--                      --         unsafePerformEffect $ do
+--                      --           _ <- d $ ShowSidePanel true
+--                      --           let {id, label} = (unsafeCoerce e).data.node
+--                      --           _ <- d $ SelectNode $ SelectedNode {id, label}
+--                      --           pure unit
+--                      -- ]
+--                  <>
+--                  if length st.legendData > 0 then [div [style {position : "absolute", bottom : "10px", border: "1px solid black", boxShadow : "rgb(0, 0, 0) 0px 2px 6px", marginLeft : "10px", padding:  "16px"}] [dispLegend st.legendData]] else []
+--              ]
+--          --, button [onClick \_ -> d ShowSidePanel, className "btn btn-primary", style {right:"39px",position : "relative",zIndex:"1000", top: "-59px"}] [text "Show SidePanel"]
+--          , if (st.showSidePanel) then
+--             div [_id "sp-container", className "col-md-2", style {border : "1px white solid", backgroundColor : "white"}]
+--              [ div [className "row"] $
+-- --             , div [className "col-md-12"]
+-- --               [a
+-- --                 ul [className "nav nav-tabs"
+-- --                    , _id "myTab"
+-- --                    , role "tablist"
+-- --                    , style {marginBottom : "18px", marginTop : "18px"}
+-- --                    ]
+-- --                 [
+-- --                   li [className "nav-item"]
+-- --                   [
+-- --                     a [className "nav-link active"
+-- --                       , _id "home-tab"
+-- --                       ,  _data {toggle : "tab"}
+-- --                       , href "#home"
+-- --                       , role "tab"
+-- --                       , aria {controls :"home" , selected : "true"}
+-- --                       ] [text "Neighbours"]
+-- --                   ]
+-- --                 ]
+-- --                 , div [className "tab-content", _id "myTabContent", style {borderBottom : "1px solid black", paddingBottom : "19px"}]
+-- --                   [ div [ className "", _id "home", role "tabpanel" ]
+-- --                     [ a [ className "badge badge-light"][text "objects"]
+-- --                     , a [ className "badge badge-light"][text "evaluation"]
+-- --                     , a [ className "badge badge-light"][text "dynamics"]
+-- --                     , a [ className "badge badge-light"][text "virtual environments"]
+-- --                     , a [ className "badge badge-light"][text "virtual reality"]
+-- --                     , a [ className "badge badge-light"][text "performance analysis"]
+-- --                     , a [ className "badge badge-light"][text "software engineering"]
+-- --                     , a [ className "badge badge-light"][text "complex systems"]
+-- --                     , a [ className "badge badge-light"][text "wireless communications"]
+-- --
+-- --                     ]
+-- --                   ]
+-- --                 ]
+--              {-, div [className "col-md-12", _id "horizontal-checkbox"]
+--                [ ul [ style {display: "inline",float : "left" }]
+--                  [ li []
+--                    [ span [] [text "Pubs"]
+--                      ,input [ _type "checkbox"
+--                            , className "checkbox"
+--                            , checked $ true
+--                            , title "Mark as completed"
+--                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
+--                            ]
 
-                   ]
-                 , li []
-                   [ span [] [text "Projects"]
-                     ,input [ _type "checkbox"
-                           , className "checkbox"
-                           , checked $ false
-                           , title "Mark as completed"
-                             --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
-                           ]
-                   ]
-                 , li []
-                   [ span [] [text "Patents"]
-                     ,input [ _type "checkbox"
-                           , className "checkbox"
-                           , checked $ false
-                           , title "Mark as completed"
-                             --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
-                           ]
-                   ]
-                 , li []
-                   [ span [] [text "Others"]
-                     ,input [ _type "checkbox"
-                           , className "checkbox"
-                           , checked $ false
-                           , title "Mark as completed"
-                             --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
-                           ]
-                   ]
-                 ]
+--                    ]
+--                  , li []
+--                    [ span [] [text "Projects"]
+--                      ,input [ _type "checkbox"
+--                            , className "checkbox"
+--                            , checked $ false
+--                            , title "Mark as completed"
+--                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
+--                            ]
+--                    ]
+--                  , li []
+--                    [ span [] [text "Patents"]
+--                      ,input [ _type "checkbox"
+--                            , className "checkbox"
+--                            , checked $ false
+--                            , title "Mark as completed"
+--                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
+--                            ]
+--                    ]
+--                  , li []
+--                    [ span [] [text "Others"]
+--                      ,input [ _type "checkbox"
+--                            , className "checkbox"
+--                            , checked $ false
+--                            , title "Mark as completed"
+--                              --  , onChange $ dispatch <<< ( const $ SetMap $ not (getter _._type state.term == MapTerm))
+--                            ]
+--                    ]
+--                  ]
 
-               ] --}
+--                ] --}
 
-              [ div []
-                [ p [] []
-                , div [className "col-md-12"]
-                  [ let query = (\(SelectedNode {label}) -> words label) <$> Set.toUnfoldable st.selectedNodes in
-                    if null query then
-                      p [] []
-                    else
-                      GT.tabsElt {query, sides}
-                  , p [] []
-                  ]
-                ]
-              ]
-             ]
-            else
-              div [] []   -- ends sidepanel column here
-           ]
-         ]
-      ]
+--               [ div []
+--                 [ p [] []
+--                 , div [className "col-md-12"]
+--                   [ let query = (\(SelectedNode {label}) -> words label) <$> Set.toUnfoldable st.selectedNodes in
+--                     if null query then
+--                       p [] []
+--                     else
+--                       GT.tabsElt {query, sides}
+--                   , p [] []
+--                   ]
+--                 ]
+--               ]
+--              ]
+--             else
+--               div [] []   -- ends sidepanel column here
+--            ]
+--          ]
+--       ]
 

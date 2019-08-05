@@ -7,7 +7,7 @@ import Data.Maybe                                      (Maybe(Just))
 import Effect (Effect)
 import Gargantext.Components.Login                  as LN
 
-import Gargantext.Pages.Corpus.Graph     as GE
+--import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
 import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Router                               (Routes(..))
@@ -19,7 +19,7 @@ type AppState =
   , searchState        :: S.State
   , showLogin          :: Boolean
   , showCorpus         :: Boolean
-  , graphExplorerState :: GE.State
+  --, graphExplorerState :: GE.State
   , showTree           :: Boolean
   }
 
@@ -33,7 +33,7 @@ initAppState = do
     , searchState    : S.initialState
     , showLogin      : false
     , showCorpus     : false
-    , graphExplorerState : GE.initialState
+    --, graphExplorerState : GE.initialState
     , showTree : false
     }
 
@@ -49,6 +49,6 @@ _addCorpusState = lens (\s -> s.addCorpusState) (\s ss -> s{addCorpusState = ss}
 _searchState :: Lens' AppState S.State
 _searchState = lens (\s -> s.searchState) (\s ss -> s{searchState = ss})
 
-_graphExplorerState :: Lens' AppState GE.State
-_graphExplorerState = lens (\s -> s.graphExplorerState) (\s ss -> s{graphExplorerState = ss})
+-- _graphExplorerState :: Lens' AppState GE.State
+-- _graphExplorerState = lens (\s -> s.graphExplorerState) (\s ss -> s{graphExplorerState = ss})
 

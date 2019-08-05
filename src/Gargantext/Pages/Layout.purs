@@ -53,7 +53,7 @@ dispatchAction dispatcher _ (Document i n) = do
 
 dispatchAction dispatcher _ (PGraphExplorer nid) = do
   dispatcher $ SetRoute $ PGraphExplorer nid
-  dispatcher $ GraphExplorerA $ GE.LoadGraph nid
+  -- dispatcher $ GraphExplorerA $ GE.LoadGraph nid
   --dispatcher $ GraphExplorerA $ GE.LoadGraph "imtNew.json"
 
 dispatchAction dispatcher _ Dashboard = do
