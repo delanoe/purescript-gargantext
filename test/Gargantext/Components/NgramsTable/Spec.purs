@@ -4,6 +4,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Gargantext.Components.NgramsTable.Core (highlightNgrams, NgramsElement(..), NgramsTable(..))
+import Gargantext.Config (CTabNgramType(..))
 import Gargantext.Types  (TermList(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -41,7 +42,7 @@ spec = do
                    ,Tuple " at every " Nothing
                    ,Tuple "candidate" (Just CandidateTerm)
                    ]
-      highlightNgrams table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqual` output
 
     it "works when pattern overlaps" do
       let table = NgramsTable
@@ -66,7 +67,7 @@ spec = do
                    ,Tuple " " Nothing
                    ,Tuple "the" (Just GraphTerm)
                    ]
-      highlightNgrams table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqual` output
 
     it "works when pattern overlaps 2" do
       let table = NgramsTable
@@ -80,7 +81,7 @@ spec = do
                    ,Tuple " space " Nothing
                    ,Tuple "images" (Just GraphTerm)
                    ]
-      highlightNgrams table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqual` output
 
     it "works with punctuation" do
       let table = NgramsTable
@@ -90,4 +91,4 @@ spec = do
                    ,Tuple "graph" (Just GraphTerm)
                    ,Tuple ", after" Nothing
                    ]
-      highlightNgrams table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqual` output
