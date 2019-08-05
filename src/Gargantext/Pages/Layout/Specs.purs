@@ -4,7 +4,9 @@ import Data.Foldable (fold, intercalate)
 import Data.Lens (over)
 import Data.Maybe (Maybe(Nothing, Just))
 import Data.Tuple.Nested((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
+import Effect.Aff (launchAff)
 import React.DOM (button, div, text)
 import React.DOM.Props (_id, className, onClick, role, style)
 import Reactix as R
@@ -112,7 +114,7 @@ layout0 layout =
           Nothing ->
             className "col-md-12"
         ] (render d p s c) ]
-    cont = over _render \render d p s c -> [ div [className "row"      ] (render d p s c) ]
+    cont = over _render \render d p s c -> [ div [className "row" ] (render d p s c) ]
 
     bs = innerLayout $ layout
 
@@ -336,14 +338,49 @@ logLinks d s = case s.loginState.authData of
           [H.text " Logout"]
 
 
+divDropdownRight :: (Action -> Effect Unit) -> AppState -> R.Element
+divDropdownRight d s = R.createElement el {state: s} []
+  where
+    el = R.hooksComponent "DivDropdownRight" cpt
+    cpt {state} _children = do
+      (configState /\ setConfigState) <- R.useState' state.configState
+
+      pure $ H.ul {className: "nav navbar-nav pull-right"}
+        [ endConfigChooserCpt d state.configState (configState /\ setConfigState)
+        , logLinks d state
+        ]
+
+endConfigChooserCpt d s (configState /\ setConfigState) = R.createElement el {state: s} []
+  where
+    el = R.hooksComponent "EndConfigChooserCpt" cpt
+    cpt {state} _children = do
+      R.useEffect $ pure $
+        if (configState /= state) then do
+          _ <- log2 "update state: " configState
+          _ <- d $ ConfigStateA $ C.UpdateState configState
+          _ <- log2 "logout" ""
+          d $ Logout
+        else
+          pure $ unit
+
+      pure $ H.span {}
+        [ endConfigChooser (configState /\ setConfigState)
+        , H.span {className: "text-info"}
+          [ H.text $ C.endConfigDisplayName configState.endConfig ]
+        , H.span {className: "text-danger"}
+          [ H.text $ C.endConfigDisplayName state.endConfig ]
+        ]
+
+
 endConfigChooser :: R.State C.State -> R.Element
 endConfigChooser (configState /\ setConfigState) = R.createElement el {} []
   where
     el = R.hooksComponent "EndConfigChooser" cpt
     cpt {} _ = do
       -- NOTE Need to rebind the component after rerender
-      R.useEffect $
-        pure $ createDropdown "end-config-chooser"
+      R.useEffect do
+        _ <- pure $ createDropdown "end-config-chooser"
+        pure $ pure unit
 
       pure $ H.li {className: "dropdown"}
         [ H.a { className: "navbar-text dropdown-toggle"
@@ -359,28 +396,12 @@ endConfigChooser (configState /\ setConfigState) = R.createElement el {} []
 
     liItem :: C.EndConfigOption -> R.Element
     liItem {endConfig, displayName} =
-      H.li {on: {click: \_ -> setConfigState $ \st -> st {endConfig = endConfig}}}
-      --H.li {}
+      H.li {on: {click: onClick endConfig}}
       [ H.a {href: "#"} [H.text displayName] ]
 
-
-divDropdownRight :: (Action -> Effect Unit) -> AppState -> R.Element
-divDropdownRight d s = R.createElement el {} []
-  where
-    el = R.hooksComponent "DivDropdownRight" cpt
-    cpt {} _children = do
-      (configState /\ setConfigState) <- R.useState' s.configState
-
-      R.useEffect $
-        if (configState /= s.configState) then do
-          pure $ d $ ConfigStateA $ C.UpdateState configState
-        else
-          pure $ pure $ unit
-
-      pure $ H.ul {className: "nav navbar-nav pull-right"}
-        [ endConfigChooser (configState /\ setConfigState)
-        , logLinks d s
-        ]
+    onClick endConfig = \_ -> do
+      log2 "set end config" endConfig
+      setConfigState $ \st -> st {endConfig = endConfig}
 
 layoutFooter :: Spec {} {} Void
 layoutFooter = R2.elSpec $ R.hooksComponent "LayoutFooter" cpt
