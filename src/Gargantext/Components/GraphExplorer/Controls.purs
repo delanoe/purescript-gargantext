@@ -10,22 +10,28 @@ module Gargantext.Components.GraphExplorer.Controls
  , getMultiNodeSelect, setMultiNodeSelect
  ) where
 
+import Data.Tuple.Nested ((/\))
+import Effect (Effect)
+import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton)
+import Gargantext.Utils.Reactix as R2
+
 
 type Controls =
-  ( showTree :: R.State Boolean
-  , showControls :: R.State Boolean
-  , showSidePanel :: R.State Boolean
-  , showEdges :: R.State Boolean
-  , cursorSize :: R.State Number
+  ( cursorSize :: R.State Number
   , labelSize :: R.State Number
   , nodeSize :: R.State Number
   , multiNodeSelect :: R.Ref Boolean
+  , showControls :: R.State Boolean
+  , showEdges :: R.State Boolean
+  , showSidePanel :: R.State Boolean
+  , showTree :: R.State Boolean
   )
 
-controls = Record Controls -> R.Element
+controls :: Record Controls -> R.Element
 controls props = R.createElement controlsCpt props []
 
 controlsCpt :: R.Component Controls
@@ -35,84 +41,84 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
       case getShowControls props of
         false -> pure $ RH.div {} []
         true -> do
-          RH.div { className: "col-md-12", style: { paddingBottom: "10px" } }
-          [ menu { id: "toolbar" }
-            [ RH.ul {}
-              [ -- change type button (?)
-                RH.li {} [ edgesToggleButton props.showEdges ]
-                -- change level
-                -- file upload
-                -- run demo
-                -- search button
-                -- search topics
-                -- cursor size: 0-100
-                -- labels size: 1-4
-                -- node size : 5-15
-                -- edge size : ??
-                -- zoom: 0 -100 - calculate ratio
-                -- toggle multi node selection
-                -- spatialization (pause ForceAtlas2)
-                -- save button
+          pure $ RH.div { className: "col-md-12", style: { paddingBottom: "10px" } }
+            [ R2.menu { id: "toolbar" }
+              [ RH.ul {}
+                [ -- change type button (?)
+                  RH.li {} [ edgesToggleButton props.showEdges ]
+                  -- change level
+                  -- file upload
+                  -- run demo
+                  -- search button
+                  -- search topics
+                  -- cursor size: 0-100
+                  -- labels size: 1-4
+                  -- node size : 5-15
+                  -- edge size : ??
+                  -- zoom: 0 -100 - calculate ratio
+                  -- toggle multi node selection
+                  -- spatialization (pause ForceAtlas2)
+                  -- save button
+                ]
               ]
             ]
-          ]
 
 useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
-  showTree <- R.useState' false
-  showControls <- R.useState' false
-  showSidePanel <- R.useState' false
-  showEdges <- R.useState' true
-  cursorSize <- R.useState' 10
-  labelSize <- R.useState' 3
-  nodeSize <- R.useState' 10
+  cursorSize <- R.useState' 10.0
+  labelSize <- R.useState' 3.0
+  nodeSize <- R.useState' 10.0
   multiNodeSelect <- R.useRef false
+  showControls <- R.useState' false
+  showEdges <- R.useState' true
+  showSidePanel <- R.useState' false
+  showTree <- R.useState' false
   pure { showTree, showControls, showSidePanel, showEdges, cursorSize, labelSize, nodeSize, multiNodeSelect }
-  
-getShowTree :: Controls -> Boolean
+
+getShowTree :: Record Controls -> Boolean
 getShowTree { showTree: ( should /\ _ ) } = should
 
-getShowControls :: Controls -> Boolean
+getShowControls :: Record Controls -> Boolean
 getShowControls { showControls: ( should /\ _ ) } = should
 
-getShowSidePanel :: Controls -> Boolean
+getShowSidePanel :: Record Controls -> Boolean
 getShowSidePanel { showSidePanel: ( should /\ _ ) } = should
 
-getShowEdges :: Controls -> Boolean
-getShowEdges { showEdges: ( should /\ _ ) } = should 
+getShowEdges :: Record Controls -> Boolean
+getShowEdges { showEdges: ( should /\ _ ) } = should
 
-getCursorSize :: Controls -> Number
+getCursorSize :: Record Controls -> Number
 getCursorSize { cursorSize: ( size /\ _ ) } = size
 
-getLabelSize :: Controls -> Number
+getLabelSize :: Record Controls -> Number
 getLabelSize { labelSize: ( size /\ _ ) } = size
 
-getNodeSize :: Controls -> Number
+getNodeSize :: Record Controls -> Number
 getNodeSize { nodeSize: ( size /\ _ ) } = size
 
-getMultiNodeSelect :: Controls -> Boolean
+getMultiNodeSelect :: Record Controls -> Boolean
 getMultiNodeSelect { multiNodeSelect } = R.readRef multiNodeSelect
 
-setShowTree :: Controls -> Boolean -> Effect Unit
-setShowTree { showTree: ( _ /\ set ) } = set
+setShowTree :: Record Controls -> Boolean -> Effect Unit
+setShowTree { showTree: ( _ /\ set ) } v = set $ const v
 
-setShowControls :: Controls -> Boolean -> Effect Unit
-setShowControls { showControls: ( _ /\ set ) } = set
+setShowControls :: Record Controls -> Boolean -> Effect Unit
+setShowControls { showControls: ( _ /\ set ) } v = set $ const v
 
-setShowSidePanel :: Controls -> Boolean -> Effect Unit
-setShowSidePanel { showSidePanel: ( _ /\ set ) } = set
+setShowSidePanel :: Record Controls -> Boolean -> Effect Unit
+setShowSidePanel { showSidePanel: ( _ /\ set ) } v = set $ const v
 
-setShowEdges :: Controls -> Boolean -> Effect Unit
-setShowEdges { showEdges: ( _ /\ set ) } = set
+setShowEdges :: Record Controls -> Boolean -> Effect Unit
+setShowEdges { showEdges: ( _ /\ set ) } v = set $ const v
 
-setCursorSize :: Controls -> Number -> Effect Unit
-setCursorSize { cursorSize: ( _ /\ setSize ) } = setSize
+setCursorSize :: Record Controls -> Number -> Effect Unit
+setCursorSize { cursorSize: ( _ /\ setSize ) } v = setSize $ const v
 
-setLabelSize :: Controls -> Number -> Effect Unit
-setLabelSize { labelSize: ( _ /\ setSize) } = setSize
+setLabelSize :: Record Controls -> Number -> Effect Unit
+setLabelSize { labelSize: ( _ /\ setSize) } v = setSize $ const v
 
-setNodeSize :: Controls -> Number -> Effect Unit
-setNodeSize { nodeSize: ( _ /\ setSize ) } = setSize
+setNodeSize :: Record Controls -> Number -> Effect Unit
+setNodeSize { nodeSize: ( _ /\ setSize ) } v = setSize $ const v
 
-setMultiNodeSelect :: Controls -> Boolean -> Effect Unit
+setMultiNodeSelect :: Record Controls -> Boolean -> Effect Unit
 setMultiNodeSelect { multiNodeSelect } = R.setRef multiNodeSelect

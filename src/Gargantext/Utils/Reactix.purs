@@ -44,6 +44,9 @@ overState f (_state /\ setState) = setState f
 select :: ElemFactory
 select = createDOMElement "select"
 
+menu :: ElemFactory
+menu = createDOMElement "menu"
+
 effToggler :: forall e. R.State Boolean -> EffectFn1 e Unit
 effToggler (_value /\ setValue) = mkEffectFn1 $ \e -> setValue not
 

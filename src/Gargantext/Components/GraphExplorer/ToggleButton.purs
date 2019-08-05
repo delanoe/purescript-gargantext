@@ -6,24 +6,25 @@ module Gargantext.Components.GraphExplorer.ToggleButton
   , edgesToggleButton
   ) where
 
-import Prelude (bind, pure, ($))
+import Prelude
+import Data.Tuple.Nested ((/\))
 import Reactix as R
-import Reactix.HTML as H
+import Reactix.DOM.HTML as H
 
 type Props = ( state :: R.State Boolean, onMessage :: String, offMessage :: String )
 
 toggleButton :: Record Props -> R.Element
 toggleButton props = R.createElement toggleButtonCpt props []
-  
+
 toggleButtonCpt :: R.Component Props
 toggleButtonCpt = R.hooksComponent "ToggleButton" cpt
   where
     cpt {state, onMessage, offMessage} _ = do
       let (toggled /\ setToggled) = state
       pure $
-        RH.button
+        H.button
           { className: "btn btn-primary", on: {click: \_ -> setToggled not } }
-          [ RH.text (text onMessage offMessage toggled) ]
+          [ H.text (text onMessage offMessage toggled) ]
     text on _off true = on
     text _on off false = off
 

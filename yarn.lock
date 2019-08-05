@@ -3351,10 +3351,6 @@ react-is@^16.8.1, react-is@^16.8.4:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.8.6.tgz#5bbc1e2d29141c9fbdfed456343fe2bc430a6a16"
   integrity sha512-aUk3bHfZ2bRSVFFbbeVS4i+lNPZr3/WM5jT2J5omUVV1zzcs1nAaf3l51ctA5FFvCRbhrH0bdAsRRQddFJZPtA==
 
-"react-sigma@git://github.com/np/react-sigma.git#shouldComponentUpdate":
-  version "1.2.29"
-  resolved "git://github.com/np/react-sigma.git#0023eb24248c7bc61aec872bc26552e3d569b974"
-
 react-testing-library@^6.1.2:
   version "6.1.2"
   resolved "https://registry.yarnpkg.com/react-testing-library/-/react-testing-library-6.1.2.tgz#f6bba6eeecedac736eb00b22b4c70bae04535a4f"
@@ -3701,8 +3697,9 @@ shelljs@^0.8.2, shelljs@^0.8.3:
     interpret "^1.0.0"
     rechoir "^0.6.2"
 
-sigma@../sigma.js:
+"sigma@git://github.com/jjl/sigma.js#garg":
   version "1.2.1"
+  resolved "git://github.com/jjl/sigma.js#64a0e1ccd48550387ad4a56292dcbaef3258c929"
 
 signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"

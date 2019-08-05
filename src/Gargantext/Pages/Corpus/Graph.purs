@@ -24,6 +24,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaNode, cameras, getCameraProps, goTo, pauseForceAtlas2, sigmaOnMouseMove)
+import Gargantext.Components.GraphExplorer (getAuthData, getNodes, intColor)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
@@ -31,6 +32,7 @@ import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get)
+import Gargantext.Pages.Layout.Actions (Action(..))
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Types (class Optional)
 import Gargantext.Utils (toggleSet)
@@ -234,8 +236,8 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
 --   for_ (cameras s !! 0) $ \cam ->
 --     void $ goTo cam (f $ getCameraProps cam)
 
-      , text $ " " <> label
-      ]
+      -- , text $ " " <> label
+      -- ]
 
 
 specOld :: Spec State {} Action
@@ -327,7 +329,7 @@ specOld = fold [treespec treeSpec, graphspec $ simpleSpec performAction render']
                     ]
                   ]
                 -}
-                , li [className "col-md-1"]
+                 li [className "col-md-1"]
                   [ span [] [text "Selector"]
                   , input [ _type "range"
                           , _id "cursorSizeRange"

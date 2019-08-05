@@ -1,11 +1,13 @@
 module Gargantext.Components.GraphExplorer.Types where
 
 import Prelude
+import Partial.Unsafe (unsafePartial)
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Array (concat, fromFoldable, group, sort, take)
+import Data.Array (concat, fromFoldable, group, sort, take, (!!), length)
+import Data.Maybe (Maybe(..), maybe, fromJust)
 import Data.Newtype (class Newtype)
-import Data.Maybe (Maybe(..), maybe)
+
 newtype Node = Node
   { id_ :: String
   , size :: Int
@@ -145,5 +147,3 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#
 
 intColor :: Int -> String
 intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
-
-  

@@ -47,7 +47,7 @@ import Web.Storage.Storage (getItem)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
-type Props = ()
+type Props s fa2 = ()
 
 explorer :: forall s fa2. Record (Props s fa2) -> R.Element
 explorer props = R.createElement explorerCpt props []
@@ -61,9 +61,9 @@ explorerCpt = R.hooksComponent "Explorer" cpt
         outer
         [ inner
           [ row1
-            [ col [ pullLeft [ Toggle.treeTogglebutton controls.showTree ] ]
+            [ col [ pullLeft [ Toggle.treeToggleButton controls.showTree ] ]
             , col [ Toggle.controlsToggleButton controls.showControls ]
-            , col [ pullRight [ Toggle.sidePanelToggleButton controls.showSidePanel ] ]
+            , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
             ]
           , row [ Controls.controls controls ]
           , row [ graph controls, sidebar controls ]
