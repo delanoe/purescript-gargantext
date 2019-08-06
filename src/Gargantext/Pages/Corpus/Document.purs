@@ -3,28 +3,26 @@ module Gargantext.Pages.Corpus.Document where
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
-import React (ReactElement, ReactClass)
-import React as React
+import React (ReactClass, Children)
 import React.DOM (div, h4, li, p, span, text, ul)
 import React.DOM.Props (className)
-import Thermite (PerformAction, Render, Spec, simpleSpec, cmapProps, defaultPerformAction, createClass)
-import Control.Monad.Trans.Class (lift)
+import Reactix as R
+import Thermite (PerformAction, Render, Spec, simpleSpec, cmapProps, createClass)
 
 import Gargantext.Prelude
-import Gargantext.Config          (toUrl, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..))
+import Gargantext.Config          (toUrl, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..), CTabNgramType(..))
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.Loader as Loader
+import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Types (TermList)
-import Gargantext.Utils.Reactix ( scuff )
+import Gargantext.Utils.Reactix as R2
 
-type DocPath = { nodeId :: Int, listIds :: Array Int, tabType :: TabType }
+type DocPath = { nodeId :: Int, listIds :: Array Int, corpusId :: Maybe Int, tabType :: TabType }
 
 type NodeDocument = NodePoly Document
 
@@ -32,7 +30,10 @@ type LoadedData =
   { document    :: NodeDocument
   , ngramsTable :: VersionedNgramsTable }
 
-type LoadedDataProps = Loader.InnerProps DocPath LoadedData ()
+type Props =
+  { loaded :: LoadedData
+  , path   :: DocPath
+  }
 
 -- This is a subpart of NgramsTable.State.
 type State = CoreState ()
@@ -273,24 +274,24 @@ instance decodeDocument :: DecodeJson Document
                       --, text
                       }
 
-docViewSpec :: Spec State LoadedDataProps Action
+docViewSpec :: Spec State Props Action
 docViewSpec = simpleSpec performAction render
   where
-    performAction :: PerformAction State LoadedDataProps Action
+    performAction :: PerformAction State Props Action
     performAction Refresh {path: {nodeId, listIds, tabType}} {ngramsVersion} = do
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
     performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
-        pt = PatchMap $ Map.singleton n pe
-    performAction (AddNewNgram ngram termList) {path: params} _ =
-      lift $ addNewNgram ngram (Just termList) params
+        pt = singletonNgramsTablePatch CTabTerms n pe
+    performAction (AddNewNgram ngram termList) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
+        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+      where
+        pt = addNewNgram CTabTerms ngram termList
 
-    render :: Render State LoadedDataProps Action
-    render dispatch { path: pageParams
-                    , loaded: { ngramsTable: Versioned { data: initTable }, document }
-                    , dispatch: loaderDispatch }
+    render :: Render State Props Action
+    render dispatch { loaded: { ngramsTable: Versioned { data: initTable }, document } }
                     { ngramsTablePatch }
                     _reactChildren =
       [ autoUpdateElt { duration: 3000
@@ -327,23 +328,27 @@ docViewSpec = simpleSpec performAction render
           ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
           setTermList ngram Nothing        newList = dispatch $ AddNewNgram ngram newList
           setTermList ngram (Just oldList) newList = dispatch $ SetTermListItem ngram (replace oldList newList)
-          annotate text = scuff $ AnnotatedField.annotatedField { ngrams: ngramsTable, setTermList, text }
+          annotate text = R2.scuff $ AnnotatedField.annotatedField { ngrams: ngramsTable, setTermList, text }
           li' = li [className "list-group-item justify-content-between"]
           text' x = text $ maybe "Nothing" identity x
           badge s = span [className "badge badge-default badge-pill"] [text s]
           NodePoly {hyperdata : Document doc} = document
 
-layout :: Spec {} {nodeId :: Int, listId :: Int} Void
-layout = cmapProps (\{nodeId, listId} -> {nodeId, listIds: [listId], tabType})
-       $ simpleSpec defaultPerformAction render
+docViewClass :: ReactClass
+                  { children :: Children
+                  , loaded   :: LoadedData
+                  , path     :: DocPath
+                  }
+docViewClass = createClass "DocumentView" docViewSpec initialState
+
+layout :: Spec {} {nodeId :: Int, listId :: Int, corpusId :: Maybe Int} Void
+layout =
+  cmapProps (\{nodeId, listId, corpusId} -> {nodeId, listIds: [listId], corpusId, tabType}) $
+  R2.elSpec $ R.hooksComponent "DocumentLoader" \path _ ->
+    useLoader path loadData $ \props ->
+      R2.createElement' docViewClass props []
   where
     tabType = TabDocument (TabNgramType CTabTerms)
-    render :: Render {} DocPath Void
-    render _ path _ _ =
-      [ documentLoader
-        { path
-        , component: createClass "DocumentView" docViewSpec initialState
-        } ]
 
 ------------------------------------------------------------------------
 
@@ -363,9 +368,3 @@ loadData {nodeId, listIds, tabType} = do
     , termSizeFilter : Nothing
     }
   pure {document, ngramsTable}
-
-documentLoaderClass :: ReactClass (Loader.Props DocPath LoadedData)
-documentLoaderClass = Loader.createLoaderClass "DocumentLoader" loadData
-
-documentLoader :: Loader.Props' DocPath LoadedData -> ReactElement
-documentLoader props = React.createElement documentLoaderClass props []

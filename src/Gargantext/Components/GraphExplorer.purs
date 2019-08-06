@@ -40,6 +40,7 @@ import Gargantext.Types (class Optional)
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
+import Thermite (Spec)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -49,13 +50,14 @@ import Reactix.DOM.HTML as RH
 
 type Props s fa2 = ()
 
-spec = R2.scuff $ explorer {}
+spec :: forall s fa2. Spec {} (Record (Props s fa2)) Void
+spec = R2.elSpec $ explorerCpt
 
 explorer :: forall s fa2. Record (Props s fa2) -> R.Element
 explorer props = R.createElement explorerCpt props []
 
 explorerCpt :: forall s fa2. R.Component (Props s fa2)
-explorerCpt = R.hooksComponent "Explorer" cpt
+explorerCpt = R.hooksComponent "GraphExplorer" cpt
   where
     cpt props _ = do
       controls <- Controls.useGraphControls

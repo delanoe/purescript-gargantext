@@ -4,7 +4,6 @@ import Prelude hiding (div)
 import Data.Lens (view)
 import Data.List (fromFoldable)
 import Data.Tuple (Tuple(..))
-import Gargantext.Config (TabType(..), TabSubType(..))
 import Gargantext.Components.GraphExplorer.Types (GraphSideCorpus(..))
 import Gargantext.Components.FacetsTable (TextQuery, docViewSpec)
 import Gargantext.Components.Table as T

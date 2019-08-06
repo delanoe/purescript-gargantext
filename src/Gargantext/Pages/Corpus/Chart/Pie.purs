@@ -1,28 +1,31 @@
 module Gargantext.Pages.Corpus.Chart.Pie where
 
-import Data.String (take, joinWith, Pattern(..), split, length)
+import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Array (foldl, zip, filter)
 import Data.Array as A
-import Data.Tuple (Tuple(..))
-import Data.Map as Map
 import Data.Int (toNumber)
-import Data.Map (Map)
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Maybe (Maybe(..), maybe)
+import Data.String (take, joinWith, Pattern(..), split, length)
+import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
 import Gargantext.Config.REST (get)
 import React (ReactClass, ReactElement, createElement)
-import Thermite (Spec, Render, defaultPerformAction, simpleSpec, createClass)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Thermite (Spec)
+
 import Gargantext.Prelude
 import Gargantext.Types (TermList(..))
-import Gargantext.Components.Loader as Loader
+import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Charts.Options.ECharts
 import Gargantext.Components.Charts.Options.Type
 import Gargantext.Components.Charts.Options.Series
 import Gargantext.Components.Charts.Options.Color
 import Gargantext.Components.Charts.Options.Font
 import Gargantext.Components.Charts.Options.Data
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Pages.Corpus.Chart.Utils as U
 
 type Path =
   { corpusId :: Int
@@ -53,14 +56,8 @@ instance decodeHistoMetrics :: DecodeJson HistoMetrics where
 
 type Loaded = HistoMetrics
 
-loadedMetricsSpec :: Spec {} (Loader.InnerProps Path Loaded ()) Void
-loadedMetricsSpec = simpleSpec defaultPerformAction render
-  where
-    render :: Render {} (Loader.InnerProps Path Loaded ()) Void
-    render dispatch {loaded : metricsData} {} _ = [chart (chartOptions metricsData)]
-
-chartOptions :: HistoMetrics -> Options
-chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
+chartOptionsBar :: HistoMetrics -> Options
+chartOptionsBar (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Bar"
   , subTitle  : "Count of GraphTerm"
   , xAxis     : xAxis' $ map (\t -> joinWith " " $ map (take 3) $ A.take 3 $ filter (\s -> length s > 3) $ split (Pattern " ") t) dates'
@@ -69,12 +66,6 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
   }
-
-loadedMetricsSpecPie :: Spec {} (Loader.InnerProps Path Loaded ()) Void
-loadedMetricsSpecPie = simpleSpec defaultPerformAction render
-  where
-    render :: Render {} (Loader.InnerProps Path Loaded ()) Void
-    render dispatch {loaded : metricsData} {} _ = [chart (chartOptionsPie metricsData)]
 
 chartOptionsPie :: HistoMetrics -> Options
 chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
@@ -89,34 +80,50 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   }
 
 
-metricsLoader :: Loader.Props' Path HistoMetrics -> ReactElement
-metricsLoader props = createElement metricsLoaderClass props []
-  where
-    metricsLoaderClass :: ReactClass (Loader.Props Path HistoMetrics)
-    metricsLoaderClass = Loader.createLoaderClass "MetricsLoader" getMetrics
+getMetrics :: Path -> Aff HistoMetrics
+getMetrics {corpusId, tabType:tabType} = do
+  ChartMetrics ms <- get $ toUrl Back (Chart {chartType: ChartPie, tabType: tabType}) $ Just corpusId
+  pure ms."data"
 
-    getMetrics :: Path -> Aff HistoMetrics
-    getMetrics {corpusId, tabType:tabType} = do
-      ChartMetrics ms <- get $ toUrl Back (Chart {chartType: ChartPie, tabType: tabType}) $ Just corpusId
-      pure ms."data"
+
 
 pieSpec :: Spec {} Path Void
-pieSpec = simpleSpec defaultPerformAction render
+pieSpec = R2.elSpec $ R.hooksComponent "LoadedMetricsPie" cpt
   where
-    render :: Render {} Path Void
-    render dispatch path {} _ =
-      [ metricsLoader
-        { path
-        , component: createClass "LoadedMetrics" loadedMetricsSpecPie (const {})
-        } ]
+    cpt p _ = do
+      setReload <- R.useState' 0
+
+      pure $ metricsLoadPieView setReload p
+
+metricsLoadPieView :: R.State Int -> Path -> R.Element
+metricsLoadPieView setReload p = R.createElement el p []
+  where
+    el = R.hooksComponent "MetricsLoadedPieView" cpt
+    cpt p _ = do
+      useLoader p getMetrics $ \{loaded} ->
+        loadedMetricsPieView setReload loaded
+
+loadedMetricsPieView :: R.State Int -> HistoMetrics -> R.Element
+loadedMetricsPieView setReload loaded = U.reloadButtonWrap setReload $ R2.buff $ chart $ chartOptionsPie loaded
+
+
 
 barSpec :: Spec {} Path Void
-barSpec = simpleSpec defaultPerformAction render
+barSpec = R2.elSpec $ R.hooksComponent "LoadedMetricsBar" cpt
   where
-    render :: Render {} Path Void
-    render dispatch path {} _ =
-      [ metricsLoader
-        { path
-        , component: createClass "LoadedMetrics" loadedMetricsSpec (const {})
-        } ]
+    cpt p _ = do
+      setReload <- R.useState' 0
 
+      pure $ metricsLoadBarView setReload p
+
+
+metricsLoadBarView :: R.State Int -> Path -> R.Element
+metricsLoadBarView setReload p = R.createElement el p []
+  where
+    el = R.hooksComponent "MetricsLoadedBarView" cpt
+    cpt p _ = do
+      useLoader p getMetrics $ \{loaded} ->
+        loadedMetricsBarView setReload loaded
+
+loadedMetricsBarView :: R.State Int -> Loaded -> R.Element
+loadedMetricsBarView setReload loaded = U.reloadButtonWrap setReload $ R2.buff $ chart $ chartOptionsBar loaded

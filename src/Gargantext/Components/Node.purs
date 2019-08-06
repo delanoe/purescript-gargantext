@@ -25,10 +25,10 @@ instance decodeNodePoly :: (DecodeJson a)
     parentId  <- obj .? "parentId"
     name      <- obj .? "name"
     date      <- obj .? "date"
-    
+
     hyperdata  <- obj .? "hyperdata"
     hyperdata' <- decodeJson hyperdata
-    
+
     pure $ NodePoly  { id : id
                  , typename : typename
                  , userId   : userId

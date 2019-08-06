@@ -15,6 +15,7 @@ import Prelude
 import Data.Lens ((^?), _Just)
 import Data.Lens.At (at)
 import Data.Maybe ( Maybe(..), maybe, maybe' )
+import Data.String.Regex as R
 import Data.String as S
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
@@ -25,9 +26,10 @@ import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
+import Gargantext.Config (CTabNgramType(..))
 import Gargantext.Types ( TermList )
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
-import Gargantext.Components.NgramsTable.Core ( NgramsTerm, NgramsTable(..), _NgramsElement, _list, highlightNgrams )
+import Gargantext.Components.NgramsTable.Core ( NgramsTerm, NgramsTable(..), _NgramsElement, _list, highlightNgrams, findNgramTermList )
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
 import Gargantext.Utils.Selection as Sel
 
@@ -58,7 +60,7 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
             let x = E.clientX event
                 y = E.clientY event
                 setList t = do
-                  setTermList (S.toLower text') (Just list) t
+                  setTermList text' (Just list) t
                   setMenu (const Nothing)
             setMenu (const $ Just {x, y, list: Just list, menuType: SetTermListItem, setList} )
 
@@ -79,7 +81,7 @@ maybeShowMenu setMenu setTermList ngrams event = do
         sel' -> do
           let x = E.clientX event
               y = E.clientY event
-              list = findNgram ngrams sel'
+              list = findNgramTermList CTabTerms ngrams sel'
               setList t = do
                 setTermList sel' list t
                 setMenu (const Nothing)
@@ -96,10 +98,7 @@ maybeAddMenu setMenu e (Just props) = annotationMenu setMenu props <> e
 maybeAddMenu _ e _ = e
 
 compile :: NgramsTable -> Maybe String -> Array (Tuple String (Maybe TermList))
-compile ngrams = maybe [] (highlightNgrams ngrams)
-
-findNgram :: NgramsTable -> String -> Maybe TermList
-findNgram (NgramsTable m) s = m ^? at s <<< _Just <<< _NgramsElement <<< _list
+compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
 
 -- Runs
 

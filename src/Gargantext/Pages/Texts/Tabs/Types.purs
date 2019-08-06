@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Tabs.Types where
+module Gargantext.Pages.Texts.Tabs.Types where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
 import Data.Maybe (Maybe(..))
@@ -43,10 +43,11 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     let totalRecords = 47361 -- TODO
     pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
 
-type CorpusData = {corpusNode :: NodePoly CorpusInfo, defaultListId :: Int}
+type CorpusData = { corpusId :: Int
+                  , corpusNode :: NodePoly CorpusInfo
+                  , defaultListId :: Int}
 
--- TODO type Props = {nodeId :: Int, info :: Maybe (NodePoly CorpusInfo) }
-type PropsRow = Loader.InnerPropsRow Int CorpusData ()
+type PropsRow = ( corpusId :: Int, corpusData :: CorpusData )
 type Props = Record PropsRow
 
 -- TODO include Gargantext.Pages.Corpus.Tabs.States

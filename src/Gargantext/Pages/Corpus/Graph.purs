@@ -244,29 +244,17 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
 --   where
 --     treespec = over _render \frender d p (State s) c ->
 
---                 [ div [ className "col-md-2", _id "graph-tree", style {marginTop: "65px"}] $
---                   [
---                      button [className "btn btn-primary" , onClick \_ -> d ToggleTree]
---                      [text $ if s.showTree then "Hide Tree" else "Show Tree"]
---                   ]
---                   <>
---                   if s.showTree then (frender d p (State s) c) else []
---                 ]
+    -- graphspec   = over _render \frender d p s c -> [
+    --      div [ className "col-md-9"] (frender d p s c)
+    --   ]
+    -- treeSpec :: Spec State {} Action
+    -- treeSpec = withState \(State st) ->
+    --   case st.treeId of
+    --     Nothing ->
+    --       simpleSpec defaultPerformAction defaultRender
+    --     Just treeId ->
+    --       cmapProps (const {root: treeId, mCurrentRoute: Nothing}) $ noState $ Tree.treeview
 
-
-
---     graphspec   = over _render \frender d p s c -> [
---          div [ className "col-md-9"] (frender d p s c)
---       ]
---     treeSpec :: Spec State {} Action
---     treeSpec = withState \(State st) ->
---       case st.treeId of
---         Nothing ->
---           simpleSpec defaultPerformAction defaultRender
---         Just treeId ->
---           (cmapProps (const {root: treeId}) (noState Tree.treeview))
-    
-    
 --     render' :: Render State {} Action
 --     render' d _ (State st@{sigmaSettings, graphData: GraphData {sides,metaData  }}) _ =
 --       [ div [className "container-fluid", style {paddingTop : "90px" }]

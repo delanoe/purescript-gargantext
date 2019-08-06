@@ -34,12 +34,13 @@ import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Types (TermList(..), readTermList, readTermSize, termLists, termSizes)
-import Gargantext.Config (OrderBy(..), TabType)
+import Gargantext.Config (OrderBy(..), TabType, CTabNgramType(..))
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
 import Gargantext.Components.Loader as Loader
 import Gargantext.Components.NgramsTable.Core
+import Gargantext.Utils.Reactix as R2
 
 type State =
   CoreState
@@ -119,7 +120,7 @@ tableContainer { pageParams
                         , name "search", placeholder "Search"
                         , _type "value"
                         , value pageParams.searchQuery
-                        , onInput \e -> setSearchQuery (unsafeEventValue e)
+                        , onInput \e -> setSearchQuery (R2.unsafeEventValue e)
                         ]
                 , div [] (
                     if A.null props.tableBody && pageParams.searchQuery /= "" then [
@@ -134,7 +135,7 @@ tableContainer { pageParams
                         [ select  [ _id "picklistmenu"
                                   , className "form-control custom-select"
                                   , value (maybe "" show pageParams.termListFilter)
-                                  , onChange (\e -> setTermListFilter $ readTermList $ unsafeEventValue e)
+                                  , onChange (\e -> setTermListFilter $ readTermList $ R2.unsafeEventValue e)
                                   ] $ map optps1 termLists
                         ]
                       ]
@@ -143,7 +144,7 @@ tableContainer { pageParams
                         [ select  [ _id "picktermtype"
                                   , className "form-control custom-select"
                                   , value (maybe "" show pageParams.termSizeFilter)
-                                  , onChange (\e -> setTermSizeFilter $ readTermSize $ unsafeEventValue e)
+                                  , onChange (\e -> setTermSizeFilter $ readTermSize $ R2.unsafeEventValue e)
                                   ] $ map optps1 termSizes
                         ]
                       ]
@@ -197,8 +198,8 @@ toggleMap :: forall a. a -> Maybe a -> Maybe a
 toggleMap _ (Just _) = Nothing
 toggleMap b Nothing  = Just b
 
-ngramsTableSpec :: Spec State LoadedNgramsTableProps Action
-ngramsTableSpec = simpleSpec performAction render
+ngramsTableSpec :: CTabNgramType -> Spec State LoadedNgramsTableProps Action
+ngramsTableSpec ntype = simpleSpec performAction render
   where
     setParentResetChildren :: Maybe NgramsTerm -> State -> State
     setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
@@ -213,9 +214,8 @@ ngramsTableSpec = simpleSpec performAction render
     performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
-        listId = Just 10 -- List.head listIds
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
-        pt = PatchMap $ Map.singleton n pe
+        pt = singletonNgramsTablePatch ntype n pe
     performAction AddTermChildren _ {ngramsParent: Nothing} =
         -- impossible but harmless
         pure unit
@@ -227,14 +227,13 @@ ngramsTableSpec = simpleSpec performAction render
         modifyState_ $ setParentResetChildren Nothing
         commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
-        listId = Just 10 -- List.head listIds
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }
-        pt = PatchMap $ Map.fromFoldable [Tuple parent pe]
-        -- TODO ROOT-UPDATE
-        -- patch the root of the child to be equal to the root of the parent.
-    performAction (AddNewNgram ngram) {path: params} _ =
-      lift $ addNewNgram ngram Nothing params
+        pt = singletonNgramsTablePatch ntype parent pe
+    performAction (AddNewNgram ngram) {path: {listIds, nodeId, tabType}} {ngramsVersion} =
+        commitPatch {listIds, nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
+      where
+        pt = addNewNgram ntype ngram CandidateTerm
 
     render :: Render State LoadedNgramsTableProps Action
     render dispatch { path: pageParams
@@ -251,7 +250,7 @@ ngramsTableSpec = simpleSpec performAction render
           , container: tableContainer {pageParams, loaderDispatch, dispatch, ngramsParent, ngramsChildren, ngramsTable}
           , colNames:
               T.ColumnName <$>
-              [ "Graph"
+              [ "Map"
               , "Stop"
               , "Terms"
               , "Score (Occurrences)" -- see convOrderBy
@@ -294,21 +293,24 @@ ngramsTableSpec = simpleSpec performAction render
               , delete: false
               }
 
-ngramsTableClass :: Loader.InnerClass PageParams VersionedNgramsTable
-ngramsTableClass = createClass "NgramsTable" ngramsTableSpec initialState
+ngramsTableClass :: CTabNgramType -> Loader.InnerClass PageParams VersionedNgramsTable
+ngramsTableClass ct = createClass "NgramsTable" (ngramsTableSpec ct) initialState
 
 type MainNgramsTableProps =
-  Loader.InnerProps Int { defaultListId :: Int }
-                        ( tabType :: TabType )
+  { nodeId        :: Int
+    -- ^ This node can be a corpus or contact.
+  , defaultListId :: Int
+  , tabType       :: TabType
+  }
 
-mainNgramsTableSpec :: Spec {} MainNgramsTableProps Void
-mainNgramsTableSpec = simpleSpec defaultPerformAction render
+mainNgramsTableSpec :: CTabNgramType -> Spec {} MainNgramsTableProps Void
+mainNgramsTableSpec nt = simpleSpec defaultPerformAction render
   where
     render :: Render {} MainNgramsTableProps Void
-    render _ {path: nodeId, loaded: {defaultListId}, tabType} _ _ =
+    render _ {nodeId, defaultListId, tabType} _ _ =
       [ ngramsLoader
           { path: initialPageParams nodeId [defaultListId] tabType
-          , component: ngramsTableClass
+          , component: (ngramsTableClass nt)
           } ]
 
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
@@ -419,6 +421,3 @@ optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> ReactElemen
 optps1 { desc, mval } = option [value val] [text desc]
   where
     val = maybe "" show mval
-
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value

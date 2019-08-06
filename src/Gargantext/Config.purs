@@ -10,17 +10,14 @@ toUrl Front Corpus 1 == "http://localhost:2015/#/corpus/1"
 module Gargantext.Config where
 
 import Prelude
-import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson)
+import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject)
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Map (Map)
-import Data.Map as DM
 import Data.Maybe (Maybe(..), maybe)
-import Data.Tuple (Tuple(..))
 import Gargantext.Router as R
 
-import Gargantext.Types
+import Gargantext.Types (TermList, TermSize(..))
 
 urlPlease :: End -> String -> String
 urlPlease end path = theEnd.baseUrl <> theEnd.prePath <> path
@@ -31,7 +28,8 @@ endConfig = endConfig' V10
 
 endConfig' :: ApiVersion -> EndConfig
 endConfig' v = { front : frontRelative
-               , back  : backDev v
+               --, back  : backLocal v
+               , back: backDev v
                , static : staticRelative
              }
 --               , back  : backDemo v  }
@@ -59,6 +57,11 @@ frontHaskell = { baseUrl: "http://localhost:8008"
 
 frontDev :: Config
 frontDev = { baseUrl: "https://dev.gargantext.org"
+           , prePath: "/#/"
+           }
+
+frontDemo :: Config
+frontDemo = { baseUrl: "https://demo.gargantext.org"
            , prePath: "/#/"
            }
 
@@ -119,11 +122,6 @@ endBaseUrl end c = (endOf end c).baseUrl
 endPathUrl :: End -> EndConfig -> Path -> Maybe Id -> UrlPath
 endPathUrl end = pathUrl <<< endOf end
 
-tabTypeDocs :: TabType -> UrlPath
-tabTypeDocs (TabCorpus  t) = "table?view="   <> show t
-tabTypeDocs (TabDocument t)= "table?view="   <> show t
-tabTypeDocs (TabPairing t) = "pairing?view=" <> show t
-
 limitUrl :: Limit -> UrlPath
 limitUrl l = "&limit=" <> show l
 
@@ -141,10 +139,26 @@ showTabType' (TabCorpus   t) = show t
 showTabType' (TabDocument t) = show t
 showTabType' (TabPairing t) = show t
 
+data TabPostQuery = TabPostQuery {
+    offset :: Int
+  , limit :: Int
+  , orderBy :: OrderBy
+  , tabType :: TabType
+  , query :: String
+  }
+
+instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
+  encodeJson (TabPostQuery post) =
+        "view"       := showTabType' post.tabType
+     ~> "offset"     := post.offset
+     ~> "limit"      := post.limit
+     ~> "orderBy"    := show post.orderBy
+     ~> "query"      := post.query
+     ~> jsonEmptyObject
+
 pathUrl :: Config -> Path -> Maybe Id -> UrlPath
-pathUrl c (Tab t o l s) i =
-    pathUrl c (NodeAPI Node) i <>
-      "/" <> tabTypeDocs t <> offsetUrl o <> limitUrl l <> orderUrl s
+pathUrl c (Tab t) i =
+    pathUrl c (NodeAPI Node) i <> "/" <> showTabType' t
 pathUrl c (Children n o l s) i =
     pathUrl c (NodeAPI Node) i <>
       "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
@@ -204,14 +218,16 @@ pathUrl c (Chart {chartType, tabType}) i =
 
 ------------------------------------------------------------
 
+routesPath :: R.Routes -> String
 routesPath R.Home = ""
 routesPath R.Login = "login"
-routesPath R.SearchView = "search"
 routesPath (R.Folder i) = "folder/" <> show i
 routesPath (R.Corpus i) = "corpus/" <> show i
-routesPath R.AddCorpus = "addCorpus"
+routesPath (R.CorpusDocument c l i) = "corpus/" <> show c <> "/list/" <> show l <> "/document/" <> show i
 routesPath (R.Document l i) = "list/" <> show l <> "/document/" <> show i
 routesPath (R.PGraphExplorer i) = "#/"
+routesPath (R.Texts i) = "texts/" <> show i
+routesPath (R.Lists i) = "lists/" <> show i
 routesPath R.Dashboard = "dashboard"
 routesPath (R.Annuaire i) = "annuaire/" <> show i
 routesPath (R.UserPage i) = "user/" <> show i
@@ -253,6 +269,7 @@ data NodeType = NodeUser
               | Nodes
               | Tree
               | NodeList
+              | Texts
 
 derive instance eqNodeType :: Eq NodeType
 
@@ -273,6 +290,7 @@ instance showNodeType :: Show NodeType where
   show Nodes         = "Nodes"
   show Tree          = "NodeTree"
   show NodeList      = "NodeList"
+  show Texts         = "NodeTexts"
 
 readNodeType :: String -> NodeType
 readNodeType "NodeAnnuaire"  = Annuaire
@@ -290,6 +308,7 @@ readNodeType "NodeUser"      = NodeUser
 readNodeType "NodeContact"   = NodeContact
 readNodeType "Tree"          = Tree
 readNodeType "NodeList"      = NodeList
+readNodeType "NodeTexts"     = Texts
 readNodeType _               = Error
 {-
 ------------------------------------------------------------
@@ -320,18 +339,19 @@ nodeTypeUrl Graph     = "graph"
 nodeTypeUrl Phylo     = "phylo"
 nodeTypeUrl Individu  = "individu"
 nodeTypeUrl Node      = "node"
-nodeTypeUrl Nodes      = "nodes"
+nodeTypeUrl Nodes     = "nodes"
 nodeTypeUrl NodeUser  = "user"
 nodeTypeUrl NodeContact = "contact"
 nodeTypeUrl Tree      = "tree"
-nodeTypeUrl NodeList  = "list"
+nodeTypeUrl NodeList  = "lists"
+nodeTypeUrl Texts     = "texts"
 ------------------------------------------------------------
 
 type ListId = Int
 
 data Path
   = Auth
-  | Tab      TabType  Offset Limit (Maybe OrderBy)
+  | Tab      TabType
   | Children NodeType Offset Limit (Maybe OrderBy)
   | GetNgrams
       { tabType        :: TabType
@@ -416,7 +436,7 @@ instance showPTabNgramType :: Show PTabNgramType where
   show PTabBooks         = "Books"
   show PTabCommunication = "Communication"
 
-data TabSubType a = TabDocs | TabNgramType a | TabTrash
+data TabSubType a = TabDocs | TabNgramType a | TabTrash | TabMoreLikeFav | TabMoreLikeTrash
 
 derive instance eqTabSubType :: Eq a => Eq (TabSubType a)
 
@@ -424,6 +444,8 @@ instance showTabSubType :: Show a => Show (TabSubType a) where
   show TabDocs          = "Docs"
   show (TabNgramType a) = show a
   show TabTrash         = "Trash"
+  show TabMoreLikeFav   = "MoreFav"
+  show TabMoreLikeTrash = "MoreTrash"
 
 data TabType
   = TabCorpus   (TabSubType CTabNgramType)

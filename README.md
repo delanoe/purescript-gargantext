@@ -37,8 +37,25 @@ curl -sL https://deb.nodesource.com/setup_11.x | sudo bash -
 sudo apt update && sudo apt install nodejs
 ```
 
-On Mac OS (with Homebrew):
+(For Ubuntu)
+```shell
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+sudo apt update && sudo apt install yarn
+```
 
+To upgrade to latest version (and not current stable) version, you can use
+(Use n module from npm in order to upgrade node)
+
+```shell
+sudo npm cache clean -f
+sudo npm install -g n
+sudo n stable
+sudo n latest
+```
+
+
+### OSX
 ```shell
 brew install node
 ```
@@ -88,7 +105,43 @@ Or run a repl:
 yarn repl
 ```
 
-To test in the browser, you need to build a browser bundle:
+```shell
+yarn install && yarn ps-deps
+```
+
+### Running a dev server
+
+```shell
+yarn dev
+```
+
+This will launch a hot-reloading development server with
+webpack-dev-server.  Visit [localhost:9000](http://localhost:9000/) to
+see the result when the output shows a line like this:
+
+```
+ℹ ｢wdm｣: Compiled successfully.
+```
+
+#### Purescript IDE integration
+
+A `purs ide` connection will be available on port 9002 while the
+development server is running.
+
+A guide to getting set up with the IDE integration is beyond the scope
+of this document.
+
+#### Source maps
+
+Currently broken. Someone please fix them.
+
+### Getting a purescript repl
+
+```shell
+yarn repl
+```
+
+### Building for production
 
 ```shell
 yarn build
@@ -107,6 +160,24 @@ Examples:
 <!-- ```shell -->
 <!-- yarn live -->
 <!-- ``` -->
+
+Note that a production build takes a little while.
+
+### How do I?
+
+#### Change which backend to connect to?
+
+Edit `Config.purs`. Find the function `endConfig'` just after the
+imports and edit `back`. The definitions are not far below, just after
+the definitions of the various `front` options.
+
+Example (using `demo.gargantext.org` as backend):
+
+```
+endConfig' :: ApiVersion -> EndConfig
+endConfig' v = { front : frontRelative
+               , back  : backDemo v  }
+```
 
 ## Note to the contributors
 

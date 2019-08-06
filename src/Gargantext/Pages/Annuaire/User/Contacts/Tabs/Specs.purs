@@ -6,14 +6,20 @@ import Prelude hiding (div)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List (fromFoldable)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
-import Gargantext.Config (TabType(..), TabSubType(..), PTabNgramType(..))
+import Gargantext.Config (TabType(..), TabSubType(..), PTabNgramType(..), CTabNgramType(..))
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
-import Gargantext.Pages.Annuaire.User.Contacts.Types (Props)
-import Thermite (Spec, focus, hideState, noState, cmapProps)
+import Gargantext.Pages.Annuaire.User.Contacts.Types (ContactData)
+import Gargantext.Utils.Reactix as R2
+
+import Reactix as R
+import Reactix.DOM.HTML as H
+import React (Children, ReactElement, ReactClass, createElement)
+import Thermite (Spec, focus, hideState, noState, cmapProps, createClass)
 
 data Mode = Patents | Books | Communication
 
@@ -28,6 +34,27 @@ modeTabType :: Mode -> PTabNgramType
 modeTabType Patents = PTabPatents
 modeTabType Books = PTabBooks
 modeTabType Communication = PTabCommunication
+
+-- TODO fix this type
+modeTabType' :: Mode -> CTabNgramType
+modeTabType' Patents = CTabAuthors
+modeTabType' Books = CTabAuthors
+modeTabType' Communication = CTabAuthors
+
+
+
+type PropsRow =
+  ( nodeId :: Int
+  , contactData :: ContactData
+  )
+
+type Props = Record PropsRow
+
+elt :: Props -> ReactElement
+elt props = createElement tabsClass props []
+
+tabsClass :: ReactClass { children :: Children | PropsRow }
+tabsClass = createClass "ContactsTabs" pureTabs (const {})
 
 pureTabs :: Spec {} Props Void
 pureTabs = hideState (const {activeTab: 0}) statefulTabs
@@ -44,17 +71,21 @@ statefulTabs =
   where
     chart = mempty
     -- TODO totalRecords
-    docs = cmapProps (\{path: nodeId, loaded} ->
-                       { nodeId, chart
-                       , tabType: TabPairing TabDocs
-                       , totalRecords: 4736
-                       , listId: loaded.defaultListId}) $
-           noState DT.docViewSpec
+    docs = noState $ R2.elSpec $ R.hooksComponent "DocViewSpecWithCorpus" $ \{nodeId, contactData: {defaultListId}} _ -> do
+      pure $ DT.docViewSpec
+        { nodeId
+        , chart
+        , tabType: TabPairing TabDocs
+        , totalRecords: 4736
+        , listId: defaultListId
+        , corpusId: Nothing
+        , showSearch: true
+        }
 
 ngramsViewSpec :: {mode :: Mode} -> Spec Tab.State Props Tab.Action
 ngramsViewSpec {mode} =
-  cmapProps (\{loaded: {defaultListId}, path, dispatch} ->
-              {loaded: {defaultListId}, path, dispatch, tabType})
-            (noState NT.mainNgramsTableSpec)
+  cmapProps (\{contactData: {defaultListId}, nodeId} ->
+              {defaultListId, nodeId, tabType})
+            (noState (NT.mainNgramsTableSpec (modeTabType' mode)))
     where
       tabType = TabPairing $ TabNgramType $ modeTabType mode

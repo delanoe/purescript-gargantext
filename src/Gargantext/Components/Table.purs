@@ -9,11 +9,12 @@ import Effect (Effect)
 import Effect.Class (liftEffect)
 import React (ReactElement, ReactClass, Children, createElement)
 import React.DOM (a, b, b', p, i, h3, hr, div, option, select, span, table, tbody, td, text, th, thead, tr)
-import React.DOM.Props (className, href, onChange, onClick, scope, selected, value, style)
+import React.DOM.Props (className, href, onChange, onClick, scope, selected, value, defaultValue, style)
 import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec, StateCoTransformer, createClass)
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
+import Gargantext.Utils.Reactix as R2
 
 type TableContainerProps =
   { pageSizeControl     :: ReactElement
@@ -218,7 +219,8 @@ sizeDD :: PageSizes -> (Action -> Effect Unit) -> ReactElement
 sizeDD ps d
   = span []
     [ select [ className "form-control"
-             , onChange (\e -> d (ChangePageSize $ string2PageSize $ (unsafeCoerce e).target.value))
+             , defaultValue $ show ps
+             , onChange $ \e -> d (ChangePageSize $ string2PageSize $ R2.unsafeEventValue e)
              ] $ map (optps ps) aryPS
     ]
 
@@ -316,4 +318,4 @@ string2PageSize "200" = PS200
 string2PageSize _    = PS10
 
 optps :: PageSizes -> PageSizes -> ReactElement
-optps cv val = option [ selected (cv == val), value $ show val ] [text $ show val]
+optps cv val = option [ value $ show val ] [text $ show val]

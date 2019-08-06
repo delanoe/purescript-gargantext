@@ -1,7 +1,11 @@
 module Gargantext.Components.Search.Types where
 
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
+import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
+import Data.Array (head)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
@@ -13,19 +17,19 @@ import Thermite (PerformAction, modifyState)
 
 import Gargantext.Prelude
 import Gargantext.Types (class ToQuery)
-import Gargantext.Config.REST (post)
+import Gargantext.Config (End(..), NodeType(..), Path(..), toUrl)
+import Gargantext.Config.REST (post, put)
 import Gargantext.Components.Modals.Modal (modalHide)
-import Gargantext.Pages.Layout.Specs.AddCorpus.States (Response, State)
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 
 data Database = All | PubMed | HAL | IsTex
 
 instance showDatabase :: Show Database where
-  show All = "All"
+  show All    = "All"
   show PubMed = "PubMed"
-  show HAL = "HAL"
-  show IsTex = "IsTex"
+  show HAL    = "HAL"
+  show IsTex  = "IsTex"
 
 readDatabase :: String -> Maybe Database
 readDatabase "All" = Just All
@@ -35,6 +39,10 @@ readDatabase "IsTex" = Just IsTex
 readDatabase _ = Nothing
 
 derive instance eqDatabase :: Eq Database
+
+instance encodeJsonDatabase :: EncodeJson Database where
+  encodeJson a = encodeJson (show a)
+
 
 allDatabases :: Array Database
 allDatabases = [All, HAL, IsTex, PubMed]
@@ -85,8 +93,57 @@ instance searchQueryToQuery :: ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, corpus_id, files_id})
-    =   "query"      :=  query
-    ~>  "corpus_id"  :=  fromMaybe 0 corpus_id
-    ~>  "files_id"   :=  files_id
+  encodeJson (SearchQuery {query, databases, corpus_id, files_id})
+    =   "query"      := query
+    ~> "databases"   := databases
+    ~>  "corpus_id"  := fromMaybe 0 corpus_id
+    ~>  "files_id"   := files_id
     ~> jsonEmptyObject
+
+
+data Category = Trash | Normal | Favorite
+derive instance genericFavorite :: Generic Category _
+instance showCategory :: Show Category where
+  show = genericShow
+instance eqCategory :: Eq Category where
+  eq = genericEq
+instance encodeJsonCategory :: EncodeJson Category where
+  encodeJson Trash = encodeJson 0
+  encodeJson Normal = encodeJson 1
+  encodeJson Favorite = encodeJson 2
+
+favCategory :: Category -> Category
+favCategory Normal = Favorite
+favCategory Trash = Favorite
+favCategory Favorite = Normal
+
+trashCategory :: Category -> Category
+trashCategory Normal = Trash
+trashCategory Trash = Normal
+trashCategory Favorite = Trash
+
+
+decodeCategory :: Int -> Category
+decodeCategory 0 = Trash
+decodeCategory 1 = Normal
+decodeCategory 2 = Favorite
+decodeCategory _ = Normal
+
+
+
+newtype CategoryQuery = CategoryQuery {
+    nodeIds :: Array Int
+  , category :: Category
+  }
+
+instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
+  encodeJson (CategoryQuery post) =
+    "ntc_nodesId" := post.nodeIds
+    ~> "ntc_category" := encodeJson post.category
+    ~> jsonEmptyObject
+
+categoryUrl :: Int -> String
+categoryUrl nodeId = toUrl Back Node (Just nodeId) <> "/category"
+
+putCategories :: Int -> CategoryQuery -> Aff (Array Int)
+putCategories nodeId = put $ categoryUrl nodeId
