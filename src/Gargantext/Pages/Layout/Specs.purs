@@ -60,7 +60,7 @@ pagesComponent s = case s.currentRoute of
     selectSpec (Corpus   i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState Corpus.layout
     selectSpec (CorpusDocument c l i) = layout0 $ cmapProps (const {nodeId: i, listId: l, corpusId: Just c}) $ noState Annotation.layout
     selectSpec (Document l i)    = layout0 $ cmapProps (const {nodeId: i, listId: l, corpusId: Nothing}) $ noState Annotation.layout
-    selectSpec (PGraphExplorer i) = graphSpec
+    selectSpec (PGraphExplorer i) = graphSpec i
     selectSpec (Texts i)         = layout0 $ cmapProps (const {nodeId: i}) $ noState Texts.layout
     selectSpec (Lists i)         = layout0 $ cmapProps (const {nodeId: i}) $ noState Lists.layout
     selectSpec Dashboard         = layout0 $ noState Dsh.layoutDashboard
@@ -68,9 +68,10 @@ pagesComponent s = case s.currentRoute of
     selectSpec (UserPage i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState C.layoutUser
     selectSpec (ContactPage i)   = layout0 $ cmapProps (const {nodeId: i}) $ noState C.layoutUser
 
-    graphSpec = layout1 $ withState \st ->
+    graphSpec i = layout1 $ withState \st ->
           cmapProps (const {
-              mCurrentRoute: st.currentRoute
+              graphId: i
+            , mCurrentRoute: st.currentRoute
             , treeId: case st.loginState.authData of
                 Nothing -> Nothing
                 Just (AuthData ad) -> Just ad.tree_id

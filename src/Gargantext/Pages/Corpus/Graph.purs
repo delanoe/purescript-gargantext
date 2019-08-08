@@ -24,8 +24,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaNode, cameras, getCameraProps, goTo, pauseForceAtlas2, sigmaOnMouseMove)
-import Gargantext.Components.GraphExplorer (getAuthData, getNodes, intColor)
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData, intColor)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Graph as Graph
