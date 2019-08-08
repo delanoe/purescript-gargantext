@@ -30,6 +30,7 @@ import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Legend (legend)
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.Graph as Graph
+import Gargantext.Components.Loader2 as Loader
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Tree as Tree
@@ -49,8 +50,11 @@ import Web.Storage.Storage (getItem)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+type GraphId = Int
+
 type Props = (
-    mCurrentRoute :: Maybe Routes
+    graphId :: GraphId
+  , mCurrentRoute :: Maybe Routes
   , treeId :: Maybe Int
 )
 
@@ -76,7 +80,7 @@ explorer state props = R.createElement (explorerCpt state) props []
 --explorerCpt :: GET.State -> R.Component Props
 explorerCpt state = R.hooksComponent "GraphExplorer" cpt
   where
-    cpt {mCurrentRoute, treeId} _ = do
+    cpt {graphId, mCurrentRoute, treeId} _ = do
       controls <- Controls.useGraphControls
       pure $
         row
@@ -89,7 +93,7 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
               , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
               ]
             , row [ Controls.controls controls ]
-            , row [ tree {mCurrentRoute, treeId} controls, graph controls, sidebar controls ]
+            , row [ tree {mCurrentRoute, treeId} controls, graphLoader graphId controls, sidebar controls ]
             , row [ ]
             ]
           ]
@@ -105,8 +109,31 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
     tree {treeId: Nothing} _ = RH.div {} []
     tree _ {showTree: false /\ _} = RH.div {} []
     tree {mCurrentRoute, treeId: Just treeId} _ = RH.div {} [ Tree.elTreeview {mCurrentRoute, root: treeId} ]
-    graph _ = RH.div {} []
     sidebar _ = RH.div {} []
+
+graphLoader :: GraphId -> Record Controls.Controls -> R.Element
+graphLoader graphId controls = R.createElement el {} []
+  where
+    el = R.hooksComponent "GraphLoader" cpt
+    cpt {} _children = do
+      Loader.useLoader graphId getNodes $ \{loaded} ->
+        loadedGraphView controls {graphId, graph: convert loaded}
+
+type GraphProps = (
+    graphId :: GraphId
+  , graph :: Graph.Graph
+)
+
+loadedGraphView :: Record Controls.Controls -> Record GraphProps -> R.Element
+loadedGraphView controls props = R.createElement el props []
+  where
+    el = R.hooksComponent "GraphView" cpt
+    cpt {graphId, graph} _children = do
+      pure $ Graph.graph {
+          graph
+        , sigmaSettings: Graph.sigmaSettings
+        , forceAtlas2Settings: Graph.forceAtlas2Settings
+        }
 
 convert :: GET.GraphData -> Graph.Graph
 convert (GET.GraphData r) = Sigmax.Graph {nodes, edges}
@@ -119,7 +146,7 @@ convert (GET.GraphData r) = Sigmax.Graph {nodes, edges}
         , label : n.label
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)
-        , color : intColor (cDef n.attributes)
+        , color : GET.intColor (cDef n.attributes)
         }
       where
         cDef (GET.Cluster {clustDefault}) = clustDefault
@@ -133,24 +160,5 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#
 -- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `mod` length defaultPalette)
 
 
-intColor :: Int -> String
-intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
-
-
-
-
-
-getNodes :: Int -> Aff GET.GraphData
+getNodes :: GraphId -> Aff GET.GraphData
 getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId
-
-getAuthData :: Effect (Maybe AuthData)
-getAuthData = do
-  w  <- window
-  ls <- localStorage w
-  mto <- getItem "token" ls
-  mti <- getItem "tree_id" ls
-  pure do
-    token <- mto
-    tree_id <- Int.fromString =<< mti
-    pure $ AuthData {token, tree_id}
-
