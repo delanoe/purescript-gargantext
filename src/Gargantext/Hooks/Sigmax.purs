@@ -94,7 +94,7 @@ createSigma settings = do
   ret <$ logStatus ret
   where
     logStatus (Left err) = log2 "[useSigma] Error during sigma creation:" err
-    logStatus _ = log "[useSigma] Initialised sigma successfully"
+    logStatus (Right x) = log2 "[useSigma] Initialised sigma successfully:" x
 
 cleanupSigma :: Sigma -> String -> Effect Unit
 cleanupSigma sigma context = traverse_ kill (readSigma sigma)
