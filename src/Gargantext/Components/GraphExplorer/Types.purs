@@ -7,6 +7,13 @@ import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Array (concat, fromFoldable, group, sort, take, (!!), length)
 import Data.Maybe (Maybe(..), maybe, fromJust)
 import Data.Newtype (class Newtype)
+import Data.Set (Set)
+import Data.Set as Set
+import Reactix as R
+import Thermite (PerformAction, Spec)
+
+import Gargantext.Components.Login.Types (TreeId)
+import Gargantext.Components.Graph as Graph
 
 newtype Node = Node
   { id_ :: String
@@ -60,6 +67,84 @@ newtype MetaData = MetaData
   , corpusId :: Array Int
   , listId   :: ListId
   }
+
+
+
+newtype SelectedNode = SelectedNode {id :: String, label :: String}
+
+derive instance eqSelectedNode :: Eq SelectedNode
+derive instance newtypeSelectedNode :: Newtype SelectedNode _
+derive instance ordSelectedNode :: Ord SelectedNode
+
+instance showSelectedNode :: Show SelectedNode where
+  show (SelectedNode node) = node.label
+
+
+data Action = Dummy
+
+performAction :: forall props. PerformAction (Record StateGlue) (Record props) Action
+performAction Dummy _ _ = do
+  pure $ unit
+
+
+type StateGlue = (
+  --treeId :: Maybe TreeId
+)
+
+initialStateGlue :: Record StateGlue
+initialStateGlue = {
+{-   corpusId <- R.useState' 0
+  cursorSize <- R.useState' 0.0
+  filePath <- R.useState' ""
+  graphData <- R.useState' initialGraphData
+  legendData <- R.useState' []
+  multiNodeSelection <- R.useState' false
+  selectedNodes <- R.useState' Set.empty
+  showControls <- R.useState' false
+  showSidePanel <- R.useState' false
+  showTree <- R.useState' false
+  sigmaGraphData <- R.useState' (Nothing :: Maybe Graph.Graph)
+  sigmaSettings <- R.useState' Graph.sigmaSettings
+  treeId <- R.useState' (Nothing :: Maybe TreeId) -}
+
+  --treeId : Nothing
+}
+
+
+type State = (
+  --  corpusId :: R.State Int
+  --, cursorSize :: R.State Number
+  --, filePath :: R.State String
+  --, graphData :: R.State GraphData
+  --, legendData :: R.State (Array Legend)
+  --, multiNodeSelection :: R.State Boolean
+  --, selectedNodes :: R.State (Set SelectedNode)
+  --, showSidePanel :: R.State Boolean
+  --, showControls :: R.State Boolean
+  --, showTree :: R.State Boolean
+  --, sigmaGraphData :: R.State (Maybe Graph.Graph)
+  --, sigmaSettings :: R.State ({|Graph.SigmaSettings})
+    --treeId :: R.State (Maybe TreeId)
+  )
+
+fromStateGlue :: Record StateGlue -> R.Hooks (Record State)
+fromStateGlue {} = do
+  --treeIdS <- R.useState' treeId
+
+  pure {
+    --treeId: treeIdS
+  }
+
+initialGraphData :: GraphData
+initialGraphData = GraphData {
+    nodes: []
+  , edges: []
+  , sides: []
+  , metaData : Just $ MetaData {title : "", legend : [], corpusId : [], listId : 0}
+  }
+
+initialState :: R.Hooks (Record State)
+initialState = fromStateGlue initialStateGlue
 
 
 instance decodeJsonGraphData :: DecodeJson GraphData where

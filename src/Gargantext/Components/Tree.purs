@@ -178,15 +178,21 @@ treeLoadView setReload p = R.createElement el p []
       useLoader root loadNode $ \{loaded} ->
         loadedTreeView setReload {tree: loaded, mCurrentRoute}
 
-treeview :: Spec {} Props Void
-treeview = R2.elSpec $ R.hooksComponent "TreeView" cpt
+elTreeview :: Props -> R.Element
+elTreeview props = R.createElement el props []
   where
-    cpt {root, mCurrentRoute} _children = do
-      -- NOTE: this is a hack to reload the tree view on demand
-      setReload <- R.useState' 0
+    el = R.hooksComponent "TreeView" treeviewCpt
 
-      pure $ treeLoadView setReload {root, mCurrentRoute}
 
+treeview :: Spec {} Props Void
+treeview = R2.elSpec $ R.hooksComponent "TreeView" treeviewCpt
+
+
+treeviewCpt {root, mCurrentRoute} _children = do
+  -- NOTE: this is a hack to reload the tree view on demand
+  setReload <- R.useState' 0
+
+  pure $ treeLoadView setReload {root, mCurrentRoute}
 
 -- START toHtml
 

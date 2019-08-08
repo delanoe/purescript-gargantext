@@ -9,10 +9,10 @@ import Effect.Class                                    (liftEffect)
 import Thermite                                        (PerformAction, modifyState, modifyState_)
 import Routing.Hash                                    (setHash)
 
+import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Modals.Modal              (modalShow)
 import Gargantext.Pages.Annuaire             as Annuaire
-import Gargantext.Pages.Corpus.Graph     as GE
 import Gargantext.Pages.Layout.States                  (AppState)
 import Gargantext.Prelude
 import Gargantext.Router                               (Routes)
@@ -22,7 +22,7 @@ import Gargantext.Router                               (Routes)
 data Action
   = LoginA     LN.Action
   | SetRoute   Routes
-  | GraphExplorerA     GE.Action
+  | GraphExplorerA     GET.Action
   | AnnuaireAction     Annuaire.Action
   | ShowLogin
   | Logout
@@ -76,8 +76,8 @@ _annuaireAction = prism AnnuaireAction \action ->
        AnnuaireAction a -> Right a
        _                -> Left  action
 
--- _graphExplorerAction :: Prism' Action GE.Action
--- _graphExplorerAction = prism GraphExplorerA \action ->
---   case action of
---     GraphExplorerA caction -> Right caction
---     _-> Left action
+_graphExplorerAction :: Prism' Action GET.Action
+_graphExplorerAction = prism GraphExplorerA \action ->
+  case action of
+    GraphExplorerA caction -> Right caction
+    _-> Left action
