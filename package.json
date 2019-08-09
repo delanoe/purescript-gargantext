@@ -5,6 +5,7 @@
         "install-ps": "psc-package install",
         "compile": "pulp --psc-package build",
         "build": "pulp --psc-package browserify -t dist/bundle.js",
+        "sass": "sass dist/styles/",
         "dev": "webpack-dev-server --env dev --mode development",
         "repl": "pulp --psc-package repl",
         "clean": "rm -Rf output"
@@ -19,6 +20,7 @@
         "prop-types": "15.6.2",
         "react": "^16.8.6",
         "react-dom": "^16.8.6",
+        "sass": "^1.22.9",
         "sigma": "git://github.com/jjl/sigma.js#garg"
     },
     "eslintConfig": {
@@ -41,6 +43,7 @@
         "html-webpack-plugin": "^4.0.0-beta.5",
         "http-server": "^0.11.1",
         "mini-css-extract-plugin": "^0.5.0",
+        "psc": "^0.1.1",
         "psc-package": "^3.0.1",
         "pulp": "^12.4.0",
         "purescript": "^0.12.4",

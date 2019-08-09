@@ -1,0 +1,14 @@
+#graph-explorer #toolbar {
+  display: flex;
+  flex-direction: column;
+}
+#graph-explorer #toolbar ul {
+  display: flex;
+  flex-direction: row;
+}
+#graph-explorer #toolbar ul li {
+  display: flex;
+  max-width: 200px;
+}
+
+/*# sourceMappingURL=Graph.css.map */
