@@ -141,6 +141,14 @@ Currently broken. Someone please fix them.
 yarn repl
 ```
 
+### Compiling styles
+
+We use the `sass` compiler for some of the style files. To convert them to CSS do:
+
+```shell
+yarn sass
+```
+
 ### Building for production
 
 ```shell
