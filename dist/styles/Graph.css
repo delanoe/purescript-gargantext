@@ -10,5 +10,17 @@
   display: flex;
   max-width: 200px;
 }
+#graph-explorer #sp-container {
+  border: 1px white solid;
+  background-color: white;
+}
+#graph-explorer #sp-container #myTab {
+  marginBottom: 18px;
+  marginTop: 18px;
+}
+#graph-explorer #sp-container #myTabContent {
+  borderBottom: 1px solid black;
+  paddingBottom: 19px;
+}
 
 /*# sourceMappingURL=Graph.css.map */

@@ -25,10 +25,11 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaNode, cameras, getCameraProps, goTo, pauseForceAtlas2, sigmaOnMouseMove)
-import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Legend (legend)
+import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
+import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Loader2 as Loader
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
@@ -96,13 +97,13 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
                 , row [ Controls.controls controls ]
-                , row [ tree {mCurrentRoute, treeId} controls, graphLoader graphId controls, sidebar controls ]
+                , row [ tree {mCurrentRoute, treeId} controls, graphLoader graphId controls, Sidebar.sidebar controls ]
                 , row [ ]
                 ]
               ]
             ]
           ]
-    outer = RH.div { className: "col-md-9" }
+    outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1 = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
     row = RH.div { className: "row" }
@@ -112,8 +113,8 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
 
     tree {treeId: Nothing} _ = RH.div {} []
     tree _ {showTree: false /\ _} = RH.div {} []
-    tree {mCurrentRoute, treeId: Just treeId} _ = RH.div {} [ Tree.elTreeview {mCurrentRoute, root: treeId} ]
-    sidebar _ = RH.div {} []
+    tree {mCurrentRoute, treeId: Just treeId} _ =
+      RH.div { className: "col-md-2" } [ Tree.elTreeview {mCurrentRoute, root: treeId} ]
 
 graphLoader :: GraphId -> Record Controls.Controls -> R.Element
 graphLoader graphId controls = R.createElement el {} []
@@ -133,11 +134,18 @@ loadedGraphView controls props = R.createElement el props []
   where
     el = R.hooksComponent "GraphView" cpt
     cpt {graphId, graph} _children = do
-      pure $ Graph.graph {
-          graph
-        , sigmaSettings: Controls.controlsToSigmaSettings controls
-        , forceAtlas2Settings: Graph.forceAtlas2Settings
-        }
+      pure $ RH.div { className: colSize controls }
+        [
+          Graph.graph {
+               forceAtlas2Settings: Graph.forceAtlas2Settings
+             , graph
+             , sigmaSettings: Controls.controlsToSigmaSettings controls
+             }
+        ]
+    -- TODO: this doesn't work? seems to always render "col-md-9"
+    colSize {showSidePanel: (true /\ _), showTree: (true /\ _)} = "col-md-8"
+    colSize {showSidePanel: (false /\ _), showTree: (false /\ _)} = "col-md-12"
+    colSize _ = "col-md-10"
 
 convert :: GET.GraphData -> Graph.Graph
 convert (GET.GraphData r) = Sigmax.Graph {nodes, edges}
