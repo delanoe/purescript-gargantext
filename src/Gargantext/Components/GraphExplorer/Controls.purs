@@ -21,7 +21,7 @@ import Reactix as R
 import Reactix.DOM.HTML as RH
 
 import Gargantext.Components.Graph as Graph
-import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, nodeSizeButton)
+import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton, nodeSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton)
 import Gargantext.Utils.Reactix as R2
 
@@ -38,10 +38,13 @@ type Controls =
   )
 
 controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
-controlsToSigmaSettings { labelSize: (labelSize /\ _)
+controlsToSigmaSettings { cursorSize: (cursorSize /\ _)
+                        , labelSize: (labelSize /\ _)
                         , nodeSize: (nodeSize /\ _)
                         , showEdges: (showEdges /\ _)} = Graph.sigmaSettings {
     drawEdges = showEdges
+  , drawEdgeLabels = showEdges
+  , hideEdgesOnMove = not showEdges
   , labelMaxSize = labelSize
   , maxEdgeSize = if showEdges then 1.0 else 0.0
   , maxNodeSize = nodeSize
@@ -69,7 +72,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- run demo
                   -- search button
                   -- search topics
-                  -- cursor size: 0-100
+                , RH.li {} [ cursorSizeButton props.cursorSize ] -- cursor size: 0-100
                 , RH.li {} [ labelSizeButton props.labelSize ] -- labels size: 1-4
                 , RH.li {} [ nodeSizeButton props.nodeSize ] -- node size : 5-15
                   -- edge size : ??

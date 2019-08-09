@@ -1,9 +1,9 @@
 module Gargantext.Components.GraphExplorer.ToggleButton
   ( Props, toggleButton, toggleButtonCpt
-  , treeToggleButton
   , controlsToggleButton
-  , sidebarToggleButton
   , edgesToggleButton
+  , sidebarToggleButton
+  , treeToggleButton
   ) where
 
 import Prelude
@@ -31,19 +31,18 @@ toggleButtonCpt = R.hooksComponent "ToggleButton" cpt
     text on _off true = on
     text _on off false = off
 
-treeToggleButton :: R.State Boolean -> R.Element
-treeToggleButton state =
-  toggleButton { state: state, onMessage: "Hide Tree", offMessage: "Show Tree" }
-
 controlsToggleButton :: R.State Boolean -> R.Element
 controlsToggleButton state =
   toggleButton { state: state, onMessage: "Hide Controls", offMessage: "Show Controls" }
-
-sidebarToggleButton :: R.State Boolean -> R.Element
-sidebarToggleButton state =
-  toggleButton { state: state, onMessage: "Hide Sidebar", offMessage: "Show Sidebar" }
 
 edgesToggleButton :: R.State Boolean -> R.Element
 edgesToggleButton state =
   toggleButton { state: state, onMessage: "Hide Edges", offMessage: "Show Edges" }
 
+treeToggleButton :: R.State Boolean -> R.Element
+treeToggleButton state =
+  toggleButton { state: state, onMessage: "Hide Tree", offMessage: "Show Tree" }
+
+sidebarToggleButton :: R.State Boolean -> R.Element
+sidebarToggleButton state =
+  toggleButton { state: state, onMessage: "Hide Sidebar", offMessage: "Show Sidebar" }

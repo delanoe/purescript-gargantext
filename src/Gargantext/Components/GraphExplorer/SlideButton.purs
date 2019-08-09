@@ -1,6 +1,7 @@
 module Gargantext.Components.GraphExplorer.SlideButton
   ( Props
   , sizeButton
+  , cursorSizeButton
   , labelSizeButton
   , nodeSizeButton
   ) where
@@ -34,6 +35,10 @@ sizeButtonCpt = R.hooksComponent "SizeButton" cpt
                     , on: {input: \e -> setValue $ const $ readFloat $ R2.unsafeEventValue e }
                     }
           ]
+
+cursorSizeButton :: R.State Number -> R.Element
+cursorSizeButton state =
+  sizeButton { state: state, caption: "Cursor Size", min: 1.0, max: 4.0 }
 
 labelSizeButton :: R.State Number -> R.Element
 labelSizeButton state =
