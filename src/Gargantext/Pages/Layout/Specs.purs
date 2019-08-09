@@ -71,6 +71,7 @@ pagesComponent s = case s.currentRoute of
     graphSpec i = layout1 $ withState \st ->
           cmapProps (const {
               graphId: i
+            , graph: Nothing
             , mCurrentRoute: st.currentRoute
             , treeId: case st.loginState.authData of
                 Nothing -> Nothing

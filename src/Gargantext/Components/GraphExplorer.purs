@@ -55,6 +55,7 @@ type GraphId = Int
 
 type Props = (
     graphId :: GraphId
+  , graph :: Maybe Graph.Graph
   , mCurrentRoute :: Maybe Routes
   , treeId :: Maybe Int
 )
@@ -76,12 +77,22 @@ specCpt d stateGlue p = R.createElement el p []
       pure $ explorer state props
 
 explorer :: Record GET.State -> Record Props -> R.Element
-explorer state props = R.createElement (explorerCpt state) props []
+explorer state props = R.createElement (explorerLoader state) props []
+
+explorerLoader :: Record GET.State -> R.Component Props
+explorerLoader state = R.hooksComponent "GraphExplorerLoader" cpt
+  where
+    cpt props _ = do
+      Loader.useLoader props.graphId getNodes $ \{loaded} ->
+        explorerEl state $ props {graph = Just $ convert loaded}
+
+explorerEl :: Record GET.State -> Record Props -> R.Element
+explorerEl state props = R.createElement (explorerCpt state) props []
 
 explorerCpt :: Record GET.State -> R.Component Props
 explorerCpt state = R.hooksComponent "GraphExplorer" cpt
   where
-    cpt {graphId, mCurrentRoute, treeId} _ = do
+    cpt {graphId, mCurrentRoute, treeId, graph} _ = do
       controls <- Controls.useGraphControls
       pure $
         RH.div
@@ -97,7 +108,7 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
                 , row [ Controls.controls controls ]
-                , row [ tree {mCurrentRoute, treeId} controls, graphLoader graphId controls, Sidebar.sidebar controls ]
+                , row [ tree {mCurrentRoute, treeId} controls, mGraph {graphId, graph} controls, Sidebar.sidebar controls ]
                 , row [ ]
                 ]
               ]
@@ -116,21 +127,17 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
     tree {mCurrentRoute, treeId: Just treeId} _ =
       RH.div { className: "col-md-2" } [ Tree.elTreeview {mCurrentRoute, root: treeId} ]
 
-graphLoader :: GraphId -> Record Controls.Controls -> R.Element
-graphLoader graphId controls = R.createElement el {} []
-  where
-    el = R.hooksComponent "GraphLoader" cpt
-    cpt {} _children = do
-      Loader.useLoader graphId getNodes $ \{loaded} ->
-        loadedGraphView controls {graphId, graph: convert loaded}
+    mGraph :: {graphId :: GraphId, graph :: Maybe Graph.Graph} -> Record Controls.Controls -> R.Element
+    mGraph {graph: Nothing} _ = RH.div {} []
+    mGraph {graphId, graph: Just graph} controls = graphView controls {graphId, graph}
 
 type GraphProps = (
     graphId :: GraphId
   , graph :: Graph.Graph
 )
 
-loadedGraphView :: Record Controls.Controls -> Record GraphProps -> R.Element
-loadedGraphView controls props = R.createElement el props []
+graphView :: Record Controls.Controls -> Record GraphProps -> R.Element
+graphView controls props = R.createElement el props []
   where
     el = R.hooksComponent "GraphView" cpt
     cpt {graphId, graph} _children = do
