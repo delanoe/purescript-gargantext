@@ -66,7 +66,7 @@ spec = simpleSpec GET.performAction render
      [ R2.scuff $ specCpt dispatch state props ]
 
 specCpt :: (GET.Action -> Effect Unit) -> Record GET.StateGlue -> Record Props -> R.Element
-specCpt d stateGlue props = R.createElement el props []
+specCpt d stateGlue p = R.createElement el p []
   where
     el = R.hooksComponent "SpecCpt" cpt
     cpt props _children = do
@@ -77,27 +77,31 @@ specCpt d stateGlue props = R.createElement el props []
 explorer :: Record GET.State -> Record Props -> R.Element
 explorer state props = R.createElement (explorerCpt state) props []
 
---explorerCpt :: GET.State -> R.Component Props
+explorerCpt :: Record GET.State -> R.Component Props
 explorerCpt state = R.hooksComponent "GraphExplorer" cpt
   where
     cpt {graphId, mCurrentRoute, treeId} _ = do
       controls <- Controls.useGraphControls
       pure $
-        row
-        [
-          outer
-          [ inner
-            [ row1
-              [ col [ pullLeft [ Toggle.treeToggleButton controls.showTree ] ]
-              , col [ Toggle.controlsToggleButton controls.showControls ]
-              , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
+        RH.div
+          { id: "graph-explorer" }
+          [
+            row
+            [
+              outer
+              [ inner
+                [ row1
+                  [ col [ pullLeft [ Toggle.treeToggleButton controls.showTree ] ]
+                  , col [ Toggle.controlsToggleButton controls.showControls ]
+                  , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
+                  ]
+                , row [ Controls.controls controls ]
+                , row [ tree {mCurrentRoute, treeId} controls, graphLoader graphId controls, sidebar controls ]
+                , row [ ]
+                ]
               ]
-            , row [ Controls.controls controls ]
-            , row [ tree {mCurrentRoute, treeId} controls, graphLoader graphId controls, sidebar controls ]
-            , row [ ]
             ]
           ]
-        ]
     outer = RH.div { className: "col-md-9" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1 = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
@@ -131,7 +135,7 @@ loadedGraphView controls props = R.createElement el props []
     cpt {graphId, graph} _children = do
       pure $ Graph.graph {
           graph
-        , sigmaSettings: Graph.sigmaSettings
+        , sigmaSettings: Controls.controlsToSigmaSettings controls
         , forceAtlas2Settings: Graph.forceAtlas2Settings
         }
 
@@ -158,6 +162,124 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#
 
 -- clusterColor :: Cluster -> Color
 -- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `mod` length defaultPalette)
+    
+--               div [className "col-md-12", style {"padding-bottom" : "10px"}]
+--             [ menu [_id "toolbar"]
+--               [ ul'
+--                 [
+--                 --  li' [ button [className "btn btn-success btn-sm"] [text "Change Type"] ]
+--                 -- ,
+--                 -- , li' [ button [className "btn btn-primary btn-sm"] [text "Change Level"] ]
+--                 {- ,li [style {display : "inline-block"}]
+--                   [ form'
+--                     [ input [_type "file"
+--                             , name "file"
+--                          --   , onChange (\e -> d $ SetFile (getFile e) (unsafeCoerce $ d <<< SetProgress))
+--                             , className "btn btn-primary"]
+
+--                     -- , text $ show st.readyState
+--                     ]
+--                   ]
+--                 -}
+--                 {-, li' [ input [_type "button"
+--                               , className "btn btn-warning btn-sm"
+--                               ,value "Run Demo"
+--                             --  , onClick \_ -> d SetGraph, disabled (st.readyState /= DONE)
+--                               ]
+--                       ]
+--                       -}
+--                 {-, li'
+--                   [ form'
+--                     [ div [className "col-lg-2"]
+--                       [
+--                         div [className "input-group"]
+--                         [
+--                           span [className "input-group-btn"]
+--                           [
+--                             button [className "btn btn-primary", _type "button"]
+--                             [ span [className "glyphicon glyphicon-search"] []
+--                             ]
+--                           ]
+--                           , input [_type "text", className "form-control", placeholder "select topics"]
+--                         ]
+--                       ]
+
+--                     ]
+--                   ]
+--                 -}
+--                  li [className "col-md-1"]
+--                   [ span [] [text "Selector"]
+--                   , input [ _type "range"
+--                           , _id "cursorSizeRange"
+--                           , min "0"
+--                           , max "100"
+--                           , defaultValue (show st.cursorSize)
+--                           , onChange \e -> d $ ChangeCursorSize (numberTargetValue e)
+--                           ]
+--                   ]
+--                 , li [className "col-md-1"]
+--                   [ span [] [text "Labels"],input [_type "range"
+--                                                  , _id "labelSizeRange"
+--                                                  , max "4"
+--                                                  , defaultValue <<< show $ sigmaSettings ^. _labelSizeRatio
+--                                                  , min "1"
+--                                                  , onChange \e -> d $ ChangeLabelSize (numberTargetValue e)
+--                                                  ]
+--                   ]
+
+--                 , li [className "col-md-1"]
+--                   [ span [] [text "Nodes"],input [_type "range"
+--                                                  , _id "nodeSizeRange"
+--                                                  , max "15"
+--                                                  , defaultValue <<< show $ sigmaSettings ^. _minNodeSize
+--                                                  , min "5"
+--                                                  , onChange \e -> d $ ChangeNodeSize (numberTargetValue e)
+--                                                  ]
+--                   ]
+--                 {-, li [className "col-md-2"]
+--                   [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
+--                   ]
+--                 -}
+--                 -- , li'
+--                   -- [ button [ className "btn btn-primary"
+--                   --          , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
+--                   --          ] [text "Center"]
+--                   -- ]
+--                 -- , li [className "col-md-1"]
+--                 --   [ span [] [text "Zoom"],input [ _type "range"
+--                 --                                 , _id "cameraRatio"
+--                 --                                 , max "100"
+--                 --                                 , defaultValue "0"
+--                 --                                 , min "0"
+--                 --                                 , onChange \e -> do
+--                 --                                     let ratio = (100.0 - numberTargetValue e) / 100.0pa
+--                 --                                     modCamera0 (const {ratio})
+--                 --                                 ]
+--                 --   ]
+--                 , li [className "col-md-1"]
+--                   [ span [] [text "MultiNode"]
+--                   , input
+--                     [ _type "checkbox"
+--                     , className "checkbox"
+--                     -- , checked
+--                     , onChange $ const $ d ToggleMultiNodeSelection
+--                     ]
+--                   ]
+--                 , li'
+--                   [ button [ className "btn btn-primary"
+--                            , onClick \_ -> pauseForceAtlas2
+--                            ] [text "Spatialization"]
+--                   ]
+--                 {-, li'
+--                   [ button [className "btn btn-primary"
+--                             , onClick \_ -> do
+--                                              _ <- log "Hey there" -- $ show st.camera
+--                                              pure unit
+--                            ] [text "Save"] -- TODO: Implement Save!
+--                   ]
+--                 -}
+--                 ]
+--               ]
 
 
 getNodes :: GraphId -> Aff GET.GraphData

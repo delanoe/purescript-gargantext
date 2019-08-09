@@ -1,5 +1,9 @@
 module Gargantext.Components.GraphExplorer.Controls
- ( Controls, useGraphControls, controls, controlsCpt
+ ( Controls
+ , controlsToSigmaSettings
+ , useGraphControls
+ , controls
+ , controlsCpt
  , getShowTree, setShowTree
  , getShowControls, setShowControls
  , getShowSidePanel, setShowSidePanel
@@ -16,6 +20,8 @@ import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Components.Graph as Graph
+import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, nodeSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton)
 import Gargantext.Utils.Reactix as R2
 
@@ -30,6 +36,18 @@ type Controls =
   , showSidePanel :: R.State Boolean
   , showTree :: R.State Boolean
   )
+
+controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
+controlsToSigmaSettings { labelSize: (labelSize /\ _)
+                        , nodeSize: (nodeSize /\ _)
+                        , showEdges: (showEdges /\ _)} = Graph.sigmaSettings {
+    drawEdges = showEdges
+  , labelMaxSize = labelSize
+  , maxEdgeSize = if showEdges then 1.0 else 0.0
+  , maxNodeSize = nodeSize
+  , minEdgeSize = if showEdges then 1.0 else 0.0
+  , minNodeSize = nodeSize
+  }
 
 controls :: Record Controls -> R.Element
 controls props = R.createElement controlsCpt props []
@@ -52,8 +70,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- search button
                   -- search topics
                   -- cursor size: 0-100
-                  -- labels size: 1-4
-                  -- node size : 5-15
+                , RH.li {} [ labelSizeButton props.labelSize ] -- labels size: 1-4
+                , RH.li {} [ nodeSizeButton props.nodeSize ] -- node size : 5-15
                   -- edge size : ??
                   -- zoom: 0 -100 - calculate ratio
                   -- toggle multi node selection
@@ -67,7 +85,7 @@ useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
   cursorSize <- R.useState' 10.0
   labelSize <- R.useState' 3.0
-  nodeSize <- R.useState' 10.0
+  nodeSize <- R.useState' 5.0
   multiNodeSelect <- R.useRef false
   showControls <- R.useState' false
   showEdges <- R.useState' true

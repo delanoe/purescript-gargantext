@@ -87,6 +87,8 @@ performAction Dummy _ _ = do
   pure $ unit
 
 
+-- NOTE: special state to "glue" thermite with reactix
+-- When thermite is removed, this can be removed as well and replaced with State
 type StateGlue = (
   --treeId :: Maybe TreeId
 )

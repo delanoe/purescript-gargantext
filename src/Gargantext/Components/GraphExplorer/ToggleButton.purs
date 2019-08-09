@@ -22,9 +22,12 @@ toggleButtonCpt = R.hooksComponent "ToggleButton" cpt
     cpt {state, onMessage, offMessage} _ = do
       let (toggled /\ setToggled) = state
       pure $
-        H.button
-          { className: "btn btn-primary", on: {click: \_ -> setToggled not } }
-          [ H.text (text onMessage offMessage toggled) ]
+        H.span {}
+          [
+            H.button
+              { className: "btn btn-primary", on: {click: \_ -> setToggled not } }
+              [ H.text (text onMessage offMessage toggled) ]
+          ]
     text on _off true = on
     text _on off false = off
 

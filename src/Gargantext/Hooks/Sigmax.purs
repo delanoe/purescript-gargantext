@@ -90,6 +90,7 @@ useCanvasRenderer container sigma =
 
 createSigma :: forall settings err. settings -> Effect (Either err Sigma.Sigma)
 createSigma settings = do
+  log2 "[useSigma] Initializing sigma with settings" settings
   ret <- Sigma.sigma {settings}
   ret <$ logStatus ret
   where
