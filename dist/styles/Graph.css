@@ -22,5 +22,9 @@
   borderBottom: 1px solid black;
   paddingBottom: 19px;
 }
+#graph-explorer #sp-container #horizontal-checkbox ul {
+  display: inline;
+  float: left;
+}
 
 /*# sourceMappingURL=Graph.css.map */

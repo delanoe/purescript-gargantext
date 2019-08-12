@@ -24,7 +24,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
         RH.div { id: "sp-container"
                , className: "col-md-2" }
         [
-          RH.div {id: "sp-container"}
+          RH.div {}
           [
             RH.div { className: "row" }
             [
@@ -61,6 +61,45 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                   , badge "software engineering"
                   , badge "complex systems"
                   , badge "wireless communications"
+                  ]
+                ]
+              ]
+            , RH.div { className: "col-md-12"
+                     , id: "horizontal-checkbox" }
+              [
+                RH.ul {}
+                [
+                  RH.li {}
+                  [
+                    RH.span {} [ RH.text "Pubs" ]
+                  , RH.input { type: "checkbox"
+                             , className: "checkbox"
+                             , checked: true
+                             , title: "Mark as completed" }
+                  ]
+                , RH.li {}
+                  [
+                    RH.span {} [ RH.text "Projects" ]
+                  , RH.input { type: "checkbox"
+                             , className: "checkbox"
+                             , checked: true
+                             , title: "Mark as completed" }
+                  ]
+                , RH.li {}
+                  [
+                    RH.span {} [ RH.text "Patents" ]
+                  , RH.input { type: "checkbox"
+                             , className: "checkbox"
+                             , checked: true
+                             , title: "Mark as completed" }
+                  ]
+                , RH.li {}
+                  [
+                    RH.span {} [ RH.text "Others" ]
+                  , RH.input { type: "checkbox"
+                             , className: "checkbox"
+                             , checked: true
+                             , title: "Mark as completed" }
                   ]
                 ]
               ]
