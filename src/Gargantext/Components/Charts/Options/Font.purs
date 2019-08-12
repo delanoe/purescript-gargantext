@@ -131,7 +131,7 @@ mkToolBox = { feature: { dataView    : { show: true, readOnly : false, title : "
 
 
 ---------------------------------------
-type ToolBox = { feature :: Feature 
+type ToolBox = { feature :: Feature
                , orient  :: String}
 type Feature = { dataView :: DataView
                , saveAsImage   :: Save

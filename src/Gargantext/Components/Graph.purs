@@ -26,7 +26,7 @@ import Gargantext.Hooks.Sigmax
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma (SigmaOpts)
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Sigmajs ()
+import Gargantext.Hooks.Sigmax.Sigmajs
 
 type OnProps  = ()
 

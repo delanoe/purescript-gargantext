@@ -79,7 +79,7 @@ loadedAnnuaireSpec :: Spec {} Props Void
 loadedAnnuaireSpec = simpleSpec defaultPerformAction render
   where
     render :: Render {} Props Void
-    render _ {path: nodeId, loaded: annuaireInfo@AnnuaireInfo {name, date}} _ _ =
+    render _ {path: nodeId, loaded: annuaireInfo@(AnnuaireInfo {name, date})} _ _ =
       T.renderTableHeaderLayout
         { title: name
         , desc: name

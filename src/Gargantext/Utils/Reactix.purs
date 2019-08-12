@@ -12,6 +12,7 @@ import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import DOM.Simple as DOM
 import Effect (Effect)
+import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import FFI.Simple ((...), defineProperty)
 import React (ReactClass, ReactElement, Children, class IsReactElement, class ReactPropFields)
@@ -22,6 +23,7 @@ import Reactix.React (createDOMElement)
 import Reactix.SyntheticEvent as RE
 import Thermite (Spec, simpleSpec, Render, defaultPerformAction)
 import Unsafe.Coerce (unsafeCoerce)
+
 newtype Point = Point { x :: Number, y :: Number }
 
 -- | Turns a ReactElement into aReactix Element
@@ -107,9 +109,9 @@ nothingRef :: forall t. R.Hooks (R.Ref (Maybe t))
 nothingRef = R.useRef Nothing
 
 useLayoutEffect1' :: forall a. a -> (Unit -> Effect Unit) -> R.Hooks Unit
-useLayoutEffect1' a f = R.useLayoutEffect1 a $ \_ ->
-  do f unit
-     pure $ \_ -> pure unit
+useLayoutEffect1' a f = R.useLayoutEffect1 a $ do
+  liftEffect $ f unit
+  pure $ pure unit
 
 useLayoutRef :: forall a b. (a -> b) -> b -> R.Ref a -> R.Hooks (R.Ref b)
 useLayoutRef fn init ref = do

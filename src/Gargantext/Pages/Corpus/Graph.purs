@@ -22,6 +22,17 @@ import Data.Traversable (for_)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Partial.Unsafe (unsafePartial)
+import React (ReactElement)
+import React.DOM (button, div, input, li, li', menu, p, span, text, ul')
+import React.DOM.Props (_id, _type, className, defaultValue, max, min, onChange, onClick, style, onMouseMove)
+import React.SyntheticEvent (SyntheticUIEvent, target)
+import Thermite (PerformAction, Render, Spec, _render, cmapProps, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
+import Unsafe.Coerce (unsafeCoerce)
+import Web.HTML (window)
+import Web.HTML.Window (localStorage)
+import Web.Storage.Storage (getItem)
+
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaNode, cameras, getCameraProps, goTo, pauseForceAtlas2, sigmaOnMouseMove)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData, intColor)
@@ -35,17 +46,8 @@ import Gargantext.Config.REST (get)
 import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Types (class Optional)
 import Gargantext.Utils (toggleSet)
+import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix (scuff)
-import Partial.Unsafe (unsafePartial)
-import React (ReactElement)
-import React.DOM (button, div, input, li, li', menu, p, span, text, ul')
-import React.DOM.Props (_id, _type, className, defaultValue, max, min, onChange, onClick, style, onMouseMove)
-import React.SyntheticEvent (SyntheticUIEvent, target)
-import Thermite (PerformAction, Render, Spec, _render, cmapProps, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
-import Unsafe.Coerce (unsafeCoerce)
-import Web.HTML (window)
-import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (getItem)
 
 data Action
   = LoadGraph Int
@@ -56,6 +58,17 @@ data Action
 --  | Zoom Boolean
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
+
+type EdgeFilters =
+   { confluence :: Range.Closed Number }
+
+defaultEdgeFilters :: EdgeFilters
+defaultEdgeFilters = { confluence: Range.closedProbability }
+
+type NodeFilters = {}
+
+defaultNodeFilters :: NodeFilters
+defaultNodeFilters = {}
 
 derive instance eqSelectedNode :: Eq SelectedNode
 derive instance newtypeSelectedNode :: Newtype SelectedNode _
@@ -111,11 +124,14 @@ derive instance newtypeState :: Newtype State _
 
 emptyGraphData :: GraphData
 emptyGraphData = GraphData { nodes: [], edges: [], sides: [], metaData }
-  where metaData = Just $ MetaData { title : "", legend : [], corpusId : [] }
+  where metaData = Just $ MetaData { title : "", legend : [], corpusId : [], listId: 0 }
 
 initialState :: State
 initialState = State
   { graphData : GraphData {nodes: [], edges: [], sides: [], metaData : Just $ MetaData{title : "", legend : [], corpusId : [], listId : 0}}
+  , rawGraphData : emptyGraphData
+  , edgeFilters: defaultEdgeFilters
+  , nodeFilters: defaultNodeFilters
   , filePath : ""
   , sigmaGraphData : Nothing
   , legendData : []
@@ -231,7 +247,6 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
   -- [dispLegend legendData]
 --}
 
-=======
 
 
 

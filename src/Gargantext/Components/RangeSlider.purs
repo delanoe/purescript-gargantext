@@ -7,23 +7,25 @@
 module Gargantext.Components.RangeSlider where
 
 import Prelude
-import Reactix as R
+import Data.Maybe (Maybe(..))
+import Data.Nullable (null)
 import Data.Traversable (traverse_)
-import Gargantext.Utils.Reactix as R2
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import DOM.Simple.Document (document)
 import DOM.Simple.EventListener as EL
 import DOM.Simple.Types (DOMRect, Element)
 import DOM.Simple.Event as Event
 import DOM.Simple.Console (log, log2)
 import Data.Tuple.Nested ((/\))
-import Effect.Uncurried (EffectFn1, mkEffectFn1)
-import Gargantext.Utils.Math (roundToMultiple)
-import Gargantext.Utils.Range as Range
-import Data.Maybe (Maybe(..))
-import Data.Nullable (null)
-import Effect (Effect)
+import Reactix as R
 import Reactix.DOM.HTML as H
 import Reactix.SyntheticEvent as RE
+
+import Gargantext.Utils.Math (roundToMultiple)
+import Gargantext.Utils.Range as Range
+import Gargantext.Utils.Reactix as R2
 -- data Axis = X | Y
 
 type NumberRange = Range.Closed Number
@@ -51,7 +53,8 @@ rangeSliderCpt :: R.Component Props
 rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
   where
     cpt props _ = do
-      R.useEffect' $ \_ -> log2 "Props: " props
+      R.useEffect' $ do
+        liftEffect $ log2 "Props: " props
       -- scale bar
       scaleElem <- R.useRef null -- dom ref
       scalePos <- R2.usePositionRef scaleElem
@@ -62,11 +65,11 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
       highElem <- R.useRef null -- a dom ref to the high knob
       highPos <- R2.usePositionRef highElem
       -- The value of the user's selection
-      value /\ setValue <- R.useState $ \_ -> pure $ initialValue props
+      value /\ setValue <- R.useState' $ initialValue props
       let Range.Closed value' = value
 
       -- the knob we are currently in a drag for. set by mousedown on a knob
-      dragKnob /\ setDragKnob <- R.useState $ \_ -> pure Nothing
+      dragKnob /\ setDragKnob <- R.useState' $ (Nothing :: Maybe Knob)
       -- the bounding box within which the mouse can drag
       dragScale <- R.useRef $ Nothing
       -- the handler functions for trapping mouse events, so they can be removed
@@ -79,12 +82,12 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
       R2.useLayoutEffect1' dragKnob $ \_ -> do
         case dragKnob of
           Just knob -> do
-            let drag = getDragScale knob scalePos lowPos highPos
+            let drag = (getDragScale knob scalePos lowPos highPos) :: Maybe NumberRange
             R.setRef dragScale drag
             let onMouseMove = EL.callback $ \(event :: Event.MouseEvent) ->
-              case reproject drag scalePos value (R2.domMousePosition event) of
-                  Just val -> setKnob knob setValue value val
-                  Nothing -> destroy unit
+                  case reproject drag scalePos value (R2.domMousePosition event) of
+                    Just val -> setKnob knob setValue value val
+                    Nothing -> destroy unit
             let onMouseUp = EL.callback $ \(_event :: Event.MouseEvent) -> destroy unit
             log "RangeSlider: Creating event handlers"
             EL.addEventListener document "mousemove" onMouseMove
@@ -108,13 +111,13 @@ destroyEventHandler name ref = traverse_ destroy $ R.readRef ref
       EL.removeEventListener document name handler
       R.setRef ref Nothing
 
-setKnob :: Knob -> (Range.Closed Number -> Effect Unit) -> Range.Closed Number -> Number -> Effect Unit
-setKnob knob setValue r val = setValue $ setter knob r val
+setKnob :: Knob -> ((NumberRange -> NumberRange) -> Effect Unit) -> NumberRange -> Number -> Effect Unit
+setKnob knob setValue r val = setValue $ const $ setter knob r val
   where
     setter MinKnob = Range.withMin
     setter MaxKnob = Range.withMax
 
-getDragScale :: Knob -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> Maybe (Range.Closed Number)
+getDragScale :: Knob -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> Maybe NumberRange
 getDragScale knob scalePos lowPos highPos = do
   scale <- R.readRef scalePos
   low <- R.readRef lowPos
@@ -138,17 +141,17 @@ renderKnob ref val label knob set =
     tabIndex = 0
     className = "knob"
     aria = { label }
-    onMouseDown = mkEffectFn1 $ \_ -> set (Just knob)
+    onMouseDown = mkEffectFn1 $ \_ -> set $ const $ Just knob
 
 -- todo round to nearest epsilon
-reproject :: Maybe (Range.Closed Number) -> R.Ref (Maybe DOMRect) -> Range.Closed Number -> R2.Point -> Maybe Number
+reproject :: Maybe NumberRange -> R.Ref (Maybe DOMRect) -> NumberRange -> R2.Point -> Maybe Number
 reproject drag scale value (R2.Point mousePos) = do
   drag_ <- drag
   scale_ <- rectRange <$> R.readRef scale
   let normal = Range.normalise scale_ (Range.clamp drag_ mousePos.x)
   pure $ Range.projectNormal value normal
     
-rectRange :: DOMRect -> Range.Closed Number
+rectRange :: DOMRect -> NumberRange
 rectRange rect = Range.Closed { min, max }
   where min = rect.left
         max = rect.right
