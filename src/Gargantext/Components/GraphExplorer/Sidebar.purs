@@ -69,38 +69,10 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
               [
                 RH.ul {}
                 [
-                  RH.li {}
-                  [
-                    RH.span {} [ RH.text "Pubs" ]
-                  , RH.input { type: "checkbox"
-                             , className: "checkbox"
-                             , checked: true
-                             , title: "Mark as completed" }
-                  ]
-                , RH.li {}
-                  [
-                    RH.span {} [ RH.text "Projects" ]
-                  , RH.input { type: "checkbox"
-                             , className: "checkbox"
-                             , checked: true
-                             , title: "Mark as completed" }
-                  ]
-                , RH.li {}
-                  [
-                    RH.span {} [ RH.text "Patents" ]
-                  , RH.input { type: "checkbox"
-                             , className: "checkbox"
-                             , checked: true
-                             , title: "Mark as completed" }
-                  ]
-                , RH.li {}
-                  [
-                    RH.span {} [ RH.text "Others" ]
-                  , RH.input { type: "checkbox"
-                             , className: "checkbox"
-                             , checked: true
-                             , title: "Mark as completed" }
-                  ]
+                  checkbox "Pubs"
+                , checkbox "Projects"
+                , checkbox "Patents"
+                , checkbox "Others"
                 ]
               ]
             ]
@@ -109,3 +81,12 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
 
     badge text =
       RH.a { className: "badge badge-light" } [ RH.text text ]
+    checkbox text =
+      RH.li {}
+      [
+        RH.span {} [ RH.text text ]
+      , RH.input { type: "checkbox"
+                 , className: "checkbox"
+                 , checked: true
+                 , title: "Mark as completed" }
+      ]
