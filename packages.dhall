@@ -109,10 +109,10 @@ let additions =
 -}
 
 let mkPackage =
-      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.5-20190508/src/mkPackage.dhall sha256:0b197efa1d397ace6eb46b243ff2d73a3da5638d8d0ac8473e8e4a8fc528cf57
+      https://raw.githubusercontent.com/purescript/package-sets/psc-0.13.2-20190804/src/mkPackage.dhall sha256:0b197efa1d397ace6eb46b243ff2d73a3da5638d8d0ac8473e8e4a8fc528cf57
 
 let upstream =
-      https://raw.githubusercontent.com/purescript/package-sets/psc-0.12.5-20190508/src/packages.dhall sha256:8ef3a6d6d123e05933997426da68ef07289e1cbbdd2a844b5d10c9159deef65a
+      https://raw.githubusercontent.com/purescript/package-sets/psc-0.13.2-20190804/src/packages.dhall sha256:2230fc547841b54bca815eb0058414aa03ed7b675042f8b3dda644e1952824e5
 
 let overrides =
       { thermite =
@@ -157,7 +157,13 @@ let additions =
           "v3.1.0"
       , ffi-simple =
           mkPackage
-          [ "prelude", "effect", "maybe", "functions", "nullable", "unsafe-coerce" ]
+          [ "prelude"
+          , "effect"
+          , "maybe"
+          , "functions"
+          , "nullable"
+          , "unsafe-coerce"
+          ]
           "https://github.com/irresponsible/purescript-ffi-simple"
           "v0.2.4"
       , dom-simple =
@@ -174,14 +180,10 @@ let additions =
           "https://github.com/irresponsible/purescript-dom-simple"
           "v0.2.4"
       , dom-filereader =
-	      mkPackage
-		  [ "aff"
-		  , "arraybuffer-types"
-		  , "web-file"
-		  , "web-html"
-		  ]
-		  "https://github.com/nwolverson/purescript-dom-filereader"
-		  "v5.0.0"
+          mkPackage
+          [ "aff", "arraybuffer-types", "web-file", "web-html" ]
+          "https://github.com/nwolverson/purescript-dom-filereader"
+          "v5.0.0"
       , reactix =
           mkPackage
           [ "aff"
@@ -202,7 +204,15 @@ let additions =
           "v5.1.1"
       , uri =
           mkPackage
-          [ "these", "arrays", "profunctor-lenses", "unfoldable", "parsing", "integers", "globals", "generics-rep" ]
+          [ "these"
+          , "arrays"
+          , "profunctor-lenses"
+          , "unfoldable"
+          , "parsing"
+          , "integers"
+          , "globals"
+          , "generics-rep"
+          ]
           "https://github.com/slamdata/purescript-uri"
           "v7.0.0"
       }
