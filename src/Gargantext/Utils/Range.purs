@@ -17,6 +17,8 @@ instance closedRange :: Ord t => Range (Closed t) t where
   clamp (Closed r) = max r.min <<< min r.max
   within (Closed r) v = (v <= r.max) && (v >= r.min)
 
+type NumberRange = Closed Number
+
 range :: Closed Number -> Number
 range (Closed r) = r.max - r.min
 

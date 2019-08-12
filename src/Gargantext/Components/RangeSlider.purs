@@ -28,19 +28,18 @@ import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 -- data Axis = X | Y
 
-type NumberRange = Range.Closed Number
 -- To avoid overloading the terms 'min' and 'max' here, we treat 'min'
 -- and 'max' as being the bounds of the scale and 'low' and 'high' as
 -- being the selected values
 type Props =
-  ( bounds :: NumberRange       -- The minimum and maximum values it is possible to select
-  , initialValue :: NumberRange -- The user's selection of minimum and maximum values
+  ( bounds :: Range.NumberRange       -- The minimum and maximum values it is possible to select
+  , initialValue :: Range.NumberRange -- The user's selection of minimum and maximum values
   , epsilon :: Number           -- The smallest possible change (for mouse)
   , step :: Number              -- The 'standard' change (for keyboard)
   -- , axis :: Axis                -- Which direction to move in
   , width :: Number
   , height :: Number
-  , onChange :: NumberRange -> Effect Unit )
+  , onChange :: Range.NumberRange -> Effect Unit )
 
 rangeSlider :: Record Props -> R.Element
 rangeSlider props = R.createElement rangeSliderCpt props []
@@ -82,7 +81,7 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
       R2.useLayoutEffect1' dragKnob $ \_ -> do
         case dragKnob of
           Just knob -> do
-            let drag = (getDragScale knob scalePos lowPos highPos) :: Maybe NumberRange
+            let drag = (getDragScale knob scalePos lowPos highPos) :: Maybe Range.NumberRange
             R.setRef dragScale drag
             let onMouseMove = EL.callback $ \(event :: Event.MouseEvent) ->
                   case reproject drag scalePos value (R2.domMousePosition event) of
@@ -111,13 +110,13 @@ destroyEventHandler name ref = traverse_ destroy $ R.readRef ref
       EL.removeEventListener document name handler
       R.setRef ref Nothing
 
-setKnob :: Knob -> ((NumberRange -> NumberRange) -> Effect Unit) -> NumberRange -> Number -> Effect Unit
+setKnob :: Knob -> ((Range.NumberRange -> Range.NumberRange) -> Effect Unit) -> Range.NumberRange -> Number -> Effect Unit
 setKnob knob setValue r val = setValue $ const $ setter knob r val
   where
     setter MinKnob = Range.withMin
     setter MaxKnob = Range.withMax
 
-getDragScale :: Knob -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> Maybe NumberRange
+getDragScale :: Knob -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> Maybe Range.NumberRange
 getDragScale knob scalePos lowPos highPos = do
   scale <- R.readRef scalePos
   low <- R.readRef lowPos
@@ -144,25 +143,25 @@ renderKnob ref val label knob set =
     onMouseDown = mkEffectFn1 $ \_ -> set $ const $ Just knob
 
 -- todo round to nearest epsilon
-reproject :: Maybe NumberRange -> R.Ref (Maybe DOMRect) -> NumberRange -> R2.Point -> Maybe Number
+reproject :: Maybe Range.NumberRange -> R.Ref (Maybe DOMRect) -> Range.NumberRange -> R2.Point -> Maybe Number
 reproject drag scale value (R2.Point mousePos) = do
   drag_ <- drag
   scale_ <- rectRange <$> R.readRef scale
   let normal = Range.normalise scale_ (Range.clamp drag_ mousePos.x)
   pure $ Range.projectNormal value normal
     
-rectRange :: DOMRect -> NumberRange
+rectRange :: DOMRect -> Range.NumberRange
 rectRange rect = Range.Closed { min, max }
   where min = rect.left
         max = rect.right
 
-initialValue :: Record Props -> NumberRange
+initialValue :: Record Props -> Range.NumberRange
 initialValue props = roundRange props.epsilon props.bounds props.initialValue
 
-round :: Number -> NumberRange -> Number -> Number
+round :: Number -> Range.NumberRange -> Number -> Number
 round epsilon bounds = roundToMultiple epsilon <<< Range.clamp bounds
 
-roundRange :: Number -> NumberRange -> NumberRange -> NumberRange
+roundRange :: Number -> Range.NumberRange -> Range.NumberRange -> Range.NumberRange
 roundRange epsilon bounds (Range.Closed initial) = Range.Closed { min, max }
   where min = round epsilon bounds initial.min
         max = round epsilon bounds initial.max

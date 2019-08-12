@@ -23,6 +23,15 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Partial.Unsafe (unsafePartial)
+import Thermite (Render, Spec, simpleSpec, defaultPerformAction)
+import Unsafe.Coerce (unsafeCoerce)
+import Web.HTML (window)
+import Web.HTML.Window (localStorage)
+import Web.Storage.Storage (getItem)
+import Reactix as R
+import Reactix.DOM.HTML as RH
+
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaNode, cameras, getCameraProps, goTo, pauseForceAtlas2, sigmaOnMouseMove)
 import Gargantext.Components.GraphExplorer.Controls as Controls
@@ -41,15 +50,8 @@ import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Router (Routes(..))
 import Gargantext.Types (class Optional)
 import Gargantext.Utils (toggleSet)
+import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Partial.Unsafe (unsafePartial)
-import Thermite (Render, Spec, simpleSpec, defaultPerformAction)
-import Unsafe.Coerce (unsafeCoerce)
-import Web.HTML (window)
-import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (getItem)
-import Reactix as R
-import Reactix.DOM.HTML as RH
 
 type GraphId = Int
 

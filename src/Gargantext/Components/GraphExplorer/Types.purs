@@ -14,6 +14,7 @@ import Thermite (PerformAction, Spec)
 
 import Gargantext.Components.Login.Types (TreeId)
 import Gargantext.Components.Graph as Graph
+import Gargantext.Utils.Range as Range
 
 newtype Node = Node
   { id_ :: String
