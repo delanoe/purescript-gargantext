@@ -36,9 +36,13 @@ newtype Edge = Edge
   , source :: String
   , target :: String
   , weight :: Number
+  , confluence :: Number
   }
 
 derive instance newtypeEdge :: Newtype Edge _
+
+-- | A 'fully closed interval' in CS parlance
+type InclusiveRange t = { min :: t, max :: t }
 
 type ListId      = Int
 type CorpusId    = Int
@@ -208,7 +212,8 @@ instance decodeJsonEdge :: DecodeJson Edge where
     source <- obj .? "source"
     target <- obj .? "target"
     weight <- obj .? "weight"
-    pure $ Edge { id_, source, target, weight }
+    confluence <- obj .? "confluence"
+    pure $ Edge { id_, source, target, weight, confluence }
 
 newtype Legend = Legend  {id_ ::Int , color :: String, label :: String}
 

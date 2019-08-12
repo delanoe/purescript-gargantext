@@ -26,6 +26,7 @@ import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaNode, cameras, getCameraProps, goTo, pauseForceAtlas2, sigmaOnMouseMove)
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData, intColor)
 import Gargantext.Components.Login.Types (AuthData(..), TreeId)
+import Gargantext.Components.RangeSlider as RangeSlider
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Tree as Tree
@@ -88,7 +89,10 @@ numberTargetValue e =
 
 -- TODO remove newtype here
 newtype State = State
-  { graphData :: GraphData
+  { rawGraphData :: GraphData
+  , graphData :: GraphData
+  , edgeFilters :: EdgeFilters
+  , nodeFilters :: NodeFilters
   , filePath :: String
   , sigmaGraphData :: Maybe Graph.Graph
   , legendData :: Array Legend
@@ -104,6 +108,10 @@ newtype State = State
   }
 
 derive instance newtypeState :: Newtype State _
+
+emptyGraphData :: GraphData
+emptyGraphData = GraphData { nodes: [], edges: [], sides: [], metaData }
+  where metaData = Just $ MetaData { title : "", legend : [], corpusId : [] }
 
 initialState :: State
 initialState = State
@@ -223,6 +231,7 @@ render d p (State {sigmaGraphData, settings, legendData}) c =
   -- [dispLegend legendData]
 --}
 
+=======
 
 
 
