@@ -5091,10 +5091,10 @@ public-encrypt@^4.0.0:
     randombytes "^2.0.1"
     safe-buffer "^5.1.2"
 
-pulp@^12.4.0:
-  version "12.4.2"
-  resolved "https://registry.yarnpkg.com/pulp/-/pulp-12.4.2.tgz#0d8221005da08bd4507a56c8b0e6c8b0996e10e7"
-  integrity sha512-hU2vADQCh/PJBtVX5rTpSyhHbOopYUZ5QLlgoz0ZBFHjgGY1I9dPBqH5FW5uag9Q1Ewz8OeWHtLDmRtY6w7UlQ==
+pulp@^13.0.0:
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/pulp/-/pulp-13.0.0.tgz#ed7f4dd0e0ae20a79d4ac3621e387b4ebae4bf18"
+  integrity sha512-wjjAVuN1Shx6783NvTd8aPwWZ1pE94+isiWtdAJhedvbLqJuwe8p5CSNul9FS0WvBz7ejdrW0vc6wLDLsKX7Yw==
   dependencies:
     browserify "^16.2.3"
     browserify-incremental "^3.1.1"
@@ -5105,7 +5105,6 @@ pulp@^12.4.0:
     node-static "^0.7.11"
     read "^1.0.7"
     sorcery "^0.10.0"
-    string-stream "0.0.7"
     temp "^0.9.0"
     through "^2.3.8"
     tree-kill "^1.2.1"
@@ -6057,11 +6056,6 @@ stream-splicer@^2.0.0:
   dependencies:
     inherits "^2.0.1"
     readable-stream "^2.0.2"
-
-string-stream@0.0.7:
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/string-stream/-/string-stream-0.0.7.tgz#cfcde82799fa62f303429aaa79336ee8834332fe"
-  integrity sha1-z83oJ5n6YvMDQpqqeTNu6INDMv4=
 
 string-width@^1.0.1:
   version "1.0.2"

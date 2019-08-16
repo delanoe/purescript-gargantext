@@ -3,7 +3,6 @@ module Gargantext.Components.GraphExplorer.SlideButton
   , sizeButton
   , cursorSizeButton
   , labelSizeButton
-  , nodeSizeButton
   ) where
 
 import Global (readFloat)
@@ -43,7 +42,3 @@ cursorSizeButton state =
 labelSizeButton :: R.State Number -> R.Element
 labelSizeButton state =
   sizeButton { state: state, caption: "Label Size", min: 1.0, max: 4.0 }
-
-nodeSizeButton :: R.State Number -> R.Element
-nodeSizeButton state =
-  sizeButton { state: state, caption: "Node Size", min: 5.0, max: 15.0 }

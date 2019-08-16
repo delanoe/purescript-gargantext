@@ -4,5 +4,4 @@ import Prelude
 import Math as Math
 
 roundToMultiple :: Number -> Number -> Number
-roundToMultiple num eps = eps * Math.round (num / eps)
-
+roundToMultiple eps num = eps * Math.round (num / eps)

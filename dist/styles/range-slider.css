@@ -1,12 +1,13 @@
 .range-slider {
   position: relative;
 }
-
 .range-slider .scale {
   position: absolute;
   background-color: #555;
 }
-
 .range-slider .knob {
   position: absolute;
+  cursor: pointer;
 }
+
+/*# sourceMappingURL=range-slider.css.map */

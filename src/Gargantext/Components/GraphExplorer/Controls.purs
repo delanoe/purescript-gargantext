@@ -21,15 +21,17 @@ import Reactix as R
 import Reactix.DOM.HTML as RH
 
 import Gargantext.Components.Graph as Graph
-import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton, nodeSizeButton)
+import Gargantext.Components.GraphExplorer.RangeControl (nodeSizeControl)
+import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton)
+import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
 
 type Controls =
   ( cursorSize :: R.State Number
   , labelSize :: R.State Number
-  , nodeSize :: R.State Number
+  , nodeSize :: R.State Range.NumberRange
   , multiNodeSelect :: R.Ref Boolean
   , showControls :: R.State Boolean
   , showEdges :: R.State Boolean
@@ -40,16 +42,16 @@ type Controls =
 controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
 controlsToSigmaSettings { cursorSize: (cursorSize /\ _)
                         , labelSize: (labelSize /\ _)
-                        , nodeSize: (nodeSize /\ _)
+                        , nodeSize: (Range.Closed { min: nodeSizeMin, max: nodeSizeMax } /\ _)
                         , showEdges: (showEdges /\ _)} = Graph.sigmaSettings {
     drawEdges = showEdges
   , drawEdgeLabels = showEdges
   , hideEdgesOnMove = not showEdges
   , labelMaxSize = labelSize
   , maxEdgeSize = if showEdges then 1.0 else 0.0
-  , maxNodeSize = nodeSize
+  , maxNodeSize = nodeSizeMax
   , minEdgeSize = if showEdges then 1.0 else 0.0
-  , minNodeSize = nodeSize
+  , minNodeSize = nodeSizeMin
   }
 
 controls :: Record Controls -> R.Element
@@ -74,7 +76,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- search topics
                 , RH.li {} [ cursorSizeButton props.cursorSize ] -- cursor size: 0-100
                 , RH.li {} [ labelSizeButton props.labelSize ] -- labels size: 1-4
-                , RH.li {} [ nodeSizeButton props.nodeSize ] -- node size : 5-15
+                , RH.li {} [ nodeSizeControl props.nodeSize ] -- node size : 5-15
                   -- edge size : ??
                   -- zoom: 0 -100 - calculate ratio
                   -- toggle multi node selection
@@ -88,7 +90,7 @@ useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
   cursorSize <- R.useState' 10.0
   labelSize <- R.useState' 3.0
-  nodeSize <- R.useState' 5.0
+  nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 5.0 }
   multiNodeSelect <- R.useRef false
   showControls <- R.useState' false
   showEdges <- R.useState' true
@@ -114,7 +116,7 @@ getCursorSize { cursorSize: ( size /\ _ ) } = size
 getLabelSize :: Record Controls -> Number
 getLabelSize { labelSize: ( size /\ _ ) } = size
 
-getNodeSize :: Record Controls -> Number
+getNodeSize :: Record Controls -> Range.NumberRange
 getNodeSize { nodeSize: ( size /\ _ ) } = size
 
 getMultiNodeSelect :: Record Controls -> Boolean
@@ -138,7 +140,7 @@ setCursorSize { cursorSize: ( _ /\ setSize ) } v = setSize $ const v
 setLabelSize :: Record Controls -> Number -> Effect Unit
 setLabelSize { labelSize: ( _ /\ setSize) } v = setSize $ const v
 
-setNodeSize :: Record Controls -> Number -> Effect Unit
+setNodeSize :: Record Controls -> Range.NumberRange -> Effect Unit
 setNodeSize { nodeSize: ( _ /\ setSize ) } v = setSize $ const v
 
 setMultiNodeSelect :: Record Controls -> Boolean -> Effect Unit
