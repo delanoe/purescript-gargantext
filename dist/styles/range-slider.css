@@ -10,7 +10,7 @@
   cursor: pointer;
 }
 .range-slider .knob .button {
-  top: -7px;
+  margin-top: -3px;
   background: #f00;
   width: 10px;
   height: 10px;

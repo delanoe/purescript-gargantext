@@ -55,8 +55,8 @@ rangeSliderCpt :: R.Component Props
 rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
   where
     cpt props _ = do
-      R.useEffect' $ do
-        liftEffect $ log2 "Props: " props
+      --R.useEffect' $ do
+      --  liftEffect $ log2 "Props: " props
 
       -- scale bar
       scaleElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
@@ -80,7 +80,7 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
       mouseMoveHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
       mouseUpHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
       let destroy = \_ -> do
-            log "RangeSlider: Destroying event handlers"
+            --log "RangeSlider: Destroying event handlers"
             destroyEventHandler "mousemove" mouseMoveHandler
             destroyEventHandler "mouseup" mouseUpHandler
             R.setRef mouseMoveHandler $ Nothing
@@ -121,14 +121,14 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
 
                   case reproject drag scalePos props.bounds (R2.domMousePosition event) of
                     Just val -> do
-                      log2 "reproject val" val
+                      --log2 "reproject val" val
                       setKnob knob setValue value val
                     Nothing -> destroy unit
             let onMouseUp = EL.callback $ \(_event :: Event.MouseEvent) -> do
                   setDragKnob $ const Nothing
                   destroy unit
-            log "RangeSlider: Creating event handlers"
-            log2 "Clamp: " $ Range.clamp props.bounds value'.min
+            --log "RangeSlider: Creating event handlers"
+            --log2 "Clamp: " $ Range.clamp props.bounds value'.min
             EL.addEventListener document "mousemove" onMouseMove
             EL.addEventListener document "mouseup" onMouseUp
             R.setRef mouseMoveHandler $ Just onMouseMove

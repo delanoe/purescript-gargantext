@@ -49,8 +49,8 @@ controlsToSigmaSettings { cursorSize: (cursorSize /\ _)
   , hideEdgesOnMove = not showEdges
   , labelMaxSize = labelSize
   , maxEdgeSize = if showEdges then 1.0 else 0.0
-  , maxNodeSize = nodeSizeMax
   , minEdgeSize = if showEdges then 1.0 else 0.0
+  , maxNodeSize = nodeSizeMax
   , minNodeSize = nodeSizeMin
   }
 
