@@ -1,6 +1,7 @@
 module Gargantext.Components.NgramsTable.Spec where
 
 import Prelude
+import Gargantext.Config (CTabNgramType(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Gargantext.Components.NgramsTable.Core (highlightNgrams, NgramsElement(..), NgramsTable(..))
@@ -41,7 +42,7 @@ spec = do
                    ,Tuple " at every " Nothing
                    ,Tuple "candidate" (Just CandidateTerm)
                    ]
-      highlightNgrams table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqual` output
 
     it "works when pattern overlaps" do
       let table = NgramsTable
@@ -66,7 +67,7 @@ spec = do
                    ,Tuple " " Nothing
                    ,Tuple "the" (Just GraphTerm)
                    ]
-      highlightNgrams table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqual` output
 
     it "works when pattern overlaps 2" do
       let table = NgramsTable
@@ -80,7 +81,7 @@ spec = do
                    ,Tuple " space " Nothing
                    ,Tuple "images" (Just GraphTerm)
                    ]
-      highlightNgrams table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqual` output
 
     it "works with punctuation" do
       let table = NgramsTable
@@ -90,4 +91,4 @@ spec = do
                    ,Tuple "graph" (Just GraphTerm)
                    ,Tuple ", after" Nothing
                    ]
-      highlightNgrams table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqual` output
