@@ -8,12 +8,14 @@ module Gargantext.Components.RangeSlider where
 
 import Prelude
 import Data.Maybe (Maybe(..))
-import Data.Nullable (null)
+import Data.Nullable (Nullable, null, toMaybe)
 import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, mkEffectFn1)
+import DOM.Simple as DOM
 import DOM.Simple.Document (document)
+import DOM.Simple.Element as Element
 import DOM.Simple.EventListener as EL
 import DOM.Simple.Types (DOMRect, Element)
 import DOM.Simple.Event as Event
@@ -71,37 +73,42 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
       -- the knob we are currently in a drag for. set by mousedown on a knob
       dragKnob /\ setDragKnob <- R.useState' $ (Nothing :: Maybe Knob)
       -- the bounding box within which the mouse can drag
-      dragScale <- R.useRef $ Nothing
+      --dragScale <- R.useRef $ Nothing
 
       -- the handler functions for trapping mouse events, so they can be removed
       mouseMoveHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
       mouseUpHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
-      let destroy = \_ ->
-            do log "RangeSlider: Destroying event handlers"
-               destroyEventHandler "mousemove" mouseMoveHandler
-               destroyEventHandler "mouseup" mouseUpHandler
+      let destroy = \_ -> do
+            log "RangeSlider: Destroying event handlers"
+            destroyEventHandler "mousemove" mouseMoveHandler
+            destroyEventHandler "mouseup" mouseUpHandler
+            R.setRef mouseMoveHandler $ Nothing
+            R.setRef mouseUpHandler $ Nothing
 
       R2.useLayoutEffect1' dragKnob $ \_ -> do
         case dragKnob of
           Just knob -> do
             let drag = (getDragScale knob scalePos lowPos highPos) :: Maybe Range.NumberRange
-            R.setRef dragScale drag
+            --R.setRef dragScale drag
             let onMouseMove = EL.callback $ \(event :: Event.MouseEvent) -> do
-                  -- log2 "drag" drag
-                  -- log2 "scale" scalePos
-                  -- -- log2 "value" value
-                  -- let (R2.Point mousePos) = R2.domMousePosition event
-                  -- log2 "mouse position" mousePos
-                  -- let scale = rectRange <$> R.readRef scalePos
-                  -- case scale of
-                  --   Just scale_ ->
-                  --     case drag of
-                  --       Just drag_ -> do
-                  --         let normal = Range.normalise scale_ (Range.clamp drag_ mousePos.x)
-                  --         log2 "normal" normal
-                  --         log2 "project normal" $ Range.projectNormal props.bounds normal
-                  --       _ -> log "drag is Nothing"
-                  --   _ -> log "scale is Nothing"
+                  log2 "dragKnob" dragKnob
+                  log2 "lowPos" lowPos
+                  log2 "highPos" highPos
+                  log2 "drag" drag
+                  log2 "scale" scalePos
+                  -- log2 "value" value
+                  let (R2.Point mousePos) = R2.domMousePosition event
+                  log2 "mouse position" mousePos
+                  let scale = rectRange <$> R.readRef scalePos
+                  case scale of
+                    Just scale_ ->
+                      case drag of
+                        Just drag_ -> do
+                          let normal = Range.normalise scale_ (Range.clamp drag_ mousePos.x)
+                          log2 "normal" normal
+                          log2 "project normal" $ Range.projectNormal props.bounds normal
+                        _ -> log "drag is Nothing"
+                    _ ->  log "scale is Nothing"
 
                   case reproject drag scalePos props.bounds (R2.domMousePosition event) of
                     Just val -> do
@@ -178,7 +185,7 @@ reproject drag scale value (R2.Point mousePos) = do
   scale_ <- rectRange <$> R.readRef scale
   let normal = Range.normalise scale_ (Range.clamp drag_ mousePos.x)
   pure $ Range.projectNormal value normal
-    
+
 rectRange :: DOMRect -> Range.NumberRange
 rectRange rect = Range.Closed { min, max }
   where min = rect.left
