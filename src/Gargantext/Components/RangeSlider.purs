@@ -10,9 +10,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Traversable (traverse_)
-import Effect (Effect)
-import Effect.Class (liftEffect)
-import Effect.Uncurried (EffectFn1, mkEffectFn1)
+import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
@@ -20,7 +18,10 @@ import DOM.Simple.EventListener as EL
 import DOM.Simple.Types (DOMRect, Element)
 import DOM.Simple.Event as Event
 import DOM.Simple.Console (log, log2)
-import Data.Tuple.Nested ((/\))
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import Effect.Uncurried (EffectFn1, mkEffectFn1)
+--import Global (toFixed)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Reactix.SyntheticEvent as RE
@@ -58,14 +59,14 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
         liftEffect $ log2 "Props: " props
 
       -- scale bar
-      scaleElem <- R.useRef null -- dom ref
-      scalePos <- R2.usePositionRef scaleElem
+      scaleElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
+      --scalePos <- R2.usePositionRef scaleElem
       -- low knob
-      lowElem <- R.useRef null -- a dom ref to the low knob
-      lowPos <- R2.usePositionRef lowElem
+      lowElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- a dom ref to the low knob
+      --lowPos <- R2.usePositionRef lowElem
       -- high knob
-      highElem <- R.useRef null -- a dom ref to the high knob
-      highPos <- R2.usePositionRef highElem
+      highElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- a dom ref to the high knob
+      --highPos <- R2.usePositionRef highElem
       -- The value of the user's selection
       value /\ setValue <- R.useState' $ initialValue props
       let Range.Closed value' = value
@@ -86,29 +87,37 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
             R.setRef mouseUpHandler $ Nothing
 
       R2.useLayoutEffect1' dragKnob $ \_ -> do
+        let scalePos' = R.readRef scaleElem
+        let scalePos = Element.boundingRect <$> toMaybe scalePos'
+        let lowPos' = R.readRef lowElem
+        let lowPos = Element.boundingRect <$> toMaybe lowPos'
+        let highPos' = R.readRef highElem
+        let highPos = Element.boundingRect <$> toMaybe highPos'
+
         case dragKnob of
           Just knob -> do
             let drag = (getDragScale knob scalePos lowPos highPos) :: Maybe Range.NumberRange
+
             --R.setRef dragScale drag
             let onMouseMove = EL.callback $ \(event :: Event.MouseEvent) -> do
-                  log2 "dragKnob" dragKnob
-                  log2 "lowPos" lowPos
-                  log2 "highPos" highPos
-                  log2 "drag" drag
-                  log2 "scale" scalePos
-                  -- log2 "value" value
-                  let (R2.Point mousePos) = R2.domMousePosition event
-                  log2 "mouse position" mousePos
-                  let scale = rectRange <$> R.readRef scalePos
-                  case scale of
-                    Just scale_ ->
-                      case drag of
-                        Just drag_ -> do
-                          let normal = Range.normalise scale_ (Range.clamp drag_ mousePos.x)
-                          log2 "normal" normal
-                          log2 "project normal" $ Range.projectNormal props.bounds normal
-                        _ -> log "drag is Nothing"
-                    _ ->  log "scale is Nothing"
+                  -- log2 "dragKnob" dragKnob
+                  -- log2 "lowPos" lowPos
+                  -- log2 "highPos" highPos
+                  -- log2 "drag" drag
+                  -- log2 "scale" scalePos
+                  -- -- log2 "value" value
+                  -- let (R2.Point mousePos) = R2.domMousePosition event
+                  -- log2 "mouse position" mousePos
+                  -- let scale = rectRange <$> scalePos
+                  -- case scale of
+                  --   Just scale_ ->
+                  --     case drag of
+                  --       Just drag_ -> do
+                  --         let normal = Range.normalise scale_ (Range.clamp drag_ mousePos.x)
+                  --         log2 "normal" normal
+                  --         log2 "project normal" $ Range.projectNormal props.bounds normal
+                  --       _ -> log "drag is Nothing"
+                  --   _ ->  log "scale is Nothing"
 
                   case reproject drag scalePos props.bounds (R2.domMousePosition event) of
                     Just val -> do
@@ -127,8 +136,8 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
           Nothing -> destroy unit
       pure $ H.div { className, aria }
         [ renderScale scaleElem props value'
-        , renderKnob lowElem  value'.min props.bounds ("Minimum value:" <> show value'.min) MinKnob setDragKnob
-        , renderKnob highElem value'.max props.bounds ("Maximum value:" <> show value'.max) MaxKnob setDragKnob
+        , renderKnob lowElem  value'.min props.bounds MinKnob setDragKnob props.epsilon
+        , renderKnob highElem value'.max props.bounds MaxKnob setDragKnob props.epsilon
         ]
     className = "range-slider"
     aria = { label: "Range Slider Control. Expresses filtering data by a minimum and maximum value range through two slider knobs. Knobs can be adjusted with the arrow keys." }
@@ -149,12 +158,12 @@ setKnob knob setValue r val = setValue $ const $ setter knob r val
     setter MinKnob = Range.withMin
     setter MaxKnob = Range.withMax
 
-getDragScale :: Knob -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> R.Ref (Maybe DOMRect) -> Maybe Range.NumberRange
+getDragScale :: Knob -> Maybe DOMRect -> Maybe DOMRect -> Maybe DOMRect -> Maybe Range.NumberRange
 getDragScale knob scalePos lowPos highPos = do
-  scale <- R.readRef scalePos
-  low <- R.readRef lowPos
-  high <- R.readRef highPos
-  pure $ Range.Closed { min: min knob scale high, max: max knob scale low }
+  scale <- scalePos
+  low <- lowPos
+  high <- highPos
+  pure $ Range.Closed { min: min knob scale low, max: max knob scale high }
   where
     min MinKnob scale _ = scale.left
     min MaxKnob _ low = low.left
@@ -168,21 +177,25 @@ renderScale ref {width,height} {min, max} =
     aria = { label: "Scale running from " <> show min <> " to " <> show max }
     style = { width: "100%", height: "3px" }
 
-renderKnob ref val bounds label knob set =
-  H.div { ref, tabIndex, className, aria, onMouseDown, style } [ H.text (show val) ]
+renderKnob ref val bounds knob set epsilon =
+  H.div { ref, tabIndex, className, aria, onMouseDown, style } [ H.text (text $ Just val) ]
   where
+    text (Just num) = show num
+    text Nothing = "error"
     tabIndex = 0
     className = "knob"
-    aria = { label: label <> ", perc: " <> show percOffset }
+    aria = { label: labelPrefix knob <> "value: " <> show val }
+    labelPrefix MinKnob = "Minimum "
+    labelPrefix MaxKnob = "Maximum "
     onMouseDown = mkEffectFn1 $ \_ -> set $ const $ Just knob
     percOffset = Range.normalise bounds val
     style = { left: (show $ 100.0 * percOffset) <> "%" }
 
 -- TODO round to nearest epsilon
-reproject :: Maybe Range.NumberRange -> R.Ref (Maybe DOMRect) -> Range.NumberRange -> R2.Point -> Maybe Number
-reproject drag scale value (R2.Point mousePos) = do
+reproject :: Maybe Range.NumberRange -> Maybe DOMRect -> Range.NumberRange -> R2.Point -> Maybe Number
+reproject drag scalePos value (R2.Point mousePos) = do
   drag_ <- drag
-  scale_ <- rectRange <$> R.readRef scale
+  scale_ <- rectRange <$> scalePos
   let normal = Range.normalise scale_ (Range.clamp drag_ mousePos.x)
   pure $ Range.projectNormal value normal
 
