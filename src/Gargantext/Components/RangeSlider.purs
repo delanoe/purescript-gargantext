@@ -178,7 +178,10 @@ renderScale ref {width,height} {min, max} =
     style = { width: "100%", height: "3px" }
 
 renderKnob ref val bounds knob set epsilon =
-  H.div { ref, tabIndex, className, aria, onMouseDown, style } [ H.text (text $ Just val) ]
+  H.div { ref, tabIndex, className, aria, onMouseDown, style } [
+      H.div { className: "button" } []
+    , H.text (text $ Just val)
+  ]
   where
     text (Just num) = show num
     text Nothing = "error"

@@ -9,5 +9,12 @@
   position: absolute;
   cursor: pointer;
 }
+.range-slider .knob .button {
+  top: -7px;
+  background: #f00;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
 
 /*# sourceMappingURL=range-slider.css.map */

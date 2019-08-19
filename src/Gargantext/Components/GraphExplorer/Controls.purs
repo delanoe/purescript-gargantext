@@ -90,7 +90,7 @@ useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
   cursorSize <- R.useState' 10.0
   labelSize <- R.useState' 3.0
-  nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 5.0 }
+  nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 10.0 }
   multiNodeSelect <- R.useRef false
   showControls <- R.useState' false
   showEdges <- R.useState' true
