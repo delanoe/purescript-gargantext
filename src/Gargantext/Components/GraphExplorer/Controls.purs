@@ -44,10 +44,10 @@ controlsToSigmaSettings { cursorSize: (cursorSize /\ _)
                         , labelSize: (labelSize /\ _)
                         , nodeSize: (Range.Closed { min: nodeSizeMin, max: nodeSizeMax } /\ _)
                         , showEdges: (showEdges /\ _)} = Graph.sigmaSettings {
-    drawEdges = showEdges
+    defaultLabelSize = labelSize
+  , drawEdges = showEdges
   , drawEdgeLabels = showEdges
   , hideEdgesOnMove = not showEdges
-  , labelMaxSize = labelSize
   , maxEdgeSize = if showEdges then 1.0 else 0.0
   , minEdgeSize = if showEdges then 1.0 else 0.0
   , maxNodeSize = nodeSizeMax

@@ -12,12 +12,12 @@ import Data.Nullable (Nullable, null, toMaybe)
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
+import DOM.Simple.Console (log, log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
+import DOM.Simple.Event as Event
 import DOM.Simple.EventListener as EL
 import DOM.Simple.Types (DOMRect, Element)
-import DOM.Simple.Event as Event
-import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, mkEffectFn1)
@@ -122,9 +122,10 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
                   case reproject drag scalePos props.bounds (R2.domMousePosition event) of
                     Just val -> do
                       --log2 "reproject val" val
-                      setKnob knob setValue value val
+                      setKnob knob setValue value $ round props.epsilon props.bounds val
                     Nothing -> destroy unit
             let onMouseUp = EL.callback $ \(_event :: Event.MouseEvent) -> do
+                  props.onChange value
                   setDragKnob $ const Nothing
                   destroy unit
             --log "RangeSlider: Creating event handlers"

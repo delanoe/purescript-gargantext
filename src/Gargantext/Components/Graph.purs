@@ -76,7 +76,7 @@ type SigmaSettings =
   , defaultHoverLabelColor :: String
   , defaultLabelColor :: String
   -- , defaultLabelHoverColor :: String
-  -- , defaultLabelSize :: String
+  , defaultLabelSize :: Number
   , defaultNodeBorderColor :: String
   , defaultNodeColor :: String
   -- , defaultNodeHoverColor :: String
@@ -112,7 +112,6 @@ type SigmaSettings =
   -- , labelHoverColor :: String
   -- , labelHoverShadow :: String
   -- , labelHoverShadowColor :: String
-  , labelMaxSize :: Number
   , labelSize :: String
   , labelSizeRatio :: Number
   , labelThreshold :: Number
@@ -165,6 +164,7 @@ sigmaSettings =
   , defaultHoverLabelBGColor: "#fff"
   , defaultHoverLabelColor: "#000"
   , defaultLabelColor: "#000"         -- labels text color
+  , defaultLabelSize: 3.0                -- (old tina: showLabelsIfZoom)
   , defaultNodeBorderColor: "black"   -- <- if nodeBorderColor = 'default'
   , defaultNodeColor: "#ddd"
   , drawEdgeLabels: true
@@ -176,7 +176,6 @@ sigmaSettings =
   , font: "Droid Sans"                -- font params
   , fontStyle: "bold"
   , hideEdgesOnMove: true
-  , labelMaxSize: 3.0                -- (old tina: showLabelsIfZoom)
   , labelSize : "proportional"
   , labelSizeRatio: 2.0               -- label size in ratio of node size
   , labelThreshold: 2.0               -- min node cam size to start showing label
