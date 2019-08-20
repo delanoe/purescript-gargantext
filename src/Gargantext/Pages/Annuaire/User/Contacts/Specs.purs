@@ -3,29 +3,25 @@ module Gargantext.Pages.Annuaire.User.Contacts.Specs
        where
 
 
-import Data.List (List, zipWith, catMaybes, toUnfoldable)
-import Data.Map (Map, empty, keys, values, lookup)
 import Data.Array (head)
-import Data.Semigroup ((<>))
+import Data.List (zipWith, catMaybes, toUnfoldable)
+import Data.Map (Map, keys, lookup)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Data.Set (toUnfoldable) as S
-import Data.Tuple (Tuple(..), uncurry)
-import Data.Unfoldable (class Unfoldable)
-import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
+import Data.Set (toUnfoldable) as S
 import Data.String (joinWith)
-import Effect.Aff (Aff, throwError)
-import Effect.Exception (error)
-import Thermite (Render, Spec, defaultPerformAction, simpleSpec)
-import React as React
-import React (ReactClass, ReactElement)
-import React.DOM (div, h3, img, li, span, text, ul, text)
+import Data.Tuple (Tuple(..))
+import Data.Unfoldable (class Unfoldable)
+import Effect.Aff (Aff)
+import React (ReactElement)
+import React.DOM (div, h3, img, li, span, text, ul)
 import React.DOM.Props (_id, className, src)
 import Reactix as R
+import Thermite (Spec)
+
 import Gargantext.Prelude
-import Gargantext.Config (toUrl, End(..), NodeType(..), Path(..))
+import Gargantext.Config (toUrl, End(..), NodeType(..))
 import Gargantext.Config.REST (get)
-import Gargantext.Components.Node (NodePoly(..), HyperdataList(..))
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Pages.Annuaire.User.Contacts.Types
 import Gargantext.Pages.Annuaire.User.Contacts.Tabs.Specs as Tabs
@@ -61,11 +57,15 @@ mapMyMap f m = toUnfoldable
 
 infixl 4 mapMyMap as <.~$>
 
+getFirstName :: Maybe ContactWho -> String
 getFirstName obj = fromMaybe "Empty title" $ getFirstName' <$> obj
-getFirstName' = fromMaybe "Empty first name" <<< _.firstName <<< unwrap
+  where
+    getFirstName' = fromMaybe "Empty first name" <<< _.firstName <<< unwrap
 
+getLastName :: Maybe ContactWho -> String
 getLastName obj = fromMaybe "Empty title" $ getLastName' <$> obj
-getLastName' = fromMaybe "Empty last name"  <<< _.lastName <<< unwrap
+  where
+    getLastName' = fromMaybe "Empty last name"  <<< _.lastName <<< unwrap
 
 -- | ContactWhere infos
 -- TODO factor below
