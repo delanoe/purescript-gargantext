@@ -124,3 +124,8 @@ useLayoutRef fn init ref = do
 
 usePositionRef :: R.Ref (Nullable DOM.Element) -> R.Hooks (R.Ref (Maybe DOM.DOMRect))
 usePositionRef = useLayoutRef (map Element.boundingRect <<< toMaybe) Nothing
+
+readPositionRef :: R.Ref (Nullable DOM.Element) -> Maybe DOM.DOMRect
+readPositionRef el = do
+  let posRef = R.readRef el
+  Element.boundingRect <$> toMaybe posRef

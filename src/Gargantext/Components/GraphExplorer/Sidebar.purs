@@ -2,7 +2,6 @@ module Gargantext.Components.GraphExplorer.Sidebar
        where
 
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as RH

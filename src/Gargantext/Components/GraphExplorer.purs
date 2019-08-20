@@ -1,56 +1,30 @@
 module Gargantext.Components.GraphExplorer where
 
-import Effect.Unsafe (unsafePerformEffect)
 import Gargantext.Prelude hiding (max,min)
 
-import Control.Monad.Cont.Trans (lift)
-import Data.Array (fold, length, (!!), null)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
-import Data.Int as Int
-import Data.Lens (Lens', over, (%~), (.~), (^.))
-import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
-import Data.Newtype (class Newtype)
-import Data.Number as Num
 import Data.Sequence as Seq
-import Data.Set (Set)
-import Data.Set as Set
-import Data.Symbol (SProxy(..))
-import Data.Traversable (for_)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Partial.Unsafe (unsafePartial)
-import Thermite (Render, Spec, simpleSpec, defaultPerformAction)
-import Unsafe.Coerce (unsafeCoerce)
-import Web.HTML (window)
-import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (getItem)
+import Thermite (Render, Spec, simpleSpec)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
 import Gargantext.Hooks.Sigmax.Types as Sigmax
-import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaNode, cameras, getCameraProps, goTo, pauseForceAtlas2, sigmaOnMouseMove)
 import Gargantext.Components.GraphExplorer.Controls as Controls
-import Gargantext.Components.GraphExplorer.Legend (legend)
 import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Loader2 as Loader
-import Gargantext.Components.Login.Types (AuthData(..), TreeId)
-import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get)
-import Gargantext.Pages.Corpus.Graph.Tabs as GT
 import Gargantext.Router (Routes(..))
-import Gargantext.Types (class Optional)
-import Gargantext.Utils (toggleSet)
-import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
 type GraphId = Int
