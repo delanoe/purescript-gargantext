@@ -139,7 +139,8 @@ layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
           , if showSearch then searchBar query else H.div {} []
           , H.div {className: "col-md-12"}
             [ pageLoader tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
-          , H.div {className: "col-md-1 col-md-offset-11"}
+          
+          {-, H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
                        , style: {backgroundColor: "peru", color : "white", border : "white"}
                        , onClick: onClickTrashAll nodeId
@@ -148,6 +149,7 @@ layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
               ,  H.text "Trash all"
               ]
             ]
+           -}
           ]
         ]
 
@@ -162,17 +164,16 @@ searchBar (query /\ setQuery) = R.createElement el {} []
       queryText <- R.useState' query
 
       pure $ H.div {className: "row"}
-        [ H.div {className: "col col-md-3 form-group"}
+        [ H.div {className: "col col-md-3"} []
+        , H.div {className: "col col-md-1"} [if query /= "" then clearButton else H.div {} []]
+        , H.div {className: "col col-md-3 form-group"}
           [ H.input { type: "text"
                     , className: "form-control"
                     , on: {change: onSearchChange queryText, keyUp: onSearchKeyup queryText}
                     , placeholder: query
                     , defaultValue: query}
           ]
-        , H.div {className: "col col-md-1"}
-          [ searchButton queryText
-          , if query /= "" then clearButton else H.div {} []
-          ]
+        , H.div {className: "col col-md-1"} [searchButton queryText]
         ]
 
     onSearchChange :: forall e. R.State Query -> e -> Effect Unit
@@ -265,8 +266,8 @@ renderPage (_ /\ setTableParams) p res = R.createElement el p []
           , container: T.defaultContainer { title: "Documents" }
           , colNames:
             T.ColumnName <$>
-            [ "Map"
-            , "Stop"
+            [ "Favorites"
+            , "Trash"
             , "Date"
             , "Title"
             , "Source"

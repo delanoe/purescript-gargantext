@@ -79,7 +79,7 @@ readTermList _               = Nothing
 
 termLists :: Array { desc :: String, mval :: Maybe TermList }
 termLists = [ { desc: "All terms",   mval: Nothing      }
-            , { desc: "Graph terms",   mval: Just GraphTerm   }
+            , { desc: "Map terms",   mval: Just GraphTerm   }
             , { desc: "Stop terms",  mval: Just StopTerm  }
             , { desc: "Candidate terms", mval: Just CandidateTerm }
             ]

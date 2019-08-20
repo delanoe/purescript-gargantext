@@ -4,7 +4,7 @@ import Prelude hiding (div)
 
 import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (filter)
+import Data.Array (filter, sortWith)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
@@ -197,11 +197,14 @@ toHtml setReload setState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _
     pAction = performAction setReload setState
     cpt props _ = do
       folderOpen <- R.useState' true
+      
+      let withId (NTree (LNode {id}) _) = id
 
       pure $ H.ul {}
         [ H.li {}
           ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute} folderOpen ]
-            <> childNodes setReload folderOpen mCurrentRoute ary
+          <> childNodes setReload folderOpen mCurrentRoute (sortWith withId ary)
+
           )
         ]
 
