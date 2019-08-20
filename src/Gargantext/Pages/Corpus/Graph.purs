@@ -3,13 +3,10 @@ module Gargantext.Pages.Corpus.Graph where
 import Effect.Unsafe (unsafePerformEffect)
 import Gargantext.Prelude hiding (max,min)
 
-import Control.Monad.Cont.Trans (lift)
-import Data.Array (fold, length, (!!), null)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
-import Data.Int as Int
-import Data.Lens (Lens', over, (%~), (.~), (^.))
+import Data.Lens (Lens')
 import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
@@ -18,36 +15,15 @@ import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Traversable (for_)
-import Effect (Effect)
-import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
 import Partial.Unsafe (unsafePartial)
-import React (ReactElement)
-import React.DOM (button, div, input, li, li', menu, p, span, text, ul')
-import React.DOM.Props (_id, _type, className, defaultValue, max, min, onChange, onClick, style, onMouseMove)
 import React.SyntheticEvent (SyntheticUIEvent, target)
-import Thermite (PerformAction, Render, Spec, _render, cmapProps, defaultPerformAction, defaultRender, modifyState, modifyState_, noState, simpleSpec, withState)
 import Unsafe.Coerce (unsafeCoerce)
-import Web.HTML (window)
-import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (getItem)
 
 import Gargantext.Hooks.Sigmax.Types as Sigmax
-import Gargantext.Hooks.Sigmax.Sigmajs (CameraProps, SigmaNode, cameras, getCameraProps, goTo, pauseForceAtlas2, sigmaOnMouseMove)
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData, intColor)
-import Gargantext.Components.Login.Types (AuthData(..), TreeId)
-import Gargantext.Components.RangeSlider as RangeSlider
-import Gargantext.Components.RandomText (words)
+import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend, Node(..), intColor)
+import Gargantext.Components.Login.Types (TreeId)
 import Gargantext.Components.Graph as Graph
-import Gargantext.Components.Tree as Tree
-import Gargantext.Config as Config
-import Gargantext.Config.REST (get)
-import Gargantext.Pages.Corpus.Graph.Tabs as GT
-import Gargantext.Types (class Optional)
-import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Range as Range
-import Gargantext.Utils.Reactix (scuff)
 
 data Action
   = LoadGraph Int

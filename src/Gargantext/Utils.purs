@@ -1,11 +1,10 @@
 module Gargantext.Utils where
 
 import Prelude
-import Data.Ordering (Ordering(..))
+import Data.Lens (Lens', lens)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Set as Set
 import Data.Set (Set)
-import Data.Lens (Lens', lens)
 
 -- | Astonishingly, not in the prelude
 id :: forall a. a -> a

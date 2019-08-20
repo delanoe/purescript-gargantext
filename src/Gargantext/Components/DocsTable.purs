@@ -1,51 +1,35 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
-import Affjax (defaultRequest, request)
-import Affjax.RequestBody (RequestBody(..))
-import Affjax.ResponseFormat (printResponseFormatError)
-import Affjax.ResponseFormat as ResponseFormat
-import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
-import Data.Array (drop, take, (:), filter)
-import Data.Either (Either(..))
+import Data.Array (drop, take)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.HTTP.Method (Method(..))
-import Data.Lens
+import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map (Map, insert)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
-import Data.Int (fromString)
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
-import Effect.Class (liftEffect)
-import Effect.Uncurried (EffectFn1, mkEffectFn1)
-import React as React
-import React (ReactClass, ReactElement, Children)
+import Effect.Uncurried (mkEffectFn1)
 import Reactix as R
-import Reactix.SyntheticEvent as RE
 import Reactix.DOM.HTML as H
-import Unsafe.Coerce (unsafeCoerce)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, TabPostQuery(..), toUrl, toLink)
-import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
+import Gargantext.Config (End(..), NodeType(..), OrderBy(..), TabType, TabPostQuery(..), toUrl, toLink)
+import Gargantext.Config.REST (delete, post)
 import Gargantext.Components.Loader2 (useLoader)
-import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
-import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Router as Router
-import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
 
 type NodeID = Int

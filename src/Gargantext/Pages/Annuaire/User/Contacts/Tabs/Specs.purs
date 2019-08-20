@@ -17,9 +17,8 @@ import Gargantext.Pages.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Utils.Reactix as R2
 
 import Reactix as R
-import Reactix.DOM.HTML as H
 import React (Children, ReactElement, ReactClass, createElement)
-import Thermite (Spec, focus, hideState, noState, cmapProps, createClass)
+import Thermite (Spec, hideState, noState, cmapProps, createClass)
 
 data Mode = Patents | Books | Communication
 

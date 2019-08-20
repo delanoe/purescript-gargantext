@@ -8,21 +8,16 @@ import Data.List (fromFoldable)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
-import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
+import Gargantext.Config (CTabNgramType(..), TabSubType(..), TabType(..))
 import Gargantext.Pages.Lists.Tabs.Types (Props, PropsRow)
 
-import Gargantext.Pages.Corpus.Chart.Histo (histoSpec)
 import Gargantext.Pages.Corpus.Chart.Metrics (metricsSpec)
 import Gargantext.Pages.Corpus.Chart.Pie  (pieSpec, barSpec)
 import Gargantext.Pages.Corpus.Chart.Tree (treeSpec)
 
 import Gargantext.Components.NgramsTable as NT
-import Gargantext.Components.Charts.Options.ECharts (chart) as ECharts
-import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Tab as Tab
-import Gargantext.Utils.Reactix as R2
 
-import Reactix.DOM.HTML as H
 import React (ReactElement, ReactClass, createElement, Children)
 import Thermite (Spec, hideState, noState, cmapProps, createClass)
 

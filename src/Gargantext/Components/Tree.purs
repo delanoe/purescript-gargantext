@@ -2,7 +2,6 @@ module Gargantext.Components.Tree where
 
 import Prelude hiding (div)
 
-import Control.Monad.Cont.Trans (lift)
 import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array (filter)
@@ -13,23 +12,17 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
-import Effect.Aff (Aff, launchAff, launchAff_, killFiber, runAff)
+import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Class (liftEffect)
-import Effect.Exception (error)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Partial.Unsafe (unsafePartial)
-import React as React
-import React.DOM (a, div, i)
-import React.DOM.Props (className, style)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Thermite (Spec)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
-import Unsafe.Coerce (unsafeCoerce)
 import Web.File.File (toBlob)
 import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)

@@ -8,16 +8,11 @@ import Data.List (fromFoldable)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
-import Gargantext.Config (CTabNgramType(..), End(..), Path(..), TabSubType(..), TabType(..), toUrl)
+import Gargantext.Config (CTabNgramType(..), TabSubType(..), TabType(..))
 import Gargantext.Pages.Texts.Tabs.Types (Props, PropsRow)
 
 import Gargantext.Pages.Corpus.Chart.Histo (histoSpec)
-import Gargantext.Pages.Corpus.Chart.Metrics (metricsSpec)
-import Gargantext.Pages.Corpus.Chart.Pie  (pieSpec, barSpec)
-import Gargantext.Pages.Corpus.Chart.Tree (treeSpec)
 
-import Gargantext.Components.NgramsTable as NT
-import Gargantext.Components.Charts.Options.ECharts (chart) as ECharts
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.Reactix as R2
@@ -80,7 +75,7 @@ docViewSpec tst = R2.elSpec $ R.hooksComponent "DocViewSpecWithCorpus" cpt
       pure $ DT.docViewSpec $ params tst
 
       where
-        params :: forall a. TabSubType a -> DT.Props
+        params :: forall b. TabSubType b -> DT.Props
         params TabDocs = {
           nodeId: corpusId
           -- ^ TODO merge nodeId and corpusId in DT

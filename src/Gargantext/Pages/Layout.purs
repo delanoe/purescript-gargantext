@@ -1,14 +1,8 @@
 module Gargantext.Pages.Layout where
 
 import Prelude hiding (div)
--- import Gargantext.Components.Login as LN
 import Gargantext.Pages.Layout.Actions (Action(..))
--- import Gargantext.Pages.Corpus.Tabs as TV
 
-import Gargantext.Pages.Corpus.Graph          as GE
--- import Gargantext.Pages.Corpus.Tabs.Terms.NgramsTable as NG
-
--- import Gargantext.Pages.Home as L
 import Gargantext.Router (Routes(..))
 
 dispatchAction :: forall ignored m.

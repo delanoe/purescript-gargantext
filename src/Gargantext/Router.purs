@@ -2,16 +2,9 @@ module Gargantext.Router where
 
 import Gargantext.Prelude
 
-import Control.Alt ((<|>))
 import Data.Foldable (oneOf)
 import Data.Int (floor)
-import Data.Maybe (Maybe(..))
-import Effect (Effect)
-import Effect.Class (liftEffect)
 import Routing.Match (Match, lit, num)
-import Web.HTML (window)
-import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (getItem)
 
 data Routes
   = Home
