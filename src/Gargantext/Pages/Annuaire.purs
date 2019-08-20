@@ -2,7 +2,7 @@ module Gargantext.Pages.Annuaire where
 
 import Gargantext.Prelude
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
 import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Lens (Prism', prism)
@@ -177,8 +177,8 @@ data HyperdataAnnuaire = HyperdataAnnuaire
 instance decodeHyperdataAnnuaire :: DecodeJson HyperdataAnnuaire where
   decodeJson json = do
     obj   <- decodeJson json
-    title <- obj .?? "title"
-    desc  <- obj .?? "desc"
+    title <- obj .:! "title"
+    desc  <- obj .:! "desc"
     pure $ HyperdataAnnuaire { title, desc }
 
 ------------------------------------------------------------------------------
@@ -194,13 +194,13 @@ newtype AnnuaireInfo = AnnuaireInfo { id        :: Int
 instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
   decodeJson json = do
     obj <- decodeJson json
-    id        <- obj .? "id"
-    typename  <- obj .? "typename"
-    userId    <- obj .? "userId"
-    parentId  <- obj .? "parentId"
-    name      <- obj .? "name"
-    date      <- obj .? "date"
-    hyperdata <- obj .? "hyperdata"
+    id        <- obj .: "id"
+    typename  <- obj .: "typename"
+    userId    <- obj .: "userId"
+    parentId  <- obj .: "parentId"
+    name      <- obj .: "name"
+    date      <- obj .: "date"
+    hyperdata <- obj .: "hyperdata"
     pure $ AnnuaireInfo { id : id
                         , typename : typename
                         , userId   : userId

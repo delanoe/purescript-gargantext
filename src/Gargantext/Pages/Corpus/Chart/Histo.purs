@@ -1,6 +1,6 @@
 module Gargantext.Pages.Corpus.Chart.Histo where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
@@ -30,7 +30,7 @@ newtype ChartMetrics = ChartMetrics
 instance decodeChartMetrics :: DecodeJson ChartMetrics where
   decodeJson json = do
     obj <- decodeJson json
-    d   <- obj .? "data"
+    d   <- obj .: "data"
     pure $ ChartMetrics { "data": d }
 
 newtype HistoMetrics = HistoMetrics
@@ -41,8 +41,8 @@ newtype HistoMetrics = HistoMetrics
 instance decodeHistoMetrics :: DecodeJson HistoMetrics where
   decodeJson json = do
     obj   <- decodeJson json
-    d <- obj .? "dates"
-    c <- obj .? "count"
+    d <- obj .: "dates"
+    c <- obj .: "count"
     pure $ HistoMetrics { dates : d , count: c}
 
 type Loaded = HistoMetrics

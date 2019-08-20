@@ -1,6 +1,6 @@
 module Gargantext.Pages.Corpus.Chart.Metrics where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
@@ -39,10 +39,10 @@ newtype Metric = Metric
 instance decodeMetric :: DecodeJson Metric where
   decodeJson json = do
     obj   <- decodeJson json
-    label <- obj .? "label"
-    x     <- obj .? "x"
-    y     <- obj .? "y"
-    cat   <- obj .? "cat"
+    label <- obj .: "label"
+    x     <- obj .: "x"
+    y     <- obj .: "y"
+    cat   <- obj .: "cat"
     pure $ Metric { label, x, y, cat }
 
 newtype Metrics = Metrics
@@ -52,7 +52,7 @@ newtype Metrics = Metrics
 instance decodeMetrics :: DecodeJson Metrics where
   decodeJson json = do
     obj <- decodeJson json
-    d   <- obj .? "data"
+    d   <- obj .: "data"
     pure $ Metrics { "data": d }
 
 type Loaded  = Array Metric
@@ -76,16 +76,16 @@ scatterOptions metrics = Options
     map2series ms = toSeries <$> Map.toUnfoldable ms
       where
         -- TODO colors are not respected yet
-        toSeries (Tuple k ms) =
-            seriesScatterD2 {symbolSize: 5.0} (toSerie color <$> ms)
+        toSeries (Tuple k ms') =
+            seriesScatterD2 {symbolSize: 5.0} (toSerie color <$> ms')
           where
             color =
               case k of
                 StopTerm -> red
                 GraphTerm -> green
                 CandidateTerm -> grey
-            toSerie color (Metric {label,x,y}) =
-              dataSerie { name: label, itemStyle: itemStyle {color}
+            toSerie color' (Metric {label,x,y}) =
+              dataSerie { name: label, itemStyle: itemStyle {color: color'}
                      -- , label: {show: true}
                         , value: [x,y]
                         }
@@ -108,8 +108,8 @@ metricsLoadView :: R.State Int -> Path -> R.Element
 metricsLoadView setReload p = R.createElement el p []
   where
     el = R.hooksComponent "MetricsLoadedView" cpt
-    cpt p _ = do
-      useLoader p getMetrics $ \{loaded} ->
+    cpt p' _ = do
+      useLoader p' getMetrics $ \{loaded} ->
         loadedMetricsView setReload loaded
 
 loadedMetricsView :: R.State Int -> Loaded -> R.Element

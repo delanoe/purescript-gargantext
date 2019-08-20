@@ -6,7 +6,7 @@ import Record.Unsafe (unsafeSet)
 import Unsafe.Coerce (unsafeCoerce)
 import Prelude
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Gargantext.Types (class Optional)
 import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
 import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
@@ -192,9 +192,9 @@ data TreeNode = TreeNode { name     :: String
 instance decodeTreeNode :: DecodeJson TreeNode where
   decodeJson json = do
     obj <- decodeJson json
-    name <- obj .? "label"
-    value <- obj .? "value"
-    children <- obj .? "children"
+    name <- obj .: "label"
+    value <- obj .: "value"
+    children <- obj .: "children"
     pure $ TreeNode {name, value, children}
 
 

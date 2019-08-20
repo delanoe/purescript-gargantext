@@ -2,19 +2,12 @@ module Gargantext.Pages.Annuaire.User.Contacts.Types where
 
 import Prelude
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
-import Data.Either (Either(..))
-import Data.Lens (Lens', Prism', lens, prism)
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
-import Data.Map (Map(..))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
+import Data.Maybe (Maybe, fromMaybe)
+import Data.Map (Map)
 
-import React (ReactElement)
-import React.DOM (div)
-
-import Gargantext.Components.Loader as Loader
-import Gargantext.Components.Tab as Tab
 import Gargantext.Utils.DecodeMaybe ((.?|))
-import Data.Newtype
+import Data.Newtype (class Newtype)
 
 -- TODO: should it be a NodePoly HyperdataContact ?
 newtype Contact = Contact {
@@ -43,11 +36,11 @@ instance decodeContactWho :: DecodeJson ContactWho
   where
     decodeJson json = do
       obj <- decodeJson json
-      idWho  <- obj .?? "id"
-      firstName <- obj .?? "firstName"
-      lastName  <- obj .?? "lastName"
-      keywords  <- obj .?? "keywords"
-      freetags  <- obj .?? "freetags"
+      idWho  <- obj .:! "id"
+      firstName <- obj .:! "firstName"
+      lastName  <- obj .:! "lastName"
+      keywords  <- obj .:! "keywords"
+      freetags  <- obj .:! "freetags"
 
       let k = fromMaybe [] keywords
       let f = fromMaybe [] freetags
@@ -75,15 +68,15 @@ instance decodeContactWhere :: DecodeJson ContactWhere
   where
     decodeJson json = do
       obj <- decodeJson json
-      organization  <- obj .?? "organization"
-      labTeamDepts  <- obj .?? "labTeamDepts"
-      role          <- obj .?? "role"
-      office        <- obj .?? "office"
-      country       <- obj .?? "country"
-      city          <- obj .?? "city"
-      touch         <- obj .?? "touch"
-      entry         <- obj .?? "entry"
-      exit          <- obj .?? "exit"
+      organization  <- obj .:! "organization"
+      labTeamDepts  <- obj .:! "labTeamDepts"
+      role          <- obj .:! "role"
+      office        <- obj .:! "office"
+      country       <- obj .:! "country"
+      city          <- obj .:! "city"
+      touch         <- obj .:! "touch"
+      entry         <- obj .:! "entry"
+      exit          <- obj .:! "exit"
 
       let o = fromMaybe [] organization
       let l = fromMaybe [] labTeamDepts
@@ -101,9 +94,9 @@ instance decodeContactTouch :: DecodeJson ContactTouch
   where
     decodeJson json = do
       obj <- decodeJson json
-      mail  <- obj .?? "mail"
-      phone <- obj .?? "phone"
-      url   <- obj .?? "url"
+      mail  <- obj .:! "mail"
+      phone <- obj .:! "phone"
+      url   <- obj .:! "url"
       pure $ ContactTouch {mail, phone, url}
 
 
@@ -123,14 +116,14 @@ instance decodeHyperdataContact :: DecodeJson HyperdataContact
   where
     decodeJson json = do
       obj <- decodeJson json
-      bdd            <- obj .?? "bdd"
-      who            <- obj .?? "who"
-      ou             <- obj .?? "where"
-      title          <- obj .?? "title"
-      source         <- obj .?? "source"
-      lastValidation <- obj .?? "lastValidation"
-      uniqId         <- obj .?? "uniqId"
-      uniqIdBdd      <- obj .?? "uniqIdBdd"
+      bdd            <- obj .:! "bdd"
+      who            <- obj .:! "who"
+      ou             <- obj .:! "where"
+      title          <- obj .:! "title"
+      source         <- obj .:! "source"
+      lastValidation <- obj .:! "lastValidation"
+      uniqId         <- obj .:! "uniqId"
+      uniqIdBdd      <- obj .:! "uniqIdBdd"
       
       let ou' = fromMaybe [] ou
 
@@ -155,13 +148,13 @@ instance decodeUserHyperData :: (DecodeJson c, DecodeJson s) =>
 instance decodeUser :: DecodeJson Contact where
   decodeJson json = do
     obj <- decodeJson json
-    id <- obj .? "id"
+    id <- obj .: "id"
     typename <- obj .?| "typename"
-    userId <- obj .?? "userId"
+    userId <- obj .:! "userId"
     parentId <- obj .?| "parentId"
-    name <- obj .?? "name"
+    name <- obj .:! "name"
     date <- obj .?| "date"
-    hyperdata <- obj .? "hyperdata"
+    hyperdata <- obj .: "hyperdata"
     pure $ Contact { id, typename, userId
                    , parentId, name, date
                    , hyperdata

@@ -1,11 +1,10 @@
 module Gargantext.Pages.Texts.Tabs.Types where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
 import Data.Maybe (Maybe(..))
 --------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.Loader as Loader
 
 newtype CorpusInfo = CorpusInfo { title   :: String
                                 , desc    :: String
@@ -35,11 +34,11 @@ corpusInfoDefault = NodePoly { id : 0
 instance decodeCorpusInfo :: DecodeJson CorpusInfo where
   decodeJson json = do
     obj <- decodeJson json
-    title <- obj .? "title"
-    desc  <- obj .? "desc"
-    query <- obj .? "query"
-    authors <- obj .? "authors"
-    chart   <- obj .?? "chart"
+    title <- obj .: "title"
+    desc  <- obj .: "desc"
+    query <- obj .: "query"
+    authors <- obj .: "authors"
+    chart   <- obj .:! "chart"
     let totalRecords = 47361 -- TODO
     pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
 

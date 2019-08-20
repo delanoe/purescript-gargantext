@@ -8,7 +8,7 @@ import Data.Sequence (Seq)
 import Data.Traversable (foldMap)
 import Reactix as R
 import Reactix.DOM.HTML as RH
-import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData, intColor)
+import Gargantext.Components.GraphExplorer.Types (Legend(..), intColor)
 
 type Props = ( items :: Seq Legend )
 

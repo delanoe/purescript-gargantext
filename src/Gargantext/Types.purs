@@ -1,7 +1,6 @@
 module Gargantext.Types where
 
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
-                     , jsonEmptyObject, (:=), (~>), (.?), (.??) )
+import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson )
 import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
 import Prim.Row (class Union)

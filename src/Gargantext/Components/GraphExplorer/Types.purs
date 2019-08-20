@@ -3,7 +3,7 @@ module Gargantext.Components.GraphExplorer.Types where
 import Prelude
 import Partial.Unsafe (unsafePartial)
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Array ((!!), length)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
@@ -152,13 +152,13 @@ initialState = fromStateGlue initialStateGlue
 instance decodeJsonGraphData :: DecodeJson GraphData where
   decodeJson json = do
     obj <- decodeJson json
-    nodes <- obj .? "nodes"
-    edges <- obj .? "edges"
+    nodes <- obj .: "nodes"
+    edges <- obj .: "edges"
     -- TODO: sides
-    metadata <- obj .? "metadata"
-    corpusIds <- metadata .? "corpusId"
-    listId'   <- metadata .? "listId"
-    metaData <- obj .? "metadata"
+    metadata <- obj .: "metadata"
+    corpusIds <- metadata .: "corpusId"
+    listId'   <- metadata .: "listId"
+    metaData <- obj .: "metadata"
     let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Publications", listId : listId'}
     let sides = side <$> corpusIds
     pure $ GraphData { nodes, edges, sides, metaData }
@@ -166,49 +166,49 @@ instance decodeJsonGraphData :: DecodeJson GraphData where
 instance decodeJsonNode :: DecodeJson Node where
   decodeJson json = do
     obj <- decodeJson json
-    id_ <- obj .? "id"
-    type_ <- obj .? "type"
-    label <- obj .? "label"
-    size <- obj .? "size"
-    attributes <- obj .? "attributes"
-    x <- obj .? "x_coord"
-    y <- obj .? "y_coord"
+    id_ <- obj .: "id"
+    type_ <- obj .: "type"
+    label <- obj .: "label"
+    size <- obj .: "size"
+    attributes <- obj .: "attributes"
+    x <- obj .: "x_coord"
+    y <- obj .: "y_coord"
     pure $ Node { id_, type_, size, label, attributes, x, y }
 
 
 instance decodeJsonMetaData :: DecodeJson MetaData where
   decodeJson json = do
     obj <- decodeJson json
-    title <- obj .? "title"
-    legend <- obj .? "legend"
-    corpusId <- obj .? "corpusId"
-    listId <- obj .? "listId"
+    title <- obj .: "title"
+    legend <- obj .: "legend"
+    corpusId <- obj .: "corpusId"
+    listId <- obj .: "listId"
     pure $ MetaData { title, legend, corpusId, listId}
 
 
 instance decodeJsonLegend :: DecodeJson Legend where
   decodeJson json = do
     obj <- decodeJson json
-    id_ <- obj .? "id"
-    color <- obj .? "color"
-    label <- obj .? "label"
+    id_ <- obj .: "id"
+    color <- obj .: "color"
+    label <- obj .: "label"
     pure $ Legend { id_, color, label }
 
 
 instance decodeJsonCluster :: DecodeJson Cluster where
   decodeJson json = do
     obj <- decodeJson json
-    clustDefault <- obj .? "clust_default"
+    clustDefault <- obj .: "clust_default"
     pure $ Cluster { clustDefault }
 
 instance decodeJsonEdge :: DecodeJson Edge where
   decodeJson json = do
     obj <- decodeJson json
-    id_ <- obj .? "id"
-    source <- obj .? "source"
-    target <- obj .? "target"
-    weight <- obj .? "weight"
-    confluence <- obj .? "confluence"
+    id_ <- obj .: "id"
+    source <- obj .: "source"
+    target <- obj .: "target"
+    weight <- obj .: "weight"
+    confluence <- obj .: "confluence"
     pure $ Edge { id_, source, target, weight, confluence }
 
 newtype Legend = Legend  {id_ ::Int , color :: String, label :: String}

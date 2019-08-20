@@ -1,6 +1,6 @@
 module Gargantext.Pages.Corpus.Chart.Tree where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
@@ -33,7 +33,7 @@ newtype Metrics = Metrics
 instance decodeMetrics :: DecodeJson Metrics where
   decodeJson json = do
     obj <- decodeJson json
-    d   <- obj .? "data"
+    d   <- obj .: "data"
     pure $ Metrics { "data": d }
 
 type Loaded  = Array TreeNode

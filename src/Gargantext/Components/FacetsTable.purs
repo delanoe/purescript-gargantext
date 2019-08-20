@@ -4,7 +4,7 @@
 module Gargantext.Components.FacetsTable where
 
 import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array (filter, (!!))
 import Data.Foldable (intercalate)
 import Data.Generic.Rep (class Generic)
@@ -54,7 +54,7 @@ newtype SearchResults = SearchResults { results :: Array Response }
 instance decodeSearchResults :: DecodeJson SearchResults where
   decodeJson json = do
     obj     <- decodeJson json
-    results <- obj .? "results"
+    results <- obj .: "results"
     pure $ SearchResults {results}
 
 type Props =
@@ -129,16 +129,16 @@ newtype Hyperdata = Hyperdata
 --instance decodeHyperdata :: DecodeJson Hyperdata where
 --  decodeJson json = do
 --    obj    <- decodeJson json
---    title  <- obj .? "title"
---    source <- obj .? "source"
+--    title  <- obj .: "title"
+--    source <- obj .: "source"
 --    pure $ Hyperdata { title,source }
 
 
 instance decodePair :: DecodeJson Pair where
   decodeJson json = do
     obj   <- decodeJson json
-    id    <- obj .? "id"
-    label <- obj .? "label"
+    id    <- obj .: "id"
+    label <- obj .: "label"
     pure $ Pair { id, label }
 
 instance decodeHyperdata :: DecodeJson Hyperdata where
@@ -152,23 +152,23 @@ instance decodeHyperdata :: DecodeJson Hyperdata where
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
     obj       <- decodeJson json
-    id        <- obj .? "id"
-    -- date      <- obj .? "date" -- TODO
+    id        <- obj .: "id"
+    -- date      <- obj .: "date" -- TODO
     date      <- pure "2018"
-    score     <- obj .? "score"
-    hyperdata <- obj .? "hyperdata"
-    pairs     <- obj .? "pairs"
+    score     <- obj .: "score"
+    hyperdata <- obj .: "hyperdata"
+    pairs     <- obj .: "pairs"
     pure $ Response { id, date, score, hyperdata, pairs }
 -}
 
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
     obj        <- decodeJson json
-    id         <- obj .? "id"
-    created    <- obj .? "created"
-    hyperdata  <- obj .? "hyperdata"
-    favorite   <- obj .? "favorite"
-    --ngramCount <- obj .? "ngramCount"
+    id         <- obj .: "id"
+    created    <- obj .: "created"
+    hyperdata  <- obj .: "hyperdata"
+    favorite   <- obj .: "favorite"
+    --ngramCount <- obj .: "ngramCount"
     let ngramCount = 1
     pure $ Response { id, created, hyperdata, category: decodeCategory favorite, ngramCount}
 

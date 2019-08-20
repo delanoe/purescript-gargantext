@@ -1,7 +1,7 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array (drop, take)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -102,18 +102,18 @@ newtype Hyperdata = Hyperdata
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj    <- decodeJson json
-    title  <- obj .? "title"
-    source <- obj .? "source"
-    pub_year <- obj .? "publication_year"
+    title  <- obj .: "title"
+    source <- obj .: "source"
+    pub_year <- obj .: "publication_year"
     pure $ Hyperdata { title,source, pub_year}
 
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
     obj        <- decodeJson json
-    cid        <- obj .? "id"
-    favorite   <- obj .? "favorite"
-    ngramCount <- obj .? "id"
-    hyperdata  <- obj .? "hyperdata"
+    cid        <- obj .: "id"
+    favorite   <- obj .: "favorite"
+    ngramCount <- obj .: "id"
+    hyperdata  <- obj .: "hyperdata"
     pure $ Response { cid, category: decodeCategory favorite, ngramCount, hyperdata }
 
 
