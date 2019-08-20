@@ -1,23 +1,18 @@
 module Gargantext.Pages.Corpus.Chart.Metrics where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Array (foldl)
 import Data.Map as Map
 import Data.Map (Map)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
 import Gargantext.Config.REST (get)
-import React (ReactClass, ReactElement, createElement)
 import Reactix as R
-import Reactix.DOM.HTML as H
-import Thermite (Spec)
 
 import Gargantext.Prelude
 import Gargantext.Types (TermList(..))
 import Gargantext.Components.Loader2 (useLoader)
-import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Charts.Options.ECharts
 import Gargantext.Components.Charts.Options.Type
 import Gargantext.Components.Charts.Options.Series

@@ -49,7 +49,7 @@ import Control.Monad.Cont.Trans (lift)
 import Data.Array (head)
 import Data.Array as A
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
-                     , jsonEmptyObject, (:=), (~>), (.?), (.??) )
+                     , jsonEmptyObject, (:=), (~>), (.:), (.:!) )
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
@@ -71,8 +71,8 @@ import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
-import Data.String.Regex as R
-import Data.String.Regex.Flags as R
+import Data.String.Regex (Regex, regex, replace) as R
+import Data.String.Regex.Flags (global, multiline) as R
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 -- import Debug.Trace
@@ -156,12 +156,12 @@ _NgramsElement = _Newtype
 instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
   decodeJson json = do
     obj         <- decodeJson json
-    ngrams      <- obj .?  "ngrams"
-    list        <- obj .?  "list"
-    occurrences <- obj .?  "occurrences"
-    parent      <- obj .?? "parent"
-    root        <- obj .?? "root"
-    children'   <- obj .?  "children"
+    ngrams      <- obj .:  "ngrams"
+    list        <- obj .:  "list"
+    occurrences <- obj .:  "occurrences"
+    parent      <- obj .:! "parent"
+    root        <- obj .:! "root"
+    children'   <- obj .:  "children"
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
     pure $ NgramsElement {ngrams, list, occurrences, parent, root, children}
 
@@ -182,8 +182,8 @@ instance encodeJsonVersioned :: EncodeJson a => EncodeJson (Versioned a) where
 instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
   decodeJson json = do
     obj     <- decodeJson json
-    version <- obj .? "version"
-    data_   <- obj .? "data"
+    version <- obj .: "version"
+    data_   <- obj .: "data"
     pure $ Versioned {version, data: data_}
 
 -- type NgramsTable = Array (NTree NgramsElement)
@@ -214,10 +214,12 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
 wordBoundaryChars :: String
 wordBoundaryChars = "[ .,;:!?'\\{}()]"
 
+wordBoundaryReg :: R.Regex
 wordBoundaryReg = case R.regex ("(" <> wordBoundaryChars <> ")") (R.global <> R.multiline) of
   Left e  -> unsafePartial $ crashWith e
   Right r -> r
 
+wordBoundaryReg2 :: R.Regex
 wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <> R.multiline) of
   Left e  -> unsafePartial $ crashWith e
   Right r -> r
@@ -327,8 +329,8 @@ instance encodeJsonReplace :: EncodeJson a => EncodeJson (Replace a) where
 instance decodeJsonReplace :: (DecodeJson a, Eq a) => DecodeJson (Replace a) where
   decodeJson json = do
     obj  <- decodeJson json
-    mold <- obj .?? "old"
-    mnew <- obj .?? "new"
+    mold <- obj .:! "old"
+    mnew <- obj .:! "new"
     case Tuple mold mnew of
       Tuple (Just old) (Just new) -> pure $ replace old new
       Tuple Nothing Nothing       -> pure Keep
@@ -361,8 +363,8 @@ instance decodeJsonPatchSet :: (Ord a, DecodeJson a) => DecodeJson (PatchSet a) 
   decodeJson json = do
     -- TODO handle empty fields
     obj <- decodeJson json
-    rem <- mkSet <$> (obj .? "rem")
-    add <- mkSet <$> (obj .? "add")
+    rem <- mkSet <$> (obj .: "rem")
+    add <- mkSet <$> (obj .: "add")
     pure $ PatchSet { rem, add }
    where
     mkSet :: forall b. Ord b => Array b -> Set b
@@ -401,8 +403,8 @@ instance decodeJsonNgramsPatch :: DecodeJson NgramsPatch where
   decodeJson json = do
     obj            <- decodeJson json
     -- TODO handle empty fields
-    patch_list     <- obj .? "patch_list"
-    patch_children <- obj .? "patch_children"
+    patch_list     <- obj .: "patch_list"
+    patch_children <- obj .: "patch_children"
     pure $ NgramsPatch { patch_list, patch_children }
 
 applyNgramsPatch :: NgramsPatch -> NgramsElement -> NgramsElement
@@ -601,6 +603,7 @@ loadNgramsTable { nodeId, listIds, termListFilter, termSizeFilter
                      })
           (Just nodeId)
 
+convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
 convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc
 convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc

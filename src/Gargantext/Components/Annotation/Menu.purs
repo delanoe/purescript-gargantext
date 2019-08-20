@@ -9,14 +9,12 @@ import Effect ( Effect )
 import Effect.Uncurried ( mkEffectFn1 )
 import Reactix as R
 import Reactix.DOM.HTML as HTML
-import Reactix.SyntheticEvent as E
 
 import Gargantext.Types ( TermList(..), termListName )
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 
 import Gargantext.Components.ContextMenu.ContextMenu as CM
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Selection (Selection, selectionToString)
 
 data MenuType = NewNgram | SetTermListItem
 

@@ -2,7 +2,6 @@ module Gargantext.Components.Table where
 
 import Data.Array (filter)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Effect (Effect)
@@ -11,7 +10,6 @@ import React (ReactElement, ReactClass, Children, createElement)
 import React.DOM (a, b, b', p, i, h3, hr, div, option, select, span, table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (className, href, onChange, onClick, scope, selected, value, defaultValue, style)
 import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec, StateCoTransformer, createClass)
-import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2

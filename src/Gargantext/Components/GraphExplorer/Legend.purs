@@ -5,8 +5,7 @@ module Gargantext.Components.GraphExplorer.Legend
 import Prelude hiding (map)
 
 import Data.Sequence (Seq)
-import Data.Sequence as Seq
-import Data.Traversable (foldMap, traverseDefault)
+import Data.Traversable (foldMap)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Gargantext.Components.GraphExplorer.Types (Cluster(..), MetaData(..), Edge(..), GraphData(..), Legend(..), Node(..), getLegendData, intColor)

@@ -4,16 +4,12 @@ import Prelude
 import Partial.Unsafe (unsafePartial)
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Array (concat, fromFoldable, group, sort, take, (!!), length)
-import Data.Maybe (Maybe(..), maybe, fromJust)
+import Data.Array ((!!), length)
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
-import Data.Set (Set)
-import Data.Set as Set
 import Reactix as R
-import Thermite (PerformAction, Spec)
+import Thermite (PerformAction)
 
-import Gargantext.Components.Login.Types (TreeId)
-import Gargantext.Components.Graph as Graph
 
 newtype Node = Node
   { id_ :: String

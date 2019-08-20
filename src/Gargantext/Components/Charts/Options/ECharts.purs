@@ -2,16 +2,14 @@ module Gargantext.Components.Charts.Options.ECharts where
 
 import Prelude
 
-import Data.String (take)
 import CSS (italic)
 import CSS.Common (normal)
-import Data.Array (length)
 import Gargantext.Components.Charts.Options.Color (transparent, violet, black)
-import Gargantext.Components.Charts.Options.Data (DataLegend, DataAxis, dataSerie)
-import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon, mkTooltip, Tooltip, ToolBox, mkToolBox)
+import Gargantext.Components.Charts.Options.Data (DataLegend, dataSerie)
+import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon, mkTooltip, Tooltip, mkToolBox)
 import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), PlainOrScroll(..), selectedMode, Orientation(..), orient)
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
-import Gargantext.Components.Charts.Options.Series (Series, SeriesName, Chart(..), seriesPieD1)
+import Gargantext.Components.Charts.Options.Series (Series, seriesPieD1)
 import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, XAxis, YAxis, xAxis, yAxis)
 import React (unsafeCreateElementDynamic)
 import React as R

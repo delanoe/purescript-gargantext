@@ -1,26 +1,16 @@
 module Gargantext.Pages.Corpus.Chart.Histo where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Array (foldl)
-import Data.Int (toNumber)
-import Data.Map as Map
-import Data.Map (Map)
-import Data.Maybe (Maybe(..), maybe)
-import Data.Tuple (Tuple(..))
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
 import Gargantext.Config.REST (get)
-import React (ReactClass, ReactElement, createElement)
 import Reactix as R
-import Reactix.DOM.HTML as H
 import Thermite (Spec)
 
 import Gargantext.Prelude
-import Gargantext.Types (TermList(..))
-import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Charts.Options.ECharts
-import Gargantext.Components.Charts.Options.Type
 import Gargantext.Components.Charts.Options.Series
 import Gargantext.Components.Charts.Options.Color
 import Gargantext.Components.Charts.Options.Font

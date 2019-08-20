@@ -5,28 +5,11 @@ module Gargantext.Components.Graph
   -- )
   where
 import Prelude
-import Control.Monad.Except.Trans
-import Data.Array as A
-import Data.Bitraversable (bitraverse)
-import Data.Either (Either(..), either)
-import Data.Maybe (Maybe(..), maybe)
-import Data.Nullable (Nullable, null)
-import Data.Sequence as Seq
-import Data.Sequence (Seq)
-import Data.Traversable (for, for_, traverse, traverse_)
-import DOM.Simple.Types (Element)
-import DOM.Simple.Console (log, log2)
-import Effect (Effect)
-import FFI.Simple (delay)
+import Data.Nullable (null)
 import Reactix as R
 import Reactix.DOM.HTML as RH
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Types (class Optional)
 import Gargantext.Hooks.Sigmax
 import Gargantext.Hooks.Sigmax.Types as Sigmax
-import Gargantext.Hooks.Sigmax.Sigma (SigmaOpts)
-import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Sigmajs
 
 type OnProps  = ()
 

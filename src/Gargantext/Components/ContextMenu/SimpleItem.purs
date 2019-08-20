@@ -4,21 +4,6 @@ module Gargantext.Component.ContextMenu.SimpleItem where
   -- (MenuProps, Action(..), separator) where
 
 import Prelude hiding (div)
-import Effect (Effect)
-import Data.String (joinWith)
-import React
-  ( class ReactComponentSpec
-  , ReactClass, ReactElement, ReactClassConstructor, Children
-  , component, createElement )
-import React.DOM (a, div, li, ul')
-import React.DOM as DOM -- for Props
-import React.DOM.Props (className, onContextMenu, onMouseOut, onBlur)
-import Thermite
-  ( Render, PerformAction
-  , simpleSpec, modifyState_
-  , createReactSpec, defaultRender
-  , _render )
-import Gargantext.Utils.React (WithChildren, wrap)
 
 -- separator :: ReactElement
 -- separator = div [ className "context-menu-separator" ] []

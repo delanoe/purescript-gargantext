@@ -4,7 +4,7 @@ import Prelude
 import Effect.Class (liftEffect)
 import Effect.Aff (Aff)
 import Data.Argonaut (class DecodeJson)
-import DOM.Simple.Console
+import DOM.Simple.Console (log2)
 import Gargantext.Types (toQuery)
 import Gargantext.Components.Search.Types (SearchQuery)
 import Gargantext.Config.REST (post)

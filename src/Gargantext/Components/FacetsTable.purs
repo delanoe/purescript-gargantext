@@ -3,22 +3,15 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-import Affjax (defaultRequest, request)
-import Affjax.RequestBody (RequestBody(..))
-import Affjax.ResponseFormat (printResponseFormatError)
-import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.?), (:=), (~>))
-import Data.Array (drop, take, (:), filter, (!!))
-import Data.Either (Either(..))
+import Data.Array (filter, (!!))
 import Data.Foldable (intercalate)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Set (Set)
 import Data.Set as Set
-import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -26,16 +19,16 @@ import React as React
 import React (ReactClass, ReactElement, Children)
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl, toLink)
-import Gargantext.Config.REST (put, post, deleteWithBody)
+import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), toUrl, toLink)
+import Gargantext.Config.REST (post, deleteWithBody)
 import Gargantext.Components.Loader as Loader
-import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
+import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
 import Gargantext.Router as Router
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import React.DOM (a, br', button, div, i, input, p, text, span)
-import React.DOM.Props (_type, className, href, onClick, placeholder, style, checked, target)
+import React.DOM.Props (_type, className, href, onClick, style, checked, target)
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
 ------------------------------------------------------------------------
 

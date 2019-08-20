@@ -1,8 +1,6 @@
 module Gargantext.Components.Search.Types where
 
-import Control.Monad.Cont.Trans (lift)
 import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
-import Data.Array (head)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
@@ -11,15 +9,11 @@ import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Routing.Hash (setHash)
-import Thermite (PerformAction, modifyState)
 
 import Gargantext.Prelude
 import Gargantext.Types (class ToQuery)
-import Gargantext.Config (End(..), NodeType(..), Path(..), toUrl)
-import Gargantext.Config.REST (post, put)
-import Gargantext.Components.Modals.Modal (modalHide)
+import Gargantext.Config (End(..), NodeType(..), toUrl)
+import Gargantext.Config.REST (put)
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 

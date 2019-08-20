@@ -9,7 +9,6 @@ module Gargantext.Components.NgramsTable
   )
   where
 
-import Control.Monad.Cont.Trans (lift)
 import Data.Array as A
 import Data.Lens (to, view, (%~), (.~), (^.), (^..))
 import Data.Lens.Common (_Just)
@@ -31,7 +30,6 @@ import React.DOM (a, button, div, h2, i, input, li, option, p, select, span, tab
 import React.DOM.Props (_id, _type, checked, className, name, onChange, onClick, onInput, placeholder, style, value)
 import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, createClass)
-import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Types (TermList(..), readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Config (OrderBy(..), TabType, CTabNgramType(..))

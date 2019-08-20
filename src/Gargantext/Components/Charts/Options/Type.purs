@@ -3,7 +3,7 @@ module Gargantext.Components.Charts.Options.Type where
 import Prelude
 
 import Gargantext.Components.Charts.Options.Color (Color)
-import Gargantext.Components.Charts.Options.Data (DataLegend, DataAxis)
+import Gargantext.Components.Charts.Options.Data (DataLegend)
 import Gargantext.Components.Charts.Options.Font (TextStyle, Tooltip, ToolBox)
 import Gargantext.Components.Charts.Options.Legend (LegendType, Orient, SelectedMode)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)

@@ -1,29 +1,24 @@
 module Gargantext.Pages.Corpus.Chart.Pie where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Array (foldl, zip, filter)
+import Data.Array (zip, filter)
 import Data.Array as A
-import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Gargantext.Config -- (End(..), Path(..), TabType, toUrl)
 import Gargantext.Config.REST (get)
-import React (ReactClass, ReactElement, createElement)
 import Reactix as R
-import Reactix.DOM.HTML as H
 import Thermite (Spec)
 
 import Gargantext.Prelude
-import Gargantext.Types (TermList(..))
 import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Charts.Options.ECharts
-import Gargantext.Components.Charts.Options.Type
-import Gargantext.Components.Charts.Options.Series
-import Gargantext.Components.Charts.Options.Color
+import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
+import Gargantext.Components.Charts.Options.Color (blue)
 import Gargantext.Components.Charts.Options.Font
-import Gargantext.Components.Charts.Options.Data
+import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Pages.Corpus.Chart.Utils as U
 

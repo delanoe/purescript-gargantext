@@ -5,24 +5,19 @@ module Gargantext.Components.ContextMenu.ContextMenu where
 import Prelude hiding (div)
 import Data.Maybe ( Maybe(..) )
 import Data.Nullable ( Nullable, null, toMaybe )
-import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
 import Data.Traversable ( traverse_ )
 import DOM.Simple as DOM
-import DOM.Simple.Console
 import DOM.Simple.Event as DE
 import DOM.Simple.EventListener ( Callback, callback )
 import DOM.Simple.Element as Element
 import DOM.Simple.Window ( window )
 import DOM.Simple.Document ( document )
-import DOM.Simple.Document as Document
 import DOM.Simple.Types ( DOMRect )
 import Effect (Effect)
-import Effect.Uncurried ( mkEffectFn1 )
 import FFI.Simple ( (...), (..), delay )
 import Reactix as R
 import Reactix.DOM.HTML as HTML
-import Reactix.SyntheticEvent as E
 
 import Gargantext.Utils.Reactix as R2
 

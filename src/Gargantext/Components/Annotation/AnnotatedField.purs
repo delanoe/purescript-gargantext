@@ -12,11 +12,7 @@
 module Gargantext.Components.Annotation.AnnotatedField where
 
 import Prelude
-import Data.Lens ((^?), _Just)
-import Data.Lens.At (at)
-import Data.Maybe ( Maybe(..), maybe, maybe' )
-import Data.String.Regex as R
-import Data.String as S
+import Data.Maybe ( Maybe(..), maybe )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
 import DOM.Simple.Event as DE
@@ -29,7 +25,7 @@ import Reactix.SyntheticEvent as E
 import Gargantext.Config (CTabNgramType(..))
 import Gargantext.Types ( TermList )
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
-import Gargantext.Components.NgramsTable.Core ( NgramsTerm, NgramsTable(..), _NgramsElement, _list, highlightNgrams, findNgramTermList )
+import Gargantext.Components.NgramsTable.Core ( NgramsTerm, NgramsTable(..), highlightNgrams, findNgramTermList )
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel

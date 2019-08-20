@@ -5,7 +5,6 @@ module Gargantext.Components.GraphExplorer.RangeControl
   , nodeSizeControl
   ) where
 
-import Global (readFloat)
 import Prelude
 import Data.Tuple.Nested ((/\))
 import Reactix as R
@@ -13,7 +12,6 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Components.RangeSlider as RS
 import Gargantext.Utils.Range as Range
-import Gargantext.Utils.Reactix as R2
 
 type Props = (
     caption :: String
