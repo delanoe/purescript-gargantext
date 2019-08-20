@@ -26,7 +26,7 @@ import Reactix.SyntheticEvent as E
 
 import Gargantext.Utils.Reactix as R2
 
-type Props t = ( x :: Number, y :: Number, setMenu :: (Maybe t -> Maybe t) -> Effect Unit)
+type Props t = ( x :: Number, y :: Number, setMenu :: R2.StateSetter (Maybe t) )
 
 getPortalHost :: R.Hooks DOM.Element
 getPortalHost = R.unsafeHooksEffect $ delay unit $ \_ -> pure $ document ... "getElementById" $ ["menu-portal"]
@@ -70,7 +70,7 @@ contextMenuCpt = R.hooksComponent "ContextMenu" cpt
 
 contextMenuEffect
   :: forall t
-  .  ((Maybe t -> Maybe t) -> Effect Unit)
+  .  R2.StateSetter (Maybe t)
   -> R.Ref (Nullable DOM.Element)
   -> Effect (Effect Unit)
 contextMenuEffect setMenu rootRef =
@@ -85,14 +85,14 @@ contextMenuEffect setMenu rootRef =
         DOM.removeEventListener document "scroll" onScroll
     Nothing -> pure R.nothing
 
-documentClickHandler :: forall t. ((Maybe t -> Maybe t) -> Effect Unit) -> DOM.Element -> Callback DE.MouseEvent
+documentClickHandler :: forall t. R2.StateSetter (Maybe t) -> DOM.Element -> Callback DE.MouseEvent
 documentClickHandler hide menu =
   R2.named "hideMenuOnClickOutside" $ callback $ \e ->
     if Element.contains menu (DE.target e)
       then pure unit
       else hide (const Nothing)
 
-documentScrollHandler :: forall t. ((Maybe t -> Maybe t) -> Effect Unit) -> Callback DE.MouseEvent
+documentScrollHandler :: forall t. R2.StateSetter (Maybe t) -> Callback DE.MouseEvent
 documentScrollHandler hide =
   R2.named "hideMenuOnScroll" $ callback $ \e -> hide (const Nothing)
 

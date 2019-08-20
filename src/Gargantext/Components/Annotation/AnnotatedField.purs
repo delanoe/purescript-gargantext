@@ -31,6 +31,7 @@ import Gargantext.Types ( TermList )
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 import Gargantext.Components.NgramsTable.Core ( NgramsTerm, NgramsTable(..), _NgramsElement, _list, highlightNgrams, findNgramTermList )
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
+import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
 
 type Props =
@@ -90,7 +91,7 @@ maybeShowMenu setMenu setTermList ngrams event = do
     Nothing -> pure unit
 
 maybeAddMenu
-  :: ((Maybe AnnotationMenu -> Maybe AnnotationMenu) -> Effect Unit)
+  :: R2.StateSetter (Maybe AnnotationMenu)
   -> R.Element
   -> Maybe AnnotationMenu
   -> R.Element
