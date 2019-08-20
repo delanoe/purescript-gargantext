@@ -16,10 +16,8 @@ import Web.Storage.Storage (getItem)
 data Routes
   = Home
   | Login
-  | SearchView
   | Folder             Int
     | Corpus           Int
-      | AddCorpus
       | Document       Int Int
       | CorpusDocument Int Int Int
       | PGraphExplorer Int
@@ -33,8 +31,6 @@ data Routes
 routing :: Match Routes
 routing = oneOf
   [ Login            <$   route "login"
-  , SearchView       <$   route "search"
-  , AddCorpus        <$   route "addCorpus"
   , Folder           <$> (route "folder"     *> int)
   , CorpusDocument   <$> (route "corpus" *> int) <*> (lit "list" *> int) <*> (lit "document" *> int)
   , Corpus           <$> (route "corpus"     *> int)
@@ -57,8 +53,6 @@ routing = oneOf
 
 instance showRoutes :: Show Routes where
   show Login            = "Login"
-  show AddCorpus        = "AddCorpus"
-  show SearchView       = "Search"
   show (UserPage i)     = "User"     <> show i
   show (ContactPage i)  = "Contact"  <> show i
   show (CorpusDocument _ _ i)     = "Document" <> show i

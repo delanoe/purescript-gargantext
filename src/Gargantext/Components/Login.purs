@@ -2,16 +2,17 @@ module Gargantext.Components.Login where
 
 import Control.Monad.Cont.Trans (lift)
 import Data.Int as Int
-import Data.Lens (over, view)
+import Data.Lens (over)
 import Data.Maybe (Maybe(..))
-import Data.Traversable (traverse_)
+import Data.Tuple.Nested((/\))
 import Effect.Class (liftEffect)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import React.DOM (a, button, div, h2, h4, h5, i, input, label, p, span, text)
-import React.DOM.Props (_data, _id, _type, aria, className, href, maxLength, name, onClick, onInput, placeholder, role, target, value)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import React.DOM (button, div, h5, span, text)
+import React.DOM.Props (_data, _id, _type, aria, className, role)
 import Thermite (PerformAction, Render, Spec, _render, modifyState_, simpleSpec)
-import Unsafe.Coerce (unsafeCoerce)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, setItem, removeItem)
@@ -47,8 +48,7 @@ initialState = do
 
 data Action
   = PostAuth
-  | SetUserName String
-  | SetPassword String
+  | SetCredentials String String
 
 
 modalSpec :: forall props. Boolean -> String -> Spec State props Action -> Spec State props Action
@@ -81,110 +81,144 @@ modalSpec sm t = over _render \render d p s c ->
 spec' :: Spec State {} Action
 spec' = modalSpec true "Login" renderSpec
 
+performAction :: PerformAction State {} Action
+performAction (SetCredentials usr pwd) _ _ = do
+  modifyState_ $ _ { username = usr, password = pwd }
+performAction PostAuth _ {username, password} = do
+  res <- lift $ postAuthRequest $ AuthRequest {username, password}
+  case res of
+    AuthResponse {inval: Just (AuthInvalid {message})} ->
+      modifyState_ $ _ { errorMessage = message }
+    AuthResponse {valid} -> do
+      liftEffect $ setAuthData valid
+      modifyState_ $ _ {authData = valid, errorMessage = ""}
+      liftEffect $ modalHide "loginModal"
+
 renderSpec :: Spec State {} Action
 renderSpec = simpleSpec performAction render
   where
-    performAction :: PerformAction State {} Action
-
-    performAction (SetUserName usr) _ _ =
-      modifyState_ $ _ { username = usr }
-
-    performAction (SetPassword pwd) _ _ =
-      modifyState_ $ _ { password = pwd }
-
-    performAction PostAuth _ {username, password} = do
-      res <- lift $ postAuthRequest $ AuthRequest {username, password}
-      case res of
-        AuthResponse {inval: Just (AuthInvalid {message})} ->
-          modifyState_ $ _ { errorMessage = message }
-        AuthResponse {valid} -> do
-          liftEffect $ setAuthData valid
-          modifyState_ $ _ {authData = valid, errorMessage = ""}
-          liftEffect $ modalHide "loginModal"
-
     render :: Render State {} Action
     render dispatch _ state _ =
-      [ div [className "row"]
-        [ div [className "col-md-10 col-md-push-1"]
-          [ h2 [className "text-primary center m-a-2"]
-            [ i [className "material-icons md-36"] [text "control_point"]
-            , span [className "icon-text"] [text "Gargantext"]
-            ]
-          , div [className "card-group"]
-            [ div [className "card"]
-              [ div [className "card-block"]
-                [ div [className "center"]
-                  [ h4 [className "m-b-0"]
-                    [ span [className "icon-text"] [ text "Welcome :)"] ]
-                  , p [className "text-muted"]
-                    [ text $ "Login to your account or",
-                      a [ target "blank",href "https://iscpif.fr/services/applyforourservices/"] [text " ask to get an access"]
-                    ]
-                  ]
-                , div []
-                  [ input [_type "hidden",
-                           name "csrfmiddlewaretoken",
-                           -- TODO hard-coded CSRF token
-                           value "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP0j4WcEM" ]
+      [R2.scuff $ renderCpt dispatch state]
 
-                  , div [className "form-group"]
-                    [ p [] [text state.errorMessage]
-                    , input [className "form-control", _id "id_username",maxLength "254", name "username", placeholder "username", _type "text",value state.username,  onInput \e -> dispatch (SetUserName $ R2.unsafeEventValue e)]
-                    ]
-                  , div [className "form-group"]
-                    [ input [className "form-control", _id "id_password", name "password", placeholder "password", _type "password",value state.password,onInput \e -> dispatch (SetPassword $ R2.unsafeEventValue e)]
-                    , div [className "clearfix"] []
-                    ]
-                  , div [className "center"]
-                    [ label []
-                      [ div [className "checkbox"]
-                        [ input [_id "terms-accept", _type "checkbox", value "", className "checkbox"]
-                        , text "I accept the terms of uses ",
-                          a [href "http://gitlab.iscpif.fr/humanities/tofu/tree/master"] [text " [ Read the terms of use ] "]
-                        ]
-                      , button [_id "login-button",className "btn btn-primary btn-rounded", _type "submit", onClick \_ -> dispatch $ PostAuth] [text "Login"]
+
+renderCpt :: (Action -> Effect Unit) -> State -> R.Element
+renderCpt d s = R.createElement el {} []
+  where
+    el = R.hooksComponent "RenderComponent" cpt
+    cpt {} _children = do
+      (state /\ setState) <- R.useState' s
+
+      R.useEffect $
+        if (state /= s) then do
+          _ <- d $ SetCredentials state.username state.password
+          pure $ d $ PostAuth
+        else
+          pure $ pure $ unit
+
+      pure $ renderLogin (state /\ setState)
+
+renderLogin :: R.State State -> R.Element
+renderLogin (state /\ setState) = R.createElement el {} []
+  where
+    el = R.hooksComponent "RenderLogin" cpt
+    cpt {} _children = do
+      username <- R.useState' state.username
+      password <- R.useState' state.password
+
+      pure $ H.div {className: "row"}
+        [ gargLogo
+        , H.div {className: "card-group"}
+          [ H.div {className: "card"}
+            [ H.div {className: "card-block"}
+              [ H.div {className: "center"}
+                [ H.h4 {className: "m-b-0"}
+                  [ H.span {className: "icon-text"}
+                    [ H.text "Welcome :)"]
+                  ]
+                , H.p {className: "text-muted"}
+                  [ H.text $ "Login to your account or",
+                    H.a { target: "blank"
+                        , href: "https://iscpif.fr/services/applyforourservices/"
+                        }
+                    [H.text " ask to get an access"]
+                  ]
+                ]
+              , H.div {}
+                [ H.input { type: "hidden"
+                          , name: "csrfmiddlewaretoken"
+                            -- TODO hard-coded CSRF token
+                          , value: "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP0j4WcEM"
+                          }
+
+                , H.div {className: "form-group"}
+                  [ H.p {} [H.text state.errorMessage]
+                  , usernameInput username
+                  ]
+                , H.div {className: "form-group"}
+                  [ passwordInput password
+                  , H.div {className: "clearfix"} []
+                  ]
+                , H.div {className: "center"}
+                  [ H.label {}
+                    [ H.div {className: "checkbox"}
+                      [ H.input { id: "terms-accept"
+                                , type: "checkbox"
+                                , value: ""
+                                , className: "checkbox"
+                                }
+                      , H.text "I accept the terms of uses "
+                      , H.a {href: "http://gitlab.iscpif.fr/humanities/tofu/tree/master"}
+                        [ H.text " [ Read the terms of use ] "]
                       ]
                     ]
+                  , H.button { id: "login-button"
+                             , className: "btn btn-primary btn-rounded"
+                             , type: "submit"
+                                   -- TODO
+                                   --, on: {click: \_ -> dispatch $ PostAuth}
+                             , on: {click: onClick username password}
+                             }
+                    [H.text "Login"]
                   ]
                 ]
               ]
             ]
           ]
         ]
+
+    gargLogo =
+      H.div {className: "col-md-10 col-md-push-1"}
+      [ H.h2 {className: "text-primary center m-a-2"}
+        [ H.i {className: "material-icons md-36"}
+          [H.text "control_point"]
+        , H.span {className: "icon-text"}
+          [H.text "Gargantext"]
+        ]
       ]
-
-      -- div [ className "modal fade myModal"
-      --                    , role "dialog"
---                    , _data {show : true}
---                    ][ div [ className "modal-dialog"
---                           , role "document"
---                           ] [ div [ className "modal-content"]
---                                   [ div [ className "modal-header"]
---                                         [ h5 [ className "modal-title"
---                                              ]
---                                              [ text "CorpusView"
---                                              ]
---                                         , button [ _type "button"
---                                                  , className "close"
---                                                  , _data { dismiss : "modal"}
---                                                  ] [ span [ aria {hidden : true}]
---                                                           [ text "X"]
---                                                    ]
---                                         ]
-
---                                   , div [ className "modal-body"]
---                                         [ ul [ className "list-group"] ( map fn1 state.authData ) ]
-
---                                   , div [className "modal-footer"]
---                                         [ button [ _type "button"
---                                                  , className "btn btn-secondary"
---                                                  , _data {dismiss : "modal"}
---                                                  ] [ text "GO"]
---                                         ]
---                                    ]
---                             ]
---                      ]
---         ]
+    usernameInput (username /\ setUsername) =
+      H.input { className: "form-control"
+              , id: "id_username"
+              , maxLength: "254"
+              , name: "username"
+              , placeholder: "username"
+              , type: "text"
+              , defaultValue: username
+                --, on: {input: \e -> dispatch (SetUserName $ R2.unsafeEventValue e)}
+              , on: {change: \e -> setUsername $ const $ R2.unsafeEventValue e}
+              }
+    passwordInput (password /\ setPassword) =
+      H.input { className: "form-control"
+              , id: "id_password"
+              , name: "password"
+              , placeholder: "password"
+              , type: "password"
+              , defaultValue: password
+              --, on: {input: \e -> dispatch (SetPassword $ R2.unsafeEventValue e)}
+              , on: {change: \e -> setPassword $ const $ R2.unsafeEventValue e}
+              }
+    onClick (username /\ _) (password /\ _) = \e -> do
+      setState $ \st -> st {username = username, password = password}
 
 
 getAuthData :: Effect (Maybe AuthData)

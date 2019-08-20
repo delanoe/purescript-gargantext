@@ -13,8 +13,6 @@ import Gargantext.Components.Login                  as LN
 import Gargantext.Components.Modals.Modal              (modalShow)
 import Gargantext.Pages.Annuaire             as Annuaire
 import Gargantext.Pages.Corpus.Graph     as GE
-import Gargantext.Pages.Layout.Specs.AddCorpus      as AC
-import Gargantext.Pages.Layout.Specs.Search         as S
 import Gargantext.Pages.Layout.States                  (AppState)
 import Gargantext.Prelude
 import Gargantext.Router                               (Routes)
@@ -24,8 +22,6 @@ import Gargantext.Router                               (Routes)
 data Action
   = LoginA     LN.Action
   | SetRoute   Routes
-  | SearchA    S.Action
-  | AddCorpusA AC.Action
   | GraphExplorerA     GE.Action
   | AnnuaireAction     Annuaire.Action
   | ShowLogin
@@ -61,8 +57,6 @@ performAction ShowAddCorpus  _ _ = void do
 ---------------------------------------------------------
 
 performAction (LoginA          _) _ _ = pure unit
-performAction (AddCorpusA      _) _ _ = pure unit
-performAction (SearchA         _) _ _ = pure unit
 performAction (GraphExplorerA  _) _ _ = pure unit
 performAction (AnnuaireAction  _) _ _ = pure unit
   -- liftEffect $ modalShow "addCorpus"
@@ -74,18 +68,6 @@ _loginAction :: Prism' Action LN.Action
 _loginAction = prism LoginA \action ->
   case action of
     LoginA caction -> Right caction
-    _-> Left action
-
-_addCorpusAction :: Prism' Action AC.Action
-_addCorpusAction = prism AddCorpusA \action ->
-  case action of
-    AddCorpusA caction -> Right caction
-    _-> Left action
-
-_searchAction :: Prism' Action S.Action
-_searchAction = prism SearchA \action ->
-  case action of
-    SearchA caction -> Right caction
     _-> Left action
 
 _annuaireAction :: Prism' Action Annuaire.Action

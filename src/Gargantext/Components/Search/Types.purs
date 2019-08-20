@@ -20,7 +20,6 @@ import Gargantext.Types (class ToQuery)
 import Gargantext.Config (End(..), NodeType(..), Path(..), toUrl)
 import Gargantext.Config.REST (post, put)
 import Gargantext.Components.Modals.Modal (modalHide)
-import Gargantext.Pages.Layout.Specs.AddCorpus.States (Response, State)
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 

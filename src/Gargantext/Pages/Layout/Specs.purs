@@ -4,12 +4,11 @@ import Data.Foldable (fold, intercalate)
 import Data.Lens (over)
 import Data.Maybe (Maybe(Nothing, Just))
 import Effect (Effect)
-import React (ReactElement)
 import React.DOM (button, div, text)
 import React.DOM.Props (_id, className, onClick, role, style)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Thermite (Render, Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
+import Thermite (Spec, _render, defaultPerformAction, defaultRender, focus, simpleSpec, withState, noState, cmapProps)
 -- import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Prelude
@@ -27,11 +26,9 @@ import Gargantext.Pages.Corpus.Graph as GE
 import Gargantext.Pages.Lists as Lists
 import Gargantext.Pages.Texts as Texts
 import Gargantext.Pages.Home as L
-import Gargantext.Pages.Layout.Actions (Action(..), _addCorpusAction, _graphExplorerAction, _loginAction, _searchAction, performAction)
-import Gargantext.Pages.Layout.Specs.AddCorpus as AC
-import Gargantext.Pages.Layout.Specs.Search    as S
+import Gargantext.Pages.Layout.Actions (Action(..), _graphExplorerAction, _loginAction, performAction)
 import Gargantext.Pages.Layout.Specs.SearchBar as SB
-import Gargantext.Pages.Layout.States (AppState, _addCorpusState, _graphExplorerState, _loginState, _searchState)
+import Gargantext.Pages.Layout.States (AppState, _graphExplorerState, _loginState)
 import Gargantext.Router (Routes(..))
 import Gargantext.Utils.Reactix as R2
 
@@ -42,7 +39,6 @@ layoutSpec =
   , container $ withState pagesComponent
   , withState \st ->
      fold [ focus _loginState _loginAction (LN.modalSpec st.showLogin "Login" LN.renderSpec)
-          , focus _addCorpusState _addCorpusAction (AC.modalSpec st.showCorpus "Search Results" AC.layoutAddcorpus)
           ]
   ]
   where
@@ -57,13 +53,11 @@ pagesComponent s = case s.currentRoute of
     Nothing    -> selectSpec Home -- TODO add Error page here: url requested does not exist (with funny Garg image)
   where
     selectSpec :: Routes -> Spec AppState {} Action
-    selectSpec Home              = layout0 $ noState (L.layoutLanding EN)
+    selectSpec Home              = layout0 $ noState $ L.layoutLanding EN
     selectSpec Login             = focus _loginState _loginAction LN.renderSpec
     selectSpec (Folder i)        = layout0 $ noState F.layoutFolder
 
     selectSpec (Corpus   i)      = layout0 $ cmapProps (const {nodeId: i}) $ noState Corpus.layout
-    selectSpec AddCorpus         = layout0 $ focus _addCorpusState _addCorpusAction AC.layoutAddcorpus
-    selectSpec SearchView        = layout0 $ focus _searchState _searchAction  S.searchSpec
     selectSpec (CorpusDocument c l i) = layout0 $ cmapProps (const {nodeId: i, listId: l, corpusId: Just c}) $ noState Annotation.layout
     selectSpec (Document l i)    = layout0 $ cmapProps (const {nodeId: i, listId: l, corpusId: Nothing}) $ noState Annotation.layout
     selectSpec (PGraphExplorer i)= layout1  $ focus _graphExplorerState _graphExplorerAction  GE.specOld
