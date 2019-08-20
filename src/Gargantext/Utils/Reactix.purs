@@ -26,6 +26,8 @@ import Unsafe.Coerce (unsafeCoerce)
 
 newtype Point = Point { x :: Number, y :: Number }
 
+type StateSetter a = (a -> a) -> Effect Unit
+
 -- | Turns a ReactElement into aReactix Element
 -- | buff (v.) to polish
 buff :: ReactElement -> R.Element

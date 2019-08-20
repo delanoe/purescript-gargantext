@@ -1,6 +1,7 @@
 module Gargantext.Components.GraphExplorer.RangeControl
   ( Props
   , rangeControl
+  , edgeSizeControl
   , nodeSizeControl
   ) where
 
@@ -31,6 +32,21 @@ rangeControlCpt = R.hooksComponent "RangeButton" cpt
           [ H.label {} [ H.text caption ]
           , RS.rangeSlider sliderProps
           ]
+
+edgeSizeControl :: R.State Range.NumberRange -> R.Element
+edgeSizeControl (state /\ setState) =
+  rangeControl {
+      caption: "Edge Size"
+    , sliderProps: {
+        bounds: Range.Closed { min: 0.0, max: 3.0 }
+      , initialValue: state
+      , epsilon: 0.1
+      , step: 1.0
+      , width: 10.0
+      , height: 5.0
+      , onChange: setState <<< const
+      }
+    }
 
 nodeSizeControl :: R.State Range.NumberRange -> R.Element
 nodeSizeControl (state /\ setState) =

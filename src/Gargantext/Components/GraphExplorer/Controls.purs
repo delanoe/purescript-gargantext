@@ -21,7 +21,7 @@ import Reactix as R
 import Reactix.DOM.HTML as RH
 
 import Gargantext.Components.Graph as Graph
-import Gargantext.Components.GraphExplorer.RangeControl (nodeSizeControl)
+import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton)
 import Gargantext.Utils.Range as Range
@@ -30,6 +30,7 @@ import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( cursorSize :: R.State Number
+  , edgeSize :: R.State Range.NumberRange
   , labelSize :: R.State Number
   , nodeSize :: R.State Range.NumberRange
   , multiNodeSelect :: R.Ref Boolean
@@ -41,6 +42,7 @@ type Controls =
 
 controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
 controlsToSigmaSettings { cursorSize: (cursorSize /\ _)
+                        , edgeSize: (Range.Closed { min: edgeSizeMin, max: edgeSizeMax } /\ _)
                         , labelSize: (labelSize /\ _)
                         , nodeSize: (Range.Closed { min: nodeSizeMin, max: nodeSizeMax } /\ _)
                         , showEdges: (showEdges /\ _)} = Graph.sigmaSettings {
@@ -48,10 +50,10 @@ controlsToSigmaSettings { cursorSize: (cursorSize /\ _)
   , drawEdges = showEdges
   , drawEdgeLabels = showEdges
   , hideEdgesOnMove = not showEdges
-  , maxEdgeSize = if showEdges then 1.0 else 0.0
-  , minEdgeSize = if showEdges then 1.0 else 0.0
-  , maxNodeSize = nodeSizeMax
+  , minEdgeSize = if showEdges then edgeSizeMin else 0.0
+  , maxEdgeSize = if showEdges then edgeSizeMax else 0.0
   , minNodeSize = nodeSizeMin
+  , maxNodeSize = nodeSizeMax
   }
 
 controls :: Record Controls -> R.Element
@@ -69,6 +71,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
               [ RH.ul {}
                 [ -- change type button (?)
                   RH.li {} [ edgesToggleButton props.showEdges ]
+                , RH.li {} [ edgeSizeControl props.edgeSize ] -- edge size : 0-3
                   -- change level
                   -- file upload
                   -- run demo
@@ -77,7 +80,6 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                 , RH.li {} [ cursorSizeButton props.cursorSize ] -- cursor size: 0-100
                 , RH.li {} [ labelSizeButton props.labelSize ] -- labels size: 1-4
                 , RH.li {} [ nodeSizeControl props.nodeSize ] -- node size : 5-15
-                  -- edge size : ??
                   -- zoom: 0 -100 - calculate ratio
                   -- toggle multi node selection
                   -- spatialization (pause ForceAtlas2)
@@ -89,6 +91,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
   cursorSize <- R.useState' 10.0
+  edgeSize <- R.useState' $ Range.Closed { min: 0.5, max: 1.0 }
   labelSize <- R.useState' 3.0
   nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 10.0 }
   multiNodeSelect <- R.useRef false
@@ -96,7 +99,17 @@ useGraphControls = do
   showEdges <- R.useState' true
   showSidePanel <- R.useState' false
   showTree <- R.useState' false
-  pure { showTree, showControls, showSidePanel, showEdges, cursorSize, labelSize, nodeSize, multiNodeSelect }
+  pure {
+      showTree
+    , showControls
+    , showSidePanel
+    , showEdges
+    , cursorSize
+    , edgeSize
+    , labelSize
+    , nodeSize
+    , multiNodeSelect
+    }
 
 getShowTree :: Record Controls -> Boolean
 getShowTree { showTree: ( should /\ _ ) } = should

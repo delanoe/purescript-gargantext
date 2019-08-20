@@ -15,6 +15,7 @@ import Gargantext.Types ( TermList(..), termListName )
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 
 import Gargantext.Components.ContextMenu.ContextMenu as CM
+import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection (Selection, selectionToString)
 
 data MenuType = NewNgram | SetTermListItem
@@ -29,7 +30,7 @@ type AnnotationMenu = { x :: Number, y :: Number | Props }
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
-annotationMenu :: ((Maybe AnnotationMenu -> Maybe AnnotationMenu) -> Effect Unit) -> AnnotationMenu -> R.Element
+annotationMenu :: R2.StateSetter (Maybe AnnotationMenu) -> AnnotationMenu -> R.Element
 annotationMenu setMenu { x,y,list,menuType,setList } =
   CM.contextMenu { x,y,setMenu } [
     R.createElement annotationMenuCpt {list,menuType,setList} []

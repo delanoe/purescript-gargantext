@@ -1092,9 +1092,12 @@
     "version": "v6.1.1"
   },
   "globals": {
-    "dependencies": [],
-    "repo": "https://github.com/purescript/purescript-globals.git",
-    "version": "v4.0.0"
+    "dependencies": [
+      "functions",
+      "maybe"
+    ],
+    "repo": "https://github.com/purescript/purescript-globals",
+    "version": "v4.1.0"
   },
   "gomtang-basic": {
     "dependencies": [

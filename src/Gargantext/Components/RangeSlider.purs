@@ -7,7 +7,8 @@
 module Gargantext.Components.RangeSlider where
 
 import Prelude
-import Data.Maybe (Maybe(..))
+import Data.Int (fromNumber)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
@@ -18,10 +19,12 @@ import DOM.Simple.Element as Element
 import DOM.Simple.Event as Event
 import DOM.Simple.EventListener as EL
 import DOM.Simple.Types (DOMRect, Element)
+import Global (toFixed)
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, mkEffectFn1)
 --import Global (toFixed)
+import Math as M
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Reactix.SyntheticEvent as RE
@@ -57,6 +60,9 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
     cpt props _ = do
       --R.useEffect' $ do
       --  liftEffect $ log2 "Props: " props
+
+      -- rounding precision (i.e. how many decimal digits are in epsilon)
+      let precision = fromMaybe 0 $ fromNumber $ max 0.0 $ - M.floor $ (M.log props.epsilon) / M.ln10
 
       -- scale bar
       scaleElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
@@ -137,8 +143,8 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
           Nothing -> destroy unit
       pure $ H.div { className, aria }
         [ renderScale scaleElem props value'
-        , renderKnob lowElem  value'.min props.bounds MinKnob setDragKnob props.epsilon
-        , renderKnob highElem value'.max props.bounds MaxKnob setDragKnob props.epsilon
+        , renderKnob MinKnob lowElem  value'.min props.bounds setDragKnob precision
+        , renderKnob MaxKnob highElem value'.max props.bounds setDragKnob precision
         ]
     className = "range-slider"
     aria = { label: "Range Slider Control. Expresses filtering data by a minimum and maximum value range through two slider knobs. Knobs can be adjusted with the arrow keys." }
@@ -153,7 +159,7 @@ destroyEventHandler name ref = traverse_ destroy $ R.readRef ref
       EL.removeEventListener document name handler
       R.setRef ref Nothing
 
-setKnob :: Knob -> ((Range.NumberRange -> Range.NumberRange) -> Effect Unit) -> Range.NumberRange -> Number -> Effect Unit
+setKnob :: Knob -> R2.StateSetter Range.NumberRange -> Range.NumberRange -> Number -> Effect Unit
 setKnob knob setValue r val = setValue $ const $ setter knob r val
   where
     setter MinKnob = Range.withMin
@@ -178,13 +184,14 @@ renderScale ref {width,height} {min, max} =
     aria = { label: "Scale running from " <> show min <> " to " <> show max }
     style = { width: "100%", height: "3px" }
 
-renderKnob ref val bounds knob set epsilon =
+renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Number -> Range.NumberRange -> R2.StateSetter (Maybe Knob) -> Int -> R.Element
+renderKnob knob ref val bounds set precision =
   H.div { ref, tabIndex, className, aria, onMouseDown, style } [
       H.div { className: "button" } []
-    , H.text (text $ Just val)
+    , H.text $ text $ toFixed precision val
   ]
   where
-    text (Just num) = show num
+    text (Just num) = num
     text Nothing = "error"
     tabIndex = 0
     className = "knob"

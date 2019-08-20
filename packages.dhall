@@ -127,6 +127,13 @@ let overrides =
           ]
           "https://github.com/np/purescript-thermite.git"
           "hide"
+      , globals =
+          mkPackage
+          [ "functions"
+          , "maybe"
+          ]
+          "https://github.com/purescript/purescript-globals"
+          "v4.1.0"
       }
 
 let additions =
