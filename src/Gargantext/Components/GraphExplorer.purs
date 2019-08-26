@@ -14,6 +14,7 @@ import Thermite (Render, Spec, simpleSpec)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Hooks.Sigmax.Sigma (Sigma)
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
@@ -70,6 +71,7 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
   where
     cpt {graphId, mCurrentRoute, treeId, graph} _ = do
       controls <- Controls.useGraphControls
+
       pure $
         RH.div
           { id: "graph-explorer" }
@@ -84,7 +86,9 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
                 , row [ Controls.controls controls ]
-                , row [ tree {mCurrentRoute, treeId} controls, mGraph {graphId, graph} controls, Sidebar.sidebar controls ]
+                , row [ tree {mCurrentRoute, treeId} controls
+                      , mGraph controls {graphId, graph}
+                      , Sidebar.sidebar controls ]
                 , row [ ]
                 ]
               ]
@@ -103,9 +107,9 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
     tree {mCurrentRoute, treeId: Just treeId} _ =
       RH.div { className: "col-md-2" } [ Tree.elTreeview {mCurrentRoute, root: treeId} ]
 
-    mGraph :: {graphId :: GraphId, graph :: Maybe Graph.Graph} -> Record Controls.Controls -> R.Element
-    mGraph {graph: Nothing} _ = RH.div {} []
-    mGraph {graphId, graph: Just graph} controls = graphView controls {graphId, graph}
+    mGraph :: Record Controls.Controls -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
+    mGraph _ {graph: Nothing} = RH.div {} []
+    mGraph controls {graphId, graph: Just graph} = graphView controls {graphId, graph}
 
 type GraphProps = (
     graphId :: GraphId
@@ -123,6 +127,7 @@ graphView controls props = R.createElement el props []
                forceAtlas2Settings: Graph.forceAtlas2Settings
              , graph
              , sigmaSettings: Controls.controlsToSigmaSettings controls
+             , sigmaRef: controls.sigmaRef
              }
         ]
     -- TODO: this doesn't work? seems to always render "col-md-9"

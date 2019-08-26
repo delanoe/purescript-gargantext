@@ -14,6 +14,8 @@ module Gargantext.Components.GraphExplorer.Controls
  , getMultiNodeSelect, setMultiNodeSelect
  ) where
 
+import Data.Maybe (Maybe(..))
+import DOM.Simple as DOM
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Prelude
@@ -23,7 +25,8 @@ import Reactix.DOM.HTML as RH
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
-import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton)
+import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
+import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
@@ -34,10 +37,12 @@ type Controls =
   , labelSize :: R.State Number
   , nodeSize :: R.State Range.NumberRange
   , multiNodeSelect :: R.Ref Boolean
+  , pauseForceAtlas :: R.State Boolean
   , showControls :: R.State Boolean
   , showEdges :: R.State Boolean
   , showSidePanel :: R.State Boolean
   , showTree :: R.State Boolean
+  , sigmaRef :: R.Ref (Maybe Sigmax.Sigma)
   )
 
 controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
@@ -70,7 +75,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
             [ R2.menu { id: "toolbar" }
               [ RH.ul {}
                 [ -- change type button (?)
-                  RH.li {} [ edgesToggleButton props.showEdges ]
+                  RH.li {} [ pauseForceAtlasButton props.sigmaRef props.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
+                , RH.li {} [ edgesToggleButton props.showEdges ]
                 , RH.li {} [ edgeSizeControl props.edgeSize ] -- edge size : 0-3
                   -- change level
                   -- file upload
@@ -82,7 +88,6 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                 , RH.li {} [ nodeSizeControl props.nodeSize ] -- node size : 5-15
                   -- zoom: 0 -100 - calculate ratio
                   -- toggle multi node selection
-                  -- spatialization (pause ForceAtlas2)
                   -- save button
                 ]
               ]
@@ -95,20 +100,25 @@ useGraphControls = do
   labelSize <- R.useState' 3.0
   nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 10.0 }
   multiNodeSelect <- R.useRef false
+  pauseForceAtlas <- R.useState' true
   showControls <- R.useState' false
   showEdges <- R.useState' true
   showSidePanel <- R.useState' false
   showTree <- R.useState' false
+  sigmaRef <- R.useRef Nothing
+
   pure {
-      showTree
-    , showControls
-    , showSidePanel
-    , showEdges
-    , cursorSize
+      cursorSize
     , edgeSize
     , labelSize
-    , nodeSize
     , multiNodeSelect
+    , nodeSize
+    , pauseForceAtlas
+    , showControls
+    , showEdges
+    , showSidePanel
+    , showTree
+    , sigmaRef
     }
 
 getShowTree :: Record Controls -> Boolean

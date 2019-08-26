@@ -5,7 +5,9 @@ module Gargantext.Components.Graph
   -- )
   where
 import Prelude
-import Data.Nullable (null)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (Nullable, null)
+import DOM.Simple.Console (log2)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Gargantext.Hooks.Sigmax
@@ -27,8 +29,10 @@ type Graph = Sigmax.Graph Node Edge
 
 type Props sigma forceatlas2 =
   ( graph :: Graph
+  , forceAtlas2Settings :: forceatlas2
   , sigmaSettings :: sigma
-  , forceAtlas2Settings :: forceatlas2 )
+  , sigmaRef :: R.Ref (Maybe Sigma)
+  )
 
 graph :: forall s fa2. Record (Props s fa2) -> R.Element
 graph props = R.createElement graphCpt props []
@@ -38,7 +42,14 @@ graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
       ref <- R.useRef null
-      sigma <- useSigma ref props.sigmaSettings
+      let mSigma = R.readRef props.sigmaRef
+      _ <- pure $ log2 "[graphCpt] mSigma" mSigma
+      sigma <- case mSigma of
+        Just s -> pure s
+        Nothing -> do
+          sigma_ <- useSigma ref props.sigmaSettings
+          _ <- pure $ R.setRef props.sigmaRef $ Just sigma_
+          pure sigma_
       useCanvasRenderer ref sigma
       useData sigma props.graph
       useForceAtlas2 sigma props.forceAtlas2Settings
