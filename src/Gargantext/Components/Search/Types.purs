@@ -24,7 +24,12 @@ import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 
 allDatabases :: Array Database
-allDatabases = [All, PubMed, Isidore_EN, Isidore_FR]
+allDatabases = [All, PubMed
+               , HAL_EN
+               , HAL_FR
+               , IsTex_EN
+               , IsTex_FR
+               , Isidore_EN, Isidore_FR]
 
 data Database = All | PubMed
               | HAL_EN       | HAL_FR
@@ -42,11 +47,11 @@ instance showDatabase :: Show Database where
   show All    = "All"
   show PubMed = "PubMed"
   
-  show HAL_EN = "HAL" <> show EN
-  show HAL_FR = "HAL" <> show FR
+  show HAL_EN = "HAL_" <> show EN
+  show HAL_FR = "HAL_" <> show FR
   
-  show IsTex_EN  = "IsTex" <> show EN
-  show IsTex_FR  = "Istex" <> show FR
+  show IsTex_EN  = "IsTex_" <> show EN
+  show IsTex_FR  = "Istex_" <> show FR
   
   show Isidore_EN = "Isidore_" <> show EN
   show Isidore_FR = "Isidore_" <> show FR
