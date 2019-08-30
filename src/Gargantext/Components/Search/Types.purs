@@ -51,7 +51,7 @@ instance showDatabase :: Show Database where
   show HAL_FR = "HAL_" <> show FR
   
   show IsTex_EN  = "IsTex_" <> show EN
-  show IsTex_FR  = "Istex_" <> show FR
+  show IsTex_FR  = "IsTex_" <> show FR
   
   show Isidore_EN = "Isidore_" <> show EN
   show Isidore_FR = "Isidore_" <> show FR
