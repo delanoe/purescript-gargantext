@@ -261,7 +261,7 @@ loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orde
     convOrderBy _ = DateAsc -- TODO
 
 renderPage :: R.State T.Params -> PageLoaderProps -> Array DocumentsView -> R.Element
-renderPage (_ /\ setTableParams) p res = R.createElement el p []
+renderPage (tableParams /\ setTableParams) p res = R.createElement el p []
   where
     el = R.hooksComponent "RenderPage" cpt
 
@@ -275,10 +275,11 @@ renderPage (_ /\ setTableParams) p res = R.createElement el p []
     cpt {nodeId, corpusId, listId, totalRecords} _children = do
       localCategories <- R.useState' (mempty :: LocalCategories)
 
-      pure $ R2.buff $ T.tableElt
+      pure $ R2.buff $ T.tableEltWithInitialState
+          (T.paramsState tableParams)
           { rows: rows localCategories
           -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
-          , setParams: \params -> setTableParams $ const params
+          , setParams: setTableParams <<< const
           , container: T.defaultContainer { title: "Documents" }
           , colNames:
             T.ColumnName <$>
@@ -293,29 +294,29 @@ renderPage (_ /\ setTableParams) p res = R.createElement el p []
       where
         getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
         rows localCategories = (\(DocumentsView r) ->
-                    let cat = getCategory localCategories r
-                        isDel = Trash == cat in
-                    { row: map R2.scuff $ [
-                          H.div {}
-                          [ H.a { className: gi cat
-                                , style: trashStyle cat
-                                , on: {click: onClick localCategories Favorite r._id cat}
-                                } []
-                          ]
-                        , H.input { type: "checkbox"
-                                  , checked: isDel
-                                  , on: {click: onClick localCategories Trash r._id cat}
-                                  }
-                        -- TODO show date: Year-Month-Day only
-                        , H.div { style: trashStyle cat } [ H.text (show r.date) ]
-                        , H.a { href: toLink $ (corpusDocument corpusId) listId r._id
-                              , style: trashStyle cat
-                              , target: "_blank"
-                              } [ H.text r.title ]
-                        , H.div { style: trashStyle cat} [ H.text r.source ]
-                        ]
-                    , delete: true
-                    }) <$> res
+          let cat = getCategory localCategories r
+              isDel = Trash == cat in
+          { row: map R2.scuff $ [
+                H.div {}
+                [ H.a { className: gi cat
+                      , style: trashStyle cat
+                      , on: {click: onClick localCategories Favorite r._id cat}
+                      } []
+                ]
+              , H.input { type: "checkbox"
+                        , checked: isDel
+                        , on: {click: onClick localCategories Trash r._id cat}
+                        }
+              -- TODO show date: Year-Month-Day only
+              , H.div { style: trashStyle cat } [ H.text (show r.date) ]
+              , H.a { href: toLink $ (corpusDocument corpusId) listId r._id
+                    , style: trashStyle cat
+                    , target: "_blank"
+                    } [ H.text r.title ]
+              , H.div { style: trashStyle cat} [ H.text r.source ]
+              ]
+          , delete: true
+          }) <$> res
         onClick (_ /\ setLocalCategories) catType nid cat = \_-> do
           let newCat = if (catType == Favorite) then (favCategory cat) else (trashCategory cat)
           setLocalCategories $ insert nid newCat

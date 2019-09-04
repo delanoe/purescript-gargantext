@@ -1,20 +1,20 @@
 module Gargantext.Components.Table where
 
+import Gargantext.Prelude
+
 import Data.Array (filter)
-import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
 import Effect.Class (liftEffect)
+import Gargantext.Utils.Reactix as R2
 import React (ReactElement, ReactClass, Children, createElement)
 import React.DOM (a, b, b', p, i, h3, hr, div, option, select, span, table, tbody, td, text, th, thead, tr)
 import React.DOM.Props (className, href, onChange, onClick, scope, selected, value, style)
 import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec, StateCoTransformer, createClass)
 import Unsafe.Coerce (unsafeCoerce)
-
-import Gargantext.Prelude
-import Gargantext.Utils.Reactix as R2
 
 type TableContainerProps =
   { pageSizeControl     :: ReactElement
@@ -132,7 +132,7 @@ tableSpec = simpleSpec performAction render
   where
     modifyStateAndReload :: (State -> State) -> Props -> State -> StateCoTransformer State Unit
     modifyStateAndReload f {setParams} state = do
-      logs "modifyStateAndReload" -- TODO rename
+      --logs "modifyStateAndReload" -- TODO rename
       modifyState_ f
       liftEffect $ setParams $ stateParams $ f state
 
@@ -209,11 +209,22 @@ stateParams {pageSize, currentPage, orderBy} = {offset, limit, orderBy}
     limit = pageSizes2Int pageSize
     offset = limit * (currentPage - 1)
 
+paramsState :: Params -> State
+paramsState {offset, limit, orderBy} = {pageSize, currentPage, orderBy}
+  where
+    pageSize = string2PageSize $ show limit
+    currentPage = (offset / limit) + 1
+
 tableClass :: ReactClass {children :: Children | Props'}
 tableClass = createClass "Table" tableSpec (const initialState)
 
 tableElt :: Props -> ReactElement
 tableElt props = createElement tableClass props []
+
+tableEltWithInitialState :: State -> Props -> ReactElement
+tableEltWithInitialState state props = createElement tc props []
+  where
+    tc = createClass "Table" tableSpec (const state)
 
 sizeDD :: PageSizes -> (Action -> Effect Unit) -> ReactElement
 sizeDD ps d
