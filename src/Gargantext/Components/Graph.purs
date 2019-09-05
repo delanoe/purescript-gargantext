@@ -8,6 +8,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null)
 import DOM.Simple.Console (log2)
+import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Gargantext.Hooks.Sigmax
@@ -43,16 +44,24 @@ graphCpt = R.hooksComponent "Graph" cpt
     cpt props _ = do
       ref <- R.useRef null
       let mSigma = R.readRef props.sigmaRef
-      _ <- pure $ log2 "[graphCpt] mSigma" mSigma
-      sigma <- case mSigma of
-        Just s -> pure s
-        Nothing -> do
-          sigma_ <- useSigma ref props.sigmaSettings
-          _ <- pure $ R.setRef props.sigmaRef $ Just sigma_
-          pure sigma_
+      sigma <- useSigma ref props.sigmaSettings
+
       useCanvasRenderer ref sigma
       useData sigma props.graph
       useForceAtlas2 sigma props.forceAtlas2Settings
+
+      R.useLayoutEffect $
+        delay unit $ \_ -> do
+          log2 "[graphCpt] mSigma" mSigma
+          pure $ case mSigma of
+            Just s -> do
+              log2 "[graphCpt] mSigma is Just" s
+              pure unit
+            Nothing -> do
+              log2 "[graphCpt] setting sigmaRef" $ Just sigma
+              log2 "[graphCpt] readSigma" $ readSigma sigma
+              R.setRef props.sigmaRef $ Just sigma
+
       pure $ RH.div { ref, style: {height: "95%"} } []
 
 type SigmaSettings =

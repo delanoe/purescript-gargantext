@@ -84,8 +84,10 @@ pauseForceAtlasButton sigmaRef state = R.createElement el props []
                           Just sigma -> do
                             log2 "[pauseForceAtlasButton] sigma" sigma
                             log2 "[pauseForceAtlasButton] toggled" toggled
+                            let rSigma = Sigmax.readSigma sigma
+                            log2 "[pauseForceAtlasButton] rSigma" rSigma
                             if toggled then
-                              case Sigmax.readSigma sigma of
+                              case rSigma of
                                 Nothing -> pure unit
                                 Just s -> stopForceAtlas2 s
                             else
