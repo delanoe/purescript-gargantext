@@ -3,6 +3,7 @@ module Gargantext.Hooks.Sigmax.Sigma where
 import Prelude
 import Type.Row (class Union)
 import Data.Either (Either(..))
+import Data.Nullable (null)
 import Data.Unit (Unit)
 import Effect (Effect)
 import FFI.Simple.Objects (named)
@@ -97,6 +98,9 @@ foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 
 startForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
 startForceAtlas2 = runEffectFn2 _startForceAtlas2
+
+restartForceAtlas2 :: Sigma -> Effect Unit
+restartForceAtlas2 sigma = runEffectFn2 _startForceAtlas2 sigma null
 
 stopForceAtlas2 :: Sigma -> Effect Unit
 stopForceAtlas2 = runEffectFn1 _stopForceAtlas2

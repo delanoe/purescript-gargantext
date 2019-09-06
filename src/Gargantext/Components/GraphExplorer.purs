@@ -121,7 +121,8 @@ graphView controls props = R.createElement el props []
   where
     el = R.hooksComponent "GraphView" cpt
     cpt {graphId, graph} _children = do
-      pure $ RH.div { className: colSize controls }
+      pure $
+        RH.div { className: colSize controls }
         [
           Graph.graph {
                forceAtlas2Settings: Graph.forceAtlas2Settings

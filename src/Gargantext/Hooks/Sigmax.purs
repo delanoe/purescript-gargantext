@@ -51,8 +51,8 @@ cleanupFirst sigma =
   R.setRef sigma.cleanup <<< (flip Seq.cons) (R.readRef sigma.cleanup)
 
 -- | Manages a sigma with the given settings
-useSigma :: forall settings. R.Ref (Nullable Element) -> settings -> R.Hooks Sigma
-useSigma container settings = do
+useSigma :: forall settings. R.Ref (Nullable Element) -> settings -> R.Ref (Maybe Sigma) -> R.Hooks Sigma
+useSigma container settings sigmaRef = do
   sigma <- newSigma <$> R2.nothingRef <*> R.useRef Seq.empty
   R.useEffect2 container sigma.sigma $
     delay unit $ handleSigma sigma (readSigma sigma)
@@ -63,7 +63,8 @@ useSigma container settings = do
     handleSigma sigma Nothing _ = do
       ret <- createSigma settings
       traverse_ (writeSigma sigma <<< Just) ret
-      pure (cleanupSigma sigma "useSigma")
+      R.setRef sigmaRef $ Just sigma
+      pure $ cleanupSigma sigma "useSigma"
 
 -- | Manages a renderer for the sigma
 useCanvasRenderer :: R.Ref (Nullable Element) -> Sigma -> R.Hooks Unit

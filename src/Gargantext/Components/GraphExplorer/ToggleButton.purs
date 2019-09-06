@@ -17,7 +17,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Sigma (startForceAtlas2, stopForceAtlas2)
+import Gargantext.Hooks.Sigmax.Sigma (restartForceAtlas2, stopForceAtlas2)
 import Gargantext.Utils.Reactix as R2
 
 type Props = (
@@ -78,22 +78,17 @@ pauseForceAtlasButton sigmaRef state = R.createElement el props []
               { className: "btn btn-primary"
               , on: {click: \_ -> do
                         let mSigma = R.readRef sigmaRef
-                        log2 "[pauseForceAtlasButton] mSigma" mSigma
                         case mSigma of
                           Nothing -> pure unit
                           Just sigma -> do
-                            log2 "[pauseForceAtlasButton] sigma" sigma
-                            log2 "[pauseForceAtlasButton] toggled" toggled
                             let rSigma = Sigmax.readSigma sigma
-                            log2 "[pauseForceAtlasButton] rSigma" rSigma
-                            if toggled then
-                              case rSigma of
-                                Nothing -> pure unit
-                                Just s -> stopForceAtlas2 s
-                            else
-                              --startForceAtlas2 $ graph.sigma
-                              pure unit
-                        --setToggled not
+                            case rSigma of
+                              Nothing -> pure unit
+                              Just s -> if toggled then
+                                  stopForceAtlas2 s
+                                else
+                                  restartForceAtlas2 s
+                        setToggled not
                     }
               }
               [ H.text (text onMessage offMessage toggled) ]

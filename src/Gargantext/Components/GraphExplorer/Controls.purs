@@ -37,7 +37,6 @@ type Controls =
   , labelSize :: R.State Number
   , nodeSize :: R.State Range.NumberRange
   , multiNodeSelect :: R.Ref Boolean
-  , pauseForceAtlas :: R.State Boolean
   , showControls :: R.State Boolean
   , showEdges :: R.State Boolean
   , showSidePanel :: R.State Boolean
@@ -61,21 +60,34 @@ controlsToSigmaSettings { cursorSize: (cursorSize /\ _)
   , maxNodeSize = nodeSizeMax
   }
 
+type LocalControls =
+  ( pauseForceAtlas :: R.State Boolean
+  )
+
+initialLocalControls :: R.Hooks (Record LocalControls)
+initialLocalControls = do
+  pauseForceAtlas <- R.useState' true
+
+  pure $ {
+    pauseForceAtlas
+  }
+
 controls :: Record Controls -> R.Element
 controls props = R.createElement controlsCpt props []
 
 controlsCpt :: R.Component Controls
 controlsCpt = R.hooksComponent "GraphControls" cpt
   where
-    cpt props _ =
-      case getShowControls props of
-        false -> pure $ RH.div {} []
-        true -> do
-          pure $ RH.div { className: "col-md-12", style: { paddingBottom: "10px" } }
+    cpt props _ = do
+      localControls <- initialLocalControls
+
+      pure $ case getShowControls props of
+        false -> RH.div {} []
+        true -> RH.div { className: "col-md-12", style: { paddingBottom: "10px" } }
             [ R2.menu { id: "toolbar" }
               [ RH.ul {}
                 [ -- change type button (?)
-                  RH.li {} [ pauseForceAtlasButton props.sigmaRef props.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
+                  RH.li {} [ pauseForceAtlasButton props.sigmaRef localControls.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
                 , RH.li {} [ edgesToggleButton props.showEdges ]
                 , RH.li {} [ edgeSizeControl props.edgeSize ] -- edge size : 0-3
                   -- change level
@@ -100,7 +112,6 @@ useGraphControls = do
   labelSize <- R.useState' 3.0
   nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 10.0 }
   multiNodeSelect <- R.useRef false
-  pauseForceAtlas <- R.useState' true
   showControls <- R.useState' false
   showEdges <- R.useState' true
   showSidePanel <- R.useState' false
@@ -113,7 +124,6 @@ useGraphControls = do
     , labelSize
     , multiNodeSelect
     , nodeSize
-    , pauseForceAtlas
     , showControls
     , showEdges
     , showSidePanel
@@ -121,14 +131,14 @@ useGraphControls = do
     , sigmaRef
     }
 
-getShowTree :: Record Controls -> Boolean
-getShowTree { showTree: ( should /\ _ ) } = should
-
 getShowControls :: Record Controls -> Boolean
 getShowControls { showControls: ( should /\ _ ) } = should
 
 getShowSidePanel :: Record Controls -> Boolean
 getShowSidePanel { showSidePanel: ( should /\ _ ) } = should
+
+getShowTree :: Record Controls -> Boolean
+getShowTree { showTree: ( should /\ _ ) } = should
 
 getShowEdges :: Record Controls -> Boolean
 getShowEdges { showEdges: ( should /\ _ ) } = should
@@ -145,14 +155,14 @@ getNodeSize { nodeSize: ( size /\ _ ) } = size
 getMultiNodeSelect :: Record Controls -> Boolean
 getMultiNodeSelect { multiNodeSelect } = R.readRef multiNodeSelect
 
-setShowTree :: Record Controls -> Boolean -> Effect Unit
-setShowTree { showTree: ( _ /\ set ) } v = set $ const v
-
 setShowControls :: Record Controls -> Boolean -> Effect Unit
 setShowControls { showControls: ( _ /\ set ) } v = set $ const v
 
 setShowSidePanel :: Record Controls -> Boolean -> Effect Unit
 setShowSidePanel { showSidePanel: ( _ /\ set ) } v = set $ const v
+
+setShowTree :: Record Controls -> Boolean -> Effect Unit
+setShowTree { showTree: ( _ /\ set ) } v = set $ const v
 
 setShowEdges :: Record Controls -> Boolean -> Effect Unit
 setShowEdges { showEdges: ( _ /\ set ) } v = set $ const v
