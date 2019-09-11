@@ -6,7 +6,16 @@
 }
 .range .range-slider .scale {
   position: absolute;
-  background-color: #555;
+  width: 100%;
+  height: 3px;
+  margin-top: 2px;
+  background-color: #d8d8d8;
+}
+.range .range-slider .scale-sel {
+  position: absolute;
+  background-color: #27c470;
+  width: 100%;
+  height: 7px;
 }
 .range .range-slider .knob {
   position: absolute;
@@ -16,6 +25,7 @@
   -ms-user-select: none;
   user-select: none;
   -o-user-select: none;
+  margin-top: -2px;
 }
 .range .range-slider .knob .button {
   margin-top: -3px;

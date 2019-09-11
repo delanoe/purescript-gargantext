@@ -65,6 +65,8 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
 
       -- scale bar
       scaleElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
+      -- scale sel bar
+      scaleSelElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
       -- low knob
       lowElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- a dom ref to the low knob
       -- high knob
@@ -109,6 +111,7 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
           Nothing -> destroy unit
       pure $ H.div { className, aria }
         [ renderScale scaleElem props value
+        , renderScaleSel scaleSelElem props value
         , renderKnob MinKnob lowElem  value props.bounds setDragKnob precision
         , renderKnob MaxKnob highElem value props.bounds setDragKnob precision
         ]
@@ -145,11 +148,22 @@ getDragScale knob scalePos lowPos highPos = do
 
 renderScale :: R.Ref (Nullable DOM.Element) -> Record Props -> Range.NumberRange -> R.Element
 renderScale ref {width,height} (Range.Closed {min, max}) =
-   H.div { ref, className, width, height, aria, style } []
+   H.div { ref, className, width, height, aria } []
   where
     className = "scale"
     aria = { label: "Scale running from " <> show min <> " to " <> show max }
-    style = { width: "100%", height: "3px" }
+
+renderScaleSel :: R.Ref (Nullable DOM.Element) -> Record Props -> Range.NumberRange -> R.Element
+renderScaleSel ref props (Range.Closed {min, max}) =
+    H.div { ref, className, style} []
+  where
+    className = "scale-sel"
+    style = {left: computeLeft, width: computeWidth}
+    percOffsetMin = Range.normalise props.bounds min
+    percOffsetMax = Range.normalise props.bounds max
+    computeLeft = (show $ 100.0 * percOffsetMin) <> "%"
+    computeWidth = (show $ 100.0 * (percOffsetMax - percOffsetMin)) <> "%"
+
 
 renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> R2.StateSetter (Maybe Knob) -> Int -> R.Element
 renderKnob knob ref (Range.Closed value) bounds set precision =
