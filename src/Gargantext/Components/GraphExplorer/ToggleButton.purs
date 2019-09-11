@@ -68,9 +68,9 @@ edgesToggleButton sigmaRef state =
       case mSigma of
         Just (Just s) -> do
           let settings = {
-                drawEdges: toggled
-              , drawEdgeLabels: toggled
-              , hideEdgesOnMove: not toggled
+                drawEdges: not toggled
+              , drawEdgeLabels: not toggled
+              , hideEdgesOnMove: toggled
             }
           Sigma.setSettings s settings
         _             -> pure unit
