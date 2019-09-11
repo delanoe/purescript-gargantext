@@ -49,6 +49,7 @@ function killSigma(left, right, sigma) {
 }
 function clear(sigma) { sigma.graph.clear(); }
 function bind(sigma, event, handler) { sigma.bind(event, handler); }
+function setSettings(sigma, settings) { sigma.settings(settings); }
 function startForceAtlas2(sigma, settings) { sigma.startForceAtlas2(settings); }
 function stopForceAtlas2(sigma) { sigma.stopForceAtlas2(); }
 function killForceAtlas2(sigma) { sigma.killForceAtlas2(); }
@@ -62,6 +63,7 @@ exports._killRenderer = killRenderer;
 exports._killSigma = killSigma
 exports._clear = clear;
 exports._bind = bind;
+exports._setSettings = setSettings;
 exports._startForceAtlas2 = startForceAtlas2;
 exports._stopForceAtlas2 = stopForceAtlas2;
 exports._killForceAtlas2 = killForceAtlas2;

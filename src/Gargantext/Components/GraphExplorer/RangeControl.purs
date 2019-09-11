@@ -6,11 +6,14 @@ module Gargantext.Components.GraphExplorer.RangeControl
   ) where
 
 import Prelude
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.RangeSlider as RS
+import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Range as Range
 
 type Props = (
@@ -31,8 +34,8 @@ rangeControlCpt = R.hooksComponent "RangeButton" cpt
           , RS.rangeSlider sliderProps
           ]
 
-edgeSizeControl :: R.State Range.NumberRange -> R.Element
-edgeSizeControl (state /\ setState) =
+edgeSizeControl :: R.Ref (Maybe Sigmax.Sigma) -> R.State Range.NumberRange -> R.Element
+edgeSizeControl sigmaRef (state /\ setState) =
   rangeControl {
       caption: "Edge Size"
     , sliderProps: {
@@ -42,12 +45,20 @@ edgeSizeControl (state /\ setState) =
       , step: 1.0
       , width: 10.0
       , height: 5.0
-      , onChange: setState <<< const
+      , onChange: \range@(Range.Closed {min, max}) -> do
+          let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
+          case mSigma of
+            Just (Just s) -> Sigma.setSettings s {
+                minEdgeSize: min
+              , maxEdgeSize: max
+              }
+            _             -> pure unit
+          setState $ const range
       }
     }
 
-nodeSizeControl :: R.State Range.NumberRange -> R.Element
-nodeSizeControl (state /\ setState) =
+nodeSizeControl :: R.Ref (Maybe Sigmax.Sigma) -> R.State Range.NumberRange -> R.Element
+nodeSizeControl sigmaRef (state /\ setState) =
   rangeControl {
       caption: "Node Size"
     , sliderProps: {
@@ -57,6 +68,14 @@ nodeSizeControl (state /\ setState) =
       , step: 1.0
       , width: 10.0
       , height: 5.0
-      , onChange: setState <<< const
+      , onChange: \range@(Range.Closed {min, max}) -> do
+          let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
+          case mSigma of
+            Just (Just s) -> Sigma.setSettings s {
+                minNodeSize: min
+              , maxNodeSize: max
+              }
+            _             -> pure unit
+          setState $ const range
       }
     }

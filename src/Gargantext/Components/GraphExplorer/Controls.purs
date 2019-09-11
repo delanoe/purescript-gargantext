@@ -7,10 +7,7 @@ module Gargantext.Components.GraphExplorer.Controls
  , getShowTree, setShowTree
  , getShowControls, setShowControls
  , getShowSidePanel, setShowSidePanel
- , getShowEdges, setShowEdges
  , getCursorSize, setCursorSize
- , getLabelSize, setLabelSize
- , getNodeSize, setNodeSize
  , getMultiNodeSelect, setMultiNodeSelect
  ) where
 
@@ -33,43 +30,38 @@ import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( cursorSize :: R.State Number
-  , edgeSize :: R.State Range.NumberRange
-  , labelSize :: R.State Number
-  , nodeSize :: R.State Range.NumberRange
   , multiNodeSelect :: R.Ref Boolean
   , showControls :: R.State Boolean
-  , showEdges :: R.State Boolean
   , showSidePanel :: R.State Boolean
   , showTree :: R.State Boolean
   , sigmaRef :: R.Ref (Maybe Sigmax.Sigma)
   )
 
 controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
-controlsToSigmaSettings { cursorSize: (cursorSize /\ _)
-                        , edgeSize: (Range.Closed { min: edgeSizeMin, max: edgeSizeMax } /\ _)
-                        , labelSize: (labelSize /\ _)
-                        , nodeSize: (Range.Closed { min: nodeSizeMin, max: nodeSizeMax } /\ _)
-                        , showEdges: (showEdges /\ _)} = Graph.sigmaSettings {
-    defaultLabelSize = labelSize
-  , drawEdges = showEdges
-  , drawEdgeLabels = showEdges
-  , hideEdgesOnMove = not showEdges
-  , minEdgeSize = if showEdges then edgeSizeMin else 0.0
-  , maxEdgeSize = if showEdges then edgeSizeMax else 0.0
-  , minNodeSize = nodeSizeMin
-  , maxNodeSize = nodeSizeMax
-  }
+controlsToSigmaSettings { cursorSize: (cursorSize /\ _)} = Graph.sigmaSettings
 
 type LocalControls =
-  ( pauseForceAtlas :: R.State Boolean
+  ( edgeSize :: R.State Range.NumberRange
+  , labelSize :: R.State Number
+  , nodeSize :: R.State Range.NumberRange
+  , pauseForceAtlas :: R.State Boolean
+  , showEdges :: R.State Boolean
   )
 
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
+  edgeSize <- R.useState' $ Range.Closed { min: 0.5, max: 1.0 }
+  labelSize <- R.useState' 3.0
+  nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 10.0 }
   pauseForceAtlas <- R.useState' true
+  showEdges <- R.useState' true
 
   pure $ {
-    pauseForceAtlas
+    edgeSize
+  , labelSize
+  , nodeSize
+  , pauseForceAtlas
+  , showEdges
   }
 
 controls :: Record Controls -> R.Element
@@ -88,16 +80,16 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
               [ RH.ul {}
                 [ -- change type button (?)
                   RH.li {} [ pauseForceAtlasButton props.sigmaRef localControls.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
-                , RH.li {} [ edgesToggleButton props.showEdges ]
-                , RH.li {} [ edgeSizeControl props.edgeSize ] -- edge size : 0-3
+                , RH.li {} [ edgesToggleButton props.sigmaRef localControls.showEdges ]
+                , RH.li {} [ edgeSizeControl props.sigmaRef localControls.edgeSize ] -- edge size : 0-3
                   -- change level
                   -- file upload
                   -- run demo
                   -- search button
                   -- search topics
                 , RH.li {} [ cursorSizeButton props.cursorSize ] -- cursor size: 0-100
-                , RH.li {} [ labelSizeButton props.labelSize ] -- labels size: 1-4
-                , RH.li {} [ nodeSizeControl props.nodeSize ] -- node size : 5-15
+                , RH.li {} [ labelSizeButton props.sigmaRef localControls.labelSize ] -- labels size: 1-4
+                , RH.li {} [ nodeSizeControl props.sigmaRef localControls.nodeSize ] -- node size : 5-15
                   -- zoom: 0 -100 - calculate ratio
                   -- toggle multi node selection
                   -- save button
@@ -108,24 +100,16 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
   cursorSize <- R.useState' 10.0
-  edgeSize <- R.useState' $ Range.Closed { min: 0.5, max: 1.0 }
-  labelSize <- R.useState' 3.0
-  nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 10.0 }
   multiNodeSelect <- R.useRef false
   showControls <- R.useState' false
-  showEdges <- R.useState' true
   showSidePanel <- R.useState' false
   showTree <- R.useState' false
   sigmaRef <- R.useRef Nothing
 
   pure {
       cursorSize
-    , edgeSize
-    , labelSize
     , multiNodeSelect
-    , nodeSize
     , showControls
-    , showEdges
     , showSidePanel
     , showTree
     , sigmaRef
@@ -140,17 +124,8 @@ getShowSidePanel { showSidePanel: ( should /\ _ ) } = should
 getShowTree :: Record Controls -> Boolean
 getShowTree { showTree: ( should /\ _ ) } = should
 
-getShowEdges :: Record Controls -> Boolean
-getShowEdges { showEdges: ( should /\ _ ) } = should
-
 getCursorSize :: Record Controls -> Number
 getCursorSize { cursorSize: ( size /\ _ ) } = size
-
-getLabelSize :: Record Controls -> Number
-getLabelSize { labelSize: ( size /\ _ ) } = size
-
-getNodeSize :: Record Controls -> Range.NumberRange
-getNodeSize { nodeSize: ( size /\ _ ) } = size
 
 getMultiNodeSelect :: Record Controls -> Boolean
 getMultiNodeSelect { multiNodeSelect } = R.readRef multiNodeSelect
@@ -164,17 +139,8 @@ setShowSidePanel { showSidePanel: ( _ /\ set ) } v = set $ const v
 setShowTree :: Record Controls -> Boolean -> Effect Unit
 setShowTree { showTree: ( _ /\ set ) } v = set $ const v
 
-setShowEdges :: Record Controls -> Boolean -> Effect Unit
-setShowEdges { showEdges: ( _ /\ set ) } v = set $ const v
-
 setCursorSize :: Record Controls -> Number -> Effect Unit
 setCursorSize { cursorSize: ( _ /\ setSize ) } v = setSize $ const v
-
-setLabelSize :: Record Controls -> Number -> Effect Unit
-setLabelSize { labelSize: ( _ /\ setSize) } v = setSize $ const v
-
-setNodeSize :: Record Controls -> Range.NumberRange -> Effect Unit
-setNodeSize { nodeSize: ( _ /\ setSize ) } v = setSize $ const v
 
 setMultiNodeSelect :: Record Controls -> Boolean -> Effect Unit
 setMultiNodeSelect { multiNodeSelect } = R.setRef multiNodeSelect

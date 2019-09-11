@@ -96,6 +96,11 @@ bind_ s e h = runEffectFn3 _bind s e (mkEffectFn1 h)
 
 foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 
+setSettings :: forall settings. Sigma -> settings -> Effect Unit
+setSettings = runEffectFn2 _setSettings
+
+foreign import _setSettings :: forall settings. EffectFn2 Sigma settings Unit
+
 startForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
 startForceAtlas2 = runEffectFn2 _startForceAtlas2
 
