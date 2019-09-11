@@ -97,7 +97,9 @@ bind_ s e h = runEffectFn3 _bind s e (mkEffectFn1 h)
 foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 
 setSettings :: forall settings. Sigma -> settings -> Effect Unit
-setSettings = runEffectFn2 _setSettings
+setSettings sigma settings = do
+  runEffectFn2 _setSettings sigma settings
+  refresh sigma
 
 foreign import _setSettings :: forall settings. EffectFn2 Sigma settings Unit
 
