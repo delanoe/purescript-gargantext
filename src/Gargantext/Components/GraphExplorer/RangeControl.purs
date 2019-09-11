@@ -29,7 +29,7 @@ rangeControlCpt = R.hooksComponent "RangeButton" cpt
   where
     cpt {caption, sliderProps} _ = do
       pure $
-        H.span {}
+        H.span {className: "range"}
           [ H.label {} [ H.text caption ]
           , RS.rangeSlider sliderProps
           ]

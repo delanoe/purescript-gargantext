@@ -1,20 +1,27 @@
-.range-slider {
+.range {
+  width: 400px;
+}
+.range .range-slider {
   position: relative;
 }
-.range-slider .scale {
+.range .range-slider .scale {
   position: absolute;
   background-color: #555;
 }
-.range-slider .knob {
+.range .range-slider .knob {
   position: absolute;
   cursor: pointer;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -o-user-select: none;
 }
-.range-slider .knob .button {
+.range .range-slider .knob .button {
   margin-top: -3px;
-  background: #f00;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  background: #eee;
+  width: 30px;
+  height: 20px;
 }
 
 /*# sourceMappingURL=range-slider.css.map */

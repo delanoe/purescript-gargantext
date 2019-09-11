@@ -154,8 +154,10 @@ renderScale ref {width,height} (Range.Closed {min, max}) =
 renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> R2.StateSetter (Maybe Knob) -> Int -> R.Element
 renderKnob knob ref (Range.Closed value) bounds set precision =
   H.div { ref, tabIndex, className, aria, onMouseDown, style } [
-      H.div { className: "button" } []
-    , H.text $ text $ toFixed precision val
+      H.div { className: "button" }
+        [
+          H.text $ text $ toFixed precision val
+        ]
   ]
   where
     text (Just num) = num

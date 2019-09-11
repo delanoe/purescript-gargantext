@@ -1,18 +1,27 @@
-.range-slider
-  position: relative
+.range
+  width: 400px
 
-  .scale
-    position: absolute
-    background-color: #555
+  .range-slider
+    position: relative
 
-  .knob
-    position: absolute
-    cursor: pointer
+    .scale
+      position: absolute
+      background-color: #555
 
-    .button
-      margin-top: -3px
+    .knob
+      position: absolute
+      cursor: pointer
+      -moz-user-select: none
+      -webkit-user-select: none
+      -ms-user-select: none
+      user-select: none
+      -o-user-select: none
 
-      background: #f00
-      width: 10px
-      height: 10px
-      border-radius: 50%
+      .button
+        margin-top: -3px
+
+        //background: #f00
+        background: #eee
+        width: 30px
+        height: 20px
+        //border-radius: 50%
