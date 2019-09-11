@@ -26,5 +26,8 @@
   display: inline;
   float: left;
 }
+#graph-explorer #tree {
+  position: absolute;
+}
 
 /*# sourceMappingURL=Graph.css.map */

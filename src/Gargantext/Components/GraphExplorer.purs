@@ -14,6 +14,7 @@ import Thermite (Render, Spec, simpleSpec)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma (Sigma)
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Components.GraphExplorer.Controls as Controls
@@ -87,7 +88,7 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
                   ]
                 , row [ Controls.controls controls ]
                 , row [ tree {mCurrentRoute, treeId} controls
-                      , mGraph controls {graphId, graph}
+                      , mGraph controls.sigmaRef {graphId, graph}
                       , Sidebar.sidebar controls ]
                 , row [ ]
                 ]
@@ -102,39 +103,37 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
     pullLeft = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }
 
-    tree {treeId: Nothing} _ = RH.div {} []
-    tree _ {showTree: false /\ _} = RH.div {} []
+    tree {treeId: Nothing} _ = RH.div { id: "tree" } []
+    tree _ {showTree: false /\ _} = RH.div { id: "tree" } []
     tree {mCurrentRoute, treeId: Just treeId} _ =
-      RH.div { className: "col-md-2" } [ Tree.elTreeview {mCurrentRoute, root: treeId} ]
+      RH.div { id: "tree", className: "col-md-2" } [
+        Tree.elTreeview {mCurrentRoute, root: treeId}
+      ]
 
-    mGraph :: Record Controls.Controls -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
+    mGraph :: R.Ref (Maybe Sigmax.Sigma) -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
     mGraph _ {graph: Nothing} = RH.div {} []
-    mGraph controls {graphId, graph: Just graph} = graphView controls {graphId, graph}
+    mGraph sigmaRef {graphId, graph: Just graph} = graphView sigmaRef {graphId, graph}
 
 type GraphProps = (
     graphId :: GraphId
   , graph :: Graph.Graph
 )
 
-graphView :: Record Controls.Controls -> Record GraphProps -> R.Element
-graphView controls props = R.createElement el props []
+graphView :: R.Ref (Maybe Sigmax.Sigma) -> Record GraphProps -> R.Element
+graphView sigmaRef props = R.createElement (R.memo el (==)) props []
   where
     el = R.hooksComponent "GraphView" cpt
     cpt {graphId, graph} _children = do
       pure $
-        RH.div { className: colSize controls }
+        RH.div { id: "graph-view", className: "col-md-12" }
         [
           Graph.graph {
-               forceAtlas2Settings: Graph.forceAtlas2Settings
+             forceAtlas2Settings: Graph.forceAtlas2Settings
              , graph
-             , sigmaSettings: Controls.controlsToSigmaSettings controls
-             , sigmaRef: controls.sigmaRef
+             , sigmaSettings: Graph.sigmaSettings
+             , sigmaRef: sigmaRef
              }
         ]
-    -- TODO: this doesn't work? seems to always render "col-md-9"
-    colSize {showSidePanel: (true /\ _), showTree: (true /\ _)} = "col-md-8"
-    colSize {showSidePanel: (false /\ _), showTree: (false /\ _)} = "col-md-12"
-    colSize _ = "col-md-10"
 
 convert :: GET.GraphData -> Graph.Graph
 convert (GET.GraphData r) = Sigmax.Graph {nodes, edges}

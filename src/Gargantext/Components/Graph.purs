@@ -169,8 +169,8 @@ sigmaSettings =
   , labelSizeRatio: 2.0               -- label size in ratio of node size
   , labelThreshold: 2.0               -- min node cam size to start showing label
   , maxEdgeSize: 1.0
-  , maxNodeSize: 30.0
-  , minEdgeSize: 1.0              -- in fact used in tina as edge size
+  , maxNodeSize: 10.0
+  , minEdgeSize: 0.5              -- in fact used in tina as edge size
   , minNodeSize: 5.0
   , mouseEnabled: true
   , mouseZoomDuration: 150.0

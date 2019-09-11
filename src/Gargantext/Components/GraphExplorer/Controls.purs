@@ -51,7 +51,7 @@ type LocalControls =
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
   edgeSize <- R.useState' $ Range.Closed { min: 0.5, max: 1.0 }
-  labelSize <- R.useState' 3.0
+  labelSize <- R.useState' 14.0
   nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 10.0 }
   pauseForceAtlas <- R.useState' true
   showEdges <- R.useState' true
