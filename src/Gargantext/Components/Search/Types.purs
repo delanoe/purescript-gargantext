@@ -17,19 +17,52 @@ import Gargantext.Config.REST (put)
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 
-data Database = All | PubMed | HAL | IsTex
+allDatabases :: Array Database
+allDatabases = [All, PubMed
+               , HAL_EN
+               , HAL_FR
+               , IsTex_EN
+               , IsTex_FR
+               , Isidore_EN, Isidore_FR]
+
+data Database = All | PubMed
+              | HAL_EN       | HAL_FR
+              | IsTex_EN     | IsTex_FR
+              | Isidore_EN   | Isidore_FR
+
+data Langs = FR | EN
+
+-- | Types needed for now maybe not useful later (we could factorize the Type with Database Lang but no need for now)
+instance showLangs :: Show Langs where
+  show FR = "FR"
+  show EN = "EN"
 
 instance showDatabase :: Show Database where
   show All    = "All"
   show PubMed = "PubMed"
-  show HAL    = "HAL"
-  show IsTex  = "IsTex"
+  
+  show HAL_EN = "HAL_" <> show EN
+  show HAL_FR = "HAL_" <> show FR
+  
+  show IsTex_EN  = "IsTex_" <> show EN
+  show IsTex_FR  = "IsTex_" <> show FR
+  
+  show Isidore_EN = "Isidore_" <> show EN
+  show Isidore_FR = "Isidore_" <> show FR
 
 readDatabase :: String -> Maybe Database
 readDatabase "All" = Just All
 readDatabase "PubMed" = Just PubMed
-readDatabase "HAL" = Just HAL
-readDatabase "IsTex" = Just IsTex
+
+readDatabase "HAL_EN" = Just HAL_EN
+readDatabase "HAL_FR" = Just HAL_FR
+
+readDatabase "IsTex_EN" = Just IsTex_EN
+readDatabase "IsTex_FR" = Just IsTex_FR
+
+readDatabase "Isidore_EN" = Just Isidore_EN
+readDatabase "Isidore_FR" = Just Isidore_FR
+
 readDatabase _ = Nothing
 
 derive instance eqDatabase :: Eq Database
@@ -37,9 +70,6 @@ derive instance eqDatabase :: Eq Database
 instance encodeJsonDatabase :: EncodeJson Database where
   encodeJson a = encodeJson (show a)
 
-
-allDatabases :: Array Database
-allDatabases = [All, PubMed]
 
 data SearchOrder
   = DateAsc
