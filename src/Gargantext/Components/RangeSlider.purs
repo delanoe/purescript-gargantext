@@ -13,6 +13,7 @@ import Data.Nullable (Nullable, null, toMaybe)
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
+import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as Event
@@ -99,9 +100,10 @@ rangeSliderCpt = R.hooksComponent "RangeSlider" cpt
                   case reproject drag scalePos props.bounds props.epsilon (R2.domMousePosition event) of
                     Just val -> do
                       setKnob knob setValue value val
+                      props.onChange $ knobSetter knob value val
                     Nothing -> destroy unit
             let onMouseUp = EL.callback $ \(_event :: Event.MouseEvent) -> do
-                  props.onChange value
+                  --props.onChange $ knobSetter knob value val
                   setDragKnob $ const Nothing
                   destroy unit
             EL.addEventListener document "mousemove" onMouseMove
@@ -129,10 +131,11 @@ destroyEventHandler name ref = traverse_ destroy $ R.readRef ref
       R.setRef ref Nothing
 
 setKnob :: Knob -> R2.StateSetter Range.NumberRange -> Range.NumberRange -> Number -> Effect Unit
-setKnob knob setValue r val = setValue $ const $ setter knob r val
-  where
-    setter MinKnob = Range.withMin
-    setter MaxKnob = Range.withMax
+setKnob knob setValue r val = setValue $ const $ knobSetter knob r val
+
+knobSetter :: Knob -> Range.NumberRange -> Number -> Range.NumberRange
+knobSetter MinKnob = Range.withMin
+knobSetter MaxKnob = Range.withMax
 
 getDragScale :: Knob -> Maybe DOMRect -> Maybe DOMRect -> Maybe DOMRect -> Maybe Range.NumberRange
 getDragScale knob scalePos lowPos highPos = do
