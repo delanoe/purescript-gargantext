@@ -7,6 +7,7 @@ import Data.Foldable (foldMap)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Sequence as Seq
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -89,7 +90,7 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
                 , row [ Controls.controls controls ]
                 , row [ tree {mCurrentRoute, treeId} controls
                       , mGraph controls.sigmaRef {graphId, graph}
-                      , Sidebar.sidebar controls ]
+                      , Sidebar.sidebar {showSidePanel: fst controls.showSidePanel} ]
                 , row [ ]
                 ]
               ]
@@ -120,8 +121,10 @@ type GraphProps = (
 )
 
 graphView :: R.Ref (Maybe Sigmax.Sigma) -> Record GraphProps -> R.Element
-graphView sigmaRef props = R.createElement (R.memo el (==)) props []
+--graphView sigmaRef props = R.createElement (R.memo el memoCmp) props []
+graphView sigmaRef props = R.createElement el props []
   where
+    --memoCmp props1 props2 = props1.graphId == props2.graphId
     el = R.hooksComponent "GraphView" cpt
     cpt {graphId, graph} _children = do
       pure $

@@ -9,14 +9,18 @@ import Reactix.DOM.HTML as RH
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Utils.Reactix as R2
 
+type Props = (
+  showSidePanel :: Boolean
+  )
 
-sidebar :: Record Controls.Controls -> R.Element
-sidebar controls = R.createElement sidebarCpt controls []
 
-sidebarCpt :: R.Component Controls.Controls
+sidebar :: Record Props -> R.Element
+sidebar props = R.createElement sidebarCpt props []
+
+sidebarCpt :: R.Component Props
 sidebarCpt = R.hooksComponent "Sidebar" cpt
   where
-    cpt {showSidePanel: (false /\ _)} _children = do
+    cpt {showSidePanel: false} _children = do
       pure $ RH.div {} []
     cpt props _children = do
       pure $

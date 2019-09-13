@@ -104,7 +104,7 @@ useGraphControls = do
   showControls <- R.useState' false
   showSidePanel <- R.useState' false
   showTree <- R.useState' false
-  sigmaRef <- R.useRef Nothing
+  sigmaRef <- R2.nothingRef
 
   pure {
       cursorSize

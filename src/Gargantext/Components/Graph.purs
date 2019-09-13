@@ -42,11 +42,7 @@ graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
       ref <- R.useRef null
-      sigma <- useSigma ref props.sigmaSettings props.sigmaRef
-
-      useCanvasRenderer ref sigma
-      useData sigma props.graph
-      useForceAtlas2 sigma props.forceAtlas2Settings
+      startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
       pure $ RH.div { ref, style: {height: "95%"} } []
 
