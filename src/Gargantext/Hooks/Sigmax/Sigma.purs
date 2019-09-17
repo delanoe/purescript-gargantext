@@ -1,13 +1,16 @@
 module Gargantext.Hooks.Sigmax.Sigma where
 
 import Prelude
-import Type.Row (class Union)
+
 import Data.Either (Either(..))
 import Data.Nullable (null)
 import Data.Unit (Unit)
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
-import FFI.Simple.Objects (named)
+import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, mkEffectFn1, runEffectFn1, EffectFn2, runEffectFn2, EffectFn3, runEffectFn3, EffectFn4, runEffectFn4)
+import FFI.Simple.Objects (named)
+import Type.Row (class Union)
 
 foreign import data Sigma :: Type
 
@@ -53,6 +56,19 @@ refresh :: Sigma -> Effect Unit
 refresh = runEffectFn1 _refresh
 
 foreign import _refresh :: EffectFn1 Sigma Unit
+
+refreshForceAtlas :: Sigma -> Effect Unit
+refreshForceAtlas sigma = do
+  isRunning <- isForceAtlas2Running sigma
+  if isRunning then
+    pure unit
+  else do
+    _ <- setTimeout 100 $ do
+      restartForceAtlas2 sigma
+      _ <- setTimeout 100 $
+        stopForceAtlas2 sigma
+      pure unit
+    pure unit
 
 addRenderer :: forall r err. Sigma -> r -> Effect (Either err Unit)
 addRenderer = runEffectFn4 _addRenderer Left Right

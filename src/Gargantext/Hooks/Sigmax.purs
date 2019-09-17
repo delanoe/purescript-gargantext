@@ -60,9 +60,19 @@ startSigma ref sigmaRef settings forceAtlas2Settings graph = do
     useData sigma graph
     useForceAtlas2 sigma forceAtlas2Settings
   else
-    R.useEffect' $ do
-      log2 "refreshing" $ readSigma sigma
-      delay unit $ \_ -> pure $ Sigma.refresh <$> readSigma sigma
+    pure unit
+
+  R.useEffect $ do
+    delay unit $ handleRefresh sigma
+
+  where
+    handleRefresh sigma _ = do
+      let rSigma = readSigma sigma
+      _ <- case rSigma of
+        Nothing -> log2 "[handleRefresh] can't refresh" sigma
+        Just s -> do
+          Sigma.refreshForceAtlas s
+      pure $ pure unit
 
 -- | Manages a sigma with the given settings
 useSigma :: forall settings. R.Ref (Nullable Element) -> settings -> R.Ref (Maybe Sigma) -> R.Hooks {sigma :: Sigma, isNew :: Boolean}

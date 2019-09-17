@@ -131,7 +131,7 @@ graphView sigmaRef props = R.createElement el props []
         RH.div { id: "graph-view", className: "col-md-12" }
         [
           Graph.graph {
-             forceAtlas2Settings: Graph.forceAtlas2Settings
+               forceAtlas2Settings: Graph.forceAtlas2Settings
              , graph
              , sigmaSettings: Graph.sigmaSettings
              , sigmaRef: sigmaRef
