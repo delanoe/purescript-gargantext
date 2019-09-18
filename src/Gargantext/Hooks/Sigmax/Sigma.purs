@@ -2,14 +2,16 @@ module Gargantext.Hooks.Sigmax.Sigma where
 
 import Prelude
 
+import Data.Array (head)
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.Unit (Unit)
 import DOM.Simple.Console (log, log2)
-import Effect (Effect)
+import Effect (Effect, foreachE)
 import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, mkEffectFn1, runEffectFn1, EffectFn2, runEffectFn2, EffectFn3, runEffectFn3, EffectFn4, runEffectFn4)
-import FFI.Simple.Objects (named)
+import FFI.Simple.Objects (named, getProperty)
 import Type.Row (class Union)
 
 foreign import data Sigma :: Type
@@ -158,3 +160,29 @@ sigmaEasing =
   , cubicOut : SigmaEasing "cubicOut"
   , cubicInOut : SigmaEasing "cubicInOut"
   }
+
+type CameraProps =
+  ( x :: Number
+  , y :: Number
+  , ratio :: Number
+  , angle :: Number
+  )
+
+foreign import data CameraInstance' :: # Type
+type CameraInstance = { | CameraInstance' }
+
+cameras :: Sigma -> Effect (Array CameraInstance)
+cameras = runEffectFn1 _getCameras
+
+foreign import _getCameras :: EffectFn1 Sigma (Array CameraInstance)
+
+goTo :: Record CameraProps -> CameraInstance -> Effect Unit
+goTo props cam = do
+  runEffectFn2 _goTo cam props
+
+foreign import _goTo :: EffectFn2 CameraInstance (Record CameraProps) Unit
+
+goToAllCameras :: Sigma -> Record CameraProps -> Effect Unit
+goToAllCameras sigma props = do
+  cs <- cameras sigma
+  foreachE cs (goTo props)

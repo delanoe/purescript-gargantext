@@ -55,6 +55,15 @@ function stopForceAtlas2(sigma) { sigma.stopForceAtlas2(); }
 function killForceAtlas2(sigma) { sigma.killForceAtlas2(); }
 function isForceAtlas2Running(sigma) { return sigma.isForceAtlas2Running(); }
 
+function getCameras(sigma) {
+  // For some reason, sigma.cameras is an object with integer keys
+  return Object.values(sigma.cameras);
+};
+
+function goTo(cam, props) {
+  return cam.goTo(props);
+};
+
 exports._sigma = _sigma;
 exports._graphRead = graphRead;
 exports._refresh = refresh;
@@ -68,3 +77,5 @@ exports._startForceAtlas2 = startForceAtlas2;
 exports._stopForceAtlas2 = stopForceAtlas2;
 exports._killForceAtlas2 = killForceAtlas2;
 exports._isForceAtlas2Running = isForceAtlas2Running;
+exports._getCameras = getCameras;
+exports._goTo = goTo;

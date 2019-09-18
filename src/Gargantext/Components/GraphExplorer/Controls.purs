@@ -20,6 +20,7 @@ import Reactix as R
 import Reactix.DOM.HTML as RH
 
 import Gargantext.Components.Graph as Graph
+import Gargantext.Components.GraphExplorer.Button (centerButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
@@ -79,7 +80,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
             [ R2.menu { id: "toolbar" }
               [ RH.ul {}
                 [ -- change type button (?)
-                  RH.li {} [ pauseForceAtlasButton props.sigmaRef localControls.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
+                  RH.li {} [ centerButton props.sigmaRef ]
+                , RH.li {} [ pauseForceAtlasButton props.sigmaRef localControls.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
                 , RH.li {} [ edgesToggleButton props.sigmaRef localControls.showEdges ]
                 , RH.li {} [ edgeSizeControl props.sigmaRef localControls.edgeSize ] -- edge size : 0-3
                   -- change level
