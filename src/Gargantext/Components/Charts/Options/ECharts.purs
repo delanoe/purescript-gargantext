@@ -11,16 +11,15 @@ import Gargantext.Components.Charts.Options.Legend (legendType, LegendMode(..), 
 import Gargantext.Components.Charts.Options.Position (Align(..), LeftRelativePosition(..), TopRelativePosition(..), numberPosition, percentPosition, relativePosition)
 import Gargantext.Components.Charts.Options.Series (Series, seriesPieD1)
 import Gargantext.Components.Charts.Options.Type (DataZoom, Echarts, Legend, Option, Title, XAxis, YAxis, xAxis, yAxis)
-import React (unsafeCreateElementDynamic)
-import React as R
+import React (ReactClass, unsafeCreateElementDynamic)
+import Reactix as R
+import Gargantext.Utils.Reactix as R2
 import Unsafe.Coerce (unsafeCoerce)
 
+foreign import eChartsClass :: ReactClass Echarts
 
-foreign import eChartsClass :: R.ReactClass Echarts
-
-chart :: Options -> R.ReactElement
+chart :: Options -> R.Element
 chart = echarts <<< chartWith <<< opts
-
 
 chartWith :: Option -> Echarts
 chartWith option =
@@ -39,8 +38,8 @@ chartWith option =
 --, onEvents   : Nothing
   }
 
-echarts :: Echarts -> R.ReactElement
-echarts c = unsafeCreateElementDynamic (unsafeCoerce eChartsClass) c []
+echarts :: Echarts -> R.Element
+echarts c = R2.buff $ unsafeCreateElementDynamic (unsafeCoerce eChartsClass) c []
 
 type MainTitle = String
 type SubTitle  = String
