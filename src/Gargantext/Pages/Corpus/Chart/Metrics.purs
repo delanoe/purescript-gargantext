@@ -6,9 +6,10 @@ import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
-import Gargantext.Config
+import Gargantext.Config (Ends, BackendRoute(..), TabType, url)
 import Gargantext.Config.REST (get)
 import Reactix as R
+import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 import Gargantext.Types (TermList(..))
@@ -29,6 +30,8 @@ type Path =
   , tabType  :: TabType
   , limit    :: Maybe Int
   }
+
+type Props = ( path :: Path, ends :: Ends )
 
 newtype Metric = Metric
   { label :: String
@@ -92,26 +95,29 @@ scatterOptions metrics = Options
                         }
     --}
 
-getMetrics :: Path -> Aff Loaded
-getMetrics {corpusId, listId, limit, tabType} = do
-  Metrics ms <- get $ toUrl endConfigStateful Back (CorpusMetrics {listId, tabType, limit}) $ Just corpusId
+getMetrics :: Ends -> Path -> Aff Loaded
+getMetrics ends {corpusId, listId, limit, tabType} = do
+  Metrics ms <- get $ url ends metrics
   pure ms."data"
+  where metrics = CorpusMetrics {listId, tabType, limit} (Just corpusId)
 
+metrics :: Record Props -> R.Element
+metrics props = R.createElement metricsCpt props []
 
-metricsSpec = R2.elSpec $ R.hooksComponent "LoadedMetrics" cpt
+metricsCpt :: R.Component Props
+metricsCpt = R.hooksComponent "LoadedMetrics" cpt
   where
-    cpt p _ = do
+    cpt {path, ends} _ = do
       setReload <- R.useState' 0
+      pure $ metricsLoadView ends setReload path
 
-      pure $ metricsLoadView setReload p
-
-metricsLoadView :: R.State Int -> Path -> R.Element
-metricsLoadView setReload p = R.createElement el p []
+metricsLoadView :: Ends -> R.State Int -> Path -> R.Element
+metricsLoadView ends setReload path = R.createElement el {ends,path} []
   where
     el = R.hooksComponent "MetricsLoadedView" cpt
-    cpt p' _ = do
-      useLoader p' getMetrics $ \{loaded} ->
+    cpt {ends, path} _ = do
+      useLoader path (getMetrics ends) $ \loaded ->
         loadedMetricsView setReload loaded
 
 loadedMetricsView :: R.State Int -> Loaded -> R.Element
-loadedMetricsView setReload loaded = U.reloadButtonWrap setReload $ R2.buff $ chart $ scatterOptions loaded
+loadedMetricsView setReload loaded = U.reloadButtonWrap setReload $ chart $ scatterOptions loaded

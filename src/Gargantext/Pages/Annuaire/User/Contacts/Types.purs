@@ -2,33 +2,34 @@ module Gargantext.Pages.Annuaire.User.Contacts.Types where
 
 import Prelude
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
-import Data.Maybe (Maybe, fromMaybe)
-import Data.Map (Map)
-
+import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
+import Data.Either (Either(..))
+import Data.Lens (Lens', Prism', lens, prism)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Map (Map(..))
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Newtype (class Newtype)
 
 -- TODO: should it be a NodePoly HyperdataContact ?
-newtype Contact = Contact {
-  id :: Int
+newtype Contact =
+  Contact
+  { id :: Int
   , typename :: Maybe Int
   , userId :: Maybe Int
   , parentId :: Maybe Int
   , name :: Maybe String
   , date :: Maybe String
-  , hyperdata :: HyperdataContact
-  }
+  , hyperdata :: HyperdataContact }
 
 derive instance newtypeContact :: Newtype Contact _
 
 newtype ContactWho =
-     ContactWho { idWho     :: Maybe String
-                , firstName :: Maybe String
-                , lastName  :: Maybe String
-                , keywords  :: (Array String)
-                , freetags  :: (Array String)
-                }
+  ContactWho
+  { idWho     :: Maybe String
+  , firstName :: Maybe String
+  , lastName  :: Maybe String
+  , keywords  :: (Array String)
+  , freetags  :: (Array String) }
 
 derive instance newtypeContactWho :: Newtype ContactWho _
 
@@ -48,20 +49,21 @@ instance decodeContactWho :: DecodeJson ContactWho
       pure $ ContactWho {idWho, firstName, lastName, keywords:k, freetags:f}
 
 newtype ContactWhere =
-     ContactWhere { organization :: (Array String)
-                  , labTeamDepts :: (Array String)
+  ContactWhere
+  { organization :: (Array String)
+  , labTeamDepts :: (Array String)
                   
-                  , role         :: Maybe String
-                  
-                  , office       :: Maybe String
-                  , country      :: Maybe String
-                  , city         :: Maybe String
-                  
-                  , touch        :: Maybe ContactTouch
-                  
-                  , entry        :: Maybe String
-                  , exit         :: Maybe String
-  }
+  , role         :: Maybe String
+                    
+  , office       :: Maybe String
+  , country      :: Maybe String
+  , city         :: Maybe String
+                    
+  , touch        :: Maybe ContactTouch
+                    
+  , entry        :: Maybe String
+  , exit         :: Maybe String }
+
 derive instance newtypeContactWhere :: Newtype ContactWhere _
 
 instance decodeContactWhere :: DecodeJson ContactWhere
@@ -84,10 +86,11 @@ instance decodeContactWhere :: DecodeJson ContactWhere
       pure $ ContactWhere {organization:o, labTeamDepts:l, role, office, country, city, touch, entry, exit}
 
 newtype ContactTouch =
-     ContactTouch { mail      :: Maybe String
-                  , phone     :: Maybe String
-                  , url       :: Maybe String
-  }
+  ContactTouch
+  { mail  :: Maybe String
+  , phone :: Maybe String
+  , url   :: Maybe String }
+
 derive instance newtypeContactTouch :: Newtype ContactTouch _
 
 instance decodeContactTouch :: DecodeJson ContactTouch

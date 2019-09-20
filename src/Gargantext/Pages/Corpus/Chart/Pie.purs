@@ -7,10 +7,10 @@ import Data.Maybe (Maybe(..))
 import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
-import Gargantext.Config
+import Gargantext.Config (Ends, BackendRoute(..), TabType, ChartType(..), url)
 import Gargantext.Config.REST (get)
 import Reactix as R
-import Thermite (Spec)
+import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 import Gargantext.Types (TermList(..))
@@ -27,6 +27,8 @@ type Path =
   { corpusId :: Int
   , tabType  :: TabType
   }
+
+type Props = ( ends :: Ends, path :: Path )
 
 newtype ChartMetrics = ChartMetrics
   { "data" :: HistoMetrics
@@ -76,50 +78,52 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   }
 
 
-getMetrics :: Path -> Aff HistoMetrics
-getMetrics {corpusId, tabType:tabType} = do
-  ChartMetrics ms <- get $ toUrl endConfigStateful Back (Chart {chartType: ChartPie, tabType: tabType}) $ Just corpusId
+getMetrics :: Ends -> Path -> Aff HistoMetrics
+getMetrics ends {corpusId, tabType:tabType} = do
+  ChartMetrics ms <- get $ url ends chart
   pure ms."data"
+  where chart = Chart {chartType: ChartPie, tabType: tabType} (Just corpusId)
 
+pie :: Record Props -> R.Element
+pie props = R.createElement pieCpt props []
 
-
-pieSpec :: Spec {} Path Void
-pieSpec = R2.elSpec $ R.hooksComponent "LoadedMetricsPie" cpt
+pieCpt :: R.Component Props
+pieCpt = R.hooksComponent "LoadedMetricsPie" cpt
   where
-    cpt p _ = do
+    cpt {path,ends} _ = do
       setReload <- R.useState' 0
+      pure $ metricsLoadPieView ends setReload path
 
-      pure $ metricsLoadPieView setReload p
-
-metricsLoadPieView :: R.State Int -> Path -> R.Element
-metricsLoadPieView setReload p = R.createElement el p []
+metricsLoadPieView :: Ends -> R.State Int -> Path -> R.Element
+metricsLoadPieView ends setReload path = R.createElement el {ends,path} []
   where
     el = R.hooksComponent "MetricsLoadedPieView" cpt
-    cpt p _ = do
-      useLoader p getMetrics $ \{loaded} ->
+    cpt {ends,path} _ = do
+      useLoader path (getMetrics ends) $ \loaded ->
         loadedMetricsPieView setReload loaded
 
 loadedMetricsPieView :: R.State Int -> HistoMetrics -> R.Element
-loadedMetricsPieView setReload loaded = U.reloadButtonWrap setReload $ R2.buff $ chart $ chartOptionsPie loaded
+loadedMetricsPieView setReload loaded = U.reloadButtonWrap setReload $ chart $ chartOptionsPie loaded
 
 
+bar :: Record Props -> R.Element
+bar props = R.createElement barCpt props []
 
-barSpec :: Spec {} Path Void
-barSpec = R2.elSpec $ R.hooksComponent "LoadedMetricsBar" cpt
+barCpt :: R.Component Props
+barCpt = R.hooksComponent "LoadedMetricsBar" cpt
   where
-    cpt p _ = do
+    cpt {path, ends} _ = do
       setReload <- R.useState' 0
+      pure $ metricsLoadBarView ends setReload path
 
-      pure $ metricsLoadBarView setReload p
 
-
-metricsLoadBarView :: R.State Int -> Path -> R.Element
-metricsLoadBarView setReload p = R.createElement el p []
+metricsLoadBarView :: Ends -> R.State Int -> Path -> R.Element
+metricsLoadBarView ends setReload path = R.createElement el {ends,path} []
   where
     el = R.hooksComponent "MetricsLoadedBarView" cpt
-    cpt p _ = do
-      useLoader p getMetrics $ \{loaded} ->
+    cpt {path, ends} _ = do
+      useLoader path (getMetrics ends) $ \loaded ->
         loadedMetricsBarView setReload loaded
 
 loadedMetricsBarView :: R.State Int -> Loaded -> R.Element
-loadedMetricsBarView setReload loaded = U.reloadButtonWrap setReload $ R2.buff $ chart $ chartOptionsBar loaded
+loadedMetricsBarView setReload loaded = U.reloadButtonWrap setReload $ chart $ chartOptionsBar loaded

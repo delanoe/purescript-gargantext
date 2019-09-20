@@ -4,170 +4,127 @@ import Gargantext.Prelude
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
 import Data.Array (head)
-import Data.Either (Either(..))
-import Data.Lens (Prism', prism)
 import Data.Maybe (Maybe(..), maybe)
+import Data.Tuple (fst, snd)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Gargantext.Components.Loader as Loader
-import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as T
-import Gargantext.Config (toUrl, endConfigStateful, Path(..), NodeType(..), End(..))
+import Gargantext.Config (NodeType(..), Ends, BackendRoute(..), NodePath(..), url)
 import Gargantext.Config.REST (get)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperdataContact(..), ContactWhere(..))
-import React (ReactClass, ReactElement, Children)
-import React as React
-import React.DOM (a, br', div, input, p, text)
-import React.DOM.Props (className, href, style, target)
-import Thermite (Render, Spec, createClass, simpleSpec, defaultPerformAction)
-------------------------------------------------------------------------------
+import Reactix as R
+import Reactix.DOM.HTML as H
 
-type Props = Loader.InnerProps Int AnnuaireInfo ()
+newtype IndividuView =
+  CorpusView
+  { id      :: Int
+  , name    :: String
+  , role    :: String
+  , company :: String }
 
-data Action
-  = TabsA   Tab.Action
-
-_tabsAction :: Prism' Action Tab.Action
-_tabsAction = prism TabsA \ action ->
-  case action of
-    TabsA taction -> Right taction
-    -- _-> Left action
-
-newtype IndividuView
-  = CorpusView
-    { id      :: Int
-    , name    :: String
-    , role    :: String
-    , company :: String
-    }
-
-------------------------------------------------------------------------------
-
--- unused
-defaultAnnuaireTable :: AnnuaireTable
-defaultAnnuaireTable = AnnuaireTable { annuaireTable : [] }
-
--- unused
-defaultHyperdataAnnuaire :: HyperdataAnnuaire
-defaultHyperdataAnnuaire = HyperdataAnnuaire { title: Nothing, desc: Nothing }
-
--- unused
-defaultAnnuaireInfo :: AnnuaireInfo
-defaultAnnuaireInfo = AnnuaireInfo { id : 0
-                                   , typename : 0
-                                   , userId   : 0
-                                   , parentId : 0
-                                   , name     : ""
-                                   , date     : ""
-                                   , hyperdata : defaultHyperdataAnnuaire
-                                   }
-------------------------------------------------------------------------------
 toRows :: AnnuaireTable -> Array (Maybe Contact)
 toRows (AnnuaireTable a) = a.annuaireTable
 
-layout :: Spec {} {annuaireId :: Int} Void
-layout = simpleSpec defaultPerformAction render
+-- | Top level layout component. Loads an annuaire by id and renders
+-- | the annuaire using the result
+type LayoutProps = ( annuaireId :: Int, ends :: Ends )
+
+annuaireLayout :: Record LayoutProps -> R.Element
+annuaireLayout props = R.createElement annuaireLayoutCpt props []
+
+annuaireLayoutCpt :: R.Component LayoutProps
+annuaireLayoutCpt = R.hooksComponent "G.P.Annuaire.annuaireLayout" cpt
   where
-    render :: Render {} {annuaireId :: Int} Void
-    render _ {annuaireId} _ _ =
-      [ annuaireLoader
-          { path: annuaireId
-          , component: createClass "LoadedAnnuaire" loadedAnnuaireSpec (const {})
-          } ]
+    cpt {annuaireId, ends} _ = do
+      path <- R.useState' annuaireId
+      useLoader (fst path) (getAnnuaireInfo ends) $
+        \info -> annuaire {ends, path, info}
+      
+type AnnuaireProps =
+  ( ends :: Ends
+  , path :: R.State Int
+  , info :: AnnuaireInfo )
 
-loadedAnnuaireSpec :: Spec {} Props Void
-loadedAnnuaireSpec = simpleSpec defaultPerformAction render
+-- | Renders a basic table and the page loader
+annuaire :: Record AnnuaireProps -> R.Element
+annuaire props = R.createElement annuaireCpt props []
+
+-- Abuses closure to work around the Loader
+annuaireCpt :: R.Component AnnuaireProps
+annuaireCpt = R.staticComponent "G.P.Annuaire.annuaire" cpt
   where
-    render :: Render {} Props Void
-    render _ {path: nodeId, loaded: annuaireInfo@(AnnuaireInfo {name, date})} _ _ =
-      T.renderTableHeaderLayout
-        { title: name
-        , desc: name
-        , query: ""
-        , date: "Last update: " <> date
-        , user: ""
-        } <>
-      [ p [] []
-      , div [className "col-md-3"] [ text "    Filter ", input [className "form-control", style {"width" : "250px", "display": "inline-block"}]]
-      , br'
-      , pageLoader
-          { path: initialPageParams nodeId
-          , annuaireInfo
-          }
-      ]
+    cpt {ends, path, info: info@(AnnuaireInfo {name, date: date'})} _ = R.fragment
+      [ T.tableHeaderLayout headerProps
+      , H.p {} []
+      , H.div {className: "col-md-3"}
+        [ H.text "    Filter ", H.input { className: "form-control", style } ]
+      , H.br {}
+      , pageLayout { info, ends, annuairePath: path } ]
+      where
+        headerProps = { title: name, desc: name, query: "", date, user: ""}
+        date = "Last update: " <> date'
+        style = {width: "250px", display: "inline-block"}
+type PagePath = { nodeId :: Int, params :: T.Params }
 
-type PageParams = {nodeId :: Int, params :: T.Params}
+type PageLayoutProps =
+  ( ends :: Ends
+  , annuairePath :: R.State Int
+  , info :: AnnuaireInfo )
 
-initialPageParams :: Int -> PageParams
-initialPageParams nodeId = {nodeId, params: T.initialParams}
+pageLayout :: Record PageLayoutProps -> R.Element
+pageLayout props = R.createElement pageLayoutCpt props []
 
-type PageLoaderProps =
-  { path :: PageParams
-  , annuaireInfo :: AnnuaireInfo
-  }
-
-renderPage :: forall props path.
-              Render (Loader.State {nodeId :: Int | path} AnnuaireTable)
-                     {annuaireInfo :: AnnuaireInfo | props}
-                     (Loader.Action PageParams)
-renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage dispatch {annuaireInfo} { currentPath: {nodeId}
-                                   , loaded: Just (AnnuaireTable {annuaireTable: res})
-                                   } _ = [ T.tableElt { rows
-                                       , setParams: \params -> liftEffect $ dispatch (Loader.SetPath {nodeId, params})
-                                       , container: T.defaultContainer { title: "Annuaire" } -- TODO
-                                       , colNames: T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
-                                       , totalRecords: 4361 -- TODO
-                                       }
-                                     ]
-                        where
-                          --rows = (\c -> {row: [text $ show c.id], delete: false}) <$> res
-                          rows = (\c -> {row: renderContactCells c, delete: false}) <$> res
-
-{-
-showRow :: Maybe Contact -> ReactElement
-showRow Nothing = tr [][]
-showRow (Just (Contact {id: id, hyperdata: (HyperdataContact contact) })) = tr [] []
-  [ td [] [ a [ href (toUrl endConfigStateful Front NodeUser (Just id)) ] [
-               text $ maybe "name" identity contact.title
-               ]
-          ]
-  , td [] [text $ maybe "fonction" identity contact.source]
-  , td [] [text $ maybe "groupe"   identity contact.source]
-  , td [] [text $ "date entry"]
-  ]
-    --where
-      --maybe' key = maybe (key <> " not found") identity $ lookup key contact
-      -}
-
-pageLoaderClass :: ReactClass { path :: PageParams, annuaireInfo :: AnnuaireInfo, children :: Children }
-pageLoaderClass = Loader.createLoaderClass' "AnnuairePageLoader" loadPage renderPage
-
-pageLoader :: PageLoaderProps -> ReactElement
-pageLoader props = React.createElement pageLoaderClass props []
-
---{-
-renderContactCells :: Maybe Contact -> Array ReactElement
-renderContactCells Nothing = []
-renderContactCells (Just (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) })) =
-  [ text ""
-  , a [ href (toUrl endConfigStateful Front NodeContact (Just id)), target "blank" ] [ text $ maybe "name" identity contact.title ]
-  , text $ maybe "No ContactWhere" renderContactWhereOrg  (head $ ou)
-  , text $ maybe "No ContactWhere" renderContactWhereDept (head $ ou)
-  , div [className "nooverflow"] [text $ maybe "No ContactWhere" renderContactWhereRole (head $ ou)]
-  ]
+pageLayoutCpt :: R.Component PageLayoutProps
+pageLayoutCpt = R.hooksComponent "G.P.Annuaire.pageLayout" cpt
   where
-    maybe' = maybe "" identity
-    renderContactWhereOrg (ContactWhere { organization: [] }) = "No Organization"
-    renderContactWhereOrg (ContactWhere { organization: orga }) =
+    cpt {annuairePath, info, ends} _ = do
+      pagePath <- R.useState' (initialPagePath (fst annuairePath))
+      useLoader (fst pagePath) (loadPage ends) $
+        \table -> page {ends, table, pagePath, annuairePath}
+    initialPagePath nodeId = {nodeId, params: T.initialParams}
+
+type PageProps = 
+  ( ends :: Ends
+  , annuairePath :: R.State Int
+  , pagePath :: R.State PagePath
+  -- , info :: AnnuaireInfo
+  , table :: AnnuaireTable )
+
+page :: Record PageProps -> R.Element
+page props = R.createElement pageCpt props []
+
+pageCpt :: R.Component PageProps
+pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
+  where
+    cpt { ends, annuairePath, pagePath, table: (AnnuaireTable {annuaireTable}) } _ = do
+      T.table { rows, setParams, container, colNames, totalRecords }
+      where
+        totalRecords =4361 -- TODO
+        rows = (\c -> {row: contactCells ends c, delete: false}) <$> annuaireTable
+        setParams params = snd pagePath $ const {params, nodeId: fst annuairePath}
+        container = T.defaultContainer { title: "Annuaire" } -- TODO
+        colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
+
+contactCells :: Ends -> Maybe Contact -> Array R.Element
+contactCells ends = maybe [] render
+  where
+    render (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) }) =
+      let nodepath = NodePath NodeContact (Just id)
+          href = url ends nodepath in
+      [ H.text ""
+      , H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
+      , H.text $ maybe "No ContactWhere" contactWhereOrg  (head $ ou)
+      , H.text $ maybe "No ContactWhere" contactWhereDept (head $ ou)
+      , H.div {className: "nooverflow"}
+        [ H.text $ maybe "No ContactWhere" contactWhereRole (head $ ou) ] ]
+    contactWhereOrg (ContactWhere { organization: [] }) = "No Organization"
+    contactWhereOrg (ContactWhere { organization: orga }) =
       maybe "No orga (list)" identity (head orga)
-
-    renderContactWhereDept (ContactWhere { labTeamDepts : [] }) = "Empty Dept"
-    renderContactWhereDept (ContactWhere { labTeamDepts : dept }) =
+    contactWhereDept (ContactWhere { labTeamDepts : [] }) = "Empty Dept"
+    contactWhereDept (ContactWhere { labTeamDepts : dept }) =
       maybe "No Dept (list)" identity (head dept)
-
-    renderContactWhereRole (ContactWhere { role: Nothing }) = "Empty Role"
-    renderContactWhereRole (ContactWhere { role: Just role }) = role
+    contactWhereRole (ContactWhere { role: Nothing }) = "Empty Role"
+    contactWhereRole (ContactWhere { role: Just role }) = role
 
 
 data HyperdataAnnuaire = HyperdataAnnuaire
@@ -177,8 +134,8 @@ data HyperdataAnnuaire = HyperdataAnnuaire
 instance decodeHyperdataAnnuaire :: DecodeJson HyperdataAnnuaire where
   decodeJson json = do
     obj   <- decodeJson json
-    title <- obj .:! "title"
-    desc  <- obj .:! "desc"
+    title <- obj .:? "title"
+    desc  <- obj .:? "desc"
     pure $ HyperdataAnnuaire { title, desc }
 
 ------------------------------------------------------------------------------
@@ -218,10 +175,9 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     rows <- decodeJson json
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
-loadPage :: PageParams -> Aff AnnuaireTable
-loadPage {nodeId, params: { offset, limit, orderBy }} =
-    get $ toUrl endConfigStateful Back (Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-})
-                     (Just nodeId)
+loadPage :: Ends -> PagePath -> Aff AnnuaireTable
+loadPage ends {nodeId, params: { offset, limit, orderBy }} =
+    get $ url ends children
  -- TODO orderBy
  -- where
  --   convOrderBy (T.ASC  (T.ColumnName "Name")) = NameAsc
@@ -229,12 +185,11 @@ loadPage {nodeId, params: { offset, limit, orderBy }} =
  --   ...
  --   convOrderBy _ = NameAsc -- TODO
 
-getAnnuaireInfo :: Int -> Aff AnnuaireInfo
-getAnnuaireInfo id = get $ toUrl endConfigStateful Back Node (Just id)
-------------------------------------------------------------------------------
+  where
+    children = Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-} (Just nodeId)
 
-annuaireLoaderClass :: ReactClass (Loader.Props Int AnnuaireInfo)
-annuaireLoaderClass = Loader.createLoaderClass "AnnuaireLoader" getAnnuaireInfo
+------ Annuaire loading ------
 
-annuaireLoader :: Loader.Props' Int AnnuaireInfo -> ReactElement
-annuaireLoader props = React.createElement annuaireLoaderClass props []
+getAnnuaireInfo :: Ends -> Int -> Aff AnnuaireInfo
+getAnnuaireInfo ends id = get $ url ends (NodeAPI Node (Just id))
+

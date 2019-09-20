@@ -6,7 +6,7 @@ import Effect.Aff (Aff)
 import Gargantext.Config
 import Gargantext.Config.REST (get)
 import Reactix as R
-import Thermite (Spec)
+import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 import Gargantext.Types (TermList(..))
@@ -20,14 +20,11 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Pages.Corpus.Chart.Utils as U
 
-type Path =
-  { corpusId :: Int
-  , tabType  :: TabType
-  }
+type Path = { corpusId :: Int, tabType  :: TabType }
 
-newtype ChartMetrics = ChartMetrics
-  { "data" :: HistoMetrics
-  }
+type Props = ( path :: Path, ends :: Ends )
+
+newtype ChartMetrics = ChartMetrics { "data" :: HistoMetrics }
 
 instance decodeChartMetrics :: DecodeJson ChartMetrics where
   decodeJson json = do
@@ -35,10 +32,7 @@ instance decodeChartMetrics :: DecodeJson ChartMetrics where
     d   <- obj .: "data"
     pure $ ChartMetrics { "data": d }
 
-newtype HistoMetrics = HistoMetrics
-  { dates :: Array String
-  , count :: Array Number
-  }
+newtype HistoMetrics = HistoMetrics { dates :: Array String, count :: Array Number }
 
 instance decodeHistoMetrics :: DecodeJson HistoMetrics where
   decodeJson json = do
@@ -60,27 +54,29 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
   }
 
-
-getMetrics :: Path -> Aff HistoMetrics
-getMetrics {corpusId, tabType} = do
-  ChartMetrics ms <- get $ toUrl endConfigStateful Back (Chart {chartType: Histo, tabType: tabType}) $ Just corpusId
+getMetrics :: Ends -> Path -> Aff HistoMetrics
+getMetrics ends {corpusId, tabType} = do
+  ChartMetrics ms <- get $ url ends chart
   pure ms."data"
+  where chart = Chart {chartType: Histo, tabType: tabType} (Just corpusId)
 
-histoSpec :: Spec {} Path Void
-histoSpec = R2.elSpec $ R.hooksComponent "LoadedMetricsHisto" cpt
+histo :: Record Props -> R.Element
+histo props = R.createElement histoCpt props []
+
+histoCpt :: R.Component Props
+histoCpt = R.hooksComponent "LoadedMetricsHisto" cpt
   where
-    cpt p _ = do
+    cpt {ends,path} _ = do
       setReload <- R.useState' 0
+      pure $ metricsLoadView ends setReload path
 
-      pure $ metricsLoadView setReload p
-
-metricsLoadView :: R.State Int -> Path -> R.Element
-metricsLoadView setReload p = R.createElement el p []
+metricsLoadView :: Ends -> R.State Int -> Path -> R.Element
+metricsLoadView ends setReload path = R.createElement el {ends,path} []
   where
     el = R.hooksComponent "MetricsLoadedHistoView" cpt
-    cpt p _ = do
-      useLoader p getMetrics $ \{loaded} ->
+    cpt {path,ends} _ = do
+      useLoader path (getMetrics ends) $ \loaded ->
         loadedMetricsView setReload loaded
 
 loadedMetricsView :: R.State Int -> HistoMetrics -> R.Element
-loadedMetricsView setReload loaded = U.reloadButtonWrap setReload $ R2.buff $ chart $ chartOptions loaded
+loadedMetricsView setReload loaded = U.reloadButtonWrap setReload $ chart $ chartOptions loaded
