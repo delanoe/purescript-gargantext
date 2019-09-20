@@ -8,6 +8,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Lens (Iso', iso)
 import Data.Maybe (Maybe)
+import Data.Newtype (class Newtype)
 
 type Username = String
 type Password = String
@@ -32,8 +33,9 @@ newtype AuthData = AuthData
   , tree_id :: TreeId
   }
 
-
 derive instance genericAuthData :: Generic AuthData _
+
+derive instance newtypeAuthData :: Newtype AuthData _
 
 instance eqAuthData :: Eq AuthData where
   eq = genericEq

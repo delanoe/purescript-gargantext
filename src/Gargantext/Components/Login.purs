@@ -1,25 +1,28 @@
 module Gargantext.Components.Login where
 
-import Control.Monad.Cont.Trans (lift)
+import Control.Monad.Except (runExcept)
+import Data.Either (Either(..))
 import Data.Int as Int
-import Data.Lens (over)
+import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse)
 import Data.Tuple.Nested((/\))
+import DOM.Simple.Console (log2)
 import Effect.Class (liftEffect)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
+import Foreign (MultipleErrors)
+import Foreign.Generic (encodeJSON, decodeJSON)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import React.DOM (button, div, h5, span, text)
-import React.DOM.Props (_data, _id, _type, aria, className, role)
-import Thermite (PerformAction, Render, Spec, _render, modifyState_, simpleSpec)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, setItem, removeItem)
 
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (toUrl, endConfigStateful, Path(..), End(..))
+import Gargantext.Config (Ends, BackendRoute(..), backendKey, url)
 import Gargantext.Config.REST (post)
 import Gargantext.Components.Modals.Modal (modalHide)
 import Gargantext.Components.Login.Types
@@ -28,104 +31,40 @@ import Gargantext.Utils.Reactix as R2
 -- TODO: ask for login (modal) or account creation after 15 mn when user
 -- is not logged and has made one search at least
 
-type State =
-  { username :: String
-  , password :: String
-  , authData :: Maybe AuthData
-  , errorMessage :: String
-  }
+type Auths = Map String AuthData
 
+type Props = ( ends :: Ends, setVisible :: R2.Setter Boolean)
 
-initialState :: Effect State
-initialState = do
-  authData <- getAuthData
-  pure
-    { authData
-    , username : ""
-    , password : ""
-    , errorMessage : ""
-    }
+type ModalProps = ( visible :: Boolean )
 
-data Action
-  = PostAuth
-  | SetCredentials String String
+modal :: Record ModalProps -> Array R.Element -> R.Element
+modal = R.createElement modalCpt
 
-
-modalSpec :: forall props. Boolean -> String -> Spec State props Action -> Spec State props Action
-modalSpec sm t = over _render \render d p s c ->
-  [ div [ _id "loginModal", className $ "modal myModal" <> if sm then "" else " fade"
-        , role "dialog"
-        , _data {show : true}
-        ]
-    [ div [ className "modal-dialog"
-          , role "document"
-          ]
-      [ div [ className "modal-content"]
-        [ div [ className "modal-header"]
-          [ h5 [ className "modal-title" ]
-            [ -- text t
-            ]
-          , button [ _type "button"
-                   , className "close"
-                   , _data { dismiss : "modal"}
-                   ]
-            [ span [ aria {hidden : true}] [ text "X"]
-            ]
-          ]
-        , div [ className "modal-body"] (render d p s c)
-        ]
-      ]
-    ]
-  ]
-
-spec' :: Spec State {} Action
-spec' = modalSpec true "Login" renderSpec
-
-performAction :: PerformAction State {} Action
-performAction (SetCredentials usr pwd) _ _ = do
-  modifyState_ $ _ { username = usr, password = pwd }
-performAction PostAuth _ {username, password} = do
-  res <- lift $ postAuthRequest $ AuthRequest {username, password}
-  case res of
-    AuthResponse {inval: Just (AuthInvalid {message})} ->
-      modifyState_ $ _ { errorMessage = message }
-    AuthResponse {valid} -> do
-      liftEffect $ setAuthData valid
-      modifyState_ $ _ {authData = valid, errorMessage = ""}
-      liftEffect $ modalHide "loginModal"
-
-renderSpec :: Spec State {} Action
-renderSpec = simpleSpec performAction render
+modalCpt :: R.Component ModalProps
+modalCpt = R.staticComponent "Modal" cpt
   where
-    render :: Render State {} Action
-    render dispatch _ state _ =
-      [R2.scuff $ renderCpt dispatch state]
+    cpt {visible} children =
+      H.div { id: "loginModal", className: modalClass visible, role: "dialog", "data": {show: true}}
+      [ H.div { className: "modal-dialog", role: "document"}
+        [ H.div { className: "modal-content" }
+          [ H.div { className: "modal-header" }
+            [ H.h5 { className: "modal-title" } []
+            , H.button { "type": "button", className: "close", "data": { dismiss: "modal" } }
+              [ H.span { aria: { hidden: true } } [ H.text "X" ] ]
+            , H.div { className: "modal-body" } children ] ] ] ]
+    modalClass s = "modal myModal" <> if s then "" else " fade"
 
+login :: Record Props -> R.Element
+login props = R.createElement loginCpt props []
 
-renderCpt :: (Action -> Effect Unit) -> State -> R.Element
-renderCpt d s = R.createElement el {} []
+loginCpt :: R.Component Props
+loginCpt = R.hooksComponent "Login" cpt
   where
-    el = R.hooksComponent "RenderComponent" cpt
-    cpt {} _children = do
-      (state /\ setState) <- R.useState' s
-
-      R.useEffect $
-        if (state /= s) then do
-          _ <- d $ SetCredentials state.username state.password
-          pure $ d $ PostAuth
-        else
-          pure $ pure $ unit
-
-      pure $ renderLogin (state /\ setState)
-
-renderLogin :: R.State State -> R.Element
-renderLogin (state /\ setState) = R.createElement el {} []
-  where
-    el = R.hooksComponent "RenderLogin" cpt
-    cpt {} _children = do
-      username <- R.useState' state.username
-      password <- R.useState' state.password
-
+    cpt {ends, setVisible} _children = do
+      (username /\ setUsername) <- R.useState' ""
+      (password /\ setPassword) <- R.useState' ""
+      (error /\ setError) <- R.useState' ""
+      (authData /\ setAuthData) <- R.useState' Nothing
       pure $ H.div {className: "row"}
         [ gargLogo
         , H.div {className: "card-group"}
@@ -141,7 +80,7 @@ renderLogin (state /\ setState) = R.createElement el {} []
                     H.a { target: "blank"
                         , href: "https://iscpif.fr/services/applyforourservices/"
                         }
-                    [H.text " ask to get an access"]
+                    [H.text " request access"]
                   ]
                 ]
               , H.div {}
@@ -152,11 +91,11 @@ renderLogin (state /\ setState) = R.createElement el {} []
                           }
 
                 , H.div {className: "form-group"}
-                  [ H.p {} [H.text state.errorMessage]
-                  , usernameInput username
+                  [ H.p {} [H.text error]
+                  , usernameInput username setUsername
                   ]
                 , H.div {className: "form-group"}
-                  [ passwordInput password
+                  [ passwordInput password setPassword
                   , H.div {className: "clearfix"} []
                   ]
                 , H.div {className: "center"}
@@ -167,7 +106,7 @@ renderLogin (state /\ setState) = R.createElement el {} []
                                 , value: ""
                                 , className: "checkbox"
                                 }
-                      , H.text "I accept the terms of uses "
+                      , H.text "I accept the terms of use "
                       , H.a {href: "http://gitlab.iscpif.fr/humanities/tofu/tree/master"}
                         [ H.text " [ Read the terms of use ] "]
                       ]
@@ -177,7 +116,7 @@ renderLogin (state /\ setState) = R.createElement el {} []
                              , type: "submit"
                                    -- TODO
                                    --, on: {click: \_ -> dispatch $ PostAuth}
-                             , on: {click: onClick username password}
+                             , on: {click: onClick ends setError setAuthData setVisible username password}
                              }
                     [H.text "Login"]
                   ]
@@ -190,13 +129,9 @@ renderLogin (state /\ setState) = R.createElement el {} []
     gargLogo =
       H.div {className: "col-md-10 col-md-push-1"}
       [ H.h2 {className: "text-primary center m-a-2"}
-        [ H.i {className: "material-icons md-36"}
-          [H.text "control_point"]
-        , H.span {className: "icon-text"}
-          [H.text "Gargantext"]
-        ]
-      ]
-    usernameInput (username /\ setUsername) =
+        [ H.i {className: "material-icons md-36"} [ H.text "control_point" ]
+        , H.span {className: "icon-text"} [ H.text "Gargantext" ] ] ]
+    usernameInput username setUsername =
       H.input { className: "form-control"
               , id: "id_username"
               , maxLength: "254"
@@ -207,7 +142,8 @@ renderLogin (state /\ setState) = R.createElement el {} []
                 --, on: {input: \e -> dispatch (SetUserName $ R2.unsafeEventValue e)}
               , on: {change: \e -> setUsername $ const $ R2.unsafeEventValue e}
               }
-    passwordInput (password /\ setPassword) =
+ 
+    passwordInput password setPassword =
       H.input { className: "form-control"
               , id: "id_password"
               , name: "password"
@@ -217,14 +153,41 @@ renderLogin (state /\ setState) = R.createElement el {} []
               --, on: {input: \e -> dispatch (SetPassword $ R2.unsafeEventValue e)}
               , on: {change: \e -> setPassword $ const $ R2.unsafeEventValue e}
               }
-    onClick (username /\ _) (password /\ _) = \e -> do
-      setState $ \st -> st {username = username, password = password}
+    onClick ends setError setAuthData setVisible username password = \e ->
+      launchAff_ $ do
+        res <- postAuthRequest ends $ AuthRequest {username, password}
+        case res of
+          AuthResponse {inval: Just (AuthInvalid {message})} -> liftEffect $ do
+            setError (const message)
+            setAuthData (const Nothing)
+          AuthResponse {valid} -> liftEffect $ do
+            setAuthData (const valid)
+            setError (const "")
+            setVisible (const false)
 
+-- getAuth :: Effect Auth
+-- getAuth = do
+--   window >>= localStorage >>= getItem
+
+-- setAuth :: Auth -> Effect Unit
+
+getAuths :: Effect (Maybe Auths)
+getAuths = pure Nothing
+
+-- getAuths = window >>= localStorage >>= getItem "auths" >>= traverse decode
+--   where
+--     decode :: String -> Effect (Maybe Auths)
+--     decode = ret <<< runExcept <<< decodeJSON
+--     ret (Right v) = pure $ Just v
+--     ret (Left e) = log2 "Error reading serialised auths:" e *> pure Nothing
+
+setAuths :: Auths -> Effect Unit
+-- setAuths Map.empty = -- window >>= localStorage >>= removeItem "auths"
+setAuths _ = pure unit -- auths = window >>= localStorage >>= setItem "auths" (encodeJSON auths)
 
 getAuthData :: Effect (Maybe AuthData)
 getAuthData = do
-  w  <- window
-  ls <- localStorage w
+  ls <- window >>= localStorage
   mto <- getItem "token" ls
   mti <- getItem "tree_id" ls
   pure do
@@ -234,15 +197,20 @@ getAuthData = do
 
 setAuthData :: Maybe AuthData -> Effect Unit
 setAuthData Nothing = do
-  w  <- window
-  ls <- localStorage w
+  ls <- window >>= localStorage
   removeItem "token"   ls
   removeItem "tree_id" ls
 setAuthData (Just (AuthData {tree_id, token})) = do
-  w  <- window
-  ls <- localStorage w
+  ls <- window >>= localStorage
   setItem "token"   token          ls
   setItem "tree_id" (show tree_id) ls
 
-postAuthRequest :: AuthRequest -> Aff AuthResponse
-postAuthRequest = post $ toUrl endConfigStateful Back Auth Nothing
+-- TODO
+-- useLocalStorageAuths :: String -> R.Hooks (R.State Auths)
+-- useLocalStorageAuths key = do
+
+postAuthRequest :: Ends -> AuthRequest -> Aff AuthResponse
+postAuthRequest ends = post $ url ends Auth
+
+getCurrentAuth :: Ends -> Auths -> Maybe AuthData
+getCurrentAuth ends = Map.lookup (backendKey ends.backend)
