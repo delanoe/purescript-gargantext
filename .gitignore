@@ -9,6 +9,8 @@
 /.psa*
 /.spago
 bundle.js
+# tempfiles
+.#*
 # webpack splays purescript modules in dist. we don't want these to be
 # added, but we do want static assets to be added
 /dist/*
