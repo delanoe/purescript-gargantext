@@ -167,8 +167,8 @@ instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
     ~> "ntc_category" := encodeJson post.category
     ~> jsonEmptyObject
 
-categoryUrl :: Int -> String
-categoryUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/category"
+categoryUrl :: Ends -> Int -> String
+categoryUrl ends nodeId = url ends (NodeAPI Node (Just nodeId)) <> "/category"
 
-putCategories :: Int -> CategoryQuery -> Aff (Array Int)
-putCategories nodeId = put $ categoryUrl nodeId
+putCategories :: Ends -> Int -> CategoryQuery -> Aff (Array Int)
+putCategories = put <<< categoryUrl

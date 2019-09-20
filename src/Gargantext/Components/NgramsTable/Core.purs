@@ -86,7 +86,7 @@ import Partial.Unsafe (unsafePartial)
 
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Types (TermList(..), TermSize)
-import Gargantext.Config (toUrl, endConfigStateful, End(..), Path(..), TabType, OrderBy(..), CTabNgramType(..))
+import Gargantext.Config (Ends, BackendRoute(..), TabType, OrderBy(..), CTabNgramType(..), url)
 import Gargantext.Config.REST (get, put, post)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude
@@ -106,10 +106,11 @@ type PageParams =
     , searchQuery :: String
     , termListFilter :: Maybe TermList -- Nothing means all
     , termSizeFilter :: Maybe TermSize -- Nothing means all
+    , ends :: Ends
     )
 
-initialPageParams :: Int -> Array Int -> TabType -> PageParams
-initialPageParams nodeId listIds tabType =
+initialPageParams :: Ends -> Int -> Array Int -> TabType -> PageParams
+initialPageParams ends nodeId listIds tabType =
   { nodeId
   , listIds
   , params: T.initialParams
@@ -117,6 +118,7 @@ initialPageParams nodeId listIds tabType =
   , termSizeFilter: Nothing
   , termListFilter: Just GraphTerm
   , searchQuery: ""
+  , ends
   }
 
 type NgramsTerm = String
@@ -561,47 +563,48 @@ type CoreState s =
   | s
   }
 
-postNewNgrams :: forall s. Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
-postNewNgrams newNgrams mayList {nodeId, listIds, tabType} =
+postNewNgrams :: forall s. Ends -> Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
+postNewNgrams ends newNgrams mayList {nodeId, listIds, tabType} =
   when (not (A.null newNgrams)) $ do
-    (_ :: Array Unit) <- post (toUrl endConfigStateful Back (PutNgrams tabType (head listIds) mayList) $ Just nodeId) newNgrams
+    (_ :: Array Unit) <- post (url ends put) newNgrams
     pure unit
+  where put = PutNgrams tabType (head listIds) mayList (Just nodeId)
 
-postNewElems :: forall s. NewElems -> CoreParams s -> Aff Unit
-postNewElems newElems params = void $ traverseWithIndex postNewElem newElems
+postNewElems :: forall s. Ends -> NewElems -> CoreParams s -> Aff Unit
+postNewElems ends newElems params = void $ traverseWithIndex postNewElem newElems
   where
-    postNewElem ngrams list = postNewNgrams [ngrams] (Just list) params
+    postNewElem ngrams list = postNewNgrams ends [ngrams] (Just list) params
 
 addNewNgram :: CTabNgramType -> NgramsTerm -> TermList -> NgramsTablePatch
 addNewNgram ntype ngrams list = { ngramsPatches: mempty
                           , ngramsNewElems: Map.singleton (normNgram ntype ngrams) list }
 
-putNgramsPatches :: {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
-putNgramsPatches {nodeId, listIds, tabType} =
-  put (toUrl endConfigStateful Back (PutNgrams tabType (head listIds) Nothing) $ Just nodeId)
+putNgramsPatches :: Ends -> {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
+putNgramsPatches ends {nodeId, listIds, tabType} = put $ url ends putNgrams
+  where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
-commitPatch :: forall s. {nodeId :: Int, listIds :: Array Int, tabType :: TabType}
+commitPatch :: forall s. Ends -> {nodeId :: Int, listIds :: Array Int, tabType :: TabType}
             -> Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
-commitPatch props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNewElems}}) = do
+commitPatch ends props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNewElems}}) = do
   let pt = Versioned { version, data: ngramsPatches }
-  lift $ postNewElems ngramsNewElems props
-  Versioned {version: newVersion, data: newPatch} <- lift $ putNgramsPatches props pt
+  lift $ postNewElems ends ngramsNewElems props
+  Versioned {version: newVersion, data: newPatch} <- lift $ putNgramsPatches ends props pt
   modifyState_ $ \s ->
     s { ngramsVersion    = newVersion
       , ngramsTablePatch = fromNgramsPatches newPatch <> tablePatch <> s.ngramsTablePatch
       }
     -- TODO: check that pt.version == s.ngramsTablePatch.version
 
-loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
-loadNgramsTable { nodeId, listIds, termListFilter, termSizeFilter
-         , searchQuery, tabType, params: {offset, limit, orderBy}} =
-  get $ toUrl endConfigStateful Back
-          (GetNgrams { tabType, offset, limit, listIds
-                     , orderBy: convOrderBy <$> orderBy
-                     , termListFilter, termSizeFilter
-                     , searchQuery
-                     })
-          (Just nodeId)
+loadNgramsTable :: Ends -> PageParams -> Aff VersionedNgramsTable
+loadNgramsTable ends
+  { nodeId, listIds, termListFilter, termSizeFilter
+  , searchQuery, tabType, params: {offset, limit, orderBy}}
+  = get $ url ends query
+  where query = GetNgrams { tabType, offset, limit, listIds
+                          , orderBy: convOrderBy <$> orderBy
+                          , termListFilter, termSizeFilter
+                          , searchQuery } (Just nodeId)
+        
 
 convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
 convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc
@@ -609,10 +612,10 @@ convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
 
-ngramsLoaderClass :: Loader.LoaderClass PageParams VersionedNgramsTable
-ngramsLoaderClass = Loader.createLoaderClass "NgramsTableLoader" loadNgramsTable
+ngramsLoaderClass :: Ends -> Loader.LoaderClass PageParams VersionedNgramsTable
+ngramsLoaderClass ends = Loader.createLoaderClass "NgramsTableLoader" (loadNgramsTable ends)
 
-ngramsLoader :: Loader.Props' PageParams VersionedNgramsTable -> ReactElement
-ngramsLoader props = React.createElement ngramsLoaderClass props []
+ngramsLoader :: Ends -> Loader.Props' PageParams VersionedNgramsTable -> ReactElement
+ngramsLoader ends props = React.createElement (ngramsLoaderClass ends) props []
 
-type LoadedNgramsTableProps = Loader.InnerProps PageParams VersionedNgramsTable ()
+type LoadedNgramsTableProps = ( path :: PageParams, loaded :: VersionedNgramsTable )

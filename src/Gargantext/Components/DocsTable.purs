@@ -18,12 +18,13 @@ import Data.Tuple.Nested ((/\))
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
-import Effect.Uncurried (mkEffectFn1)
+import Effect.Class (liftEffect)
+import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, TabPostQuery(..), toUrl, endConfigStateful, toLink)
+import Gargantext.Config (Ends, NodeType(..), OrderBy(..), BackendRoute(..), TabType, TabPostQuery(..), url)
 import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
@@ -38,25 +39,25 @@ type NodeID = Int
 type TotalRecords = Int
 
 type Props =
-  { nodeId       :: Int
+  ( nodeId       :: Int
   , totalRecords :: Int
   , chart        :: R.Element
   , tabType      :: TabType
   , listId       :: Int
   , corpusId     :: Maybe Int
   , showSearch   :: Boolean
+  , ends         :: Ends )
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
-  -- ngramtable. Let's see how this evolves.
-  }
+  -- ngramtable. Let's see how this evolves.  )
 
 type PageLoaderProps =
-  { nodeId    :: Int
+  ( nodeId    :: Int
   , totalRecords :: Int
   , tabType      :: TabType
   , listId       :: Int
   , corpusId     :: Maybe Int
   , query       :: Query
-  }
+  )
 
 type LocalCategories = Map Int Category
 type Query = String
@@ -119,18 +120,19 @@ instance decodeResponse :: DecodeJson Response where
     pure $ Response { cid, category: decodeCategory favorite, ngramCount, hyperdata }
 
 
-docViewSpec :: Props -> R.Element
-docViewSpec p = R.createElement el p []
+docView :: Record Props -> R.Element
+docView p = R.createElement docViewCpt p []
+
+docViewCpt :: R.Component Props
+docViewCpt = R.hooksComponent "DocView" cpt
   where
-    el = R.hooksComponent "DocView" cpt
     cpt p _children = do
       query <- R.useState' ("" :: Query)
       tableParams <- R.useState' T.initialParams
-
       pure $ layoutDocview query tableParams p
 
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: R.State Query -> R.State T.Params -> Props -> R.Element
+layoutDocview :: R.State Query -> R.State T.Params -> Record Props -> R.Element
 layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "LayoutDocView" cpt
@@ -140,9 +142,13 @@ layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
           [ chart
           , if showSearch then searchBar query else H.div {} []
           , H.div {className: "col-md-12"}
-            [ pageLoader tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
+            [ pageLoader tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ] ] ]
+    onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
+      launchAff $ deleteAllDocuments p.ends nodeId
           
           {-, H.div {className: "col-md-1 col-md-offset-11"}
+            [ pageLoader p.ends tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
+          , H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
                        , style: {backgroundColor: "peru", color : "white", border : "white"}
                        , onClick: onClickTrashAll nodeId
@@ -152,11 +158,6 @@ layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
               ]
             ]
            -}
-          ]
-        ]
-
-    onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
-      launchAff $ deleteAllDocuments nodeId
 
 searchBar :: R.State Query -> R.Element
 searchBar (query /\ setQuery) = R.createElement el {} []
@@ -210,12 +211,12 @@ type PageParams = { nodeId :: Int
                   , query   :: Query
                   , params :: T.Params}
 
-loadPage :: PageParams -> Aff (Array DocumentsView)
-loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
+loadPage :: Ends -> PageParams -> Aff (Array DocumentsView)
+loadPage ends {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let url = (toUrl endConfigStateful Back Node (Just nodeId)) <> "/table"
-  res <- post url $ TabPostQuery {
+  let url2 = (url ends (NodeAPI Node (Just nodeId))) <> "/table"
+  res <- post url2 $ TabPostQuery {
       offset
     , limit
     , orderBy: convOrderBy orderBy
@@ -246,8 +247,8 @@ loadPage {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orde
 
     convOrderBy _ = DateAsc -- TODO
 
-renderPage :: R.State T.Params -> PageLoaderProps -> Array DocumentsView -> R.Element
-renderPage (tableParams /\ setTableParams) p res = R.createElement el p []
+renderPage :: Ends -> R.State T.Params -> Record PageLoaderProps -> Array DocumentsView -> R.Element
+renderPage ends (_ /\ setTableParams) p res = R.createElement el p []
   where
     el = R.hooksComponent "RenderPage" cpt
 
@@ -260,61 +261,46 @@ renderPage (tableParams /\ setTableParams) p res = R.createElement el p []
 
     cpt {nodeId, corpusId, listId, totalRecords} _children = do
       localCategories <- R.useState' (mempty :: LocalCategories)
-
-      pure $ R2.buff $ T.tableEltWithInitialState
-          (T.paramsState tableParams)
+      pure $ T.table
           { rows: rows localCategories
           -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
           , setParams: setTableParams <<< const
           , container: T.defaultContainer { title: "Documents" }
-          , colNames:
-            T.ColumnName <$>
-            [ "Favorites"
-            , "Trash"
-            , "Date"
-            , "Title"
-            , "Source"
-            ]
+          , colNames
           , totalRecords
           }
       where
+        colNames = T.ColumnName <$> [ "Map", "Stop", "Date", "Title", "Source"]
         getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
-        rows localCategories = (\(DocumentsView r) ->
-          let cat = getCategory localCategories r
-              isDel = Trash == cat in
-          { row: map R2.scuff $ [
-                H.div {}
-                [ H.a { className: gi cat
-                      , style: trashStyle cat
-                      , on: {click: onClick localCategories Favorite r._id cat}
-                      } []
+        rows localCategories = row <$> res
+          where
+            row (DocumentsView r) =
+              { row:
+                [ H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
+                , H.input { type: "checkbox", checked, on: {click: click Trash} }
+                -- TODO show date: Year-Month-Day only
+                , H.div { style } [ R2.showText r.date ]
+                , H.div { style } [ H.text r.source ]
                 ]
-              , H.input { type: "checkbox"
-                        , defaultChecked: isDel
-                        , on: {click: onClick localCategories Trash r._id cat}
-                        }
-              -- TODO show date: Year-Month-Day only
-              , H.div { style: trashStyle cat } [ H.text (show r.date) ]
-              , H.a { href: toLink $ (corpusDocument corpusId) listId r._id
-                    , style: trashStyle cat
-                    , target: "_blank"
-                    } [ H.text r.title ]
-              , H.div { style: trashStyle cat} [ H.text r.source ]
-              ]
-          , delete: true
-          }) <$> res
+              , delete: true }
+              where
+                cat = getCategory localCategories r
+                click cat2 = onClick localCategories cat2 r._id cat
+                checked = Trash == cat
+                style = trashStyle cat
+                className = gi cat
         onClick (_ /\ setLocalCategories) catType nid cat = \_-> do
           let newCat = if (catType == Favorite) then (favCategory cat) else (trashCategory cat)
           setLocalCategories $ insert nid newCat
-          void $ launchAff $ putCategories nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
+          void $ launchAff $ putCategories ends nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
 
-pageLoader :: R.State T.Params -> PageLoaderProps -> R.Element
-pageLoader tableParams@(pageParams /\ _) p = R.createElement el p []
+pageLoader :: Ends -> R.State T.Params -> Record PageLoaderProps -> R.Element
+pageLoader ends tableParams@(pageParams /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "PageLoader" cpt
     cpt p@{nodeId, listId, corpusId, tabType, query} _children = do
-      useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} loadPage $ \{loaded} ->
-        renderPage tableParams p loaded
+      useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} (loadPage ends) $
+        \loaded -> renderPage ends tableParams p loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
@@ -358,7 +344,6 @@ searchResults :: SearchQuery -> Aff Int
 searchResults squery = post "http://localhost:8008/count" unit
   -- TODO
 
-
 newtype CategoryQuery = CategoryQuery {
     nodeIds :: Array Int
   , category :: Category
@@ -376,11 +361,11 @@ categoryUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/catego
 putCategories :: Int -> CategoryQuery -> Aff (Array Int)
 putCategories nodeId = put $ categoryUrl nodeId
 
-documentsUrl :: Int -> String
-documentsUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/documents"
+documentsUrl :: Ends -> Int -> String
+documentsUrl ends nodeId = url ends (NodeAPI Node (Just nodeId)) <> "/documents"
 
-deleteAllDocuments :: Int -> Aff (Array Int)
-deleteAllDocuments nodeId = delete $ documentsUrl nodeId
+deleteAllDocuments :: Ends -> Int -> Aff (Array Int)
+deleteAllDocuments ends = delete <<< documentsUrl ends
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)
 toggleSet :: forall a. Ord a => a -> Set a -> Set a

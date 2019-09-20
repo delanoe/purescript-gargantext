@@ -1,5 +1,5 @@
 -- TODO: this module should replace DocsTable
---       However the fix for favorites in commit 91cb6bd9906e128b3129b1db01ef6ef5ae13f7f8
+--      However the fix for favorites in commit 91cb6bd9906e128b3129b1db01ef6ef5ae13f7f8
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
@@ -12,24 +12,25 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Set (Set)
 import Data.Set as Set
+import Data.Tuple (fst)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import React as React
-import React (ReactClass, ReactElement, Children)
+import Reactix as R
+import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, toUrl, endConfigStateful)
+import Gargantext.Config (Ends, NodeType(..), OrderBy(..), NodePath(..), BackendRoute(..), TabType, url)
 import Gargantext.Config.REST (put, post, deleteWithBody)
-import Gargantext.Components.Loader as Loader
-import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
+
 import Gargantext.Components.Table as T
 import Gargantext.Router as Router
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.DecodeMaybe ((.|))
-import React.DOM (a, br', button, div, i, input, p, text, span)
-import React.DOM.Props (_type, className, href, onClick, style, checked, target)
-import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, hideState)
+import Gargantext.Utils.Reactix as R2
 ------------------------------------------------------------------------
 
 type NodeID = Int
@@ -40,9 +41,7 @@ type TotalRecords = Int
 -- This searches for documents with "machine learning" or "artificial intelligence"
 type TextQuery = Array (Array String)
 
-newtype SearchQuery = SearchQuery
-  { query :: TextQuery
-  }
+newtype SearchQuery = SearchQuery { query :: TextQuery }
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
   encodeJson (SearchQuery post)
@@ -58,51 +57,39 @@ instance decodeSearchResults :: DecodeJson SearchResults where
     pure $ SearchResults {results}
 
 type Props =
-  { nodeId :: Int
+  ( nodeId :: Int
   , listId :: Int
   , query :: TextQuery
   , totalRecords :: Int
-  , chart :: ReactElement
-  , container :: T.TableContainerProps -> Array ReactElement
-  }
+  , chart :: R.Element
+  , container :: Record T.TableContainerProps -> R.Element
+  , ends :: Ends
+  )
 
-type State =
-  { documentIdsToDelete :: Set Int
-  , documentIdsDeleted  :: Set Int
-  }
+-- | Tracks the ids of documents to delete and that have been deleted
+type Deletions = { pending :: Set Int, deleted :: Set Int }
 
-initialState :: State
-initialState =
-  { documentIdsToDelete: mempty
-  , documentIdsDeleted:  mempty
-  }
+initialDeletions :: Deletions
+initialDeletions = { pending: mempty, deleted: mempty }
 
-data Action
-  = MarkCategory Category (Array Int)
-  | ToggleDocumentToDelete Int
-  | TrashDocuments
-
-newtype Pair = Pair
-  { id    :: Int
-  , label :: String
-  }
+newtype Pair = Pair { id :: Int, label :: String }
 
 derive instance genericPair :: Generic Pair _
 
 instance showPair :: Show Pair where
   show = genericShow
 
-newtype DocumentsView
-  = DocumentsView
-    { id     :: Int
-    , date   :: String
-    , title  :: String
-    , source :: String
-    , score  :: Int
-    , pairs  :: Array Pair
-    , delete :: Boolean
-    , category :: Category
-    }
+newtype DocumentsView =
+  DocumentsView
+  { id       :: Int
+  , date     :: String
+  , title    :: String
+  , source   :: String
+  , score    :: Int
+  , pairs    :: Array Pair
+  , delete   :: Boolean
+  , category :: Category
+  }
 
 derive instance genericDocumentsView :: Generic DocumentsView _
 
@@ -120,7 +107,6 @@ newtype Response = Response
 -- , pairs     :: Array Pair
   }
 
-
 newtype Hyperdata = Hyperdata
   { title  :: String
   , source :: String
@@ -132,7 +118,6 @@ newtype Hyperdata = Hyperdata
 --    title  <- obj .: "title"
 --    source <- obj .: "source"
 --    pure $ Hyperdata { title,source }
-
 
 instance decodePair :: DecodeJson Pair where
   decodeJson json = do
@@ -172,252 +157,180 @@ instance decodeResponse :: DecodeJson Response where
     let ngramCount = 1
     pure $ Response { id, created, hyperdata, category: decodeCategory favorite, ngramCount}
 
--- | Filter
--- TODO: unused
-filterSpec :: forall state props action. Spec state props action
-filterSpec = simpleSpec defaultPerformAction render
-  where
-    render d p s c = [] {-[div [ className "col-md-2", style {textAlign : "center", marginLeft : "0px", paddingLeft : "0px"}] [ text "    Filter "
-                     , input [className "form-control", placeholder "Filter here"]
-                     ]]
-                     -}
-
-docViewSpec :: Spec {} Props Void
-docViewSpec = hideState (const initialState) layoutDocviewGraph
-
 -- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: Spec State Props Action
-layoutDocview = simpleSpec performAction render
+docView :: Record Props -> R.Element
+docView props = R.createElement docViewCpt props []
+
+docViewCpt :: R.Component Props
+docViewCpt = R.hooksComponent "G.C.FacetsTable.DocView" cpt
   where
-    performAction :: PerformAction State Props Action
-    performAction (MarkCategory category nids) {nodeId} _ =
-      void $ lift $ putCategories nodeId $ CategoryQuery {nodeIds: nids, category: favCategory category}
-    --TODO add array of delete rows here
-    performAction (ToggleDocumentToDelete nid) _ _ =
-      modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
-    performAction TrashDocuments {nodeId} {documentIdsToDelete} = do
-      void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
-      modifyState_ \{documentIdsToDelete, documentIdsDeleted} ->
-        { documentIdsToDelete: mempty
-        , documentIdsDeleted: documentIdsDeleted <> documentIdsToDelete
-        }
-
-    render :: Render State Props Action
-    render dispatch {nodeId, listId, query, totalRecords, chart, container} deletionState _ =
-      [ {- br'
-      , div [ style {textAlign : "center"}] [ text "    Filter "
-                     , input [className "form-control", style {width : "120px", display : "inline-block"}, placeholder "Filter here"]
-                     ]
-      , p [] [text ""]
-      , br' 
-      -}
-       div [className "container1"]
-        [ div [className "row"]
+    cpt {ends, nodeId, listId, query, totalRecords, chart, container} _ = do
+      deletions <- R.useState' initialDeletions
+      path <- R.useState' $ initialPagePath {nodeId, listId, query, ends}
+      pure $ H.div { className: "container1" }
+        [ H.div { className: "row" }
           [ chart
-          , div [className "col-md-12"]
-            [ pageLoader
-                { path: initialPageParams {nodeId, listId, query}
-                , totalRecords
-                , deletionState
-                , dispatch
-                , container
-                }
-            ]
-          , div [className "col-md-12"]
-             [ button [ style {backgroundColor: "peru", padding : "9px", color : "white", border : "white", float: "right"}
-                      , onClick $ (\_ -> dispatch TrashDocuments)
-                      ]
-               [  i [className "glyphitem glyphicon glyphicon-trash", style {marginRight : "9px"}] []
-               ,  text "Trash it !"
-               ]
-             ]
-          ]
-        ]
-      ]
+          , H.div { className: "col-md-12" }
+            [ pageLayout { deletions, totalRecords, container, ends, path } ]
+          , H.div { className: "col-md-12" }
+            [ H.button { style: buttonStyle, on: { click: trashClick deletions } }
+              [ H.i { className: "glyphitem glyphicon glyphicon-trash"
+                    , style: { marginRight : "9px" }} []
+              , H.text "Delete document!" ] ] ] ]
+        where
+          buttonStyle =
+            { backgroundColor: "peru", padding: "9px", color: "white"
+            , border: "white", float: "right" }
+          trashClick deletions _ = performDeletions ends nodeId deletions
 
-
-
-layoutDocviewGraph :: Spec State Props Action
-layoutDocviewGraph = simpleSpec performAction render
+performDeletions :: Ends -> Int -> R.State Deletions -> Effect Unit
+performDeletions ends nodeId (deletions /\ setDeletions) =
+  launchAff_ call *> setDeletions del
   where
-    performAction :: PerformAction State Props Action
-    performAction (MarkCategory category nids) {nodeId} _ =
-      void $ lift $ putCategories nodeId $ CategoryQuery {nodeIds: nids, category: favCategory category}
-    --TODO add array of delete rows here
-    performAction (ToggleDocumentToDelete nid) _ _ =
-      modifyState_ \state -> state {documentIdsToDelete = toggleSet nid state.documentIdsToDelete}
-    performAction TrashDocuments {nodeId} {documentIdsToDelete} = do
-      void $ lift $ deleteDocuments nodeId (DeleteDocumentQuery {documents: Set.toUnfoldable documentIdsToDelete})
-      modifyState_ \{documentIdsToDelete, documentIdsDeleted} ->
-        { documentIdsToDelete: mempty
-        , documentIdsDeleted: documentIdsDeleted <> documentIdsToDelete
-        }
+    q = {documents: Set.toUnfoldable deletions.pending}
+    call = deleteDocuments ends nodeId (DeleteDocumentQuery q)
+    del {pending, deleted} = {pending: mempty, deleted: deleted <> pending}
 
-    render :: Render State Props Action
-    render dispatch {nodeId, listId, query, totalRecords, chart, container} deletionState _ =
-      [ br'
+-- markCategory :: Ends -> NodeID -> _ -> Array NodeID -> Effect Unit
+markCategory ends nodeId category nids =
+  void $ launchAff_ $putCategories ends nodeId (CategoryQuery q)
+  where -- TODO add array of delete rows here
+    q = {nodeIds: nids, category: favCategory category}
 
-      , p [] [text ""]
-      , br'
-      , div [className "container-fluid"]
-        [ div [className "row"]
-          [ chart
-          , div [className "col-md-12"]
-            [ pageLoader
-                { path: initialPageParams {nodeId, listId, query}
-                , totalRecords
-                , deletionState
-                , dispatch
-                , container
-                }
-            , button [ style {backgroundColor: "peru", padding : "9px", color : "white", border : "white", float: "right"}
-                      , onClick $ (\_ -> dispatch TrashDocuments)
-                      ]
-               [  i [className "glyphitem glyphicon glyphicon-trash", style {marginRight : "9px"}] []
-               ,  text "Trash it !"
-               ]
-            ]
+togglePendingDeletion :: R.State Deletions -> NodeID -> Effect Unit
+togglePendingDeletion (_ /\ setDeletions) nid = setDeletions setter
+  where setter deletions@{pending} = deletions { pending = toggleSet nid pending }
 
-          ]
-        ]
-      ]
+docViewGraph :: Record Props -> R.Element
+docViewGraph props = R.createElement docViewCpt props []
 
+docViewGraphCpt :: R.Component Props
+docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
+  where
+    cpt {ends, nodeId, listId, query, totalRecords, chart, container} _ = do
+      deletions <- R.useState' initialDeletions
+      let buttonStyle = { backgroundColor: "peru", padding : "9px"
+                        , color : "white", border : "white", float: "right"}
+      let performClick = \_ -> performDeletions ends nodeId deletions
+      path <- R.useState' $ initialPagePath { nodeId, listId, query, ends }
+      pure $ R.fragment
+        [ H.br {}
+        , H.p {} [ H.text "" ]
+        , H.br {}
+        , H.div { className: "container-fluid" }
+          [ H.div { className: "row" }
+            [ chart
+            , H.div { className: "col-md-12" }
+              [ pageLayout { totalRecords, deletions, container, ends, path }
+              , H.button { style: buttonStyle, on: { click: performClick } }
+                [ H.i { className: "glyphitem glyphicon glyphicon-trash"
+                      , style: { marginRight : "9px" } } []
+                , H.text "Delete document!" ] ] ] ] ]
 
+type PagePath = {nodeId :: Int, listId :: Int, query :: TextQuery, params :: T.Params, ends :: Ends}
 
-type PageParams = {nodeId :: Int, listId :: Int, query :: TextQuery, params :: T.Params}
+initialPagePath :: {ends :: Ends, nodeId :: Int, listId :: Int, query :: TextQuery} -> PagePath
+initialPagePath {ends, nodeId, listId, query} = {ends, nodeId, listId, query, params: T.initialParams}
 
-initialPageParams :: {nodeId :: Int, listId :: Int, query :: TextQuery} -> PageParams
-initialPageParams {nodeId, listId, query} = {nodeId, listId, query, params: T.initialParams}
-
-loadPage :: PageParams -> Aff (Array DocumentsView)
-loadPage {nodeId, listId, query, params: {limit, offset, orderBy}} = do
+loadPage :: PagePath -> Aff (Array DocumentsView)
+loadPage {ends, nodeId, listId, query, params: {limit, offset, orderBy}} = do
   logs "loading documents page: loadPage with Offset and limit"
-  let url = toUrl endConfigStateful Back (Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy }) (Just nodeId)
-  SearchResults res <- post url $ SearchQuery {query}
+  let url2 = url ends $ Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
+  SearchResults res <- post url2 $ SearchQuery {query}
   pure $ res2corpus <$> res.results
   where
     res2corpus :: Response -> DocumentsView
-    res2corpus (Response { id, created: date, ngramCount: score
-                         , hyperdata: Hyperdata {title, source}
-                         , category
-                         }) =
-      DocumentsView
-        { id
-        , date
-        , title
-        , source
-        , score
-        , pairs: []
-        , delete: false
-        , category
-        }
+    res2corpus (Response { id, created: date, ngramCount: score, category
+                         , hyperdata: Hyperdata {title, source} }) =
+      DocumentsView { id, date, title, source, score, category, pairs: [], delete: false }
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
     convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
     convOrderBy (T.DESC (T.ColumnName "Title")) = TitleDesc
     convOrderBy (T.ASC  (T.ColumnName "Source")) = SourceAsc
     convOrderBy (T.DESC (T.ColumnName "Source")) = SourceDesc
-
     convOrderBy _ = DateAsc -- TODO
 
-type PageLoaderProps row =
-  { path :: PageParams
-  , totalRecords :: Int
-  , dispatch :: Action -> Effect Unit
-  , deletionState :: State
-  , container :: T.TableContainerProps -> Array ReactElement
-  | row
-  }
+type PageLayoutProps =
+  ( totalRecords :: Int
+  , deletions :: R.State Deletions
+  , container :: Record T.TableContainerProps -> R.Element
+  , ends :: Ends
+  , path :: R.State PagePath
+  )
 
-renderPage :: forall props path.
-              Render (Loader.State {nodeId :: Int, listId :: Int, query :: TextQuery | path} (Array DocumentsView))
-                     { totalRecords :: Int
-                     , dispatch :: Action -> Effect Unit
-                     , deletionState :: State
-                     , container :: T.TableContainerProps -> Array ReactElement
-                     | props
-                     }
-                     (Loader.Action PageParams)
-renderPage _ _ {loaded: Nothing} _ = [] -- TODO loading spinner
-renderPage loaderDispatch { totalRecords, dispatch, container
-                          , deletionState: {documentIdsToDelete, documentIdsDeleted}}
-                          {currentPath: {nodeId, listId, query}, loaded: Just res} _ =
-  [ T.tableElt
-      { rows
-      , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, listId, query, params})
-      , container
-      , colNames:
-          T.ColumnName <$>
-          [ ""
-          , "Date"
-          , "Title"
-          , "Source"
-          , "Authors"
-          , "Delete"
-          ]
-      , totalRecords
-      }
-  ]
+type PageProps = ( documents :: Array DocumentsView | PageLayoutProps )
+
+-- | Loads and renders a page
+pageLayout :: Record PageLayoutProps -> R.Element
+pageLayout props = R.createElement pageLayoutCpt props []
+
+pageLayoutCpt :: R.Component PageLayoutProps
+pageLayoutCpt = R.hooksComponent "G.C.FacetsTable.PageLayout" cpt
   where
-    -- TODO: how to interprete other scores?
-    gi Favorite = "glyphicon glyphicon-star-empty"
-    gi _ = "glyphicon glyphicon-star"
-    isChecked id = Set.member id documentIdsToDelete
-    isDeleted (DocumentsView {id}) = Set.member id documentIdsDeleted
-    pairUrl (Pair {id,label})
-      | id > 1    = [a [href (toUrl endConfigStateful Front NodeContact (Just id)), target "blank"] [text label]]
-      | otherwise = [text label]
-    comma = span [] [text ", "]
-    rows = (\(DocumentsView {id,score,title,source,date,pairs,delete,category}) ->
-                let
-                  strikeIfDeleted
-                    | delete    = [style {textDecoration : "line-through"}]
-                    | otherwise = []
-                in
-                { row:
-                    [ div []
-                      [ a [ className $ gi category
-                          , onClick $ const $ dispatch $ MarkCategory category [id]
-                          ] []
-                      ]
+    cpt {totalRecords, deletions, container, ends, path} _ = do
+      useLoader (fst path) loadPage $ \documents ->
+        page {totalRecords, deletions, container, ends, path, documents}
+
+page :: Record PageProps -> R.Element
+page props = R.createElement pageCpt props []
+
+pageCpt :: R.Component PageProps
+pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
+  where
+    cpt {totalRecords, container, deletions, documents, ends, path: path@({nodeId, listId, query} /\ setPath)} _ = do
+      T.table { rows, container, colNames, totalRecords, setParams }
+      where
+        setParams params = setPath (_ {params = params})
+        colNames = T.ColumnName <$> [ "", "Date", "Title", "Source", "Authors", "Delete" ]
+        -- TODO: how to interprete other scores?
+        gi Favorite = "glyphicon glyphicon-star-empty"
+        gi _ = "glyphicon glyphicon-star"
+        isChecked id = Set.member id (fst deletions).pending
+        isDeleted (DocumentsView {id}) = Set.member id (fst deletions).deleted
+        pairUrl (Pair {id,label})
+          | id > 1 = H.a { href, target: "blank" } [ H.text label ]
+            where href = url ends $ NodePath NodeContact (Just id)
+          | otherwise = H.text label
+        comma = H.span {} [ H.text ", " ]
+        rows = row <$> filter (not <<< isDeleted) documents
+          where
+            row (DocumentsView {id,score,title,source,date,pairs,delete,category}) =
+              { row:
+                [ H.div {}
+                  [ H.a { className, on: {click: markClick} } []
                     -- TODO show date: Year-Month-Day only
-                    , div strikeIfDeleted [text date]
-                    , a (strikeIfDeleted <> [ href $ toLink endConfigStateful $ Router.Document listId id
-                                            , target "blank"])
-                        [ text title ]
-                    , div strikeIfDeleted [text source]
-                    , div strikeIfDeleted $ intercalate [comma] $ pairUrl <$> pairs
-                    , input [ _type "checkbox"
-                            , checked (isChecked id)
-                            , onClick $ const $ dispatch $ ToggleDocumentToDelete id]
-                    ]
-                , delete: true
-                }) <$> filter (not <<< isDeleted) res
+                  , maybeStricken [ H.text date ]
+                  , maybeStricken [ H.text source ]
+                  -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
+                  , H.input { type: "checkbox", checked: isChecked id, on: { click: toggleClick } }
+                  ] ]
+              , delete: true }
+              where
+                markClick _ = markCategory ends nodeId category [id]
+                toggleClick _ = togglePendingDeletion deletions id
+                className = gi category
+                maybeStricken
+                  | delete = H.div { style: { textDecoration: "line-through" } }
+                  | otherwise = H.div {}
 
-pageLoaderClass :: ReactClass (PageLoaderProps (children :: Children))
-pageLoaderClass = Loader.createLoaderClass' "PageLoader" loadPage renderPage
-
-pageLoader :: PageLoaderProps () -> ReactElement
-pageLoader props = React.createElement pageLoaderClass props []
 
 ---------------------------------------------------------
 
-newtype DeleteDocumentQuery = DeleteDocumentQuery
-  {
-    documents :: Array Int
-  }
-
+newtype DeleteDocumentQuery = DeleteDocumentQuery { documents :: Array Int }
 
 instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
-  encodeJson (DeleteDocumentQuery post)
-     = "documents" := post.documents
-       ~> jsonEmptyObject
+  encodeJson (DeleteDocumentQuery post) =
+    "documents" := post.documents ~> jsonEmptyObject
 
-putFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
-putFavorites nodeId = put (toUrl endConfigStateful Back Node (Just nodeId) <> "/favorites")
+putFavorites :: Ends -> Int -> FavoriteQuery -> Aff (Array Int)
+putFavorites ends nodeId = put to
+  where to = url endst (NodeAPI Node (Just nodeId)) <> "/favorites"
 
 deleteFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
-deleteFavorites nodeId = deleteWithBody (toUrl endConfigStateful Back Node (Just nodeId) <> "/favorites")
+deleteFavorites nodeId = deleteWithBody to
+  where to = url ends (NodeAPI Node (Just nodeId)) <> "/favorites"
 
-deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Array Int)
-deleteDocuments nodeId = deleteWithBody (toUrl endConfigStateful Back Node (Just nodeId) <> "/documents")
+deleteDocuments :: Ends -> Int -> DeleteDocumentQuery -> Aff (Array Int)
+deleteDocuments ends nodeId = deleteWithBody to
+  where to = url ends (NodeAPI Node (Just nodeId)) <> "/documents"
