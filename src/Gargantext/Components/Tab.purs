@@ -3,67 +3,48 @@ module Gargantext.Components.Tab where
 import Prelude hiding (div)
 
 import Data.Array (fold)
-import Data.Lens (Lens', Prism', over, view)
-import Data.List (List, mapWithIndex, toUnfoldable)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Tuple (Tuple(..))
-import React (ReactElement)
-import React.DOM (a, div, nav, text)
-import React.DOM.Props (className, onClick)
-import Thermite ( PerformAction, Render, Spec
-                , _render, modifyState, focus
-                , simpleSpec, withState)
+import Data.Tuple.Nested ((/\))
+import Reactix as R
+import Reactix.DOM.HTML as H
 
-type State = { activeTab :: Int }
+type TabsProps = ( tabs :: Array (Tuple String R.Element), selected :: Int )
 
-data Action = ChangeTab Int
+tabs :: Record TabsProps -> R.Element
+tabs props = R.createElement tabsCpt props []
 
-tabs :: forall state props action.
-  Lens' state State -> Prism' action Action
-  -> List (Tuple String (Spec state props action))
-                      -> Spec state props action
-tabs l p ls = withState \st ->
-  let {activeTab} = view l st in
-  fold
-  [ focus l p $ simpleSpec performAction (render activeTab  ls)
-  , wrapper $ fold $ mapWithIndex        (   tab activeTab) ls
-  ]
+-- this is actually just the list of tabs, not the tab contents itself
+tabsCpt :: R.Component TabsProps
+tabsCpt = R.hooksComponent "Tabs" cpt
   where
-    performAction :: forall props.
-      PerformAction State props Action
-    performAction (ChangeTab activeTab) _ _ =
-      void $ modifyState $ const {activeTab}
-    wrapper = over _render \render d p s c ->
-      [div [className "tab-content"] $ render d p s c]
+    cpt props _ = do
+      (activeTab /\ setActiveTab) <- R.useState' props.selected
+      pure $
+        H.div { className: "tab-content" }
+        [ H.nav {}
+          [ H.div { className: "nav nav-tabs" }
+            (mapWithIndex (item setActiveTab activeTab) props.tabs) ] ]
+    item setActiveTab selected index (name /\ _) =
+      H.a { className, on: { click } } [ H.text name ]
+      where
+        eq = index == selected
+        className = "nav-item nav-link" <> (if eq then " active" else "")
+        click e = setActiveTab (const index)
 
-tab :: forall state props action. 
-  Int -> Int -> Tuple String (Spec state props action)
-                           -> Spec state props action
-tab sid iid (Tuple name spec) = over _render tabRender spec
+-- TODO: document what these are (selection, item indices)
+type TabProps = ( selected :: Int, index :: Int )
+
+tab :: Record TabProps -> Array R.Element -> R.Element
+tab = R.createElement tabCpt
+
+-- | A tab only shows its contents if it is currently selected
+tabCpt :: R.Component TabProps
+tabCpt = R.staticComponent "Tab" cpt
   where
-    tabRender renderer d p s c =
-      [ div [ className $ "tab-pane " <>
-        if sid ==iid 
-           then " show active" 
-           else " fade"] $
-        if sid == iid
-          then renderer d p s c
-          else []
-      ]
+    cpt { selected, index } children = H.div { className } children'
+      where
+        same = selected == index
+        className = "tab-pane" <> (if same then "show active" else "fade")
+        children' = if same then children else []
 
-
-render :: forall state props action.
-  Int -> List (Tuple String (Spec state props action))
-                          -> Render State props Action
-render at ls d p s c =
-  [ nav []
-    [ div [className "nav nav-tabs"]
-      $ toUnfoldable $ mapWithIndex (item at) ls
-    ]
-  ]
-  where
-    item :: forall a. Int -> Int -> (Tuple String a) -> ReactElement
-    item sid iid (Tuple name _) =
-      a [className $ "nav-item nav-link" <>
-      if sid == iid
-         then " active"
-         else "", onClick \e -> d $ ChangeTab iid] [text name]
