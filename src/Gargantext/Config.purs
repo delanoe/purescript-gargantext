@@ -10,197 +10,107 @@ toUrl Front Corpus 1 == "http://localhost:2015/#/corpus/1"
 module Gargantext.Config where
 
 import Prelude
+import Control.Plus (empty)
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject)
 import Data.Array (filter, head)
+import Data.NonEmpty (NonEmpty, (:|))
+import Data.NonEmpty as NonEmpty
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), maybe, fromJust)
 import Partial.Unsafe (unsafePartial)
-import Thermite (PerformAction, modifyState_)
 
 import Gargantext.Router as R
 import Gargantext.Types (TermList, TermSize(..))
 
-urlPlease :: End -> String -> String
-urlPlease end path = theEnd.baseUrl <> theEnd.prePath <> path
-  where theEnd = endOf end endConfig
+data PathType = BackendPath | FrontendPath | StaticPath
 
--- TODO temporary variable, to make refactoring easier
-endConfigStateful :: EndConfig
-endConfigStateful = endConfig
+class Path t where
+  pathType :: t -> PathType
+  path :: t -> String
 
-endConfig :: EndConfig
-endConfig = devEndConfig
-
-demoEndConfig :: EndConfig
-demoEndConfig = demoEndConfig' V10
-
-devEndConfig :: EndConfig
-devEndConfig = devEndConfig' V10
-
-demoEndConfig' :: ApiVersion -> EndConfig
-demoEndConfig' v = { front : frontRelative
-                   , back: backDemo v
-                   , static : staticRelative
-                   }
-
-devEndConfig' :: ApiVersion -> EndConfig
-devEndConfig' v = { front : frontRelative
-                    , back: backDev v
-                    , static : staticRelative
-                  }
-
-localEndConfig :: EndConfig
-localEndConfig = localEndConfig' V10
-
-localEndConfig' :: ApiVersion -> EndConfig
-localEndConfig' v = { front : frontRelative
-                    , back  : backLocal v
-                    , static : staticRelative
-                    }
-
-
-type EndConfigOption = {
-    endConfig :: EndConfig
-  , displayName :: String
-  }
-
-endConfigOptions :: Array EndConfigOption
-endConfigOptions = [
-  {
-    endConfig: demoEndConfig
-  , displayName: "demo"
-  }
-  ,
-  {
-      endConfig: devEndConfig
-    , displayName: "dev"
-  }
-  , {
-       endConfig: localEndConfig
-     , displayName: "local"
-  }
-  ]
-
-endConfigDisplayName :: EndConfig -> String
-endConfigDisplayName endConfig = (unsafePartial $ fromJust h).displayName
+url :: forall t. Path t => Ends -> t -> String
+url e p = h (pathType p)
   where
-    h = head $ filter (\ec -> ec.endConfig == endConfig) endConfigOptions
+    h BackendPath = back e.backend (path p)
+    h FrontendPath = front e.frontend (path p)
+    h StaticPath = front e.static (path p)
+    back e path = e.baseUrl <> e.prePath <> show e.version <> "/" <> path
+    front e path = e.baseUrl <> e.prePath <> path
 
-type State = {
-    endConfig :: EndConfig
+type Backend =
+  { name :: String,    version :: ApiVersion
+  , prePath :: String, baseUrl :: String
   }
 
-initialState :: State
-initialState = {
-  endConfig: endConfig
-  }
+backendKey :: Backend -> String
+backendKey {prePath, baseUrl} = prePath <> baseUrl
 
-data StateAction = UpdateState State
+type Frontend = { name :: String, baseUrl :: String, prePath :: String }
 
-statePerformAction :: forall props. PerformAction State props StateAction
-statePerformAction (UpdateState state) _ _ =
-  void $ modifyState_ $ const state
+backend :: ApiVersion -> String -> String -> String -> Backend
+backend version baseUrl prePath name = { name, version, prePath, baseUrl }
 
-------------------------------------------------------------------------
-frontRelative :: Config
-frontRelative = { baseUrl: ""
-                , prePath: "/#/"
-                }
+frontend :: String -> String -> String -> Frontend
+frontend baseUrl prePath name = { name, baseUrl, prePath }
 
-staticRelative :: Config
-staticRelative = { baseUrl: ""
-                 , prePath : "/"
-               }
+defaultBackends :: NonEmpty Array Backend
+defaultBackends = prod :| [dev, demo, local]
+  where
+    prod = backend V10 "http://gargantext.org" "/api/" "gargantext.org"
+    dev = backend V10 "http://dev.gargantext.org" "/api/" "gargantext.org (dev)"
+    demo = backend V10 "http://demo.gargantext.org" "/api/" "gargantext.org (demo)"
+    local = backend V10 "http://localhost:8008" "/api/" "local"
 
-frontCaddy :: Config
-frontCaddy = { baseUrl: "http://localhost:2015"
-             , prePath: "/#/"
-             }
+defaultFrontends :: NonEmpty Array Frontend
+defaultFrontends = relative :| [prod, dev, demo, haskell, caddy]
+  where
+    relative = frontend "" "/" "Relative"
+    prod = frontend "https://gargantext.org" "/#/" "gargantext.org"
+    dev = frontend "https://dev.gargantext.org" "/#/" "gargantext.org (dev)"
+    demo = frontend "https://demo.gargantext.org" "/#/" "gargantext.org (demo)"
+    haskell = frontend "http://localhost:8008" "/#/" "local (gargantext)"
+    python = frontend "http://localhost:8000" "/#/" "local (python)"
+    caddy = frontend "http://localhost:2015" "/#/" "local (caddy)"
 
-frontHaskell :: Config
-frontHaskell = { baseUrl: "http://localhost:8008"
-               , prePath: "/#/"
-               }
+defaultStatics :: NonEmpty Array Frontend
+defaultStatics = relative :| []
+  where
+    relative = frontend "" "/" "relative"
 
-frontDev :: Config
-frontDev = { baseUrl: "https://dev.gargantext.org"
-           , prePath: "/#/"
-           }
+type Ends =
+  { backend  :: Backend
+  , frontend :: Frontend
+  , static   :: Frontend }
 
-frontDemo :: Config
-frontDemo = { baseUrl: "https://demo.gargantext.org"
-           , prePath: "/#/"
-           }
+type Ends' =
+  { backend  :: NonEmpty Array Backend
+  , frontend :: NonEmpty Array Frontend
+  , static   :: NonEmpty Array Frontend }
 
-frontProd :: Config
-frontProd = { baseUrl: "https://gargantext.org"
-            , prePath: "/#/"
-            }
+defaultEnds :: Ends
+defaultEnds =
+  { backend:  NonEmpty.head defaultBackends
+  , frontend: NonEmpty.head defaultFrontends
+  , static:   NonEmpty.head defaultStatics }
 
-------------------------------------------------------------------------
+defaultEnds' :: Ends'
+defaultEnds' =
+  { backend:  defaultBackends
+  , frontend: defaultFrontends
+  , static:   defaultStatics }
 
-backLocal :: ApiVersion -> Config
-backLocal v = { baseUrl: "http://localhost:8008"
-              , prePath: "/api/" <> show v <> "/"
-              }
-
-backDev :: ApiVersion -> Config
-backDev v = { baseUrl: "https://dev.gargantext.org"
-            , prePath: "/api/" <> show v <> "/"
-            }
-
-backDemo :: ApiVersion -> Config
-backDemo v = { baseUrl: "https://demo.gargantext.org"
-             , prePath: "/api/" <> show v <> "/"
-             }
-
-backProd :: ApiVersion -> Config
-backProd v = { baseUrl: "https://gargantext.org"
-             , prePath: "/api/" <> show v <> "/"
-             }
-------------------------------------------------------------------------
-
-type EndConfig = { front :: Config
-                 , back  :: Config
-                 , static :: Config
-                 }
-
-type Config = { baseUrl :: String
-              , prePath :: String
-              }
-
-------------------------------------------------------------
-type UrlBase  = String
-type UrlPath  = String
-type UrlParam = String
-type Url      = String
-
-doUrl :: UrlBase -> UrlPath -> UrlParam -> Url
-doUrl b p ps = b <> p <> ps
-
-endOf :: forall cfg. End -> { front :: cfg, back :: cfg, static :: cfg } -> cfg
-endOf Back  = _.back
-endOf Front = _.front
-endOf Static = _.static
-
-endBaseUrl :: End -> EndConfig -> UrlBase
-endBaseUrl end c = (endOf end c).baseUrl
-
-endPathUrl :: End -> EndConfig -> Path -> Maybe Id -> UrlPath
-endPathUrl end = pathUrl <<< endOf end
-
-limitUrl :: Limit -> UrlPath
+limitUrl :: Limit -> String
 limitUrl l = "&limit=" <> show l
 
-offsetUrl :: Offset -> UrlPath
+offsetUrl :: Offset -> String
 offsetUrl o = "&offset=" <> show o
 
-orderUrl :: forall a. Show a => Maybe a -> UrlPath
+orderUrl :: forall a. Show a => Maybe a -> String
 orderUrl = maybe "" (\x -> "&order=" <> show x)
 
-orderByUrl :: forall a. Show a => Maybe a -> UrlPath
+orderByUrl :: forall a. Show a => Maybe a -> String
 orderByUrl = maybe "" (\x -> "&orderBy=" <> show x)
 
 showTabType' :: TabType -> String
@@ -225,67 +135,12 @@ instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
      ~> "query"      := post.query
      ~> jsonEmptyObject
 
-pathUrl :: Config -> Path -> Maybe Id -> UrlPath
-pathUrl c (Tab t) i =
-    pathUrl c (NodeAPI Node) i <> "/" <> showTabType' t
-pathUrl c (Children n o l s) i =
-    pathUrl c (NodeAPI Node) i <>
-      "/" <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
-pathUrl c (NodeAPI Phylo) pId = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId)
-pathUrl c (GetNgrams
-            { tabType: t
-            , offset: o
-            , orderBy
-            , limit: l
-            , listIds
-            , termListFilter: tlf
-            , termSizeFilter: tsf
-            , searchQuery: q
-            }) i =
-      base
-      <> "/ngrams?ngramsType=" <> showTabType' t
-      <> offsetUrl o <> limitUrl l
-      <> orderByUrl orderBy
-      <> foldMap (\x -> "&list=" <> show x) listIds
-      <> foldMap (\x -> "&listType=" <> show x) tlf
-      <> foldMap (\x -> case x of
-                          MonoTerm  -> "&minTermSize=0&maxTermSize=1"
-                          MultiTerm -> "&minTermSize=2"
-                 ) tsf
-      <> if q == "" then "" else ("&search=" <> q)
-        where
-          base =  case t of
-                    TabCorpus _ -> pathUrl c (NodeAPI Node) i
-                    _           -> pathUrl c (NodeAPI Url_Document) i
-pathUrl c (ListDocument lId) dId =
-  pathUrl c (NodeAPI NodeList) lId <> "/document/" <> (show $ maybe 0 identity dId)
-
-pathUrl c (PutNgrams t listid termList) i =
-    pathUrl c (NodeAPI Node) i <> "/ngrams?ngramsType="
-      <> showTabType' t
-      <> maybe "" (\x -> "&list=" <> show x) listid
-      <> foldMap (\x -> "&listType=" <> show x) termList
-pathUrl c Auth Nothing = c.prePath <> "auth"
-pathUrl c Auth (Just _) = "impossible" -- TODO better types
-pathUrl c (NodeAPI nt) i = c.prePath <> nodeTypeUrl nt <> (maybe "" (\i' -> "/" <> show i') i)
-pathUrl c (Search {listId,limit,offset,orderBy}) i =
-    pathUrl c (NodeAPI Corpus) i
-      <> "/search?list_id=" <> show listId
-      <> offsetUrl offset <> limitUrl limit <> orderUrl orderBy
-pathUrl c (CorpusMetrics {tabType, listId, limit}) i =
-    pathUrl c (NodeAPI Corpus) i <> "/metrics"
-      <> "?ngrams=" <> show listId
-      <> "&ngramsType=" <> showTabType' tabType
-      <> maybe "" (\x -> "&limit=" <> show x) limit
--- TODO fix this url path
-pathUrl c (Chart {chartType, tabType}) i =
-    pathUrl c (NodeAPI Corpus) i <> "/" <> show chartType
-      <> "?ngramsType=" <> showTabType' tabType
-      <> "&listType=GraphTerm" -- <> show listId
-      -- <> maybe "" (\x -> "&limit=" <> show x) limit
-
 
 ------------------------------------------------------------
+
+instance pathRoutes :: Path R.Routes where
+  pathType _ = FrontendPath
+  path = routesPath
 
 routesPath :: R.Routes -> String
 routesPath R.Home = ""
@@ -302,24 +157,18 @@ routesPath (R.Annuaire i) = "annuaire/" <> show i
 routesPath (R.UserPage i) = "user/" <> show i
 routesPath (R.ContactPage i) = "contact/" <> show i
 
-class Linkable a where
-  toLink :: EndConfig -> a -> String
+-- nodeTypePath :: NodeType -> Path
+-- nodeTypePath = NodeAPI
 
-instance linkableRoutes :: Linkable R.Routes where
-  toLink ec l = ec.front.baseUrl <> endConfig.front.prePath <> routesPath l
+-- instance toUrlNodeType :: ToUrl NodeType where
+--   toUrl ec e nt i = toUrl ec e (NodeAPI nt) i
 
-class ToUrl a where
-  toUrl :: EndConfig -> End -> a -> Maybe Id -> Url
-
-instance toUrlNodeType :: ToUrl NodeType where
-  toUrl ec e nt i = toUrl ec e (NodeAPI nt) i
-
-instance toUrlPath :: ToUrl Path where
-  toUrl ec e p i = doUrl base path params
-    where
-      base   = endBaseUrl e ec
-      path   = endPathUrl e ec p i
-      params = ""
+-- instance toUrlPath :: ToUrl Path where
+--   toUrl ec e p i = doUrl base path params
+--     where
+--       base   = endBaseUrl e ec
+--       path   = endPathUrl e ec p i
+--       params = ""
 ------------------------------------------------------------
 
 data NodeType = NodeUser
@@ -396,63 +245,136 @@ instance decodeJsonNodeType :: DecodeJson NodeType where
 instance encodeJsonNodeType :: EncodeJson NodeType where
   encodeJson nodeType = encodeJson $ show nodeType
 
-nodeTypeUrl :: NodeType -> Url
-nodeTypeUrl Annuaire  = "annuaire"
-nodeTypeUrl Corpus    = "corpus"
-nodeTypeUrl CorpusV3  = "corpus"
-nodeTypeUrl Dashboard = "dashboard"
-nodeTypeUrl Url_Document  = "document"
-nodeTypeUrl Error     = "ErrorNodeType"
-nodeTypeUrl Folder    = "folder"
-nodeTypeUrl Graph     = "graph"
-nodeTypeUrl Phylo     = "phylo"
-nodeTypeUrl Individu  = "individu"
-nodeTypeUrl Node      = "node"
-nodeTypeUrl Nodes     = "nodes"
-nodeTypeUrl NodeUser  = "user"
-nodeTypeUrl NodeContact = "contact"
-nodeTypeUrl Tree      = "tree"
-nodeTypeUrl NodeList  = "lists"
-nodeTypeUrl Texts     = "texts"
+nodeTypePath :: NodeType -> String
+nodeTypePath Annuaire  = "annuaire"
+nodeTypePath Corpus    = "corpus"
+nodeTypePath CorpusV3  = "corpus"
+nodeTypePath Dashboard = "dashboard"
+nodeTypePath Url_Document  = "document"
+nodeTypePath Error     = "ErrorNodeType"
+nodeTypePath Folder    = "folder"
+nodeTypePath Graph     = "graph"
+nodeTypePath Phylo     = "phylo"
+nodeTypePath Individu  = "individu"
+nodeTypePath Node      = "node"
+nodeTypePath Nodes     = "nodes"
+nodeTypePath NodeUser  = "user"
+nodeTypePath NodeContact = "contact"
+nodeTypePath Tree      = "tree"
+nodeTypePath NodeList  = "lists"
+nodeTypePath Texts     = "texts"
 ------------------------------------------------------------
 
 type ListId = Int
 
-data Path
+type NgramsGetOpts =
+  { tabType        :: TabType
+  , offset         :: Offset
+  , limit          :: Limit
+  , orderBy        :: Maybe OrderBy
+  , listIds        :: Array ListId
+  , termListFilter :: Maybe TermList
+  , termSizeFilter :: Maybe TermSize
+  , searchQuery    :: String
+  }
+
+type SearchOpts =
+  { {-id :: Int
+    , query    :: Array String
+    ,-}
+    listId   :: Int
+  , limit    :: Limit
+  , offset   :: Offset
+  , orderBy  :: Maybe OrderBy
+  }
+
+type CorpusMetricOpts =
+  { tabType :: TabType
+  , listId  :: ListId
+  , limit   :: Maybe Limit
+  }
+
+type ChartOpts =
+  { chartType :: ChartType
+  , tabType   :: TabType
+  -- , listId  :: ListId
+  -- , limit   :: Maybe Limit
+  }
+
+data BackendRoute
   = Auth
-  | Tab      TabType
-  | Children NodeType Offset Limit (Maybe OrderBy)
-  | GetNgrams
-      { tabType        :: TabType
-      , offset         :: Offset
-      , limit          :: Limit
-      , orderBy        :: Maybe OrderBy
-      , listIds        :: Array ListId
-      , termListFilter :: Maybe TermList
-      , termSizeFilter :: Maybe TermSize
-      , searchQuery    :: String
-      }
-  | PutNgrams TabType (Maybe ListId) (Maybe TermList)
+  | Tab TabType (Maybe Id)
+  | Children NodeType Offset Limit (Maybe OrderBy) (Maybe Id)
+  | GetNgrams NgramsGetOpts (Maybe Id)
+  | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
   -- ^ The name is not good. In particular this URL is used both in PUT and POST.
-  | NodeAPI NodeType
-  | ListDocument (Maybe ListId)
-  | Search  { {-id :: Int
-            , query    :: Array String
-            ,-}
-              listId   :: Int
-            , limit    :: Limit
-            , offset   :: Offset
-            , orderBy  :: Maybe OrderBy
-            }
-  | CorpusMetrics { tabType :: TabType
-                  , listId  :: ListId
-                  , limit   :: Maybe Limit
-                  }
-  | Chart { chartType :: ChartType
-          , tabType   :: TabType
-     --            , listId  :: ListId
-      --           , limit   :: Maybe Limit
-                 }
+  | NodeAPI NodeType (Maybe Id)
+  | ListDocument (Maybe ListId) (Maybe Id)
+  | Search SearchOpts (Maybe Id)
+  | CorpusMetrics CorpusMetricOpts  (Maybe Id)
+  | Chart ChartOpts (Maybe Id)
+
+instance pathBackendRoute :: Path BackendRoute where
+  pathType _ = BackendPath
+  path = backendPath
+
+backendPath :: BackendRoute -> String
+backendPath (Tab t i) = backendPath (NodeAPI Node i) <> "/" <> showTabType' t
+backendPath (Children n o l s i) = root <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
+  where root = backendPath (NodeAPI Node i) <> "/"
+backendPath (NodeAPI Phylo pId) = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId)
+backendPath (GetNgrams opts i) =
+  base opts.tabType
+  <> "/ngrams?ngramsType="
+  <> showTabType' opts.tabType
+  <> offsetUrl opts.offset
+  <> limitUrl opts.limit
+  <> orderByUrl opts.orderBy
+  <> foldMap (\x -> "&list=" <> show x) opts.listIds
+  <> foldMap (\x -> "&listType=" <> show x) opts.termListFilter
+  <> foldMap termSizeFilter opts.termSizeFilter
+  <> search opts.searchQuery
+  where
+    base (TabCorpus _) = backendPath (NodeAPI Node i)
+    base _ = backendPath (NodeAPI Url_Document i)
+    termSizeFilter MonoTerm = "&minTermSize=0&maxTermSize=1"
+    termSizeFilter MultiTerm = "&minTermSize=2"
+    search "" = ""
+    search s = "&search=" <> s
+backendPath (ListDocument lId dId) =
+  backendPath (NodeAPI NodeList lId) <> "/document/" <> (show $ maybe 0 identity dId)
+backendPath (PutNgrams t listId termList i) =
+    backendPath (NodeAPI Node i)
+    <> "/ngrams?ngramsType="
+    <> showTabType' t
+    <> maybe "" (\x -> "&list=" <> show x) listId
+    <> foldMap (\x -> "&listType=" <> show x) termList
+backendPath Auth = "auth"
+backendPath (NodeAPI nt i) = nodeTypePath nt <> (maybe "" (\i' -> "/" <> show i') i)
+backendPath (Search {listId,limit,offset,orderBy} i) =
+    backendPath (NodeAPI Corpus i)
+    <> "/search?list_id=" <> show listId
+    <> offsetUrl offset
+    <> limitUrl limit
+    <> orderUrl orderBy
+backendPath (CorpusMetrics {tabType, listId, limit} i) =
+    backendPath (NodeAPI Corpus i) <> "/metrics"
+      <> "?ngrams=" <> show listId
+      <> "&ngramsType=" <> showTabType' tabType
+      <> maybe "" (\x -> "&limit=" <> show x) limit
+-- TODO fix this url path
+backendPath (Chart {chartType, tabType} i) =
+    backendPath (NodeAPI Corpus i) <> "/" <> show chartType
+      <> "?ngramsType=" <> showTabType' tabType
+      <> "&listType=GraphTerm" -- <> show listId
+      -- <> maybe "" (\x -> "&limit=" <> show x) limit
+
+data NodePath = NodePath NodeType (Maybe Id)
+
+instance pathNodePath :: Path NodePath where
+  pathType _ = FrontendPath
+  path (NodePath nt i) = nodeTypePath nt <> id
+    where id = maybe "" (\i' -> "/" <> show i') i
 
 data ChartType = Histo | Scatter | ChartPie | ChartTree
 
@@ -463,9 +385,7 @@ instance showChartType :: Show ChartType
     show ChartPie = "pie"
     show ChartTree = "tree"
 
-data End = Back | Front | Static
 type Id  = Int
-
 type Limit  = Int
 type Offset = Int
 data OrderBy = DateAsc  | DateDesc
@@ -485,6 +405,11 @@ instance showApiVersion :: Show ApiVersion where
   show V10 = "v1.0"
   show V11 = "v1.1"
 ------------------------------------------------------------
+
+instance eqApiVersion :: Eq ApiVersion where
+  eq V10 V10 = true
+  eq V11 V11 = true
+  eq _ _ = false
 
 data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
 
