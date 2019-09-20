@@ -9,10 +9,11 @@ import React (ReactClass, Children)
 import React.DOM (div, h4, li, p, span, text, ul)
 import React.DOM.Props (className)
 import Reactix as R
-import Thermite (PerformAction, Render, Spec, simpleSpec, cmapProps, createClass)
+import Thermite (PerformAction, Render, Spec, simpleSpec, createClass)
 
 import Gargantext.Prelude
-import Gargantext.Config          (toUrl, endConfigStateful, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..), CTabNgramType(..))
+import Gargantext.Config
+  ( NodeType(..), Ends, TabSubType(..), TabType(..), CTabNgramType(..), BackendRoute(..), url )
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Node (NodePoly(..))
@@ -28,19 +29,23 @@ type NodeDocument = NodePoly Document
 
 type LoadedData =
   { document    :: NodeDocument
-  , ngramsTable :: VersionedNgramsTable }
+  , ngramsTable :: VersionedNgramsTable
+  }
 
 type Props =
   { loaded :: LoadedData
   , path   :: DocPath
+  , ends   :: Ends
   }
 
 -- This is a subpart of NgramsTable.State.
 type State = CoreState ()
 
-initialState :: forall props others
-              . { loaded :: { ngramsTable :: VersionedNgramsTable | others } | props }
-             -> State
+initialState
+  :: forall props others
+  .  { loaded :: { ngramsTable :: VersionedNgramsTable | others }
+     | props }
+  -> State
 initialState {loaded: {ngramsTable: Versioned {version}}} =
   { ngramsTablePatch: mempty
   , ngramsVersion:    version
@@ -278,15 +283,15 @@ docViewSpec :: Spec State Props Action
 docViewSpec = simpleSpec performAction render
   where
     performAction :: PerformAction State Props Action
-    performAction Refresh {path: {nodeId, listIds, tabType}} {ngramsVersion} = do
-        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
-    performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
-        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+    performAction Refresh {path: {nodeId, listIds, tabType}, ends} {ngramsVersion} = do
+        commitPatch ends {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
+    performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}, ends} {ngramsVersion} =
+        commitPatch ends {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
         pt = singletonNgramsTablePatch CTabTerms n pe
-    performAction (AddNewNgram ngram termList) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
-        commitPatch {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+    performAction (AddNewNgram ngram termList) {path: {nodeId, listIds, tabType},ends} {ngramsVersion} =
+        commitPatch ends {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pt = addNewNgram CTabTerms ngram termList
 
@@ -334,32 +339,40 @@ docViewSpec = simpleSpec performAction render
           badge s = span [className "badge badge-default badge-pill"] [text s]
           NodePoly {hyperdata : Document doc} = document
 
-docViewClass :: ReactClass
-                  { children :: Children
-                  , loaded   :: LoadedData
-                  , path     :: DocPath
-                  }
+docViewClass
+  :: ReactClass
+     { ends     :: Ends
+     , children :: Children
+     , loaded   :: LoadedData
+     , path     :: DocPath }
 docViewClass = createClass "DocumentView" docViewSpec initialState
 
-layout :: Spec {} {nodeId :: Int, listId :: Int, corpusId :: Maybe Int} Void
-layout =
-  cmapProps (\{nodeId, listId, corpusId} -> {nodeId, listIds: [listId], corpusId, tabType}) $
-  R2.elSpec $ R.hooksComponent "DocumentLoader" \path _ ->
-    useLoader path loadData $ \props ->
-      R2.createElement' docViewClass props []
+type LayoutProps = ( ends :: Ends, nodeId :: Int, listId :: Int, corpusId :: Maybe Int )
+
+documentLayout :: Record LayoutProps -> R.Element
+documentLayout props = R.createElement documentLayoutCpt props []
+
+documentLayoutCpt :: R.Component LayoutProps
+documentLayoutCpt = R.hooksComponent "G.P.Corpus.Document.documentLayout" cpt
   where
-    tabType = TabDocument (TabNgramType CTabTerms)
+    cpt {ends, nodeId, listId, corpusId} _ = do
+      useLoader path (loadData ends) $ \loaded ->
+        R2.createElement' docViewClass {ends, path, loaded} []
+      where
+        tabType = TabDocument (TabNgramType CTabTerms)
+        path = {nodeId, listIds: [listId], corpusId, tabType}
 
 ------------------------------------------------------------------------
 
-loadDocument :: Int -> Aff NodeDocument
-loadDocument = get <<< toUrl endConfigStateful Back Node <<< Just
+loadDocument :: Ends -> Int -> Aff NodeDocument
+loadDocument ends = get <<< url ends <<< NodeAPI Node <<< Just
 
-loadData :: DocPath -> Aff LoadedData
-loadData {nodeId, listIds, tabType} = do
-  document <- loadDocument nodeId
-  ngramsTable <- loadNgramsTable
-    { nodeId
+loadData :: Ends -> DocPath -> Aff LoadedData
+loadData ends {nodeId, listIds, tabType} = do
+  document <- loadDocument ends nodeId
+  ngramsTable <- loadNgramsTable ends
+    { ends
+    , nodeId
     , listIds: listIds
     , params: { offset : 0, limit : 100, orderBy: Nothing}
     , tabType

@@ -1,17 +1,22 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, searchField, searchFieldComponent )where
 
-import Prelude hiding (div)
+import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||))
 import Data.Maybe ( Maybe(..), maybe )
 import Data.Tuple ( fst )
 import Data.Tuple.Nested ( (/\) )
+import Effect ( Effect )
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Reactix as R
-import Reactix.DOM.HTML (text, button, div, input, option, form, span, ul, li, a)
-
+import Reactix.DOM.HTML as HTML
+import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a)
 import Gargantext.Components.Search.Types (Database)
 
+select
+  :: forall props
+  .  R.IsComponent String props (Array R.Element)
+  => Record props -> Array R.Element -> R.Element
 select = R.createElement "select"
 
 type Search = { database :: Maybe Database, term :: String }

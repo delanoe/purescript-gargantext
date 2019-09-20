@@ -1,6 +1,6 @@
 module Gargantext.Components.Search.Types where
 
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
+import Data.Argonaut (class EncodeJson, class DecodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
@@ -9,14 +9,13 @@ import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-
 import Gargantext.Prelude
-import Gargantext.Types (class ToQuery)
-import Gargantext.Config (endConfigStateful, End(..), NodeType(..), Path(..), toUrl)
+import Gargantext.Types (class ToQuery, toQuery)
+import Gargantext.Config (Ends, NodeType(..), class Path, PathType(..), BackendRoute(..), url)
 import Gargantext.Config.REST (post, put)
-import Gargantext.Components.Modals.Modal (modalHide)
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
+import URI.Query as Q
 
 allDatabases :: Array Database
 allDatabases = [All, PubMed
@@ -109,6 +108,10 @@ defaultSearchQuery = SearchQuery
   , limit: Nothing
   , order: Nothing }
 
+instance pathSearchQuery :: Path SearchQuery where
+  pathType _ = BackendPath
+  path q = "new" <> Q.print (toQuery q)
+
 instance searchQueryToQuery :: ToQuery SearchQuery where
   toQuery (SearchQuery {offset, limit, order}) =
     QP.print id id $ QP.QueryPairs $
@@ -168,7 +171,11 @@ instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
     ~> jsonEmptyObject
 
 categoryUrl :: Ends -> Int -> String
-categoryUrl ends nodeId = url ends (NodeAPI Node (Just nodeId)) <> "/category"
+categoryUrl ends nodeId = url ends (NodeAPI Node $ Just nodeId) <> "/category"
 
 putCategories :: Ends -> Int -> CategoryQuery -> Aff (Array Int)
-putCategories = put <<< categoryUrl
+putCategories ends nodeId = put $ categoryUrl ends nodeId
+
+performSearch :: forall a. DecodeJson a => Ends -> SearchQuery -> Aff a
+performSearch ends q = post (url ends q) q
+

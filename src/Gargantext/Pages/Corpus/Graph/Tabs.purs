@@ -1,55 +1,37 @@
 module Gargantext.Pages.Corpus.Graph.Tabs where
 
 import Prelude hiding (div)
-import Data.Lens (view)
-import Data.List (fromFoldable)
-import Data.Tuple (Tuple(..))
+import Data.Array (fromFoldable)
+import Data.Tuple (Tuple(..), fst)
+import Gargantext.Config (Ends)
 import Gargantext.Components.GraphExplorer.Types (GraphSideCorpus(..))
-import Gargantext.Components.FacetsTable (TextQuery, docViewSpec)
+import Gargantext.Components.FacetsTable (TextQuery, docView)
 import Gargantext.Components.Table as T
 import Gargantext.Components.Tab as Tab
-import React (ReactElement, ReactClass, Children, createElement)
-import Thermite ( Spec, PerformAction, Render, _performAction, _render
-                , hideState, noState, cmapProps, simpleSpec, createClass
-                )
+import Reactix as R
+import Reactix.DOM.HTML as H
 
-type Props = { query :: TextQuery, sides :: Array GraphSideCorpus }
+type Props = ( ends :: Ends, query :: TextQuery, sides :: Array GraphSideCorpus )
 
-tabsElt :: Props -> ReactElement
-tabsElt props = createElement tabsClass props []
+tabs :: Record Props -> R.Element
+tabs props = R.createElement tabsCpt props []
 
 -- TODO no need for Children here
-tabsClass :: ReactClass { query :: TextQuery, sides :: Array GraphSideCorpus, children :: Children }
-tabsClass = createClass "GraphTabs" pureTabs (const {})
-
-pureTabs :: Spec {} Props Void
-pureTabs = hideState (const {activeTab: 0}) statefulTabs
-
-tab :: forall props state. TextQuery -> GraphSideCorpus -> Tuple String (Spec state props Tab.Action)
-tab query (GraphSideCorpus {corpusId: nodeId, corpusLabel, listId}) =
-  Tuple corpusLabel $
-    cmapProps (const {nodeId, listId, query, chart, totalRecords: 4736, container}) $
-      noState docViewSpec
+tabsCpt :: R.Component Props
+tabsCpt = R.hooksComponent "G.P.Corpus.Graph.Tabs.tabs" cpt
   where
+    cpt {ends, query, sides} _ = do
+      active <- R.useState' 0
+      pure $ Tab.tabs {tabs: tabs', selected: fst active}
+      where
+        tabs' = fromFoldable $ tab ends query <$> sides
+
+tab :: Ends -> TextQuery -> GraphSideCorpus -> Tuple String R.Element
+tab ends query (GraphSideCorpus {corpusId: nodeId, corpusLabel, listId}) =
+  Tuple corpusLabel (docView dvProps)
+  where
+    dvProps = {ends, nodeId, listId, query, chart, totalRecords: 4736, container}
     -- TODO totalRecords: probably need to insert a corpusLoader.
     chart = mempty
     container = T.graphContainer {title: corpusLabel}
 
-statefulTabs :: Spec Tab.State Props Tab.Action
-statefulTabs =
-  withProps (\{query, sides} ->
-    Tab.tabs identity identity $ fromFoldable $ tab query <$> sides)
-
--- TODO move to Thermite
--- | This function captures the props of the `Spec` as a function argument.
-withProps
-  :: forall state props action
-   . (props -> Spec state props action)
-  -> Spec state props action
-withProps f = simpleSpec performAction render
-  where
-    performAction :: PerformAction state props action
-    performAction a p st = view _performAction (f p) a p st
-
-    render :: Render state props action
-    render k p st = view _render (f p) k p st

@@ -8,51 +8,52 @@ import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis',
 import Gargantext.Components.Charts.Options.Data
 import Gargantext.Components.Charts.Options.Series
 import Data.Int (toNumber)
-import React.DOM (div, h1, text)
 import React.DOM.Props (className)
+import Reactix as R
+import Reactix.DOM.HTML as H
 import Thermite (Render, Spec, simpleSpec, defaultPerformAction)
 
-render :: Render {} {} Void
-render dispatch _ state _ = [
-    h1 [] [text "IMT DashBoard"]
-    , div [className "row"] [ div [className "col-md-9 content"] [chart globalPublis]
-                            , div [className "col-md-3 content"] [chart naturePublis]
-                            ]
-    , chart distriBySchool
-    , div [className "row"] (map (\school -> div [className "col-md-4 content"] [chart $ focus school])
-                                 [ "Télécom Bretagne", "Mines Nantes", "Eurecom"]
-                            )
-    , chart scatterEx
-    , chart sankeyEx
-    , chart treeMapEx
-    , chart treeEx
-  ]
-    where
-      myData = [seriesBarD1 {name: "Bar Data"}
-                            [ dataSerie {name: "val1", value: 50.0}
-                            , dataSerie {name: "val2", value: 70.0}
-                            , dataSerie {name: "val3", value: 80.0}
-                            ]
-               ]
+dashboardLayout :: {} -> R.Element
+dashboardLayout props = R.createElement dashboardLayoutCpt props []
 
-      focus :: String -> Options
-      focus school = Options
-        { mainTitle : "Focus " <> school
-        , subTitle  : "Total scientific publications"
-        , xAxis     : xAxis' ["2015", "2016", "2017"]
-        , yAxis     : yAxis' { position: "left"
-                             , show: false
-                             , min : 0
-                             }
-        , series    : myData
-        , addZoom   : false
-        , tooltip   : tooltipTriggerAxis -- Necessary?
-        }
+dashboardLayoutCpt :: R.Component ()
+dashboardLayoutCpt = R.staticComponent "G.P.Corpus.Dashboard.dashboardLayout" cpt
+  where
+    cpt _ _ =
+      R.fragment
+      [ H.h1 {} [ H.text "IMT DashBoard" ]
+      , H.div {className: "row"}
+        [ H.div {className: "col-md-9 content"} [ chart globalPublis ]
+        , H.div {className: "col-md-3 content"} [ chart naturePublis ] ]
+      , chart distriBySchool
+      , H.div {className: "row"} (aSchool <$> schools)
+      , chart scatterEx
+      , chart sankeyEx
+      , chart treeMapEx
+      , chart treeEx ]
+    aSchool school = H.div {className: "col-md-4 content"} [ chart $ focus school ]
+    schools = [ "Télécom Bretagne", "Mines Nantes", "Eurecom" ]
+    myData =
+      [seriesBarD1 {name: "Bar Data"}
+       [ dataSerie {name: "val1", value: 50.0}
+       , dataSerie {name: "val2", value: 70.0}
+       , dataSerie {name: "val3", value: 80.0} ] ]
+    focus :: String -> Options
+    focus school =
+      Options
+      { mainTitle : "Focus " <> school
+      , subTitle  : "Total scientific publications"
+      , xAxis     : xAxis' ["2015", "2016", "2017"]
+      , yAxis     : yAxis' { position: "left", show: false, min : 0 }
+      , series    : myData
+      , addZoom   : false
+      , tooltip   : tooltipTriggerAxis } -- Necessary?
 
 -----------------------------------------------------------------------------------------------------------
 
 naturePublis_x :: Array String
 naturePublis_x = ["Com","Articles","Thèses","Reports"]
+
 naturePublis_y' :: Array Int
 naturePublis_y' = [23901,17417,1188,1176]
 
@@ -130,7 +131,7 @@ sankeyEx = Options
      [ seriesSankey
          { "data":
              [ {name : "a"}, {name : "b"}
-             , {name:"c"}, {name:"d"} ]
+             , {name:"c"},   {name:"d"} ]
          , links:
              [ {source : "a", target : "b", value :2.0}
              , {source : "a", target : "c", value :1.0}
@@ -145,49 +146,46 @@ sankeyEx = Options
   }
 
 treeData :: Array TreeNode
-treeData = [ treeNode "nodeA" 10 [ treeNode "nodeAa" 4 []
-                                   , treeNode "nodeAb" 5 []
-                                   , treeNode "nodeAc" 1 [ treeNode "nodeAca" 5 []
-                                                           , treeNode "nodeAcb" 5 []
-                                                          ]
-                                   ]
-           , treeNode "nodeB" 20 [ treeNode "nodeBa" 20 [ treeNode "nodeBa1" 20 [] ]]
-           , treeNode "nodeC" 20 [ treeNode "nodeCa" 20 [ treeNode "nodeCa1" 10 []
-                                                            , treeNode "nodeCa2" 10 []
-                                                            ]
-                                   ]
-           , treeNode "nodeD" 20 [ treeNode "nodeDa" 20 [ treeNode "nodeDa1" 2 []
-                                                            , treeNode "nodeDa2" 2 []
-                                                            , treeNode "nodeDa3" 2 []
-                                                            , treeNode "nodeDa4" 2 []
-                                                            , treeNode "nodeDa5" 2 []
-                                                            , treeNode "nodeDa6" 2 []
-                                                            , treeNode "nodeDa7" 2 []
-                                                            , treeNode "nodeDa8" 2 []
-                                                            , treeNode "nodeDa9" 2 []
-                                                            , treeNode "nodeDa10" 2 []
-                                                            ]
-                                     ]
-          ]
-
+treeData =
+  [ treeNode "nodeA" 10
+    [ treeNode "nodeAa" 4 []
+    , treeNode "nodeAb" 5 []
+    , treeNode "nodeAc" 1
+      [ treeNode "nodeAca" 5 []
+      , treeNode "nodeAcb" 5 [] ] ]
+  , treeNode "nodeB" 20
+    [ treeNode "nodeBa" 20
+      [ treeNode "nodeBa1" 20 [] ]]
+  , treeNode "nodeC" 20
+    [ treeNode "nodeCa" 20
+      [ treeNode "nodeCa1" 10 []
+      , treeNode "nodeCa2" 10 [] ]
+    , treeNode "nodeD" 20
+      [ treeNode "nodeDa" 20
+        [ treeNode "nodeDa1" 2 []
+        , treeNode "nodeDa2" 2 []
+        , treeNode "nodeDa3" 2 []
+        , treeNode "nodeDa4" 2 []
+        , treeNode "nodeDa5" 2 []
+        , treeNode "nodeDa6" 2 []
+        , treeNode "nodeDa7" 2 []
+        , treeNode "nodeDa8" 2 []
+        , treeNode "nodeDa9" 2 []
+        , treeNode "nodeDa10" 2 [] ]]]]
 
 treeData' :: Array TreeNode
-treeData' = [ treeNode "nodeA" 10 [ treeLeaf "nodeAa" 4
-                                    , treeLeaf "nodeAb" 5
-                                    , treeNode "nodeAc" 1 [ treeLeaf "nodeAca" 5
-                                                           , treeLeaf "nodeAcb" 5
-                                                          ]
-                                   , treeNode "nodeB" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-                                   , treeNode "nodeC" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-                                   , treeNode "nodeD" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-                                   , treeNode "nodeE" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-                                   , treeNode "nodeF" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-                                   , treeNode "nodeG" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-                                   , treeNode "nodeH" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-                                   ]
-          ]
-
-
+treeData' =
+  [ treeNode "nodeA" 10
+    [ treeLeaf "nodeAa" 4
+    , treeLeaf "nodeAb" 5
+    , treeNode "nodeAc" 1 [ treeLeaf "nodeAca" 5, treeLeaf "nodeAcb" 5 ]]
+  , treeNode "nodeB" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+  , treeNode "nodeC" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+  , treeNode "nodeD" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+  , treeNode "nodeE" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+  , treeNode "nodeF" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+  , treeNode "nodeG" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+  , treeNode "nodeH" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]]
 
 treeMapEx :: Options
 treeMapEx = Options
@@ -211,5 +209,3 @@ treeEx = Options
   , tooltip   : tooltipTriggerAxis -- Necessary?
   }
 
-layoutDashboard :: Spec {} {} Void
-layoutDashboard = simpleSpec defaultPerformAction render
