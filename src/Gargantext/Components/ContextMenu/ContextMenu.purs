@@ -23,9 +23,6 @@ import Gargantext.Utils.Reactix as R2
 
 type Props t = ( x :: Number, y :: Number, setMenu :: R2.StateSetter (Maybe t) )
 
-getPortalHost :: R.Hooks DOM.Element
-getPortalHost = R.unsafeHooksEffect $ delay unit $ \_ -> pure $ document ... "getElementById" $ ["menu-portal"]
-
 contextMenu :: forall t. Record (Props t) -> Array R.Element -> R.Element
 contextMenu = R.createElement contextMenuCpt
 
@@ -33,7 +30,7 @@ contextMenuCpt :: forall t. R.Component (Props t)
 contextMenuCpt = R.hooksComponent "ContextMenu" cpt
   where
     cpt menu children = do
-      host <- getPortalHost
+      host <- R2.getPortalHost
       root <- R.useRef null
       rect /\ setRect <- R.useState $ \_ -> Nothing
       R.useLayoutEffect1 (R.readRef root) $ do

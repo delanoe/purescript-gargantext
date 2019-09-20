@@ -3,6 +3,9 @@ module Gargantext.Utils.Reactix
 
 import Prelude
 
+import DOM.Simple as DOM
+import DOM.Simple.Document (document)
+import DOM.Simple.Event as DE
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Traversable (traverse_)
@@ -13,12 +16,14 @@ import DOM.Simple.Event as DE
 import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Class (liftEffect)
+import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
+import Effect.Exception (error)
 import Effect.Uncurried (EffectFn1, mkEffectFn1)
-import FFI.Simple ((...), defineProperty)
+import FFI.Simple ((...), defineProperty, delay)
 import React (ReactClass, ReactElement, Children, class IsReactElement, class ReactPropFields)
 import React as React
 import Reactix as R
-import Reactix.DOM.HTML (ElemFactory)
+import Reactix.DOM.HTML (ElemFactory, text)
 import Reactix.React (createDOMElement)
 import Reactix.SyntheticEvent as RE
 import Thermite (Spec, simpleSpec, Render, defaultPerformAction)
@@ -26,7 +31,7 @@ import Unsafe.Coerce (unsafeCoerce)
 
 newtype Point = Point { x :: Number, y :: Number }
 
-type StateSetter a = (a -> a) -> Effect Unit
+type Setter t = (t -> t) -> Effect Unit
 
 -- | Turns a ReactElement into aReactix Element
 -- | buff (v.) to polish
@@ -79,6 +84,12 @@ instance isComponentReactClass
     React.createElement reactClass props children
 -}
 
+-- | Turns an aff into a useEffect-compatible Effect (Effect Unit)
+affEffect :: forall a. String -> Aff a -> Effect (Effect Unit)
+affEffect errmsg aff = do
+    fiber <- launchAff aff
+    pure $ launchAff_ $ killFiber (error errmsg) fiber
+
 mousePosition :: RE.SyntheticEvent DE.MouseEvent -> Point
 mousePosition e = Point { x: RE.clientX e, y: RE.clientY e }
 
@@ -90,7 +101,6 @@ named = flip $ defineProperty "name"
 
 overState :: forall t. (t -> t) -> R.State t -> Effect Unit
 overState f (_state /\ setState) = setState f
-
 
 select :: ElemFactory
 select = createDOMElement "select"
@@ -129,3 +139,27 @@ readPositionRef :: R.Ref (Nullable DOM.Element) -> Maybe DOM.DOMRect
 readPositionRef el = do
   let posRef = R.readRef el
   Element.boundingRect <$> toMaybe posRef
+
+unsafeEventTarget :: forall event. event -> DOM.Element
+unsafeEventTarget e = (unsafeCoerce e).target
+
+getElementById :: String -> Effect (Maybe DOM.Element)
+getElementById = (flip delay) h
+  where
+    h id = pure $ toMaybe $ document ... "getElementById" $ [id]
+  
+-- We just assume it works, so make sure it's in the html
+getPortalHost :: R.Hooks DOM.Element
+getPortalHost = R.unsafeHooksEffect $ delay unit $ \_ -> pure $ document ... "getElementById" $ ["portal"]
+
+useLayoutEffectOnce :: Effect (Effect Unit) -> R.Hooks Unit
+useLayoutEffectOnce e = R.unsafeUseLayoutEffect e []
+
+singleParent :: forall props. R.Component props -> Record props -> R.Element -> R.Element
+singleParent cpt props child = R.createElement cpt props [ child ]
+
+childless :: forall props. R.Component props -> Record props -> R.Element
+childless cpt props = R.createElement cpt props []
+
+showText :: forall s. Show s => s -> R.Element
+showText = text <<< show
