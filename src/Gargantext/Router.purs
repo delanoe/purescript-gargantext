@@ -4,7 +4,16 @@ import Gargantext.Prelude
 
 import Data.Foldable (oneOf)
 import Data.Int (floor)
+import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested ((/\))
+-- import Effect (Effect)
+-- import Effect.Class (liftEffect)
+import Reactix as R
+import Routing.Hash (matches)
 import Routing.Match (Match, lit, num)
+-- import Web.HTML (window)
+-- import Web.HTML.Window (localStorage)
+-- import Web.Storage.Storage (getItem)
 
 data Routes
   = Home
@@ -58,3 +67,11 @@ instance showRoutes :: Show Routes where
   show (Texts i)          = "texts" <> show i
   show (Lists i)          = "lists" <> show i
   show Home             = "Home"
+
+-- | Ties the hash router to a state hook of routes
+-- | Note: if it gets sent to an unrecognised url, it will quietly drop the change
+useHashRouter :: forall routes. Match routes -> routes -> R.Hooks (R.State routes)
+useHashRouter routes init = do
+  route@(_ /\ setRoute) <- R.useState' init
+  R.useEffectOnce $ matches routes $ \_old new -> setRoute (const new)
+  pure route
