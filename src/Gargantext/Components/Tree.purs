@@ -28,10 +28,10 @@ import Web.File.File (toBlob)
 import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
-import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Config (toUrl, EndConfig, endConfig, End(..), NodeType(..), readNodeType)
 import Gargantext.Config as C
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Router as Router
 import Gargantext.Types (class ToQuery, toQuery)
 import Gargantext.Utils (id)

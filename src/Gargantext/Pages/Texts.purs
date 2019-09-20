@@ -9,12 +9,12 @@ import Thermite (Spec)
 --------------------------------------------------------
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Table as Table
 import Gargantext.Config      (toUrl, endConfigStateful, Path(..), NodeType(..), End(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Pages.Texts.Tabs.Types (CorpusData, CorpusInfo(..))
 import Gargantext.Pages.Texts.Tabs.Specs (elt) as Tabs
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
 
 ------------------------------------------------------------------------

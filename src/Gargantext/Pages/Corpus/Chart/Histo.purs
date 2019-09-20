@@ -9,12 +9,14 @@ import Reactix as R
 import Thermite (Spec)
 
 import Gargantext.Prelude
-import Gargantext.Components.Loader2 (useLoader)
+import Gargantext.Types (TermList(..))
+import Gargantext.Components.Loader as Loader
 import Gargantext.Components.Charts.Options.ECharts
 import Gargantext.Components.Charts.Options.Series
 import Gargantext.Components.Charts.Options.Color
 import Gargantext.Components.Charts.Options.Font
 import Gargantext.Components.Charts.Options.Data
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Pages.Corpus.Chart.Utils as U
 

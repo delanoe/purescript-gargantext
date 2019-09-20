@@ -25,9 +25,11 @@ import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 import Gargantext.Config (End(..), NodeType(..), OrderBy(..), Path(..), TabType, TabPostQuery(..), toUrl, endConfigStateful, toLink)
 import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
-import Gargantext.Components.Loader2 (useLoader)
+import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Router as Router
 ------------------------------------------------------------------------

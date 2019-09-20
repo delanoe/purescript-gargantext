@@ -15,10 +15,10 @@ import Gargantext.Prelude
 import Gargantext.Config          (toUrl, endConfigStateful, NodeType(..), End(..), TabSubType(..), TabType(..), CTabNgramType(..), CTabNgramType(..))
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.Loader2 (useLoader)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Types (TermList)
 import Gargantext.Utils.Reactix as R2
 
