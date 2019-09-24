@@ -19,4 +19,3 @@ newtype Graph n e = Graph { nodes :: Seq {|n}, edges :: Seq {|e} }
 
 
 type Renderer = { "type" :: String, container :: Element }
-

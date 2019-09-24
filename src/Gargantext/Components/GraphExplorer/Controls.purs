@@ -11,10 +11,14 @@ module Gargantext.Components.GraphExplorer.Controls
  , getMultiNodeSelect, setMultiNodeSelect
  ) where
 
+import Data.Int (round)
 import Data.Maybe (Maybe(..))
-import DOM.Simple as DOM
+import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple as DOM
+import DOM.Simple.Console (log2)
 import Effect (Effect)
+import Effect.Timer (setTimeout)
 import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -24,6 +28,7 @@ import Gargantext.Components.GraphExplorer.Button (centerButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
@@ -71,8 +76,24 @@ controls props = R.createElement controlsCpt props []
 controlsCpt :: R.Component Controls
 controlsCpt = R.hooksComponent "GraphControls" cpt
   where
+    forceAtlas2Timeout = 2.0  -- in seconds
+
     cpt props _ = do
       localControls <- initialLocalControls
+
+      R.useEffectOnce $ do
+          _ <- setTimeout (round $ forceAtlas2Timeout * 1000.0) $ do
+            log2 "Pausing forceatlas" props.sigmaRef
+            let (pauseForceAtlas /\ setPauseForceAtlas) = localControls.pauseForceAtlas
+            let mSigma = Sigmax.readSigma <$> R.readRef props.sigmaRef
+            case mSigma of
+              Just (Just s) -> if pauseForceAtlas then do
+                  setPauseForceAtlas $ const false
+                  Sigma.stopForceAtlas2 s
+                else
+                  pure unit
+              _             -> pure unit
+          pure $ pure unit
 
       pure $ case getShowControls props of
         false -> RH.div {} []
