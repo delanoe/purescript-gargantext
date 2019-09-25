@@ -4,6 +4,7 @@ module Gargantext.Components.GraphExplorer.ToggleButton
   , edgesToggleButton
   , sidebarToggleButton
   , pauseForceAtlasButton
+  , pauseForceAtlasButton2
   , treeToggleButton
   ) where
 
@@ -93,6 +94,15 @@ pauseForceAtlasButton sigmaRef state =
             Sigma.restartForceAtlas2 s
         _             -> pure unit
       setToggled not
+    }
+
+pauseForceAtlasButton2 :: R.State Boolean -> R.Element
+pauseForceAtlasButton2 state =
+  toggleButton {
+      state: state
+    , onMessage: "Pause Force Atlas2"
+    , offMessage: "Start Force Atlas2"
+    , onClick: \_ -> snd state not
     }
 
 treeToggleButton :: R.State Boolean -> R.Element

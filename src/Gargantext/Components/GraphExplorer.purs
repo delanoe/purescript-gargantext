@@ -89,7 +89,10 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
                   ]
                 , row [ Controls.controls controls ]
                 , row [ tree {mCurrentRoute, treeId} controls
-                      , mGraph controls.sigmaRef {graphId, graph}
+                      , mGraph controls.sigmaRef {
+                          forceAtlas2Paused: fst controls.forceAtlas2Paused
+                        , graphId
+                        , graph}
                       , Sidebar.sidebar {showSidePanel: fst controls.showSidePanel} ]
                 , row [ ]
                 ]
@@ -111,12 +114,13 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
         Tree.elTreeview {mCurrentRoute, root: treeId}
       ]
 
-    mGraph :: R.Ref (Maybe Sigmax.Sigma) -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
+    mGraph :: R.Ref (Maybe Sigmax.Sigma) -> {forceAtlas2Paused :: Boolean, graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
     mGraph _ {graph: Nothing} = RH.div {} []
-    mGraph sigmaRef {graphId, graph: Just graph} = graphView sigmaRef {graphId, graph}
+    mGraph sigmaRef {forceAtlas2Paused, graphId, graph: Just graph} = graphView sigmaRef {forceAtlas2Paused, graphId, graph}
 
 type GraphProps = (
-    graphId :: GraphId
+    forceAtlas2Paused :: Boolean
+  , graphId :: GraphId
   , graph :: Graph.Graph
 )
 
@@ -126,12 +130,13 @@ graphView sigmaRef props = R.createElement el props []
   where
     --memoCmp props1 props2 = props1.graphId == props2.graphId
     el = R.hooksComponent "GraphView" cpt
-    cpt {graphId, graph} _children = do
+    cpt {forceAtlas2Paused, graphId, graph} _children = do
       pure $
         RH.div { id: "graph-view", className: "col-md-12" }
         [
           Graph.graph {
-               forceAtlas2Settings: Graph.forceAtlas2Settings
+               forceAtlas2Paused
+             , forceAtlas2Settings: Graph.forceAtlas2Settings
              , graph
              , sigmaSettings: Graph.sigmaSettings
              , sigmaRef: sigmaRef

@@ -61,16 +61,16 @@ foreign import _refresh :: EffectFn1 Sigma Unit
 
 refreshForceAtlas :: Sigma -> Effect Unit
 refreshForceAtlas sigma = do
-  isRunning <- isForceAtlas2Running sigma
-  if isRunning then
+  --isRunning <- isForceAtlas2Running sigma
+  --if isRunning then
+    --pure unit
+  --else do
+  _ <- setTimeout 100 $ do
+    restartForceAtlas2 sigma
+    _ <- setTimeout 100 $
+      stopForceAtlas2 sigma
     pure unit
-  else do
-    _ <- setTimeout 100 $ do
-      restartForceAtlas2 sigma
-      _ <- setTimeout 100 $
-        stopForceAtlas2 sigma
-      pure unit
-    pure unit
+  pure unit
 
 addRenderer :: forall r err. Sigma -> r -> Effect (Either err Unit)
 addRenderer = runEffectFn4 _addRenderer Left Right

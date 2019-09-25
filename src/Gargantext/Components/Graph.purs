@@ -29,6 +29,7 @@ type Graph = Sigmax.Graph Node Edge
 
 type Props sigma forceatlas2 =
   ( graph :: Graph
+  , forceAtlas2Paused :: Boolean
   , forceAtlas2Settings :: forceatlas2
   , sigmaSettings :: sigma
   , sigmaRef :: R.Ref (Maybe Sigma)
@@ -40,11 +41,20 @@ graph props = R.createElement graphCpt props []
 graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
-    cpt props _ = do
-      ref <- R.useRef null
-      startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+    cpt {graph, forceAtlas2Paused, forceAtlas2Settings, sigmaSettings, sigmaRef} _ = do
+      let memoProps = {
+          graph
+        , forceAtlas2Paused
+        , forceAtlas2Settings
+        , sigmaSettings
+        , sigmaRef
+        }
 
-      pure $ RH.div { ref, style: {height: "95%"} } []
+      ref <- R.useRef null
+      startSigma ref sigmaRef sigmaSettings forceAtlas2Paused forceAtlas2Settings graph
+
+      --pure $ RH.div { ref, style: {height: "95%"} } []
+      R.useMemo1 memoProps $ const $ RH.div { ref, style: {height: "95%"} } []
 
 type SigmaSettings =
   ( animationsTime :: Number
@@ -204,7 +214,7 @@ type ForceAtlas2Settings =
   , startingIterations :: Number
   , strongGravityMode :: Boolean
   -- , timeout :: Number
-  -- , worker :: Boolean
+  , worker :: Boolean
   )
 
 forceAtlas2Settings :: {|ForceAtlas2Settings}
@@ -222,4 +232,5 @@ forceAtlas2Settings =
   , slowDown : 0.7
   , startingIterations : 2.0
   , strongGravityMode : false
+  , worker: true
   }

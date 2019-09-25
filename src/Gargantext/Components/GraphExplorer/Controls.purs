@@ -27,7 +27,7 @@ import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
-import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
+import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton, pauseForceAtlasButton2)
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Utils.Range as Range
@@ -36,6 +36,7 @@ import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( cursorSize :: R.State Number
+  , forceAtlas2Paused :: R.State Boolean
   , multiNodeSelect :: R.Ref Boolean
   , showControls :: R.State Boolean
   , showSidePanel :: R.State Boolean
@@ -103,6 +104,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                 [ -- change type button (?)
                   RH.li {} [ centerButton props.sigmaRef ]
                 , RH.li {} [ pauseForceAtlasButton props.sigmaRef localControls.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
+                , RH.li {} [ pauseForceAtlasButton2 props.forceAtlas2Paused ]
                 , RH.li {} [ edgesToggleButton props.sigmaRef localControls.showEdges ]
                 , RH.li {} [ edgeSizeControl props.sigmaRef localControls.edgeSize ] -- edge size : 0-3
                   -- change level
@@ -123,6 +125,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
   cursorSize <- R.useState' 10.0
+  forceAtlas2Paused <- R.useState' false
   multiNodeSelect <- R.useRef false
   showControls <- R.useState' false
   showSidePanel <- R.useState' false
@@ -130,13 +133,14 @@ useGraphControls = do
   sigmaRef <- R2.nothingRef
 
   pure {
-      cursorSize
-    , multiNodeSelect
-    , showControls
-    , showSidePanel
-    , showTree
-    , sigmaRef
-    }
+    cursorSize
+  , forceAtlas2Paused
+  , multiNodeSelect
+  , showControls
+  , showSidePanel
+  , showTree
+  , sigmaRef
+  }
 
 getShowControls :: Record Controls -> Boolean
 getShowControls { showControls: ( should /\ _ ) } = should

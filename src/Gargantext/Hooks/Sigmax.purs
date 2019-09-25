@@ -51,8 +51,8 @@ cleanupFirst :: Sigma -> Effect Unit -> Effect Unit
 cleanupFirst sigma =
   R.setRef sigma.cleanup <<< (flip Seq.cons) (R.readRef sigma.cleanup)
 
-startSigma :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref (Maybe Sigma) -> settings -> faSettings -> Graph n e -> R.Hooks Unit
-startSigma ref sigmaRef settings forceAtlas2Settings graph = do
+startSigma :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref (Maybe Sigma) -> settings -> Boolean -> faSettings -> Graph n e -> R.Hooks Unit
+startSigma ref sigmaRef settings forceAtlas2Paused forceAtlas2Settings graph = do
   {sigma, isNew} <- useSigma ref settings sigmaRef
   useCanvasRenderer ref sigma
 
@@ -71,7 +71,10 @@ startSigma ref sigmaRef settings forceAtlas2Settings graph = do
       _ <- case rSigma of
         Nothing -> log2 "[handleRefresh] can't refresh" sigma
         Just s -> do
-          Sigma.refreshForceAtlas s
+          if forceAtlas2Paused then do
+            Sigma.refreshForceAtlas s
+          else
+            Sigma.restartForceAtlas2 s
       pure $ pure unit
 
 -- | Manages a sigma with the given settings
