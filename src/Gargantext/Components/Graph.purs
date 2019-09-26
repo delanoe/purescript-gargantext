@@ -41,20 +41,11 @@ graph props = R.createElement graphCpt props []
 graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
-    cpt {graph, forceAtlas2Paused, forceAtlas2Settings, sigmaSettings, sigmaRef} _ = do
-      let memoProps = {
-          graph
-        , forceAtlas2Paused
-        , forceAtlas2Settings
-        , sigmaSettings
-        , sigmaRef
-        }
-
+    cpt props _ = do
       ref <- R.useRef null
-      startSigma ref sigmaRef sigmaSettings forceAtlas2Paused forceAtlas2Settings graph
+      startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Paused props.forceAtlas2Settings props.graph
 
-      --pure $ RH.div { ref, style: {height: "95%"} } []
-      R.useMemo1 memoProps $ const $ RH.div { ref, style: {height: "95%"} } []
+      R.useMemo1 props $ const $ RH.div { ref, style: {height: "95%"} } []
 
 type SigmaSettings =
   ( animationsTime :: Number

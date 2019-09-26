@@ -4,24 +4,23 @@ module Gargantext.Components.GraphExplorer.ToggleButton
   , edgesToggleButton
   , sidebarToggleButton
   , pauseForceAtlasButton
-  , pauseForceAtlasButton2
   , treeToggleButton
   ) where
 
 import Prelude
 
+import DOM.Simple.Console (log2)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
+import Effect.Timer (TimeoutId, clearTimeout)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 type Props = (
     state :: R.State Boolean
@@ -78,31 +77,22 @@ edgesToggleButton sigmaRef state =
       setToggled not
     }
 
-pauseForceAtlasButton :: R.Ref (Maybe Sigmax.Sigma) -> R.State Boolean -> R.Element
-pauseForceAtlasButton sigmaRef state =
+pauseForceAtlasButton :: R.Ref (Maybe TimeoutId) -> R.State Boolean -> R.Element
+pauseForceAtlasButton mTimeoutIdRef state =
   toggleButton {
       state: state
-    , onMessage: "Pause Force Atlas"
-    , offMessage: "Start Force Atlas"
+    , onMessage: "Start Force Atlas"
+    , offMessage: "Pause Force Atlas"
     , onClick: \_ -> do
-      let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
+      let mTimeoutId = R.readRef mTimeoutIdRef
       let (toggled /\ setToggled) = state
-      case mSigma of
-        Just (Just s) -> if toggled then
-            Sigma.stopForceAtlas2 s
-          else
-            Sigma.restartForceAtlas2 s
-        _             -> pure unit
+      -- cancel the default stop forceAtlas Timer
+      -- User can quickly click stop/start button.
+      -- In this case the default timer shouldn't fire.
+      case mTimeoutId of
+        Just timeoutId -> clearTimeout timeoutId
+        Nothing -> pure unit
       setToggled not
-    }
-
-pauseForceAtlasButton2 :: R.State Boolean -> R.Element
-pauseForceAtlasButton2 state =
-  toggleButton {
-      state: state
-    , onMessage: "Pause Force Atlas2"
-    , offMessage: "Start Force Atlas2"
-    , onClick: \_ -> snd state not
     }
 
 treeToggleButton :: R.State Boolean -> R.Element
