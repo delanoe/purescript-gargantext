@@ -15,6 +15,7 @@ import Thermite (Render, Spec, simpleSpec)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma (Sigma)
 import Gargantext.Hooks.Sigmax.Types as Sigmax
@@ -23,8 +24,8 @@ import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Graph as Graph
-import Gargantext.Components.Loader2 as Loader
 import Gargantext.Components.Tree as Tree
+import Gargantext.Config (Ends, url)
 import Gargantext.Config as Config
 import Gargantext.Config.REST (get)
 import Gargantext.Router (Routes(..))
@@ -32,48 +33,36 @@ import Gargantext.Utils.Reactix as R2
 
 type GraphId = Int
 
-type Props = (
-    graphId :: GraphId
-  , graph :: Maybe Graph.Graph
+type LayoutProps =
+  ( graphId :: GraphId
   , mCurrentRoute :: Maybe Routes
   , treeId :: Maybe Int
-)
+  , ends :: Ends )
 
-spec :: Spec (Record GET.StateGlue) (Record Props) GET.Action
-spec = simpleSpec GET.performAction render
- where
-   render :: Render (Record GET.StateGlue) (Record Props) GET.Action
-   render dispatch props state _ =
-     [ R2.scuff $ specCpt dispatch state props ]
 
-specCpt :: (GET.Action -> Effect Unit) -> Record GET.StateGlue -> Record Props -> R.Element
-specCpt d stateGlue p = R.createElement el p []
+type Props = ( graph :: Maybe Graph.Graph | LayoutProps )
+
+explorerLayout :: Record LayoutProps -> R.Element
+explorerLayout props = R.createElement explorerLayoutCpt props []
+
+explorerLayoutCpt :: R.Component LayoutProps
+explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
   where
-    el = R.hooksComponent "SpecCpt" cpt
-    cpt props _children = do
-      state <- GET.fromStateGlue stateGlue
+    cpt {graphId, mCurrentRoute, treeId, ends} _ =
+      useLoader graphId (getNodes ends) handler
+      where
+        handler loaded = explorer {graphId, mCurrentRoute, treeId, ends, graph}
+          where graph = Just (convert loaded)
 
-      pure $ explorer state props
+explorer :: Record Props -> R.Element
+explorer props = R.createElement explorerCpt props []
 
-explorer :: Record GET.State -> Record Props -> R.Element
-explorer state props = R.createElement (explorerLoader state) props []
-
-explorerLoader :: Record GET.State -> R.Component Props
-explorerLoader state = R.hooksComponent "GraphExplorerLoader" cpt
+explorerCpt :: R.Component Props
+explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt props _ = do
-      Loader.useLoader props.graphId getNodes $ \{loaded} ->
-        explorerEl state $ props {graph = Just $ convert loaded}
-
-explorerEl :: Record GET.State -> Record Props -> R.Element
-explorerEl state props = R.createElement (explorerCpt state) props []
-
-explorerCpt :: Record GET.State -> R.Component Props
-explorerCpt state = R.hooksComponent "GraphExplorer" cpt
-  where
-    cpt {graphId, mCurrentRoute, treeId, graph} _ = do
+    cpt {ends, graphId, mCurrentRoute, treeId, graph} _ = do
       controls <- Controls.useGraphControls
-
+      state <- useExplorerState
       pure $
         RH.div
           { id: "graph-explorer" }
@@ -96,6 +85,12 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
               ]
             ]
           ]
+      where
+        tree {treeId: Nothing} _ = RH.div { id: "tree" } []
+        tree _ {showTree: false /\ _} = RH.div { id: "tree" } []
+        tree {mCurrentRoute, treeId: Just treeId} _ =
+          RH.div { id: "tree", className: "col-md-2" }
+          [  Tree.treeView {mCurrentRoute, root: treeId, ends: ends} ]
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1 = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
@@ -104,16 +99,28 @@ explorerCpt state = R.hooksComponent "GraphExplorer" cpt
     pullLeft = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }
 
-    tree {treeId: Nothing} _ = RH.div { id: "tree" } []
-    tree _ {showTree: false /\ _} = RH.div { id: "tree" } []
-    tree {mCurrentRoute, treeId: Just treeId} _ =
-      RH.div { id: "tree", className: "col-md-2" } [
-        Tree.elTreeview {mCurrentRoute, root: treeId}
-      ]
 
     mGraph :: R.Ref (Maybe Sigmax.Sigma) -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
     mGraph _ {graph: Nothing} = RH.div {} []
     mGraph sigmaRef {graphId, graph: Just graph} = graphView sigmaRef {graphId, graph}
+
+useExplorerState :: R.Hooks (Record GET.State)
+useExplorerState = do pure {}
+{-   corpusId <- R.useState' 0
+  cursorSize <- R.useState' 0.0
+  filePath <- R.useState' ""
+  graphData <- R.useState' initialGraphData
+  legendData <- R.useState' []
+  multiNodeSelection <- R.useState' false
+  selectedNodes <- R.useState' Set.empty
+  showControls <- R.useState' false
+  showSidePanel <- R.useState' false
+  showTree <- R.useState' false
+  sigmaGraphData <- R.useState' (Nothing :: Maybe Graph.Graph)
+  sigmaSettings <- R.useState' Graph.sigmaSettings
+  treeId <- R.useState' (Nothing :: Maybe TreeId) -}
+
+  --treeId : Nothing
 
 type GraphProps = (
     graphId :: GraphId
@@ -281,5 +288,5 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#
 --               ]
 
 
-getNodes :: GraphId -> Aff GET.GraphData
-getNodes graphId = get $ Config.toUrl Config.Back Config.Graph $ Just graphId
+getNodes :: Ends -> GraphId -> Aff GET.GraphData
+getNodes ends graphId = get $ url ends $ Config.NodeAPI Config.Graph (Just graphId)

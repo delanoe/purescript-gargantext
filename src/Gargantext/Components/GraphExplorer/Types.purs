@@ -68,7 +68,8 @@ newtype MetaData = MetaData
   , listId   :: ListId
   }
 
-
+getLegend :: GraphData -> Maybe (Array Legend)
+getLegend (GraphData {metaData}) = (\(MetaData m) -> m.legend) <$> metaData
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
@@ -78,40 +79,6 @@ derive instance ordSelectedNode :: Ord SelectedNode
 
 instance showSelectedNode :: Show SelectedNode where
   show (SelectedNode node) = node.label
-
-
-data Action = Dummy
-
-performAction :: forall props. PerformAction (Record StateGlue) (Record props) Action
-performAction Dummy _ _ = do
-  pure $ unit
-
-
--- NOTE: special state to "glue" thermite with reactix
--- When thermite is removed, this can be removed as well and replaced with State
-type StateGlue = (
-  --treeId :: Maybe TreeId
-)
-
-initialStateGlue :: Record StateGlue
-initialStateGlue = {
-{-   corpusId <- R.useState' 0
-  cursorSize <- R.useState' 0.0
-  filePath <- R.useState' ""
-  graphData <- R.useState' initialGraphData
-  legendData <- R.useState' []
-  multiNodeSelection <- R.useState' false
-  selectedNodes <- R.useState' Set.empty
-  showControls <- R.useState' false
-  showSidePanel <- R.useState' false
-  showTree <- R.useState' false
-  sigmaGraphData <- R.useState' (Nothing :: Maybe Graph.Graph)
-  sigmaSettings <- R.useState' Graph.sigmaSettings
-  treeId <- R.useState' (Nothing :: Maybe TreeId) -}
-
-  --treeId : Nothing
-}
-
 
 type State = (
   --  corpusId :: R.State Int
@@ -129,14 +96,6 @@ type State = (
     --treeId :: R.State (Maybe TreeId)
   )
 
-fromStateGlue :: Record StateGlue -> R.Hooks (Record State)
-fromStateGlue {} = do
-  --treeIdS <- R.useState' treeId
-
-  pure {
-    --treeId: treeIdS
-  }
-
 initialGraphData :: GraphData
 initialGraphData = GraphData {
     nodes: []
@@ -144,10 +103,6 @@ initialGraphData = GraphData {
   , sides: []
   , metaData : Just $ MetaData {title : "", legend : [], corpusId : [], listId : 0}
   }
-
-initialState :: R.Hooks (Record State)
-initialState = fromStateGlue initialStateGlue
-
 
 instance decodeJsonGraphData :: DecodeJson GraphData where
   decodeJson json = do
