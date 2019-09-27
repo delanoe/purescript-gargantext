@@ -51,13 +51,13 @@ type Props =
   -- ngramtable. Let's see how this evolves.  )
 
 type PageLoaderProps =
-  ( nodeId    :: Int
+  ( nodeId       :: Int
   , totalRecords :: Int
   , tabType      :: TabType
   , listId       :: Int
   , corpusId     :: Maybe Int
-  , query       :: Query
-  )
+  , query        :: Query
+  , ends         :: Ends )
 
 type LocalCategories = Map Int Category
 type Query = String
@@ -136,13 +136,13 @@ layoutDocview :: R.State Query -> R.State T.Params -> Record Props -> R.Element
 layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "LayoutDocView" cpt
-    cpt {nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch} _children = do
+    cpt {ends, nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch} _children = do
       pure $ H.div {className: "container1"}
         [ H.div {className: "row"}
           [ chart
           , if showSearch then searchBar query else H.div {} []
           , H.div {className: "col-md-12"}
-            [ pageLoader tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ] ] ]
+            [ pageLoader tableParams {ends, nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ] ] ]
     onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
       launchAff $ deleteAllDocuments p.ends nodeId
           
@@ -247,8 +247,8 @@ loadPage ends {nodeId, tabType, query, listId, corpusId, params: {limit, offset,
 
     convOrderBy _ = DateAsc -- TODO
 
-renderPage :: Ends -> R.State T.Params -> Record PageLoaderProps -> Array DocumentsView -> R.Element
-renderPage ends (_ /\ setTableParams) p res = R.createElement el p []
+renderPage :: R.State T.Params -> Record PageLoaderProps -> Array DocumentsView -> R.Element
+renderPage (_ /\ setTableParams) p res = R.createElement el p []
   where
     el = R.hooksComponent "RenderPage" cpt
 
@@ -259,7 +259,7 @@ renderPage ends (_ /\ setTableParams) p res = R.createElement el p []
     corpusDocument (Just corpusId) = Router.CorpusDocument corpusId
     corpusDocument _ = Router.Document
 
-    cpt {nodeId, corpusId, listId, totalRecords} _children = do
+    cpt {ends, nodeId, corpusId, listId, totalRecords} _children = do
       localCategories <- R.useState' (mempty :: LocalCategories)
       pure $ T.table
           { rows: rows localCategories
@@ -294,13 +294,13 @@ renderPage ends (_ /\ setTableParams) p res = R.createElement el p []
           setLocalCategories $ insert nid newCat
           void $ launchAff $ putCategories ends nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
 
-pageLoader :: Ends -> R.State T.Params -> Record PageLoaderProps -> R.Element
-pageLoader ends tableParams@(pageParams /\ _) p = R.createElement el p []
+pageLoader :: R.State T.Params -> Record PageLoaderProps -> R.Element
+pageLoader tableParams@(pageParams /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "PageLoader" cpt
-    cpt p@{nodeId, listId, corpusId, tabType, query} _children = do
+    cpt p@{ends, nodeId, listId, corpusId, tabType, query} _children = do
       useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} (loadPage ends) $
-        \loaded -> renderPage ends tableParams p loaded
+        \loaded -> renderPage tableParams p loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
@@ -343,23 +343,6 @@ instance encodeJsonSQuery :: EncodeJson SearchQuery where
 searchResults :: SearchQuery -> Aff Int
 searchResults squery = post "http://localhost:8008/count" unit
   -- TODO
-
-newtype CategoryQuery = CategoryQuery {
-    nodeIds :: Array Int
-  , category :: Category
-  }
-
-instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
-  encodeJson (CategoryQuery post) =
-       "ntc_nodesId" := post.nodeIds
-    ~> "ntc_category" := encodeJson post.category
-    ~> jsonEmptyObject
-
-categoryUrl :: Int -> String
-categoryUrl nodeId = toUrl endConfigStateful Back Node (Just nodeId) <> "/category"
-
-putCategories :: Int -> CategoryQuery -> Aff (Array Int)
-putCategories nodeId = put $ categoryUrl nodeId
 
 documentsUrl :: Ends -> Int -> String
 documentsUrl ends nodeId = url ends (NodeAPI Node (Just nodeId)) <> "/documents"
