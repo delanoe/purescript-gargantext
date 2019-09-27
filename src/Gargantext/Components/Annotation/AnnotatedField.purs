@@ -87,7 +87,7 @@ maybeShowMenu setMenu setTermList ngrams event = do
     Nothing -> pure unit
 
 maybeAddMenu
-  :: R2.StateSetter (Maybe AnnotationMenu)
+  :: R2.Setter (Maybe AnnotationMenu)
   -> R.Element
   -> Maybe AnnotationMenu
   -> R.Element

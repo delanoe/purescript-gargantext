@@ -28,7 +28,7 @@ type AnnotationMenu = { x :: Number, y :: Number | Props }
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
-annotationMenu :: R2.StateSetter (Maybe AnnotationMenu) -> AnnotationMenu -> R.Element
+annotationMenu :: R2.Setter (Maybe AnnotationMenu) -> AnnotationMenu -> R.Element
 annotationMenu setMenu { x,y,list,menuType,setList } =
   CM.contextMenu { x,y,setMenu } [
     R.createElement annotationMenuCpt {list,menuType,setList} []

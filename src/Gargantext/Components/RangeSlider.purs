@@ -34,18 +34,18 @@ import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 -- data Axis = X | Y
 
-type Epsilon = Number
 type Bounds = Range.NumberRange
+type Epsilon = Number
 
 -- To avoid overloading the terms 'min' and 'max' here, we treat 'min'
 -- and 'max' as being the bounds of the scale and 'low' and 'high' as
 -- being the selected values
 type Props =
-  ( bounds :: Bounds       -- The minimum and maximum values it is possible to select
+  ( bounds :: Bounds                  -- The minimum and maximum values it is possible to select
   , initialValue :: Range.NumberRange -- The user's selection of minimum and maximum values
-  , epsilon :: Epsilon           -- The smallest possible change (for mouse)
-  , step :: Number              -- The 'standard' change (for keyboard)
-  -- , axis :: Axis                -- Which direction to move in
+  , epsilon :: Number                 -- The smallest possible change (for mouse)
+  , step :: Number                    -- The 'standard' change (for keyboard)
+  -- , axis :: Axis                   -- Which direction to move in
   , width :: Number
   , height :: Number
   , onChange :: Range.NumberRange -> Effect Unit )
@@ -130,7 +130,7 @@ destroyEventHandler name ref = traverse_ destroy $ R.readRef ref
       EL.removeEventListener document name handler
       R.setRef ref Nothing
 
-setKnob :: Knob -> R2.StateSetter Range.NumberRange -> Range.NumberRange -> Number -> Effect Unit
+setKnob :: Knob -> R2.Setter Range.NumberRange -> Range.NumberRange -> Number -> Effect Unit
 setKnob knob setValue r val = setValue $ const $ knobSetter knob r val
 
 knobSetter :: Knob -> Range.NumberRange -> Number -> Range.NumberRange
@@ -168,7 +168,7 @@ renderScaleSel ref props (Range.Closed {min, max}) =
     computeWidth = (show $ 100.0 * (percOffsetMax - percOffsetMin)) <> "%"
 
 
-renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> R2.StateSetter (Maybe Knob) -> Int -> R.Element
+renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> R2.Setter (Maybe Knob) -> Int -> R.Element
 renderKnob knob ref (Range.Closed value) bounds set precision =
   H.div { ref, tabIndex, className, aria, onMouseDown, style } [
       H.div { className: "button" }
