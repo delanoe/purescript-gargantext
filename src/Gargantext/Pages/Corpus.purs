@@ -13,7 +13,7 @@ corpusLayout props = R.createElement corpusLayoutCpt props []
 corpusLayoutCpt :: R.Component Props
 corpusLayoutCpt = R.staticComponent "G.P.Corpus.corpusLayout" cpt
   where
-    cpt {nodeId} _children = do
-      pure $ H.div {} [ H.h1 {} [H.text "Corpus Description"]
-                      , H.p  {} [H.text "Soon: corpus synthesis here (when all others charts/features will be stabilized)."]
-                      ]
+    cpt {nodeId} _children =
+      H.div {}
+      [ H.h1 {} [H.text "Corpus Description"]
+      , H.p  {} [H.text "Soon: corpus synthesis here (when all others charts/features will be stabilized)."] ]

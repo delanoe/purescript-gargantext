@@ -1,6 +1,6 @@
 module Gargantext.Pages.Corpus.Document where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), maybe)
@@ -199,7 +199,7 @@ instance decodeDocumentV3 :: DecodeJson DocumentV3
   where
     decodeJson json = do
       obj <- decodeJson json
-      abstract <- obj .:? "abstract"
+      abstract <- obj .:! "abstract"
       authors  <- obj .: "authors"
       --error    <- obj .: "error"
       language_iso2 <- obj .: "language_iso2"
@@ -239,23 +239,23 @@ instance decodeDocument :: DecodeJson Document
   where
     decodeJson json = do
       obj <- decodeJson json
-      abstract <- obj .:? "abstract"
-      authors  <- obj .:? "authors"
-      bdd      <- obj .:? "bdd"
-      doi      <- obj .:? "doi"
-      language_iso2 <- obj .:? "language_iso2"
-      -- page          <- obj .:? "page"
-      publication_date   <- obj .:? "publication_date"
-      --publication_second <- obj .:? "publication_second"
-      --publication_minute <- obj .:? "publication_minute"
-      --publication_hour   <- obj .:? "publication_hour"
-      publication_day    <- obj .:? "publication_day"
-      publication_month  <- obj .:? "publication_month"
-      publication_year   <- obj .:? "publication_year"
-      source             <- obj .:? "sources"
-      institutes         <- obj .:? "institutes"
-      title              <- obj .:? "title"
-      uniqId             <- obj .:? "uniqId"
+      abstract <- obj .:! "abstract"
+      authors  <- obj .:! "authors"
+      bdd      <- obj .:! "bdd"
+      doi      <- obj .:! "doi"
+      language_iso2 <- obj .:! "language_iso2"
+      -- page          <- obj .:! "page"
+      publication_date   <- obj .:! "publication_date"
+      --publication_second <- obj .:! "publication_second"
+      --publication_minute <- obj .:! "publication_minute"
+      --publication_hour   <- obj .:! "publication_hour"
+      publication_day    <- obj .:! "publication_day"
+      publication_month  <- obj .:! "publication_month"
+      publication_year   <- obj .:! "publication_year"
+      source             <- obj .:! "sources"
+      institutes         <- obj .:! "institutes"
+      title              <- obj .:! "title"
+      uniqId             <- obj .:! "uniqId"
       --url                <- obj .: "url"
       --text               <- obj .: "text"
       pure $ Document { abstract
