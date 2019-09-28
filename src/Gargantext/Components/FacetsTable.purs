@@ -323,14 +323,6 @@ instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
   encodeJson (DeleteDocumentQuery post) =
     "documents" := post.documents ~> jsonEmptyObject
 
-putFavorites :: Ends -> Int -> FavoriteQuery -> Aff (Array Int)
-putFavorites ends nodeId = put to
-  where to = url endst (NodeAPI Node (Just nodeId)) <> "/favorites"
-
-deleteFavorites :: Int -> FavoriteQuery -> Aff (Array Int)
-deleteFavorites nodeId = deleteWithBody to
-  where to = url ends (NodeAPI Node (Just nodeId)) <> "/favorites"
-
 deleteDocuments :: Ends -> Int -> DeleteDocumentQuery -> Aff (Array Int)
 deleteDocuments ends nodeId = deleteWithBody to
   where to = url ends (NodeAPI Node (Just nodeId)) <> "/documents"
