@@ -21,6 +21,7 @@ import Gargantext.Prelude
 import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.EndsChooser as EndsChooser
 import Gargantext.Components.EndsSummary (endsSummary)
+import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Login.Types (AuthData(..))
 import Gargantext.Components.Login (Auths, getCurrentAuth, setAuths, login)
 import Gargantext.Components.Search.SearchBar as SB
@@ -32,7 +33,6 @@ import Gargantext.Pages.Annuaire.User.Contacts (userLayout)
 import Gargantext.Pages.Corpus (corpusLayout)
 import Gargantext.Pages.Corpus.Document (documentLayout)
 import Gargantext.Pages.Corpus.Dashboard (dashboardLayout)
-import Gargantext.Pages.Corpus.Graph as GE
 import Gargantext.Pages.Lists (listsLayout)
 import Gargantext.Pages.Texts (textsLayout)
 import Gargantext.Pages.Home (layoutLanding)
@@ -40,8 +40,7 @@ import Gargantext.Router (Routes(..), routing, useHashRouter)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Global (Global, defaultGlobal)
 
--- TODO
--- rewrite layoutSpec to use state (with EndConfig)
+-- TODO (what does this mean?)
 -- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
 
 type State =
@@ -50,8 +49,7 @@ type State =
   , route         :: R.State Routes
   , showLogin     :: R.State Boolean
   , showCorpus    :: R.State Boolean
-  , showTree      :: R.State Boolean
-  , graphExplorer :: R.State GE.State )
+  , showTree      :: R.State Boolean )
 
 layout :: _ -> R.Element
 layout _ = R.createElement layoutCpt {} []
@@ -69,26 +67,27 @@ pages props = R.createElement pagesCpt props []
 pagesCpt :: R.Component State
 pagesCpt = R.staticComponent "Pages" cpt
   where
-    cpt state@{ends, route, showLogin, showCorpus, graphExplorer, showTree} _ = do
+    cpt state@{ends, route, showLogin, showCorpus, showTree} _ = do
       case (fst route) of
         Home -> tree $ layoutLanding EN
         Login -> login { ends: (fst ends), setVisible: (snd showLogin) }
         Folder _ -> tree $ folder {}
         Corpus nodeId -> tree $ corpusLayout {nodeId, ends: fst ends}
-        CorpusDocument corpusId listId nodeId ->
-          tree $ documentLayout { nodeId, listId, corpusId: Just corpusId, ends: fst ends }
-        Document listId nodeId ->
-          tree $ documentLayout { nodeId, listId, corpusId: Nothing, ends: fst ends }
-        PGraphExplorer i -> R.fragment [] -- simpleLayout state $
         Texts nodeId -> tree $ textsLayout {nodeId, ends: fst ends}
         Lists nodeId -> tree $ listsLayout {nodeId, ends: fst ends}
         Dashboard -> tree $ dashboardLayout {}
         Annuaire annuaireId -> tree $ annuaireLayout { annuaireId, ends: fst ends }
         UserPage nodeId -> tree $ userLayout { nodeId, ends: fst ends }
         ContactPage nodeId -> tree $ userLayout { nodeId, ends: fst ends }
+        CorpusDocument corpusId listId nodeId ->
+          tree $ documentLayout { nodeId, listId, corpusId: Just corpusId, ends: fst ends }
+        Document listId nodeId ->
+          tree $ documentLayout { nodeId, listId, corpusId: Nothing, ends: fst ends }
+        PGraphExplorer graphId ->
+          simpleLayout state $ explorerLayout {graphId, mCurrentRoute, treeId: Nothing, ends: fst ends}
       where
+        mCurrentRoute = Just $ fst route
         tree = treeLayout state
--- routePage (PGraphExplorer i)= layout1  $ focus _graphExplorerState _graphExplorerAction  GE.specOld
 
 usePagesState :: R.Hooks (Record State)
 usePagesState = do
@@ -97,9 +96,8 @@ usePagesState = do
   route <- useHashRouter routing Home
   showLogin <- R.useState' false
   showCorpus <- R.useState' false
-  graphExplorer <- R.useState' GE.initialState
   showTree <- R.useState' false
-  pure $ {ends, auths, route, showLogin, showCorpus, graphExplorer, showTree}
+  pure $ {ends, auths, route, showLogin, showCorpus, showTree}
 
 treeLayout :: Record State -> R.Element -> R.Element
 treeLayout state@{ends, auths, route, showTree} child =
@@ -274,7 +272,7 @@ loginLinks state@{ends, auths, showLogin} =
           [H.text " Logout"]
 
 logout :: Record State -> Effect Unit
-logout {ends, auths} = (snd auths) (const auths2) *> setAuths auths2
+logout {ends, auths} = (snd auths) (const auths2) *> setAuths (Just auths2)
   where
     key = backendKey (fst ends).backend
     auths2 = Map.delete key (fst auths)
