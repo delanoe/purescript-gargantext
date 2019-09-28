@@ -181,29 +181,10 @@ getAuths = pure Nothing
 --     ret (Right v) = pure $ Just v
 --     ret (Left e) = log2 "Error reading serialised auths:" e *> pure Nothing
 
-setAuths :: Auths -> Effect Unit
+setAuths :: Maybe Auths -> Effect Unit
 -- setAuths Map.empty = -- window >>= localStorage >>= removeItem "auths"
 setAuths _ = pure unit -- auths = window >>= localStorage >>= setItem "auths" (encodeJSON auths)
 
-getAuthData :: Effect (Maybe AuthData)
-getAuthData = do
-  ls <- window >>= localStorage
-  mto <- getItem "token" ls
-  mti <- getItem "tree_id" ls
-  pure do
-    token <- mto
-    tree_id <- Int.fromString =<< mti
-    pure $ AuthData {token, tree_id}
-
-setAuthData :: Maybe AuthData -> Effect Unit
-setAuthData Nothing = do
-  ls <- window >>= localStorage
-  removeItem "token"   ls
-  removeItem "tree_id" ls
-setAuthData (Just (AuthData {tree_id, token})) = do
-  ls <- window >>= localStorage
-  setItem "token"   token          ls
-  setItem "tree_id" (show tree_id) ls
 
 -- TODO
 -- useLocalStorageAuths :: String -> R.Hooks (R.State Auths)
