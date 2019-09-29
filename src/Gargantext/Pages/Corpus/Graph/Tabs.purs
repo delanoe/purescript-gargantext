@@ -3,15 +3,14 @@ module Gargantext.Pages.Corpus.Graph.Tabs where
 import Prelude hiding (div)
 import Data.Array (fromFoldable)
 import Data.Tuple (Tuple(..), fst)
-import Gargantext.Config (Ends)
+import Reactix as R
 import Gargantext.Components.GraphExplorer.Types (GraphSideCorpus(..))
 import Gargantext.Components.FacetsTable (TextQuery, docView)
 import Gargantext.Components.Table as T
 import Gargantext.Components.Tab as Tab
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Sessions (Session)
 
-type Props = ( ends :: Ends, query :: TextQuery, sides :: Array GraphSideCorpus )
+type Props = ( session :: Session, query :: TextQuery, sides :: Array GraphSideCorpus )
 
 tabs :: Record Props -> R.Element
 tabs props = R.createElement tabsCpt props []
@@ -20,17 +19,17 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component Props
 tabsCpt = R.hooksComponent "G.P.Corpus.Graph.Tabs.tabs" cpt
   where
-    cpt {ends, query, sides} _ = do
+    cpt {session, query, sides} _ = do
       active <- R.useState' 0
       pure $ Tab.tabs {tabs: tabs', selected: fst active}
       where
-        tabs' = fromFoldable $ tab ends query <$> sides
+        tabs' = fromFoldable $ tab session query <$> sides
 
-tab :: Ends -> TextQuery -> GraphSideCorpus -> Tuple String R.Element
-tab ends query (GraphSideCorpus {corpusId: nodeId, corpusLabel, listId}) =
+tab :: Session -> TextQuery -> GraphSideCorpus -> Tuple String R.Element
+tab session query (GraphSideCorpus {corpusId: nodeId, corpusLabel, listId}) =
   Tuple corpusLabel (docView dvProps)
   where
-    dvProps = {ends, nodeId, listId, query, chart, totalRecords: 4736, container}
+    dvProps = {session, nodeId, listId, query, chart, totalRecords: 4736, container}
     -- TODO totalRecords: probably need to insert a corpusLoader.
     chart = mempty
     container = T.graphContainer {title: corpusLabel}

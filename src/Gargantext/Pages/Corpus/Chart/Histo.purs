@@ -1,28 +1,27 @@
 module Gargantext.Pages.Corpus.Chart.Histo where
 
+import Prelude (bind, map, pure, ($))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Gargantext.Config
 import Gargantext.Config.REST (get)
 import Reactix as R
-import Reactix.DOM.HTML as H
 
-import Gargantext.Prelude
-import Gargantext.Types (TermList(..))
-import Gargantext.Components.Loader as Loader
-import Gargantext.Components.Charts.Options.ECharts
-import Gargantext.Components.Charts.Options.Series
-import Gargantext.Components.Charts.Options.Color
-import Gargantext.Components.Charts.Options.Font
-import Gargantext.Components.Charts.Options.Data
+import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
+import Gargantext.Components.Charts.Options.Series (seriesBarD1)
+import Gargantext.Components.Charts.Options.Color (grey)
+import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
+import Gargantext.Components.Charts.Options.Data (dataSerie)
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Pages.Corpus.Chart.Utils as U
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (ChartType(..), TabType)
 
 type Path = { corpusId :: Int, tabType  :: TabType }
 
-type Props = ( path :: Path, ends :: Ends )
+type Props = ( path :: Path, session :: Session )
 
 newtype ChartMetrics = ChartMetrics { "data" :: HistoMetrics }
 
@@ -49,14 +48,14 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , subTitle  : "Distribution of publications over time"
   , xAxis     : xAxis' dates'
   , yAxis     : yAxis' { position: "left", show: true, min:0}
-  , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count']
   , addZoom   : true
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
-  }
+  , series    : [seriesBarD1 {name: "Number of publication / year"} $
+                 map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count'] }
 
-getMetrics :: Ends -> Path -> Aff HistoMetrics
-getMetrics ends {corpusId, tabType} = do
-  ChartMetrics ms <- get $ url ends chart
+getMetrics :: Session -> Path -> Aff HistoMetrics
+getMetrics session {corpusId, tabType} = do
+  ChartMetrics ms <- get $ url session chart
   pure ms."data"
   where chart = Chart {chartType: Histo, tabType: tabType} (Just corpusId)
 
@@ -66,16 +65,16 @@ histo props = R.createElement histoCpt props []
 histoCpt :: R.Component Props
 histoCpt = R.hooksComponent "LoadedMetricsHisto" cpt
   where
-    cpt {ends,path} _ = do
+    cpt {session,path} _ = do
       setReload <- R.useState' 0
-      pure $ metricsLoadView ends setReload path
+      pure $ metricsLoadView session setReload path
 
-metricsLoadView :: Ends -> R.State Int -> Path -> R.Element
-metricsLoadView ends setReload path = R.createElement el {ends,path} []
+metricsLoadView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadView s setReload p = R.createElement el {session: s, path: p} []
   where
     el = R.hooksComponent "MetricsLoadedHistoView" cpt
-    cpt {path,ends} _ = do
-      useLoader path (getMetrics ends) $ \loaded ->
+    cpt {path,session} _ = do
+      useLoader path (getMetrics session) $ \loaded ->
         loadedMetricsView setReload loaded
 
 loadedMetricsView :: R.State Int -> HistoMetrics -> R.Element

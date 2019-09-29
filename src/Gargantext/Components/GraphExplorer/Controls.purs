@@ -11,8 +11,7 @@ module Gargantext.Components.GraphExplorer.Controls
  , getMultiNodeSelect, setMultiNodeSelect
  ) where
 
-import Data.Maybe (Maybe(..))
-import DOM.Simple as DOM
+import Data.Maybe (Maybe)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Prelude

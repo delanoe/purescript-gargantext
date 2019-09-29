@@ -1,37 +1,36 @@
-module Gargantext.Utils.Reactix
-  where
+module Gargantext.Utils.Reactix where
 
 import Prelude
-
+import Data.Maybe (Maybe(..))
+import Data.Nullable (Nullable, null, toMaybe)
+import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Document (document)
 import DOM.Simple.Event as DE
-import Data.Maybe (Maybe(..))
-import Data.Nullable (Nullable, null, toMaybe)
-import Data.Traversable (traverse_)
-import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
 import DOM.Simple.Element as Element
-import DOM.Simple.Event as DE
-import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Exception (error)
-import Effect.Uncurried (EffectFn1, mkEffectFn1)
-import FFI.Simple ((...), defineProperty, delay)
-import React (ReactClass, ReactElement, Children, class IsReactElement, class ReactPropFields)
+import Effect.Uncurried (EffectFn1, mkEffectFn1, mkEffectFn2)
+import FFI.Simple ((...), defineProperty, delay, args3)
+import React (class ReactPropFields, Children, ReactClass, ReactElement)
 import React as React
 import Reactix as R
 import Reactix.DOM.HTML (ElemFactory, text)
-import Reactix.React (createDOMElement)
+import Reactix.React (react, createDOMElement)
 import Reactix.SyntheticEvent as RE
+import Reactix.Utils (currySecond, hook, tuple)
 import Thermite (Spec, simpleSpec, Render, defaultPerformAction)
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype Point = Point { x :: Number, y :: Number }
 
+-- a setter function, for useState
 type Setter t = (t -> t) -> Effect Unit
+-- a reducer function living in effector, for useReductor
+type Actor t a = (t -> a -> Effect t)
 
 -- | Turns a ReactElement into aReactix Element
 -- | buff (v.) to polish
@@ -163,3 +162,19 @@ childless cpt props = R.createElement cpt props []
 
 showText :: forall s. Show s => s -> R.Element
 showText = text <<< show
+
+----- Reactix's new effectful reducer: sneak-peek because anoe wants to demo on tuesday
+
+-- | Like a reducer, but lives in Effect
+type Reductor state action = Tuple state (action -> Effect Unit)
+
+-- | Like useReductor, but lives in Effect
+useReductor :: forall s a i. Actor s a -> (i -> Effect s) -> i -> R.Hooks (Reductor s a)
+useReductor f i j =
+  hook $ \_ ->
+    pure $ currySecond $ tuple $ react ... "useReducer" $ args3 (mkEffectFn2 f) j (mkEffectFn1 i)
+
+-- | Like `useReductor`, but takes an initial state instead of an
+-- | initialiser function and argument
+useReductor' :: forall s a. Actor s a -> s -> R.Hooks (Reductor s a)
+useReductor' r = useReductor r pure

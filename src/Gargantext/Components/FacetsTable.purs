@@ -3,10 +3,9 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-import Control.Monad.Cont.Trans (lift)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
+import Prelude
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array (filter, (!!))
-import Data.Foldable (intercalate)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
@@ -14,23 +13,24 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
-import Gargantext.Prelude
-import Gargantext.Config (Ends, NodeType(..), OrderBy(..), NodePath(..), BackendRoute(..), TabType, url)
-import Gargantext.Config.REST (put, post, deleteWithBody)
+import Gargantext.Config.REST (post, deleteWithBody)
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
+import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 
 import Gargantext.Components.Table as T
-import Gargantext.Router as Router
+import Gargantext.Routes (SessionRoute(Search,NodeAPI))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..))
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.DecodeMaybe ((.|))
-import Gargantext.Utils.Reactix as R2
 ------------------------------------------------------------------------
 
 type NodeID = Int
@@ -63,7 +63,7 @@ type Props =
   , totalRecords :: Int
   , chart :: R.Element
   , container :: Record T.TableContainerProps -> R.Element
-  , ends :: Ends
+  , session :: Session
   )
 
 -- | Tracks the ids of documents to delete and that have been deleted
@@ -164,14 +164,14 @@ docView props = R.createElement docViewCpt props []
 docViewCpt :: R.Component Props
 docViewCpt = R.hooksComponent "G.C.FacetsTable.DocView" cpt
   where
-    cpt {ends, nodeId, listId, query, totalRecords, chart, container} _ = do
+    cpt {session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
-      path <- R.useState' $ initialPagePath {nodeId, listId, query, ends}
+      path <- R.useState' $ initialPagePath {nodeId, listId, query, session}
       pure $ H.div { className: "container1" }
         [ H.div { className: "row" }
           [ chart
           , H.div { className: "col-md-12" }
-            [ pageLayout { deletions, totalRecords, container, ends, path } ]
+            [ pageLayout { deletions, totalRecords, container, session, path } ]
           , H.div { className: "col-md-12" }
             [ H.button { style: buttonStyle, on: { click: trashClick deletions } }
               [ H.i { className: "glyphitem glyphicon glyphicon-trash"
@@ -181,19 +181,19 @@ docViewCpt = R.hooksComponent "G.C.FacetsTable.DocView" cpt
           buttonStyle =
             { backgroundColor: "peru", padding: "9px", color: "white"
             , border: "white", float: "right" }
-          trashClick deletions _ = performDeletions ends nodeId deletions
+          trashClick deletions _ = performDeletions session nodeId deletions
 
-performDeletions :: Ends -> Int -> R.State Deletions -> Effect Unit
-performDeletions ends nodeId (deletions /\ setDeletions) =
+performDeletions :: Session -> Int -> R.State Deletions -> Effect Unit
+performDeletions session nodeId (deletions /\ setDeletions) =
   launchAff_ call *> setDeletions del
   where
     q = {documents: Set.toUnfoldable deletions.pending}
-    call = deleteDocuments ends nodeId (DeleteDocumentQuery q)
+    call = deleteDocuments session nodeId (DeleteDocumentQuery q)
     del {pending, deleted} = {pending: mempty, deleted: deleted <> pending}
 
--- markCategory :: Ends -> NodeID -> _ -> Array NodeID -> Effect Unit
-markCategory ends nodeId category nids =
-  void $ launchAff_ $putCategories ends nodeId (CategoryQuery q)
+markCategory :: Session -> NodeID -> Category -> Array NodeID -> Effect Unit
+markCategory session nodeId category nids =
+  void $ launchAff_ $putCategories session nodeId (CategoryQuery q)
   where -- TODO add array of delete rows here
     q = {nodeIds: nids, category: favCategory category}
 
@@ -207,12 +207,12 @@ docViewGraph props = R.createElement docViewCpt props []
 docViewGraphCpt :: R.Component Props
 docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
   where
-    cpt {ends, nodeId, listId, query, totalRecords, chart, container} _ = do
+    cpt {session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
       let buttonStyle = { backgroundColor: "peru", padding : "9px"
                         , color : "white", border : "white", float: "right"}
-      let performClick = \_ -> performDeletions ends nodeId deletions
-      path <- R.useState' $ initialPagePath { nodeId, listId, query, ends }
+      let performClick = \_ -> performDeletions session nodeId deletions
+      path <- R.useState' $ initialPagePath { nodeId, listId, query, session }
       pure $ R.fragment
         [ H.br {}
         , H.p {} [ H.text "" ]
@@ -221,21 +221,21 @@ docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
           [ H.div { className: "row" }
             [ chart
             , H.div { className: "col-md-12" }
-              [ pageLayout { totalRecords, deletions, container, ends, path }
+              [ pageLayout { totalRecords, deletions, container, session, path }
               , H.button { style: buttonStyle, on: { click: performClick } }
                 [ H.i { className: "glyphitem glyphicon glyphicon-trash"
                       , style: { marginRight : "9px" } } []
                 , H.text "Delete document!" ] ] ] ] ]
 
-type PagePath = {nodeId :: Int, listId :: Int, query :: TextQuery, params :: T.Params, ends :: Ends}
+type PagePath = {nodeId :: Int, listId :: Int, query :: TextQuery, params :: T.Params, session :: Session}
 
-initialPagePath :: {ends :: Ends, nodeId :: Int, listId :: Int, query :: TextQuery} -> PagePath
-initialPagePath {ends, nodeId, listId, query} = {ends, nodeId, listId, query, params: T.initialParams}
+initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: TextQuery} -> PagePath
+initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
 
 loadPage :: PagePath -> Aff (Array DocumentsView)
-loadPage {ends, nodeId, listId, query, params: {limit, offset, orderBy}} = do
-  logs "loading documents page: loadPage with Offset and limit"
-  let url2 = url ends $ Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
+loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
+  liftEffect $ log "loading documents page: loadPage with Offset and limit"
+  let url2 = url session $ Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
   SearchResults res <- post url2 $ SearchQuery {query}
   pure $ res2corpus <$> res.results
   where
@@ -255,7 +255,7 @@ type PageLayoutProps =
   ( totalRecords :: Int
   , deletions :: R.State Deletions
   , container :: Record T.TableContainerProps -> R.Element
-  , ends :: Ends
+  , session :: Session
   , path :: R.State PagePath
   )
 
@@ -268,9 +268,9 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.FacetsTable.PageLayout" cpt
   where
-    cpt {totalRecords, deletions, container, ends, path} _ = do
+    cpt {totalRecords, deletions, container, session, path} _ = do
       useLoader (fst path) loadPage $ \documents ->
-        page {totalRecords, deletions, container, ends, path, documents}
+        page {totalRecords, deletions, container, session, path, documents}
 
 page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
@@ -278,7 +278,7 @@ page props = R.createElement pageCpt props []
 pageCpt :: R.Component PageProps
 pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
   where
-    cpt {totalRecords, container, deletions, documents, ends, path: path@({nodeId, listId, query} /\ setPath)} _ = do
+    cpt {totalRecords, container, deletions, documents, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
       T.table { rows, container, colNames, totalRecords, setParams }
       where
         setParams params = setPath (_ {params = params})
@@ -290,7 +290,7 @@ pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
         isDeleted (DocumentsView {id}) = Set.member id (fst deletions).deleted
         pairUrl (Pair {id,label})
           | id > 1 = H.a { href, target: "blank" } [ H.text label ]
-            where href = url ends $ NodePath NodeContact (Just id)
+            where href = url session $ NodePath NodeContact (Just id)
           | otherwise = H.text label
         comma = H.span {} [ H.text ", " ]
         rows = row <$> filter (not <<< isDeleted) documents
@@ -307,7 +307,7 @@ pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
                   ] ]
               , delete: true }
               where
-                markClick _ = markCategory ends nodeId category [id]
+                markClick _ = markCategory session nodeId category [id]
                 toggleClick _ = togglePendingDeletion deletions id
                 className = gi category
                 maybeStricken
@@ -323,6 +323,6 @@ instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
   encodeJson (DeleteDocumentQuery post) =
     "documents" := post.documents ~> jsonEmptyObject
 
-deleteDocuments :: Ends -> Int -> DeleteDocumentQuery -> Aff (Array Int)
-deleteDocuments ends nodeId = deleteWithBody to
-  where to = url ends (NodeAPI Node (Just nodeId)) <> "/documents"
+deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Array Int)
+deleteDocuments session nodeId = deleteWithBody to
+  where to = url session (NodeAPI Node (Just nodeId)) <> "/documents"

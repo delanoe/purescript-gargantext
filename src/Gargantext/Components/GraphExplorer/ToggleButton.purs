@@ -12,15 +12,12 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Utils.Reactix as R2
 
 type Props = (
     state :: R.State Boolean

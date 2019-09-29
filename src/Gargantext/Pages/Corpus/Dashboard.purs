@@ -1,17 +1,16 @@
 module Gargantext.Pages.Corpus.Dashboard where
 
-import Prelude hiding (div)
-
+import Prelude (map, show, ($), (<$>), (<>))
 import Data.Array (zipWith)
+import Data.Int (toNumber)
 import Data.Tuple (Tuple(..))
+import Reactix as R
+import Reactix.DOM.HTML as H
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis', tooltipTriggerAxis)
 import Gargantext.Components.Charts.Options.Data
 import Gargantext.Components.Charts.Options.Series
-import Data.Int (toNumber)
-import React.DOM.Props (className)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Thermite (Render, Spec, simpleSpec, defaultPerformAction)
+  ( TreeNode, Trees(..), mkTree, seriesBarD1, seriesFunnelD1, seriesPieD1
+  , seriesSankey, seriesScatterD2, treeLeaf, treeNode )
 
 dashboardLayout :: {} -> R.Element
 dashboardLayout props = R.createElement dashboardLayoutCpt props []

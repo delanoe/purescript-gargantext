@@ -17,12 +17,12 @@ import Gargantext.Components.Loader as Loader
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Tab as Tab
-import Gargantext.Config
 import Gargantext.Pages.Corpus.Chart.Histo (histo)
 import Gargantext.Pages.Corpus.Chart.Metrics (metrics)
 import Gargantext.Pages.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Pages.Corpus.Chart.Tree (tree)
-
+import Gargantext.Sessions (Session)
+import Gargantext.Types (CTabNgramType(..), TabType(..), TabSubType(..))
 import Gargantext.Utils.Reactix as R2
 
 data Mode = Authors | Sources | Institutes | Terms
@@ -41,7 +41,7 @@ modeTabType Institutes = CTabInstitutes
 modeTabType Terms      = CTabTerms
 
 type Props =
-  ( ends :: Ends
+  ( session :: Session
   , corpusId :: Int
   , corpusData :: CorpusData )
 
@@ -51,15 +51,15 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component Props
 tabsCpt = R.hooksComponent "CorpusTabs" cpt
   where
-    cpt {ends, corpusId, corpusData: corpusData@{defaultListId}} _ = do
+    cpt {session, corpusId, corpusData: corpusData@{defaultListId}} _ = do
       (selected /\ setSelected) <- R.useState' 0
-      pure $ Tab.tabs { tabs, selected }
+      pure $ Tab.tabs { tabs: tabs', selected }
       where
-        tabs = [ "Sources"    /\ view Sources
-               , "Authors"    /\ view Authors
-               , "Institutes" /\ view Institutes
-               , "Terms"      /\ view Terms ]
-        view mode = ngramsView {mode, ends, corpusId, corpusData}
+        tabs' = [ "Sources"    /\ view Sources
+                , "Authors"    /\ view Authors
+                , "Institutes" /\ view Institutes
+                , "Terms"      /\ view Terms ]
+        view mode = ngramsView {mode, session, corpusId, corpusData}
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
@@ -69,19 +69,19 @@ ngramsView props = R.createElement ngramsViewCpt props []
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = R.staticComponent "ListsNgramsView" cpt
   where
-    cpt {mode, ends, corpusId, corpusData: {defaultListId}} _ =
+    cpt {mode, session, corpusId, corpusData: {defaultListId}} _ =
       NT.mainNgramsTable
-      {ends, defaultListId, nodeId: corpusId, tabType, tabNgramType}
+      {session, defaultListId, nodeId: corpusId, tabType, tabNgramType}
       where
         tabNgramType = modeTabType mode
         tabType = TabCorpus (TabNgramType tabNgramType)
         listId = 0 -- TODO!
         path = {corpusId, tabType}
         path2 = {corpusId, listId, tabType, limit: (Just 1000)} -- todo
-        chart Authors = pie {ends, path}
-        chart Sources = bar {ends, path}
-        chart Institutes = tree {ends, path: path2}
-        chart Terms = metrics {ends, path: path2}
+        chart Authors = pie {session, path}
+        chart Sources = bar {session, path}
+        chart Institutes = tree {session, path: path2}
+        chart Terms = metrics {session, path: path2}
 
 newtype CorpusInfo =
   CorpusInfo

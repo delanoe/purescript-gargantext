@@ -1,9 +1,7 @@
 module Gargantext.Pages.Home where
 
 import Prelude
-import Data.Lens (re)
-import Data.Lens.Iso.Newtype (_Newtype)
-import Data.Newtype (class Newtype, unwrap)
+import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -12,7 +10,6 @@ import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Data.Lang (Lang(..))
-import Gargantext.Utils.Reactix as R2
 
 type Props = ()
 
@@ -38,28 +35,24 @@ performAction Enter = void $ setHash "/search"
 performAction Login = void $ setHash "/login"
 performAction SignUp = pure unit
 
--- Layout |
-
-landingData :: Lang -> LandingData
-landingData FR = Fr.landingData
-landingData EN = En.landingData
+langLandingData :: Lang -> LandingData
+langLandingData FR = Fr.landingData
+langLandingData EN = En.landingData
 
 ------------------------------------------------------------------------
 
-layoutLanding :: Lang -> R.Element
-layoutLanding lang = R.createElement layoutLandingCpt props []
-  where props = { landingData: landingData lang }
+homeLayout :: Lang -> R.Element
+homeLayout lang = R.createElement homeLayoutCpt {landingData} []
+  where landingData = langLandingData lang
 
-layoutLandingCpt :: R.Component ( landingData :: LandingData )
-layoutLandingCpt = R.hooksComponent "LayoutLanding" cpt
+homeLayoutCpt :: R.Component ( landingData :: LandingData )
+homeLayoutCpt = R.staticComponent "LayoutLanding" cpt
   where
-    cpt {landingData} _ = do
-      pure $ H.span {} [
-        H.div { className: "container1" }
-              [ jumboTitle landingData false ]
-        , H.div { className: "container1" } [] -- TODO put research form
-        , H.div { className: "container1" } [ blocksRandomText' landingData ]
-        ]
+    cpt {landingData} _ =
+      H.span {}
+      [ H.div { className: "container1" } [ jumboTitle landingData false ]
+      , H.div { className: "container1" } [] -- TODO put research form
+      , H.div { className: "container1" } [ blocksRandomText' landingData ] ]
 
 ------------------------------------------------------------------------
 

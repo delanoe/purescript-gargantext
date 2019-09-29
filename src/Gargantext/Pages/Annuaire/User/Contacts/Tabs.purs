@@ -2,7 +2,6 @@
 module Gargantext.Pages.Annuaire.User.Contacts.Tabs.Specs where
 
 import Prelude hiding (div)
-
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List (fromFoldable)
@@ -10,11 +9,12 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
 
-import Gargantext.Config (Ends, TabType(..), TabSubType(..), PTabNgramType(..), CTabNgramType(..))
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Pages.Annuaire.User.Contacts.Types (ContactData)
+import Gargantext.Sessions (Session)
+import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
 import Gargantext.Utils.Reactix as R2
 
 import Reactix as R
@@ -43,7 +43,7 @@ modeTabType' Communication = CTabAuthors
 type Props =
   ( nodeId :: Int
   , contactData :: ContactData
-  , ends :: Ends )
+  , session :: Session )
 
 tabs :: Record Props -> R.Element
 tabs props = R.createElement tabsCpt props []
@@ -51,7 +51,7 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component Props
 tabsCpt = R.hooksComponent "G.P.Annuaire.User.Contacts.Tabs.tabs" cpt
   where
-    cpt {nodeId, contactData: {defaultListId}, ends} _ = do
+    cpt {nodeId, contactData: {defaultListId}, session} _ = do
       active <- R.useState' 0
       pure $
         Tab.tabs { tabs: tabs', selected: fst active }
@@ -64,13 +64,13 @@ tabsCpt = R.hooksComponent "G.P.Annuaire.User.Contacts.Tabs.tabs" cpt
           , "Trash"         /\ docs -- TODO pass-in trash mode
           ]
           where
-            patentsView = {ends, defaultListId, nodeId, mode: Patents}
-            booksView = {ends, defaultListId, nodeId, mode: Books}
-            commView = {ends, defaultListId, nodeId, mode: Communication}
+            patentsView = {session, defaultListId, nodeId, mode: Patents}
+            booksView = {session, defaultListId, nodeId, mode: Books}
+            commView = {session, defaultListId, nodeId, mode: Communication}
             chart = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docView
-              { ends, nodeId, chart, totalRecords
+              { session, nodeId, chart, totalRecords
               , tabType: TabPairing TabDocs
               , listId: defaultListId
               , corpusId: Nothing
@@ -78,15 +78,15 @@ tabsCpt = R.hooksComponent "G.P.Annuaire.User.Contacts.Tabs.tabs" cpt
 
 
 type NgramsViewProps =
-  ( ends :: Ends
+  ( session :: Session
   , mode :: Mode
   , defaultListId :: Int
   , nodeId :: Int )
 
 ngramsView :: Record NgramsViewProps -> R.Element
-ngramsView {ends,mode, defaultListId, nodeId} =
+ngramsView {session,mode, defaultListId, nodeId} =
   NT.mainNgramsTable
-  { nodeId, defaultListId, tabType, ends, tabNgramType }
+  { nodeId, defaultListId, tabType, session, tabNgramType }
   where
     tabNgramType = modeTabType' mode
     tabType = TabPairing $ TabNgramType $ modeTabType mode

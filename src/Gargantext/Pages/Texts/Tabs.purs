@@ -1,30 +1,21 @@
 module Gargantext.Pages.Texts.Tabs where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
-import Data.Maybe (Maybe(..))
 --------------------------------------------------------
-import Gargantext.Prelude
-import Prelude hiding (div)
-
-import Data.Array as Array
+import Prelude (class Eq, class Show, bind, pure, ($))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.List (fromFoldable)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Components.Charts.Options.ECharts (chart) as ECharts
 import Gargantext.Components.DocsTable as DT
-import Gargantext.Components.Loader as Loader
-import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Tab as Tab
-import Gargantext.Config (CTabNgramType(..), TabSubType(..), TabType(..), Ends)
 import Gargantext.Pages.Corpus.Chart.Histo (histo)
-import Gargantext.Utils.Reactix as R2
+import Gargantext.Sessions (Session)
+import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
 
 data Mode = MoreLikeFav | MoreLikeTrash
 
@@ -39,7 +30,7 @@ modeTabType :: Mode -> CTabNgramType
 modeTabType MoreLikeFav    = CTabAuthors  -- TODO
 modeTabType MoreLikeTrash  = CTabSources  -- TODO
 
-type Props = ( ends :: Ends, corpusId :: Int, corpusData :: CorpusData )
+type Props = ( session :: Session, corpusId :: Int, corpusData :: CorpusData )
 
 tabs :: Record Props -> R.Element
 tabs props = R.createElement tabsCpt props []
@@ -47,21 +38,21 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component Props
 tabsCpt = R.hooksComponent "CorpusTabs" cpt
   where
-    cpt {ends, corpusId, corpusData} _ = do
+    cpt {session, corpusId, corpusData} _ = do
       (selected /\ setSelected) <- R.useState' 0
-      pure $ Tab.tabs { tabs, selected }
+      pure $ Tab.tabs { tabs: tabs', selected }
       where
-        tabs = [ "Documents"     /\ docs,        "Trash"           /\ trash
-               , "More like fav" /\ moreLikeFav, "More like trash" /\ moreLikeTrash ]
-        docView' tabType = docView { ends, corpusId, corpusData, tabType }
+        tabs' = [ "Documents"     /\ docs,        "Trash"           /\ trash
+                , "More like fav" /\ moreLikeFav, "More like trash" /\ moreLikeTrash ]
+        docView' tabType = docView { session, corpusId, corpusData, tabType }
         docs = R.fragment [ docsHisto, docView' TabDocs ]
-        docsHisto = histo { path, ends }
+        docsHisto = histo { path, session }
           where path = { corpusId, tabType: TabCorpus TabDocs }
         moreLikeFav = docView' TabMoreLikeFav
         moreLikeTrash = docView' TabMoreLikeTrash
         trash = docView' TabTrash
 
-type DocViewProps a = ( ends :: Ends, corpusId :: Int, corpusData :: CorpusData, tabType :: TabSubType a )
+type DocViewProps a = ( session :: Session, corpusId :: Int, corpusData :: CorpusData, tabType :: TabSubType a )
 
 docView :: forall a. Record (DocViewProps a) -> R.Element
 docView props = R.createElement docViewCpt props []
@@ -70,10 +61,10 @@ docView props = R.createElement docViewCpt props []
 docViewCpt :: forall a. R.Component (DocViewProps a)
 docViewCpt = R.hooksComponent "DocViewWithCorpus" cpt
   where
-    cpt {ends, corpusId, corpusData: {defaultListId}, tabType} _children = do
+    cpt {session, corpusId, corpusData: {defaultListId}, tabType} _children = do
       pure $ DT.docView $ params tabType
       where
-        params :: forall a. TabSubType a -> Record DT.Props
+        params :: forall b. TabSubType b -> Record DT.Props
         params TabDocs =
           { nodeId: corpusId
             -- ^ TODO merge nodeId and corpusId in DT
@@ -83,7 +74,7 @@ docViewCpt = R.hooksComponent "DocViewWithCorpus" cpt
           , listId: defaultListId
           , corpusId: Just corpusId
           , showSearch: true
-          , ends }
+          , session }
         params TabMoreLikeFav =
           { nodeId: corpusId
             -- ^ TODO merge nodeId and corpusId in DT
@@ -93,7 +84,7 @@ docViewCpt = R.hooksComponent "DocViewWithCorpus" cpt
           , listId: defaultListId
           , corpusId: Just corpusId
           , showSearch: false
-          , ends }
+          , session }
         params TabMoreLikeTrash =
           { nodeId: corpusId
             -- ^ TODO merge nodeId and corpusId in DT
@@ -103,7 +94,7 @@ docViewCpt = R.hooksComponent "DocViewWithCorpus" cpt
           , listId: defaultListId
           , corpusId: Just corpusId
           , showSearch: false
-          , ends }
+          , session }
         params TabTrash =
           { nodeId: corpusId
             -- ^ TODO merge nodeId and corpusId in DT
@@ -113,7 +104,7 @@ docViewCpt = R.hooksComponent "DocViewWithCorpus" cpt
           , listId: defaultListId
           , corpusId: Nothing
           , showSearch: true
-          , ends }
+          , session }
         -- DUMMY
         params _ =
           { nodeId: corpusId
@@ -124,7 +115,7 @@ docViewCpt = R.hooksComponent "DocViewWithCorpus" cpt
           , listId: defaultListId
           , corpusId: Nothing
           , showSearch: true
-          , ends }
+          , session }
 
 newtype CorpusInfo = CorpusInfo { title   :: String
                                 , desc    :: String
@@ -154,11 +145,11 @@ corpusInfoDefault = NodePoly { id : 0
 instance decodeCorpusInfo :: DecodeJson CorpusInfo where
   decodeJson json = do
     obj <- decodeJson json
-    title <- obj .? "title"
-    desc  <- obj .? "desc"
-    query <- obj .? "query"
-    authors <- obj .? "authors"
-    chart   <- obj .?? "chart"
+    title <- obj .: "title"
+    desc  <- obj .: "desc"
+    query <- obj .: "query"
+    authors <- obj .: "authors"
+    chart   <- obj .:! "chart"
     let totalRecords = 47361 -- TODO
     pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
 

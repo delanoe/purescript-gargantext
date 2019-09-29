@@ -5,19 +5,16 @@ import Gargantext.Prelude hiding (max,min)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe)
+import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Effect.Aff (Aff)
-import Thermite (Render, Spec, simpleSpec)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Sigma (Sigma)
+import Gargantext.Hooks.Sigmax (Sigma)
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
@@ -25,19 +22,19 @@ import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Tree as Tree
-import Gargantext.Config (Ends, url)
-import Gargantext.Config as Config
 import Gargantext.Config.REST (get)
-import Gargantext.Router (Routes(..))
-import Gargantext.Utils.Reactix as R2
+import Gargantext.Ends (url)
+import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
+import Gargantext.Sessions (Session)
+import Gargantext.Types (NodeType(Graph))
 
 type GraphId = Int
 
 type LayoutProps =
   ( graphId :: GraphId
-  , mCurrentRoute :: Maybe Routes
+  , mCurrentRoute :: Maybe AppRoute
   , treeId :: Maybe Int
-  , ends :: Ends )
+  , session :: Session )
 
 
 type Props = ( graph :: Maybe Graph.Graph | LayoutProps )
@@ -48,10 +45,10 @@ explorerLayout props = R.createElement explorerLayoutCpt props []
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
   where
-    cpt {graphId, mCurrentRoute, treeId, ends} _ =
-      useLoader graphId (getNodes ends) handler
+    cpt {graphId, mCurrentRoute, treeId, session} _ =
+      useLoader graphId (getNodes session) handler
       where
-        handler loaded = explorer {graphId, mCurrentRoute, treeId, ends, graph}
+        handler loaded = explorer {graphId, mCurrentRoute, treeId, session, graph}
           where graph = Just (convert loaded)
 
 explorer :: Record Props -> R.Element
@@ -60,7 +57,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt {ends, graphId, mCurrentRoute, treeId, graph} _ = do
+    cpt {session, graphId, mCurrentRoute, treeId, graph} _ = do
       controls <- Controls.useGraphControls
       state <- useExplorerState
       pure $
@@ -88,9 +85,9 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       where
         tree {treeId: Nothing} _ = RH.div { id: "tree" } []
         tree _ {showTree: false /\ _} = RH.div { id: "tree" } []
-        tree {mCurrentRoute, treeId: Just treeId} _ =
+        tree {mCurrentRoute: m, treeId: Just root} _ =
           RH.div { id: "tree", className: "col-md-2" }
-          [  Tree.treeView {mCurrentRoute, root: treeId, ends: ends} ]
+          [  Tree.treeView {mCurrentRoute: m, root, session: session} ]
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1 = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
@@ -100,7 +97,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     pullRight = RH.div { className: "pull-right" }
 
 
-    mGraph :: R.Ref (Maybe Sigmax.Sigma) -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
+    mGraph :: R.Ref (Maybe Sigma) -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
     mGraph _ {graph: Nothing} = RH.div {} []
     mGraph sigmaRef {graphId, graph: Just graph} = graphView sigmaRef {graphId, graph}
 
@@ -127,7 +124,7 @@ type GraphProps = (
   , graph :: Graph.Graph
 )
 
-graphView :: R.Ref (Maybe Sigmax.Sigma) -> Record GraphProps -> R.Element
+graphView :: R.Ref (Maybe Sigma) -> Record GraphProps -> R.Element
 --graphView sigmaRef props = R.createElement (R.memo el memoCmp) props []
 graphView sigmaRef props = R.createElement el props []
   where
@@ -288,5 +285,5 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#
 --               ]
 
 
-getNodes :: Ends -> GraphId -> Aff GET.GraphData
-getNodes ends graphId = get $ url ends $ Config.NodeAPI Config.Graph (Just graphId)
+getNodes :: Session -> GraphId -> Aff GET.GraphData
+getNodes session graphId = get $ url session $ NodeAPI Graph (Just graphId)

@@ -15,7 +15,7 @@ import DOM.Simple.Window ( window )
 import DOM.Simple.Document ( document )
 import DOM.Simple.Types ( DOMRect )
 import Effect (Effect)
-import FFI.Simple ( (...), (..), delay )
+import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 

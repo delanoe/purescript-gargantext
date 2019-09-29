@@ -1,11 +1,9 @@
 module Gargantext.Hooks.Loader where
 
-import Data.Functor ((<$>))
-import Control.Monad ((=<<))
+import Gargantext.Prelude
 import Data.Maybe (Maybe(..), isNothing, maybe, maybe')
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Gargantext.Prelude
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R

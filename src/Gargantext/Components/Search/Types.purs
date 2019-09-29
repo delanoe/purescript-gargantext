@@ -1,5 +1,6 @@
 module Gargantext.Components.Search.Types where
 
+import Prelude (class Eq, class Show, show, ($), (<>))
 import Data.Argonaut (class EncodeJson, class DecodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
@@ -9,10 +10,11 @@ import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Prelude
-import Gargantext.Types (class ToQuery, toQuery)
-import Gargantext.Config (Ends, NodeType(..), class Path, PathType(..), BackendRoute(..), url)
 import Gargantext.Config.REST (post, put)
+import Gargantext.Ends (class ToUrl, backendUrl, url)
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session(..))
+import Gargantext.Types (class ToQuery, toQuery, NodeType(..))
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
@@ -108,10 +110,10 @@ defaultSearchQuery = SearchQuery
   , limit: Nothing
   , order: Nothing }
 
-instance pathSearchQuery :: Path SearchQuery where
-  pathType _ = BackendPath
-  path q = "new" <> Q.print (toQuery q)
-
+instance toUrlSessionSearchQuery :: ToUrl Session SearchQuery where
+  toUrl (Session {backend}) q = backendUrl backend q2
+    where q2 = "new" <> Q.print (toQuery q)
+  
 instance searchQueryToQuery :: ToQuery SearchQuery where
   toQuery (SearchQuery {offset, limit, order}) =
     QP.print id id $ QP.QueryPairs $
@@ -157,8 +159,6 @@ decodeCategory 1 = Normal
 decodeCategory 2 = Favorite
 decodeCategory _ = Normal
 
-
-
 newtype CategoryQuery = CategoryQuery {
     nodeIds :: Array Int
   , category :: Category
@@ -170,12 +170,12 @@ instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
     ~> "ntc_category" := encodeJson post.category
     ~> jsonEmptyObject
 
-categoryUrl :: Ends -> Int -> String
-categoryUrl ends nodeId = url ends (NodeAPI Node $ Just nodeId) <> "/category"
+categoryUrl :: Session -> Int -> String
+categoryUrl session nodeId = url session (NodeAPI Node $ Just nodeId) <> "/category"
 
-putCategories :: Ends -> Int -> CategoryQuery -> Aff (Array Int)
-putCategories ends nodeId = put $ categoryUrl ends nodeId
+putCategories :: Session -> Int -> CategoryQuery -> Aff (Array Int)
+putCategories session nodeId = put $ categoryUrl session nodeId
 
-performSearch :: forall a. DecodeJson a => Ends -> SearchQuery -> Aff a
-performSearch ends q = post (url ends q) q
+performSearch :: forall a. DecodeJson a => Session -> SearchQuery -> Aff a
+performSearch session q = post (url session q) q
 

@@ -1,7 +1,8 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
+import Prelude
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array (drop, take)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -15,24 +16,24 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Effect.Uncurried (EffectFn1, mkEffectFn1)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
-import Gargantext.Prelude
-import Gargantext.Config (Ends, NodeType(..), OrderBy(..), BackendRoute(..), TabType, TabPostQuery(..), url)
-import Gargantext.Config.REST (get, put, post, deleteWithBody, delete)
-import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Config.REST (post, delete)
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Router as Router
+import Gargantext.Routes as Routes
+import Gargantext.Routes (SessionRoute(NodeAPI))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..))
 ------------------------------------------------------------------------
 
 type NodeID = Int
@@ -46,7 +47,7 @@ type Props =
   , listId       :: Int
   , corpusId     :: Maybe Int
   , showSearch   :: Boolean
-  , ends         :: Ends )
+  , session         :: Session )
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
 
@@ -57,7 +58,7 @@ type PageLoaderProps =
   , listId       :: Int
   , corpusId     :: Maybe Int
   , query        :: Query
-  , ends         :: Ends )
+  , session         :: Session )
 
 type LocalCategories = Map Int Category
 type Query = String
@@ -136,23 +137,22 @@ layoutDocview :: R.State Query -> R.State T.Params -> Record Props -> R.Element
 layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "LayoutDocView" cpt
-    cpt {ends, nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch} _children = do
+    cpt {session, nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch} _children = do
       pure $ H.div {className: "container1"}
         [ H.div {className: "row"}
           [ chart
           , if showSearch then searchBar query else H.div {} []
           , H.div {className: "col-md-12"}
-            [ pageLoader tableParams {ends, nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ] ] ]
-    onClickTrashAll nodeId = mkEffectFn1 $ \_ -> do
-      launchAff $ deleteAllDocuments p.ends nodeId
+            [ pageLoader tableParams {session, nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ] ] ]
+    -- onClickTrashAll nodeId _ = do
+    --   launchAff $ deleteAllDocuments p.session nodeId
           
           {-, H.div {className: "col-md-1 col-md-offset-11"}
-            [ pageLoader p.ends tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
+            [ pageLoader p.session tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
           , H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
                        , style: {backgroundColor: "peru", color : "white", border : "white"}
-                       , onClick: onClickTrashAll nodeId
-                       }
+                       , on: { click: onClickTrashAll nodeId } }
               [  H.i {className: "glyphitem glyphicon glyphicon-trash"} []
               ,  H.text "Trash all"
               ]
@@ -211,11 +211,11 @@ type PageParams = { nodeId :: Int
                   , query   :: Query
                   , params :: T.Params}
 
-loadPage :: Ends -> PageParams -> Aff (Array DocumentsView)
-loadPage ends {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
-  logs "loading documents page: loadPage with Offset and limit"
+loadPage :: Session -> PageParams -> Aff (Array DocumentsView)
+loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
+  liftEffect $ log "loading documents page: loadPage with Offset and limit"
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let url2 = (url ends (NodeAPI Node (Just nodeId))) <> "/table"
+  let url2 = (url session (NodeAPI Node (Just nodeId))) <> "/table"
   res <- post url2 $ TabPostQuery {
       offset
     , limit
@@ -256,10 +256,10 @@ renderPage (_ /\ setTableParams) p res = R.createElement el p []
     gi _ = "glyphicon glyphicon-star-empty"
     trashStyle Trash = {textDecoration: "line-through"}
     trashStyle _ = {textDecoration: "none"}
-    corpusDocument (Just corpusId) = Router.CorpusDocument corpusId
-    corpusDocument _ = Router.Document
+    corpusDocument (Just corpusId) = Routes.CorpusDocument corpusId
+    corpusDocument _ = Routes.Document
 
-    cpt {ends, nodeId, corpusId, listId, totalRecords} _children = do
+    cpt {session, nodeId, corpusId, listId, totalRecords} _children = do
       localCategories <- R.useState' (mempty :: LocalCategories)
       pure $ T.table
           { rows: rows localCategories
@@ -292,15 +292,15 @@ renderPage (_ /\ setTableParams) p res = R.createElement el p []
         onClick (_ /\ setLocalCategories) catType nid cat = \_-> do
           let newCat = if (catType == Favorite) then (favCategory cat) else (trashCategory cat)
           setLocalCategories $ insert nid newCat
-          void $ launchAff $ putCategories ends nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
+          void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
 
 pageLoader :: R.State T.Params -> Record PageLoaderProps -> R.Element
 pageLoader tableParams@(pageParams /\ _) p = R.createElement el p []
   where
     el = R.hooksComponent "PageLoader" cpt
-    cpt p@{ends, nodeId, listId, corpusId, tabType, query} _children = do
-      useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} (loadPage ends) $
-        \loaded -> renderPage tableParams p loaded
+    cpt props@{session, nodeId, listId, corpusId, tabType, query} _children = do
+      useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} (loadPage session) $
+        \loaded -> renderPage tableParams props loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
@@ -344,11 +344,11 @@ searchResults :: SearchQuery -> Aff Int
 searchResults squery = post "http://localhost:8008/count" unit
   -- TODO
 
-documentsUrl :: Ends -> Int -> String
-documentsUrl ends nodeId = url ends (NodeAPI Node (Just nodeId)) <> "/documents"
+documentsUrl :: Session -> Int -> String
+documentsUrl session nodeId = url session (NodeAPI Node (Just nodeId)) <> "/documents"
 
-deleteAllDocuments :: Ends -> Int -> Aff (Array Int)
-deleteAllDocuments ends = delete <<< documentsUrl ends
+deleteAllDocuments :: Session -> Int -> Aff (Array Int)
+deleteAllDocuments session = delete <<< documentsUrl session
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)
 toggleSet :: forall a. Ord a => a -> Set a -> Set a

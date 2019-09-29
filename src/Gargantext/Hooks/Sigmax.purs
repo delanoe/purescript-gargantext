@@ -3,27 +3,23 @@ module Gargantext.Hooks.Sigmax
   -- )
   where
 
-import Prelude
+import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=))
 import Data.Array as A
-import Data.Bitraversable (bitraverse)
 import Data.Either (Either(..), either)
 import Data.Foldable (sequence_)
-import Data.Maybe (Maybe(..), maybe)
-import Data.Nullable (Nullable, null)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (Nullable)
 import Data.Sequence as Seq
 import Data.Sequence (Seq)
-import Data.Traversable (for, for_, traverse, traverse_)
+import Data.Traversable (traverse_)
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
 import Effect (Effect)
 import FFI.Simple (delay)
 import Reactix as R
-import Reactix.DOM.HTML as RH
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Types (class Optional)
-import Gargantext.Hooks.Sigmax.Sigma (SigmaOpts)
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Types
+import Gargantext.Hooks.Sigmax.Types (Graph(..))
 
 type Sigma =
   { sigma :: R.Ref (Maybe Sigma.Sigma)
@@ -88,8 +84,8 @@ useSigma container settings sigmaRef = do
     delay unit $ handleSigma sigma (readSigma sigma)
   pure $ {sigma, isNew}
   where
-    newSigma sigmaRef = do
-      let mSigma = R.readRef sigmaRef
+    newSigma sigmaRef' = do
+      let mSigma = R.readRef sigmaRef'
       case mSigma of
         Just sigma -> pure sigma
         Nothing    -> do

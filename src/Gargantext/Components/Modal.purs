@@ -3,23 +3,17 @@
 -- | content. Clicking outside of the box will close the modal
 module Gargantext.Components.Modal where
 
-import Prelude hiding (div)
-import Data.Maybe ( Maybe(..), maybe )
-import Data.Nullable ( Nullable, null, toMaybe )
-import Data.Tuple ( Tuple(..) )
-import Data.Tuple.Nested ( (/\) )
+import Prelude (Unit, bind, const, discard, pure, unit, ($))
+import Data.Maybe ( maybe )
+import Data.Nullable ( Nullable, null )
 import DOM.Simple as DOM
-import DOM.Simple.Console
-import DOM.Simple.EventListener ( Callback, callback )
+import DOM.Simple.EventListener ( callback )
 import DOM.Simple.Element as Element
 import DOM.Simple.Event (MouseEvent, target)
 import DOM.Simple.Document ( document )
 import Effect (Effect)
-import Effect.Uncurried ( mkEffectFn1 )
-import FFI.Simple ( (...), (..), delay )
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Reactix.SyntheticEvent as E
 import Gargantext.Utils.Reactix as R2
 
 type Props = ( setVisible :: R2.Setter Boolean )

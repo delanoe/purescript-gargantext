@@ -1,28 +1,27 @@
 module Gargantext.Pages.Corpus.Chart.Metrics where
 
+import Prelude (bind, negate, pure, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
-import Gargantext.Config (Ends, BackendRoute(..), TabType, url)
 import Gargantext.Config.REST (get)
 import Reactix as R
-import Reactix.DOM.HTML as H
 
-import Gargantext.Prelude
-import Gargantext.Types (TermList(..))
-import Gargantext.Components.Loader as Loader
-import Gargantext.Components.Charts.Options.ECharts
-import Gargantext.Components.Charts.Options.Type
-import Gargantext.Components.Charts.Options.Series
-import Gargantext.Components.Charts.Options.Color
-import Gargantext.Components.Charts.Options.Font
-import Gargantext.Components.Charts.Options.Data
+import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
+import Gargantext.Components.Charts.Options.Type (xAxis)
+import Gargantext.Components.Charts.Options.Series (Series, seriesScatterD2)
+import Gargantext.Components.Charts.Options.Color (green, grey, red)
+import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
+import Gargantext.Components.Charts.Options.Data (dataSerie)
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Pages.Corpus.Chart.Utils as U
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (TabType, TermList(..))
 
 type Path =
   { corpusId :: Int
@@ -31,7 +30,7 @@ type Path =
   , limit    :: Maybe Int
   }
 
-type Props = ( path :: Path, ends :: Ends )
+type Props = ( path :: Path, session :: Session )
 
 newtype Metric = Metric
   { label :: String
@@ -62,12 +61,12 @@ instance decodeMetrics :: DecodeJson Metrics where
 type Loaded  = Array Metric
 
 scatterOptions :: Array Metric -> Options
-scatterOptions metrics = Options
+scatterOptions metrics' = Options
   { mainTitle : "Ngrams Selection Metrics"
   , subTitle  : "Local metrics (Inc/Exc, Spe/Gen), Global metrics (TFICF maillage)"
   , xAxis     : xAxis { min: -1 }
   , yAxis     : yAxis' { position : "", show: true, min : -2}
-  , series    : map2series $ metric2map metrics
+  , series    : map2series $ metric2map metrics'
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
   }
@@ -95,11 +94,11 @@ scatterOptions metrics = Options
                         }
     --}
 
-getMetrics :: Ends -> Path -> Aff Loaded
-getMetrics ends {corpusId, listId, limit, tabType} = do
-  Metrics ms <- get $ url ends metrics
+getMetrics :: Session -> Path -> Aff Loaded
+getMetrics session {corpusId, listId, limit, tabType} = do
+  Metrics ms <- get $ url session metrics'
   pure ms."data"
-  where metrics = CorpusMetrics {listId, tabType, limit} (Just corpusId)
+  where metrics' = CorpusMetrics {listId, tabType, limit} (Just corpusId)
 
 metrics :: Record Props -> R.Element
 metrics props = R.createElement metricsCpt props []
@@ -107,16 +106,16 @@ metrics props = R.createElement metricsCpt props []
 metricsCpt :: R.Component Props
 metricsCpt = R.hooksComponent "LoadedMetrics" cpt
   where
-    cpt {path, ends} _ = do
+    cpt {path, session} _ = do
       setReload <- R.useState' 0
-      pure $ metricsLoadView ends setReload path
+      pure $ metricsLoadView session setReload path
 
-metricsLoadView :: Ends -> R.State Int -> Path -> R.Element
-metricsLoadView ends setReload path = R.createElement el {ends,path} []
+metricsLoadView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadView s setReload p = R.createElement el {session: s, path: p} []
   where
     el = R.hooksComponent "MetricsLoadedView" cpt
-    cpt {ends, path} _ = do
-      useLoader path (getMetrics ends) $ \loaded ->
+    cpt {session, path} _ = do
+      useLoader path (getMetrics session) $ \loaded ->
         loadedMetricsView setReload loaded
 
 loadedMetricsView :: R.State Int -> Loaded -> R.Element

@@ -3,31 +3,26 @@ module Gargantext.Pages.Annuaire.User.Contacts
   , userLayout )
   where
 
-import Prelude ((<$>))
-import Data.List (List, zipWith, catMaybes, toUnfoldable)
-import Data.Map (Map, empty, keys, values, lookup)
+import Prelude (bind, pure, ($), (<<<), (<>), (<$>))
 import Data.Array (head)
-import Data.Semigroup ((<>))
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Data.Set (toUnfoldable) as S
-import Data.Tuple (Tuple(..), uncurry)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Data.Unfoldable (class Unfoldable)
-import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.String (joinWith)
-import Effect.Aff (Aff, throwError)
-import Effect.Exception (error)
+import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Gargantext.Prelude
-import Gargantext.Config (Ends, BackendRoute(..), NodeType(..), url)
 import Gargantext.Config.REST (get)
-import Gargantext.Components.Node (NodePoly(..), HyperdataList(..))
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Pages.Annuaire.User.Contacts.Types
+  ( Contact(..), ContactData, ContactTouch(..), ContactWhere(..)
+  , ContactWho(..), HyperData(..), HyperdataContact(..) )
 import Gargantext.Pages.Annuaire.User.Contacts.Tabs.Specs as Tabs
-import Gargantext.Utils.Reactix as R2
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (NodeType(..))
 
 display :: String -> Array R.Element -> R.Element
 display title elems =
@@ -129,7 +124,7 @@ infoRender (Tuple title content) =
   [ H.span { className: "badge badge-default badge-pill"} [ H.text title ]
   , H.span {} [H.text content] ]
 
-type LayoutProps = ( nodeId :: Int, ends :: Ends )
+type LayoutProps = ( nodeId :: Int, session :: Session )
 
 userLayout :: Record LayoutProps -> R.Element
 userLayout props = R.createElement userLayoutCpt props []
@@ -137,17 +132,17 @@ userLayout props = R.createElement userLayoutCpt props []
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = R.hooksComponent "G.P.Annuaire.UserLayout" cpt
   where
-    cpt {nodeId, ends} _ =
-      useLoader nodeId (getContact ends) $
+    cpt {nodeId, session} _ =
+      useLoader nodeId (getContact session) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
           [ display (fromMaybe "no name" name) (contactInfos hyperdata)
-          , Tabs.tabs {nodeId, contactData, ends} ]
+          , Tabs.tabs {nodeId, contactData, session} ]
 
 -- | toUrl to get data
-getContact :: Ends -> Int -> Aff ContactData
-getContact ends id = do
-  contactNode <- get $ url ends (NodeAPI NodeContact (Just id))
+getContact :: Session -> Int -> Aff ContactData
+getContact session id = do
+  contactNode <- get $ url session (NodeAPI NodeContact (Just id))
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of

@@ -31,6 +31,10 @@ invertOrdering LT = GT
 invertOrdering GT = LT
 invertOrdering EQ = EQ
 
+csrfMiddlewareToken :: String
+csrfMiddlewareToken = "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP0j4WcEM"
+
 -- A lens that always returns unit
 _unit :: forall s. Lens' s Unit
 _unit = lens (\_ -> unit) (\s _ -> s)
+

@@ -1,23 +1,18 @@
 module Gargantext.Components.GraphExplorer.Button
-  (
-    centerButton
+  ( centerButton
   , Props
   , simpleButton
   ) where
 
-import Global (readFloat)
 import Prelude
 import Data.Maybe (Maybe(..))
-import Data.Tuple (snd)
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Utils.Reactix as R2
 
 type Props = (
     onClick :: forall e. e -> Effect Unit

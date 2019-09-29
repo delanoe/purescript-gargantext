@@ -1,5 +1,6 @@
 module Gargantext.Pages.Corpus.Document where
 
+import Prelude (class Show, bind, identity, mempty, pure, ($), (<<<))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -11,16 +12,19 @@ import React.DOM.Props (className)
 import Reactix as R
 import Thermite (PerformAction, Render, Spec, simpleSpec, createClass)
 
-import Gargantext.Prelude
-import Gargantext.Config
-  ( NodeType(..), Ends, TabSubType(..), TabType(..), CTabNgramType(..), BackendRoute(..), url )
 import Gargantext.Config.REST     (get)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable.Core
+  ( CoreState, NgramsPatch(..), NgramsTerm, Replace, Versioned(..)
+  , VersionedNgramsTable, addNewNgram, applyNgramsTablePatch, commitPatch
+  , loadNgramsTable, replace, singletonNgramsTablePatch )
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Types (TermList)
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), TermList)
 import Gargantext.Utils.Reactix as R2
 
 type DocPath = { nodeId :: Int, listIds :: Array Int, corpusId :: Maybe Int, tabType :: TabType }
@@ -35,7 +39,7 @@ type LoadedData =
 type Props =
   { loaded :: LoadedData
   , path   :: DocPath
-  , ends   :: Ends
+  , session   :: Session
   }
 
 -- This is a subpart of NgramsTable.State.
@@ -283,15 +287,15 @@ docViewSpec :: Spec State Props Action
 docViewSpec = simpleSpec performAction render
   where
     performAction :: PerformAction State Props Action
-    performAction Refresh {path: {nodeId, listIds, tabType}, ends} {ngramsVersion} = do
-        commitPatch ends {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
-    performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}, ends} {ngramsVersion} =
-        commitPatch ends {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+    performAction Refresh {path: {nodeId, listIds, tabType}, session} {ngramsVersion} = do
+        commitPatch session {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
+    performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}, session} {ngramsVersion} =
+        commitPatch session {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
         pt = singletonNgramsTablePatch CTabTerms n pe
-    performAction (AddNewNgram ngram termList) {path: {nodeId, listIds, tabType},ends} {ngramsVersion} =
-        commitPatch ends {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+    performAction (AddNewNgram ngram termList) {path: {nodeId, listIds, tabType},session} {ngramsVersion} =
+        commitPatch session {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pt = addNewNgram CTabTerms ngram termList
 
@@ -341,13 +345,13 @@ docViewSpec = simpleSpec performAction render
 
 docViewClass
   :: ReactClass
-     { ends     :: Ends
+     { session     :: Session
      , children :: Children
      , loaded   :: LoadedData
      , path     :: DocPath }
 docViewClass = createClass "DocumentView" docViewSpec initialState
 
-type LayoutProps = ( ends :: Ends, nodeId :: Int, listId :: Int, corpusId :: Maybe Int )
+type LayoutProps = ( session :: Session, nodeId :: Int, listId :: Int, corpusId :: Maybe Int )
 
 documentLayout :: Record LayoutProps -> R.Element
 documentLayout props = R.createElement documentLayoutCpt props []
@@ -355,23 +359,23 @@ documentLayout props = R.createElement documentLayoutCpt props []
 documentLayoutCpt :: R.Component LayoutProps
 documentLayoutCpt = R.hooksComponent "G.P.Corpus.Document.documentLayout" cpt
   where
-    cpt {ends, nodeId, listId, corpusId} _ = do
-      useLoader path (loadData ends) $ \loaded ->
-        R2.createElement' docViewClass {ends, path, loaded} []
+    cpt {session, nodeId, listId, corpusId} _ = do
+      useLoader path (loadData session) $ \loaded ->
+        R2.createElement' docViewClass {session, path, loaded} []
       where
         tabType = TabDocument (TabNgramType CTabTerms)
         path = {nodeId, listIds: [listId], corpusId, tabType}
 
 ------------------------------------------------------------------------
 
-loadDocument :: Ends -> Int -> Aff NodeDocument
-loadDocument ends = get <<< url ends <<< NodeAPI Node <<< Just
+loadDocument :: Session -> Int -> Aff NodeDocument
+loadDocument session = get <<< url session <<< NodeAPI Node <<< Just
 
-loadData :: Ends -> DocPath -> Aff LoadedData
-loadData ends {nodeId, listIds, tabType} = do
-  document <- loadDocument ends nodeId
-  ngramsTable <- loadNgramsTable ends
-    { ends
+loadData :: Session -> DocPath -> Aff LoadedData
+loadData session {nodeId, listIds, tabType} = do
+  document <- loadDocument session nodeId
+  ngramsTable <- loadNgramsTable session
+    { session
     , nodeId
     , listIds: listIds
     , params: { offset : 0, limit : 100, orderBy: Nothing}

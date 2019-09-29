@@ -1,37 +1,13 @@
 module Gargantext.Router where
 
-import Gargantext.Prelude
-
+import Prelude
 import Data.Foldable (oneOf)
 import Data.Int (floor)
-import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
--- import Effect (Effect)
--- import Effect.Class (liftEffect)
-import Reactix as R
-import Routing.Hash (matches)
 import Routing.Match (Match, lit, num)
--- import Web.HTML (window)
--- import Web.HTML.Window (localStorage)
--- import Web.Storage.Storage (getItem)
+import Gargantext.Routes (AppRoute(..))
 
-data Routes
-  = Home
-  | Login
-  | Folder             Int
-    | Corpus           Int
-      | Document       Int Int
-      | CorpusDocument Int Int Int
-      | PGraphExplorer Int
-      | Dashboard
-      | Texts          Int
-      | Lists          Int
-    | Annuaire         Int
-      | UserPage       Int
-      | ContactPage       Int
-
-routing :: Match Routes
-routing = oneOf
+router :: Match AppRoute
+router = oneOf
   [ Login            <$   route "login"
   , Folder           <$> (route "folder"     *> int)
   , CorpusDocument   <$> (route "corpus" *> int) <*> (lit "list" *> int) <*> (lit "document" *> int)
@@ -46,32 +22,8 @@ routing = oneOf
     , ContactPage       <$> (route "contact" *> int)
   , Home             <$   lit ""
   ]
-
  where
     route str      = lit "" *> lit str
-
     int :: Match Int
     int = floor <$> num
 
-instance showRoutes :: Show Routes where
-  show Login            = "Login"
-  show (UserPage i)     = "User"     <> show i
-  show (ContactPage i)  = "Contact"  <> show i
-  show (CorpusDocument _ _ i)     = "Document" <> show i
-  show (Document _ i)     = "Document" <> show i
-  show (Corpus i)       = "Corpus"   <> show i
-  show (Annuaire i)     = "Annuaire" <> show i
-  show (Folder   i)     = "Folder"   <> show i
-  show Dashboard        = "Dashboard"
-  show (PGraphExplorer i) = "graphExplorer" <> show i
-  show (Texts i)          = "texts" <> show i
-  show (Lists i)          = "lists" <> show i
-  show Home             = "Home"
-
--- | Ties the hash router to a state hook of routes
--- | Note: if it gets sent to an unrecognised url, it will quietly drop the change
-useHashRouter :: forall routes. Match routes -> routes -> R.Hooks (R.State routes)
-useHashRouter routes init = do
-  route@(_ /\ setRoute) <- R.useState' init
-  R.useEffectOnce $ matches routes $ \_old new -> setRoute (const new)
-  pure route

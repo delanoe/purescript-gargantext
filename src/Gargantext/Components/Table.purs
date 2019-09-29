@@ -1,19 +1,14 @@
 module Gargantext.Components.Table where
 
-import Gargantext.Prelude
-
+import Prelude
 import Data.Array (filter)
-import Data.Maybe (Maybe(..), maybe)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Unsafe.Coerce (unsafeCoerce)
-import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 
 type TableContainerProps =

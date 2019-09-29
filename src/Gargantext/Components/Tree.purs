@@ -4,7 +4,7 @@ import Prelude hiding (div)
 
 import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (filter, sortWith, head)
+import Data.Array (filter)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
@@ -14,25 +14,25 @@ import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Class (liftEffect)
-import Effect (Effect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Thermite (PerformAction, Spec, Render, modifyState_, simpleSpec, defaultPerformAction)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 import Web.File.File (toBlob)
 import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
-import Gargantext.Config (Ends, NodeType(..), BackendRoute(..), NodePath(..), readNodeType, url)
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Router as Router
-import Gargantext.Types (class ToQuery, toQuery)
+import Gargantext.Routes as Routes
+import Gargantext.Routes (AppRoute, SessionRoute(..))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 
@@ -44,9 +44,12 @@ type Reload = Int
 
 data NodePopup = CreatePopup | NodePopup
 
-type Props = ( root :: ID, mCurrentRoute :: Maybe Router.Routes, ends :: Ends )
+type Props = ( root :: ID, mCurrentRoute :: Maybe AppRoute, session :: Session )
 
-type TreeViewProps = ( tree :: FTree, mCurrentRoute :: Maybe Router.Routes, ends :: Ends )
+type TreeViewProps =
+  ( tree :: FTree
+  , mCurrentRoute :: Maybe AppRoute
+  , session :: Session )
 
 data NTree a = NTree a (Array (NTree a))
 
@@ -118,38 +121,38 @@ type Tree = { tree :: FTree }
 mapFTree :: (FTree -> FTree) -> Tree -> Tree
 mapFTree f s@{tree} = s {tree = f tree}
 
-performAction :: Ends -> R.State Int -> R.State Tree -> Action -> Aff Unit
+performAction :: Session -> R.State Int -> R.State Tree -> Action -> Aff Unit
 
-performAction ends (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
-  void $ deleteNode ends id
+performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
+  void $ deleteNode session id
   liftEffect $ setReload (_ + 1)
 
-performAction ends _ ({tree: NTree (LNode {id}) _} /\ setTree) (Submit name)  = do
-  void $ renameNode ends id $ RenameValue {name}
+performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (Submit name)  = do
+  void $ renameNode session id $ RenameValue {name}
   liftEffect $ setTree $ \s@{tree: NTree (LNode node) arr} -> s {tree = NTree (LNode node {name = name}) arr}
 
-performAction ends (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) (CreateSubmit name nodeType) = do
-  void $ createNode ends id $ CreateValue {name, nodeType}
+performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) (CreateSubmit name nodeType) = do
+  void $ createNode session id $ CreateValue {name, nodeType}
   liftEffect $ setReload (_ + 1)
 
-performAction ends _ ({tree: NTree (LNode {id}) _} /\ _) (UploadFile fileType contents) = do
-  hashes <- uploadFile ends id fileType contents
+performAction session _ ({tree: NTree (LNode {id}) _} /\ _) (UploadFile fileType contents) = do
+  hashes <- uploadFile session id fileType contents
   liftEffect $ log2 "uploaded:" hashes
 
 
 
 ------------------------------------------------------------------------
 
-mCorpusId :: Maybe Router.Routes -> Maybe Int
-mCorpusId (Just (Router.Corpus id)) = Just id
-mCorpusId (Just (Router.CorpusDocument id _ _)) = Just id
+mCorpusId :: Maybe AppRoute -> Maybe Int
+mCorpusId (Just (Routes.Corpus id)) = Just id
+mCorpusId (Just (Routes.CorpusDocument id _ _)) = Just id
 mCorpusId _ = Nothing
 
 treeView :: Record Props -> R.Element
 treeView props = R.createElement treeViewCpt props []
 
 treeViewCpt :: R.Component Props
-treeViewCpt = R.hooksComponent "TreeView" cpt
+treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
   where
     cpt props _children = do
       -- NOTE: this is a hack to reload the tree view on demand
@@ -160,36 +163,36 @@ treeLoadView :: R.State Reload -> Record Props -> R.Element
 treeLoadView reload p = R.createElement el p []
   where
     el = R.hooksComponent "TreeLoadView" cpt
-    cpt {root, mCurrentRoute, ends} _ = do
-      useLoader root (loadNode ends) $ \loaded ->
-        loadedTreeView reload {tree: loaded, mCurrentRoute, ends}
+    cpt {root, mCurrentRoute, session} _ = do
+      useLoader root (loadNode session) $ \loaded ->
+        loadedTreeView reload {tree: loaded, mCurrentRoute, session}
 
 loadedTreeView :: R.State Reload -> Record TreeViewProps -> R.Element
 loadedTreeView reload p = R.createElement el p []
   where
     el = R.hooksComponent "LoadedTreeView" cpt
-    cpt {tree, mCurrentRoute, ends} _ = do
+    cpt {tree, mCurrentRoute, session} _ = do
       treeState <- R.useState' {tree}
 
       pure $ H.div {className: "tree"}
-        [ toHtml reload treeState ends mCurrentRoute ]
+        [ toHtml reload treeState session mCurrentRoute ]
 
 -- START toHtml
 
-toHtml :: R.State Reload -> R.State Tree -> Ends -> Maybe Router.Routes -> R.Element
-toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) ends mCurrentRoute = R.createElement el {} []
+toHtml :: R.State Reload -> R.State Tree -> Session -> Maybe AppRoute -> R.Element
+toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) session mCurrentRoute = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
-    pAction = performAction ends reload treeState
+    pAction = performAction session reload treeState
     cpt props _ = do
       folderOpen <- R.useState' true
       
-      let withId (NTree (LNode {id}) _) = id
+      let withId (NTree (LNode {id: id'}) _) = id'
 
       pure $ H.ul {}
         [ H.li {}
-          ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute} folderOpen ends ]
-            <> childNodes ends reload folderOpen mCurrentRoute ary
+          ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute} folderOpen session ]
+            <> childNodes session reload folderOpen mCurrentRoute ary
           )
         ]
 
@@ -197,14 +200,14 @@ type NodeMainSpanProps =
   ( id :: ID
   , name :: Name
   , nodeType :: NodeType
-  , mCurrentRoute :: Maybe Router.Routes)
+  , mCurrentRoute :: Maybe AppRoute)
 
 nodeMainSpan :: (Action -> Aff Unit)
              -> Record NodeMainSpanProps
              -> R.State Boolean
-             -> Ends
+             -> Session
              -> R.Element
-nodeMainSpan d p folderOpen ends = R.createElement el p []
+nodeMainSpan d p folderOpen session = R.createElement el p []
   where
     el = R.hooksComponent "NodeMainSpan" cpt
     cpt {id, name, nodeType, mCurrentRoute} _ = do
@@ -215,7 +218,7 @@ nodeMainSpan d p folderOpen ends = R.createElement el p []
 
       pure $ H.span (dropProps droppedFile isDragOver)
         [ folderIcon folderOpen
-        , H.a { href: (url ends (NodePath nodeType (Just id)))
+        , H.a { href: (url session (NodePath nodeType (Just id)))
               , style: {marginLeft: "22px"}
               }
           [ nodeText {isSelected: (mCorpusId mCurrentRoute) == (Just id), name} ]
@@ -224,27 +227,26 @@ nodeMainSpan d p folderOpen ends = R.createElement el p []
         , createNodeView d {id, name} popupOpen
         , fileTypeView d {id} droppedFile isDragOver
         ]
-    folderIcon folderOpen@(open /\ _) =
-      H.a {onClick: R2.effToggler folderOpen}
+    folderIcon folderOpen'@(open /\ _) =
+      H.a {onClick: R2.effToggler folderOpen'}
       [ H.i {className: fldr open} [] ]
     popOverIcon (popOver /\ setPopOver) =
       H.a { className: "glyphicon glyphicon-cog"
           , id: "rename-leaf"
-          , onClick: mkEffectFn1 $ \_ -> setPopOver $ toggle
+          , on: { click: \_ -> setPopOver $ toggle }
           } []
       where
         toggle Nothing = Just NodePopup
         toggle _       = Nothing
-    dropProps droppedFile isDragOver = {
-        className: dropClass droppedFile isDragOver
-      , onDrop: dropHandler droppedFile
-      , onDragOver: onDragOverHandler isDragOver
-      , onDragLeave: onDragLeave isDragOver
-      }
+    dropProps droppedFile isDragOver =
+      { className: dropClass droppedFile isDragOver
+      , on: { drop: dropHandler droppedFile
+            , dragOver: onDragOverHandler isDragOver
+            , dragLeave: onDragLeave isDragOver } }
     dropClass (Just _ /\ _)  _           = "file-dropped"
     dropClass _              (true /\ _) = "file-dropped"
     dropClass (Nothing /\ _) _           = ""
-    dropHandler (_ /\ setDroppedFile) = mkEffectFn1 $ \e -> unsafePartial $ do
+    dropHandler (_ /\ setDroppedFile) e = unsafePartial $ do
       let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
       liftEffect $ log2 "drop:" ff
       -- prevent redirection when file is dropped
@@ -254,23 +256,23 @@ nodeMainSpan d p folderOpen ends = R.createElement el p []
       void $ runAff (\_ -> pure unit) do
         contents <- readAsText blob
         liftEffect $ setDroppedFile $ const $ Just $ DroppedFile {contents: (UploadFileContents contents), fileType: Just CSV}
-    onDragOverHandler (_ /\ setIsDragOver) = mkEffectFn1 $ \e -> do
+    onDragOverHandler (_ /\ setIsDragOver) e = do
       -- prevent redirection when file is dropped
       -- https://stackoverflow.com/a/6756680/941471
       E.preventDefault e
       E.stopPropagation e
       setIsDragOver $ const true
-    onDragLeave (_ /\ setIsDragOver) = mkEffectFn1 $ \_ -> setIsDragOver $ const false
+    onDragLeave (_ /\ setIsDragOver) _ = setIsDragOver $ const false
 
 
 fldr :: Boolean -> String
 fldr open = if open then "glyphicon glyphicon-folder-open" else "glyphicon glyphicon-folder-close"
 
 
-childNodes :: Ends -> R.State Reload -> R.State Boolean -> Maybe Router.Routes -> Array FTree -> Array R.Element
+childNodes :: Session -> R.State Reload -> R.State Boolean -> Maybe AppRoute -> Array FTree -> Array R.Element
 childNodes _ _ _ _ [] = []
 childNodes _ _ (false /\ _) _ _ = []
-childNodes ends reload (true /\ _) mCurrentRoute ary = map (\ctree -> childNode {tree: ctree}) ary
+childNodes session reload (true /\ _) mCurrentRoute ary = map (\ctree -> childNode {tree: ctree}) ary
   where
     childNode :: Tree -> R.Element
     childNode props = R.createElement el props []
@@ -278,7 +280,7 @@ childNodes ends reload (true /\ _) mCurrentRoute ary = map (\ctree -> childNode 
     cpt {tree} _ = do
       treeState <- R.useState' {tree}
 
-      pure $ toHtml reload treeState ends mCurrentRoute
+      pure $ toHtml reload treeState session mCurrentRoute
 
 -- END toHtml
 
@@ -512,13 +514,13 @@ createNodeView d p (Just CreatePopup /\ setPopupOpen) = R.createElement el p []
           ]
         renderOption (opt :: NodeType) = H.option {} [ H.text $ show opt ]
         panelFooter :: R.State String  -> R.State NodeType -> R.Element
-        panelFooter (name /\ _) (nt /\ _) =
+        panelFooter (name' /\ _) (nt /\ _) =
           H.div {className: "panel-footer"}
           [ H.button {className: "btn btn-success"
                      , type: "button"
                      , onClick: mkEffectFn1 $ \_ -> do
                          setPopupOpen $ const Nothing
-                         launchAff $ d $ CreateSubmit name nt
+                         launchAff $ d $ CreateSubmit name' nt
                      } [H.text "Create"]
           ]
 createNodeView _ _ _ = R.createElement el {} []
@@ -618,8 +620,8 @@ nodeText p = R.createElement el p []
 
 -- END node text
 
-loadNode :: Ends -> ID -> Aff FTree
-loadNode ends = get <<< url ends <<< NodeAPI Tree <<< Just
+loadNode :: Session -> ID -> Aff FTree
+loadNode session = get <<< url session <<< NodeAPI Tree <<< Just
 
 ----- TREE CRUD Operations
 
@@ -645,15 +647,15 @@ instance encodeJsonCreateValue :: EncodeJson CreateValue where
     ~> "pn_typename" := nodeType
     ~> jsonEmptyObject
 
-createNode :: Ends -> ID -> CreateValue -> Aff ID
+createNode :: Session -> ID -> CreateValue -> Aff ID
 --createNode = post $ urlPlease Back $ "new"
-createNode ends parentId = post $ url ends (NodeAPI Node $ Just parentId)
+createNode session parentId = post $ url session (NodeAPI Node $ Just parentId)
 
-renameNode :: Ends -> ID -> RenameValue -> Aff (Array ID)
-renameNode ends renameNodeId = put $ url ends (NodeAPI Node $ Just renameNodeId) <> "/rename"
+renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
+renameNode session renameNodeId = put $ url session (NodeAPI Node $ Just renameNodeId) <> "/rename"
 
-deleteNode :: Ends -> ID -> Aff ID
-deleteNode ends = delete <<< url ends <<< NodeAPI Node <<< Just
+deleteNode :: Session -> ID -> Aff ID
+deleteNode session = delete <<< url session <<< NodeAPI Node <<< Just
 
 newtype FileUploadQuery = FileUploadQuery {
     fileType :: FileType
@@ -666,11 +668,11 @@ instance fileUploadQueryToQuery :: ToQuery FileUploadQuery where
     where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
           pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
 
-uploadFile :: Ends -> ID -> FileType -> UploadFileContents -> Aff (Array FileHash)
-uploadFile ends id fileType (UploadFileContents fileContents) = postWwwUrlencoded url2 fileContents
+uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff (Array FileHash)
+uploadFile session id fileType (UploadFileContents fileContents) = postWwwUrlencoded url2 fileContents
   where
     q = FileUploadQuery { fileType: fileType }
-    url2 = url ends (NodeAPI Node (Just id)) <> "/upload" <> Q.print (toQuery q)
+    url2 = url session (NodeAPI Node (Just id)) <> "/upload" <> Q.print (toQuery q)
 
 fnTransform :: LNode -> FTree
 fnTransform n = NTree n []

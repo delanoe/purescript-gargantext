@@ -1,5 +1,6 @@
 module Gargantext.Pages.Corpus.Chart.Pie where
 
+import Prelude (bind, map, pure, ($), (>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Array (zip, filter)
 import Data.Array as A
@@ -7,28 +8,27 @@ import Data.Maybe (Maybe(..))
 import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
-import Gargantext.Config (Ends, BackendRoute(..), TabType, ChartType(..), url)
 import Gargantext.Config.REST (get)
 import Reactix as R
-import Reactix.DOM.HTML as H
 
-import Gargantext.Prelude
-import Gargantext.Types (TermList(..))
-import Gargantext.Components.Charts.Options.ECharts
+import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
 import Gargantext.Components.Charts.Options.Color (blue)
-import Gargantext.Components.Charts.Options.Font
-import Gargantext.Components.Charts.Options.Data
+import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
+import Gargantext.Components.Charts.Options.Data (dataSerie)
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Pages.Corpus.Chart.Utils as U
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (ChartType(..), TabType)
 
 type Path =
   { corpusId :: Int
   , tabType  :: TabType
   }
 
-type Props = ( ends :: Ends, path :: Path )
+type Props = ( session :: Session, path :: Path )
 
 newtype ChartMetrics = ChartMetrics
   { "data" :: HistoMetrics
@@ -78,9 +78,9 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   }
 
 
-getMetrics :: Ends -> Path -> Aff HistoMetrics
-getMetrics ends {corpusId, tabType:tabType} = do
-  ChartMetrics ms <- get $ url ends chart
+getMetrics :: Session -> Path -> Aff HistoMetrics
+getMetrics session {corpusId, tabType:tabType} = do
+  ChartMetrics ms <- get $ url session chart
   pure ms."data"
   where chart = Chart {chartType: ChartPie, tabType: tabType} (Just corpusId)
 
@@ -90,16 +90,16 @@ pie props = R.createElement pieCpt props []
 pieCpt :: R.Component Props
 pieCpt = R.hooksComponent "LoadedMetricsPie" cpt
   where
-    cpt {path,ends} _ = do
+    cpt {path,session} _ = do
       setReload <- R.useState' 0
-      pure $ metricsLoadPieView ends setReload path
+      pure $ metricsLoadPieView session setReload path
 
-metricsLoadPieView :: Ends -> R.State Int -> Path -> R.Element
-metricsLoadPieView ends setReload path = R.createElement el {ends,path} []
+metricsLoadPieView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadPieView s setReload p = R.createElement el {session: s,path: p} []
   where
     el = R.hooksComponent "MetricsLoadedPieView" cpt
-    cpt {ends,path} _ = do
-      useLoader path (getMetrics ends) $ \loaded ->
+    cpt {session,path} _ = do
+      useLoader path (getMetrics session) $ \loaded ->
         loadedMetricsPieView setReload loaded
 
 loadedMetricsPieView :: R.State Int -> HistoMetrics -> R.Element
@@ -112,17 +112,17 @@ bar props = R.createElement barCpt props []
 barCpt :: R.Component Props
 barCpt = R.hooksComponent "LoadedMetricsBar" cpt
   where
-    cpt {path, ends} _ = do
+    cpt {path, session} _ = do
       setReload <- R.useState' 0
-      pure $ metricsLoadBarView ends setReload path
+      pure $ metricsLoadBarView session setReload path
 
 
-metricsLoadBarView :: Ends -> R.State Int -> Path -> R.Element
-metricsLoadBarView ends setReload path = R.createElement el {ends,path} []
+metricsLoadBarView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadBarView s setReload p = R.createElement el {path: p, session: s} []
   where
     el = R.hooksComponent "MetricsLoadedBarView" cpt
-    cpt {path, ends} _ = do
-      useLoader path (getMetrics ends) $ \loaded ->
+    cpt {path, session} _ = do
+      useLoader path (getMetrics session) $ \loaded ->
         loadedMetricsBarView setReload loaded
 
 loadedMetricsBarView :: R.State Int -> Loaded -> R.Element

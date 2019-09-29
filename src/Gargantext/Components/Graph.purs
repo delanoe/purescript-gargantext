@@ -4,10 +4,9 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude
-import Data.Maybe (Maybe(..))
-import Data.Nullable (Nullable, null)
-import DOM.Simple.Console (log2)
+import Prelude (bind, discard, pure, ($))
+import Data.Maybe (Maybe)
+import Data.Nullable (null)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Gargantext.Hooks.Sigmax

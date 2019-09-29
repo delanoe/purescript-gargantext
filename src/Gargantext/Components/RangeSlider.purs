@@ -9,25 +9,20 @@ module Gargantext.Components.RangeSlider where
 import Prelude
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Nullable (Nullable, null, toMaybe)
+import Data.Nullable (Nullable, null)
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
-import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
-import DOM.Simple.Element as Element
 import DOM.Simple.Event as Event
 import DOM.Simple.EventListener as EL
-import DOM.Simple.Types (DOMRect, Element)
+import DOM.Simple (DOMRect)
 import Global (toFixed)
 import Effect (Effect)
-import Effect.Class (liftEffect)
-import Effect.Uncurried (EffectFn1, mkEffectFn1)
---import Global (toFixed)
+import Effect.Uncurried (mkEffectFn1)
 import Math as M
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Reactix.SyntheticEvent as RE
 
 import Gargantext.Utils.Math (roundToMultiple)
 import Gargantext.Utils.Range as Range

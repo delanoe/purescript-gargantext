@@ -22,10 +22,9 @@ import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
-import Gargantext.Config (CTabNgramType(..))
-import Gargantext.Types ( TermList )
+import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
-import Gargantext.Components.NgramsTable.Core ( NgramsTerm, NgramsTable(..), highlightNgrams, findNgramTermList )
+import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams)
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
@@ -69,6 +68,7 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
       pure $ HTML.div wrapperProps [maybeAddMenu setMenu runs menu]
 
 
+-- forall e. IsMouseEvent e => R2.Setter (Maybe AnnotationMenu) -> R2.Setter ? -> ? -> e -> Effect Unit
 maybeShowMenu setMenu setTermList ngrams event = do
   s <- Sel.getSelection
   case s of
@@ -118,6 +118,6 @@ annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
       HTML.span { className: className list
                 , onClick: mkEffectFn1 $ \e -> onSelect text (Just list) e} [ HTML.text text ]
       where
-        className     list        = "annotation-run bg-" <> termBootstrapClass list
+        className list' = "annotation-run bg-" <> termBootstrapClass list'
 
 

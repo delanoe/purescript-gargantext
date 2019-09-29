@@ -1,14 +1,16 @@
 module Gargantext.Pages.Annuaire where
 
-import Gargantext.Prelude
-
+import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
 import Data.Array (head)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (fst, snd)
 import Effect.Aff (Aff)
 import Gargantext.Components.Table as T
-import Gargantext.Config (NodeType(..), Ends, BackendRoute(..), NodePath(..), url)
+import Gargantext.Ends (url)
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (NodePath(..), NodeType(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperdataContact(..), ContactWhere(..))
@@ -27,7 +29,7 @@ toRows (AnnuaireTable a) = a.annuaireTable
 
 -- | Top level layout component. Loads an annuaire by id and renders
 -- | the annuaire using the result
-type LayoutProps = ( annuaireId :: Int, ends :: Ends )
+type LayoutProps = ( annuaireId :: Int, session :: Session )
 
 annuaireLayout :: Record LayoutProps -> R.Element
 annuaireLayout props = R.createElement annuaireLayoutCpt props []
@@ -35,13 +37,13 @@ annuaireLayout props = R.createElement annuaireLayoutCpt props []
 annuaireLayoutCpt :: R.Component LayoutProps
 annuaireLayoutCpt = R.hooksComponent "G.P.Annuaire.annuaireLayout" cpt
   where
-    cpt {annuaireId, ends} _ = do
+    cpt {annuaireId, session} _ = do
       path <- R.useState' annuaireId
-      useLoader (fst path) (getAnnuaireInfo ends) $
-        \info -> annuaire {ends, path, info}
+      useLoader (fst path) (getAnnuaireInfo session) $
+        \info -> annuaire {session, path, info}
       
 type AnnuaireProps =
-  ( ends :: Ends
+  ( session :: Session
   , path :: R.State Int
   , info :: AnnuaireInfo )
 
@@ -53,13 +55,13 @@ annuaire props = R.createElement annuaireCpt props []
 annuaireCpt :: R.Component AnnuaireProps
 annuaireCpt = R.staticComponent "G.P.Annuaire.annuaire" cpt
   where
-    cpt {ends, path, info: info@(AnnuaireInfo {name, date: date'})} _ = R.fragment
+    cpt {session, path, info: info@(AnnuaireInfo {name, date: date'})} _ = R.fragment
       [ T.tableHeaderLayout headerProps
       , H.p {} []
       , H.div {className: "col-md-3"}
         [ H.text "    Filter ", H.input { className: "form-control", style } ]
       , H.br {}
-      , pageLayout { info, ends, annuairePath: path } ]
+      , pageLayout { info, session, annuairePath: path } ]
       where
         headerProps = { title: name, desc: name, query: "", date, user: ""}
         date = "Last update: " <> date'
@@ -67,7 +69,7 @@ annuaireCpt = R.staticComponent "G.P.Annuaire.annuaire" cpt
 type PagePath = { nodeId :: Int, params :: T.Params }
 
 type PageLayoutProps =
-  ( ends :: Ends
+  ( session :: Session
   , annuairePath :: R.State Int
   , info :: AnnuaireInfo )
 
@@ -77,14 +79,14 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.P.Annuaire.pageLayout" cpt
   where
-    cpt {annuairePath, info, ends} _ = do
+    cpt {annuairePath, info, session} _ = do
       pagePath <- R.useState' (initialPagePath (fst annuairePath))
-      useLoader (fst pagePath) (loadPage ends) $
-        \table -> page {ends, table, pagePath, annuairePath}
+      useLoader (fst pagePath) (loadPage session) $
+        \table -> page {session, table, pagePath, annuairePath}
     initialPagePath nodeId = {nodeId, params: T.initialParams}
 
 type PageProps = 
-  ( ends :: Ends
+  ( session :: Session
   , annuairePath :: R.State Int
   , pagePath :: R.State PagePath
   -- , info :: AnnuaireInfo
@@ -96,21 +98,21 @@ page props = R.createElement pageCpt props []
 pageCpt :: R.Component PageProps
 pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
   where
-    cpt { ends, annuairePath, pagePath, table: (AnnuaireTable {annuaireTable}) } _ = do
+    cpt { session, annuairePath, pagePath, table: (AnnuaireTable {annuaireTable}) } _ = do
       T.table { rows, setParams, container, colNames, totalRecords }
       where
         totalRecords =4361 -- TODO
-        rows = (\c -> {row: contactCells ends c, delete: false}) <$> annuaireTable
+        rows = (\c -> {row: contactCells session c, delete: false}) <$> annuaireTable
         setParams params = snd pagePath $ const {params, nodeId: fst annuairePath}
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
 
-contactCells :: Ends -> Maybe Contact -> Array R.Element
-contactCells ends = maybe [] render
+contactCells :: Session -> Maybe Contact -> Array R.Element
+contactCells session = maybe [] render
   where
     render (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) }) =
       let nodepath = NodePath NodeContact (Just id)
-          href = url ends nodepath in
+          href = url session nodepath in
       [ H.text ""
       , H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
       , H.text $ maybe "No ContactWhere" contactWhereOrg  (head $ ou)
@@ -175,9 +177,9 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
     rows <- decodeJson json
     pure $ AnnuaireTable { annuaireTable : rows}
 ------------------------------------------------------------------------
-loadPage :: Ends -> PagePath -> Aff AnnuaireTable
-loadPage ends {nodeId, params: { offset, limit, orderBy }} =
-    get $ url ends children
+loadPage :: Session -> PagePath -> Aff AnnuaireTable
+loadPage session {nodeId, params: { offset, limit, orderBy }} =
+    get $ url session children
  -- TODO orderBy
  -- where
  --   convOrderBy (T.ASC  (T.ColumnName "Name")) = NameAsc
@@ -190,6 +192,6 @@ loadPage ends {nodeId, params: { offset, limit, orderBy }} =
 
 ------ Annuaire loading ------
 
-getAnnuaireInfo :: Ends -> Int -> Aff AnnuaireInfo
-getAnnuaireInfo ends id = get $ url ends (NodeAPI Node (Just id))
+getAnnuaireInfo :: Session -> Int -> Aff AnnuaireInfo
+getAnnuaireInfo session id = get $ url session (NodeAPI Node (Just id))
 

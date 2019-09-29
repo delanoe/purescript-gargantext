@@ -1,12 +1,11 @@
 module Gargantext.Components.Charts.Options.Series where
 
-import Data.Maybe
+import Prelude (class Show, bind, map, pure, show, ($), (+), (<<<), (<>))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Array (foldl)
+import Data.Maybe (Maybe(..), maybe)
 import Record.Unsafe (unsafeSet)
 import Unsafe.Coerce (unsafeCoerce)
-import Prelude
-
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Gargantext.Types (class Optional)
 import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
 import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
@@ -181,7 +180,7 @@ toJsTree maybeSurname (TreeNode x) =
                , children : (map (toJsTree (Just name)) x.children)
                }
     where
-      name = maybe "" (\x -> x <> ">") maybeSurname  <> x.name
+      name = maybe "" (\x' -> x' <> ">") maybeSurname  <> x.name
 
 data TreeNode = TreeNode { name     :: String
                  , value    :: Int

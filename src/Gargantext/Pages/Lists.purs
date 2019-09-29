@@ -10,15 +10,17 @@ import Reactix as R
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Table as Table
-import Gargantext.Config
 import Gargantext.Config.REST (get)
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Pages.Lists.Tabs as Tabs
-import Gargantext.Utils.Reactix as R2
+import Gargantext.Routes (SessionRoute(NodeAPI, Children))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (NodeType(..))
 
 ------------------------------------------------------------------------
 
-type Props = ( nodeId :: Int, ends :: Ends )
+type Props = ( nodeId :: Int, session :: Session )
 
 listsLayout :: Record Props -> R.Element
 listsLayout props = R.createElement listsLayoutCpt props []
@@ -26,19 +28,19 @@ listsLayout props = R.createElement listsLayoutCpt props []
 listsLayoutCpt :: R.Component Props
 listsLayoutCpt = R.hooksComponent "G.P.Lists.listsLayout" cpt
   where
-    cpt {nodeId, ends} _ =
-      useLoader nodeId (getCorpus ends) $
+    cpt {nodeId, session} _ =
+      useLoader nodeId (getCorpus session) $
         \corpusData@{corpusId, defaultListId, corpusNode: NodePoly poly} ->
           let { name, date, hyperdata: Tabs.CorpusInfo corpus } = poly
               { desc, query, authors: user } = corpus in
           R.fragment
           [ Table.tableHeaderLayout
             { title: "Corpus " <> name, desc, query, user, date }
-         , Tabs.tabs {ends, corpusId, corpusData}]
+         , Tabs.tabs {session, corpusId, corpusData}]
 ------------------------------------------------------------------------
 
-getCorpus :: Ends -> Int -> Aff Tabs.CorpusData
-getCorpus ends listId = do
+getCorpus :: Session -> Int -> Aff Tabs.CorpusData
+getCorpus session listId = do
   -- fetch corpus via lists parentId
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get nodePolyUrl
   corpusNode     <- get $ corpusNodeUrl corpusId
@@ -49,6 +51,6 @@ getCorpus ends listId = do
     Nothing ->
       throwError $ error "Missing default list"
   where
-    nodePolyUrl = url ends (NodeAPI Corpus (Just listId))
-    corpusNodeUrl = url ends <<< NodeAPI Corpus <<< Just
-    defaultListIdsUrl = url ends <<< Children NodeList 0 1 Nothing <<< Just
+    nodePolyUrl = url session (NodeAPI Corpus (Just listId))
+    corpusNodeUrl = url session <<< NodeAPI Corpus <<< Just
+    defaultListIdsUrl = url session <<< Children NodeList 0 1 Nothing <<< Just

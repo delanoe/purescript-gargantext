@@ -10,14 +10,16 @@ import Reactix as R
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Table as Table
-import Gargantext.Config
 import Gargantext.Config.REST (get)
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Pages.Texts.Tabs (CorpusData, CorpusInfo(..))
 import Gargantext.Pages.Texts.Tabs as Tabs
-import Gargantext.Utils.Reactix as R2
+import Gargantext.Routes (SessionRoute(NodeAPI, Children))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (NodeType(..))
 
-type Props = ( ends :: Ends, nodeId :: Int )
+type Props = ( session :: Session, nodeId :: Int )
 
 textsLayout :: Record Props -> R.Element
 textsLayout props = R.createElement textsLayoutCpt props []
@@ -26,13 +28,13 @@ textsLayout props = R.createElement textsLayoutCpt props []
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = R.hooksComponent "TextsLoader" cpt
   where
-    cpt {nodeId,ends} _ =
-      useLoader nodeId (getCorpus ends) $
+    cpt {nodeId,session} _ =
+      useLoader nodeId (getCorpus session) $
         \corpusData@{corpusId, corpusNode, defaultListId} ->
           let
             NodePoly { name, date, hyperdata: CorpusInfo corpus } = corpusNode
             {desc, query, authors: user} = corpus
-            tabs = Tabs.tabs {ends, corpusId, corpusData}
+            tabs = Tabs.tabs {session, corpusId, corpusData}
             title = "Corpus " <> name
             headerProps = { title, desc, query, date, user } in
           R.fragment [Table.tableHeaderLayout headerProps, tabs]
@@ -41,8 +43,8 @@ textsLayoutCpt = R.hooksComponent "TextsLoader" cpt
 
 ------------------------------------------------------------------------
 
-getCorpus :: Ends -> Int -> Aff CorpusData
-getCorpus ends textsId = do
+getCorpus :: Session -> Int -> Aff CorpusData
+getCorpus session textsId = do
   -- fetch corpus via texts parentId
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get nodePolyUrl
   corpusNode     <- get $ corpusNodeUrl corpusId
@@ -53,6 +55,6 @@ getCorpus ends textsId = do
     Nothing ->
       throwError $ error "Missing default list"
   where
-    nodePolyUrl = url ends $ NodeAPI NodeList (Just textsId)
-    corpusNodeUrl = url ends <<< NodeAPI Corpus <<< Just
-    defaultListIdsUrl = url ends <<< Children NodeList 0 1 Nothing <<< Just
+    nodePolyUrl = url session $ NodeAPI NodeList (Just textsId)
+    corpusNodeUrl = url session <<< NodeAPI Corpus <<< Just
+    defaultListIdsUrl = url session <<< Children NodeList 0 1 Nothing <<< Just

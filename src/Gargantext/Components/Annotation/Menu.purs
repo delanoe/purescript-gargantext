@@ -2,16 +2,16 @@
 module Gargantext.Components.Annotation.Menu where
 
 
-import Prelude ( Unit, (==), ($), (<>), unit, pure, otherwise, const )
+import Prelude (Unit, pure, ($), (<>), (==))
 import Data.Array as A
-import Data.Maybe ( Maybe(..), maybe' )
-import Effect ( Effect )
-import Effect.Uncurried ( mkEffectFn1 )
+import Data.Maybe (Maybe(..))
+import Effect (Effect)
+import Effect.Uncurried (mkEffectFn1)
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 
-import Gargantext.Types ( TermList(..), termListName )
-import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
+import Gargantext.Types (TermList(..), termListName)
+import Gargantext.Components.Annotation.Utils (termBootstrapClass)
 
 import Gargantext.Components.ContextMenu.ContextMenu as CM
 import Gargantext.Utils.Reactix as R2

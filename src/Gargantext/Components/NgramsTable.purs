@@ -1,5 +1,6 @@
 module Gargantext.Components.NgramsTable where
 
+import Prelude
 import Data.Array as A
 import Data.Lens (to, view, (%~), (.~), (^.), (^..))
 import Data.Lens.Common (_Just)
@@ -25,13 +26,12 @@ import React.DOM.Props (_id, _type, checked, className, name, onChange, onClick,
 import React.DOM.Props as DOM
 import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, createClass)
 
-import Gargantext.Types (TermList(..), readTermList, readTermSize, termLists, termSizes)
-import Gargantext.Config (Ends, OrderBy(..), TabType, CTabNgramType(..))
+import Gargantext.Types (TermList(..), OrderBy(..), TabType, CTabNgramType(..), readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.Table as T
-import Gargantext.Prelude
-import Gargantext.Hooks.Loader (useLoader, useLoader2)
 import Gargantext.Components.NgramsTable.Core
+import Gargantext.Components.Table as T
+import Gargantext.Hooks.Loader (useLoader, useLoader2)
+import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 
 type State =
@@ -173,10 +173,10 @@ performNgramsAction st (ToggleChild' b c) = st
 performNgramsAction st Refresh' = st
 
 useNgramsReducer :: State -> R.Hooks (R.Reducer State Action')
-useNgramsReducer init = R.useReducer performNgramsAction identity init
+useNgramsReducer init = R.useReducer' performNgramsAction init
 
 type Props =
-  ( ends :: Ends
+  ( session :: Session
   , tabNgramType :: CTabNgramType
   , path :: R.State PageParams
   , versioned :: VersionedNgramsTable )
@@ -191,8 +191,8 @@ ngramsTableCpt = R.hooksComponent "G.C.NgramsTable.ngramsTable" cpt
       state <- useNgramsReducer (initialState versioned)
       pure $ R.fragment []
 
-ngramsTableSpec :: Ends -> CTabNgramType -> R2.Setter PageParams -> Spec State (Record LoadedNgramsTableProps) Action
-ngramsTableSpec ends ntype setPath = simpleSpec performAction render
+ngramsTableSpec :: Session -> CTabNgramType -> R2.Setter PageParams -> Spec State (Record LoadedNgramsTableProps) Action
+ngramsTableSpec session ntype setPath = simpleSpec performAction render
   where
     setParentResetChildren :: Maybe NgramsTerm -> State -> State
     setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
@@ -203,9 +203,9 @@ ngramsTableSpec ends ntype setPath = simpleSpec performAction render
     performAction (ToggleChild b c) _ _ =
       modifyState_ $ _ngramsChildren <<< at c %~ toggleMap b
     performAction Refresh {path: {nodeId, listIds, tabType}} {ngramsVersion} = do
-        commitPatch ends {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
+        commitPatch session {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
     performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
-        commitPatch ends {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+        commitPatch session {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
         pt = singletonNgramsTablePatch ntype n pe
@@ -218,13 +218,13 @@ ngramsTableSpec ends ntype setPath = simpleSpec performAction render
                   , ngramsVersion
                   } = do
         modifyState_ $ setParentResetChildren Nothing
-        commitPatch ends {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+        commitPatch session {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }
         pt = singletonNgramsTablePatch ntype parent pe
     performAction (AddNewNgram ngram) {path: {listIds, nodeId, tabType}} {ngramsVersion} =
-        commitPatch ends {listIds, nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
+        commitPatch session {listIds, nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
       where
         pt = addNewNgram ntype ngram CandidateTerm
 
@@ -273,18 +273,18 @@ ngramsTableSpec ends ntype setPath = simpleSpec performAction render
           , delete: false
           }
 
--- ngramsTableClass :: Ends -> CTabNgramType -> R2.Setter PageParams -> Loader.InnerClass PageParams (Versioned NgramsTable)
--- ngramsTableClass ends ct setPath = createClass "NgramsTable" (ngramsTableSpec ends ct setPath) initialState
+-- ngramsTableClass :: Session -> CTabNgramType -> R2.Setter PageParams -> Loader.InnerClass PageParams (Versioned NgramsTable)
+-- ngramsTableClass session ct setPath = createClass "NgramsTable" (ngramsTableSpec session ct setPath) initialState
 
--- ngramsTable' :: Ends -> CTabNgramType -> R2.Setter PageParams -> Record LoadedNgramsTableProps -> R.Element
--- ngramsTable' ends ct setPath props = R2.createElement' (ngramsTableClass ends ct setPath) props []
+-- ngramsTable' :: Session -> CTabNgramType -> R2.Setter PageParams -> Record LoadedNgramsTableProps -> R.Element
+-- ngramsTable' session ct setPath props = R2.createElement' (ngramsTableClass session ct setPath) props []
 
 type MainNgramsTableProps =
   ( nodeId        :: Int
     -- ^ This node can be a corpus or contact.
   , defaultListId :: Int
   , tabType       :: TabType
-  , ends          :: Ends
+  , session          :: Session
   , tabNgramType  :: CTabNgramType
   )
 
@@ -294,10 +294,10 @@ mainNgramsTable props = R.createElement mainNgramsTableCpt props []
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
   where
-    cpt {nodeId, defaultListId, tabType, ends, tabNgramType} _ = do
-      path <- R.useState' $ initialPageParams ends nodeId [defaultListId] tabType
-      useLoader2 path (loadNgramsTable ends) $
-        \versioned -> ngramsTable {ends, tabNgramType, path, versioned}
+    cpt {nodeId, defaultListId, tabType, session, tabNgramType} _ = do
+      path <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
+      useLoader2 path (loadNgramsTable session) $
+        \versioned -> ngramsTable {session, tabNgramType, path, versioned}
         
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)

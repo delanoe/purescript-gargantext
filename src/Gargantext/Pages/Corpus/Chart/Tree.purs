@@ -1,23 +1,22 @@
 module Gargantext.Pages.Corpus.Chart.Tree where
 
+import Prelude (bind, pure, ($))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Gargantext.Config (Ends, BackendRoute(..), TabType, ChartType(..), url)
-import Gargantext.Config.REST (get)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Prelude
-import Gargantext.Types (TermList(..))
-import Gargantext.Components.Charts.Options.ECharts
-import Gargantext.Components.Charts.Options.Series
-import Gargantext.Components.Charts.Options.Font
-import Gargantext.Components.Charts.Options.Data
+import Gargantext.Config.REST (get)
+import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
+import Gargantext.Components.Charts.Options.Series (TreeNode, Trees(..), mkTree)
+import Gargantext.Components.Charts.Options.Font (mkTooltip, templateFormatter)
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Pages.Corpus.Chart.Utils as U
-
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session)
+import Gargantext.Types (ChartType(..), TabType)
 
 type Path =
   { corpusId :: Int
@@ -25,7 +24,7 @@ type Path =
   , tabType  :: TabType
   , limit    :: Maybe Int
   }
-type Props = ( path :: Path, ends :: Ends )
+type Props = ( path :: Path, session :: Session )
 
 newtype Metrics = Metrics
   { "data" :: Array TreeNode
@@ -53,9 +52,9 @@ scatterOptions nodes = Options
 
   }
 
-getMetrics :: Ends -> Path -> Aff Loaded
-getMetrics ends {corpusId, listId, limit, tabType} = do
-  Metrics ms <- get $ url ends chart
+getMetrics :: Session -> Path -> Aff Loaded
+getMetrics session {corpusId, listId, limit, tabType} = do
+  Metrics ms <- get $ url session chart
   pure ms."data"
   where
     chart = Chart {chartType : ChartTree, tabType: tabType} (Just corpusId)
@@ -66,16 +65,16 @@ tree props = R.createElement treeCpt props []
 treeCpt :: R.Component Props
 treeCpt = R.hooksComponent "LoadedMetrics" cpt
   where
-    cpt {path, ends} _ = do
+    cpt {path, session} _ = do
       setReload <- R.useState' 0
-      pure $ metricsLoadView ends setReload path
+      pure $ metricsLoadView session setReload path
 
-metricsLoadView :: Ends -> R.State Int -> Path -> R.Element
-metricsLoadView ends setReload p = R.createElement el p []
+metricsLoadView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadView session setReload path = R.createElement el path []
   where
     el = R.hooksComponent "MetricsLoadView" cpt
     cpt p _ = do
-      useLoader p (getMetrics ends) $ \loaded ->
+      useLoader p (getMetrics session) $ \loaded ->
         loadedMetricsView setReload loaded
 
 loadedMetricsView :: R.State Int -> Loaded -> R.Element
