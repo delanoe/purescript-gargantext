@@ -1,7 +1,7 @@
 module Gargantext.Pages.Lists.Tabs where
 
 import Prelude
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.??))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
@@ -111,7 +111,7 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     desc  <- obj .: "desc"
     query <- obj .: "query"
     authors <- obj .: "authors"
-    chart   <- obj .:! "chart"
+    chart   <- obj .?? "chart"
     let totalRecords = 47361 -- TODO
     pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
 

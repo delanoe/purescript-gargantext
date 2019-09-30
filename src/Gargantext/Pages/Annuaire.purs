@@ -1,7 +1,7 @@
 module Gargantext.Pages.Annuaire where
 
 import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.??))
 import Data.Array (head)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (fst, snd)
@@ -138,8 +138,8 @@ data HyperdataAnnuaire = HyperdataAnnuaire
 instance decodeHyperdataAnnuaire :: DecodeJson HyperdataAnnuaire where
   decodeJson json = do
     obj   <- decodeJson json
-    title <- obj .:! "title"
-    desc  <- obj .:! "desc"
+    title <- obj .?? "title"
+    desc  <- obj .?? "desc"
     pure $ HyperdataAnnuaire { title, desc }
 
 ------------------------------------------------------------------------------

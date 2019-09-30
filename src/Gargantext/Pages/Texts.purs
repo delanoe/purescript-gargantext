@@ -3,6 +3,8 @@ module Gargantext.Pages.Texts where
 import Prelude ((<<<))
 import Data.Array (head)
 import Data.Maybe (Maybe(..))
+import DOM.Simple.Console (log2)
+import Effect.Class (liftEffect)
 import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
 import Reactix as R
@@ -45,9 +47,12 @@ textsLayoutCpt = R.hooksComponent "TextsLoader" cpt
 
 getCorpus :: Session -> Int -> Aff CorpusData
 getCorpus session textsId = do
+  liftEffect $ log2 "nodepolyurl: " nodePolyUrl
   -- fetch corpus via texts parentId
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get nodePolyUrl
+  liftEffect $ log2 "corpusnodeurl: " $ corpusNodeUrl corpusId
   corpusNode     <- get $ corpusNodeUrl corpusId
+  liftEffect $ log2 "defaultlistidsurl: " $ defaultListIdsUrl corpusId
   defaultListIds <- get $ defaultListIdsUrl corpusId
   case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
@@ -55,6 +60,6 @@ getCorpus session textsId = do
     Nothing ->
       throwError $ error "Missing default list"
   where
-    nodePolyUrl = url session $ NodeAPI NodeList (Just textsId)
+    nodePolyUrl = url session $ NodeAPI Corpus (Just textsId)
     corpusNodeUrl = url session <<< NodeAPI Corpus <<< Just
     defaultListIdsUrl = url session <<< Children NodeList 0 1 Nothing <<< Just

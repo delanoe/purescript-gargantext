@@ -2,7 +2,7 @@ module Gargantext.Components.Login.Types where
 
 import Prelude
 import Data.Argonaut ( class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject
-                      , (.:), (.:!), (:=), (~>)
+                      , (.:), (.??), (:=), (~>)
                       )
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
@@ -52,8 +52,8 @@ instance decodeAuthInvalid :: DecodeJson AuthInvalid where
 instance decodeAuthResponse :: DecodeJson AuthResponse where
   decodeJson json = do
     obj   <- decodeJson json
-    valid <- obj .:! "valid"
-    inval <- obj .:! "inval"
+    valid <- obj .?? "valid"
+    inval <- obj .?? "inval"
     pure $ AuthResponse {valid, inval}
 
 instance decodeAuthData :: DecodeJson AuthData where

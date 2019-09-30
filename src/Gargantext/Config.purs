@@ -7,9 +7,9 @@ import Gargantext.Types (ApiVersion(..))
 defaultBackends :: NonEmpty Array Backend
 defaultBackends = prod :| [dev, demo, local]
   where
-    prod  = backend V10 "/api/" "http://gargantext.org" "gargantext.org"
-    dev   = backend V10 "/api/" "http://dev.gargantext.org" "dev.gargantext.org"
-    demo  = backend V10 "/api/" "http://demo.gargantext.org" "demo.gargantext.org"
+    prod  = backend V10 "/api/" "https://gargantext.org" "gargantext.org"
+    dev   = backend V10 "/api/" "https://dev.gargantext.org" "dev.gargantext.org"
+    demo  = backend V10 "/api/" "https://demo.gargantext.org" "demo.gargantext.org"
     local = backend V10 "/api/" "http://localhost:8008" "localhost"
 
 defaultApps :: NonEmpty Array Frontend
