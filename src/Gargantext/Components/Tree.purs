@@ -4,7 +4,7 @@ import Prelude hiding (div)
 
 import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (filter)
+import Data.Array (filter, head)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
@@ -138,8 +138,6 @@ performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTre
 performAction session _ ({tree: NTree (LNode {id}) _} /\ _) (UploadFile fileType contents) = do
   hashes <- uploadFile session id fileType contents
   liftEffect $ log2 "uploaded:" hashes
-
-
 
 ------------------------------------------------------------------------
 
@@ -279,7 +277,6 @@ childNodes session reload (true /\ _) mCurrentRoute ary = map (\ctree -> childNo
     el = R.hooksComponent "ChildNodeView" cpt
     cpt {tree} _ = do
       treeState <- R.useState' {tree}
-
       pure $ toHtml reload treeState session mCurrentRoute
 
 -- END toHtml

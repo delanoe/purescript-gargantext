@@ -66,6 +66,7 @@ annuaireCpt = R.staticComponent "G.P.Annuaire.annuaire" cpt
         headerProps = { title: name, desc: name, query: "", date, user: ""}
         date = "Last update: " <> date'
         style = {width: "250px", display: "inline-block"}
+
 type PagePath = { nodeId :: Int, params :: T.Params }
 
 type PageLayoutProps =
@@ -98,10 +99,11 @@ page props = R.createElement pageCpt props []
 pageCpt :: R.Component PageProps
 pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
   where
-    cpt { session, annuairePath, pagePath, table: (AnnuaireTable {annuaireTable}) } _ = do
+    cpt { session, annuairePath, pagePath
+        , table: (AnnuaireTable {annuaireTable}) } _ = do
       T.table { rows, setParams, container, colNames, totalRecords }
       where
-        totalRecords =4361 -- TODO
+        totalRecords = 4361 -- TODO
         rows = (\c -> {row: contactCells session c, delete: false}) <$> annuaireTable
         setParams params = snd pagePath $ const {params, nodeId: fst annuairePath}
         container = T.defaultContainer { title: "Annuaire" } -- TODO
@@ -176,7 +178,9 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
   decodeJson json = do
     rows <- decodeJson json
     pure $ AnnuaireTable { annuaireTable : rows}
+
 ------------------------------------------------------------------------
+
 loadPage :: Session -> PagePath -> Aff AnnuaireTable
 loadPage session {nodeId, params: { offset, limit, orderBy }} =
     get $ url session children
@@ -189,8 +193,6 @@ loadPage session {nodeId, params: { offset, limit, orderBy }} =
 
   where
     children = Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-} (Just nodeId)
-
------- Annuaire loading ------
 
 getAnnuaireInfo :: Session -> Int -> Aff AnnuaireInfo
 getAnnuaireInfo session id = get $ url session (NodeAPI Node (Just id))

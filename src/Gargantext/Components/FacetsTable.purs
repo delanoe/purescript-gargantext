@@ -24,7 +24,6 @@ import Gargantext.Config.REST (post, deleteWithBody)
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
-
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(Search,NodeAPI))
 import Gargantext.Sessions (Session)
@@ -314,7 +313,6 @@ pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
                   | delete = H.div { style: { textDecoration: "line-through" } }
                   | otherwise = H.div {}
 
-
 ---------------------------------------------------------
 
 newtype DeleteDocumentQuery = DeleteDocumentQuery { documents :: Array Int }
@@ -323,6 +321,6 @@ instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
   encodeJson (DeleteDocumentQuery post) =
     "documents" := post.documents ~> jsonEmptyObject
 
-deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Array Int)
-deleteDocuments session nodeId = deleteWithBody to
-  where to = url session (NodeAPI Node (Just nodeId)) <> "/documents"
+deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Array Int)
+deleteDocuments nodeId = deleteWithBody (toUrl endConfigStateful Back Node (Just nodeId) <> "/documents")
+
