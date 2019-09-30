@@ -8,12 +8,12 @@ import DOM.Simple.Document (document)
 import DOM.Simple.Console (log)
 import Effect (Effect)
 import FFI.Simple ((...))
-import Reactix as R
 import Gargantext.Components.App (app)
+import Gargantext.Utils.Reactix as R2
 
 main :: Effect Unit
 main = paint $ toMaybe (document ... "getElementById" $ [ "app" ])
 
 paint :: Maybe Element -> Effect Unit
 paint Nothing = log "[main] Container not found"
-paint (Just c) = R.render (app {}) c
+paint (Just c) = R2.render (app {}) c
