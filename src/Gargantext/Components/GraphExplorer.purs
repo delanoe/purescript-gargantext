@@ -23,7 +23,7 @@ import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Tree as Tree
 import Gargantext.Config.REST (get)
-import Gargantext.Ends (url)
+import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeType(Graph))
@@ -34,7 +34,8 @@ type LayoutProps =
   ( graphId :: GraphId
   , mCurrentRoute :: Maybe AppRoute
   , treeId :: Maybe Int
-  , session :: Session )
+  , session :: Session
+  , frontends :: Frontends )
 
 
 type Props = ( graph :: Maybe Graph.Graph | LayoutProps )
@@ -45,10 +46,10 @@ explorerLayout props = R.createElement explorerLayoutCpt props []
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
   where
-    cpt {graphId, mCurrentRoute, treeId, session} _ =
+    cpt {graphId, mCurrentRoute, treeId, session, frontends} _ =
       useLoader graphId (getNodes session) handler
       where
-        handler loaded = explorer {graphId, mCurrentRoute, treeId, session, graph}
+        handler loaded = explorer {graphId, mCurrentRoute, treeId, session, graph, frontends}
           where graph = Just (convert loaded)
 
 explorer :: Record Props -> R.Element
@@ -57,7 +58,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt {session, graphId, mCurrentRoute, treeId, graph} _ = do
+    cpt {session, graphId, mCurrentRoute, treeId, graph, frontends} _ = do
       controls <- Controls.useGraphControls
       state <- useExplorerState
       pure $
@@ -87,7 +88,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
         tree _ {showTree: false /\ _} = RH.div { id: "tree" } []
         tree {mCurrentRoute: m, treeId: Just root} _ =
           RH.div { id: "tree", className: "col-md-2" }
-          [  Tree.treeView {mCurrentRoute: m, root, session: session} ]
+          [  Tree.treeView {frontends, root, mCurrentRoute: m, session: session} ]
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1 = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }

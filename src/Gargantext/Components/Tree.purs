@@ -27,7 +27,7 @@ import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
-import Gargantext.Ends (url)
+import Gargantext.Ends (Frontends(..), url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Routes (AppRoute, SessionRoute(..))
@@ -44,11 +44,12 @@ type Reload = Int
 
 data NodePopup = CreatePopup | NodePopup
 
-type Props = ( root :: ID, mCurrentRoute :: Maybe AppRoute, session :: Session )
+type Props = ( root :: ID, mCurrentRoute :: Maybe AppRoute, session :: Session, frontends :: Frontends )
 
 type TreeViewProps =
   ( tree :: FTree
   , mCurrentRoute :: Maybe AppRoute
+  , frontends :: Frontends
   , session :: Session )
 
 data NTree a = NTree a (Array (NTree a))
@@ -92,11 +93,15 @@ type FTree = NTree LNode
 
 -- file upload types
 data FileType = CSV | PresseRIS
+
 derive instance genericFileType :: Generic FileType _
+
 instance eqFileType :: Eq FileType where
     eq = genericEq
+
 instance showFileType :: Show FileType where
     show = genericShow
+
 readFileType :: String -> Maybe FileType
 readFileType "CSV" = Just CSV
 readFileType "PresseRIS" = Just PresseRIS
@@ -161,24 +166,24 @@ treeLoadView :: R.State Reload -> Record Props -> R.Element
 treeLoadView reload p = R.createElement el p []
   where
     el = R.hooksComponent "TreeLoadView" cpt
-    cpt {root, mCurrentRoute, session} _ = do
+    cpt {root, mCurrentRoute, session, frontends} _ = do
       useLoader root (loadNode session) $ \loaded ->
-        loadedTreeView reload {tree: loaded, mCurrentRoute, session}
+        loadedTreeView reload {tree: loaded, mCurrentRoute, session, frontends}
 
 loadedTreeView :: R.State Reload -> Record TreeViewProps -> R.Element
 loadedTreeView reload p = R.createElement el p []
   where
     el = R.hooksComponent "LoadedTreeView" cpt
-    cpt {tree, mCurrentRoute, session} _ = do
+    cpt {tree, mCurrentRoute, session, frontends} _ = do
       treeState <- R.useState' {tree}
 
       pure $ H.div {className: "tree"}
-        [ toHtml reload treeState session mCurrentRoute ]
+        [ toHtml reload treeState session frontends mCurrentRoute ]
 
 -- START toHtml
 
-toHtml :: R.State Reload -> R.State Tree -> Session -> Maybe AppRoute -> R.Element
-toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) session mCurrentRoute = R.createElement el {} []
+toHtml :: R.State Reload -> R.State Tree -> Session -> Frontends -> Maybe AppRoute -> R.Element
+toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) session frontends mCurrentRoute = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     pAction = performAction session reload treeState
@@ -189,8 +194,8 @@ toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) 
 
       pure $ H.ul {}
         [ H.li {}
-          ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute} folderOpen session ]
-            <> childNodes session reload folderOpen mCurrentRoute ary
+          ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute} folderOpen session frontends ]
+            <> childNodes session frontends reload folderOpen mCurrentRoute ary
           )
         ]
 
@@ -204,8 +209,9 @@ nodeMainSpan :: (Action -> Aff Unit)
              -> Record NodeMainSpanProps
              -> R.State Boolean
              -> Session
+             -> Frontends
              -> R.Element
-nodeMainSpan d p folderOpen session = R.createElement el p []
+nodeMainSpan d p folderOpen session (Frontends frontends) = R.createElement el p []
   where
     el = R.hooksComponent "NodeMainSpan" cpt
     cpt {id, name, nodeType, mCurrentRoute} _ = do
@@ -216,7 +222,7 @@ nodeMainSpan d p folderOpen session = R.createElement el p []
 
       pure $ H.span (dropProps droppedFile isDragOver)
         [ folderIcon folderOpen
-        , H.a { href: (url session (NodePath nodeType (Just id)))
+        , H.a { href: (url frontends.app (NodePath nodeType (Just id)))
               , style: {marginLeft: "22px"}
               }
           [ nodeText {isSelected: (mCorpusId mCurrentRoute) == (Just id), name} ]
@@ -267,17 +273,17 @@ fldr :: Boolean -> String
 fldr open = if open then "glyphicon glyphicon-folder-open" else "glyphicon glyphicon-folder-close"
 
 
-childNodes :: Session -> R.State Reload -> R.State Boolean -> Maybe AppRoute -> Array FTree -> Array R.Element
-childNodes _ _ _ _ [] = []
-childNodes _ _ (false /\ _) _ _ = []
-childNodes session reload (true /\ _) mCurrentRoute ary = map (\ctree -> childNode {tree: ctree}) ary
+childNodes :: Session -> Frontends -> R.State Reload -> R.State Boolean -> Maybe AppRoute -> Array FTree -> Array R.Element
+childNodes _ _ _ _ _ [] = []
+childNodes _ _ _ (false /\ _) _ _ = []
+childNodes session frontends reload (true /\ _) mCurrentRoute ary = map (\ctree -> childNode {tree: ctree}) ary
   where
     childNode :: Tree -> R.Element
     childNode props = R.createElement el props []
     el = R.hooksComponent "ChildNodeView" cpt
     cpt {tree} _ = do
       treeState <- R.useState' {tree}
-      pure $ toHtml reload treeState session mCurrentRoute
+      pure $ toHtml reload treeState session frontends mCurrentRoute
 
 -- END toHtml
 

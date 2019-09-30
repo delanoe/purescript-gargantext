@@ -9,7 +9,9 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe, maybe)
 import Gargantext.Routes as R
-import Gargantext.Types (ApiVersion, Limit, NodeType(..), Offset, TabType(..), TermSize(..), nodeTypePath, showTabType')
+import Gargantext.Types
+   ( ApiVersion, Limit, NodePath, NodeType(..), Offset, TabType(..)
+   , TermSize(..), nodePath, nodeTypePath, showTabType')
 
 -- | A means of generating a url to visit, a destination
 class ToUrl conf p where
@@ -54,6 +56,9 @@ derive instance genericFrontend :: Generic Frontend _
 
 instance eqFrontend :: Eq Frontend where
   eq = genericEq
+
+instance toUrlFrontendNodePath :: ToUrl Frontend NodePath where
+  toUrl front np = frontendUrl front (nodePath np)
 
 -- | Creates a frontend
 frontend :: String -> String -> String -> Frontend

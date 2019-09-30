@@ -31,7 +31,7 @@ forestCpt = R.staticComponent "G.C.Forest.forest" cpt where
           Just s@(Session {treeId}) ->
             R.fragment
             [ H.text (show s)
-            , treeView { root: treeId, mCurrentRoute: Just route, session: s } ]
+            , treeView { root: treeId, frontends, mCurrentRoute: Just route, session: s } ]
         
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin = H.button {on: {click}} [ H.text "+" ]

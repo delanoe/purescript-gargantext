@@ -71,7 +71,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
                 tree $ documentLayout { nodeId, listId, session, corpusId: Nothing }
               PGraphExplorer graphId ->
                 simpleLayout (fst sessions) $
-                  explorerLayout { graphId, mCurrentRoute, session, treeId: Nothing }
+                  explorerLayout { graphId, mCurrentRoute, session, treeId: Nothing, frontends }
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
 forestLayout frontends sessions route showLogin child =
