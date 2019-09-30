@@ -1,7 +1,8 @@
 module Gargantext.Components.Forest where
 
-import Prelude (const, show)
+import Prelude (const, show, discard)
 import Data.Maybe (Maybe(..))
+import DOM.Simple.Console (log)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Ends (Frontends)
@@ -33,6 +34,7 @@ forestCpt = R.staticComponent "G.C.Forest.forest" cpt where
             , treeView { root: treeId, mCurrentRoute: Just route, session: s } ]
         
 plus :: R2.Setter Boolean -> R.Element
-plus showLogin =
-  H.button {on: {click: \_ -> showLogin (const true)}}
-  [ H.text "+" ]
+plus showLogin = H.button {on: {click}} [ H.text "+" ]
+  where
+    click _ = do
+      showLogin (const true)

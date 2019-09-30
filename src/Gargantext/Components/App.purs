@@ -47,29 +47,31 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
     showCorpus <- R.useState' false
     let tree = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
     let mCurrentRoute = Just $ fst route
-    let setVisible = snd showLogin
     let backends = fromFoldable defaultBackends
-    pure $ case unSessions (fst sessions) of
-      Nothing -> tree $ homeLayout EN
-      Just session ->
-        case (fst route) of
-          Home -> tree $ homeLayout EN
-          Login -> login { sessions, backends, setVisible }
-          Folder _ -> tree $ folder {}
-          Corpus nodeId -> tree $ corpusLayout { nodeId }
-          Texts nodeId -> tree $ textsLayout { nodeId, session }
-          Lists nodeId -> tree $ listsLayout { nodeId, session }
-          Dashboard -> tree $ dashboardLayout {}
-          Annuaire annuaireId -> tree $ annuaireLayout { annuaireId, session }
-          UserPage nodeId -> tree $ userLayout { nodeId, session }
-          ContactPage nodeId -> tree $ userLayout { nodeId, session }
-          CorpusDocument corpusId listId nodeId ->
-            tree $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
-          Document listId nodeId ->
-            tree $ documentLayout { nodeId, listId, session, corpusId: Nothing }
-          PGraphExplorer graphId ->
-            simpleLayout (fst sessions) $
-              explorerLayout { graphId, mCurrentRoute, session, treeId: Nothing }
+    pure $ case fst showLogin of
+      true -> tree $ login { sessions, backends, visible: showLogin }
+      false ->
+        case unSessions (fst sessions) of
+          Nothing -> tree $ homeLayout EN
+          Just session ->
+            case (fst route) of
+              Home -> tree $ homeLayout EN
+              Login -> login { sessions, backends, visible: showLogin }
+              Folder _ -> tree $ folder {}
+              Corpus nodeId -> tree $ corpusLayout { nodeId }
+              Texts nodeId -> tree $ textsLayout { nodeId, session }
+              Lists nodeId -> tree $ listsLayout { nodeId, session }
+              Dashboard -> tree $ dashboardLayout {}
+              Annuaire annuaireId -> tree $ annuaireLayout { annuaireId, session }
+              UserPage nodeId -> tree $ userLayout { nodeId, session }
+              ContactPage nodeId -> tree $ userLayout { nodeId, session }
+              CorpusDocument corpusId listId nodeId ->
+                tree $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
+              Document listId nodeId ->
+                tree $ documentLayout { nodeId, listId, session, corpusId: Nothing }
+              PGraphExplorer graphId ->
+                simpleLayout (fst sessions) $
+                  explorerLayout { graphId, mCurrentRoute, session, treeId: Nothing }
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
 forestLayout frontends sessions route showLogin child =
