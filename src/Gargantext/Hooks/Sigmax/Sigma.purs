@@ -1,17 +1,11 @@
 module Gargantext.Hooks.Sigmax.Sigma where
 
 import Prelude
-
-import Data.Array (head)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
-import Data.Unit (Unit)
-import DOM.Simple.Console (log, log2)
 import Effect (Effect, foreachE)
 import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, mkEffectFn1, runEffectFn1, EffectFn2, runEffectFn2, EffectFn3, runEffectFn3, EffectFn4, runEffectFn4)
-import FFI.Simple.Objects (named, getProperty)
 import Type.Row (class Union)
 
 foreign import data Sigma :: Type

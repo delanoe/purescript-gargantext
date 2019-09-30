@@ -1,24 +1,20 @@
 -- TODO copy of Gargantext.Pages.Corpus.Tabs.Specs
-module Gargantext.Pages.Annuaire.User.Contacts.Tabs.Specs where
+module Gargantext.Pages.Annuaire.User.Contacts.Tabs where
 
 import Prelude hiding (div)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.List (fromFoldable)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..), fst)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-
+import Reactix as R
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Pages.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
-import Gargantext.Utils.Reactix as R2
 
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 data Mode = Patents | Books | Communication
 

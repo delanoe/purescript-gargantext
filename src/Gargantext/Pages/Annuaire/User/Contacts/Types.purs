@@ -2,11 +2,9 @@ module Gargantext.Pages.Annuaire.User.Contacts.Types where
 
 import Prelude
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!), (.?), (.??))
-import Data.Either (Either(..))
-import Data.Lens (Lens', Prism', lens, prism)
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
-import Data.Map (Map(..))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
+import Data.Maybe (Maybe, fromMaybe)
+import Data.Map (Map)
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Newtype (class Newtype)
 

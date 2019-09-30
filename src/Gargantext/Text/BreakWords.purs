@@ -4,17 +4,13 @@
 -- | for highlighting purposes
 module Gargantext.Text.BreakWords (BrokenWord(..), breakWords) where
 
-import Prelude
+import Prelude (Unit, discard, negate, otherwise, pure, ($), (-), (<<<), (==), (>>=))
 import Data.Traversable (traverse_)
 import Effect (Effect)
 import Data.Maybe (Maybe(..))
-import Data.Unit (Unit, unit)
-import Effect.Uncurried (EffectFn2, runEffectFn2)
-import Data.Function.Uncurried (Fn1, runFn1)
 import Data.String.CodeUnits (length, slice) -- TODO: double check i'm the right choice
-import Data.Nullable (Nullable, toMaybe)
 import Data.String.Regex (Regex)
-import Gargantext.Utils.Regex
+import Gargantext.Utils.Regex (cloneRegex, execRegex, getRegexLastIndex)
 import Gargantext.Utils.Array (push)
 
 data BrokenWord = Word String | Space String
@@ -31,8 +27,8 @@ breakWords s = loop $ break s
 
 -- Returns whether to continue
 breakNext :: Breaking -> Effect Boolean
-breakNext b = checkStatic b $ lastIndex b
-  where checkStatic b origin
+breakNext b = checkStatic (lastIndex b)
+  where checkStatic origin
           | origin == length b.source = pure false
           | otherwise = search b >>= next' origin
         next' origin Nothing = finish b origin

@@ -2,7 +2,7 @@ module Gargantext.Routes where
 
 import Prelude
 import Data.Maybe (Maybe)
-import Gargantext.Types
+import Gargantext.Types (ChartOpts, CorpusMetricOpts, Id, Limit, ListId, NgramsGetOpts, NodeType, Offset, OrderBy, SearchOpts, TabType, TermList)
 
 data AppRoute
   = Home

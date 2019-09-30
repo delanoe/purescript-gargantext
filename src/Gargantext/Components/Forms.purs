@@ -3,7 +3,7 @@ module Gargantext.Components.Forms where
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-clearfix :: _ -> R.Element
+clearfix :: {} -> R.Element
 clearfix _ = H.div {className: "clearfix"} []
 
 formGroup :: Array R.Element -> R.Element

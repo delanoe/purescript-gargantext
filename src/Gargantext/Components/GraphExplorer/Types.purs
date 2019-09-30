@@ -1,15 +1,11 @@
 module Gargantext.Components.GraphExplorer.Types where
 
 import Prelude
-import Partial.Unsafe (unsafePartial)
-
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Array ((!!), length)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
-import Reactix as R
-import Thermite (PerformAction)
-
+import Partial.Unsafe (unsafePartial)
 
 newtype Node = Node
   { id_ :: String
@@ -175,11 +171,8 @@ instance ordLegend :: Ord Legend where
   compare (Legend l1) (Legend l2) = compare l1.id_ l2.id_
 
 getLegendData :: GraphData -> Array Legend
-getLegendData (GraphData {nodes, edges, metaData}) = getLegend metaData
-  where
-    getLegend (Just (MetaData {legend})) = legend
-    getLegend Nothing  = []
-
+getLegendData (GraphData {metaData: Just (MetaData {legend})}) = legend
+getLegendData _ = []
 
 defaultPalette :: Array String
 defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#33c8f3","#739e9a","#caeca3","#f6f7e5","#f9bcca","#ccb069","#c9ffde","#c58683","#6c9eb0","#ffd3cf","#ccffc7","#52a1b0","#d2ecff","#99fffe","#9295ae","#5ea38b","#fff0b3","#d99e68"]

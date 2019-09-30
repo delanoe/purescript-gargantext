@@ -321,6 +321,8 @@ instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
   encodeJson (DeleteDocumentQuery post) =
     "documents" := post.documents ~> jsonEmptyObject
 
-deleteDocuments :: Int -> DeleteDocumentQuery -> Aff (Array Int)
-deleteDocuments nodeId = deleteWithBody (toUrl endConfigStateful Back Node (Just nodeId) <> "/documents")
+deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Array Int)
+deleteDocuments session nodeId =
+  deleteWithBody $
+    (url session $ NodeAPI Node $ Just nodeId) <> "/documents"
 

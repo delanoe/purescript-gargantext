@@ -1,7 +1,7 @@
 module Gargantext.Utils.Selection where
 
 import Prelude
-import Data.Maybe (Maybe, fromMaybe, maybe)
+import Data.Maybe (Maybe, maybe)
 import Data.Nullable (Nullable, toMaybe)
 import DOM.Simple.Types (Element, DOMRect)
 import DOM.Simple.Element as Element

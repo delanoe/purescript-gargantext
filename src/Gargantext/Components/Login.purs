@@ -116,7 +116,7 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
             , H.div {}
               [ csrfTokenInput {}
               , formGroup [ H.p {} [ H.text (fst error) ], usernameInput username ]
-              , formGroup [ passwordInput password, clearfix [] ]
+              , formGroup [ passwordInput password, clearfix {} ]
               , center
                 [ H.label {}
                   [ H.div {className: "checkbox"}

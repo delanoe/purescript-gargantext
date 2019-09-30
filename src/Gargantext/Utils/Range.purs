@@ -1,8 +1,7 @@
 module Gargantext.Utils.Range where
 
-import Prelude
+import Prelude hiding (clamp)
 import Data.Newtype (class Newtype)
-import Data.Ord (class Ord)
 
 class Range r v where
   clamp :: r -> v -> v

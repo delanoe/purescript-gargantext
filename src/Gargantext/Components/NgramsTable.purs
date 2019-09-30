@@ -1,6 +1,9 @@
 module Gargantext.Components.NgramsTable where
 
 import Prelude
+  ( class Show, Unit, bind, const, discard, identity, map, mempty, not
+  , pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<)
+  , (==), (||) )
 import Data.Array as A
 import Data.Lens (to, view, (%~), (.~), (^.), (^..))
 import Data.Lens.Common (_Just)
@@ -16,21 +19,27 @@ import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import React (ReactElement)
-import React.DOM (a, button, div, h2, i, input, li, option, p, select, span, table, tbody, text, thead, ul)
-import React.DOM.Props (_id, _type, checked, className, name, onChange, onClick, onInput, placeholder, style, value)
+import React.DOM (a, i, input, li, span, text, ul)
+import React.DOM.Props (_type, checked, className, onChange, onClick, style)
 import React.DOM.Props as DOM
-import Thermite (PerformAction, Render, Spec, defaultPerformAction, modifyState_, simpleSpec, createClass)
-
-import Gargantext.Types (TermList(..), OrderBy(..), TabType, CTabNgramType(..), readTermList, readTermSize, termLists, termSizes)
+import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec)
+import Gargantext.Types
+  ( CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList
+  , readTermSize, termLists, termSizes)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.NgramsTable.Core
+  ( CoreState, LoadedNgramsTableProps, NgramsElement(..), NgramsPatch(..)
+  , NgramsTable, NgramsTerm, PageParams, Replace(..), Versioned(..)
+  , VersionedNgramsTable, _NgramsElement, _NgramsTable, _children
+  , _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsTablePatch
+  , applyPatchSet, commitPatch, convOrderBy, initialPageParams, loadNgramsTable
+  , patchSetFromMap, replace, singletonNgramsTablePatch )
 import Gargantext.Components.Table as T
-import Gargantext.Hooks.Loader (useLoader, useLoader2)
+import Gargantext.Hooks.Loader (useLoader2)
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 

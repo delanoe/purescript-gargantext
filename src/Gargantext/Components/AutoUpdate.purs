@@ -1,6 +1,5 @@
 module Gargantext.Components.AutoUpdate where
 
-import Control.Monad.Cont.Trans (lift)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_)
 import React as React
@@ -8,11 +7,7 @@ import React (ReactClass, ReactElement, Children)
 import React.DOM (div')
 import Gargantext.Prelude
 import Effect (Effect)
-import Effect.Aff (Aff)
 import Effect.Timer (IntervalId, setInterval, clearInterval)
-
-import Thermite (Render, PerformAction, simpleSpec, modifyState_,
-                 createReactSpec, defaultRender)
 
 data Action = Update
 

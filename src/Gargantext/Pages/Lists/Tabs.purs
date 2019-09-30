@@ -1,29 +1,20 @@
 module Gargantext.Pages.Lists.Tabs where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.?), (.??))
+import Prelude
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.List (fromFoldable)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
-import Reactix.DOM.HTML as H
-import Unsafe.Coerce (unsafeCoerce)
-import Gargantext.Prelude
-import Gargantext.Components.Charts.Options.ECharts (chart) as ECharts
-import Gargantext.Components.DocsTable as DT
-import Gargantext.Components.Loader as Loader
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Tab as Tab
-import Gargantext.Pages.Corpus.Chart.Histo (histo)
 import Gargantext.Pages.Corpus.Chart.Metrics (metrics)
 import Gargantext.Pages.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Pages.Corpus.Chart.Tree (tree)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), TabType(..), TabSubType(..))
-import Gargantext.Utils.Reactix as R2
 
 data Mode = Authors | Sources | Institutes | Terms
 
@@ -92,6 +83,7 @@ newtype CorpusInfo =
   , chart        :: (Maybe (Array Number))
   , totalRecords :: Int }
   
+hyperdataDefault :: CorpusInfo
 hyperdataDefault =
   CorpusInfo
   { title : "Default title"
@@ -115,11 +107,11 @@ corpusInfoDefault =
 instance decodeCorpusInfo :: DecodeJson CorpusInfo where
   decodeJson json = do
     obj <- decodeJson json
-    title <- obj .? "title"
-    desc  <- obj .? "desc"
-    query <- obj .? "query"
-    authors <- obj .? "authors"
-    chart   <- obj .?? "chart"
+    title <- obj .: "title"
+    desc  <- obj .: "desc"
+    query <- obj .: "query"
+    authors <- obj .: "authors"
+    chart   <- obj .:! "chart"
     let totalRecords = 47361 -- TODO
     pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
 

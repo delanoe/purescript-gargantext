@@ -12,7 +12,7 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (getItem, setItem, removeItem)
+import Web.Storage.Storage (removeItem) -- (getItem, setItem, removeItem)
 import Gargantext.Components.Login.Types
   (AuthRequest(..), AuthResponse(..), AuthInvalid(..), AuthData(..))
 import Gargantext.Config.REST (post)

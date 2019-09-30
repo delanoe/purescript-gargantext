@@ -2,7 +2,7 @@ module Gargantext.Components.App where
 
 import Prelude
 import Data.Array (fromFoldable)
-import Data.Foldable (fold, intercalate)
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
 import Reactix as R
@@ -29,7 +29,7 @@ import Gargantext.Router (router)
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Hooks.Router (useHashRouter)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Sessions (Session, Sessions, useSessions, unSessions)
+import Gargantext.Sessions (Sessions, useSessions, unSessions)
 
 -- TODO (what does this mean?)
 -- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc

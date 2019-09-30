@@ -28,7 +28,6 @@ import Data.Enum (fromEnum)
 import Data.Foldable (class Foldable, minimum, foldl)
 import Data.Int (quot)
 import Data.List as L
-import Data.List (List)
 import Data.Map as M
 import Data.Maybe (Maybe(..), isJust)
 import Data.String as S

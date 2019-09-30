@@ -1,10 +1,8 @@
 module Gargantext.Components.Tab where
 
 import Prelude hiding (div)
-
-import Data.Array (fold)
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H

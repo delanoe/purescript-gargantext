@@ -19,7 +19,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Pages.Annuaire.User.Contacts.Types
   ( Contact(..), ContactData, ContactTouch(..), ContactWhere(..)
   , ContactWho(..), HyperData(..), HyperdataContact(..) )
-import Gargantext.Pages.Annuaire.User.Contacts.Tabs.Specs as Tabs
+import Gargantext.Pages.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeType(..))

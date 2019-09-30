@@ -2,7 +2,7 @@ module Gargantext.Types where
 
 import Prelude
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject)
-import Data.Maybe (Maybe(..), maybe, fromJust)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..))
 import Prim.Row (class Union)
 import URI.Query (Query)

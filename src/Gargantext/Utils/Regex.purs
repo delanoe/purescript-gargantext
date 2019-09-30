@@ -3,7 +3,7 @@ module Gargantext.Utils.Regex where
 
 import Effect (Effect)
 import Prelude ((<$>))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Effect.Uncurried (EffectFn2, runEffectFn2)
 import Data.Function.Uncurried (Fn1, runFn1)
 import Data.Nullable (Nullable, toMaybe)

@@ -105,7 +105,7 @@ jumboTitle (LandingData hd) b =
       true  -> "jumbotron"
       false -> ""
 
-imageEnter :: LandingData -> _ -> R.Element
+imageEnter :: forall t. LandingData -> t -> R.Element
 imageEnter (LandingData hd) action =
   H.div {className: "row"}
   [ H.div {className: "col-md-offset-5 col-md-6 content"}

@@ -1,14 +1,7 @@
 module Gargantext.Hooks.Sigmax.Types where
 
-import Gargantext.Prelude
-
-import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe)
-import Data.Sequence as Seq
 import Data.Sequence (Seq)
 import DOM.Simple.Types (Element)
-import Reactix as R
-import Prim.RowList (RowToList)
 
 newtype Graph n e = Graph { nodes :: Seq {|n}, edges :: Seq {|e} }
 
