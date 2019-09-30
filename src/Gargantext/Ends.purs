@@ -80,6 +80,12 @@ instance toUrlFrontendAppRoute :: ToUrl Frontend R.AppRoute where
 -- | The currently selected App and Static configurations
 newtype Frontends = Frontends { app :: Frontend, static :: Frontend }
 
+instance toUrlFrontendsRoutes :: ToUrl Frontends R.AppRoute where
+  toUrl f r = appUrl f (R.appPath r)
+
+instance toUrlFrontendsNodePath :: ToUrl Frontends NodePath where
+  toUrl (Frontends {app}) np = frontendUrl app (nodePath np)
+
 -- | Creates an app url from a Frontends and the path as a string
 appUrl :: Frontends -> String -> String
 appUrl (Frontends {app}) = frontendUrl app
@@ -87,9 +93,6 @@ appUrl (Frontends {app}) = frontendUrl app
 -- | Creates a static url from a Frontends and the path as a string
 staticUrl :: Frontends -> String -> String
 staticUrl (Frontends {static}) = frontendUrl static
-
-instance toUrlFrontendsRoutes :: ToUrl Frontends R.AppRoute where
-  toUrl f r = appUrl f (R.appPath r)
 
 sessionPath :: R.SessionRoute -> String
 sessionPath (R.Tab t i) = sessionPath (R.NodeAPI Node i) <> "/" <> showTabType' t
@@ -140,8 +143,6 @@ sessionPath (R.Chart {chartType, tabType} i) =
       <> "?ngramsType=" <> showTabType' tabType
       <> "&listType=GraphTerm" -- <> show listId
       -- <> maybe "" (\x -> "&limit=" <> show x) limit
-
-
 
 ------- misc routing stuff
 

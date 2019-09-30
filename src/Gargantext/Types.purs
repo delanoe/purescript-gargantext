@@ -245,7 +245,7 @@ data NodePath = NodePath NodeType (Maybe Id)
 
 nodePath :: NodePath -> String
 nodePath (NodePath t i) = nodeTypePath t <> "/" <> id
-  where id = maybe "" (\j -> "/" <> show j) i
+  where id = maybe "" show i
 
 data ChartType = Histo | Scatter | ChartPie | ChartTree
 

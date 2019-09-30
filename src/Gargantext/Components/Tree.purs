@@ -27,7 +27,7 @@ import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
-import Gargantext.Ends (Frontends(..), url)
+import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Routes (AppRoute, SessionRoute(..))
@@ -211,7 +211,7 @@ nodeMainSpan :: (Action -> Aff Unit)
              -> Session
              -> Frontends
              -> R.Element
-nodeMainSpan d p folderOpen session (Frontends frontends) = R.createElement el p []
+nodeMainSpan d p folderOpen session frontends = R.createElement el p []
   where
     el = R.hooksComponent "NodeMainSpan" cpt
     cpt {id, name, nodeType, mCurrentRoute} _ = do
@@ -222,7 +222,7 @@ nodeMainSpan d p folderOpen session (Frontends frontends) = R.createElement el p
 
       pure $ H.span (dropProps droppedFile isDragOver)
         [ folderIcon folderOpen
-        , H.a { href: (url frontends.app (NodePath nodeType (Just id)))
+        , H.a { href: (url frontends (NodePath nodeType (Just id)))
               , style: {marginLeft: "22px"}
               }
           [ nodeText {isSelected: (mCorpusId mCurrentRoute) == (Just id), name} ]
