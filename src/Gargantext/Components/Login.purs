@@ -3,10 +3,11 @@
   -- Select a backend and log into it
 module Gargantext.Components.Login where
 
-import Prelude (Unit, bind, const, discard, pure, flip, show, ($), (<>), (<$>))
+import Prelude (Unit, bind, const, discard, pure, flip, show, ($), (<>), (*>), (<$>))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
+import DOM.Simple.Console (log)
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Aff (launchAff_)
@@ -30,7 +31,7 @@ type Props =
   , sessions :: R2.Reductor Sessions Sessions.Action
   , visible :: R.State Boolean )
 
-type ModalProps = ( visible :: Boolean )
+type ModalProps = ( visible :: R.State Boolean )
 
 modal :: Record ModalProps -> R.Element -> R.Element
 modal props child = R.createElement modalCpt props [ child ]
@@ -40,8 +41,9 @@ modalCpt = R.hooksComponent "Modal" cpt where
   cpt {visible} children = do
     R.createPortal elems <$> R2.getPortalHost
     where
+      click _ = log "click!" *> (snd visible) (const false)
       elems = 
-        [ H.div { id: "loginModal", className: modalClass visible
+        [ H.div { id: "loginModal", className: modalClass (fst visible)
                 , role: "dialog", "data": {show: true}, style: {display: "block"}}
           [ H.div { className: "modal-dialog", role: "document"}
             [ H.div { className: "modal-content" }
@@ -49,9 +51,10 @@ modalCpt = R.hooksComponent "Modal" cpt where
                 [ H.h5 { className: "modal-title" } []
                 , H.button { "type": "button", className: "close"
                            , "data": { dismiss: "modal" } }
-                  [ H.span { aria: { hidden: true } } [ H.text "X" ] ] ]
+                  [ H.span { on: {click} } [ H.text "X" ] ] ]
               , H.div { className: "modal-body" } children ] ] ] ]
       modalClass s = "modal myModal" <> if s then "" else " fade"
+      
 
 login :: Record Props -> R.Element
 login props = R.createElement loginCpt props []
@@ -62,7 +65,7 @@ loginCpt = R.hooksComponent "G.C.Login.login" cpt
     cpt props@{backends, sessions, visible} _ = do
       backend <- R.useState' Nothing
       pure $
-        modal {visible: fst visible} $
+        modal {visible} $
           case fst backend of
             Nothing -> chooser { backends, backend, sessions, visible }
             Just b -> form { sessions, visible, backend: b }
