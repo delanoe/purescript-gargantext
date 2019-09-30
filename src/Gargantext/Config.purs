@@ -15,7 +15,7 @@ defaultBackends = prod :| [dev, demo, local]
 defaultApps :: NonEmpty Array Frontend
 defaultApps = relative :| [prod, dev, demo, haskell, caddy]
   where
-    relative = frontend "/" "" "Relative"
+    relative = frontend "/#/" "" "Relative"
     prod     = frontend "/#/" "https://gargantext.org" "gargantext.org"
     dev      = frontend "/#/" "https://dev.gargantext.org" "gargantext.org (dev)"
     demo     = frontend "/#/" "https://demo.gargantext.org" "gargantext.org (demo)"
