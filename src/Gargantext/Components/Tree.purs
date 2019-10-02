@@ -70,7 +70,8 @@ filterNTree p (NTree x ary) =
 
 newtype LNode = LNode { id :: ID
                       , name :: Name
-                      , nodeType :: NodeType}
+                      , nodeType :: NodeType
+                      }
 
 derive instance newtypeLNode :: Newtype LNode _
 
@@ -193,7 +194,7 @@ toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) 
     pAction = performAction session reload treeState
     cpt props _ = do
       folderOpen <- R.useState' true
-      
+
       let withId (NTree (LNode {id: id'}) _) = id'
 
       pure $ H.ul {}
@@ -204,9 +205,9 @@ toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) 
         ]
 
 type NodeMainSpanProps =
-  ( id :: ID
-  , name :: Name
-  , nodeType :: NodeType
+  ( id            :: ID
+  , name          :: Name
+  , nodeType      :: NodeType
   , mCurrentRoute :: Maybe AppRoute
   )
 
@@ -230,12 +231,14 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
         , H.a { href: (url frontends (NodePath nodeType (Just id)))
               , style: {marginLeft: "22px"}
               }
-          [ nodeText {isSelected: (mCorpusId mCurrentRoute) == (Just id), name} ]
+          [ nodeText {isSelected: (mCorpusId mCurrentRoute) == (Just id), name:name'} ]
         , popOverIcon popupOpen
         , nodePopupView d {id, name} popupOpen
         , createNodeView d {id, name} popupOpen
         , fileTypeView d {id} droppedFile isDragOver
         ]
+          where
+            name' = if nodeType == NodeUser then show session else name
     folderIcon folderOpen'@(open /\ _) =
       H.a {onClick: R2.effToggler folderOpen'}
       [ H.i {className: fldr open} [] ]
