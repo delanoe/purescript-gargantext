@@ -8,7 +8,8 @@ import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
-import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
+import Gargantext.Components.Data.Landing
+  (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Data.Lang (Lang(..))
 
 type Props = ()

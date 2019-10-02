@@ -7,7 +7,7 @@ Maintainer  : alexandre.delanoe@iscpif.fr
 Stability   : experimental
 Portability : POSIX
 
-How semantic emerge from contextualized randomness can be experimented
+How semantic emerges from contextualized randomness can be experimented
 with these simple functions;
 
 randomSentences: randomizes sentences in a paragraph.

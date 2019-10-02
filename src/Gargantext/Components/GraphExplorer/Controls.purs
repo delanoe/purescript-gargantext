@@ -29,12 +29,12 @@ import Gargantext.Utils.Reactix as R2
 
 
 type Controls =
-  ( cursorSize :: R.State Number
+  ( cursorSize      :: R.State Number
   , multiNodeSelect :: R.Ref Boolean
-  , showControls :: R.State Boolean
-  , showSidePanel :: R.State Boolean
-  , showTree :: R.State Boolean
-  , sigmaRef :: R.Ref (Maybe Sigmax.Sigma)
+  , showControls    :: R.State Boolean
+  , showSidePanel   :: R.State Boolean
+  , showTree        :: R.State Boolean
+  , sigmaRef        :: R.Ref (Maybe Sigmax.Sigma)
   )
 
 controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
@@ -100,21 +100,20 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 
 useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
-  cursorSize <- R.useState' 10.0
+  cursorSize      <- R.useState' 10.0
   multiNodeSelect <- R.useRef false
-  showControls <- R.useState' false
-  showSidePanel <- R.useState' false
+  showControls    <- R.useState' false
+  showSidePanel   <- R.useState' false
   showTree <- R.useState' false
   sigmaRef <- R2.nothingRef
 
-  pure {
-      cursorSize
-    , multiNodeSelect
-    , showControls
-    , showSidePanel
-    , showTree
-    , sigmaRef
-    }
+  pure { cursorSize
+       , multiNodeSelect
+       , showControls
+       , showSidePanel
+       , showTree
+       , sigmaRef
+       }
 
 getShowControls :: Record Controls -> Boolean
 getShowControls { showControls: ( should /\ _ ) } = should
@@ -138,7 +137,7 @@ setShowSidePanel :: Record Controls -> Boolean -> Effect Unit
 setShowSidePanel { showSidePanel: ( _ /\ set ) } v = set $ const v
 
 setShowTree :: Record Controls -> Boolean -> Effect Unit
-setShowTree { showTree: ( _ /\ set ) } v = set $ const v
+setShowTree { showTree: ( _ /\ set ) } v = set $ not <<< const v
 
 setCursorSize :: Record Controls -> Number -> Effect Unit
 setCursorSize { cursorSize: ( _ /\ setSize ) } v = setSize $ const v

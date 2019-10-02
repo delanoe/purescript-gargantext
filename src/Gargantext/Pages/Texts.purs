@@ -30,7 +30,7 @@ textsLayout props = R.createElement textsLayoutCpt props []
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = R.hooksComponent "TextsLoader" cpt
   where
-    cpt {nodeId,session} _ =
+    cpt {session,nodeId} _ =
       useLoader nodeId (getCorpus session) $
         \corpusData@{corpusId, corpusNode, defaultListId} ->
           let

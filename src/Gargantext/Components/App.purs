@@ -41,13 +41,15 @@ appCpt :: R.Component ()
 appCpt = R.hooksComponent "G.C.App.app" cpt where
   frontends = defaultFrontends
   cpt _ _ = do
-    sessions <- useSessions
-    route <- useHashRouter router Home
-    showLogin <- R.useState' false
+    sessions   <- useSessions
+    route      <- useHashRouter router Home
+    
+    showLogin  <- R.useState' false
     showCorpus <- R.useState' false
-    let tree = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
-    let mCurrentRoute = Just $ fst route
-    let backends = fromFoldable defaultBackends
+    
+    let tree          = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
+    let mCurrentRoute = fst route
+    let backends      = fromFoldable defaultBackends
     pure $ case fst showLogin of
       true -> tree $ login { sessions, backends, visible: showLogin }
       false ->
@@ -55,15 +57,15 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
           Nothing -> tree $ homeLayout EN
           Just session ->
             case (fst route) of
-              Home -> tree $ homeLayout EN
-              Login -> login { sessions, backends, visible: showLogin }
+              Home     -> tree $ homeLayout EN
+              Login    -> login { sessions, backends, visible: showLogin }
               Folder _ -> tree $ folder {}
               Corpus nodeId -> tree $ corpusLayout { nodeId }
-              Texts nodeId -> tree $ textsLayout { nodeId, session }
-              Lists nodeId -> tree $ listsLayout { nodeId, session }
-              Dashboard -> tree $ dashboardLayout {}
-              Annuaire annuaireId -> tree $ annuaireLayout { annuaireId, session }
-              UserPage nodeId -> tree $ userLayout { nodeId, session }
+              Texts  nodeId -> tree $ textsLayout { nodeId, session }
+              Lists  nodeId -> tree $ listsLayout { nodeId, session }
+              Dashboard _nodeId -> tree $ dashboardLayout {}
+              Annuaire    nodeId -> tree $ annuaireLayout { nodeId, session }
+              UserPage    nodeId -> tree $ userLayout { nodeId, session }
               ContactPage nodeId -> tree $ userLayout { nodeId, session }
               CorpusDocument corpusId listId nodeId ->
                 tree $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
@@ -71,7 +73,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
                 tree $ documentLayout { nodeId, listId, session, corpusId: Nothing }
               PGraphExplorer graphId ->
                 simpleLayout (fst sessions) $
-                  explorerLayout { graphId, mCurrentRoute, session, treeId: Nothing, frontends }
+                  explorerLayout { graphId, mCurrentRoute, session, treeId: Nothing, frontends}
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
 forestLayout frontends sessions route showLogin child =
@@ -81,8 +83,9 @@ forestLayout frontends sessions route showLogin child =
     main =
       R.fragment
       [ H.div {className: "col-md-2", style: {paddingTop: "60px"}}
-        [ forest {sessions, route, frontends, showLogin} ]
-      , mainPage child ]
+              [ forest {sessions, route, frontends, showLogin} ]
+      , mainPage child
+      ]
 
 -- Simple layout does not accommodate the tree
 simpleLayout :: Sessions -> R.Element -> R.Element
@@ -218,7 +221,7 @@ liNav (LiNav { title : title'
 footer :: {} -> R.Element
 footer props = R.createElement footerCpt props []
 
-footerCpt :: R.Component () 
+footerCpt :: R.Component ()
 footerCpt = R.staticComponent "G.C.Layout.footer" cpt
   where
     cpt _ _ =

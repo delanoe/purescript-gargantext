@@ -43,7 +43,7 @@ getCorpus :: Session -> Int -> Aff Tabs.CorpusData
 getCorpus session listId = do
   -- fetch corpus via lists parentId
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get nodePolyUrl
-  corpusNode     <- get $ corpusNodeUrl corpusId
+  corpusNode     <- get $ corpusNodeUrl     corpusId
   defaultListIds <- get $ defaultListIdsUrl corpusId
   case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
@@ -51,6 +51,6 @@ getCorpus session listId = do
     Nothing ->
       throwError $ error "Missing default list"
   where
-    nodePolyUrl = url session (NodeAPI Corpus (Just listId))
-    corpusNodeUrl = url session <<< NodeAPI Corpus <<< Just
+    nodePolyUrl       = url session (NodeAPI Corpus (Just listId))
+    corpusNodeUrl     = url session <<< NodeAPI Corpus <<< Just
     defaultListIdsUrl = url session <<< Children NodeList 0 1 Nothing <<< Just

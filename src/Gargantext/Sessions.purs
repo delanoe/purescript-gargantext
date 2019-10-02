@@ -68,8 +68,8 @@ act :: Sessions -> Action -> Effect Sessions
 act _ (Login session) = pure $ Sessions (Just session)
 act (Sessions s) (Logout session)
   | Just session == s = pure (Sessions Nothing)
-  | Just s2 <- s = log2 "Alien session:" s2 *> pure (Sessions Nothing)
-  | otherwise = log "Can't log out of nonexistent session" *> pure (Sessions Nothing)
+  | Just      s2 <- s = log2 "Alien session:" s2 *> pure (Sessions Nothing)
+  | otherwise         = log "Can't log out of nonexistent session" *> pure (Sessions Nothing)
 
 -- Key we will store the data under
 localStorageKey :: String
@@ -106,7 +106,7 @@ postAuthRequest backend ar@(AuthRequest {username}) =
   decode <$> post (toUrl backend "auth") ar
   where
     decode (AuthResponse ar2)
-      | {inval: Just (AuthInvalid {message})} <- ar2 = Left message
+      | {inval: Just (AuthInvalid {message})}     <- ar2 = Left message
       | {valid: Just (AuthData {token, tree_id})} <- ar2 =
           Right $ Session { backend, username, token, treeId: tree_id }
       | otherwise = Left "Invalid response from server"

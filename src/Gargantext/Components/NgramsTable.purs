@@ -80,12 +80,12 @@ data Action
 
 type Dispatch = Action -> Effect Unit
 
-tableContainer :: { pageParams :: PageParams
-                  , dispatch :: Dispatch
-                  , setPath :: R2.Setter PageParams
-                  , ngramsParent :: Maybe NgramsTerm
+tableContainer :: { pageParams     :: PageParams
+                  , dispatch       :: Dispatch
+                  , setPath        :: R2.Setter PageParams
+                  , ngramsParent   :: Maybe NgramsTerm
                   , ngramsChildren :: Map NgramsTerm Boolean
-                  , ngramsTable :: NgramsTable
+                  , ngramsTable    :: NgramsTable
                   }
                -> Record T.TableContainerProps -> R.Element
 tableContainer { pageParams
@@ -185,10 +185,10 @@ useNgramsReducer :: State -> R.Hooks (R.Reducer State Action')
 useNgramsReducer init = R.useReducer' performNgramsAction init
 
 type Props =
-  ( session :: Session
+  ( session      :: Session
   , tabNgramType :: CTabNgramType
-  , path :: R.State PageParams
-  , versioned :: VersionedNgramsTable )
+  , path         :: R.State PageParams
+  , versioned    :: VersionedNgramsTable )
 
 ngramsTable :: Record Props -> R.Element
 ngramsTable props = R.createElement ngramsTableCpt props []

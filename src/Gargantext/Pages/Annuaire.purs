@@ -1,7 +1,7 @@
 module Gargantext.Pages.Annuaire where
 
 import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.??))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array (head)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (fst, snd)
@@ -29,7 +29,7 @@ toRows (AnnuaireTable a) = a.annuaireTable
 
 -- | Top level layout component. Loads an annuaire by id and renders
 -- | the annuaire using the result
-type LayoutProps = ( annuaireId :: Int, session :: Session )
+type LayoutProps = ( nodeId :: Int, session :: Session )
 
 annuaireLayout :: Record LayoutProps -> R.Element
 annuaireLayout props = R.createElement annuaireLayoutCpt props []
@@ -37,8 +37,8 @@ annuaireLayout props = R.createElement annuaireLayoutCpt props []
 annuaireLayoutCpt :: R.Component LayoutProps
 annuaireLayoutCpt = R.hooksComponent "G.P.Annuaire.annuaireLayout" cpt
   where
-    cpt {annuaireId, session} _ = do
-      path <- R.useState' annuaireId
+    cpt {nodeId, session} _ = do
+      path <- R.useState' nodeId
       useLoader (fst path) (getAnnuaireInfo session) $
         \info -> annuaire {session, path, info}
       
@@ -138,8 +138,8 @@ data HyperdataAnnuaire = HyperdataAnnuaire
 instance decodeHyperdataAnnuaire :: DecodeJson HyperdataAnnuaire where
   decodeJson json = do
     obj   <- decodeJson json
-    title <- obj .?? "title"
-    desc  <- obj .?? "desc"
+    title <- obj .:? "title"
+    desc  <- obj .:? "desc"
     pure $ HyperdataAnnuaire { title, desc }
 
 ------------------------------------------------------------------------------

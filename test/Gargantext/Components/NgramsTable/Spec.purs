@@ -1,11 +1,9 @@
 module Gargantext.Components.NgramsTable.Spec where
 
 import Prelude
-import Gargantext.Config (CTabNgramType(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Gargantext.Components.NgramsTable.Core (highlightNgrams, NgramsElement(..), NgramsTable(..))
-import Gargantext.Config (CTabNgramType(..))
 import Gargantext.Types  (TermList(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -13,6 +11,7 @@ import Test.Spec.Assertions (shouldEqual)
 import Data.Map as Map
 import Data.Set as Set
 
+{-
 spec :: Spec Unit
 spec = do
   let ne ngrams list =
@@ -93,3 +92,4 @@ spec = do
                    ,Tuple ", after" Nothing
                    ]
       highlightNgrams CTabTerms table input `shouldEqual` output
+-}

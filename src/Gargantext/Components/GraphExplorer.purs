@@ -7,7 +7,7 @@ import Data.Foldable (foldMap)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
-import Data.Tuple (fst)
+import Data.Tuple (fst,snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
@@ -21,25 +21,27 @@ import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Graph as Graph
-import Gargantext.Components.Tree as Tree
+import Gargantext.Components.Forest (forest)
 import Gargantext.Config.REST (get)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, Sessions(..))
 import Gargantext.Types (NodeType(Graph))
 
 type GraphId = Int
 
 type LayoutProps =
   ( graphId :: GraphId
-  , mCurrentRoute :: Maybe AppRoute
+  , mCurrentRoute :: AppRoute
   , treeId :: Maybe Int
   , session :: Session
-  , frontends :: Frontends )
+  , frontends :: Frontends 
+  )
 
 
 type Props = ( graph :: Maybe Graph.Graph | LayoutProps )
 
+--------------------------------------------------------------
 explorerLayout :: Record LayoutProps -> R.Element
 explorerLayout props = R.createElement explorerLayoutCpt props []
 
@@ -52,6 +54,7 @@ explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
         handler loaded = explorer {graphId, mCurrentRoute, treeId, session, graph, frontends}
           where graph = Just (convert loaded)
 
+--------------------------------------------------------------
 explorer :: Record Props -> R.Element
 explorer props = R.createElement explorerCpt props []
 
@@ -61,13 +64,12 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     cpt {session, graphId, mCurrentRoute, treeId, graph, frontends} _ = do
       controls <- Controls.useGraphControls
       state <- useExplorerState
+      showLogin <- snd <$> R.useState' true
       pure $
         RH.div
           { id: "graph-explorer" }
-          [
-            row
-            [
-              outer
+          [ row
+            [ outer
               [ inner
                 [ row1
                   [ col [ pullLeft [ Toggle.treeToggleButton controls.showTree ] ]
@@ -75,7 +77,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
                 , row [ Controls.controls controls ]
-                , row [ tree {mCurrentRoute, treeId} controls
+                , row [ tree {mCurrentRoute, treeId} controls showLogin
                       , mGraph controls.sigmaRef {graphId, graph}
                       , Sidebar.sidebar {showSidePanel: fst controls.showSidePanel} ]
                 , row [ ]
@@ -84,17 +86,17 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
             ]
           ]
       where
-        tree {treeId: Nothing} _ = RH.div { id: "tree" } []
-        tree _ {showTree: false /\ _} = RH.div { id: "tree" } []
-        tree {mCurrentRoute: m, treeId: Just root} _ =
-          RH.div { id: "tree", className: "col-md-2" }
-          [  Tree.treeView {frontends, root, mCurrentRoute: m, session: session} ]
+        -- tree {treeId: Nothing} _ _ = RH.div { id: "tree" } []
+        tree _ {showTree: false /\ _} _ = RH.div { id: "tree" } []
+        tree {mCurrentRoute: m, treeId: root} _ showLogin= 
+          RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
+                 [forest {sessions: Sessions (Just session), route:m, frontends, showLogin}]
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
-    row1 = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
-    row = RH.div { className: "row" }
-    col = RH.div { className: "col-md-4" }
-    pullLeft = RH.div { className: "pull-left" }
+    row1  = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
+    row   = RH.div { className: "row" }
+    col       = RH.div { className: "col-md-4" }
+    pullLeft  = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }
 
 

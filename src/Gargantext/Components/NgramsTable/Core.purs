@@ -104,11 +104,11 @@ type CoreParams s =
 
 type PageParams =
   CoreParams
-    ( params :: T.Params
-    , searchQuery :: String
+    ( params         :: T.Params
+    , searchQuery    :: String
     , termListFilter :: Maybe TermList -- Nothing means all
     , termSizeFilter :: Maybe TermSize -- Nothing means all
-    , session :: Session
+    , session        :: Session
     )
 
 initialPageParams :: Session -> Int -> Array Int -> TabType -> PageParams

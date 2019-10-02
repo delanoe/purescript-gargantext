@@ -44,13 +44,17 @@ type Reload = Int
 
 data NodePopup = CreatePopup | NodePopup
 
-type Props = ( root :: ID, mCurrentRoute :: Maybe AppRoute, session :: Session, frontends :: Frontends )
+type Props = ( root :: ID
+             , mCurrentRoute :: Maybe AppRoute
+             , session :: Session
+             , frontends :: Frontends
+             )
 
-type TreeViewProps =
-  ( tree :: FTree
-  , mCurrentRoute :: Maybe AppRoute
-  , frontends :: Frontends
-  , session :: Session )
+type TreeViewProps = ( tree :: FTree
+                     , mCurrentRoute :: Maybe AppRoute
+                     , frontends :: Frontends
+                     , session :: Session 
+                     )
 
 data NTree a = NTree a (Array (NTree a))
 
@@ -203,7 +207,8 @@ type NodeMainSpanProps =
   ( id :: ID
   , name :: Name
   , nodeType :: NodeType
-  , mCurrentRoute :: Maybe AppRoute)
+  , mCurrentRoute :: Maybe AppRoute
+  )
 
 nodeMainSpan :: (Action -> Aff Unit)
              -> Record NodeMainSpanProps
@@ -216,9 +221,9 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
     el = R.hooksComponent "NodeMainSpan" cpt
     cpt {id, name, nodeType, mCurrentRoute} _ = do
       -- only 1 popup at a time is allowed to be opened
-      popupOpen <- R.useState' (Nothing :: Maybe NodePopup)
+      popupOpen   <- R.useState' (Nothing :: Maybe NodePopup)
       droppedFile <- R.useState' (Nothing :: Maybe DroppedFile)
-      isDragOver <- R.useState' false
+      isDragOver  <- R.useState' false
 
       pure $ H.span (dropProps droppedFile isDragOver)
         [ folderIcon folderOpen
@@ -270,10 +275,14 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
 
 
 fldr :: Boolean -> String
-fldr open = if open then "glyphicon glyphicon-folder-open" else "glyphicon glyphicon-folder-close"
+fldr open = if open
+               then "glyphicon glyphicon-folder-open"
+               else "glyphicon glyphicon-folder-close"
 
-
-childNodes :: Session -> Frontends -> R.State Reload -> R.State Boolean -> Maybe AppRoute -> Array FTree -> Array R.Element
+childNodes :: Session         -> Frontends
+            -> R.State Reload -> R.State Boolean
+            -> Maybe AppRoute -> Array FTree
+            -> Array R.Element
 childNodes _ _ _ _ _ [] = []
 childNodes _ _ _ (false /\ _) _ _ = []
 childNodes session frontends reload (true /\ _) mCurrentRoute ary = map (\ctree -> childNode {tree: ctree}) ary

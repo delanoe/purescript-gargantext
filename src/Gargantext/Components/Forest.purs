@@ -1,8 +1,7 @@
 module Gargantext.Components.Forest where
 
-import Prelude (const, show, discard)
+import Prelude (const, show)
 import Data.Maybe (Maybe(..))
-import DOM.Simple.Console (log)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Ends (Frontends)
@@ -12,8 +11,8 @@ import Gargantext.Components.Tree (treeView)
 import Gargantext.Utils.Reactix as R2
 
 type Props =
-  ( sessions :: Sessions
-  , route :: AppRoute
+  ( sessions  :: Sessions
+  , route     :: AppRoute
   , frontends :: Frontends
   , showLogin :: R2.Setter Boolean )
 
@@ -31,8 +30,12 @@ forestCpt = R.staticComponent "G.C.Forest.forest" cpt where
           Just s@(Session {treeId}) ->
             R.fragment
             [ H.text (show s)
-            , treeView { root: treeId, frontends, mCurrentRoute: Just route, session: s } ]
-        
+            , treeView { root: treeId
+                       , frontends
+                       , mCurrentRoute: Just route
+                       , session: s }
+            ]
+
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin = H.button {on: {click}} [ H.text "+" ]
   where

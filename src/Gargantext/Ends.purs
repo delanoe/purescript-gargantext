@@ -95,11 +95,11 @@ staticUrl :: Frontends -> String -> String
 staticUrl (Frontends {static}) = frontendUrl static
 
 sessionPath :: R.SessionRoute -> String
-sessionPath (R.Tab t i) = sessionPath (R.NodeAPI Node i) <> "/" <> showTabType' t
+sessionPath (R.Tab t i)            = sessionPath (R.NodeAPI Node i) <> "/" <> showTabType' t
 sessionPath (R.Children n o l s i) = root <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
   where root = sessionPath (R.NodeAPI Node i) <> "/"
-sessionPath (R.NodeAPI Phylo pId) = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId)
-sessionPath (R.GetNgrams opts i) =
+sessionPath (R.NodeAPI Phylo pId)  = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId)
+sessionPath (R.GetNgrams opts i)   =
   base opts.tabType
   <> "/ngrams?ngramsType="
   <> showTabType' opts.tabType
