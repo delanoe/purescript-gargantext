@@ -65,7 +65,7 @@ tabsCpt = R.hooksComponent "G.P.Annuaire.User.Contacts.Tabs.tabs" cpt
             commView = {session, defaultListId, nodeId, mode: Communication}
             chart = mempty
             totalRecords = 4736 -- TODO
-            docs = DT.docView
+            docs = DT.docViewLayout
               { session, nodeId, chart, totalRecords
               , tabType: TabPairing TabDocs
               , listId: defaultListId

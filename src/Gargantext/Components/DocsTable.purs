@@ -39,7 +39,7 @@ import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..))
 type NodeID = Int
 type TotalRecords = Int
 
-type Props =
+type LayoutProps =
   ( nodeId       :: Int
   , totalRecords :: Int
   , chart        :: R.Element
@@ -51,14 +51,15 @@ type Props =
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
 
-type PageLoaderProps =
+type PageLayoutProps =
   ( nodeId       :: Int
   , totalRecords :: Int
   , tabType      :: TabType
   , listId       :: Int
   , corpusId     :: Maybe Int
   , query        :: Query
-  , session      :: Session )
+  , session      :: Session
+  , params       :: R.State T.Params )
 
 type LocalCategories = Map Int Category
 type Query = String
@@ -121,34 +122,41 @@ instance decodeResponse :: DecodeJson Response where
     pure $ Response { cid, category: decodeCategory favorite, ngramCount, hyperdata }
 
 
+docViewLayout :: Record LayoutProps -> R.Element
+docViewLayout props = R.createElement docViewLayoutCpt props []
+
+docViewLayoutCpt :: R.Component LayoutProps
+docViewLayoutCpt = R.hooksComponent "G.C.DocsTable.docViewLayout" cpt
+  where
+    cpt layout _children = do
+      query <- R.useState' ""
+      params <- R.useState' T.initialParams
+      pure $ docView {query, params, layout}
+
+type Props =
+  ( query :: R.State Query
+  , params :: R.State T.Params
+  , layout :: Record LayoutProps )
+
 docView :: Record Props -> R.Element
-docView p = R.createElement docViewCpt p []
+docView props = R.createElement docViewCpt props []
 
 docViewCpt :: R.Component Props
-docViewCpt = R.hooksComponent "DocView" cpt
-  where
-    cpt p _children = do
-      query <- R.useState' ("" :: Query)
-      tableParams <- R.useState' T.initialParams
-      pure $ layoutDocview query tableParams p
-
--- | Main layout of the Documents Tab of a Corpus
-layoutDocview :: R.State Query -> R.State T.Params -> Record Props -> R.Element
-layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
-  where
-    el = R.hooksComponent "LayoutDocView" cpt
-    cpt {session, nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch} _children = do
-      pure $ H.div {className: "container1"}
-        [ H.div {className: "row"}
-          [ chart
-          , if showSearch then searchBar query else H.div {} []
-          , H.div {className: "col-md-12"}
-            [ pageLoader tableParams {session, nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ] ] ]
+docViewCpt = R.hooksComponent "G.C.DocsTable.docView" cpt where
+  cpt { query, params
+      , layout: { session, nodeId, tabType, listId, corpusId
+                , totalRecords, chart, showSearch } } _ = do
+    pure $ H.div {className: "container1"}
+      [ H.div {className: "row"}
+        [ chart
+        , if showSearch then searchBar query else H.div {} []
+        , H.div {className: "col-md-12"}
+          [ pageLayout {session, nodeId, totalRecords, tabType, listId, corpusId, query: fst query, params} ] ] ]
     -- onClickTrashAll nodeId _ = do
     --   launchAff $ deleteAllDocuments p.session nodeId
           
           {-, H.div {className: "col-md-1 col-md-offset-11"}
-            [ pageLoader p.session tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
+            [ pageLayout p.session params {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
           , H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
                        , style: {backgroundColor: "peru", color : "white", border : "white"}
@@ -247,7 +255,7 @@ loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offs
 
     convOrderBy _ = DateAsc -- TODO
 
-renderPage :: R.State T.Params -> Record PageLoaderProps -> Array DocumentsView -> R.Element
+renderPage :: R.State T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
 renderPage (_ /\ setTableParams) p@{session} res = R.createElement el p []
   where
     sid = sessionId session
@@ -295,13 +303,14 @@ renderPage (_ /\ setTableParams) p@{session} res = R.createElement el p []
           setLocalCategories $ insert nid newCat
           void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
 
-pageLoader :: R.State T.Params -> Record PageLoaderProps -> R.Element
-pageLoader tableParams@(pageParams /\ _) p = R.createElement el p []
-  where
-    el = R.hooksComponent "PageLoader" cpt
-    cpt props@{session, nodeId, listId, corpusId, tabType, query} _children = do
-      useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} (loadPage session) $
-        \loaded -> renderPage tableParams props loaded
+pageLayout :: Record PageLayoutProps -> R.Element
+pageLayout props = R.createElement pageLayoutCpt props []
+
+pageLayoutCpt :: R.Component PageLayoutProps
+pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
+  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ = do
+    useLoader {nodeId, listId, corpusId, tabType, query, params: fst params} (loadPage session) $
+      \loaded -> renderPage params props loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView

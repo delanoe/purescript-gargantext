@@ -30,7 +30,7 @@ import Gargantext.Routes (AppRoute(..))
 import Gargantext.Hooks.Router (useHashRouter)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Sessions as Sessions
-import Gargantext.Sessions (Sessions, useSessions, unSessions)
+import Gargantext.Sessions (Sessions, useSessions)
 
 -- TODO (what does this mean?)
 -- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc

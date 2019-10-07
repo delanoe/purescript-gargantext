@@ -62,9 +62,9 @@ docViewCpt :: forall a. R.Component (DocViewProps a)
 docViewCpt = R.hooksComponent "DocViewWithCorpus" cpt
   where
     cpt {session, corpusId, corpusData: {defaultListId}, tabType} _children = do
-      pure $ DT.docView $ params tabType
+      pure $ DT.docViewLayout $ params tabType
       where
-        params :: forall b. TabSubType b -> Record DT.Props
+        params :: forall b. TabSubType b -> Record DT.LayoutProps
         params TabDocs =
           { nodeId: corpusId
             -- ^ TODO merge nodeId and corpusId in DT
