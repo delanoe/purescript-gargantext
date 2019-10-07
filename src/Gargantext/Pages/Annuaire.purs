@@ -9,7 +9,7 @@ import Effect.Aff (Aff)
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url)
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodePath(..), NodeType(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Hooks.Loader (useLoader)
@@ -113,7 +113,7 @@ contactCells :: Session -> Maybe Contact -> Array R.Element
 contactCells session = maybe [] render
   where
     render (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) }) =
-      let nodepath = NodePath NodeContact (Just id)
+      let nodepath = NodePath (sessionId session) NodeContact (Just id)
           href = url session nodepath in
       [ H.text ""
       , H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]

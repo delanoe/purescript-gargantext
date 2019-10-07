@@ -26,7 +26,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(Search,NodeAPI))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..))
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.DecodeMaybe ((.|))
@@ -289,7 +289,7 @@ pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
         isDeleted (DocumentsView {id}) = Set.member id (fst deletions).deleted
         pairUrl (Pair {id,label})
           | id > 1 = H.a { href, target: "blank" } [ H.text label ]
-            where href = url session $ NodePath NodeContact (Just id)
+            where href = url session $ NodePath (sessionId session) NodeContact (Just id)
           | otherwise = H.text label
         comma = H.span {} [ H.text ", " ]
         rows = row <$> filter (not <<< isDeleted) documents

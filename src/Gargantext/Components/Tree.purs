@@ -31,7 +31,7 @@ import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Routes (AppRoute, SessionRoute(..))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
@@ -228,7 +228,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
 
       pure $ H.span (dropProps droppedFile isDragOver)
         [ folderIcon folderOpen
-        , H.a { href: (url frontends (NodePath nodeType (Just id)))
+        , H.a { href: (url frontends (NodePath (sessionId session) nodeType (Just id)))
               , style: {marginLeft: "22px"}
               }
           [ nodeText {isSelected: (mCorpusId mCurrentRoute) == (Just id), name:name'} ]

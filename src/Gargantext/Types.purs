@@ -252,10 +252,10 @@ type ChartOpts =
   -- , limit   :: Maybe Limit
   }
 
-data NodePath = NodePath NodeType (Maybe Id)
+data NodePath = NodePath SessionId NodeType (Maybe Id)
 
 nodePath :: NodePath -> String
-nodePath (NodePath t i) = nodeTypePath t <> id
+nodePath (NodePath s t i) = nodeTypePath t <> "/" <> show s <> id
   where id = maybe "" (\j -> "/" <> show j) i
 
 data ChartType = Histo | Scatter | ChartPie | ChartTree
