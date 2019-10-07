@@ -3,7 +3,7 @@ module Gargantext.Components.App where
 import Prelude
 import Data.Array (fromFoldable)
 import Data.Foldable (intercalate)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -12,8 +12,8 @@ import Gargantext.Components.Data.Lang (Lang(..))
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Login (login)
-import Gargantext.Components.Search.SearchBar as SB
-import Gargantext.Components.Search.Types (allDatabases)
+-- import Gargantext.Components.Search.SearchBar as SB
+-- import Gargantext.Components.Search.Types (allDatabases)
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Components.Folder (folder)
 import Gargantext.Ends (Frontends)
@@ -29,6 +29,7 @@ import Gargantext.Router (router)
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Hooks.Router (useHashRouter)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Sessions as Sessions
 import Gargantext.Sessions (Sessions, useSessions, unSessions)
 
 -- TODO (what does this mean?)
@@ -47,37 +48,39 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
     showLogin  <- R.useState' false
     showCorpus <- R.useState' false
     
-    let tree          = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
+    let forested          = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
     let mCurrentRoute = fst route
     let backends      = fromFoldable defaultBackends
+    let withSession = \sid f -> maybe' (\_ -> forested $ homeLayout EN) f $ Sessions.lookup sid (fst sessions)
     pure $ case fst showLogin of
-      true -> tree $ login { sessions, backends, visible: showLogin }
+      true -> forested $ login { sessions, backends, visible: showLogin }
       false ->
-        case unSessions (fst sessions) of
-          Nothing -> tree $ homeLayout EN
-          Just session ->
-            case (fst route) of
-              Home     -> tree $ homeLayout EN
-              Login    -> login { sessions, backends, visible: showLogin }
-              Folder _ -> tree $ folder {}
-              Corpus nodeId -> tree $ corpusLayout { nodeId }
-              Texts  nodeId -> tree $ textsLayout { nodeId, session }
-              Lists  nodeId -> tree $ listsLayout { nodeId, session }
-              Dashboard _nodeId -> tree $ dashboardLayout {}
-              Annuaire    nodeId -> tree $ annuaireLayout { nodeId, session }
-              UserPage    nodeId -> tree $ userLayout { nodeId, session }
-              ContactPage nodeId -> tree $ userLayout { nodeId, session }
-              CorpusDocument corpusId listId nodeId ->
-                tree $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
-              Document listId nodeId ->
-                tree $ documentLayout { nodeId, listId, session, corpusId: Nothing }
-              PGraphExplorer graphId ->
-                simpleLayout (fst sessions) $
-                  explorerLayout { graphId, mCurrentRoute, session, sessions, treeId: Nothing, frontends}
+        case fst route of
+          Home  -> forested $ homeLayout EN
+          Login -> login { sessions, backends, visible: showLogin }
+          Folder sid _ -> withSession sid $ \_ -> forested (folder {})
+          Corpus sid nodeId -> withSession sid $ \_ -> forested $ corpusLayout { nodeId }
+          Texts sid nodeId -> withSession sid $ \session -> forested $ textsLayout { nodeId, session }
+          Lists sid nodeId -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
+          Dashboard sid _nodeId -> withSession sid $ \session -> forested $ dashboardLayout {}
+          Annuaire sid nodeId -> withSession sid $ \session -> forested $ annuaireLayout { nodeId, session }
+          UserPage sid nodeId -> withSession sid $ \session -> forested $ userLayout { nodeId, session }
+          ContactPage sid nodeId -> withSession sid $ \session -> forested $ userLayout { nodeId, session }
+          CorpusDocument sid corpusId listId nodeId ->
+            withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
+          Document sid listId nodeId ->
+            withSession sid $
+              \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Nothing }
+          PGraphExplorer sid graphId ->
+            withSession sid $
+              \session ->
+                simpleLayout $
+                  explorerLayout { graphId, mCurrentRoute, session
+                                 , sessions: (fst sessions), treeId: Nothing, frontends}
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
 forestLayout frontends sessions route showLogin child =
-  R.fragment [ topBar sessions, row main, footer {} ]
+  R.fragment [ topBar {}, row main, footer {} ]
   where
     row child' = H.div {className: "row"} [child']
     main =

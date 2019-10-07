@@ -48,7 +48,7 @@ explorerLayout props = R.createElement explorerLayoutCpt props []
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
   where
-    cpt {graphId, mCurrentRoute, treeId, session, frontends} _ =
+    cpt {graphId, mCurrentRoute, treeId, session, sessions, frontends} _ =
       useLoader graphId (getNodes session) handler
       where
         handler loaded = explorer {graphId, mCurrentRoute, treeId, session, sessions, graph, frontends}
@@ -90,7 +90,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
         tree _ {showTree: false /\ _} _ = RH.div { id: "tree" } []
         tree {mCurrentRoute: route, treeId: root} _ showLogin= 
           RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
-                 [forest {sessions, route, frontends, showLogin}]
+          [forest {sessions, route, frontends, showLogin}]
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1  = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }

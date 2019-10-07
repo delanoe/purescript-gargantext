@@ -32,7 +32,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..))
 ------------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ type Props =
   , listId       :: Int
   , corpusId     :: Maybe Int
   , showSearch   :: Boolean
-  , session         :: Session )
+  , session      :: Session )
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
 
@@ -58,7 +58,7 @@ type PageLoaderProps =
   , listId       :: Int
   , corpusId     :: Maybe Int
   , query        :: Query
-  , session         :: Session )
+  , session      :: Session )
 
 type LocalCategories = Map Int Category
 type Query = String
@@ -248,16 +248,17 @@ loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offs
     convOrderBy _ = DateAsc -- TODO
 
 renderPage :: R.State T.Params -> Record PageLoaderProps -> Array DocumentsView -> R.Element
-renderPage (_ /\ setTableParams) p res = R.createElement el p []
+renderPage (_ /\ setTableParams) p@{session} res = R.createElement el p []
   where
+    sid = sessionId session
     el = R.hooksComponent "RenderPage" cpt
 
     gi Favorite  = "glyphicon glyphicon-star"
     gi _ = "glyphicon glyphicon-star-empty"
     trashStyle Trash = {textDecoration: "line-through"}
     trashStyle _ = {textDecoration: "none"}
-    corpusDocument (Just corpusId) = Routes.CorpusDocument corpusId
-    corpusDocument _ = Routes.Document
+    corpusDocument (Just corpusId) = Routes.CorpusDocument sid corpusId
+    corpusDocument _ = Routes.Document sid
 
     cpt {session, nodeId, corpusId, listId, totalRecords} _children = do
       localCategories <- R.useState' (mempty :: LocalCategories)

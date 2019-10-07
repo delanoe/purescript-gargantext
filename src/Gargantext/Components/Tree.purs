@@ -152,8 +152,8 @@ performAction session _ ({tree: NTree (LNode {id}) _} /\ _) (UploadFile fileType
 ------------------------------------------------------------------------
 
 mCorpusId :: Maybe AppRoute -> Maybe Int
-mCorpusId (Just (Routes.Corpus id)) = Just id
-mCorpusId (Just (Routes.CorpusDocument id _ _)) = Just id
+mCorpusId (Just (Routes.Corpus _ id)) = Just id
+mCorpusId (Just (Routes.CorpusDocument _ id _ _)) = Just id
 mCorpusId _ = Nothing
 
 treeView :: Record Props -> R.Element
