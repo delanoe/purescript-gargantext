@@ -25,12 +25,16 @@ import Reactix.Utils (currySecond, hook, tuple)
 import Thermite (Spec, simpleSpec, Render, defaultPerformAction)
 import Unsafe.Coerce (unsafeCoerce)
 
-newtype Point = Point { x :: Number, y :: Number }
+newtype Point
+  = Point { x :: Number, y :: Number }
 
 -- a setter function, for useState
-type Setter t = (t -> t) -> Effect Unit
+type Setter t
+  = (t -> t) -> Effect Unit
+
 -- a reducer function living in effector, for useReductor
-type Actor t a = (t -> a -> Effect t)
+type Actor t a
+  = (t -> a -> Effect t)
 
 -- | Turns a ReactElement into aReactix Element
 -- | buff (v.) to polish
@@ -58,21 +62,21 @@ instance toElementArray :: ToElement a => ToElement (Array a) where
 instance isReactElementElement :: IsReactElement R.Element where
   toElement = scuff
 -}
-
-elSpec :: forall component props
-        . R.IsComponent component props (Array R.Element)
-       => component -> Spec {} (Record props) Void
+elSpec ::
+  forall component props.
+  R.IsComponent component props (Array R.Element) =>
+  component -> Spec {} (Record props) Void
 elSpec cpt = simpleSpec defaultPerformAction render
   where
-    render :: Render {} (Record props) Void
-    render _ props _ children = [scuff $ R.createElement cpt props (buff <$> children)]
+  render :: Render {} (Record props) Void
+  render _ props _ children = [ scuff $ R.createElement cpt props (buff <$> children) ]
 
-createElement' :: forall required given
-                . ReactPropFields required given
-               => ReactClass { children :: Children | required }
-               -> Record given -> Array R.Element -> R.Element
-createElement' reactClass props children =
-  buff $ React.createElement reactClass props $ scuff <$> children
+createElement' ::
+  forall required given.
+  ReactPropFields required given =>
+  ReactClass { children :: Children | required } ->
+  Record given -> Array R.Element -> R.Element
+createElement' reactClass props children = buff $ React.createElement reactClass props $ scuff <$> children
 
 {-
 instance isComponentReactClass
@@ -82,18 +86,18 @@ instance isComponentReactClass
   createElement reactClass props children =
     React.createElement reactClass props children
 -}
-
 -- | Turns an aff into a useEffect-compatible Effect (Effect Unit)
 affEffect :: forall a. String -> Aff a -> Effect (Effect Unit)
 affEffect errmsg aff = do
-    fiber <- launchAff aff
-    pure $ launchAff_ $ killFiber (error errmsg) fiber
+  fiber <- launchAff aff
+  pure $ launchAff_ $ killFiber (error errmsg) fiber
 
 mousePosition :: RE.SyntheticEvent DE.MouseEvent -> Point
 mousePosition e = Point { x: RE.clientX e, y: RE.clientY e }
 
 domMousePosition :: DE.MouseEvent -> Point
 domMousePosition = mousePosition <<< unsafeCoerce
+
 -- | This is naughty, it quietly mutates the input and returns it
 named :: forall o. String -> o -> o
 named = flip $ defineProperty "name"
@@ -120,14 +124,17 @@ nothingRef :: forall t. R.Hooks (R.Ref (Maybe t))
 nothingRef = R.useRef Nothing
 
 useLayoutEffect1' :: forall a. a -> (Unit -> Effect Unit) -> R.Hooks Unit
-useLayoutEffect1' a f = R.useLayoutEffect1 a $ do
-  liftEffect $ f unit
-  pure $ pure unit
+useLayoutEffect1' a f =
+  R.useLayoutEffect1 a
+    $ do
+        liftEffect $ f unit
+        pure $ pure unit
 
 useLayoutRef :: forall a b. (a -> b) -> b -> R.Ref a -> R.Hooks (R.Ref b)
 useLayoutRef fn init ref = do
   new <- R.useRef init
-  let old = R.readRef ref
+  let
+    old = R.readRef ref
   useLayoutEffect1' old $ \_ -> R.setRef new (fn old)
   pure new
 
@@ -136,7 +143,8 @@ usePositionRef = useLayoutRef (map Element.boundingRect <<< toMaybe) Nothing
 
 readPositionRef :: R.Ref (Nullable DOM.Element) -> Maybe DOM.DOMRect
 readPositionRef el = do
-  let posRef = R.readRef el
+  let
+    posRef = R.readRef el
   Element.boundingRect <$> toMaybe posRef
 
 unsafeEventTarget :: forall event. event -> DOM.Element
@@ -145,11 +153,11 @@ unsafeEventTarget e = (unsafeCoerce e).target
 getElementById :: String -> Effect (Maybe DOM.Element)
 getElementById = (flip delay) h
   where
-    h id = pure $ toMaybe $ document ... "getElementById" $ [id]
-  
+  h id = pure $ toMaybe $ document ... "getElementById" $ [ id ]
+
 -- We just assume it works, so make sure it's in the html
 getPortalHost :: R.Hooks DOM.Element
-getPortalHost = R.unsafeHooksEffect $ delay unit $ \_ -> pure $ document ... "getElementById" $ ["portal"]
+getPortalHost = R.unsafeHooksEffect $ delay unit $ \_ -> pure $ document ... "getElementById" $ [ "portal" ]
 
 useLayoutEffectOnce :: Effect (Effect Unit) -> R.Hooks Unit
 useLayoutEffectOnce e = R.unsafeUseLayoutEffect e []
@@ -164,15 +172,16 @@ showText :: forall s. Show s => s -> R.Element
 showText = text <<< show
 
 ----- Reactix's new effectful reducer: sneak-peek because anoe wants to demo on tuesday
-
 -- | Like a reducer, but lives in Effect
-type Reductor state action = Tuple state (action -> Effect Unit)
+type Reductor state action
+  = Tuple state (action -> Effect Unit)
 
 -- | Like useReductor, but lives in Effect
 useReductor :: forall s a i. Actor s a -> (i -> Effect s) -> i -> R.Hooks (Reductor s a)
 useReductor f i j =
-  hook $ \_ ->
-    pure $ currySecond $ tuple $ react ... "useReducer" $ args3 (mkEffectFn2 f) j (mkEffectFn1 i)
+  hook
+    $ \_ ->
+        pure $ currySecond $ tuple $ react ... "useReducer" $ args3 (mkEffectFn2 f) j (mkEffectFn1 i)
 
 -- | Like `useReductor`, but takes an initial state instead of an
 -- | initialiser function and argument

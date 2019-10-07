@@ -5200,6 +5200,11 @@ purs-loader@^3.3.0:
     lodash.difference "^4.5.0"
     promise-retry "^1.1.0"
 
+purty@^4.5.1:
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/purty/-/purty-4.5.1.tgz#2458ae2823d550cc495bd6ab69f6ff2501abb159"
+  integrity sha512-yS+5XAlri7P4YwA0UpJeLPfMSYpwl8Uk3c1ly/BXRGIyAgzxfIel7jpn3mgLKMwY5ALv/v0VRnY/K8I+EzD8vw==
+
 qs@6.7.0:
   version "6.7.0"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.7.0.tgz#41dc1a015e3d581f1621776be31afb2876a9b1bc"

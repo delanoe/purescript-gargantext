@@ -1,16 +1,14 @@
 module Gargantext.Components.Charts.Options.Position
-       (
-         Position(),
-         numberPosition,
-         percentPosition,
-         relativePosition,
-         Align(..),
-         TopRelativePosition(..),
-         LeftRelativePosition(..)
-       ) where
+  ( Position()
+  , numberPosition
+  , percentPosition
+  , relativePosition
+  , Align(..)
+  , TopRelativePosition(..)
+  , LeftRelativePosition(..)
+  ) where
 
 import Prelude
-
 import Unsafe.Coerce (unsafeCoerce)
 
 -- | The type `Position` is made to render a css position.
@@ -29,18 +27,29 @@ percentPosition n = unsafeCoerce $ (show n) <> "%"
 -- | Smart constructor to build a JS String giving position's detail ("top", "left", ...)
 relativePosition :: forall a. Show a => Align a -> Position a
 relativePosition (Auto) = unsafeCoerce "auto"
+
 relativePosition (Relative r) = unsafeCoerce $ show r
 
-data Align p = Auto | Relative p
+data Align p
+  = Auto
+  | Relative p
 
-data TopRelativePosition = Top | Middle | Bottom
-instance showTopRelativePosition :: Show TopRelativePosition
-  where show (Top) = "top"
-        show (Middle) = "middle"
-        show (Bottom) = "bottom"
+data TopRelativePosition
+  = Top
+  | Middle
+  | Bottom
 
-data LeftRelativePosition = LeftPos | Center | RightPos
-instance showLeftRelativePosition :: Show LeftRelativePosition
-  where show (LeftPos) = "left"
-        show (Center) = "center"
-        show (RightPos) = "right"
+instance showTopRelativePosition :: Show TopRelativePosition where
+  show (Top) = "top"
+  show (Middle) = "middle"
+  show (Bottom) = "bottom"
+
+data LeftRelativePosition
+  = LeftPos
+  | Center
+  | RightPos
+
+instance showLeftRelativePosition :: Show LeftRelativePosition where
+  show (LeftPos) = "left"
+  show (Center) = "center"
+  show (RightPos) = "right"

@@ -1,7 +1,6 @@
 module Gargantext.Components.Charts.Options.ECharts where
 
 import Prelude
-
 import CSS (italic)
 import CSS.Common (normal)
 import Gargantext.Components.Charts.Options.Color (transparent, violet, black)
@@ -24,189 +23,201 @@ chart = echarts <<< chartWith <<< opts
 chartWith :: Option -> Echarts
 chartWith option =
   { option
---, className : Nothing
---, style     : Nothing
---, theme     : Nothing
---, group     : Nothing
---, initOpts  : Nothing
---, notMerge  : Nothing
---, lazyUpdate: Nothing
---, loading   : Nothing
---, optsLoading: Nothing
---, onReady    : Nothing
---, resizable  : Nothing
---, onEvents   : Nothing
+  --, className : Nothing
+  --, style     : Nothing
+  --, theme     : Nothing
+  --, group     : Nothing
+  --, initOpts  : Nothing
+  --, notMerge  : Nothing
+  --, lazyUpdate: Nothing
+  --, loading   : Nothing
+  --, optsLoading: Nothing
+  --, onReady    : Nothing
+  --, resizable  : Nothing
+  --, onEvents   : Nothing
   }
 
 echarts :: Echarts -> R.Element
 echarts c = R2.buff $ unsafeCreateElementDynamic (unsafeCoerce eChartsClass) c []
 
-type MainTitle = String
-type SubTitle  = String
+type MainTitle
+  = String
+
+type SubTitle
+  = String
 
 title :: MainTitle -> SubTitle -> Title
 title mainTitle subTitle =
-  {
-    id: ""
-   ,show: true
-   ,text: mainTitle
-   ,link: ""
-   ,target: "blank"
-   ,textStyle: textStyle
-   ,subtext: subTitle
-   ,sublink: ""
-   ,subtarget: "blank"
-   ,subtextStyle: textStyle2
-   ,padding: 10.0
-   ,itemGap: 0.0
-   ,zlevel: 2.0
-   ,z: 2.0
-   ,left: relativePosition (Relative RightPos)
-   ,top: relativePosition (Relative Top)
-   ,right: numberPosition 60.0
-   ,bottom: percentPosition 40.0
-   ,backgroundColor: transparent
-   ,borderColor: transparent
-   ,borderWidth: 0.0
-   ,borderRadius: 0.0
-   ,shadowBlur: 0.0
-   ,shadowColor: transparent
-   ,shadowOffsetX: 0.0
-   ,shadowOffsetY: 0.0
+  { id: ""
+  , show: true
+  , text: mainTitle
+  , link: ""
+  , target: "blank"
+  , textStyle: textStyle
+  , subtext: subTitle
+  , sublink: ""
+  , subtarget: "blank"
+  , subtextStyle: textStyle2
+  , padding: 10.0
+  , itemGap: 0.0
+  , zlevel: 2.0
+  , z: 2.0
+  , left: relativePosition (Relative RightPos)
+  , top: relativePosition (Relative Top)
+  , right: numberPosition 60.0
+  , bottom: percentPosition 40.0
+  , backgroundColor: transparent
+  , borderColor: transparent
+  , borderWidth: 0.0
+  , borderRadius: 0.0
+  , shadowBlur: 0.0
+  , shadowColor: transparent
+  , shadowOffsetX: 0.0
+  , shadowOffsetY: 0.0
   }
 
 legend :: Legend
 legend =
-  {
-    id: "Muda"
-   ,"type": legendType Plain
-   , show: true
-   , zlevel: 0.0
-   , z: 2.0
-   , left: relativePosition Auto
-   , top: relativePosition Auto
-   , right: relativePosition Auto
-   , bottom: relativePosition Auto
-   , width: relativePosition Auto
-   , height: relativePosition Auto
-   , orient: orient Horizontal
-   , align: relativePosition Auto
-   , padding: 5.0
-   , itemGap: 10.0
-   , itemWidth: 25.0
-   , itemHeight: 14.0
- --, formatter: Nothing
-   , selectedMode: selectedMode $ Bool true
-   , inactiveColor: violet
- --- selected: Nothing
-   , textStyle: textStyle
-   , "data": [data1]
+  { id: "Muda"
+  , "type": legendType Plain
+  , show: true
+  , zlevel: 0.0
+  , z: 2.0
+  , left: relativePosition Auto
+  , top: relativePosition Auto
+  , right: relativePosition Auto
+  , bottom: relativePosition Auto
+  , width: relativePosition Auto
+  , height: relativePosition Auto
+  , orient: orient Horizontal
+  , align: relativePosition Auto
+  , padding: 5.0
+  , itemGap: 10.0
+  , itemWidth: 25.0
+  , itemHeight: 14.0
+  --, formatter: Nothing
+  , selectedMode: selectedMode $ Bool true
+  , inactiveColor: violet
+  --- selected: Nothing
+  , textStyle: textStyle
+  , "data": [ data1 ]
   }
 
 data1 :: DataLegend
-data1 = {name: "Map terms coverage", icon: icon $ Shape Circle, textStyle: textStyle'}
+data1 = { name: "Map terms coverage", icon: icon $ Shape Circle, textStyle: textStyle' }
 
 data2 :: DataLegend
-data2 = {name: "Favorites", icon: icon $ Shape Circle, textStyle: textStyle'}
+data2 = { name: "Favorites", icon: icon $ Shape Circle, textStyle: textStyle' }
 
 data3 :: DataLegend
-data3 = {name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle'}
-
+data3 = { name: "Test", icon: icon $ Shape Diamond, textStyle: textStyle' }
 
 yAxisVoid :: YAxis
-yAxisVoid = yAxis
-  { "type": ""
-  , name: ""
-  , min: 0
-  , position: ""
-  , axisLabel: {formatter: ""}
-  , show: false
-  }
+yAxisVoid =
+  yAxis
+    { "type": ""
+    , name: ""
+    , min: 0
+    , position: ""
+    , axisLabel: { formatter: "" }
+    , show: false
+    }
 
 xAxis' :: Array String -> XAxis
-xAxis' [] = unsafeCoerce {show:false}
-xAxis' xs = xAxis
-            { "data": xs
-            , "type": "category"
-            , axisTick: {alignWithLabel: true}
-            , show: true
-            , axisLabel: {formatter: "{value}"}
-            }
+xAxis' [] = unsafeCoerce { show: false }
+
+xAxis' xs =
+  xAxis
+    { "data": xs
+    , "type": "category"
+    , axisTick: { alignWithLabel: true }
+    , show: true
+    , axisLabel: { formatter: "{value}" }
+    }
 
 -- TODO try to use Optional
-yAxis' :: { position :: String
-          , show     :: Boolean
-          , min      :: Int
-          } -> YAxis
-yAxis' {position, show, min} = yAxis
-  { "type": "value"
-  , name: ""
-  , min: min
-  , axisLabel: {formatter: "{value}"}
-  , position
-  , show
-  }
+yAxis' ::
+  { position :: String
+  , show :: Boolean
+  , min :: Int
+  } ->
+  YAxis
+yAxis' { position, show, min } =
+  yAxis
+    { "type": "value"
+    , name: ""
+    , min: min
+    , axisLabel: { formatter: "{value}" }
+    , position
+    , show
+    }
 
-data Options = Options
-  { mainTitle :: MainTitle
-  , subTitle  :: SubTitle
-  , xAxis     :: XAxis
-  , yAxis     :: YAxis
-  , series    :: Array Series
-  , addZoom   :: Boolean
-  , tooltip   :: Tooltip
-  }
+data Options
+  = Options
+    { mainTitle :: MainTitle
+    , subTitle :: SubTitle
+    , xAxis :: XAxis
+    , yAxis :: YAxis
+    , series :: Array Series
+    , addZoom :: Boolean
+    , tooltip :: Tooltip
+    }
 
 tooltipTriggerAxis :: Tooltip
-tooltipTriggerAxis = mkTooltip { trigger: "axis"}
+tooltipTriggerAxis = mkTooltip { trigger: "axis" }
 
 opts :: Options -> Option
-opts (Options { mainTitle
-              , subTitle
-              , xAxis
-              , yAxis
-              , series
-              , tooltip
-              , addZoom
-              }) =
+opts ( Options
+    { mainTitle
+  , subTitle
+  , xAxis
+  , yAxis
+  , series
+  , tooltip
+  , addZoom
+  }
+) =
   { title: title mainTitle subTitle
   , legend
   , tooltip
-  , grid: {containLabel: true}
+  , grid: { containLabel: true }
   , series
   , xAxis
   , yAxis
-  , dataZoom: if addZoom then [zoom Slider, zoom Inside] else []
-  , children : unsafeCoerce [] -- TODO
+  , dataZoom: if addZoom then [ zoom Slider, zoom Inside ] else []
+  , children: unsafeCoerce [] -- TODO
   , toolbox: mkToolBox
   }
 
-data Zoom = Slider | Inside
+data Zoom
+  = Slider
+  | Inside
 
 instance showZoom :: Show Zoom where
   show Slider = "slider"
   show Inside = "inside"
 
 zoom :: Zoom -> DataZoom
-zoom z = {
-  "type": show z
-  ,xAxisIndex: 0
-  ,filterMode: "empty"
-  ,start: 0
-  ,end: 100
+zoom z =
+  { "type": show z
+  , xAxisIndex: 0
+  , filterMode: "empty"
+  , start: 0
+  , end: 100
   }
 
-
 seriesPie :: Series
-seriesPie = seriesPieD1
-  { name: "Pie name" }
-  (dataSerie <$> [ {name: "t1", value: 50.0}
-                 , {name: "t2", value: 45.0}
-                 , {name: "t3", value: 65.0}
-                 , {name: "t4", value: 15.0}
-                 , {name: "t5", value: 23.0}
-                 ])
-
+seriesPie =
+  seriesPieD1
+    { name: "Pie name" }
+    ( dataSerie
+        <$> [ { name: "t1", value: 50.0 }
+          , { name: "t2", value: 45.0 }
+          , { name: "t3", value: 65.0 }
+          , { name: "t4", value: 15.0 }
+          , { name: "t5", value: 23.0 }
+          ]
+    )
 
 textStyle2 :: TextStyle
 textStyle2 =

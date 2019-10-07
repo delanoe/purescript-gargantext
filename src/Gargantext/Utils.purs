@@ -23,12 +23,14 @@ getter fn = fn <<< unwrap
 toggleSet :: forall a. Ord a => a -> Set a -> Set a
 toggleSet a s
   | Set.member a s = Set.delete a s
-  | otherwise      = Set.insert a s
+  | otherwise = Set.insert a s
 
 -- Default sort order is ascending, we may want descending
 invertOrdering :: Ordering -> Ordering
 invertOrdering LT = GT
+
 invertOrdering GT = LT
+
 invertOrdering EQ = EQ
 
 csrfMiddlewareToken :: String
@@ -37,4 +39,3 @@ csrfMiddlewareToken = "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP
 -- A lens that always returns unit
 _unit :: forall s. Lens' s Unit
 _unit = lens (\_ -> unit) (\s _ -> s)
-

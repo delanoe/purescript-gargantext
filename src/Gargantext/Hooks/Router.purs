@@ -13,4 +13,3 @@ useHashRouter routes init = do
   route@(_ /\ setRoute) <- R.useState' init
   R.useEffectOnce $ matches routes $ \_old new -> setRoute (const new)
   pure route
-

@@ -41,16 +41,24 @@ module Gargantext.Components.NgramsTable.Core
   , _root
   , commitPatch
   , addNewNgram
-  )
-  where
+  ) where
 
 import Prelude
 import Control.Monad.State (class MonadState, execState)
 import Control.Monad.Cont.Trans (lift)
 import Data.Array (head)
 import Data.Array as A
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
-                     , jsonEmptyObject, (:=), (~>), (.:), (.??) )
+import Data.Argonaut
+  ( class DecodeJson
+  , decodeJson
+  , class EncodeJson
+  , encodeJson
+  , jsonEmptyObject
+  , (:=)
+  , (~>)
+  , (.:)
+  , (.??)
+  )
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
@@ -84,7 +92,6 @@ import React as React
 import Thermite (StateCoTransformer, modifyState_)
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
-
 import Gargantext.Config.REST (get, put, post)
 import Gargantext.Components.Table as T
 import Gargantext.Components.Loader as Loader
@@ -94,22 +101,22 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (OrderBy(..), CTabNgramType(..), TabType, TermList(..), TermSize)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 
-type CoreParams s =
-  { nodeId  :: Int
+type CoreParams s
+  = { nodeId :: Int
     -- ^ This node can be a corpus or contact.
-  , listIds :: Array Int
-  , tabType :: TabType
-  | s
-  }
+    , listIds :: Array Int
+    , tabType :: TabType
+    | s
+    }
 
-type PageParams =
-  CoreParams
-    ( params         :: T.Params
-    , searchQuery    :: String
-    , termListFilter :: Maybe TermList -- Nothing means all
-    , termSizeFilter :: Maybe TermSize -- Nothing means all
-    , session        :: Session
-    )
+type PageParams
+  = CoreParams
+      ( params :: T.Params
+      , searchQuery :: String
+      , termListFilter :: Maybe TermList -- Nothing means all
+      , termSizeFilter :: Maybe TermSize -- Nothing means all
+      , session :: Session
+      )
 
 initialPageParams :: Session -> Int -> Array Int -> TabType -> PageParams
 initialPageParams session nodeId listIds tabType =
@@ -123,24 +130,28 @@ initialPageParams session nodeId listIds tabType =
   , session
   }
 
-type NgramsTerm = String
+type NgramsTerm
+  = String
 
 -----------------------------------------------------------------------------------
-newtype NgramsElement = NgramsElement
-  { ngrams      :: NgramsTerm
-  , list        :: TermList
+newtype NgramsElement
+  = NgramsElement
+  { ngrams :: NgramsTerm
+  , list :: TermList
   , occurrences :: Int
-  , parent      :: Maybe NgramsTerm
-  , root        :: Maybe NgramsTerm
-  , children    :: Set NgramsTerm
+  , parent :: Maybe NgramsTerm
+  , root :: Maybe NgramsTerm
+  , children :: Set NgramsTerm
   }
 
 derive instance eqNgramsElement :: Eq NgramsElement
+
 derive instance eqNgramsTable :: Eq NgramsTable
 
-
 _parent = prop (SProxy :: SProxy "parent")
-_root   = prop (SProxy :: SProxy "root")
+
+_root = prop (SProxy :: SProxy "root")
+
 _ngrams = prop (SProxy :: SProxy "ngrams")
 
 _children :: forall row. Lens' { children :: Set NgramsTerm | row } (Set NgramsTerm)
@@ -159,40 +170,45 @@ _NgramsElement = _Newtype
 
 instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
   decodeJson json = do
-    obj         <- decodeJson json
-    ngrams      <- obj .:  "ngrams"
-    list        <- obj .:  "list"
-    occurrences <- obj .:  "occurrences"
-    parent      <- obj .?? "parent"
-    root        <- obj .?? "root"
-    children'   <- obj .:  "children"
-    let children = Set.fromFoldable (children' :: Array NgramsTerm)
-    pure $ NgramsElement {ngrams, list, occurrences, parent, root, children}
+    obj <- decodeJson json
+    ngrams <- obj .: "ngrams"
+    list <- obj .: "list"
+    occurrences <- obj .: "occurrences"
+    parent <- obj .?? "parent"
+    root <- obj .?? "root"
+    children' <- obj .: "children"
+    let
+      children = Set.fromFoldable (children' :: Array NgramsTerm)
+    pure $ NgramsElement { ngrams, list, occurrences, parent, root, children }
 
 -----------------------------------------------------------------------------------
-type Version = Int
+type Version
+  = Int
 
-newtype Versioned a = Versioned
+newtype Versioned a
+  = Versioned
   { version :: Version
-  , data    :: a
+  , data :: a
   }
 
 instance encodeJsonVersioned :: EncodeJson a => EncodeJson (Versioned a) where
-  encodeJson (Versioned {version, data: data_})
-     = "version" := version
-    ~> "data" := data_
-    ~> jsonEmptyObject
+  encodeJson (Versioned { version, data: data_ }) =
+    "version" := version
+      ~> "data"
+      := data_
+      ~> jsonEmptyObject
 
 instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
   decodeJson json = do
-    obj     <- decodeJson json
+    obj <- decodeJson json
     version <- obj .: "version"
-    data_   <- obj .: "data"
-    pure $ Versioned {version, data: data_}
+    data_ <- obj .: "data"
+    pure $ Versioned { version, data: data_ }
 
 -- type NgramsTable = Array (NTree NgramsElement)
 -- type NgramsTable = Array NgramsElement
-newtype NgramsTable = NgramsTable (Map NgramsTerm NgramsElement)
+newtype NgramsTable
+  = NgramsTable (Map NgramsTerm NgramsElement)
 
 derive instance newtypeNgramsTable :: Newtype NgramsTable _
 
@@ -209,90 +225,102 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
   decodeJson json = do
     elements <- decodeJson json
     pure $ NgramsTable
-         $ Map.fromFoldable
-         $ f <$> (elements :: Array NgramsElement)
+      $ Map.fromFoldable
+      $ f
+      <$> (elements :: Array NgramsElement)
     where
-      f e@(NgramsElement e') = Tuple e'.ngrams e
------------------------------------------------------------------------------------
+    f e@(NgramsElement e') = Tuple e'.ngrams e
 
+-----------------------------------------------------------------------------------
 wordBoundaryChars :: String
 wordBoundaryChars = "[ .,;:!?'\\{}()]"
 
 wordBoundaryReg :: R.Regex
 wordBoundaryReg = case R.regex ("(" <> wordBoundaryChars <> ")") (R.global <> R.multiline) of
-  Left e  -> unsafePartial $ crashWith e
+  Left e -> unsafePartial $ crashWith e
   Right r -> r
 
 wordBoundaryReg2 :: R.Regex
 wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <> R.multiline) of
-  Left e  -> unsafePartial $ crashWith e
+  Left e -> unsafePartial $ crashWith e
   Right r -> r
 
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
 highlightNgrams :: CTabNgramType -> NgramsTable -> String -> Array (Tuple String (Maybe TermList))
 highlightNgrams ntype (NgramsTable table) input0 =
-    -- trace {pats, input0, input, ixs} \_ ->
-    let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
+  -- trace {pats, input0, input, ixs} \_ ->
+  let
+    sN = unsafePartial (foldl goFold { i0: 0, s: input, l: Nil } ixs)
+  in
     A.reverse (A.fromFoldable (consNonEmpty (undb (init sN.s)) sN.l))
   where
-    spR x = " " <> R.replace wordBoundaryReg "$1$1" x <> " "
-    reR = R.replace wordBoundaryReg " "
-    db = S.replace (S.Pattern " ") (S.Replacement "  ")
-    sp x = " " <> db x <> " "
-    undb = R.replace wordBoundaryReg2 "$1"
-    init x = S.take (S.length x - 1) x
-    input = spR input0
-    pats = A.fromFoldable (Map.keys table)
-    ixs = indicesOfAny (sp <$> pats) (normNgram ntype input)
+  spR x = " " <> R.replace wordBoundaryReg "$1$1" x <> " "
 
-    consOnJustTail s xs@(Tuple _ (Just _) : _) =
-      Tuple s Nothing : xs
-    consOnJustTail _ xs = xs
+  reR = R.replace wordBoundaryReg " "
 
-    consNonEmpty x xs
-      | S.null x  = xs
-      | otherwise = Tuple x Nothing : xs
+  db = S.replace (S.Pattern " ") (S.Replacement "  ")
 
-    -- NOTE that only the first matching pattern is used, the others are ignored!
-    goFold :: Partial => _ -> Tuple Int (Array Int) -> _
-    goFold { i0, s, l } (Tuple i pis)
-      | i < i0    =
-        -- Skip this pattern which is overlapping with a previous one.
-        { i0, s, l }
-      | otherwise =
-      case A.index pis 0 of
-        Nothing ->
-          { i0, s, l }
-        Just pi ->
-          case A.index pats pi of
-            Nothing ->
-              crashWith "highlightNgrams: out of bounds pattern"
-            Just pat ->
-              let lpat = S.length (db pat) in
-              case Map.lookup pat table of
-                Nothing ->
-                  crashWith "highlightNgrams: pattern missing from table"
-                Just (NgramsElement ne) ->
-                  let
-                    s1    = S.splitAt (i - i0) s
-                    s2    = S.splitAt lpat     (S.drop 1 s1.after)
-                    s3    = S.splitAt 1        s2.after
-                    unspB = if i0 == 0 then S.drop 1 else identity
-                    s3b   = s3.before
-                  in
+  sp x = " " <> db x <> " "
+
+  undb = R.replace wordBoundaryReg2 "$1"
+
+  init x = S.take (S.length x - 1) x
+
+  input = spR input0
+
+  pats = A.fromFoldable (Map.keys table)
+
+  ixs = indicesOfAny (sp <$> pats) (normNgram ntype input)
+
+  consOnJustTail s xs@(Tuple _ (Just _) : _) = Tuple s Nothing : xs
+
+  consOnJustTail _ xs = xs
+
+  consNonEmpty x xs
+    | S.null x = xs
+    | otherwise = Tuple x Nothing : xs
+
+  -- NOTE that only the first matching pattern is used, the others are ignored!
+  goFold :: Partial => _ -> Tuple Int (Array Int) -> _
+  goFold { i0, s, l } (Tuple i pis)
+    | i < i0 = -- Skip this pattern which is overlapping with a previous one.
+      { i0, s, l }
+    | otherwise = case A.index pis 0 of
+      Nothing -> { i0, s, l }
+      Just pi -> case A.index pats pi of
+        Nothing -> crashWith "highlightNgrams: out of bounds pattern"
+        Just pat ->
+          let
+            lpat = S.length (db pat)
+          in
+            case Map.lookup pat table of
+              Nothing -> crashWith "highlightNgrams: pattern missing from table"
+              Just (NgramsElement ne) ->
+                let
+                  s1 = S.splitAt (i - i0) s
+
+                  s2 = S.splitAt lpat (S.drop 1 s1.after)
+
+                  s3 = S.splitAt 1 s2.after
+
+                  unspB = if i0 == 0 then S.drop 1 else identity
+
+                  s3b = s3.before
+                in
                   -- trace {s, i, i0, s1, s2, s3, pat, lpat, s3b} \_ ->
                   -- `undb s2.before` and pat might differ by casing only!
                   { i0: i + lpat + 2
-                  , s:  s3.after
-                  , l:  Tuple (undb s2.before) (Just ne.list) :
-                        consOnJustTail s3b
-                        (consNonEmpty (unspB (undb s1.before)) l)
+                  , s: s3.after
+                  , l:
+                    Tuple (undb s2.before) (Just ne.list)
+                      : consOnJustTail s3b
+                          (consNonEmpty (unspB (undb s1.before)) l)
                   }
 
 -----------------------------------------------------------------------------------
-
-type VersionedNgramsTable = Versioned NgramsTable
+type VersionedNgramsTable
+  = Versioned NgramsTable
 
 -----------------------------------------------------------------------------------
 data Replace a
@@ -302,13 +330,12 @@ data Replace a
 replace :: forall a. Eq a => a -> a -> Replace a
 replace old new
   | old == new = Keep
-  | otherwise  = Replace { old, new }
+  | otherwise = Replace { old, new }
 
 instance semigroupReplace :: Semigroup (Replace a) where
   append Keep p = p
   append p Keep = p
-  append (Replace { old: _m, new }) (Replace { old, new: _m' }) =
-    -- assert _m == _m'
+  append (Replace { old: _m, new }) (Replace { old, new: _m' }) = -- assert _m == _m'
     Replace { old, new }
 
 instance semigroupMonoid :: Monoid (Replace a) where
@@ -316,52 +343,58 @@ instance semigroupMonoid :: Monoid (Replace a) where
 
 applyReplace :: forall a. Eq a => Replace a -> a -> a
 applyReplace Keep a = a
+
 applyReplace (Replace { old, new }) a
-  | a == old  = new
+  | a == old = new
   | otherwise = a
 
 instance encodeJsonReplace :: EncodeJson a => EncodeJson (Replace a) where
-  encodeJson Keep
-    = "tag" := "Keep"
-   ~> jsonEmptyObject
-  encodeJson (Replace {old, new})
-    = "old" := old
-   ~> "new" := new
-   ~> "tag" := "Replace"
-   ~> jsonEmptyObject
+  encodeJson Keep =
+    "tag" := "Keep"
+      ~> jsonEmptyObject
+  encodeJson (Replace { old, new }) =
+    "old" := old
+      ~> "new"
+      := new
+      ~> "tag"
+      := "Replace"
+      ~> jsonEmptyObject
 
 instance decodeJsonReplace :: (DecodeJson a, Eq a) => DecodeJson (Replace a) where
   decodeJson json = do
-    obj  <- decodeJson json
+    obj <- decodeJson json
     mold <- obj .?? "old"
     mnew <- obj .?? "new"
     case Tuple mold mnew of
       Tuple (Just old) (Just new) -> pure $ replace old new
-      Tuple Nothing Nothing       -> pure Keep
-      _                           -> Left "decodeJsonReplace"
+      Tuple Nothing Nothing -> pure Keep
+      _ -> Left "decodeJsonReplace"
 
 -- Representing a PatchSet as `Map a Boolean` would have the advantage
 -- of enforcing rem and add to be disjoint.
-newtype PatchSet a = PatchSet
+newtype PatchSet a
+  = PatchSet
   { rem :: Set a
   , add :: Set a
   }
 
 instance semigroupPatchSet :: Ord a => Semigroup (PatchSet a) where
-  append (PatchSet p) (PatchSet q) = PatchSet
-    { rem: q.rem <> p.rem
-    , add: Set.difference q.add p.rem <> p.add
-    }
+  append (PatchSet p) (PatchSet q) =
+    PatchSet
+      { rem: q.rem <> p.rem
+      , add: Set.difference q.add p.rem <> p.add
+      }
 
 instance monoidPatchSet :: Ord a => Monoid (PatchSet a) where
   mempty = PatchSet { rem: Set.empty, add: Set.empty }
 
 instance encodeJsonPatchSet :: EncodeJson a => EncodeJson (PatchSet a) where
-  encodeJson (PatchSet {rem, add})
-    -- TODO only include non empty fields
-    = "rem" := (Set.toUnfoldable rem :: Array a)
-   ~> "add" := (Set.toUnfoldable add :: Array a)
-   ~> jsonEmptyObject
+  encodeJson (PatchSet { rem, add }) -- TODO only include non empty fields
+   =
+    "rem" := (Set.toUnfoldable rem :: Array a)
+      ~> "add"
+      := (Set.toUnfoldable add :: Array a)
+      ~> jsonEmptyObject
 
 instance decodeJsonPatchSet :: (Ord a, DecodeJson a) => DecodeJson (PatchSet a) where
   decodeJson json = do
@@ -370,7 +403,7 @@ instance decodeJsonPatchSet :: (Ord a, DecodeJson a) => DecodeJson (PatchSet a) 
     rem <- mkSet <$> (obj .: "rem")
     add <- mkSet <$> (obj .: "add")
     pure $ PatchSet { rem, add }
-   where
+    where
     mkSet :: forall b. Ord b => Array b -> Set b
     mkSet = Set.fromFoldable
 
@@ -378,50 +411,58 @@ applyPatchSet :: forall a. Ord a => PatchSet a -> Set a -> Set a
 applyPatchSet (PatchSet p) s = Set.difference s p.rem <> p.add
 
 patchSetFromMap :: forall a. Ord a => Map a Boolean -> PatchSet a
-patchSetFromMap m = PatchSet { rem: Map.keys (Map.filter not m)
-                             , add: Map.keys (Map.filter identity m) }
-  -- TODO Map.partition would be nice here
+patchSetFromMap m =
+  PatchSet
+    { rem: Map.keys (Map.filter not m)
+    , add: Map.keys (Map.filter identity m)
+    }
 
-newtype NgramsPatch = NgramsPatch
+-- TODO Map.partition would be nice here
+newtype NgramsPatch
+  = NgramsPatch
   { patch_children :: PatchSet NgramsTerm
-  , patch_list     :: Replace TermList
+  , patch_list :: Replace TermList
   }
 
 instance semigroupNgramsPatch :: Semigroup NgramsPatch where
-  append (NgramsPatch p) (NgramsPatch q) = NgramsPatch
-    { patch_children: p.patch_children <> q.patch_children
-    , patch_list:     p.patch_list     <> q.patch_list
-    }
+  append (NgramsPatch p) (NgramsPatch q) =
+    NgramsPatch
+      { patch_children: p.patch_children <> q.patch_children
+      , patch_list: p.patch_list <> q.patch_list
+      }
 
 instance monoidNgramsPatch :: Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
 
 instance encodeJsonNgramsPatch :: EncodeJson NgramsPatch where
   -- TODO only include non empty fields
-  encodeJson (NgramsPatch { patch_children, patch_list })
-     = "patch_children" := patch_children
-    ~> "patch_list"     := patch_list
-    ~> jsonEmptyObject
+  encodeJson (NgramsPatch { patch_children, patch_list }) =
+    "patch_children" := patch_children
+      ~> "patch_list"
+      := patch_list
+      ~> jsonEmptyObject
 
 instance decodeJsonNgramsPatch :: DecodeJson NgramsPatch where
   decodeJson json = do
-    obj            <- decodeJson json
+    obj <- decodeJson json
     -- TODO handle empty fields
-    patch_list     <- obj .: "patch_list"
+    patch_list <- obj .: "patch_list"
     patch_children <- obj .: "patch_children"
     pure $ NgramsPatch { patch_list, patch_children }
 
 applyNgramsPatch :: NgramsPatch -> NgramsElement -> NgramsElement
-applyNgramsPatch (NgramsPatch p) (NgramsElement e) = NgramsElement
-  { ngrams:      e.ngrams
-  , list:        applyReplace p.patch_list e.list
-  , occurrences: e.occurrences
-  , parent:      e.parent
-  , root:        e.root
-  , children:    applyPatchSet p.patch_children e.children
-  }
+applyNgramsPatch (NgramsPatch p) (NgramsElement e) =
+  NgramsElement
+    { ngrams: e.ngrams
+    , list: applyReplace p.patch_list e.list
+    , occurrences: e.occurrences
+    , parent: e.parent
+    , root: e.root
+    , children: applyPatchSet p.patch_children e.children
+    }
 
-newtype PatchMap k p = PatchMap (Map k p)
+newtype PatchMap k p
+  = PatchMap (Map k p)
 
 instance semigroupPatchMap :: (Ord k, Semigroup p) => Semigroup (PatchMap k p) where
   append (PatchMap p) (PatchMap q) = PatchMap (Map.unionWith append p q)
@@ -458,8 +499,7 @@ instance traversableWithIndexPatchMap :: TraversableWithIndex k (PatchMap k) whe
   traverseWithIndex f (PatchMap m) = PatchMap <$> traverseWithIndex f m
 
 instance encodeJsonPatchMap :: EncodeJson p => EncodeJson (PatchMap String p) where
-  encodeJson (PatchMap m) =
-    encodeJson $ FO.fromFoldable $ (Map.toUnfoldable m :: Array _)
+  encodeJson (PatchMap m) = encodeJson $ FO.fromFoldable $ (Map.toUnfoldable m :: Array _)
 
 instance decodeJsonPatchMap :: DecodeJson p => DecodeJson (PatchMap String p) where
   decodeJson json = do
@@ -475,29 +515,32 @@ isEmptyPatchMap (PatchMap p) = Map.isEmpty p
 applyPatchMap :: forall k p v. Ord k => (p -> v -> v) -> PatchMap k p -> Map k v -> Map k v
 applyPatchMap applyPatchValue (PatchMap p) = mapWithIndex f
   where
-    f k v =
-      case Map.lookup k p of
-        Nothing -> v
-        Just pv -> applyPatchValue pv v
+  f k v = case Map.lookup k p of
+    Nothing -> v
+    Just pv -> applyPatchValue pv v
 
-type NgramsPatches = PatchMap NgramsTerm NgramsPatch
+type NgramsPatches
+  = PatchMap NgramsTerm NgramsPatch
 
-type NewElems = Map NgramsTerm TermList
+type NewElems
+  = Map NgramsTerm TermList
 
-type NgramsTablePatch =
-  { ngramsNewElems :: NewElems
-  , ngramsPatches  :: NgramsPatches
-  }
+type NgramsTablePatch
+  = { ngramsNewElems :: NewElems
+    , ngramsPatches :: NgramsPatches
+    }
 
 fromNgramsPatches :: NgramsPatches -> NgramsTablePatch
-fromNgramsPatches ngramsPatches = {ngramsNewElems: mempty, ngramsPatches}
+fromNgramsPatches ngramsPatches = { ngramsNewElems: mempty, ngramsPatches }
 
 normNgram :: CTabNgramType -> String -> NgramsTerm
 normNgram CTabAuthors = identity
-normNgram CTabSources = identity
-normNgram CTabInstitutes = identity
-normNgram CTabTerms      = S.toLower <<< R.replace wordBoundaryReg " "
 
+normNgram CTabSources = identity
+
+normNgram CTabInstitutes = identity
+
+normNgram CTabTerms = S.toLower <<< R.replace wordBoundaryReg " "
 
 findNgramTermList :: CTabNgramType -> NgramsTable -> String -> Maybe TermList
 findNgramTermList ntype (NgramsTable m) s = m ^? at (normNgram ntype s) <<< _Just <<< _NgramsElement <<< _list
@@ -505,34 +548,45 @@ findNgramTermList ntype (NgramsTable m) s = m ^? at (normNgram ntype s) <<< _Jus
 singletonNgramsTablePatch :: CTabNgramType -> NgramsTerm -> NgramsPatch -> NgramsTablePatch
 singletonNgramsTablePatch m n p = fromNgramsPatches $ singletonPatchMap (normNgram m n) p
 
-type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
+type RootParent
+  = { root :: NgramsTerm, parent :: NgramsTerm }
 
-type ReParent a = forall m. MonadState NgramsTable m => a -> m Unit
+type ReParent a
+  = forall m. MonadState NgramsTable m => a -> m Unit
 
 reRootChildren :: NgramsTerm -> ReParent NgramsTerm
 reRootChildren root ngram = do
   nre <- use (at ngram)
-  traverseOf_ (_Just <<< _NgramsElement <<< _children <<< folded) (\child -> do
-    at child <<< _Just <<< _NgramsElement <<< _root ?= root
-    reRootChildren root child) nre
+  traverseOf_ (_Just <<< _NgramsElement <<< _children <<< folded)
+    ( \child -> do
+        at child <<< _Just <<< _NgramsElement <<< _root ?= root
+        reRootChildren root child
+    )
+    nre
 
 reParent :: Maybe RootParent -> ReParent NgramsTerm
 reParent mrp child = do
-  at child <<< _Just <<< _NgramsElement %= ((_parent .~ (view _parent <$> mrp)) <<<
-                                            (_root   .~ (view _root   <$> mrp)))
+  at child <<< _Just <<< _NgramsElement
+    %= ( (_parent .~ (view _parent <$> mrp))
+          <<< (_root .~ (view _root <$> mrp))
+      )
   reRootChildren (maybe child identity (mrp ^? _Just <<< _root)) child
 
 -- reParentNgramsPatch :: NgramsTerm -> ReParent NgramsPatch
 -- ^ GHC would have accepted this type. Here reParentNgramsPatch checks but
 --   not its usage in reParentNgramsTablePatch.
-reParentNgramsPatch :: forall m. MonadState NgramsTable m
-                    => NgramsTerm -> NgramsPatch -> m Unit
-reParentNgramsPatch parent (NgramsPatch {patch_children: PatchSet {rem, add}}) = do
+reParentNgramsPatch ::
+  forall m.
+  MonadState NgramsTable m =>
+  NgramsTerm -> NgramsPatch -> m Unit
+reParentNgramsPatch parent (NgramsPatch { patch_children: PatchSet { rem, add } }) = do
   -- root_of_parent <- use (at parent <<< _Just <<< _NgramsElement <<< _root)
   -- ^ TODO this does not type checks, we do the following two lines instead:
   s <- use (at parent)
-  let root_of_parent = s ^. (_Just <<< _NgramsElement <<< _root)
-  let rp = { root: maybe parent identity root_of_parent, parent }
+  let
+    root_of_parent = s ^. (_Just <<< _NgramsElement <<< _root)
+  let
+    rp = { root: maybe parent identity root_of_parent, parent }
   traverse_ (reParent Nothing) rem
   traverse_ (reParent $ Just rp) add
 
@@ -542,76 +596,102 @@ reParentNgramsTablePatch = void <<< traverseWithIndex reParentNgramsPatch
 newElemsTable :: NewElems -> Map NgramsTerm NgramsElement
 newElemsTable = mapWithIndex newElem
   where
-    newElem ngrams list =
-      NgramsElement
-        { ngrams
-        , list
-        , occurrences: 1
-        , parent:      Nothing
-        , root:        Nothing
-        , children:    mempty
-        }
+  newElem ngrams list =
+    NgramsElement
+      { ngrams
+      , list
+      , occurrences: 1
+      , parent: Nothing
+      , root: Nothing
+      , children: mempty
+      }
 
 applyNgramsTablePatch :: NgramsTablePatch -> NgramsTable -> NgramsTable
 applyNgramsTablePatch { ngramsPatches, ngramsNewElems: n } (NgramsTable m) =
-  execState (reParentNgramsTablePatch ngramsPatches) $
-  NgramsTable $ applyPatchMap applyNgramsPatch ngramsPatches (newElemsTable n <> m)
+  execState (reParentNgramsTablePatch ngramsPatches)
+    $ NgramsTable
+    $ applyPatchMap applyNgramsPatch ngramsPatches (newElemsTable n <> m)
 
 -----------------------------------------------------------------------------------
-
-type CoreState s =
-  { ngramsTablePatch :: NgramsTablePatch
-  , ngramsVersion    :: Version
-  | s
-  }
+type CoreState s
+  = { ngramsTablePatch :: NgramsTablePatch
+    , ngramsVersion :: Version
+    | s
+    }
 
 postNewNgrams :: forall s. Session -> Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
-postNewNgrams session newNgrams mayList {nodeId, listIds, tabType} =
-  when (not (A.null newNgrams)) $ do
-    (_ :: Array Unit) <- post (url session put) newNgrams
-    pure unit
-  where put = PutNgrams tabType (head listIds) mayList (Just nodeId)
+postNewNgrams session newNgrams mayList { nodeId, listIds, tabType } =
+  when (not (A.null newNgrams))
+    $ do
+        (_ :: Array Unit) <- post (url session put) newNgrams
+        pure unit
+  where
+  put = PutNgrams tabType (head listIds) mayList (Just nodeId)
 
 postNewElems :: forall s. Session -> NewElems -> CoreParams s -> Aff Unit
 postNewElems session newElems params = void $ traverseWithIndex postNewElem newElems
   where
-    postNewElem ngrams list = postNewNgrams session [ngrams] (Just list) params
+  postNewElem ngrams list = postNewNgrams session [ ngrams ] (Just list) params
 
 addNewNgram :: CTabNgramType -> NgramsTerm -> TermList -> NgramsTablePatch
-addNewNgram ntype ngrams list = { ngramsPatches: mempty
-                          , ngramsNewElems: Map.singleton (normNgram ntype ngrams) list }
+addNewNgram ntype ngrams list =
+  { ngramsPatches: mempty
+  , ngramsNewElems: Map.singleton (normNgram ntype ngrams) list
+  }
 
-putNgramsPatches :: Session -> {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
-putNgramsPatches session {nodeId, listIds, tabType} = put $ url session putNgrams
-  where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
+putNgramsPatches :: Session -> { nodeId :: Int, listIds :: Array Int, tabType :: TabType } -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
+putNgramsPatches session { nodeId, listIds, tabType } = put $ url session putNgrams
+  where
+  putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
-commitPatch :: forall s. Session -> {nodeId :: Int, listIds :: Array Int, tabType :: TabType}
-            -> Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
-commitPatch session props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNewElems}}) = do
-  let pt = Versioned { version, data: ngramsPatches }
+commitPatch ::
+  forall s.
+  Session ->
+  { nodeId :: Int, listIds :: Array Int, tabType :: TabType } ->
+  Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
+commitPatch session props (Versioned { version, data: tablePatch@{ ngramsPatches, ngramsNewElems } }) = do
+  let
+    pt = Versioned { version, data: ngramsPatches }
   lift $ postNewElems session ngramsNewElems props
-  Versioned {version: newVersion, data: newPatch} <- lift $ putNgramsPatches session props pt
-  modifyState_ $ \s ->
-    s { ngramsVersion    = newVersion
-      , ngramsTablePatch = fromNgramsPatches newPatch <> tablePatch <> s.ngramsTablePatch
-      }
-    -- TODO: check that pt.version == s.ngramsTablePatch.version
+  Versioned { version: newVersion, data: newPatch } <- lift $ putNgramsPatches session props pt
+  modifyState_
+    $ \s ->
+        s
+          { ngramsVersion = newVersion
+          , ngramsTablePatch = fromNgramsPatches newPatch <> tablePatch <> s.ngramsTablePatch
+          }
 
+-- TODO: check that pt.version == s.ngramsTablePatch.version
 loadNgramsTable :: Session -> PageParams -> Aff VersionedNgramsTable
-loadNgramsTable session
-  { nodeId, listIds, termListFilter, termSizeFilter
-  , searchQuery, tabType, params: {offset, limit, orderBy}}
-  = get $ url session query
-  where query = GetNgrams { tabType, offset, limit, listIds
-                          , orderBy: convOrderBy <$> orderBy
-                          , termListFilter, termSizeFilter
-                          , searchQuery } (Just nodeId)
-        
+loadNgramsTable session { nodeId
+, listIds
+, termListFilter
+, termSizeFilter
+, searchQuery
+, tabType
+, params: { offset, limit, orderBy }
+} = get $ url session query
+  where
+  query =
+    GetNgrams
+      { tabType
+      , offset
+      , limit
+      , listIds
+      , orderBy: convOrderBy <$> orderBy
+      , termListFilter
+      , termSizeFilter
+      , searchQuery
+      }
+      (Just nodeId)
 
 convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
-convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc
+convOrderBy (T.ASC (T.ColumnName "Score (Occurrences)")) = ScoreAsc
+
 convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
-convOrderBy (T.ASC  _) = TermAsc
+
+convOrderBy (T.ASC _) = TermAsc
+
 convOrderBy (T.DESC _) = TermDesc
 
 ngramsLoaderClass :: Session -> Loader.LoaderClass PageParams VersionedNgramsTable
@@ -620,4 +700,5 @@ ngramsLoaderClass session = Loader.createLoaderClass "NgramsTableLoader" (loadNg
 ngramsLoader :: Session -> Loader.Props' PageParams VersionedNgramsTable -> ReactElement
 ngramsLoader session props = React.createElement (ngramsLoaderClass session) props []
 
-type LoadedNgramsTableProps = ( path :: PageParams, loaded :: VersionedNgramsTable )
+type LoadedNgramsTableProps
+  = ( path :: PageParams, loaded :: VersionedNgramsTable )

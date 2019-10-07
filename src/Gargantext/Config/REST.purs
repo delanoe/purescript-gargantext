@@ -1,7 +1,6 @@
 module Gargantext.Config.REST where
 
 import Gargantext.Prelude
-
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..), string)
 import Affjax.RequestHeader (RequestHeader(..))
@@ -14,22 +13,28 @@ import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON)
 import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
 
-send :: forall a b. EncodeJson a => DecodeJson b =>
-        Method -> String -> Maybe a -> Aff b
+send ::
+  forall a b.
+  EncodeJson a =>
+  DecodeJson b =>
+  Method -> String -> Maybe a -> Aff b
 send m url reqbody = do
-  affResp <- request $ defaultRequest
-         { url = url
-         , responseFormat = ResponseFormat.json
-         , method = Left m
-         , headers =  [ ContentType applicationJSON
-                      , Accept applicationJSON
-                        --   , RequestHeader "Authorization" $  "Bearer " <> token
-                      ]
-         , content  = (Json <<< encodeJson) <$> reqbody
-         }
+  affResp <-
+    request
+      $ defaultRequest
+          { url = url
+          , responseFormat = ResponseFormat.json
+          , method = Left m
+          , headers =
+            [ ContentType applicationJSON
+            , Accept applicationJSON
+            --   , RequestHeader "Authorization" $  "Bearer " <> token
+            ]
+          , content = (Json <<< encodeJson) <$> reqbody
+          }
   case affResp.body of
     Left err -> do
-      _ <-  logs $ printResponseFormatError err
+      _ <- logs $ printResponseFormatError err
       throwError $ error $ printResponseFormatError err
     Right json -> do
       --_ <-  logs $ show json.status
@@ -61,18 +66,21 @@ post url = send POST url <<< Just
 
 postWwwUrlencoded :: forall b. DecodeJson b => String -> String -> Aff b
 postWwwUrlencoded url body = do
-  affResp <- request $ defaultRequest
-             { url = url
-             , responseFormat = ResponseFormat.json
-             , method = Left POST
-             , headers =  [ ContentType applicationFormURLEncoded
-                          , Accept applicationJSON
-                          ]
-             , content  = Just $ string body
-             }
+  affResp <-
+    request
+      $ defaultRequest
+          { url = url
+          , responseFormat = ResponseFormat.json
+          , method = Left POST
+          , headers =
+            [ ContentType applicationFormURLEncoded
+            , Accept applicationJSON
+            ]
+          , content = Just $ string body
+          }
   case affResp.body of
     Left err -> do
-      _ <-  logs $ printResponseFormatError err
+      _ <- logs $ printResponseFormatError err
       throwError $ error $ printResponseFormatError err
     Right json -> do
       --_ <-  logs $ show json.status

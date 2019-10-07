@@ -21,7 +21,8 @@ import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeType(..))
 
-type Props = ( session :: Session, nodeId :: Int )
+type Props
+  = ( session :: Session, nodeId :: Int )
 
 textsLayout :: Record Props -> R.Element
 textsLayout props = R.createElement textsLayoutCpt props []
@@ -30,36 +31,38 @@ textsLayout props = R.createElement textsLayoutCpt props []
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = R.hooksComponent "TextsLoader" cpt
   where
-    cpt {session,nodeId} _ =
-      useLoader nodeId (getCorpus session) $
-        \corpusData@{corpusId, corpusNode, defaultListId} ->
+  cpt { session, nodeId } _ =
+    useLoader nodeId (getCorpus session)
+      $ \corpusData@{ corpusId, corpusNode, defaultListId } ->
           let
             NodePoly { name, date, hyperdata: CorpusInfo corpus } = corpusNode
-            {desc, query, authors: user} = corpus
-            tabs = Tabs.tabs {session, corpusId, corpusData}
-            title = "Corpus " <> name
-            headerProps = { title, desc, query, date, user } in
-          R.fragment [Table.tableHeaderLayout headerProps, tabs]
 
-          
+            { desc, query, authors: user } = corpus
+
+            tabs = Tabs.tabs { session, corpusId, corpusData }
+
+            title = "Corpus " <> name
+
+            headerProps = { title, desc, query, date, user }
+          in
+            R.fragment [ Table.tableHeaderLayout headerProps, tabs ]
 
 ------------------------------------------------------------------------
-
 getCorpus :: Session -> Int -> Aff CorpusData
 getCorpus session textsId = do
   liftEffect $ log2 "nodepolyurl: " nodePolyUrl
   -- fetch corpus via texts parentId
-  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get nodePolyUrl
+  (NodePoly { parentId: corpusId } :: NodePoly {}) <- get nodePolyUrl
   liftEffect $ log2 "corpusnodeurl: " $ corpusNodeUrl corpusId
-  corpusNode     <- get $ corpusNodeUrl corpusId
+  corpusNode <- get $ corpusNodeUrl corpusId
   liftEffect $ log2 "defaultlistidsurl: " $ defaultListIdsUrl corpusId
   defaultListIds <- get $ defaultListIdsUrl corpusId
   case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
-    Just (NodePoly { id: defaultListId }) ->
-      pure {corpusId, corpusNode, defaultListId}
-    Nothing ->
-      throwError $ error "Missing default list"
+    Just (NodePoly { id: defaultListId }) -> pure { corpusId, corpusNode, defaultListId }
+    Nothing -> throwError $ error "Missing default list"
   where
-    nodePolyUrl = url session $ NodeAPI Corpus (Just textsId)
-    corpusNodeUrl = url session <<< NodeAPI Corpus <<< Just
-    defaultListIdsUrl = url session <<< Children NodeList 0 1 Nothing <<< Just
+  nodePolyUrl = url session $ NodeAPI Corpus (Just textsId)
+
+  corpusNodeUrl = url session <<< NodeAPI Corpus <<< Just
+
+  defaultListIdsUrl = url session <<< Children NodeList 0 1 Nothing <<< Just

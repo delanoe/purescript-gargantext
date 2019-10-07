@@ -34,92 +34,97 @@ import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..))
+
 ------------------------------------------------------------------------
+type NodeID
+  = Int
 
-type NodeID = Int
-type TotalRecords = Int
+type TotalRecords
+  = Int
 
-type Props =
-  ( nodeId       :: Int
-  , totalRecords :: Int
-  , chart        :: R.Element
-  , tabType      :: TabType
-  , listId       :: Int
-  , corpusId     :: Maybe Int
-  , showSearch   :: Boolean
-  , session         :: Session )
-  -- ^ tabType is not ideal here since it is too much entangled with tabs and
-  -- ngramtable. Let's see how this evolves.  )
+type Props
+  = ( nodeId :: Int
+    , totalRecords :: Int
+    , chart :: R.Element
+    , tabType :: TabType
+    , listId :: Int
+    , corpusId :: Maybe Int
+    , showSearch :: Boolean
+    , session :: Session
+    )
 
-type PageLoaderProps =
-  ( nodeId       :: Int
-  , totalRecords :: Int
-  , tabType      :: TabType
-  , listId       :: Int
-  , corpusId     :: Maybe Int
-  , query        :: Query
-  , session         :: Session )
+-- ^ tabType is not ideal here since it is too much entangled with tabs and
+-- ngramtable. Let's see how this evolves.  )
+type PageLoaderProps
+  = ( nodeId :: Int
+    , totalRecords :: Int
+    , tabType :: TabType
+    , listId :: Int
+    , corpusId :: Maybe Int
+    , query :: Query
+    , session :: Session
+    )
 
-type LocalCategories = Map Int Category
-type Query = String
+type LocalCategories
+  = Map Int Category
 
-_documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
-_localCategories     = prop (SProxy :: SProxy "localCategories")
+type Query
+  = String
+
+_documentIdsDeleted = prop (SProxy :: SProxy "documentIdsDeleted")
+
+_localCategories = prop (SProxy :: SProxy "localCategories")
 
 data Action
   = MarkCategory Int Category
 
-
 newtype DocumentsView
   = DocumentsView
-    { _id    :: Int
-    , url    :: String
-    , date   :: Int
-    , title  :: String
-    , source :: String
-    , category :: Category
-    , ngramCount :: Int
-    }
-
+  { _id :: Int
+  , url :: String
+  , date :: Int
+  , title :: String
+  , source :: String
+  , category :: Category
+  , ngramCount :: Int
+  }
 
 derive instance genericDocumentsView :: Generic DocumentsView _
 
 instance showDocumentsView :: Show DocumentsView where
   show = genericShow
 
-
-newtype Response = Response
-  { cid        :: Int
-  , hyperdata  :: Hyperdata
-  , category   :: Category
+newtype Response
+  = Response
+  { cid :: Int
+  , hyperdata :: Hyperdata
+  , category :: Category
   , ngramCount :: Int
   }
 
-
-newtype Hyperdata = Hyperdata
-  { title  :: String
+newtype Hyperdata
+  = Hyperdata
+  { title :: String
   , source :: String
-  , pub_year   :: Int
+  , pub_year :: Int
   }
-
 
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
-    obj    <- decodeJson json
-    title  <- obj .: "title"
+    obj <- decodeJson json
+    title <- obj .: "title"
     source <- obj .: "source"
     pub_year <- obj .: "publication_year"
-    pure $ Hyperdata { title,source, pub_year}
+    pure $ Hyperdata { title, source, pub_year }
 
 instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
-    obj        <- decodeJson json
-    cid        <- obj .: "id"
-    favorite   <- obj .: "favorite"
+    obj <- decodeJson json
+    cid <- obj .: "id"
+    favorite <- obj .: "favorite"
     ngramCount <- obj .: "id"
-    hyperdata  <- obj .: "hyperdata"
+    hyperdata <- obj .: "hyperdata"
     pure $ Response { cid, category: decodeCategory favorite, ngramCount, hyperdata }
-
 
 docView :: Record Props -> R.Element
 docView p = R.createElement docViewCpt p []
@@ -127,27 +132,31 @@ docView p = R.createElement docViewCpt p []
 docViewCpt :: R.Component Props
 docViewCpt = R.hooksComponent "DocView" cpt
   where
-    cpt p _children = do
-      query <- R.useState' ("" :: Query)
-      tableParams <- R.useState' T.initialParams
-      pure $ layoutDocview query tableParams p
+  cpt p _children = do
+    query <- R.useState' ("" :: Query)
+    tableParams <- R.useState' T.initialParams
+    pure $ layoutDocview query tableParams p
 
 -- | Main layout of the Documents Tab of a Corpus
 layoutDocview :: R.State Query -> R.State T.Params -> Record Props -> R.Element
 layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
   where
-    el = R.hooksComponent "LayoutDocView" cpt
-    cpt {session, nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch} _children = do
-      pure $ H.div {className: "container1"}
-        [ H.div {className: "row"}
-          [ chart
-          , if showSearch then searchBar query else H.div {} []
-          , H.div {className: "col-md-12"}
-            [ pageLoader tableParams {session, nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ] ] ]
-    -- onClickTrashAll nodeId _ = do
-    --   launchAff $ deleteAllDocuments p.session nodeId
-          
-          {-, H.div {className: "col-md-1 col-md-offset-11"}
+  el = R.hooksComponent "LayoutDocView" cpt
+
+  cpt { session, nodeId, tabType, listId, corpusId, totalRecords, chart, showSearch } _children = do
+    pure
+      $ H.div { className: "container1" }
+          [ H.div { className: "row" }
+              [ chart
+              , if showSearch then searchBar query else H.div {} []
+              , H.div { className: "col-md-12" }
+                  [ pageLoader tableParams { session, nodeId, totalRecords, tabType, listId, corpusId, query: fst query } ]
+              ]
+          ]
+
+-- onClickTrashAll nodeId _ = do
+--   launchAff $ deleteAllDocuments p.session nodeId
+{-, H.div {className: "col-md-1 col-md-offset-11"}
             [ pageLoader p.session tableParams {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
           , H.div {className: "col-md-1 col-md-offset-11"}
             [ H.button { className: "btn"
@@ -158,110 +167,137 @@ layoutDocview query tableParams@(params /\ _) p = R.createElement el p []
               ]
             ]
            -}
-
 searchBar :: R.State Query -> R.Element
 searchBar (query /\ setQuery) = R.createElement el {} []
   where
-    el = R.hooksComponent "SearchBar" cpt
-    cpt {} _children = do
-      queryText <- R.useState' query
+  el = R.hooksComponent "SearchBar" cpt
 
-      pure $ H.div {className: "row"}
-        [ H.div {className: "col col-md-3"} []
-        , H.div {className: "col col-md-1"} [if query /= "" then clearButton else H.div {} []]
-        , H.div {className: "col col-md-3 form-group"}
-          [ H.input { type: "text"
-                    , className: "form-control"
-                    , on: {change: onSearchChange queryText, keyUp: onSearchKeyup queryText}
-                    , placeholder: query
-                    , defaultValue: query}
+  cpt {} _children = do
+    queryText <- R.useState' query
+    pure
+      $ H.div { className: "row" }
+          [ H.div { className: "col col-md-3" } []
+          , H.div { className: "col col-md-1" } [ if query /= "" then clearButton else H.div {} [] ]
+          , H.div { className: "col col-md-3 form-group" }
+              [ H.input
+                  { type: "text"
+                  , className: "form-control"
+                  , on: { change: onSearchChange queryText, keyUp: onSearchKeyup queryText }
+                  , placeholder: query
+                  , defaultValue: query
+                  }
+              ]
+          , H.div { className: "col col-md-1" } [ searchButton queryText ]
           ]
-        , H.div {className: "col col-md-1"} [searchButton queryText]
-        ]
 
-    onSearchChange :: forall e. R.State Query -> e -> Effect Unit
-    onSearchChange (_ /\ setQueryText) = \e ->
-      setQueryText $ const $ R2.unsafeEventValue e
+  onSearchChange :: forall e. R.State Query -> e -> Effect Unit
+  onSearchChange (_ /\ setQueryText) = \e ->
+    setQueryText $ const $ R2.unsafeEventValue e
 
-    onSearchKeyup :: R.State Query -> DE.KeyboardEvent -> Effect Unit
-    onSearchKeyup (queryText /\ _) = \e ->
-      if DE.key e == "Enter" then
-        setQuery $ const queryText
-      else
-        pure $ unit
+  onSearchKeyup :: R.State Query -> DE.KeyboardEvent -> Effect Unit
+  onSearchKeyup (queryText /\ _) = \e ->
+    if DE.key e == "Enter" then
+      setQuery $ const queryText
+    else
+      pure $ unit
 
-    searchButton (queryText /\ _) =
-      H.button { type: "submit"
-               , className: "btn btn-default"
-               , on: {click: \e -> setQuery $ const queryText}}
-      [ H.span {className: "glyphicon glyphicon-search"} [] ]
+  searchButton (queryText /\ _) =
+    H.button
+      { type: "submit"
+      , className: "btn btn-default"
+      , on: { click: \e -> setQuery $ const queryText }
+      }
+      [ H.span { className: "glyphicon glyphicon-search" } [] ]
 
-    clearButton =
-      H.button { className: "btn btn-danger"
-               , on: {click: \e -> setQuery $ const ""}}
-      [ H.span {className: "glyphicon glyphicon-remove"} [] ]
+  clearButton =
+    H.button
+      { className: "btn btn-danger"
+      , on: { click: \e -> setQuery $ const "" }
+      }
+      [ H.span { className: "glyphicon glyphicon-remove" } [] ]
 
 mock :: Boolean
 mock = false
 
-type PageParams = { nodeId :: Int
-                  , listId :: Int
-                  , corpusId :: Maybe Int
-                  , tabType :: TabType
-                  , query   :: Query
-                  , params :: T.Params}
+type PageParams
+  = { nodeId :: Int
+    , listId :: Int
+    , corpusId :: Maybe Int
+    , tabType :: TabType
+    , query :: Query
+    , params :: T.Params
+    }
 
 loadPage :: Session -> PageParams -> Aff (Array DocumentsView)
-loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
+loadPage session { nodeId, tabType, query, listId, corpusId, params: { limit, offset, orderBy } } = do
   liftEffect $ log "loading documents page: loadPage with Offset and limit"
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let url2 = (url session (NodeAPI Node (Just nodeId))) <> "/table"
-  res <- post url2 $ TabPostQuery {
-      offset
-    , limit
-    , orderBy: convOrderBy orderBy
-    , tabType
-    , query
-    }
-  let docs = res2corpus <$> res
-  pure $
-    if mock then take limit $ drop offset sampleData else
-    docs
+  let
+    url2 = (url session (NodeAPI Node (Just nodeId))) <> "/table"
+  res <-
+    post url2
+      $ TabPostQuery
+          { offset
+          , limit
+          , orderBy: convOrderBy orderBy
+          , tabType
+          , query
+          }
+  let
+    docs = res2corpus <$> res
+  pure
+    $ if mock then
+        take limit $ drop offset sampleData
+      else
+        docs
   where
-    res2corpus :: Response -> DocumentsView
-    res2corpus (Response r) =
-      DocumentsView { _id : r.cid
-      , url    : ""
-      , date   : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
-      , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
-      , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
-      , category : r.category
-      , ngramCount : r.ngramCount
-     }
-    convOrderBy (Just (T.ASC  (T.ColumnName "Date")))  = DateAsc
-    convOrderBy (Just (T.DESC (T.ColumnName "Date")))  = DateDesc
-    convOrderBy (Just (T.ASC  (T.ColumnName "Title"))) = TitleAsc
-    convOrderBy (Just (T.DESC (T.ColumnName "Title"))) = TitleDesc
-    convOrderBy (Just (T.ASC  (T.ColumnName "Source"))) = SourceAsc
-    convOrderBy (Just (T.DESC (T.ColumnName "Source"))) = SourceDesc
+  res2corpus :: Response -> DocumentsView
+  res2corpus (Response r) =
+    DocumentsView
+      { _id: r.cid
+      , url: ""
+      , date: (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
+      , title: (\(Hyperdata hr) -> hr.title) r.hyperdata
+      , source: (\(Hyperdata hr) -> hr.source) r.hyperdata
+      , category: r.category
+      , ngramCount: r.ngramCount
+      }
 
-    convOrderBy _ = DateAsc -- TODO
+  convOrderBy (Just (T.ASC (T.ColumnName "Date"))) = DateAsc
+
+  convOrderBy (Just (T.DESC (T.ColumnName "Date"))) = DateDesc
+
+  convOrderBy (Just (T.ASC (T.ColumnName "Title"))) = TitleAsc
+
+  convOrderBy (Just (T.DESC (T.ColumnName "Title"))) = TitleDesc
+
+  convOrderBy (Just (T.ASC (T.ColumnName "Source"))) = SourceAsc
+
+  convOrderBy (Just (T.DESC (T.ColumnName "Source"))) = SourceDesc
+
+  convOrderBy _ = DateAsc -- TODO
 
 renderPage :: R.State T.Params -> Record PageLoaderProps -> Array DocumentsView -> R.Element
 renderPage (_ /\ setTableParams) p res = R.createElement el p []
   where
-    el = R.hooksComponent "RenderPage" cpt
+  el = R.hooksComponent "RenderPage" cpt
 
-    gi Favorite  = "glyphicon glyphicon-star"
-    gi _ = "glyphicon glyphicon-star-empty"
-    trashStyle Trash = {textDecoration: "line-through"}
-    trashStyle _ = {textDecoration: "none"}
-    corpusDocument (Just corpusId) = Routes.CorpusDocument corpusId
-    corpusDocument _ = Routes.Document
+  gi Favorite = "glyphicon glyphicon-star"
 
-    cpt {session, nodeId, corpusId, listId, totalRecords} _children = do
-      localCategories <- R.useState' (mempty :: LocalCategories)
-      pure $ T.table
+  gi _ = "glyphicon glyphicon-star-empty"
+
+  trashStyle Trash = { textDecoration: "line-through" }
+
+  trashStyle _ = { textDecoration: "none" }
+
+  corpusDocument (Just corpusId) = Routes.CorpusDocument corpusId
+
+  corpusDocument _ = Routes.Document
+
+  cpt { session, nodeId, corpusId, listId, totalRecords } _children = do
+    localCategories <- R.useState' (mempty :: LocalCategories)
+    pure
+      $ T.table
           { rows: rows localCategories
           -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
           , setParams: setTableParams <<< const
@@ -269,81 +305,99 @@ renderPage (_ /\ setTableParams) p res = R.createElement el p []
           , colNames
           , totalRecords
           }
+    where
+    colNames = T.ColumnName <$> [ "Map", "Stop", "Date", "Title", "Source" ]
+
+    getCategory (localCategories /\ _) { _id, category } = maybe category identity (localCategories ^. at _id)
+
+    rows localCategories = row <$> res
       where
-        colNames = T.ColumnName <$> [ "Map", "Stop", "Date", "Title", "Source"]
-        getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
-        rows localCategories = row <$> res
-          where
-            row (DocumentsView r) =
-              { row:
-                [ H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                , H.input { type: "checkbox", checked, on: {click: click Trash} }
-                -- TODO show date: Year-Month-Day only
-                , H.div { style } [ R2.showText r.date ]
-                , H.div { style } [ H.text r.source ]
-                ]
-              , delete: true }
-              where
-                cat = getCategory localCategories r
-                click cat2 = onClick localCategories cat2 r._id cat
-                checked = Trash == cat
-                style = trashStyle cat
-                className = gi cat
-        onClick (_ /\ setLocalCategories) catType nid cat = \_-> do
-          let newCat = if (catType == Favorite) then (favCategory cat) else (trashCategory cat)
-          setLocalCategories $ insert nid newCat
-          void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
+      row (DocumentsView r) =
+        { row:
+          [ H.div {} [ H.a { className, style, on: { click: click Favorite } } [] ]
+          , H.input { type: "checkbox", checked, on: { click: click Trash } }
+          -- TODO show date: Year-Month-Day only
+          , H.div { style } [ R2.showText r.date ]
+          , H.div { style } [ H.text r.source ]
+          ]
+        , delete: true
+        }
+        where
+        cat = getCategory localCategories r
+
+        click cat2 = onClick localCategories cat2 r._id cat
+
+        checked = Trash == cat
+
+        style = trashStyle cat
+
+        className = gi cat
+
+    onClick (_ /\ setLocalCategories) catType nid cat = \_ -> do
+      let
+        newCat = if (catType == Favorite) then (favCategory cat) else (trashCategory cat)
+      setLocalCategories $ insert nid newCat
+      void $ launchAff $ putCategories session nodeId $ CategoryQuery { nodeIds: [ nid ], category: newCat }
 
 pageLoader :: R.State T.Params -> Record PageLoaderProps -> R.Element
 pageLoader tableParams@(pageParams /\ _) p = R.createElement el p []
   where
-    el = R.hooksComponent "PageLoader" cpt
-    cpt props@{session, nodeId, listId, corpusId, tabType, query} _children = do
-      useLoader {nodeId, listId, corpusId, tabType, query, params: pageParams} (loadPage session) $
-        \loaded -> renderPage tableParams props loaded
+  el = R.hooksComponent "PageLoader" cpt
+
+  cpt props@{ session, nodeId, listId, corpusId, tabType, query } _children = do
+    useLoader { nodeId, listId, corpusId, tabType, query, params: pageParams } (loadPage session)
+      $ \loaded -> renderPage tableParams props loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
-sampleData' = DocumentsView { _id : 1
-                            , url : ""
-                            , date : 2010
-                            , title : "title"
-                            , source : "source"
-                            , category : Normal
-                            , ngramCount : 1}
+sampleData' =
+  DocumentsView
+    { _id: 1
+    , url: ""
+    , date: 2010
+    , title: "title"
+    , source: "source"
+    , category: Normal
+    , ngramCount: 1
+    }
 
 sampleData :: Array DocumentsView
 --sampleData = replicate 10 sampleData'
-sampleData = map (\(Tuple t s) -> DocumentsView { _id : 1
-                                                , url : ""
-                                                , date : 2017
-                                                , title: t
-                                                , source: s
-                                                , category : Normal
-                                                , ngramCount : 10}) sampleDocuments
+sampleData =
+  map
+    ( \(Tuple t s) ->
+        DocumentsView
+          { _id: 1
+          , url: ""
+          , date: 2017
+          , title: t
+          , source: s
+          , category: Normal
+          , ngramCount: 10
+          }
+    )
+    sampleDocuments
 
 sampleDocuments :: Array (Tuple String String)
-sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
+sampleDocuments = [ Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres", Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques", Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques", Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques", Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques", Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques", Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques", Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques", Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque", Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque", Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics", Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III", Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae", Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B", Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B", Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A", Tuple "Surveying the nuclear caloric curve" "Physics Letters B", Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B" ]
 
-newtype SearchQuery = SearchQuery
-  {
-    query :: Array String
+newtype SearchQuery
+  = SearchQuery
+  { query :: Array String
   , parent_id :: Int
   }
 
-
 instance encodeJsonSQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery post)
-     = "query" := post.query
-    ~> "parent_id" := post.parent_id
-    ~> jsonEmptyObject
-
-
+  encodeJson (SearchQuery post) =
+    "query" := post.query
+      ~> "parent_id"
+      := post.parent_id
+      ~> jsonEmptyObject
 
 searchResults :: SearchQuery -> Aff Int
 searchResults squery = post "http://localhost:8008/count" unit
-  -- TODO
 
+-- TODO
 documentsUrl :: Session -> Int -> String
 documentsUrl session nodeId = url session (NodeAPI Node (Just nodeId)) <> "/documents"
 
@@ -354,4 +408,4 @@ deleteAllDocuments session = delete <<< documentsUrl session
 toggleSet :: forall a. Ord a => a -> Set a -> Set a
 toggleSet a s
   | Set.member a s = Set.delete a s
-  | otherwise      = Set.insert a s
+  | otherwise = Set.insert a s

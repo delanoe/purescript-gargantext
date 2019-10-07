@@ -1,19 +1,18 @@
 module Gargantext.Components.Charts.Options.Color
-       ( Color
-       , stringColor
-       , cssColor
-       , transparent
-       , red
-       , blue
-       , magenta
-       , violet
-       , black
-       , grey
-       , green
-       ) where
+  ( Color
+  , stringColor
+  , cssColor
+  , transparent
+  , red
+  , blue
+  , magenta
+  , violet
+  , black
+  , grey
+  , green
+  ) where
 
 import Prelude
-
 import CSS as CSS
 import Color (rgba)
 import Unsafe.Coerce (unsafeCoerce)
@@ -34,8 +33,8 @@ red = stringColor "red"
 
 blue :: Color
 blue = cssColor $ rgba 100 150 200 0.0
--- stringColor "blue"
 
+-- stringColor "blue"
 magenta :: Color
 magenta = stringColor "magenta"
 

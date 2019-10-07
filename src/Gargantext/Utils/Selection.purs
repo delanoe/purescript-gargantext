@@ -10,13 +10,13 @@ import FFI.Simple ((.?), (..), (...))
 
 -- | Represents a text selection
 foreign import data Selection :: Type
+
 -- | Represents a single selection range
 foreign import data Range :: Type
 
 -- Terminology:
-  -- Anchor: point at which the selection was started
-  -- Focus: point at which the selection ends
-
+-- Anchor: point at which the selection was started
+-- Focus: point at which the selection ends
 -- | The Node in which the anchor lies
 anchorNode :: Selection -> Maybe Element
 anchorNode s = s .? "anchorNode"
@@ -33,7 +33,7 @@ rangeCount :: Selection -> Int
 rangeCount s = s .. "rangeCount"
 
 getRange :: Selection -> Int -> Effect Range
-getRange s i = pure $ s ... "getRangeAt" $ [i]
+getRange s i = pure $ s ... "getRangeAt" $ [ i ]
 
 -- | Renders a selection or range as a string
 selectionToString :: Selection -> String
@@ -51,19 +51,18 @@ cloneRange :: Range -> Range
 cloneRange r = r ... "cloneRange" $ []
 
 collapseRange :: Range -> Boolean -> Effect Unit
-collapseRange r toStart = pure $ r ... "collapse" $ [toStart]
+collapseRange r toStart = pure $ r ... "collapse" $ [ toStart ]
 
 commonAncestorContainer :: Range -> Element
 commonAncestorContainer r = r .. "commonAncestorContainer"
 
 insertNode :: Range -> Element -> Effect Unit
-insertNode r e = pure $ r ... "insertNode" $ [e]
+insertNode r e = pure $ r ... "insertNode" $ [ e ]
 
 boundingRect :: Range -> DOMRect
 boundingRect r = r ... "getBoundingClientRect" $ []
 
 -- getSelection
-
 -- | Fetches the current text selection, if any
 getSelection :: Effect (Maybe Selection)
 getSelection = toMaybe <$> _getSelection
@@ -74,5 +73,5 @@ foreign import _getSelection :: Effect (Nullable Selection)
 doesSelectionLieWithin :: Selection -> Element -> Boolean
 doesSelectionLieWithin sel elem = test anchorNode && test focusNode
   where
-    test :: (Selection -> Maybe Element) -> Boolean
-    test f = maybe false (Element.contains elem) (f sel)
+  test :: (Selection -> Maybe Element) -> Boolean
+  test f = maybe false (Element.contains elem) (f sel)
