@@ -83,10 +83,7 @@ chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
     [ renderSessions sessions, renderBackends backends backend ]
   
 renderSessions :: R2.Reductor Sessions Sessions.Action -> R.Element
-renderSessions sessions =
-  render (unSessions $ fst sessions) where
-  render Nothing = R.fragment []
-  render (Just s) = renderSession s
+renderSessions sessions = R.fragment (renderSession <$> unSessions (fst sessions))
 
 renderSession :: Session -> R.Element
 renderSession session = H.li {} [ H.text $ "Active session: " <> show session ]

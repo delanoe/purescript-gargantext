@@ -7,7 +7,18 @@ import Data.Either (Either(..))
 import Prim.Row (class Union)
 import URI.Query (Query)
 import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
+
+newtype SessionId = SessionId String
+
+derive instance genericSessionId :: Generic SessionId _
+
+instance eqSessionId :: Eq SessionId where
+  eq = genericEq
+
+instance showSessionId :: Show SessionId where
+  show (SessionId s) = s
 
 data TermSize = MonoTerm | MultiTerm
 

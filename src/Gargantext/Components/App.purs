@@ -73,11 +73,11 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
                 tree $ documentLayout { nodeId, listId, session, corpusId: Nothing }
               PGraphExplorer graphId ->
                 simpleLayout (fst sessions) $
-                  explorerLayout { graphId, mCurrentRoute, session, treeId: Nothing, frontends}
+                  explorerLayout { graphId, mCurrentRoute, session, sessions, treeId: Nothing, frontends}
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
 forestLayout frontends sessions route showLogin child =
-  R.fragment [ searchBar sessions, row main, footer {} ]
+  R.fragment [ topBar sessions, row main, footer {} ]
   where
     row child' = H.div {className: "row"} [child']
     main =
@@ -88,8 +88,8 @@ forestLayout frontends sessions route showLogin child =
       ]
 
 -- Simple layout does not accommodate the tree
-simpleLayout :: Sessions -> R.Element -> R.Element
-simpleLayout sessions child = R.fragment [ searchBar sessions, child, footer {}]
+simpleLayout :: R.Element -> R.Element
+simpleLayout child = R.fragment [ topBar {}, child, footer {}]
 
 mainPage :: R.Element -> R.Element
 mainPage child =
@@ -97,20 +97,16 @@ mainPage child =
   [ H.div {id: "page-wrapper"}
     [ H.div {className: "container-fluid"} [ child ] ] ]
 
-searchBar :: Sessions -> R.Element
-searchBar sessions =
+topBar :: {} -> R.Element
+topBar _ =
   H.div { id: "dafixedtop", role: "navigation"
         , className: "navbar navbar-inverse navbar-fixed-top" }
   [ H.div { className: "container-fluid" }
     [ H.div { className: "navbar-inner" }
       [ logo
       , H.div { className: "collapse navbar-collapse" }
-        [ divDropdownLeft
-        , search ] ] ] ]
-  where
-    search = case unSessions sessions of
-      Just session -> SB.searchBar {session, databases: allDatabases}
-      Nothing -> R.fragment []
+        [ divDropdownLeft ] ] ] ]
+      -- SB.searchBar {session, databases: allDatabases}
 
 logo :: R.Element
 logo =
