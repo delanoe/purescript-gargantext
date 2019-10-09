@@ -8,6 +8,8 @@
 # setup
 # dev
 
+NODE=node:buster-garg
+
 dockerrun(){
   P=/app/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
   sudo docker run -u "$UID" -e PATH="$P" -v $PWD:/app -w /app "$@"
@@ -16,32 +18,47 @@ dockerrun(){
 unalias npm yarn bower pulp repl &>/dev/null || :
 unset   npm yarn bower pulp repl &>/dev/null || :
 
+buildimage(){
+  (
+    cd devops/docker &&
+    sudo docker build -t node:buster-garg .
+  )
+}
+
+node(){
+  dockerrun -ti "$NODE" "$@"
+}
+
+pull(){
+  sudo docker pull "$NODE"
+}
+
 npm(){
-  dockerrun node npm "$@"
+  dockerrun "$NODE" npm "$@"
 }
 
 yarn(){
-  dockerrun node yarn "$@"
+  dockerrun "$NODE" yarn "$@"
 }
 
 bower(){
-  dockerrun node bower "$@"
+  dockerrun "$NODE" bower "$@"
 }
 
 dependencies(){
-  dockerrun node psc-dependencies "$@"
+  dockerrun "$NODE" psc-dependencies "$@"
 }
 
 package(){
-  dockerrun node psc-package "$@"
+  dockerrun "$NODE" psc-package "$@"
 }
 
 pulp(){
-  dockerrun node pulp --psc-package "$@"
+  dockerrun "$NODE" pulp --psc-package "$@"
 }
 
 repl(){
-  dockerrun -ti node pulp --psc-package repl "$@"
+  node pulp --psc-package repl "$@"
 }
 
 check(){
@@ -59,7 +76,7 @@ build(){
 }
 
 serve(){
-  dockerrun node http-server -p 2015 --cors dist
+  dockerrun "$NODE" http-server -p 2015 --cors dist
 }
 
 dev(){
