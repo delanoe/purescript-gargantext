@@ -4,7 +4,8 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe(..), isNothing, maybe, maybe')
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
+import Effect.Exception (error)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Gargantext.Utils.Reactix as R2
@@ -28,13 +29,13 @@ useLoader path loader render
   <$> (useAff =<< R.useMemo2 path loader (\_ -> loader path))
 
 useLoader2 :: forall path st.
-              R.State path -> (path -> Aff st) 
+              R.State path -> (path -> Aff st)
               -> (st -> R.Element) -> R.Hooks R.Element
 useLoader2 path loader render = do
   state <- R.useState' Nothing
   useLoaderEffect2 path state loader
   pure $ maybe (loadingSpinner {}) render (fst state)
-  
+
 useLoaderEffect :: forall state.
                    Aff state -> R.State (Maybe state) -> R.Hooks Unit
 useLoaderEffect loader (state /\ setState) = do
@@ -61,4 +62,31 @@ useRepointer :: forall path st.
                 R.State path -> (path -> Aff st) -> R.Hooks (Aff st)
 useRepointer path@(path' /\ _) loader = R.useMemo2 loader path' (\_ -> loader path')
 
+useLoader3
+  :: forall path loaded
+  .  Eq path
+  => Show path
+  => path
+  -> (path -> Aff loaded)
+  -> (path -> loaded -> R.Element)
+  -> R.Hooks R.Element
+useLoader3 newPath loader render = do
+  {currentPath, loaded} /\ setState <- R.useState' { currentPath: newPath, loaded: Nothing }
 
+  R.useEffect $
+    if (isNothing loaded || newPath /= currentPath) then do
+      logs $ "useLoader " <> show {newPath, currentPath, loadedIsNothing: isNothing loaded}
+
+      fiber <- launchAff do
+        freshlyLoaded <- loader newPath
+        liftEffect $ setState $ const { currentPath: newPath, loaded: Just freshlyLoaded }
+      pure $ launchAff_ $ killFiber (error "useLoader") fiber
+    else do
+      pure $ pure $ unit
+
+  pure case loaded of
+    Nothing ->
+      -- TODO load spinner
+      R.fragment []
+    Just loadedData ->
+      render currentPath loadedData --, setState}

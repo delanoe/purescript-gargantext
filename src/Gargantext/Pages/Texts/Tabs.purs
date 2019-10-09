@@ -39,7 +39,9 @@ tabsCpt :: R.Component Props
 tabsCpt = R.hooksComponent "CorpusTabs" cpt
   where
     cpt {session, corpusId, corpusData} _ = do
-      (selected /\ setSelected) <- R.useState' 0
+      let selected = 0
+      -- Why use a state if setSelected is never called?
+      -- (selected /\ setSelected) <- R.useState' 0
       pure $ Tab.tabs { tabs: tabs', selected }
       where
         tabs' = [ "Documents"     /\ docs,        "Trash"           /\ trash

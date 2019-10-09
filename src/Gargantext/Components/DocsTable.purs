@@ -14,7 +14,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), fst)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log)
 import DOM.Simple.Event as DE
@@ -28,7 +28,7 @@ import Gargantext.Config.REST (post, delete)
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url)
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Loader (useLoader, useLoader3)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
@@ -131,6 +131,7 @@ docViewLayoutCpt = R.hooksComponent "G.C.DocsTable.docViewLayout" cpt
     cpt layout _children = do
       query <- R.useState' ""
       params <- R.useState' T.initialParams
+      --DEBUG-- let params = T.initialParams /\ const (pure unit)
       pure $ docView {query, params, layout}
 
 type Props =
@@ -154,7 +155,7 @@ docViewCpt = R.hooksComponent "G.C.DocsTable.docView" cpt where
           [ pageLayout {session, nodeId, totalRecords, tabType, listId, corpusId, query: fst query, params} ] ] ]
     -- onClickTrashAll nodeId _ = do
     --   launchAff $ deleteAllDocuments p.session nodeId
-          
+
           {-, H.div {className: "col-md-1 col-md-offset-11"}
             [ pageLayout p.session params {nodeId, totalRecords, tabType, listId, corpusId, query: fst query} ]
           , H.div {className: "col-md-1 col-md-offset-11"}
@@ -172,6 +173,10 @@ searchBar (query /\ setQuery) = R.createElement el {} []
   where
     el = R.hooksComponent "SearchBar" cpt
     cpt {} _children = do
+      -- This is a local state for the query.
+      -- When the searchBar input changes it should not update right
+      -- away, instead it is when the searchButton is clicked that
+      -- the state is transfered.
       queryText <- R.useState' query
 
       pure $ H.div {className: "row"}
@@ -217,10 +222,11 @@ type PageParams = { nodeId :: Int
                   , corpusId :: Maybe Int
                   , tabType :: TabType
                   , query   :: Query
+                  , session :: Session
                   , params :: T.Params}
 
-loadPage :: Session -> PageParams -> Aff (Array DocumentsView)
-loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
+loadPage :: PageParams -> Aff (Array DocumentsView)
+loadPage {nodeId, tabType, query, listId, corpusId, session, params: {limit, offset, orderBy}} = do
   liftEffect $ log "loading documents page: loadPage with Offset and limit"
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let url2 = (url session (NodeAPI Node (Just nodeId))) <> "/table"
@@ -255,8 +261,9 @@ loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offs
 
     convOrderBy _ = DateAsc -- TODO
 
-renderPage :: R.State T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
-renderPage (_ /\ setTableParams) p@{session} res = R.createElement el p []
+renderPage :: Record PageLayoutProps -> Array DocumentsView -> R.Element
+renderPage {session, nodeId, corpusId, listId, totalRecords, params: _ /\ setParams} res
+    = R.createElement el {nodeId, corpusId, listId, totalRecords} []
   where
     sid = sessionId session
     el = R.hooksComponent "RenderPage" cpt
@@ -268,12 +275,14 @@ renderPage (_ /\ setTableParams) p@{session} res = R.createElement el p []
     corpusDocument (Just corpusId) = Routes.CorpusDocument sid corpusId
     corpusDocument _ = Routes.Document sid
 
-    cpt {session, nodeId, corpusId, listId, totalRecords} _children = do
+    cpt {nodeId, corpusId, listId, totalRecords} _children = do
       localCategories <- R.useState' (mempty :: LocalCategories)
+      --DEBUG-- let localCategories = (mempty :: LocalCategories) /\ (\_ -> pure unit)
       pure $ T.table
           { rows: rows localCategories
           -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
-          , setParams: setTableParams <<< const
+          , setParams: setParams <<< const
+          --DEBUG-- , setParams: \_ -> pure unit
           , container: T.defaultContainer { title: "Documents" }
           , colNames
           , totalRecords
@@ -309,8 +318,15 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
   cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ = do
-    useLoader {nodeId, listId, corpusId, tabType, query, params: fst params} (loadPage session) $
-      \loaded -> renderPage params props loaded
+    useLoader {nodeId, listId, corpusId, tabType, query, session, params: fst params} loadPage $
+      \loaded -> renderPage props loaded
+{- --DEBUG--
+  cpt props@{session, nodeId, listId, corpusId, tabType, query, totalRecords} _ = do
+    useLoader3 {nodeId, listId, corpusId, tabType, query, session, params: fst props.params}
+              loadPage (\{nodeId, listId, corpusId, tabType, query, session, params} ->
+                          renderPage {nodeId, listId, corpusId, tabType, query, session,
+                                      params: params /\ snd props.params, totalRecords})
+              -}
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
