@@ -131,7 +131,7 @@ tableCpt = R.hooksComponent "Table" cpt
       let state = {pageSize, orderBy, page}
       let ps = pageSizes2Int pageSize
       let totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
-      R.useEffect1' state $ setParams (stateParams state)
+      -- R.useEffect1' state $ setParams (stateParams state)
       pure $ container
         { pageSizeControl: sizeDD pageSize setPageSize
         , pageSizeDescription: textDescription page pageSize totalRecords
