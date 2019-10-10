@@ -1,8 +1,10 @@
 -- | A module for authenticating to create sessions and handling them
 module Gargantext.Sessions where
 
-import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<))
+import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<), bind)
+import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject, (.:), Json, fromArray)
 import Data.Array as A
+import Data.Traversable (traverse)
 import DOM.Simple.Console (log2)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -33,6 +35,9 @@ newtype Session = Session
   , token    :: String
   , treeId   :: Int }
 
+------------------------------------------------------------------------
+-- | Main instances
+
 derive instance genericSession :: Generic Session _
 
 instance eqSession :: Eq Session where
@@ -56,12 +61,50 @@ sessionId = SessionId <<< show
 instance toUrlSessionString :: ToUrl Session String where
   toUrl = sessionUrl
 
+--------------------
+-- | JSON instances
+instance encodeJsonSession :: EncodeJson Session where
+  encodeJson (Session {backend, username, token, treeId})
+    =  "backend"  := encodeJson backend
+    ~> "username" := username
+    ~> "token"    :=  token
+    ~> "treeId"   := treeId
+    ~> jsonEmptyObject
+
+instance decodeJsonSession :: DecodeJson Session where
+  decodeJson json = do
+    obj      <- decodeJson json
+    backend  <- obj .: "backend"
+    username <- obj .: "username"
+    token    <- obj .: "token"
+    treeId   <- obj .: "treeId"
+    pure $ Session { backend, username, token, treeId}
+
+------------------------------------------------------------------------
+
 newtype Sessions = Sessions (Seq Session)
 
 derive instance genericSessions :: Generic Sessions _
 
 instance eqSessions :: Eq Sessions where
   eq = genericEq
+
+instance decodeJsonSessions :: DecodeJson Sessions where
+  decodeJson json = do
+    ss <- decodeSessions json
+    pure (Sessions (Seq.fromFoldable ss))
+    
+    where
+      decodeSessions :: Json -> Either String (Array Session)
+      decodeSessions json = decodeJson json >>= traverse decodeJson
+
+instance encodeJsonSessions :: EncodeJson Sessions where
+  encodeJson (Sessions ss) = "sessions" := (encodeSessions ss)
+                           ~> jsonEmptyObject
+    where
+      encodeSessions :: Seq Session -> Json
+      encodeSessions ss = fromArray $ encodeJson <$> (Seq.toUnfoldable ss)
+
 
 unSessions :: Sessions -> Array Session
 unSessions (Sessions s) = A.fromFoldable s
@@ -125,13 +168,14 @@ null (Sessions seq) = Seq.null seq
 -- | Will attempt to load saved sessions from localstorage. should log if decoding fails
 loadSessions :: Effect Sessions
 loadSessions = pure empty
--- loadSessions = window >>= localStorage >>= getItem "auths" >>= traverse decode
---   where
---     decode :: String -> Effect (Maybe Sessions)
---     decode = ret <<< runExcept <<< decodeJSON
---     ret (Right v) = pure $ Just v
---     ret (Left e) = log2 "Error reading serialised sessions:" e *> pure (Malformed e)
-
+{-
+loadSessions = window >>= localStorage >>= getItem "auths" >>= traverse decode
+  where
+    decode :: String -> Effect (Maybe Sessions)
+    decode = ret <<< runExcept <<< decodeJson
+    ret (Right v) = pure $ Just v
+    ret (Left e)  = log2 "Error reading serialised sessions:" e *> pure (Malformed e)
+    -}
 saveSessions :: Sessions -> Effect Sessions
 saveSessions sessions = effect *> pure sessions
   where
