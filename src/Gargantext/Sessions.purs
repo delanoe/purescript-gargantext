@@ -91,12 +91,12 @@ instance eqSessions :: Eq Sessions where
 
 instance decodeJsonSessions :: DecodeJson Sessions where
   decodeJson json = do
-    ss <- decodeSessions' json
+    ss <- decodeSessions json
     pure (Sessions (Seq.fromFoldable ss))
     
     where
-      decodeSessions' :: Json -> Either String (Array Session)
-      decodeSessions' json = decodeJson json >>= traverse decodeJson
+      decodeSessions :: Json -> Either String (Array Session)
+      decodeSessions json = decodeJson json >>= traverse decodeJson
 
 instance encodeJsonSessions :: EncodeJson Sessions where
   encodeJson (Sessions ss) = "sessions" := (encodeSessions ss)
