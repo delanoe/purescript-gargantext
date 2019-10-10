@@ -3,7 +3,8 @@ module Gargantext.Ends
   -- ( )
   where
 
-import Prelude (class Eq, class Show, identity, show, ($), (<>))
+import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure)
+import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject, (.:))
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
@@ -44,6 +45,24 @@ instance showBackend :: Show Backend where
 
 instance toUrlBackendString :: ToUrl Backend String where
   toUrl = backendUrl
+
+-- JSON instances
+instance encodeJsonBackend :: EncodeJson Backend where
+  encodeJson (Backend {name, baseUrl, prePath, version})
+    =  "name"    := name
+    ~> "baseUrl" := baseUrl
+    ~> "prePath" := prePath
+    ~> "version" := show version
+    ~> jsonEmptyObject
+
+instance decodeJsonBackend :: DecodeJson Backend where
+  decodeJson json = do
+    obj <- decodeJson json
+    name <- obj .: "objet"
+    baseUrl <- obj .: "baseUrl"
+    prePath <- obj .: "prePath"
+    version <- obj .: "version"
+    pure $ Backend {name, baseUrl, prePath, version}
 
 -- | Encapsulates the data needed to construct a url to a frontend
 -- | server (either for the app or static content)

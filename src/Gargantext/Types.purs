@@ -282,16 +282,30 @@ instance showOrderBy :: Show OrderBy where
   show = genericShow
 
 ------------------------------------------------------------
-data ApiVersion = V10 | V11
+-- V0 is the dummy case (impossible)
+data ApiVersion = V0 | V10 | V11
+
 instance showApiVersion :: Show ApiVersion where
+  show V0  = "v0"
   show V10 = "v1.0"
   show V11 = "v1.1"
-------------------------------------------------------------
 
 instance eqApiVersion :: Eq ApiVersion where
   eq V10 V10 = true
   eq V11 V11 = true
   eq _ _ = false
+
+instance encodeJsonApiVersion :: EncodeJson ApiVersion where
+  encodeJson v = encodeJson (show v)
+
+instance decodeJsonApiVersion :: DecodeJson ApiVersion where
+  decodeJson json = do
+    v <- decodeJson json
+    case v of
+         "v1.0" -> pure V10
+         "v1.1" -> pure V11
+         _      -> pure V0
+------------------------------------------------------------
 
 data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
 
