@@ -272,8 +272,8 @@ type PageProps =
 page ::  R.State T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
 page params layout documents = R.createElement pageCpt {params, layout, documents} []
 
-pageCpt :: R.Component PageProps
-pageCpt = R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
+pageCpt :: R.Memo PageProps
+pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
   cpt { layout: {session, nodeId, corpusId, listId, totalRecords}
       , documents, params: (_ /\ setParams) } _children = do
     localCategories <- R.useState' (mempty :: LocalCategories)
