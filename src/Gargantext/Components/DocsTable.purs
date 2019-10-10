@@ -306,11 +306,11 @@ renderPage (_ /\ setTableParams) p@{session} res = R.createElement el p []
 pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
-pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
-  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ = do pure $ R.fragment []
-    -- useLoader {nodeId, listId, corpusId, tabType, query, params: fst params} (loadPage session) $
-    --   \loaded -> renderPage params props loaded
+pageLayoutCpt :: R.Memo PageLayoutProps
+pageLayoutCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
+  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ = do
+    useLoader {nodeId, listId, corpusId, tabType, query, params: fst params} (loadPage session) $
+      \loaded -> renderPage params props loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
