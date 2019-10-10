@@ -255,33 +255,47 @@ loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offs
 
     convOrderBy _ = DateAsc -- TODO
 
-renderPage :: R.State T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
-renderPage (_ /\ setTableParams) p@{session} res = R.createElement el p []
-  where
-    sid = sessionId session
-    el = R.hooksComponent "RenderPage" cpt
+pageLayout :: Record PageLayoutProps -> R.Element
+pageLayout props = R.createElement pageLayoutCpt props []
 
-    gi Favorite  = "glyphicon glyphicon-star"
-    gi _ = "glyphicon glyphicon-star-empty"
-    trashStyle Trash = {textDecoration: "line-through"}
-    trashStyle _ = {textDecoration: "none"}
-    corpusDocument (Just corpusId) = Routes.CorpusDocument sid corpusId
-    corpusDocument _ = Routes.Document sid
+pageLayoutCpt :: R.Memo PageLayoutProps
+pageLayoutCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
+  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ = do
+    useLoader {nodeId, listId, corpusId, tabType, query, params: fst params} (loadPage session) $
+      \loaded -> page params props loaded
 
-    cpt {session, nodeId, corpusId, listId, totalRecords} _children = do
-      localCategories <- R.useState' (mempty :: LocalCategories)
-      pure $ T.table
-          { rows: rows localCategories
-          -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
-          , setParams: setTableParams <<< const
-          , container: T.defaultContainer { title: "Documents" }
-          , colNames
-          , totalRecords
-          }
+type PageProps =
+  ( params :: R.State T.Params
+  , layout :: Record PageLayoutProps
+  , documents :: Array DocumentsView )
+
+page ::  R.State T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
+page params layout documents = R.createElement pageCpt {params, layout, documents} []
+
+pageCpt :: R.Component PageProps
+pageCpt = R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
+  cpt { layout: {session, nodeId, corpusId, listId, totalRecords}
+      , documents, params: (_ /\ setParams) } _children = do
+    localCategories <- R.useState' (mempty :: LocalCategories)
+    pure $ T.table
+      { rows: rows localCategories
+        -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
+      , setParams: setParams <<< const
+      , container: T.defaultContainer { title: "Documents" }
+      , colNames
+      , totalRecords
+      }
       where
+        sid = sessionId session
+        gi Favorite  = "glyphicon glyphicon-star"
+        gi _ = "glyphicon glyphicon-star-empty"
+        trashStyle Trash = {textDecoration: "line-through"}
+        trashStyle _ = {textDecoration: "none"}
+        corpusDocument (Just corpusId) = Routes.CorpusDocument sid corpusId
+        corpusDocument _ = Routes.Document sid
         colNames = T.ColumnName <$> [ "Map", "Stop", "Date", "Title", "Source"]
         getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
-        rows localCategories = row <$> res
+        rows localCategories = row <$> documents
           where
             row (DocumentsView r) =
               { row:
@@ -302,15 +316,6 @@ renderPage (_ /\ setTableParams) p@{session} res = R.createElement el p []
           let newCat = if (catType == Favorite) then (favCategory cat) else (trashCategory cat)
           setLocalCategories $ insert nid newCat
           void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [nid], category: newCat}
-
-pageLayout :: Record PageLayoutProps -> R.Element
-pageLayout props = R.createElement pageLayoutCpt props []
-
-pageLayoutCpt :: R.Memo PageLayoutProps
-pageLayoutCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
-  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ = do
-    useLoader {nodeId, listId, corpusId, tabType, query, params: fst params} (loadPage session) $
-      \loaded -> renderPage params props loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
