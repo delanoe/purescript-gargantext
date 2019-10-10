@@ -308,9 +308,9 @@ pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
-  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ = do
-    useLoader {nodeId, listId, corpusId, tabType, query, params: fst params} (loadPage session) $
-      \loaded -> renderPage params props loaded
+  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ = do pure $ R.fragment []
+    -- useLoader {nodeId, listId, corpusId, tabType, query, params: fst params} (loadPage session) $
+    --   \loaded -> renderPage params props loaded
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
