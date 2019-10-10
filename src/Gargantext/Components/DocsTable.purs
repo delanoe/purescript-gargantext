@@ -298,6 +298,7 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
                 , H.input { type: "checkbox", checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { style } [ R2.showText r.date ]
+                , H.div { style } [ H.text r.title ]
                 , H.div { style } [ H.text r.source ]
                 ]
               , delete: true }
