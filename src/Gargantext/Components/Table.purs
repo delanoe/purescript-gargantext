@@ -5,6 +5,7 @@ import Data.Array (filter)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
+import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
@@ -50,7 +51,7 @@ derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 type Props =
   ( colNames     :: Array ColumnName
   , totalRecords :: Int
-  , setParams    :: Params -> Effect Unit
+  , params       :: R.State Params
   , rows         :: Rows
   , container    :: Record TableContainerProps -> R.Element
   )
@@ -124,14 +125,14 @@ table props = R.createElement tableCpt props []
 tableCpt :: R.Component Props
 tableCpt = R.hooksComponent "Table" cpt
   where
-    cpt {container, colNames, totalRecords, rows, setParams} _ = do
+    cpt {container, colNames, totalRecords, rows, params} _ = do
       (pageSize /\ setPageSize) <- R.useState' PS10
       (page /\ setPage) <- R.useState' 1
       (orderBy /\ setOrderBy) <- R.useState' Nothing
       let state = {pageSize, orderBy, page}
       let ps = pageSizes2Int pageSize
       let totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
-      -- R.useEffect1' state $ setParams (stateParams state)
+      R.useEffect1' state $ when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
       pure $ container
         { pageSizeControl: sizeDD pageSize setPageSize
         , pageSizeDescription: textDescription page pageSize totalRecords
@@ -139,16 +140,17 @@ tableCpt = R.hooksComponent "Table" cpt
         , tableHead: H.tr {} (colHeader setOrderBy orderBy <$> colNames)
         , tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
         }
-    colHeader :: (R2.Setter OrderBy) -> OrderBy -> ColumnName -> R.Element
-    colHeader setOrderBy currentOrderBy c = H.th {scope: "col"} [ H.b {} cs ]
-      where
-        lnk mc = effectLink (setOrderBy (const mc))
-        cs :: Array R.Element
-        cs =
-          case currentOrderBy of
-            Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ",  lnk Nothing (columnName c)]
-            Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "ASC ", lnk Nothing (columnName c)]
-            _ -> [lnk (Just (ASC c)) (columnName c)]
+        where
+          colHeader :: (R2.Setter OrderBy) -> OrderBy -> ColumnName -> R.Element
+          colHeader setOrderBy orderBy c = H.th {scope: "col"} [ H.b {} cs ]
+            where
+              lnk mc = effectLink (setOrderBy (const mc))
+              cs :: Array R.Element
+              cs =
+                case orderBy of
+                  Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ",  lnk Nothing (columnName c)]
+                  Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "ASC ", lnk Nothing (columnName c)]
+                  _ -> [lnk (Just (ASC c)) (columnName c)]
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 defaultContainer {title} props = R.fragment

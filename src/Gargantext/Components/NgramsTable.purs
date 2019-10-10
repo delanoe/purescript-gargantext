@@ -19,6 +19,7 @@ import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), snd)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -243,13 +244,14 @@ ngramsTableSpec session ntype setPath = simpleSpec performAction render
                     { ngramsTablePatch, ngramsParent, ngramsChildren }
                     _reactChildren =
       [ autoUpdateElt { duration: 3000, effect: dispatch Refresh }
-      , R2.scuff $ T.table { rows, setParams, container, colNames, totalRecords}
+      , R2.scuff $ T.table { rows, params, container, colNames, totalRecords}
       ]
       where
         totalRecords = 47361 -- TODO
         colNames = T.ColumnName <$> ["Map", "Stop", "Terms", "Score (Occurrences)"] -- see convOrderBy
         container = tableContainer {pageParams, setPath, dispatch, ngramsParent, ngramsChildren, ngramsTable}
-        setParams params = setPath $ const (pageParams {params = params})
+        setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
+        params = pageParams.params /\ setParams
         ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
         orderWith =
           case convOrderBy <$> pageParams.params.orderBy of

@@ -278,9 +278,10 @@ pageCpt :: R.Component PageProps
 pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
   where
     cpt {totalRecords, container, deletions, documents, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
-      T.table { rows, container, colNames, totalRecords, setParams }
+      T.table { rows, container, colNames, totalRecords, params }
       where
-        setParams params = setPath (_ {params = params})
+        setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
+        params = (fst path).params /\ setParams
         colNames = T.ColumnName <$> [ "", "Date", "Title", "Source", "Authors", "Delete" ]
         -- TODO: how to interprete other scores?
         gi Favorite = "glyphicon glyphicon-star-empty"

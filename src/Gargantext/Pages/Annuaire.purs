@@ -5,6 +5,7 @@ import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array (head)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (fst, snd)
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url)
@@ -101,13 +102,15 @@ pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
   where
     cpt { session, annuairePath, pagePath
         , table: (AnnuaireTable {annuaireTable}) } _ = do
-      T.table { rows, setParams, container, colNames, totalRecords }
+      T.table { rows, params, container, colNames, totalRecords }
       where
         totalRecords = 4361 -- TODO
         rows = (\c -> {row: contactCells session c, delete: false}) <$> annuaireTable
-        setParams params = snd pagePath $ const {params, nodeId: fst annuairePath}
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
+        setParams f = snd pagePath $ \{nodeId, params} ->
+          {params: f params, nodeId: fst annuairePath}
+        params = T.initialParams /\ setParams
 
 contactCells :: Session -> Maybe Contact -> Array R.Element
 contactCells session = maybe [] render

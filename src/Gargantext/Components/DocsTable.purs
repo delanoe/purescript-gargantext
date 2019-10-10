@@ -274,17 +274,12 @@ page params layout documents = R.createElement pageCpt {params, layout, document
 
 pageCpt :: R.Memo PageProps
 pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
-  cpt { layout: {session, nodeId, corpusId, listId, totalRecords}
-      , documents, params: (_ /\ setParams) } _children = do
+  cpt { layout: {session, nodeId, corpusId, listId, totalRecords}, documents, params } _ = do
     localCategories <- R.useState' (mempty :: LocalCategories)
     pure $ T.table
       { rows: rows localCategories
-        -- , setParams: \params -> liftEffect $ loaderDispatch (Loader.SetPath {nodeId, tabType, listId, corpusId, params, query})
-      , setParams: setParams <<< const
       , container: T.defaultContainer { title: "Documents" }
-      , colNames
-      , totalRecords
-      }
+      , params, colNames, totalRecords }
       where
         sid = sessionId session
         gi Favorite  = "glyphicon glyphicon-star"
