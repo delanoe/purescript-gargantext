@@ -22,7 +22,6 @@ import Reactix.DOM.HTML (ElemFactory, text)
 import Reactix.React (react, createDOMElement)
 import Reactix.SyntheticEvent as RE
 import Reactix.Utils (currySecond, hook, tuple)
-import Thermite (Spec, simpleSpec, Render, defaultPerformAction)
 import Unsafe.Coerce (unsafeCoerce)
 
 newtype Point = Point { x :: Number, y :: Number }
@@ -42,30 +41,17 @@ buff = unsafeCoerce
 scuff :: R.Element -> ReactElement
 scuff = unsafeCoerce
 
-class ToElement a where
-  toElement :: a -> R.Element
+-- class ToElement a where
+--   toElement :: a -> R.Element
 
-instance toElementElement :: ToElement R.Element where
-  toElement = identity
+-- instance toElementElement :: ToElement R.Element where
+--   toElement = identity
 
-instance toElementReactElement :: ToElement ReactElement where
-  toElement = buff
+-- instance toElementReactElement :: ToElement ReactElement where
+--   toElement = buff
 
-instance toElementArray :: ToElement a => ToElement (Array a) where
-  toElement = R.fragment <<< map toElement
-
-{-
-instance isReactElementElement :: IsReactElement R.Element where
-  toElement = scuff
--}
-
-elSpec :: forall component props
-        . R.IsComponent component props (Array R.Element)
-       => component -> Spec {} (Record props) Void
-elSpec cpt = simpleSpec defaultPerformAction render
-  where
-    render :: Render {} (Record props) Void
-    render _ props _ children = [scuff $ R.createElement cpt props (buff <$> children)]
+-- instance toElementArray :: ToElement a => ToElement (Array a) where
+--   toElement = R.fragment <<< map toElement
 
 createElement' :: forall required given
                 . ReactPropFields required given

@@ -103,7 +103,7 @@ instance encodeJsonSessions :: EncodeJson Sessions where
                            ~> jsonEmptyObject
     where
       encodeSessions :: Seq Session -> Json
-      encodeSessions ss = fromArray $ encodeJson <$> (Seq.toUnfoldable ss)
+      encodeSessions ss2 = fromArray $ encodeJson <$> (Seq.toUnfoldable ss2)
 
 
 unSessions :: Sessions -> Array Session
