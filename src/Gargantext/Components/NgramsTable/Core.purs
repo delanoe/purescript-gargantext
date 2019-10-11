@@ -87,7 +87,7 @@ import Partial.Unsafe (unsafePartial)
 
 import Gargantext.Config.REST (get, put, post)
 import Gargantext.Components.Table as T
-import Gargantext.Components.Loader as Loader
+import Gargantext.Components.OldLoader as Loader
 import Gargantext.Ends (url)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session)
