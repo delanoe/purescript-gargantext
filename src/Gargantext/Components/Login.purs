@@ -37,13 +37,13 @@ modal :: Record ModalProps -> R.Element -> R.Element
 modal props child = R.createElement modalCpt props [ child ]
 
 modalCpt :: R.Component ModalProps
-modalCpt = R.hooksComponent "Modal" cpt where
+modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
   cpt {visible} children = do
     R.createPortal elems <$> R2.getPortalHost
     where
       click _ = log "click!" *> (snd visible) (const false)
       elems = 
-        [ H.div { id: "loginModal", className: modalClass (fst visible)
+        [ H.div { id: "loginModal", className: modalClass (fst visible), key: 0
                 , role: "dialog", "data": {show: true}, style: {display: "block"}}
           [ H.div { className: "modal-dialog", role: "document"}
             [ H.div { className: "modal-content" }

@@ -179,7 +179,7 @@ graphContainer {title} props =
    -- , props.paginationLinks
 
 sizeDD :: PageSizes -> R2.Setter PageSizes -> R.Element
-sizeDD ps setPageSize = H.span {} [ R2.select { className, on: {change} } sizes ]
+sizeDD ps setPageSize = H.span {} [ R2.select { className, defaultValue: ps, on: {change} } sizes ]
   where
     className = "form-control"
     change e = setPageSize $ const (string2PageSize $ R2.unsafeEventValue e)
@@ -278,4 +278,4 @@ string2PageSize "200" = PS200
 string2PageSize _    = PS10
 
 optps :: PageSizes -> PageSizes -> R.Element
-optps cv val = H.option {selected: (cv == val), value: show val} [R2.showText val]
+optps _cv val = H.option {value: show val} [R2.showText val]

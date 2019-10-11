@@ -10,6 +10,7 @@ import Effect.Exception (error)
 import Reactix as R
 --------------------------------------------------------
 import Gargantext.Prelude
+import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Table as Table
 import Gargantext.Config.REST (get)
@@ -28,25 +29,22 @@ textsLayout props = R.createElement textsLayoutCpt props []
 
 ------------------------------------------------------------------------
 textsLayoutCpt :: R.Component Props
-textsLayoutCpt = R.hooksComponent "TextsLoader" cpt
-  where
-    cpt {session,nodeId} _ =
-      useLoader nodeId (getCorpus session) $
-        \corpusData@{corpusId, corpusNode, defaultListId} ->
-          let
-            NodePoly { name, date, hyperdata: CorpusInfo corpus } = corpusNode
-            {desc, query, authors: user} = corpus
-            tabs = Tabs.tabs {session, corpusId, corpusData}
-            title = "Corpus " <> name
-            headerProps = { title, desc, query, date, user } in
-          R.fragment [Table.tableHeaderLayout headerProps, tabs]
-
-          
-
+textsLayoutCpt = R.hooksComponent "G.P.Texts.textsLayout" cpt where
+  cpt path@{session} _ = do
+    pure $ loader path loadCorpus paint
+    where
+      paint corpusData@{corpusId, corpusNode, defaultListId} =
+        R.fragment [ Table.tableHeaderLayout headerProps, tabs ]
+        where
+          NodePoly { name, date, hyperdata: CorpusInfo corpus } = corpusNode
+          {desc, query, authors: user} = corpus
+          tabs = Tabs.tabs {session, corpusId, corpusData}
+          title = "Corpus " <> name
+          headerProps = { title, desc, query, date, user }
 ------------------------------------------------------------------------
 
-getCorpus :: Session -> Int -> Aff CorpusData
-getCorpus session textsId = do
+loadCorpus :: Record Props -> Aff CorpusData
+loadCorpus {session, nodeId} = do
   liftEffect $ log2 "nodepolyurl: " nodePolyUrl
   -- fetch corpus via texts parentId
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get nodePolyUrl
@@ -60,6 +58,6 @@ getCorpus session textsId = do
     Nothing ->
       throwError $ error "Missing default list"
   where
-    nodePolyUrl = url session $ NodeAPI Corpus (Just textsId)
+    nodePolyUrl = url session $ NodeAPI Corpus (Just nodeId)
     corpusNodeUrl = url session <<< NodeAPI Corpus <<< Just
     defaultListIdsUrl = url session <<< Children NodeList 0 1 Nothing <<< Just

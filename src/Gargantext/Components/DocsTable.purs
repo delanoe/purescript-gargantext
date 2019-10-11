@@ -295,7 +295,7 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
             row (DocumentsView r) =
               { row:
                 [ H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                , H.input { type: "checkbox", checked, on: {click: click Trash} }
+                , H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { style } [ R2.showText r.date ]
                 , H.div { style } [ H.text r.title ]

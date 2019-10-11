@@ -5,6 +5,7 @@ import Prelude hiding (div)
 import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array (filter)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
@@ -225,7 +226,6 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
       popupOpen   <- R.useState' (Nothing :: Maybe NodePopup)
       droppedFile <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver  <- R.useState' false
-
       pure $ H.span (dropProps droppedFile isDragOver)
         [ folderIcon folderOpen
         , H.a { href: (url frontends (NodePath (sessionId session) nodeType (Just id)))
@@ -288,14 +288,19 @@ childNodes :: Session         -> Frontends
             -> Array R.Element
 childNodes _ _ _ _ _ [] = []
 childNodes _ _ _ (false /\ _) _ _ = []
-childNodes session frontends reload (true /\ _) mCurrentRoute ary = map (\ctree -> childNode {tree: ctree}) ary
-  where
-    childNode :: Tree -> R.Element
-    childNode props = R.createElement el props []
-    el = R.hooksComponent "ChildNodeView" cpt
-    cpt {tree} _ = do
-      treeState <- R.useState' {tree}
-      pure $ toHtml reload treeState session frontends mCurrentRoute
+childNodes session frontends reload (true /\ _) route ary =
+  mapWithIndex (\index tree -> childNode {tree, session, frontends, reload, route, key: index}) ary
+
+type ChildProps = ( tree :: FTree, session :: Session, frontends :: Frontends, key :: Int, reload :: R.State Reload, route :: Maybe AppRoute )
+
+childNode :: Record ChildProps -> R.Element
+childNode props = R.createElement childNodeCpt props []
+
+childNodeCpt :: R.Component ChildProps
+childNodeCpt = R.hooksComponent "G.C.Tree.childNode" cpt where
+  cpt {tree, reload, session, frontends, route} _ = do
+    treeState <- R.useState' {tree}
+    pure $ toHtml reload treeState session frontends route
 
 -- END toHtml
 
