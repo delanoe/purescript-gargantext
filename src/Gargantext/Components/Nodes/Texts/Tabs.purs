@@ -1,4 +1,4 @@
-module Gargantext.Pages.Texts.Tabs where
+module Gargantext.Components.Nodes.Texts.Tabs where
 
 --------------------------------------------------------
 import Prelude (class Eq, class Show, bind, pure, ($))
@@ -13,7 +13,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Tab as Tab
-import Gargantext.Pages.Corpus.Chart.Histo (histo)
+import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
 

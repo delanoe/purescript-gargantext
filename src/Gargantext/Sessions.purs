@@ -105,7 +105,6 @@ instance encodeJsonSessions :: EncodeJson Sessions where
       encodeSessions :: Seq Session -> Json
       encodeSessions ss2 = fromArray $ encodeJson <$> (Seq.toUnfoldable ss2)
 
-
 unSessions :: Sessions -> Array Session
 unSessions (Sessions s) = A.fromFoldable s
 

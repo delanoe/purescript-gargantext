@@ -1,4 +1,4 @@
-module Gargantext.Pages.Lists where
+module Gargantext.Components.Nodes.Lists where
 
 import Prelude ((<<<))
 import Data.Array (head)
@@ -13,7 +13,7 @@ import Gargantext.Components.Table as Table
 import Gargantext.Config.REST (get)
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Pages.Lists.Tabs as Tabs
+import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeType(..))

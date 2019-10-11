@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Chart.Histo where
+module Gargantext.Components.Nodes.Corpus.Chart.Histo where
 
 import Prelude (bind, map, pure, ($))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
@@ -14,7 +14,7 @@ import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, template
 import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Pages.Corpus.Chart.Utils as U
+import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ChartType(..), TabType)

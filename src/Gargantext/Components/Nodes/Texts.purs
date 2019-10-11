@@ -1,4 +1,4 @@
-module Gargantext.Pages.Texts where
+module Gargantext.Components.Nodes.Texts where
 
 import Prelude ((<<<))
 import Data.Array (head)
@@ -16,8 +16,8 @@ import Gargantext.Components.Table as Table
 import Gargantext.Config.REST (get)
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Pages.Texts.Tabs (CorpusData, CorpusInfo(..))
-import Gargantext.Pages.Texts.Tabs as Tabs
+import Gargantext.Components.Nodes.Texts.Tabs (CorpusData, CorpusInfo(..))
+import Gargantext.Components.Nodes.Texts.Tabs as Tabs
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeType(..))

@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Document where
+module Gargantext.Components.Nodes.Corpus.Document where
 
 import Prelude (class Show, bind, identity, mempty, pure, ($), (<<<))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))

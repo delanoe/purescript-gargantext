@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus where
+module Gargantext.Components.Nodes.Corpus where
 
 import Reactix as R
 import Reactix.DOM.HTML as H

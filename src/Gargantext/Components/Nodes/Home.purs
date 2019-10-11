@@ -1,4 +1,4 @@
-module Gargantext.Pages.Home where
+module Gargantext.Components.Nodes.Home where
 
 import Prelude
 import Data.Newtype (class Newtype)
