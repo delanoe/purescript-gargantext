@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Graph.Tabs where
+module Gargantext.Components.Nodes.Corpus.Graph.Tabs where
 
 import Prelude hiding (div)
 import Data.Array (fromFoldable)

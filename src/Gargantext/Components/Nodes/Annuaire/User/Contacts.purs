@@ -1,5 +1,5 @@
-module Gargantext.Pages.Annuaire.User.Contacts
-  ( module Gargantext.Pages.Annuaire.User.Contacts.Types
+module Gargantext.Components.Nodes.Annuaire.User.Contacts
+  ( module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , userLayout )
   where
 
@@ -16,10 +16,10 @@ import Reactix.DOM.HTML as H
 import Gargantext.Config.REST (get)
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Pages.Annuaire.User.Contacts.Types
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   ( Contact(..), ContactData, ContactTouch(..), ContactWhere(..)
   , ContactWho(..), HyperData(..), HyperdataContact(..) )
-import Gargantext.Pages.Annuaire.User.Contacts.Tabs as Tabs
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeType(..))

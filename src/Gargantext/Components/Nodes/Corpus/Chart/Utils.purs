@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Chart.Utils where
+module Gargantext.Components.Nodes.Corpus.Chart.Utils where
 
 import Data.Tuple.Nested ((/\))
 import Effect.Uncurried (mkEffectFn1)

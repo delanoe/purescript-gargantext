@@ -1,4 +1,4 @@
-module Gargantext.Pages.Corpus.Dashboard where
+module Gargantext.Components.Nodes.Corpus.Dashboard where
 
 import Prelude (map, show, ($), (<$>), (<>))
 import Data.Array (zipWith)

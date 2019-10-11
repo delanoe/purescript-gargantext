@@ -1,4 +1,4 @@
-module Gargantext.Pages.Annuaire.User.Contacts.Types where
+module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types where
 
 import Prelude
 

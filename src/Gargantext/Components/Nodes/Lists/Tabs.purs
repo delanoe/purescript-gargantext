@@ -1,4 +1,4 @@
-module Gargantext.Pages.Lists.Tabs where
+module Gargantext.Components.Nodes.Lists.Tabs where
 
 import Prelude
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.??))
@@ -10,9 +10,9 @@ import Reactix as R
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Tab as Tab
-import Gargantext.Pages.Corpus.Chart.Metrics (metrics)
-import Gargantext.Pages.Corpus.Chart.Pie  (pie, bar)
-import Gargantext.Pages.Corpus.Chart.Tree (tree)
+import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
+import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
+import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), TabType(..), TabSubType(..))
 

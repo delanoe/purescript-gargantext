@@ -1,5 +1,5 @@
--- TODO copy of Gargantext.Pages.Corpus.Tabs.Specs
-module Gargantext.Pages.Annuaire.User.Contacts.Tabs where
+-- TODO copy of Gargantext.Components.Nodes.Corpus.Tabs.Specs
+module Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs where
 
 import Prelude hiding (div)
 import Data.Generic.Rep (class Generic)
@@ -11,7 +11,7 @@ import Reactix as R
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
-import Gargantext.Pages.Annuaire.User.Contacts.Types (ContactData)
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
 

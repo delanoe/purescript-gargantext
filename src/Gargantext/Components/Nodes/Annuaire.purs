@@ -1,12 +1,15 @@
-module Gargantext.Pages.Annuaire where
+module Gargantext.Components.Nodes.Annuaire where
 
-import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
+import Prelude (bind, identity, pure, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array (head)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), HyperdataContact(..), ContactWhere(..))
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url)
 import Gargantext.Routes (SessionRoute(..))
@@ -14,9 +17,6 @@ import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodePath(..), NodeType(..))
 import Gargantext.Config.REST (get)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Pages.Annuaire.User.Contacts.Types (Contact(..), HyperdataContact(..), ContactWhere(..))
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 newtype IndividuView =
   CorpusView
@@ -108,8 +108,8 @@ pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
         rows = (\c -> {row: contactCells session c, delete: false}) <$> annuaireTable
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
-        setParams f = snd pagePath $ \{nodeId, params} ->
-          {params: f params, nodeId: fst annuairePath}
+        setParams f = snd pagePath $ \{nodeId, params: ps} ->
+          {params: f ps, nodeId: fst annuairePath}
         params = T.initialParams /\ setParams
 
 contactCells :: Session -> Maybe Contact -> Array R.Element
