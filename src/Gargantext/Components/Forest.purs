@@ -9,7 +9,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, unSessions)
-import Gargantext.Components.Tree (treeView)
+import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Utils.Reactix as R2
 
 type Props =

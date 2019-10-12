@@ -123,14 +123,13 @@ instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
      ~> jsonEmptyObject
 
 data NodeType = NodeUser
+              | Folder | FolderPrivate | FolderTeam | FolderPublic
               | Annuaire
               | NodeContact
               | Corpus
               | Url_Document
-              | CorpusV3
               | Dashboard
               | Error
-              | Folder
               | Graph
               | Phylo
               | Individu
@@ -144,14 +143,18 @@ derive instance eqNodeType :: Eq NodeType
 
 instance showNodeType :: Show NodeType where
   show NodeUser      = "NodeUser"
+
+  show Folder        = "NodeFolder"
+  show FolderPrivate = "NodeFolderPrivate"
+  show FolderTeam    = "NodeFolderTeam"
+  show FolderPublic  = "NodeFolderPublic"
+
   show Annuaire      = "Annuaire"
   show NodeContact   = "NodeContact"
   show Corpus        = "NodeCorpus"
-  show CorpusV3      = "NodeCorpusV3"
   show Dashboard     = "NodeDashboard"
   show Url_Document  = "NodeDocument"
   show Error         = "NodeError"
-  show Folder        = "NodeFolder"
   show Graph         = "NodeGraph"
   show Phylo         = "NodePhylo"
   show Individu      = "NodeIndividu"
@@ -162,18 +165,22 @@ instance showNodeType :: Show NodeType where
   show Texts         = "NodeTexts"
 
 readNodeType :: String -> NodeType
+readNodeType "NodeUser"      = NodeUser
+
+readNodeType "NodeFolder"    = Folder
+readNodeType "NodeFolderPrivate" = FolderPrivate
+readNodeType "NodeFolderTeam"    = FolderTeam
+readNodeType "NodeFolderPublic"  = FolderPublic
+
 readNodeType "NodeAnnuaire"  = Annuaire
 readNodeType "NodeDashboard" = Dashboard
 readNodeType "Document"      = Url_Document
-readNodeType "NodeFolder"    = Folder
 readNodeType "NodeGraph"     = Graph
 readNodeType "NodePhylo"     = Phylo
 readNodeType "Individu"      = Individu
 readNodeType "Node"          = Node
 readNodeType "Nodes"         = Nodes
 readNodeType "NodeCorpus"    = Corpus
-readNodeType "NodeCorpusV3"  = CorpusV3
-readNodeType "NodeUser"      = NodeUser
 readNodeType "NodeContact"   = NodeContact
 readNodeType "Tree"          = Tree
 readNodeType "NodeList"      = NodeList
@@ -197,13 +204,15 @@ instance encodeJsonNodeType :: EncodeJson NodeType where
   encodeJson nodeType = encodeJson $ show nodeType
 
 nodeTypePath :: NodeType -> String
+nodeTypePath Folder    = "folder"
+nodeTypePath FolderPrivate = "folderPrivate"
+nodeTypePath FolderTeam    = "folderTeam"
+nodeTypePath FolderPublic  = "folderPublic"
 nodeTypePath Annuaire  = "annuaire"
 nodeTypePath Corpus    = "corpus"
-nodeTypePath CorpusV3  = "corpus"
 nodeTypePath Dashboard = "dashboard"
 nodeTypePath Url_Document  = "document"
 nodeTypePath Error     = "ErrorNodeType"
-nodeTypePath Folder    = "folder"
 nodeTypePath Graph     = "graph"
 nodeTypePath Phylo     = "phylo"
 nodeTypePath Individu  = "individu"
