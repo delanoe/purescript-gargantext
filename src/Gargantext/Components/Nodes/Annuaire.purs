@@ -13,9 +13,8 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), Hy
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url)
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session, sessionId, get)
 import Gargantext.Types (NodePath(..), NodeType(..))
-import Gargantext.Config.REST (get)
 import Gargantext.Hooks.Loader (useLoader)
 
 newtype IndividuView =
@@ -42,7 +41,7 @@ annuaireLayoutCpt = R.hooksComponent "G.P.Annuaire.annuaireLayout" cpt
       path <- R.useState' nodeId
       useLoader (fst path) (getAnnuaireInfo session) $
         \info -> annuaire {session, path, info}
-      
+
 type AnnuaireProps =
   ( session :: Session
   , path :: R.State Int
@@ -186,7 +185,7 @@ instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
 
 loadPage :: Session -> PagePath -> Aff AnnuaireTable
 loadPage session {nodeId, params: { offset, limit, orderBy }} =
-    get $ url session children
+    get session children
  -- TODO orderBy
  -- where
  --   convOrderBy (T.ASC  (T.ColumnName "Name")) = NameAsc
@@ -198,5 +197,5 @@ loadPage session {nodeId, params: { offset, limit, orderBy }} =
     children = Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-} (Just nodeId)
 
 getAnnuaireInfo :: Session -> Int -> Aff AnnuaireInfo
-getAnnuaireInfo session id = get $ url session (NodeAPI Node (Just id))
+getAnnuaireInfo session id = get session (NodeAPI Node (Just id) "")
 

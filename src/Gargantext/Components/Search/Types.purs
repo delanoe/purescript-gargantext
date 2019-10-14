@@ -10,10 +10,9 @@ import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Config.REST (post, put)
-import Gargantext.Ends (class ToUrl, backendUrl, url)
+import Gargantext.Ends (class ToUrl, backendUrl)
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session(..))
+import Gargantext.Sessions (Session(..), post, put)
 import Gargantext.Types (class ToQuery, toQuery, NodeType(..))
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
@@ -170,12 +169,12 @@ instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
     ~> "ntc_category" := encodeJson post.category
     ~> jsonEmptyObject
 
-categoryUrl :: Session -> Int -> String
-categoryUrl session nodeId = url session (NodeAPI Node $ Just nodeId) <> "/category"
+categoryRoute :: Int -> SessionRoute
+categoryRoute nodeId = NodeAPI Node (Just nodeId) "category"
 
 putCategories :: Session -> Int -> CategoryQuery -> Aff (Array Int)
-putCategories session nodeId = put $ categoryUrl session nodeId
+putCategories session nodeId = put session $ categoryRoute nodeId
 
 performSearch :: forall a. DecodeJson a => Session -> SearchQuery -> Aff a
-performSearch session q = post (url session q) q
+performSearch session q = post session q q
 

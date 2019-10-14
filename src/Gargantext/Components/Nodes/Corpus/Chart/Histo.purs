@@ -4,7 +4,6 @@ import Prelude (bind, map, pure, ($))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Gargantext.Config.REST (get)
 import Reactix as R
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
@@ -16,7 +15,7 @@ import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType)
 
 type Path = { corpusId :: Int, tabType  :: TabType }
@@ -55,7 +54,7 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
 
 getMetrics :: Session -> Path -> Aff HistoMetrics
 getMetrics session {corpusId, tabType} = do
-  ChartMetrics ms <- get $ url session chart
+  ChartMetrics ms <- get session chart
   pure ms."data"
   where chart = Chart {chartType: Histo, tabType: tabType} (Just corpusId)
 

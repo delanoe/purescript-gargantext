@@ -12,7 +12,6 @@ import React.DOM.Props (className)
 import Reactix as R
 import Thermite (PerformAction, Render, Spec, simpleSpec, createClass)
 
-import Gargantext.Config.REST     (get)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable.Core
@@ -23,7 +22,7 @@ import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), TermList)
 import Gargantext.Utils.Reactix as R2
 
@@ -369,7 +368,7 @@ documentLayoutCpt = R.hooksComponent "G.P.Corpus.Document.documentLayout" cpt
 ------------------------------------------------------------------------
 
 loadDocument :: Session -> Int -> Aff NodeDocument
-loadDocument session = get <<< url session <<< NodeAPI Node <<< Just
+loadDocument session nodeId = get session $ NodeAPI Node (Just nodeId) ""
 
 loadData :: Session -> DocPath -> Aff LoadedData
 loadData session {nodeId, listIds, tabType} = do

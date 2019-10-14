@@ -1,15 +1,14 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
 import Prelude
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.??))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Gargantext.Components.NgramsTable as NT
-import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Tab as Tab
+import Gargantext.Components.Nodes.Corpus (CorpusData)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
@@ -73,50 +72,3 @@ ngramsViewCpt = R.staticComponent "ListsNgramsView" cpt
         chart Sources = bar {session, path}
         chart Institutes = tree {session, path: path2}
         chart Terms = metrics {session, path: path2}
-
-newtype CorpusInfo =
-  CorpusInfo
-  { title        :: String
-  , desc         :: String
-  , query        :: String
-  , authors      :: String
-  , chart        :: (Maybe (Array Number))
-  , totalRecords :: Int }
-  
-hyperdataDefault :: CorpusInfo
-hyperdataDefault =
-  CorpusInfo
-  { title : "Default title"
-  , desc  : " Default desc"
-  , query : " Default Query"
-  , authors : " Author(s): default"
-  , chart   : Nothing
-  , totalRecords : 0 }
-
-corpusInfoDefault :: NodePoly CorpusInfo
-corpusInfoDefault =
-  NodePoly
-  { id : 0
-  , typename : 0
-  , userId : 0
-  , parentId : 0
-  , name : "Default name"
-  , date  : " Default date"
-  , hyperdata : hyperdataDefault }
-
-instance decodeCorpusInfo :: DecodeJson CorpusInfo where
-  decodeJson json = do
-    obj <- decodeJson json
-    title <- obj .: "title"
-    desc  <- obj .: "desc"
-    query <- obj .: "query"
-    authors <- obj .: "authors"
-    chart   <- obj .?? "chart"
-    let totalRecords = 47361 -- TODO
-    pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
-
-type CorpusData = { corpusId :: Int
-                  , corpusNode :: NodePoly CorpusInfo
-                  , defaultListId :: Int}
-
-

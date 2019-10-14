@@ -85,12 +85,11 @@ import Thermite (StateCoTransformer, modifyState_)
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 
-import Gargantext.Config.REST (get, put, post)
 import Gargantext.Components.Table as T
 import Gargantext.Components.OldLoader as Loader
 import Gargantext.Ends (url)
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, get, put, post)
 import Gargantext.Types (OrderBy(..), CTabNgramType(..), TabType, TermList(..), TermSize)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 
@@ -568,9 +567,9 @@ type CoreState s =
 postNewNgrams :: forall s. Session -> Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
 postNewNgrams session newNgrams mayList {nodeId, listIds, tabType} =
   when (not (A.null newNgrams)) $ do
-    (_ :: Array Unit) <- post (url session put) newNgrams
+    (_ :: Array Unit) <- post session p newNgrams
     pure unit
-  where put = PutNgrams tabType (head listIds) mayList (Just nodeId)
+  where p = PutNgrams tabType (head listIds) mayList (Just nodeId)
 
 postNewElems :: forall s. Session -> NewElems -> CoreParams s -> Aff Unit
 postNewElems session newElems params = void $ traverseWithIndex postNewElem newElems
@@ -582,7 +581,7 @@ addNewNgram ntype ngrams list = { ngramsPatches: mempty
                           , ngramsNewElems: Map.singleton (normNgram ntype ngrams) list }
 
 putNgramsPatches :: Session -> {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
-putNgramsPatches session {nodeId, listIds, tabType} = put $ url session putNgrams
+putNgramsPatches session {nodeId, listIds, tabType} = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
 commitPatch :: forall s. Session -> {nodeId :: Int, listIds :: Array Int, tabType :: TabType}
@@ -601,12 +600,11 @@ loadNgramsTable :: Session -> PageParams -> Aff VersionedNgramsTable
 loadNgramsTable session
   { nodeId, listIds, termListFilter, termSizeFilter
   , searchQuery, tabType, params: {offset, limit, orderBy}}
-  = get $ url session query
+  = get session query
   where query = GetNgrams { tabType, offset, limit, listIds
                           , orderBy: convOrderBy <$> orderBy
                           , termListFilter, termSizeFilter
                           , searchQuery } (Just nodeId)
-        
 
 convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
 convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc

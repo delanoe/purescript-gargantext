@@ -3,7 +3,7 @@ module Gargantext.Ends
   -- ( )
   where
 
-import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure)
+import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==))
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject, (.:))
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
@@ -114,54 +114,57 @@ staticUrl :: Frontends -> String -> String
 staticUrl (Frontends {static}) = frontendUrl static
 
 sessionPath :: R.SessionRoute -> String
-sessionPath (R.Tab t i)            = sessionPath (R.NodeAPI Node i) <> "/" <> showTabType' t
-sessionPath (R.Children n o l s i) = root <> "children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s
-  where root = sessionPath (R.NodeAPI Node i) <> "/"
-sessionPath (R.NodeAPI Phylo pId)  = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId)
-sessionPath (R.GetNgrams opts i)   =
+sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType' t))
+sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
+sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId) <> p
+sessionPath (R.GetNgrams opts i)    =
   base opts.tabType
-  <> "/ngrams?ngramsType="
-  <> showTabType' opts.tabType
-  <> offsetUrl opts.offset
-  <> limitUrl opts.limit
-  <> orderByUrl opts.orderBy
-  <> foldMap (\x -> "&list=" <> show x) opts.listIds
-  <> foldMap (\x -> "&listType=" <> show x) opts.termListFilter
-  <> foldMap termSizeFilter opts.termSizeFilter
-  <> search opts.searchQuery
+     $ "ngrams?ngramsType="
+    <> showTabType' opts.tabType
+    <> offsetUrl opts.offset
+    <> limitUrl opts.limit
+    <> orderByUrl opts.orderBy
+    <> foldMap (\x -> "&list=" <> show x) opts.listIds
+    <> foldMap (\x -> "&listType=" <> show x) opts.termListFilter
+    <> foldMap termSizeFilter opts.termSizeFilter
+    <> search opts.searchQuery
   where
-    base (TabCorpus _) = sessionPath (R.NodeAPI Node i)
-    base _ = sessionPath (R.NodeAPI Url_Document i)
+    base (TabCorpus _) = sessionPath <<< R.NodeAPI Node i
+    base _             = sessionPath <<< R.NodeAPI Url_Document i
     termSizeFilter MonoTerm = "&minTermSize=0&maxTermSize=1"
     termSizeFilter MultiTerm = "&minTermSize=2"
     search "" = ""
     search s = "&search=" <> s
 sessionPath (R.ListDocument lId dId) =
-  sessionPath (R.NodeAPI NodeList lId) <> "/document/" <> (show $ maybe 0 identity dId)
+  sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ maybe 0 identity dId))
 sessionPath (R.PutNgrams t listId termList i) =
-    sessionPath (R.NodeAPI Node i)
-    <> "/ngrams?ngramsType="
-    <> showTabType' t
-    <> maybe "" (\x -> "&list=" <> show x) listId
-    <> foldMap (\x -> "&listType=" <> show x) termList
-sessionPath (R.NodeAPI nt i) = nodeTypePath nt <> (maybe "" (\i' -> "/" <> show i') i)
+  sessionPath $ R.NodeAPI Node i
+      $ "ngrams?ngramsType="
+     <> showTabType' t
+     <> maybe "" (\x -> "&list=" <> show x) listId
+     <> foldMap (\x -> "&listType=" <> show x) termList
+sessionPath (R.NodeAPI nt i p) = nodeTypePath nt
+                              <> (maybe "" (\i' -> "/" <> show i') i)
+                              <> (if p == "" then "" else "/" <> p)
 sessionPath (R.Search {listId,limit,offset,orderBy} i) =
-    sessionPath (R.NodeAPI Corpus i)
-    <> "/search?list_id=" <> show listId
+  sessionPath $ R.NodeAPI Corpus i
+     $ "search?list_id=" <> show listId
     <> offsetUrl offset
     <> limitUrl limit
     <> orderUrl orderBy
 sessionPath (R.CorpusMetrics {tabType, listId, limit} i) =
-    sessionPath (R.NodeAPI Corpus i) <> "/metrics"
-      <> "?ngrams=" <> show listId
-      <> "&ngramsType=" <> showTabType' tabType
-      <> maybe "" (\x -> "&limit=" <> show x) limit
+  sessionPath $ R.NodeAPI Corpus i
+     $ "metrics"
+    <> "?ngrams=" <> show listId
+    <> "&ngramsType=" <> showTabType' tabType
+    <> maybe "" (\x -> "&limit=" <> show x) limit
 -- TODO fix this url path
 sessionPath (R.Chart {chartType, tabType} i) =
-    sessionPath (R.NodeAPI Corpus i) <> "/" <> show chartType
-      <> "?ngramsType=" <> showTabType' tabType
-      <> "&listType=GraphTerm" -- <> show listId
-      -- <> maybe "" (\x -> "&limit=" <> show x) limit
+  sessionPath $ R.NodeAPI Corpus i
+     $ show chartType
+    <> "?ngramsType=" <> showTabType' tabType
+    <> "&listType=GraphTerm" -- <> show listId
+    -- <> maybe "" (\x -> "&limit=" <> show x) limit
 
 ------- misc routing stuff
 

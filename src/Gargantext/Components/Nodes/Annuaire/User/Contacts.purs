@@ -13,15 +13,13 @@ import Data.String (joinWith)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Gargantext.Config.REST (get)
-import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   ( Contact(..), ContactData, ContactTouch(..), ContactWhere(..)
   , ContactWho(..), HyperData(..), HyperdataContact(..) )
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..))
 
 display :: String -> Array R.Element -> R.Element
@@ -142,7 +140,7 @@ userLayoutCpt = R.hooksComponent "G.P.Annuaire.UserLayout" cpt
 -- | toUrl to get data
 getContact :: Session -> Int -> Aff ContactData
 getContact session id = do
-  contactNode <- get $ url session (NodeAPI NodeContact (Just id))
+  contactNode <- get session $ NodeAPI NodeContact (Just id) ""
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of

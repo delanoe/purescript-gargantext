@@ -7,7 +7,6 @@ import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
-import Gargantext.Config.REST (get)
 import Reactix as R
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
@@ -20,7 +19,7 @@ import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, get)
 import Gargantext.Types (TabType, TermList(..))
 
 type Path =
@@ -96,7 +95,7 @@ scatterOptions metrics' = Options
 
 getMetrics :: Session -> Path -> Aff Loaded
 getMetrics session {corpusId, listId, limit, tabType} = do
-  Metrics ms <- get $ url session metrics'
+  Metrics ms <- get session metrics'
   pure ms."data"
   where metrics' = CorpusMetrics {listId, tabType, limit} (Just corpusId)
 

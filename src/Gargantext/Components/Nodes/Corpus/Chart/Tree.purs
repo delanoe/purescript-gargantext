@@ -7,7 +7,6 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Config.REST (get)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (TreeNode, Trees(..), mkTree)
 import Gargantext.Components.Charts.Options.Font (mkTooltip, templateFormatter)
@@ -15,7 +14,7 @@ import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType)
 
 type Path =
@@ -54,7 +53,7 @@ scatterOptions nodes = Options
 
 getMetrics :: Session -> Path -> Aff Loaded
 getMetrics session {corpusId, listId, limit, tabType} = do
-  Metrics ms <- get $ url session chart
+  Metrics ms <- get session chart
   pure ms."data"
   where
     chart = Chart {chartType : ChartTree, tabType: tabType} (Just corpusId)

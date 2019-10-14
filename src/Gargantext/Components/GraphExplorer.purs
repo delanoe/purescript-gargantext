@@ -22,10 +22,9 @@ import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Forest (forest)
-import Gargantext.Config.REST (get)
-import Gargantext.Ends (Frontends, url)
+import Gargantext.Ends (Frontends)
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
-import Gargantext.Sessions (Session, Sessions(..))
+import Gargantext.Sessions (Session, Sessions(..), get)
 import Gargantext.Types (NodeType(Graph))
 
 type GraphId = Int
@@ -289,4 +288,4 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#
 
 
 getNodes :: Session -> GraphId -> Aff GET.GraphData
-getNodes session graphId = get $ url session $ NodeAPI Graph (Just graphId)
+getNodes session graphId = get session $ NodeAPI Graph (Just graphId) ""

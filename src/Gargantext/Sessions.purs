@@ -20,7 +20,7 @@ import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (removeItem) -- (getItem, setItem, removeItem)
 import Gargantext.Components.Login.Types
   (AuthRequest(..), AuthResponse(..), AuthInvalid(..), AuthData(..))
-import Gargantext.Config.REST (post)
+import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend, backendUrl, toUrl, sessionPath)
 import Gargantext.Routes (SessionRoute)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
@@ -127,13 +127,13 @@ tryCons s ss = try (lookup sid ss) where
   try Nothing = Right (cons s ss)
   try _ = Left unit
 
-delete :: SessionId -> Sessions -> Sessions
-delete sid (Sessions ss) = Sessions (Seq.filter f ss) where
+remove :: SessionId -> Sessions -> Sessions
+remove sid (Sessions ss) = Sessions (Seq.filter f ss) where
   f s = sid /= sessionId s
 
-tryDelete :: SessionId -> Sessions -> Either Unit Sessions
-tryDelete sid old@(Sessions ss) = ret where
-  new = delete sid old
+tryRemove :: SessionId -> Sessions -> Either Unit Sessions
+tryRemove sid old@(Sessions ss) = ret where
+  new = remove sid old
   ret
     | new == old = Left unit
     | otherwise =  Right new
@@ -148,7 +148,7 @@ act ss (Login s) =
     Right new -> pure new
     _ -> pure ss <* log2 "Cannot overwrite existing session: " (sessionId s)
 act old@(Sessions ss) (Logout s) =
-  case tryDelete (sessionId s) old of
+  case tryRemove (sessionId s) old of
     Right new -> pure $ new
     _ -> pure old <* log2 "Logged out of stale session:" (sessionId s)
        
@@ -185,10 +185,30 @@ saveSessions sessions = effect *> pure sessions
 
 postAuthRequest :: Backend -> AuthRequest -> Aff (Either String Session)
 postAuthRequest backend ar@(AuthRequest {username}) =
-  decode <$> post (toUrl backend "auth") ar
+  decode <$> REST.post Nothing (toUrl backend "auth") ar
   where
     decode (AuthResponse ar2)
       | {inval: Just (AuthInvalid {message})}     <- ar2 = Left message
       | {valid: Just (AuthData {token, tree_id})} <- ar2 =
           Right $ Session { backend, username, token, treeId: tree_id }
       | otherwise = Left "Invalid response from server"
+
+get :: forall a p. DecodeJson a => ToUrl Session p => Session -> p -> Aff a
+get session@(Session {token}) p = REST.get (Just token) (toUrl session p)
+
+put :: forall a b p. EncodeJson a => DecodeJson b => ToUrl Session p => Session -> p -> a -> Aff b
+put session@(Session {token}) p = REST.put (Just token) (toUrl session p)
+
+delete :: forall a p. DecodeJson a => ToUrl Session p => Session -> p -> Aff a
+delete session@(Session {token}) p = REST.delete (Just token) (toUrl session p)
+
+-- This might not be a good idea:
+-- https://stackoverflow.com/questions/14323716/restful-alternatives-to-delete-request-body
+deleteWithBody :: forall a b p. EncodeJson a => DecodeJson b => ToUrl Session p => Session -> p -> a -> Aff b
+deleteWithBody session@(Session {token}) p = REST.deleteWithBody (Just token) (toUrl session p)
+
+post :: forall a b p. EncodeJson a => DecodeJson b => ToUrl Session p => Session -> p -> a -> Aff b
+post session@(Session {token}) p = REST.post (Just token) (toUrl session p)
+
+postWwwUrlencoded :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> String -> Aff b
+postWwwUrlencoded session@(Session {token}) p = REST.postWwwUrlencoded (Just token) (toUrl session p)

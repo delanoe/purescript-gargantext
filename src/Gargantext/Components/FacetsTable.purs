@@ -20,13 +20,12 @@ import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
-import Gargantext.Config.REST (post, deleteWithBody)
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(Search,NodeAPI))
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
 import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..))
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.DecodeMaybe ((.|))
@@ -43,8 +42,8 @@ type TextQuery = Array (Array String)
 newtype SearchQuery = SearchQuery { query :: TextQuery }
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery post)
-     = "query"     := post.query !! 0 -- TODO anoe
+  encodeJson (SearchQuery {query})
+     = "query"     := query !! 0 -- TODO anoe
     ~> jsonEmptyObject
 
 newtype SearchResults = SearchResults { results :: Array Response }
@@ -234,8 +233,8 @@ initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, que
 loadPage :: PagePath -> Aff (Array DocumentsView)
 loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
   liftEffect $ log "loading documents page: loadPage with Offset and limit"
-  let url2 = url session $ Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
-  SearchResults res <- post url2 $ SearchQuery {query}
+  let p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
+  SearchResults res <- post session p $ SearchQuery {query}
   pure $ res2corpus <$> res.results
   where
     res2corpus :: Response -> DocumentsView
@@ -319,11 +318,10 @@ pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
 newtype DeleteDocumentQuery = DeleteDocumentQuery { documents :: Array Int }
 
 instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
-  encodeJson (DeleteDocumentQuery post) =
-    "documents" := post.documents ~> jsonEmptyObject
+  encodeJson (DeleteDocumentQuery {documents}) =
+    "documents" := documents ~> jsonEmptyObject
 
 deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Array Int)
 deleteDocuments session nodeId =
-  deleteWithBody $
-    (url session $ NodeAPI Node $ Just nodeId) <> "/documents"
+  deleteWithBody session $ NodeAPI Node (Just nodeId) "documents"
 

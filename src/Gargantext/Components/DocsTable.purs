@@ -24,15 +24,13 @@ import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
-import Gargantext.Config.REST (post, delete)
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
-import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session, sessionId, post, delete)
 import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..))
 ------------------------------------------------------------------------
 
@@ -223,8 +221,8 @@ loadPage :: Session -> PageParams -> Aff (Array DocumentsView)
 loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
   liftEffect $ log "loading documents page: loadPage with Offset and limit"
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let url2 = (url session (NodeAPI Node (Just nodeId))) <> "/table"
-  res <- post url2 $ TabPostQuery {
+  let p = NodeAPI Node (Just nodeId) "table"
+  res <- post session p $ TabPostQuery {
       offset
     , limit
     , orderBy: convOrderBy orderBy
@@ -337,29 +335,27 @@ sampleDocuments :: Array (Tuple String String)
 sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
 
 newtype SearchQuery = SearchQuery
-  {
-    query :: Array String
+  { query :: Array String
   , parent_id :: Int
   }
 
 
 instance encodeJsonSQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery post)
-     = "query" := post.query
-    ~> "parent_id" := post.parent_id
+  encodeJson (SearchQuery {query, parent_id})
+     = "query" := query
+    ~> "parent_id" := parent_id
     ~> jsonEmptyObject
 
 
 
 searchResults :: SearchQuery -> Aff Int
-searchResults squery = post "http://localhost:8008/count" unit
-  -- TODO
+searchResults squery = pure 42 -- TODO post "http://localhost:8008/count" unit
 
-documentsUrl :: Session -> Int -> String
-documentsUrl session nodeId = url session (NodeAPI Node (Just nodeId)) <> "/documents"
+documentsRoute :: Int -> SessionRoute
+documentsRoute nodeId = NodeAPI Node (Just nodeId) "documents"
 
 deleteAllDocuments :: Session -> Int -> Aff (Array Int)
-deleteAllDocuments session = delete <<< documentsUrl session
+deleteAllDocuments session = delete session <<< documentsRoute
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)
 toggleSet :: forall a. Ord a => a -> Set a -> Set a

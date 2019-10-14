@@ -26,12 +26,11 @@ import Web.File.File (toBlob)
 import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
-import Gargantext.Config.REST (get, put, post, postWwwUrlencoded, delete)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Routes (AppRoute, SessionRoute(..))
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
 import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
@@ -668,7 +667,7 @@ nodeText p = R.createElement el p []
 -- END node text
 
 loadNode :: Session -> ID -> Aff FTree
-loadNode session = get <<< url session <<< NodeAPI Tree <<< Just
+loadNode session nodeId = get session $ NodeAPI Tree (Just nodeId) ""
 
 ----- TREE CRUD Operations
 
@@ -695,21 +694,18 @@ instance encodeJsonCreateValue :: EncodeJson CreateValue where
     ~> jsonEmptyObject
 
 createNode :: Session -> ID -> CreateValue -> Aff ID
---createNode = post $ urlPlease Back $ "new"
-createNode session parentId = post $ url session (NodeAPI Node $ Just parentId)
+createNode session parentId = post session $ NodeAPI Node (Just parentId) ""
 
 renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
-renameNode session renameNodeId = put $ url session (NodeAPI Node $ Just renameNodeId) <> "/rename"
+renameNode session renameNodeId = put session $ NodeAPI Node (Just renameNodeId) "rename"
 
 deleteNode :: Session -> ID -> Aff ID
-deleteNode session = delete <<< url session <<< NodeAPI Node <<< Just
+deleteNode session nodeId = delete session $ NodeAPI Node (Just nodeId) ""
 
 newtype FileUploadQuery = FileUploadQuery {
     fileType :: FileType
   }
-
 derive instance newtypeSearchQuery :: Newtype FileUploadQuery _
-
 instance fileUploadQueryToQuery :: ToQuery FileUploadQuery where
   toQuery (FileUploadQuery {fileType}) =
     QP.print id id $ QP.QueryPairs $
@@ -718,10 +714,11 @@ instance fileUploadQueryToQuery :: ToQuery FileUploadQuery where
           pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
 
 uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff (Array FileHash)
-uploadFile session id fileType (UploadFileContents fileContents) = postWwwUrlencoded url2 fileContents
+uploadFile session id fileType (UploadFileContents fileContents) =
+    postWwwUrlencoded session p fileContents
   where
     q = FileUploadQuery { fileType: fileType }
-    url2 = url session (NodeAPI Node (Just id)) <> "/upload" <> Q.print (toQuery q)
+    p = NodeAPI Node (Just id) $ "upload" <> Q.print (toQuery q)
 
 fnTransform :: LNode -> FTree
 fnTransform n = NTree n []

@@ -13,6 +13,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Tab as Tab
+import Gargantext.Components.Nodes.Corpus (CorpusData)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
@@ -116,46 +117,6 @@ docViewCpt = R.hooksComponent "DocViewWithCorpus" cpt
           , corpusId: Nothing
           , showSearch: true
           , session }
-
-newtype CorpusInfo = CorpusInfo { title   :: String
-                                , desc    :: String
-                                , query   :: String
-                                , authors :: String
-                                , chart   :: (Maybe (Array Number))
-                                , totalRecords :: Int
-                                }
-
-corpusInfoDefault :: NodePoly CorpusInfo
-corpusInfoDefault = NodePoly { id : 0
-                             , typename : 0
-                             , userId : 0
-                             , parentId : 0
-                             , name : "Default name"
-                             , date  : " Default date"
-                             , hyperdata : CorpusInfo
-                                { title : "Default title"
-                                , desc  : " Default desc"
-                                , query : " Default Query"
-                                , authors : " Author(s): default"
-                                , chart   : Nothing
-                                , totalRecords : 0
-                                }
-                             }
-
-instance decodeCorpusInfo :: DecodeJson CorpusInfo where
-  decodeJson json = do
-    obj <- decodeJson json
-    title <- obj .: "title"
-    desc  <- obj .: "desc"
-    query <- obj .: "query"
-    authors <- obj .: "authors"
-    chart   <- obj .?? "chart"
-    let totalRecords = 47361 -- TODO
-    pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
-
-type CorpusData = { corpusId :: Int
-                  , corpusNode :: NodePoly CorpusInfo
-                  , defaultListId :: Int}
 
 
 
