@@ -18,8 +18,8 @@ import FFI.Simple ((...), defineProperty, delay, args2, args3)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
 import React as React
 import Reactix as R
-import Reactix.DOM.HTML (ElemFactory, text)
-import Reactix.React (react, createDOMElement)
+import Reactix.DOM.HTML (ElemFactory, createDOM, text)
+import Reactix.React (react)
 import Reactix.SyntheticEvent as RE
 import Reactix.Utils (currySecond, hook, tuple)
 import Unsafe.Coerce (unsafeCoerce)
@@ -88,10 +88,10 @@ overState :: forall t. (t -> t) -> R.State t -> Effect Unit
 overState f (_state /\ setState) = setState f
 
 select :: ElemFactory
-select = createDOMElement "select"
+select = createDOM "select"
 
 menu :: ElemFactory
-menu = createDOMElement "menu"
+menu = createDOM "menu"
 
 effToggler :: forall e. R.State Boolean -> EffectFn1 e Unit
 effToggler (value /\ setValue) = mkEffectFn1 $ \e -> setValue $ const $ not value

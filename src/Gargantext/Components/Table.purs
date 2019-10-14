@@ -7,6 +7,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -126,16 +127,16 @@ tableCpt :: R.Component Props
 tableCpt = R.hooksComponent "Table" cpt
   where
     cpt {container, colNames, totalRecords, rows, params} _ = do
-      (pageSize /\ setPageSize) <- R.useState' PS10
+      pageSize@(pageSize' /\ setPageSize) <- R.useState' PS10
       (page /\ setPage) <- R.useState' 1
       (orderBy /\ setOrderBy) <- R.useState' Nothing
-      let state = {pageSize, orderBy, page}
-      let ps = pageSizes2Int pageSize
+      let state = {pageSize: pageSize', orderBy, page}
+      let ps = pageSizes2Int pageSize'
       let totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
       R.useEffect1' state $ when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
       pure $ container
-        { pageSizeControl: sizeDD pageSize setPageSize
-        , pageSizeDescription: textDescription page pageSize totalRecords
+        { pageSizeControl: sizeDD pageSize
+        , pageSizeDescription: textDescription page pageSize' totalRecords
         , paginationLinks: pagination setPage totalPages page
         , tableHead: H.tr {} (colHeader setOrderBy orderBy <$> colNames)
         , tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
@@ -178,12 +179,15 @@ graphContainer {title} props =
    -- , props.pageSizeDescription
    -- , props.paginationLinks
 
-sizeDD :: PageSizes -> R2.Setter PageSizes -> R.Element
-sizeDD ps setPageSize = H.span {} [ R2.select { className, defaultValue: ps, on: {change} } sizes ]
+sizeDD :: R.State PageSizes -> R.Element
+sizeDD (ps /\ setPageSize) =
+  H.span {} [ R2.select { className, defaultValue: ps, on: {change} } sizes ]
   where
     className = "form-control"
     change e = setPageSize $ const (string2PageSize $ R2.unsafeEventValue e)
-    sizes = map (optps ps) pageSizes
+    sizes = map option pageSizes
+    option size = H.option {value} [H.text value]
+      where value = show size
 
 textDescription :: Int -> PageSizes -> Int -> R.Element
 textDescription currPage pageSize totalRecords =
@@ -276,6 +280,3 @@ string2PageSize "50" = PS50
 string2PageSize "100" = PS100
 string2PageSize "200" = PS200
 string2PageSize _    = PS10
-
-optps :: PageSizes -> PageSizes -> R.Element
-optps _cv val = H.option {value: show val} [R2.showText val]
