@@ -16,7 +16,7 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log)
+import DOM.Simple.Console (log, log3)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
@@ -27,6 +27,10 @@ import Reactix.DOM.HTML as H
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Components.Loader (loader)
+import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
+import Gargantext.Components.Table as T
+import Gargantext.Ends (url)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
@@ -219,7 +223,7 @@ type PageParams = { nodeId :: Int
 
 loadPage :: Session -> PageParams -> Aff (Array DocumentsView)
 loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
-  liftEffect $ log "loading documents page: loadPage with Offset and limit"
+  liftEffect $ log3 "loading documents page: loadPage with Offset and limit" offset limit
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let p = NodeAPI Node (Just nodeId) "table"
   res <- post session p $ TabPostQuery {
@@ -257,10 +261,12 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Memo PageLayoutProps
-pageLayoutCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
-  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ = do
-    useLoader {nodeId, listId, corpusId, tabType, query, params: fst params} (loadPage session) $
-      \loaded -> page params props loaded
+pageLayoutCpt = R.memo' $ R.staticComponent "G.C.DocsTable.pageLayout" cpt where
+  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ =
+    loader path (loadPage session) paint
+    where
+      path = {nodeId, listId, corpusId, tabType, query, params: fst params}
+      paint loaded = page params props loaded
 
 type PageProps =
   ( params :: R.State T.Params
