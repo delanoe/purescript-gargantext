@@ -1,11 +1,14 @@
-module Gargantext.Components.NgramsTable where
+module Gargantext.Components.NgramsTable
+  ( MainNgramsTableProps
+  , mainNgramsTable
+  ) where
 
 import Prelude
   ( class Show, Unit, bind, const, discard, identity, map, mempty, not
   , pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<)
   , (==), (||) )
 import Data.Array as A
-import Data.Lens (to, view, (%~), (.~), (^.), (^..))
+import Data.Lens (Lens', to, view, (%~), (.~), (^.), (^..))
 import Data.Lens.Common (_Just)
 import Data.Lens.At (at)
 import Data.Lens.Index (ix)
@@ -54,6 +57,7 @@ type State =
                      --   be removed.
   )
 
+_ngramsChildren :: forall row. Lens' { ngramsChildren :: Map NgramsTerm Boolean | row } (Map NgramsTerm Boolean)
 _ngramsChildren = prop (SProxy :: SProxy "ngramsChildren")
 
 initialState :: VersionedNgramsTable -> State
@@ -191,11 +195,11 @@ type Props =
   , path         :: R.State PageParams
   , versioned    :: VersionedNgramsTable )
 
-ngramsTable :: Record Props -> R.Element
-ngramsTable props = R.createElement ngramsTableCpt props []
+loadedNgramsTable :: Record Props -> R.Element
+loadedNgramsTable props = R.createElement loadedNgramsTableCpt props []
 
-ngramsTableCpt :: R.Component Props
-ngramsTableCpt = R.hooksComponent "G.C.NgramsTable.ngramsTable" cpt
+loadedNgramsTableCpt :: R.Component Props
+loadedNgramsTableCpt = R.hooksComponent "G.C.NgramsTable.loadedNgramsTable" cpt
   where
     cpt {versioned} _ = do
       state <- useNgramsReducer (initialState versioned)
@@ -308,8 +312,8 @@ mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
     cpt {nodeId, defaultListId, tabType, session, tabNgramType} _ = do
       path <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
       useLoader2 path (loadNgramsTable session) $
-        \versioned -> ngramsTable {session, tabNgramType, path, versioned}
-        
+        \versioned -> loadedNgramsTable {session, tabNgramType, path, versioned}
+
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 
@@ -318,10 +322,10 @@ tree :: { ngramsTable :: NgramsTable
         , ngramsEdit  :: NgramsClick
         , ngramsClick :: NgramsClick
         } -> NgramsDepth -> ReactElement
-tree params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick} nd@{ngrams} =
+tree params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick} nd =
   li [ style {width : "100%"} ]
     ([ i icon []
-     , tag [text $ " " <> ngrams]
+     , tag [text $ " " <> nd.ngrams]
      ] <> maybe [] edit (ngramsEdit nd) <>
      [ forest cs
      ])
@@ -339,7 +343,7 @@ tree params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick} nd@{ngrams} =
     icon = gray <> [className $ "glyphicon glyphicon-chevron-" <> if open then "down" else "right"]
     open = not leaf || false {- TODO -}
     gray = if leaf then [style {color: "#adb5bd"}] else []
-    cs   = ngramsTable ^.. ix ngrams <<< _NgramsElement <<< _children <<< folded
+    cs   = ngramsTable ^.. ix nd.ngrams <<< _NgramsElement <<< _children <<< folded
 
     forest =
       let depth = nd.depth + 1 in
