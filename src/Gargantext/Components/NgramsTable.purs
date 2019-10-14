@@ -30,7 +30,8 @@ import React (ReactElement)
 import React.DOM (a, i, input, li, span, text, ul)
 import React.DOM.Props (_type, checked, className, onChange, onClick, style)
 import React.DOM.Props as DOM
-import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec)
+import Thermite as Thermite
+import Thermite (modifyState_)
 import Gargantext.Types
   ( CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList
   , readTermSize, termLists, termSizes)
@@ -181,14 +182,6 @@ data Action'
   | ToggleChild' (Maybe NgramsTerm) NgramsTerm
   | Refresh'
 
-performNgramsAction :: State -> Action' -> State
-performNgramsAction st (SetParentResetChildren' term) = st
-performNgramsAction st (ToggleChild' b c) = st
-performNgramsAction st Refresh' = st
-
-useNgramsReducer :: State -> R.Hooks (R.Reducer State Action')
-useNgramsReducer init = R.useReducer' performNgramsAction init
-
 type Props =
   ( session      :: Session
   , tabNgramType :: CTabNgramType
@@ -205,13 +198,21 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NgramsTable.loadedNgramsTable" cpt
       state <- useNgramsReducer (initialState versioned)
       pure $ R.fragment []
 
-ngramsTableSpec :: Session -> CTabNgramType -> R2.Setter PageParams -> Spec State (Record LoadedNgramsTableProps) Action
-ngramsTableSpec session ntype setPath = simpleSpec performAction render
+    useNgramsReducer :: State -> R.Hooks (R.Reducer State Action')
+    useNgramsReducer init = R2.useReductor' performNgramsAction init
+
+    performNgramsAction :: Action' -> State -> Effect State
+    performNgramsAction (SetParentResetChildren' term) = pure -- TODO
+    performNgramsAction (ToggleChild' b c) = pure -- TODO
+    performNgramsAction Refresh' = pure -- TODO
+
+ngramsTableSpec :: Session -> CTabNgramType -> R2.Setter PageParams -> Thermite.Spec State (Record LoadedNgramsTableProps) Action
+ngramsTableSpec session ntype setPath = Thermite.simpleSpec performAction render
   where
     setParentResetChildren :: Maybe NgramsTerm -> State -> State
     setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
 
-    performAction :: PerformAction State (Record LoadedNgramsTableProps) Action
+    performAction :: Thermite.PerformAction State (Record LoadedNgramsTableProps) Action
     performAction (SetParentResetChildren p) _ _ =
       modifyState_ $ setParentResetChildren p
     performAction (ToggleChild b c) _ _ =
@@ -242,7 +243,7 @@ ngramsTableSpec session ntype setPath = simpleSpec performAction render
       where
         pt = addNewNgram ntype ngram CandidateTerm
 
-    render :: Render State (Record LoadedNgramsTableProps) Action
+    render :: Thermite.Render State (Record LoadedNgramsTableProps) Action
     render dispatch { path: pageParams
                     , loaded: Versioned { data: initTable } }
                     { ngramsTablePatch, ngramsParent, ngramsChildren }

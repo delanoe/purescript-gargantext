@@ -29,7 +29,7 @@ newtype Point = Point { x :: Number, y :: Number }
 -- a setter function, for useState
 type Setter t = (t -> t) -> Effect Unit
 -- a reducer function living in effector, for useReductor
-type Actor t a = (t -> a -> Effect t)
+type Actor s a = (a -> s -> Effect s)
 
 -- | Turns a ReactElement into aReactix Element
 -- | buff (v.) to polish
@@ -158,7 +158,7 @@ type Reductor state action = Tuple state (action -> Effect Unit)
 useReductor :: forall s a i. Actor s a -> (i -> Effect s) -> i -> R.Hooks (Reductor s a)
 useReductor f i j =
   hook $ \_ ->
-    pure $ currySecond $ tuple $ react ... "useReducer" $ args3 (mkEffectFn2 f) j (mkEffectFn1 i)
+    pure $ currySecond $ tuple $ react ... "useReducer" $ args3 (mkEffectFn2 (flip f)) j (mkEffectFn1 i)
 
 -- | Like `useReductor`, but takes an initial state instead of an
 -- | initialiser function and argument
