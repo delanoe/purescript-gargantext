@@ -1,8 +1,11 @@
 -- | A module for authenticating to create sessions and handling them
 module Gargantext.Sessions where
 
-import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<), bind)
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject, (.:), Json, fromArray)
+import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (>=>), (<<<), bind)
+import Control.Monad.Except (runExcept)
+import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:), Json)
+import Data.Argonaut.Core (Json, fromArray, jsonEmptyObject, stringify)
+import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Traversable (traverse)
 import DOM.Simple.Console (log2)
@@ -17,7 +20,7 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (removeItem) -- (getItem, setItem, removeItem)
+import Web.Storage.Storage (Storage, getItem, setItem, removeItem)
 import Gargantext.Components.Login.Types
   (AuthRequest(..), AuthResponse(..), AuthInvalid(..), AuthData(..))
 import Gargantext.Config.REST (post)
@@ -152,7 +155,6 @@ act old@(Sessions ss) (Logout s) =
     Right new -> pure $ new
     _ -> pure old <* log2 "Logged out of stale session:" (sessionId s)
        
-
 -- Key we will store the data under
 localStorageKey :: String
 localStorageKey = "garg-sessions"
@@ -164,24 +166,32 @@ empty = Sessions Seq.empty
 null :: Sessions -> Boolean
 null (Sessions seq) = Seq.null seq
 
--- | Will attempt to load saved sessions from localstorage. should log if decoding fails
+
+
+-- | Will attempt to load saved sessions from localstorage. should log
+-- | if decoding fails
 loadSessions :: Effect Sessions
-loadSessions = pure empty
-{-
-loadSessions = window >>= localStorage >>= getItem "auths" >>= traverse decode
-  where
-    decode :: String -> Effect (Maybe Sessions)
-    decode = ret <<< runExcept <<< decodeJson
-    ret (Right v) = pure $ Just v
-    ret (Left e)  = log2 "Error reading serialised sessions:" e *> pure (Malformed e)
-    -}
+loadSessions = getls >>= getItem localStorageKey >>= handleMaybe where
+  -- a localstorage lookup can find nothing
+  handleMaybe (Just val) = handleEither (parse val >>= decode)
+  handleMaybe Nothing = pure empty
+  -- either parsing or decoding could fail, hence two errors
+  handleEither (Left err) = err *> pure empty
+  handleEither (Right ss) = pure ss
+  parse s = mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
+  decode j = mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
+
+mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
+mapLeft f (Left l) = Left (f l)
+mapLeft _ (Right r) = Right r
+
 saveSessions :: Sessions -> Effect Sessions
-saveSessions sessions = effect *> pure sessions
-  where
-    effect
-      | null sessions = window >>= localStorage >>= removeItem localStorageKey
-      | otherwise = pure unit
--- | otherwise = window >>= localStorage >>= setItem localStorageKey (encodeJSON sessions)
+saveSessions sessions = effect *> pure sessions where
+  remove = getls >>= removeItem localStorageKey
+  set v = getls >>= setItem localStorageKey v
+  effect
+    | null sessions = remove
+    | otherwise = set (stringify $ encodeJson sessions)
 
 postAuthRequest :: Backend -> AuthRequest -> Aff (Either String Session)
 postAuthRequest backend ar@(AuthRequest {username}) =
@@ -192,3 +202,6 @@ postAuthRequest backend ar@(AuthRequest {username}) =
       | {valid: Just (AuthData {token, tree_id})} <- ar2 =
           Right $ Session { backend, username, token, treeId: tree_id }
       | otherwise = Left "Invalid response from server"
+
+getls :: Effect Storage
+getls = window >>= localStorage
