@@ -16,12 +16,9 @@ module Gargantext.Components.NgramsTable.Core
   , Versioned(..)
   , VersionedNgramsTable
   , CoreState
-  , LoadedNgramsTableProps
   , highlightNgrams
   , initialPageParams
   , loadNgramsTable
-  , ngramsLoader
-  , ngramsLoaderClass
   , convOrderBy
   , Replace(..) -- Ideally we should keep the constructors hidden
   , replace
@@ -86,7 +83,6 @@ import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 
 import Gargantext.Components.Table as T
-import Gargantext.Components.OldLoader as Loader
 import Gargantext.Ends (url)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post)
@@ -98,6 +94,7 @@ type CoreParams s =
     -- ^ This node can be a corpus or contact.
   , listIds :: Array Int
   , tabType :: TabType
+  , session :: Session
   | s
   }
 
@@ -107,7 +104,6 @@ type PageParams =
     , searchQuery    :: String
     , termListFilter :: Maybe TermList -- Nothing means all
     , termSizeFilter :: Maybe TermSize -- Nothing means all
-    , session        :: Session
     )
 
 initialPageParams :: Session -> Int -> Array Int -> TabType -> PageParams
@@ -564,41 +560,41 @@ type CoreState s =
   | s
   }
 
-postNewNgrams :: forall s. Session -> Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
-postNewNgrams session newNgrams mayList {nodeId, listIds, tabType} =
+postNewNgrams :: forall s. Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
+postNewNgrams newNgrams mayList {nodeId, listIds, tabType, session} =
   when (not (A.null newNgrams)) $ do
     (_ :: Array Unit) <- post session p newNgrams
     pure unit
   where p = PutNgrams tabType (head listIds) mayList (Just nodeId)
 
-postNewElems :: forall s. Session -> NewElems -> CoreParams s -> Aff Unit
-postNewElems session newElems params = void $ traverseWithIndex postNewElem newElems
+postNewElems :: forall s. NewElems -> CoreParams s -> Aff Unit
+postNewElems newElems params = void $ traverseWithIndex postNewElem newElems
   where
-    postNewElem ngrams list = postNewNgrams session [ngrams] (Just list) params
+    postNewElem ngrams list = postNewNgrams [ngrams] (Just list) params
 
 addNewNgram :: CTabNgramType -> NgramsTerm -> TermList -> NgramsTablePatch
 addNewNgram ntype ngrams list = { ngramsPatches: mempty
                           , ngramsNewElems: Map.singleton (normNgram ntype ngrams) list }
 
-putNgramsPatches :: Session -> {nodeId :: Int, listIds :: Array Int, tabType :: TabType} -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
-putNgramsPatches session {nodeId, listIds, tabType} = put session putNgrams
+putNgramsPatches :: forall s. CoreParams s -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
+putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
-commitPatch :: forall s. Session -> {nodeId :: Int, listIds :: Array Int, tabType :: TabType}
+commitPatch :: forall p s. CoreParams p
             -> Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
-commitPatch session props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNewElems}}) = do
+commitPatch props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNewElems}}) = do
   let pt = Versioned { version, data: ngramsPatches }
-  lift $ postNewElems session ngramsNewElems props
-  Versioned {version: newVersion, data: newPatch} <- lift $ putNgramsPatches session props pt
+  lift $ postNewElems ngramsNewElems props
+  Versioned {version: newVersion, data: newPatch} <- lift $ putNgramsPatches props pt
   modifyState_ $ \s ->
     s { ngramsVersion    = newVersion
       , ngramsTablePatch = fromNgramsPatches newPatch <> tablePatch <> s.ngramsTablePatch
       }
     -- TODO: check that pt.version == s.ngramsTablePatch.version
 
-loadNgramsTable :: Session -> PageParams -> Aff VersionedNgramsTable
-loadNgramsTable session
-  { nodeId, listIds, termListFilter, termSizeFilter
+loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
+loadNgramsTable
+  { nodeId, listIds, termListFilter, termSizeFilter, session
   , searchQuery, tabType, params: {offset, limit, orderBy}}
   = get session query
   where query = GetNgrams { tabType, offset, limit, listIds
@@ -611,11 +607,3 @@ convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc
 convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
-
-ngramsLoaderClass :: Session -> Loader.LoaderClass PageParams VersionedNgramsTable
-ngramsLoaderClass session = Loader.createLoaderClass "NgramsTableLoader" (loadNgramsTable session)
-
-ngramsLoader :: Session -> Loader.Props' PageParams VersionedNgramsTable -> ReactElement
-ngramsLoader session props = React.createElement (ngramsLoaderClass session) props []
-
-type LoadedNgramsTableProps = ( path :: PageParams, loaded :: VersionedNgramsTable )

@@ -118,7 +118,7 @@ useSessions :: R.Hooks (R2.Reductor Sessions Action)
 useSessions = R2.useReductor actAndSave (const loadSessions) unit
   where
     actAndSave :: R2.Actor Sessions Action
-    actAndSave s a = act s a >>= saveSessions
+    actAndSave a s = act s a >>= saveSessions
 
 lookup :: SessionId -> Sessions -> Maybe Session
 lookup sid (Sessions {sessions:ss}) = Seq.head (Seq.filter f ss) where

@@ -1,11 +1,14 @@
-module Gargantext.Components.NgramsTable where
+module Gargantext.Components.NgramsTable
+  ( MainNgramsTableProps
+  , mainNgramsTable
+  ) where
 
 import Prelude
   ( class Show, Unit, bind, const, discard, identity, map, mempty, not
   , pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<)
   , (==), (||) )
 import Data.Array as A
-import Data.Lens (to, view, (%~), (.~), (^.), (^..))
+import Data.Lens (Lens', to, view, (%~), (.~), (^.), (^..))
 import Data.Lens.Common (_Just)
 import Data.Lens.At (at)
 import Data.Lens.Index (ix)
@@ -23,24 +26,25 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import React (ReactElement)
+import React (ReactClass, ReactElement, Children)
 import React.DOM (a, i, input, li, span, text, ul)
 import React.DOM.Props (_type, checked, className, onChange, onClick, style)
 import React.DOM.Props as DOM
-import Thermite (PerformAction, Render, Spec, modifyState_, simpleSpec)
+import Thermite as Thermite
+import Thermite (modifyState_)
 import Gargantext.Types
   ( CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList
   , readTermSize, termLists, termSizes)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.NgramsTable.Core
-  ( CoreState, LoadedNgramsTableProps, NgramsElement(..), NgramsPatch(..)
+  ( CoreState, NgramsElement(..), NgramsPatch(..)
   , NgramsTable, NgramsTerm, PageParams, Replace(..), Versioned(..)
   , VersionedNgramsTable, _NgramsElement, _NgramsTable, _children
   , _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsTablePatch
   , applyPatchSet, commitPatch, convOrderBy, initialPageParams, loadNgramsTable
   , patchSetFromMap, replace, singletonNgramsTablePatch )
+import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Table as T
-import Gargantext.Hooks.Loader (useLoader2)
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 
@@ -54,6 +58,7 @@ type State =
                      --   be removed.
   )
 
+_ngramsChildren :: forall row. Lens' { ngramsChildren :: Map NgramsTerm Boolean | row } (Map NgramsTerm Boolean)
 _ngramsChildren = prop (SProxy :: SProxy "ngramsChildren")
 
 initialState :: VersionedNgramsTable -> State
@@ -81,17 +86,15 @@ data Action
 
 type Dispatch = Action -> Effect Unit
 
-tableContainer :: { pageParams     :: PageParams
+tableContainer :: { path           :: R.State PageParams
                   , dispatch       :: Dispatch
-                  , setPath        :: R2.Setter PageParams
                   , ngramsParent   :: Maybe NgramsTerm
                   , ngramsChildren :: Map NgramsTerm Boolean
                   , ngramsTable    :: NgramsTable
                   }
                -> Record T.TableContainerProps -> R.Element
-tableContainer { pageParams
+tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                , dispatch
-               , setPath
                , ngramsParent
                , ngramsChildren
                , ngramsTable: ngramsTableCache
@@ -111,26 +114,26 @@ tableContainer { pageParams
                         , name: "search"
                         , placeholder: "Search"
                         , type: "value"
-                        , value: pageParams.searchQuery
+                        , value: searchQuery
                         , on: {input: \e -> setSearchQuery (R2.unsafeEventValue e)}}
               , H.div {} (
-                   if A.null props.tableBody && pageParams.searchQuery /= "" then [
+                   if A.null props.tableBody && searchQuery /= "" then [
                      H.button { className: "btn btn-primary"
-                              , on: {click: const $ dispatch $ AddNewNgram pageParams.searchQuery}}
-                     [ H.text ("Add " <> pageParams.searchQuery) ]
+                              , on: {click: const $ dispatch $ AddNewNgram searchQuery}}
+                     [ H.text ("Add " <> searchQuery) ]
                      ] else [])]
             , H.div {className: "col-md-2", style: {marginTop : "6px"}}
               [ H.li {className: " list-group-item"}
                 [ R2.select { id: "picklistmenu"
                             , className: "form-control custom-select"
-                            , value: (maybe "" show pageParams.termListFilter)
+                            , value: (maybe "" show termListFilter)
                             , on: {change: (\e -> setTermListFilter $ readTermList $ R2.unsafeEventValue e)}}
                   (map optps1 termLists)]]
             , H.div {className: "col-md-2", style: {marginTop : "6px"}}
               [ H.li {className: "list-group-item"}
                 [ R2.select {id: "picktermtype"
                             , className: "form-control custom-select"
-                            , value: (maybe "" show pageParams.termSizeFilter)
+                            , value: (maybe "" show termSizeFilter)
                             , on: {change: (\e -> setTermSizeFilter $ readTermSize $ R2.unsafeEventValue e)}}
                     (map optps1 termSizes)]]
             , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
@@ -163,98 +166,107 @@ tableContainer { pageParams
               [ H.thead {className: "tableHeader"} [props.tableHead]
               , H.tbody {} props.tableBody]]]]]]
   where
-    setPageParams f = setPath (const $ f pageParams)
-    setSearchQuery    x = setPageParams $ _ { searchQuery = x }
-    setTermListFilter x = setPageParams $ _ { termListFilter = x }
-    setTermSizeFilter x = setPageParams $ _ { termSizeFilter = x }
+    -- WHY setPath     f = origSetPageParams (const $ f path)
+    setSearchQuery    x = setPath $ _ { searchQuery = x }
+    setTermListFilter x = setPath $ _ { termListFilter = x }
+    setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
 
 toggleMap :: forall a. a -> Maybe a -> Maybe a
 toggleMap _ (Just _) = Nothing
 toggleMap b Nothing  = Just b
 
+-- NEXT
 data Action'
   = SetParentResetChildren' (Maybe NgramsTerm)
   | ToggleChild' (Maybe NgramsTerm) NgramsTerm
   | Refresh'
 
-performNgramsAction :: State -> Action' -> State
-performNgramsAction st (SetParentResetChildren' term) = st
-performNgramsAction st (ToggleChild' b c) = st
-performNgramsAction st Refresh' = st
-
-useNgramsReducer :: State -> R.Hooks (R.Reducer State Action')
-useNgramsReducer init = R.useReducer' performNgramsAction init
-
+-- NEXT
 type Props =
-  ( session      :: Session
-  , tabNgramType :: CTabNgramType
+  ( tabNgramType :: CTabNgramType
   , path         :: R.State PageParams
   , versioned    :: VersionedNgramsTable )
 
-ngramsTable :: Record Props -> R.Element
-ngramsTable props = R.createElement ngramsTableCpt props []
+-- NEXT
+loadedNgramsTable :: Record Props -> R.Element
+loadedNgramsTable props = R.createElement loadedNgramsTableCpt props []
 
-ngramsTableCpt :: R.Component Props
-ngramsTableCpt = R.hooksComponent "G.C.NgramsTable.ngramsTable" cpt
+-- NEXT
+loadedNgramsTableCpt :: R.Component Props
+loadedNgramsTableCpt = R.hooksComponent "G.C.NgramsTable.loadedNgramsTable" cpt
   where
     cpt {versioned} _ = do
       state <- useNgramsReducer (initialState versioned)
       pure $ R.fragment []
 
-ngramsTableSpec :: Session -> CTabNgramType -> R2.Setter PageParams -> Spec State (Record LoadedNgramsTableProps) Action
-ngramsTableSpec session ntype setPath = simpleSpec performAction render
+    useNgramsReducer :: State -> R.Hooks (R.Reducer State Action')
+    useNgramsReducer init = R2.useReductor' performNgramsAction init
+
+    performNgramsAction :: Action' -> State -> Effect State
+    performNgramsAction (SetParentResetChildren' term) = pure -- TODO
+    performNgramsAction (ToggleChild' b c) = pure -- TODO
+    performNgramsAction Refresh' = pure -- TODO
+
+type LoadedNgramsTableProps =
+  ( tabNgramType :: CTabNgramType
+  , path         :: R.State PageParams
+  , versioned    :: VersionedNgramsTable
+  )
+
+loadedNgramsTableSpec :: Thermite.Spec State (Record LoadedNgramsTableProps) Action
+loadedNgramsTableSpec = Thermite.simpleSpec performAction render
   where
     setParentResetChildren :: Maybe NgramsTerm -> State -> State
     setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
 
-    performAction :: PerformAction State (Record LoadedNgramsTableProps) Action
+    performAction :: Thermite.PerformAction State (Record LoadedNgramsTableProps) Action
     performAction (SetParentResetChildren p) _ _ =
       modifyState_ $ setParentResetChildren p
     performAction (ToggleChild b c) _ _ =
       modifyState_ $ _ngramsChildren <<< at c %~ toggleMap b
-    performAction Refresh {path: {nodeId, listIds, tabType}} {ngramsVersion} = do
-        commitPatch session {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: mempty})
-    performAction (SetTermListItem n pl) {path: {nodeId, listIds, tabType}} {ngramsVersion} =
-        commitPatch session {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+    performAction Refresh {path: path /\ _} {ngramsVersion} = do
+        commitPatch path (Versioned {version: ngramsVersion, data: mempty})
+    performAction (SetTermListItem n pl) {path: path /\ _, tabNgramType} {ngramsVersion} =
+        commitPatch path (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
-        pt = singletonNgramsTablePatch ntype n pe
+        pt = singletonNgramsTablePatch tabNgramType n pe
     performAction AddTermChildren _ {ngramsParent: Nothing} =
         -- impossible but harmless
         pure unit
-    performAction AddTermChildren {path: {nodeId, listIds, tabType}}
+    performAction AddTermChildren {path: path /\ _, tabNgramType}
                   { ngramsParent: Just parent
                   , ngramsChildren
                   , ngramsVersion
                   } = do
         modifyState_ $ setParentResetChildren Nothing
-        commitPatch session {nodeId, listIds, tabType} (Versioned {version: ngramsVersion, data: pt})
+        commitPatch path (Versioned {version: ngramsVersion, data: pt})
       where
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }
-        pt = singletonNgramsTablePatch ntype parent pe
-    performAction (AddNewNgram ngram) {path: {listIds, nodeId, tabType}} {ngramsVersion} =
-        commitPatch session {listIds, nodeId, tabType} (Versioned {version: ngramsVersion, data: pt})
+        pt = singletonNgramsTablePatch tabNgramType parent pe
+    performAction (AddNewNgram ngram) {path: path /\ _, tabNgramType} {ngramsVersion} =
+        commitPatch path (Versioned {version: ngramsVersion, data: pt})
       where
-        pt = addNewNgram ntype ngram CandidateTerm
+        pt = addNewNgram tabNgramType ngram CandidateTerm
 
-    render :: Render State (Record LoadedNgramsTableProps) Action
-    render dispatch { path: pageParams
-                    , loaded: Versioned { data: initTable } }
+    render :: Thermite.Render State (Record LoadedNgramsTableProps) Action
+    render dispatch { path: path@({params} /\ setPath)
+                    , versioned: Versioned { data: initTable } }
                     { ngramsTablePatch, ngramsParent, ngramsChildren }
                     _reactChildren =
       [ autoUpdateElt { duration: 3000, effect: dispatch Refresh }
-      , R2.scuff $ T.table { rows, params, container, colNames, totalRecords}
+      , R2.scuff $ T.table { params: params /\ setParams -- TODO-LENS
+                           , rows, container, colNames, totalRecords}
       ]
       where
         totalRecords = 47361 -- TODO
         colNames = T.ColumnName <$> ["Map", "Stop", "Terms", "Score (Occurrences)"] -- see convOrderBy
-        container = tableContainer {pageParams, setPath, dispatch, ngramsParent, ngramsChildren, ngramsTable}
+        container = tableContainer {path, dispatch, ngramsParent, ngramsChildren, ngramsTable}
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
-        params = pageParams.params /\ setParams
         ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
         orderWith =
-          case convOrderBy <$> pageParams.params.orderBy of
+          case convOrderBy <$> params.orderBy of
             Just ScoreAsc  -> A.sortWith \x -> (snd x) ^. _NgramsElement <<< _occurrences
             Just ScoreDesc -> A.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
             _              -> identity -- the server ordering is enough here
@@ -284,18 +296,19 @@ ngramsTableSpec session ntype setPath = simpleSpec performAction render
           , delete: false
           }
 
--- ngramsTableClass :: Session -> CTabNgramType -> R2.Setter PageParams -> Loader.InnerClass PageParams (Versioned NgramsTable)
--- ngramsTableClass session ct setPath = createClass "NgramsTable" (ngramsTableSpec session ct setPath) initialState
+loadedNgramsTableClass :: ReactClass { children :: Children | LoadedNgramsTableProps }
+loadedNgramsTableClass = Thermite.createClass "LoadedNgramsNgramsTable"
+  loadedNgramsTableSpec (\{versioned} -> initialState versioned)
 
--- ngramsTable' :: Session -> CTabNgramType -> R2.Setter PageParams -> Record LoadedNgramsTableProps -> R.Element
--- ngramsTable' session ct setPath props = R2.createElement' (ngramsTableClass session ct setPath) props []
+loadedNgramsTable' :: Record LoadedNgramsTableProps -> R.Element
+loadedNgramsTable' props = R2.createElement' (loadedNgramsTableClass) props []
 
 type MainNgramsTableProps =
   ( nodeId        :: Int
     -- ^ This node can be a corpus or contact.
   , defaultListId :: Int
   , tabType       :: TabType
-  , session          :: Session
+  , session       :: Session
   , tabNgramType  :: CTabNgramType
   )
 
@@ -306,10 +319,10 @@ mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
   where
     cpt {nodeId, defaultListId, tabType, session, tabNgramType} _ = do
-      path <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
-      useLoader2 path (loadNgramsTable session) $
-        \versioned -> ngramsTable {session, tabNgramType, path, versioned}
-        
+      path /\ setPath <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
+      let paint versioned = loadedNgramsTable' {tabNgramType, path: path /\ setPath, versioned}
+      pure $ loader path loadNgramsTable paint
+
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 
@@ -318,10 +331,10 @@ tree :: { ngramsTable :: NgramsTable
         , ngramsEdit  :: NgramsClick
         , ngramsClick :: NgramsClick
         } -> NgramsDepth -> ReactElement
-tree params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick} nd@{ngrams} =
+tree params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick} nd =
   li [ style {width : "100%"} ]
     ([ i icon []
-     , tag [text $ " " <> ngrams]
+     , tag [text $ " " <> nd.ngrams]
      ] <> maybe [] edit (ngramsEdit nd) <>
      [ forest cs
      ])
@@ -339,7 +352,7 @@ tree params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick} nd@{ngrams} =
     icon = gray <> [className $ "glyphicon glyphicon-chevron-" <> if open then "down" else "right"]
     open = not leaf || false {- TODO -}
     gray = if leaf then [style {color: "#adb5bd"}] else []
-    cs   = ngramsTable ^.. ix ngrams <<< _NgramsElement <<< _children <<< folded
+    cs   = ngramsTable ^.. ix nd.ngrams <<< _NgramsElement <<< _children <<< folded
 
     forest =
       let depth = nd.depth + 1 in
