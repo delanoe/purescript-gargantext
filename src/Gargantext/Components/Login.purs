@@ -63,7 +63,11 @@ modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
 
       closing = H.button { "type": "button", className: "close"
                            , "data": { dismiss: "modal" } }
-                  [ H.span { on: {click} } [ H.text "X" ] ] 
+                           [ H.a { on: {click}
+                                 , className: "btn glyphicon glyphicon-remove-circle" 
+                                 -- TODO , font-size : "50px"
+                                 } [] 
+                           ]
 
 
 
