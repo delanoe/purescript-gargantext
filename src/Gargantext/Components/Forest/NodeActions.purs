@@ -9,11 +9,13 @@ import Reactix.DOM.HTML as H
 import Effect.Aff (Aff, launchAff, runAff)
 
 data NodeAction = Rename
+                | Documentation NodeType
                 | Add (Array NodeType)
                 | Search
                 | Download | Upload | Refresh
                 | Move     | Clone  | Delete
                 | Share
+                | Disconnect
 
 data ButtonType = Edit | Click | Pop
 
@@ -59,14 +61,15 @@ nodeActions NodeUser      = [ Add [ FolderPrivate
                                   , FolderTeam
                                   , FolderPublic
                                   ]
+                            , Disconnect
                             , Delete
                             ]
 
-nodeActions FolderPrivate = [Add [Folder, Corpus]]
-nodeActions FolderTeam    = [Add [Folder, Corpus]]
-nodeActions FolderPublic  = [Add [Folder, Corpus]]
+nodeActions FolderPrivate = [ Add [Folder, Corpus]]
+nodeActions FolderTeam    = [ Add [Folder, Corpus]]
+nodeActions FolderPublic  = [ Add [Folder, Corpus]]
 
-nodeActions Folder        = [Add [Corpus], Rename, Delete]
+nodeActions Folder        = [ Add [Corpus], Rename, Delete]
 
 nodeActions Corpus        = [ Rename
                             , Search, Upload, Download
@@ -83,5 +86,4 @@ nodeActions _ = []
 
 
 ---------------------------------------------------------
-
 

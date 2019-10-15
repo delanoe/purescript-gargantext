@@ -38,3 +38,6 @@ csrfMiddlewareToken = "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP
 _unit :: forall s. Lens' s Unit
 _unit = lens (\_ -> unit) (\s _ -> s)
 
+
+glyphicon t = "glyphitem glyphicon glyphicon-" <> t
+

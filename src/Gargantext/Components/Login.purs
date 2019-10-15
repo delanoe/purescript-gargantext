@@ -3,11 +3,12 @@
   -- Select a backend and log into it
 module Gargantext.Components.Login where
 
-import Prelude (Unit, bind, const, discard, pure, flip, show, ($), (<>), (*>), (<$>))
+import Prelude (Unit, bind, const, discard, pure, flip, show, ($), (<>), (*>), (<$>), (>))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
 import DOM.Simple.Console (log)
+import Data.Sequence as DS
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Aff (launchAff_)
@@ -18,9 +19,9 @@ import Reactix.DOM.HTML as H
 import Gargantext.Components.Forms (clearfix, card, cardBlock, cardGroup, center, formGroup)
 import Gargantext.Components.Login.Types (AuthRequest(..))
 import Gargantext.Ends (Backend(..))
-import Gargantext.Sessions (Session, Sessions, postAuthRequest, unSessions)
+import Gargantext.Sessions (Session, Sessions(..), postAuthRequest, unSessions)
 import Gargantext.Sessions as Sessions
-import Gargantext.Utils (csrfMiddlewareToken)
+import Gargantext.Utils (csrfMiddlewareToken, glyphicon)
 import Gargantext.Utils.Reactix as R2
 
 -- TODO: ask for login (modal) or account creation after 15 mn when user
@@ -48,13 +49,20 @@ modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
           [ H.div { className: "modal-dialog", role: "document"}
             [ H.div { className: "modal-content" }
               [ H.div { className: "modal-header" }
-                [ H.h5 { className: "modal-title" } []
+                [ logo
+                , H.h2 { className: "center modal-title" } [H.text "Backends manager"]
                 , H.button { "type": "button", className: "close"
                            , "data": { dismiss: "modal" } }
                   [ H.span { on: {click} } [ H.text "X" ] ] ]
               , H.div { className: "modal-body" } children ] ] ] ]
       modalClass s = "modal myModal" <> if s then "" else " fade"
-      
+      logo =
+        H.div {className: "col-md-10 col-md-push-1"}
+            [ H.h2 {className: "text-primary center m-a-2"}
+        [ H.i {className: "material-icons md-36"} [ H.text "control_point" ]
+        , H.span {className: "icon-text"} [ H.text "Gargantext" ] ] ]
+
+
 
 login :: Record Props -> R.Element
 login props = R.createElement loginCpt props []
@@ -79,22 +87,49 @@ chooserCpt :: R.Component ChooserProps
 chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
   cpt :: Record ChooserProps -> Array R.Element -> R.Element
   cpt {backend, backends, sessions} _ =
-    H.ul {}
-    [ renderSessions sessions, renderBackends backends backend ]
-  
-renderSessions :: R2.Reductor Sessions Sessions.Action -> R.Element
-renderSessions sessions = R.fragment (renderSession <$> unSessions (fst sessions))
+    R.fragment $ new <> active
+      where
+        active = if DS.length ss > 0 then [ H.h3 {} [H.text "Active connection(s)"]
+                 , H.ul {} [ renderSessions sessions]
+                 ] else [] where
+                   Sessions {sessions:ss} = fst sessions
+        new    = [ H.h3 {} [H.text "New connection(s)"]
+                 , H.ul {} [renderBackends backends backend ]
+                 ]
 
-renderSession :: Session -> R.Element
-renderSession session = H.li {} [ H.text $ "Active session: " <> show session ]
+renderSessions :: R2.Reductor Sessions Sessions.Action -> R.Element
+renderSessions sessions = R.fragment (renderSession sessions <$> unSessions (fst sessions))
+
+
+renderSession :: R2.Reductor Sessions Sessions.Action -> Session -> R.Element
+renderSession sessions session = H.li {} $ [ H.text $ "Active session: " <> show session ]
+                                        <> [ H.a { on : {click}
+                                                 , className: glyphicon "log-out"
+                                                 , id : "log-out"
+                                                 , title: "Log out"
+                                                 } [] ]
+                                            where
+                                              click _ = (snd sessions) (Sessions.Logout session)
 
 renderBackends :: Array Backend -> R.State (Maybe Backend) -> R.Element
 renderBackends backends state = R.fragment $ (flip renderBackend $ state) <$> backends
 
+{-
 renderBackend :: Backend -> R.State (Maybe Backend) -> R.Element
 renderBackend backend@(Backend {name}) state =
-  H.li {} [ H.a {on: {click}} [ H.text $ "Connect to " <> name ] ] where
+  H.li {} [ H.a {on: {click}, className: glyphicon "log-in"} [ H.text $ "Connect to " <> name ] ] where
     click _ = (snd state) (const $ Just backend)
+    -}
+
+renderBackend :: Backend -> R.State (Maybe Backend) -> R.Element
+renderBackend backend@(Backend {name}) state =
+  H.li {} $ [ H.a { on : {click}
+          --      , className: glyphicon "log-in"
+          --      , id : "log-in"
+        } [ H.text $ " Connect to " <> name ] ] <> [ H.a { on : {click}, className : glyphicon "log-in", title: "Log In"} []]
+                                        where
+                                          click _ = (snd state) (const $ Just backend)
+
 
 type FormProps =
   ( backend :: Backend
@@ -112,8 +147,7 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
     username <- R.useState' ""
     password <- R.useState' ""
     pure $ H.div {className: "row"}
-      [ logo
-      , cardGroup
+      [ cardGroup
         [ card
           [ cardBlock
             [ center
@@ -141,11 +175,6 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
           (snd sessions) (Sessions.Login sess)
           (snd error) (const "")
           (snd visible) (const false)
-  logo =
-    H.div {className: "col-md-10 col-md-push-1"}
-        [ H.h2 {className: "text-primary center m-a-2"}
-    [ H.i {className: "material-icons md-36"} [ H.text "control_point" ]
-    , H.span {className: "icon-text"} [ H.text "Gargantext" ] ] ]
 
 csrfTokenInput :: {} -> R.Element
 csrfTokenInput _ =

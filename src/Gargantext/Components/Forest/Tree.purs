@@ -32,7 +32,7 @@ import Gargantext.Routes as Routes
 import Gargantext.Routes (AppRoute, SessionRoute(..))
 import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
 import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
-import Gargantext.Utils (id)
+import Gargantext.Utils (id, glyphicon)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Components.Forest.NodeActions
 
@@ -44,16 +44,16 @@ type Reload = Int
 
 data NodePopup = CreatePopup | NodePopup
 
-type Props = ( root :: ID
+type Props = ( root          :: ID
              , mCurrentRoute :: Maybe AppRoute
-             , session :: Session
-             , frontends :: Frontends
+             , session       :: Session
+             , frontends     :: Frontends
              )
 
-type TreeViewProps = ( tree :: FTree
+type TreeViewProps = ( tree          :: FTree
                      , mCurrentRoute :: Maybe AppRoute
-                     , frontends :: Frontends
-                     , session :: Session 
+                     , frontends     :: Frontends
+                     , session       :: Session 
                      )
 
 data NTree a = NTree a (Array (NTree a))
@@ -313,7 +313,6 @@ type NodePopupProps =
   )
 
 iconAStyle = {color:"black", paddingTop: "6px", paddingBottom: "6px"}
-glyphicon t = "glyphitem glyphicon glyphicon-" <> t
 
 nodePopupView ::   (Action -> Aff Unit)
                  -> Record NodePopupProps
@@ -344,11 +343,13 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
         rowClass false = "col-md-8"
 
         Buttons {edit:edits,click:clicks,pop:pops} = buttons nodeType
- 
+
         panelHeading renameBoxOpen@(open /\ _) =
           H.div {className: "panel-heading"}
           [ H.div {className: "row" }
-            [ H.div {className: rowClass open} [ renameBox d {id, name} renameBoxOpen ]
+            [ H.div {className: "col-md-1"} []
+            , buttonClick d (Documentation nodeType)
+            , H.div {className: rowClass open} [ renameBox d {id, name} renameBoxOpen ]
             , if not (null edits) then editIcon renameBoxOpen else H.div {} []
             , H.div {className: "col-md-2"}
               [ H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove-circle"
@@ -378,7 +379,7 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
                          , border: "none"}}
           ((map (\a -> buttonPop a setPopupOpen) pops)
           <>
-          (map (\a -> buttonClick a d) clicks))
+          (map (buttonClick d) clicks))
 
 
 nodePopupView _ p _ = R.createElement el p []
@@ -387,12 +388,30 @@ nodePopupView _ p _ = R.createElement el p []
     cpt _ _ = pure $ H.div {} []
 
 
-
 -- buttonAction :: NodeAction -> R.Element
+buttonClick _ (Documentation x ) = H.div {className: "col-md-1"}
+            [ H.a { style: iconAStyle
+                  , className: (glyphicon "question-sign")
+                  , id: "doc"
+                  , title: "Documentation"
+                }
+                  -- , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
+              []
+            ]
+
+buttonClick d Disconnect = H.div {className: "col-md-4"}
+            [ H.a { style: iconAStyle
+                  , className: (glyphicon "log-out")
+                  , id: "log-out"
+                  , title: "Log Out"
+                  -- , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
+                }
+              []
+            ]
 
 
-buttonClick Delete d = H.div {className: "col-md-4"}
-            [ H.a {style: iconAStyle
+buttonClick d Delete = H.div {className: "col-md-4"}
+            [ H.a { style: iconAStyle
                   , className: (glyphicon "trash")
                   , id: "rename2"
                   , title: "Delete"
@@ -400,15 +419,15 @@ buttonClick Delete d = H.div {className: "col-md-4"}
               []
             ]
 
-buttonClick Upload _ = H.div {className: "col-md-4"}
-            [ H.a {style: iconAStyle
+buttonClick _ Upload = H.div {className: "col-md-4"}
+            [ H.a { style: iconAStyle
                   , className: (glyphicon "upload")
                   , id: "upload"
                   , title: "Upload [WIP]"}
               []
             ]
 
-buttonClick Download _ = H.div {className: "col-md-4"}
+buttonClick _ Download = H.div {className: "col-md-4"}
             [ H.a {style: iconAStyle
                   , className: (glyphicon "download")
                   , id: "download"
@@ -421,7 +440,7 @@ buttonClick _ _ = H.div {} []
 
 
 buttonPop (Add _) f =  H.div {className: "col-md-4"}
-              [ H.a {style: iconAStyle
+              [ H.a { style: iconAStyle
                     , className: (glyphicon "plus")
                     , id: "create"
                     , title: "Create"

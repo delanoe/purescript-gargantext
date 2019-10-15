@@ -34,7 +34,7 @@ forestCpt = R.staticComponent "G.C.Forest.forest" cpt where
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin =
   H.button {on: {click}}
-  [ H.i { className: "glyphicon glyphicon-log-in"} [] ]
+  [ H.i { className: "glyphicon glyphicon-plus"} [] ]
   where
     click _ = do
       showLogin (const true)
