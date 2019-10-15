@@ -58,7 +58,7 @@ instance encodeJsonBackend :: EncodeJson Backend where
 instance decodeJsonBackend :: DecodeJson Backend where
   decodeJson json = do
     obj <- decodeJson json
-    name <- obj .: "objet"
+    name <- obj .: "name"
     baseUrl <- obj .: "baseUrl"
     prePath <- obj .: "prePath"
     version <- obj .: "version"

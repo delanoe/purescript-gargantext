@@ -1,7 +1,7 @@
 -- | A module for authenticating to create sessions and handling them
 module Gargantext.Sessions where
 
-import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (>=>), (<<<), bind)
+import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (>=>), (<<<), bind, map)
 import Control.Monad.Except (runExcept)
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:), Json)
 import Data.Argonaut.Core (Json, fromArray, jsonEmptyObject, stringify)
@@ -26,6 +26,7 @@ import Gargantext.Components.Login.Types
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend, backendUrl, toUrl, sessionPath)
 import Gargantext.Routes (SessionRoute)
+import Gargantext.Prelude (logs)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
 import Gargantext.Utils.Reactix as R2
 
@@ -85,7 +86,7 @@ instance decodeJsonSession :: DecodeJson Session where
 
 ------------------------------------------------------------------------
 
-newtype Sessions = Sessions (Seq Session)
+data Sessions = Sessions { sessions :: (Seq Session)}
 
 derive instance genericSessions :: Generic Sessions _
 
@@ -95,21 +96,23 @@ instance eqSessions :: Eq Sessions where
 instance decodeJsonSessions :: DecodeJson Sessions where
   decodeJson json = do
     ss <- decodeSessions json
-    pure (Sessions (Seq.fromFoldable ss))
-    
+    pure (Sessions {sessions:Seq.fromFoldable ss})
+
     where
       decodeSessions :: Json -> Either String (Array Session)
-      decodeSessions json = decodeJson json >>= traverse decodeJson
+      decodeSessions json = decodeJson json
+                          >>= \obj -> obj .: "sessions"
+                          >>= traverse decodeJson
 
 instance encodeJsonSessions :: EncodeJson Sessions where
-  encodeJson (Sessions ss) = "sessions" := (encodeSessions ss)
+  encodeJson (Sessions {sessions:ss}) = "sessions" := (encodeSessions ss)
                            ~> jsonEmptyObject
     where
       encodeSessions :: Seq Session -> Json
       encodeSessions ss2 = fromArray $ encodeJson <$> (Seq.toUnfoldable ss2)
 
 unSessions :: Sessions -> Array Session
-unSessions (Sessions s) = A.fromFoldable s
+unSessions (Sessions {sessions:s}) = A.fromFoldable s
 
 useSessions :: R.Hooks (R2.Reductor Sessions Action)
 useSessions = R2.useReductor actAndSave (const loadSessions) unit
@@ -118,11 +121,11 @@ useSessions = R2.useReductor actAndSave (const loadSessions) unit
     actAndSave s a = act s a >>= saveSessions
 
 lookup :: SessionId -> Sessions -> Maybe Session
-lookup sid (Sessions ss) = Seq.head (Seq.filter f ss) where
+lookup sid (Sessions {sessions:ss}) = Seq.head (Seq.filter f ss) where
   f s = sid == sessionId s
 
 cons :: Session -> Sessions -> Sessions
-cons s (Sessions ss) = Sessions (Seq.cons s ss)
+cons s (Sessions {sessions:ss}) = Sessions {sessions:(Seq.cons s ss)}
 
 tryCons :: Session -> Sessions -> Either Unit Sessions
 tryCons s ss = try (lookup sid ss) where
@@ -131,7 +134,7 @@ tryCons s ss = try (lookup sid ss) where
   try _ = Left unit
 
 remove :: SessionId -> Sessions -> Sessions
-remove sid (Sessions ss) = Sessions (Seq.filter f ss) where
+remove sid (Sessions {sessions:ss}) = Sessions {sessions: Seq.filter f ss} where
   f s = sid /= sessionId s
 
 tryRemove :: SessionId -> Sessions -> Either Unit Sessions
@@ -154,41 +157,48 @@ act old@(Sessions ss) (Logout s) =
   case tryRemove (sessionId s) old of
     Right new -> pure $ new
     _ -> pure old <* log2 "Logged out of stale session:" (sessionId s)
-       
+
 -- Key we will store the data under
 localStorageKey :: String
 localStorageKey = "garg-sessions"
 
 empty :: Sessions
-empty = Sessions Seq.empty
+empty = Sessions {sessions:Seq.empty}
 
 -- True if there are no sessions stored
 null :: Sessions -> Boolean
-null (Sessions seq) = Seq.null seq
-
+null (Sessions {sessions:seq}) = Seq.null seq
 
 
 -- | Will attempt to load saved sessions from localstorage. should log
 -- | if decoding fails
 loadSessions :: Effect Sessions
-loadSessions = getls >>= getItem localStorageKey >>= handleMaybe where
-  -- a localstorage lookup can find nothing
-  handleMaybe (Just val) = handleEither (parse val >>= decode)
-  handleMaybe Nothing = pure empty
-  -- either parsing or decoding could fail, hence two errors
-  handleEither (Left err) = err *> pure empty
-  handleEither (Right ss) = pure ss
-  parse s = mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
-  decode j = mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
+loadSessions = do
+  -- getls >>= getItem localStorageKey >>= handleMaybe
+  tls <- getls
+  ls  <- getItem localStorageKey tls
+  _ <- logs (show <$> ls)
+  handleMaybe ls
+  where
+    -- a localstorage lookup can find nothing
+    handleMaybe (Just val) = handleEither (parse val >>= decode)
+    handleMaybe Nothing    = pure empty
+
+    -- either parsing or decoding could fail, hence two errors
+    handleEither (Left err) = err *> pure empty
+    handleEither (Right ss) = pure ss
+
+    parse  s = mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
+    decode j = mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
 
 mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
-mapLeft f (Left l) = Left (f l)
+mapLeft f (Left  l) = Left (f l)
 mapLeft _ (Right r) = Right r
 
 saveSessions :: Sessions -> Effect Sessions
 saveSessions sessions = effect *> pure sessions where
   remove = getls >>= removeItem localStorageKey
-  set v = getls >>= setItem localStorageKey v
+  set v  = getls >>= setItem    localStorageKey v
   effect
     | null sessions = remove
     | otherwise = set (stringify $ encodeJson sessions)
