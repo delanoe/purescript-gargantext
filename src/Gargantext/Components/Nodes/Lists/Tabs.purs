@@ -60,8 +60,11 @@ ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = R.staticComponent "ListsNgramsView" cpt
   where
     cpt {mode, session, corpusId, corpusData: {defaultListId}} _ =
-      NT.mainNgramsTable
-      {session, defaultListId, nodeId: corpusId, tabType, tabNgramType}
+      R.fragment
+        [ chart mode
+        , NT.mainNgramsTable
+            {session, defaultListId, nodeId: corpusId, tabType, tabNgramType}
+        ]
       where
         tabNgramType = modeTabType mode
         tabType = TabCorpus (TabNgramType tabNgramType)
