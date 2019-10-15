@@ -15,7 +15,6 @@ data NodeAction = Rename
                 | Download | Upload | Refresh
                 | Move     | Clone  | Delete
                 | Share
-                | Disconnect
 
 data ButtonType = Edit | Click | Pop
 
@@ -61,7 +60,6 @@ nodeActions NodeUser      = [ Add [ FolderPrivate
                                   , FolderTeam
                                   , FolderPublic
                                   ]
-                            , Disconnect
                             , Delete
                             ]
 

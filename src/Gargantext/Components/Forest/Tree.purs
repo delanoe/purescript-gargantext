@@ -399,17 +399,6 @@ buttonClick _ (Documentation x ) = H.div {className: "col-md-1"}
               []
             ]
 
-buttonClick d Disconnect = H.div {className: "col-md-4"}
-            [ H.a { style: iconAStyle
-                  , className: (glyphicon "log-out")
-                  , id: "log-out"
-                  , title: "Log Out"
-                  -- , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
-                }
-              []
-            ]
-
-
 buttonClick d Delete = H.div {className: "col-md-4"}
             [ H.a { style: iconAStyle
                   , className: (glyphicon "trash")
