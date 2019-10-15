@@ -173,12 +173,7 @@ null (Sessions {sessions:seq}) = Seq.null seq
 -- | Will attempt to load saved sessions from localstorage. should log
 -- | if decoding fails
 loadSessions :: Effect Sessions
-loadSessions = do
-  -- getls >>= getItem localStorageKey >>= handleMaybe
-  tls <- getls
-  ls  <- getItem localStorageKey tls
-  _ <- logs (show <$> ls)
-  handleMaybe ls
+loadSessions = getls >>= getItem localStorageKey >>= handleMaybe
   where
     -- a localstorage lookup can find nothing
     handleMaybe (Just val) = handleEither (parse val >>= decode)
