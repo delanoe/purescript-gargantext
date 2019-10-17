@@ -28,7 +28,6 @@ import Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-
 ------------------------------------------------------------------------
 type Props = ( root          :: ID
              , mCurrentRoute :: Maybe AppRoute
@@ -98,11 +97,13 @@ toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) 
         ]
 
 
-
-childNodes :: Session         -> Frontends
-            -> R.State Reload -> R.State Boolean
-            -> Maybe AppRoute -> Array FTree
-            -> Array R.Element
+childNodes :: Session
+           -> Frontends
+           -> R.State Reload
+           -> R.State Boolean
+           -> Maybe AppRoute
+           -> Array FTree
+           -> Array R.Element
 childNodes _ _ _ _ _ [] = []
 childNodes _ _ _ (false /\ _) _ _ = []
 childNodes session frontends reload (true /\ _) mCurrentRoute ary =
@@ -116,8 +117,11 @@ childNodes session frontends reload (true /\ _) mCurrentRoute ary =
         pure $ toHtml reload treeState session frontends mCurrentRoute
 
 
-performAction :: Session -> R.State Int -> R.State Tree -> Action -> Aff Unit
-
+performAction :: Session
+              -> R.State Int
+              -> R.State Tree
+              -> Action
+              -> Aff Unit
 performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
   void $ deleteNode session id
   liftEffect $ setReload (_ + 1)
@@ -133,5 +137,4 @@ performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTre
 performAction session _ ({tree: NTree (LNode {id}) _} /\ _) (UploadFile fileType contents) = do
   hashes <- uploadFile session id fileType contents
   liftEffect $ log2 "uploaded:" hashes
-
 

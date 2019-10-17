@@ -1,16 +1,16 @@
 module Gargantext.Components.Forest.Action where
 
-import Prelude hiding (div)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff, launchAff, runAff)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
 import Gargantext.Routes (AppRoute, SessionRoute(..))
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Generic.Rep.Eq (genericEq)
+import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
+import Prelude hiding (div)
 
 -- file upload types
 data Action =   Submit       String
@@ -18,6 +18,8 @@ data Action =   Submit       String
               | CreateSubmit String NodeType
               | UploadFile   FileType UploadFileContents
 
+-----------------------------------------------------
+-- UploadFile Action
 data FileType = CSV | PresseRIS
 
 derive instance genericFileType :: Generic FileType _
@@ -44,9 +46,12 @@ type FileHash = String
 type Name = String
 type ID   = Int
 type Reload = Int
-data NodePopup = CreatePopup | NodePopup
 
 newtype UploadFileContents = UploadFileContents String
+
+
+
+
 
 createNode :: Session -> ID -> CreateValue -> Aff ID
 createNode session parentId = post session $ NodeAPI Node (Just parentId) ""
@@ -79,7 +84,7 @@ newtype CreateValue = CreateValue
 
 instance encodeJsonCreateValue :: EncodeJson CreateValue where
   encodeJson (CreateValue {name, nodeType})
-     = "pn_name" := name
+     = "pn_name"     := name
     ~> "pn_typename" := nodeType
     ~> jsonEmptyObject
 
@@ -116,5 +121,4 @@ instance decodeJsonFTree :: DecodeJson (NTree LNode) where
     node' <- decodeJson node
     nodes' <- decodeJson nodes
     pure $ NTree node' nodes'
-
 

@@ -19,75 +19,149 @@ filterWithRights (show action if user can only)
 
 -}
 
-nodeActions :: NodeType -> Array NodeAction
-nodeActions NodeUser      = [ Add [ FolderPrivate
-                                  , FolderShared
-                                  , FolderPublic
-                                  ]
-                            , Delete
-                            ]
+data SettingsBox =
+  SettingsBox { show    :: Boolean
+              , edit    :: Boolean
+              , add     :: Array NodeType
+              , buttons :: Array NodeAction
+              }
 
-nodeActions FolderPrivate = [ Add [Folder, Corpus]]
-nodeActions FolderShared  = [ Add [Folder, Corpus]]
-nodeActions FolderPublic  = [ Add [Folder, Corpus]]
+settingsBox :: NodeType -> SettingsBox
+settingsBox NodeUser = SettingsBox { show : true
+                                   , edit : false
+                                   , add  : [ FolderPrivate
+                                            , FolderShared
+                                            , FolderPublic
+                                            ]
+                                   , buttons : [Documentation NodeUser
+                                               , Delete
+                                               ]
+                                   }
 
-nodeActions Folder        = [ Add [Corpus], Rename, Delete]
+settingsBox FolderPrivate = SettingsBox { show: true
+                                        , edit : false
+                                        , add  : [ Folder
+                                                 , Corpus
+                                                 ]
+                                        , buttons : [Documentation FolderPrivate, Delete]
+                                        }
 
-nodeActions Corpus        = [ Rename
-                            , Search, Upload, Download
-                            , Add [NodeList, Dashboard, Graph, Phylo]
-                            , Share, Move , Clone
-                            , Delete
-                            ]
+settingsBox FolderShared = SettingsBox { show: true
+                                        , edit : false
+                                        , add  : [ Folder
+                                                 , Corpus
+                                                 ]
+                                        , buttons : [Documentation FolderShared, Delete]
+                                        }
 
-nodeActions Graph = [Add [Graph], Delete]
-nodeActions Texts = [Download, Upload, Delete]
+settingsBox FolderPublic = SettingsBox { show: true
+                                        , edit : false
+                                        , add  : [ Folder
+                                                 , Corpus
+                                                 ]
+                                        , buttons : [Documentation FolderPublic, Delete]
+                                        }
 
-nodeActions _ = []
+settingsBox Folder = SettingsBox { show : true
+                                 , edit : true
+                                 , add  : [ Folder
+                                          , Corpus
+                                          ]
+                                 , buttons : [Documentation Folder, Delete]
+                                 }
+
+settingsBox Corpus = SettingsBox { show : true
+                                 , edit : true
+                                 , add  : [ NodeList
+                                          , Dashboard
+                                          , Graph
+                                          , Phylo
+                                          ]
+                                 , buttons : [ Documentation Corpus
+                                             , Search
+                                             , Upload
+                                             , Download
+                                             , Share
+                                             , Move
+                                             , Clone
+                                             , Delete
+                                             ]
+                                 }
+
+settingsBox Texts = SettingsBox { show : true
+                                , edit : false
+                                , add : []
+                                , buttons : [ Documentation Texts
+                                            , Upload
+                                            , Download
+                                            ]
+                                }
+
+settingsBox Graph = SettingsBox { show : true
+                                , edit : false
+                                , add : [Graph]
+                                , buttons : [ Documentation Graph
+                                            , Upload
+                                            , Download
+                                            ]
+                                }
+
+settingsBox NodeList = SettingsBox { show : true
+                                   , edit : false
+                                   , add : [NodeList]
+                                   , buttons : [ Documentation NodeList
+                                               , Upload
+                                               , Download
+                                               ]
+                                }
+
+settingsBox Dashboard = SettingsBox { show : true
+                                   , edit : false
+                                   , add : []
+                                   , buttons : [ Documentation Dashboard
+                                               ]
+                                }
+
+
+
+
+settingsBox _ = SettingsBox { show : false
+                            , edit : false
+                            , add : []
+                            , buttons : []
+                          }
 
 
 ------------------------------------------------------------------------
-
-data NodeAction = Rename
-                | Documentation NodeType
-                | Add (Array NodeType)
+data NodeAction = Documentation NodeType
                 | Search
                 | Download | Upload | Refresh
                 | Move     | Clone  | Delete
                 | Share
 
-data ButtonType = Edit | Click | Pop
-
-
+data ButtonType = Click | Pop
 
 
 instance eqButtonType :: Eq ButtonType where
-  eq Edit Edit   = true
   eq Click Click = true
   eq Pop   Pop   = true
   eq _     _     = false
 
 
 buttonType :: NodeAction -> ButtonType
-buttonType Rename  = Edit
-buttonType (Add _) = Pop
 buttonType Search  = Pop
 buttonType _       = Click
 
 
-data Buttons = Buttons { edit :: Array NodeAction
-                       , click :: Array NodeAction
+data Buttons = Buttons { click :: Array NodeAction
                        , pop   :: Array NodeAction
                        }
 
-buttons nt = Buttons {edit, click, pop}
+{-
+buttons nt = Buttons {click, pop}
   where
-    edit  = filter' Edit
-    click = filter' Click
-    pop   = filter' Pop
-    filter' b = filter (\a -> buttonType a == b)
-                       (nodeActions nt)
-
-
+    click = init
+    pop   = rest
+    {init, rest} = span buttonType (nodeActions nt)
+    -}
 ---------------------------------------------------------
-

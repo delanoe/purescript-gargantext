@@ -1,7 +1,5 @@
 module Gargantext.Components.Forest.Action.Add where
 
-import Prelude hiding (div)
-
 import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array (filter, null)
@@ -16,7 +14,18 @@ import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
+import Gargantext.Components.Forest.Action
+import Gargantext.Components.Forest.NodeActions
+import Gargantext.Ends (Frontends, url)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Routes (AppRoute, SessionRoute(..))
+import Gargantext.Routes as Routes
+import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
+import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
+import Gargantext.Utils (id, glyphicon)
+import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
+import Prelude hiding (div)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -26,28 +35,21 @@ import Web.File.File (toBlob)
 import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
-import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes as Routes
-import Gargantext.Routes (AppRoute, SessionRoute(..))
-import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
-import Gargantext.Utils (id, glyphicon)
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Components.Forest.NodeActions
-import Gargantext.Components.Forest.Action
-
 -- START Create Node
+
+data NodePopup = CreatePopup | NodePopup
+
 type CreateNodeProps =
   ( id       :: ID
   , name     :: Name
-  , nodeType :: NodeType)
+  , nodeType :: NodeType
+  )
 
 createNodeView :: (Action -> Aff Unit)
                -> Record CreateNodeProps
                -> R.State (Maybe NodePopup)
                -> R.Element
-createNodeView d p (Just CreatePopup /\ setPopupOpen) = R.createElement el p []
+createNodeView d p@{nodeType} (Just CreatePopup /\ setPopupOpen) = R.createElement el p []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt {id, name} _ = do
@@ -56,13 +58,15 @@ createNodeView d p (Just CreatePopup /\ setPopupOpen) = R.createElement el p []
       pure $ H.div tooltipProps $
         [ H.div {className: "panel panel-default"}
           [ panelHeading
-          , panelBody nodeName nodeType
+          , panelBody   nodeName nodeType
           , panelFooter nodeName nodeType
           ]
         ]
       where
+        SettingsBox {add:nodeTypes} = settingsBox nodeType
+
         tooltipProps = { className: ""
-                       , id: "add-node-tooltip"
+                       , id: "create-node-tooltip"
                        , title: "Add new node"
                        , data: {toggle: "tooltip", placement: "right"}
                        }
@@ -86,7 +90,7 @@ createNodeView d p (Just CreatePopup /\ setPopupOpen) = R.createElement el p []
           [ H.div {className: "row"}
             [ H.div {className: "col-md-12"}
               [ H.form {className: "form-horizontal"}
-                [ H.div {className: "form-group"}
+                [ {- H.div {className: "form-group"}
                   [ H.input { type: "text"
                             , placeholder: "Node name"
                             , defaultValue: name
@@ -94,11 +98,11 @@ createNodeView d p (Just CreatePopup /\ setPopupOpen) = R.createElement el p []
                             , onInput: mkEffectFn1 $ \e -> setNodeName $ const $ e .. "target" .. "value"
                             }
                   ]
-                , H.div {className: "form-group"}
+                  , -} H.div {className: "form-group"}
                   [ R2.select { className: "form-control"
                               , onChange: mkEffectFn1 $ \e -> setNodeType $ const $ readNodeType $ e .. "target" .. "value"
                               }
-                    (map renderOption [FolderPublic, FolderShared, FolderPrivate])
+                    (map renderOption nodeTypes)
                   ]
                 ]
               ]

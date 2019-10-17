@@ -1,16 +1,15 @@
 module Gargantext.Components.Forest.Action.Rename where
 
-import Prelude hiding (div)
 import Data.Tuple.Nested ((/\))
-import Reactix.DOM.HTML as H
-import Reactix as R
 import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Gargantext.Components.Forest.Action
+import Prelude hiding (div)
+import Reactix as R
+import Reactix.DOM.HTML as H
 
--- START Rename Box
-
+-- | START Rename Box
 type RenameBoxProps =
   ( id :: ID
   , name :: Name)

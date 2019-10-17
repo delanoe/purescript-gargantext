@@ -53,19 +53,25 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
       droppedFile <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver  <- R.useState' false
 
-      pure $ H.span (dropProps droppedFile isDragOver)
+      pure $ H.span (dropProps droppedFile isDragOver) $
         [ folderIcon folderOpen
         , H.a { href: (url frontends (NodePath (sessionId session) nodeType (Just id)))
               , style: {marginLeft: "22px"}
               }
-          [ nodeText {isSelected: (mCorpusId mCurrentRoute) == (Just id), name:name'} ]
-        , popOverIcon popupOpen
-        , nodePopupView  d {id, name, nodeType} popupOpen
-        , createNodeView d {id, name, nodeType} popupOpen
-        , fileTypeView   d {id      , nodeType} droppedFile isDragOver
+          [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
+                     , name: name'} ]
+        , if showBox then popOverIcon popupOpen else H.div {} []
+        , if showBox then nodePopupView  d {id, name:name', nodeType} popupOpen else H.div {} []
+        , addButton popupOpen
+        , fileTypeView   d {id, nodeType} droppedFile isDragOver
         ]
           where
             name' = if nodeType == NodeUser then show session else name
+            SettingsBox {show:showBox, add} = settingsBox nodeType
+            addButton p = if null add
+                           then H.div {} []
+                           else createNodeView d {id, name, nodeType} p
+
 
     folderIcon folderOpen'@(open /\ _) =
       H.a {onClick: R2.effToggler folderOpen'}
@@ -118,7 +124,8 @@ fldr open = if open
 -- START node text
 type NodeTextProps =
   ( isSelected :: Boolean
-  , name :: Name )
+  , name :: Name 
+  )
 
 nodeText :: Record NodeTextProps -> R.Element
 nodeText p = R.createElement el p []
@@ -159,7 +166,8 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
         [ H.div {id: "arrow"} []
         , H.div { className: "panel panel-default"
                 , style: { border: "1px solid rgba(0,0,0,0.2)"
-                         , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"}
+                         , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
+                         }
                 }
           [ panelHeading renameBoxOpen
           , panelBody
@@ -172,18 +180,16 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
                        , data: {toggle: "tooltip", placement: "right"}
                        }
         rowClass true  = "col-md-10"
-        rowClass false = "col-md-8"
+        rowClass false = "col-md-10"
 
-        Buttons {edit:edits,click:clicks,pop:pops} = buttons nodeType
+        SettingsBox {edit, add, buttons} = settingsBox nodeType
 
         panelHeading renameBoxOpen@(open /\ _) =
           H.div {className: "panel-heading"}
           [ H.div {className: "row" }
-            [ H.div {className: "col-md-1"} []
-            , buttonClick d (Documentation nodeType)
-            , H.div {className: rowClass open} [ renameBox d {id, name} renameBoxOpen ]
-            , if not (null edits) then editIcon renameBoxOpen else H.div {} []
-            , H.div {className: "col-md-2"}
+            [ H.div {className: rowClass open} [ renameBox d {id, name} renameBoxOpen ]
+            , if edit then editIcon renameBoxOpen else H.div {} []
+            , H.div {className: "col-md-1"}
               [ H.a {className: "btn glyphitem glyphicon glyphicon-remove-circle"
                     , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const Nothing
                     , title: "Close"} []
@@ -192,7 +198,7 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
           ]
           where
             editIcon (false /\ setRenameBoxOpen) =
-              H.div {className: "col-md-2"}
+              H.div {className: "col-md-1"}
               [ H.a {style: {color: "black"}
                     , className: "btn glyphitem glyphicon glyphicon-pencil"
                     , id: "rename1"
@@ -209,9 +215,10 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
                          , justifyContent : "center"
                          , backgroundColor: "white"
                          , border: "none"}}
-          ((map (\a -> buttonPop a setPopupOpen) pops)
+          $ 
+          (map (buttonClick d) buttons)
           <>
-          (map (buttonClick d) clicks))
+          ( [if null add then H.div {} [] else buttonPop setPopupOpen] )
 nodePopupView _ p _ = R.createElement el p []
   where
     el = R.hooksComponent "CreateNodeView" cpt
@@ -223,7 +230,7 @@ buttonClick _ (Documentation x ) = H.div {className: "col-md-1"}
             [ H.a { style: iconAStyle
                   , className: (glyphicon "question-sign")
                   , id: "doc"
-                  , title: "Documentation"
+                  , title: "Documentation of " <> show x
                 }
                   -- , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
               []
@@ -257,7 +264,7 @@ buttonClick _ Download = H.div {className: "col-md-4"}
 buttonClick _ _ = H.div {} []
 
 
-buttonPop (Add _) f =  H.div {className: "col-md-4"}
+buttonPop f =  H.div {className: "col-md-4"}
               [ H.a { style: iconAStyle
                     , className: (glyphicon "plus")
                     , id: "create"
@@ -267,10 +274,5 @@ buttonPop (Add _) f =  H.div {className: "col-md-4"}
                 []
               ]
 
-buttonPop _ _ = H.div {} []
-
 -- END Popup View
-
-
-
 
