@@ -24,7 +24,7 @@ import Gargantext.Components.Graph as Graph
 import Gargantext.Components.Forest (forest)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
-import Gargantext.Sessions (Session, Sessions(..), get)
+import Gargantext.Sessions (Session, Sessions, get)
 import Gargantext.Types (NodeType(Graph))
 
 type GraphId = Int

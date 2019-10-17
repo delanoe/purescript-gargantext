@@ -1,9 +1,8 @@
 module Gargantext.Components.Forest where
 
-import Prelude (const, otherwise, ($), (<>), (<$>))
+import Prelude (const, ($), (<$>))
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Data.Sequence as Seq
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Ends (Frontends)

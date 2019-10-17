@@ -57,14 +57,14 @@ filterWithRights (show action if user can only)
 
 nodeActions :: NodeType -> Array NodeAction
 nodeActions NodeUser      = [ Add [ FolderPrivate
-                                  , FolderTeam
+                                  , FolderShared
                                   , FolderPublic
                                   ]
                             , Delete
                             ]
 
 nodeActions FolderPrivate = [ Add [Folder, Corpus]]
-nodeActions FolderTeam    = [ Add [Folder, Corpus]]
+nodeActions FolderShared  = [ Add [Folder, Corpus]]
 nodeActions FolderPublic  = [ Add [Folder, Corpus]]
 
 nodeActions Folder        = [ Add [Corpus], Rename, Delete]

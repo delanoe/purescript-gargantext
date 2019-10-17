@@ -123,7 +123,7 @@ instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
      ~> jsonEmptyObject
 
 data NodeType = NodeUser
-              | Folder | FolderPrivate | FolderTeam | FolderPublic
+              | Folder | FolderPrivate | FolderShared | FolderPublic
               | Annuaire
               | NodeContact
               | Corpus
@@ -146,7 +146,7 @@ instance showNodeType :: Show NodeType where
 
   show Folder        = "NodeFolder"
   show FolderPrivate = "NodeFolderPrivate"
-  show FolderTeam    = "NodeFolderTeam"
+  show FolderShared    = "NodeFolderShared"
   show FolderPublic  = "NodeFolderPublic"
 
   show Annuaire      = "Annuaire"
@@ -169,7 +169,7 @@ readNodeType "NodeUser"      = NodeUser
 
 readNodeType "NodeFolder"    = Folder
 readNodeType "NodeFolderPrivate" = FolderPrivate
-readNodeType "NodeFolderTeam"    = FolderTeam
+readNodeType "NodeFolderShared"  = FolderShared
 readNodeType "NodeFolderPublic"  = FolderPublic
 
 readNodeType "NodeAnnuaire"  = Annuaire
@@ -206,7 +206,7 @@ instance encodeJsonNodeType :: EncodeJson NodeType where
 nodeTypePath :: NodeType -> String
 nodeTypePath Folder    = "folder"
 nodeTypePath FolderPrivate = "folderPrivate"
-nodeTypePath FolderTeam    = "folderTeam"
+nodeTypePath FolderShared  = "folderShared"
 nodeTypePath FolderPublic  = "folderPublic"
 nodeTypePath Annuaire  = "annuaire"
 nodeTypePath Corpus    = "corpus"
