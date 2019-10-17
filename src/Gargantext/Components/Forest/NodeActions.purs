@@ -8,42 +8,6 @@ import Data.Array (filter)
 import Reactix.DOM.HTML as H
 import Effect.Aff (Aff, launchAff, runAff)
 
-data NodeAction = Rename
-                | Documentation NodeType
-                | Add (Array NodeType)
-                | Search
-                | Download | Upload | Refresh
-                | Move     | Clone  | Delete
-                | Share
-
-data ButtonType = Edit | Click | Pop
-
-instance eqButtonType :: Eq ButtonType where
-  eq Edit Edit   = true
-  eq Click Click = true
-  eq Pop   Pop   = true
-  eq _     _     = false
-
-
-buttonType :: NodeAction -> ButtonType
-buttonType Rename  = Edit
-buttonType (Add _) = Pop
-buttonType Search  = Pop
-buttonType _       = Click
-
-
-data Buttons = Buttons { edit :: Array NodeAction
-                       , click :: Array NodeAction
-                       , pop   :: Array NodeAction
-                       }
-
-buttons nt = Buttons {edit, click, pop}
-  where
-    edit  = filter' Edit
-    click = filter' Click
-    pop   = filter' Pop
-    filter' b = filter (\a -> buttonType a == b)
-                       (nodeActions nt)
 
 {-
 -- | TODO use Set (needs Ord instance for NodeType)
@@ -81,6 +45,48 @@ nodeActions Texts = [Download, Upload, Delete]
 
 nodeActions _ = []
 
+
+------------------------------------------------------------------------
+
+data NodeAction = Rename
+                | Documentation NodeType
+                | Add (Array NodeType)
+                | Search
+                | Download | Upload | Refresh
+                | Move     | Clone  | Delete
+                | Share
+
+data ButtonType = Edit | Click | Pop
+
+
+
+
+instance eqButtonType :: Eq ButtonType where
+  eq Edit Edit   = true
+  eq Click Click = true
+  eq Pop   Pop   = true
+  eq _     _     = false
+
+
+buttonType :: NodeAction -> ButtonType
+buttonType Rename  = Edit
+buttonType (Add _) = Pop
+buttonType Search  = Pop
+buttonType _       = Click
+
+
+data Buttons = Buttons { edit :: Array NodeAction
+                       , click :: Array NodeAction
+                       , pop   :: Array NodeAction
+                       }
+
+buttons nt = Buttons {edit, click, pop}
+  where
+    edit  = filter' Edit
+    click = filter' Click
+    pop   = filter' Pop
+    filter' b = filter (\a -> buttonType a == b)
+                       (nodeActions nt)
 
 
 ---------------------------------------------------------

@@ -28,28 +28,14 @@ import Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-type Open = Boolean
-type URL  = String
 
+------------------------------------------------------------------------
 type Props = ( root          :: ID
              , mCurrentRoute :: Maybe AppRoute
              , session       :: Session
              , frontends     :: Frontends
              )
-
-type TreeViewProps = ( tree          :: FTree
-                     , mCurrentRoute :: Maybe AppRoute
-                     , frontends     :: Frontends
-                     , session       :: Session 
-                     )
-
--- Keep only the nodes matching the predicate.
--- The root of the tree is always kept.
-filterNTree :: forall a. (a -> Boolean) -> NTree a -> NTree a
-filterNTree p (NTree x ary) =
-  NTree x $ map (filterNTree p) $ filter (\(NTree a _) -> p a) ary
-
-------------------------------------------------------------------------
+-----------------
 treeView :: Record Props -> R.Element
 treeView props = R.createElement treeViewCpt props []
 
@@ -69,6 +55,14 @@ treeLoadView reload p = R.createElement el p []
       useLoader root (loadNode session) $ \loaded ->
         loadedTreeView reload {tree: loaded, mCurrentRoute, session, frontends}
 
+----------------
+
+type TreeViewProps = ( tree          :: FTree
+                     , mCurrentRoute :: Maybe AppRoute
+                     , frontends     :: Frontends
+                     , session       :: Session 
+                     )
+
 loadedTreeView :: R.State Reload -> Record TreeViewProps -> R.Element
 loadedTreeView reload p = R.createElement el p []
   where
@@ -79,13 +73,7 @@ loadedTreeView reload p = R.createElement el p []
       pure $ H.div {className: "tree"}
         [ toHtml reload treeState session frontends mCurrentRoute ]
 
-
-
-
-
-
-
--- | To HTML
+------------------------------------------------------------------------
 toHtml :: R.State Reload
        -> R.State Tree
        -> Session
@@ -147,15 +135,3 @@ performAction session _ ({tree: NTree (LNode {id}) _} /\ _) (UploadFile fileType
   liftEffect $ log2 "uploaded:" hashes
 
 
--- TO be deleted
-
-{-
-mapFTree :: (FTree -> FTree) -> Tree -> Tree
-mapFTree f s@{tree} = s {tree = f tree}
--}
-
-
-{-
-fnTransform :: LNode -> FTree
-fnTransform n = NTree n []
--}
