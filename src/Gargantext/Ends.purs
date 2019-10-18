@@ -4,7 +4,7 @@ module Gargantext.Ends
   where
 
 import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==))
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject, (.:))
+import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, (:=), (~>), jsonEmptyObject, (.:))
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)

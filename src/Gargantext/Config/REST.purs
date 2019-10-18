@@ -1,7 +1,6 @@
 module Gargantext.Config.REST where
 
-import Gargantext.Prelude
-import Gargantext.Ends
+import Prelude (Unit, bind, logs, pure, ($), (<$>), (<<<), (<>))
 
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..), string)
