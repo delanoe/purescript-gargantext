@@ -31,9 +31,9 @@ instance showFileType :: Show FileType where
     show = genericShow
 
 readFileType :: String -> Maybe FileType
-readFileType "CSV" = Just CSV
+readFileType "CSV"       = Just CSV
 readFileType "PresseRIS" = Just PresseRIS
-readFileType _ = Nothing
+readFileType _           = Nothing
 
 
 data DroppedFile = DroppedFile {
@@ -48,8 +48,6 @@ type ID   = Int
 type Reload = Int
 
 newtype UploadFileContents = UploadFileContents String
-
-
 
 
 

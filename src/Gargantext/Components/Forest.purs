@@ -34,7 +34,9 @@ forestCpt = R.staticComponent "G.C.Forest.forest" cpt where
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin =
   H.button {on: {click}}
-  [ H.i { className: glyphicon "plus"} [] ]
+  [ H.div { "type": "button"
+          , className: "glyphicon glyphicon-plus"
+          } [] ]
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
   where

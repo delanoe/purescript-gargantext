@@ -2,17 +2,17 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 
 import DOM.Simple.Console (log2)
 import Data.Array (filter, null)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
-import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Components.Forest.Tree.Node.Action.Rename
-import Gargantext.Components.Forest.Tree.Node.Action.Add
-import Gargantext.Components.Forest.Tree.Node.Action.Upload
 import Gargantext.Components.Forest.Tree.Node
+import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Components.Forest.Tree.Node.Action.Add
+import Gargantext.Components.Forest.Tree.Node.Action.Rename
+import Gargantext.Components.Forest.Tree.Node.Action.Upload
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (AppRoute, SessionRoute(..))
 import Gargantext.Routes as Routes
@@ -62,9 +62,13 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
                      , name: name'} ]
         , if showBox then popOverIcon popupOpen else H.div {} []
         , if showBox 
-             then nodePopupView  d {id, name:name', nodeType} popupOpen
+             then nodePopupView  d { id
+                                   , name:name'
+                                   , nodeType
+                                   , action: Nothing
+                                   } popupOpen
              else H.div {} []
-        , addButton popupOpen
+        --, addButton popupOpen
         , fileTypeView   d {id, nodeType} droppedFile isDragOver
         ]
           where
@@ -107,7 +111,12 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
           let blob = toBlob $ ff
           void $ runAff (\_ -> pure unit) do
             contents <- readAsText blob
-            liftEffect $ setDroppedFile $ const $ Just $ DroppedFile {contents: (UploadFileContents contents), fileType: Just CSV}
+            liftEffect $ setDroppedFile
+                       $ const
+                       $ Just
+                       $ DroppedFile { contents: (UploadFileContents contents)
+                                     , fileType: Just CSV
+                                     }
     onDragOverHandler (_ /\ setIsDragOver) e = do
       -- prevent redirection when file is dropped
       -- https://stackoverflow.com/a/6756680/941471
@@ -145,15 +154,17 @@ mCorpusId (Just (Routes.CorpusDocument _ id _ _)) = Just id
 mCorpusId _ = Nothing
 
 
-
 -- | START Popup View
 type NodePopupProps =
   ( id       :: ID
   , name     :: Name
   , nodeType :: NodeType
+  , action   :: Maybe NodeAction
   )
 
-iconAStyle = {color:"black", paddingTop: "6px", paddingBottom: "6px"}
+iconAStyle = { color         : "black"
+             , paddingTop    : "6px"
+             , paddingBottom : "6px"}
 
 nodePopupView :: (Action -> Aff Unit)
               -> Record NodePopupProps
@@ -162,27 +173,33 @@ nodePopupView :: (Action -> Aff Unit)
 nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
   where
     el = R.hooksComponent "NodePopupView" cpt
-    cpt {id, name, nodeType} _ = do
+    cpt {id, name, nodeType, action} _ = do
       renameBoxOpen <- R.useState' false
+      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {id, name, nodeType, action}
       pure $ H.div tooltipProps $
         [ H.div {id: "arrow"} []
         , H.div { className: "panel panel-default"
-                , style: { border: "1px solid rgba(0,0,0,0.2)"
+                , style: { border    : "1px solid rgba(0,0,0,0.2)"
                          , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
                          }
                 }
           [ panelHeading renameBoxOpen
-          , panelBody
+          , panelBody nodePopupState d
+          , if isJust nodePopup.action 
+              then H.div { className: glyphicon "remove-circle"
+                         , onClick : setNodePopup $ const {id,name,nodeType,action :Nothing}
+                       } []
+              else H.div {} []
+          , panelAction nodeType nodePopup.action d
           ]
         ]
       where
         tooltipProps = { className: ""
                        , id: "node-popup-tooltip"
                        , title: "Node settings"
-                       , data: {toggle: "tooltip", placement: "right"}
+                       , data: { toggle: "tooltip"
+                               , placement: "right"}
                        }
-        rowClass true  = "col-md-10"
-        rowClass false = "col-md-10"
 
         SettingsBox {edit, add, buttons} = settingsBox nodeType
 
@@ -190,10 +207,10 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
           H.div {className: "panel-heading"}
           [ -- H.h1 {className : "col-md-12"} [H.text "Settings Box"]
            H.div {className: "row" }
-            [ H.div {className: rowClass open} [ renameBox d {id, name} renameBoxOpen ]
+            [ H.div {className: "col-md-10"} [ renameBox d {id, name} renameBoxOpen ]
             , if edit then editIcon renameBoxOpen else H.div {} []
             , H.div {className: "col-md-1"}
-              [ H.a { type : "button"
+              [ H.a { "type" : "button"
                     , className: glyphicon "remove-circle"
                     , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const Nothing
                     , title: "Close"} []
@@ -213,43 +230,63 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
               ]
             editIcon (true /\ _) = H.div {} []
 
-        panelBody =
+        panelBody nodePopupState d =
           H.div {className: "panel-body"
                 , style: { display:"flex"
                          , justifyContent : "center"
                          , backgroundColor: "white"
-                         , border: "none"}}
+                         , border: "none"
+                         }
+                }
           $ 
-          (map (buttonClick d) buttons)
+          [H.div {className: "col-md-1"} []]
           <>
-          ( [if null add then H.div {} [] else buttonPop setPopupOpen] )
+          (map (buttonClick nodePopupState d) buttons)
 nodePopupView _ p _ = R.createElement el p []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt _ _ = pure $ H.div {} []
 
 
+
 -- buttonAction :: NodeAction -> R.Element
-buttonClick _ (Documentation x ) = H.div {className: "col-md-1"}
+buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ todo@(Documentation x) = H.div {className: "col-md-1"}
             [ H.a { style: iconAStyle
-                  , className: (glyphicon "question-sign")
+                  , className: "btn glyphitem glyphicon glyphicon-question-sign" <> if action == (Just todo) then " active" else ""
                   , id: "doc"
                   , title: "Documentation of " <> show x
+                  , onClick : mkEffectFn1 $ \_ -> setNodePopup $ const $ {id,name,nodeType,action:Just todo}
                 }
-                  -- , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
               []
             ]
 
-buttonClick d Delete = H.div {className: "col-md-4"}
+buttonClick ({id,name,nodeType,action} /\ setNodePopup) d Delete = H.div {className: "col-md-1"}
             [ H.a { style: iconAStyle
-                  , className: (glyphicon "trash")
-                  , id: "rename2"
+                  , className: "btn glyphitem glyphicon glyphicon-trash" <> if action == (Just Delete) then " active" else ""
+                  --, className: (glyphicon "trash")
+                  , id: "delete"
                   , title: "Delete"
-                  , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just Delete}
+                  --, onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
+                }
               []
             ]
 
-buttonClick _ Upload = H.div {className: "col-md-4"}
+buttonClick ({id,name,nodeType,action} /\ setNodePopup) d (Add xs) = H.div {className: "col-md-1"}
+            [ H.a { style: iconAStyle
+                  , className: "btn glyphitem glyphicon glyphicon-plus" <> if action == (Just $ Add xs) then " active" else ""
+                  --, className: (glyphicon "trash")
+                  , id: "add"
+                  , title: "add"
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just $ Add xs}
+                  --, onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
+                }
+              []
+            ]
+
+
+{-
+buttonClick _ _ Upload = H.div {className: "col-md-1"}
             [ H.a { style: iconAStyle
                   , className: (glyphicon "upload")
                   , id: "upload"
@@ -257,15 +294,15 @@ buttonClick _ Upload = H.div {className: "col-md-4"}
               []
             ]
 
-buttonClick _ Download = H.div {className: "col-md-4"}
+buttonClick _ _ Download = H.div {className: "col-md-1"}
             [ H.a {style: iconAStyle
                   , className: (glyphicon "download")
                   , id: "download"
                   , title: "Download [WIP]"}
               []
             ]
-
-buttonClick _ _ = H.div {} []
+-}
+buttonClick _ _ _ = H.div {} []
 
 
 buttonPop f =  H.div {className: "col-md-4"}
@@ -280,3 +317,8 @@ buttonPop f =  H.div {className: "col-md-4"}
 
 -- END Popup View
 
+panelAction _ (Just (Documentation x)) _ = R.fragment [ H.div {} [H.text "more information"]]
+panelAction NodeUser (Just Delete)         _ = R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant!"]]
+panelAction _ (Just Delete)         _ = R.fragment [ H.div {} [H.text "Are your sure you want to delete ?"]]
+panelAction _ (Just (Add xs))       _ = R.fragment [ H.div {} [H.text "Adding configuration"]]
+panelAction _ _ _ = H.div {} []

@@ -151,6 +151,3 @@ showConfig FolderPublic  = H.div {} [H.text "This folder will be public"]
 showConfig nt = H.div {} [H.h1  {} [H.text $ "Config of " <> show nt ]]
 
 
-
-
-

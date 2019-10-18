@@ -34,6 +34,10 @@ settingsBox NodeUser = SettingsBox { show : true
                                             , FolderPublic
                                             ]
                                    , buttons : [Documentation NodeUser
+                                               , Add [ FolderPrivate
+                                                     , FolderShared
+                                                     , FolderPublic
+                                                     ]
                                                , Delete
                                                ]
                                    }
@@ -101,7 +105,6 @@ settingsBox Graph = SettingsBox { show : true
                                 , edit : false
                                 , add : [Graph]
                                 , buttons : [ Documentation Graph
-                                            , Upload
                                             , Download
                                             ]
                                 }
@@ -138,6 +141,20 @@ data NodeAction = Documentation NodeType
                 | Download | Upload | Refresh
                 | Move     | Clone  | Delete
                 | Share
+                | Add (Array NodeType)
+
+instance eqNodeAction :: Eq NodeAction where
+  eq (Documentation x) (Documentation y) = true && (x == y)
+  eq Search Search = true
+  eq Download Download = true
+  eq Upload Upload     = true
+  eq Refresh Refresh   = true
+  eq Move Move         = true
+  eq Clone Clone       = true
+  eq Delete Delete     = true
+  eq Share Share       = true
+  eq (Add x) (Add y)   = true && (x == y)
+  eq _ _               = false
 
 data ButtonType = Click | Pop
 
