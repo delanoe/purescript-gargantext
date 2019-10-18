@@ -34,7 +34,8 @@ plus :: R2.Setter Boolean -> R.Element
 plus showLogin =
   H.button {on: {click}}
   [ H.i { className: "glyphicon glyphicon-plus"} [] ]
-  -- TODO [ H.i { className: "material-icons md-36"} [] ]
+  -- TODO same as the one in the Login Modal (same CSS)
+  -- [ H.i { className: "material-icons md-36"} [] ]
   where
     click _ = do
       showLogin (const true)

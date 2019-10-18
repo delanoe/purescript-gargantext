@@ -58,7 +58,7 @@ createNodeView d p@{nodeType} (Just CreatePopup /\ setPopupOpen) = R.createEleme
       pure $ H.div tooltipProps $
         [ H.div {className: "panel panel-default"}
           [ panelHeading
-          , panelBody   nodeName nodeType
+          , panelBody   readNodeType nodeName nodeType
           , panelFooter nodeName nodeType
           ]
         ]
@@ -84,11 +84,14 @@ createNodeView d p@{nodeType} (Just CreatePopup /\ setPopupOpen) = R.createEleme
             ]
           ]
 
-        panelBody :: R.State String -> R.State NodeType -> R.Element
-        panelBody (_ /\ setNodeName) (nt /\ setNodeType) =
+        panelBody :: (String -> NodeType)
+                  -> R.State String
+                  -> R.State NodeType
+                  -> R.Element
+        panelBody readIt (_ /\ setNodeName) (nt /\ setNodeType) =
           H.div {className: "panel-body"}
           [ H.div {className: "row"}
-            [ H.div {className: "col-md-12"}
+            [ H.div {className: "col-md-10"}
               [ H.form {className: "form-horizontal"}
                 [ {- H.div {className: "form-group"}
                   [ H.input { type: "text"
@@ -100,16 +103,20 @@ createNodeView d p@{nodeType} (Just CreatePopup /\ setPopupOpen) = R.createEleme
                   ]
                   , -} H.div {className: "form-group"}
                   [ R2.select { className: "form-control"
-                              , onChange: mkEffectFn1 $ \e -> setNodeType $ const $ readNodeType $ e .. "target" .. "value"
+                              , onChange: mkEffectFn1 $ \e -> setNodeType
+                                                      $ const
+                                                      $ readIt 
+                                                      $ e .. "target" .. "value"
                               }
-                    (map renderOption nodeTypes)
+                    (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
                   ]
+                  -- , H.text "config"
+                  , showConfig nt
                 ]
               ]
             ]
           ]
 
-        renderOption (opt :: NodeType) = H.option {} [ H.text $ show opt ]
 
         panelFooter :: R.State String  -> R.State NodeType -> R.Element
         panelFooter (name' /\ _) (nt /\ _) =
@@ -127,4 +134,13 @@ createNodeView _ _ _ = R.createElement el {} []
     el = R.hooksComponent "CreateNodeView" cpt
     cpt props _ = pure $ H.div {} []
 -- END Create Node
+
+
+showConfig :: NodeType -> R.Element
+showConfig Graph = H.text $ show Graph
+showConfig _     = H.text $ show ""
+
+
+
+
 
