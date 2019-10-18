@@ -14,7 +14,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), fst)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log, log3)
 import DOM.Simple.Event as DE
@@ -26,14 +26,13 @@ import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
-import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, trashCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
-import Gargantext.Ends (url)
+import Gargantext.Ends (Frontends, url)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
-import Gargantext.Routes (SessionRoute(NodeAPI))
+import Gargantext.Routes (AppRoute, SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, post, delete)
 import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..))
 ------------------------------------------------------------------------
@@ -49,6 +48,7 @@ type LayoutProps =
   , listId       :: Int
   , corpusId     :: Maybe Int
   , showSearch   :: Boolean
+  , frontends    :: Frontends
   , session      :: Session )
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
@@ -61,6 +61,7 @@ type PageLayoutProps =
   , corpusId     :: Maybe Int
   , query        :: Query
   , session      :: Session
+  , frontends    :: Frontends
   , params       :: R.State T.Params )
 
 type LocalCategories = Map Int Category
@@ -146,14 +147,14 @@ docView props = R.createElement docViewCpt props []
 docViewCpt :: R.Component Props
 docViewCpt = R.hooksComponent "G.C.DocsTable.docView" cpt where
   cpt { query, params
-      , layout: { session, nodeId, tabType, listId, corpusId
-                , totalRecords, chart, showSearch } } _ = do
+      , layout: { frontends, session, nodeId, tabType, listId
+                , corpusId, totalRecords, chart, showSearch } } _ = do
     pure $ H.div {className: "container1"}
       [ H.div {className: "row"}
         [ chart
         , if showSearch then searchBar query else H.div {} []
         , H.div {className: "col-md-12"}
-          [ pageLayout {session, nodeId, totalRecords, tabType, listId, corpusId, query: fst query, params} ] ] ]
+          [ pageLayout {frontends, session, nodeId, totalRecords, tabType, listId, corpusId, query: fst query, params} ] ] ]
     -- onClickTrashAll nodeId _ = do
     --   launchAff $ deleteAllDocuments p.session nodeId
           
@@ -214,12 +215,13 @@ searchBar (query /\ setQuery) = R.createElement el {} []
 mock :: Boolean
 mock = false
 
-type PageParams = { nodeId :: Int
-                  , listId :: Int
-                  , corpusId :: Maybe Int
-                  , tabType :: TabType
-                  , query   :: Query
-                  , params :: T.Params}
+type PageParams =
+  { nodeId :: Int
+  , listId :: Int
+  , corpusId :: Maybe Int
+  , tabType :: TabType
+  , query   :: Query
+  , params :: T.Params}
 
 loadPage :: Session -> PageParams -> Aff (Array DocumentsView)
 loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
@@ -262,7 +264,7 @@ pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Memo PageLayoutProps
 pageLayoutCpt = R.memo' $ R.staticComponent "G.C.DocsTable.pageLayout" cpt where
-  cpt props@{session, nodeId, listId, corpusId, tabType, query, params} _ =
+  cpt props@{frontends, session, nodeId, listId, corpusId, tabType, query, params} _ =
     loader path (loadPage session) paint
     where
       path = {nodeId, listId, corpusId, tabType, query, params: fst params}
@@ -278,7 +280,7 @@ page params layout documents = R.createElement pageCpt {params, layout, document
 
 pageCpt :: R.Memo PageProps
 pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
-  cpt { layout: {session, nodeId, corpusId, listId, totalRecords}, documents, params } _ = do
+  cpt { layout: {frontends, session, nodeId, corpusId, listId, totalRecords}, documents, params } _ = do
     localCategories <- R.useState' (mempty :: LocalCategories)
     pure $ T.table
       { rows: rows localCategories
@@ -290,8 +292,9 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
         gi _ = "glyphicon glyphicon-star-empty"
         trashStyle Trash = {textDecoration: "line-through"}
         trashStyle _ = {textDecoration: "none"}
-        corpusDocument (Just corpusId) = Routes.CorpusDocument sid corpusId
-        corpusDocument _ = Routes.Document sid
+        corpusDocument
+          | Just cid <- corpusId = Routes.CorpusDocument sid cid listId
+          | otherwise = Routes.Document sid listId
         colNames = T.ColumnName <$> [ "Map", "Stop", "Date", "Title", "Source"]
         getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
         rows localCategories = row <$> documents
@@ -302,7 +305,8 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
                 , H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { style } [ R2.showText r.date ]
-                , H.div { style } [ H.text r.title ]
+                , H.div { style }
+                  [ H.a { href: url frontends $ corpusDocument r._id } [ H.text r.title ] ]
                 , H.div { style } [ H.text r.source ]
                 ]
               , delete: true }

@@ -85,7 +85,7 @@ tableHeaderLayout :: Record TableHeaderLayoutProps -> R.Element
 tableHeaderLayout props = R.createElement tableHeaderLayoutCpt props []
 
 tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
-tableHeaderLayoutCpt = R.staticComponent "TableHeaderLayout" cpt
+tableHeaderLayoutCpt = R.staticComponent "G.C.Table.tableHeaderLayout" cpt
   where
     cpt {title, desc, query, date, user} _ =
       R.fragment
@@ -124,7 +124,7 @@ table :: Record Props -> R.Element
 table props = R.createElement tableCpt props []
 
 tableCpt :: R.Component Props
-tableCpt = R.hooksComponent "Table" cpt
+tableCpt = R.hooksComponent "G.C.Table.table" cpt
   where
     cpt {container, colNames, totalRecords, rows, params} _ = do
       pageSize@(pageSize' /\ setPageSize) <- R.useState' PS10

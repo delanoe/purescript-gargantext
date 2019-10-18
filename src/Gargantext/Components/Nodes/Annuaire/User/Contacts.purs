@@ -13,12 +13,13 @@ import Data.String (joinWith)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   ( Contact(..), ContactData, ContactTouch(..), ContactWhere(..)
   , ContactWho(..), HyperData(..), HyperdataContact(..) )
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
-import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Routes
+import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..))
 
@@ -122,20 +123,20 @@ infoRender (Tuple title content) =
   [ H.span { className: "badge badge-default badge-pill"} [ H.text title ]
   , H.span {} [H.text content] ]
 
-type LayoutProps = ( nodeId :: Int, session :: Session )
+type LayoutProps = ( frontends :: Frontends, nodeId :: Int, session :: Session )
 
 userLayout :: Record LayoutProps -> R.Element
 userLayout props = R.createElement userLayoutCpt props []
 
 userLayoutCpt :: R.Component LayoutProps
-userLayoutCpt = R.hooksComponent "G.P.Annuaire.UserLayout" cpt
+userLayoutCpt = R.staticComponent "G.C.Nodes.Annuaire.User.Contacts.userLayout" cpt
   where
-    cpt {nodeId, session} _ =
-      useLoader nodeId (getContact session) $
+    cpt {frontends, nodeId, session} _ =
+      loader nodeId (getContact session) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
           [ display (fromMaybe "no name" name) (contactInfos hyperdata)
-          , Tabs.tabs {nodeId, contactData, session} ]
+          , Tabs.tabs {frontends, nodeId, contactData, session} ]
 
 -- | toUrl to get data
 getContact :: Session -> Int -> Aff ContactData
