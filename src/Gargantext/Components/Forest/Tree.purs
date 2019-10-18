@@ -14,12 +14,12 @@ import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
-import Gargantext.Components.Forest.Action
-import Gargantext.Components.Forest.Action.Add
-import Gargantext.Components.Forest.Action.Rename
-import Gargantext.Components.Forest.Action.Upload
-import Gargantext.Components.Forest.NodeActions
-import Gargantext.Components.Forest.Tree.HTML
+import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Components.Forest.Tree.Node.Action.Add
+import Gargantext.Components.Forest.Tree.Node.Action.Rename
+import Gargantext.Components.Forest.Tree.Node.Action.Upload
+import Gargantext.Components.Forest.Tree.Node
+import Gargantext.Components.Forest.Tree.Node.Box
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute)

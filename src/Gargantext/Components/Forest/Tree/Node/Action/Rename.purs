@@ -1,10 +1,10 @@
-module Gargantext.Components.Forest.Action.Rename where
+module Gargantext.Components.Forest.Tree.Node.Action.Rename where
 
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
-import Gargantext.Components.Forest.Action
+import Gargantext.Components.Forest.Tree.Node.Action
 import Prelude hiding (div)
 import Reactix as R
 import Reactix.DOM.HTML as H

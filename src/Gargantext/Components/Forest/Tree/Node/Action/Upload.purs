@@ -1,4 +1,4 @@
-module Gargantext.Components.Forest.Action.Upload where
+module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff, launchAff, runAff)
@@ -8,7 +8,7 @@ import Gargantext.Routes (AppRoute, SessionRoute(..))
 import Prelude hiding (div)
 import Data.Maybe (Maybe(..), fromJust)
 import URI.Extra.QueryPairs as QP
-import Gargantext.Components.Forest.Action
+import Gargantext.Components.Forest.Tree.Node.Action
 import Reactix as R
 import Data.Tuple (Tuple)
 import URI.Query as Q

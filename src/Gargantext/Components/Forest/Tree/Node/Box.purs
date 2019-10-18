@@ -1,4 +1,4 @@
-module Gargantext.Components.Forest.Tree.HTML where
+module Gargantext.Components.Forest.Tree.Node.Box where
 
 import DOM.Simple.Console (log2)
 import Data.Array (filter, null)
@@ -8,11 +8,11 @@ import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
-import Gargantext.Components.Forest.Action
-import Gargantext.Components.Forest.Action.Rename
-import Gargantext.Components.Forest.Action.Add
-import Gargantext.Components.Forest.Action.Upload
-import Gargantext.Components.Forest.NodeActions
+import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Components.Forest.Tree.Node.Action.Rename
+import Gargantext.Components.Forest.Tree.Node.Action.Add
+import Gargantext.Components.Forest.Tree.Node.Action.Upload
+import Gargantext.Components.Forest.Tree.Node
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (AppRoute, SessionRoute(..))
 import Gargantext.Routes as Routes
@@ -61,7 +61,9 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
           [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
                      , name: name'} ]
         , if showBox then popOverIcon popupOpen else H.div {} []
-        , if showBox then nodePopupView  d {id, name:name', nodeType} popupOpen else H.div {} []
+        , if showBox 
+             then nodePopupView  d {id, name:name', nodeType} popupOpen
+             else H.div {} []
         , addButton popupOpen
         , fileTypeView   d {id, nodeType} droppedFile isDragOver
         ]

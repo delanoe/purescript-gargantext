@@ -1,4 +1,4 @@
-module Gargantext.Components.Forest.Action where
+module Gargantext.Components.Forest.Tree.Node.Action where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Generic.Rep (class Generic)
