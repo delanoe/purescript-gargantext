@@ -12,6 +12,7 @@ import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
+import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
@@ -40,7 +41,7 @@ modeTabType' Communication = CTabAuthors
 type TabsProps =
   ( nodeId :: Int
   , contactData :: ContactData
-  , route :: R.State AppRoute
+  , frontends :: Frontends
   , session :: Session )
 
 tabs :: Record TabsProps -> R.Element
@@ -49,7 +50,7 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = R.hooksComponent "G.P.Annuaire.User.Contacts.Tabs.tabs" cpt
   where
-    cpt {route, nodeId, contactData: {defaultListId}, session} _ = do
+    cpt {frontends, nodeId, contactData: {defaultListId}, session} _ = do
       active <- R.useState' 0
       pure $
         Tab.tabs { tabs: tabs', selected: fst active }
@@ -68,7 +69,7 @@ tabsCpt = R.hooksComponent "G.P.Annuaire.User.Contacts.Tabs.tabs" cpt
             chart = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
-              { route, session, nodeId, chart, totalRecords
+              { frontends, session, nodeId, chart, totalRecords
               , tabType: TabPairing TabDocs
               , listId: defaultListId
               , corpusId: Nothing
