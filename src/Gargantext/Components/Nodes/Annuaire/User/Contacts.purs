@@ -18,7 +18,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   ( Contact(..), ContactData, ContactTouch(..), ContactWhere(..)
   , ContactWho(..), HyperData(..), HyperdataContact(..) )
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
-import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Routes (AppRoute, SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..))
 
@@ -122,7 +122,7 @@ infoRender (Tuple title content) =
   [ H.span { className: "badge badge-default badge-pill"} [ H.text title ]
   , H.span {} [H.text content] ]
 
-type LayoutProps = ( nodeId :: Int, session :: Session )
+type LayoutProps = ( route :: R.State AppRoute, nodeId :: Int, session :: Session )
 
 userLayout :: Record LayoutProps -> R.Element
 userLayout props = R.createElement userLayoutCpt props []
@@ -130,12 +130,12 @@ userLayout props = R.createElement userLayoutCpt props []
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = R.hooksComponent "G.P.Annuaire.UserLayout" cpt
   where
-    cpt {nodeId, session} _ =
+    cpt {route, nodeId, session} _ =
       useLoader nodeId (getContact session) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
           [ display (fromMaybe "no name" name) (contactInfos hyperdata)
-          , Tabs.tabs {nodeId, contactData, session} ]
+          , Tabs.tabs {route, nodeId, contactData, session} ]
 
 -- | toUrl to get data
 getContact :: Session -> Int -> Aff ContactData
