@@ -1,9 +1,8 @@
 -- | A module for authenticating to create sessions and handling them
 module Gargantext.Sessions where
 
-import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (>=>), (<<<), bind, map)
-import Control.Monad.Except (runExcept)
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:), Json)
+import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<), bind)
+import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:))
 import Data.Argonaut.Core (Json, fromArray, jsonEmptyObject, stringify)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
@@ -26,7 +25,6 @@ import Gargantext.Components.Login.Types
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend, backendUrl, toUrl, sessionPath)
 import Gargantext.Routes (SessionRoute)
-import Gargantext.Prelude (logs)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
 import Gargantext.Utils.Reactix as R2
 
@@ -100,7 +98,7 @@ instance decodeJsonSessions :: DecodeJson Sessions where
 
     where
       decodeSessions :: Json -> Either String (Array Session)
-      decodeSessions json = decodeJson json
+      decodeSessions json2 = decodeJson json2
                           >>= \obj -> obj .: "sessions"
                           >>= traverse decodeJson
 
@@ -192,10 +190,10 @@ mapLeft _ (Right r) = Right r
 
 saveSessions :: Sessions -> Effect Sessions
 saveSessions sessions = effect *> pure sessions where
-  remove = getls >>= removeItem localStorageKey
+  rem = getls >>= removeItem localStorageKey
   set v  = getls >>= setItem    localStorageKey v
   effect
-    | null sessions = remove
+    | null sessions = rem
     | otherwise = set (stringify $ encodeJson sessions)
 
 postAuthRequest :: Backend -> AuthRequest -> Aff (Either String Session)
