@@ -10,6 +10,7 @@ import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, unSessions)
 import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils (glyphicon)
 
 type Props =
   ( sessions  :: Sessions
@@ -33,7 +34,7 @@ forestCpt = R.staticComponent "G.C.Forest.forest" cpt where
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin =
   H.button {on: {click}}
-  [ H.i { className: "glyphicon glyphicon-plus"} [] ]
+  [ H.i { className: glyphicon "plus"} [] ]
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
   where

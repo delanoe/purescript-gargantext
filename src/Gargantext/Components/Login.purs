@@ -21,7 +21,7 @@ import Gargantext.Components.Login.Types (AuthRequest(..))
 import Gargantext.Ends (Backend(..))
 import Gargantext.Sessions (Session, Sessions(..), postAuthRequest, unSessions)
 import Gargantext.Sessions as Sessions
-import Gargantext.Utils (csrfMiddlewareToken, glyphicon)
+import Gargantext.Utils (csrfMiddlewareToken)
 import Gargantext.Utils.Reactix as R2
 
 -- TODO: ask for login (modal) or account creation after 15 mn when user
@@ -111,7 +111,7 @@ renderSessions sessions = R.fragment (renderSession sessions <$> unSessions (fst
 renderSession :: R2.Reductor Sessions Sessions.Action -> Session -> R.Element
 renderSession sessions session = H.li {} $ [ H.text $ "Active session: " <> show session ]
                                         <> [ H.a { on : {click}
-                                                 , className: glyphicon "log-out"
+                                                 , className: "glyphitem glyphicon glyphicon-log-out"
                                                  , id : "log-out"
                                                  , title: "Log out"
                                                  } [] ]
@@ -133,9 +133,12 @@ renderBackend backend@(Backend {name}) state =
   H.li {} $ [ H.a { on : {click}
           --      , className: glyphicon "log-in"
           --      , id : "log-in"
-        } [ H.text $ " Connect to " <> name ] ] <> [ H.a { on : {click}, className : glyphicon "log-in", title: "Log In"} []]
-                                        where
-                                          click _ = (snd state) (const $ Just backend)
+        } [ H.text $ " Connect to " <> name ] ]
+        <> [ H.a { on : {click}
+                 , className : "glyphitem glyphicon glyphicon-log-in"
+                 , title: "Log In"} []]
+            where
+              click _ = (snd state) (const $ Just backend)
 
 
 type FormProps =

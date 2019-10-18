@@ -39,5 +39,5 @@ _unit :: forall s. Lens' s Unit
 _unit = lens (\_ -> unit) (\s _ -> s)
 
 
-glyphicon t = "glyphitem glyphicon glyphicon-" <> t
+glyphicon t = "btn glyphitem glyphicon glyphicon-" <> t
 

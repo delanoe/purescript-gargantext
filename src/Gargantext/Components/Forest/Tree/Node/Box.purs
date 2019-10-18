@@ -188,11 +188,13 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
 
         panelHeading renameBoxOpen@(open /\ _) =
           H.div {className: "panel-heading"}
-          [ H.div {className: "row" }
+          [ -- H.h1 {className : "col-md-12"} [H.text "Settings Box"]
+           H.div {className: "row" }
             [ H.div {className: rowClass open} [ renameBox d {id, name} renameBoxOpen ]
             , if edit then editIcon renameBoxOpen else H.div {} []
             , H.div {className: "col-md-1"}
-              [ H.a {className: "btn glyphitem glyphicon glyphicon-remove-circle"
+              [ H.a { type : "button"
+                    , className: glyphicon "remove-circle"
                     , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const Nothing
                     , title: "Close"} []
               ]
@@ -202,7 +204,7 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
             editIcon (false /\ setRenameBoxOpen) =
               H.div {className: "col-md-1"}
               [ H.a {style: {color: "black"}
-                    , className: "btn glyphitem glyphicon glyphicon-pencil"
+                    , className: glyphicon "pencil"
                     , id: "rename1"
                     , title: "Rename"
                     , onClick: mkEffectFn1 $ \_ -> setRenameBoxOpen $ const true
