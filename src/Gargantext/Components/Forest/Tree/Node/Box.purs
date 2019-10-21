@@ -54,7 +54,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
       isDragOver  <- R.useState' false
 
       pure $ H.span (dropProps droppedFile isDragOver) $
-        [ folderIcon folderOpen
+        [ folderIcon nodeType folderOpen
         , H.a { href: (url frontends (NodePath (sessionId session) nodeType (Just id)))
               , style: {marginLeft: "22px"}
               }
@@ -68,20 +68,16 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
                                    , action: Nothing
                                    } popupOpen
              else H.div {} []
-        --, addButton popupOpen
         , fileTypeView   d {id, nodeType} droppedFile isDragOver
         ]
           where
             name' = if nodeType == NodeUser then show session else name
-            SettingsBox {show:showBox, add} = settingsBox nodeType
-            addButton p = if null add
-                           then H.div {} []
-                           else createNodeView d {id, name, nodeType} p
+            SettingsBox {show:showBox} = settingsBox nodeType
 
 
-    folderIcon folderOpen'@(open /\ _) =
+    folderIcon nodeType folderOpen'@(open /\ _) =
       H.a {onClick: R2.effToggler folderOpen'}
-      [ H.i {className: fldr open} [] ]
+      [ H.i {className: fldr nodeType open} [] ]
 
     popOverIcon (popOver /\ setPopOver) =
       H.a { className: "glyphicon glyphicon-cog"
@@ -126,10 +122,14 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
     onDragLeave (_ /\ setIsDragOver) _ = setIsDragOver $ const false
 
 
-fldr :: Boolean -> String
-fldr open = if open
-               then "glyphicon glyphicon-folder-open"
-               else "glyphicon glyphicon-folder-close"
+fldr :: NodeType -> Boolean -> String
+fldr nt open = if open
+               then "glyphicon glyphicon-folder-open" <> color nt
+               else "glyphicon glyphicon-folder-close" <> color nt
+                 where
+                   color FolderPublic = " text-danger"
+                   color FolderShared = " text-warning"
+                   color _            = ""
 
 
 -- START node text
@@ -170,7 +170,7 @@ nodePopupView :: (Action -> Aff Unit)
               -> Record NodePopupProps
               -> R.State (Maybe NodePopup)
               -> R.Element
-nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
+nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p []
   where
     el = R.hooksComponent "NodePopupView" cpt
     cpt {id, name, nodeType, action} _ = do
@@ -190,7 +190,7 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
                          , onClick : setNodePopup $ const {id,name,nodeType,action :Nothing}
                        } []
               else H.div {} []
-          , panelAction nodeType nodePopup.action d
+          , panelAction d {id,name,nodeType,action:nodePopup.action} mPop
           ]
         ]
       where
@@ -201,7 +201,7 @@ nodePopupView d p (Just NodePopup /\ setPopupOpen) = R.createElement el p []
                                , placement: "right"}
                        }
 
-        SettingsBox {edit, add, buttons} = settingsBox nodeType
+        SettingsBox {edit, buttons} = settingsBox nodeType
 
         panelHeading renameBoxOpen@(open /\ _) =
           H.div {className: "panel-heading"}
@@ -248,9 +248,8 @@ nodePopupView _ p _ = R.createElement el p []
     cpt _ _ = pure $ H.div {} []
 
 
-
 -- buttonAction :: NodeAction -> R.Element
-buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ todo@(Documentation x) = H.div {className: "col-md-1"}
+buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ todo@(Documentation x) = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
                   , className: "btn glyphitem glyphicon glyphicon-question-sign" <> if action == (Just todo) then " active" else ""
                   , id: "doc"
@@ -260,7 +259,7 @@ buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ todo@(Documentation x)
               []
             ]
 
-buttonClick ({id,name,nodeType,action} /\ setNodePopup) d Delete = H.div {className: "col-md-1"}
+buttonClick ({id,name,nodeType,action} /\ setNodePopup) d Delete = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
                   , className: "btn glyphitem glyphicon glyphicon-trash" <> if action == (Just Delete) then " active" else ""
                   --, className: (glyphicon "trash")
@@ -272,13 +271,13 @@ buttonClick ({id,name,nodeType,action} /\ setNodePopup) d Delete = H.div {classN
               []
             ]
 
-buttonClick ({id,name,nodeType,action} /\ setNodePopup) d (Add xs) = H.div {className: "col-md-1"}
+buttonClick (node@{action} /\ setNodePopup) d (Add xs) = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
                   , className: "btn glyphitem glyphicon glyphicon-plus" <> if action == (Just $ Add xs) then " active" else ""
                   --, className: (glyphicon "trash")
                   , id: "add"
                   , title: "add"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just $ Add xs}
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $  node { action = Just $ Add xs} 
                   --, onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
                 }
               []
@@ -317,8 +316,35 @@ buttonPop f =  H.div {className: "col-md-4"}
 
 -- END Popup View
 
-panelAction _ (Just (Documentation x)) _ = R.fragment [ H.div {} [H.text "more information"]]
-panelAction NodeUser (Just Delete)         _ = R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant!"]]
-panelAction _ (Just Delete)         _ = R.fragment [ H.div {} [H.text "Are your sure you want to delete ?"]]
-panelAction _ (Just (Add xs))       _ = R.fragment [ H.div {} [H.text "Adding configuration"]]
-panelAction _ _ _ = H.div {} []
+type NodeProps =
+  ( id       :: ID
+  , name     :: Name
+  , nodeType :: NodeType
+  )
+
+type Open = Boolean
+
+panelAction :: (Action -> Aff Unit)
+            -> Record NodePopupProps
+            -> R.State (Maybe NodePopup)
+            -> R.Element
+panelAction d {id,name,nodeType,action} p = case action of
+    (Just (Documentation x)) -> R.fragment [ H.div {} [H.text $ "More information on" <> show nodeType]]
+    (Just Delete)            -> case nodeType of
+        NodeUser -> R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]
+        _        -> R.fragment [ H.div {} [H.text "Are your sure you want to delete, if yes, click again ?"], reallyDelete d]
+    (Just (Add xs))          -> createNodeView d {id, name, nodeType} p xs
+      --R.fragment [ H.div {} [H.text "Adding configuration"]]
+    _                        -> H.div {} []
+
+
+reallyDelete d = H.div {className: "panel-footer"}
+            [ H.a { type: "button"
+                  , className: "btn glyphicon glyphicon-trash"
+                  , id: "delete"
+                  , title: "Delete"
+                  , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
+              [H.text "Yes, delete!"]
+            ]
+
+

@@ -22,17 +22,12 @@ filterWithRights (show action if user can only)
 data SettingsBox =
   SettingsBox { show    :: Boolean
               , edit    :: Boolean
-              , add     :: Array NodeType
               , buttons :: Array NodeAction
               }
 
 settingsBox :: NodeType -> SettingsBox
 settingsBox NodeUser = SettingsBox { show : true
                                    , edit : false
-                                   , add  : [ FolderPrivate
-                                            , FolderShared
-                                            , FolderPublic
-                                            ]
                                    , buttons : [Documentation NodeUser
                                                , Add [ FolderPrivate
                                                      , FolderShared
@@ -44,44 +39,48 @@ settingsBox NodeUser = SettingsBox { show : true
 
 settingsBox FolderPrivate = SettingsBox { show: true
                                         , edit : false
-                                        , add  : [ Folder
-                                                 , Corpus
-                                                 ]
-                                        , buttons : [Documentation FolderPrivate, Delete]
+                                        , buttons : [Documentation FolderPrivate
+                                                    , Add [ Corpus
+                                                          , Folder
+                                                          ]
+                                                    , Delete]
                                         }
 
 settingsBox FolderShared = SettingsBox { show: true
                                         , edit : false
-                                        , add  : [ Folder
-                                                 , Corpus
-                                                 ]
-                                        , buttons : [Documentation FolderShared, Delete]
+                                        , buttons : [Documentation FolderShared
+                                                    , Add [ Corpus
+                                                          , Folder
+                                                          ]
+                                                    , Delete]
                                         }
 
 settingsBox FolderPublic = SettingsBox { show: true
                                         , edit : false
-                                        , add  : [ Folder
-                                                 , Corpus
-                                                 ]
-                                        , buttons : [Documentation FolderPublic, Delete]
+                                        , buttons : [Documentation FolderPublic
+                                                    , Add [ Corpus
+                                                          , Folder
+                                                          ]
+                                                    , Delete
+                                                    ]
                                         }
 
 settingsBox Folder = SettingsBox { show : true
                                  , edit : true
-                                 , add  : [ Folder
-                                          , Corpus
-                                          ]
-                                 , buttons : [Documentation Folder, Delete]
+                                 , buttons : [ Documentation Folder
+                                             , Add [ Corpus
+                                                   , Folder
+                                                   ]
+                                             , Delete]
                                  }
 
 settingsBox Corpus = SettingsBox { show : true
                                  , edit : true
-                                 , add  : [ NodeList
-                                          , Dashboard
-                                          , Graph
-                                          , Phylo
-                                          ]
                                  , buttons : [ Documentation Corpus
+                                             , Add [ NodeList 
+                                                   , Graph
+                                                   , Dashboard
+                                                   ]
                                              , Search
                                              , Upload
                                              , Download
@@ -94,7 +93,6 @@ settingsBox Corpus = SettingsBox { show : true
 
 settingsBox Texts = SettingsBox { show : true
                                 , edit : false
-                                , add : []
                                 , buttons : [ Documentation Texts
                                             , Upload
                                             , Download
@@ -103,7 +101,6 @@ settingsBox Texts = SettingsBox { show : true
 
 settingsBox Graph = SettingsBox { show : true
                                 , edit : false
-                                , add : [Graph]
                                 , buttons : [ Documentation Graph
                                             , Download
                                             ]
@@ -111,7 +108,6 @@ settingsBox Graph = SettingsBox { show : true
 
 settingsBox NodeList = SettingsBox { show : true
                                    , edit : false
-                                   , add : [NodeList]
                                    , buttons : [ Documentation NodeList
                                                , Upload
                                                , Download
@@ -120,17 +116,13 @@ settingsBox NodeList = SettingsBox { show : true
 
 settingsBox Dashboard = SettingsBox { show : true
                                    , edit : false
-                                   , add : []
                                    , buttons : [ Documentation Dashboard
                                                ]
                                 }
 
 
-
-
 settingsBox _ = SettingsBox { show : false
                             , edit : false
-                            , add : []
                             , buttons : []
                           }
 
@@ -142,6 +134,7 @@ data NodeAction = Documentation NodeType
                 | Move     | Clone  | Delete
                 | Share
                 | Add (Array NodeType)
+
 
 instance eqNodeAction :: Eq NodeAction where
   eq (Documentation x) (Documentation y) = true && (x == y)
@@ -156,29 +149,4 @@ instance eqNodeAction :: Eq NodeAction where
   eq (Add x) (Add y)   = true && (x == y)
   eq _ _               = false
 
-data ButtonType = Click | Pop
 
-
-instance eqButtonType :: Eq ButtonType where
-  eq Click Click = true
-  eq Pop   Pop   = true
-  eq _     _     = false
-
-
-buttonType :: NodeAction -> ButtonType
-buttonType Search  = Pop
-buttonType _       = Click
-
-
-data Buttons = Buttons { click :: Array NodeAction
-                       , pop   :: Array NodeAction
-                       }
-
-{-
-buttons nt = Buttons {click, pop}
-  where
-    click = init
-    pop   = rest
-    {init, rest} = span buttonType (nodeActions nt)
-    -}
----------------------------------------------------------

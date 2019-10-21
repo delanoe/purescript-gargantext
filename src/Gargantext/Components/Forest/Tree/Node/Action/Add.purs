@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
 import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (filter, null, length, head)
+import Data.Array (filter, null, length, head, elem)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
@@ -48,42 +48,19 @@ type CreateNodeProps =
 createNodeView :: (Action -> Aff Unit)
                -> Record CreateNodeProps
                -> R.State (Maybe NodePopup)
+               -> Array NodeType
                -> R.Element
-createNodeView d p@{nodeType} (Just CreatePopup /\ setPopupOpen) = R.createElement el p []
+createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el p []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt {id, name} _ = do
       nodeName <- R.useState' ""
       nodeType <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
-      pure $ H.div tooltipProps $
-        [ H.div {className: "panel panel-default"}
-          [ panelHeading
-          , panelBody   readNodeType nodeName nodeType
+      pure $ H.div {}
+          [ panelBody   readNodeType nodeName nodeType
           , panelFooter nodeName nodeType
           ]
-        ]
       where
-        SettingsBox {add:nodeTypes} = settingsBox nodeType
-
-        tooltipProps = { className: ""
-                       , id: "create-node-tooltip"
-                       , title: "Add new node"
-                       , data: {toggle: "tooltip", placement: "right"}
-                       }
-
-        panelHeading =
-          H.div {className: "panel-heading"}
-          [ H.div {className: "row"}
-            [ H.div {className: "col-md-10"}
-              [ H.h5 {} [H.text "Add"] ]
-            , H.div {className: "col-md-2"}
-              [ H.a { className: "btn glyphitem glyphicon glyphicon-remove-circle"
-                    , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const Nothing
-                    , title: "Close"} []
-              ]
-            ]
-          ]
-
         panelBody :: (String -> NodeType)
                   -> R.State String
                   -> R.State NodeType
@@ -92,37 +69,49 @@ createNodeView d p@{nodeType} (Just CreatePopup /\ setPopupOpen) = R.createEleme
           H.div {className: "panel-body"}
           [ H.div {className: "row"}
             [ H.div {className: "col-md-10"}
-              [ H.form {className: "form-horizontal"}
-                [ {- H.div {className: "form-group"}
-                  [ H.input { type: "text"
-                            , placeholder: "Node name"
-                            , defaultValue: name
-                            , className: "form-control"
-                            , onInput: mkEffectFn1 $ \e -> setNodeName $ const $ e .. "target" .. "value"
-                            }
-                  ]
-                  , -} 
-                  if length nodeTypes > 1
-                    then 
-                      R.fragment [H.div {className: "form-group"} $ [ R2.select { className: "form-control"
-                                        , onChange: mkEffectFn1 $ \e -> setNodeType
-                                                      $ const
-                                                      $ readIt 
-                                                      $ e .. "target" .. "value"
-                                        }
-                             (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
-                             ]
-                             , showConfig nt
-                             ]
-                    else
-                      H.button { className : "btn btn-success"
-                               , type : "button"
-                               , onClick : mkEffectFn1 $ \_ -> setNodeType (const $ fromMaybe nt $ head nodeTypes)
-                               } [showConfig nt]
-                ]
+              [ H.form {className: "form-horizontal"} $ maybeChoose <> maybeEdit ]
               ]
             ]
-          ]
+              where
+                SettingsBox {edit} = settingsBox nt
+                maybeEdit = [ if edit
+                              then
+                                H.div {className: "form-group"}
+                                      [ H.input { type: "text"
+                                                , placeholder: "Node name"
+                                                , defaultValue: "Chose name"
+                                                , className: "form-control"
+                                                , onInput: mkEffectFn1 $ \e -> setNodeName
+                                                                       $ const
+                                                                       $ e .. "target" .. "value"
+                                               }
+                                      ]
+                              else
+                                H.div {} []
+                             ]
+
+                maybeChoose = [ if length nodeTypes > 1
+                                then 
+                                  R.fragment [H.div {className: "form-group"} $ [ R2.select { className: "form-control"
+                                                    , onChange: mkEffectFn1 $ \e -> setNodeType
+                                                                  $ const
+                                                                  $ readIt 
+                                                                  $ e .. "target" .. "value"
+                                                    }
+                                         (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
+                                         ]
+                                         -- , showConfig nt
+                                         ]
+                                else
+                                  H.button { className : "btn btn-success"
+                                           , type : "button"
+                                           , onClick : mkEffectFn1 $ \_ -> setNodeType ( const
+                                                                                       $ fromMaybe nt 
+                                                                                       $ head nodeTypes
+                                                                                       )
+                                           } []
+                               ]
+
 
 
         panelFooter :: R.State String  -> R.State NodeType -> R.Element
@@ -132,11 +121,11 @@ createNodeView d p@{nodeType} (Just CreatePopup /\ setPopupOpen) = R.createEleme
                      , type: "button"
                      , onClick: mkEffectFn1 $ \_ -> do
                          setPopupOpen $ const Nothing
-                         launchAff $ d $ CreateSubmit name' nt
+                         launchAff    $ d $ CreateSubmit name' nt
                      } [H.text "Add"]
           ]
 
-createNodeView _ _ _ = R.createElement el {} []
+createNodeView _ _ _ _ = R.createElement el {} []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt props _ = pure $ H.div {} []
@@ -148,6 +137,6 @@ showConfig NodeUser      = H.div {} []
 showConfig FolderPrivate = H.div {} [H.text "This folder will be private only"]
 showConfig FolderShared  = H.div {} [H.text "This folder will be shared"]
 showConfig FolderPublic  = H.div {} [H.text "This folder will be public"]
-showConfig nt = H.div {} [H.h1  {} [H.text $ "Config of " <> show nt ]]
+showConfig nt            = H.div {} [H.h4  {} [H.text $ "Config of " <> show nt ]]
 
 

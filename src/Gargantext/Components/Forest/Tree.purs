@@ -54,8 +54,6 @@ treeLoadView reload p = R.createElement el p []
       useLoader root (loadNode session) $ \loaded ->
         loadedTreeView reload {tree: loaded, mCurrentRoute, session, frontends}
 
-----------------
-
 type TreeViewProps = ( tree          :: FTree
                      , mCurrentRoute :: Maybe AppRoute
                      , frontends     :: Frontends
