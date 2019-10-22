@@ -130,28 +130,28 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
       pageSize@(pageSize' /\ setPageSize) <- R.useState' PS10
       (page /\ setPage) <- R.useState' 1
       (orderBy /\ setOrderBy) <- R.useState' Nothing
-      let state = {pageSize: pageSize', orderBy, page}
-      let ps = pageSizes2Int pageSize'
-      let totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
+      let
+        state = {pageSize: pageSize', orderBy, page}
+        ps = pageSizes2Int pageSize'
+        totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
+        colHeader :: ColumnName -> R.Element
+        colHeader c = H.th {scope: "col"} [ H.b {} cs ]
+          where
+            lnk mc = effectLink (setOrderBy (const mc))
+            cs :: Array R.Element
+            cs =
+              case orderBy of
+                Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ",  lnk Nothing (columnName c)]
+                Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "ASC ", lnk Nothing (columnName c)]
+                _ -> [lnk (Just (ASC c)) (columnName c)]
       R.useEffect1' state $ when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
       pure $ container
         { pageSizeControl: sizeDD pageSize
         , pageSizeDescription: textDescription page pageSize' totalRecords
         , paginationLinks: pagination setPage totalPages page
-        , tableHead: H.tr {} (colHeader setOrderBy orderBy <$> colNames)
+        , tableHead: H.tr {} (colHeader <$> colNames)
         , tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
         }
-        where
-          colHeader :: (R2.Setter OrderBy) -> OrderBy -> ColumnName -> R.Element
-          colHeader setOrderBy orderBy c = H.th {scope: "col"} [ H.b {} cs ]
-            where
-              lnk mc = effectLink (setOrderBy (const mc))
-              cs :: Array R.Element
-              cs =
-                case orderBy of
-                  Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ",  lnk Nothing (columnName c)]
-                  Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "ASC ", lnk Nothing (columnName c)]
-                  _ -> [lnk (Just (ASC c)) (columnName c)]
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 defaultContainer {title} props = R.fragment
