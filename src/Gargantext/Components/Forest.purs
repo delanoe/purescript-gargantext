@@ -36,7 +36,7 @@ plus showLogin =
   H.button {on: {click}}
   [ H.div { "type": "button"
           , className: "glyphicon glyphicon-plus"
-          } [] ]
+          } [H.text "Login"] ]
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
   where

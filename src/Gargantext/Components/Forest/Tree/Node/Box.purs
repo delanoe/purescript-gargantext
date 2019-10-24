@@ -127,9 +127,10 @@ fldr nt open = if open
                then "glyphicon glyphicon-folder-open" <> color nt
                else "glyphicon glyphicon-folder-close" <> color nt
                  where
-                   color FolderPublic = " text-danger"
+                   color NodeUser     = ""
+                   color FolderPublic = ""
                    color FolderShared = " text-warning"
-                   color _            = ""
+                   color _            = " text-danger"
 
 
 -- START node text
