@@ -24,9 +24,10 @@ allDatabases = [All, PubMed
                , HAL_FR
                , IsTex_EN
                , IsTex_FR
-               , Isidore_EN, Isidore_FR]
+               , Isidore_EN, Isidore_FR
+               ]
 
-data Database = All | PubMed
+data Database = All          | PubMed
               | HAL_EN       | HAL_FR
               | IsTex_EN     | IsTex_FR
               | Isidore_EN   | Isidore_FR

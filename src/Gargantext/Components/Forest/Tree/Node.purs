@@ -29,6 +29,7 @@ settingsBox :: NodeType -> SettingsBox
 settingsBox NodeUser = SettingsBox { show : true
                                    , edit : false
                                    , buttons : [Documentation NodeUser
+                                               , SearchBox
                                                , Add [ FolderPrivate
                                                      , FolderShared
                                                      , FolderPublic
@@ -40,6 +41,7 @@ settingsBox NodeUser = SettingsBox { show : true
 settingsBox FolderPrivate = SettingsBox { show: true
                                         , edit : false
                                         , buttons : [Documentation FolderPrivate
+                                                    , SearchBox
                                                     , Add [ Corpus
                                                           , Folder
                                                           ]
@@ -49,15 +51,14 @@ settingsBox FolderPrivate = SettingsBox { show: true
 settingsBox FolderShared = SettingsBox { show: true
                                         , edit : false
                                         , buttons : [Documentation FolderShared
-                                                    , Add [ Corpus
-                                                          , Folder
-                                                          ]
+                                                    --, Team
                                                     , Delete]
                                         }
 
 settingsBox FolderPublic = SettingsBox { show: true
                                         , edit : false
                                         , buttons : [Documentation FolderPublic
+                                                    , SearchBox
                                                     , Add [ Corpus
                                                           , Folder
                                                           ]
@@ -68,20 +69,22 @@ settingsBox FolderPublic = SettingsBox { show: true
 settingsBox Folder = SettingsBox { show : true
                                  , edit : true
                                  , buttons : [ Documentation Folder
+                                             , SearchBox
                                              , Add [ Corpus
                                                    , Folder
                                                    ]
-                                             , Delete]
+                                             , Delete
+                                             ]
                                  }
 
 settingsBox Corpus = SettingsBox { show : true
                                  , edit : true
                                  , buttons : [ Documentation Corpus
+                                             , SearchBox
                                              , Add [ NodeList 
                                                    , Graph
                                                    , Dashboard
                                                    ]
-                                             , Search
                                              , Upload
                                              , Download
                                              , Share
@@ -129,16 +132,16 @@ settingsBox _ = SettingsBox { show : false
 
 ------------------------------------------------------------------------
 data NodeAction = Documentation NodeType
-                | Search
+                | SearchBox
                 | Download | Upload | Refresh
                 | Move     | Clone  | Delete
-                | Share
+                | Share    | Team
                 | Add (Array NodeType)
 
 
 instance eqNodeAction :: Eq NodeAction where
   eq (Documentation x) (Documentation y) = true && (x == y)
-  eq Search Search = true
+  eq SearchBox SearchBox = true
   eq Download Download = true
   eq Upload Upload     = true
   eq Refresh Refresh   = true
@@ -146,7 +149,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq Clone Clone       = true
   eq Delete Delete     = true
   eq Share Share       = true
+  eq Team  Team        = true
   eq (Add x) (Add y)   = true && (x == y)
   eq _ _               = false
-
 

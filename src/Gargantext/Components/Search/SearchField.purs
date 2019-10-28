@@ -5,16 +5,18 @@ import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import Gargantext.Utils.Reactix as R2
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Reactix as R
-import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a)
-import Gargantext.Components.Search.Types (Database)
+import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option)
+import Gargantext.Components.Search.Types (Database(..), readDatabase)
 
-select
-  :: forall props
-  .  R.IsComponent String props (Array R.Element)
-  => Record props -> Array R.Element -> R.Element
+select :: forall props.
+          R.IsComponent String props (Array R.Element)
+          => Record props
+          -> Array R.Element
+          -> R.Element
 select = R.createElement "select"
 
 type Search = { database :: Maybe Database, term :: String }
@@ -33,7 +35,8 @@ searchField :: Record Props -> R.Element
 searchField p = R.createElement searchFieldComponent p []
 
 placeholder :: String
-placeholder = "Query, URL or FILE (works with Firefox or Chromium browsers)"
+placeholder = "Query, URL or FILE"
+-- TODO add elsewhere "(works with Firefox or Chromium browsers)"
 
 searchFieldComponent :: R.Memo Props
 searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
@@ -44,30 +47,31 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
       db   <- R.useState' (Nothing :: Maybe Database)
       pure $
           div { className: "search-field input-group" }
-              [ databaseInput db props.databases
-              , searchInput term
-              , span { className: "input-group-btn" }
-                     [ submitButton db term props.search ]
+              [ searchInput term
+              , databaseInput db props.databases
+              , span { className: "input-group-btn" } [ submitButton db term props.search ]
               ]
-    hasChanged p p' = (fst p.search /= fst p'.search) || (p.databases /= p'.databases)
+    hasChanged p p' = (fst p.search /= fst p'.search)
+                   || (p.databases /= p'.databases)
+
 
 databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
 databaseInput (db /\ setDB) dbs =
-  div { className: "input-group-btn search-panel dropdown" }
-      [ dropdownBtn db
-      , ul {className: "dropdown-menu", role: "menu"} (liItem <$> dbs)
-      ]
-  where
-    liItem db' = li { onClick } [ a {href: "#"} [text (show db') ] ]
-      where
-        onClick = mkEffectFn1 $ \_ -> setDB $ const $ Just db'
-    dropdownBtnProps = { id: "search-dropdown"
-                        , className: "btn btn-default dropdown-toggle"
-                        , type: "button"
-                        , data: {toggle: "dropdown"}
-                        }
-    dropdownBtn (Just db') = button dropdownBtnProps [ span {} [ text (show db') ] ]
-    dropdownBtn (Nothing) = button dropdownBtnProps [ span {} [ text "-" ] ]
+  R.fragment [ div { className: "form-group" } 
+                   [ R2.select { className: "form-control"
+                               , onChange: mkEffectFn1
+                                         $ \e -> setDB
+                                         $ const
+                                         $ readDatabase
+                                         $ e .. "target" .. "value"
+                               } (liItem <$> dbs)
+                   ]
+             ]
+    where
+      liItem :: Database -> R.Element
+      liItem  db = option {} [ text (show db) ]
+
+
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =

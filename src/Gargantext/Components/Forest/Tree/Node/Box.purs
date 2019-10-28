@@ -13,6 +13,9 @@ import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Components.Forest.Tree.Node.Action.Add
 import Gargantext.Components.Forest.Tree.Node.Action.Rename
 import Gargantext.Components.Forest.Tree.Node.Action.Upload
+import Gargantext.Components.Search.Types
+import Gargantext.Components.Search.SearchBar
+
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (AppRoute, SessionRoute(..))
 import Gargantext.Routes as Routes
@@ -66,6 +69,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
                                    , name:name'
                                    , nodeType
                                    , action: Nothing
+                                   , session
                                    } popupOpen
              else H.div {} []
         , fileTypeView   d {id, nodeType} droppedFile isDragOver
@@ -161,6 +165,7 @@ type NodePopupProps =
   , name     :: Name
   , nodeType :: NodeType
   , action   :: Maybe NodeAction
+  , session  :: Session
   )
 
 iconAStyle = { color         : "black"
@@ -174,7 +179,7 @@ nodePopupView :: (Action -> Aff Unit)
 nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p []
   where
     el = R.hooksComponent "NodePopupView" cpt
-    cpt {id, name, nodeType, action} _ = do
+    cpt {id, name, nodeType, action, session} _ = do
       renameBoxOpen <- R.useState' false
       nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {id, name, nodeType, action}
       pure $ H.div tooltipProps $
@@ -191,7 +196,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
                          , onClick : setNodePopup $ const {id,name,nodeType,action :Nothing}
                        } []
               else H.div {} []
-          , panelAction d {id,name,nodeType,action:nodePopup.action} mPop
+          , panelAction d {id,name,nodeType,action:nodePopup.action, session} mPop
           ]
         ]
       where
@@ -208,7 +213,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
           H.div {className: "panel-heading"}
           [ -- H.h1 {className : "col-md-12"} [H.text "Settings Box"]
            H.div {className: "row" }
-            [ H.div {className: "col-md-10"} [ renameBox d {id, name} renameBoxOpen ]
+            [ H.div {className: "col-md-8"} [ renameBox d {id, name} renameBoxOpen ]
             , if edit then editIcon renameBoxOpen else H.div {} []
             , H.div {className: "col-md-1"}
               [ H.a { "type" : "button"
@@ -263,7 +268,6 @@ buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ todo@(Documentation x)
 buttonClick ({id,name,nodeType,action} /\ setNodePopup) d Delete = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
                   , className: "btn glyphitem glyphicon glyphicon-trash" <> if action == (Just Delete) then " active" else ""
-                  --, className: (glyphicon "trash")
                   , id: "delete"
                   , title: "Delete"
                   , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just Delete}
@@ -283,6 +287,18 @@ buttonClick (node@{action} /\ setNodePopup) d (Add xs) = H.div {className: "col-
                 }
               []
             ]
+--{-
+buttonClick ({id,name,nodeType,action} /\ setNodePopup) d SearchBox = H.div {className: "col-md-2"}
+            [ H.a { style: iconAStyle
+                  , className: "btn glyphitem glyphicon glyphicon-search" <> if action == (Just SearchBox) then " active" else ""
+                  , id: "search"
+                  , title: "Search and create " <> show nodeType
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just SearchBox}
+                  }
+              []
+            ]
+
+--}
 
 
 {-
@@ -329,8 +345,11 @@ panelAction :: (Action -> Aff Unit)
             -> Record NodePopupProps
             -> R.State (Maybe NodePopup)
             -> R.Element
-panelAction d {id,name,nodeType,action} p = case action of
+panelAction d {id,name,nodeType,action, session} p = case action of
     (Just (Documentation x)) -> R.fragment [ H.div {} [H.text $ "More information on" <> show nodeType]]
+    (Just SearchBox)         -> R.fragment [ searchBar {session, databases:allDatabases}
+                                           , H.div {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
+                                           ]
     (Just Delete)            -> case nodeType of
         NodeUser -> R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]
         _        -> R.fragment [ H.div {} [H.text "Are your sure you want to delete, if yes, click again ?"], reallyDelete d]

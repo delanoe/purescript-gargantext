@@ -24,21 +24,13 @@ searchBar :: Record Props -> R.Element
 searchBar props = R.createElement searchBarCpt props []
 
 searchBarCpt :: R.Component Props
-searchBarCpt = R.hooksComponent "G.C.Search.SearchBar.searchBar" cpt
+searchBarCpt = R.hooksComponent "G.C.Node.SearchBar.searchBar" cpt
   where
     cpt {session, databases} _ = do
-      open <- R.useState' false
       search <- R.useState' Nothing
       onSearchChange session search
-      pure $ H.div { className: "search-bar-container pull-right" }
-        [ toggleButton open
-        , searchFieldContainer open databases search ]
+      pure $ H.div { className: "" } [ searchField {databases, search }]
 
-searchFieldContainer :: R.State Boolean -> Array Database -> R.State (Maybe Search) -> R.Element
-searchFieldContainer (open /\ _) databases search =
-  H.div { className: "search-bar " <> openClass } [ searchField { databases, search } ]
-  where
-    openClass = if open then "open" else "closed"
 
 onSearchChange :: Session -> R.State (Maybe Search) -> R.Hooks Unit
 onSearchChange session (search /\ setSearch) =
@@ -46,19 +38,19 @@ onSearchChange session (search /\ setSearch) =
   where
     triggerSearch q =
       launchAff_ $ do
+
         liftEffect $ do
           log2 "Searching db: " $ show q.database
           log2 "Searching term: " q.term
+
         r <- (performSearch session $ searchQuery q) :: Aff Unit
+
         liftEffect $ do
           log2 "Return:" r
           modalShow "addCorpus"
-    searchQuery {database: Nothing, term} = over SearchQuery (_ {query=term}) defaultSearchQuery
-    searchQuery {database: Just db, term} = over SearchQuery (_ {databases=[db], query=term}) defaultSearchQuery
 
-toggleButton :: R.State Boolean -> R.Element
-toggleButton open =
-  H.button { on: {click: \_ -> (snd open) not}, className: "search-bar-toggle" }
-  [ H.i { className: "material-icons md-24", style  } [ H.text "control_point" ] ]
-  where style = { marginTop: "-2px", color: "#000" }
+    searchQuery {database: Nothing, term} =
+      over SearchQuery (_ {query=term}) defaultSearchQuery
 
+    searchQuery {database: Just db, term} =
+      over SearchQuery (_ {databases=[db], query=term}) defaultSearchQuery

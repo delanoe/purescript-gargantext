@@ -34,7 +34,7 @@ type Props = ( root          :: ID
              , session       :: Session
              , frontends     :: Frontends
              )
------------------
+
 treeView :: Record Props -> R.Element
 treeView props = R.createElement treeViewCpt props []
 
