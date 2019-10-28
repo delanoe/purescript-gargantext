@@ -127,6 +127,7 @@ data NodeType = NodeUser
               | Annuaire
               | NodeContact
               | Corpus
+              | Team
               | Url_Document
               | Dashboard
               | Error
@@ -161,6 +162,7 @@ instance showNodeType :: Show NodeType where
   show Node          = "Node"
   show Nodes         = "Nodes"
   show Tree          = "NodeTree"
+  show Team          = "Team"
   show NodeList      = "NodeList"
   show Texts         = "NodeTexts"
 
@@ -183,6 +185,7 @@ readNodeType "Nodes"         = Nodes
 readNodeType "NodeCorpus"    = Corpus
 readNodeType "NodeContact"   = NodeContact
 readNodeType "Tree"          = Tree
+readNodeType "Team"          = Team
 readNodeType "NodeList"      = NodeList
 readNodeType "NodeTexts"     = Texts
 readNodeType _               = Error
@@ -223,6 +226,7 @@ nodeTypePath NodeContact = "contact"
 nodeTypePath Tree      = "tree"
 nodeTypePath NodeList  = "lists"
 nodeTypePath Texts     = "texts"
+nodeTypePath Team      = "team"
 ------------------------------------------------------------
 
 type ListId = Int

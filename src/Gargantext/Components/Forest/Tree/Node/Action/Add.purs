@@ -54,7 +54,7 @@ createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt {id, name} _ = do
-      nodeName <- R.useState' ""
+      nodeName <- R.useState' "Default Name"
       nodeType <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
       pure $ H.div {}
           [ panelBody   readNodeType nodeName nodeType
@@ -79,7 +79,7 @@ createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el
                                 H.div {className: "form-group"}
                                       [ H.input { type: "text"
                                                 , placeholder: "Node name"
-                                                , defaultValue: "Chose name"
+                                                , defaultValue: "Write Name here"
                                                 , className: "form-control"
                                                 , onInput: mkEffectFn1 $ \e -> setNodeName
                                                                        $ const

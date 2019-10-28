@@ -51,17 +51,17 @@ settingsBox FolderPrivate = SettingsBox { show: true
 settingsBox FolderShared = SettingsBox { show: true
                                         , edit : false
                                         , buttons : [Documentation FolderShared
-                                                    --, Team
+                                                    -- , Add [Folder, Team]
                                                     , Delete]
                                         }
 
 settingsBox FolderPublic = SettingsBox { show: true
                                         , edit : false
                                         , buttons : [Documentation FolderPublic
-                                                    , SearchBox
+                                                    {-, SearchBox
                                                     , Add [ Corpus
                                                           , Folder
-                                                          ]
+                                                          ]-}
                                                     , Delete
                                                     ]
                                         }
@@ -135,7 +135,7 @@ data NodeAction = Documentation NodeType
                 | SearchBox
                 | Download | Upload | Refresh
                 | Move     | Clone  | Delete
-                | Share    | Team
+                | Share
                 | Add (Array NodeType)
 
 
@@ -149,7 +149,6 @@ instance eqNodeAction :: Eq NodeAction where
   eq Clone Clone       = true
   eq Delete Delete     = true
   eq Share Share       = true
-  eq Team  Team        = true
   eq (Add x) (Add y)   = true && (x == y)
   eq _ _               = false
 
