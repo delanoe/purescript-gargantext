@@ -349,7 +349,7 @@ panelAction :: (Action -> Aff Unit)
             -> R.Element
 panelAction d {id,name,nodeType,action, session} p = case action of
     (Just (Documentation NodeUser))      -> R.fragment [H.div {} [ H.p {} [ H.text "This account is personal"]
-                                                                 , H.p {} [ H.text "Its uses depends on the instances terms of uses."]
+                                                                 , H.p {} [ H.text "See the instances terms of uses."]
                                                                  ]
                                                         ]
     (Just (Documentation FolderPrivate)) -> R.fragment [H.div {} [H.text $ "This folder and its children are private only!"]]
