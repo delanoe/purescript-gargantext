@@ -46,10 +46,11 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
       term <- R.useState' search.term
       db   <- R.useState' (Nothing :: Maybe Database)
       pure $
-          div { className: "search-field input-group" }
+          div { className: "search-field-group" }
               [ searchInput term
+              , div {className: "text-primary center"} [text "in"]
               , databaseInput db props.databases
-              , span { className: "input-group-btn" } [ submitButton db term props.search ]
+              , div { className: "panel-footer" } [ submitButton db term props.search ]
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
                    || (p.databases /= p'.databases)
@@ -57,7 +58,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
 
 databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
 databaseInput (db /\ setDB) dbs =
-  R.fragment [ div { className: "form-group" } 
+  div { className: "form-group" } 
                    [ R2.select { className: "form-control"
                                , onChange: mkEffectFn1
                                          $ \e -> setDB
@@ -66,10 +67,9 @@ databaseInput (db /\ setDB) dbs =
                                          $ e .. "target" .. "value"
                                } (liItem <$> dbs)
                    ]
-             ]
     where
       liItem :: Database -> R.Element
-      liItem  db = option {} [ text (show db) ]
+      liItem  db = option {className : "text-primary center"} [ text (show db) ]
 
 
 
@@ -85,7 +85,10 @@ searchInput (term /\ setTerm) =
 
 submitButton :: R.State (Maybe Database) -> R.State String -> R.State (Maybe Search) -> R.Element
 submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
-  button { className: "btn btn-default", type: "button", onClick: click } [ text "Search" ]
+  button { className: "btn btn-primary text-center"
+         , type: "button"
+         , onClick: click
+         } [ text "Search" ]
   where
     click = mkEffectFn1 $ \_ -> do
       case term of

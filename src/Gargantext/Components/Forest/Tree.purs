@@ -21,7 +21,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload
 import Gargantext.Components.Forest.Tree.Node
 import Gargantext.Components.Forest.Tree.Node.Box
 import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Components.Loader (loader)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
 import Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
@@ -49,9 +49,9 @@ treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
 treeLoadView :: R.State Reload -> Record Props -> R.Element
 treeLoadView reload p = R.createElement el p []
   where
-    el = R.hooksComponent "TreeLoadView" cpt
+    el = R.staticComponent "TreeLoadView" cpt
     cpt {root, mCurrentRoute, session, frontends} _ = do
-      useLoader root (loadNode session) $ \loaded ->
+      loader root (loadNode session) $ \loaded ->
         loadedTreeView reload {tree: loaded, mCurrentRoute, session, frontends}
 
 type TreeViewProps = ( tree          :: FTree

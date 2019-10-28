@@ -12,14 +12,14 @@ import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencode
 import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
 import Prelude hiding (div)
 
--- file upload types
-data Action =   Submit       String
-              | DeleteNode
-              | CreateSubmit String NodeType
-              | UploadFile   FileType UploadFileContents
+data Action = Submit       String
+            | DeleteNode
+            | CreateSubmit String NodeType
+            | UploadFile   FileType UploadFileContents
 
 -----------------------------------------------------
 -- UploadFile Action
+-- file upload types
 data FileType = CSV | PresseRIS
 
 derive instance genericFileType :: Generic FileType _
@@ -50,8 +50,7 @@ type Reload = Int
 newtype UploadFileContents = UploadFileContents String
 
 
-
-createNode :: Session -> ID -> CreateValue -> Aff ID
+createNode :: Session -> ID -> CreateValue -> Aff (Array ID)
 createNode session parentId = post session $ NodeAPI Node (Just parentId) ""
 
 renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)

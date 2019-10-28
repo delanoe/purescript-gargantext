@@ -270,8 +270,11 @@ buttonClick ({id,name,nodeType,action} /\ setNodePopup) d Delete = H.div {classN
                   , className: "btn glyphitem glyphicon glyphicon-trash" <> if action == (Just Delete) then " active" else ""
                   , id: "delete"
                   , title: "Delete"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just Delete}
-                  --, onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const { id
+                                                                      , name
+                                                                      , nodeType
+                                                                      , action : Just Delete
+                                                                      }
                 }
               []
             ]
@@ -283,7 +286,6 @@ buttonClick (node@{action} /\ setNodePopup) d (Add xs) = H.div {className: "col-
                   , id: "add"
                   , title: "add"
                   , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $  node { action = Just $ Add xs} 
-                  --, onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
                 }
               []
             ]
@@ -347,14 +349,13 @@ panelAction :: (Action -> Aff Unit)
             -> R.Element
 panelAction d {id,name,nodeType,action, session} p = case action of
     (Just (Documentation x)) -> R.fragment [ H.div {} [H.text $ "More information on" <> show nodeType]]
-    (Just SearchBox)         -> R.fragment [ searchBar {session, databases:allDatabases}
-                                           , H.div {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
+    (Just SearchBox)         -> R.fragment [ H.div {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
+                                           , searchBar {session, databases:allDatabases}
                                            ]
     (Just Delete)            -> case nodeType of
         NodeUser -> R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]
         _        -> R.fragment [ H.div {} [H.text "Are your sure you want to delete, if yes, click again ?"], reallyDelete d]
     (Just (Add xs))          -> createNodeView d {id, name, nodeType} p xs
-      --R.fragment [ H.div {} [H.text "Adding configuration"]]
     _                        -> H.div {} []
 
 
@@ -364,7 +365,7 @@ reallyDelete d = H.div {className: "panel-footer"}
                   , id: "delete"
                   , title: "Delete"
                   , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
-              [H.text "Yes, delete!"]
+              [H.text " Yes, delete!"]
             ]
 
 

@@ -14,7 +14,10 @@ type Props path loaded =
   , load  :: path -> Aff loaded
   , paint :: loaded -> R.Element )
 
-loader :: forall path loaded. path -> (path -> Aff loaded) -> (loaded -> R.Element) -> R.Element
+loader :: forall path loaded. path
+                            -> (path -> Aff loaded)
+                            -> (loaded -> R.Element)
+                            -> R.Element
 loader path load paint =
   R.createElement loaderCpt {path,load,paint} []
 

@@ -17,7 +17,7 @@ import FFI.Simple ((..))
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Components.Forest.Tree.Node
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Components.Loader (loader)
 import Gargantext.Routes (AppRoute, SessionRoute(..))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
@@ -103,7 +103,7 @@ createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el
                                          -- , showConfig nt
                                          ]
                                 else
-                                  H.button { className : "btn btn-success"
+                                H.button { className : "btn btn-primary"
                                            , type : "button"
                                            , onClick : mkEffectFn1 $ \_ -> setNodeType ( const
                                                                                        $ fromMaybe nt 
@@ -117,7 +117,7 @@ createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el
         panelFooter :: R.State String  -> R.State NodeType -> R.Element
         panelFooter (name' /\ _) (nt /\ _) =
           H.div {className: "panel-footer"}
-          [ H.button {className: "btn btn-success"
+          [ H.button {className: "btn btn-primary text-center"
                      , type: "button"
                      , onClick: mkEffectFn1 $ \_ -> do
                          setPopupOpen $ const Nothing
