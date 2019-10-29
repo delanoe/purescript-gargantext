@@ -8,22 +8,45 @@ import Data.Array (filter)
 import Reactix.DOM.HTML as H
 import Effect.Aff (Aff, launchAff, runAff)
 
-
+------------------------------------------------------------------------
+------------------------------------------------------------------------
 {-
--- | TODO use Set (needs Ord instance for NodeType)
-add :: Array NodeType -> NodeAction
-add = Add <<< fromFoldable
-
 -- | TODO
 filterWithRights (show action if user can only)
 
 -}
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+data NodeAction = Documentation NodeType
+                | SearchBox
+                | Download | Upload | Refresh
+                | Move     | Clone  | Delete
+                | Share
+                | Add (Array NodeType)
+
+
+instance eqNodeAction :: Eq NodeAction where
+  eq (Documentation x) (Documentation y) = true && (x == y)
+  eq SearchBox SearchBox = true
+  eq Download Download = true
+  eq Upload Upload     = true
+  eq Refresh Refresh   = true
+  eq Move Move         = true
+  eq Clone Clone       = true
+  eq Delete Delete     = true
+  eq Share Share       = true
+  eq (Add x) (Add y)   = true && (x == y)
+  eq _ _               = false
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
 
 data SettingsBox =
   SettingsBox { show    :: Boolean
               , edit    :: Boolean
               , buttons :: Array NodeAction
               }
+------------------------------------------------------------------------
 
 settingsBox :: NodeType -> SettingsBox
 settingsBox NodeUser = SettingsBox { show : true
@@ -44,6 +67,7 @@ settingsBox FolderPrivate = SettingsBox { show: true
                                                     , SearchBox
                                                     , Add [ Corpus
                                                           , Folder
+                                                          , Annuaire
                                                           ]
                                                     , Delete]
                                         }
@@ -52,8 +76,10 @@ settingsBox FolderShared = SettingsBox { show: true
                                         , edit : false
                                         , buttons : [Documentation FolderShared
                                                     -- , Add [Folder, Team]
-                                                    , Delete]
+                                                    , Delete
+                                                    ]
                                         }
+
 
 settingsBox FolderPublic = SettingsBox { show: true
                                         , edit : false
@@ -72,6 +98,7 @@ settingsBox Folder = SettingsBox { show : true
                                              , SearchBox
                                              , Add [ Corpus
                                                    , Folder
+                                                   , Annuaire
                                                    ]
                                              , Delete
                                              ]
@@ -130,25 +157,4 @@ settingsBox _ = SettingsBox { show : false
                           }
 
 
-------------------------------------------------------------------------
-data NodeAction = Documentation NodeType
-                | SearchBox
-                | Download | Upload | Refresh
-                | Move     | Clone  | Delete
-                | Share
-                | Add (Array NodeType)
-
-
-instance eqNodeAction :: Eq NodeAction where
-  eq (Documentation x) (Documentation y) = true && (x == y)
-  eq SearchBox SearchBox = true
-  eq Download Download = true
-  eq Upload Upload     = true
-  eq Refresh Refresh   = true
-  eq Move Move         = true
-  eq Clone Clone       = true
-  eq Delete Delete     = true
-  eq Share Share       = true
-  eq (Add x) (Add y)   = true && (x == y)
-  eq _ _               = false
 

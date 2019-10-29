@@ -300,26 +300,27 @@ buttonClick ({id,name,nodeType,action} /\ setNodePopup) d SearchBox = H.div {cla
               []
             ]
 
---}
 
-
-{-
-buttonClick _ _ Upload = H.div {className: "col-md-1"}
+buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ Upload = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
                   , className: (glyphicon "upload")
                   , id: "upload"
-                  , title: "Upload [WIP]"}
+                  , title: "Upload [WIP]"
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just Upload}
+                  }
               []
             ]
 
-buttonClick _ _ Download = H.div {className: "col-md-1"}
+buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ Download = H.div {className: "col-md-2"}
             [ H.a {style: iconAStyle
                   , className: (glyphicon "download")
                   , id: "download"
-                  , title: "Download [WIP]"}
+                  , title: "Download [WIP]"
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just Download}
+                  }
               []
             ]
--}
+
 buttonClick _ _ _ = H.div {} []
 
 
@@ -356,12 +357,16 @@ panelAction d {id,name,nodeType,action, session} p = case action of
     (Just (Documentation FolderPublic))  -> R.fragment [H.div {} [H.text $ "Soon, you will be able to build public folders to share your work with the world!"]]
     (Just (Documentation FolderShared))  -> R.fragment [H.div {} [H.text $ "Soon, you will be able to build teams folders to share your work"]]
     (Just (Documentation x)) -> R.fragment [ H.div {} [H.text $ "More information on" <> show nodeType]]
+
+    (Just Upload)                        -> R.fragment [ H.div {} [H.text $ "Soon, you will be able to upload  your file here"]]
+    (Just Download)                      -> R.fragment [ H.div {} [H.text $ "Soon, you will be able to dowload your file here"]]
+
     (Just SearchBox)         -> R.fragment [ H.div {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
                                            , searchBar {session, databases:allDatabases}
                                            ]
     (Just Delete)            -> case nodeType of
         NodeUser -> R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]
-        _        -> R.fragment [ H.div {} [H.text "Are your sure you want to delete, if yes, click again ?"], reallyDelete d]
+        _        -> R.fragment [ H.div {} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."]), reallyDelete d]
     (Just (Add xs))          -> createNodeView d {id, name, nodeType} p xs
     _                        -> H.div {} []
 
