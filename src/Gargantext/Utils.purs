@@ -10,13 +10,26 @@ import Data.Set (Set)
 id :: forall a. a -> a
 id a = a
 
-setterv :: forall nt record field. Newtype nt record => (record -> field -> record) -> field -> nt -> nt
+setterv :: forall nt record field.
+           Newtype nt record
+           => (record -> field -> record)
+           -> field
+           -> nt
+           -> nt
 setterv fn v t = (setter (flip fn v) t)
 
-setter :: forall nt record. Newtype nt record => (record -> record) -> nt -> nt
+setter :: forall nt record.
+          Newtype nt record
+          => (record -> record)
+          -> nt
+          -> nt
 setter fn = wrap <<< fn <<< unwrap
 
-getter :: forall record field nt. Newtype nt record => (record -> field) -> nt -> field
+getter :: forall record field nt.
+          Newtype nt record
+          => (record -> field)
+          -> nt
+          -> field
 getter fn = fn <<< unwrap
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)
@@ -38,6 +51,9 @@ csrfMiddlewareToken = "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP
 _unit :: forall s. Lens' s Unit
 _unit = lens (\_ -> unit) (\s _ -> s)
 
-
+glyphicon :: String -> String
 glyphicon t = "btn glyphitem glyphicon glyphicon-" <> t
+
+glyphiconActive :: String -> Boolean -> String
+glyphiconActive icon b = glyphicon icon <> if b then " active" else ""
 

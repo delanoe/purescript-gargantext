@@ -21,7 +21,7 @@ import Gargantext.Routes (AppRoute, SessionRoute(..))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
 import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
-import Gargantext.Utils (id, glyphicon)
+import Gargantext.Utils (id, glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
 import Prelude hiding (div)
@@ -254,35 +254,31 @@ nodePopupView _ p _ = R.createElement el p []
     cpt _ _ = pure $ H.div {} []
 
 
+
 -- buttonAction :: NodeAction -> R.Element
-buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ todo@(Documentation x) = H.div {className: "col-md-2"}
+buttonClick (node@{action} /\ setNodePopup) _ todo@(Documentation x) = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
-                  , className: "btn glyphitem glyphicon glyphicon-question-sign" <> if action == (Just todo) then " active" else ""
+                  , className: glyphiconActive "question-sign" (action == (Just todo))
                   , id: "doc"
                   , title: "Documentation of " <> show x
-                  , onClick : mkEffectFn1 $ \_ -> setNodePopup $ const $ {id,name,nodeType,action:Just todo}
+                  , onClick : mkEffectFn1 $ \_ -> setNodePopup $ const (node { action = Just todo })
                 }
               []
             ]
 
-buttonClick ({id,name,nodeType,action} /\ setNodePopup) d Delete = H.div {className: "col-md-2"}
+buttonClick (node@{action} /\ setNodePopup) d Delete = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
-                  , className: "btn glyphitem glyphicon glyphicon-trash" <> if action == (Just Delete) then " active" else ""
+                  , className: glyphiconActive "trash" (action == (Just Delete))
                   , id: "delete"
                   , title: "Delete"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const { id
-                                                                      , name
-                                                                      , nodeType
-                                                                      , action : Just Delete
-                                                                      }
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node { action = Just Delete }
                 }
               []
             ]
 
 buttonClick (node@{action} /\ setNodePopup) d (Add xs) = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
-                  , className: "btn glyphitem glyphicon glyphicon-plus" <> if action == (Just $ Add xs) then " active" else ""
-                  --, className: (glyphicon "trash")
+                  , className: glyphiconActive "plus" (action == (Just $ Add xs))
                   , id: "add"
                   , title: "add"
                   , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $  node { action = Just $ Add xs} 
@@ -290,33 +286,44 @@ buttonClick (node@{action} /\ setNodePopup) d (Add xs) = H.div {className: "col-
               []
             ]
 --{-
-buttonClick ({id,name,nodeType,action} /\ setNodePopup) d SearchBox = H.div {className: "col-md-2"}
+buttonClick (node@{nodeType,action} /\ setNodePopup) d SearchBox = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
-                  , className: "btn glyphitem glyphicon glyphicon-search" <> if action == (Just SearchBox) then " active" else ""
+                  , className: glyphiconActive "search" (action == (Just SearchBox))
                   , id: "search"
                   , title: "Search and create " <> show nodeType
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just SearchBox}
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node {action = Just SearchBox}
                   }
               []
             ]
 
 
-buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ Upload = H.div {className: "col-md-2"}
+buttonClick (node@{action} /\ setNodePopup) _ Upload = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
-                  , className: (glyphicon "upload")
+                  , className: glyphiconActive "upload" (action == (Just Upload))
                   , id: "upload"
                   , title: "Upload [WIP]"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just Upload}
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node {action = Just Upload}
                   }
               []
             ]
 
-buttonClick ({id,name,nodeType,action} /\ setNodePopup) _ Download = H.div {className: "col-md-2"}
+buttonClick (node@{action} /\ setNodePopup) _ (Link n) = H.div {className: "col-md-2"}
+            [ H.a { style: iconAStyle
+                  , className: glyphiconActive "transfer" (action == (Just $ Link n))
+                  , id: "link"
+                  , title: "Link [WIP]"
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node {action = Just (Link n)}
+                  }
+              []
+            ]
+
+
+buttonClick (node@{action} /\ setNodePopup) _ Download = H.div {className: "col-md-2"}
             [ H.a {style: iconAStyle
-                  , className: (glyphicon "download")
+                  , className: glyphiconActive "download" (action == (Just Download))
                   , id: "download"
                   , title: "Download [WIP]"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const {id, name, nodeType, action : Just Download}
+                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node {action = Just Download}
                   }
               []
             ]
@@ -353,15 +360,16 @@ panelAction d {id,name,nodeType,action, session} p = case action of
                                                                  , H.p {} [ H.text "See the instances terms of uses."]
                                                                  ]
                                                         ]
-    (Just (Documentation FolderPrivate)) -> R.fragment [H.div {} [H.text $ "This folder and its children are private only!"]]
-    (Just (Documentation FolderPublic))  -> R.fragment [H.div {} [H.text $ "Soon, you will be able to build public folders to share your work with the world!"]]
-    (Just (Documentation FolderShared))  -> R.fragment [H.div {} [H.text $ "Soon, you will be able to build teams folders to share your work"]]
-    (Just (Documentation x)) -> R.fragment [ H.div {} [H.text $ "More information on" <> show nodeType]]
+    (Just (Documentation FolderPrivate)) -> R.fragment [H.p {} [H.text $ "This folder and its children are private only!"]]
+    (Just (Documentation FolderPublic))  -> R.fragment [H.p {} [H.text $ "Soon, you will be able to build public folders to share your work with the world!"]]
+    (Just (Documentation FolderShared))  -> R.fragment [H.p {} [H.text $ "Soon, you will be able to build teams folders to share your work"]]
+    (Just (Documentation x)) -> R.fragment [ H.p {} [H.text $ "More information on" <> show nodeType]]
 
-    (Just Upload)                        -> R.fragment [ H.div {} [H.text $ "Soon, you will be able to upload  your file here"]]
-    (Just Download)                      -> R.fragment [ H.div {} [H.text $ "Soon, you will be able to dowload your file here"]]
+    (Just (Link _))                      -> R.fragment [ H.p {} [H.text $ "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."]]
+    (Just Upload)                        -> R.fragment [ H.p {} [H.text $ "Soon, you will be able to upload  your file here"]]
+    (Just Download)                      -> R.fragment [ H.p {} [H.text $ "Soon, you will be able to dowload your file here"]]
 
-    (Just SearchBox)         -> R.fragment [ H.div {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
+    (Just SearchBox)         -> R.fragment [ H.p {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
                                            , searchBar {session, databases:allDatabases}
                                            ]
     (Just Delete)            -> case nodeType of

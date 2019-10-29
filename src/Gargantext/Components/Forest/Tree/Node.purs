@@ -21,7 +21,7 @@ data NodeAction = Documentation NodeType
                 | SearchBox
                 | Download | Upload | Refresh
                 | Move     | Clone  | Delete
-                | Share
+                | Share    | Link NodeType
                 | Add (Array NodeType)
 
 
@@ -35,6 +35,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq Clone Clone       = true
   eq Delete Delete     = true
   eq Share Share       = true
+  eq (Link x) (Link y) = true && (x == y)
   eq (Add x) (Add y)   = true && (x == y)
   eq _ _               = false
 
@@ -112,6 +113,7 @@ settingsBox Corpus = SettingsBox { show : true
                                                    , Graph
                                                    , Dashboard
                                                    ]
+                                             , Link Annuaire
                                              , Upload
                                              , Download
                                              , Share
