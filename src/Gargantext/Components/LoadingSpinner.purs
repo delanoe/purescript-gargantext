@@ -11,4 +11,5 @@ loadingSpinner props = R.createElement loadingSpinnerCpt props []
 loadingSpinnerCpt :: R.Component Props
 loadingSpinnerCpt = R.staticComponent "LoadingSpinner" cpt
   where
-    cpt _ _ = H.span {} [H.text "[Loading]"]
+    cpt _ _ = H.i {className: "fa fa-circle-o-notch fa-spin fa-3x fa-fw"} [H.text ""]
+    --cpt _ _ = H.i {className: "fa fa-spinner fa-pulse fa-3x fa-fw"} [H.text ""]

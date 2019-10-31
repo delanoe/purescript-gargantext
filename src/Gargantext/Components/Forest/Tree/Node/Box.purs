@@ -127,15 +127,39 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
 
 
 fldr :: NodeType -> Boolean -> String
+fldr NodeUser false = "fa fa-user-circle"
+fldr NodeUser true  = "fa fa-user-circle-o"
+
+fldr FolderPrivate true  = "fa fa-lock"
+fldr FolderPrivate false = "fa fa-expeditedssl"
+
+fldr FolderShared  true  = "fa fa-users" -- "fa fa-share-alt"
+fldr FolderShared  false = "fa fa-share-alt-square"
+
+fldr FolderPublic _  = "fa fa-globe"
+
+fldr Corpus true = "fa fa-sun-o" -- "fa fa-snowflake-o"
+fldr Corpus false = "fa fa-sun"   -- "fa fa-snowflake-o"
+
+fldr Graph _ = "fa fa-hubzilla"
+fldr Texts _ = "fa fa-newspaper-o"
+fldr Dashboard _ = "fa fa-signal"
+fldr NodeList _ = "fa fa-list"
+
+fldr _        false  = "fa fa-folder"
+fldr _        true   = "fa fa-folder-o"
+
+{-
 fldr nt open = if open
-               then "glyphicon glyphicon-folder-open" <> color nt
-               else "glyphicon glyphicon-folder-close" <> color nt
+               then "fa fa-globe" -- <> color nt
+               else "fa fa-folder-globe" -- <> color nt
+               --else "glyphicon glyphicon-folder-close" <> color nt
                  where
                    color NodeUser     = ""
                    color FolderPublic = ""
                    color FolderShared = " text-warning"
                    color _            = " text-danger"
-
+                   -}
 
 -- START node text
 type NodeTextProps =
