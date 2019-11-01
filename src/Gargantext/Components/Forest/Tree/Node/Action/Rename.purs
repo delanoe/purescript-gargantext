@@ -5,6 +5,7 @@ import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Types (NodeType(..))
 import Prelude hiding (div)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -12,13 +13,14 @@ import Reactix.DOM.HTML as H
 -- | START Rename Box
 type RenameBoxProps =
   ( id :: ID
-  , name :: Name)
+  , name :: Name
+  , nodeType :: NodeType)
 
 renameBox :: (Action -> Aff Unit) -> Record RenameBoxProps -> R.State Boolean -> R.Element
 renameBox d p (true /\ setRenameBoxOpen) = R.createElement el p []
   where
     el = R.hooksComponent "RenameBox" cpt
-    cpt {id, name} _ = do
+    cpt {id, name, nodeType} _ = do
       renameNodeName <- R.useState' name
       pure $ H.div {className: "from-group row-no-padding"}
         [ renameInput renameNodeName

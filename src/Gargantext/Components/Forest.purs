@@ -35,7 +35,7 @@ plus :: R2.Setter Boolean -> R.Element
 plus showLogin =
   H.button {on: {click}}
   [ H.div { "type": ""
-          , className: "fa fa-plus-circle fa-2x"
+          , className: "fa fa-plus-circle fa-lg"
           --, className: "glyphicon glyphicon-plus"
           } [H.text "Login"] ]
   -- TODO same as the one in the Login Modal (same CSS)

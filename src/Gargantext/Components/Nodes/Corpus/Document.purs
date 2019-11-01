@@ -347,7 +347,8 @@ docViewSpec = simpleSpec performAction render
 
 docViewClass :: ReactClass { children :: Children
                            , loaded   :: LoadedData
-                           , path     :: DocPath }
+                           , path     :: DocPath
+                           }
 docViewClass = createClass "DocumentView" docViewSpec initialState
 
 type LayoutProps = ( session :: Session, nodeId :: Int, listId :: Int, corpusId :: Maybe Int )

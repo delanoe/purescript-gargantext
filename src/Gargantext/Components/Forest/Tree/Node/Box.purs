@@ -20,7 +20,7 @@ import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (AppRoute, SessionRoute(..))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
+import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType, fldr)
 import Gargantext.Utils (id, glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
@@ -125,30 +125,6 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
       setIsDragOver $ const true
     onDragLeave (_ /\ setIsDragOver) _ = setIsDragOver $ const false
 
-
-fldr :: NodeType -> Boolean -> String
-fldr NodeUser false = "fa fa-user-circle"
-fldr NodeUser true  = "fa fa-user-circle-o"
-
-fldr FolderPrivate true  = "fa fa-lock"
-fldr FolderPrivate false = "fa fa-expeditedssl"
-
-fldr FolderShared  true  = "fa fa-users" -- "fa fa-share-alt"
-fldr FolderShared  false = "fa fa-share-alt-square"
-
-fldr FolderPublic _  = "fa fa-globe"
-
-fldr Corpus true = "fa fa-sun-o" -- "fa fa-snowflake-o"
-fldr Corpus false = "fa fa-sun"   -- "fa fa-snowflake-o"
-
-fldr Graph _ = "fa fa-hubzilla"
-fldr Texts _ = "fa fa-newspaper-o"
-fldr Dashboard _ = "fa fa-signal"
-fldr NodeList _ = "fa fa-list"
-
-fldr _        false  = "fa fa-folder"
-fldr _        true   = "fa fa-folder-o"
-
 {-
 fldr nt open = if open
                then "fa fa-globe" -- <> color nt
@@ -213,7 +189,13 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
                          , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
                          }
                 }
-          [ panelHeading renameBoxOpen
+          [ H.div {className: ""}
+                  [ H.div { className : "col-md-11"}
+                          [ H.h3 { className: fldr nodeType true}
+                                 [ H.text $ show nodeType]
+                          ]
+                  ]
+          , panelHeading renameBoxOpen
           , panelBody nodePopupState d
           , if isJust nodePopup.action 
               then H.div { className: glyphicon "remove-circle"
@@ -237,7 +219,8 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
           H.div {className: "panel-heading"}
           [ -- H.h1 {className : "col-md-12"} [H.text "Settings Box"]
            H.div {className: "row" }
-            [ H.div {className: "col-md-8"} [ renameBox d {id, name} renameBoxOpen ]
+            [
+             H.div {className: "col-md-8"} [ renameBox d {id, name, nodeType} renameBoxOpen ]
             , if edit then editIcon renameBoxOpen else H.div {} []
             , H.div {className: "col-md-1"}
               [ H.a { "type" : "button"

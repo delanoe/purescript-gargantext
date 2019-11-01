@@ -40,15 +40,15 @@ instance showLangs :: Show Langs where
   show EN = "EN"
 
 instance showDatabase :: Show Database where
-  show All    = "All"
+  show All    = "In Gargantext"
   show PubMed = "PubMed"
-  
+
   show HAL_EN = "HAL_" <> show EN
   show HAL_FR = "HAL_" <> show FR
-  
+
   show IsTex_EN  = "IsTex_" <> show EN
   show IsTex_FR  = "IsTex_" <> show FR
-  
+
   show Isidore_EN = "Isidore_" <> show EN
   show Isidore_FR = "Isidore_" <> show FR
 

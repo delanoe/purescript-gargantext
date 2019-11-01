@@ -189,6 +189,42 @@ readNodeType "Team"          = Team
 readNodeType "NodeList"      = NodeList
 readNodeType "NodeTexts"     = Texts
 readNodeType _               = Error
+
+
+fldr :: NodeType -> Boolean -> String
+fldr NodeUser false = "fa fa-user-circle"
+fldr NodeUser true  = "fa fa-user-circle-o"
+
+fldr FolderPrivate true  = "fa fa-lock"
+fldr FolderPrivate false = "fa fa-expeditedssl"
+
+fldr FolderShared  true  = "fa fa-users" -- "fa fa-share-alt"
+fldr FolderShared  false = "fa fa-share-alt-square"
+
+fldr FolderPublic _  = "fa fa-globe"
+
+fldr Corpus _ = "fa fa-book" -- "fa fa-snowflake-o"
+
+fldr Phylo _ = "fa fa-code-fork"
+
+fldr Graph _ = "fa fa-hubzilla"
+fldr Texts _ = "fa fa-newspaper-o"
+fldr Dashboard _ = "fa fa-signal"
+fldr NodeList _ = "fa fa-list"
+
+fldr Annuaire true  = "fa fa-address-book-o"
+fldr Annuaire false = "fa fa-address-book"
+
+fldr NodeContact true  = "fa fa-address-card-o"
+fldr NodeContact false = "fa fa-address-card"
+
+fldr _        false  = "fa fa-folder"
+fldr _        true   = "fa fa-folder-o"
+
+
+
+
+
 {-
 ------------------------------------------------------------
 instance ordNodeType :: Ord NodeType where
