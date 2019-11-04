@@ -1,6 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node where
 
 import Prelude
+import Data.Array (foldl)
 import Gargantext.Types
 import Effect.Uncurried (mkEffectFn1)
 -- import Data.Set
@@ -39,6 +40,31 @@ instance eqNodeAction :: Eq NodeAction where
   eq (Add x) (Add y)   = true && (x == y)
   eq _ _               = false
 
+instance showNodeAction :: Show NodeAction where
+  show (Documentation x) = "Documentation of " <> show x
+  show SearchBox         = "SearchBox"
+  show Download          = "Download"
+  show Upload            = "Upload"
+  show Refresh           = "Refresh"
+  show Move              = "Move"
+  show Clone             = "Clone"
+  show Delete            = "Delete"
+  show Share             = "Share"
+  show (Link x)          = "Link to " <> show x
+  show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
+
+
+glyphiconNodeAction :: NodeAction -> String
+glyphiconNodeAction (Documentation _) = "question-sign"
+glyphiconNodeAction Delete            = "trash"
+glyphiconNodeAction (Add _)           = "plus"
+glyphiconNodeAction SearchBox         = "search"
+glyphiconNodeAction Upload            = "upload"
+glyphiconNodeAction (Link _)          = "transfer"
+glyphiconNodeAction Download          = "download"
+glyphiconNodeAction _                 = ""
+
+
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
@@ -74,17 +100,17 @@ settingsBox FolderPrivate = SettingsBox { show: true
                                         }
 
 settingsBox FolderShared = SettingsBox { show: true
-                                        , edit : false
-                                        , buttons : [Documentation FolderShared
+                                       , edit : false
+                                       , buttons : [Documentation FolderShared
                                                     -- , Add [Folder, Team]
                                                     , Delete
                                                     ]
-                                        }
+                                       }
 
 
 settingsBox FolderPublic = SettingsBox { show: true
-                                        , edit : false
-                                        , buttons : [Documentation FolderPublic
+                                       , edit : false
+                                       , buttons : [Documentation FolderPublic
                                                     {-, SearchBox
                                                     , Add [ Corpus
                                                           , Folder
@@ -147,8 +173,8 @@ settingsBox NodeList = SettingsBox { show : true
                                 }
 
 settingsBox Dashboard = SettingsBox { show : true
-                                   , edit : false
-                                   , buttons : [ Documentation Dashboard
+                                    , edit : false
+                                    , buttons : [ Documentation Dashboard
                                                ]
                                 }
 

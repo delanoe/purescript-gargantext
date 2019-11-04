@@ -263,90 +263,29 @@ nodePopupView _ p _ = R.createElement el p []
 
 
 -- buttonAction :: NodeAction -> R.Element
-buttonClick (node@{action} /\ setNodePopup) _ todo@(Documentation x) = H.div {className: "col-md-2"}
+buttonClick (node@{action} /\ setNodePopup) _ todo = H.div {className: "col-md-2"}
             [ H.a { style: iconAStyle
-                  , className: glyphiconActive "question-sign" (action == (Just todo))
-                  , id: "doc"
-                  , title: "Documentation of " <> show x
-                  , onClick : mkEffectFn1 $ \_ -> setNodePopup $ const (node { action = Just todo })
+                  , className: glyphiconActive (glyphiconNodeAction todo)
+                                               (action == (Just todo)   )
+                  , id: show todo
+                  , title: show todo
+                  , onClick : mkEffectFn1
+                            $ \_ -> setNodePopup
+                            $ const (node { action = action' })
                 }
               []
             ]
-
-buttonClick (node@{action} /\ setNodePopup) d Delete = H.div {className: "col-md-2"}
-            [ H.a { style: iconAStyle
-                  , className: glyphiconActive "trash" (action == (Just Delete))
-                  , id: "delete"
-                  , title: "Delete"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node { action = Just Delete }
-                }
-              []
-            ]
-
-buttonClick (node@{action} /\ setNodePopup) d (Add xs) = H.div {className: "col-md-2"}
-            [ H.a { style: iconAStyle
-                  , className: glyphiconActive "plus" (action == (Just $ Add xs))
-                  , id: "add"
-                  , title: "add"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $  node { action = Just $ Add xs} 
-                }
-              []
-            ]
---{-
-buttonClick (node@{nodeType,action} /\ setNodePopup) d SearchBox = H.div {className: "col-md-2"}
-            [ H.a { style: iconAStyle
-                  , className: glyphiconActive "search" (action == (Just SearchBox))
-                  , id: "search"
-                  , title: "Search and create " <> show nodeType
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node {action = Just SearchBox}
-                  }
-              []
-            ]
-
-
-buttonClick (node@{action} /\ setNodePopup) _ Upload = H.div {className: "col-md-2"}
-            [ H.a { style: iconAStyle
-                  , className: glyphiconActive "upload" (action == (Just Upload))
-                  , id: "upload"
-                  , title: "Upload [WIP]"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node {action = Just Upload}
-                  }
-              []
-            ]
-
-buttonClick (node@{action} /\ setNodePopup) _ (Link n) = H.div {className: "col-md-2"}
-            [ H.a { style: iconAStyle
-                  , className: glyphiconActive "transfer" (action == (Just $ Link n))
-                  , id: "link"
-                  , title: "Link [WIP]"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node {action = Just (Link n)}
-                  }
-              []
-            ]
-
-
-buttonClick (node@{action} /\ setNodePopup) _ Download = H.div {className: "col-md-2"}
-            [ H.a {style: iconAStyle
-                  , className: glyphiconActive "download" (action == (Just Download))
-                  , id: "download"
-                  , title: "Download [WIP]"
-                  , onClick: mkEffectFn1 $ \_ -> setNodePopup $ const $ node {action = Just Download}
-                  }
-              []
-            ]
+              where
+                action' = if action == (Just todo)
+                             then Nothing
+                             else (Just todo)
 
 buttonClick _ _ _ = H.div {} []
 
 
-buttonPop f =  H.div {className: "col-md-4"}
-              [ H.a { style: iconAStyle
-                    , className: (glyphicon "plus")
-                    , id: "create"
-                    , title: "Create"
-                    , onClick: mkEffectFn1 $ \_ -> f $ const $ Just CreatePopup
-                    }
-                []
-              ]
+
+
+
 
 -- END Popup View
 
@@ -401,5 +340,7 @@ reallyDelete d = H.div {className: "panel-footer"}
                   , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
               [H.text " Yes, delete!"]
             ]
+
+
 
 

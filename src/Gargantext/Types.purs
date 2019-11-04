@@ -223,8 +223,6 @@ fldr _        true   = "fa fa-folder-o"
 
 
 
-
-
 {-
 ------------------------------------------------------------
 instance ordNodeType :: Ord NodeType where
