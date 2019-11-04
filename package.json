@@ -9,7 +9,7 @@
         "dev": "webpack-dev-server --env dev --mode development",
         "repl": "pulp --psc-package repl",
         "clean": "rm -Rf output",
-        "purty-format": "find src -iname '*.purs' -exec yarn run purty {} --write \\;"
+        "format": "find src -iname '*.purs' -exec yarn run purty {} --write \\;"
     },
     "dependencies": {
         "@babel/polyfill": "^7.0.0",
