@@ -13,12 +13,15 @@ import Reactix as R
 import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_)
 import Reactix.DOM.HTML as H
-import Gargantext.Components.Search.Types (Database, SearchQuery(..), defaultSearchQuery, performSearch)
+import Gargantext.Components.Search.Types (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Search.SearchField (Search, searchField)
 import Gargantext.Sessions (Session)
 
-type Props = ( session :: Session, databases :: Array Database )
+type Props = ( session   :: Session
+             , databases :: Array Database
+             , langs     :: Array Lang
+             )
 
 searchBar :: Record Props -> R.Element
 searchBar props = R.createElement searchBarCpt props []
@@ -26,10 +29,10 @@ searchBar props = R.createElement searchBarCpt props []
 searchBarCpt :: R.Component Props
 searchBarCpt = R.hooksComponent "G.C.Node.SearchBar.searchBar" cpt
   where
-    cpt {session, databases} _ = do
+    cpt {session, databases, langs} _ = do
       search <- R.useState' Nothing
       onSearchChange session search
-      pure $ H.div { className: "" } [ searchField {databases, search }]
+      pure $ H.div { className: "" } [ searchField {databases, langs, search}]
 
 
 onSearchChange :: Session -> R.State (Maybe Search) -> R.Hooks Unit
@@ -49,8 +52,8 @@ onSearchChange session (search /\ setSearch) =
           log2 "Return:" r
           modalShow "addCorpus"
 
-    searchQuery {database: Nothing, term} =
+    searchQuery {database: Nothing, lang, term} =
       over SearchQuery (_ {query=term}) defaultSearchQuery
 
-    searchQuery {database: Just db, term} =
-      over SearchQuery (_ {databases=[db], query=term}) defaultSearchQuery
+    searchQuery {database: Just db, lang, term} =
+      over SearchQuery (_ {databases=[db], lang=lang, query=term}) defaultSearchQuery

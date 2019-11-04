@@ -10,7 +10,7 @@ import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option)
-import Gargantext.Components.Search.Types (Database(..), readDatabase)
+import Gargantext.Components.Search.Types (Database(..), readDatabase, Lang(..), readLang)
 
 select :: forall props.
           R.IsComponent String props (Array R.Element)
@@ -19,14 +19,23 @@ select :: forall props.
           -> R.Element
 select = R.createElement "select"
 
-type Search = { database :: Maybe Database, term :: String }
+
+
+type Search = { database :: Maybe Database
+              , term :: String
+              , lang :: Maybe Lang
+              }
 
 defaultSearch :: Search
-defaultSearch = { database: Nothing, term: "" }
+defaultSearch = { database: Nothing
+                , term: ""
+                , lang: Nothing
+                }
 
 type Props =
   -- list of databases to search, or parsers to use on uploads
   ( databases :: Array Database
+  , langs   :: Array Lang
   -- State hook for a search, how we get data in and out
   , search :: R.State (Maybe Search)
   )
@@ -45,15 +54,18 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
       let search = maybe defaultSearch identity (fst props.search)
       term <- R.useState' search.term
       db   <- R.useState' (Nothing :: Maybe Database)
+      lang <- R.useState' (Nothing :: Maybe Lang)
       pure $
           div { className: "search-field-group" }
               [ searchInput term
               , div {className: "text-primary center"} [text "in"]
-              , databaseInput db props.databases
-              , div { className: "panel-footer" } [ submitButton db term props.search ]
+              , databaseInput db   props.databases
+              , langInput     lang props.langs
+              , div { className: "panel-footer" } [ submitButton db term lang props.search ]
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
-                   || (p.databases /= p'.databases)
+                   || (p.databases  /= p'.databases )
+                   || (p.langs      /= p'.langs     )
 
 
 databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
@@ -72,6 +84,21 @@ databaseInput (db /\ setDB) dbs =
       liItem  db = option {className : "text-primary center"} [ text (show db) ]
 
 
+langInput :: R.State (Maybe Lang) -> Array Lang -> R.Element
+langInput (lang /\ setLang) langs =
+  div { className: "form-group" } 
+                   [ R2.select { className: "form-control"
+                               , onChange: mkEffectFn1
+                                         $ \e -> setLang
+                                         $ const
+                                         $ readLang
+                                         $ e .. "target" .. "value"
+                               } (liItem <$> langs)
+                   ]
+    where
+      liItem :: Lang -> R.Element
+      liItem  lang = option {className : "text-primary center"} [ text (show lang) ]
+
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
@@ -83,8 +110,12 @@ searchInput (term /\ setTerm) =
   where onChange = mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
 
 
-submitButton :: R.State (Maybe Database) -> R.State String -> R.State (Maybe Search) -> R.Element
-submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
+submitButton :: R.State (Maybe Database)
+             -> R.State String
+             -> R.State (Maybe Lang)
+             -> R.State (Maybe Search)
+             -> R.Element
+submitButton (database /\ _) (term /\ _) (lang /\ _) (_ /\ setSearch) =
   button { className: "btn btn-primary text-center"
          , type: "button"
          , onClick: click
@@ -93,4 +124,4 @@ submitButton (database /\ _) (term /\ _) (_ /\ setSearch) =
     click = mkEffectFn1 $ \_ -> do
       case term of
         "" -> setSearch $ const Nothing
-        _  -> setSearch $ const $ Just { database, term }
+        _  -> setSearch $ const $ Just { database, lang, term }

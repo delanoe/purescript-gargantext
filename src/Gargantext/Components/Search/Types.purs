@@ -18,60 +18,63 @@ import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 
+------------------------------------------------------------------------
+-- | Lang search specifications
+allLangs :: Array Lang
+allLangs = [ EN
+           , FR
+           , Universal
+           ]
+
+data Lang = FR | EN | Universal
+
+instance showLang :: Show Lang where
+  show FR = "FR"
+  show EN = "EN"
+  show Universal = "Universal"
+
+derive instance eqLang :: Eq Lang
+
+readLang :: String -> Maybe Lang
+readLang "FR"  = Just FR
+readLang "EN"  = Just EN
+readLang "Universal" = Just Universal
+readLang _           = Nothing
+
+------------------------------------------------------------------------
+-- | Database search specifications
 allDatabases :: Array Database
 allDatabases = [All, PubMed
-               , HAL_EN
-               , HAL_FR
-               , IsTex_EN
-               , IsTex_FR
-               , Isidore_EN, Isidore_FR
+               , HAL
+               , IsTex
+               , Isidore
                ]
 
 data Database = All          | PubMed
-              | HAL_EN       | HAL_FR
-              | IsTex_EN     | IsTex_FR
-              | Isidore_EN   | Isidore_FR
+              | HAL
+              | IsTex
+              | Isidore
 
-data Langs = FR | EN
-
--- | Types needed for now maybe not useful later (we could factorize the Type with Database Lang but no need for now)
-instance showLangs :: Show Langs where
-  show FR = "FR"
-  show EN = "EN"
 
 instance showDatabase :: Show Database where
   show All    = "In Gargantext"
   show PubMed = "PubMed"
-
-  show HAL_EN = "HAL_" <> show EN
-  show HAL_FR = "HAL_" <> show FR
-
-  show IsTex_EN  = "IsTex_" <> show EN
-  show IsTex_FR  = "IsTex_" <> show FR
-
-  show Isidore_EN = "Isidore_" <> show EN
-  show Isidore_FR = "Isidore_" <> show FR
+  show HAL    = "HAL"
+  show IsTex  = "IsTex"
+  show Isidore= "Isidore"
 
 readDatabase :: String -> Maybe Database
-readDatabase "All" = Just All
+readDatabase "All"    = Just All
 readDatabase "PubMed" = Just PubMed
-
-readDatabase "HAL_EN" = Just HAL_EN
-readDatabase "HAL_FR" = Just HAL_FR
-
-readDatabase "IsTex_EN" = Just IsTex_EN
-readDatabase "IsTex_FR" = Just IsTex_FR
-
-readDatabase "Isidore_EN" = Just Isidore_EN
-readDatabase "Isidore_FR" = Just Isidore_FR
-
-readDatabase _ = Nothing
+readDatabase "HAL"    = Just HAL
+readDatabase "IsTex"  = Just IsTex
+readDatabase "Isidore"= Just Isidore
+readDatabase _        = Nothing
 
 derive instance eqDatabase :: Eq Database
 
 instance encodeJsonDatabase :: EncodeJson Database where
   encodeJson a = encodeJson (show a)
-
 
 data SearchOrder
   = DateAsc
@@ -90,13 +93,15 @@ instance showSearchOrder :: Show SearchOrder where
   show ScoreDesc = "ScoreDesc"
 
 newtype SearchQuery = SearchQuery
-  { query :: String
+  { query     :: String
   , databases :: Array Database
-  , corpus_id :: Maybe Int
+  , lang     :: Maybe Lang
+  , node_id   :: Maybe Int
   , files_id  :: Array String
-  , offset :: Maybe Int
-  , limit :: Maybe Int
-  , order :: Maybe SearchOrder }
+  , offset    :: Maybe Int
+  , limit     :: Maybe Int
+  , order     :: Maybe SearchOrder 
+  }
 
 derive instance newtypeSearchQuery :: Newtype SearchQuery _
 
@@ -104,7 +109,8 @@ defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
   { query: ""
   , databases: allDatabases
-  , corpus_id: Nothing
+  , lang    : Nothing
+  , node_id: Nothing
   , files_id : []
   , offset: Nothing
   , limit: Nothing
@@ -123,10 +129,10 @@ instance searchQueryToQuery :: ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, databases, corpus_id, files_id})
+  encodeJson (SearchQuery {query, databases, node_id, files_id})
     =   "query"      := query
     ~> "databases"   := databases
-    ~>  "corpus_id"  := fromMaybe 0 corpus_id
+    ~>  "node_id"  := fromMaybe 0 node_id
     ~>  "files_id"   := files_id
     ~> jsonEmptyObject
 
