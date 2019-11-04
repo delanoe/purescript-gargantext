@@ -364,19 +364,19 @@ documentLayoutCpt = R.hooksComponent "G.P.Corpus.Document.documentLayout" cpt
         R2.createElement' docViewClass {path, loaded} []
       where
         tabType = TabDocument (TabNgramType CTabTerms)
-        path = {session, nodeId, listIds: [listId], corpusId, tabType}
+        path    = {session, nodeId, listIds: [listId], corpusId, tabType}
 
 ------------------------------------------------------------------------
-
-loadDocument :: Session -> Int -> Aff NodeDocument
-loadDocument session nodeId = get session $ NodeAPI Node (Just nodeId) ""
+loadDocument :: Session -> Maybe Int -> Int -> Aff NodeDocument
+loadDocument session corpusId nodeId =
+  get session $ SessionCorpusDocument corpusId (Just nodeId)
 
 loadData :: DocPath -> Aff LoadedData
-loadData {session, nodeId, listIds, tabType} = do
-  document <- loadDocument session nodeId
+loadData {session, nodeId, corpusId, listIds, tabType} = do
+  document    <- loadDocument session corpusId nodeId
   ngramsTable <- loadNgramsTable
     { session
-    , nodeId
+    , NodeId corpusId (Just nodeId)
     , listIds
     , params: { offset : 0, limit : 100, orderBy: Nothing}
     , tabType

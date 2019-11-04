@@ -89,8 +89,12 @@ import Gargantext.Sessions (Session, get, put, post)
 import Gargantext.Types (OrderBy(..), CTabNgramType(..), TabType, TermList(..), TermSize)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 
+data NodeId = NodeId { corpusId :: Int
+                     , documentId :: Maybe Int
+                     }
+
 type CoreParams s =
-  { nodeId  :: Int
+  { nodeId  :: NodeId
     -- ^ This node can be a corpus or contact.
   , listIds :: Array Int
   , tabType :: TabType
@@ -597,10 +601,12 @@ loadNgramsTable
   { nodeId, listIds, termListFilter, termSizeFilter, session
   , searchQuery, tabType, params: {offset, limit, orderBy}}
   = get session query
-  where query = GetNgrams { tabType, offset, limit, listIds
+  where
+    NodeId {corpusId, documentId} = nodeId
+    query = GetNgrams { tabType, offset, limit, listIds
                           , orderBy: convOrderBy <$> orderBy
                           , termListFilter, termSizeFilter
-                          , searchQuery } (Just nodeId)
+                          , searchQuery } (Just corpusId) documentId
 
 convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
 convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc

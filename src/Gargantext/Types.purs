@@ -103,7 +103,7 @@ instance optionalInstance :: Union r t s => Optional r s
 showTabType' :: TabType -> String
 showTabType' (TabCorpus   t) = show t
 showTabType' (TabDocument t) = show t
-showTabType' (TabPairing t) = show t
+showTabType' (TabPairing  t) = show t
 
 data TabPostQuery = TabPostQuery {
     offset :: Int

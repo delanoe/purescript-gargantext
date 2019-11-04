@@ -117,26 +117,27 @@ sessionPath :: R.SessionRoute -> String
 sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType' t))
 sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
 sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId) <> p
-sessionPath (R.GetNgrams opts i)    =
+sessionPath (R.GetNgrams opts c i)    =
   base opts.tabType
      $ "ngrams?ngramsType="
     <> showTabType' opts.tabType
-    <> offsetUrl opts.offset
-    <> limitUrl opts.limit
-    <> orderByUrl opts.orderBy
-    <> foldMap (\x -> "&list=" <> show x) opts.listIds
+    <> offsetUrl    opts.offset
+    <> limitUrl     opts.limit
+    <> orderByUrl   opts.orderBy
+    <> foldMap (\x -> "&list="     <> show x) opts.listIds
     <> foldMap (\x -> "&listType=" <> show x) opts.termListFilter
     <> foldMap termSizeFilter opts.termSizeFilter
     <> search opts.searchQuery
   where
-    base (TabCorpus _) = sessionPath <<< R.NodeAPI Node i
-    base _             = sessionPath <<< R.NodeAPI Url_Document i
-    termSizeFilter MonoTerm = "&minTermSize=0&maxTermSize=1"
+    base :: TabType -> String
+    base (TabCorpus _) = sessionPath <<< R.NodeAPI Node c
+    base _             = sessionPath <<< (R.SessionCorpusDocument c i)
+    termSizeFilter MonoTerm  = "&minTermSize=0&maxTermSize=1"
     termSizeFilter MultiTerm = "&minTermSize=2"
     search "" = ""
-    search s = "&search=" <> s
-sessionPath (R.ListDocument lId dId) =
-  sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ maybe 0 identity dId))
+    search s  = "&search=" <> s
+sessionPath (R.SessionCorpusDocument cId dId) =
+  sessionPath $ R.NodeAPI Corpus cId ("document/" <> (show $ maybe 0 identity dId))
 sessionPath (R.PutNgrams t listId termList i) =
   sessionPath $ R.NodeAPI Node i
       $ "ngrams?ngramsType="
