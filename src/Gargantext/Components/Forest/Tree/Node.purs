@@ -142,9 +142,9 @@ settingsBox Corpus = SettingsBox { show : true
                                              , Link Annuaire
                                              , Upload
                                              , Download
-                                             , Share
-                                             , Move
-                                             , Clone
+                                             --, Share
+                                             --, Move
+                                             --, Clone
                                              , Delete
                                              ]
                                  }

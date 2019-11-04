@@ -1,7 +1,7 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, searchField, searchFieldComponent )where
 
-import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||))
+import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||), (==), map, (<>))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
@@ -9,8 +9,8 @@ import Gargantext.Utils.Reactix as R2
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Reactix as R
-import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option)
-import Gargantext.Components.Search.Types (Database(..), readDatabase, Lang(..), readLang)
+import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option, text)
+import Gargantext.Components.Search.Types (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs)
 
 select :: forall props.
           R.IsComponent String props (Array R.Element)
@@ -43,24 +43,30 @@ type Props =
 searchField :: Record Props -> R.Element
 searchField p = R.createElement searchFieldComponent p []
 
-placeholder :: String
-placeholder = "Query, URL or FILE"
--- TODO add elsewhere "(works with Firefox or Chromium browsers)"
-
 searchFieldComponent :: R.Memo Props
 searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
   where
     cpt props _ = do
       let search = maybe defaultSearch identity (fst props.search)
       term <- R.useState' search.term
-      db   <- R.useState' (Nothing :: Maybe Database)
-      lang <- R.useState' (Nothing :: Maybe Lang)
+      db@(db' /\ _) <- R.useState' (Nothing :: Maybe Database)
+      lang          <- R.useState' (Nothing :: Maybe Lang)
+      org@(o /\ _)           <- R.useState' (Nothing :: Maybe Org)
+      fi            <- R.useState' ""
       pure $
           div { className: "search-field-group" }
               [ searchInput term
               , div {className: "text-primary center"} [text "in"]
               , databaseInput db   props.databases
-              , langInput     lang props.langs
+
+              , if db' /= Just PubMed then langInput     lang props.langs else div {} []
+              , if db' == Just HAL    then orgInput org allOrgs else div {} []
+              , if o == (Just $ CNRS {orgs:[]})
+                   then filterInput fi
+                   else if o == (Just $ IMT {orgs:[]})
+                   then ul {} $ map (\o -> li {} [input { type: "checkbox" }, text $ " " <> show o]) allIMTorgs
+                        else div {} []
+
               , div { className: "panel-footer" } [ submitButton db term lang props.search ]
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
@@ -87,7 +93,8 @@ databaseInput (db /\ setDB) dbs =
 langInput :: R.State (Maybe Lang) -> Array Lang -> R.Element
 langInput (lang /\ setLang) langs =
   div { className: "form-group" } 
-                   [ R2.select { className: "form-control"
+                   [ text "with lang"
+                   , R2.select { className: "form-control"
                                , onChange: mkEffectFn1
                                          $ \e -> setLang
                                          $ const
@@ -99,6 +106,30 @@ langInput (lang /\ setLang) langs =
       liItem :: Lang -> R.Element
       liItem  lang = option {className : "text-primary center"} [ text (show lang) ]
 
+orgInput :: R.State (Maybe Org) -> Array Org -> R.Element
+orgInput (org /\ setOrg) orgs =
+  div { className: "form-group" } 
+                   [ text "filter with organization: "
+                   , R2.select { className: "form-control"
+                               , onChange: mkEffectFn1
+                                         $ \e -> setOrg
+                                         $ const
+                                         $ readOrg
+                                         $ e .. "target" .. "value"
+                               } (liItem <$> orgs)
+                   ]
+    where
+      liItem :: Org -> R.Element
+      liItem  org = option {className : "text-primary center"} [ text (show org) ]
+
+filterInput :: R.State String -> R.Element
+filterInput (term /\ setTerm) =
+  input { defaultValue: term
+        , className: "form-control"
+        , type: "text"
+        , onChange: mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
+        , placeHolder : "Struct_Ids as integer" }
+
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
@@ -106,7 +137,7 @@ searchInput (term /\ setTerm) =
         , className: "form-control"
         , type: "text"
         , onChange
-        , placeholder }
+        , placeHolder: "Your Query here" }
   where onChange = mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
 
 

@@ -24,14 +24,16 @@ allLangs :: Array Lang
 allLangs = [ EN
            , FR
            , Universal
+           , No_extraction
            ]
 
-data Lang = FR | EN | Universal
+data Lang = FR | EN | Universal | No_extraction
 
 instance showLang :: Show Lang where
   show FR = "FR"
   show EN = "EN"
   show Universal = "Universal"
+  show No_extraction = "No_extraction"
 
 derive instance eqLang :: Eq Lang
 
@@ -39,7 +41,11 @@ readLang :: String -> Maybe Lang
 readLang "FR"  = Just FR
 readLang "EN"  = Just EN
 readLang "Universal" = Just Universal
+readLang "No_extraction" = Just No_extraction
 readLang _           = Nothing
+
+instance encodeJsonLang :: EncodeJson Lang where
+  encodeJson a = encodeJson (show a)
 
 ------------------------------------------------------------------------
 -- | Database search specifications
@@ -75,7 +81,126 @@ derive instance eqDatabase :: Eq Database
 
 instance encodeJsonDatabase :: EncodeJson Database where
   encodeJson a = encodeJson (show a)
+------------------------------------------------------------------------
+-- | Database Filter specifications
+-- filter by organization
 
+allOrgs :: Array Org
+allOrgs = [ All_Orgs
+          , IMT  {orgs:[]}
+          , CNRS {orgs:[]}
+          ]
+
+data Org = All_Orgs
+         | CNRS   { orgs :: Array Int }
+         | IMT    { orgs :: Array IMT_org }
+         | Others { orgs :: Array Int }
+
+instance showOrg :: Show Org where
+  show All_Orgs = "All__Orgs"
+  show (CNRS   _)    = "CNRS"
+  show (IMT    _)    = "IMT"
+  show (Others _)    = "Others"
+
+readOrg :: String -> Maybe Org
+readOrg "All_Orgs" = Just $ All_Orgs
+readOrg "CNRS"     = Just $ CNRS {orgs: []}
+readOrg "IMT"      = Just $ IMT  {orgs: []}
+readOrg "Others"   = Just $ Others  {orgs: []}
+readOrg _          = Nothing
+
+instance eqOrg :: Eq Org
+  where
+    eq All_Orgs All_Orgs = true
+    eq (CNRS _) (CNRS _) = true
+    eq (IMT  _) (IMT  _) = true
+    eq (Others _) (Others _)  = true
+    eq _  _        = false
+
+instance encodeJsonOrg :: EncodeJson Org where
+  encodeJson a = encodeJson (show a)
+
+------------------------------------------------------------------------
+allIMTorgs :: Array IMT_org
+allIMTorgs = [ ARMINES
+             , Eurecom
+             , IMT_Atlantique
+             , IMT_Business_School
+             , IMT_Lille_Douai
+             , IMT_Mines_ALES
+             , IMT_Mines_Albi
+             , Institut_MinesTelecom_Paris
+             , MINES_ParisTech
+             , Mines_Douai
+             , Mines_Nantes
+             , Mines_SaintEtienne
+             , Telecom_Bretagne
+             , Telecom_Ecole_de_Management
+             , Telecom_Lille
+             , Telecom_ParisTech
+             , Telecom_SudParis
+             ]
+
+data IMT_org = ARMINES
+              | Eurecom
+              | IMT_Atlantique
+              | IMT_Business_School
+              | IMT_Lille_Douai
+              | IMT_Mines_ALES
+              | IMT_Mines_Albi
+              | Institut_MinesTelecom_Paris
+              | MINES_ParisTech
+              | Mines_Douai
+              | Mines_Nantes
+              | Mines_SaintEtienne
+              | Telecom_Bretagne
+              | Telecom_Ecole_de_Management
+              | Telecom_Lille
+              | Telecom_ParisTech
+              | Telecom_SudParis
+
+instance showIMT_org :: Show IMT_org where
+  show ARMINES = "ARMINES"
+  show Eurecom = "Eurecom"
+  show IMT_Atlantique = "IMT_Atlantique"
+  show IMT_Business_School = "IMT_Business_School"
+  show IMT_Lille_Douai = "IMT_Lille_Douai"
+  show IMT_Mines_ALES = "IMT_Mines_ALES"
+  show IMT_Mines_Albi = "IMT_Mines_Albi"
+  show Institut_MinesTelecom_Paris = "Institut_MinesTelecom_Paris"
+  show MINES_ParisTech = "MINES_ParisTech"
+  show Mines_Douai = "Mines_Douai"
+  show Mines_Nantes = "Mines_Nantes"
+  show Mines_SaintEtienne = "Mines_SaintEtienne"
+  show Telecom_Bretagne = "Telecom_Bretagne"
+  show Telecom_Ecole_de_Management = "Telecom_Ecole_de_Management"
+  show Telecom_Lille = "Telecom_Lille"
+  show Telecom_ParisTech = "Telecom_ParisTech"
+  show Telecom_SudParis = "Telecom_SudParis"
+
+
+
+{-
+Mines_Douai 224096
+Telecom_Lille 144103
+Mines_Nantes 84538
+ARMINES 300104
+Telecom_ParisTech 300362
+Telecom_Bretagne 301262
+Telecom_Ecole_de_Management 301442
+MINES_ParisTech 301492
+Institut_MinesTelecom_Paris 302102
+Eurecom 421532
+IMT_Lille_Douai 497330
+Telecom_SudParis 352124
+IMT_Atlantique 481355
+IMT_Mines_Albi 469216
+IMT_Business_School 542824
+IMT_Mines_ALES 6279
+Mines_SaintEtienne 29212
+-}
+
+------------------------------------------------------------------------
 data SearchOrder
   = DateAsc
   | DateDesc
@@ -92,6 +217,7 @@ instance showSearchOrder :: Show SearchOrder where
   show ScoreAsc = "ScoreAsc"
   show ScoreDesc = "ScoreDesc"
 
+------------------------------------------------------------------------
 newtype SearchQuery = SearchQuery
   { query     :: String
   , databases :: Array Database
@@ -110,7 +236,7 @@ defaultSearchQuery = SearchQuery
   { query: ""
   , databases: allDatabases
   , lang    : Nothing
-  , node_id: Nothing
+  , node_id : Nothing
   , files_id : []
   , offset: Nothing
   , limit: Nothing
