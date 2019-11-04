@@ -363,7 +363,8 @@ panelAction :: (Action -> Aff Unit)
             -> R.State (Maybe NodePopup)
             -> R.Element
 panelAction d {id,name,nodeType,action, session} p = case action of
-    (Just (Documentation NodeUser))      -> R.fragment [H.div {} [ H.p {} [ H.text "This account is personal"]
+    (Just (Documentation NodeUser))      -> R.fragment [H.div {} [ infoTitle NodeUser
+                                                                 , H.p {} [ H.text "This account is personal"]
                                                                  , H.p {} [ H.text "See the instances terms of uses."]
                                                                  ]
                                                         ]
@@ -384,6 +385,12 @@ panelAction d {id,name,nodeType,action, session} p = case action of
         _        -> R.fragment [ H.div {} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."]), reallyDelete d]
     (Just (Add xs))          -> createNodeView d {id, name, nodeType} p xs
     _                        -> H.div {} []
+
+
+infoTitle :: NodeType -> R.Element
+infoTitle nt = H.div {} [ H.h3 {} [H.text "Documentation about " ]
+                        , H.h3 {className: fldr nt true} [ H.text $ show nt ]
+                        ]
 
 
 reallyDelete d = H.div {className: "panel-footer"}
