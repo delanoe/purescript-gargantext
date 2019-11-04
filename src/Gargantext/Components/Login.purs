@@ -29,7 +29,7 @@ import Gargantext.Utils.Reactix as R2
 
 type Props =
   ( backends :: Array Backend
-  , sessions :: R2.Reductor Sessions Sessions.Action
+  , sessions :: R2.Reducer Sessions Sessions.Action
   , visible :: R.State Boolean )
 
 type ModalProps = ( visible :: R.State Boolean )
@@ -104,11 +104,11 @@ chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
                  , H.ul {} [renderBackends backends backend ]
                  ]
 
-renderSessions :: R2.Reductor Sessions Sessions.Action -> R.Element
+renderSessions :: R2.Reducer Sessions Sessions.Action -> R.Element
 renderSessions sessions = R.fragment (renderSession sessions <$> unSessions (fst sessions))
 
 
-renderSession :: R2.Reductor Sessions Sessions.Action -> Session -> R.Element
+renderSession :: R2.Reducer Sessions Sessions.Action -> Session -> R.Element
 renderSession sessions session = H.li {} $ [ H.text $ "Active session: " <> show session ]
                                         <> [ H.a { on : {click}
                                                  , className: glyphicon "log-out"
@@ -140,7 +140,7 @@ renderBackend backend@(Backend {name}) state =
 
 type FormProps =
   ( backend :: Backend
-  , sessions :: R2.Reductor Sessions Sessions.Action
+  , sessions :: R2.Reducer Sessions Sessions.Action
   , visible :: R.State Boolean )
 
 form :: Record FormProps -> R.Element

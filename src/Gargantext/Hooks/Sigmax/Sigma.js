@@ -8,9 +8,9 @@ if (typeof window !== 'undefined') {
 
 require('sigma/plugins/garg.js').init(sigma, window);
 
-function _sigma(left, right, opts) {
+function _sigma(left, right) {
   try {
-    return right(new sigma(opts));
+    return right(new sigma());
   } catch(e) {
     return left(e);
   }

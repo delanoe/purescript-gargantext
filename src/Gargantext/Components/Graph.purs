@@ -4,12 +4,17 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude (bind, discard, pure, ($))
+import Prelude (bind, discard, pure, ($), (<$>), (<*>))
+import Data.Either (Either(..), either, note)
 import Data.Maybe (Maybe)
 import Data.Nullable (null)
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
+import DOM.Simple as DOM
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Gargantext.Hooks.Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as Sigmax
 
 type OnProps  = ()
@@ -26,11 +31,16 @@ type Edge = ( id :: String, source :: String, target :: String )
 
 type Graph = Sigmax.Graph Node Edge
 
-type Props sigma forceatlas2 =
+type Props sigma fa2 =
   ( graph :: Graph
-  , forceAtlas2Settings :: forceatlas2
+  , forceAtlas2Settings :: fa2
   , sigmaSettings :: sigma
-  , sigmaRef :: R.Ref (Maybe Sigma)
+  )
+
+type Last sigma fa2 =
+  ( graph :: R.Ref (Maybe Graph))
+  , fa2   :: R.Ref (Maybe fa2))
+  , sigma :: R.Ref (Maybe sigma)
   )
 
 graph :: forall s fa2. Record (Props s fa2) -> R.Element
@@ -40,11 +50,75 @@ graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
-      ref <- R.useRef null
+      containerRef <- R2.nullRef
+      sigmaRef <- R2.nothingRef
+      last <- R2.nothingRef
+      R.useEffectOnce do
+        let r = (/\) <$> assertContainer containerRef <*> assertCreateSigma unit
+        case r of
+          Left e -> e *> pure R.nothing
+          Right (container /\ sigma) -> do
+            Sigma.setSettings sigma props.sigmaSettings
+            good <- addRenderer container sigma
+            if good
+            setLast last props
+            R.setRef sigmaRef sigma
+
+      R.useEffect3 props.graph props.forceAtlas2Settings props.sigmaSettings
+        
       startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
-      pure $ RH.div { ref, style: {height: "95%"} } []
+      pure $ RH.div { ref: containerRef, style: {height: "95%"} } []
 
+graphEffect {graph, forceAtlas2Settings, sigmaSettings} =
+  R.useEffect3 graph forceAtlas2Settings sigmaSettings do
+    
+setLast :: forall s fa2. R.Ref (Record (Last s fa2)) -> R.Record (Props s fa2) -> Effect Unit
+setLast ref {graph, forceAtlas2Settings, sigmaSettings} = R.setRef ref new where
+  new = {graph, fa2: forceAtlas2Settings, sigma: sigmaSettings}
+
+assertContainer :: R.Ref (Nullable DOM.Element) -> Either (Effect Unit) DOM.Element
+assertContainer ref = note err $ R.readNullableRef containerRef where
+  err = log "[G.C.Graph.graph] container not found"
+
+assertCreateSigma :: Unit -> Either (Effect Unit) Sigma
+assertCreateSigma = either err Right $ Sigma.sigma where
+  err = log2 "[G.C.Graph.graph] Error initialising sigma: "
+
+addRenderer :: DOM.Element -> Sigma -> Effect Bool
+addRenderer container sigma = do
+  ret <- Sigma.addRenderer sigma {container, "type": "canvas"}
+  case ret of
+    Right r -> pure True
+    Left e -> log2 "[G.C.Graph.graph] Error creating renderer: " e *> pure False
+
+either err Right $ Sigma.sigma where
+  err = log2 "[G.C.Graph.graph] Error initialising sigma: "
+  
+useSigma containerRef props = do
+  sigmaRef <- R2.nothingRef
+  R.useEffectOnce $ delay unit $ \_ ->
+    case R.readNullableRef containerRef of
+      Nothing -> log "[G.C.Graph.useSigma] container not found!" *> pure R.nothing
+      Just container ->
+        case Sigma.sigma unit of
+          Left e -> log2 "[G.C.Graph.useSigma] Error initialising sigma: " e *> pure R.nothing
+          Right sigma -> do
+            log2 "[G.H.Sigmax.useSigma] Sigma initialised: " sigma
+            R.setRef sigmaRef sigma
+            pure $ Sigma.killSigma sigma
+          h sigma = do
+                log2 "[G.C.Graph.graph] Found sigma!" sigma
+  pure sigmaRef
+  where
+    named msg = "[G.C.Graph.useSigma] " <> msg
+    signed = log <<< named
+    signed2 msg = log2 <<< named msg
+
+
+
+assertAddRenderer sigma container =
+  
 type SigmaSettings =
   ( animationsTime :: Number
   , autoRescale :: Boolean

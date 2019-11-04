@@ -112,10 +112,10 @@ instance encodeJsonSessions :: EncodeJson Sessions where
 unSessions :: Sessions -> Array Session
 unSessions (Sessions {sessions:s}) = A.fromFoldable s
 
-useSessions :: R.Hooks (R2.Reductor Sessions Action)
-useSessions = R2.useReductor actAndSave (const loadSessions) unit
+useSessions :: R.Hooks (R2.Reducer Sessions Action)
+useSessions = R2.useReducer unit (const loadSessions) actAndSave
   where
-    actAndSave :: R2.Actor Sessions Action
+    actAndSave :: R2.Reduce Sessions Action
     actAndSave a s = act s a >>= saveSessions
 
 lookup :: SessionId -> Sessions -> Maybe Session

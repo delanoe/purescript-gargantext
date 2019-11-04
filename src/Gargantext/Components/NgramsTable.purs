@@ -200,7 +200,7 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NgramsTable.loadedNgramsTable" cpt
       pure $ R.fragment []
 
     useNgramsReducer :: State -> R.Hooks (R.Reducer State Action')
-    useNgramsReducer init = R2.useReductor' performNgramsAction init
+    useNgramsReducer init = R2.useReducer' init performNgramsAction
 
     performNgramsAction :: Action' -> State -> Effect State
     performNgramsAction (SetParentResetChildren' term) = pure -- TODO

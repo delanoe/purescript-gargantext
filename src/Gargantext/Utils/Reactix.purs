@@ -28,10 +28,8 @@ newtype Point = Point { x :: Number, y :: Number }
 
 -- a setter function, for useState
 type Setter t = (t -> t) -> Effect Unit
--- a reducer function living in effector, for useReductor
-type Actor s a = (a -> s -> Effect s)
 
--- | Turns a ReactElement into aReactix Element
+-- | Turns a ReactElement into a fReactix Element
 -- | buff (v.) to polish
 buff :: ReactElement -> R.Element
 buff = unsafeCoerce
@@ -41,33 +39,12 @@ buff = unsafeCoerce
 scuff :: R.Element -> ReactElement
 scuff = unsafeCoerce
 
--- class ToElement a where
---   toElement :: a -> R.Element
-
--- instance toElementElement :: ToElement R.Element where
---   toElement = identity
-
--- instance toElementReactElement :: ToElement ReactElement where
---   toElement = buff
-
--- instance toElementArray :: ToElement a => ToElement (Array a) where
---   toElement = R.fragment <<< map toElement
-
 createElement' :: forall required given
                 . ReactPropFields required given
                => ReactClass { children :: Children | required }
                -> Record given -> Array R.Element -> R.Element
 createElement' reactClass props children =
   buff $ React.createElement reactClass props $ scuff <$> children
-
-{-
-instance isComponentReactClass
-      :: R.IsComponent (ReactClass { children :: Children
-                                   | props
-                                   }) props (Array R.Element) where
-  createElement reactClass props children =
-    React.createElement reactClass props children
--}
 
 -- | Turns an aff into a useEffect-compatible Effect (Effect Unit)
 affEffect :: forall a. String -> Aff a -> Effect (Effect Unit)
@@ -80,6 +57,7 @@ mousePosition e = Point { x: RE.clientX e, y: RE.clientY e }
 
 domMousePosition :: DE.MouseEvent -> Point
 domMousePosition = mousePosition <<< unsafeCoerce
+
 -- | This is naughty, it quietly mutates the input and returns it
 named :: forall o. String -> o -> o
 named = flip $ defineProperty "name"
@@ -125,6 +103,12 @@ readPositionRef el = do
   let posRef = R.readRef el
   Element.boundingRect <$> toMaybe posRef
 
+readRefE :: forall r. R.Ref r -> Effect r
+readRefE ref = delay unit $ \_ -> pure $ R.readRef ref
+
+readNullableRefE :: forall r. R.Ref (Nullable r) -> Effect (Maybe r)
+readNullableRefE ref = delay unit $ \_ -> pure $ R.readNullableRef ref
+
 unsafeEventTarget :: forall event. event -> DOM.Element
 unsafeEventTarget e = (unsafeCoerce e).target
 
@@ -151,19 +135,22 @@ showText = text <<< show
 
 ----- Reactix's new effectful reducer: sneak-peek because anoe wants to demo on tuesday
 
+type Reduce state action = action -> state -> Effect state
+
 -- | Like a reducer, but lives in Effect
-type Reductor state action = Tuple state (action -> Effect Unit)
+type Reducer state action = Tuple state (action -> Effect Unit)
 
--- | Like useReductor, but lives in Effect
-useReductor :: forall s a i. Actor s a -> (i -> Effect s) -> i -> R.Hooks (Reductor s a)
-useReductor f i j =
-  hook $ \_ ->
-    pure $ currySecond $ tuple $ react ... "useReducer" $ args3 (mkEffectFn2 (flip f)) j (mkEffectFn1 i)
+useReducer :: forall s a i. i -> (i -> Effect s) -> Reduce s a -> R.Hooks (Reducer s a)
+useReducer initArg init reducer =
+  hook $ \_ -> pure $ currySecond $ tuple $ react ... "useReducer" $ args
+  where
+    args = args3 (mkEffectFn2 (flip reducer)) initArg init
 
--- | Like `useReductor`, but takes an initial state instead of an
+-- | Like `useReducer`, but takes an initial state instead of an
 -- | initialiser function and argument
-useReductor' :: forall s a. Actor s a -> s -> R.Hooks (Reductor s a)
-useReductor' r = useReductor r pure
+useReducer' :: forall s a. s -> Reduce s a -> R.Hooks (Reducer s a)
+useReducer' initArg = useReducer initArg pure
 
 render :: R.Element -> DOM.Element -> Effect Unit
 render e d = delay unit $ \_ -> pure $ R.reactDOM ... "render" $ args2 e d
+

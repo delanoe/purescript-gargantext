@@ -2,7 +2,9 @@ module Gargantext.Hooks.Sigmax.Sigma where
 
 import Prelude
 import Data.Either (Either(..))
+import Data.Function.Uncurried (Fn2, runFn2)
 import Data.Nullable (null)
+import DOM.Simple.Console (log)
 import Effect (Effect, foreachE)
 import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, mkEffectFn1, runEffectFn1, EffectFn2, runEffectFn2, EffectFn3, runEffectFn3, EffectFn4, runEffectFn4)
@@ -27,15 +29,14 @@ instance edgeProps
 type Graph n e = { nodes :: Array {|n}, edges :: Array {|e} }
 type SigmaOpts s = { settings :: s }
 
-sigma :: forall opts err. SigmaOpts opts -> Effect (Either err Sigma)
-sigma = runEffectFn3 _sigma Left Right
+sigma :: forall err. Unit -> (Either err Sigma)
+sigma _ = runFn2 _sigma Left Right
 
 foreign import _sigma ::
-  forall a b opts err.
-  EffectFn3 (a -> Either a b)
-            (b -> Either a b)
-            (SigmaOpts opts)
-            (Either err Sigma)
+  forall a b err.
+  Fn2 (a -> Either a b)
+      (b -> Either a b)
+      (Either err Sigma)
 
 graphRead :: forall node edge err. Sigma -> Graph node edge -> Effect (Either err Unit)
 graphRead = runEffectFn4 _graphRead Left Right
@@ -58,13 +59,15 @@ refreshForceAtlas sigma = do
   isRunning <- isForceAtlas2Running sigma
   if isRunning then
     pure unit
-  else do
-    _ <- setTimeout 100 $ do
-      restartForceAtlas2 sigma
-      _ <- setTimeout 100 $
-        stopForceAtlas2 sigma
-      pure unit
-    pure unit
+  else
+    void do
+      log "refreshForceAtlas not running"
+      setTimeout 100 $ void do
+        log "refreshForceAtlas restarting"
+        restartForceAtlas2 sigma
+        setTimeout 2000 $ void do
+          log "refreshForceAtlas stopping"
+          stopForceAtlas2 sigma
 
 addRenderer :: forall r err. Sigma -> r -> Effect (Either err Unit)
 addRenderer = runEffectFn4 _addRenderer Left Right
@@ -109,9 +112,7 @@ bind_ s e h = runEffectFn3 _bind s e (mkEffectFn1 h)
 foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 
 setSettings :: forall settings. Sigma -> settings -> Effect Unit
-setSettings sigma settings = do
-  runEffectFn2 _setSettings sigma settings
-  refresh sigma
+setSettings = runEffectFn2 _setSettings
 
 foreign import _setSettings :: forall settings. EffectFn2 Sigma settings Unit
 
@@ -122,7 +123,7 @@ restartForceAtlas2 :: Sigma -> Effect Unit
 restartForceAtlas2 sigma = runEffectFn2 _startForceAtlas2 sigma null
 
 stopForceAtlas2 :: Sigma -> Effect Unit
-stopForceAtlas2 = runEffectFn1 _stopForceAtlas2
+stopForceAtlas2 s = runEffectFn1 _stopForceAtlas2 s *> log "stopped"
 
 killForceAtlas2 :: Sigma -> Effect Unit
 killForceAtlas2 = runEffectFn1 _killForceAtlas2

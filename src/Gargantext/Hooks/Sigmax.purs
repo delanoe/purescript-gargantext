@@ -3,11 +3,11 @@ module Gargantext.Hooks.Sigmax
   -- )
   where
 
-import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=))
+import Prelude
 import Data.Array as A
 import Data.Either (Either(..), either)
 import Data.Foldable (sequence_)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.Nullable (Nullable)
 import Data.Sequence as Seq
 import Data.Sequence (Seq)
@@ -70,36 +70,24 @@ startSigma ref sigmaRef settings forceAtlas2Settings graph = do
           Sigma.refreshForceAtlas s
       pure $ pure unit
 
--- | Manages a sigma with the given settings
-useSigma :: forall settings. R.Ref (Nullable Element) -> settings -> R.Ref (Maybe Sigma) -> R.Hooks {sigma :: Sigma, isNew :: Boolean}
-useSigma container settings sigmaRef = do
-  sigma <- newSigma sigmaRef
-  let isNew = case (readSigma sigma) of
-        Just _ -> false
-        _      -> true
-  R.useEffect1 isNew $ do
-    log2 "isNew" isNew
-    log2 "sigmaRef" $ R.readRef sigmaRef
-    log2 "sigma" sigma
-    delay unit $ handleSigma sigma (readSigma sigma)
-  pure $ {sigma, isNew}
-  where
-    newSigma sigmaRef' = do
-      let mSigma = R.readRef sigmaRef'
-      case mSigma of
-        Just sigma -> pure sigma
-        Nothing    -> do
-          s <- R2.nothingRef
-          c <- R.useRef Seq.empty
-          pure {sigma: s, cleanup: c}
-    handleSigma sigma (Just _) _ = do
-      pure R.nothing
-    handleSigma sigma Nothing _ = do
-      ret <- createSigma settings
-      traverse_ (writeSigma sigma <<< Just) ret
-      R.setRef sigmaRef $ Just sigma
-      --pure $ cleanupSigma sigma "useSigma"
-      pure $ R.nothing
+useSigma :: R.Hooks (R.Ref (Maybe Sigma))
+useSigma = do
+  sigmaRef <- R2.nothingRef
+  R.useEffectOnce $ delay unit $ \_ ->
+    case Sigma.sigma unit of
+      Left e ->
+        log2 "[G.H.Sigmax.useSigma] Error initialising sigma: " e
+      Right sigma -> do
+        log2 "[G.H.Sigmax.useSigma] Sigma initialised: " sigma
+        R.setRef sigmaRef (Sigma.sigma unit)
+
+updateSettings :: forall settings. Sigma -> R.Ref settings -> settings -> Effect Bool
+updateSettings sigma ref settings =
+  | (R.readRef ref) == settings = pure false
+  | otherwise
+      =  Sigma.setSettings sigma settings
+      *> pure $ R.setRef ref settings
+      *> pure true
 
 -- | Manages a renderer for the sigma
 useCanvasRenderer :: R.Ref (Nullable Element) -> Sigma -> R.Hooks Unit
@@ -193,8 +181,8 @@ useForceAtlas2 sigma settings =
       log sigma
       Sigma.startForceAtlas2 sig settings
       cleanupFirst sigma (Sigma.killForceAtlas2 sig)
-    startingMsg = "[Graph] Starting ForceAtlas2"
-    sigmaNotFoundMsg = "[Graph] Sigma not found, not initialising"
+    startingMsg = "[Sigmax] Starting ForceAtlas2"
+    sigmaNotFoundMsg = "[Sigmax] Sigma not found, not initialising"
 
 dependOnSigma :: Sigma -> String -> (Sigma.Sigma -> Effect Unit) -> Effect Unit
 dependOnSigma sigma notFoundMsg f = do
