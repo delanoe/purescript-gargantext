@@ -24,6 +24,7 @@ import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Effect.Uncurried (mkEffectFn1)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import React (ReactClass, ReactElement, Children)
@@ -114,8 +115,9 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                         , name: "search"
                         , placeholder: "Search"
                         , type: "value"
-                        , value: searchQuery
-                        , on: {input: \e -> setSearchQuery (R2.unsafeEventValue e)}}
+                        , defaultValue: searchQuery
+                        , onChange: onSearchInputChange
+                        }
               , H.div {} (
                    if A.null props.tableBody && searchQuery /= "" then [
                      H.button { className: "btn btn-primary"
@@ -170,6 +172,7 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
     setSearchQuery    x = setPath $ _ { searchQuery = x }
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
+    onSearchInputChange = mkEffectFn1 $ \e -> setSearchQuery (R2.unsafeEventValue e)
 
 toggleMap :: forall a. a -> Maybe a -> Maybe a
 toggleMap _ (Just _) = Nothing
