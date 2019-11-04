@@ -6,10 +6,10 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a)
 import Gargantext.Components.Search.Types (Database)
+import Gargantext.Utils.Reactix as R2
 
 select
   :: forall props
@@ -76,7 +76,7 @@ searchInput (term /\ setTerm) =
         , type: "text"
         , onChange
         , placeholder }
-  where onChange = mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
+  where onChange = mkEffectFn1 $ \e -> setTerm $ const $ R2.unsafeEventValue e
 
 
 submitButton :: R.State (Maybe Database) -> R.State String -> R.State (Maybe Search) -> R.Element
