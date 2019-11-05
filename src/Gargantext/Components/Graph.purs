@@ -38,8 +38,8 @@ type Props sigma fa2 =
   )
 
 type Last sigma fa2 =
-  ( graph :: R.Ref (Maybe Graph))
-  , fa2   :: R.Ref (Maybe fa2))
+  ( graph :: R.Ref (Maybe Graph)
+  , fa2   :: R.Ref (Maybe fa2)
   , sigma :: R.Ref (Maybe sigma)
   )
 
@@ -60,22 +60,24 @@ graphCpt = R.hooksComponent "Graph" cpt
           Right (container /\ sigma) -> do
             Sigma.setSettings sigma props.sigmaSettings
             good <- addRenderer container sigma
-            if good
-            setLast last props
+            if good then
+              setLast last props
+            else
+              pure unit
             R.setRef sigmaRef sigma
 
-      R.useEffect3 props.graph props.forceAtlas2Settings props.sigmaSettings
-        
-      startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+      R.useEffect3 props.graph props.forceAtlas2Settings props.sigmaSettings $
+        startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
       pure $ RH.div { ref: containerRef, style: {height: "95%"} } []
 
-graphEffect {graph, forceAtlas2Settings, sigmaSettings} =
-  R.useEffect3 graph forceAtlas2Settings sigmaSettings do
+graphEffect {graph, forceAtlas2Settings, sigmaSettings} = R.useEffect3 graph forceAtlas2Settings sigmaSettings $
+  pure unit
     
 setLast :: forall s fa2. R.Ref (Record (Last s fa2)) -> R.Record (Props s fa2) -> Effect Unit
-setLast ref {graph, forceAtlas2Settings, sigmaSettings} = R.setRef ref new where
-  new = {graph, fa2: forceAtlas2Settings, sigma: sigmaSettings}
+setLast ref {graph, forceAtlas2Settings, sigmaSettings} = R.setRef ref new
+  where
+    new = {graph, fa2: forceAtlas2Settings, sigma: sigmaSettings}
 
 assertContainer :: R.Ref (Nullable DOM.Element) -> Either (Effect Unit) DOM.Element
 assertContainer ref = note err $ R.readNullableRef containerRef where
@@ -92,8 +94,8 @@ addRenderer container sigma = do
     Right r -> pure True
     Left e -> log2 "[G.C.Graph.graph] Error creating renderer: " e *> pure False
 
-either err Right $ Sigma.sigma where
-  err = log2 "[G.C.Graph.graph] Error initialising sigma: "
+  --either err Right $ Sigma.sigma where
+  --  err = log2 "[G.C.Graph.graph] Error initialising sigma: "
   
 useSigma containerRef props = do
   sigmaRef <- R2.nothingRef
@@ -107,8 +109,8 @@ useSigma containerRef props = do
             log2 "[G.H.Sigmax.useSigma] Sigma initialised: " sigma
             R.setRef sigmaRef sigma
             pure $ Sigma.killSigma sigma
-          h sigma = do
-                log2 "[G.C.Graph.graph] Found sigma!" sigma
+          --h sigma = do
+          --      log2 "[G.C.Graph.graph] Found sigma!" sigma
   pure sigmaRef
   where
     named msg = "[G.C.Graph.useSigma] " <> msg
@@ -117,7 +119,7 @@ useSigma containerRef props = do
 
 
 
-assertAddRenderer sigma container =
+--assertAddRenderer sigma container =
   
 type SigmaSettings =
   ( animationsTime :: Number

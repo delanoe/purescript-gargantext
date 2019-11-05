@@ -49,7 +49,8 @@ cleanupFirst sigma =
 
 startSigma :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref (Maybe Sigma) -> settings -> faSettings -> Graph n e -> R.Hooks Unit
 startSigma ref sigmaRef settings forceAtlas2Settings graph = do
-  {sigma, isNew} <- useSigma ref settings sigmaRef
+  --{sigma, isNew} <- useSigma ref settings sigmaRef
+  sigmaRef <- useSigma
   useCanvasRenderer ref sigma
 
   if isNew then do
@@ -72,22 +73,33 @@ startSigma ref sigmaRef settings forceAtlas2Settings graph = do
 
 useSigma :: R.Hooks (R.Ref (Maybe Sigma))
 useSigma = do
-  sigmaRef <- R2.nothingRef
-  R.useEffectOnce $ delay unit $ \_ ->
-    case Sigma.sigma unit of
-      Left e ->
-        log2 "[G.H.Sigmax.useSigma] Error initialising sigma: " e
-      Right sigma -> do
-        log2 "[G.H.Sigmax.useSigma] Sigma initialised: " sigma
-        R.setRef sigmaRef (Sigma.sigma unit)
+  sRef <- R2.nothingRef
+  cleanupRef <- R.useRef Seq.empty
+  sigmaRef <- R.useRef $ Just { sigma: sRef, cleanup: cleanupRef }
 
-updateSettings :: forall settings. Sigma -> R.Ref settings -> settings -> Effect Bool
+  R.useEffectOnce $ delay unit $ \_ -> do
+    let s = Sigma.sigma unit
+    case s of
+      Left e -> do
+        pure $ log2 "[G.H.Sigmax.useSigma] Error initialising sigma: " e
+      Right sigma -> do
+        _ <- pure $ log2 "[G.H.Sigmax.useSigma] Sigma initialised: " sigma
+        _ <- pure $ R.setRef sRef $ Just sigma
+        pure $ pure unit
+
+  pure sigmaRef
+
+updateSettings :: forall settings. Eq settings => Sigma -> R.Ref settings -> settings -> Effect Boolean
 updateSettings sigma ref settings =
-  | (R.readRef ref) == settings = pure false
-  | otherwise
-      =  Sigma.setSettings sigma settings
-      *> pure $ R.setRef ref settings
-      *> pure true
+  if (R.readRef ref) == settings then
+    pure false
+  else
+    case R.readRef sigma.sigma of
+      Nothing -> pure false
+      Just s  -> do
+        _ <- Sigma.setSettings s settings
+        _ <- pure $ R.setRef ref settings
+        pure true
 
 -- | Manages a renderer for the sigma
 useCanvasRenderer :: R.Ref (Nullable Element) -> Sigma -> R.Hooks Unit
@@ -112,14 +124,18 @@ useCanvasRenderer container sigma =
     errorKillingMsg      = "[useCanvasRenderer] Error killing renderer:"
     killedMsg            = "[useCanvasRenderer] Killed renderer"
 
-createSigma :: forall settings err. settings -> Effect (Either err Sigma.Sigma)
-createSigma settings = do
-  log2 "[useSigma] Initializing sigma with settings" settings
-  ret <- Sigma.sigma {settings}
-  ret <$ logStatus ret
-  where
-    logStatus (Left err) = log2 "[useSigma] Error during sigma creation:" err
-    logStatus (Right x) = log2 "[useSigma] Initialised sigma successfully:" x
+--createSigma :: forall settings err. settings -> Effect (Either err Sigma.Sigma)
+--createSigma settings = do
+--  log2 "[useSigma] Initializing sigma with settings" settings
+--  ret <- Sigma.sigma unit
+--  case ret of
+--    Left err -> pure unit
+--    Right s -> Sigma.setSettings s settings
+--  _ <- pure $ logStatus ret
+--  pure ret
+--  where
+--    logStatus (Left err) = log2 "[useSigma] Error during sigma creation:" err
+--    logStatus (Right x) = log2 "[useSigma] Initialised sigma successfully:" x
 
 cleanupSigma :: Sigma -> String -> Effect Unit
 cleanupSigma sigma context = traverse_ kill (readSigma sigma)
