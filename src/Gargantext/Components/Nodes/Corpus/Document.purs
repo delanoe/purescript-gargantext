@@ -369,14 +369,14 @@ documentLayoutCpt = R.hooksComponent "G.P.Corpus.Document.documentLayout" cpt
 ------------------------------------------------------------------------
 loadDocument :: Session -> Maybe Int -> Int -> Aff NodeDocument
 loadDocument session corpusId nodeId =
-  get session $ SessionCorpusDocument corpusId (Just nodeId)
+  get session $ CorpusDocumentAPI corpusId (Just nodeId)
 
 loadData :: DocPath -> Aff LoadedData
 loadData {session, nodeId, corpusId, listIds, tabType} = do
   document    <- loadDocument session corpusId nodeId
   ngramsTable <- loadNgramsTable
     { session
-    , NodeId corpusId (Just nodeId)
+    -- , NodeId corpusId (Just nodeId)
     , listIds
     , params: { offset : 0, limit : 100, orderBy: Nothing}
     , tabType

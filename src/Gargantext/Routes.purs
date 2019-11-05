@@ -2,7 +2,7 @@ module Gargantext.Routes where
 
 import Prelude
 import Data.Maybe (Maybe)
-import Gargantext.Types (ChartOpts, CorpusMetricOpts, Id, Limit, ListId, NgramsGetOpts, NodeType, Offset, OrderBy, SearchOpts, SessionId, TabType, TermList)
+import Gargantext.Types (ChartOpts, CorpusMetricOpts, Id, Limit, ListId, NgramsGetParams, NgramsPutParams, NodeType, Offset, OrderBy, SearchOpts, SessionId, TabType, TermList)
 
 data AppRoute
   = Home
@@ -19,14 +19,15 @@ data AppRoute
     | UserPage       SessionId Int
     | ContactPage    SessionId Int
 
+-- TODO renaming suggestion RouteAPI?
 data SessionRoute
   = Tab TabType (Maybe Id)
   | Children NodeType Offset Limit (Maybe OrderBy) (Maybe Id)
-  | GetNgrams    NgramsGetOpts (Maybe Id) (Maybe Id)
-  | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
+  | GetNgrams NgramsGetParams
+  | PutNgrams NgramsPutParams
   -- ^ This name is not good. In particular this URL is used both in PUT and POST.
   | NodeAPI NodeType (Maybe Id) String
-  | SessionCorpusDocument (Maybe Id) (Maybe Id)
+  | CorpusDocumentAPI (Maybe Id) (Maybe Id) String
   | Search SearchOpts (Maybe Id)
   | CorpusMetrics CorpusMetricOpts  (Maybe Id)
   | Chart ChartOpts (Maybe Id)

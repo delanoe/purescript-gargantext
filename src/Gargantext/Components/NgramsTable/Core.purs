@@ -89,28 +89,30 @@ import Gargantext.Sessions (Session, get, put, post)
 import Gargantext.Types (OrderBy(..), CTabNgramType(..), TabType, TermList(..), TermSize)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 
+-- TODO the name is misleading
 data NodeId = NodeId { corpusId :: Int
                      , documentId :: Maybe Int
                      }
 
-type CoreParams s =
-  { nodeId  :: NodeId
+type CoreParams nodeId extra =
+  { nodeId  :: nodeId
     -- ^ This node can be a corpus or contact.
   , listIds :: Array Int
   , tabType :: TabType
   , session :: Session
-  | s
+  | extra
   }
 
-type PageParams =
+type PageParams nodeId =
   CoreParams
+    nodeId
     ( params         :: T.Params
     , searchQuery    :: String
     , termListFilter :: Maybe TermList -- Nothing means all
     , termSizeFilter :: Maybe TermSize -- Nothing means all
     )
 
-initialPageParams :: Session -> Int -> Array Int -> TabType -> PageParams
+initialPageParams :: forall nodeId. Session -> nodeId -> Array Int -> TabType -> PageParams nodeId
 initialPageParams session nodeId listIds tabType =
   { nodeId
   , listIds
@@ -564,14 +566,14 @@ type CoreState s =
   | s
   }
 
-postNewNgrams :: forall s. Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
+postNewNgrams :: forall n s. Array NgramsTerm -> Maybe TermList -> CoreParams n s -> Aff Unit
 postNewNgrams newNgrams mayList {nodeId, listIds, tabType, session} =
   when (not (A.null newNgrams)) $ do
     (_ :: Array Unit) <- post session p newNgrams
     pure unit
   where p = PutNgrams tabType (head listIds) mayList (Just nodeId)
 
-postNewElems :: forall s. NewElems -> CoreParams s -> Aff Unit
+postNewElems :: forall n s. NewElems -> CoreParams n s -> Aff Unit
 postNewElems newElems params = void $ traverseWithIndex postNewElem newElems
   where
     postNewElem ngrams list = postNewNgrams [ngrams] (Just list) params
@@ -580,11 +582,12 @@ addNewNgram :: CTabNgramType -> NgramsTerm -> TermList -> NgramsTablePatch
 addNewNgram ntype ngrams list = { ngramsPatches: mempty
                           , ngramsNewElems: Map.singleton (normNgram ntype ngrams) list }
 
-putNgramsPatches :: forall s. CoreParams s -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
+-- TODO putNgramsPatches :: forall s. CoreParams Int s -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
+putNgramsPatches :: forall n s. CoreParams n s -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
-commitPatch :: forall p s. CoreParams p
+commitPatch :: forall n p s. CoreParams n p
             -> Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
 commitPatch props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNewElems}}) = do
   let pt = Versioned { version, data: ngramsPatches }
@@ -596,7 +599,7 @@ commitPatch props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNe
       }
     -- TODO: check that pt.version == s.ngramsTablePatch.version
 
-loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
+loadNgramsTable :: PageParams NodeId -> Aff VersionedNgramsTable
 loadNgramsTable
   { nodeId, listIds, termListFilter, termSizeFilter, session
   , searchQuery, tabType, params: {offset, limit, orderBy}}
@@ -604,9 +607,9 @@ loadNgramsTable
   where
     NodeId {corpusId, documentId} = nodeId
     query = GetNgrams { tabType, offset, limit, listIds
-                          , orderBy: convOrderBy <$> orderBy
-                          , termListFilter, termSizeFilter
-                          , searchQuery } (Just corpusId) documentId
+                      , orderBy: convOrderBy <$> orderBy
+                      , termListFilter, termSizeFilter
+                      , searchQuery } (Just corpusId) documentId
 
 convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
 convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc

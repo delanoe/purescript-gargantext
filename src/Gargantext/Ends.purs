@@ -14,6 +14,12 @@ import Gargantext.Types
    ( ApiVersion, Limit, NodePath, NodeType(..), Offset, TabType(..)
    , TermSize(..), nodePath, nodeTypePath, showTabType')
 
+joinUrl :: String -> String -> String
+joinUrl p "" = p
+joinUrl p q  = p <> "/" <> q
+
+infixr 5 joinUrl as </>
+
 -- | A means of generating a url to visit, a destination
 class ToUrl conf p where
   toUrl :: conf -> p -> String
@@ -33,7 +39,7 @@ backend version prePath baseUrl name = Backend { name, version, prePath, baseUrl
 
 -- | Creates a backend url from a backend and the path as a string
 backendUrl :: Backend -> String -> String
-backendUrl (Backend b) path = b.baseUrl <> b.prePath <> show b.version <> "/" <> path
+backendUrl (Backend b) path = b.baseUrl <> b.prePath <> show b.version </> path
 
 derive instance genericBackend :: Generic Backend _
 
@@ -117,7 +123,7 @@ sessionPath :: R.SessionRoute -> String
 sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType' t))
 sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
 sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId) <> p
-sessionPath (R.GetNgrams opts c i)    =
+sessionPath (R.GetNgrams opts)      =
   base opts.tabType
      $ "ngrams?ngramsType="
     <> showTabType' opts.tabType
@@ -129,24 +135,26 @@ sessionPath (R.GetNgrams opts c i)    =
     <> foldMap termSizeFilter opts.termSizeFilter
     <> search opts.searchQuery
   where
-    base :: TabType -> String
-    base (TabCorpus _) = sessionPath <<< R.NodeAPI Node c
-    base _             = sessionPath <<< (R.SessionCorpusDocument c i)
+    base :: TabType -> String -> String
+    base (TabCorpus _) = case opts.nodeId of
+                           -- Just _  -> error
+                           Nothing -> sessionPath <<< R.NodeAPI Node opts.corpusId
+    base _             = sessionPath <<< R.CorpusDocumentAPI opts.corpusId opts.nodeId
     termSizeFilter MonoTerm  = "&minTermSize=0&maxTermSize=1"
     termSizeFilter MultiTerm = "&minTermSize=2"
     search "" = ""
     search s  = "&search=" <> s
-sessionPath (R.SessionCorpusDocument cId dId) =
-  sessionPath $ R.NodeAPI Corpus cId ("document/" <> (show $ maybe 0 identity dId))
-sessionPath (R.PutNgrams t listId termList i) =
+sessionPath (R.CorpusDocumentAPI cId dId p) =
+  sessionPath $ R.NodeAPI Corpus cId $ "document" </> show (maybe 0 identity dId) </> p
+sessionPath (R.PutNgrams {tabType, listId, termList, nodeId, corpusId}) =
   sessionPath $ R.NodeAPI Node i
       $ "ngrams?ngramsType="
-     <> showTabType' t
+     <> showTabType' tabType
      <> maybe "" (\x -> "&list=" <> show x) listId
      <> foldMap (\x -> "&listType=" <> show x) termList
 sessionPath (R.NodeAPI nt i p) = nodeTypePath nt
-                              <> (maybe "" (\i' -> "/" <> show i') i)
-                              <> (if p == "" then "" else "/" <> p)
+                              </> maybe "" show i
+                              </> p
 sessionPath (R.Search {listId,limit,offset,orderBy} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ "search?list_id=" <> show listId

@@ -267,7 +267,7 @@ nodeTypePath Team      = "team"
 
 type ListId = Int
 
-type NgramsGetOpts =
+type NgramsGetParams =
   { tabType        :: TabType
   , offset         :: Offset
   , limit          :: Limit
@@ -276,6 +276,16 @@ type NgramsGetOpts =
   , termListFilter :: Maybe TermList
   , termSizeFilter :: Maybe TermSize
   , searchQuery    :: String
+  , corpusId       :: Maybe Id
+  , nodeId         :: Maybe Id
+  }
+
+type NgramsPutParams =
+  { tabType  :: TabType
+  , listId   :: Maybe ListId
+  , termList :: Maybe TermList
+  , corpusId :: Maybe Id
+  , nodeId   :: Maybe Id
   }
 
 type SearchOpts =
