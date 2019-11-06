@@ -3,23 +3,23 @@ module Gargantext.Hooks.Sigmax
   -- )
   where
 
-import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=))
+import DOM.Simple.Console (log, log2)
+import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Either (Either(..), either)
 import Data.Foldable (sequence_)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.Sequence as Seq
 import Data.Sequence (Seq)
+import Data.Sequence as Seq
 import Data.Traversable (traverse_)
-import DOM.Simple.Console (log, log2)
-import DOM.Simple.Types (Element)
 import Effect (Effect)
 import FFI.Simple (delay)
-import Reactix as R
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types (Graph(..))
+import Gargantext.Utils.Reactix as R2
+import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=))
+import Reactix as R
 
 type Sigma =
   { sigma :: R.Ref (Maybe Sigma.Sigma)
@@ -28,6 +28,12 @@ type Sigma =
   }
 
 type Data n e = { graph :: R.Ref (Graph n e) }
+
+initSigma :: R.Hooks Sigma
+initSigma = do
+    s <- R2.nothingRef
+    c <- R.useRef Seq.empty
+    pure { sigma: s, cleanup: c }
 
 readSigma :: Sigma -> Maybe Sigma.Sigma
 readSigma sigma = R.readRef sigma.sigma
@@ -49,7 +55,7 @@ cleanupFirst sigma =
 
 startSigma :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref (Maybe Sigma) -> settings -> faSettings -> Graph n e -> R.Hooks Unit
 startSigma ref sigmaRef settings forceAtlas2Settings graph = do
-  {sigma, isNew} <- useSigma ref settings sigmaRef
+  {sigma, isNew} <- useSigma settings sigmaRef
   useCanvasRenderer ref sigma
 
   if isNew then do
@@ -71,8 +77,8 @@ startSigma ref sigmaRef settings forceAtlas2Settings graph = do
       pure $ pure unit
 
 -- | Manages a sigma with the given settings
-useSigma :: forall settings. R.Ref (Nullable Element) -> settings -> R.Ref (Maybe Sigma) -> R.Hooks {sigma :: Sigma, isNew :: Boolean}
-useSigma container settings sigmaRef = do
+useSigma :: forall settings. settings -> R.Ref (Maybe Sigma) -> R.Hooks {sigma :: Sigma, isNew :: Boolean}
+useSigma settings sigmaRef = do
   sigma <- newSigma sigmaRef
   let isNew = case (readSigma sigma) of
         Just _ -> false
@@ -101,12 +107,82 @@ useSigma container settings sigmaRef = do
       --pure $ cleanupSigma sigma "useSigma"
       pure $ R.nothing
 
+startSigmaEff :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref Sigma -> settings -> faSettings -> Graph n e -> Effect Unit
+startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
+  log "[startSigmaEff] calling useSigmaEff"
+  sigma <- useSigmaEff settings sigmaRef
+  log "[startSigmaEff] calling useCanvasRendererEff"
+  useCanvasRendererEff ref sigma
+
+  log "[startSigmaEff] calling useDataEff"
+  useDataEff sigma graph
+  log "[startSigmaEff] calling useForceAtlas2Eff"
+  useForceAtlas2Eff sigma forceAtlas2Settings
+
+  --handleRefresh sigma
+
+  where
+    handleRefresh :: Sigma -> Effect Unit
+    handleRefresh sigma = do
+      let rSigma = readSigma sigma
+      _ <- case rSigma of
+        Nothing -> log2 "[handleRefresh] can't refresh" sigma
+        Just s -> do
+          Sigma.refreshForceAtlas s
+      pure unit
+
+
+useSigmaEff :: forall settings. settings -> R.Ref Sigma -> Effect Sigma
+useSigmaEff settings sigmaRef = do
+  --sigma <- newSigma
+  --delay unit $ handleSigma sigma (readSigma sigma)
+  let sigma = R.readRef sigmaRef
+  handleSigma sigma (readSigma sigma)
+  pure sigma
+
+  where
+    --newSigma = do
+    --  s <- R2.nothingRef
+    --  c <- R.useRef Seq.empty
+    --  pure { sigma: s, cleanup: c }
+    handleSigma :: Sigma -> (Maybe Sigma.Sigma) -> Effect Unit
+    handleSigma sigma (Just _) = do
+      pure unit
+    handleSigma sigma Nothing = do
+      ret <- createSigma settings
+      traverse_ (writeSigma sigma <<< Just) ret
+      R.setRef sigmaRef sigma
+      --pure $ cleanupSigma sigma "useSigma"
+      pure unit
+
+
 -- | Manages a renderer for the sigma
 useCanvasRenderer :: R.Ref (Nullable Element) -> Sigma -> R.Hooks Unit
 useCanvasRenderer container sigma =
   R.useEffect2' container sigma.sigma $
     delay unit $ \_ ->
       dependOnContainer container containerNotFoundMsg withContainer
+  where
+    withContainer c = dependOnSigma sigma sigmaNotFoundMsg withSigma
+      where -- close over c
+        withSigma sig = addRenderer sig renderer >>= handle
+          where -- close over sig
+            renderer = { "type": "canvas", container: c }
+            handle (Right _) = cleanupFirst sigma (Sigma.killRenderer sig renderer >>= logCleanup)
+            handle (Left e) =
+              log2 errorAddingMsg e *> cleanupSigma sigma "useCanvasRenderer"
+    logCleanup (Left e) = log2 errorKillingMsg e
+    logCleanup _ = log killedMsg
+    containerNotFoundMsg = "[useCanvasRenderer] Container not found, not adding renderer"
+    sigmaNotFoundMsg     = "[useCanvasRenderer] Sigma not found, not adding renderer"
+    errorAddingMsg       = "[useCanvasRenderer] Error adding canvas renderer: "
+    errorKillingMsg      = "[useCanvasRenderer] Error killing renderer:"
+    killedMsg            = "[useCanvasRenderer] Killed renderer"
+
+useCanvasRendererEff :: R.Ref (Nullable Element) -> Sigma -> Effect Unit
+useCanvasRendererEff container sigma =
+  delay unit $ \_ ->
+    dependOnContainer container containerNotFoundMsg withContainer
   where
     withContainer c = dependOnSigma sigma sigmaNotFoundMsg withSigma
       where -- close over c
@@ -163,6 +239,12 @@ useData sigma graph =
     withSigma sig = refreshData sig (sigmafy graph)
     sigmaNotFoundMsg = "[useData] Sigma not found, not adding data"
 
+useDataEff :: forall n e. Sigma -> Graph n e -> Effect Unit
+useDataEff sigma graph = dependOnSigma sigma sigmaNotFoundMsg withSigma
+  where
+    withSigma sig = refreshData sig (sigmafy graph)
+    sigmaNotFoundMsg = "[useData] Sigma not found, not adding data"
+
 refreshData :: forall n e. Sigma.Sigma -> Sigma.Graph n e -> Effect Unit
 refreshData sigma graph
   =   log clearingMsg
@@ -188,6 +270,18 @@ useForceAtlas2 sigma settings =
   R.useEffect1' sigma.sigma (delay unit effect)
   where
     effect _ = dependOnSigma sigma sigmaNotFoundMsg withSigma
+    withSigma sig = do
+      log startingMsg
+      log sigma
+      Sigma.startForceAtlas2 sig settings
+      cleanupFirst sigma (Sigma.killForceAtlas2 sig)
+    startingMsg = "[Graph] Starting ForceAtlas2"
+    sigmaNotFoundMsg = "[Graph] Sigma not found, not initialising"
+
+useForceAtlas2Eff :: forall settings. Sigma -> settings -> Effect Unit
+useForceAtlas2Eff sigma settings = effect
+  where
+    effect = dependOnSigma sigma sigmaNotFoundMsg withSigma
     withSigma sig = do
       log startingMsg
       log sigma

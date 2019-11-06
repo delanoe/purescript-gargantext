@@ -34,7 +34,7 @@ type Controls =
   , showControls    :: R.State Boolean
   , showSidePanel   :: R.State Boolean
   , showTree        :: R.State Boolean
-  , sigmaRef        :: R.Ref (Maybe Sigmax.Sigma)
+  , sigmaRef        :: R.Ref Sigmax.Sigma
   )
 
 controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
@@ -105,7 +105,8 @@ useGraphControls = do
   showControls    <- R.useState' false
   showSidePanel   <- R.useState' false
   showTree <- R.useState' false
-  sigmaRef <- R2.nothingRef
+  sigma <- Sigmax.initSigma
+  sigmaRef <- R.useRef sigma
 
   pure { cursorSize
        , multiNodeSelect

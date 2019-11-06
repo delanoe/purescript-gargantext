@@ -7,10 +7,14 @@ module Gargantext.Components.Graph
 import Prelude (bind, discard, pure, ($))
 import Data.Maybe (Maybe)
 import Data.Nullable (null)
+import Data.Sequence as Seq
+import DOM.Simple.Console (log, log2)
 import Reactix as R
 import Reactix.DOM.HTML as RH
+
 import Gargantext.Hooks.Sigmax
 import Gargantext.Hooks.Sigmax.Types as Sigmax
+import Gargantext.Utils.Reactix as R2
 
 type OnProps  = ()
 
@@ -30,7 +34,7 @@ type Props sigma forceatlas2 =
   ( graph :: Graph
   , forceAtlas2Settings :: forceatlas2
   , sigmaSettings :: sigma
-  , sigmaRef :: R.Ref (Maybe Sigma)
+  , sigmaRef :: R.Ref Sigma
   )
 
 graph :: forall s fa2. Record (Props s fa2) -> R.Element
@@ -41,7 +45,11 @@ graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
       ref <- R.useRef null
-      startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+      --startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+
+      R.useEffectOnce $ do
+        log "[graphCpt] calling startSigmaEff"
+        pure $ startSigmaEff ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
       pure $ RH.div { ref, style: {height: "95%"} } []
 

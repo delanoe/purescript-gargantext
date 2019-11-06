@@ -34,7 +34,7 @@ rangeControlCpt = R.hooksComponent "RangeButton" cpt
           , RS.rangeSlider sliderProps
           ]
 
-edgeSizeControl :: R.Ref (Maybe Sigmax.Sigma) -> R.State Range.NumberRange -> R.Element
+edgeSizeControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
 edgeSizeControl sigmaRef (state /\ setState) =
   rangeControl {
       caption: "Edge Size"
@@ -46,18 +46,18 @@ edgeSizeControl sigmaRef (state /\ setState) =
       , width: 10.0
       , height: 5.0
       , onChange: \range@(Range.Closed {min, max}) -> do
-          let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
+          let mSigma = Sigmax.readSigma $ R.readRef sigmaRef
           case mSigma of
-            Just (Just s) -> Sigma.setSettings s {
+            Just s -> Sigma.setSettings s {
                 minEdgeSize: min
               , maxEdgeSize: max
               }
-            _             -> pure unit
+            _      -> pure unit
           setState $ const range
       }
     }
 
-nodeSizeControl :: R.Ref (Maybe Sigmax.Sigma) -> R.State Range.NumberRange -> R.Element
+nodeSizeControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
 nodeSizeControl sigmaRef (state /\ setState) =
   rangeControl {
       caption: "Node Size"
@@ -69,13 +69,13 @@ nodeSizeControl sigmaRef (state /\ setState) =
       , width: 10.0
       , height: 5.0
       , onChange: \range@(Range.Closed {min, max}) -> do
-          let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
+          let mSigma = Sigmax.readSigma $ R.readRef sigmaRef
           case mSigma of
-            Just (Just s) -> Sigma.setSettings s {
+            Just s -> Sigma.setSettings s {
                 minNodeSize: min
               , maxNodeSize: max
               }
-            _             -> pure unit
+            _      -> pure unit
           setState $ const range
       }
     }
