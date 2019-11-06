@@ -49,8 +49,7 @@ cleanupFirst sigma =
 
 startSigma :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref (Maybe Sigma) -> settings -> faSettings -> Graph n e -> R.Hooks Unit
 startSigma ref sigmaRef settings forceAtlas2Settings graph = do
-  --{sigma, isNew} <- useSigma ref settings sigmaRef
-  sigmaRef <- useSigma
+  {sigma, isNew} <- useSigma ref settings sigmaRef
   useCanvasRenderer ref sigma
 
   if isNew then do

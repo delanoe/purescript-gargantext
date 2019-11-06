@@ -7,15 +7,18 @@ module Gargantext.Components.Graph
 import Prelude (bind, discard, pure, ($), (<$>), (<*>))
 import Data.Either (Either(..), either, note)
 import Data.Maybe (Maybe)
-import Data.Nullable (null)
+import Data.Nullable (null, Nullable)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
+import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as RH
+
 import Gargantext.Hooks.Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as Sigmax
+import Gargantext.Utils.Reactix as R2
 
 type OnProps  = ()
 
@@ -74,7 +77,7 @@ graphCpt = R.hooksComponent "Graph" cpt
 graphEffect {graph, forceAtlas2Settings, sigmaSettings} = R.useEffect3 graph forceAtlas2Settings sigmaSettings $
   pure unit
     
-setLast :: forall s fa2. R.Ref (Record (Last s fa2)) -> R.Record (Props s fa2) -> Effect Unit
+setLast :: forall s fa2. R.Ref (Record (Last s fa2)) -> Record (Props s fa2) -> Effect Unit
 setLast ref {graph, forceAtlas2Settings, sigmaSettings} = R.setRef ref new
   where
     new = {graph, fa2: forceAtlas2Settings, sigma: sigmaSettings}
