@@ -124,7 +124,7 @@ updateFilter org (Just (HAL_IMT {imtOrgs})) =
                   then
                     if org == All_IMT
                        then Set.empty
-                       else Set.delete org imtOrgs
+                       else Set.delete All_IMT $ Set.delete org imtOrgs
                   else
                     if org == All_IMT
                        then Set.fromFoldable allIMTorgs
@@ -208,7 +208,7 @@ searchInput (term /\ setTerm) =
       , className: "form-control"
       , type: "text"
       , on: { change : \e -> setTerm $ const $ e .. "target" .. "value" }
-      , placenolder: "Your Query here" }
+      , placeholder: "Your Query here" }
       ]
 
 
