@@ -4,7 +4,7 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude (bind, discard, pure, ($))
+import Prelude (bind, discard, pure, ($), unit)
 import Data.Maybe (Maybe)
 import Data.Nullable (null)
 import Data.Sequence as Seq
@@ -47,9 +47,9 @@ graphCpt = R.hooksComponent "Graph" cpt
       ref <- R.useRef null
       --startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
-      R.useEffectOnce $ do
+      R.useEffectOnce' $ do
         log "[graphCpt] calling startSigmaEff"
-        pure $ startSigmaEff ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+        startSigmaEff ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
       pure $ RH.div { ref, style: {height: "95%"} } []
 

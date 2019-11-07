@@ -107,54 +107,6 @@ useSigma settings sigmaRef = do
       --pure $ cleanupSigma sigma "useSigma"
       pure $ R.nothing
 
-startSigmaEff :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref Sigma -> settings -> faSettings -> Graph n e -> Effect Unit
-startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
-  log "[startSigmaEff] calling useSigmaEff"
-  sigma <- useSigmaEff settings sigmaRef
-  log "[startSigmaEff] calling useCanvasRendererEff"
-  useCanvasRendererEff ref sigma
-
-  log "[startSigmaEff] calling useDataEff"
-  useDataEff sigma graph
-  log "[startSigmaEff] calling useForceAtlas2Eff"
-  useForceAtlas2Eff sigma forceAtlas2Settings
-
-  --handleRefresh sigma
-
-  where
-    handleRefresh :: Sigma -> Effect Unit
-    handleRefresh sigma = do
-      let rSigma = readSigma sigma
-      _ <- case rSigma of
-        Nothing -> log2 "[handleRefresh] can't refresh" sigma
-        Just s -> do
-          Sigma.refreshForceAtlas s
-      pure unit
-
-
-useSigmaEff :: forall settings. settings -> R.Ref Sigma -> Effect Sigma
-useSigmaEff settings sigmaRef = do
-  --sigma <- newSigma
-  --delay unit $ handleSigma sigma (readSigma sigma)
-  let sigma = R.readRef sigmaRef
-  handleSigma sigma (readSigma sigma)
-  pure sigma
-
-  where
-    --newSigma = do
-    --  s <- R2.nothingRef
-    --  c <- R.useRef Seq.empty
-    --  pure { sigma: s, cleanup: c }
-    handleSigma :: Sigma -> (Maybe Sigma.Sigma) -> Effect Unit
-    handleSigma sigma (Just _) = do
-      pure unit
-    handleSigma sigma Nothing = do
-      ret <- createSigma settings
-      traverse_ (writeSigma sigma <<< Just) ret
-      R.setRef sigmaRef sigma
-      --pure $ cleanupSigma sigma "useSigma"
-      pure unit
-
 
 -- | Manages a renderer for the sigma
 useCanvasRenderer :: R.Ref (Nullable Element) -> Sigma -> R.Hooks Unit
@@ -162,27 +114,6 @@ useCanvasRenderer container sigma =
   R.useEffect2' container sigma.sigma $
     delay unit $ \_ ->
       dependOnContainer container containerNotFoundMsg withContainer
-  where
-    withContainer c = dependOnSigma sigma sigmaNotFoundMsg withSigma
-      where -- close over c
-        withSigma sig = addRenderer sig renderer >>= handle
-          where -- close over sig
-            renderer = { "type": "canvas", container: c }
-            handle (Right _) = cleanupFirst sigma (Sigma.killRenderer sig renderer >>= logCleanup)
-            handle (Left e) =
-              log2 errorAddingMsg e *> cleanupSigma sigma "useCanvasRenderer"
-    logCleanup (Left e) = log2 errorKillingMsg e
-    logCleanup _ = log killedMsg
-    containerNotFoundMsg = "[useCanvasRenderer] Container not found, not adding renderer"
-    sigmaNotFoundMsg     = "[useCanvasRenderer] Sigma not found, not adding renderer"
-    errorAddingMsg       = "[useCanvasRenderer] Error adding canvas renderer: "
-    errorKillingMsg      = "[useCanvasRenderer] Error killing renderer:"
-    killedMsg            = "[useCanvasRenderer] Killed renderer"
-
-useCanvasRendererEff :: R.Ref (Nullable Element) -> Sigma -> Effect Unit
-useCanvasRendererEff container sigma =
-  delay unit $ \_ ->
-    dependOnContainer container containerNotFoundMsg withContainer
   where
     withContainer c = dependOnSigma sigma sigmaNotFoundMsg withSigma
       where -- close over c
@@ -239,12 +170,6 @@ useData sigma graph =
     withSigma sig = refreshData sig (sigmafy graph)
     sigmaNotFoundMsg = "[useData] Sigma not found, not adding data"
 
-useDataEff :: forall n e. Sigma -> Graph n e -> Effect Unit
-useDataEff sigma graph = dependOnSigma sigma sigmaNotFoundMsg withSigma
-  where
-    withSigma sig = refreshData sig (sigmafy graph)
-    sigmaNotFoundMsg = "[useData] Sigma not found, not adding data"
-
 refreshData :: forall n e. Sigma.Sigma -> Sigma.Graph n e -> Effect Unit
 refreshData sigma graph
   =   log clearingMsg
@@ -278,18 +203,6 @@ useForceAtlas2 sigma settings =
     startingMsg = "[Graph] Starting ForceAtlas2"
     sigmaNotFoundMsg = "[Graph] Sigma not found, not initialising"
 
-useForceAtlas2Eff :: forall settings. Sigma -> settings -> Effect Unit
-useForceAtlas2Eff sigma settings = effect
-  where
-    effect = dependOnSigma sigma sigmaNotFoundMsg withSigma
-    withSigma sig = do
-      log startingMsg
-      log sigma
-      Sigma.startForceAtlas2 sig settings
-      cleanupFirst sigma (Sigma.killForceAtlas2 sig)
-    startingMsg = "[Graph] Starting ForceAtlas2"
-    sigmaNotFoundMsg = "[Graph] Sigma not found, not initialising"
-
 dependOnSigma :: Sigma -> String -> (Sigma.Sigma -> Effect Unit) -> Effect Unit
 dependOnSigma sigma notFoundMsg f = do
   case readSigma sigma of
@@ -302,3 +215,85 @@ dependOnContainer container notFoundMsg f = do
     Nothing -> log notFoundMsg
     Just c -> f c
 
+
+-- Effectful versions of the above code
+
+startSigmaEff :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref Sigma -> settings -> faSettings -> Graph n e -> Effect Unit
+startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
+  log "[startSigmaEff] calling useSigmaEff"
+  sigma <- useSigmaEff settings sigmaRef
+  log "[startSigmaEff] calling useCanvasRendererEff"
+  useCanvasRendererEff ref sigma
+
+  log "[startSigmaEff] calling useDataEff"
+  useDataEff sigma graph
+  log "[startSigmaEff] calling useForceAtlas2Eff"
+  useForceAtlas2Eff sigma forceAtlas2Settings
+
+  --handleRefresh sigma
+
+  where
+    handleRefresh :: Sigma -> Effect Unit
+    handleRefresh sigma = do
+      let rSigma = readSigma sigma
+      _ <- case rSigma of
+        Nothing -> log2 "[handleRefresh] can't refresh" sigma
+        Just s -> do
+          Sigma.refreshForceAtlas s
+      pure unit
+
+
+useSigmaEff :: forall settings. settings -> R.Ref Sigma -> Effect Sigma
+useSigmaEff settings sigmaRef = do
+  let sigma = R.readRef sigmaRef
+  handleSigma sigma (readSigma sigma)
+  pure sigma
+
+  where
+    handleSigma :: Sigma -> (Maybe Sigma.Sigma) -> Effect Unit
+    handleSigma sigma (Just _) = do
+      pure unit
+    handleSigma sigma Nothing = do
+      ret <- createSigma settings
+      traverse_ (writeSigma sigma <<< Just) ret
+      R.setRef sigmaRef sigma
+      pure unit
+
+useDataEff :: forall n e. Sigma -> Graph n e -> Effect Unit
+useDataEff sigma graph = dependOnSigma sigma sigmaNotFoundMsg withSigma
+  where
+    withSigma sig = refreshData sig (sigmafy graph)
+    sigmaNotFoundMsg = "[useData] Sigma not found, not adding data"
+
+useCanvasRendererEff :: R.Ref (Nullable Element) -> Sigma -> Effect Unit
+useCanvasRendererEff container sigma =
+  delay unit $ \_ ->
+    dependOnContainer container containerNotFoundMsg withContainer
+  where
+    withContainer c = dependOnSigma sigma sigmaNotFoundMsg withSigma
+      where -- close over c
+        withSigma sig = addRenderer sig renderer >>= handle
+          where -- close over sig
+            renderer = { "type": "canvas", container: c }
+            handle (Right _) = cleanupFirst sigma (Sigma.killRenderer sig renderer >>= logCleanup)
+            handle (Left e) =
+              log2 errorAddingMsg e *> cleanupSigma sigma "useCanvasRenderer"
+    logCleanup (Left e) = log2 errorKillingMsg e
+    logCleanup _ = log killedMsg
+    containerNotFoundMsg = "[useCanvasRenderer] Container not found, not adding renderer"
+    sigmaNotFoundMsg     = "[useCanvasRenderer] Sigma not found, not adding renderer"
+    errorAddingMsg       = "[useCanvasRenderer] Error adding canvas renderer: "
+    errorKillingMsg      = "[useCanvasRenderer] Error killing renderer:"
+    killedMsg            = "[useCanvasRenderer] Killed renderer"
+
+useForceAtlas2Eff :: forall settings. Sigma -> settings -> Effect Unit
+useForceAtlas2Eff sigma settings = effect
+  where
+    effect = dependOnSigma sigma sigmaNotFoundMsg withSigma
+    withSigma sig = do
+      log startingMsg
+      log sigma
+      Sigma.startForceAtlas2 sig settings
+      cleanupFirst sigma (Sigma.killForceAtlas2 sig)
+    startingMsg = "[Graph] Starting ForceAtlas2"
+    sigmaNotFoundMsg = "[Graph] Sigma not found, not initialising"

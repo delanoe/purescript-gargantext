@@ -63,6 +63,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     cpt {sessions, session, graphId, mCurrentRoute, treeId, graph, frontends} _ = do
       controls <- Controls.useGraphControls
       state <- useExplorerState
+      x /\ setX <- R.useState' 0
       showLogin <- snd <$> R.useState' true
       pure $
         RH.div
@@ -75,11 +76,14 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ Toggle.controlsToggleButton controls.showControls ]
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
-                , row [ Controls.controls controls ]
+                , row [ Controls.controls controls
+                      , RH.div {on: {click: \e -> setX $ \x_ -> x_ + 1}} [ RH.text ("Counter: " <> (show x)) ]
+                        ]
                 , row [ tree {mCurrentRoute, treeId} controls showLogin
                       , mGraph controls.sigmaRef {graphId, graph}
                       , Sidebar.sidebar {showSidePanel: fst controls.showSidePanel} ]
-                , row [ ]
+                , row [
+                  ]
                 ]
               ]
             ]
