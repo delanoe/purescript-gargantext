@@ -9,7 +9,7 @@ import Data.Tuple.Nested ((/\))
 import Gargantext.Utils.Reactix as R2
 import FFI.Simple ((..))
 import Reactix as R
-import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option, text)
+import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option, text, i)
 import Gargantext.Components.Search.Types -- (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs, HAL_Filters(..), IMT_org(..))
 
 select :: forall props.
@@ -83,7 +83,9 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
                                                                   $ updateFilter org' curFilters
                                                       }
                                                 }
-                                        , text $ " " <> show org'
+                                        , if org' == All_IMT
+                                             then i {} [text  $ " " <> show org']
+                                             else text $ " " <> show org'
                                         ]
                                         ) allIMTorgs
                           , filterInput fi
@@ -113,7 +115,7 @@ isInFilters org (Just (HAL_IMT { imtOrgs })) = Set.member org imtOrgs
 isInFilters _ _ = false
 
 updateFilter :: IMT_org -> Maybe HAL_Filters -> Maybe HAL_Filters
-updateFilter org (Just (HAL_IMT { imtOrgs})) =
+updateFilter org (Just (HAL_IMT {imtOrgs})) =
   Just $ HAL_IMT { imtOrgs: imtOrgs'
                  , structIds: Set.empty
                  }
@@ -130,7 +132,9 @@ updateFilter org (Just (HAL_IMT { imtOrgs})) =
 
 updateFilter org _ = Just $ HAL_IMT { imtOrgs: imtOrgs', structIds: Set.empty}
   where
-    imtOrgs' = Set.fromFoldable [org]
+    imtOrgs' = if org == All_IMT
+                  then Set.fromFoldable allIMTorgs
+                  else Set.fromFoldable [org]
 
 
 databaseInput :: R.State (Maybe Database)
