@@ -13,7 +13,7 @@ import Reactix as R
 import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_)
 import Reactix.DOM.HTML as H
-import Gargantext.Components.Search.Types (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
+import Gargantext.Components.Search.Types -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Search.SearchField (Search, searchField)
 import Gargantext.Sessions (Session)

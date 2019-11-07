@@ -1,8 +1,9 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, searchField, searchFieldComponent )where
 
-import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||), (==), map, (<>))
-import Data.Maybe (Maybe(..), maybe)
+import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||), (==), map, (<>), (&&), (*>), (>>=), (>=>))
+import Data.Maybe (Maybe(..), maybe, isJust)
+import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Gargantext.Utils.Reactix as R2
@@ -10,7 +11,7 @@ import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option, text)
-import Gargantext.Components.Search.Types (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs)
+import Gargantext.Components.Search.Types -- (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs, HAL_Filters(..), IMT_org(..))
 
 select :: forall props.
           R.IsComponent String props (Array R.Element)
@@ -19,25 +20,27 @@ select :: forall props.
           -> R.Element
 select = R.createElement "select"
 
-
-
 type Search = { database :: Maybe Database
-              , term :: String
-              , lang :: Maybe Lang
+              , term     :: String
+              , lang     :: Maybe Lang
+              , org      :: Maybe Org
+              , filters  :: Maybe HAL_Filters
               }
 
 defaultSearch :: Search
 defaultSearch = { database: Nothing
                 , term: ""
                 , lang: Nothing
+                , org : Nothing
+                , filters: Nothing
                 }
 
 type Props =
   -- list of databases to search, or parsers to use on uploads
   ( databases :: Array Database
-  , langs   :: Array Lang
+  , langs     :: Array Lang
   -- State hook for a search, how we get data in and out
-  , search :: R.State (Maybe Search)
+  , search    :: R.State (Maybe Search)
   )
 
 searchField :: Record Props -> R.Element
@@ -49,40 +52,98 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
     cpt props _ = do
       let search = maybe defaultSearch identity (fst props.search)
       term <- R.useState' search.term
-      db@(db' /\ _) <- R.useState' (Nothing :: Maybe Database)
-      lang          <- R.useState' (Nothing :: Maybe Lang)
-      org@(o /\ _)           <- R.useState' (Nothing :: Maybe Org)
-      fi            <- R.useState' ""
+      db@(curDb /\ setDb)                <- R.useState' (Nothing :: Maybe Database)
+      lang                               <- R.useState' (Nothing :: Maybe Lang)
+      org@(curOrg /\ setOrg)             <- R.useState' (Nothing :: Maybe Org)
+      filters@(curFilters /\ setFilters) <- R.useState' (Nothing :: Maybe HAL_Filters)
+      fi                                 <- R.useState' ""
       pure $
           div { className: "search-field-group" }
               [ searchInput term
               , div {className: "text-primary center"} [text "in"]
-              , databaseInput db   props.databases
+              , databaseInput db filters org props.databases
 
-              , if db' /= Just PubMed then langInput     lang props.langs else div {} []
-              , if db' == Just HAL    then orgInput org allOrgs else div {} []
-              , if o == (Just $ CNRS {orgs:[]})
-                   then filterInput fi
-                   else if o == (Just $ IMT {orgs:[]})
-                   then ul {} $ map (\o -> li {} [input { type: "checkbox" }, text $ " " <> show o]) allIMTorgs
-                        else div {} []
+              , if curDb /= Just PubMed
+                   then langInput lang props.langs
+                   else div {} []
 
-              , div { className: "panel-footer" } [ submitButton db term lang props.search ]
+              , if isHAL curDb
+                   then orgInput org allOrgs
+                   else div {} []
+
+              , if isHAL curDb
+                  then
+                    if curOrg == (Just IMT)
+                      then
+                        R.fragment
+                          [ ul {} $ map ( \org' -> li {}
+                                        [ input { type: "checkbox"
+                                                , checked: isInFilters org' curFilters
+                                                , on: {click: mkEffectFn1
+                                                            $ \_ -> setFilters
+                                                            $ const
+                                                            $ updateFilter org' curFilters
+                                                      }
+                                                }
+                                        , text $ " " <> show org'
+                                        ]
+                                        ) allIMTorgs
+                          , filterInput fi
+                          ]
+                      else
+                        if curOrg == (Just CNRS)
+                           then
+                             R.fragment [ div {} [], filterInput fi]
+                           else
+                             div {} []
+                  else
+                    div {} []
+              , div { className: "panel-footer" }
+                    [ submitButton db term lang org filters props.search ]
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
                    || (p.databases  /= p'.databases )
                    || (p.langs      /= p'.langs     )
+--                   || (fst p.filters /= fst p'.filters   )
+
+isHAL :: Maybe Database -> Boolean
+isHAL (Just HAL) = true
+isHAL _ = false
+
+isInFilters :: IMT_org -> Maybe HAL_Filters -> Boolean
+isInFilters org (Just (HAL_IMT { imtOrgs })) = Set.member org imtOrgs
+isInFilters _ _ = false
+
+updateFilter :: IMT_org -> Maybe HAL_Filters -> Maybe HAL_Filters
+updateFilter org (Just (HAL_IMT { imtOrgs})) =
+  Just $ HAL_IMT { imtOrgs: imtOrgs'
+                 , structIds: Set.empty
+                 }
+  where
+    imtOrgs' = if Set.member org imtOrgs
+                  then Set.delete org imtOrgs
+                  else Set.insert org imtOrgs
+
+updateFilter org _ = Just $ HAL_IMT { imtOrgs: imtOrgs', structIds: Set.empty}
+  where
+    imtOrgs' = Set.fromFoldable [org]
 
 
-databaseInput :: R.State (Maybe Database) -> Array Database -> R.Element
-databaseInput (db /\ setDB) dbs =
-  div { className: "form-group" } 
+databaseInput :: R.State (Maybe Database)
+              -> R.State (Maybe HAL_Filters)
+              -> R.State (Maybe Org)
+              -> Array Database
+              -> R.Element
+databaseInput (db /\ setDB) (_ /\ setFilters) (_ /\ setOrg) dbs =
+  div { className: "form-group" }
                    [ R2.select { className: "form-control"
-                               , onChange: mkEffectFn1
-                                         $ \e -> setDB
+                               , on: { change: \e -> (setDB
                                          $ const
                                          $ readDatabase
-                                         $ e .. "target" .. "value"
+                                         $ e .. "target" .. "value")
+                                         *> (setFilters $ const Nothing)
+                                         *> (setOrg     $ const Nothing)
+                                   }
                                } (liItem <$> dbs)
                    ]
     where
@@ -92,7 +153,7 @@ databaseInput (db /\ setDB) dbs =
 
 langInput :: R.State (Maybe Lang) -> Array Lang -> R.Element
 langInput (lang /\ setLang) langs =
-  div { className: "form-group" } 
+  div { className: "form-group" }
                    [ text "with lang"
                    , R2.select { className: "form-control"
                                , onChange: mkEffectFn1
@@ -108,7 +169,7 @@ langInput (lang /\ setLang) langs =
 
 orgInput :: R.State (Maybe Org) -> Array Org -> R.Element
 orgInput (org /\ setOrg) orgs =
-  div { className: "form-group" } 
+  div { className: "form-group" }
                    [ text "filter with organization: "
                    , R2.select { className: "form-control"
                                , onChange: mkEffectFn1
@@ -124,35 +185,45 @@ orgInput (org /\ setOrg) orgs =
 
 filterInput :: R.State String -> R.Element
 filterInput (term /\ setTerm) =
-  input { defaultValue: term
-        , className: "form-control"
-        , type: "text"
-        , onChange: mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
-        , placeHolder : "Struct_Ids as integer" }
+  div {className: ""} [ input { defaultValue: term
+                               , className: "form-control"
+                               , type: "text"
+                               , onChange: mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
+                               , placeHolder : "Filter with struct_Ids as integer" }
+                               ]
 
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
-  input { defaultValue: term
-        , className: "form-control"
-        , type: "text"
-        , onChange
-        , placeHolder: "Your Query here" }
-  where onChange = mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
+  div { className : "" }
+      [ input { defaultValue: term
+      , className: "form-control"
+      , type: "text"
+      , onChange
+      , placeHolder: "Your Query here" }
+      ]
+  where
+    onChange = mkEffectFn1 $ \e -> setTerm
+                           $ const
+                           $ e .. "target" .. "value"
 
 
 submitButton :: R.State (Maybe Database)
              -> R.State String
              -> R.State (Maybe Lang)
+             -> R.State (Maybe Org)
+             -> R.State (Maybe HAL_Filters)
              -> R.State (Maybe Search)
              -> R.Element
-submitButton (database /\ _) (term /\ _) (lang /\ _) (_ /\ setSearch) =
-  button { className: "btn btn-primary text-center"
-         , type: "button"
-         , onClick: click
-         } [ text "Search" ]
+submitButton (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /\ _) (_ /\ setSearch) =
+  R.fragment [ div { className : "" } []
+             , button { className: "btn btn-primary text-center"
+                      , type: "button"
+                      , onClick: click
+                      } [ text "Search" ]
+             ]
   where
     click = mkEffectFn1 $ \_ -> do
       case term of
         "" -> setSearch $ const Nothing
-        _  -> setSearch $ const $ Just { database, lang, term }
+        _  -> setSearch $ const $ Just { database, lang, filters, term, org}

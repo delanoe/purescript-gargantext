@@ -1,6 +1,10 @@
 module Gargantext.Components.Search.Types where
 
-import Prelude (class Eq, class Show, show, ($), (<>))
+import Prelude (class Eq, class Show, show, ($), (<>), map)
+import Data.Set (Set)
+import Data.Ord
+import Data.Set as Set
+import Data.Array (concat)
 import Data.Argonaut (class EncodeJson, class DecodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
@@ -50,13 +54,15 @@ instance encodeJsonLang :: EncodeJson Lang where
 ------------------------------------------------------------------------
 -- | Database search specifications
 allDatabases :: Array Database
-allDatabases = [All, PubMed
+allDatabases = [ All
+               , PubMed
                , HAL
                , IsTex
                , Isidore
                ]
 
-data Database = All          | PubMed
+data Database = All
+              | PubMed
               | HAL
               | IsTex
               | Isidore
@@ -87,118 +93,162 @@ instance encodeJsonDatabase :: EncodeJson Database where
 
 allOrgs :: Array Org
 allOrgs = [ All_Orgs
-          , IMT  {orgs:[]}
-          , CNRS {orgs:[]}
+          , IMT
+          , CNRS
           ]
 
 data Org = All_Orgs
-         | CNRS   { orgs :: Array Int }
-         | IMT    { orgs :: Array IMT_org }
-         | Others { orgs :: Array Int }
+         | CNRS
+         | IMT
+         | Others
 
 instance showOrg :: Show Org where
-  show All_Orgs = "All__Orgs"
-  show (CNRS   _)    = "CNRS"
-  show (IMT    _)    = "IMT"
-  show (Others _)    = "Others"
+  show All_Orgs   = "All__Orgs"
+  show CNRS = "CNRS"
+  show IMT  = "IMT"
+  show Others = "Others"
 
 readOrg :: String -> Maybe Org
 readOrg "All_Orgs" = Just $ All_Orgs
-readOrg "CNRS"     = Just $ CNRS {orgs: []}
-readOrg "IMT"      = Just $ IMT  {orgs: []}
-readOrg "Others"   = Just $ Others  {orgs: []}
+readOrg "CNRS"     = Just $ CNRS
+readOrg "IMT"      = Just $ IMT
+readOrg "Others"   = Just $ Others
 readOrg _          = Nothing
 
 instance eqOrg :: Eq Org
   where
     eq All_Orgs All_Orgs = true
-    eq (CNRS _) (CNRS _) = true
-    eq (IMT  _) (IMT  _) = true
-    eq (Others _) (Others _)  = true
-    eq _  _        = false
+    eq CNRS CNRS     = true
+    eq IMT IMT       = true
+    eq Others Others = true
+    eq _  _          = false
 
 instance encodeJsonOrg :: EncodeJson Org where
   encodeJson a = encodeJson (show a)
 
 ------------------------------------------------------------------------
-allIMTorgs :: Array IMT_org
-allIMTorgs = [ ARMINES
-             , Eurecom
-             , IMT_Atlantique
-             , IMT_Business_School
-             , IMT_Lille_Douai
-             , IMT_Mines_ALES
-             , IMT_Mines_Albi
-             , Institut_MinesTelecom_Paris
-             , MINES_ParisTech
-             , Mines_Douai
-             , Mines_Nantes
-             , Mines_SaintEtienne
-             , Telecom_Bretagne
-             , Telecom_Ecole_de_Management
-             , Telecom_Lille
-             , Telecom_ParisTech
-             , Telecom_SudParis
-             ]
 
-data IMT_org = ARMINES
-              | Eurecom
-              | IMT_Atlantique
-              | IMT_Business_School
-              | IMT_Lille_Douai
-              | IMT_Mines_ALES
-              | IMT_Mines_Albi
-              | Institut_MinesTelecom_Paris
-              | MINES_ParisTech
-              | Mines_Douai
-              | Mines_Nantes
-              | Mines_SaintEtienne
-              | Telecom_Bretagne
-              | Telecom_Ecole_de_Management
-              | Telecom_Lille
-              | Telecom_ParisTech
-              | Telecom_SudParis
+type StructId = Int
+
+
+data HAL_Filters = HAL_StructId { structIds :: Set StructId}
+                 | HAL_IMT { imtOrgs :: Set IMT_org
+                           , structIds :: Set StructId
+                           }
+
+
+instance eqHAL_Filters :: Eq HAL_Filters
+  where
+    eq (HAL_StructId _) (HAL_StructId _) = true
+    eq (HAL_IMT _     ) (HAL_IMT      _) = true
+    eq _ _ = false
+
+
+allIMTorgs :: Array IMT_org
+allIMTorgs = [All_IMT] <> allIMTSubOrgs
+
+allIMTSubOrgs :: Array IMT_org
+allIMTSubOrgs = [ ARMINES
+                , Eurecom
+                , IMT_Atlantique
+                , IMT_Business_School
+                , IMT_Lille_Douai
+                , IMT_Mines_ALES
+                , IMT_Mines_Albi
+                , Institut_MinesTelecom_Paris
+                , MINES_ParisTech
+                , Mines_Douai
+                , Mines_Nantes
+                , Mines_SaintEtienne
+                , Telecom_Bretagne
+                , Telecom_Ecole_de_Management
+                , Telecom_Lille
+                , Telecom_ParisTech
+                , Telecom_SudParis
+                ]
+
+data IMT_org = All_IMT
+             | ARMINES
+             | Eurecom
+             | IMT_Atlantique
+             | IMT_Business_School
+             | IMT_Lille_Douai
+             | IMT_Mines_ALES
+             | IMT_Mines_Albi
+             | Institut_MinesTelecom_Paris
+             | MINES_ParisTech
+             | Mines_Douai
+             | Mines_Nantes
+             | Mines_SaintEtienne
+             | Telecom_Bretagne
+             | Telecom_Ecole_de_Management
+             | Telecom_Lille
+             | Telecom_ParisTech
+             | Telecom_SudParis
+
+derive instance ordIMT_org :: Ord IMT_org
+derive instance eqIMT_org  :: Eq IMT_org
 
 instance showIMT_org :: Show IMT_org where
-  show ARMINES = "ARMINES"
-  show Eurecom = "Eurecom"
-  show IMT_Atlantique = "IMT_Atlantique"
+  show All_IMT             = "All_IMT"
+  show ARMINES             = "ARMINES"
+  show Eurecom             = "Eurecom"
+  show IMT_Atlantique      = "IMT_Atlantique"
   show IMT_Business_School = "IMT_Business_School"
-  show IMT_Lille_Douai = "IMT_Lille_Douai"
-  show IMT_Mines_ALES = "IMT_Mines_ALES"
-  show IMT_Mines_Albi = "IMT_Mines_Albi"
+  show IMT_Lille_Douai     = "IMT_Lille_Douai"
+  show IMT_Mines_ALES      = "IMT_Mines_ALES"
+  show IMT_Mines_Albi      = "IMT_Mines_Albi"
   show Institut_MinesTelecom_Paris = "Institut_MinesTelecom_Paris"
-  show MINES_ParisTech = "MINES_ParisTech"
-  show Mines_Douai = "Mines_Douai"
-  show Mines_Nantes = "Mines_Nantes"
-  show Mines_SaintEtienne = "Mines_SaintEtienne"
-  show Telecom_Bretagne = "Telecom_Bretagne"
+  show MINES_ParisTech     = "MINES_ParisTech"
+  show Mines_Douai         = "Mines_Douai"
+  show Mines_Nantes        = "Mines_Nantes"
+  show Mines_SaintEtienne  = "Mines_SaintEtienne"
+  show Telecom_Bretagne    = "Telecom_Bretagne"
   show Telecom_Ecole_de_Management = "Telecom_Ecole_de_Management"
-  show Telecom_Lille = "Telecom_Lille"
-  show Telecom_ParisTech = "Telecom_ParisTech"
-  show Telecom_SudParis = "Telecom_SudParis"
+  show Telecom_Lille       = "Telecom_Lille"
+  show Telecom_ParisTech   = "Telecom_ParisTech"
+  show Telecom_SudParis    = "Telecom_SudParis"
 
+readIMT_org :: String -> Maybe IMT_org
+readIMT_org "All_IMT"             = Just All_IMT
+readIMT_org "ARMINES"             = Just ARMINES
+readIMT_org "Eurecom"             = Just Eurecom
+readIMT_org "IMT_Atlantique"      = Just IMT_Atlantique
+readIMT_org "IMT_Business_School" = Just IMT_Business_School
+readIMT_org "IMT_Lille_Douai"     = Just IMT_Lille_Douai
+readIMT_org "IMT_Mines_ALES"      = Just IMT_Mines_ALES
+readIMT_org "IMT_Mines_Albi"      = Just IMT_Mines_Albi
+readIMT_org "Institut_MinesTelecom_Paris" = Just Institut_MinesTelecom_Paris
+readIMT_org "MINES_ParisTech"     = Just MINES_ParisTech
+readIMT_org "Mines_Douai"         = Just Mines_Douai
+readIMT_org "Mines_Nantes"        = Just Mines_Nantes
+readIMT_org "Mines_SaintEtienne"  = Just Mines_SaintEtienne
+readIMT_org "Telecom_Bretagne"    = Just Telecom_Bretagne
+readIMT_org "Telecom_Ecole_de_Management" = Just Telecom_Ecole_de_Management
+readIMT_org "Telecom_Lille"       = Just Telecom_Lille
+readIMT_org "Telecom_ParisTech"   = Just Telecom_ParisTech
+readIMT_org "Telecom_SudParis"    = Just Telecom_SudParis
+readIMT_org _                     = Nothing
 
-
-{-
-Mines_Douai 224096
-Telecom_Lille 144103
-Mines_Nantes 84538
-ARMINES 300104
-Telecom_ParisTech 300362
-Telecom_Bretagne 301262
-Telecom_Ecole_de_Management 301442
-MINES_ParisTech 301492
-Institut_MinesTelecom_Paris 302102
-Eurecom 421532
-IMT_Lille_Douai 497330
-Telecom_SudParis 352124
-IMT_Atlantique 481355
-IMT_Mines_Albi 469216
-IMT_Business_School 542824
-IMT_Mines_ALES 6279
-Mines_SaintEtienne 29212
--}
+imtStructId :: IMT_org -> Array StructId
+imtStructId All_IMT           = concat $ map imtStructId allIMTSubOrgs
+imtStructId Mines_Douai       = [224096]
+imtStructId Telecom_Lille     = [144103]
+imtStructId Mines_Nantes      = [84538]
+imtStructId ARMINES           = [300104]
+imtStructId Telecom_ParisTech = [300362]
+imtStructId Telecom_Bretagne  = [301262]
+imtStructId Telecom_Ecole_de_Management = [301442]
+imtStructId MINES_ParisTech   = [301492]
+imtStructId Institut_MinesTelecom_Paris = [302102]
+imtStructId Eurecom           = [421532]
+imtStructId IMT_Lille_Douai   = [497330]
+imtStructId Telecom_SudParis  = [352124]
+imtStructId IMT_Atlantique    = [481355]
+imtStructId IMT_Mines_Albi    = [469216]
+imtStructId IMT_Business_School = [542824]
+imtStructId IMT_Mines_ALES     = [6279]
+imtStructId Mines_SaintEtienne = [29212]
 
 ------------------------------------------------------------------------
 data SearchOrder
