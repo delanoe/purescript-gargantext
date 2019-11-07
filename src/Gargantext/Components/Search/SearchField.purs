@@ -7,7 +7,6 @@ import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Gargantext.Utils.Reactix as R2
-import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option, text)
@@ -79,10 +78,9 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
                           [ ul {} $ map ( \org' -> li {}
                                         [ input { type: "checkbox"
                                                 , checked: isInFilters org' curFilters
-                                                , on: {click: mkEffectFn1
-                                                            $ \_ -> setFilters
-                                                            $ const
-                                                            $ updateFilter org' curFilters
+                                                , on: {change: \_ -> setFilters
+                                                                  $ const
+                                                                  $ updateFilter org' curFilters
                                                       }
                                                 }
                                         , text $ " " <> show org'
@@ -121,8 +119,14 @@ updateFilter org (Just (HAL_IMT { imtOrgs})) =
                  }
   where
     imtOrgs' = if Set.member org imtOrgs
-                  then Set.delete org imtOrgs
-                  else Set.insert org imtOrgs
+                  then
+                    if org == All_IMT
+                       then Set.empty
+                       else Set.delete org imtOrgs
+                  else
+                    if org == All_IMT
+                       then Set.fromFoldable allIMTorgs
+                       else Set.insert org imtOrgs
 
 updateFilter org _ = Just $ HAL_IMT { imtOrgs: imtOrgs', structIds: Set.empty}
   where
@@ -141,8 +145,8 @@ databaseInput (db /\ setDB) (_ /\ setFilters) (_ /\ setOrg) dbs =
                                          $ const
                                          $ readDatabase
                                          $ e .. "target" .. "value")
-                                         *> (setFilters $ const Nothing)
                                          *> (setOrg     $ const Nothing)
+                                         *> (setFilters $ const Nothing)
                                    }
                                } (liItem <$> dbs)
                    ]
@@ -156,11 +160,11 @@ langInput (lang /\ setLang) langs =
   div { className: "form-group" }
                    [ text "with lang"
                    , R2.select { className: "form-control"
-                               , onChange: mkEffectFn1
-                                         $ \e -> setLang
-                                         $ const
-                                         $ readLang
-                                         $ e .. "target" .. "value"
+                               , on: { change: \e -> setLang
+                                                   $ const
+                                                   $ readLang
+                                                   $ e .. "target" .. "value"
+                                     }
                                } (liItem <$> langs)
                    ]
     where
@@ -172,11 +176,11 @@ orgInput (org /\ setOrg) orgs =
   div { className: "form-group" }
                    [ text "filter with organization: "
                    , R2.select { className: "form-control"
-                               , onChange: mkEffectFn1
-                                         $ \e -> setOrg
-                                         $ const
-                                         $ readOrg
-                                         $ e .. "target" .. "value"
+                               , on: { change: \e -> setOrg
+                                                   $ const
+                                                   $ readOrg
+                                                   $ e .. "target" .. "value"
+                                      }
                                } (liItem <$> orgs)
                    ]
     where
@@ -188,8 +192,8 @@ filterInput (term /\ setTerm) =
   div {className: ""} [ input { defaultValue: term
                                , className: "form-control"
                                , type: "text"
-                               , onChange: mkEffectFn1 $ \e -> setTerm $ const $ e .. "target" .. "value"
-                               , placeHolder : "Filter with struct_Ids as integer" }
+                               , on: { change: \e -> setTerm $ const $ e .. "target" .. "value"}
+                               , placeholder : "Filter with struct_Ids as integer" }
                                ]
 
 
@@ -199,13 +203,9 @@ searchInput (term /\ setTerm) =
       [ input { defaultValue: term
       , className: "form-control"
       , type: "text"
-      , onChange
-      , placeHolder: "Your Query here" }
+      , on: { change : \e -> setTerm $ const $ e .. "target" .. "value" }
+      , placenolder: "Your Query here" }
       ]
-  where
-    onChange = mkEffectFn1 $ \e -> setTerm
-                           $ const
-                           $ e .. "target" .. "value"
 
 
 submitButton :: R.State (Maybe Database)
@@ -219,11 +219,11 @@ submitButton (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /\ _) (_ 
   R.fragment [ div { className : "" } []
              , button { className: "btn btn-primary text-center"
                       , type: "button"
-                      , onClick: click
+                      , on: {change: click}
                       } [ text "Search" ]
              ]
   where
-    click = mkEffectFn1 $ \_ -> do
+    click = \_ -> do
       case term of
         "" -> setSearch $ const Nothing
         _  -> setSearch $ const $ Just { database, lang, filters, term, org}
