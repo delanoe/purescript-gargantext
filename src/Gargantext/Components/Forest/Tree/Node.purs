@@ -99,10 +99,21 @@ settingsBox FolderPrivate = SettingsBox { show: true
                                                     , Delete]
                                         }
 
+settingsBox Team = SettingsBox { show: true
+                                        , edit : false
+                                        , buttons : [Documentation Team
+                                                    , SearchBox
+                                                    , Add [ Corpus
+                                                          , Folder
+                                                          , Annuaire
+                                                          ]
+                                                    , Delete]
+                                        }
+
 settingsBox FolderShared = SettingsBox { show: true
-                                       , edit : false
+                                       , edit : true
                                        , buttons : [Documentation FolderShared
-                                                    -- , Add [Folder, Team]
+                                                    , Add [Team, FolderShared]
                                                     , Delete
                                                     ]
                                        }

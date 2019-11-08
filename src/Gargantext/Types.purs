@@ -162,7 +162,7 @@ instance showNodeType :: Show NodeType where
   show Node          = "Node"
   show Nodes         = "Nodes"
   show Tree          = "NodeTree"
-  show Team          = "Team"
+  show Team          = "NodeTeam"
   show NodeList      = "NodeList"
   show Texts         = "NodeTexts"
 
@@ -185,7 +185,7 @@ readNodeType "Nodes"         = Nodes
 readNodeType "NodeCorpus"    = Corpus
 readNodeType "NodeContact"   = NodeContact
 readNodeType "Tree"          = Tree
-readNodeType "Team"          = Team
+readNodeType "NodeTeam"      = Team
 readNodeType "NodeList"      = NodeList
 readNodeType "NodeTexts"     = Texts
 readNodeType _               = Error
@@ -198,8 +198,10 @@ fldr NodeUser true  = "fa fa-user-circle-o"
 fldr FolderPrivate true  = "fa fa-lock"
 fldr FolderPrivate false = "fa fa-expeditedssl"
 
-fldr FolderShared  true  = "fa fa-users" -- "fa fa-share-alt"
+fldr FolderShared  true  = "fa fa-share-alt"
 fldr FolderShared  false = "fa fa-share-alt-square"
+fldr Team  true   = "fa fa-users"
+fldr Team  false  = "fa fa-users"
 
 fldr FolderPublic _  = "fa fa-globe"
 
