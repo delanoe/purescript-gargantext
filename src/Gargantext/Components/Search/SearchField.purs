@@ -19,18 +19,20 @@ select :: forall props.
           -> R.Element
 select = R.createElement "select"
 
-type Search = { database :: Maybe Database
-              , term     :: String
-              , lang     :: Maybe Lang
-              , org      :: Maybe Org
-              , filters  :: Maybe HAL_Filters
-              , node_id  :: Maybe Int
+type Search = { datafield :: Maybe DataField
+              , database  :: Maybe Database
+              , term      :: String
+              , lang      :: Maybe Lang
+              , org       :: Maybe Org
+              , filters   :: Maybe HAL_Filters
+              , node_id   :: Maybe Int
               }
 
 defaultSearch :: Search
-defaultSearch = { database: Just Gargantext
+defaultSearch = { datafield: Just Gargantext
+                , database: Just PubMed
                 , term: ""
-                , lang: Nothing
+                , lang: Just EN
                 , org : Nothing
                 , filters: Nothing
                 , node_id: Nothing
@@ -53,51 +55,61 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
   where
     cpt props@{node_id} _ = do
       let search = maybe defaultSearch identity (fst props.search)
-      term <- R.useState' search.term
-      db@(curDb /\ setDb)                <- R.useState' (Just Gargantext :: Maybe Database)
-      lang                               <- R.useState' (Nothing :: Maybe Lang)
+      term@(curTerm /\ _) <- R.useState' search.term
+      df@(curDf /\ setDf)                <- R.useState' (Just Gargantext :: Maybe DataField)
+      db@(curDb /\ setDb)                <- R.useState' (Nothing :: Maybe Database)
+      lang@(curLg /\ _)                  <- R.useState' (Nothing :: Maybe Lang)
       org@(curOrg /\ setOrg)             <- R.useState' (Nothing :: Maybe Org)
       filters@(curFilters /\ setFilters) <- R.useState' (Nothing :: Maybe HAL_Filters)
       fi                                 <- R.useState' ""
       pure $
           div { className: "search-field-group" }
               [ searchInput term
-              , langInput lang props.langs
-              , databaseInput db filters org props.databases
+              , if curTerm == ""
+                   then div {}[]
+                   else div {} [ langNav lang props.langs
+                               , if curLg == Nothing
+                                    then div {}[]
+                                    else div {} [ dataFieldNav  df dataFields
+                                                , if curDf == Just (External Nothing)
+                                                     then databaseInput db filters org props.databases
+                                                     else div {} []
 
-              , if isHAL curDb
-                   then orgInput org allOrgs
-                   else div {} []
+                                                , if isHAL curDb
+                                                     then orgInput org allOrgs
+                                                     else div {} []
 
-              , if isHAL curDb
-                  then
-                    if curOrg == (Just IMT)
-                      then
-                        R.fragment
-                          [ ul {} $ map ( \org' -> li {}
-                                        [ input { type: "checkbox"
-                                                , checked: isInFilters org' curFilters
-                                                , on: {change: \_ -> setFilters
-                                                                  $ const
-                                                                  $ updateFilter org' curFilters
-                                                      }
-                                                }
-                                        , if org' == All_IMT
-                                             then i {} [text  $ " " <> show org']
-                                             else text $ " " <> show org'
-                                        ]
-                                        ) allIMTorgs
-                          , filterInput fi
-                          ]
-                      else
-                        if curOrg == (Just CNRS)
-                           then
-                             R.fragment [ div {} [], filterInput fi]
-                           else
-                             div {} []
-                  else
-                    div {} []
-              , submitButton node_id db term lang org filters props.search
+                                                , if isHAL curDb
+                                                    then
+                                                      if curOrg == (Just IMT)
+                                                        then
+                                                          R.fragment
+                                                            [ ul {} $ map ( \org' -> li {}
+                                                                          [ input { type: "checkbox"
+                                                                                  , checked: isInFilters org' curFilters
+                                                                                  , on: {change: \_ -> setFilters
+                                                                                                    $ const
+                                                                                                    $ updateFilter org' curFilters
+                                                                                        }
+                                                                                  }
+                                                                          , if org' == All_IMT
+                                                                               then i {} [text  $ " " <> show org']
+                                                                               else text $ " " <> show org'
+                                                                          ]
+                                                                          ) allIMTorgs
+                                                            , filterInput fi
+                                                            ]
+                                                        else
+                                                          if curOrg == (Just CNRS)
+                                                             then
+                                                               R.fragment [ div {} [], filterInput fi]
+                                                             else
+                                                               div {} []
+                                                    else
+                                                      div {} []
+                                                 , submitButton node_id db term lang org filters props.search
+                                                ]
+                              ]
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
                    || (p.databases  /= p'.databases )
@@ -128,14 +140,18 @@ updateFilter org (Just (HAL_IMT {imtOrgs})) =
                        then Set.fromFoldable allIMTorgs
                        else Set.insert org imtOrgs
 
-updateFilter org _ = Just $ HAL_IMT { imtOrgs: imtOrgs', structIds: Set.empty}
+updateFilter org _ = Just $ HAL_IMT { imtOrgs: imtOrgs'
+                                    , structIds: Set.empty
+                                    }
   where
     imtOrgs' = if org == All_IMT
                   then Set.fromFoldable allIMTorgs
                   else Set.fromFoldable [org]
 
-langInput :: R.State (Maybe Lang) -> Array Lang -> R.Element
-langInput (lang /\ setLang) langs =
+
+------------------------------------------------------------------------
+langList :: R.State (Maybe Lang) -> Array Lang -> R.Element
+langList (lang /\ setLang) langs =
               div { className: "form-group" }
                    [ div {className: "text-primary center"} [text "with lang"]
                    , R2.select { className: "form-control"
@@ -150,7 +166,33 @@ langInput (lang /\ setLang) langs =
       liItem :: Lang -> R.Element
       liItem  lang = option {className : "text-primary center"} [ text (show lang) ]
 
+langNav :: R.State (Maybe Lang) -> Array Lang -> R.Element
+langNav (lang /\ setLang) langs =
+  R.fragment [ div {className: "text-primary center"} [text "with lang"]
+             , div { className: "nav nav-tabs"} (liItem <$> langs)
+             ]
+    where
+      liItem :: Lang -> R.Element
+      liItem  lang' = div { className : "nav-item nav-link" <> if (Just lang') == lang then " active" else ""
+                         , on: { click: \_ -> setLang $ const $ Just lang' }
+                         } [ text (show lang') ]
 
+------------------------------------------------------------------------
+
+dataFieldNav :: R.State (Maybe DataField) -> Array DataField -> R.Element
+dataFieldNav (df /\ setDf) datafields =
+  R.fragment [ div {className: "text-primary center"} [text "with DataField"]
+             , div { className: "nav nav-tabs"} (liItem <$> dataFields)
+             ]
+    where
+      liItem :: DataField -> R.Element
+      liItem  df' = div { className : "nav-item nav-link" <> if (Just df') == df then " active" else ""
+                         , on: { click: \_ -> setDf $ const $ Just df'
+                               }
+                         } [ text (show df') ]
+
+
+------------------------------------------------------------------------
 databaseInput :: R.State (Maybe Database)
               -> R.State (Maybe HAL_Filters)
               -> R.State (Maybe Org)
@@ -238,4 +280,4 @@ submitButton node_id (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /
     doSearch = \_ -> do
       case term of
         "" -> setSearch $ const Nothing
-        _  -> setSearch $ const $ Just { database, lang, filters, term, org, node_id}
+        _  -> setSearch $ const $ Just {datafield: Nothing, database, lang, filters, term, org, node_id}

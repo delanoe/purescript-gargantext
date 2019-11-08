@@ -23,6 +23,10 @@ import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 
 ------------------------------------------------------------------------
+class Doc a where
+  doc :: a -> String
+
+------------------------------------------------------------------------
 -- | Lang search specifications
 allLangs :: Array Lang
 allLangs = [ EN
@@ -52,10 +56,39 @@ instance encodeJsonLang :: EncodeJson Lang where
   encodeJson a = encodeJson (show a)
 
 ------------------------------------------------------------------------
+-- | DataField search specifications
+
+dataFields :: Array DataField
+dataFields = [ Gargantext
+             , External Nothing
+             , Web
+             ]
+
+data DataField = Gargantext
+               | External (Maybe Database)
+               | Web
+
+instance showDataField :: Show DataField where
+  show Gargantext   = "In Gargantext"
+  show (External _) = "Ext.Database"
+  show Web          = "Web"
+
+instance docDataField :: Doc DataField where
+  doc Gargantext   = "All Gargantext Database"
+  doc (External _) = "External (scientific) databases"
+  doc Web          = "All the web crawled with meta-search-engine SearX"
+
+instance eqDataField :: Eq DataField where
+  eq Gargantext Gargantext = true
+  eq (External _) (External _) = true
+  eq Web Web = true
+  eq _ _     = false
+
+------------------------------------------------------------------------
 -- | Database search specifications
+
 allDatabases :: Array Database
-allDatabases = [ Gargantext
-               , PubMed
+allDatabases = [ PubMed
                , HAL
                , IsTex
                , Isidore
@@ -65,50 +98,40 @@ allDatabases = [ Gargantext
                ]
 
 data Database = All_Databases
-              | Gargantext
               | PubMed
               | HAL
               | IsTex
               | Isidore
-              | Web
-              | News
-              | SocialNetworks
+--              | News
+--              | SocialNetworks
 
 instance showDatabase :: Show Database where
   show All_Databases= "All Databases"
-  show Gargantext = "In Gargantext"
   show PubMed = "PubMed"
   show HAL    = "HAL"
   show IsTex  = "IsTex"
   show Isidore= "Isidore"
-  show Web    = "Web"
-  show News   = "News"
-  show SocialNetworks = "Social Networks"
-
-class Doc a where
-  doc :: a -> String
+--  show News   = "News"
+--  show SocialNetworks = "Social Networks"
 
 instance docDatabase :: Doc Database where
   doc All_Databases = "All databases"
-  doc Gargantext  = "All Gargantext Database"
   doc PubMed      = "All Medical publications"
   doc HAL         = "All open science (archives ouvertes)"
   doc IsTex       = "All Elsevier enriched by CNRS/INIST"
   doc Isidore     = "All (French) Social Sciences"
-  doc Web         = "All the web crawled with meta-search-engine SearX"
-  doc News        = "Web filtered by News"
-  doc SocialNetworks = "Web filtered by MicroBlogs"
+--  doc News        = "Web filtered by News"
+--  doc SocialNetworks = "Web filtered by MicroBlogs"
 
 readDatabase :: String -> Maybe Database
 readDatabase "All Databases" = Just All_Databases
-readDatabase "Gargantext" = Just Gargantext
 readDatabase "PubMed" = Just PubMed
 readDatabase "HAL"    = Just HAL
 readDatabase "IsTex"  = Just IsTex
 readDatabase "Isidore"= Just Isidore
-readDatabase "Web"    = Just Web
-readDatabase "News"   = Just News
-readDatabase "Social Networks" = Just SocialNetworks
+-- readDatabase "Web"    = Just Web
+-- readDatabase "News"   = Just News
+-- readDatabase "Social Networks" = Just SocialNetworks
 readDatabase _        = Nothing
 
 derive instance eqDatabase :: Eq Database
