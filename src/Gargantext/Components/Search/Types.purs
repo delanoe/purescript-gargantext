@@ -60,28 +60,33 @@ instance encodeJsonLang :: EncodeJson Lang where
 
 dataFields :: Array DataField
 dataFields = [ Gargantext
-             , External Nothing
              , Web
+             , External Nothing
+             , Files
              ]
 
 data DataField = Gargantext
                | External (Maybe Database)
                | Web
+               | Files
 
 instance showDataField :: Show DataField where
   show Gargantext   = "In Gargantext"
   show (External _) = "Ext.Database"
   show Web          = "Web"
+  show Files        = "Files"
 
 instance docDataField :: Doc DataField where
   doc Gargantext   = "All Gargantext Database"
   doc (External _) = "External (scientific) databases"
   doc Web          = "All the web crawled with meta-search-engine SearX"
+  doc Files        = "Zip files with formats.."
 
 instance eqDataField :: Eq DataField where
   eq Gargantext Gargantext = true
   eq (External _) (External _) = true
   eq Web Web = true
+  eq Files Files = true
   eq _ _     = false
 
 ------------------------------------------------------------------------

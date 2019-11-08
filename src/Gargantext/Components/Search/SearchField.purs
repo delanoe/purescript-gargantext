@@ -1,8 +1,9 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, searchField, searchFieldComponent )where
 
-import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||), (==), map, (<>), (&&), (*>), (>>=), (>=>))
+import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||), (==), map, (<>), (&&), (*>), (>>=), (>=>), (<))
 import Data.Maybe (Maybe(..), maybe, isJust)
+import Data.String (length)
 import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
@@ -65,51 +66,55 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
       pure $
           div { className: "search-field-group" }
               [ searchInput term
-              , if curTerm == ""
-                   then div {}[]
-                   else div {} [ langNav lang props.langs
-                               , if curLg == Nothing
-                                    then div {}[]
-                                    else div {} [ dataFieldNav  df dataFields
-                                                , if curDf == Just (External Nothing)
-                                                     then databaseInput db filters org props.databases
-                                                     else div {} []
+              , if length curTerm < 3
+                  then
+                    div {}[]
+                  else
+                    div {} [ langNav lang props.langs
+                           , if curLg == Nothing
+                               then
+                                 div {}[]
+                               else
+                                 div {} [ dataFieldNav  df dataFields
+                                         , if curDf == Just (External Nothing)
+                                             then databaseInput df db filters org props.databases
+                                             else div {} []
 
-                                                , if isHAL curDb
-                                                     then orgInput org allOrgs
-                                                     else div {} []
+                                         , if isHAL curDb
+                                             then orgInput org allOrgs
+                                             else div {} []
 
-                                                , if isHAL curDb
-                                                    then
-                                                      if curOrg == (Just IMT)
-                                                        then
-                                                          R.fragment
-                                                            [ ul {} $ map ( \org' -> li {}
-                                                                          [ input { type: "checkbox"
-                                                                                  , checked: isInFilters org' curFilters
-                                                                                  , on: {change: \_ -> setFilters
-                                                                                                    $ const
-                                                                                                    $ updateFilter org' curFilters
-                                                                                        }
-                                                                                  }
-                                                                          , if org' == All_IMT
-                                                                               then i {} [text  $ " " <> show org']
-                                                                               else text $ " " <> show org'
-                                                                          ]
-                                                                          ) allIMTorgs
-                                                            , filterInput fi
-                                                            ]
-                                                        else
-                                                          if curOrg == (Just CNRS)
-                                                             then
-                                                               R.fragment [ div {} [], filterInput fi]
-                                                             else
-                                                               div {} []
-                                                    else
-                                                      div {} []
-                                                 , submitButton node_id db term lang org filters props.search
-                                                ]
-                              ]
+                                         , if isHAL curDb
+                                             then
+                                               if curOrg == (Just IMT)
+                                                 then
+                                                   R.fragment
+                                                     [ ul {} $ map ( \org' -> li {}
+                                                                   [ input { type: "checkbox"
+                                                                           , checked: isInFilters org' curFilters
+                                                                           , on: {change: \_ -> (setFilters
+                                                                                             $ const
+                                                                                             $ updateFilter org' curFilters)
+                                                                                 }
+                                                                           }
+                                                                   , if org' == All_IMT
+                                                                        then i {} [text  $ " " <> show org']
+                                                                        else text $ " " <> show org'
+                                                                   ]
+                                                                   ) allIMTorgs
+                                                     , filterInput fi
+                                                     ]
+                                                 else
+                                                   if curOrg == (Just CNRS)
+                                                      then
+                                                        R.fragment [ div {} [], filterInput fi]
+                                                      else
+                                                        div {} []
+                                             else
+                                               div {} []
+                                         ]
+                          ]
+              , submitButton node_id db term lang org filters props.search
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
                    || (p.databases  /= p'.databases )
@@ -183,6 +188,7 @@ dataFieldNav :: R.State (Maybe DataField) -> Array DataField -> R.Element
 dataFieldNav (df /\ setDf) datafields =
   R.fragment [ div {className: "text-primary center"} [text "with DataField"]
              , div { className: "nav nav-tabs"} (liItem <$> dataFields)
+             , div {className:"center"} [ text $ maybe "" doc df ]
              ]
     where
       liItem :: DataField -> R.Element
@@ -193,12 +199,13 @@ dataFieldNav (df /\ setDf) datafields =
 
 
 ------------------------------------------------------------------------
-databaseInput :: R.State (Maybe Database)
+databaseInput :: R.State (Maybe DataField)
+              -> R.State (Maybe Database)
               -> R.State (Maybe HAL_Filters)
               -> R.State (Maybe Org)
               -> Array Database
               -> R.Element
-databaseInput (db /\ setDB) (_ /\ setFilters) (_ /\ setOrg) dbs =
+databaseInput (df /\ setDf) (db /\ setDB) (_ /\ setFilters) (_ /\ setOrg) dbs =
    div { className: "form-group" }
                    [ div {className: "text-primary center"} [text "in database"]
                    , R2.select { className: "form-control"
@@ -208,6 +215,7 @@ databaseInput (db /\ setDB) (_ /\ setFilters) (_ /\ setOrg) dbs =
                                          $ e .. "target" .. "value")
                                          *> (setOrg     $ const Nothing)
                                          *> (setFilters $ const Nothing)
+                                         *> (setDf $ const $ Just $ External db)
                                    }
                                } (liItem <$> dbs)
                    , div {className:"center"} [ text $ maybe "" doc db ]
