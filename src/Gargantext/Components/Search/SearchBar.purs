@@ -49,6 +49,7 @@ onSearchChange session (search /\ setSearch) =
           log2 "Searching db: " $ show q.database
           log2 "Searching term: " q.term
           log2 "Searching filters: " q.filters
+          log2 "Searching lang: "    q.lang
 
         r <- (performSearch session $ searchQuery q) :: Aff Unit
 
@@ -60,7 +61,13 @@ onSearchChange session (search /\ setSearch) =
       over SearchQuery (_ {query=term}) defaultSearchQuery
 
     searchQuery {database: Just db, lang, term, filters, node_id} =
-      over SearchQuery (_ {databases=[db], lang=lang, query=term, filters=filters', node_id=node_id}) defaultSearchQuery
+      over SearchQuery (_ { databases=[db]
+                          , lang=lang
+                          , query=term
+                          , filters=filters'
+                          , node_id=node_id
+                          }
+                        ) defaultSearchQuery
         where
           filters' = toInt filters
           toInt (Just (HAL_StructId {structIds}))     = Set.toUnfoldable structIds

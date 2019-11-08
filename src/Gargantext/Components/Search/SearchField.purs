@@ -62,12 +62,10 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
       pure $
           div { className: "search-field-group" }
               [ searchInput term
+              , langInput lang props.langs
               , div {className: "text-primary center"} [text "in"]
               , databaseInput db filters org props.databases
 
-              , if curDb /= Just PubMed
-                   then langInput lang props.langs
-                   else div {} []
 
               , if isHAL curDb
                    then orgInput org allOrgs
@@ -165,7 +163,7 @@ databaseInput (db /\ setDB) (_ /\ setFilters) (_ /\ setOrg) dbs =
 langInput :: R.State (Maybe Lang) -> Array Lang -> R.Element
 langInput (lang /\ setLang) langs =
   div { className: "form-group" }
-                   [ text "with lang"
+                   [ div {className: "text-primary center"} [text "with lang"]
                    , R2.select { className: "form-control"
                                , on: { change: \e -> setLang
                                                    $ const

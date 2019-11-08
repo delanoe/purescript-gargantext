@@ -310,12 +310,13 @@ instance searchQueryToQuery :: ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, databases, node_id, files_id, filters})
+  encodeJson (SearchQuery {query, databases, node_id, files_id, filters, lang})
     =  "query"      := query
     ~> "databases"  := databases
     ~> "node_id"    := fromMaybe 0 node_id
     ~> "files_id"   := files_id
     ~> "filters"    := filters
+    ~> "lang"       := maybe "EN" show lang
     ~> jsonEmptyObject
 
 
