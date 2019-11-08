@@ -271,12 +271,13 @@ instance showSearchOrder :: Show SearchOrder where
 newtype SearchQuery = SearchQuery
   { query     :: String
   , databases :: Array Database
-  , lang     :: Maybe Lang
+  , lang      :: Maybe Lang
+  , filters   :: (Array Int)
   , node_id   :: Maybe Int
   , files_id  :: Array String
   , offset    :: Maybe Int
   , limit     :: Maybe Int
-  , order     :: Maybe SearchOrder 
+  , order     :: Maybe SearchOrder
   }
 
 derive instance newtypeSearchQuery :: Newtype SearchQuery _
@@ -287,10 +288,12 @@ defaultSearchQuery = SearchQuery
   , databases: allDatabases
   , lang    : Nothing
   , node_id : Nothing
+  , filters : []
   , files_id : []
   , offset: Nothing
   , limit: Nothing
-  , order: Nothing }
+  , order: Nothing
+  }
 
 instance toUrlSessionSearchQuery :: ToUrl Session SearchQuery where
   toUrl (Session {backend}) q = backendUrl backend q2
@@ -298,18 +301,21 @@ instance toUrlSessionSearchQuery :: ToUrl Session SearchQuery where
   
 instance searchQueryToQuery :: ToQuery SearchQuery where
   toQuery (SearchQuery {offset, limit, order}) =
-    QP.print id id $ QP.QueryPairs $
-         pair "offset" offset <> pair "limit" limit <> pair "order" order
+    QP.print id id $ QP.QueryPairs
+                   $ pair "offset" offset
+                   <> pair "limit" limit
+                   <> pair "order" order
     where pair :: forall a. Show a => String -> Maybe a -> Array (Tuple QP.Key (Maybe QP.Value))
           pair k = maybe [] $ \v ->
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, databases, node_id, files_id})
-    =   "query"      := query
-    ~> "databases"   := databases
-    ~>  "node_id"  := fromMaybe 0 node_id
-    ~>  "files_id"   := files_id
+  encodeJson (SearchQuery {query, databases, node_id, files_id, filters})
+    =  "query"      := query
+    ~> "databases"  := databases
+    ~> "node_id"    := fromMaybe 0 node_id
+    ~> "files_id"   := files_id
+    ~> "filters"    := filters
     ~> jsonEmptyObject
 
 

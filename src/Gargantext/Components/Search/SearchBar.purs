@@ -2,8 +2,10 @@ module Gargantext.Components.Search.SearchBar
   ( Props, searchBar, searchBarCpt
   ) where
 
-import Prelude (Unit, bind, discard, not, pure, show, ($), (<>))
+import Prelude (Unit, bind, discard, not, pure, show, ($), (<>), map)
 import Data.Maybe (Maybe(..))
+import Data.Array (nub, concat)
+import Data.Set as Set
 import Data.Newtype (over)
 import Data.Traversable (traverse_)
 import Data.Tuple (snd)
@@ -45,6 +47,7 @@ onSearchChange session (search /\ setSearch) =
         liftEffect $ do
           log2 "Searching db: " $ show q.database
           log2 "Searching term: " q.term
+          log2 "Searching filters: " q.filters
 
         r <- (performSearch session $ searchQuery q) :: Aff Unit
 
@@ -55,5 +58,10 @@ onSearchChange session (search /\ setSearch) =
     searchQuery {database: Nothing, lang, term} =
       over SearchQuery (_ {query=term}) defaultSearchQuery
 
-    searchQuery {database: Just db, lang, term} =
-      over SearchQuery (_ {databases=[db], lang=lang, query=term}) defaultSearchQuery
+    searchQuery {database: Just db, lang, term, filters} =
+      over SearchQuery (_ {databases=[db], lang=lang, query=term, filters=filters'}) defaultSearchQuery
+        where
+          filters' = toInt filters
+          toInt (Just (HAL_StructId {structIds}))     = Set.toUnfoldable structIds
+          toInt (Just (HAL_IMT {imtOrgs, structIds})) = nub $  (concat $ map imtStructId $ Set.toUnfoldable imtOrgs) <> (Set.toUnfoldable structIds)
+          toInt _ = []

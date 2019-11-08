@@ -25,6 +25,7 @@
     "psci-support",
     "random",
     "reactix",
+    "read",
     "routing",
     "sequences",
     "spec-discovery",

@@ -222,6 +222,9 @@ let additions =
           ]
           "https://github.com/slamdata/purescript-uri"
           "v7.0.0"
+       , read = mkPackage ["purescript-prelude", "purescript-maybe", "purescript-string"]
+                "https://github.com/truqu/purescript-read"
+                "v1.0.1"
       }
 
 in  upstream // overrides // additions

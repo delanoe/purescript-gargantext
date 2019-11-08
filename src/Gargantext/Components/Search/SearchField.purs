@@ -98,7 +98,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
                              div {} []
                   else
                     div {} []
-              , div { className: "panel-footer" }
+              , div { className: "" }
                     [ submitButton db term lang org filters props.search ]
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
@@ -108,7 +108,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
 
 isHAL :: Maybe Database -> Boolean
 isHAL (Just HAL) = true
-isHAL _ = false
+isHAL _          = false
 
 isInFilters :: IMT_org -> Maybe HAL_Filters -> Boolean
 isInFilters org (Just (HAL_IMT { imtOrgs })) = Set.member org imtOrgs
@@ -194,11 +194,19 @@ orgInput (org /\ setOrg) orgs =
 filterInput :: R.State String -> R.Element
 filterInput (term /\ setTerm) =
   div {className: ""} [ input { defaultValue: term
-                               , className: "form-control"
-                               , type: "text"
-                               , on: { change: \e -> setTerm $ const $ e .. "target" .. "value"}
-                               , placeholder : "Filter with struct_Ids as integer" }
-                               ]
+                              , className: "form-control"
+                              , type: "text"
+                              , on: { change: \e -> setTerm
+                                                  $ const
+                                                  $ e .. "target" .. "value"
+                                    }
+                              , "required pattern": "[[0-9]+[ ]+]*"
+                              -- TODO                          ^FIXME not sure about the regex comprehension: that should match "123 2334 44545" only (Integers separated by one space)
+                              -- form validation with CSS
+                              -- DOC: https://developer.mozilla.org/en-US/docs/Learn/HTML/Forms/Form_validation
+                              , placeholder : "Filter with struct_Ids as integer" 
+                              }
+                      ]
 
 
 searchInput :: R.State String -> R.Element
@@ -221,13 +229,13 @@ submitButton :: R.State (Maybe Database)
              -> R.Element
 submitButton (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /\ _) (_ /\ setSearch) =
   R.fragment [ div { className : "" } []
-             , button { className: "btn btn-primary text-center"
+             , button { className: "btn btn-primary"
                       , type: "button"
-                      , on: {change: click}
+                      , on: {click: doSearch}
                       } [ text "Search" ]
              ]
   where
-    click = \_ -> do
+    doSearch = \_ -> do
       case term of
         "" -> setSearch $ const Nothing
         _  -> setSearch $ const $ Just { database, lang, filters, term, org}
