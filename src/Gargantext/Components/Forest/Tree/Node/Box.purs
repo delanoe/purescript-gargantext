@@ -137,6 +137,7 @@ fldr nt open = if open
                    color _            = " text-danger"
                    -}
 
+
 -- START node text
 type NodeTextProps =
   ( isSelected :: Boolean

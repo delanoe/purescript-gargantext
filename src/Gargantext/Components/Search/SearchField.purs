@@ -28,7 +28,7 @@ type Search = { database :: Maybe Database
               }
 
 defaultSearch :: Search
-defaultSearch = { database: Just InGargantext
+defaultSearch = { database: Just Gargantext
                 , term: ""
                 , lang: Nothing
                 , org : Nothing
@@ -54,7 +54,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
     cpt props@{node_id} _ = do
       let search = maybe defaultSearch identity (fst props.search)
       term <- R.useState' search.term
-      db@(curDb /\ setDb)                <- R.useState' (Just InGargantext :: Maybe Database)
+      db@(curDb /\ setDb)                <- R.useState' (Just Gargantext :: Maybe Database)
       lang                               <- R.useState' (Nothing :: Maybe Lang)
       org@(curOrg /\ setOrg)             <- R.useState' (Nothing :: Maybe Org)
       filters@(curFilters /\ setFilters) <- R.useState' (Nothing :: Maybe HAL_Filters)
@@ -63,9 +63,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
           div { className: "search-field-group" }
               [ searchInput term
               , langInput lang props.langs
-              , div {className: "text-primary center"} [text "in"]
               , databaseInput db filters org props.databases
-
 
               , if isHAL curDb
                    then orgInput org allOrgs
@@ -99,8 +97,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
                              div {} []
                   else
                     div {} []
-              , div { className: "" }
-                    [ submitButton node_id db term lang org filters props.search ]
+              , submitButton node_id db term lang org filters props.search
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
                    || (p.databases  /= p'.databases )
@@ -137,32 +134,9 @@ updateFilter org _ = Just $ HAL_IMT { imtOrgs: imtOrgs', structIds: Set.empty}
                   then Set.fromFoldable allIMTorgs
                   else Set.fromFoldable [org]
 
-
-databaseInput :: R.State (Maybe Database)
-              -> R.State (Maybe HAL_Filters)
-              -> R.State (Maybe Org)
-              -> Array Database
-              -> R.Element
-databaseInput (db /\ setDB) (_ /\ setFilters) (_ /\ setOrg) dbs =
-  div { className: "form-group" }
-                   [ R2.select { className: "form-control"
-                               , on: { change: \e -> (setDB
-                                         $ const
-                                         $ readDatabase
-                                         $ e .. "target" .. "value")
-                                         *> (setOrg     $ const Nothing)
-                                         *> (setFilters $ const Nothing)
-                                   }
-                               } (liItem <$> dbs)
-                   ]
-    where
-      liItem :: Database -> R.Element
-      liItem  db = option {className : "text-primary center"} [ text (show db) ]
-
-
 langInput :: R.State (Maybe Lang) -> Array Lang -> R.Element
 langInput (lang /\ setLang) langs =
-  div { className: "form-group" }
+              div { className: "form-group" }
                    [ div {className: "text-primary center"} [text "with lang"]
                    , R2.select { className: "form-control"
                                , on: { change: \e -> setLang
@@ -176,10 +150,35 @@ langInput (lang /\ setLang) langs =
       liItem :: Lang -> R.Element
       liItem  lang = option {className : "text-primary center"} [ text (show lang) ]
 
+
+databaseInput :: R.State (Maybe Database)
+              -> R.State (Maybe HAL_Filters)
+              -> R.State (Maybe Org)
+              -> Array Database
+              -> R.Element
+databaseInput (db /\ setDB) (_ /\ setFilters) (_ /\ setOrg) dbs =
+   div { className: "form-group" }
+                   [ div {className: "text-primary center"} [text "in database"]
+                   , R2.select { className: "form-control"
+                               , on: { change: \e -> (setDB
+                                         $ const
+                                         $ readDatabase
+                                         $ e .. "target" .. "value")
+                                         *> (setOrg     $ const Nothing)
+                                         *> (setFilters $ const Nothing)
+                                   }
+                               } (liItem <$> dbs)
+                   , div {className:"center"} [ text $ maybe "" doc db ]
+                   ]
+    where
+      liItem :: Database -> R.Element
+      liItem  db = option {className : "text-primary center"} [ text (show db) ]
+
+
 orgInput :: R.State (Maybe Org) -> Array Org -> R.Element
 orgInput (org /\ setOrg) orgs =
   div { className: "form-group" }
-                   [ text "filter with organization: "
+                   [ div {className: "text-primary center"} [text "filter with organization: "]
                    , R2.select { className: "form-control"
                                , on: { change: \e -> setOrg
                                                    $ const
@@ -194,7 +193,7 @@ orgInput (org /\ setOrg) orgs =
 
 filterInput :: R.State String -> R.Element
 filterInput (term /\ setTerm) =
-  div {className: ""} [ input { defaultValue: term
+  div {className: "form-group"} [ input { defaultValue: term
                               , className: "form-control"
                               , type: "text"
                               , on: { change: \e -> setTerm
@@ -212,13 +211,13 @@ filterInput (term /\ setTerm) =
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
-  div { className : "" }
-      [ input { defaultValue: term
-      , className: "form-control"
-      , type: "text"
-      , on: { change : \e -> setTerm $ const $ e .. "target" .. "value" }
-      , placeholder: "Your Query here" }
-      ]
+              div { className : "" }
+                    [ input { defaultValue: term
+                    , className: "form-control"
+                    , type: "text"
+                    , on: { change : \e -> setTerm $ const $ e .. "target" .. "value" }
+                    , placeholder: "Your Query here" }
+                    ]
 
 
 submitButton :: Maybe Int
@@ -229,13 +228,12 @@ submitButton :: Maybe Int
              -> R.State (Maybe HAL_Filters)
              -> R.State (Maybe Search)
              -> R.Element
-submitButton node_id (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /\ _) (_ /\ setSearch) =
-  R.fragment [ div { className : "" } []
-             , button { className: "btn btn-primary"
-                      , type: "button"
-                      , on: {click: doSearch}
-                      } [ text "Search" ]
-             ]
+submitButton node_id (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /\ _) (_ /\ setSearch) = div { className : "panel-footer" }
+                     [ button { className: "btn btn-primary"
+                              , type: "button"
+                              , on: {click: doSearch}
+                              } [ text "Launch Search" ]
+                       ]
   where
     doSearch = \_ -> do
       case term of

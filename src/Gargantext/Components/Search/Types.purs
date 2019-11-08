@@ -54,36 +54,51 @@ instance encodeJsonLang :: EncodeJson Lang where
 ------------------------------------------------------------------------
 -- | Database search specifications
 allDatabases :: Array Database
-allDatabases = [ InGargantext
+allDatabases = [ Gargantext
                , PubMed
                , HAL
                , IsTex
                , Isidore
+               -- , Web
                ]
 
-data Database = All
-              | InGargantext
+data Database = All_Databases
+              | Gargantext
               | PubMed
               | HAL
               | IsTex
               | Isidore
-
+              | Web
 
 instance showDatabase :: Show Database where
-  show All    = "All"
-  show InGargantext = "In Gargantext"
+  show All_Databases= "All Databases"
+  show Gargantext = "In Gargantext"
   show PubMed = "PubMed"
   show HAL    = "HAL"
   show IsTex  = "IsTex"
   show Isidore= "Isidore"
+  show Web    = "Web"
+
+class Doc a where
+  doc :: a -> String
+
+instance docDatabase :: Doc Database where
+  doc All_Databases = "All databases"
+  doc Gargantext  = "All Gargantext Database"
+  doc PubMed      = "All Medical publications"
+  doc HAL         = "All open science (archives ouvertes)"
+  doc IsTex       = "All Elsevier enriched by CNRS/INIST"
+  doc Isidore     = "All (French) Social Sciences"
+  doc Web         = "All the web"
 
 readDatabase :: String -> Maybe Database
-readDatabase "All"    = Just All
-readDatabase "In Gargantext" = Just InGargantext
+readDatabase "All Databases" = Just All_Databases
+readDatabase "Gargantext" = Just Gargantext
 readDatabase "PubMed" = Just PubMed
 readDatabase "HAL"    = Just HAL
 readDatabase "IsTex"  = Just IsTex
 readDatabase "Isidore"= Just Isidore
+readDatabase "Web"    = Just Web
 readDatabase _        = Nothing
 
 derive instance eqDatabase :: Eq Database

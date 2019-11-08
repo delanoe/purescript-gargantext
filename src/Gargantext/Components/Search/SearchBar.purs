@@ -35,7 +35,7 @@ searchBarCpt = R.hooksComponent "G.C.Node.SearchBar.searchBar" cpt
     cpt {session, databases, langs, node_id} _ = do
       search <- R.useState' Nothing
       onSearchChange session search
-      pure $ H.div { className: "" } [ searchField {databases, langs, search, node_id}]
+      pure $ H.div {} [ searchField {databases, langs, search, node_id}]
 
 
 onSearchChange :: Session -> R.State (Maybe Search) -> R.Hooks Unit
