@@ -54,7 +54,7 @@ instance encodeJsonLang :: EncodeJson Lang where
 ------------------------------------------------------------------------
 -- | Database search specifications
 allDatabases :: Array Database
-allDatabases = [ All
+allDatabases = [ InGargantext
                , PubMed
                , HAL
                , IsTex
@@ -62,6 +62,7 @@ allDatabases = [ All
                ]
 
 data Database = All
+              | InGargantext
               | PubMed
               | HAL
               | IsTex
@@ -69,7 +70,8 @@ data Database = All
 
 
 instance showDatabase :: Show Database where
-  show All    = "In Gargantext"
+  show All    = "All"
+  show InGargantext = "In Gargantext"
   show PubMed = "PubMed"
   show HAL    = "HAL"
   show IsTex  = "IsTex"
@@ -77,6 +79,7 @@ instance showDatabase :: Show Database where
 
 readDatabase :: String -> Maybe Database
 readDatabase "All"    = Just All
+readDatabase "In Gargantext" = Just InGargantext
 readDatabase "PubMed" = Just PubMed
 readDatabase "HAL"    = Just HAL
 readDatabase "IsTex"  = Just IsTex

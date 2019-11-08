@@ -28,7 +28,7 @@ type Search = { database :: Maybe Database
               }
 
 defaultSearch :: Search
-defaultSearch = { database: Nothing
+defaultSearch = { database: Just InGargantext
                 , term: ""
                 , lang: Nothing
                 , org : Nothing
@@ -54,7 +54,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
     cpt props@{node_id} _ = do
       let search = maybe defaultSearch identity (fst props.search)
       term <- R.useState' search.term
-      db@(curDb /\ setDb)                <- R.useState' (Nothing :: Maybe Database)
+      db@(curDb /\ setDb)                <- R.useState' (Just InGargantext :: Maybe Database)
       lang                               <- R.useState' (Nothing :: Maybe Lang)
       org@(curOrg /\ setOrg)             <- R.useState' (Nothing :: Maybe Org)
       filters@(curFilters /\ setFilters) <- R.useState' (Nothing :: Maybe HAL_Filters)
