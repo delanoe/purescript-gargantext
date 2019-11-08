@@ -59,7 +59,9 @@ allDatabases = [ Gargantext
                , HAL
                , IsTex
                , Isidore
-               -- , Web
+               --, Web
+               --, News
+               --, SocialNetworks
                ]
 
 data Database = All_Databases
@@ -69,6 +71,8 @@ data Database = All_Databases
               | IsTex
               | Isidore
               | Web
+              | News
+              | SocialNetworks
 
 instance showDatabase :: Show Database where
   show All_Databases= "All Databases"
@@ -78,6 +82,8 @@ instance showDatabase :: Show Database where
   show IsTex  = "IsTex"
   show Isidore= "Isidore"
   show Web    = "Web"
+  show News   = "News"
+  show SocialNetworks = "Social Networks"
 
 class Doc a where
   doc :: a -> String
@@ -89,7 +95,9 @@ instance docDatabase :: Doc Database where
   doc HAL         = "All open science (archives ouvertes)"
   doc IsTex       = "All Elsevier enriched by CNRS/INIST"
   doc Isidore     = "All (French) Social Sciences"
-  doc Web         = "All the web"
+  doc Web         = "All the web crawled with meta-search-engine SearX"
+  doc News        = "Web filtered by News"
+  doc SocialNetworks = "Web filtered by MicroBlogs"
 
 readDatabase :: String -> Maybe Database
 readDatabase "All Databases" = Just All_Databases
@@ -99,6 +107,8 @@ readDatabase "HAL"    = Just HAL
 readDatabase "IsTex"  = Just IsTex
 readDatabase "Isidore"= Just Isidore
 readDatabase "Web"    = Just Web
+readDatabase "News"   = Just News
+readDatabase "Social Networks" = Just SocialNetworks
 readDatabase _        = Nothing
 
 derive instance eqDatabase :: Eq Database
@@ -121,7 +131,7 @@ data Org = All_Orgs
          | Others
 
 instance showOrg :: Show Org where
-  show All_Orgs   = "All__Orgs"
+  show All_Orgs   = "All_Orgs"
   show CNRS = "CNRS"
   show IMT  = "IMT"
   show Others = "Others"
