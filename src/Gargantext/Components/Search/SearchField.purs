@@ -24,6 +24,7 @@ type Search = { database :: Maybe Database
               , lang     :: Maybe Lang
               , org      :: Maybe Org
               , filters  :: Maybe HAL_Filters
+              , node_id  :: Maybe Int
               }
 
 defaultSearch :: Search
@@ -32,6 +33,7 @@ defaultSearch = { database: Nothing
                 , lang: Nothing
                 , org : Nothing
                 , filters: Nothing
+                , node_id: Nothing
                 }
 
 type Props =
@@ -40,6 +42,7 @@ type Props =
   , langs     :: Array Lang
   -- State hook for a search, how we get data in and out
   , search    :: R.State (Maybe Search)
+  , node_id   :: Maybe Int
   )
 
 searchField :: Record Props -> R.Element
@@ -48,7 +51,7 @@ searchField p = R.createElement searchFieldComponent p []
 searchFieldComponent :: R.Memo Props
 searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
   where
-    cpt props _ = do
+    cpt props@{node_id} _ = do
       let search = maybe defaultSearch identity (fst props.search)
       term <- R.useState' search.term
       db@(curDb /\ setDb)                <- R.useState' (Nothing :: Maybe Database)
@@ -99,7 +102,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
                   else
                     div {} []
               , div { className: "" }
-                    [ submitButton db term lang org filters props.search ]
+                    [ submitButton node_id db term lang org filters props.search ]
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
                    || (p.databases  /= p'.databases )
@@ -220,14 +223,15 @@ searchInput (term /\ setTerm) =
       ]
 
 
-submitButton :: R.State (Maybe Database)
+submitButton :: Maybe Int
+             -> R.State (Maybe Database)
              -> R.State String
              -> R.State (Maybe Lang)
              -> R.State (Maybe Org)
              -> R.State (Maybe HAL_Filters)
              -> R.State (Maybe Search)
              -> R.Element
-submitButton (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /\ _) (_ /\ setSearch) =
+submitButton node_id (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /\ _) (_ /\ setSearch) =
   R.fragment [ div { className : "" } []
              , button { className: "btn btn-primary"
                       , type: "button"
@@ -238,4 +242,4 @@ submitButton (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /\ _) (_ 
     doSearch = \_ -> do
       case term of
         "" -> setSearch $ const Nothing
-        _  -> setSearch $ const $ Just { database, lang, filters, term, org}
+        _  -> setSearch $ const $ Just { database, lang, filters, term, org, node_id}

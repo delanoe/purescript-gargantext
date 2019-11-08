@@ -23,6 +23,7 @@ import Gargantext.Sessions (Session)
 type Props = ( session   :: Session
              , databases :: Array Database
              , langs     :: Array Lang
+             , node_id   :: Maybe Int
              )
 
 searchBar :: Record Props -> R.Element
@@ -31,10 +32,10 @@ searchBar props = R.createElement searchBarCpt props []
 searchBarCpt :: R.Component Props
 searchBarCpt = R.hooksComponent "G.C.Node.SearchBar.searchBar" cpt
   where
-    cpt {session, databases, langs} _ = do
+    cpt {session, databases, langs, node_id} _ = do
       search <- R.useState' Nothing
       onSearchChange session search
-      pure $ H.div { className: "" } [ searchField {databases, langs, search}]
+      pure $ H.div { className: "" } [ searchField {databases, langs, search, node_id}]
 
 
 onSearchChange :: Session -> R.State (Maybe Search) -> R.Hooks Unit
@@ -58,8 +59,8 @@ onSearchChange session (search /\ setSearch) =
     searchQuery {database: Nothing, lang, term} =
       over SearchQuery (_ {query=term}) defaultSearchQuery
 
-    searchQuery {database: Just db, lang, term, filters} =
-      over SearchQuery (_ {databases=[db], lang=lang, query=term, filters=filters'}) defaultSearchQuery
+    searchQuery {database: Just db, lang, term, filters, node_id} =
+      over SearchQuery (_ {databases=[db], lang=lang, query=term, filters=filters', node_id=node_id}) defaultSearchQuery
         where
           filters' = toInt filters
           toInt (Just (HAL_StructId {structIds}))     = Set.toUnfoldable structIds
