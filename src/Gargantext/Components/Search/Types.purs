@@ -1,6 +1,6 @@
 module Gargantext.Components.Search.Types where
 
-import Prelude (class Eq, class Show, show, ($), (<>), map)
+import Prelude (class Eq, class Show, show, ($), (<>), map, (&&), (==))
 import Data.Set (Set)
 import Data.Ord
 import Data.Set as Set
@@ -62,7 +62,7 @@ dataFields :: Array DataField
 dataFields = [ Gargantext
              , Web
              , External Nothing
-             , Files
+             -- , Files
              ]
 
 data DataField = Gargantext
@@ -82,19 +82,19 @@ instance docDataField :: Doc DataField where
   doc Web          = "All the web crawled with meta-search-engine SearX"
   doc Files        = "Zip files with formats.."
 
+
+-- derive instance eqDataField :: Eq DataField
 instance eqDataField :: Eq DataField where
   eq Gargantext Gargantext = true
   eq (External _) (External _) = true
   eq Web Web = true
-  eq Files Files = true
-  eq _ _     = false
-
+  eq _ _ = false
 ------------------------------------------------------------------------
 -- | Database search specifications
 
 allDatabases :: Array Database
 allDatabases = [ PubMed
-               , HAL
+               , HAL Nothing
                , IsTex
                , Isidore
                --, Web
@@ -104,7 +104,7 @@ allDatabases = [ PubMed
 
 data Database = All_Databases
               | PubMed
-              | HAL
+              | HAL (Maybe Org)
               | IsTex
               | Isidore
 --              | News
@@ -113,7 +113,7 @@ data Database = All_Databases
 instance showDatabase :: Show Database where
   show All_Databases= "All Databases"
   show PubMed = "PubMed"
-  show HAL    = "HAL"
+  show (HAL _)= "HAL"
   show IsTex  = "IsTex"
   show Isidore= "Isidore"
 --  show News   = "News"
@@ -122,7 +122,7 @@ instance showDatabase :: Show Database where
 instance docDatabase :: Doc Database where
   doc All_Databases = "All databases"
   doc PubMed      = "All Medical publications"
-  doc HAL         = "All open science (archives ouvertes)"
+  doc (HAL _)     = "All open science (archives ouvertes)"
   doc IsTex       = "All Elsevier enriched by CNRS/INIST"
   doc Isidore     = "All (French) Social Sciences"
 --  doc News        = "Web filtered by News"
@@ -131,7 +131,7 @@ instance docDatabase :: Doc Database where
 readDatabase :: String -> Maybe Database
 readDatabase "All Databases" = Just All_Databases
 readDatabase "PubMed" = Just PubMed
-readDatabase "HAL"    = Just HAL
+readDatabase "HAL"    = Just $ HAL Nothing
 readDatabase "IsTex"  = Just IsTex
 readDatabase "Isidore"= Just Isidore
 -- readDatabase "Web"    = Just Web
@@ -141,64 +141,44 @@ readDatabase _        = Nothing
 
 derive instance eqDatabase :: Eq Database
 
+
 instance encodeJsonDatabase :: EncodeJson Database where
   encodeJson a = encodeJson (show a)
 ------------------------------------------------------------------------
--- | Database Filter specifications
--- filter by organization
+-- | Organization specifications
 
 allOrgs :: Array Org
 allOrgs = [ All_Orgs
-          , IMT
-          , CNRS
+          , IMT  $ Set.fromFoldable []
+          , CNRS $ Set.fromFoldable []
           ]
 
 data Org = All_Orgs
-         | CNRS
-         | IMT
-         | Others
+         | CNRS   (Set StructId)
+         | Others (Set StructId)
+         | IMT    (Set IMT_org)
+
+type StructId = Int
 
 instance showOrg :: Show Org where
   show All_Orgs   = "All_Orgs"
-  show CNRS = "CNRS"
-  show IMT  = "IMT"
-  show Others = "Others"
+  show (CNRS _)   = "CNRS"
+  show (IMT  _)   = "IMT"
+  show (Others _) = "Others"
 
 readOrg :: String -> Maybe Org
 readOrg "All_Orgs" = Just $ All_Orgs
-readOrg "CNRS"     = Just $ CNRS
-readOrg "IMT"      = Just $ IMT
-readOrg "Others"   = Just $ Others
+readOrg "CNRS"     = Just $ CNRS   $ Set.fromFoldable []
+readOrg "IMT"      = Just $ IMT    $ Set.fromFoldable []
+readOrg "Others"   = Just $ Others $ Set.fromFoldable []
 readOrg _          = Nothing
 
-instance eqOrg :: Eq Org
-  where
-    eq All_Orgs All_Orgs = true
-    eq CNRS CNRS     = true
-    eq IMT IMT       = true
-    eq Others Others = true
-    eq _  _          = false
+derive instance eqOrg :: Eq Org
 
 instance encodeJsonOrg :: EncodeJson Org where
   encodeJson a = encodeJson (show a)
 
 ------------------------------------------------------------------------
-
-type StructId = Int
-
-
-data HAL_Filters = HAL_StructId { structIds :: Set StructId}
-                 | HAL_IMT { imtOrgs :: Set IMT_org
-                           , structIds :: Set StructId
-                           }
-
-
-instance eqHAL_Filters :: Eq HAL_Filters
-  where
-    eq (HAL_StructId _) (HAL_StructId _) = true
-    eq (HAL_IMT _     ) (HAL_IMT      _) = true
-    eq _ _ = false
-
 
 allIMTorgs :: Array IMT_org
 allIMTorgs = [All_IMT] <> allIMTSubOrgs
@@ -326,9 +306,8 @@ instance showSearchOrder :: Show SearchOrder where
 ------------------------------------------------------------------------
 newtype SearchQuery = SearchQuery
   { query     :: String
-  , databases :: Array Database
+  , datafield :: Maybe DataField
   , lang      :: Maybe Lang
-  , filters   :: (Array Int)
   , node_id   :: Maybe Int
   , files_id  :: Array String
   , offset    :: Maybe Int
@@ -341,10 +320,9 @@ derive instance newtypeSearchQuery :: Newtype SearchQuery _
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
   { query: ""
-  , databases: allDatabases
+  , datafield: Nothing
   , lang    : Nothing
   , node_id : Nothing
-  , filters : []
   , files_id : []
   , offset: Nothing
   , limit: Nothing
@@ -366,12 +344,11 @@ instance searchQueryToQuery :: ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, databases, node_id, files_id, filters, lang})
+  encodeJson (SearchQuery {query, datafield, node_id, lang})
     =  "query"      := query
-    ~> "databases"  := databases
+    ~> "datafield"  := "" -- fromMaybe "" datafield
     ~> "node_id"    := fromMaybe 0 node_id
-    ~> "files_id"   := files_id
-    ~> "filters"    := filters
+    -- ~> "files_id"   := files_id
     ~> "lang"       := maybe "EN" show lang
     ~> jsonEmptyObject
 

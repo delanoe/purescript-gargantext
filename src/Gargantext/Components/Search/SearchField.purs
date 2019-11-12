@@ -21,21 +21,15 @@ select :: forall props.
 select = R.createElement "select"
 
 type Search = { datafield :: Maybe DataField
-              , database  :: Maybe Database
               , term      :: String
               , lang      :: Maybe Lang
-              , org       :: Maybe Org
-              , filters   :: Maybe HAL_Filters
               , node_id   :: Maybe Int
               }
 
 defaultSearch :: Search
 defaultSearch = { datafield: Just Gargantext
-                , database: Just PubMed
                 , term: ""
                 , lang: Just EN
-                , org : Nothing
-                , filters: Nothing
                 , node_id: Nothing
                 }
 
@@ -57,12 +51,9 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
     cpt props@{node_id} _ = do
       let search = maybe defaultSearch identity (fst props.search)
       term@(curTerm /\ _) <- R.useState' search.term
-      df@(curDf /\ setDf)                <- R.useState' (Just Gargantext :: Maybe DataField)
-      db@(curDb /\ setDb)                <- R.useState' (Nothing :: Maybe Database)
-      lang@(curLg /\ _)                  <- R.useState' (Nothing :: Maybe Lang)
-      org@(curOrg /\ setOrg)             <- R.useState' (Nothing :: Maybe Org)
-      filters@(curFilters /\ setFilters) <- R.useState' (Nothing :: Maybe HAL_Filters)
-      fi                                 <- R.useState' ""
+      df@(curDf /\ setDf) <- R.useState' (Just Gargantext :: Maybe DataField)
+      lang@(curLg /\ _)   <- R.useState' (Nothing :: Maybe Lang)
+      fi                  <- R.useState' ""
       pure $
           div { className: "search-field-group" }
               [ searchInput term
@@ -75,65 +66,77 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
                                then
                                  div {}[]
                                else
-                                 div {} [ dataFieldNav  df dataFields
-                                         , if curDf == Just (External Nothing)
-                                             then databaseInput df db filters org props.databases
+                                 div {} [ dataFieldNav df dataFields
+                                         , if isExternal curDf
+                                             then databaseInput df props.databases
                                              else div {} []
 
-                                         , if isHAL curDb
-                                             then orgInput org allOrgs
+                                         , if isHAL curDf
+                                             then orgInput df allOrgs
                                              else div {} []
 
-                                         , if isHAL curDb
+                                         , if isIMT curDf
                                              then
-                                               if curOrg == (Just IMT)
-                                                 then
-                                                   R.fragment
-                                                     [ ul {} $ map ( \org' -> li {}
+                                               R.fragment
+                                                     [ ul {} $ map ( \org -> li {}
                                                                    [ input { type: "checkbox"
-                                                                           , checked: isInFilters org' curFilters
-                                                                           , on: {change: \_ -> (setFilters
+                                                                           , checked: isIn org curDf
+                                                                           , on: {change: \_ -> (setDf
                                                                                              $ const
-                                                                                             $ updateFilter org' curFilters)
+                                                                                             $ updateFilter org curDf)
                                                                                  }
                                                                            }
-                                                                   , if org' == All_IMT
-                                                                        then i {} [text  $ " " <> show org']
-                                                                        else text $ " " <> show org'
+                                                                   , if org == All_IMT
+                                                                        then i {} [text  $ " " <> show org]
+                                                                        else text $ " " <> show org
                                                                    ]
                                                                    ) allIMTorgs
                                                      , filterInput fi
                                                      ]
-                                                 else
-                                                   if curOrg == (Just CNRS)
-                                                      then
-                                                        R.fragment [ div {} [], filterInput fi]
-                                                      else
-                                                        div {} []
-                                             else
-                                               div {} []
+                                              else div {} []
+
+                                         , if isCNRS curDf
+                                            then
+                                              R.fragment [ div {} [], filterInput fi]
+                                            else
+                                              div {} []
+
                                          ]
                           ]
-              , submitButton node_id db term lang org filters props.search
+              , submitButton node_id df term lang props.search
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
                    || (p.databases  /= p'.databases )
                    || (p.langs      /= p'.langs     )
 --                   || (fst p.filters /= fst p'.filters   )
 
-isHAL :: Maybe Database -> Boolean
-isHAL (Just HAL) = true
-isHAL _          = false
 
-isInFilters :: IMT_org -> Maybe HAL_Filters -> Boolean
-isInFilters org (Just (HAL_IMT { imtOrgs })) = Set.member org imtOrgs
-isInFilters _ _ = false
+isExternal :: Maybe DataField -> Boolean
+isExternal (Just (External _)) = true
+isExternal _ = false
 
-updateFilter :: IMT_org -> Maybe HAL_Filters -> Maybe HAL_Filters
-updateFilter org (Just (HAL_IMT {imtOrgs})) =
-  Just $ HAL_IMT { imtOrgs: imtOrgs'
-                 , structIds: Set.empty
-                 }
+isHAL :: Maybe DataField -> Boolean
+isHAL (Just (External (Just (HAL _)))) = true
+isHAL _ = false
+
+isIMT :: Maybe DataField -> Boolean
+isIMT (Just ( External ( Just ( HAL ( Just ( IMT _)))))) = true
+isIMT _ = false
+
+isCNRS :: Maybe DataField -> Boolean
+isCNRS (Just ( External ( Just ( HAL ( Just ( CNRS _)))))) = true
+isCNRS _ = false
+
+
+
+
+isIn :: IMT_org -> Maybe DataField -> Boolean
+isIn org (Just (External (Just (HAL (Just (IMT imtOrgs)))))) = Set.member org imtOrgs
+isIn _ _ = false
+
+updateFilter :: IMT_org -> Maybe DataField -> Maybe DataField
+updateFilter org (Just (External (Just (HAL (Just (IMT imtOrgs)))))) =
+ (Just (External (Just (HAL (Just $ IMT imtOrgs')))))
   where
     imtOrgs' = if Set.member org imtOrgs
                   then
@@ -145,14 +148,11 @@ updateFilter org (Just (HAL_IMT {imtOrgs})) =
                        then Set.fromFoldable allIMTorgs
                        else Set.insert org imtOrgs
 
-updateFilter org _ = Just $ HAL_IMT { imtOrgs: imtOrgs'
-                                    , structIds: Set.empty
-                                    }
+updateFilter org _ = (Just (External (Just (HAL (Just (IMT imtOrgs'))))))
   where
     imtOrgs' = if org == All_IMT
                   then Set.fromFoldable allIMTorgs
                   else Set.fromFoldable [org]
-
 
 ------------------------------------------------------------------------
 langList :: R.State (Maybe Lang) -> Array Lang -> R.Element
@@ -200,38 +200,39 @@ dataFieldNav (df /\ setDf) datafields =
 
 ------------------------------------------------------------------------
 databaseInput :: R.State (Maybe DataField)
-              -> R.State (Maybe Database)
-              -> R.State (Maybe HAL_Filters)
-              -> R.State (Maybe Org)
               -> Array Database
               -> R.Element
-databaseInput (df /\ setDf) (db /\ setDB) (_ /\ setFilters) (_ /\ setOrg) dbs =
+databaseInput (df /\ setDf) dbs =
    div { className: "form-group" }
                    [ div {className: "text-primary center"} [text "in database"]
                    , R2.select { className: "form-control"
-                               , on: { change: \e -> (setDB
+                               , on: { change: \e -> setDf
                                          $ const
+                                         $ Just
+                                         $ External
                                          $ readDatabase
-                                         $ e .. "target" .. "value")
-                                         *> (setOrg     $ const Nothing)
-                                         *> (setFilters $ const Nothing)
-                                         *> (setDf $ const $ Just $ External db)
+                                         $ e .. "target" .. "value"
                                    }
                                } (liItem <$> dbs)
                    , div {className:"center"} [ text $ maybe "" doc db ]
                    ]
     where
+      db = case df of
+        (Just (External (Just x))) -> Just x
+        _                          -> Nothing
+
       liItem :: Database -> R.Element
       liItem  db = option {className : "text-primary center"} [ text (show db) ]
 
 
-orgInput :: R.State (Maybe Org) -> Array Org -> R.Element
-orgInput (org /\ setOrg) orgs =
+orgInput :: R.State (Maybe DataField) -> Array Org -> R.Element
+orgInput (curDf /\ setDf) orgs =
   div { className: "form-group" }
                    [ div {className: "text-primary center"} [text "filter with organization: "]
                    , R2.select { className: "form-control"
-                               , on: { change: \e -> setOrg
+                               , on: { change: \e -> setDf
                                                    $ const
+                                                   $ Just $ External $ Just $ HAL
                                                    $ readOrg
                                                    $ e .. "target" .. "value"
                                       }
@@ -271,14 +272,12 @@ searchInput (term /\ setTerm) =
 
 
 submitButton :: Maybe Int
-             -> R.State (Maybe Database)
+             -> R.State (Maybe DataField)
              -> R.State String
              -> R.State (Maybe Lang)
-             -> R.State (Maybe Org)
-             -> R.State (Maybe HAL_Filters)
              -> R.State (Maybe Search)
              -> R.Element
-submitButton node_id (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /\ _) (_ /\ setSearch) = div { className : "panel-footer" }
+submitButton node_id (datafield /\ _) (term /\ _) (lang /\ _) (_ /\ setSearch) = div { className : "panel-footer" }
                      [ button { className: "btn btn-primary"
                               , type: "button"
                               , on: {click: doSearch}
@@ -288,4 +287,4 @@ submitButton node_id (database /\ _) (term /\ _) (lang /\ _) (org/\_) (filters /
     doSearch = \_ -> do
       case term of
         "" -> setSearch $ const Nothing
-        _  -> setSearch $ const $ Just {datafield: Nothing, database, lang, filters, term, org, node_id}
+        _  -> setSearch $ const $ Just {datafield, term, lang, node_id}

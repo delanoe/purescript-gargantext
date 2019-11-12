@@ -21,7 +21,7 @@ import Gargantext.Components.Search.SearchField (Search, searchField)
 import Gargantext.Sessions (Session)
 
 type Props = ( session   :: Session
-             , databases :: Array Database
+             , datafield :: Maybe DataField
              , langs     :: Array Lang
              , node_id   :: Maybe Int
              )
@@ -32,10 +32,10 @@ searchBar props = R.createElement searchBarCpt props []
 searchBarCpt :: R.Component Props
 searchBarCpt = R.hooksComponent "G.C.Node.SearchBar.searchBar" cpt
   where
-    cpt {session, databases, langs, node_id} _ = do
+    cpt {session, datafield, langs, node_id} _ = do
       search <- R.useState' Nothing
       onSearchChange session search
-      pure $ H.div {} [ searchField {databases, langs, search, node_id}]
+      pure $ H.div {} [ searchField {databases:allDatabases, langs, search, node_id}]
 
 
 onSearchChange :: Session -> R.State (Maybe Search) -> R.Hooks Unit
@@ -46,9 +46,8 @@ onSearchChange session (search /\ setSearch) =
       launchAff_ $ do
 
         liftEffect $ do
-          log2 "Searching db: " $ show q.database
+          -- log2 "Searching datafield: " $ show q.database
           log2 "Searching term: " q.term
-          log2 "Searching filters: " q.filters
           log2 "Searching lang: "    q.lang
 
         r <- (performSearch session $ searchQuery q) :: Aff Unit
@@ -57,19 +56,13 @@ onSearchChange session (search /\ setSearch) =
           log2 "Return:" r
           modalShow "addCorpus"
 
-    searchQuery {database: Nothing, lang, term} =
+    searchQuery {datafield: Nothing, lang, term} =
       over SearchQuery (_ {query=term}) defaultSearchQuery
 
-    searchQuery {database: Just db, lang, term, filters, node_id} =
-      over SearchQuery (_ { databases=[db]
+    searchQuery {datafield: datafield, lang, term, node_id} =
+      over SearchQuery (_ { datafield=datafield
                           , lang=lang
                           , query=term
-                          , filters=filters'
                           , node_id=node_id
                           }
                         ) defaultSearchQuery
-        where
-          filters' = toInt filters
-          toInt (Just (HAL_StructId {structIds}))     = Set.toUnfoldable structIds
-          toInt (Just (HAL_IMT {imtOrgs, structIds})) = nub $  (concat $ map imtStructId $ Set.toUnfoldable imtOrgs) <> (Set.toUnfoldable structIds)
-          toInt _ = []

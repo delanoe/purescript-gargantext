@@ -318,7 +318,7 @@ panelAction d {id,name,nodeType,action, session} p = case action of
     (Just Download)                      -> R.fragment [ H.p {} [H.text $ "Soon, you will be able to dowload your file here"]]
 
     (Just SearchBox)         -> R.fragment [ H.p {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
-                                           , searchBar {session, databases:allDatabases, langs:allLangs, node_id: (Just id)}
+                                           , searchBar {session, datafield:Nothing, langs:allLangs, node_id: (Just id)}
                                            ]
     (Just Delete)            -> case nodeType of
         NodeUser -> R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]
