@@ -235,7 +235,7 @@ startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
     Just sig -> do
       log "[startSigmaEff] sigma initialized already"
       useCanvasRendererEff ref rSigma
-      useDataEff rSigma graph
+      --useDataEff rSigma graph
       --useForceAtlas2Eff rSigma forceAtlas2Settings
       Sigma.refreshForceAtlas sig
       pure unit
