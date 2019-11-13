@@ -9,6 +9,7 @@ import Data.Maybe (Maybe)
 import Data.Nullable (null)
 import Data.Sequence as Seq
 import DOM.Simple.Console (log, log2)
+import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
@@ -47,9 +48,13 @@ graphCpt = R.hooksComponent "Graph" cpt
       ref <- R.useRef null
       --startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
-      R.useEffectOnce' $ do
+      R.useEffectOnce $ do
         log "[graphCpt] calling startSigmaEff"
         startSigmaEff ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+
+        delay unit $ \_ -> do
+          log "[GraphCpt] cleaning up"
+          pure $ pure unit
 
       pure $ RH.div { ref, style: {height: "95%"} } []
 

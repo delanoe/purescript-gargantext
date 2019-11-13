@@ -220,15 +220,25 @@ dependOnContainer container notFoundMsg f = do
 
 startSigmaEff :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref Sigma -> settings -> faSettings -> Graph n e -> Effect Unit
 startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
-  log "[startSigmaEff] calling useSigmaEff"
-  sigma <- useSigmaEff settings sigmaRef
-  log "[startSigmaEff] calling useCanvasRendererEff"
-  useCanvasRendererEff ref sigma
+  let rSigma = R.readRef sigmaRef
+  case readSigma rSigma of
+    Nothing -> do
+      log "[startSigmaEff] calling useSigmaEff"
+      sigma <- useSigmaEff settings sigmaRef
+      log "[startSigmaEff] calling useCanvasRendererEff"
+      useCanvasRendererEff ref sigma
 
-  log "[startSigmaEff] calling useDataEff"
-  useDataEff sigma graph
-  log "[startSigmaEff] calling useForceAtlas2Eff"
-  useForceAtlas2Eff sigma forceAtlas2Settings
+      log "[startSigmaEff] calling useDataEff"
+      useDataEff sigma graph
+      log "[startSigmaEff] calling useForceAtlas2Eff"
+      useForceAtlas2Eff sigma forceAtlas2Settings
+    Just sig -> do
+      log "[startSigmaEff] sigma initialized already"
+      useCanvasRendererEff ref rSigma
+      useDataEff rSigma graph
+      --useForceAtlas2Eff rSigma forceAtlas2Settings
+      Sigma.refreshForceAtlas sig
+      pure unit
 
   --handleRefresh sigma
 
@@ -275,9 +285,10 @@ useCanvasRendererEff container sigma =
         withSigma sig = addRenderer sig renderer >>= handle
           where -- close over sig
             renderer = { "type": "canvas", container: c }
-            handle (Right _) = cleanupFirst sigma (Sigma.killRenderer sig renderer >>= logCleanup)
-            handle (Left e) =
-              log2 errorAddingMsg e *> cleanupSigma sigma "useCanvasRenderer"
+            handle _ = log "[useCanvasRenderer] cleanup handle"
+            --handle (Right _) = cleanupFirst sigma (Sigma.killRenderer sig renderer >>= logCleanup)
+            --handle (Left e) =
+            --  log2 errorAddingMsg e *> cleanupSigma sigma "useCanvasRenderer"
     logCleanup (Left e) = log2 errorKillingMsg e
     logCleanup _ = log killedMsg
     containerNotFoundMsg = "[useCanvasRenderer] Container not found, not adding renderer"
@@ -294,6 +305,6 @@ useForceAtlas2Eff sigma settings = effect
       log startingMsg
       log sigma
       Sigma.startForceAtlas2 sig settings
-      cleanupFirst sigma (Sigma.killForceAtlas2 sig)
+      --cleanupFirst sigma (Sigma.killForceAtlas2 sig)
     startingMsg = "[Graph] Starting ForceAtlas2"
     sigmaNotFoundMsg = "[Graph] Sigma not found, not initialising"
