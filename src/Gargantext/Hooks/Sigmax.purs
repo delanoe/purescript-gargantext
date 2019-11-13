@@ -14,7 +14,6 @@ import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Traversable (traverse_)
 import Effect (Effect)
-import Effect.Timer (setTimeout)
 import FFI.Simple (delay)
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types (Graph(..))
@@ -27,8 +26,6 @@ type Sigma =
     -- TODO is Seq in cleanup really necessary?
   , cleanup :: R.Ref (Seq (Effect Unit))
   }
-
-type ForceAtlas2Timeout = Int
 
 type Data n e = { graph :: R.Ref (Graph n e) }
 
@@ -234,7 +231,7 @@ startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
       log "[startSigmaEff] calling useDataEff"
       useDataEff sigma graph
       log "[startSigmaEff] calling useForceAtlas2Eff"
-      useForceAtlas2Eff sigma forceAtlas2Settings (Just 2000)
+      useForceAtlas2Eff sigma forceAtlas2Settings
     Just sig -> do
       log "[startSigmaEff] sigma initialized already"
       useCanvasRendererEff ref rSigma
@@ -300,8 +297,8 @@ useCanvasRendererEff container sigma =
     errorKillingMsg      = "[useCanvasRenderer] Error killing renderer:"
     killedMsg            = "[useCanvasRenderer] Killed renderer"
 
-useForceAtlas2Eff :: forall settings. Sigma -> settings -> Maybe ForceAtlas2Timeout -> Effect Unit
-useForceAtlas2Eff sigma settings mFATimeout = effect
+useForceAtlas2Eff :: forall settings. Sigma -> settings -> Effect Unit
+useForceAtlas2Eff sigma settings = effect
   where
     effect = dependOnSigma sigma sigmaNotFoundMsg withSigma
     withSigma sig = do
@@ -309,11 +306,5 @@ useForceAtlas2Eff sigma settings mFATimeout = effect
       log sigma
       Sigma.startForceAtlas2 sig settings
       --cleanupFirst sigma (Sigma.killForceAtlas2 sig)
-      case mFATimeout of
-        Nothing -> pure unit
-        Just timeout -> do
-          _ <- setTimeout timeout $ do
-            Sigma.stopForceAtlas2 sig
-          pure unit
     startingMsg = "[Graph] Starting ForceAtlas2"
     sigmaNotFoundMsg = "[Graph] Sigma not found, not initialising"

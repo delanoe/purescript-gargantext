@@ -11,9 +11,11 @@ module Gargantext.Components.GraphExplorer.Controls
  , getMultiNodeSelect, setMultiNodeSelect
  ) where
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
+import DOM.Simple.Console (log, log2)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Effect.Timer (clearTimeout, setTimeout)
 import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -24,6 +26,7 @@ import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSi
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
@@ -72,6 +75,24 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
   where
     cpt props _ = do
       localControls <- initialLocalControls
+      -- ref to track automatic FA pausing
+      -- If user pauses FA before auto is triggered, clear the timeoutId
+      -- TODO: mFAPauseRef needs to be set higher up the tree
+      --mFAPauseRef <- R.useRef Nothing
+
+      --R.useEffect $ handleForceAtlasPause props.sigmaRef localControls.pauseForceAtlas mFAPauseRef
+      R.useEffect $ handleForceAtlasPause props.sigmaRef localControls.pauseForceAtlas
+
+      R.useEffectOnce' $ do
+        timeoutId <- setTimeout 2000 $ do
+          --R.setRef mFAPauseRef Nothing
+          let (toggled /\ setToggled) = localControls.pauseForceAtlas
+          if toggled then
+            setToggled $ const false
+          else
+            pure unit
+        --R.setRef mFAPauseRef $ Just timeoutId
+        pure unit
 
       pure $ case getShowControls props of
         false -> RH.div {} []
@@ -97,6 +118,26 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                 ]
               ]
             ]
+      where
+        --handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
+        handleForceAtlasPause sigmaRef (toggled /\ setToggled) = do
+          let mSigma = Sigmax.readSigma $ R.readRef sigmaRef
+          pure $ case mSigma of
+            Just s -> do
+              log2 "[handleForceAtlasPause] mSigma: Just " s
+              if toggled then
+                Sigma.stopForceAtlas2 s
+              else
+                Sigma.restartForceAtlas2 s
+              -- handle case when user pressed pause/start fa button before timeout fired
+              --case R.readRef mFAPauseRef of
+              --  Nothing -> pure unit
+              --  Just timeoutId -> do
+              --    R.setRef mFAPauseRef Nothing
+              --    clearTimeout timeoutId
+            _      -> do
+              log "[handleForceAtlasPause] mSigma: Nothing"
+              pure unit
 
 useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do

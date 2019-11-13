@@ -81,14 +81,7 @@ pauseForceAtlasButton sigmaRef state =
     , onMessage: "Pause Force Atlas"
     , offMessage: "Start Force Atlas"
     , onClick: \_ -> do
-      let mSigma = Sigmax.readSigma $ R.readRef sigmaRef
-      let (toggled /\ setToggled) = state
-      case mSigma of
-        Just s -> if toggled then
-            Sigma.stopForceAtlas2 s
-          else
-            Sigma.restartForceAtlas2 s
-        _      -> pure unit
+      let (_ /\ setToggled) = state
       setToggled not
     }
 
