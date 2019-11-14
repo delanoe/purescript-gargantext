@@ -26,7 +26,6 @@ corpusLayoutCpt = R.staticComponent "G.P.Corpus.corpusLayout" cpt
       H.div {}
       [ H.h1 {} [H.text "Corpus Description"]
       , H.p  {} [H.text "Soon: corpus synthesis here (when all others charts/features will be stabilized)."]
-      , H.iframe { src: "http://cillex.gargantext.org", width: "100%", height: "100%"} []
       ]
 
 newtype CorpusInfo =

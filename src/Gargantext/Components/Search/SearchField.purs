@@ -115,7 +115,8 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
                                                                 , style: { border    : "1px solid rgba(0,0,0,0.2)"
                                                                          , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
                                                                          }
-                                                               } []
+                                                               } [ H.iframe { src: "https://istex.gargantext.org", width: "100%", height: "100%"} []
+                                                                 ]
                                                        ]
                                               else H.div {} []
 
