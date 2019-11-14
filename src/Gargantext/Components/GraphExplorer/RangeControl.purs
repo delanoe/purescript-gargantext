@@ -46,13 +46,12 @@ edgeSizeControl sigmaRef (state /\ setState) =
       , width: 10.0
       , height: 5.0
       , onChange: \range@(Range.Closed {min, max}) -> do
-          let mSigma = Sigmax.readSigma $ R.readRef sigmaRef
-          case mSigma of
-            Just s -> Sigma.setSettings s {
-                minEdgeSize: min
-              , maxEdgeSize: max
-              }
-            _      -> pure unit
+          let sigma = R.readRef sigmaRef
+          Sigmax.dependOnSigma sigma "[edgeSizeControl] sigma: Nothing" $ \s -> do
+            Sigma.setSettings s {
+              minEdgeSize: min
+            , maxEdgeSize: max
+            }
           setState $ const range
       }
     }
@@ -69,13 +68,12 @@ nodeSizeControl sigmaRef (state /\ setState) =
       , width: 10.0
       , height: 5.0
       , onChange: \range@(Range.Closed {min, max}) -> do
-          let mSigma = Sigmax.readSigma $ R.readRef sigmaRef
-          case mSigma of
-            Just s -> Sigma.setSettings s {
-                minNodeSize: min
-              , maxNodeSize: max
-              }
-            _      -> pure unit
+          let sigma = R.readRef sigmaRef
+          Sigmax.dependOnSigma sigma "[nodeSizeControl] sigma: Nothing" $ \s -> do
+            Sigma.setSettings s {
+              minNodeSize: min
+            , maxNodeSize: max
+            }
           setState $ const range
       }
     }

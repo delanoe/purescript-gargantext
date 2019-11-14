@@ -53,19 +53,6 @@ refresh = runEffectFn1 _refresh
 
 foreign import _refresh :: EffectFn1 Sigma Unit
 
-refreshForceAtlas :: Sigma -> Effect Unit
-refreshForceAtlas sigma = do
-  isRunning <- isForceAtlas2Running sigma
-  if isRunning then
-    pure unit
-  else do
-    _ <- setTimeout 100 $ do
-      restartForceAtlas2 sigma
-      _ <- setTimeout 100 $
-        stopForceAtlas2 sigma
-      pure unit
-    pure unit
-
 addRenderer :: forall r err. Sigma -> r -> Effect (Either err Unit)
 addRenderer = runEffectFn4 _addRenderer Left Right
 
@@ -134,6 +121,19 @@ foreign import _startForceAtlas2 :: forall s. EffectFn2 Sigma s Unit
 foreign import _stopForceAtlas2 :: EffectFn1 Sigma Unit
 foreign import _killForceAtlas2 :: EffectFn1 Sigma Unit
 foreign import _isForceAtlas2Running :: EffectFn1 Sigma Boolean
+
+refreshForceAtlas :: Sigma -> Effect Unit
+refreshForceAtlas sigma = do
+  isRunning <- isForceAtlas2Running sigma
+  if isRunning then
+    pure unit
+  else do
+    _ <- setTimeout 100 $ do
+      restartForceAtlas2 sigma
+      _ <- setTimeout 100 $
+        stopForceAtlas2 sigma
+      pure unit
+    pure unit
 
 newtype SigmaEasing = SigmaEasing String
 

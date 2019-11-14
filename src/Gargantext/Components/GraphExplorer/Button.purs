@@ -37,10 +37,8 @@ simpleButtonCpt = R.hooksComponent "SimpleButton" cpt
 centerButton :: R.Ref Sigmax.Sigma -> R.Element
 centerButton sigmaRef = simpleButton {
     onClick: \_ -> do
-      let mSigma = Sigmax.readSigma $ R.readRef sigmaRef
-      log2 "[centerButton] mSigma" mSigma
-      case mSigma of
-        Just s -> Sigma.goToAllCameras s {x: 0.0, y: 0.0, ratio: 1.0, angle: 0.0}
-        _      -> pure unit
+      let sigma = R.readRef sigmaRef
+      Sigmax.dependOnSigma sigma "[centerButton] sigma: Nothing" $ \s ->
+        Sigma.goToAllCameras s {x: 0.0, y: 0.0, ratio: 1.0, angle: 0.0}
   , text: "Center"
   }

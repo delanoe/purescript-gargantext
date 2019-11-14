@@ -60,17 +60,15 @@ edgesToggleButton sigmaRef state =
     , onMessage: "Hide Edges"
     , offMessage: "Show Edges"
     , onClick: \_ -> do
-      let mSigma = Sigmax.readSigma $ R.readRef sigmaRef
+      let sigma = R.readRef sigmaRef
       let (toggled /\ setToggled) = state
-      case mSigma of
-        Just s -> do
-          let settings = {
-                drawEdges: not toggled
-              , drawEdgeLabels: not toggled
-              , hideEdgesOnMove: toggled
-            }
-          Sigma.setSettings s settings
-        _      -> pure unit
+      Sigmax.dependOnSigma sigma "[edgesToggleButton] sigma: Nothing" $ \s -> do
+        let settings = {
+              drawEdges: not toggled
+            , drawEdgeLabels: not toggled
+            , hideEdgesOnMove: toggled
+          }
+        Sigma.setSettings s settings
       setToggled not
     }
 
