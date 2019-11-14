@@ -13,6 +13,7 @@ import Data.Nullable (Nullable)
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Traversable (traverse_)
+import Data.Tuple.Nested((/\))
 import Effect (Effect)
 import FFI.Simple (delay)
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
@@ -305,3 +306,20 @@ useForceAtlas2Eff sigma settings = effect
       --cleanupFirst sigma (Sigma.killForceAtlas2 sig)
     startingMsg = "[useForceAtlas2Eff] Starting ForceAtlas2"
     sigmaNotFoundMsg = "[useForceAtlas2Eff] Sigma not found, not initialising"
+
+--handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
+handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Effect Unit
+handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
+  let sigma = R.readRef sigmaRef
+  dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
+    log2 "[handleForceAtlas2Pause] mSigma: Just " s
+    log2 "[handleForceAtlas2Pause] toggled: " toggled
+    case toggled of
+      true -> Sigma.restartForceAtlas2 s
+      _ -> Sigma.stopForceAtlas2 s
+    -- handle case when user pressed pause/start fa button before timeout fired
+    --case R.readRef mFAPauseRef of
+    --  Nothing -> pure unit
+    --  Just timeoutId -> do
+    --    R.setRef mFAPauseRef Nothing
+    --    clearTimeout timeoutId

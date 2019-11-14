@@ -81,18 +81,18 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
       --mFAPauseRef <- R.useRef Nothing
 
       --R.useEffect $ handleForceAtlasPause props.sigmaRef localControls.pauseForceAtlas mFAPauseRef
-      R.useEffect $ handleForceAtlasPause props.sigmaRef localControls.pauseForceAtlas
+      R.useEffect' $ Sigmax.handleForceAtlas2Pause props.sigmaRef localControls.pauseForceAtlas
 
-      --R.useEffectOnce' $ do
-      --  timeoutId <- setTimeout 2000 $ do
-      --    --R.setRef mFAPauseRef Nothing
-      --    let (toggled /\ setToggled) = localControls.pauseForceAtlas
-      --    if toggled then
-      --      setToggled $ const false
-      --    else
-      --      pure unit
-      --  --R.setRef mFAPauseRef $ Just timeoutId
-      --  pure unit
+      R.useEffectOnce' $ do
+        timeoutId <- setTimeout 2000 $ do
+          --R.setRef mFAPauseRef Nothing
+          let (toggled /\ setToggled) = localControls.pauseForceAtlas
+          if toggled then
+            setToggled $ const false
+          else
+            pure unit
+        --R.setRef mFAPauseRef $ Just timeoutId
+        pure unit
 
       pure $ case getShowControls props of
         false -> RH.div {} []
@@ -118,23 +118,6 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                 ]
               ]
             ]
-      where
-        --handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
-        handleForceAtlasPause sigmaRef (toggled /\ setToggled) = do
-          let sigma = R.readRef sigmaRef
-          pure $ Sigmax.dependOnSigma sigma "[handleForceAtlasPause] sigma: Nothing" $ \s -> do
-            log2 "[handleForceAtlasPause] mSigma: Just " s
-            log2 "[handleForceAtlasPause] toggled: " toggled
-            if toggled then
-              Sigma.stopForceAtlas2 s
-            else
-              Sigma.restartForceAtlas2 s
-            -- handle case when user pressed pause/start fa button before timeout fired
-            --case R.readRef mFAPauseRef of
-            --  Nothing -> pure unit
-            --  Just timeoutId -> do
-            --    R.setRef mFAPauseRef Nothing
-            --    clearTimeout timeoutId
 
 useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
