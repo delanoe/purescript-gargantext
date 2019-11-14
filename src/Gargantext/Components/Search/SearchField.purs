@@ -8,6 +8,7 @@ import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Gargantext.Utils.Reactix as R2
+import Reactix.DOM.HTML as H
 import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option, text, i)
@@ -101,8 +102,25 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
                                             else
                                               div {} []
 
-                                         ]
-                          ]
+                                        , if isIsTex curDf
+                                            then H.div { className: ""
+                                                       , id: "search-popup-tooltip"
+                                                       , title: "Node settings"
+                                                       , data: { toggle: "tooltip"
+                                                               , placement: "right"
+                                                               }
+                                                       }
+                                                       [ H.div {id: "arrow"} []
+                                                       , H.div { className: "panel panel-default"
+                                                                , style: { border    : "1px solid rgba(0,0,0,0.2)"
+                                                                         , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
+                                                                         }
+                                                               } []
+                                                       ]
+                                              else H.div {} []
+
+                                          ]
+                            ]
               , submitButton node_id df term lang props.search
               ]
     hasChanged p p' = (fst p.search /= fst p'.search)
@@ -118,6 +136,11 @@ isExternal _ = false
 isHAL :: Maybe DataField -> Boolean
 isHAL (Just (External (Just (HAL _)))) = true
 isHAL _ = false
+
+isIsTex :: Maybe DataField -> Boolean
+isIsTex (Just (External (Just (IsTex)))) = true
+isIsTex _ = false
+
 
 isIMT :: Maybe DataField -> Boolean
 isIMT (Just ( External ( Just ( HAL ( Just ( IMT _)))))) = true

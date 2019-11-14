@@ -64,7 +64,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
           [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
                      , name: name'} ]
         , if showBox then popOverIcon popupOpen else H.div {} []
-        , if showBox 
+        , if showBox
              then nodePopupView  d { id
                                    , name:name'
                                    , nodeType
