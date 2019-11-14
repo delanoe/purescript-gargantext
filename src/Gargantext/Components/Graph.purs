@@ -6,9 +6,10 @@ module Gargantext.Components.Graph
   where
 import Prelude (bind, discard, pure, ($), unit)
 import Data.Maybe (Maybe)
-import Data.Nullable (null)
+import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import DOM.Simple.Console (log, log2)
+import DOM.Simple.Types (Element)
 import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -32,8 +33,9 @@ type Edge = ( id :: String, source :: String, target :: String )
 type Graph = Sigmax.Graph Node Edge
 
 type Props sigma forceatlas2 =
-  ( graph :: Graph
+  ( elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
+  , graph :: Graph
   , sigmaSettings :: sigma
   , sigmaRef :: R.Ref Sigma
   )
@@ -45,18 +47,15 @@ graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
-      ref <- R.useRef null
-      --startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
-
       R.useEffectOnce $ do
         log "[graphCpt] calling startSigmaEff"
-        startSigmaEff ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+        startSigmaEff props.elRef props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
         delay unit $ \_ -> do
           log "[GraphCpt] cleaning up"
           pure $ pure unit
 
-      pure $ RH.div { ref, style: {height: "95%"} } []
+      pure $ RH.div { ref: props.elRef, style: {height: "95%"} } []
 
 type SigmaSettings =
   ( animationsTime :: Number

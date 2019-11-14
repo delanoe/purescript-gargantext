@@ -229,23 +229,25 @@ startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
       useForceAtlas2Eff sigma forceAtlas2Settings
     Just sig -> do
       log "[startSigmaEff] sigma initialized already"
+      isFARunning <- Sigma.isForceAtlas2Running sig
+      log2 "[startSigmaEff] isFARunning" isFARunning
       useCanvasRendererEff ref rSigma
       --useDataEff rSigma graph
       --useForceAtlas2Eff rSigma forceAtlas2Settings
+      log "[startSigmaEff] refreshForceAtlas"
       Sigma.refreshForceAtlas sig
+      --if isFARunning then
+      --  Sigma.restartForceAtlas2 sig
+      --else
+      --  Sigma.stopForceAtlas2 sig
       pure unit
 
   --handleRefresh sigma
 
   where
     handleRefresh :: Sigma -> Effect Unit
-    handleRefresh sigma = do
-      let rSigma = readSigma sigma
-      _ <- case rSigma of
-        Nothing -> log2 "[handleRefresh] can't refresh" sigma
-        Just s -> do
-          Sigma.refreshForceAtlas s
-      pure unit
+    handleRefresh sigma = dependOnSigma sigma "[handleRefresh] can't refresh" $ \s -> do
+      Sigma.refreshForceAtlas s
 
 
 useSigmaEff :: forall settings. settings -> R.Ref Sigma -> Effect Sigma
