@@ -56,7 +56,7 @@ cursorSizeButton state =
     , onChange: \e -> snd state $ const $ readFloat $ R2.unsafeEventValue e
     }
 
-labelSizeButton :: R.Ref (Maybe Sigmax.Sigma) -> R.State Number -> R.Element
+labelSizeButton :: R.Ref Sigmax.Sigma -> R.State Number -> R.Element
 labelSizeButton sigmaRef state =
   sizeButton {
       state: state
@@ -64,13 +64,12 @@ labelSizeButton sigmaRef state =
     , min: 5.0
     , max: 30.0
     , onChange: \e -> do
-      let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
+      let sigma = R.readRef sigmaRef
       let newValue = readFloat $ R2.unsafeEventValue e
       let (value /\ setValue) = state
-      case mSigma of
-        Just (Just s) -> Sigma.setSettings s {
+      Sigmax.dependOnSigma sigma "[labelSizeButton] sigma: Nothing" $ \s -> do
+        Sigma.setSettings s {
           defaultLabelSize: newValue
-          }
-        _             -> pure unit
+        }
       setValue $ const newValue
     }

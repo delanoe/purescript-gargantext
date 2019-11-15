@@ -53,42 +53,33 @@ controlsToggleButton state =
     , onClick: \_ -> snd state not
     }
 
-edgesToggleButton :: R.Ref (Maybe Sigmax.Sigma) -> R.State Boolean -> R.Element
+edgesToggleButton :: R.Ref Sigmax.Sigma -> R.State Boolean -> R.Element
 edgesToggleButton sigmaRef state =
   toggleButton {
       state: state
     , onMessage: "Hide Edges"
     , offMessage: "Show Edges"
     , onClick: \_ -> do
-      let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
+      let sigma = R.readRef sigmaRef
       let (toggled /\ setToggled) = state
-      case mSigma of
-        Just (Just s) -> do
-          let settings = {
-                drawEdges: not toggled
-              , drawEdgeLabels: not toggled
-              , hideEdgesOnMove: toggled
-            }
-          Sigma.setSettings s settings
-        _             -> pure unit
+      Sigmax.dependOnSigma sigma "[edgesToggleButton] sigma: Nothing" $ \s -> do
+        let settings = {
+              drawEdges: not toggled
+            , drawEdgeLabels: not toggled
+            , hideEdgesOnMove: toggled
+          }
+        Sigma.setSettings s settings
       setToggled not
     }
 
-pauseForceAtlasButton :: R.Ref (Maybe Sigmax.Sigma) -> R.State Boolean -> R.Element
+pauseForceAtlasButton :: R.Ref Sigmax.Sigma -> R.State Boolean -> R.Element
 pauseForceAtlasButton sigmaRef state =
   toggleButton {
       state: state
     , onMessage: "Pause Force Atlas"
     , offMessage: "Start Force Atlas"
     , onClick: \_ -> do
-      let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
-      let (toggled /\ setToggled) = state
-      case mSigma of
-        Just (Just s) -> if toggled then
-            Sigma.stopForceAtlas2 s
-          else
-            Sigma.restartForceAtlas2 s
-        _             -> pure unit
+      let (_ /\ setToggled) = state
       setToggled not
     }
 

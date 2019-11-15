@@ -34,7 +34,7 @@ rangeControlCpt = R.hooksComponent "RangeButton" cpt
           , RS.rangeSlider sliderProps
           ]
 
-edgeSizeControl :: R.Ref (Maybe Sigmax.Sigma) -> R.State Range.NumberRange -> R.Element
+edgeSizeControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
 edgeSizeControl sigmaRef (state /\ setState) =
   rangeControl {
       caption: "Edge Size"
@@ -46,18 +46,17 @@ edgeSizeControl sigmaRef (state /\ setState) =
       , width: 10.0
       , height: 5.0
       , onChange: \range@(Range.Closed {min, max}) -> do
-          let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
-          case mSigma of
-            Just (Just s) -> Sigma.setSettings s {
-                minEdgeSize: min
-              , maxEdgeSize: max
-              }
-            _             -> pure unit
+          let sigma = R.readRef sigmaRef
+          Sigmax.dependOnSigma sigma "[edgeSizeControl] sigma: Nothing" $ \s -> do
+            Sigma.setSettings s {
+              minEdgeSize: min
+            , maxEdgeSize: max
+            }
           setState $ const range
       }
     }
 
-nodeSizeControl :: R.Ref (Maybe Sigmax.Sigma) -> R.State Range.NumberRange -> R.Element
+nodeSizeControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
 nodeSizeControl sigmaRef (state /\ setState) =
   rangeControl {
       caption: "Node Size"
@@ -69,13 +68,12 @@ nodeSizeControl sigmaRef (state /\ setState) =
       , width: 10.0
       , height: 5.0
       , onChange: \range@(Range.Closed {min, max}) -> do
-          let mSigma = Sigmax.readSigma <$> R.readRef sigmaRef
-          case mSigma of
-            Just (Just s) -> Sigma.setSettings s {
-                minNodeSize: min
-              , maxNodeSize: max
-              }
-            _             -> pure unit
+          let sigma = R.readRef sigmaRef
+          Sigmax.dependOnSigma sigma "[nodeSizeControl] sigma: Nothing" $ \s -> do
+            Sigma.setSettings s {
+              minNodeSize: min
+            , maxNodeSize: max
+            }
           setState $ const range
       }
     }

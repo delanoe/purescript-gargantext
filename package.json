@@ -45,7 +45,7 @@
         "psc": "^0.1.1",
         "psc-package": "^3.0.1",
         "pulp": "^13.0.0",
-        "purescript": "^0.13.3",
+        "purescript": "^0.13.4",
         "purs-loader": "^3.3.0",
         "react-testing-library": "^6.1.2",
         "sass": "^1.22.9",

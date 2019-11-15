@@ -11,9 +11,11 @@ module Gargantext.Components.GraphExplorer.Controls
  , getMultiNodeSelect, setMultiNodeSelect
  ) where
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
+import DOM.Simple.Console (log, log2)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Effect.Timer (clearTimeout, setTimeout)
 import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -24,6 +26,7 @@ import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSi
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
@@ -34,7 +37,7 @@ type Controls =
   , showControls    :: R.State Boolean
   , showSidePanel   :: R.State Boolean
   , showTree        :: R.State Boolean
-  , sigmaRef        :: R.Ref (Maybe Sigmax.Sigma)
+  , sigmaRef        :: R.Ref Sigmax.Sigma
   )
 
 controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
@@ -72,6 +75,24 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
   where
     cpt props _ = do
       localControls <- initialLocalControls
+      -- ref to track automatic FA pausing
+      -- If user pauses FA before auto is triggered, clear the timeoutId
+      -- TODO: mFAPauseRef needs to be set higher up the tree
+      --mFAPauseRef <- R.useRef Nothing
+
+      --R.useEffect $ handleForceAtlasPause props.sigmaRef localControls.pauseForceAtlas mFAPauseRef
+      R.useEffect' $ Sigmax.handleForceAtlas2Pause props.sigmaRef localControls.pauseForceAtlas
+
+      R.useEffectOnce' $ do
+        timeoutId <- setTimeout 2000 $ do
+          --R.setRef mFAPauseRef Nothing
+          let (toggled /\ setToggled) = localControls.pauseForceAtlas
+          if toggled then
+            setToggled $ const false
+          else
+            pure unit
+        --R.setRef mFAPauseRef $ Just timeoutId
+        pure unit
 
       pure $ case getShowControls props of
         false -> RH.div {} []
@@ -105,7 +126,8 @@ useGraphControls = do
   showControls    <- R.useState' false
   showSidePanel   <- R.useState' false
   showTree <- R.useState' false
-  sigmaRef <- R2.nothingRef
+  sigma <- Sigmax.initSigma
+  sigmaRef <- R.useRef sigma
 
   pure { cursorSize
        , multiNodeSelect

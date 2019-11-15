@@ -6,9 +6,11 @@ import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
+import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Tuple (fst,snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -38,7 +40,9 @@ type LayoutProps =
   , frontends :: Frontends 
   )
 
-type Props = ( graph :: Maybe Graph.Graph | LayoutProps )
+type Props = (
+    graph :: Maybe Graph.Graph | LayoutProps
+  )
 
 --------------------------------------------------------------
 explorerLayout :: Record LayoutProps -> R.Element
@@ -47,10 +51,11 @@ explorerLayout props = R.createElement explorerLayoutCpt props []
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
   where
-    cpt {graphId, mCurrentRoute, treeId, session, sessions, frontends} _ =
+    cpt {graphId, mCurrentRoute, treeId, session, sessions, frontends} _ = do
       useLoader graphId (getNodes session) handler
       where
-        handler loaded = explorer {graphId, mCurrentRoute, treeId, session, sessions, graph, frontends}
+        handler loaded =
+          explorer {graphId, mCurrentRoute, treeId, session, sessions, graph, frontends}
           where graph = Just (convert loaded)
 
 --------------------------------------------------------------
@@ -61,6 +66,7 @@ explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
     cpt {sessions, session, graphId, mCurrentRoute, treeId, graph, frontends} _ = do
+      graphRef <- R.useRef null
       controls <- Controls.useGraphControls
       state <- useExplorerState
       showLogin <- snd <$> R.useState' true
@@ -77,9 +83,11 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   ]
                 , row [ Controls.controls controls ]
                 , row [ tree {mCurrentRoute, treeId} controls showLogin
-                      , mGraph controls.sigmaRef {graphId, graph}
+                      , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12", style: {height: "95%"} } []  -- graph container
+                      , mGraph graphRef controls.sigmaRef {graphId, graph}
                       , Sidebar.sidebar {showSidePanel: fst controls.showSidePanel} ]
-                , row [ ]
+                , row [
+                  ]
                 ]
               ]
             ]
@@ -87,9 +95,10 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       where
         -- tree {treeId: Nothing} _ _ = RH.div { id: "tree" } []
         tree _ {showTree: false /\ _} _ = RH.div { id: "tree" } []
-        tree {mCurrentRoute: route, treeId: root} _ showLogin= 
+        tree {mCurrentRoute: route, treeId: root} _ showLogin =
           RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
           [forest {sessions, route, frontends, showLogin}]
+
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1  = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
@@ -98,10 +107,9 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     pullLeft  = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }
 
-
-    mGraph :: R.Ref (Maybe Sigma) -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
-    mGraph _ {graph: Nothing} = RH.div {} []
-    mGraph sigmaRef {graphId, graph: Just graph} = graphView sigmaRef {graphId, graph}
+    mGraph :: R.Ref (Nullable Element) -> R.Ref Sigma -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
+    mGraph _ _ {graph: Nothing} = RH.div {} []
+    mGraph graphRef sigmaRef {graphId, graph: Just graph} = graphView graphRef sigmaRef {graphId, graph}
 
 useExplorerState :: R.Hooks (Record GET.State)
 useExplorerState = do pure {}
@@ -126,23 +134,20 @@ type GraphProps = (
   , graph :: Graph.Graph
 )
 
-graphView :: R.Ref (Maybe Sigma) -> Record GraphProps -> R.Element
+graphView :: R.Ref (Nullable Element) -> R.Ref Sigma -> Record GraphProps -> R.Element
 --graphView sigmaRef props = R.createElement (R.memo el memoCmp) props []
-graphView sigmaRef props = R.createElement el props []
+graphView elRef sigmaRef props = R.createElement el props []
   where
     --memoCmp props1 props2 = props1.graphId == props2.graphId
     el = R.hooksComponent "GraphView" cpt
     cpt {graphId, graph} _children = do
-      pure $
-        RH.div { id: "graph-view", className: "col-md-12" }
-        [
-          Graph.graph {
-               forceAtlas2Settings: Graph.forceAtlas2Settings
-             , graph
-             , sigmaSettings: Graph.sigmaSettings
-             , sigmaRef: sigmaRef
-             }
-        ]
+      pure $ Graph.graph {
+          elRef
+        , forceAtlas2Settings: Graph.forceAtlas2Settings
+        , graph
+        , sigmaSettings: Graph.sigmaSettings
+        , sigmaRef: sigmaRef
+        }
 
 convert :: GET.GraphData -> Graph.Graph
 convert (GET.GraphData r) = Sigmax.Graph {nodes, edges}

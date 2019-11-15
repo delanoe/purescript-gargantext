@@ -3,23 +3,25 @@ module Gargantext.Hooks.Sigmax
   -- )
   where
 
-import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=))
+import DOM.Simple.Console (log, log2)
+import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Either (Either(..), either)
 import Data.Foldable (sequence_)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.Sequence as Seq
 import Data.Sequence (Seq)
+import Data.Sequence as Seq
 import Data.Traversable (traverse_)
-import DOM.Simple.Console (log, log2)
-import DOM.Simple.Types (Element)
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested((/\))
 import Effect (Effect)
 import FFI.Simple (delay)
-import Reactix as R
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types (Graph(..))
+import Gargantext.Utils.Reactix as R2
+import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=))
+import Reactix as R
 
 type Sigma =
   { sigma :: R.Ref (Maybe Sigma.Sigma)
@@ -28,6 +30,12 @@ type Sigma =
   }
 
 type Data n e = { graph :: R.Ref (Graph n e) }
+
+initSigma :: R.Hooks Sigma
+initSigma = do
+    s <- R2.nothingRef
+    c <- R.useRef Seq.empty
+    pure { sigma: s, cleanup: c }
 
 readSigma :: Sigma -> Maybe Sigma.Sigma
 readSigma sigma = R.readRef sigma.sigma
@@ -49,7 +57,7 @@ cleanupFirst sigma =
 
 startSigma :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref (Maybe Sigma) -> settings -> faSettings -> Graph n e -> R.Hooks Unit
 startSigma ref sigmaRef settings forceAtlas2Settings graph = do
-  {sigma, isNew} <- useSigma ref settings sigmaRef
+  {sigma, isNew} <- useSigma settings sigmaRef
   useCanvasRenderer ref sigma
 
   if isNew then do
@@ -62,17 +70,12 @@ startSigma ref sigmaRef settings forceAtlas2Settings graph = do
     delay unit $ handleRefresh sigma
 
   where
-    handleRefresh sigma _ = do
-      let rSigma = readSigma sigma
-      _ <- case rSigma of
-        Nothing -> log2 "[handleRefresh] can't refresh" sigma
-        Just s -> do
-          Sigma.refreshForceAtlas s
-      pure $ pure unit
+    handleRefresh sigma _ = pure $
+      dependOnSigma sigma "[handleRefresh] can't refresh" Sigma.refreshForceAtlas
 
 -- | Manages a sigma with the given settings
-useSigma :: forall settings. R.Ref (Nullable Element) -> settings -> R.Ref (Maybe Sigma) -> R.Hooks {sigma :: Sigma, isNew :: Boolean}
-useSigma container settings sigmaRef = do
+useSigma :: forall settings. settings -> R.Ref (Maybe Sigma) -> R.Hooks {sigma :: Sigma, isNew :: Boolean}
+useSigma settings sigmaRef = do
   sigma <- newSigma sigmaRef
   let isNew = case (readSigma sigma) of
         Just _ -> false
@@ -100,6 +103,7 @@ useSigma container settings sigmaRef = do
       R.setRef sigmaRef $ Just sigma
       --pure $ cleanupSigma sigma "useSigma"
       pure $ R.nothing
+
 
 -- | Manages a renderer for the sigma
 useCanvasRenderer :: R.Ref (Nullable Element) -> Sigma -> R.Hooks Unit
@@ -152,8 +156,8 @@ addRenderer sigma renderer = do
   (const unit <$> ret) <$ report ret
   where
     report = either (log2 errorMsg) (\_ -> log successMsg)
-    errorMsg = "[useRenderer] Error adding renderer:"
-    successMsg = "[useRenderer] Added renderer successfully"
+    errorMsg = "[addRenderer] Error adding renderer:"
+    successMsg = "[addRenderer] Added renderer successfully"
 
 useData :: forall n e. Sigma -> Graph n e -> R.Hooks Unit
 useData sigma graph =
@@ -208,3 +212,117 @@ dependOnContainer container notFoundMsg f = do
     Nothing -> log notFoundMsg
     Just c -> f c
 
+
+-- Effectful versions of the above code
+
+startSigmaEff :: forall settings faSettings n e. R.Ref (Nullable Element) -> R.Ref Sigma -> settings -> faSettings -> Graph n e -> Effect Unit
+startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
+  let rSigma = R.readRef sigmaRef
+  case readSigma rSigma of
+    Nothing -> do
+      --log "[startSigmaEff] calling useSigmaEff"
+      sigma <- useSigmaEff settings sigmaRef
+      --log "[startSigmaEff] calling useCanvasRendererEff"
+      useCanvasRendererEff ref sigma
+
+      --log "[startSigmaEff] calling useDataEff"
+      useDataEff sigma graph
+      --log "[startSigmaEff] calling useForceAtlas2Eff"
+      useForceAtlas2Eff sigma forceAtlas2Settings
+    Just sig -> do
+      --log "[startSigmaEff] sigma initialized already"
+      --Sigma.swapRendererContainer ref sig
+      --dependOnContainer ref "[startSigmaEff] no container" $ Sigma.setRendererContainer sig
+      --useCanvasRendererEff ref rSigma
+      --useDataEff rSigma graph
+      --useForceAtlas2Eff rSigma forceAtlas2Settings
+      --log "[startSigmaEff] refreshForceAtlas"
+      --Sigma.refreshForceAtlas sig
+      --if isFARunning then
+      --  Sigma.restartForceAtlas2 sig
+      --else
+      --  Sigma.stopForceAtlas2 sig
+      pure unit
+
+  --handleRefresh sigma
+
+  where
+    handleRefresh :: Sigma -> Effect Unit
+    handleRefresh sigma = dependOnSigma sigma "[handleRefresh] can't refresh" $ \s -> do
+      Sigma.refreshForceAtlas s
+
+
+useSigmaEff :: forall settings. settings -> R.Ref Sigma -> Effect Sigma
+useSigmaEff settings sigmaRef = do
+  let sigma = R.readRef sigmaRef
+  handleSigma sigma (readSigma sigma)
+  pure sigma
+
+  where
+    handleSigma :: Sigma -> (Maybe Sigma.Sigma) -> Effect Unit
+    handleSigma sigma (Just _) = do
+      pure unit
+    handleSigma sigma Nothing = do
+      ret <- createSigma settings
+      traverse_ (writeSigma sigma <<< Just) ret
+      R.setRef sigmaRef sigma
+      pure unit
+
+useDataEff :: forall n e. Sigma -> Graph n e -> Effect Unit
+useDataEff sigma graph = dependOnSigma sigma sigmaNotFoundMsg withSigma
+  where
+    withSigma sig = refreshData sig (sigmafy graph)
+    sigmaNotFoundMsg = "[useDataEff] Sigma not found, not adding data"
+
+useCanvasRendererEff :: R.Ref (Nullable Element) -> Sigma -> Effect Unit
+useCanvasRendererEff container sigma =
+  delay unit $ \_ ->
+    dependOnContainer container containerNotFoundMsg withContainer
+  where
+    withContainer c = dependOnSigma sigma sigmaNotFoundMsg withSigma
+      where -- close over c
+        withSigma sig = addRenderer sig renderer >>= handle
+          where -- close over sig
+            renderer = { "type": "canvas", container: c }
+            handle _ = log "[useCanvasRendererEff] cleanup handle"
+            --handle (Right _) = cleanupFirst sigma (Sigma.killRenderer sig renderer >>= logCleanup)
+            --handle (Left e) =
+            --  log2 errorAddingMsg e *> cleanupSigma sigma "useCanvasRenderer"
+    logCleanup (Left e) = log2 errorKillingMsg e
+    logCleanup _ = log killedMsg
+    containerNotFoundMsg = "[useCanvasRendererEff] Container not found, not adding renderer"
+    sigmaNotFoundMsg     = "[useCanvasRendererEff] Sigma not found, not adding renderer"
+    errorAddingMsg       = "[useCanvasRendererEff] Error adding canvas renderer: "
+    errorKillingMsg      = "[useCanvasRendererEff] Error killing renderer:"
+    killedMsg            = "[useCanvasRendererEff] Killed renderer"
+
+useForceAtlas2Eff :: forall settings. Sigma -> settings -> Effect Unit
+useForceAtlas2Eff sigma settings = effect
+  where
+    effect = dependOnSigma sigma sigmaNotFoundMsg withSigma
+    withSigma sig = do
+      --log2 startingMsg sigma
+      Sigma.startForceAtlas2 sig settings
+      --cleanupFirst sigma (Sigma.killForceAtlas2 sig)
+    startingMsg = "[useForceAtlas2Eff] Starting ForceAtlas2"
+    sigmaNotFoundMsg = "[useForceAtlas2Eff] Sigma not found, not initialising"
+
+--handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
+handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Effect Unit
+handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
+  let sigma = R.readRef sigmaRef
+  dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
+    --log2 "[handleForceAtlas2Pause] mSigma: Just " s
+    --log2 "[handleForceAtlas2Pause] toggled: " toggled
+    isFARunning <- Sigma.isForceAtlas2Running s
+    --log2 "[handleForceAtlas2Pause] isFARunning: " isFARunning
+    case Tuple toggled isFARunning of
+      Tuple true false -> Sigma.restartForceAtlas2 s
+      Tuple false true -> Sigma.stopForceAtlas2 s
+      _ -> pure unit
+    -- handle case when user pressed pause/start fa button before timeout fired
+    --case R.readRef mFAPauseRef of
+    --  Nothing -> pure unit
+    --  Just timeoutId -> do
+    --    R.setRef mFAPauseRef Nothing
+    --    clearTimeout timeoutId

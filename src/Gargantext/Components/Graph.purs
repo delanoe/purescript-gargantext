@@ -4,13 +4,21 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude (bind, discard, pure, ($))
-import Data.Maybe (Maybe)
-import Data.Nullable (null)
+import Prelude (bind, discard, pure, ($), unit)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (notNull, null, Nullable)
+import Data.Sequence as Seq
+import DOM.Simple (createElement, setAttr)
+import DOM.Simple.Console (log, log2)
+import DOM.Simple.Types (Element)
+import Effect.Timer (setTimeout)
+import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
+
 import Gargantext.Hooks.Sigmax
 import Gargantext.Hooks.Sigmax.Types as Sigmax
+import Gargantext.Utils.Reactix as R2
 
 type OnProps  = ()
 
@@ -27,10 +35,11 @@ type Edge = ( id :: String, source :: String, target :: String )
 type Graph = Sigmax.Graph Node Edge
 
 type Props sigma forceatlas2 =
-  ( graph :: Graph
+  ( elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
+  , graph :: Graph
   , sigmaSettings :: sigma
-  , sigmaRef :: R.Ref (Maybe Sigma)
+  , sigmaRef :: R.Ref Sigma
   )
 
 graph :: forall s fa2. Record (Props s fa2) -> R.Element
@@ -40,10 +49,36 @@ graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
-      ref <- R.useRef null
-      startSigma ref props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+      -- R.useEffectOnce' $ do
+      --   el <- case R.readNullableRef props.elRef of
+      --     Just el -> do
+      --       pure el
+      --     Nothing -> do
+      --       let el = createElement "div"
+      --       setAttr el "style" "height: 95%"
+      --       setAttr el "id" "graph-cpt-root"
+      --       R.setRef props.elRef $ notNull $ el
+      --       pure el
 
-      pure $ RH.div { ref, style: {height: "95%"} } []
+      --   case R.readNullableRef props.parentRef of
+      --     Nothing -> pure unit
+      --     Just parentEl -> R2.appendChild parentEl el
+      --   pure unit
+
+      R.useEffectOnce $ do
+        --log "[graphCpt] calling startSigmaEff"
+        startSigmaEff props.elRef props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+
+        delay unit $ \_ -> do
+          log "[GraphCpt] cleaning up"
+          pure $ pure unit
+
+      -- NOTE: This div is not empty after sigma initializes.
+      -- When we change state, we make it empty though.
+      --pure $ RH.div { ref: props.elRef, style: {height: "95%"} } []
+      pure $ case R.readNullableRef props.elRef of
+        Nothing -> RH.div {} []
+        Just el -> R.createPortal [] el
 
 type SigmaSettings =
   ( animationsTime :: Number
