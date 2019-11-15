@@ -183,7 +183,7 @@ sigmaSettings =
   , defaultHoverLabelBGColor: "#fff"
   , defaultHoverLabelColor: "#000"
   , defaultLabelColor: "#000"         -- labels text color
-  , defaultLabelSize: 14.0                -- (old tina: showLabelsIfZoom)
+  , defaultLabelSize: 8.0                -- (old tina: showLabelsIfZoom)
   , defaultNodeBorderColor: "black"   -- <- if nodeBorderColor = 'default'
   , defaultNodeColor: "#ddd"
   , drawEdgeLabels: true
@@ -196,8 +196,8 @@ sigmaSettings =
   , fontStyle: "bold"
   , hideEdgesOnMove: true
   , labelSize : "fixed"
-  , labelSizeRatio: 2.0               -- label size in ratio of node size
-  , labelThreshold: 2.0               -- min node cam size to start showing label
+  , labelSizeRatio: 1.0               -- label size in ratio of node size
+  , labelThreshold: 1.0               -- min node cam size to start showing label
   , maxEdgeSize: 1.0
   , maxNodeSize: 10.0
   , minEdgeSize: 0.5              -- in fact used in tina as edge size
