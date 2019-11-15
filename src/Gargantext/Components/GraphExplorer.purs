@@ -69,7 +69,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls
       state <- useExplorerState
-      x /\ setX <- R.useState' 0
       showLogin <- snd <$> R.useState' true
       pure $
         RH.div
@@ -82,9 +81,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ Toggle.controlsToggleButton controls.showControls ]
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
-                , row [ Controls.controls controls
-                      , RH.div {on: {click: \e -> setX $ \x_ -> x_ + 1}} [ RH.text ("Counter: " <> (show x)) ]
-                        ]
+                , row [ Controls.controls controls ]
                 , row [ tree {mCurrentRoute, treeId} controls showLogin
                       , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12", style: {height: "95%"} } []  -- graph container
                       , mGraph graphRef controls.sigmaRef {graphId, graph}
