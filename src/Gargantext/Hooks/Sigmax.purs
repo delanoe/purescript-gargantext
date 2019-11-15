@@ -220,23 +220,23 @@ startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
   let rSigma = R.readRef sigmaRef
   case readSigma rSigma of
     Nothing -> do
-      log "[startSigmaEff] calling useSigmaEff"
+      --log "[startSigmaEff] calling useSigmaEff"
       sigma <- useSigmaEff settings sigmaRef
-      log "[startSigmaEff] calling useCanvasRendererEff"
+      --log "[startSigmaEff] calling useCanvasRendererEff"
       useCanvasRendererEff ref sigma
 
-      log "[startSigmaEff] calling useDataEff"
+      --log "[startSigmaEff] calling useDataEff"
       useDataEff sigma graph
-      log "[startSigmaEff] calling useForceAtlas2Eff"
+      --log "[startSigmaEff] calling useForceAtlas2Eff"
       useForceAtlas2Eff sigma forceAtlas2Settings
     Just sig -> do
-      log "[startSigmaEff] sigma initialized already"
+      --log "[startSigmaEff] sigma initialized already"
       --Sigma.swapRendererContainer ref sig
       --dependOnContainer ref "[startSigmaEff] no container" $ Sigma.setRendererContainer sig
       --useCanvasRendererEff ref rSigma
       --useDataEff rSigma graph
       --useForceAtlas2Eff rSigma forceAtlas2Settings
-      log "[startSigmaEff] refreshForceAtlas"
+      --log "[startSigmaEff] refreshForceAtlas"
       --Sigma.refreshForceAtlas sig
       --if isFARunning then
       --  Sigma.restartForceAtlas2 sig
@@ -301,8 +301,7 @@ useForceAtlas2Eff sigma settings = effect
   where
     effect = dependOnSigma sigma sigmaNotFoundMsg withSigma
     withSigma sig = do
-      log startingMsg
-      log sigma
+      --log2 startingMsg sigma
       Sigma.startForceAtlas2 sig settings
       --cleanupFirst sigma (Sigma.killForceAtlas2 sig)
     startingMsg = "[useForceAtlas2Eff] Starting ForceAtlas2"
@@ -313,10 +312,10 @@ handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Effect Unit
 handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
   let sigma = R.readRef sigmaRef
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
-    log2 "[handleForceAtlas2Pause] mSigma: Just " s
-    log2 "[handleForceAtlas2Pause] toggled: " toggled
+    --log2 "[handleForceAtlas2Pause] mSigma: Just " s
+    --log2 "[handleForceAtlas2Pause] toggled: " toggled
     isFARunning <- Sigma.isForceAtlas2Running s
-    log2 "[handleForceAtlas2Pause] isFARunning: " isFARunning
+    --log2 "[handleForceAtlas2Pause] isFARunning: " isFARunning
     case Tuple toggled isFARunning of
       Tuple true false -> Sigma.restartForceAtlas2 s
       Tuple false true -> Sigma.stopForceAtlas2 s

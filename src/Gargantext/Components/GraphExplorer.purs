@@ -41,7 +41,7 @@ type LayoutProps =
   )
 
 type Props = (
-    graphElRef :: R.Ref (Nullable Element)
+    graphParentRef :: R.Ref (Nullable Element)
   , graph :: Maybe Graph.Graph | LayoutProps
   )
 
@@ -53,11 +53,11 @@ explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
   where
     cpt {graphId, mCurrentRoute, treeId, session, sessions, frontends} _ = do
-      graphElRef <- R.useRef null
-      useLoader graphId (getNodes session) (handler graphElRef)
+      graphParentRef <- R.useRef null
+      useLoader graphId (getNodes session) (handler graphParentRef)
       where
-        handler graphElRef loaded =
-          explorer {graphElRef, graphId, mCurrentRoute, treeId, session, sessions, graph, frontends}
+        handler graphParentRef loaded =
+          explorer {graphParentRef, graphId, mCurrentRoute, treeId, session, sessions, graph, frontends}
           where graph = Just (convert loaded)
 
 --------------------------------------------------------------
@@ -67,7 +67,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt {graphElRef, sessions, session, graphId, mCurrentRoute, treeId, graph, frontends} _ = do
+    cpt {graphParentRef, sessions, session, graphId, mCurrentRoute, treeId, graph, frontends} _ = do
       controls <- Controls.useGraphControls
       state <- useExplorerState
       x /\ setX <- R.useState' 0
@@ -87,7 +87,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                       , RH.div {on: {click: \e -> setX $ \x_ -> x_ + 1}} [ RH.text ("Counter: " <> (show x)) ]
                         ]
                 , row [ tree {mCurrentRoute, treeId} controls showLogin
-                      , mGraph graphElRef controls.sigmaRef {graphId, graph}
+                      , RH.div { ref: graphParentRef, id: "graph-view", className: "col-md-12" } []  -- graph parent
+                      , mGraph graphParentRef controls.sigmaRef {graphId, graph}
                       , Sidebar.sidebar {showSidePanel: fst controls.showSidePanel} ]
                 , row [
                   ]
@@ -112,7 +113,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
 
     mGraph :: R.Ref (Nullable Element) -> R.Ref Sigma -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
     mGraph _ _ {graph: Nothing} = RH.div {} []
-    mGraph graphElRef sigmaRef {graphId, graph: Just graph} = graphView graphElRef sigmaRef {graphId, graph}
+    mGraph graphParentRef sigmaRef {graphId, graph: Just graph} = graphView graphParentRef sigmaRef {graphId, graph}
 
 useExplorerState :: R.Hooks (Record GET.State)
 useExplorerState = do pure {}
@@ -139,25 +140,21 @@ type GraphProps = (
 
 graphView :: R.Ref (Nullable Element) -> R.Ref Sigma -> Record GraphProps -> R.Element
 --graphView sigmaRef props = R.createElement (R.memo el memoCmp) props []
-graphView elRef sigmaRef props = R.createElement el props []
+graphView parentRef sigmaRef props = R.createElement el props []
   where
     --memoCmp props1 props2 = props1.graphId == props2.graphId
     el = R.hooksComponent "GraphView" cpt
     cpt {graphId, graph} _children = do
-      parentRef <- R.useRef null
+      elRef <- R.useRef null
 
-      pure $
-        RH.div { ref: parentRef, id: "graph-view", className: "col-md-12" }
-        [
-          Graph.graph {
-               elRef
-             , forceAtlas2Settings: Graph.forceAtlas2Settings
-             , graph
-             , parentRef
-             , sigmaSettings: Graph.sigmaSettings
-             , sigmaRef: sigmaRef
-             }
-        ]
+      pure $ Graph.graph {
+          elRef
+        , forceAtlas2Settings: Graph.forceAtlas2Settings
+        , graph
+        , parentRef
+        , sigmaSettings: Graph.sigmaSettings
+        , sigmaRef: sigmaRef
+        }
 
 convert :: GET.GraphData -> Graph.Graph
 convert (GET.GraphData r) = Sigmax.Graph {nodes, edges}

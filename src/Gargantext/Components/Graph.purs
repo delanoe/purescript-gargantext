@@ -11,6 +11,7 @@ import Data.Sequence as Seq
 import DOM.Simple (createElement, setAttr)
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
+import Effect.Timer (setTimeout)
 import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -49,7 +50,7 @@ graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
-      R.useEffect' $ do
+      R.useEffectOnce' $ do
         el <- case R.readNullableRef props.elRef of
           Just el -> do
             pure el
@@ -61,12 +62,12 @@ graphCpt = R.hooksComponent "Graph" cpt
             pure el
 
         case R.readNullableRef props.parentRef of
-          Nothing -> R2.addRootElement el
+          Nothing -> pure unit
           Just parentEl -> R2.appendChild parentEl el
         pure unit
 
       R.useEffectOnce $ do
-        log "[graphCpt] calling startSigmaEff"
+        --log "[graphCpt] calling startSigmaEff"
         startSigmaEff props.elRef props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
         delay unit $ \_ -> do

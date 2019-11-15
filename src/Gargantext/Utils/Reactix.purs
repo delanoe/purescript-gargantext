@@ -6,6 +6,7 @@ import Data.Nullable (Nullable, null, toMaybe)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
+import DOM.Simple.Console (log, log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Event as DE
 import DOM.Simple.Element as Element
@@ -177,3 +178,12 @@ foreign import _addRootElement
 
 appendChild :: forall n m. IsNode n => IsNode m => n -> m -> Effect Unit
 appendChild n c = delay unit $ \_ -> pure $ n ... "appendChild" $ [c]
+
+appendChildToParentId :: forall c. IsNode c => String -> c -> Effect Unit
+appendChildToParentId ps c = delay unit $ \_ -> do
+  parentEl <- getElementById ps
+  log2 "[appendChildToParentId] ps" ps
+  log2 "[appendChildToParentId] parentEl" parentEl
+  case parentEl of
+    Nothing -> pure unit
+    Just el -> appendChild el c
