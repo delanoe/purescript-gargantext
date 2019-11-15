@@ -144,13 +144,16 @@ graphView elRef sigmaRef props = R.createElement el props []
     --memoCmp props1 props2 = props1.graphId == props2.graphId
     el = R.hooksComponent "GraphView" cpt
     cpt {graphId, graph} _children = do
+      parentRef <- R.useRef null
+
       pure $
-        RH.div { id: "graph-view", className: "col-md-12" }
+        RH.div { ref: parentRef, id: "graph-view", className: "col-md-12" }
         [
           Graph.graph {
                elRef
              , forceAtlas2Settings: Graph.forceAtlas2Settings
              , graph
+             , parentRef
              , sigmaSettings: Graph.sigmaSettings
              , sigmaRef: sigmaRef
              }

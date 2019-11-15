@@ -39,6 +39,12 @@ function killRenderer(left, right, sigma, renderer) {
     return left(e);
   }
 }
+function getRendererContainer(sigma) {
+  return sigma.renderers[0].container;
+}
+function setRendererContainer(sigma, el) {
+  sigma.renderers[0].container = el;
+}
 function killSigma(left, right, sigma) {
   try {
     sigma.kill()
@@ -69,6 +75,8 @@ exports._graphRead = graphRead;
 exports._refresh = refresh;
 exports._addRenderer = addRenderer;
 exports._killRenderer = killRenderer;
+exports._getRendererContainer = getRendererContainer;
+exports._setRendererContainer = setRendererContainer;
 exports._killSigma = killSigma
 exports._clear = clear;
 exports._bind = bind;

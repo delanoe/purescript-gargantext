@@ -5,9 +5,10 @@ module Gargantext.Components.Graph
   -- )
   where
 import Prelude (bind, discard, pure, ($), unit)
-import Data.Maybe (Maybe)
-import Data.Nullable (null, Nullable)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (notNull, null, Nullable)
 import Data.Sequence as Seq
+import DOM.Simple (createElement, setAttr)
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
 import FFI.Simple (delay)
@@ -36,6 +37,7 @@ type Props sigma forceatlas2 =
   ( elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
   , graph :: Graph
+  , parentRef :: R.Ref (Nullable Element)
   , sigmaSettings :: sigma
   , sigmaRef :: R.Ref Sigma
   )
@@ -47,6 +49,22 @@ graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
+      R.useEffect' $ do
+        el <- case R.readNullableRef props.elRef of
+          Just el -> do
+            pure el
+          Nothing -> do
+            let el = createElement "div"
+            setAttr el "style" "height: 95%"
+            setAttr el "id" "graph-cpt-root"
+            R.setRef props.elRef $ notNull $ el
+            pure el
+
+        case R.readNullableRef props.parentRef of
+          Nothing -> R2.addRootElement el
+          Just parentEl -> R2.appendChild parentEl el
+        pure unit
+
       R.useEffectOnce $ do
         log "[graphCpt] calling startSigmaEff"
         startSigmaEff props.elRef props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
@@ -55,7 +73,12 @@ graphCpt = R.hooksComponent "Graph" cpt
           log "[GraphCpt] cleaning up"
           pure $ pure unit
 
-      pure $ RH.div { ref: props.elRef, style: {height: "95%"} } []
+      -- NOTE: This div is not empty after sigma initializes.
+      -- When we change state, we make it empty though.
+      --pure $ RH.div { ref: props.elRef, style: {height: "95%"} } []
+      pure $ case R.readNullableRef props.elRef of
+        Nothing -> RH.div {} []
+        Just el -> R.createPortal [] el
 
 type SigmaSettings =
   ( animationsTime :: Number

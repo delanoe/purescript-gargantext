@@ -9,11 +9,12 @@ import DOM.Simple as DOM
 import DOM.Simple.Document (document)
 import DOM.Simple.Event as DE
 import DOM.Simple.Element as Element
+import DOM.Simple.Types (class IsNode)
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Exception (error)
-import Effect.Uncurried (EffectFn1, mkEffectFn1, mkEffectFn2)
+import Effect.Uncurried (EffectFn1, runEffectFn1, mkEffectFn1, mkEffectFn2)
 import FFI.Simple ((...), defineProperty, delay, args2, args3)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
 import React as React
@@ -167,3 +168,12 @@ useReductor' r = useReductor r pure
 
 render :: R.Element -> DOM.Element -> Effect Unit
 render e d = delay unit $ \_ -> pure $ R.reactDOM ... "render" $ args2 e d
+
+addRootElement :: DOM.Element -> Effect Unit
+addRootElement = runEffectFn1 _addRootElement
+
+foreign import _addRootElement
+  :: EffectFn1 DOM.Element Unit
+
+appendChild :: forall n m. IsNode n => IsNode m => n -> m -> Effect Unit
+appendChild n c = delay unit $ \_ -> pure $ n ... "appendChild" $ [c]

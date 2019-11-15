@@ -13,6 +13,7 @@ import Data.Nullable (Nullable)
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Traversable (traverse_)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested((/\))
 import Effect (Effect)
 import FFI.Simple (delay)
@@ -230,13 +231,13 @@ startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
       useForceAtlas2Eff sigma forceAtlas2Settings
     Just sig -> do
       log "[startSigmaEff] sigma initialized already"
-      isFARunning <- Sigma.isForceAtlas2Running sig
-      log2 "[startSigmaEff] isFARunning" isFARunning
-      useCanvasRendererEff ref rSigma
+      --Sigma.swapRendererContainer ref sig
+      --dependOnContainer ref "[startSigmaEff] no container" $ Sigma.setRendererContainer sig
+      --useCanvasRendererEff ref rSigma
       --useDataEff rSigma graph
       --useForceAtlas2Eff rSigma forceAtlas2Settings
       log "[startSigmaEff] refreshForceAtlas"
-      Sigma.refreshForceAtlas sig
+      --Sigma.refreshForceAtlas sig
       --if isFARunning then
       --  Sigma.restartForceAtlas2 sig
       --else
@@ -314,9 +315,12 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
     log2 "[handleForceAtlas2Pause] mSigma: Just " s
     log2 "[handleForceAtlas2Pause] toggled: " toggled
-    case toggled of
-      true -> Sigma.restartForceAtlas2 s
-      _ -> Sigma.stopForceAtlas2 s
+    isFARunning <- Sigma.isForceAtlas2Running s
+    log2 "[handleForceAtlas2Pause] isFARunning: " isFARunning
+    case Tuple toggled isFARunning of
+      Tuple true false -> Sigma.restartForceAtlas2 s
+      Tuple false true -> Sigma.stopForceAtlas2 s
+      _ -> pure unit
     -- handle case when user pressed pause/start fa button before timeout fired
     --case R.readRef mFAPauseRef of
     --  Nothing -> pure unit

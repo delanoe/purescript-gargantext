@@ -2,11 +2,14 @@ module Gargantext.Hooks.Sigmax.Sigma where
 
 import Prelude
 import Data.Either (Either(..))
-import Data.Nullable (null)
+import Data.Nullable (notNull, null, Nullable)
+import DOM.Simple.Console (log, log2)
+import DOM.Simple.Types (Element)
 import Effect (Effect, foreachE)
 import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, mkEffectFn1, runEffectFn1, EffectFn2, runEffectFn2, EffectFn3, runEffectFn3, EffectFn4, runEffectFn4)
 import Type.Row (class Union)
+import Reactix as R
 
 foreign import data Sigma :: Type
 
@@ -74,6 +77,24 @@ foreign import _killRenderer
             Sigma 
             r
             (Either err Unit)
+
+getRendererContainer :: Sigma -> Effect Element
+getRendererContainer sigma = runEffectFn1 _getRendererContainer sigma
+
+foreign import _getRendererContainer
+  :: EffectFn1 Sigma Element
+
+swapRendererContainer :: R.Ref (Nullable Element) -> Sigma -> Effect Unit
+swapRendererContainer ref sigma = do
+  el <- getRendererContainer sigma
+  log2 "[swapRendererContainer] el" el
+  R.setRef ref $ notNull el
+
+setRendererContainer :: Sigma -> Element -> Effect Unit
+setRendererContainer sigma el = runEffectFn2 _setRendererContainer sigma el
+
+foreign import _setRendererContainer
+  :: EffectFn2 Sigma Element Unit
 
 killSigma :: forall err. Sigma -> Effect (Either err Unit)
 killSigma = runEffectFn3 _killSigma Left Right
