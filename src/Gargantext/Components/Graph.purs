@@ -38,7 +38,6 @@ type Props sigma forceatlas2 =
   ( elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
   , graph :: Graph
-  , parentRef :: R.Ref (Nullable Element)
   , sigmaSettings :: sigma
   , sigmaRef :: R.Ref Sigma
   )
@@ -50,21 +49,21 @@ graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
-      R.useEffectOnce' $ do
-        el <- case R.readNullableRef props.elRef of
-          Just el -> do
-            pure el
-          Nothing -> do
-            let el = createElement "div"
-            setAttr el "style" "height: 95%"
-            setAttr el "id" "graph-cpt-root"
-            R.setRef props.elRef $ notNull $ el
-            pure el
+      -- R.useEffectOnce' $ do
+      --   el <- case R.readNullableRef props.elRef of
+      --     Just el -> do
+      --       pure el
+      --     Nothing -> do
+      --       let el = createElement "div"
+      --       setAttr el "style" "height: 95%"
+      --       setAttr el "id" "graph-cpt-root"
+      --       R.setRef props.elRef $ notNull $ el
+      --       pure el
 
-        case R.readNullableRef props.parentRef of
-          Nothing -> pure unit
-          Just parentEl -> R2.appendChild parentEl el
-        pure unit
+      --   case R.readNullableRef props.parentRef of
+      --     Nothing -> pure unit
+      --     Just parentEl -> R2.appendChild parentEl el
+      --   pure unit
 
       R.useEffectOnce $ do
         --log "[graphCpt] calling startSigmaEff"
