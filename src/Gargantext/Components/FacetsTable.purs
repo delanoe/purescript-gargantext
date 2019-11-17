@@ -22,7 +22,7 @@ import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
+import Gargantext.Components.DocsTable (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(Search,NodeAPI))
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)

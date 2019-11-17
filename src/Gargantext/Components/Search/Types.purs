@@ -352,52 +352,6 @@ instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
     ~> "lang"       := maybe "EN" show lang
     ~> jsonEmptyObject
 
-
-data Category = Trash | Normal | Favorite
-derive instance genericFavorite :: Generic Category _
-instance showCategory :: Show Category where
-  show = genericShow
-instance eqCategory :: Eq Category where
-  eq = genericEq
-instance encodeJsonCategory :: EncodeJson Category where
-  encodeJson Trash = encodeJson 0
-  encodeJson Normal = encodeJson 1
-  encodeJson Favorite = encodeJson 2
-
-favCategory :: Category -> Category
-favCategory Normal = Favorite
-favCategory Trash = Favorite
-favCategory Favorite = Normal
-
-trashCategory :: Category -> Category
-trashCategory Normal = Trash
-trashCategory Trash = Normal
-trashCategory Favorite = Trash
-
-
-decodeCategory :: Int -> Category
-decodeCategory 0 = Trash
-decodeCategory 1 = Normal
-decodeCategory 2 = Favorite
-decodeCategory _ = Normal
-
-newtype CategoryQuery = CategoryQuery {
-    nodeIds :: Array Int
-  , category :: Category
-  }
-
-instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
-  encodeJson (CategoryQuery post) =
-    "ntc_nodesId" := post.nodeIds
-    ~> "ntc_category" := encodeJson post.category
-    ~> jsonEmptyObject
-
-categoryRoute :: Int -> SessionRoute
-categoryRoute nodeId = NodeAPI Node (Just nodeId) "category"
-
-putCategories :: Session -> Int -> CategoryQuery -> Aff (Array Int)
-putCategories session nodeId = put session $ categoryRoute nodeId
-
 performSearch :: forall a. DecodeJson a => Session -> SearchQuery -> Aff a
 performSearch session q = post session q q
 
