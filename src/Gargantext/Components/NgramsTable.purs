@@ -134,6 +134,7 @@ tableContainer :: { path            :: R.State PageParams
                   , ngramsSelection :: Set NgramsTerm
                   , ngramsTable     :: NgramsTable
                   , tabNgramType    :: CTabNgramType
+                  , ngramsSelectAll :: Boolean
                   }
                -> Record T.TableContainerProps -> R.Element
 tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
@@ -143,6 +144,7 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                , ngramsSelection
                , ngramsTable: ngramsTableCache
                , tabNgramType
+               , ngramsSelectAll
                } props =
   H.div {className: "container-fluid"}
   [ H.div {className: "jumbotron1"}
@@ -213,7 +215,7 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
               [ H.thead {className: "tableHeader"} [props.tableHead]
               , H.tbody {} props.tableBody]]
 
-          ,  H.li {className: " list-group-item"}
+          , if ngramsSelectAll then H.li {className: " list-group-item"}
                 [ H.button { className: "btn btn-primary"
                            , on: {click: const $ setSelection GraphTerm }
                            }
@@ -223,6 +225,7 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                            }
                   [ H.text "Stop" ]
                   ]
+                else H.div {}[]
                 ]
               ]
             ]
@@ -348,7 +351,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
         wrapColElts (T.ColumnName "Select") = const [R2.buff selected]
         wrapColElts (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
         wrapColElts _                       = identity
-        container = tableContainer {path, dispatch, ngramsParent, ngramsChildren, ngramsSelection, ngramsTable, tabNgramType}
+        container = tableContainer {path, dispatch, ngramsParent, ngramsChildren, ngramsSelection, ngramsTable, tabNgramType, ngramsSelectAll}
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
         ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
         orderWith =
