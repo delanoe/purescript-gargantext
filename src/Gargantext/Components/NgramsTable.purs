@@ -188,18 +188,6 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                 , props.pageSizeControl
                 , H.text " items / "
                 , props.paginationLinks]]
-            , H.div {className: "col-md-1", style: {marginTop : "6px", marginBottom : "1px"}}
-              [ H.li {className: " list-group-item"}
-                [ H.button { className: "btn btn-primary"
-                           , on: {click: const $ setSelection GraphTerm }
-                           }
-                  [ H.text "Map" ]
-                , H.button { className: "btn btn-primary"
-                           , on: {click: const $ setSelection StopTerm }
-                           }
-                  [ H.text "Stop" ]
-                ]
-              ]
             ]]
         , H.div {}
           (maybe [] (\ngrams ->
@@ -223,7 +211,22 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
           , H.div {id: "terms_table", className: "panel-body"}
             [ H.table {className: "table able"}
               [ H.thead {className: "tableHeader"} [props.tableHead]
-              , H.tbody {} props.tableBody]]]]]]
+              , H.tbody {} props.tableBody]]
+
+          ,  H.li {className: " list-group-item"}
+                [ H.button { className: "btn btn-primary"
+                           , on: {click: const $ setSelection GraphTerm }
+                           }
+                  [ H.text "Map" ]
+                , H.button { className: "btn btn-primary"
+                           , on: {click: const $ setSelection StopTerm }
+                           }
+                  [ H.text "Stop" ]
+                  ]
+                ]
+              ]
+            ]
+          ]
   where
     -- WHY setPath     f = origSetPageParams (const $ f path)
     setSearchQuery    x = setPath $ _ { searchQuery = x }
