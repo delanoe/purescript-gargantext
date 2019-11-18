@@ -355,3 +355,4 @@ instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
 performSearch :: forall a. DecodeJson a => Session -> SearchQuery -> Aff a
 performSearch session q = post session q q
 
+
