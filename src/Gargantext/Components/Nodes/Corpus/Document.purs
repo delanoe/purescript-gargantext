@@ -22,7 +22,7 @@ import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), TermList)
+import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), TermList, ScoreType(..))
 import Gargantext.Utils.Reactix as R2
 
 type DocPath =
@@ -295,11 +295,11 @@ docViewSpec = simpleSpec performAction render
         commitPatch path (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
-        pt = singletonNgramsTablePatch CTabTerms n pe
+        pt = singletonNgramsTablePatch n pe
     performAction (AddNewNgram ngram termList) {path} {ngramsVersion} =
         commitPatch path (Versioned {version: ngramsVersion, data: pt})
       where
-        pt = addNewNgram CTabTerms ngram termList
+        pt = addNewNgram ngram termList
 
     render :: Render State Props Action
     render dispatch { loaded: { ngramsTable: Versioned { data: initTable }, document } }
@@ -379,8 +379,9 @@ loadData {session, nodeId, listIds, tabType} = do
     , listIds
     , params: { offset : 0, limit : 100, orderBy: Nothing}
     , tabType
-    , searchQuery : ""
-    , termListFilter : Nothing
-    , termSizeFilter : Nothing
+    , searchQuery: ""
+    , termListFilter: Nothing
+    , termSizeFilter: Nothing
+    , scoreType: Occurrences
     }
   pure {document, ngramsTable}
