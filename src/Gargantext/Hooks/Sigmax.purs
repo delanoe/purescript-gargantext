@@ -20,7 +20,7 @@ import FFI.Simple (delay)
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types (Graph(..))
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=))
+import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=), not)
 import Reactix as R
 
 type Sigma =
@@ -272,14 +272,18 @@ useForceAtlas2Eff sigma settings = effect
     effect = dependOnSigma sigma sigmaNotFoundMsg withSigma
     withSigma sig = do
       --log2 startingMsg sigma
+      setEdges sig false
       Sigma.startForceAtlas2 sig settings
       --cleanupFirst sigma (Sigma.killForceAtlas2 sig)
     startingMsg = "[useForceAtlas2Eff] Starting ForceAtlas2"
     sigmaNotFoundMsg = "[useForceAtlas2Eff] Sigma not found, not initialising"
 
+-- | Effect for handling pausing FA via state changes.  We need this because
+-- | pausing can be done not only via buttons but also from the initial
+-- | setTimer.
 --handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
-handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Effect Unit
-handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
+handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Boolean -> Effect Unit
+handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) showEdges = do
   let sigma = R.readRef sigmaRef
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
     --log2 "[handleForceAtlas2Pause] mSigma: Just " s
@@ -287,8 +291,14 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
     isFARunning <- Sigma.isForceAtlas2Running s
     --log2 "[handleForceAtlas2Pause] isFARunning: " isFARunning
     case Tuple toggled isFARunning of
-      Tuple true false -> Sigma.restartForceAtlas2 s
-      Tuple false true -> Sigma.stopForceAtlas2 s
+      Tuple true false -> do
+        -- hide edges during forceAtlas rendering, this prevents flickering
+        Sigma.restartForceAtlas2 s
+        setEdges s false
+      Tuple false true -> do
+        -- restore edges state
+        Sigma.stopForceAtlas2 s
+        setEdges s showEdges
       _ -> pure unit
     -- handle case when user pressed pause/start fa button before timeout fired
     --case R.readRef mFAPauseRef of
@@ -296,3 +306,19 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
     --  Just timeoutId -> do
     --    R.setRef mFAPauseRef Nothing
     --    clearTimeout timeoutId
+
+setEdges :: Sigma.Sigma -> Boolean -> Effect Unit
+setEdges sigma val = do
+  let settings = {
+        drawEdges: val
+      , drawEdgeLabels: val
+      , hideEdgesOnMove: not val
+    }
+  -- prevent showing edges (via show edges button) when FA is running (flickering)
+  isFARunning <- Sigma.isForceAtlas2Running sigma
+  case Tuple val isFARunning of
+    Tuple false true ->
+      Sigma.setSettings sigma settings
+    Tuple true false ->
+      Sigma.setSettings sigma settings
+    _ -> pure unit
