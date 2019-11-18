@@ -53,7 +53,6 @@ import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 
-import Partial.Unsafe (unsafePartial)
 import Unsafe.Coerce (unsafeCoerce)
 
 type State =
@@ -117,7 +116,7 @@ setTermListSetA ngramsTable ns new_list =
     f n unit = NgramsPatch { patch_list, patch_children: mempty }
       where
         cur_list = ngramsTable ^? at n <<< _Just <<< _NgramsElement <<< _list
-        patch_list = replace (unsafePartial (fromJust cur_list)) new_list
+        patch_list = maybe mempty (\c -> replace c new_list) cur_list
     toMap :: forall a. Set a -> Map a Unit
     toMap = unsafeCoerce
     -- TODO https://github.com/purescript/purescript-ordered-collections/pull/21
@@ -192,11 +191,11 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
             , H.div {className: "col-md-1", style: {marginTop : "6px", marginBottom : "1px"}}
               [ H.li {className: " list-group-item"}
                 [ H.button { className: "btn btn-primary"
-                           , on: {click: const $ dispatch $ setTermListSetA ngramsTableCache ngramsSelection GraphTerm }
+                           , on: {click: const $ setSelection GraphTerm }
                            }
                   [ H.text "Map" ]
                 , H.button { className: "btn btn-primary"
-                           , on: {click: const $ dispatch $ setTermListSetA ngramsTableCache ngramsSelection StopTerm }
+                           , on: {click: const $ setSelection StopTerm }
                            }
                   [ H.text "Stop" ]
                 ]
@@ -230,6 +229,7 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
     setSearchQuery    x = setPath $ _ { searchQuery = x }
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
+    setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
 
 toggleMaybe :: forall a. a -> Maybe a -> Maybe a
 toggleMaybe _ (Just _) = Nothing
