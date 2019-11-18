@@ -74,7 +74,7 @@ cat2score Topic    = 3
 cat2score Favorite = 4
 
 -- caroussel :: Category -> R.Element
-caroussel session nodeId setLocalCategories r cat = H.div {} divs
+caroussel session nodeId setLocalCategories r cat = H.div {className:"tagDoc"} divs
   where
     divs = map (\c -> if cat == c
                         then
