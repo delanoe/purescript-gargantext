@@ -16,6 +16,7 @@ import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested((/\))
 import Effect (Effect)
+import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple (delay)
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types (Graph(..))
@@ -282,8 +283,8 @@ useForceAtlas2Eff sigma settings = effect
 -- | pausing can be done not only via buttons but also from the initial
 -- | setTimer.
 --handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
-handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Boolean -> Effect Unit
-handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) showEdges = do
+handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Boolean -> R.Ref (Maybe TimeoutId) -> Effect Unit
+handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) showEdges mFAPauseRef = do
   let sigma = R.readRef sigmaRef
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
     --log2 "[handleForceAtlas2Pause] mSigma: Just " s
@@ -295,6 +296,9 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) showEdges = do
         -- hide edges during forceAtlas rendering, this prevents flickering
         Sigma.restartForceAtlas2 s
         setEdges s false
+        case R.readRef mFAPauseRef of
+          Nothing -> pure unit
+          Just timeoutId -> clearTimeout timeoutId
       Tuple false true -> do
         -- restore edges state
         Sigma.stopForceAtlas2 s
