@@ -11,6 +11,7 @@ module Gargantext.Components.NgramsTable.Core
   , _NgramsTable
   , NgramsTerm
   , normNgram
+  , ngramsTermText
   , findNgramTermList
   , Version
   , Versioned(..)
@@ -27,9 +28,11 @@ module Gargantext.Components.NgramsTable.Core
   , patchSetFromMap
   , applyPatchSet
   , applyNgramsTablePatch
+  , rootsOf
   , singletonPatchMap
   , fromNgramsPatches
   , singletonNgramsTablePatch
+  , isEmptyNgramsTablePatch
   , _list
   , _occurrences
   , _children
@@ -48,6 +51,7 @@ import Data.Array (head)
 import Data.Array as A
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
                      , jsonEmptyObject, (:=), (~>), (.:), (.??) )
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
@@ -63,7 +67,7 @@ import Data.Lens.Iso.Newtype (_Newtype)
 import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, isNothing)
 import Data.Traversable (class Traversable, traverse, traverse_, sequence)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Set (Set)
@@ -76,17 +80,14 @@ import Data.Tuple (Tuple(..))
 -- import Debug.Trace
 import Effect.Aff (Aff)
 import Foreign.Object as FO
-import React (ReactElement)
-import React as React
 import Thermite (StateCoTransformer, modifyState_)
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 
 import Gargantext.Components.Table as T
-import Gargantext.Ends (url)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post)
-import Gargantext.Types (OrderBy(..), CTabNgramType(..), TabType, TermList(..), TermSize)
+import Gargantext.Types (OrderBy(..), CTabNgramType(..), TabType, TermList(..), TermSize, ScoreType(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 
 type CoreParams s =
@@ -104,6 +105,7 @@ type PageParams =
     , searchQuery    :: String
     , termListFilter :: Maybe TermList -- Nothing means all
     , termSizeFilter :: Maybe TermSize -- Nothing means all
+    , scoreType      :: ScoreType
     )
 
 initialPageParams :: Session -> Int -> Array Int -> TabType -> PageParams
@@ -115,10 +117,34 @@ initialPageParams session nodeId listIds tabType =
   , termSizeFilter: Nothing
   , termListFilter: Just GraphTerm
   , searchQuery: ""
+  , scoreType: Occurrences
   , session
   }
 
-type NgramsTerm = String
+newtype NgramsTerm = NormNgramsTerm String
+
+derive instance eqNgramsTerm  :: Eq  NgramsTerm
+derive instance ordNgramsTerm :: Ord NgramsTerm
+
+instance encodeJsonNgramsTerm :: EncodeJson NgramsTerm where
+  encodeJson (NormNgramsTerm s) = encodeJson s
+
+-- TODO we assume that the ngrams are already normalized.
+instance decodeJsonNgramsTerm :: DecodeJson NgramsTerm where
+  decodeJson = map NormNgramsTerm <<< decodeJson
+
+ngramsTermText :: NgramsTerm -> String
+ngramsTermText (NormNgramsTerm t) = t
+
+-- TODO
+normNgramInternal :: CTabNgramType -> String -> String
+normNgramInternal CTabAuthors    = identity
+normNgramInternal CTabSources    = identity
+normNgramInternal CTabInstitutes = identity
+normNgramInternal CTabTerms      = S.toLower <<< R.replace wordBoundaryReg " "
+
+normNgram :: CTabNgramType -> String -> NgramsTerm
+normNgram tabType = NormNgramsTerm <<< normNgramInternal tabType
 
 -----------------------------------------------------------------------------------
 newtype NgramsElement = NgramsElement
@@ -194,10 +220,10 @@ derive instance newtypeNgramsTable :: Newtype NgramsTable _
 _NgramsTable :: Iso' NgramsTable (Map NgramsTerm NgramsElement)
 _NgramsTable = _Newtype
 
-instance indexNgramsTable :: Index NgramsTable String NgramsElement where
+instance indexNgramsTable :: Index NgramsTable NgramsTerm NgramsElement where
   ix k = _NgramsTable <<< ix k
 
-instance atNgramsTable :: At NgramsTable String NgramsElement where
+instance atNgramsTable :: At NgramsTable NgramsTerm NgramsElement where
   at k = _NgramsTable <<< at k
 
 instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
@@ -239,7 +265,7 @@ highlightNgrams ntype (NgramsTable table) input0 =
     init x = S.take (S.length x - 1) x
     input = spR input0
     pats = A.fromFoldable (Map.keys table)
-    ixs = indicesOfAny (sp <$> pats) (normNgram ntype input)
+    ixs = indicesOfAny (sp <<< ngramsTermText <$> pats) (normNgramInternal ntype input)
 
     consOnJustTail s xs@(Tuple _ (Just _) : _) =
       Tuple s Nothing : xs
@@ -264,7 +290,7 @@ highlightNgrams ntype (NgramsTable table) input0 =
             Nothing ->
               crashWith "highlightNgrams: out of bounds pattern"
             Just pat ->
-              let lpat = S.length (db pat) in
+              let lpat = S.length (db (ngramsTermText pat)) in
               case Map.lookup pat table of
                 Nothing ->
                   crashWith "highlightNgrams: pattern missing from table"
@@ -452,14 +478,16 @@ instance traversablePatchMap :: Traversable (PatchMap k) where
 instance traversableWithIndexPatchMap :: TraversableWithIndex k (PatchMap k) where
   traverseWithIndex f (PatchMap m) = PatchMap <$> traverseWithIndex f m
 
-instance encodeJsonPatchMap :: EncodeJson p => EncodeJson (PatchMap String p) where
+-- TODO generalize
+instance encodeJsonPatchMap :: EncodeJson p => EncodeJson (PatchMap NgramsTerm p) where
   encodeJson (PatchMap m) =
-    encodeJson $ FO.fromFoldable $ (Map.toUnfoldable m :: Array _)
+    encodeJson $ FO.fromFoldable $ map (lmap ngramsTermText) (Map.toUnfoldable m :: Array _)
 
-instance decodeJsonPatchMap :: DecodeJson p => DecodeJson (PatchMap String p) where
+instance decodeJsonPatchMap :: DecodeJson p => DecodeJson (PatchMap NgramsTerm p) where
   decodeJson json = do
     obj <- decodeJson json
-    pure $ PatchMap $ Map.fromFoldableWithIndex (obj :: FO.Object p)
+    pure $ PatchMap $ foldlWithIndex (\k m v -> Map.insert (NormNgramsTerm k) v m) mempty (obj :: FO.Object p)
+    -- TODO we assume that the ngrams are already normalized ^^^^^^^^^^^^^
 
 singletonPatchMap :: forall k p. k -> p -> PatchMap k p
 singletonPatchMap k p = PatchMap (Map.singleton k p)
@@ -484,21 +512,22 @@ type NgramsTablePatch =
   , ngramsPatches  :: NgramsPatches
   }
 
+isEmptyNgramsTablePatch :: NgramsTablePatch -> Boolean
+isEmptyNgramsTablePatch {ngramsPatches} = isEmptyPatchMap ngramsPatches
+
 fromNgramsPatches :: NgramsPatches -> NgramsTablePatch
 fromNgramsPatches ngramsPatches = {ngramsNewElems: mempty, ngramsPatches}
 
-normNgram :: CTabNgramType -> String -> NgramsTerm
-normNgram CTabAuthors = identity
-normNgram CTabSources = identity
-normNgram CTabInstitutes = identity
-normNgram CTabTerms      = S.toLower <<< R.replace wordBoundaryReg " "
+findNgramTermList :: NgramsTable -> NgramsTerm -> Maybe TermList
+findNgramTermList (NgramsTable m) n = m ^? at n <<< _Just <<< _NgramsElement <<< _list
 
+singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
+singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap n p
 
-findNgramTermList :: CTabNgramType -> NgramsTable -> String -> Maybe TermList
-findNgramTermList ntype (NgramsTable m) s = m ^? at (normNgram ntype s) <<< _Just <<< _NgramsElement <<< _list
-
-singletonNgramsTablePatch :: CTabNgramType -> NgramsTerm -> NgramsPatch -> NgramsTablePatch
-singletonNgramsTablePatch m n p = fromNgramsPatches $ singletonPatchMap (normNgram m n) p
+rootsOf :: NgramsTable -> Set NgramsTerm
+rootsOf (NgramsTable m) = Map.keys $ Map.filter isRoot m
+  where
+    isRoot (NgramsElement {parent}) = isNothing parent
 
 type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
 
@@ -526,7 +555,7 @@ reParentNgramsPatch parent (NgramsPatch {patch_children: PatchSet {rem, add}}) =
   -- root_of_parent <- use (at parent <<< _Just <<< _NgramsElement <<< _root)
   -- ^ TODO this does not type checks, we do the following two lines instead:
   s <- use (at parent)
-  let root_of_parent = s ^. (_Just <<< _NgramsElement <<< _root)
+  let root_of_parent = s ^? (_Just <<< _NgramsElement <<< _root <<< _Just)
   let rp = { root: maybe parent identity root_of_parent, parent }
   traverse_ (reParent Nothing) rem
   traverse_ (reParent $ Just rp) add
@@ -572,9 +601,10 @@ postNewElems newElems params = void $ traverseWithIndex postNewElem newElems
   where
     postNewElem ngrams list = postNewNgrams [ngrams] (Just list) params
 
-addNewNgram :: CTabNgramType -> NgramsTerm -> TermList -> NgramsTablePatch
-addNewNgram ntype ngrams list = { ngramsPatches: mempty
-                          , ngramsNewElems: Map.singleton (normNgram ntype ngrams) list }
+addNewNgram :: NgramsTerm -> TermList -> NgramsTablePatch
+addNewNgram ngrams list =
+  { ngramsPatches: mempty
+  , ngramsNewElems: Map.singleton ngrams list }
 
 putNgramsPatches :: forall s. CoreParams s -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
@@ -594,16 +624,16 @@ commitPatch props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNe
 
 loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
 loadNgramsTable
-  { nodeId, listIds, termListFilter, termSizeFilter, session
+  { nodeId, listIds, termListFilter, termSizeFilter, session, scoreType
   , searchQuery, tabType, params: {offset, limit, orderBy}}
   = get session query
   where query = GetNgrams { tabType, offset, limit, listIds
                           , orderBy: convOrderBy <$> orderBy
                           , termListFilter, termSizeFilter
-                          , searchQuery } (Just nodeId)
+                          , searchQuery, scoreType } (Just nodeId)
 
 convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
-convOrderBy (T.ASC  (T.ColumnName "Score (Occurrences)")) = ScoreAsc
-convOrderBy (T.DESC (T.ColumnName "Score (Occurrences)")) = ScoreDesc
+convOrderBy (T.ASC  (T.ColumnName "Score")) = ScoreAsc
+convOrderBy (T.DESC (T.ColumnName "Score")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc

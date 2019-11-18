@@ -127,6 +127,7 @@ sessionPath (R.GetNgrams opts i)    =
     <> foldMap (\x -> "&list=" <> show x) opts.listIds
     <> foldMap (\x -> "&listType=" <> show x) opts.termListFilter
     <> foldMap termSizeFilter opts.termSizeFilter
+    <> "&scoreType=" <> show opts.scoreType
     <> search opts.searchQuery
   where
     base (TabCorpus _) = sessionPath <<< R.NodeAPI Node i

@@ -20,6 +20,7 @@ import FFI.Simple ((...), defineProperty, delay, args2, args3)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
 import React as React
 import Reactix as R
+import Reactix.DOM.HTML as H
 import Reactix.DOM.HTML (ElemFactory, createDOM, text)
 import Reactix.React (react)
 import Reactix.SyntheticEvent as RE
@@ -187,3 +188,6 @@ appendChildToParentId ps c = delay unit $ \_ -> do
   case parentEl of
     Nothing -> pure unit
     Just el -> appendChild el c
+
+effectLink :: Effect Unit -> String -> R.Element
+effectLink eff msg = H.a {on: {click: const eff}} [H.text msg]

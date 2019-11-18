@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Annuaire where
 
-import Prelude (bind, identity, pure, ($), (<$>), (<>))
+import Prelude (bind, identity, pure, const, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array (head)
 import Data.Maybe (Maybe(..), maybe)
@@ -101,12 +101,13 @@ pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
   where
     cpt { session, annuairePath, pagePath
         , table: (AnnuaireTable {annuaireTable}) } _ = do
-      T.table { rows, params, container, colNames, totalRecords }
+      T.table { rows, params, container, colNames, totalRecords, wrapColElts }
       where
         totalRecords = 4361 -- TODO
         rows = (\c -> {row: contactCells session c, delete: false}) <$> annuaireTable
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
+        wrapColElts = const identity
         setParams f = snd pagePath $ \{nodeId, params: ps} ->
           {params: f ps, nodeId: fst annuairePath}
         params = T.initialParams /\ setParams
