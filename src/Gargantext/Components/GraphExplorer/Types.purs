@@ -6,6 +6,7 @@ import Data.Array ((!!), length)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Partial.Unsafe (unsafePartial)
+import Reactix as R
 
 newtype Node = Node
   { id_ :: String

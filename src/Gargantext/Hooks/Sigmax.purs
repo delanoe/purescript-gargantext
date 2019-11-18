@@ -16,11 +16,12 @@ import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested((/\))
 import Effect (Effect)
+import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple (delay)
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types (Graph(..))
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=))
+import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=), not)
 import Reactix as R
 
 type Sigma =
@@ -65,13 +66,6 @@ startSigma ref sigmaRef settings forceAtlas2Settings graph = do
     useForceAtlas2 sigma forceAtlas2Settings
   else
     pure unit
-
-  R.useEffect $ do
-    delay unit $ handleRefresh sigma
-
-  where
-    handleRefresh sigma _ = pure $
-      dependOnSigma sigma "[handleRefresh] can't refresh" Sigma.refreshForceAtlas
 
 -- | Manages a sigma with the given settings
 useSigma :: forall settings. settings -> R.Ref (Maybe Sigma) -> R.Hooks {sigma :: Sigma, isNew :: Boolean}
@@ -220,36 +214,13 @@ startSigmaEff ref sigmaRef settings forceAtlas2Settings graph = do
   let rSigma = R.readRef sigmaRef
   case readSigma rSigma of
     Nothing -> do
-      --log "[startSigmaEff] calling useSigmaEff"
       sigma <- useSigmaEff settings sigmaRef
-      --log "[startSigmaEff] calling useCanvasRendererEff"
       useCanvasRendererEff ref sigma
 
-      --log "[startSigmaEff] calling useDataEff"
       useDataEff sigma graph
-      --log "[startSigmaEff] calling useForceAtlas2Eff"
       useForceAtlas2Eff sigma forceAtlas2Settings
     Just sig -> do
-      --log "[startSigmaEff] sigma initialized already"
-      --Sigma.swapRendererContainer ref sig
-      --dependOnContainer ref "[startSigmaEff] no container" $ Sigma.setRendererContainer sig
-      --useCanvasRendererEff ref rSigma
-      --useDataEff rSigma graph
-      --useForceAtlas2Eff rSigma forceAtlas2Settings
-      --log "[startSigmaEff] refreshForceAtlas"
-      --Sigma.refreshForceAtlas sig
-      --if isFARunning then
-      --  Sigma.restartForceAtlas2 sig
-      --else
-      --  Sigma.stopForceAtlas2 sig
       pure unit
-
-  --handleRefresh sigma
-
-  where
-    handleRefresh :: Sigma -> Effect Unit
-    handleRefresh sigma = dependOnSigma sigma "[handleRefresh] can't refresh" $ \s -> do
-      Sigma.refreshForceAtlas s
 
 
 useSigmaEff :: forall settings. settings -> R.Ref Sigma -> Effect Sigma
@@ -302,14 +273,18 @@ useForceAtlas2Eff sigma settings = effect
     effect = dependOnSigma sigma sigmaNotFoundMsg withSigma
     withSigma sig = do
       --log2 startingMsg sigma
+      setEdges sig false
       Sigma.startForceAtlas2 sig settings
       --cleanupFirst sigma (Sigma.killForceAtlas2 sig)
     startingMsg = "[useForceAtlas2Eff] Starting ForceAtlas2"
     sigmaNotFoundMsg = "[useForceAtlas2Eff] Sigma not found, not initialising"
 
+-- | Effect for handling pausing FA via state changes.  We need this because
+-- | pausing can be done not only via buttons but also from the initial
+-- | setTimer.
 --handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
-handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Effect Unit
-handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
+handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Boolean -> R.Ref (Maybe TimeoutId) -> Effect Unit
+handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) showEdges mFAPauseRef = do
   let sigma = R.readRef sigmaRef
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
     --log2 "[handleForceAtlas2Pause] mSigma: Just " s
@@ -317,8 +292,17 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
     isFARunning <- Sigma.isForceAtlas2Running s
     --log2 "[handleForceAtlas2Pause] isFARunning: " isFARunning
     case Tuple toggled isFARunning of
-      Tuple true false -> Sigma.restartForceAtlas2 s
-      Tuple false true -> Sigma.stopForceAtlas2 s
+      Tuple true false -> do
+        -- hide edges during forceAtlas rendering, this prevents flickering
+        Sigma.restartForceAtlas2 s
+        setEdges s false
+        case R.readRef mFAPauseRef of
+          Nothing -> pure unit
+          Just timeoutId -> clearTimeout timeoutId
+      Tuple false true -> do
+        -- restore edges state
+        Sigma.stopForceAtlas2 s
+        setEdges s showEdges
       _ -> pure unit
     -- handle case when user pressed pause/start fa button before timeout fired
     --case R.readRef mFAPauseRef of
@@ -326,3 +310,19 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) = do
     --  Just timeoutId -> do
     --    R.setRef mFAPauseRef Nothing
     --    clearTimeout timeoutId
+
+setEdges :: Sigma.Sigma -> Boolean -> Effect Unit
+setEdges sigma val = do
+  let settings = {
+        drawEdges: val
+      , drawEdgeLabels: val
+      , hideEdgesOnMove: not val
+    }
+  -- prevent showing edges (via show edges button) when FA is running (flickering)
+  isFARunning <- Sigma.isForceAtlas2Running sigma
+  case Tuple val isFARunning of
+    Tuple false true ->
+      Sigma.setSettings sigma settings
+    Tuple true false ->
+      Sigma.setSettings sigma settings
+    _ -> pure unit

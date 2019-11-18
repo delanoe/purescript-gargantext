@@ -63,12 +63,7 @@ edgesToggleButton sigmaRef state =
       let sigma = R.readRef sigmaRef
       let (toggled /\ setToggled) = state
       Sigmax.dependOnSigma sigma "[edgesToggleButton] sigma: Nothing" $ \s -> do
-        let settings = {
-              drawEdges: not toggled
-            , drawEdgeLabels: not toggled
-            , hideEdgesOnMove: toggled
-          }
-        Sigma.setSettings s settings
+        Sigmax.setEdges s $ not toggled
       setToggled not
     }
 

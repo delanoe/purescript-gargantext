@@ -13,7 +13,7 @@ module Gargantext.Components.GraphExplorer.Controls
 
 import Data.Maybe (Maybe(..))
 import DOM.Simple.Console (log, log2)
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested ((/\), get1)
 import Effect (Effect)
 import Effect.Timer (clearTimeout, setTimeout)
 import Prelude
@@ -78,10 +78,10 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
       -- ref to track automatic FA pausing
       -- If user pauses FA before auto is triggered, clear the timeoutId
       -- TODO: mFAPauseRef needs to be set higher up the tree
-      --mFAPauseRef <- R.useRef Nothing
+      mFAPauseRef <- R.useRef Nothing
 
       --R.useEffect $ handleForceAtlasPause props.sigmaRef localControls.pauseForceAtlas mFAPauseRef
-      R.useEffect' $ Sigmax.handleForceAtlas2Pause props.sigmaRef localControls.pauseForceAtlas
+      R.useEffect' $ Sigmax.handleForceAtlas2Pause props.sigmaRef localControls.pauseForceAtlas (get1 localControls.showEdges) mFAPauseRef
 
       R.useEffectOnce' $ do
         timeoutId <- setTimeout 2000 $ do
@@ -91,7 +91,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
             setToggled $ const false
           else
             pure unit
-        --R.setRef mFAPauseRef $ Just timeoutId
+          R.setRef mFAPauseRef Nothing
+        R.setRef mFAPauseRef $ Just timeoutId
         pure unit
 
       pure $ case getShowControls props of
