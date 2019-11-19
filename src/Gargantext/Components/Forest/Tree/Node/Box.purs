@@ -3,6 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import DOM.Simple.Console (log2)
 import Data.Array (filter, null)
 import Data.Maybe (Maybe(..), fromJust, isJust)
+import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Class (liftEffect)
@@ -15,6 +16,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Rename
 import Gargantext.Components.Forest.Tree.Node.Action.Upload
 import Gargantext.Components.Search.Types
 import Gargantext.Components.Search.SearchBar
+import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
 
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (AppRoute, SessionRoute(..))
@@ -28,6 +30,8 @@ import Prelude hiding (div)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
+import URI.Extra.QueryPairs as NQP
+import URI.Query as Query
 import Web.File.File (toBlob)
 import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
@@ -183,6 +187,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
     cpt {id, name, nodeType, action, session} _ = do
       renameBoxOpen <- R.useState' false
       nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {id, name, nodeType, action}
+      search <- R.useState' $ defaultSearch { node_id = Just id }
       pure $ H.div tooltipProps $
         [ H.div {id: "arrow"} []
         , H.div { style: {display: "flex", "flex-direction": "colum"} }
@@ -193,20 +198,18 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
                   }
             [ H.div {className: ""}
               [ H.div { className : "col-md-11"}
-                [ H.h3 { className: fldr nodeType true}
-                  [ H.text $ show nodeType]
+                [ H.h3 { className: fldr nodeType true} []
+                , H.div {} [ H.text $ show nodeType ]
                 ]
               ]
             , panelHeading renameBoxOpen
             , panelBody nodePopupState d
-            , removeCircleGeneral nodePopup.action setNodePopup
-            , panelAction d {id,name,nodeType,action:nodePopup.action, session} mPop
+            , panelAction d {id, name, nodeType, action:nodePopup.action, session, search} mPop
             ]
           , if nodePopup.action == Just SearchBox then
               H.div {}
                 [
-                  searchPanel id session
-                , removeCircle setNodePopup
+                  searchIsTexIframe id session search
                 ]
             else
               H.div {} []
@@ -222,7 +225,6 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
 
         SettingsBox {edit, buttons} = settingsBox nodeType
 
-        removeCircleGeneral (Just SearchBox) _ = H.div {} []
         removeCircleGeneral (Just _) setNodePopup = removeCircle setNodePopup
         removeCircleGeneral Nothing _ = H.div {} []
         removeCircle setNodePopup =
@@ -271,17 +273,46 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
           <>
           (map (buttonClick nodePopupState d) buttons)
 
-        searchPanel id session =
-          H.div { className: "panel panel-default"
-                , style: { border    : "1px solid rgba(0,0,0,0.2)"
-                         , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
-                         , width     : "1300px"
-                         }
+        searchIsTexIframe id session search@(search' /\ _) =
+          if isIsTex search'.datafield then
+            H.div { className: "panel panel-default"
+                  , style: { border    : "1px solid rgba(0,0,0,0.2)"
+                           , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
+                           , width     : "1300px"
+                           }
+                  }
+            [
+              H.h3 { className: fldr nodeType true} []
+            , componentIsTex search
+            ]
+          else
+            H.div {} []
+
+        componentIsTex (search /\ setSearch) =
+          H.div { className: ""
+                , id: "search-popup-tooltip"
+                , title: "Node settings"
+                , data: { toggle: "tooltip"
+                        , placement: "right"
+                        }
                 }
-          [
-            H.h3 { className: fldr nodeType true} []
-          , searchBar {session, datafield:Nothing, langs:allLangs, node_id: (Just id)}
+          [ H.div {id: "arrow"} []
+          , H.div { className: "panel panel-default"
+                  , style: { border    : "1px solid rgba(0,0,0,0.2)"
+                          , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
+                          }
+                  } [ H.iframe { src: isTexTermUrl search.term , width: "100%", height: "100%"} []
+                    ]
           ]
+        isTexUrl = "https://istex.gargantext.org"
+        isTexLocalUrl = "http://localhost:8083"
+        isTexTermUrl term = isTexUrl <> query
+          where
+            query = Query.print $ NQP.print identity identity qp
+
+            qp = NQP.QueryPairs [
+              Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
+              ]
 
 nodePopupView _ p _ = R.createElement el p []
   where
@@ -321,11 +352,20 @@ type NodeProps =
 
 type Open = Boolean
 
+type PanelActionProps =
+  ( id       :: ID
+  , name     :: Name
+  , nodeType :: NodeType
+  , action   :: Maybe NodeAction
+  , session  :: Session
+  , search   :: R.State Search
+  )
+
 panelAction :: (Action -> Aff Unit)
-            -> Record NodePopupProps
+            -> Record PanelActionProps
             -> R.State (Maybe NodePopup)
             -> R.Element
-panelAction d {id,name,nodeType,action, session} p = case action of
+panelAction d {id, name, nodeType, action, session, search} p = case action of
     (Just (Documentation NodeUser))      -> R.fragment [H.div {} [ infoTitle NodeUser
                                                                  , H.p {} [ H.text "This account is personal"]
                                                                  , H.p {} [ H.text "See the instances terms of uses."]
@@ -341,7 +381,7 @@ panelAction d {id,name,nodeType,action, session} p = case action of
     (Just Download)                      -> fragmentPT "Soon, you will be able to dowload your file here"
 
     (Just SearchBox)         -> R.fragment [ H.p {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
-    --                                        , searchBar {session, datafield:Nothing, langs:allLangs, node_id: (Just id)}
+                                           , searchBar {session, langs:allLangs, search}
                                            ]
     (Just Delete)            -> case nodeType of
         NodeUser -> R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]

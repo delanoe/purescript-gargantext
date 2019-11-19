@@ -10,6 +10,7 @@ import Data.Newtype (over)
 import Data.Traversable (traverse_)
 import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Class (liftEffect)
 import Reactix as R
 import DOM.Simple.Console (log2)
@@ -17,13 +18,12 @@ import Effect.Aff (Aff, launchAff_)
 import Reactix.DOM.HTML as H
 import Gargantext.Components.Search.Types -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Gargantext.Components.Modals.Modal (modalShow)
-import Gargantext.Components.Search.SearchField (Search, searchField)
+import Gargantext.Components.Search.SearchField (Search, defaultSearch, searchField)
 import Gargantext.Sessions (Session)
 
 type Props = ( session   :: Session
-             , datafield :: Maybe DataField
              , langs     :: Array Lang
-             , node_id   :: Maybe Int
+             , search    :: R.State Search
              )
 
 searchBar :: Record Props -> R.Element
@@ -32,17 +32,19 @@ searchBar props = R.createElement searchBarCpt props []
 searchBarCpt :: R.Component Props
 searchBarCpt = R.hooksComponent "G.C.Node.SearchBar.searchBar" cpt
   where
-    cpt {session, datafield, langs, node_id} _ = do
-      search <- R.useState' Nothing
-      onSearchChange session search
+    cpt {session, langs, search: search@(s /\ _)} _ = do
+      onSearchChange session s
       pure $ H.div { style: {width: "100%"} }
-        [ searchField {databases:allDatabases, langs, search, node_id}]
+        [ searchField {databases:allDatabases, langs, search}]
 
 
-onSearchChange :: Session -> R.State (Maybe Search) -> R.Hooks Unit
-onSearchChange session (search /\ setSearch) =
-  R.useLayoutEffect1' search $ traverse_ triggerSearch search
+onSearchChange :: Session -> Search -> R.Hooks Unit
+onSearchChange session s =
+  --R.useLayoutEffect1' search $ traverse_ triggerSearch search
+  --R.useEffect' $ traverse_ triggerSearch search
+  R.useEffectOnce' $ triggerSearch s
   where
+    triggerSearch :: Search -> Effect Unit
     triggerSearch q =
       launchAff_ $ do
 
@@ -57,13 +59,12 @@ onSearchChange session (search /\ setSearch) =
           log2 "Return:" r
           modalShow "addCorpus"
 
-    searchQuery {datafield: Nothing, lang, term} =
+    searchQuery :: Search -> SearchQuery
+    searchQuery {datafield: Nothing, term} =
       over SearchQuery (_ {query=term}) defaultSearchQuery
-
-    searchQuery {datafield: datafield, lang, term, node_id} =
+    searchQuery {datafield, lang, term, node_id} =
       over SearchQuery (_ { datafield=datafield
                           , lang=lang
                           , query=term
                           , node_id=node_id
-                          }
-                        ) defaultSearchQuery
+                          }) defaultSearchQuery

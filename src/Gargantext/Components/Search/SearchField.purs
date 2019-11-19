@@ -1,19 +1,18 @@
 module Gargantext.Components.Search.SearchField
-  ( Search, Props, searchField, searchFieldComponent )where
+  ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex) where
 
-import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||), (==), map, (<>), (&&), (*>), (>>=), (>=>), (<))
+import Prelude
 import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.String (length)
 import Data.Set as Set
 import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Gargantext.Utils.Reactix as R2
 import Reactix.DOM.HTML as H
 import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option, text, i)
-import URI.Extra.QueryPairs as NQP
-import URI.Query as Query
 import Gargantext.Components.Search.Types -- (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs, HAL_Filters(..), IMT_org(..))
 
 select :: forall props.
@@ -29,6 +28,12 @@ type Search = { datafield :: Maybe DataField
               , node_id   :: Maybe Int
               }
 
+eqSearch :: Search -> Search -> Boolean
+eqSearch s s' =    (s.datafield == s'.datafield)
+                && (s.term == s'.term)
+                && (s.lang == s'.lang)
+                && (s.node_id == s'.node_id)
+
 defaultSearch :: Search
 defaultSearch = { datafield: Just Gargantext
                 , term: ""
@@ -41,120 +46,86 @@ type Props =
   ( databases :: Array Database
   , langs     :: Array Lang
   -- State hook for a search, how we get data in and out
-  , search    :: R.State (Maybe Search)
-  , node_id   :: Maybe Int
+  , search    :: R.State Search
   )
 
 searchField :: Record Props -> R.Element
 searchField p = R.createElement searchFieldComponent p []
 
 searchFieldComponent :: R.Memo Props
-searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
+searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
   where
-    cpt props@{node_id} _ = do
-      let search = maybe defaultSearch identity (fst props.search)
-      term@(curTerm /\ _) <- R.useState' search.term
-      df@(curDf /\ setDf) <- R.useState' (Just Gargantext :: Maybe DataField)
-      lang@(curLg /\ _)   <- R.useState' (Nothing :: Maybe Lang)
-      fi                  <- R.useState' ""
+    cpt props@{search: search@(s /\ _)} _ = do
       pure $
         div { className: "search-field-group", style: { width: "100%" } }
           [
             div { className: "row" }
               [
-                div { className: "col-md-3" }
-                [ searchInput term
-                , if length curTerm < 3
+                div { className: "col-md-12" }
+                [ searchInput search
+                , if length s.term < 3
                   then
                     div {}[]
                   else
-                    div {} [ langNav lang props.langs
-                           , if curLg == Nothing
+                    div {} [ langNav search props.langs
+                           , if s.lang == Nothing
                              then
-                               div {}[]
+                               div {} []
                              else
-                               div {} [ dataFieldNav df dataFields
-                                      , if isExternal curDf
-                                        then databaseInput df props.databases
+                               div {} [ dataFieldNav search dataFields
+                                      , if isExternal s.datafield
+                                        then databaseInput search props.databases
                                         else div {} []
 
-                                      , if isHAL curDf
-                                        then orgInput df allOrgs
+                                      , if isHAL s.datafield
+                                        then orgInput search allOrgs
                                         else div {} []
 
-                                      , if isIMT curDf
+                                      , if isIMT s.datafield
                                         then
-                                          componentIMT df fi
+                                          componentIMT search
                                         else div {} []
 
-                                      , if isCNRS curDf
+                                      , if isCNRS s.datafield
                                         then
-                                          componentCNRS df fi
+                                          componentCNRS search
                                         else
                                           div {} []
                                       ]
                            ]
                 ]
-
-                , div { className: "col-md-9" }
-                [
-                  if isIsTex curDf
-                  then
-                    componentIsTex df fi curTerm
-                  else
-                    H.div {} []
-                ]
               ]
 
-          , submitButton node_id df term lang props.search
+          , submitButton search
           ]
-    hasChanged p p' = (fst p.search /= fst p'.search)
-                   || (p.databases  /= p'.databases )
-                   || (p.langs      /= p'.langs     )
---                   || (fst p.filters /= fst p'.filters   )
-    componentIMT (curDf /\ setDf) fi =
+    eqProps p p' =    (fst p.search == fst p'.search)
+                   && (p.databases  == p'.databases )
+                   && (p.langs      == p'.langs     )
+                   && (eqSearch (fst p.search) (fst p'.search))
+--                   && (fst p.filters == fst p'.filters   )
+    componentIMT (search /\ setSearch) =
       R.fragment
-      [ ul {} $ map ( \org -> li {}
-                              [ input { type: "checkbox"
-                                      , checked: isIn org curDf
-                                      , on: {change: \_ -> (setDf
-                                                            $ const
-                                                            $ updateFilter org curDf)
-                                            }
-                                      }
-                              , if org == All_IMT
-                                then i {} [text  $ " " <> show org]
-                                else text $ " " <> show org
-                              ]
-                    ) allIMTorgs
-      , filterInput fi
+      [ ul {} $ map liCpt allIMTorgs
+      --, filterInput fi
       ]
-    componentCNRS (df /\ setDf) fi = R.fragment [ div {} [], filterInput fi]
-    componentIsTex (df /\ setDf) fi curTerm =
-      H.div { className: ""
-            , id: "search-popup-tooltip"
-            , title: "Node settings"
-            , data: { toggle: "tooltip"
-                    , placement: "right"
-                    }
-            }
-      [ H.div {id: "arrow"} []
-      , H.div { className: "panel panel-default"
-              , style: { border    : "1px solid rgba(0,0,0,0.2)"
-                       , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
-                       }
-              } [ H.iframe { src: isTexTermUrl curTerm , width: "100%", height: "100%"} []
-                ]
-      ]
-    isTexUrl = "https://istex.gargantext.org"
-    isTexLocalUrl = "http://localhost:8083"
-    isTexTermUrl term = isTexLocalUrl <> query
       where
-        query = Query.print $ NQP.print identity identity qp
-
-        qp = NQP.QueryPairs [
-          Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
+        liCpt org =
+          li {}
+          [ input { type: "checkbox"
+                  , checked: isIn org search.datafield
+                  , on: {
+                    change: \_ -> (setSearch $ _ { datafield = updateFilter org search.datafield })
+                    }
+                  }
+          , if org == All_IMT
+            then i {} [text  $ " " <> show org]
+            else text $ " " <> show org
           ]
+    componentCNRS (search /\ setSearch) =
+      R.fragment [
+        div {} []
+      --, filterInput fi
+      ]
 
 
 isExternal :: Maybe DataField -> Boolean
@@ -222,76 +193,73 @@ langList (lang /\ setLang) langs =
       liItem :: Lang -> R.Element
       liItem  lang = option {className : "text-primary center"} [ text (show lang) ]
 
-langNav :: R.State (Maybe Lang) -> Array Lang -> R.Element
-langNav (lang /\ setLang) langs =
+langNav :: R.State Search -> Array Lang -> R.Element
+langNav ({lang} /\ setSearch) langs =
   R.fragment [ div {className: "text-primary center"} [text "with lang"]
              , div { className: "nav nav-tabs"} (liItem <$> langs)
              ]
     where
       liItem :: Lang -> R.Element
-      liItem  lang' = div { className : "nav-item nav-link" <> if (Just lang') == lang then " active" else ""
-                         , on: { click: \_ -> setLang $ const $ Just lang' }
-                         } [ text (show lang') ]
+      liItem  lang' =
+        div { className : "nav-item nav-link" <> if (Just lang') == lang then " active" else ""
+            , on: { click: \_ -> setSearch $ _ { lang = Just lang' } }
+            } [ text (show lang') ]
 
 ------------------------------------------------------------------------
 
-dataFieldNav :: R.State (Maybe DataField) -> Array DataField -> R.Element
-dataFieldNav (df /\ setDf) datafields =
+dataFieldNav :: R.State Search -> Array DataField -> R.Element
+dataFieldNav ({datafield} /\ setSearch) datafields =
   R.fragment [ div {className: "text-primary center"} [text "with DataField"]
              , div { className: "nav nav-tabs"} (liItem <$> dataFields)
-             , div {className:"center"} [ text $ maybe "" doc df ]
+             , div {className:"center"} [ text $ maybe "" doc datafield ]
              ]
     where
       liItem :: DataField -> R.Element
-      liItem  df' = div { className : "nav-item nav-link" <> if (Just df') == df then " active" else ""
-                         , on: { click: \_ -> setDf $ const $ Just df'
-                               }
-                         } [ text (show df') ]
+      liItem  df' =
+        div { className : "nav-item nav-link" <> if (Just df') == datafield then " active" else ""
+            , on: { click: \_ -> setSearch $ _ { datafield = Just df'} }
+            } [ text (show df') ]
 
 
 ------------------------------------------------------------------------
-databaseInput :: R.State (Maybe DataField)
+databaseInput :: R.State Search
               -> Array Database
               -> R.Element
-databaseInput (df /\ setDf) dbs =
+databaseInput ({datafield} /\ setSearch) dbs =
    div { className: "form-group" }
-                   [ div {className: "text-primary center"} [text "in database"]
-                   , R2.select { className: "form-control"
-                               , on: { change: \e -> setDf
-                                         $ const
-                                         $ Just
-                                         $ External
-                                         $ readDatabase
-                                         $ e .. "target" .. "value"
-                                   }
-                               } (liItem <$> dbs)
-                   , div {className:"center"} [ text $ maybe "" doc db ]
-                   ]
+   [ div {className: "text-primary center"} [text "in database"]
+   , R2.select { className: "form-control"
+               , on: { change: onChange }
+               } (liItem <$> dbs)
+   , div {className:"center"} [ text $ maybe "" doc db ]
+   ]
     where
-      db = case df of
+      db = case datafield of
         (Just (External (Just x))) -> Just x
         _                          -> Nothing
 
       liItem :: Database -> R.Element
       liItem  db = option {className : "text-primary center"} [ text (show db) ]
 
+      onChange e = do
+        let value = e .. "target" .. "value"
+        setSearch $ _ {datafield =  Just $ External $ readDatabase value }
 
-orgInput :: R.State (Maybe DataField) -> Array Org -> R.Element
-orgInput (curDf /\ setDf) orgs =
+
+orgInput :: R.State Search -> Array Org -> R.Element
+orgInput ({datafield} /\ setSearch) orgs =
   div { className: "form-group" }
-                   [ div {className: "text-primary center"} [text "filter with organization: "]
-                   , R2.select { className: "form-control"
-                               , on: { change: \e -> setDf
-                                                   $ const
-                                                   $ Just $ External $ Just $ HAL
-                                                   $ readOrg
-                                                   $ e .. "target" .. "value"
-                                      }
-                               } (liItem <$> orgs)
-                   ]
+  [ div {className: "text-primary center"} [text "filter with organization: "]
+  , R2.select { className: "form-control"
+              , on: { change: onChange }
+              } (liItem <$> orgs)
+  ]
     where
       liItem :: Org -> R.Element
       liItem  org = option {className : "text-primary center"} [ text (show org) ]
+      onChange e = do
+        let value = e .. "target" .. "value"
+        setSearch $ _ { datafield = Just $ External $ Just $ HAL $ readOrg value }
 
 filterInput :: R.State String -> R.Element
 filterInput (term /\ setTerm) =
@@ -311,35 +279,32 @@ filterInput (term /\ setTerm) =
                       ]
 
 
-searchInput :: R.State String -> R.Element
-searchInput (term /\ setTerm) =
+searchInput :: R.State Search -> R.Element
+searchInput ({term} /\ setSearch) =
   div { className : "" }
   [ input { defaultValue: term
           , className: "form-control"
           , type: "text"
-          , on: { change : \e -> setTerm $ const $ e .. "target" .. "value" }
+          , on: { change : onChange }
           , placeholder: "Your Query here" }
   ]
+  where
+    onChange e = do
+      let value = e .. "target" .. "value"
+      setSearch $ _ {term = value }
 
 
-submitButton :: Maybe Int
-             -> R.State (Maybe DataField)
-             -> R.State String
-             -> R.State (Maybe Lang)
-             -> R.State (Maybe Search)
+submitButton :: R.State Search
              -> R.Element
-submitButton node_id (datafield /\ _) (term /\ _) (lang /\ _) (_ /\ setSearch) = div { className : "panel-footer" }
-                     [ button { className: "btn btn-primary"
-                              , type: "button"
-                              , on: {click: doSearch}
-                              } [ text "Launch Search" ]
-                       ]
+submitButton (search /\ setSearch) =
+  div { className : "panel-footer" }
+  [ button { className: "btn btn-primary"
+           , type: "button"
+           , on: {click: doSearch}
+           } [ text "Launch Search" ]
+  ]
   where
     doSearch = \_ -> do
-      case term of
-        "" -> setSearch $ const Nothing
-        _  -> setSearch $ const $ Just {datafield, term, lang, node_id}
-
-
-
-
+      case search.term of
+        "" -> setSearch $ const defaultSearch
+        _  -> setSearch $ const search
