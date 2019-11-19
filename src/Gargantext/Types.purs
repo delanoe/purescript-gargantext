@@ -267,6 +267,13 @@ nodeTypePath Team      = "team"
 
 type ListId = Int
 
+data ScoreType = Occurrences
+
+derive instance genericScoreType :: Generic ScoreType _
+
+instance showScoreType :: Show ScoreType where
+  show = genericShow
+
 type NgramsGetOpts =
   { tabType        :: TabType
   , offset         :: Offset
@@ -275,6 +282,7 @@ type NgramsGetOpts =
   , listIds        :: Array ListId
   , termListFilter :: Maybe TermList
   , termSizeFilter :: Maybe TermSize
+  , scoreType      :: ScoreType
   , searchQuery    :: String
   }
 

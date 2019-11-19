@@ -12,6 +12,7 @@ import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reactix (effectLink)
 
 type TableContainerProps =
   ( pageSizeControl     :: R.Element
@@ -51,6 +52,8 @@ derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 
 type Props =
   ( colNames     :: Array ColumnName
+  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
+                 -- ^ Use `const identity` as a default behavior.
   , totalRecords :: Int
   , params       :: R.State Params
   , rows         :: Rows
@@ -126,32 +129,33 @@ table props = R.createElement tableCpt props []
 tableCpt :: R.Component Props
 tableCpt = R.hooksComponent "G.C.Table.table" cpt
   where
-    cpt {container, colNames, totalRecords, rows, params} _ = do
+    cpt {container, colNames, wrapColElts, totalRecords, rows, params} _ = do
       pageSize@(pageSize' /\ setPageSize) <- R.useState' PS10
       (page /\ setPage) <- R.useState' 1
       (orderBy /\ setOrderBy) <- R.useState' Nothing
-      let state = {pageSize: pageSize', orderBy, page}
-      let ps = pageSizes2Int pageSize'
-      let totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
+      let
+        state = {pageSize: pageSize', orderBy, page}
+        ps = pageSizes2Int pageSize'
+        totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
+        colHeader :: ColumnName -> R.Element
+        colHeader c = H.th {scope: "col"} [ H.b {} cs ]
+          where
+            lnk mc = effectLink (setOrderBy (const mc))
+            cs :: Array R.Element
+            cs =
+              wrapColElts c $
+              case orderBy of
+                Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ", lnk Nothing (columnName c)]
+                Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "ASC ",  lnk Nothing (columnName c)]
+                _ -> [lnk (Just (ASC c)) (columnName c)]
       R.useEffect1' state $ when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
       pure $ container
         { pageSizeControl: sizeDD pageSize
         , pageSizeDescription: textDescription page pageSize' totalRecords
         , paginationLinks: pagination setPage totalPages page
-        , tableHead: H.tr {} (colHeader setOrderBy orderBy <$> colNames)
+        , tableHead: H.tr {} (colHeader <$> colNames)
         , tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
         }
-        where
-          colHeader :: (R2.Setter OrderBy) -> OrderBy -> ColumnName -> R.Element
-          colHeader setOrderBy orderBy c = H.th {scope: "col"} [ H.b {} cs ]
-            where
-              lnk mc = effectLink (setOrderBy (const mc))
-              cs :: Array R.Element
-              cs =
-                case orderBy of
-                  Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ",  lnk Nothing (columnName c)]
-                  Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "ASC ", lnk Nothing (columnName c)]
-                  _ -> [lnk (Just (ASC c)) (columnName c)]
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 defaultContainer {title} props = R.fragment
@@ -197,9 +201,6 @@ textDescription currPage pageSize totalRecords =
     end' = currPage * pageSizes2Int pageSize
     end  = if end' > totalRecords then totalRecords else end'
     msg = "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords
-
-effectLink :: Effect Unit -> String -> R.Element
-effectLink eff msg = H.a {on: {click: const eff}} [H.text msg]
 
 pagination :: (R2.Setter Int) -> Int -> Int -> R.Element
 pagination changePage tp cp =

@@ -24,7 +24,7 @@ import Reactix.SyntheticEvent as E
 
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
-import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams)
+import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
@@ -56,7 +56,7 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
             let x = E.clientX event
                 y = E.clientY event
                 setList t = do
-                  setTermList text' (Just list) t
+                  setTermList (normNgram CTabTerms text') (Just list) t
                   setMenu (const Nothing)
             setMenu (const $ Just {x, y, list: Just list, menuType: SetTermListItem, setList} )
 
@@ -78,9 +78,10 @@ maybeShowMenu setMenu setTermList ngrams event = do
         sel' -> do
           let x = E.clientX event
               y = E.clientY event
-              list = findNgramTermList CTabTerms ngrams sel'
+              n = normNgram CTabTerms sel'
+              list = findNgramTermList ngrams n
               setList t = do
-                setTermList sel' list t
+                setTermList n list t
                 setMenu (const Nothing)
           E.preventDefault event
           setMenu (const $ Just { x, y, list, menuType: NewNgram, setList })

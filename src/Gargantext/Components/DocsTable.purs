@@ -391,7 +391,7 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
     pure $ T.table
       { rows: rows localCategories
       , container: T.defaultContainer { title: "Documents" }
-      , params, colNames, totalRecords }
+      , params, colNames, totalRecords, wrapColElts }
       where
         sid = sessionId session
         gi Favorite  = "glyphicon glyphicon-star"
@@ -402,6 +402,7 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
           | Just cid <- corpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
         colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source"]
+        wrapColElts = const identity
         getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
         rows localCategories = row <$> documents
           where
