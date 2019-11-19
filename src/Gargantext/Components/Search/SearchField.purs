@@ -56,78 +56,94 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
       lang@(curLg /\ _)   <- R.useState' (Nothing :: Maybe Lang)
       fi                  <- R.useState' ""
       pure $
-          div { className: "search-field-group" }
-              [ searchInput term
-              , if length curTerm < 3
+        div { className: "search-field-group", style: { width: "100%" } }
+          [
+            div { className: "row" }
+              [
+                div { className: "col-md-3" }
+                [ searchInput term
+                , if length curTerm < 3
                   then
                     div {}[]
                   else
                     div {} [ langNav lang props.langs
                            , if curLg == Nothing
-                               then
-                                 div {}[]
-                               else
-                                 div {} [ dataFieldNav df dataFields
-                                         , if isExternal curDf
-                                             then databaseInput df props.databases
-                                             else div {} []
+                             then
+                               div {}[]
+                             else
+                               div {} [ dataFieldNav df dataFields
+                                      , if isExternal curDf
+                                        then databaseInput df props.databases
+                                        else div {} []
 
-                                         , if isHAL curDf
-                                             then orgInput df allOrgs
-                                             else div {} []
+                                      , if isHAL curDf
+                                        then orgInput df allOrgs
+                                        else div {} []
 
-                                         , if isIMT curDf
-                                             then
-                                               R.fragment
-                                                     [ ul {} $ map ( \org -> li {}
-                                                                   [ input { type: "checkbox"
-                                                                           , checked: isIn org curDf
-                                                                           , on: {change: \_ -> (setDf
-                                                                                             $ const
-                                                                                             $ updateFilter org curDf)
-                                                                                 }
-                                                                           }
-                                                                   , if org == All_IMT
-                                                                        then i {} [text  $ " " <> show org]
-                                                                        else text $ " " <> show org
-                                                                   ]
-                                                                   ) allIMTorgs
-                                                     , filterInput fi
-                                                     ]
-                                              else div {} []
+                                      , if isIMT curDf
+                                        then
+                                          componentIMT df fi
+                                        else div {} []
 
-                                         , if isCNRS curDf
-                                            then
-                                              R.fragment [ div {} [], filterInput fi]
-                                            else
-                                              div {} []
+                                      , if isCNRS curDf
+                                        then
+                                          componentCNRS df fi
+                                        else
+                                          div {} []
+                                      ]
+                           ]
+                ]
 
-                                        , if isIsTex curDf
-                                            then H.div { className: ""
-                                                       , id: "search-popup-tooltip"
-                                                       , title: "Node settings"
-                                                       , data: { toggle: "tooltip"
-                                                               , placement: "right"
-                                                               }
-                                                       }
-                                                       [ H.div {id: "arrow"} []
-                                                       , H.div { className: "panel panel-default"
-                                                                , style: { border    : "1px solid rgba(0,0,0,0.2)"
-                                                                         , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
-                                                                         }
-                                                               } [ H.iframe { src: "https://istex.gargantext.org", width: "100%", height: "100%"} []
-                                                                 ]
-                                                       ]
-                                              else H.div {} []
-
-                                          ]
-                            ]
-              , submitButton node_id df term lang props.search
+                , div { className: "col-md-9" }
+                [
+                  if isIsTex curDf
+                  then
+                    componentIsTex df fi
+                  else
+                    H.div {} []
+                ]
               ]
+
+          , submitButton node_id df term lang props.search
+          ]
     hasChanged p p' = (fst p.search /= fst p'.search)
                    || (p.databases  /= p'.databases )
                    || (p.langs      /= p'.langs     )
 --                   || (fst p.filters /= fst p'.filters   )
+    componentIMT (curDf /\ setDf) fi =
+      R.fragment
+      [ ul {} $ map ( \org -> li {}
+                              [ input { type: "checkbox"
+                                      , checked: isIn org curDf
+                                      , on: {change: \_ -> (setDf
+                                                            $ const
+                                                            $ updateFilter org curDf)
+                                            }
+                                      }
+                              , if org == All_IMT
+                                then i {} [text  $ " " <> show org]
+                                else text $ " " <> show org
+                              ]
+                    ) allIMTorgs
+      , filterInput fi
+      ]
+    componentCNRS (df /\ setDf) fi = R.fragment [ div {} [], filterInput fi]
+    componentIsTex (df /\ setDf) fi =
+      H.div { className: ""
+            , id: "search-popup-tooltip"
+            , title: "Node settings"
+            , data: { toggle: "tooltip"
+                    , placement: "right"
+                    }
+            }
+      [ H.div {id: "arrow"} []
+      , H.div { className: "panel panel-default"
+              , style: { border    : "1px solid rgba(0,0,0,0.2)"
+                       , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
+                       }
+              } [ H.iframe { src: "https://istex.gargantext.org", width: "100%", height: "100%"} []
+                ]
+      ]
 
 
 isExternal :: Maybe DataField -> Boolean
@@ -286,13 +302,13 @@ filterInput (term /\ setTerm) =
 
 searchInput :: R.State String -> R.Element
 searchInput (term /\ setTerm) =
-              div { className : "" }
-                    [ input { defaultValue: term
-                    , className: "form-control"
-                    , type: "text"
-                    , on: { change : \e -> setTerm $ const $ e .. "target" .. "value" }
-                    , placeholder: "Your Query here" }
-                    ]
+  div { className : "" }
+  [ input { defaultValue: term
+          , className: "form-control"
+          , type: "text"
+          , on: { change : \e -> setTerm $ const $ e .. "target" .. "value" }
+          , placeholder: "Your Query here" }
+  ]
 
 
 submitButton :: Maybe Int

@@ -185,25 +185,31 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
       nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {id, name, nodeType, action}
       pure $ H.div tooltipProps $
         [ H.div {id: "arrow"} []
-        , H.div { className: "panel panel-default"
-                , style: { border    : "1px solid rgba(0,0,0,0.2)"
-                         , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
-                         }
-                }
-          [ H.div {className: ""}
-                  [ H.div { className : "col-md-11"}
-                          [ H.h3 { className: fldr nodeType true}
-                                 [ H.text $ show nodeType]
-                          ]
-                  ]
-          , panelHeading renameBoxOpen
-          , panelBody nodePopupState d
-          , if isJust nodePopup.action 
-              then H.div { className: glyphicon "remove-circle"
-                         , onClick : setNodePopup $ const {id,name,nodeType,action :Nothing}
-                       } []
-              else H.div {} []
-          , panelAction d {id,name,nodeType,action:nodePopup.action, session} mPop
+        , H.div { style: {display: "flex", "flex-direction": "colum"} }
+          [ H.div { className: "panel panel-default"
+                  , style: { border    : "1px solid rgba(0,0,0,0.2)"
+                           , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
+                           }
+                  }
+            [ H.div {className: ""}
+              [ H.div { className : "col-md-11"}
+                [ H.h3 { className: fldr nodeType true}
+                  [ H.text $ show nodeType]
+                ]
+              ]
+            , panelHeading renameBoxOpen
+            , panelBody nodePopupState d
+            , removeCircleGeneral nodePopup.action setNodePopup
+            , panelAction d {id,name,nodeType,action:nodePopup.action, session} mPop
+            ]
+          , if nodePopup.action == Just SearchBox then
+              H.div {}
+                [
+                  searchPanel id session
+                , removeCircle setNodePopup
+                ]
+            else
+              H.div {} []
           ]
         ]
       where
@@ -215,6 +221,14 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
                        }
 
         SettingsBox {edit, buttons} = settingsBox nodeType
+
+        removeCircleGeneral (Just SearchBox) _ = H.div {} []
+        removeCircleGeneral (Just _) setNodePopup = removeCircle setNodePopup
+        removeCircleGeneral Nothing _ = H.div {} []
+        removeCircle setNodePopup =
+          H.div { className: glyphicon "remove-circle"
+                , onClick : setNodePopup $ const {id, name, nodeType, action :Nothing}
+                } []
 
         panelHeading renameBoxOpen@(open /\ _) =
           H.div {className: "panel-heading"}
@@ -256,6 +270,19 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
           [H.div {className: "col-md-1"} []]
           <>
           (map (buttonClick nodePopupState d) buttons)
+
+        searchPanel id session =
+          H.div { className: "panel panel-default"
+                , style: { border    : "1px solid rgba(0,0,0,0.2)"
+                         , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
+                         , width     : "1300px"
+                         }
+                }
+          [
+            H.h3 { className: fldr nodeType true} []
+          , searchBar {session, datafield:Nothing, langs:allLangs, node_id: (Just id)}
+          ]
+
 nodePopupView _ p _ = R.createElement el p []
   where
     el = R.hooksComponent "CreateNodeView" cpt
@@ -284,10 +311,6 @@ buttonClick (node@{action} /\ setNodePopup) _ todo = H.div {className: "col-md-2
 buttonClick _ _ _ = H.div {} []
 
 
-
-
-
-
 -- END Popup View
 
 type NodeProps =
@@ -308,23 +331,25 @@ panelAction d {id,name,nodeType,action, session} p = case action of
                                                                  , H.p {} [ H.text "See the instances terms of uses."]
                                                                  ]
                                                         ]
-    (Just (Documentation FolderPrivate)) -> R.fragment [H.p {} [H.text $ "This folder and its children are private only!"]]
-    (Just (Documentation FolderPublic))  -> R.fragment [H.p {} [H.text $ "Soon, you will be able to build public folders to share your work with the world!"]]
-    (Just (Documentation FolderShared))  -> R.fragment [H.p {} [H.text $ "Soon, you will be able to build teams folders to share your work"]]
-    (Just (Documentation x)) -> R.fragment [ H.p {} [H.text $ "More information on" <> show nodeType]]
+    (Just (Documentation FolderPrivate)) -> fragmentPT "This folder and its children are private only!"
+    (Just (Documentation FolderPublic))  -> fragmentPT "Soon, you will be able to build public folders to share your work with the world!"
+    (Just (Documentation FolderShared))  -> fragmentPT "Soon, you will be able to build teams folders to share your work"
+    (Just (Documentation x)) -> fragmentPT $ "More information on" <> show nodeType
 
-    (Just (Link _))                      -> R.fragment [ H.p {} [H.text $ "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."]]
-    (Just Upload)                        -> R.fragment [ H.p {} [H.text $ "Soon, you will be able to upload  your file here"]]
-    (Just Download)                      -> R.fragment [ H.p {} [H.text $ "Soon, you will be able to dowload your file here"]]
+    (Just (Link _))                      -> fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
+    (Just Upload)                        -> fragmentPT "Soon, you will be able to upload  your file here"
+    (Just Download)                      -> fragmentPT "Soon, you will be able to dowload your file here"
 
     (Just SearchBox)         -> R.fragment [ H.p {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
-                                           , searchBar {session, datafield:Nothing, langs:allLangs, node_id: (Just id)}
+    --                                        , searchBar {session, datafield:Nothing, langs:allLangs, node_id: (Just id)}
                                            ]
     (Just Delete)            -> case nodeType of
         NodeUser -> R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]
         _        -> R.fragment [ H.div {} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."]), reallyDelete d]
     (Just (Add xs))          -> createNodeView d {id, name, nodeType} p xs
     _                        -> H.div {} []
+  where
+    fragmentPT text = R.fragment [H.p {} [H.text text]]
 
 
 infoTitle :: NodeType -> R.Element
