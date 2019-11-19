@@ -179,8 +179,19 @@ li:hover a#rename-leaf {
   padding-right: 6px;
 }
 
-.tagDoc {
+.flex {
   display: flex;
+}
+
+.flex-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.flex-center {
+  display: flex;
+  flew-wrap: wrap;
+  justify-content: center;
 }
 
 /*# sourceMappingURL=Login.css.map */

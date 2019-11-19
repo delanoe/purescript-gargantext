@@ -236,12 +236,14 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
            H.div {className: "row" }
             [
              H.div {className: "col-md-8"} [ renameBox d {id, name, nodeType} renameBoxOpen ]
-            , if edit then editIcon renameBoxOpen else H.div {} []
+            , H.div {className: "flex-end"} [
+             if edit then editIcon renameBoxOpen else H.div {} []
             , H.div {className: "col-md-1"}
               [ H.a { "type" : "button"
                     , className: glyphicon "remove-circle"
                     , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const Nothing
                     , title: "Close"} []
+              ]
               ]
             ]
           ]
@@ -267,9 +269,9 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
                          }
                 }
           $ 
-          [H.div {className: "col-md-1"} []]
-          <>
-          (map (buttonClick nodePopupState d) buttons)
+          -- [H.div {className: "col-md-1"} []]
+          -- <>
+          [H.div {className: "flex-center"} (map (buttonClick nodePopupState d) buttons)]
 
         searchPanel id session =
           H.div { className: "panel panel-default"
