@@ -5,13 +5,15 @@ import Prelude (bind, const, identity, pure, show, ($), (/=), (<$>), (||), (==),
 import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.String (length)
 import Data.Set as Set
-import Data.Tuple (fst)
+import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Gargantext.Utils.Reactix as R2
 import Reactix.DOM.HTML as H
 import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML (text, button, div, input, span, ul, li, a, option, text, i)
+import URI.Extra.QueryPairs as NQP
+import URI.Query as Query
 import Gargantext.Components.Search.Types -- (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs, HAL_Filters(..), IMT_org(..))
 
 select :: forall props.
@@ -98,7 +100,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
                 [
                   if isIsTex curDf
                   then
-                    componentIsTex df fi
+                    componentIsTex df fi curTerm
                   else
                     H.div {} []
                 ]
@@ -128,7 +130,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
       , filterInput fi
       ]
     componentCNRS (df /\ setDf) fi = R.fragment [ div {} [], filterInput fi]
-    componentIsTex (df /\ setDf) fi =
+    componentIsTex (df /\ setDf) fi curTerm =
       H.div { className: ""
             , id: "search-popup-tooltip"
             , title: "Node settings"
@@ -141,9 +143,18 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) hasChanged
               , style: { border    : "1px solid rgba(0,0,0,0.2)"
                        , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
                        }
-              } [ H.iframe { src: "https://istex.gargantext.org", width: "100%", height: "100%"} []
+              } [ H.iframe { src: isTexTermUrl curTerm , width: "100%", height: "100%"} []
                 ]
       ]
+    isTexUrl = "https://istex.gargantext.org"
+    isTexLocalUrl = "http://localhost:8083"
+    isTexTermUrl term = isTexLocalUrl <> query
+      where
+        query = Query.print $ NQP.print identity identity qp
+
+        qp = NQP.QueryPairs [
+          Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
+          ]
 
 
 isExternal :: Maybe DataField -> Boolean
