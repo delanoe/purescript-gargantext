@@ -321,7 +321,7 @@ setEdges sigma val = do
   -- prevent showing edges (via show edges button) when FA is running (flickering)
   isFARunning <- Sigma.isForceAtlas2Running sigma
   case Tuple val isFARunning of
-    Tuple false true ->
+    Tuple false _ ->
       Sigma.setSettings sigma settings
     Tuple true false ->
       Sigma.setSettings sigma settings
