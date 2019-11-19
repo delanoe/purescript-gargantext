@@ -57,6 +57,18 @@ li#rename #rename-a {
   text-decoration: none;
 }
 
+#search-popup-tooltip {
+  position: absolute;
+  left: 300px;
+  top: -300px;
+  background-color: white;
+  z-index: 1000;
+}
+#search-popup-tooltip:hover {
+  border: none;
+  text-decoration: none;
+}
+
 #create-node-tooltip {
   position: absolute;
   left: 96px;
@@ -165,6 +177,21 @@ li:hover a#rename-leaf {
 
 .tab-pane .reload-btn {
   padding-right: 6px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.flex-center {
+  display: flex;
+  flew-wrap: wrap;
+  justify-content: center;
 }
 
 /*# sourceMappingURL=Login.css.map */
