@@ -175,7 +175,8 @@ type NodePopupProps =
 
 iconAStyle = { color         : "black"
              , paddingTop    : "6px"
-             , paddingBottom : "6px"}
+             , paddingBottom : "6px"
+             }
 
 nodePopupView :: (Action -> Aff Unit)
               -> Record NodePopupProps
@@ -258,11 +259,8 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
             editIcon (true /\ _) = H.div {} []
 
         panelBody nodePopupState d =
-          H.div {className: "panel-body"}
-          $ 
-          -- [H.div {className: "col-md-1"} []]
-          -- <>
-          [H.div {className: "flex-center"} (map (buttonClick nodePopupState d) buttons)]
+          H.div {className: "panel-body flex-center"}
+          $ map (buttonClick nodePopupState d) buttons
 
         searchIsTexIframe id session search@(search' /\ _) =
           if isIsTex search'.datafield then
@@ -294,7 +292,7 @@ nodePopupView _ p _ = R.createElement el p []
 
 
 -- buttonAction :: NodeAction -> R.Element
-buttonClick (node@{action} /\ setNodePopup) _ todo = H.div {className: "col-md-2"}
+buttonClick (node@{action} /\ setNodePopup) _ todo = H.div {className: "col-md-1"}
             [ H.a { style: iconAStyle
                   , className: glyphiconActive (glyphiconNodeAction todo)
                                                (action == (Just todo)   )
