@@ -37,7 +37,7 @@ eqSearch s s' =    (s.datafield == s'.datafield)
 defaultSearch :: Search
 defaultSearch = { datafield: Just Gargantext
                 , term: ""
-                , lang: Just EN
+                , lang: Nothing
                 , node_id: Nothing
                 }
 
@@ -69,31 +69,31 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
                   else
                     div {} [ langNav search props.langs
                            , if s.lang == Nothing
-                             then
-                               div {} []
-                             else
-                               div {} [ dataFieldNav search dataFields
-                                      , if isExternal s.datafield
-                                        then databaseInput search props.databases
-                                        else div {} []
+                               then
+                                 div {} []
+                               else
+                                 div {} [ dataFieldNav search dataFields
+                                              , if isExternal s.datafield
+                                                then databaseInput search props.databases
+                                                else div {} []
 
-                                      , if isHAL s.datafield
-                                        then orgInput search allOrgs
-                                        else div {} []
+                                              , if isHAL s.datafield
+                                                then orgInput search allOrgs
+                                                else div {} []
 
-                                      , if isIMT s.datafield
-                                        then
-                                          componentIMT search
-                                        else div {} []
+                                              , if isIMT s.datafield
+                                                then
+                                                  componentIMT search
+                                                else div {} []
 
-                                      , if isCNRS s.datafield
-                                        then
-                                          componentCNRS search
-                                        else
-                                          div {} []
-                                      ]
-                           ]
-                ]
+                                              , if isCNRS s.datafield
+                                                then
+                                                  componentCNRS search
+                                                else
+                                                  div {} []
+                                          ]
+                            ]
+              ]
               ]
 
           , submitButton search
