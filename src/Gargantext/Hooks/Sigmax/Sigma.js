@@ -55,6 +55,8 @@ function killSigma(left, right, sigma) {
 }
 function clear(sigma) { sigma.graph.clear(); }
 function bind(sigma, event, handler) { sigma.bind(event, handler); }
+function forEachNode(sigma, handler) { sigma.graph.nodes().forEach(handler); }
+function forEachEdge(sigma, handler) { sigma.graph.edges().forEach(handler); }
 function setSettings(sigma, settings) { sigma.settings(settings); }
 function startForceAtlas2(sigma, settings) { sigma.startForceAtlas2(settings); }
 function stopForceAtlas2(sigma) { sigma.stopForceAtlas2(); }
@@ -80,6 +82,8 @@ exports._setRendererContainer = setRendererContainer;
 exports._killSigma = killSigma
 exports._clear = clear;
 exports._bind = bind;
+exports._forEachNode = forEachNode;
+exports._forEachEdge = forEachEdge;
 exports._setSettings = setSettings;
 exports._startForceAtlas2 = startForceAtlas2;
 exports._stopForceAtlas2 = stopForceAtlas2;

@@ -4,42 +4,36 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude (bind, discard, pure, ($), unit)
+import Prelude (bind, discard, pure, ($), unit, map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null, Nullable)
-import Data.Sequence as Seq
+import Data.Set as Set
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import DOM.Simple (createElement, setAttr)
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
 import Effect.Timer (setTimeout)
-import FFI.Simple (delay)
+import FFI.Simple (delay, (..))
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
-import Gargantext.Hooks.Sigmax
-import Gargantext.Hooks.Sigmax.Types as Sigmax
+import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Reactix as R2
 
 type OnProps  = ()
 
-type Node =
-  ( id    :: String
-  , label :: String
-  , x     :: Number
-  , y     :: Number
-  , size  :: Number
-  , color :: String )
-
-type Edge = ( id :: String, source :: String, target :: String )
-
-type Graph = Sigmax.Graph Node Edge
+type Graph = SigmaxTypes.Graph SigmaxTypes.Node SigmaxTypes.Edge
 
 type Props sigma forceatlas2 =
   ( elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
   , graph :: Graph
   , sigmaSettings :: sigma
-  , sigmaRef :: R.Ref Sigma
+  , sigmaRef :: R.Ref Sigmax.Sigma
   )
 
 graph :: forall s fa2. Record (Props s fa2) -> R.Element
@@ -49,28 +43,28 @@ graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
-      -- R.useEffectOnce' $ do
-      --   el <- case R.readNullableRef props.elRef of
-      --     Just el -> do
-      --       pure el
-      --     Nothing -> do
-      --       let el = createElement "div"
-      --       setAttr el "style" "height: 95%"
-      --       setAttr el "id" "graph-cpt-root"
-      --       R.setRef props.elRef $ notNull $ el
-      --       pure el
+      (selectedNodeIds /\ setSelectedNodeIds) <- R.useState' $ Set.empty
 
-      --   case R.readNullableRef props.parentRef of
-      --     Nothing -> pure unit
-      --     Just parentEl -> R2.appendChild parentEl el
-      --   pure unit
+      let (SigmaxTypes.Graph {nodes: nodes}) = props.graph
+      let nodesMap = Map.fromFoldable $ map (\n -> Tuple n.id {color: n.color}) nodes
+
+      R.useEffect' $ do
+        Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma ->
+          Sigmax.markSelectedNodes sigma selectedNodeIds nodesMap
 
       R.useEffectOnce $ do
-        --log "[graphCpt] calling startSigmaEff"
-        startSigmaEff props.elRef props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+        Sigmax.startSigmaEff props.elRef props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+
+        Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma ->
+          Sigma.bindClickNode sigma $ \node -> do
+            setSelectedNodeIds \nids ->
+              if Set.member node.id nids then
+                Set.delete node.id nids
+              else
+                Set.insert node.id nids
 
         delay unit $ \_ -> do
-          log "[GraphCpt] cleaning up"
+          log "[GraphCpt] cleanup"
           pure $ pure unit
 
       -- NOTE: This div is not empty after sigma initializes.

@@ -13,3 +13,13 @@ newtype Graph n e = Graph { nodes :: Seq {|n}, edges :: Seq {|e} }
 
 type Renderer = { "type" :: String, container :: Element }
 
+
+type Node =
+  ( id    :: String
+  , label :: String
+  , x     :: Number
+  , y     :: Number
+  , size  :: Number
+  , color :: String )
+
+type Edge = ( id :: String, source :: String, target :: String )

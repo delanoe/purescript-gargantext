@@ -5,11 +5,14 @@ import Data.Either (Either(..))
 import Data.Nullable (notNull, null, Nullable)
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
+import FFI.Simple (delay, (..))
 import Effect (Effect, foreachE)
 import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, mkEffectFn1, runEffectFn1, EffectFn2, runEffectFn2, EffectFn3, runEffectFn3, EffectFn4, runEffectFn4)
 import Type.Row (class Union)
 import Reactix as R
+
+import Gargantext.Hooks.Sigmax.Types as Types
 
 foreign import data Sigma :: Type
 
@@ -115,6 +118,21 @@ bind_ :: forall e. Sigma -> String -> (e -> Effect Unit) -> Effect Unit
 bind_ s e h = runEffectFn3 _bind s e (mkEffectFn1 h)
 
 foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
+
+forEachNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
+forEachNode s f = runEffectFn2 _forEachNode s (mkEffectFn1 f)
+
+foreign import _forEachNode :: EffectFn2 Sigma (EffectFn1 (Record Types.Node) Unit) Unit
+
+forEachEdge :: Sigma -> (Record Types.Edge -> Effect Unit) -> Effect Unit
+forEachEdge s f = runEffectFn2 _forEachEdge s (mkEffectFn1 f)
+
+foreign import _forEachEdge :: EffectFn2 Sigma (EffectFn1 (Record Types.Edge) Unit) Unit
+
+bindClickNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
+bindClickNode sigma f = bind_ sigma "clickNode" $ \e -> do
+  let node = e .. "data" .. "node" :: Record Types.Node
+  f node
 
 setSettings :: forall settings. Sigma -> settings -> Effect Unit
 setSettings sigma settings = do
