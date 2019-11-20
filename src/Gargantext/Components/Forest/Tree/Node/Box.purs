@@ -190,12 +190,8 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
       search <- R.useState' $ defaultSearch { node_id = Just id }
       pure $ H.div tooltipProps $
         [ H.div {id: "arrow"} []
-        , H.div { style: {display: "flex", "flex-direction": "colum"} }
-          [ H.div { className: "panel panel-default"
-                  , style: { border    : "1px solid rgba(0,0,0,0.2)"
-                           , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
-                           }
-                  }
+        , H.div { className: "popup-container" }
+          [ H.div { className: "panel panel-default" }
             [ H.div {className: ""}
               [ H.div { className : "col-md-11"}
                 [ H.h3 { className: fldr nodeType true} []
@@ -252,8 +248,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
           where
             editIcon (false /\ setRenameBoxOpen) =
               H.div {className: "col-md-1"}
-              [ H.a {style: {color: "black"}
-                    , className: glyphicon "pencil"
+              [ H.a { className: glyphicon "pencil"
                     , id: "rename1"
                     , title: "Rename"
                     , onClick: mkEffectFn1 $ \_ -> setRenameBoxOpen $ const true
@@ -263,13 +258,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
             editIcon (true /\ _) = H.div {} []
 
         panelBody nodePopupState d =
-          H.div {className: "panel-body"
-                , style: { display:"flex"
-                         , justifyContent : "center"
-                         , backgroundColor: "white"
-                         , border: "none"
-                         }
-                }
+          H.div {className: "panel-body"}
           $ 
           -- [H.div {className: "col-md-1"} []]
           -- <>
@@ -277,12 +266,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
 
         searchIsTexIframe id session search@(search' /\ _) =
           if isIsTex search'.datafield then
-            H.div { className: "panel panel-default"
-                  , style: { border    : "1px solid rgba(0,0,0,0.2)"
-                           , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
-                           , width     : "1300px"
-                           }
-                  }
+            H.div { className: "istex-search panel panel-default" }
             [
               H.h3 { className: fldr nodeType true} []
             , componentIsTex search
@@ -291,21 +275,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
             H.div {} []
 
         componentIsTex (search /\ setSearch) =
-          H.div { className: ""
-                , id: "search-popup-tooltip"
-                , title: "Node settings"
-                , data: { toggle: "tooltip"
-                        , placement: "right"
-                        }
-                }
-          [ H.div {id: "arrow"} []
-          , H.div { className: "panel panel-default"
-                  , style: { border    : "1px solid rgba(0,0,0,0.2)"
-                          , boxShadow : "0 2px 5px rgba(0,0,0,0.2)"
-                          }
-                  } [ H.iframe { src: isTexTermUrl search.term , width: "100%", height: "100%"} []
-                    ]
-          ]
+          H.iframe { src: isTexTermUrl search.term , width: "100%", height: "100%"} []
         isTexUrl = "https://istex.gargantext.org"
         isTexLocalUrl = "http://localhost:8083"
         isTexTermUrl term = isTexUrl <> query
