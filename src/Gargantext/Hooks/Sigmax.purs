@@ -345,3 +345,15 @@ markSelectedNodes sigma selectedNodeIds graphNodes = do
         _ <- pure $ (n .= "color") newColor
         pure unit
   Sigma.refresh sigma
+
+
+bindSelectedNodesClick :: R.Ref Sigma -> R.State SelectedNodeIds -> Effect Unit
+bindSelectedNodesClick sigmaRef (_ /\ setSelectedNodeIds) =
+  dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma ->
+    Sigma.bindClickNode sigma $ \node -> do
+      log2 "[graphCpt] clickNode" node
+      setSelectedNodeIds \nids ->
+        if Set.member node.id nids then
+          Set.delete node.id nids
+        else
+          Set.insert node.id nids

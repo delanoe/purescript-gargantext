@@ -9,7 +9,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null, Nullable)
 import Data.Set as Set
-import Data.Tuple (Tuple(..))
+import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple (createElement, setAttr)
 import DOM.Simple.Console (log, log2)
@@ -45,23 +45,21 @@ graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
       let nodesMap = SigmaxTypes.nodesMap props.graph
-      let (selectedNodeIds /\ setSelectedNodeIds) = props.selectedNodeIds
+      let selectedNodeIds = props.selectedNodeIds
 
       R.useEffect' $ do
         Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma ->
-          Sigmax.markSelectedNodes sigma selectedNodeIds nodesMap
+          Sigmax.markSelectedNodes sigma (fst selectedNodeIds) nodesMap
 
       R.useEffectOnce $ do
+        let mSigma = Sigmax.readSigma $ R.readRef props.sigmaRef
+
         Sigmax.startSigmaEff props.elRef props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
 
-        Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma ->
-          Sigma.bindClickNode sigma $ \node -> do
-            log2 "[graphCpt] clickNode" node
-            setSelectedNodeIds \nids ->
-              if Set.member node.id nids then
-                Set.delete node.id nids
-              else
-                Set.insert node.id nids
+        -- bind the click event only initially, when ref was empty
+        case mSigma of
+          Nothing -> Sigmax.bindSelectedNodesClick props.sigmaRef selectedNodeIds
+          Just _  -> pure unit
 
         delay unit $ \_ -> do
           log "[GraphCpt] cleanup"
