@@ -350,7 +350,7 @@ panelAction d {id, name, nodeType, action, session, search} p = case action of
     (Just Upload)                        -> fragmentPT "Soon, you will be able to upload  your file here"
     (Just Download)                      -> fragmentPT "Soon, you will be able to dowload your file here"
 
-    (Just SearchBox)         -> R.fragment [ H.p {} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
+    (Just SearchBox)         -> R.fragment [ H.p {"style": {"margin" :"10px"}} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
                                            , searchBar {session, langs:allLangs, search}
                                            ]
     (Just Delete)            -> case nodeType of

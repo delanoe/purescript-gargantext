@@ -205,4 +205,8 @@ li:hover a#rename-leaf {
   justify-content: center;
 }
 
+a:focus, a:hover {
+  cursor: pointer;
+}
+
 /*# sourceMappingURL=Login.css.map */

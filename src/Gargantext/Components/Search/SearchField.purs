@@ -35,7 +35,7 @@ eqSearch s s' =    (s.datafield == s'.datafield)
                 && (s.node_id == s'.node_id)
 
 defaultSearch :: Search
-defaultSearch = { datafield: Just Gargantext
+defaultSearch = { datafield: Nothing
                 , term: ""
                 , lang: Nothing
                 , node_id: Nothing
@@ -76,7 +76,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
                                               , if isExternal s.datafield
                                                 then databaseInput search props.databases
                                                 else div {} []
-
+                                              , H.text $ show s.datafield
                                               , if isHAL s.datafield
                                                 then orgInput search allOrgs
                                                 else div {} []
@@ -139,7 +139,6 @@ isHAL _ = false
 isIsTex :: Maybe DataField -> Boolean
 isIsTex (Just (External (Just (IsTex)))) = true
 isIsTex _ = false
-
 
 isIMT :: Maybe DataField -> Boolean
 isIMT (Just ( External ( Just ( HAL ( Just ( IMT _)))))) = true

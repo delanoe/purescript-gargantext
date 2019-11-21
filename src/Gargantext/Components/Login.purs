@@ -4,9 +4,11 @@
 module Gargantext.Components.Login where
 
 import Prelude (Unit, bind, const, discard, pure, flip, show, ($), (<>), (*>), (<$>), (>))
+import Data.Array (head)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (fst, snd)
+import Data.String as DST
 import DOM.Simple.Console (log)
 import Data.Sequence as DS
 import Effect (Effect)
@@ -51,7 +53,7 @@ modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
               [ H.div { className: "modal-header" }
                 [ closing
                 , logo
-                , H.h2 { className: "center modal-title" } [H.text "Backends manager"]
+                , H.h2 { className: "center modal-title" } [H.text "Instances manager"]
                 ]
               , H.div { className: "modal-body" } children ] ] ] ]
       modalClass s = "modal myModal" <> if s then "" else " fade"
@@ -130,16 +132,15 @@ renderBackend backend@(Backend {name}) state =
 
 renderBackend :: Backend -> R.State (Maybe Backend) -> R.Element
 renderBackend backend@(Backend {name}) state =
-  H.li {} $ [ H.a { on : {click}
-          --      , className: glyphicon "log-in"
-          --      , id : "log-in"
-        } [ H.text $ " Connect to " <> name ] ]
+  H.li {} $ [ H.div {className: "flex-space-between"} [ H.a { on : {click}} [H.text label], H.div {}[H.text url]] ]
         <> [ H.a { on : {click}
                  , className : "glyphitem glyphicon glyphicon-log-in"
-                 , title: "Log In"} []]
+                 , title: "Log In"} []
+           ]
             where
               click _ = (snd state) (const $ Just backend)
-
+              label   = DST.toUpper $ fromMaybe "" $ head $ DST.split (DST.Pattern ".") name
+              url     = "(garg://" <> name <> ")"
 
 type FormProps =
   ( backend :: Backend

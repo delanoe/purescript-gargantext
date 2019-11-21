@@ -71,8 +71,8 @@ data DataField = Gargantext
                | Files
 
 instance showDataField :: Show DataField where
-  show Gargantext   = "In Gargantext"
-  show (External _) = "Ext.Database"
+  show Gargantext   = "Interne"
+  show (External x) = "Externe " <> show x
   show Web          = "Web"
   show Files        = "Files"
 
