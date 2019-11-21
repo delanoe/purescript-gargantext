@@ -80,6 +80,18 @@ li#rename #rename-a {
   width: 1300px;
 }
 
+#search-popup-tooltip {
+  position: absolute;
+  left: 300px;
+  top: -300px;
+  background-color: white;
+  z-index: 1000;
+}
+#search-popup-tooltip:hover {
+  border: none;
+  text-decoration: none;
+}
+
 #create-node-tooltip {
   position: absolute;
   left: 96px;

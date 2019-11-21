@@ -3,10 +3,28 @@ module Gargantext.Components.GraphExplorer.Sidebar
   where
 
 import Prelude
+import Data.Array (head)
+import Data.Map as Map
+import Data.Maybe (Maybe(..))
+import Data.Set as Set
+import Data.Tuple.Nested((/\))
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
-type Props = ( showSidePanel :: Boolean )
+import Gargantext.Components.RandomText (words)
+import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
+import Gargantext.Components.Graph as Graph
+import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Sessions (Session)
+
+type Props =
+  ( graph :: Graph.Graph
+  , metaData :: GET.MetaData
+  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , session :: Session
+  , showSidePanel :: Boolean
+  )
 
 sidebar :: Record Props -> R.Element
 sidebar props = R.createElement sidebarCpt props []
@@ -17,6 +35,8 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
     cpt {showSidePanel: false} _children = do
       pure $ RH.div {} []
     cpt props _children = do
+      let nodesMap = SigmaxTypes.nodesMap props.graph
+
       pure $
         RH.div { id: "sp-container", className: "col-md-2" }
         [ RH.div {}
@@ -39,7 +59,16 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                 [ checkbox "Pubs"
                 , checkbox "Projects"
                 , checkbox "Patents"
-                , checkbox "Others" ] ] ] ] ]
+                , checkbox "Others"
+                ]
+              ]
+            , RH.div { className: "col-md-12", id: "query" }
+              [
+                query props.metaData props.session nodesMap props.selectedNodeIds
+              ]
+            ]
+          ]
+        ]
     badge text =
       RH.a { className: "badge badge-light" } [ RH.text text ]
     checkbox text =
@@ -59,3 +88,19 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
       , "software engineering"
       , "complex systems"
       , "wireless communications" ]
+
+    query _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
+    query (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
+      query' (head metaData.corpusId)
+      where
+        query' Nothing = RH.div {} []
+        query' (Just corpusId) =
+          GT.tabs {session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: [side corpusId]}
+        q id = case Map.lookup id nodesMap of
+          Nothing -> []
+          Just n -> words n.label
+        side corpusId = GET.GraphSideCorpus {
+             corpusId
+           , listId: metaData.listId
+           , corpusLabel: metaData.title
+           }

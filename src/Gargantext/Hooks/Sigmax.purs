@@ -8,18 +8,21 @@ import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Either (Either(..), either)
 import Data.Foldable (sequence_)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
+import Data.Set as Set
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested((/\))
 import Effect (Effect)
+import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
-import FFI.Simple (delay)
+import FFI.Simple (delay, (.=))
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Types (Graph(..))
+import Gargantext.Hooks.Sigmax.Types (Graph(..), Node(..), NodesMap, SelectedNodeIds)
 import Gargantext.Utils.Reactix as R2
 import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=), not)
 import Reactix as R
@@ -321,8 +324,36 @@ setEdges sigma val = do
   -- prevent showing edges (via show edges button) when FA is running (flickering)
   isFARunning <- Sigma.isForceAtlas2Running sigma
   case Tuple val isFARunning of
-    Tuple false true ->
+    Tuple false _ ->
       Sigma.setSettings sigma settings
     Tuple true false ->
       Sigma.setSettings sigma settings
     _ -> pure unit
+
+markSelectedNodes :: Sigma.Sigma -> SelectedNodeIds -> NodesMap -> Effect Unit
+markSelectedNodes sigma selectedNodeIds graphNodes = do
+  log2 "[markSelectedNodes] selectedNodeIds" selectedNodeIds
+  Sigma.forEachNode sigma \n -> do
+    case Map.lookup n.id graphNodes of
+      Nothing -> error $ "Node id " <> n.id <> " not found in graphNodes map"
+      Just {color} -> do
+        let newColor =
+              if Set.member n.id selectedNodeIds then
+                "#ff0000"
+              else
+                color
+        _ <- pure $ (n .= "color") newColor
+        pure unit
+  Sigma.refresh sigma
+
+
+bindSelectedNodesClick :: R.Ref Sigma -> R.State SelectedNodeIds -> Effect Unit
+bindSelectedNodesClick sigmaRef (_ /\ setSelectedNodeIds) =
+  dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma ->
+    Sigma.bindClickNode sigma $ \node -> do
+      log2 "[graphCpt] clickNode" node
+      setSelectedNodeIds \nids ->
+        if Set.member node.id nids then
+          Set.delete node.id nids
+        else
+          Set.insert node.id nids

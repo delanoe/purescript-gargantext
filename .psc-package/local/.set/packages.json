@@ -2352,11 +2352,11 @@
   },
   "read": {
     "dependencies": [
-      "maybe",
       "prelude",
+      "maybe",
       "strings"
     ],
-    "repo": "https://github.com/truqu/purescript-read.git",
+    "repo": "https://github.com/truqu/purescript-read",
     "version": "v1.0.1"
   },
   "record": {
