@@ -35,15 +35,17 @@ type GraphId = Int
 
 type LayoutProps =
   ( graphId :: GraphId
+  , frontends :: Frontends
   , mCurrentRoute :: AppRoute
-  , treeId :: Maybe Int
   , session :: Session
   , sessions :: Sessions
-  , frontends :: Frontends 
+  , treeId :: Maybe Int
   )
 
 type Props = (
-    graph :: Maybe Graph.Graph | LayoutProps
+    graph :: Maybe Graph.Graph
+  , mMetaData :: Maybe GET.MetaData
+  | LayoutProps
   )
 
 --------------------------------------------------------------
@@ -57,8 +59,8 @@ explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
       useLoader graphId (getNodes session) handler
       where
         handler loaded =
-          explorer {graphId, mCurrentRoute, treeId, session, sessions, graph, frontends}
-          where graph = Just (convert loaded)
+          explorer {graphId, mCurrentRoute, mMetaData, treeId, session, sessions, graph: Just graph, frontends}
+          where (Tuple mMetaData graph) = convert loaded
 
 --------------------------------------------------------------
 explorer :: Record Props -> R.Element
@@ -67,7 +69,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt {sessions, session, graphId, mCurrentRoute, treeId, graph, frontends} _ = do
+    cpt {frontends, graph, graphId, mCurrentRoute, mMetaData, session, sessions, treeId} _ = do
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls
       state <- useExplorerState
@@ -89,7 +91,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                 , row [ tree {mCurrentRoute, treeId} controls showLogin
                       , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12", style: {height: "95%"} } []  -- graph container
                       , mGraph graphRef controls.sigmaRef {graphId, graph, selectedNodeIds}
-                      , mSidebar graph {session, selectedNodeIds, showSidePanel: fst controls.showSidePanel}
+                      , mSidebar graph mMetaData {session, selectedNodeIds, showSidePanel: fst controls.showSidePanel}
                       ]
                 , row [
                   ]
@@ -122,13 +124,16 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     mGraph graphRef sigmaRef {graphId, graph: Just graph, selectedNodeIds} = graphView graphRef sigmaRef {graphId, graph, selectedNodeIds}
 
     mSidebar :: Maybe Graph.Graph
+             -> Maybe GET.MetaData
              -> { showSidePanel :: Boolean
                 , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
                 , session :: Session }
              -> R.Element
-    mSidebar Nothing _ = RH.div {} []
-    mSidebar (Just graph) {session, selectedNodeIds, showSidePanel} =
+    mSidebar Nothing _ _ = RH.div {} []
+    mSidebar _ Nothing _ = RH.div {} []
+    mSidebar (Just graph) (Just metaData) {session, selectedNodeIds, showSidePanel} =
       Sidebar.sidebar { graph
+                      , metaData
                       , session
                       , selectedNodeIds
                       , showSidePanel
@@ -174,8 +179,8 @@ graphView elRef sigmaRef props = R.createElement el props []
         , sigmaRef: sigmaRef
         }
 
-convert :: GET.GraphData -> Graph.Graph
-convert (GET.GraphData r) = SigmaxTypes.Graph {nodes, edges}
+convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) Graph.Graph
+convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
   where
     nodes = foldMapWithIndex nodeFn r.nodes
     nodeFn i (GET.Node n) =
@@ -196,7 +201,7 @@ defaultPalette :: Array String
 defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#33c8f3","#739e9a","#caeca3","#f6f7e5","#f9bcca","#ccb069","#c9ffde","#c58683","#6c9eb0","#ffd3cf","#ccffc7","#52a1b0","#d2ecff","#99fffe","#9295ae","#5ea38b","#fff0b3","#d99e68"]
 
 -- clusterColor :: Cluster -> Color
--- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `mod` length defaultPalette)
+-- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `molength defrultPalette)
     
 --               div [className "col-md-12", style {"padding-bottom" : "10px"}]
 --             [ menu [_id "toolbar"]

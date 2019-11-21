@@ -3,6 +3,7 @@ module Gargantext.Components.GraphExplorer.Sidebar
   where
 
 import Prelude
+import Data.Array (head)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
@@ -13,11 +14,13 @@ import Reactix.DOM.HTML as RH
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
 import Gargantext.Components.Graph as Graph
+import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Sessions (Session)
 
 type Props =
   ( graph :: Graph.Graph
+  , metaData :: GET.MetaData
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , session :: Session
   , showSidePanel :: Boolean
@@ -61,7 +64,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
               ]
             , RH.div { className: "col-md-12", id: "query" }
               [
-                query props.session nodesMap props.selectedNodeIds
+                query props.metaData props.session nodesMap props.selectedNodeIds
               ]
             ]
           ]
@@ -86,9 +89,18 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
       , "complex systems"
       , "wireless communications" ]
 
-    query session nodesMap (selectedNodeIds /\ _) =
-      GT.tabs {session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: []}
+    query _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
+    query (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
+      query' (head metaData.corpusId)
       where
+        query' Nothing = RH.div {} []
+        query' (Just corpusId) =
+          GT.tabs {session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: [side corpusId]}
         q id = case Map.lookup id nodesMap of
           Nothing -> []
           Just n -> words n.label
+        side corpusId = GET.GraphSideCorpus {
+             corpusId
+           , listId: metaData.listId
+           , corpusLabel: metaData.title
+           }

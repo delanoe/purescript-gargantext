@@ -56,6 +56,7 @@ graphCpt = R.hooksComponent "Graph" cpt
 
         Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma ->
           Sigma.bindClickNode sigma $ \node -> do
+            log2 "[graphCpt] clickNode" node
             setSelectedNodeIds \nids ->
               if Set.member node.id nids then
                 Set.delete node.id nids
