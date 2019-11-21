@@ -22,7 +22,7 @@ import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple (delay, (.=))
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Types (Graph(..), Node(..))
+import Gargantext.Hooks.Sigmax.Types (Graph(..), Node(..), NodesMap, SelectedNodeIds)
 import Gargantext.Utils.Reactix as R2
 import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=), not)
 import Reactix as R
@@ -330,7 +330,7 @@ setEdges sigma val = do
       Sigma.setSettings sigma settings
     _ -> pure unit
 
-markSelectedNodes :: Sigma.Sigma -> Set.Set String -> Map.Map String {color :: String} -> Effect Unit
+markSelectedNodes :: Sigma.Sigma -> SelectedNodeIds -> NodesMap -> Effect Unit
 markSelectedNodes sigma selectedNodeIds graphNodes = do
   log2 "[markSelectedNodes] selectedNodeIds" selectedNodeIds
   Sigma.forEachNode sigma \n -> do

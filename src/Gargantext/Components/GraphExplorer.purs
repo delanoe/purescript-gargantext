@@ -5,10 +5,12 @@ import Gargantext.Prelude hiding (max,min)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
-import Data.Tuple (fst,snd)
+import Data.Set as Set
+import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
@@ -17,7 +19,7 @@ import Reactix.DOM.HTML as RH
 
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax (Sigma)
-import Gargantext.Hooks.Sigmax.Types as Sigmax
+import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
@@ -70,6 +72,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       controls <- Controls.useGraphControls
       state <- useExplorerState
       showLogin <- snd <$> R.useState' true
+      selectedNodeIds <- R.useState' $ Set.empty
+
       pure $
         RH.div
           { id: "graph-explorer" }
@@ -84,8 +88,9 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                 , row [ Controls.controls controls ]
                 , row [ tree {mCurrentRoute, treeId} controls showLogin
                       , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12", style: {height: "95%"} } []  -- graph container
-                      , mGraph graphRef controls.sigmaRef {graphId, graph}
-                      , Sidebar.sidebar {showSidePanel: fst controls.showSidePanel} ]
+                      , mGraph graphRef controls.sigmaRef {graphId, graph, selectedNodeIds}
+                      , mSidebar graph {session, selectedNodeIds, showSidePanel: fst controls.showSidePanel}
+                      ]
                 , row [
                   ]
                 ]
@@ -107,9 +112,27 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     pullLeft  = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }
 
-    mGraph :: R.Ref (Nullable Element) -> R.Ref Sigma -> {graphId :: GraphId, graph :: Maybe Graph.Graph} -> R.Element
+    mGraph :: R.Ref (Nullable Element)
+           -> R.Ref Sigma
+           -> { graphId :: GraphId
+              , graph :: Maybe Graph.Graph
+              , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds}
+           -> R.Element
     mGraph _ _ {graph: Nothing} = RH.div {} []
-    mGraph graphRef sigmaRef {graphId, graph: Just graph} = graphView graphRef sigmaRef {graphId, graph}
+    mGraph graphRef sigmaRef {graphId, graph: Just graph, selectedNodeIds} = graphView graphRef sigmaRef {graphId, graph, selectedNodeIds}
+
+    mSidebar :: Maybe Graph.Graph
+             -> { showSidePanel :: Boolean
+                , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+                , session :: Session }
+             -> R.Element
+    mSidebar Nothing _ = RH.div {} []
+    mSidebar (Just graph) {session, selectedNodeIds, showSidePanel} =
+      Sidebar.sidebar { graph
+                      , session
+                      , selectedNodeIds
+                      , showSidePanel
+                      }
 
 useExplorerState :: R.Hooks (Record GET.State)
 useExplorerState = do pure {}
@@ -132,6 +155,7 @@ useExplorerState = do pure {}
 type GraphProps = (
     graphId :: GraphId
   , graph :: Graph.Graph
+  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
 )
 
 graphView :: R.Ref (Nullable Element) -> R.Ref Sigma -> Record GraphProps -> R.Element
@@ -140,17 +164,18 @@ graphView elRef sigmaRef props = R.createElement el props []
   where
     --memoCmp props1 props2 = props1.graphId == props2.graphId
     el = R.hooksComponent "GraphView" cpt
-    cpt {graphId, graph} _children = do
+    cpt {graphId, graph, selectedNodeIds} _children = do
       pure $ Graph.graph {
           elRef
         , forceAtlas2Settings: Graph.forceAtlas2Settings
         , graph
+        , selectedNodeIds
         , sigmaSettings: Graph.sigmaSettings
         , sigmaRef: sigmaRef
         }
 
 convert :: GET.GraphData -> Graph.Graph
-convert (GET.GraphData r) = Sigmax.Graph {nodes, edges}
+convert (GET.GraphData r) = SigmaxTypes.Graph {nodes, edges}
   where
     nodes = foldMapWithIndex nodeFn r.nodes
     nodeFn i (GET.Node n) =

@@ -119,6 +119,11 @@ bind_ s e h = runEffectFn3 _bind s e (mkEffectFn1 h)
 
 foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 
+unbind_ :: forall e. Sigma -> String -> Effect Unit
+unbind_ s e = runEffectFn2 _unbind s e
+
+foreign import _unbind :: forall e. EffectFn2 Sigma String Unit
+
 forEachNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
 forEachNode s f = runEffectFn2 _forEachNode s (mkEffectFn1 f)
 
@@ -133,6 +138,9 @@ bindClickNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
 bindClickNode sigma f = bind_ sigma "clickNode" $ \e -> do
   let node = e .. "data" .. "node" :: Record Types.Node
   f node
+
+unbindClickNode :: Sigma -> Effect Unit
+unbindClickNode sigma = unbind_ sigma "clickNode"
 
 setSettings :: forall settings. Sigma -> settings -> Effect Unit
 setSettings sigma settings = do

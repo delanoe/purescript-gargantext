@@ -32,6 +32,7 @@ type Props sigma forceatlas2 =
   ( elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
   , graph :: Graph
+  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , sigmaSettings :: sigma
   , sigmaRef :: R.Ref Sigmax.Sigma
   )
@@ -43,10 +44,8 @@ graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
-      (selectedNodeIds /\ setSelectedNodeIds) <- R.useState' $ Set.empty
-
-      let (SigmaxTypes.Graph {nodes: nodes}) = props.graph
-      let nodesMap = Map.fromFoldable $ map (\n -> Tuple n.id {color: n.color}) nodes
+      let nodesMap = SigmaxTypes.nodesMap props.graph
+      let (selectedNodeIds /\ setSelectedNodeIds) = props.selectedNodeIds
 
       R.useEffect' $ do
         Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma ->
