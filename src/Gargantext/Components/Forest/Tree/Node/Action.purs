@@ -4,12 +4,12 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyO
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
-import Effect.Aff (Aff, launchAff, runAff)
-import Gargantext.Routes (AppRoute, SessionRoute(..))
-import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
+import Effect.Aff (Aff)
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session, get, put, post, delete)
+import Gargantext.Types (NodeType(..))
 import Prelude hiding (div)
 
 data Action = Submit       String
@@ -35,13 +35,11 @@ readFileType "CSV"       = Just CSV
 readFileType "PresseRIS" = Just PresseRIS
 readFileType _           = Nothing
 
-
 data DroppedFile = DroppedFile {
     contents :: UploadFileContents
   , fileType :: Maybe FileType
     }
 type FileHash = String
-
 
 type Name = String
 type ID   = Int

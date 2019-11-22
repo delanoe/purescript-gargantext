@@ -220,7 +220,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
                                , placement: "right"}
                        }
 
-        SettingsBox {edit, buttons} = settingsBox nodeType
+        SettingsBox {edit, doc, buttons} = settingsBox nodeType
 
         removeCircleGeneral (Just _) setNodePopup = removeCircle setNodePopup
         removeCircleGeneral Nothing _ = H.div {} []
@@ -259,8 +259,11 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
             editIcon (true /\ _) = H.div {} []
 
         panelBody nodePopupState d' =
-          H.div {className: "panel-body flex-center"}
-          $ map (buttonClick nodePopupState d') buttons
+          H.div {className: "panel-body flex-space-between"}
+                [ H.div {className: "flex-center"} [buttonClick nodePopupState d' doc]
+                , H.div {className: "flex-center"}
+                        $ map (buttonClick nodePopupState d') buttons
+                ]
 
         searchIsTexIframe _id _session search@(search' /\ _) =
           if isIsTex search'.datafield then

@@ -1,39 +1,19 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
-import DOM.Simple.Console (log2)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (filter, null, length, head, elem)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe)
-import Data.Newtype (class Newtype)
-import Data.Tuple (Tuple)
+import Data.Array (length, head)
+import Data.Maybe (Maybe(..), fromMaybe)
+-- import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff, runAff)
-import Effect.Class (liftEffect)
+import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
-import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Components.Forest.Tree.Node
-import Gargantext.Ends (Frontends, url)
-import Gargantext.Components.Loader (loader)
-import Gargantext.Routes (AppRoute, SessionRoute(..))
-import Gargantext.Routes as Routes
-import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
-import Gargantext.Utils (id, glyphicon)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), ID, Name)
+import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
+import Gargantext.Types (NodeType(..), readNodeType)
 import Gargantext.Utils.Reactix as R2
-import Partial.Unsafe (unsafePartial)
-import Prelude hiding (div)
-import React.SyntheticEvent as E
+import Prelude (Unit, bind, const, discard, map, pure, show, ($), (<>), (>))
 import Reactix as R
 import Reactix.DOM.HTML as H
-import URI.Extra.QueryPairs as QP
-import URI.Query as Q
-import Web.File.File (toBlob)
-import Web.File.FileList (FileList, item)
-import Web.File.FileReader.Aff (readAsText)
 
 -- START Create Node
 
@@ -55,10 +35,10 @@ createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el
     el = R.hooksComponent "CreateNodeView" cpt
     cpt {id, name} _ = do
       nodeName <- R.useState' "Default Name"
-      nodeType <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
+      nodeType' <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
       pure $ H.div {}
-          [ panelBody   readNodeType nodeName nodeType
-          , panelFooter nodeName nodeType
+          [ panelBody   readNodeType nodeName nodeType'
+          , panelFooter nodeName nodeType'
           ]
       where
         panelBody :: (String -> NodeType)
@@ -125,10 +105,6 @@ createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el
                      } [H.text "Add"]
           ]
 
-createNodeView _ _ _ _ = R.createElement el {} []
-  where
-    el = R.hooksComponent "CreateNodeView" cpt
-    cpt props _ = pure $ H.div {} []
 -- END Create Node
 
 

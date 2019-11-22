@@ -71,6 +71,7 @@ glyphiconNodeAction _                 = ""
 data SettingsBox =
   SettingsBox { show    :: Boolean
               , edit    :: Boolean
+              , doc     :: NodeAction
               , buttons :: Array NodeAction
               }
 ------------------------------------------------------------------------
@@ -78,8 +79,8 @@ data SettingsBox =
 settingsBox :: NodeType -> SettingsBox
 settingsBox NodeUser = SettingsBox { show : true
                                    , edit : false
-                                   , buttons : [Documentation NodeUser
-                                               , SearchBox
+                                   , doc  : Documentation NodeUser
+                                   , buttons : [ SearchBox
                                                , Add [ FolderPrivate
                                                      , FolderShared
                                                      , FolderPublic
@@ -90,8 +91,8 @@ settingsBox NodeUser = SettingsBox { show : true
 
 settingsBox FolderPrivate = SettingsBox { show: true
                                         , edit : false
-                                        , buttons : [Documentation FolderPrivate
-                                                    , SearchBox
+                                        , doc  : Documentation FolderPrivate
+                                        , buttons : [ SearchBox
                                                     , Add [ Corpus
                                                           , Folder
                                                           , Annuaire
@@ -100,40 +101,40 @@ settingsBox FolderPrivate = SettingsBox { show: true
                                         }
 
 settingsBox Team = SettingsBox { show: true
-                                        , edit : false
-                                        , buttons : [Documentation Team
-                                                    , SearchBox
-                                                    , Add [ Corpus
-                                                          , Folder
-                                                          , Annuaire
-                                                          ]
-                                                    , Delete]
-                                        }
+                                , edit : false
+                                , doc  : Documentation Team
+                                , buttons : [ SearchBox
+                                            , Add [ Corpus
+                                                  , Folder
+                                                  , Annuaire
+                                                  ]
+                                            , Delete]
+                                }
 
 settingsBox FolderShared = SettingsBox { show: true
                                        , edit : true
-                                       , buttons : [Documentation FolderShared
-                                                    , Add [Team, FolderShared]
-                                                    , Delete
-                                                    ]
+                                       , doc  : Documentation FolderShared
+                                       , buttons : [ Add [Team, FolderShared]
+                                                   , Delete
+                                                   ]
                                        }
 
 
-settingsBox FolderPublic = SettingsBox { show: true
+settingsBox FolderPublic = SettingsBox { show : true
                                        , edit : false
-                                       , buttons : [Documentation FolderPublic
-                                                    {-, SearchBox
+                                       , doc  : Documentation FolderPublic
+                                       , buttons : [{-, SearchBox
                                                     , Add [ Corpus
                                                           , Folder
                                                           ]-}
-                                                    , Delete
+                                                     Delete
                                                     ]
                                         }
 
 settingsBox Folder = SettingsBox { show : true
                                  , edit : true
-                                 , buttons : [ Documentation Folder
-                                             , SearchBox
+                                 , doc  : Documentation Folder
+                                 , buttons : [ SearchBox
                                              , Add [ Corpus
                                                    , Folder
                                                    , Annuaire
@@ -144,32 +145,33 @@ settingsBox Folder = SettingsBox { show : true
 
 settingsBox Corpus = SettingsBox { show : true
                                  , edit : true
-                                 , buttons : [ Documentation Corpus
-                                             , SearchBox
-                                             , Add [ NodeList 
+                                 , doc  : Documentation Corpus
+                                 , buttons : [ SearchBox
+                                             , Add [ NodeList
                                                    , Graph
                                                    , Dashboard
                                                    ]
-                                             , Link Annuaire
                                              , Upload
                                              , Download
                                              --, Share
                                              --, Move
                                              --, Clone
+                                             , Link Annuaire
                                              , Delete
                                              ]
                                  }
 
 settingsBox Texts = SettingsBox { show : true
                                 , edit : false
-                                , buttons : [ Documentation Texts
-                                            , Upload
+                                , doc  : Documentation Texts
+                                , buttons : [ Upload
                                             , Download
                                             ]
                                 }
 
 settingsBox Graph = SettingsBox { show : true
                                 , edit : false
+                                , doc  : Documentation Graph
                                 , buttons : [ Documentation Graph
                                             , Download
                                             ]
@@ -177,21 +179,22 @@ settingsBox Graph = SettingsBox { show : true
 
 settingsBox NodeList = SettingsBox { show : true
                                    , edit : false
-                                   , buttons : [ Documentation NodeList
-                                               , Upload
+                                   , doc  : Documentation NodeList
+                                   , buttons : [ Upload
                                                , Download
                                                ]
                                 }
 
 settingsBox Dashboard = SettingsBox { show : true
                                     , edit : false
-                                    , buttons : [ Documentation Dashboard
-                                               ]
+                                    , doc  : Documentation Dashboard
+                                    , buttons : []
                                 }
 
 
 settingsBox _ = SettingsBox { show : false
                             , edit : false
+                            , doc  : Documentation NodeUser
                             , buttons : []
                           }
 

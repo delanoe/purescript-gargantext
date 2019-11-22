@@ -1,12 +1,12 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Data.Newtype (class Newtype)
-import Effect.Aff (Aff, launchAff, runAff)
-import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType)
-import Gargantext.Routes (AppRoute, SessionRoute(..))
-import Prelude hiding (div)
-import Data.Maybe (Maybe(..), fromJust)
+import Effect.Aff (Aff, launchAff)
+import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Types (class ToQuery, toQuery, NodeType(..))
+import Gargantext.Routes (SessionRoute(..))
+import Prelude (class Show, Unit, const, discard, map, pure, show, ($), (<>))
+import Data.Maybe (Maybe(..))
 import URI.Extra.QueryPairs as QP
 import Gargantext.Components.Forest.Tree.Node.Action
 import Reactix as R
@@ -15,10 +15,9 @@ import URI.Query as Q
 import Reactix.DOM.HTML as H
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
-import Gargantext.Utils (id, glyphicon)
+import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 import Data.Tuple.Nested ((/\))
-
 
 -- START File Type View
 type FileTypeProps =
