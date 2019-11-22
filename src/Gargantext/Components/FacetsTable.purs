@@ -296,14 +296,13 @@ pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
           where
             row (DocumentsView {id,score,title,source,date,pairs,delete,category}) =
               { row:
-                [ H.div {}
-                  [ H.a { className, on: {click: markClick} } []
-                    -- TODO show date: Year-Month-Day only
-                  , maybeStricken [ H.text date ]
-                  , maybeStricken [ H.text source ]
+                [ H.a { className, on: {click: markClick} } []
+                  -- TODO show date: Year-Month-Day only
+                , maybeStricken [ H.text date ]
+                , maybeStricken [ H.text source ]
                   -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
-                  , H.input { type: "checkbox", checked: isChecked id, on: { click: toggleClick } }
-                  ] ]
+                , H.input { type: "checkbox", checked: isChecked id, on: { click: toggleClick } }
+                ]
               , delete: true }
               where
                 markClick _ = markCategory session nodeId category [id]
