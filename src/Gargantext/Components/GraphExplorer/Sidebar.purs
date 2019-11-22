@@ -23,7 +23,7 @@ type Props =
   , metaData :: GET.MetaData
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , session :: Session
-  , showSidePanel :: Boolean
+  , showSidePanel :: GET.SidePanelState
   )
 
 sidebar :: Record Props -> R.Element
@@ -32,7 +32,9 @@ sidebar props = R.createElement sidebarCpt props []
 sidebarCpt :: R.Component Props
 sidebarCpt = R.hooksComponent "Sidebar" cpt
   where
-    cpt {showSidePanel: false} _children = do
+    cpt {showSidePanel: GET.Closed} _children = do
+      pure $ RH.div {} []
+    cpt {showSidePanel: GET.InitialClosed} _children = do
       pure $ RH.div {} []
     cpt props _children = do
       let nodesMap = SigmaxTypes.nodesMap props.graph

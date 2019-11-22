@@ -157,7 +157,6 @@ setEdges sigma val = do
 
 markSelectedNodes :: Sigma.Sigma -> SelectedNodeIds -> NodesMap -> Effect Unit
 markSelectedNodes sigma selectedNodeIds graphNodes = do
-  log2 "[markSelectedNodes] selectedNodeIds" selectedNodeIds
   Sigma.forEachNode sigma \n -> do
     case Map.lookup n.id graphNodes of
       Nothing -> error $ "Node id " <> n.id <> " not found in graphNodes map"
@@ -176,7 +175,6 @@ bindSelectedNodesClick :: R.Ref Sigma -> R.State SelectedNodeIds -> Effect Unit
 bindSelectedNodesClick sigmaRef (_ /\ setSelectedNodeIds) =
   dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma ->
     Sigma.bindClickNode sigma $ \node -> do
-      log2 "[graphCpt] clickNode" node
       setSelectedNodeIds \nids ->
         if Set.member node.id nids then
           Set.delete node.id nids

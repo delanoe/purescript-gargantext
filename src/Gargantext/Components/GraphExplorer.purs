@@ -76,6 +76,12 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       showLogin <- snd <$> R.useState' true
       selectedNodeIds <- R.useState' $ Set.empty
 
+      R.useEffect' $ do
+        if fst controls.showSidePanel == GET.InitialClosed && (not Set.isEmpty $ fst selectedNodeIds) then
+          snd controls.showSidePanel $ \_ -> GET.Opened
+        else
+          pure unit
+
       pure $
         RH.div
           { id: "graph-explorer" }
@@ -125,7 +131,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
 
     mSidebar :: Maybe Graph.Graph
              -> Maybe GET.MetaData
-             -> { showSidePanel :: Boolean
+             -> { showSidePanel :: GET.SidePanelState
                 , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
                 , session :: Session }
              -> R.Element
