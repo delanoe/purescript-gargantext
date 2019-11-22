@@ -3,7 +3,7 @@
   -- Select a backend and log into it
 module Gargantext.Components.Login where
 
-import Prelude (Unit, bind, const, discard, pure, flip, show, ($), (<>), (*>), (<$>), (>), map)
+import Prelude (Unit, bind, const, discard, pure, show, ($), (<>), (*>), (<$>), (>), map)
 import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -102,10 +102,11 @@ chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
                  , H.ul {} [ renderSessions sessions]
                  ] else [] where
                    Sessions {sessions:ss} = fst sessions
-        new    = [ H.h3 {} [H.text "New connection(s)"]
+        new    = [ H.input {className: "form-control", type:"text", placeholder: "Search for your institute"}
+                 , H.h3 {} [H.text "Last connection(s)"]
                  , H.table {className : "table"}
                  [ H.thead {className: "thead-dark"} [ H.tr {} [ H.th {} [H.text "Label of instance"]
-                                                                         , H.th {} [H.text "Url garg protocole"]
+                                                                         , H.th {} [H.text "Gargurl"]
                                                                          , H.th {} [ H.text ""]
                                                                ]
                                                      ]
@@ -117,14 +118,14 @@ renderSessions :: R2.Reductor Sessions Sessions.Action -> R.Element
 renderSessions sessions = R.fragment (renderSession sessions <$> unSessions (fst sessions))
   where
     renderSession :: R2.Reductor Sessions Sessions.Action -> Session -> R.Element
-    renderSession sessions session = H.li {} $ [ H.text $ "Active session: " <> show session ]
+    renderSession sessions' session = H.li {} $ [ H.text $ "Active session: " <> show session ]
                                             <> [ H.a { on : {click}
                                                      , className: "glyphitem glyphicon glyphicon-log-out"
                                                      , id : "log-out"
                                                      , title: "Log out"
                                                      } [] ]
                                                 where
-                                                  click _ = (snd sessions) (Sessions.Logout session)
+                                                  click _ = (snd sessions') (Sessions.Logout session)
 
 
 renderBackend :: R.State (Maybe Backend) -> Backend -> R.Element
@@ -139,7 +140,7 @@ renderBackend state backend@(Backend {name}) =
     where
       click _ = (snd state) (const $ Just backend)
       label   = DST.toUpper $ fromMaybe "" $ head $ DST.split (DST.Pattern ".") name
-      url     = "(garg://" <> name <> ")"
+      url     = "garg://" <> name
 
 type FormProps =
   ( backend :: Backend

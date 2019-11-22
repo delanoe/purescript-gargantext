@@ -5,12 +5,12 @@ import Gargantext.Ends
 import Gargantext.Types (ApiVersion(..))
 
 defaultBackends :: NonEmpty Array Backend
-defaultBackends = prod :| [partner, demo, dev, local]
+defaultBackends = local :| [prod, partner, demo, dev]
   where
     prod    = backend V10 "/api/" "https://v4.gargantext.org"   "iscpif.cnrs"
     partner = backend V10 "/api/" "https://demo.gargantext.org" "institut-mines-telecom.imt"
-    demo    = backend V10 "/api/" "https://demo.gargantext.org" "demo.cnrs"
-    dev     = backend V10 "/api/" "https://dev.gargantext.org"  "devel.cnrs"
+    demo    = backend V10 "/api/" "https://demo.gargantext.org" "demo.inshs.cnrs"
+    dev     = backend V10 "/api/" "https://dev.gargantext.org"  "devel.inshs.cnrs"
     local   = backend V10 "/api/" "http://localhost:8008"       "local.cnrs"
 
 defaultApps :: NonEmpty Array Frontend
