@@ -55,7 +55,7 @@ renameBox d p (true /\ setRenameBoxOpen) = R.createElement el p []
 renameBox _ p (false /\ _) = R.createElement el p []
   where
     el = R.hooksComponent "RenameBox" cpt
-    cpt {name} _ = pure $ H.div {} [ H.text name ]
+    cpt {name} _ = pure $ H.div {} []
 
 -- END Rename Box
 

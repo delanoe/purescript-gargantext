@@ -195,8 +195,8 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
           [ H.div { className: "panel panel-default" }
             [ H.div {className: ""}
               [ H.div { className : "col-md-11"}
-                [ H.h3 { className: fldr nodeType true} []
-                , H.div {} [ H.text $ show nodeType ]
+                [ H.h3 { className: fldr nodeType true} [H.text $ show nodeType]
+                , H.p {className: "text-primary center"} [H.text name]
                 ]
               ]
             , panelHeading renameBoxOpen
@@ -231,28 +231,30 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
 
         panelHeading renameBoxOpen@(open /\ _) =
           H.div {className: "panel-heading"}
-          [ -- H.h1 {className : "col-md-12"} [H.text "Settings Box"]
-           H.div {className: "row" }
-            [
-             H.div {className: "col-md-8"} [ renameBox d {id, name, nodeType} renameBoxOpen ]
-            , H.div {className: "flex-end"} [
-             if edit then editIcon renameBoxOpen else H.div {} []
-            , H.div {className: "col-md-1"}
-              [ H.a { "type" : "button"
-                    , className: glyphicon "remove-circle"
-                    , onClick: mkEffectFn1 $ \_ -> setPopupOpen $ const Nothing
-                    , title: "Close"} []
-              ]
-              ]
-            ]
-          ]
+                [ H.div {className: "row" }
+                        [ H.div {className: "col-md-8"}
+                                [ renameBox d {id, name, nodeType} renameBoxOpen ]
+
+                        , H.div {className: "flex-end"}
+                                [ if edit then editIcon renameBoxOpen else H.div {} []
+                                , H.div {className: "col-md-1"}
+                                        [ H.a { "type"   : "button"
+                                              , className: glyphicon "remove-circle"
+                                              , onClick  : mkEffectFn1
+                                                         $ \_ -> setPopupOpen $ const Nothing
+                                              , title    : "Close"} []
+                                        ]
+                                 ]
+                        ]
+                ]
           where
             editIcon (false /\ setRenameBoxOpen) =
-              H.div {className: "col-md-1"}
+              H.div {className : "col-md-1"}
               [ H.a { className: glyphicon "pencil"
-                    , id: "rename1"
-                    , title: "Rename"
-                    , onClick: mkEffectFn1 $ \_ -> setRenameBoxOpen $ const true
+                    , id       : "rename1"
+                    , title    : "Rename"
+                    , onClick  : mkEffectFn1
+                               $ \_ -> setRenameBoxOpen $ const true
                     }
                 []
               ]
