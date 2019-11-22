@@ -76,7 +76,6 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
                                               , if isExternal s.datafield
                                                 then databaseInput search props.databases
                                                 else div {} []
-                                              , H.text $ show s.datafield
                                               , if isHAL s.datafield
                                                 then orgInput search allOrgs
                                                 else div {} []
@@ -221,6 +220,29 @@ dataFieldNav ({datafield} /\ setSearch) datafields =
 
 
 ------------------------------------------------------------------------
+
+databaseNav  :: R.State Search
+              -> Array Database
+              -> R.Element
+databaseNav ({datafield} /\ setSearch) dbs =
+  R.fragment [ div {className: "text-primary center"} [text "with DataField"]
+             , div { className: "nav nav-tabs"} (liItem <$> dbs)
+             , div {className:"center"} [ text $ maybe "" doc db ]
+             ]
+    where
+
+      db = case datafield of
+        (Just (External (Just x))) -> Just x
+        _                          -> Nothing
+
+      liItem :: Database -> R.Element
+      liItem  df' =
+        div { className : "nav-item nav-link" <> if (Just $ External $ Just df') == datafield then " active" else ""
+            , on: { click: \_ -> setSearch $ _ { datafield = Just $ External $ Just df' } }
+            } [ text (show df') ]
+
+
+
 databaseInput :: R.State Search
               -> Array Database
               -> R.Element

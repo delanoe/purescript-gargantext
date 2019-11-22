@@ -71,8 +71,8 @@ data DataField = Gargantext
                | Files
 
 instance showDataField :: Show DataField where
-  show Gargantext   = "Interne"
-  show (External x) = "Externe " <> show x
+  show Gargantext   = "Gargantext"
+  show (External x) = "External" -- <> show x
   show Web          = "Web"
   show Files        = "Files"
 
@@ -83,12 +83,15 @@ instance docDataField :: Doc DataField where
   doc Files        = "Zip files with formats.."
 
 
--- derive instance eqDataField :: Eq DataField
+derive instance eqDataField :: Eq DataField
+
+{-
 instance eqDataField :: Eq DataField where
   eq Gargantext Gargantext = true
   eq (External _) (External _) = true
   eq Web Web = true
   eq _ _ = false
+  -}
 ------------------------------------------------------------------------
 -- | Database search specifications
 
@@ -140,7 +143,6 @@ readDatabase "Isidore"= Just Isidore
 readDatabase _        = Nothing
 
 derive instance eqDatabase :: Eq Database
-
 
 instance encodeJsonDatabase :: EncodeJson Database where
   encodeJson a = encodeJson (show a)
