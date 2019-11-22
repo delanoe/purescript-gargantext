@@ -343,7 +343,7 @@ panelAction :: (Action -> Aff Unit)
             -> R.State (Maybe NodePopup)
             -> R.Element
 panelAction d {id, name, nodeType, action, session, search} p = case action of
-    (Just (Documentation NodeUser))      -> R.fragment [H.div {} [ infoTitle NodeUser
+    (Just (Documentation NodeUser))      -> R.fragment [H.div {style: {margin: "10px"}} [ infoTitle NodeUser
                                                                  , H.p {} [ H.text "This account is personal"]
                                                                  , H.p {} [ H.text "See the instances terms of uses."]
                                                                  ]
@@ -361,16 +361,16 @@ panelAction d {id, name, nodeType, action, session, search} p = case action of
                                            , searchBar {session, langs:allLangs, search}
                                            ]
     (Just Delete)            -> case nodeType of
-        NodeUser -> R.fragment [ H.div {} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]
-        _        -> R.fragment [ H.div {} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."]), reallyDelete d]
+        NodeUser -> R.fragment [ H.div {style: {margin: "10px"}} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]
+        _        -> R.fragment [ H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."]), reallyDelete d]
     (Just (Add xs))          -> createNodeView d {id, name, nodeType} p xs
     _                        -> H.div {} []
   where
-    fragmentPT text = R.fragment [H.p {} [H.text text]]
+    fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 
 
 infoTitle :: NodeType -> R.Element
-infoTitle nt = H.div {} [ H.h3 {} [H.text "Documentation about " ]
+infoTitle nt = H.div {style: {margin: "10px"}} [ H.h3 {} [H.text "Documentation about " ]
                         , H.h3 {className: fldr nt true} [ H.text $ show nt ]
                         ]
 
