@@ -1,25 +1,14 @@
 module Gargantext.Components.Forest.Tree where
 
 import DOM.Simple.Console (log2)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (filter, null)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..), fromJust)
-import Data.Newtype (class Newtype)
-import Data.Tuple (Tuple)
+import Data.Maybe (Maybe)
+-- import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff, runAff)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..))
 import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Components.Forest.Tree.Node.Action.Add
-import Gargantext.Components.Forest.Tree.Node.Action.Rename
-import Gargantext.Components.Forest.Tree.Node.Action.Upload
-import Gargantext.Components.Forest.Tree.Node
-import Gargantext.Components.Forest.Tree.Node.Box
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
+import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
 import Gargantext.Ends (Frontends)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Routes (AppRoute)

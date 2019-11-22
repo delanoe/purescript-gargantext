@@ -5,7 +5,6 @@ import Gargantext.Prelude hiding (max,min)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
-import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq

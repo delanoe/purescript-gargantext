@@ -67,35 +67,30 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
                   then
                     div {}[]
                   else
-                    div {} [ langNav search props.langs
-                           , if s.lang == Nothing
-                               then
-                                 div {} []
-                               else
-                                 div {} [ dataFieldNav search dataFields
-                                              , if isExternal s.datafield
-                                                then databaseInput search props.databases
-                                                else div {} []
-                                              , if isHAL s.datafield
-                                                then orgInput search allOrgs
-                                                else div {} []
+                    div {} [ dataFieldNav search dataFields
+                            , if isExternal s.datafield
+                              then databaseInput search props.databases
+                              else div {} []
 
-                                              , if isIMT s.datafield
-                                                then
-                                                  componentIMT search
-                                                else div {} []
+                            , if isHAL s.datafield
+                              then orgInput search allOrgs
+                              else div {} []
 
-                                              , if isCNRS s.datafield
-                                                then
-                                                  componentCNRS search
-                                                else
-                                                  div {} []
-                                          ]
+                            , if isIMT s.datafield
+                              then componentIMT search
+                              else div {} []
+
+                            , if isCNRS s.datafield
+                              then componentCNRS search
+                              else div {} []
                             ]
+                ]
               ]
-              ]
-
-          , submitButton search
+          , div { className : "panel-footer" }
+                [ if needsLang s.datafield then langNav search props.langs else div {} []
+                , div {} []
+                , div {className: "flex-center"} [submitButton search]
+                ]
           ]
     eqProps p p' =    (fst p.search == fst p'.search)
                    && (p.databases  == p'.databases )
@@ -147,7 +142,11 @@ isCNRS :: Maybe DataField -> Boolean
 isCNRS (Just ( External ( Just ( HAL ( Just ( CNRS _)))))) = true
 isCNRS _ = false
 
-
+needsLang :: Maybe DataField -> Boolean
+needsLang (Just Gargantext) = true
+needsLang (Just Web)        = true
+needsLang (Just ( External ( Just (HAL _)))) = true
+needsLang _ = false
 
 
 isIn :: IMT_org -> Maybe DataField -> Boolean
@@ -175,21 +174,20 @@ updateFilter org _ = (Just (External (Just (HAL (Just (IMT imtOrgs'))))))
                   else Set.fromFoldable [org]
 
 ------------------------------------------------------------------------
-langList :: R.State (Maybe Lang) -> Array Lang -> R.Element
+langList :: R.State Search -> Array Lang -> R.Element
 langList (lang /\ setLang) langs =
               div { className: "form-group" }
                    [ div {className: "text-primary center"} [text "with lang"]
                    , R2.select { className: "form-control"
-                               , on: { change: \e -> setLang
-                                                   $ const
-                                                   $ readLang
-                                                   $ e .. "target" .. "value"
-                                     }
+                               , on: { change: \e -> setLang $ _ {lang = lang' e}}
                                } (liItem <$> langs)
                    ]
     where
       liItem :: Lang -> R.Element
       liItem  lang = option {className : "text-primary center"} [ text (show lang) ]
+
+      lang' e = readLang $ e .. "target" .. "value"
+
 
 langNav :: R.State Search -> Array Lang -> R.Element
 langNav ({lang} /\ setSearch) langs =
@@ -318,12 +316,11 @@ searchInput ({term} /\ setSearch) =
 submitButton :: R.State Search
              -> R.Element
 submitButton (search /\ setSearch) =
-  div { className : "panel-footer" }
-  [ button { className: "btn btn-primary"
-           , type: "button"
-           , on: {click: doSearch}
-           } [ text "Launch Search" ]
-  ]
+  button { className: "btn btn-primary"
+         , type: "button"
+         , on: {click: doSearch}
+         , style: { width: "100%" } 
+         } [ text "Launch Search" ]
   where
     doSearch = \_ -> do
       case search.term of

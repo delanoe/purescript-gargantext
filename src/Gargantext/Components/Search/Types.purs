@@ -40,16 +40,16 @@ data Lang = FR | EN | Universal | No_extraction
 instance showLang :: Show Lang where
   show FR = "FR"
   show EN = "EN"
-  show Universal = "Universal"
-  show No_extraction = "No_extraction"
+  show Universal = "All"
+  show No_extraction = "Nothing"
 
 derive instance eqLang :: Eq Lang
 
 readLang :: String -> Maybe Lang
 readLang "FR"  = Just FR
 readLang "EN"  = Just EN
-readLang "Universal" = Just Universal
-readLang "No_extraction" = Just No_extraction
+readLang "All" = Just Universal
+readLang "Nothing" = Just No_extraction
 readLang _           = Nothing
 
 instance encodeJsonLang :: EncodeJson Lang where

@@ -10,7 +10,6 @@ import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, unSessions)
 import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils (glyphicon)
 
 type Props =
   ( sessions  :: Sessions

@@ -1,32 +1,31 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
 import DOM.Simple.Console (log2)
-import Data.Array (filter, null)
-import Data.Maybe (Maybe(..), fromJust, isJust)
-import Data.Tuple (fst, Tuple(..))
+import Data.Maybe (Maybe(..), fromJust)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
-import Gargantext.Components.Forest.Tree.Node
-import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Components.Forest.Tree.Node.Action.Add
-import Gargantext.Components.Forest.Tree.Node.Action.Rename
-import Gargantext.Components.Forest.Tree.Node.Action.Upload
-import Gargantext.Components.Search.Types
-import Gargantext.Components.Search.SearchBar
+import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (fileTypeView)
+import Gargantext.Components.Search.Types (allLangs)
+import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
 
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Routes (AppRoute, SessionRoute(..))
+import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as Routes
-import Gargantext.Sessions (Session, sessionId, get, put, post, postWwwUrlencoded, delete)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..), NodePath(..), readNodeType, fldr)
-import Gargantext.Utils (id, glyphicon, glyphiconActive)
+import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Types (NodeType(..), NodePath(..), fldr)
+import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
-import Prelude hiding (div)
+import Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (<>), (==))
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -173,6 +172,7 @@ type NodePopupProps =
   , session  :: Session
   )
 
+iconAStyle :: { color :: String, paddingTop :: String, paddingBottom :: String}
 iconAStyle = { color         : "black"
              , paddingTop    : "6px"
              , paddingBottom : "6px"
@@ -200,7 +200,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
                 ]
               ]
             , panelHeading renameBoxOpen
-            , panelBody nodePopupState d
+            , panelBody    nodePopupState d
             , panelAction d {id, name, nodeType, action:nodePopup.action, session, search} mPop
             ]
           , if nodePopup.action == Just SearchBox then
@@ -258,11 +258,11 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
               ]
             editIcon (true /\ _) = H.div {} []
 
-        panelBody nodePopupState d =
+        panelBody nodePopupState d' =
           H.div {className: "panel-body flex-center"}
-          $ map (buttonClick nodePopupState d) buttons
+          $ map (buttonClick nodePopupState d') buttons
 
-        searchIsTexIframe id session search@(search' /\ _) =
+        searchIsTexIframe _id _session search@(search' /\ _) =
           if isIsTex search'.datafield then
             H.div { className: "istex-search panel panel-default" }
             [
@@ -290,8 +290,14 @@ nodePopupView _ p _ = R.createElement el p []
     cpt _ _ = pure $ H.div {} []
 
 
-
--- buttonAction :: NodeAction -> R.Element
+buttonClick :: R.State { id        :: ID
+                        , name     :: Name
+                        , nodeType :: NodeType
+                        , action   :: Maybe NodeAction
+                        }
+            -> (Action -> Aff Unit)
+            -> NodeAction
+            -> R.Element
 buttonClick (node@{action} /\ setNodePopup) _ todo = H.div {className: "col-md-1"}
             [ H.a { style: iconAStyle
                   , className: glyphiconActive (glyphiconNodeAction todo)
@@ -308,8 +314,6 @@ buttonClick (node@{action} /\ setNodePopup) _ todo = H.div {className: "col-md-1
                 action' = if action == (Just todo)
                              then Nothing
                              else (Just todo)
-
-buttonClick _ _ _ = H.div {} []
 
 
 -- END Popup View
@@ -367,7 +371,7 @@ infoTitle nt = H.div {} [ H.h3 {} [H.text "Documentation about " ]
                         , H.h3 {className: fldr nt true} [ H.text $ show nt ]
                         ]
 
-
+reallyDelete :: (Action -> Aff Unit) -> R.Element
 reallyDelete d = H.div {className: "panel-footer"}
             [ H.a { type: "button"
                   , className: "btn glyphicon glyphicon-trash"
@@ -376,7 +380,4 @@ reallyDelete d = H.div {className: "panel-footer"}
                   , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
               [H.text " Yes, delete!"]
             ]
-
-
-
 

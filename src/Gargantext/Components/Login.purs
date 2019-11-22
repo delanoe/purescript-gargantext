@@ -96,14 +96,14 @@ chooserCpt :: R.Component ChooserProps
 chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
   cpt :: Record ChooserProps -> Array R.Element -> R.Element
   cpt {backend, backends, sessions} _ =
-    R.fragment $ new <> active
+    R.fragment $ active <> new <> search
       where
         active = if DS.length ss > 0 then [ H.h3 {} [H.text "Active connection(s)"]
                  , H.ul {} [ renderSessions sessions]
                  ] else [] where
                    Sessions {sessions:ss} = fst sessions
-        new    = [ H.input {className: "form-control", type:"text", placeholder: "Search for your institute"}
-                 , H.h3 {} [H.text "Last connection(s)"]
+        search = [ H.input {className: "form-control", type:"text", placeholder: "Search for your institute"}]
+        new    = [ H.h3 {} [H.text "Last connection(s)"]
                  , H.table {className : "table"}
                  [ H.thead {className: "thead-dark"} [ H.tr {} [ H.th {} [H.text "Label of instance"]
                                                                          , H.th {} [H.text "Gargurl"]
@@ -118,7 +118,7 @@ renderSessions :: R2.Reductor Sessions Sessions.Action -> R.Element
 renderSessions sessions = R.fragment (renderSession sessions <$> unSessions (fst sessions))
   where
     renderSession :: R2.Reductor Sessions Sessions.Action -> Session -> R.Element
-    renderSession sessions' session = H.li {} $ [ H.text $ "Active session: " <> show session ]
+    renderSession sessions' session = H.li {} $ [ H.text $ show session ]
                                             <> [ H.a { on : {click}
                                                      , className: "glyphitem glyphicon glyphicon-log-out"
                                                      , id : "log-out"

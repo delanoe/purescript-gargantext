@@ -5,10 +5,7 @@ module Gargantext.Components.Search.SearchBar
 import Prelude (Unit, bind, discard, not, pure, show, ($), (<>), map)
 import Data.Maybe (Maybe(..))
 import Data.Array (nub, concat)
-import Data.Set as Set
 import Data.Newtype (over)
-import Data.Traversable (traverse_)
-import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Class (liftEffect)
@@ -18,7 +15,7 @@ import Effect.Aff (Aff, launchAff_)
 import Reactix.DOM.HTML as H
 import Gargantext.Components.Search.Types -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Gargantext.Components.Modals.Modal (modalShow)
-import Gargantext.Components.Search.SearchField (Search, defaultSearch, searchField)
+import Gargantext.Components.Search.SearchField (Search, searchField)
 import Gargantext.Sessions (Session)
 
 type Props = ( session   :: Session
