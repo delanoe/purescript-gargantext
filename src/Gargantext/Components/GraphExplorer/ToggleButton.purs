@@ -16,6 +16,7 @@ import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 
@@ -87,11 +88,26 @@ treeToggleButton state =
     , onClick: \_ -> snd state not
     }
 
-sidebarToggleButton :: R.State Boolean -> R.Element
-sidebarToggleButton state =
-  toggleButton {
-      state: state
-    , onMessage: "Hide Sidebar"
-    , offMessage: "Show Sidebar"
-    , onClick: \_ -> snd state not
-    }
+sidebarToggleButton :: R.State GET.SidePanelState -> R.Element
+sidebarToggleButton (state /\ setState) = R.createElement el {} []
+  where
+    el = R.hooksComponent "SidebarToggleButton" cpt
+    cpt {} _ = do
+      pure $
+        H.span {}
+          [
+            H.button
+              { className: "btn btn-primary", on: {click: onClick} }
+              [ H.text (text onMessage offMessage state) ]
+          ]
+    onMessage = "Hide Sidebar"
+    offMessage = "Show Sidebar"
+    text on _off GET.Opened = on
+    text _on off GET.InitialClosed = off
+    text _on off GET.Closed = off
+
+    onClick = \_ -> do
+      setState $ \s -> case s of
+        GET.InitialClosed -> GET.Opened
+        GET.Closed -> GET.Opened
+        GET.Opened -> GET.Closed

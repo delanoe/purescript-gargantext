@@ -75,6 +75,12 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       showLogin <- snd <$> R.useState' true
       selectedNodeIds <- R.useState' $ Set.empty
 
+      R.useEffect' $ do
+        if fst controls.showSidePanel == GET.InitialClosed && (not Set.isEmpty $ fst selectedNodeIds) then
+          snd controls.showSidePanel $ \_ -> GET.Opened
+        else
+          pure unit
+
       pure $
         RH.div
           { id: "graph-explorer" }
@@ -90,7 +96,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                 , row [ tree {mCurrentRoute, treeId} controls showLogin
                       , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12", style: {height: "95%"} } []  -- graph container
                       , mGraph graphRef controls.sigmaRef {graphId, graph, selectedNodeIds}
-                      , mSidebar graph mMetaData {session, selectedNodeIds, showSidePanel: fst controls.showSidePanel}
+                      , mSidebar graph mMetaData {frontends, session, selectedNodeIds, showSidePanel: fst controls.showSidePanel}
                       ]
                 , row [
                   ]
@@ -124,14 +130,16 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
 
     mSidebar :: Maybe Graph.Graph
              -> Maybe GET.MetaData
-             -> { showSidePanel :: Boolean
+             -> { frontends :: Frontends
+                , showSidePanel :: GET.SidePanelState
                 , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
                 , session :: Session }
              -> R.Element
     mSidebar Nothing _ _ = RH.div {} []
     mSidebar _ Nothing _ = RH.div {} []
-    mSidebar (Just graph) (Just metaData) {session, selectedNodeIds, showSidePanel} =
-      Sidebar.sidebar { graph
+    mSidebar (Just graph) (Just metaData) {frontends, session, selectedNodeIds, showSidePanel} =
+      Sidebar.sidebar { frontends
+                      , graph
                       , metaData
                       , session
                       , selectedNodeIds

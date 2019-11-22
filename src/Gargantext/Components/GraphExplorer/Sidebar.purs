@@ -15,15 +15,17 @@ import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Sessions (Session)
 
 type Props =
-  ( graph :: Graph.Graph
+  ( frontends :: Frontends
+  , graph :: Graph.Graph
   , metaData :: GET.MetaData
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , session :: Session
-  , showSidePanel :: Boolean
+  , showSidePanel :: GET.SidePanelState
   )
 
 sidebar :: Record Props -> R.Element
@@ -32,7 +34,9 @@ sidebar props = R.createElement sidebarCpt props []
 sidebarCpt :: R.Component Props
 sidebarCpt = R.hooksComponent "Sidebar" cpt
   where
-    cpt {showSidePanel: false} _children = do
+    cpt {showSidePanel: GET.Closed} _children = do
+      pure $ RH.div {} []
+    cpt {showSidePanel: GET.InitialClosed} _children = do
       pure $ RH.div {} []
     cpt props _children = do
       let nodesMap = SigmaxTypes.nodesMap props.graph
@@ -64,7 +68,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
               ]
             , RH.div { className: "col-md-12", id: "query" }
               [
-                query props.metaData props.session nodesMap props.selectedNodeIds
+                query props.frontends props.metaData props.session nodesMap props.selectedNodeIds
               ]
             ]
           ]
@@ -89,13 +93,13 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
       , "complex systems"
       , "wireless communications" ]
 
-    query _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
-    query (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
+    query _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
+    query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
       query' (head metaData.corpusId)
       where
         query' Nothing = RH.div {} []
         query' (Just corpusId) =
-          GT.tabs {session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: [side corpusId]}
+          GT.tabs {frontends, session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: [side corpusId]}
         q id = case Map.lookup id nodesMap of
           Nothing -> []
           Just n -> words n.label

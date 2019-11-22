@@ -6,7 +6,6 @@ module Gargantext.Components.GraphExplorer.Controls
  , controlsCpt
  , getShowTree, setShowTree
  , getShowControls, setShowControls
- , getShowSidePanel, setShowSidePanel
  , getCursorSize, setCursorSize
  , getMultiNodeSelect, setMultiNodeSelect
  ) where
@@ -25,17 +24,17 @@ import Gargantext.Components.GraphExplorer.Button (centerButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
+import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
-
 type Controls =
   ( cursorSize      :: R.State Number
   , multiNodeSelect :: R.Ref Boolean
   , showControls    :: R.State Boolean
-  , showSidePanel   :: R.State Boolean
+  , showSidePanel   :: R.State GET.SidePanelState
   , showTree        :: R.State Boolean
   , sigmaRef        :: R.Ref Sigmax.Sigma
   )
@@ -125,7 +124,7 @@ useGraphControls = do
   cursorSize      <- R.useState' 10.0
   multiNodeSelect <- R.useRef false
   showControls    <- R.useState' false
-  showSidePanel   <- R.useState' false
+  showSidePanel   <- R.useState' GET.InitialClosed
   showTree <- R.useState' false
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
@@ -141,9 +140,6 @@ useGraphControls = do
 getShowControls :: Record Controls -> Boolean
 getShowControls { showControls: ( should /\ _ ) } = should
 
-getShowSidePanel :: Record Controls -> Boolean
-getShowSidePanel { showSidePanel: ( should /\ _ ) } = should
-
 getShowTree :: Record Controls -> Boolean
 getShowTree { showTree: ( should /\ _ ) } = should
 
@@ -155,9 +151,6 @@ getMultiNodeSelect { multiNodeSelect } = R.readRef multiNodeSelect
 
 setShowControls :: Record Controls -> Boolean -> Effect Unit
 setShowControls { showControls: ( _ /\ set ) } v = set $ const v
-
-setShowSidePanel :: Record Controls -> Boolean -> Effect Unit
-setShowSidePanel { showSidePanel: ( _ /\ set ) } v = set $ const v
 
 setShowTree :: Record Controls -> Boolean -> Effect Unit
 setShowTree { showTree: ( _ /\ set ) } v = set $ not <<< const v
