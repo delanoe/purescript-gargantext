@@ -83,6 +83,7 @@ newtype DocumentsView =
   , date     :: String
   , title    :: String
   , source   :: String
+  , authors  :: String
   , score    :: Int
   , pairs    :: Array Pair
   , delete   :: Boolean
@@ -106,8 +107,9 @@ newtype Response = Response
   }
 
 newtype Hyperdata = Hyperdata
-  { title  :: String
-  , source :: String
+  { authors :: String
+  , title   :: String
+  , source  :: String
   }
 
 --instance decodeHyperdata :: DecodeJson Hyperdata where
@@ -127,9 +129,10 @@ instance decodePair :: DecodeJson Pair where
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj    <- decodeJson json
+    authors <- obj .| "authors"
     title  <- obj .| "title"
     source <- obj .| "source"
-    pure $ Hyperdata { title,source }
+    pure $ Hyperdata { authors, title,source }
 
 {-
 instance decodeResponse :: DecodeJson Response where
@@ -239,8 +242,8 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
   where
     res2corpus :: Response -> DocumentsView
     res2corpus (Response { id, created: date, ngramCount: score, category
-                         , hyperdata: Hyperdata {title, source} }) =
-      DocumentsView { id, date, title, source, score, category, pairs: [], delete: false }
+                         , hyperdata: Hyperdata {authors, title, source} }) =
+      DocumentsView { id, date, title, source, score, authors, category, pairs: [], delete: false }
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
     convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
@@ -294,25 +297,24 @@ pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
           | otherwise = H.text label
         comma = H.span {} [ H.text ", " ]
         rows = row <$> filter (not <<< isDeleted) documents
+        row dv@(DocumentsView {id,score,title,source,date, authors,pairs,delete,category}) =
+          { row:
+            [ H.a { className: gi category, on: {click: markClick} } []
+              -- TODO show date: Year-Month-Day only
+            , maybeStricken delete [ H.text date ]
+            , maybeStricken delete [ H.text title ]
+            , maybeStricken delete [ H.text source ]
+            , maybeStricken delete [ H.text authors ]
+              -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
+            , H.input { type: "checkbox", checked: isChecked id, on: { click: toggleClick } }
+            ]
+          , delete: true }
           where
-            row (DocumentsView {id,score,title,source,date,pairs,delete,category}) =
-              { row:
-                [ H.div {}
-                  [ H.a { className, on: {click: markClick} } []
-                    -- TODO show date: Year-Month-Day only
-                  , maybeStricken [ H.text date ]
-                  , maybeStricken [ H.text source ]
-                  -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
-                  , H.input { type: "checkbox", checked: isChecked id, on: { click: toggleClick } }
-                  ] ]
-              , delete: true }
-              where
-                markClick _ = markCategory session nodeId category [id]
-                toggleClick _ = togglePendingDeletion deletions id
-                className = gi category
-                maybeStricken
-                  | delete = H.div { style: { textDecoration: "line-through" } }
-                  | otherwise = H.div {}
+            markClick _ = markCategory session nodeId category [id]
+            toggleClick _ = togglePendingDeletion deletions id
+        maybeStricken delete
+          | delete = H.div { style: { textDecoration: "line-through" } }
+          | otherwise = H.div {}
 
 ---------------------------------------------------------
 
