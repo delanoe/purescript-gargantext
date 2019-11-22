@@ -5,6 +5,7 @@ module Gargantext.Components.Graph
   -- )
   where
 import Prelude (bind, discard, pure, ($), unit, map)
+import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null, Nullable)
@@ -52,14 +53,32 @@ graphCpt = R.hooksComponent "Graph" cpt
           Sigmax.markSelectedNodes sigma (fst selectedNodeIds) nodesMap
 
       R.useEffectOnce $ do
-        let mSigma = Sigmax.readSigma $ R.readRef props.sigmaRef
+        let rSigma = R.readRef props.sigmaRef
 
-        Sigmax.startSigmaEff props.elRef props.sigmaRef props.sigmaSettings props.forceAtlas2Settings props.graph
+        case Sigmax.readSigma rSigma of
+          Nothing -> do
+            eSigma <- Sigma.sigma {settings: props.sigmaSettings}
+            case eSigma of
+              Left err -> log2 "[graphCpt] error creating sigma" err
+              Right sig -> do
+                Sigmax.writeSigma rSigma $ Just sig
 
-        -- bind the click event only initially, when ref was empty
-        case mSigma of
-          Nothing -> Sigmax.bindSelectedNodesClick props.sigmaRef selectedNodeIds
-          Just _  -> pure unit
+                Sigmax.dependOnContainer props.elRef "[graphCpt] container not found" $ \c -> do
+                  _ <- Sigma.addRenderer sig {
+                      "type": "canvas"
+                    , container: c
+                    }
+                  pure unit
+
+                Sigmax.refreshData sig $ Sigmax.sigmafy props.graph
+
+                Sigmax.setEdges sig false
+                Sigma.startForceAtlas2 sig props.forceAtlas2Settings
+
+                -- bind the click event only initially, when ref was empty
+                Sigmax.bindSelectedNodesClick props.sigmaRef selectedNodeIds
+          Just sig -> do
+            pure unit
 
         delay unit $ \_ -> do
           log "[GraphCpt] cleanup"
