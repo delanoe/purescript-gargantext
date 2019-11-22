@@ -24,7 +24,7 @@ import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.DocsTable (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
-import Gargantext.Routes (SessionRoute(Search, NodeAPI), AppRoute(CorpusDocument))
+import Gargantext.Routes (SessionRoute(Search, NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
 import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..))
