@@ -20,11 +20,12 @@ import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
-import Gargantext.Ends (url)
+import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Search.Types (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
-import Gargantext.Routes (SessionRoute(Search,NodeAPI))
+import Gargantext.Routes (SessionRoute(Search, NodeAPI), AppRoute(CorpusDocument))
+import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
 import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..))
 import Gargantext.Utils (toggleSet)
@@ -55,13 +56,14 @@ instance decodeSearchResults :: DecodeJson SearchResults where
     pure $ SearchResults {results}
 
 type Props =
-  ( nodeId :: Int
-  , listId :: Int
-  , query :: TextQuery
-  , totalRecords :: Int
-  , chart :: R.Element
+  ( chart :: R.Element
   , container :: Record T.TableContainerProps -> R.Element
+  , frontends :: Frontends
+  , listId :: Int
+  , nodeId :: Int
+  , query :: TextQuery
   , session :: Session
+  , totalRecords :: Int
   )
 
 -- | Tracks the ids of documents to delete and that have been deleted
@@ -165,14 +167,14 @@ docView props = R.createElement docViewCpt props []
 docViewCpt :: R.Component Props
 docViewCpt = R.hooksComponent "G.C.FacetsTable.DocView" cpt
   where
-    cpt {session, nodeId, listId, query, totalRecords, chart, container} _ = do
+    cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
       path <- R.useState' $ initialPagePath {nodeId, listId, query, session}
       pure $ H.div { className: "container1" }
         [ H.div { className: "row" }
           [ chart
           , H.div { className: "col-md-12" }
-            [ pageLayout { deletions, totalRecords, container, session, path } ]
+            [ pageLayout { deletions, frontends, totalRecords, container, session, path } ]
           , H.div { className: "col-md-12" }
             [ H.button { style: buttonStyle, on: { click: trashClick deletions } }
               [ H.i { className: "glyphitem glyphicon glyphicon-trash"
@@ -208,7 +210,7 @@ docViewGraph props = R.createElement docViewCpt props []
 docViewGraphCpt :: R.Component Props
 docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
   where
-    cpt {session, nodeId, listId, query, totalRecords, chart, container} _ = do
+    cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
       let buttonStyle = { backgroundColor: "peru", padding : "9px"
                         , color : "white", border : "white", float: "right"}
@@ -222,7 +224,7 @@ docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
           [ H.div { className: "row" }
             [ chart
             , H.div { className: "col-md-12" }
-              [ pageLayout { totalRecords, deletions, container, session, path }
+              [ pageLayout { frontends, totalRecords, deletions, container, session, path }
               , H.button { style: buttonStyle, on: { click: performClick } }
                 [ H.i { className: "glyphitem glyphicon glyphicon-trash"
                       , style: { marginRight : "9px" } } []
@@ -253,7 +255,8 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
     convOrderBy _ = DateAsc -- TODO
 
 type PageLayoutProps =
-  ( totalRecords :: Int
+  ( frontends :: Frontends
+  , totalRecords :: Int
   , deletions :: R.State Deletions
   , container :: Record T.TableContainerProps -> R.Element
   , session :: Session
@@ -269,9 +272,9 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.FacetsTable.PageLayout" cpt
   where
-    cpt {totalRecords, deletions, container, session, path} _ = do
+    cpt {frontends, totalRecords, deletions, container, session, path} _ = do
       useLoader (fst path) loadPage $ \documents ->
-        page {totalRecords, deletions, container, session, path, documents}
+        page {frontends, totalRecords, deletions, container, session, path, documents}
 
 page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
@@ -279,7 +282,7 @@ page props = R.createElement pageCpt props []
 pageCpt :: R.Component PageProps
 pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
   where
-    cpt {totalRecords, container, deletions, documents, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
+    cpt {frontends, totalRecords, container, deletions, documents, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
       T.table { rows, container, colNames, totalRecords, params }
       where
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
@@ -294,14 +297,16 @@ pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
           | id > 1 = H.a { href, target: "blank" } [ H.text label ]
             where href = url session $ NodePath (sessionId session) NodeContact (Just id)
           | otherwise = H.text label
+        documentUrl id =
+            url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
         comma = H.span {} [ H.text ", " ]
         rows = row <$> filter (not <<< isDeleted) documents
         row dv@(DocumentsView {id,score,title,source,date, authors,pairs,delete,category}) =
           { row:
-            [ H.a { className: gi category, on: {click: markClick} } []
+            [ H.div {} [ H.a { className: gi category, on: {click: markClick} } [] ]
               -- TODO show date: Year-Month-Day only
             , maybeStricken delete [ H.text date ]
-            , maybeStricken delete [ H.text title ]
+            , maybeStricken delete [ H.a {target: "_blank", href: documentUrl id} [ H.text title ] ]
             , maybeStricken delete [ H.text source ]
             , maybeStricken delete [ H.text authors ]
               -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
