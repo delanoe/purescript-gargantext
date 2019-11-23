@@ -14,7 +14,7 @@ router = oneOf
   , CorpusDocument   <$> (route "corpus"     *> sid) <*> int
                         <*> (lit "list" *> int)
                         <*> (lit "document" *> int)
-  , Corpus           <$> (route "corpus"     *> sid) <*> int
+  , Corpus            <$> (route "corpus"     *> sid) <*> int
      , Document       <$> (route "list"      *> sid) <*> int 
                         <*> (lit "document" *> int)
      , Dashboard      <$> (route "dashboard" *> sid) <*> int

@@ -1,7 +1,7 @@
 module Gargantext.Components.Nodes.Corpus where
 
 import Prelude ((<<<))
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.??))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array (head)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, throwError)
@@ -24,10 +24,9 @@ corpusLayoutCpt = R.staticComponent "G.P.Corpus.corpusLayout" cpt
   where
     cpt {nodeId} _ =
       H.div {}
-      [ H.h1 {} [H.text "Corpus Description"]
-      , H.p  {} [H.text "Soon: corpus synthesis here (when all others charts/features will be stabilized)."]
+      [ H.iframe { src: gargMd , width: "100%", height: "100%"} []
       ]
-
+    gargMd = "https://hackmd.iscpif.fr/g9Aah4iwQtCayIzsKQjA0Q#"
 newtype CorpusInfo =
   CorpusInfo
   { title        :: String
@@ -65,7 +64,7 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     desc  <- obj .: "desc"
     query <- obj .: "query"
     authors <- obj .: "authors"
-    chart   <- obj .?? "chart"
+    chart   <- obj .:? "chart"
     let totalRecords = 47361 -- TODO
     pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
 
