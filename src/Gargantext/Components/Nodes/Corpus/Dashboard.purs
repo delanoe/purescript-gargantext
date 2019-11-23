@@ -20,7 +20,7 @@ dashboardLayoutCpt = R.staticComponent "G.P.Corpus.Dashboard.dashboardLayout" cp
   where
     cpt _ _ =
       R.fragment
-      [ H.h1 {} [ H.text "IMT DashBoard" ]
+      [ H.h1 {} [ H.text "DashBoard" ]
       , H.div {className: "row"}
         [ H.div {className: "col-md-9 content"} [ chart globalPublis ]
         , H.div {className: "col-md-3 content"} [ chart naturePublis ] ]
