@@ -7,7 +7,9 @@ import Effect.Class (class MonadEffect, liftEffect)
 
 
 logs:: forall message effect.
-       (MonadEffect effect) => Show message => message 
+       (MonadEffect effect)
+       => Show message
+       => message 
        -> effect Unit
 logs = liftEffect <<< log <<< show
 

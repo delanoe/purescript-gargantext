@@ -17,7 +17,6 @@ import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
-import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
 

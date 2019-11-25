@@ -14,7 +14,7 @@ router = oneOf
   , CorpusDocument   <$> (route "corpus"     *> sid) <*> int
                         <*> (lit "list" *> int)
                         <*> (lit "document" *> int)
-  , Corpus           <$> (route "corpus"     *> sid) <*> int
+  , Corpus            <$> (route "corpus"     *> sid) <*> int
      , Document       <$> (route "list"      *> sid) <*> int 
                         <*> (lit "document" *> int)
      , Dashboard      <$> (route "dashboard" *> sid) <*> int
@@ -23,13 +23,16 @@ router = oneOf
      , Lists          <$> (route "lists"     *> sid) <*> int
   , Annuaire          <$> (route "annuaire"  *> sid) <*> int
     , UserPage        <$> (route "user"      *> sid) <*> int
-    , ContactPage     <$> (route "contact"   *> sid) <*> int
+    , ContactPage     <$> (route "annuaire"   *> sid) <*> int
+                          <*> (lit "contact" *> int)
   , Home              <$   lit ""
   ]
  where
     route str      = lit "" *> lit str
+
     int :: Match Int
     int = floor <$> num
+
     sid :: Match SessionId
     sid = SessionId <$> str
 
