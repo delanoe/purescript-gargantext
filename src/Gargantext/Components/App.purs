@@ -48,7 +48,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
     showLogin  <- R.useState' false
     showCorpus <- R.useState' false
     
-    let forested          = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
+    let forested      = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
     let mCurrentRoute = fst route
     let backends      = fromFoldable defaultBackends
     let withSession = \sid f -> maybe' (\_ -> forested $ homeLayout EN) f $ Sessions.lookup sid (fst sessions)
