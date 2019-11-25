@@ -166,6 +166,7 @@ sessionPath (R.Chart {chartType, tabType} i) =
     <> "?ngramsType=" <> showTabType' tabType
     <> "&listType=GraphTerm" -- <> show listId
     -- <> maybe "" (\x -> "&limit=" <> show x) limit
+-- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 
 ------- misc routing stuff
 

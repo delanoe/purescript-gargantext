@@ -64,9 +64,9 @@ tabsCpt = R.hooksComponent "G.P.Annuaire.User.Contacts.Tabs.tabs" cpt
           ]
           where
             patentsView = {session, defaultListId, nodeId, mode: Patents}
-            booksView = {session, defaultListId, nodeId, mode: Books}
-            commView = {session, defaultListId, nodeId, mode: Communication}
-            chart = mempty
+            booksView   = {session, defaultListId, nodeId, mode: Books}
+            commView    = {session, defaultListId, nodeId, mode: Communication}
+            chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
               { frontends, session, nodeId, chart, totalRecords
@@ -88,4 +88,4 @@ ngramsView {session,mode, defaultListId, nodeId} =
   { nodeId, defaultListId, tabType, session, tabNgramType }
   where
     tabNgramType = modeTabType' mode
-    tabType = TabPairing $ TabNgramType $ modeTabType mode
+    tabType      = TabPairing $ TabNgramType $ modeTabType mode

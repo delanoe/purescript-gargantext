@@ -17,7 +17,10 @@ data AppRoute
     | Lists          SessionId Int
   | Annuaire SessionId Int
     | UserPage       SessionId Int
-    | ContactPage    SessionId Int
+    | ContactPage    SessionId AnnuaireId ContactId
+
+type AnnuaireId = Int
+type ContactId = Int
 
 data SessionRoute
   = Tab TabType (Maybe Id)
@@ -44,7 +47,7 @@ instance showAppRoute :: Show AppRoute where
   show (Lists s i)              = "lists"    <> show i <> " (" <> show s <> ")"
   show (Annuaire s i)           = "Annuaire" <> show i <> " (" <> show s <> ")"
   show (UserPage s i)           = "User"     <> show i <> " (" <> show s <> ")"
-  show (ContactPage s i)        = "Contact"  <> show i <> " (" <> show s <> ")"
+  show (ContactPage s _a i)      = "Contact"  <> show i <> " (" <> show s <> ")"
 
 appPath :: AppRoute -> String
 appPath Home                 = ""
@@ -59,4 +62,4 @@ appPath (Texts s i)          = "texts/"      <> show s <> "/" <> show i
 appPath (Lists s i)          = "lists/"      <> show s <> "/" <> show i
 appPath (Annuaire s i)       = "annuaire/"   <> show s <> "/" <> show i
 appPath (UserPage s i)       = "user/"       <> show s <> "/" <> show i
-appPath (ContactPage s i)    = "contact/"    <> show s <> "/" <> show i
+appPath (ContactPage s a i)  = "annuaire"    <> show s <> "/" <> show a <> "/contact/" <> show i

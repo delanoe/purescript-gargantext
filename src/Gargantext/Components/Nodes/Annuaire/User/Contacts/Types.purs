@@ -17,7 +17,8 @@ newtype Contact =
   , parentId :: Maybe Int
   , name :: Maybe String
   , date :: Maybe String
-  , hyperdata :: HyperdataContact }
+  , hyperdata :: HyperdataContact
+  }
 
 derive instance newtypeContact :: Newtype Contact _
 
