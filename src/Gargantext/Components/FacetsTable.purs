@@ -5,15 +5,15 @@ module Gargantext.Components.FacetsTable where
 
 import Prelude
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (filter, (!!))
+import Data.Array (concat, filter, (!!))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Set (Set)
 import Data.Set as Set
-import Data.Tuple (fst)
+import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log)
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Aff (Aff, launchAff_)
@@ -44,7 +44,8 @@ newtype SearchQuery = SearchQuery { query :: TextQuery }
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
   encodeJson (SearchQuery {query})
-     = "query"     := query !! 0 -- TODO anoe
+     -- = "query"     := query !! 0 -- TODO anoe
+    = "query" := concat query
     ~> jsonEmptyObject
 
 newtype SearchResults = SearchResults { results :: Array Response }
@@ -168,8 +169,19 @@ docViewCpt :: R.Component Props
 docViewCpt = R.hooksComponent "G.C.FacetsTable.DocView" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
+      R.useEffect' $ do
+        log2 "[docViewCpt] query" query
+
       deletions <- R.useState' initialDeletions
       path <- R.useState' $ initialPagePath {nodeId, listId, query, session}
+
+      R.useEffect' $ do
+        let ipp = initialPagePath {nodeId, listId, query, session}
+        if fst path == ipp then
+          pure unit
+        else
+          snd path $ const ipp
+
       pure $ H.div { className: "container1" }
         [ H.div { className: "row" }
           [ chart
@@ -237,7 +249,7 @@ initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, que
 
 loadPage :: PagePath -> Aff (Array DocumentsView)
 loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
-  liftEffect $ log "loading documents page: loadPage with Offset and limit"
+  liftEffect $ log2 "[loadPage] query" query
   let p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
   SearchResults res <- post session p $ SearchQuery {query}
   pure $ res2corpus <$> res.results
@@ -273,6 +285,9 @@ pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.FacetsTable.PageLayout" cpt
   where
     cpt {frontends, totalRecords, deletions, container, session, path} _ = do
+      R.useEffect' $ do
+        log2 "[pageLayoutCpt] path" $ fst path
+
       useLoader (fst path) loadPage $ \documents ->
         page {frontends, totalRecords, deletions, container, session, path, documents}
 
@@ -280,10 +295,13 @@ page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
 
 pageCpt :: R.Component PageProps
-pageCpt = R.staticComponent "G.C.FacetsTable.Page" cpt
+pageCpt = R.hooksComponent "G.C.FacetsTable.Page" cpt
   where
     cpt {frontends, totalRecords, container, deletions, documents, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
-      T.table { rows, container, colNames, totalRecords, params }
+      R.useEffect' $ do
+        log2 "[pageCpt] query" query
+
+      pure $ T.table { rows, container, colNames, totalRecords, params }
       where
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
         params = (fst path).params /\ setParams

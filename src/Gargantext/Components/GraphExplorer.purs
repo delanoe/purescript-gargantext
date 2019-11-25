@@ -12,6 +12,7 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Reactix as R
@@ -77,6 +78,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       selectedNodeIds <- R.useState' $ Set.empty
 
       R.useEffect' $ do
+        log2 "[explorerCpt] selectedNodeIds" selectedNodeIds
+
         if fst controls.showSidePanel == GET.InitialClosed && (not Set.isEmpty $ fst selectedNodeIds) then
           snd controls.showSidePanel $ \_ -> GET.Opened
         else
