@@ -166,6 +166,7 @@ settingsBox Texts = SettingsBox { show : true
                                 , doc  : Documentation Texts
                                 , buttons : [ Upload
                                             , Download
+                                            , Delete
                                             ]
                                 }
 
@@ -174,6 +175,7 @@ settingsBox Graph = SettingsBox { show : true
                                 , doc  : Documentation Graph
                                 , buttons : [ Documentation Graph
                                             , Download
+                                            , Delete
                                             ]
                                 }
 
@@ -182,15 +184,21 @@ settingsBox NodeList = SettingsBox { show : true
                                    , doc  : Documentation NodeList
                                    , buttons : [ Upload
                                                , Download
+                                               , Delete
                                                ]
                                 }
 
 settingsBox Dashboard = SettingsBox { show : true
                                     , edit : false
                                     , doc  : Documentation Dashboard
-                                    , buttons : []
+                                    , buttons : [Delete]
                                 }
 
+settingsBox Annuaire = SettingsBox { show : true
+                                    , edit : false
+                                    , doc  : Documentation Annuaire
+                                    , buttons : [Delete]
+                                }
 
 settingsBox _ = SettingsBox { show : false
                             , edit : false
