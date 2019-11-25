@@ -17,7 +17,7 @@ import Gargantext.Components.Login (login)
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Components.Folder (folder)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
-import Gargantext.Components.Nodes.Annuaire.User.Contacts (userLayout)
+import Gargantext.Components.Nodes.Annuaire.User.Contacts (annuaireUserLayout, userLayout)
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
@@ -65,7 +65,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
           Dashboard sid _nodeId  -> withSession sid $ \session -> forested $ dashboardLayout {}
           Annuaire sid nodeId    -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
           UserPage sid nodeId    -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
-          ContactPage sid _aId nodeId -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
+          ContactPage sid aId nodeId -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, nodeId, session }
           CorpusDocument sid corpusId listId nodeId ->
             withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
           Document sid listId nodeId ->
