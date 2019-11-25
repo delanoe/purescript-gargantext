@@ -2,8 +2,9 @@ module Gargantext.Hooks.Loader where
 
 import Gargantext.Prelude
 import Data.Maybe (Maybe(..), isNothing, maybe, maybe')
-import Data.Tuple (fst)
+import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R
@@ -14,18 +15,20 @@ useAff :: forall st.
           Aff st -> R.Hooks (Maybe st)
 useAff loader = do
   (loaded /\ setLoaded) <- R.useState' Nothing
-  R.useEffect1 loader $ do
+  R.useEffect' $ do
     if isNothing loaded then
       R2.affEffect "G.H.Loader.useAff" $
         loader >>= (liftEffect <<< setLoaded <<< const <<< Just)
     else pure R.nothing
   pure loaded
 
-useLoader :: forall path st.
+useLoader :: forall path st. Eq path =>
              path -> (path -> Aff st) -> (st -> R.Element) -> R.Hooks R.Element
 useLoader path loader render
   =   maybe' (\_ -> loadingSpinner {}) render
-  <$> (useAff =<< R.useMemo2 path loader (\_ -> loader path))
+  -- <$> (useAff =<< R.useMemo2 path loader (\_ -> loader path))
+  -- <$> (useAff =<< R2.useCache path (\p -> pure $ loader p))
+  <$> (useAff =<< (loader path))
 
 useLoader2 :: forall path st.
               R.State path -> (path -> Aff st) 
