@@ -1,15 +1,17 @@
 module Gargantext.Components.Nodes.Annuaire.User.Contacts
   ( module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
+  , annuaireUserLayout
   , userLayout )
   where
 
-import Prelude (bind, pure, ($), (<<<), (<>), (<$>))
+import Prelude (bind, pure, ($), (<<<), (<>), (<$>), show, discard)
 import Data.Array (head)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Newtype (unwrap)
 import Data.String (joinWith)
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -18,6 +20,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   ( Contact(..), ContactData, ContactTouch(..), ContactWhere(..)
   , ContactWho(..), HyperData(..), HyperdataContact(..) )
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, get)
@@ -151,3 +154,33 @@ getContact session id = do
   --    throwError $ error "Missing default list"
   pure {contactNode, defaultListId: 424242}
 
+
+type AnnuaireLayoutProps =
+  ( annuaireId :: Int
+  | LayoutProps )
+
+
+annuaireUserLayout :: Record AnnuaireLayoutProps -> R.Element
+annuaireUserLayout props = R.createElement annuaireUserLayoutCpt props []
+
+annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
+annuaireUserLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.annuaireUserLayout" cpt
+  where
+    cpt {annuaireId, frontends, nodeId, session} _ = do
+      useLoader nodeId (getAnnuaireContact session annuaireId) $
+        \contactData@{contactNode: Contact {name, hyperdata}} ->
+          H.ul { className: "col-md-12 list-group" }
+          [ display (fromMaybe "no name" name) (contactInfos hyperdata)
+          , Tabs.tabs {frontends, nodeId, contactData, session} ]
+
+getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData
+getAnnuaireContact session annuaireId id = do
+  contactNode <- get session $ NodeAPI Annuaire (Just annuaireId) $ "contact/" <> (show id)
+  -- TODO: we need a default list for the pairings
+  --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
+  --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
+  --  Just (NodePoly { id: defaultListId }) ->
+  --    pure {contactNode, defaultListId}
+  --  Nothing ->
+  --    throwError $ error "Missing default list"
+  pure {contactNode, defaultListId: 424242}
