@@ -24,7 +24,7 @@ corpusLayoutCpt = R.staticComponent "G.P.Corpus.corpusLayout" cpt
   where
     cpt {nodeId} _ =
       H.div {}
-      [ H.iframe { src: gargMd , width: "100%", height: "100%"} []
+      [ H.iframe { src: gargMd , width: "100%", height: "100%", style: {"border-style": "none"}} []
       ]
     gargMd = "https://hackmd.iscpif.fr/g9Aah4iwQtCayIzsKQjA0Q#"
 newtype CorpusInfo =
