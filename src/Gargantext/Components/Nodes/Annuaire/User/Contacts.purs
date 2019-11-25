@@ -179,7 +179,7 @@ annuaireUserLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.annua
 
 getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData
 getAnnuaireContact session annuaireId id = do
-  contactNode <- get session $ NodeAPI Annuaire (Just annuaireId) $ "/contact" <> (show id)
+  contactNode <- get session $ NodeAPI Annuaire (Just annuaireId) $ "contact/" <> (show id)
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
