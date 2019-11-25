@@ -167,10 +167,6 @@ annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
 annuaireUserLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.annuaireUserLayout" cpt
   where
     cpt {annuaireId, frontends, nodeId, session} _ = do
-      R.useEffect' $ do
-        log2 "[annuaireUserLayoutCpt] annuaireId" annuaireId
-        log2 "[annuaireUserLayoutCpt] nodeId" nodeId
-
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
@@ -179,7 +175,7 @@ annuaireUserLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.annua
 
 getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData
 getAnnuaireContact session annuaireId id = do
-  contactNode <- get session $ NodeAPI Annuaire (Just annuaireId) $ "/contact" <> (show id)
+  contactNode <- get session $ NodeAPI Annuaire (Just annuaireId) $ "contact/" <> (show id)
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
