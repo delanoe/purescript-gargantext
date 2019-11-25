@@ -63,7 +63,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
           Texts sid nodeId  -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
           Lists sid nodeId  -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
           Dashboard sid _nodeId  -> withSession sid $ \session -> forested $ dashboardLayout {}
-          Annuaire sid nodeId    -> withSession sid $ \session -> forested $ annuaireLayout { nodeId, session }
+          Annuaire sid nodeId    -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
           UserPage sid nodeId    -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
           ContactPage sid _aId nodeId -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
           CorpusDocument sid corpusId listId nodeId ->

@@ -117,8 +117,8 @@ pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
         wrapColElts = const identity
-        setParams f = snd pagePath $ \{nodeId, params: ps} ->
-          {params: f ps, nodeId: fst annuairePath}
+        setParams f = snd pagePath $ \pp@{nodeId, params: ps} ->
+          pp {params = f ps, nodeId = fst annuairePath}
         params = T.initialParams /\ setParams
 
 contactCells :: Session -> Frontends -> Maybe Contact -> Array R.Element
