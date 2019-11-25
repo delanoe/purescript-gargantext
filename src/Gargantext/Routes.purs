@@ -17,7 +17,7 @@ data AppRoute
     | Lists          SessionId Int
   | Annuaire SessionId Int
     | UserPage       SessionId Int
-    | ContactPage    SessionId AnnuaireId ContactId
+    | ContactPage    SessionId Int Int
 
 type AnnuaireId = Int
 type ContactId = Int
@@ -47,7 +47,7 @@ instance showAppRoute :: Show AppRoute where
   show (Lists s i)              = "lists"    <> show i <> " (" <> show s <> ")"
   show (Annuaire s i)           = "Annuaire" <> show i <> " (" <> show s <> ")"
   show (UserPage s i)           = "User"     <> show i <> " (" <> show s <> ")"
-  show (ContactPage s _a i)      = "Contact"  <> show i <> " (" <> show s <> ")"
+  show (ContactPage s a i)      = "Contact"  <> show a <> "::" <> show i <> " (" <> show s <> ")"
 
 appPath :: AppRoute -> String
 appPath Home                 = ""

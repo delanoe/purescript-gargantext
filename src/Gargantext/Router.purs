@@ -21,7 +21,7 @@ router = oneOf
      , PGraphExplorer <$> (route "graph"     *> sid) <*> int
      , Texts          <$> (route "texts"     *> sid) <*> int
      , Lists          <$> (route "lists"     *> sid) <*> int
-    , ContactPage     <$> (route "annuaire"   *> sid) <*> int
+    , ContactPage     <$> (route "annuaire"  *> sid) <*> int
                           <*> (lit "contact" *> int)
   , Annuaire          <$> (route "annuaire"  *> sid) <*> int
     , UserPage        <$> (route "user"      *> sid) <*> int
