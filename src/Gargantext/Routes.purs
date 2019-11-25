@@ -62,4 +62,4 @@ appPath (Texts s i)          = "texts/"      <> show s <> "/" <> show i
 appPath (Lists s i)          = "lists/"      <> show s <> "/" <> show i
 appPath (Annuaire s i)       = "annuaire/"   <> show s <> "/" <> show i
 appPath (UserPage s i)       = "user/"       <> show s <> "/" <> show i
-appPath (ContactPage s a i)  = "annuaire"    <> show s <> "/" <> show a <> "/contact/" <> show i
+appPath (ContactPage s a i)  = "annuaire/"   <> show s <> "/" <> show a <> "/contact/" <> show i

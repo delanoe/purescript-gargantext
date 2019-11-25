@@ -13,6 +13,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), Hy
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get)
 import Gargantext.Types (NodePath(..), NodeType(..))
 import Gargantext.Hooks.Loader (useLoader)
@@ -113,7 +114,7 @@ pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
       where
         totalRecords = 4361 -- TODO
         path = fst pagePath
-        rows = (\c -> {row: contactCells session path.frontends c, delete: false}) <$> annuaireTable
+        rows = (\c -> {row: contactCells session path.frontends path.nodeId c, delete: false}) <$> annuaireTable
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
         wrapColElts = const identity
@@ -121,14 +122,18 @@ pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
           pp {params = f ps, nodeId = fst annuairePath}
         params = T.initialParams /\ setParams
 
-contactCells :: Session -> Frontends -> Maybe Contact -> Array R.Element
-contactCells session frontends = maybe [] render
+type AnnuaireId = Int
+
+contactCells :: Session -> Frontends -> AnnuaireId -> Maybe Contact -> Array R.Element
+contactCells session frontends aId = maybe [] render
   where
     render (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) }) =
-      let nodepath = NodePath (sessionId session) NodeContact (Just id)
+      --let nodepath = NodePath (sessionId session) NodeContact (Just id)
+      let nodepath = Routes.ContactPage (sessionId session) aId id
           href = url frontends nodepath in
       [ H.text ""
-      , H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
+      , H.a { href} [ H.text $ maybe "name" identity contact.title ]
+      --, H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
       , H.text $ maybe "No ContactWhere" contactWhereOrg  (head $ ou)
       , H.text $ maybe "No ContactWhere" contactWhereDept (head $ ou)
       , H.div {className: "nooverflow"}
