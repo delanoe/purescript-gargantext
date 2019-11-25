@@ -167,10 +167,6 @@ annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
 annuaireUserLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.annuaireUserLayout" cpt
   where
     cpt {annuaireId, frontends, nodeId, session} _ = do
-      R.useEffect' $ do
-        log2 "[annuaireUserLayoutCpt] annuaireId" annuaireId
-        log2 "[annuaireUserLayoutCpt] nodeId" nodeId
-
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
