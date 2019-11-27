@@ -169,9 +169,6 @@ docViewCpt :: R.Component Props
 docViewCpt = R.hooksComponent "G.C.FacetsTable.DocView" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
-      R.useEffect' $ do
-        log2 "[docViewCpt] query" query
-
       deletions <- R.useState' initialDeletions
       path <- R.useState' $ initialPagePath {nodeId, listId, query, session}
 
@@ -249,7 +246,6 @@ initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, que
 
 loadPage :: PagePath -> Aff (Array DocumentsView)
 loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
-  liftEffect $ log2 "[loadPage] query" query
   let p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
   SearchResults res <- post session p $ SearchQuery {query}
   pure $ res2corpus <$> res.results
@@ -285,9 +281,6 @@ pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.FacetsTable.PageLayout" cpt
   where
     cpt {frontends, totalRecords, deletions, container, session, path} _ = do
-      R.useEffect' $ do
-        log2 "[pageLayoutCpt] path" $ fst path
-
       useLoader (fst path) loadPage $ \documents ->
         page {frontends, totalRecords, deletions, container, session, path, documents}
 
@@ -298,9 +291,6 @@ pageCpt :: R.Component PageProps
 pageCpt = R.hooksComponent "G.C.FacetsTable.Page" cpt
   where
     cpt {frontends, totalRecords, container, deletions, documents, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
-      R.useEffect' $ do
-        log2 "[pageCpt] query" query
-
       pure $ T.table { rows, container, colNames, totalRecords, params }
       where
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}

@@ -202,6 +202,6 @@ useCache i f = do
       Just v -> pure v
   else do
     new <- f i
-    R.unsafeHooksEffect (R.setRef oRef $ Just new)
     R.unsafeHooksEffect (R.setRef iRef $ Just i)
+    R.unsafeHooksEffect (R.setRef oRef $ Just new)
     pure new

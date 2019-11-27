@@ -78,8 +78,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       selectedNodeIds <- R.useState' $ Set.empty
 
       R.useEffect' $ do
-        log2 "[explorerCpt] selectedNodeIds" selectedNodeIds
-
         if fst controls.showSidePanel == GET.InitialClosed && (not Set.isEmpty $ fst selectedNodeIds) then
           snd controls.showSidePanel $ \_ -> GET.Opened
         else
