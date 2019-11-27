@@ -11,6 +11,7 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post, delete)
 import Gargantext.Types (NodeType(..))
 import Prelude hiding (div)
+import Reactix as R
 
 data Action = Submit       String
             | DeleteNode
@@ -91,9 +92,10 @@ instance ntreeFunctor :: Functor NTree where
   map f (NTree x ary) = NTree (f x) (map (map f) ary)
 
 
-newtype LNode = LNode { id :: ID
-                      , name :: Name
+newtype LNode = LNode { id       :: ID
+                      , name     :: Name
                       , nodeType :: NodeType
+                      , open     :: Maybe (R.State Boolean)
                       }
 
 derive instance newtypeLNode :: Newtype LNode _
@@ -106,7 +108,9 @@ instance decodeJsonLNode :: DecodeJson LNode where
     nodeType <- obj .: "type"
     pure $ LNode { id : id_
                  , name
-                 , nodeType}
+                 , nodeType
+                 , open: Nothing
+                 }
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
   decodeJson json = do

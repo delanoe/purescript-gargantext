@@ -42,6 +42,7 @@ type NodeMainSpanProps =
   , name          :: Name
   , nodeType      :: NodeType
   , mCurrentRoute :: Maybe AppRoute
+  , open          :: R.State Boolean
   )
 
 nodeMainSpan :: (Action -> Aff Unit)
@@ -53,7 +54,7 @@ nodeMainSpan :: (Action -> Aff Unit)
 nodeMainSpan d p folderOpen session frontends = R.createElement el p []
   where
     el = R.hooksComponent "NodeMainSpan" cpt
-    cpt {id, name, nodeType, mCurrentRoute} _ = do
+    cpt {id, name, nodeType, mCurrentRoute, open} _ = do
       -- only 1 popup at a time is allowed to be opened
       popupOpen   <- R.useState' (Nothing :: Maybe NodePopup)
       droppedFile <- R.useState' (Nothing :: Maybe DroppedFile)

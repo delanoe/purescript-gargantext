@@ -1,7 +1,8 @@
 module Gargantext.Components.Forest.Tree where
 
+import Prelude ((||))
 import DOM.Simple.Console (log2)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 -- import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
@@ -66,19 +67,19 @@ toHtml :: R.State Reload
        -> Frontends
        -> Maybe AppRoute
        -> R.Element
-toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) session frontends mCurrentRoute = R.createElement el {} []
+toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType, open}) ary)} /\ _) session frontends mCurrentRoute = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     pAction = performAction session reload treeState
 
     cpt props _ = do
-      folderOpen <- R.useState' true
-
-      let withId (NTree (LNode {id: id'}) _) = id'
+      folderOpen@(o /\ _) <- R.useState' false
+      let open' = o || open
+      let withId (NTree (LNode {id: id', open:open'}) _) = id'
 
       pure $ H.ul {}
         [ H.li {}
-          ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute} folderOpen session frontends ]
+          ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute, open:open'} folderOpen session frontends ]
             <> childNodes session frontends reload folderOpen mCurrentRoute ary
           )
         ]
