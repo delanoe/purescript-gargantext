@@ -99,6 +99,8 @@ instance toUrlFrontendAppRoute :: ToUrl Frontend R.AppRoute where
 -- | The currently selected App and Static configurations
 newtype Frontends = Frontends { app :: Frontend, static :: Frontend }
 
+derive instance eqFrontends :: Eq Frontends
+
 instance toUrlFrontendsRoutes :: ToUrl Frontends R.AppRoute where
   toUrl f r = appUrl f (R.appPath r)
 
