@@ -1,12 +1,10 @@
 module Gargantext.Hooks.Sigmax
-  -- (
-  -- )
   where
 
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
 import Data.Array as A
-import Data.Either (Either(..), either)
+import Data.Either (either)
 import Data.Foldable (sequence_)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
@@ -20,11 +18,11 @@ import Data.Tuple.Nested((/\))
 import Effect (Effect)
 import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
-import FFI.Simple (delay, (.=))
+import FFI.Simple ((.=))
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Types (Graph(..), Node(..), NodesMap, SelectedNodeIds)
+import Gargantext.Hooks.Sigmax.Types (Graph(..), NodesMap, SelectedNodeIds)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, flip, pure, unit, ($), (*>), (<$), (<$>), (<<<), (<>), (>>=), not)
+import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), not)
 import Reactix as R
 
 type Sigma =

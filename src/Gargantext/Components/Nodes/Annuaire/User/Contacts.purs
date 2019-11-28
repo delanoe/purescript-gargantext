@@ -20,7 +20,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , ContactWho(..), HyperData(..), HyperdataContact(..) )
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes hiding (Annuaire)
+import Gargantext.Routes as Routes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..))
@@ -143,7 +143,7 @@ userLayoutCpt = R.staticComponent "G.C.Nodes.Annuaire.User.Contacts.userLayout" 
 -- | toUrl to get data
 getContact :: Session -> Int -> Aff ContactData
 getContact session id = do
-  contactNode <- get session $ NodeAPI NodeContact (Just id) ""
+  contactNode <- get session $ Routes.NodeAPI NodeContact (Just id) ""
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
@@ -174,7 +174,7 @@ annuaireUserLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.annua
 
 getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData
 getAnnuaireContact session annuaireId id = do
-  contactNode <- get session $ NodeAPI Annuaire (Just annuaireId) $ "contact/" <> (show id)
+  contactNode <- get session $ Routes.NodeAPI Annuaire (Just annuaireId) $ "contact/" <> (show id)
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of

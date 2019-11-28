@@ -18,6 +18,7 @@ import Reactix.DOM.HTML as RH
 
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax (Sigma)
+import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
@@ -69,11 +70,22 @@ explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
     cpt {frontends, graph, graphId, mCurrentRoute, mMetaData, session, sessions, treeId} _ = do
+      dataRef <- R.useRef graph
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls
-      state <- useExplorerState
       showLogin <- snd <$> R.useState' true
       selectedNodeIds <- R.useState' $ Set.empty
+
+      R.useEffect' $ do
+        case Tuple (R.readRef dataRef) graph of
+          Tuple Nothing Nothing -> pure unit
+          Tuple (Just g1) (Just g2) | SigmaxTypes.eqGraph g1 g2 -> pure unit
+          _ -> do
+            let rSigma = R.readRef controls.sigmaRef
+            Sigmax.cleanupSigma rSigma "explorerCpt"
+            R.setRef dataRef graph
+            snd selectedNodeIds $ const Set.empty
+            snd controls.graphStage $ const Graph.Init
 
       R.useEffect' $ do
         if fst controls.showSidePanel == GET.InitialClosed && (not Set.isEmpty $ fst selectedNodeIds) then
@@ -94,8 +106,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   ]
                 , row [ Controls.controls controls ]
                 , row [ tree {mCurrentRoute, treeId} controls showLogin
-                      , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12", style: {height: "95%"} } []  -- graph container
-                      , mGraph graphRef controls.sigmaRef {graphId, graph, selectedNodeIds}
+                      , RH.div { ref: graphRef, id: "graph-view", className: graphClassName controls, style: {height: "95%"} } []  -- graph container
+                      , mGraph graphRef controls.sigmaRef {graphId, graph, graphStage: controls.graphStage, selectedNodeIds}
                       , mSidebar graph mMetaData {frontends, session, selectedNodeIds, showSidePanel: fst controls.showSidePanel}
                       ]
                 , row [
@@ -110,6 +122,11 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
         tree {mCurrentRoute: route, treeId: root} _ showLogin =
           RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
           [forest {sessions, route, frontends, showLogin}]
+        graphClassName :: Record Controls.Controls -> String
+        graphClassName {showSidePanel: (GET.Opened /\ _), showTree: (true /\ _)} = "col-md-8"
+        graphClassName {showTree: (true /\ _)} = "col-md-10"
+        graphClassName {showSidePanel: (GET.Opened /\ _)} = "col-md-10"
+        graphClassName _ = "col-md-12"
 
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
@@ -123,10 +140,11 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
            -> R.Ref Sigma
            -> { graphId :: GraphId
               , graph :: Maybe Graph.Graph
+              , graphStage :: R.State Graph.Stage
               , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds}
            -> R.Element
     mGraph _ _ {graph: Nothing} = RH.div {} []
-    mGraph graphRef sigmaRef {graphId, graph: Just graph, selectedNodeIds} = graphView graphRef sigmaRef {graphId, graph, selectedNodeIds}
+    mGraph graphRef sigmaRef r@{graph: Just graph} = graphView graphRef sigmaRef $ r { graph = graph }
 
     mSidebar :: Maybe Graph.Graph
              -> Maybe GET.MetaData
@@ -146,27 +164,10 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                       , showSidePanel
                       }
 
-useExplorerState :: R.Hooks (Record GET.State)
-useExplorerState = do pure {}
-{-   corpusId <- R.useState' 0
-  cursorSize <- R.useState' 0.0
-  filePath <- R.useState' ""
-  graphData <- R.useState' initialGraphData
-  legendData <- R.useState' []
-  multiNodeSelection <- R.useState' false
-  selectedNodes <- R.useState' Set.empty
-  showControls <- R.useState' false
-  showSidePanel <- R.useState' false
-  showTree <- R.useState' false
-  sigmaGraphData <- R.useState' (Nothing :: Maybe Graph.Graph)
-  sigmaSettings <- R.useState' Graph.sigmaSettings
-  treeId <- R.useState' (Nothing :: Maybe TreeId) -}
-
-  --treeId : Nothing
-
 type GraphProps = (
     graphId :: GraphId
   , graph :: Graph.Graph
+  , graphStage :: R.State Graph.Stage
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
 )
 
@@ -184,6 +185,7 @@ graphView elRef sigmaRef props = R.createElement el props []
         , selectedNodeIds
         , sigmaSettings: Graph.sigmaSettings
         , sigmaRef: sigmaRef
+        , stage: props.graphStage
         }
 
 convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) Graph.Graph

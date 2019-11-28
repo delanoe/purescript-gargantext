@@ -1,19 +1,20 @@
 module Gargantext.Utils.Reactix where
 
 import Prelude
+
+import DOM.Simple as DOM
+import DOM.Simple.Console (log, log2)
+import DOM.Simple.Document (document)
+import DOM.Simple.Element as Element
+import DOM.Simple.Event as DE
+import DOM.Simple.Types (class IsNode)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple as DOM
-import DOM.Simple.Console (log, log2)
-import DOM.Simple.Document (document)
-import DOM.Simple.Event as DE
-import DOM.Simple.Element as Element
-import DOM.Simple.Types (class IsNode)
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
+import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Effect.Uncurried (EffectFn1, runEffectFn1, mkEffectFn1, mkEffectFn2)
 import FFI.Simple ((...), defineProperty, delay, args2, args3)
@@ -135,7 +136,7 @@ getElementById :: String -> Effect (Maybe DOM.Element)
 getElementById = (flip delay) h
   where
     h id = pure $ toMaybe $ document ... "getElementById" $ [id]
-  
+
 -- We just assume it works, so make sure it's in the html
 getPortalHost :: R.Hooks DOM.Element
 getPortalHost = R.unsafeHooksEffect $ delay unit $ \_ -> pure $ document ... "getElementById" $ ["portal"]
@@ -191,3 +192,19 @@ appendChildToParentId ps c = delay unit $ \_ -> do
 
 effectLink :: Effect Unit -> String -> R.Element
 effectLink eff msg = H.a {on: {click: const eff}} [H.text msg]
+
+useCache :: forall i o. Eq i => i -> (i -> R.Hooks o) -> R.Hooks o
+useCache i f = do
+  iRef <- R.useRef Nothing
+  oRef <- R.useRef Nothing
+  let currI = R.readRef iRef
+  let currO = R.readRef oRef
+  if currI == Just i then
+    case currO of
+      Nothing -> f i -- this one shouldn't happen, but purescript
+      Just v -> pure v
+  else do
+    new <- f i
+    R.unsafeHooksEffect (R.setRef iRef $ Just i)
+    R.unsafeHooksEffect (R.setRef oRef $ Just new)
+    pure new
