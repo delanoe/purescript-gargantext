@@ -5,7 +5,7 @@ module Gargantext.Components.FacetsTable where
 
 import Prelude
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (concat, filter, (!!))
+import Data.Array (concat, filter)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
@@ -13,9 +13,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H

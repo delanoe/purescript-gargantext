@@ -19,7 +19,7 @@ import Data.Lens.Record (prop)
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe, fromJust)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
