@@ -5,8 +5,6 @@ module Gargantext.Components.GraphExplorer.Button
   ) where
 
 import Prelude
-import Data.Maybe (Maybe(..))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H

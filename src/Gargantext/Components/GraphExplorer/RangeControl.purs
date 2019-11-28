@@ -6,7 +6,6 @@ module Gargantext.Components.GraphExplorer.RangeControl
   ) where
 
 import Prelude
-import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
