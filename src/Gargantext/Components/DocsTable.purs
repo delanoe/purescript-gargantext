@@ -16,26 +16,24 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log3)
+import DOM.Simple.Console (log3)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
-------------------------------------------------------------------------
-import Gargantext.Components.Table as T
+
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (AppRoute, SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, post, delete, put)
 import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..))
-------------------------------------------------------------------------
+import Gargantext.Utils.Reactix as R2
 
 data Category = Trash | UnRead | Checked | Topic | Favorite
 
@@ -73,8 +71,8 @@ cat2score Checked  = 2
 cat2score Topic    = 3
 cat2score Favorite = 4
 
--- caroussel :: Category -> R.Element
-caroussel session nodeId setLocalCategories r cat = H.div {className:"flex"} divs
+-- carousel :: Category -> R.Element
+carousel session nodeId setLocalCategories r cat = H.div {className:"flex"} divs
   where
     divs = map (\c -> if cat == c
                         then
@@ -84,15 +82,15 @@ caroussel session nodeId setLocalCategories r cat = H.div {className:"flex"} div
                           H.div { className : icon c (cat == c)
                             , on: { click: onClick nodeId setLocalCategories r c}
                              } []
-                    ) (caroussel' cat)
+                    ) (carousel' cat)
 
-    caroussel' :: Category -> Array Category
-    caroussel' Trash = take 2 categories
-    caroussel' cat   = take 3 $ drop (cat2score cat - 1 ) categories
+    carousel' :: Category -> Array Category
+    carousel' Trash = take 2 categories
+    carousel' cat   = take 3 $ drop (cat2score cat - 1 ) categories
 
-    onClick nodeId setLocalCategories r cat = \_-> do
-      setLocalCategories $ Map.insert r._id cat
-      void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [r._id], category: cat}
+    onClick nodeId' setLocalCats r' cat' = \_-> do
+      setLocalCats $ Map.insert r'._id cat'
+      void $ launchAff $ putCategories session nodeId' $ CategoryQuery {nodeIds: [r'._id], category: cat'}
 
 
 icon :: Category -> Boolean -> String
@@ -409,7 +407,7 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
             row (DocumentsView r) =
               { row:
                 [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                 caroussel session nodeId setLocalCategories r cat
+                 carousel session nodeId setLocalCategories r cat
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { style } [ R2.showText r.date ]

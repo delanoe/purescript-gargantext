@@ -15,7 +15,7 @@ import Gargantext.Ends (url, Frontends)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get)
-import Gargantext.Types (NodePath(..), NodeType(..))
+import Gargantext.Types (NodeType(..))
 import Gargantext.Hooks.Loader (useLoader)
 
 newtype IndividuView =

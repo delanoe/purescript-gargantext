@@ -1,8 +1,8 @@
 module Gargantext.Components.Forest.Tree where
 
-import Prelude ((||))
+import Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>), (||))
 import DOM.Simple.Console (log2)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 -- import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
@@ -14,7 +14,6 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
-import Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
 import Reactix as R
 import Reactix.DOM.HTML as H
 

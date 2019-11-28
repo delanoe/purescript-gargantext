@@ -1,7 +1,7 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex) where
 
-import Prelude
+import Prelude hiding (div)
 import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.String (length)
 import Data.Set as Set

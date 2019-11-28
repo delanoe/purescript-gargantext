@@ -4,14 +4,13 @@ module Gargantext.Components.Nodes.Annuaire.User.Contacts
   , userLayout )
   where
 
-import Prelude (bind, pure, ($), (<<<), (<>), (<$>), show, discard)
+import Prelude (bind, pure, show, ($), (<<<), (<>), (<$>))
 import Data.Array (head)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Data.Newtype (unwrap)
 import Data.String (joinWith)
-import DOM.Simple.Console (log2)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -21,7 +20,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , ContactWho(..), HyperData(..), HyperdataContact(..) )
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes
+import Gargantext.Routes hiding (Annuaire)
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..))

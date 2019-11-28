@@ -2,9 +2,8 @@ module Gargantext.Components.Search.SearchBar
   ( Props, searchBar, searchBarCpt
   ) where
 
-import Prelude (Unit, bind, discard, not, pure, show, ($), (<>), map)
+import Prelude (Unit, bind, discard, pure, ($))
 import Data.Maybe (Maybe(..))
-import Data.Array (nub, concat)
 import Data.Newtype (over)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)

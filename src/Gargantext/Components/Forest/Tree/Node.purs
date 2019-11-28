@@ -1,13 +1,10 @@
 module Gargantext.Components.Forest.Tree.Node where
 
-import Prelude
+import Prelude (class Eq, class Show, show, (&&), (<>), (==))
 import Data.Array (foldl)
-import Gargantext.Types
-import Effect.Uncurried (mkEffectFn1)
--- import Data.Set
-import Data.Array (filter)
 import Reactix.DOM.HTML as H
-import Effect.Aff (Aff, launchAff, runAff)
+
+import Gargantext.Types (NodeType(..))
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
