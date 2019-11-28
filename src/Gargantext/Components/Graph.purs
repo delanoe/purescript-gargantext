@@ -4,27 +4,21 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude (bind, const, discard, pure, ($), unit, map, (==), (&&), class Eq)
+import Prelude (bind, const, discard, pure, ($), unit)
 import Data.Either (Either(..))
-import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Nullable (notNull, null, Nullable)
-import Data.Set as Set
-import Data.Tuple (fst, snd, Tuple(..))
+import Data.Nullable (Nullable)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple (createElement, setAttr)
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
-import Effect.Class (liftEffect)
-import Effect.Timer (setTimeout)
-import FFI.Simple (delay, (..))
+import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Utils.Reactix as R2
 
 type OnProps  = ()
 

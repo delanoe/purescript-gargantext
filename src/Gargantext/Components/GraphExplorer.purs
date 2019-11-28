@@ -5,14 +5,12 @@ import Gargantext.Prelude hiding (max,min)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
-import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Reactix as R
@@ -72,12 +70,6 @@ explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
     cpt {frontends, graph, graphId, mCurrentRoute, mMetaData, session, sessions, treeId} _ = do
-      R.useEffect' $ do
-        case graph of
-          Nothing -> log "[explorerCpt] empty graph data"
-          Just (SigmaxTypes.Graph {nodes}) -> do
-            log2 "[explorerCpt] number of nodes" $ Seq.length nodes
-
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls
@@ -89,7 +81,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
           Tuple Nothing Nothing -> pure unit
           Tuple (Just g1) (Just g2) | SigmaxTypes.eqGraph g1 g2 -> pure unit
           _ -> do
-            log "[explorerCpt] data changed"
             let rSigma = R.readRef controls.sigmaRef
             Sigmax.cleanupSigma rSigma "explorerCpt"
             R.setRef dataRef graph
