@@ -3,7 +3,7 @@ module Gargantext.Utils.Reactix where
 import Prelude
 
 import DOM.Simple as DOM
-import DOM.Simple.Console (log, log2)
+import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE

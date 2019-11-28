@@ -1,23 +1,19 @@
 module Gargantext.Components.Search.Types where
 
-import Prelude (class Eq, class Show, show, ($), (<>), map, (&&), (==))
+import Prelude (class Eq, class Show, show, ($), (<>), map)
 import Data.Set (Set)
 import Data.Ord
 import Data.Set as Set
 import Data.Array (concat)
 import Data.Argonaut (class EncodeJson, class DecodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Ends (class ToUrl, backendUrl)
-import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session(..), post, put)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..))
+import Gargantext.Sessions (Session(..), post)
+import Gargantext.Types (class ToQuery, toQuery)
 import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q

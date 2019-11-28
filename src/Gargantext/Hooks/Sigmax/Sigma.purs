@@ -3,9 +3,9 @@ module Gargantext.Hooks.Sigmax.Sigma where
 import Prelude
 import Data.Either (Either(..))
 import Data.Nullable (notNull, null, Nullable)
-import DOM.Simple.Console (log, log2)
+import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
-import FFI.Simple (delay, (..))
+import FFI.Simple ((..))
 import Effect (Effect, foreachE)
 import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, mkEffectFn1, runEffectFn1, EffectFn2, runEffectFn2, EffectFn3, runEffectFn3, EffectFn4, runEffectFn4)
@@ -82,19 +82,19 @@ foreign import _killRenderer
             (Either err Unit)
 
 getRendererContainer :: Sigma -> Effect Element
-getRendererContainer sigma = runEffectFn1 _getRendererContainer sigma
+getRendererContainer = runEffectFn1 _getRendererContainer
 
 foreign import _getRendererContainer
   :: EffectFn1 Sigma Element
 
 swapRendererContainer :: R.Ref (Nullable Element) -> Sigma -> Effect Unit
-swapRendererContainer ref sigma = do
-  el <- getRendererContainer sigma
+swapRendererContainer ref s = do
+  el <- getRendererContainer s
   log2 "[swapRendererContainer] el" el
   R.setRef ref $ notNull el
 
 setRendererContainer :: Sigma -> Element -> Effect Unit
-setRendererContainer sigma el = runEffectFn2 _setRendererContainer sigma el
+setRendererContainer = runEffectFn2 _setRendererContainer
 
 foreign import _setRendererContainer
   :: EffectFn2 Sigma Element Unit
@@ -119,10 +119,10 @@ bind_ s e h = runEffectFn3 _bind s e (mkEffectFn1 h)
 
 foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 
-unbind_ :: forall e. Sigma -> String -> Effect Unit
+unbind_ :: Sigma -> String -> Effect Unit
 unbind_ s e = runEffectFn2 _unbind s e
 
-foreign import _unbind :: forall e. EffectFn2 Sigma String Unit
+foreign import _unbind :: EffectFn2 Sigma String Unit
 
 forEachNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
 forEachNode s f = runEffectFn2 _forEachNode s (mkEffectFn1 f)
@@ -135,17 +135,17 @@ forEachEdge s f = runEffectFn2 _forEachEdge s (mkEffectFn1 f)
 foreign import _forEachEdge :: EffectFn2 Sigma (EffectFn1 (Record Types.Edge) Unit) Unit
 
 bindClickNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
-bindClickNode sigma f = bind_ sigma "clickNode" $ \e -> do
+bindClickNode s f = bind_ s "clickNode" $ \e -> do
   let node = e .. "data" .. "node" :: Record Types.Node
   f node
 
 unbindClickNode :: Sigma -> Effect Unit
-unbindClickNode sigma = unbind_ sigma "clickNode"
+unbindClickNode s = unbind_ s "clickNode"
 
 setSettings :: forall settings. Sigma -> settings -> Effect Unit
-setSettings sigma settings = do
-  runEffectFn2 _setSettings sigma settings
-  refresh sigma
+setSettings s settings = do
+  runEffectFn2 _setSettings s settings
+  refresh s
 
 foreign import _setSettings :: forall settings. EffectFn2 Sigma settings Unit
 
@@ -153,7 +153,7 @@ startForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
 startForceAtlas2 = runEffectFn2 _startForceAtlas2
 
 restartForceAtlas2 :: Sigma -> Effect Unit
-restartForceAtlas2 sigma = runEffectFn2 _startForceAtlas2 sigma null
+restartForceAtlas2 s = runEffectFn2 _startForceAtlas2 s null
 
 stopForceAtlas2 :: Sigma -> Effect Unit
 stopForceAtlas2 = runEffectFn1 _stopForceAtlas2
@@ -170,15 +170,15 @@ foreign import _killForceAtlas2 :: EffectFn1 Sigma Unit
 foreign import _isForceAtlas2Running :: EffectFn1 Sigma Boolean
 
 refreshForceAtlas :: Sigma -> Effect Unit
-refreshForceAtlas sigma = do
-  isRunning <- isForceAtlas2Running sigma
+refreshForceAtlas s = do
+  isRunning <- isForceAtlas2Running s
   if isRunning then
     pure unit
   else do
     _ <- setTimeout 100 $ do
-      restartForceAtlas2 sigma
+      restartForceAtlas2 s
       _ <- setTimeout 100 $
-        stopForceAtlas2 sigma
+        stopForceAtlas2 s
       pure unit
     pure unit
 
@@ -224,6 +224,6 @@ goTo props cam = do
 foreign import _goTo :: EffectFn2 CameraInstance (Record CameraProps) Unit
 
 goToAllCameras :: Sigma -> Record CameraProps -> Effect Unit
-goToAllCameras sigma props = do
-  cs <- cameras sigma
+goToAllCameras s props = do
+  cs <- cameras s
   foreachE cs (goTo props)

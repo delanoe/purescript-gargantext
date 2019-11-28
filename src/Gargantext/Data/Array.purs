@@ -4,7 +4,6 @@ module Gargantext.Data.Array
 
 import Data.Tuple (Tuple(..))
 import Data.Array as DA
-import Data.Maybe as DM
 import Data.Sequence as DS
 
 

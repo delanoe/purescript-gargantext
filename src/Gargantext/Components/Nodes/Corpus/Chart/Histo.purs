@@ -11,7 +11,6 @@ import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Charts.Options.Color (grey)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
-import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))

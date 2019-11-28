@@ -1,7 +1,7 @@
 module Gargantext.Components.Loader where
 
 import Prelude
-import Data.Maybe (Maybe(..), isNothing, maybe, maybe')
+import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)

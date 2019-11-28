@@ -30,7 +30,7 @@ tabsCpt = R.hooksComponent "G.C.Tab.tabs" cpt
         eq = index == selected
         className = "nav-item nav-link" <> (if eq then " active" else "")
         click e = setActiveTab (const index)
-    item selected index (_ /\ cpt) = tab { selected, index } [ cpt ]
+    item selected index (_ /\ cpt') = tab { selected, index } [ cpt' ]
 
 -- TODO: document what these are (selection, item indices)
 type TabProps = ( selected :: Int, index :: Int )
