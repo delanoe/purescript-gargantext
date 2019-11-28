@@ -4,7 +4,7 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude (bind, discard, pure, ($), unit, map)
+import Prelude (bind, const, discard, pure, ($), unit, map, (==), (&&), class Eq)
 import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
@@ -15,6 +15,7 @@ import Data.Tuple.Nested ((/\))
 import DOM.Simple (createElement, setAttr)
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
+import Effect.Class (liftEffect)
 import Effect.Timer (setTimeout)
 import FFI.Simple (delay, (..))
 import Reactix as R
@@ -29,6 +30,8 @@ type OnProps  = ()
 
 type Graph = SigmaxTypes.Graph SigmaxTypes.Node SigmaxTypes.Edge
 
+data Stage = Init | Ready | Cleanup
+
 type Props sigma forceatlas2 =
   ( elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
@@ -36,6 +39,7 @@ type Props sigma forceatlas2 =
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , sigmaSettings :: sigma
   , sigmaRef :: R.Ref Sigmax.Sigma
+  , stage :: R.State Stage
   )
 
 graph :: forall s fa2. Record (Props s fa2) -> R.Element
@@ -45,14 +49,18 @@ graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = R.hooksComponent "Graph" cpt
   where
     cpt props _ = do
-      let nodesMap = SigmaxTypes.nodesMap props.graph
-      let selectedNodeIds = props.selectedNodeIds
+      stageHooks props
 
-      R.useEffect' $ do
-        Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma ->
-          Sigmax.markSelectedNodes sigma (fst selectedNodeIds) nodesMap
+      -- NOTE: This div is not empty after sigma initializes.
+      -- When we change state, we make it empty though.
+      --pure $ RH.div { ref: props.elRef, style: {height: "95%"} } []
+      pure $ case R.readNullableRef props.elRef of
+        Nothing -> RH.div {} []
+        Just el -> R.createPortal [] el
 
+    stageHooks props@{stage: (Init /\ setStage)} = do
       R.useEffectOnce $ do
+        log "[graphCpt] effect once"
         let rSigma = R.readRef props.sigmaRef
 
         case Sigmax.readSigma rSigma of
@@ -76,20 +84,26 @@ graphCpt = R.hooksComponent "Graph" cpt
                 Sigma.startForceAtlas2 sig props.forceAtlas2Settings
 
                 -- bind the click event only initially, when ref was empty
-                Sigmax.bindSelectedNodesClick props.sigmaRef selectedNodeIds
+                Sigmax.bindSelectedNodesClick props.sigmaRef props.selectedNodeIds
           Just sig -> do
             pure unit
 
+        setStage $ const $ Ready
+
         delay unit $ \_ -> do
-          log "[GraphCpt] cleanup"
+          log "[graphCpt] cleanup"
           pure $ pure unit
 
-      -- NOTE: This div is not empty after sigma initializes.
-      -- When we change state, we make it empty though.
-      --pure $ RH.div { ref: props.elRef, style: {height: "95%"} } []
-      pure $ case R.readNullableRef props.elRef of
-        Nothing -> RH.div {} []
-        Just el -> R.createPortal [] el
+    stageHooks props@{stage: (Ready /\ setStage)} = do
+      let nodesMap = SigmaxTypes.nodesMap props.graph
+
+      -- TODO Probably this can be optimized to re-mark selected nodes only when they changed
+      R.useEffect' $ do
+        Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma ->
+          Sigmax.markSelectedNodes sigma (fst props.selectedNodeIds) nodesMap
+
+    stageHooks _ = pure unit
+
 
 type SigmaSettings =
   ( animationsTime :: Number

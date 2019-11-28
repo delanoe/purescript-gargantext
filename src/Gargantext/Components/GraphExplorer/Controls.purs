@@ -32,6 +32,7 @@ import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( cursorSize      :: R.State Number
+  , graphStage      :: R.State Graph.Stage
   , multiNodeSelect :: R.Ref Boolean
   , showControls    :: R.State Boolean
   , showSidePanel   :: R.State GET.SidePanelState
@@ -76,7 +77,6 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
       localControls <- initialLocalControls
       -- ref to track automatic FA pausing
       -- If user pauses FA before auto is triggered, clear the timeoutId
-      -- TODO: mFAPauseRef needs to be set higher up the tree
       mFAPauseRef <- R.useRef Nothing
 
       --R.useEffect $ handleForceAtlasPause props.sigmaRef localControls.pauseForceAtlas mFAPauseRef
@@ -84,7 +84,6 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 
       R.useEffectOnce' $ do
         timeoutId <- setTimeout 2000 $ do
-          --R.setRef mFAPauseRef Nothing
           let (toggled /\ setToggled) = localControls.pauseForceAtlas
           if toggled then
             setToggled $ const false
@@ -122,6 +121,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
   cursorSize      <- R.useState' 10.0
+  graphStage      <- R.useState' Graph.Init
   multiNodeSelect <- R.useRef false
   showControls    <- R.useState' false
   showSidePanel   <- R.useState' GET.InitialClosed
@@ -130,6 +130,7 @@ useGraphControls = do
   sigmaRef <- R.useRef sigma
 
   pure { cursorSize
+       , graphStage
        , multiNodeSelect
        , showControls
        , showSidePanel
