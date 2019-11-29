@@ -84,7 +84,6 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
           Graph.Init -> R.setRef mFAPauseRef Nothing
           _          -> pure unit
 
-      --R.useEffect $ handleForceAtlasPause props.sigmaRef localControls.pauseForceAtlas mFAPauseRef
       R.useEffect' $ Sigmax.handleForceAtlas2Pause props.sigmaRef localControls.pauseForceAtlas (get1 localControls.showEdges) mFAPauseRef
 
       R.useEffectOnce' $ do

@@ -5,7 +5,9 @@ import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Test.Spec.Discovery (discover)
 import Test.Spec.Reporter.Console (consoleReporter)
-import Test.Spec.Runner (run)
+import Test.Spec.Runner (runSpec)
 
 main :: Effect Unit
-main = discover "Gargantext\\..*Spec" >>= run [consoleReporter] >>> launchAff_
+main = launchAff_ do
+  specs <- discover "Gargantext\\..*Spec"
+  runSpec [consoleReporter] specs

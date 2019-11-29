@@ -8,7 +8,8 @@
         "sass": "sass dist/styles/",
         "dev": "webpack-dev-server --env dev --mode development",
         "repl": "pulp --psc-package repl",
-        "clean": "rm -Rf output"
+        "clean": "rm -Rf output",
+        "test": "pulp test"
     },
     "dependencies": {
         "@babel/polyfill": "^7.0.0",

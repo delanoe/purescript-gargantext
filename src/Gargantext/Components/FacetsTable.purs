@@ -26,7 +26,7 @@ import Gargantext.Routes (SessionRoute(Search, NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
 import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..))
-import Gargantext.Utils (toggleSet)
+import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.DecodeMaybe ((.|))
 ------------------------------------------------------------------------
 
@@ -89,7 +89,14 @@ newtype DocumentsView =
   , pairs    :: Array Pair
   , delete   :: Boolean
   , category :: Category
+  , publication_year :: Int
+  , publication_month :: Int
+  , publication_day  :: Int
   }
+
+publicationDate :: DocumentsView -> String
+publicationDate (DocumentsView {publication_year, publication_month, publication_day}) =
+  (zeroPad 2 publication_year) <> "-" <> (zeroPad 2 publication_month) <> "-" <> (zeroPad 2 publication_day)
 
 derive instance genericDocumentsView :: Generic DocumentsView _
 
@@ -111,6 +118,9 @@ newtype Hyperdata = Hyperdata
   { authors :: String
   , title   :: String
   , source  :: String
+  , publication_year :: Int
+  , publication_month :: Int
+  , publication_day :: Int
   }
 
 --instance decodeHyperdata :: DecodeJson Hyperdata where
@@ -133,7 +143,10 @@ instance decodeHyperdata :: DecodeJson Hyperdata where
     authors <- obj .| "authors"
     title  <- obj .| "title"
     source <- obj .| "source"
-    pure $ Hyperdata { authors, title,source }
+    publication_year <- obj .: "publication_year"
+    publication_month <- obj .: "publication_month"
+    publication_day <- obj .: "publication_day"
+    pure $ Hyperdata { authors, title, source, publication_year, publication_month, publication_day }
 
 {-
 instance decodeResponse :: DecodeJson Response where
@@ -250,8 +263,20 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
   where
     res2corpus :: Response -> DocumentsView
     res2corpus (Response { id, created: date, ngramCount: score, category
-                         , hyperdata: Hyperdata {authors, title, source} }) =
-      DocumentsView { id, date, title, source, score, authors, category, pairs: [], delete: false }
+                         , hyperdata: Hyperdata {authors, title, source, publication_year, publication_month, publication_day} }) =
+      DocumentsView { id
+                    , date
+                    , title
+                    , source
+                    , score
+                    , authors
+                    , category
+                    , pairs: []
+                    , delete: false
+                    , publication_year
+                    , publication_month
+                    , publication_day
+                    }
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
     convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
@@ -308,11 +333,11 @@ pageCpt = R.hooksComponent "G.C.FacetsTable.Page" cpt
             url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
         comma = H.span {} [ H.text ", " ]
         rows = row <$> filter (not <<< isDeleted) documents
-        row dv@(DocumentsView {id,score,title,source,date, authors,pairs,delete,category}) =
+        row dv@(DocumentsView {id, score, title, source, authors, pairs, delete, category}) =
           { row:
             [ H.div {} [ H.a { className: gi category, on: {click: markClick} } [] ]
               -- TODO show date: Year-Month-Day only
-            , maybeStricken delete [ H.text date ]
+            , maybeStricken delete [ H.text $ publicationDate dv ]
             , maybeStricken delete [ H.a {target: "_blank", href: documentUrl id} [ H.text title ] ]
             , maybeStricken delete [ H.text source ]
             , maybeStricken delete [ H.text authors ]

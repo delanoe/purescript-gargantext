@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Corpus.Document where
 
-import Prelude (class Show, bind, identity, mempty, pure, ($))
+import Prelude (class Show, bind, identity, mempty, pure, ($), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -23,6 +23,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), TermList, ScoreType(..))
+import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
 
 type DocPath =
@@ -142,6 +143,12 @@ data Document
     --, url                :: Maybe String
     --, text               :: Maybe String
     }
+
+publicationDate :: Document -> String
+publicationDate (Document doc@{publication_year: Nothing}) = ""
+publicationDate (Document doc@{publication_year: Just py, publication_month: Nothing}) = U.zeroPad 2 py
+publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Nothing}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm)
+publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Just pd}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm) <> "-" <> (U.zeroPad 2 pd)
 
 defaultNodeDocument :: NodeDocument
 defaultNodeDocument =
@@ -322,7 +329,7 @@ docViewSpec = simpleSpec performAction render
               , li' [ span [] [text' doc.authors]
                     , badge "authors"
                     ]
-              , li' [ span [] [text' doc.publication_date]
+              , li' [ span [] [text $ publicationDate $ Document doc]
                     , badge "date"
                     ]
               ]
