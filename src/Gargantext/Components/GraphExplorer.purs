@@ -11,9 +11,9 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
-import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
@@ -31,6 +31,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
 import Gargantext.Sessions (Session, Sessions, get)
 import Gargantext.Types (NodeType(Graph))
+import Gargantext.Utils.Reactix as R2
 
 type GraphId = Int
 
@@ -41,7 +42,6 @@ type LayoutProps =
   , session :: Session
   , sessions :: Sessions
   , showLogin :: R.State Boolean
-  , treeId :: Maybe Int
   )
 
 type Props = (
@@ -57,12 +57,12 @@ explorerLayout props = R.createElement explorerLayoutCpt props []
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
   where
-    cpt {graphId, mCurrentRoute, treeId, session, sessions, frontends, showLogin} _ = do
+    cpt {graphId, mCurrentRoute, session, sessions, frontends, showLogin} _ = do
       useLoader graphId (getNodes session) handler
       where
         handler loaded =
           explorer { graphId, mCurrentRoute, mMetaData
-                   , treeId, session, sessions, graph: Just graph, frontends, showLogin}
+                   , session, sessions, graph: Just graph, frontends, showLogin}
           where (Tuple mMetaData graph) = convert loaded
 
 --------------------------------------------------------------
@@ -72,7 +72,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt {frontends, graph, graphId, mCurrentRoute, mMetaData, session, sessions, treeId, showLogin} _ = do
+    cpt {frontends, graph, graphId, mCurrentRoute, mMetaData, session, sessions, showLogin} _ = do
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls
@@ -107,7 +107,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
                 , row [ Controls.controls controls ]
-                , row [ tree (fst controls.showTree) {mCurrentRoute, treeId} (snd showLogin)
+                , row [ tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
                       , RH.div { ref: graphRef, id: "graph-view", className: graphClassName controls, style: {height: "95%"} } []  -- graph container
                       , mGraph graphRef controls.sigmaRef {graphId, graph, graphStage: controls.graphStage, selectedNodeIds}
                       , mSidebar graph mMetaData {frontends, session, selectedNodeIds, showSidePanel: fst controls.showSidePanel}
@@ -118,18 +118,12 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
               ]
             ]
           ]
-      where
-        -- tree {treeId: Nothing} _ _ = RH.div { id: "tree" } []
-        tree :: Boolean -> {mCurrentRoute :: AppRoute, treeId :: Maybe Int} -> ((Boolean -> Boolean) -> Effect Unit) -> R.Element
-        tree false _ _ = RH.div { id: "tree" } []
-        tree true {mCurrentRoute: route, treeId: root} showLogin =
-          RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
-          [forest {sessions, route, frontends, showLogin}]
-        graphClassName :: Record Controls.Controls -> String
-        graphClassName {showSidePanel: (GET.Opened /\ _), showTree: (true /\ _)} = "col-md-8"
-        graphClassName {showTree: (true /\ _)} = "col-md-10"
-        graphClassName {showSidePanel: (GET.Opened /\ _)} = "col-md-10"
-        graphClassName _ = "col-md-12"
+
+    graphClassName :: Record Controls.Controls -> String
+    graphClassName {showSidePanel: (GET.Opened /\ _), showTree: (true /\ _)} = "col-md-8"
+    graphClassName {showTree: (true /\ _)} = "col-md-10"
+    graphClassName {showSidePanel: (GET.Opened /\ _)} = "col-md-10"
+    graphClassName _ = "col-md-12"
 
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
@@ -138,6 +132,15 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     col       = RH.div { className: "col-md-4" }
     pullLeft  = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }
+
+    tree :: Boolean
+         -> {sessions :: Sessions, mCurrentRoute :: AppRoute, frontends :: Frontends}
+         -> R2.Setter Boolean
+         -> R.Element
+    tree false _ _ = RH.div { id: "tree" } []
+    tree true {sessions, mCurrentRoute: route, frontends} showLogin =
+      RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
+      [forest {sessions, route, frontends, showLogin}]
 
     mGraph :: R.Ref (Nullable Element)
            -> R.Ref Sigma
