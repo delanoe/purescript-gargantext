@@ -156,7 +156,7 @@ let additions =
           mkPackage
           [ "prelude", "effect", "arrays", "spec", "node-fs" ]
           "https://github.com/purescript-spec/purescript-spec-discovery"
-          "v3.1.0"
+          "v4.0.0"
       , spec-quickcheck =
           mkPackage
           [ "prelude", "aff", "random", "quickcheck", "spec" ]

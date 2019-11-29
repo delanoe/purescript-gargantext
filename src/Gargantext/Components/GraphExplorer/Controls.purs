@@ -11,10 +11,10 @@ module Gargantext.Components.GraphExplorer.Controls
  ) where
 
 import Data.Maybe (Maybe(..))
-import DOM.Simple.Console (log, log2)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\), get1)
 import Effect (Effect)
-import Effect.Timer (clearTimeout, setTimeout)
+import Effect.Timer (setTimeout)
 import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -26,12 +26,12 @@ import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelS
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( cursorSize      :: R.State Number
+  , graphStage      :: R.State Graph.Stage
   , multiNodeSelect :: R.Ref Boolean
   , showControls    :: R.State Boolean
   , showSidePanel   :: R.State GET.SidePanelState
@@ -76,15 +76,18 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
       localControls <- initialLocalControls
       -- ref to track automatic FA pausing
       -- If user pauses FA before auto is triggered, clear the timeoutId
-      -- TODO: mFAPauseRef needs to be set higher up the tree
       mFAPauseRef <- R.useRef Nothing
 
-      --R.useEffect $ handleForceAtlasPause props.sigmaRef localControls.pauseForceAtlas mFAPauseRef
+      -- when graph is changed, cleanup the mFAPauseRef
+      R.useEffect' $ do
+        case fst props.graphStage of
+          Graph.Init -> R.setRef mFAPauseRef Nothing
+          _          -> pure unit
+
       R.useEffect' $ Sigmax.handleForceAtlas2Pause props.sigmaRef localControls.pauseForceAtlas (get1 localControls.showEdges) mFAPauseRef
 
       R.useEffectOnce' $ do
         timeoutId <- setTimeout 2000 $ do
-          --R.setRef mFAPauseRef Nothing
           let (toggled /\ setToggled) = localControls.pauseForceAtlas
           if toggled then
             setToggled $ const false
@@ -122,6 +125,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 useGraphControls :: R.Hooks (Record Controls)
 useGraphControls = do
   cursorSize      <- R.useState' 10.0
+  graphStage      <- R.useState' Graph.Init
   multiNodeSelect <- R.useRef false
   showControls    <- R.useState' false
   showSidePanel   <- R.useState' GET.InitialClosed
@@ -130,6 +134,7 @@ useGraphControls = do
   sigmaRef <- R.useRef sigma
 
   pure { cursorSize
+       , graphStage
        , multiNodeSelect
        , showControls
        , showSidePanel

@@ -1,6 +1,6 @@
 module Gargantext.Hooks.Sigmax.Types where
 
-import Prelude (map, ($))
+import Prelude (map, ($), (&&), (==))
 import Data.Map as Map
 import Data.Sequence (Seq)
 import Data.Set as Set
@@ -35,3 +35,6 @@ nodesMap :: Graph Node Edge -> NodesMap
 nodesMap graph = do
   let (Graph {nodes}) = graph
   Map.fromFoldable $ map (\n -> Tuple n.id n) nodes
+
+eqGraph :: (Graph Node Edge) -> (Graph Node Edge) -> Boolean
+eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n2) && (e1 == e2)

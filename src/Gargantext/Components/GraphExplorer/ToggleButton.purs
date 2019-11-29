@@ -9,7 +9,6 @@ module Gargantext.Components.GraphExplorer.ToggleButton
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
 import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -18,7 +17,6 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Sigma as Sigma
 
 type Props = (
     state :: R.State Boolean

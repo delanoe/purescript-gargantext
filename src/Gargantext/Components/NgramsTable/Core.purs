@@ -50,14 +50,14 @@ import Control.Monad.Cont.Trans (lift)
 import Data.Array (head)
 import Data.Array as A
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
-                     , jsonEmptyObject, (:=), (~>), (.:), (.??) )
+                     , jsonEmptyObject, (:=), (~>), (.:), (.:!) )
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
 import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
 import Data.Newtype (class Newtype)
-import Data.Lens (Iso', Lens', use, view, (%=), (.~), (?=), (^.), (^?))
+import Data.Lens (Iso', Lens', use, view, (%=), (.~), (?=), (^?))
 import Data.Lens.Common (_Just)
 import Data.Lens.At (class At, at)
 import Data.Lens.Index (class Index, ix)
@@ -184,8 +184,8 @@ instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
     ngrams      <- obj .:  "ngrams"
     list        <- obj .:  "list"
     occurrences <- obj .:  "occurrences"
-    parent      <- obj .?? "parent"
-    root        <- obj .?? "root"
+    parent      <- obj .:! "parent"
+    root        <- obj .:! "root"
     children'   <- obj .:  "children"
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
     pure $ NgramsElement {ngrams, list, occurrences, parent, root, children}
@@ -354,8 +354,8 @@ instance encodeJsonReplace :: EncodeJson a => EncodeJson (Replace a) where
 instance decodeJsonReplace :: (DecodeJson a, Eq a) => DecodeJson (Replace a) where
   decodeJson json = do
     obj  <- decodeJson json
-    mold <- obj .?? "old"
-    mnew <- obj .?? "new"
+    mold <- obj .:! "old"
+    mnew <- obj .:! "new"
     case Tuple mold mnew of
       Tuple (Just old) (Just new) -> pure $ replace old new
       Tuple Nothing Nothing       -> pure Keep

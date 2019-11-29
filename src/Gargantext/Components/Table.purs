@@ -7,8 +7,6 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
-import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Utils.Reactix as R2

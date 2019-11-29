@@ -76,7 +76,8 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
               \session ->
                 simpleLayout $
                   explorerLayout { graphId, mCurrentRoute, session
-                                 , sessions: (fst sessions), treeId: Nothing, frontends}
+                                 , sessions: (fst sessions), frontends
+                                 , showLogin}
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
 forestLayout frontends sessions route showLogin child =

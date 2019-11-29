@@ -7,7 +7,6 @@ module Gargantext.Components.GraphExplorer.SlideButton
 
 import Global (readFloat)
 import Prelude
-import Data.Maybe (Maybe(..))
 import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)

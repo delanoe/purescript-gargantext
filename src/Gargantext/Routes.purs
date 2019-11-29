@@ -19,6 +19,8 @@ data AppRoute
     | UserPage       SessionId Int
     | ContactPage    SessionId Int Int
 
+derive instance eqAppRoute :: Eq AppRoute
+
 type AnnuaireId = Int
 type ContactId = Int
 
