@@ -13,6 +13,7 @@ import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
+import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
@@ -39,6 +40,7 @@ type LayoutProps =
   , mCurrentRoute :: AppRoute
   , session :: Session
   , sessions :: Sessions
+  , showLogin :: R.State Boolean
   , treeId :: Maybe Int
   )
 
@@ -55,11 +57,12 @@ explorerLayout props = R.createElement explorerLayoutCpt props []
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
   where
-    cpt {graphId, mCurrentRoute, treeId, session, sessions, frontends} _ = do
+    cpt {graphId, mCurrentRoute, treeId, session, sessions, frontends, showLogin} _ = do
       useLoader graphId (getNodes session) handler
       where
         handler loaded =
-          explorer {graphId, mCurrentRoute, mMetaData, treeId, session, sessions, graph: Just graph, frontends}
+          explorer { graphId, mCurrentRoute, mMetaData
+                   , treeId, session, sessions, graph: Just graph, frontends, showLogin}
           where (Tuple mMetaData graph) = convert loaded
 
 --------------------------------------------------------------
@@ -69,11 +72,10 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt {frontends, graph, graphId, mCurrentRoute, mMetaData, session, sessions, treeId} _ = do
+    cpt {frontends, graph, graphId, mCurrentRoute, mMetaData, session, sessions, treeId, showLogin} _ = do
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls
-      showLogin <- snd <$> R.useState' true
       selectedNodeIds <- R.useState' $ Set.empty
 
       R.useEffect' $ do
@@ -105,7 +107,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
                 , row [ Controls.controls controls ]
-                , row [ tree {mCurrentRoute, treeId} controls showLogin
+                , row [ tree (fst controls.showTree) {mCurrentRoute, treeId} (snd showLogin)
                       , RH.div { ref: graphRef, id: "graph-view", className: graphClassName controls, style: {height: "95%"} } []  -- graph container
                       , mGraph graphRef controls.sigmaRef {graphId, graph, graphStage: controls.graphStage, selectedNodeIds}
                       , mSidebar graph mMetaData {frontends, session, selectedNodeIds, showSidePanel: fst controls.showSidePanel}
@@ -118,8 +120,9 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
           ]
       where
         -- tree {treeId: Nothing} _ _ = RH.div { id: "tree" } []
-        tree _ {showTree: false /\ _} _ = RH.div { id: "tree" } []
-        tree {mCurrentRoute: route, treeId: root} _ showLogin =
+        tree :: Boolean -> {mCurrentRoute :: AppRoute, treeId :: Maybe Int} -> ((Boolean -> Boolean) -> Effect Unit) -> R.Element
+        tree false _ _ = RH.div { id: "tree" } []
+        tree true {mCurrentRoute: route, treeId: root} showLogin =
           RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
           [forest {sessions, route, frontends, showLogin}]
         graphClassName :: Record Controls.Controls -> String
