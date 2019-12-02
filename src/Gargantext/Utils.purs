@@ -6,7 +6,6 @@ import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Set as Set
 import Data.Set (Set)
 import Data.String (length)
-import Math (log)
 
 -- | Astonishingly, not in the prelude
 id :: forall a. a -> a
@@ -58,13 +57,6 @@ glyphicon t = "btn glyphitem glyphicon glyphicon-" <> t
 
 glyphiconActive :: String -> Boolean -> String
 glyphiconActive icon b = glyphicon icon <> if b then " active" else ""
-
--- | Logarithm with given base
-logb :: Number -> Number -> Number
-logb base n = (log n) / (log base)
-
-log10 :: Number -> Number
-log10 = logb 10.0
 
 -- | Format a number with specified amount of zero-padding
 zeroPad :: Int -> Int -> String
