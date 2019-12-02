@@ -11,7 +11,7 @@ import Data.Tuple.Nested((/\))
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
-import Gargantext.Data.Maybe (catMaybes)
+import Gargantext.Data.Array (catMaybes)
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
 import Gargantext.Components.Graph as Graph
