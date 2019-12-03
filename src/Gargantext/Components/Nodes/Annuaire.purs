@@ -56,9 +56,10 @@ annuaire props = R.createElement annuaireCpt props []
 
 -- Abuses closure to work around the Loader
 annuaireCpt :: R.Component AnnuaireProps
-annuaireCpt = R.staticComponent "G.P.Annuaire.annuaire" cpt
+annuaireCpt = R.hooksComponent "G.P.Annuaire.annuaire" cpt
   where
-    cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ = R.fragment
+    cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ =
+      pure $ R.fragment
       [ T.tableHeaderLayout headerProps
       , H.p {} []
       , H.div {className: "col-md-3"}

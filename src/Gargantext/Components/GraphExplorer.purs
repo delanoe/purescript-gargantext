@@ -5,6 +5,7 @@ import Gargantext.Prelude hiding (max,min)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
@@ -77,6 +78,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls
       selectedNodeIds <- R.useState' $ Set.empty
+      selectedEdgeIds <- R.useState' $ Set.empty
 
       R.useEffect' $ do
         case Tuple (R.readRef dataRef) graph of
@@ -87,6 +89,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
             Sigmax.cleanupSigma rSigma "explorerCpt"
             R.setRef dataRef graph
             snd selectedNodeIds $ const Set.empty
+            snd selectedEdgeIds $ const Set.empty
             snd controls.graphStage $ const Graph.Init
 
       R.useEffect' $ do
@@ -109,7 +112,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                 , row [ Controls.controls controls ]
                 , row [ tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
                       , RH.div { ref: graphRef, id: "graph-view", className: graphClassName controls, style: {height: "95%"} } []  -- graph container
-                      , mGraph graphRef controls.sigmaRef {graphId, graph, graphStage: controls.graphStage, selectedNodeIds}
+                      , mGraph graphRef controls.sigmaRef {graphId, graph, graphStage: controls.graphStage, selectedNodeIds, selectedEdgeIds}
                       , mSidebar graph mMetaData {frontends, session, selectedNodeIds, showSidePanel: fst controls.showSidePanel}
                       ]
                 , row [
@@ -147,7 +150,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
            -> { graphId :: GraphId
               , graph :: Maybe Graph.Graph
               , graphStage :: R.State Graph.Stage
-              , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds}
+              , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+              , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds}
            -> R.Element
     mGraph _ _ {graph: Nothing} = RH.div {} []
     mGraph graphRef sigmaRef r@{graph: Just graph} = graphView graphRef sigmaRef $ r { graph = graph }
@@ -175,6 +179,7 @@ type GraphProps = (
   , graph :: Graph.Graph
   , graphStage :: R.State Graph.Stage
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds
 )
 
 graphView :: R.Ref (Nullable Element) -> R.Ref Sigma -> Record GraphProps -> R.Element
@@ -183,11 +188,12 @@ graphView elRef sigmaRef props = R.createElement el props []
   where
     --memoCmp props1 props2 = props1.graphId == props2.graphId
     el = R.hooksComponent "GraphView" cpt
-    cpt {graphId, graph, selectedNodeIds} _children = do
+    cpt {graphId, graph, selectedEdgeIds, selectedNodeIds} _children = do
       pure $ Graph.graph {
           elRef
         , forceAtlas2Settings: Graph.forceAtlas2Settings
         , graph
+        , selectedEdgeIds
         , selectedNodeIds
         , sigmaSettings: Graph.sigmaSettings
         , sigmaRef: sigmaRef
@@ -209,8 +215,13 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
         }
       where
         cDef (GET.Cluster {clustDefault}) = clustDefault
+    nodesMap = SigmaxTypes.nodesMap $ Seq.toUnfoldable nodes
     edges = foldMap edgeFn r.edges
-    edgeFn (GET.Edge e) = Seq.singleton {id : e.id_, source : e.source, target : e.target}
+    edgeFn (GET.Edge e) = Seq.singleton {id : e.id_, color, size: 1.5, source : e.source, target : e.target}
+      where
+        color = case Map.lookup e.source nodesMap of
+          Nothing -> "#000000"
+          Just node -> node.color
 
 defaultPalette :: Array String
 defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#33c8f3","#739e9a","#caeca3","#f6f7e5","#f9bcca","#ccb069","#c9ffde","#c58683","#6c9eb0","#ffd3cf","#ccffc7","#52a1b0","#d2ecff","#99fffe","#9295ae","#5ea38b","#fff0b3","#d99e68"]

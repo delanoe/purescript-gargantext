@@ -1,8 +1,6 @@
 module Gargantext.Hooks.Sigmax
   where
 
-import DOM.Simple.Console (log, log2)
-import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Either (either)
 import Data.Foldable (sequence_)
@@ -15,12 +13,14 @@ import Data.Set as Set
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested((/\))
+import DOM.Simple.Console (log, log2)
+import DOM.Simple.Types (Element)
 import Effect (Effect)
 import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple ((.=))
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Types (Graph(..), NodesMap, SelectedNodeIds)
+import Gargantext.Hooks.Sigmax.Types (Graph(..), EdgesMap, NodesMap, SelectedNodeIds, SelectedEdgeIds)
 import Gargantext.Utils.Reactix as R2
 import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), not)
 import Reactix as R
@@ -153,6 +153,21 @@ setEdges sigma val = do
       Sigma.setSettings sigma settings
     _ -> pure unit
 
+markSelectedEdges :: Sigma.Sigma -> SelectedEdgeIds -> EdgesMap -> Effect Unit
+markSelectedEdges sigma selectedEdgeIds graphEdges = do
+  Sigma.forEachEdge sigma \e -> do
+    case Map.lookup e.id graphEdges of
+      Nothing -> error $ "Edge id " <> e.id <> " not found in graphEdges map"
+      Just {color} -> do
+        let newColor =
+              if Set.member e.id selectedEdgeIds then
+                "#ff0000"
+              else
+                color
+        _ <- pure $ (e .= "color") newColor
+        pure unit
+  Sigma.refresh sigma
+
 markSelectedNodes :: Sigma.Sigma -> SelectedNodeIds -> NodesMap -> Effect Unit
 markSelectedNodes sigma selectedNodeIds graphNodes = do
   Sigma.forEachNode sigma \n -> do
@@ -171,10 +186,21 @@ markSelectedNodes sigma selectedNodeIds graphNodes = do
 
 bindSelectedNodesClick :: R.Ref Sigma -> R.State SelectedNodeIds -> Effect Unit
 bindSelectedNodesClick sigmaRef (_ /\ setSelectedNodeIds) =
-  dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma ->
+  dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
     Sigma.bindClickNode sigma $ \node -> do
       setSelectedNodeIds \nids ->
         if Set.member node.id nids then
           Set.delete node.id nids
         else
           Set.insert node.id nids
+
+bindSelectedEdgesClick :: R.Ref Sigma -> R.State SelectedEdgeIds -> Effect Unit
+bindSelectedEdgesClick sigmaRef (_ /\ setSelectedEdgeIds) =
+  dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
+    Sigma.bindClickEdge sigma $ \edge -> do
+      log2 "[bindClickEdge] edge" edge
+      setSelectedEdgeIds \eids ->
+        if Set.member edge.id eids then
+          Set.delete edge.id eids
+        else
+          Set.insert edge.id eids

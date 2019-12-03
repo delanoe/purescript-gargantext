@@ -30,6 +30,7 @@ type Props sigma forceatlas2 =
   ( elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
   , graph :: Graph
+  , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , sigmaSettings :: sigma
   , sigmaRef :: R.Ref Sigmax.Sigma
@@ -79,6 +80,7 @@ graphCpt = R.hooksComponent "Graph" cpt
 
                 -- bind the click event only initially, when ref was empty
                 Sigmax.bindSelectedNodesClick props.sigmaRef props.selectedNodeIds
+                Sigmax.bindSelectedEdgesClick props.sigmaRef props.selectedEdgeIds
           Just sig -> do
             pure unit
 
@@ -89,11 +91,13 @@ graphCpt = R.hooksComponent "Graph" cpt
           pure $ pure unit
 
     stageHooks props@{stage: (Ready /\ setStage)} = do
-      let nodesMap = SigmaxTypes.nodesMap props.graph
+      let edgesMap = SigmaxTypes.edgesGraphMap props.graph
+      let nodesMap = SigmaxTypes.nodesGraphMap props.graph
 
       -- TODO Probably this can be optimized to re-mark selected nodes only when they changed
       R.useEffect' $ do
-        Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma ->
+        Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
+          Sigmax.markSelectedEdges sigma (fst props.selectedEdgeIds) edgesMap
           Sigmax.markSelectedNodes sigma (fst props.selectedNodeIds) nodesMap
 
     stageHooks _ = pure unit
@@ -108,7 +112,7 @@ type SigmaSettings =
   -- , canvasEdgesBatchSize :: Number
   -- , clone :: Boolean
   -- , defaultEdgeColor :: String
-  -- , defaultEdgeHoverColor :: String
+  , defaultEdgeHoverColor :: String
   , defaultEdgeType :: String
   , defaultHoverLabelBGColor :: String
   , defaultHoverLabelColor :: String
@@ -119,7 +123,7 @@ type SigmaSettings =
   , defaultNodeColor :: String
   -- , defaultNodeHoverColor :: String
   -- , defaultNodeType :: String
-  -- , doubleClickEnabled :: Boolean
+  , doubleClickEnabled :: Boolean
   -- , doubleClickTimeout :: Number
   -- , doubleClickZoomDuration :: Number
   -- , doubleClickZoomingRatio :: Number
@@ -130,10 +134,10 @@ type SigmaSettings =
   , drawLabels :: Boolean
   , drawNodes :: Boolean
   -- , edgeColor :: String
-  -- , edgeHoverColor :: String
-  -- , edgeHoverExtremities :: Boolean
+  , edgeHoverColor :: String
+  , edgeHoverExtremities :: Boolean
   -- , edgeHoverPrecision :: Number
-  -- , edgeHoverSizeRatio :: Number
+  , edgeHoverSizeRatio :: Number
   -- , edgesPowRatio :: Number
   -- , enableCamera :: Boolean
   , enableEdgeHovering :: Boolean
@@ -198,6 +202,7 @@ sigmaSettings =
   , autoResize: true
   , batchEdgesDrawing: true
   , borderSize: 3.0                   -- for ex, bigger border when hover
+  , defaultEdgeHoverColor: "#f00"
   , defaultEdgeType: "curve"          -- 'curve' or 'line' (curve iff ourRendering)
   , defaultHoverLabelBGColor: "#fff"
   , defaultHoverLabelColor: "#000"
@@ -205,11 +210,15 @@ sigmaSettings =
   , defaultLabelSize: 8.0                -- (old tina: showLabelsIfZoom)
   , defaultNodeBorderColor: "black"   -- <- if nodeBorderColor = 'default'
   , defaultNodeColor: "#ddd"
+  , doubleClickEnabled: false
   , drawEdgeLabels: true
   , drawEdges: true
   , drawLabels: true
   , drawNodes: true
-  , enableEdgeHovering: false
+  , enableEdgeHovering: true
+  , edgeHoverExtremities: true
+  , edgeHoverColor: "edge"
+  , edgeHoverSizeRatio: 2.0
   , enableHovering: true
   , font: "Droid Sans"                -- font params
   , fontStyle: "bold"
