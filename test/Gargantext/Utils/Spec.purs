@@ -7,6 +7,7 @@ import Data.Maybe (Maybe(..), isJust)
 import Data.String (drop, stripPrefix, Pattern(..))
 import Data.Tuple (Tuple(..))
 import Gargantext.Utils as U
+import Gargantext.Utils.Math as UM
 -- import Test.QuickCheck ((===), (/==), (<?>), Result(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -33,4 +34,4 @@ spec =
       U.zeroPad 3 101 `shouldEqual` "101"
       U.zeroPad 3 1000 `shouldEqual` "1000"
     it "log10 10" do
-      U.log10 10.0 `shouldEqual` 1.0
+      UM.log10 10.0 `shouldEqual` 1.0

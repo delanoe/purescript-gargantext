@@ -179,7 +179,6 @@ _localCategories     = prop (SProxy :: SProxy "localCategories")
 data Action
   = MarkCategory Int Category
 
-
 newtype DocumentsView
   = DocumentsView
     { _id    :: Int
@@ -329,22 +328,24 @@ type PageParams =
   , query   :: Query
   , params :: T.Params}
 
-loadPage :: Session -> PageParams -> Aff (Array DocumentsView)
+loadPage :: Session -> PageParams -> Aff (Tuple Int (Array DocumentsView))
 loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
   liftEffect $ log3 "loading documents page: loadPage with Offset and limit" offset limit
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let p = NodeAPI Node (Just nodeId) "table"
-  res <- post session p $ TabPostQuery {
+  res <- (post session p $ TabPostQuery {
       offset
     , limit
     , orderBy: convOrderBy orderBy
     , tabType
     , query
-    }
-  let docs = res2corpus <$> res
+    }) :: Aff {count :: Int, docs :: Array Response}
+  let docs = res2corpus <$> res.docs
   pure $
-    if mock then take limit $ drop offset sampleData else
-    docs
+    if mock then
+      Tuple 4737 (take limit $ drop offset sampleData)
+    else
+      Tuple res.count docs
   where
     res2corpus :: Response -> DocumentsView
     res2corpus (Response r) =
@@ -374,7 +375,8 @@ pageLayoutCpt = R.memo' $ R.staticComponent "G.C.DocsTable.pageLayout" cpt where
     loader path (loadPage session) paint
     where
       path = {nodeId, listId, corpusId, tabType, query, params: fst params}
-      paint loaded = page params props loaded
+      paint (Tuple count docs) = page params (newProps count) docs
+      newProps count = props { totalRecords = count }
 
 type PageProps =
   ( params :: R.State T.Params

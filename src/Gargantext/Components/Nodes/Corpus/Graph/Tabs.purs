@@ -35,8 +35,7 @@ tab :: Frontends -> Session -> TextQuery -> GraphSideCorpus -> Tuple String R.El
 tab frontends session query (GraphSideCorpus {corpusId: nodeId, corpusLabel, listId}) =
   Tuple corpusLabel (docView dvProps)
   where
-    dvProps = {frontends, session, nodeId, listId, query, chart, totalRecords: 4736, container}
-    -- TODO totalRecords: probably need to insert a corpusLoader.
+    dvProps = {frontends, session, nodeId, listId, query, chart, totalRecords: 0, container}
     chart = mempty
     container = T.graphContainer {title: corpusLabel}
 
