@@ -86,10 +86,10 @@ tableHeaderLayout :: Record TableHeaderLayoutProps -> R.Element
 tableHeaderLayout props = R.createElement tableHeaderLayoutCpt props []
 
 tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
-tableHeaderLayoutCpt = R.staticComponent "G.C.Table.tableHeaderLayout" cpt
+tableHeaderLayoutCpt = R.hooksComponent "G.C.Table.tableHeaderLayout" cpt
   where
     cpt {title, desc, query, date, user} _ =
-      R.fragment
+      pure $ R.fragment
       [ H.div {className: "row"}
         [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
         , H.div {className: "col-md-9"}
@@ -146,7 +146,8 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
                 Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "DESC ", lnk Nothing (columnName c)]
                 Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "ASC ",  lnk Nothing (columnName c)]
                 _ -> [lnk (Just (ASC c)) (columnName c)]
-      R.useEffect1' state $ when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
+      R.useEffect2' params state do
+        when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
       pure $ container
         { pageSizeControl: sizeDD pageSize
         , pageSizeDescription: textDescription page pageSize' totalRecords

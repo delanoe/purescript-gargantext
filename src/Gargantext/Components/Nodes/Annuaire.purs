@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Annuaire where
 
-import Prelude (bind, identity, pure, const, ($), (<$>), (<>))
+import Prelude (bind, identity, pure, const, discard, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array (head)
 import Data.Maybe (Maybe(..), maybe)
@@ -58,29 +58,31 @@ annuaire props = R.createElement annuaireCpt props []
 annuaireCpt :: R.Component AnnuaireProps
 annuaireCpt = R.hooksComponent "G.P.Annuaire.annuaire" cpt
   where
-    cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ =
+    cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ = do
+      pagePath <- R.useState' $ initialPagePath (fst path)
+
       pure $ R.fragment
-      [ T.tableHeaderLayout headerProps
-      , H.p {} []
-      , H.div {className: "col-md-3"}
-        [ H.text "    Filter ", H.input { className: "form-control", style } ]
-      , H.br {}
-      , pageLayout { info, session, annuairePath: path, frontends} ]
+        [ T.tableHeaderLayout headerProps
+          , H.p {} []
+          , H.div {className: "col-md-3"}
+            [ H.text "    Filter ", H.input { className: "form-control", style } ]
+          , H.br {}
+          , pageLayout { info, session, pagePath, frontends} ]
       where
         headerProps = { title: name, desc: name, query: "", date, user: ""}
         date = "Last update: " <> date'
         style = {width: "250px", display: "inline-block"}
+        initialPagePath nodeId = {nodeId, params: T.initialParams}
 
 type PagePath = { nodeId :: Int
                 , params :: T.Params
-                , frontends :: Frontends
                 }
 
 type PageLayoutProps =
   ( session      :: Session
-  , annuairePath :: R.State Int
-  , info         :: AnnuaireInfo
   , frontends    :: Frontends
+  , info         :: AnnuaireInfo
+  , pagePath     :: R.State PagePath
   )
 
 pageLayout :: Record PageLayoutProps -> R.Element
@@ -89,15 +91,13 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.P.Annuaire.pageLayout" cpt
   where
-    cpt {annuairePath, info, session, frontends} _ = do
-      pagePath <- R.useState' (initialPagePath frontends (fst annuairePath))
+    cpt {info, frontends, pagePath, session} _ = do
       useLoader (fst pagePath) (loadPage session) $
-        \table -> page {session, table, pagePath, annuairePath}
-    initialPagePath frontends nodeId = {nodeId, params: T.initialParams, frontends}
+        \table -> page {session, table, frontends, pagePath}
 
 type PageProps = 
   ( session :: Session
-  , annuairePath :: R.State Int
+  , frontends :: Frontends
   , pagePath :: R.State PagePath
   -- , info :: AnnuaireInfo
   , table :: AnnuaireTable
@@ -107,21 +107,21 @@ page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
 
 pageCpt :: R.Component PageProps
-pageCpt = R.staticComponent "LoadedAnnuairePage" cpt
+pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
   where
-    cpt { session, annuairePath, pagePath
+    cpt { session, pagePath, frontends
         , table: (AnnuaireTable {annuaireTable})} _ = do
-      T.table { rows, params, container, colNames, totalRecords, wrapColElts }
+      pure $ T.table { rows, params, container, colNames, totalRecords, wrapColElts }
       where
         totalRecords = 4361 -- TODO
         path = fst pagePath
-        rows = (\c -> {row: contactCells session path.frontends path.nodeId c, delete: false}) <$> annuaireTable
+        rows = (\c -> {row: contactCells session frontends (fst pagePath).nodeId c, delete: false}) <$> annuaireTable
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
         wrapColElts = const identity
-        setParams f = snd pagePath $ \pp@{nodeId, params: ps} ->
-          pp {params = f ps, nodeId = fst annuairePath}
-        params = T.initialParams /\ setParams
+        setParams f = snd pagePath $ \pp@{params: ps} ->
+          pp {params = f ps}
+        params = (fst pagePath).params /\ setParams
 
 type AnnuaireId = Int
 
