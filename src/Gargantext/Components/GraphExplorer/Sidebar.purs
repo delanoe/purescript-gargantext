@@ -40,7 +40,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
     cpt {showSidePanel: GET.InitialClosed} _children = do
       pure $ RH.div {} []
     cpt props _children = do
-      let nodesMap = SigmaxTypes.nodesMap props.graph
+      let nodesMap = SigmaxTypes.nodesGraphMap props.graph
 
       pure $
         RH.div { id: "sp-container", className: "col-md-2" }

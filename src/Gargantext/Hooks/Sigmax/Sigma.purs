@@ -142,6 +142,24 @@ bindClickNode s f = bind_ s "clickNode" $ \e -> do
 unbindClickNode :: Sigma -> Effect Unit
 unbindClickNode s = unbind_ s "clickNode"
 
+bindOverNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
+bindOverNode s f = bind_ s "overNode" $ \e -> do
+  let node = e .. "data" .. "node" :: Record Types.Node
+  f node
+
+bindClickEdge :: Sigma -> (Record Types.Edge -> Effect Unit) -> Effect Unit
+bindClickEdge s f = bind_ s "clickEdge" $ \e -> do
+  let edge = e .. "data" .. "edge" :: Record Types.Edge
+  f edge
+
+unbindClickEdge :: Sigma -> Effect Unit
+unbindClickEdge s = unbind_ s "clickEdge"
+
+bindOverEdge :: Sigma -> (Record Types.Edge -> Effect Unit) -> Effect Unit
+bindOverEdge s f = bind_ s "overEdge" $ \e -> do
+  let edge = e .. "data" .. "edge" :: Record Types.Edge
+  f edge
+
 setSettings :: forall settings. Sigma -> settings -> Effect Unit
 setSettings s settings = do
   runEffectFn2 _setSettings s settings
