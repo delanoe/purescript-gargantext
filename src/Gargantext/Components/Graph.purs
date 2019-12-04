@@ -169,7 +169,7 @@ type SigmaSettings =
   , mouseZoomDuration :: Number
   , nodeBorderColor :: String
   -- , nodeHoverColor :: String
-  -- , nodesPowRatio :: Number
+  --, nodesPowRatio :: Number
   , rescaleIgnoreSize :: Boolean
   -- , scalingMode :: String
   -- , sideMargin :: Number
@@ -201,15 +201,15 @@ sigmaSettings =
   , autoRescale: true
   , autoResize: true
   , batchEdgesDrawing: true
-  , borderSize: 3.0                   -- for ex, bigger border when hover
+  , borderSize: 1.0                   -- for ex, bigger border when hover
   , defaultEdgeHoverColor: "#f00"
   , defaultEdgeType: "curve"          -- 'curve' or 'line' (curve iff ourRendering)
   , defaultHoverLabelBGColor: "#fff"
   , defaultHoverLabelColor: "#000"
   , defaultLabelColor: "#000"         -- labels text color
   , defaultLabelSize: 8.0                -- (old tina: showLabelsIfZoom)
-  , defaultNodeBorderColor: "black"   -- <- if nodeBorderColor = 'default'
-  , defaultNodeColor: "#ddd"
+  , defaultNodeBorderColor : "#000"   -- <- if nodeBorderColor = 'default'
+  , defaultNodeColor: "#FFF"
   , doubleClickEnabled: false
   , drawEdgeLabels: true
   , drawEdges: true
@@ -224,7 +224,7 @@ sigmaSettings =
   , fontStyle: "bold"
   , hideEdgesOnMove: true
   , labelSize : "fixed"
-  , labelSizeRatio: 1.0               -- label size in ratio of node size
+  , labelSizeRatio: 2.0               -- label size in ratio of node size
   , labelThreshold: 5.0               -- min node cam size to start showing label
   , maxEdgeSize: 1.0
   , maxNodeSize: 7.0
@@ -232,18 +232,18 @@ sigmaSettings =
   , minNodeSize: 0.1
   , mouseEnabled: true
   , mouseZoomDuration: 150.0
-  , nodeBorderColor: "node"           -- choices: 'default' color vs. node color
-  -- , nodesPowRatio: 0.3
-  , rescaleIgnoreSize: false
-  , singleHover: true
-  , touchEnabled: true
-  , twBorderGreyColor: "rgba(100, 100, 100, 0.5)"
-  , twEdgeDefaultOpacity: 0.4       -- initial opacity added to src/tgt colors
-  , twEdgeGreyColor: "rgba(100, 100, 100, 0.25)"
-  , twNodeRendBorderColor: "#222"
-  , twNodeRendBorderSize: 0.5          -- node borders (only iff ourRendering)
-  , twNodesGreyOpacity: 5.5           -- smaller value: more grey
-  , twSelectedColor: "default"     -- "node" for a label bg like the node color, "default" for white background
+  , nodeBorderColor: "default"           -- choices: "default" color vs. "node" color
+  --, nodesPowRatio : 10.8
+  , rescaleIgnoreSize : false
+  , singleHover : true
+  , touchEnabled : true
+  , twBorderGreyColor : "rgba(100, 100, 100, 0.9)"
+  , twEdgeDefaultOpacity : 0.4       -- initial opacity added to src/tgt colors
+  , twEdgeGreyColor : "rgba(100, 100, 100, 0.25)"
+  , twNodeRendBorderColor : "#FFF"
+  , twNodeRendBorderSize : 2.5          -- node borders (only iff ourRendering)
+  , twNodesGreyOpacity : 5.5           -- smaller value: more grey
+  , twSelectedColor : "node"     -- "node" for a label bg like the node color, "default" for white background
   , verbose : true
   , zoomMax: 1.7
   , zoomMin: 0.0

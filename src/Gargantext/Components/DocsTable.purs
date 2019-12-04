@@ -416,7 +416,7 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
                 -- TODO show date: Year-Month-Day only
                 , H.div { style } [ R2.showText r.date ]
                 , H.div { style }
-                  [ H.a { href: url frontends $ corpusDocument r._id } [ H.text r.title ] ]
+                  [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ] ]
                 , H.div { style } [ H.text $ if r.source == "" then "Source" else r.source ]
                 ]
               , delete: true }
