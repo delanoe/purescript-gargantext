@@ -215,7 +215,7 @@ sigmaSettings =
   , drawEdges: true
   , drawLabels: true
   , drawNodes: true
-  , enableEdgeHovering: true
+  , enableEdgeHovering: false
   , edgeHoverExtremities: true
   , edgeHoverColor: "edge"
   , edgeHoverSizeRatio: 2.0
