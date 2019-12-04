@@ -11,6 +11,7 @@ import Data.Tuple.Nested((/\))
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Data.Array (catMaybes)
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
 import Gargantext.Components.Graph as Graph
@@ -54,11 +55,11 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                          , href: "#home"
                          , role: "tab"
                          , aria: {controls: "home", selected: "true"}}
-                    [ RH.text "Neighbours" ] ] ]
+                    [ RH.text "Selected nodes" ] ] ]
               , RH.div { className: "tab-content", id: "myTabContent" }
                 [ RH.div { className: "", id: "home", role: "tabpanel" }
-                  (badge <$> badges) ] ]
-            , RH.div { className: "col-md-12", id: "horizontal-checkbox" }
+                  (badge <$> badges props.selectedNodeIds nodesMap) ] ]
+            {-, RH.div { className: "col-md-12", id: "horizontal-checkbox" }
               [ RH.ul {}
                 [ checkbox "Pubs"
                 , checkbox "Projects"
@@ -66,6 +67,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                 , checkbox "Others"
                 ]
               ]
+              -}
             , RH.div { className: "col-md-12", id: "query" }
               [
                 query props.frontends props.metaData props.session nodesMap props.selectedNodeIds
@@ -82,16 +84,10 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                  , className: "checkbox"
                  , checked: true
                  , title: "Mark as completed" } ]
-    badges =
-      [ "objects"
-      , "evaluation"
-      , "dynamics"
-      , "virtual environments"
-      , "virtual reality"
-      , "performance analysis"
-      , "software engineering"
-      , "complex systems"
-      , "wireless communications" ]
+    badges (selectedNodeIds /\ _) nodesMap = map (\n -> n.label)
+                                           $ catMaybes
+                                           $ map (\n -> Map.lookup n nodesMap)
+                                           $ Set.toUnfoldable selectedNodeIds
 
     query _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
     query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
@@ -108,3 +104,5 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
            , listId: metaData.listId
            , corpusLabel: metaData.title
            }
+
+
