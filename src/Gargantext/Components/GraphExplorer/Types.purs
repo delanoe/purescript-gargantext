@@ -62,6 +62,7 @@ newtype MetaData = MetaData
   , legend :: Array Legend
   , corpusId :: Array Int
   , listId   :: ListId
+  , version  :: Int
   }
 
 getLegend :: GraphData -> Maybe (Array Legend)
@@ -97,7 +98,7 @@ initialGraphData = GraphData {
     nodes: []
   , edges: []
   , sides: []
-  , metaData : Just $ MetaData {title : "", legend : [], corpusId : [], listId : 0}
+  , metaData : Just $ MetaData {title : "", legend : [], corpusId : [], listId : 0, version : 0}
   }
 
 instance decodeJsonGraphData :: DecodeJson GraphData where
@@ -134,7 +135,8 @@ instance decodeJsonMetaData :: DecodeJson MetaData where
     legend <- obj .: "legend"
     corpusId <- obj .: "corpusId"
     listId <- obj .: "listId"
-    pure $ MetaData { title, legend, corpusId, listId}
+    version <- obj .: "version"
+    pure $ MetaData { title, legend, corpusId, listId, version}
 
 
 instance decodeJsonLegend :: DecodeJson Legend where
