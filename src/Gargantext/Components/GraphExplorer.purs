@@ -215,9 +215,9 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
         }
       where
         cDef (GET.Cluster {clustDefault}) = clustDefault
-    nodesMap = SigmaxTypes.nodesMap $ Seq.toUnfoldable nodes
+    nodesMap = SigmaxTypes.nodesMap nodes
     edges = foldMap edgeFn r.edges
-    edgeFn (GET.Edge e) = Seq.singleton {id : e.id_, color, size: 1.5, source : e.source, target : e.target}
+    edgeFn (GET.Edge e) = Seq.singleton {id : e.id_, color, size: 1.0, source : e.source, target : e.target}
       where
         color = case Map.lookup e.source nodesMap of
           Nothing -> "#000000"

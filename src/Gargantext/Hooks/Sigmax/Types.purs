@@ -2,7 +2,7 @@ module Gargantext.Hooks.Sigmax.Types where
 
 import Prelude (map, ($), (&&), (==))
 import Data.Map as Map
-import Data.Sequence (Seq, toUnfoldable)
+import Data.Sequence (Seq)
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
 import DOM.Simple.Types (Element)
@@ -43,13 +43,13 @@ edgesGraphMap graph = do
   let (Graph {edges}) = graph
   Map.fromFoldable $ map (\e -> Tuple e.id e) edges
 
-nodesMap :: Array (Record Node) -> NodesMap
+nodesMap :: Seq (Record Node) -> NodesMap
 nodesMap nodes = Map.fromFoldable $ map (\n -> Tuple n.id n) nodes
 
 nodesGraphMap :: Graph Node Edge -> NodesMap
 nodesGraphMap graph = do
   let (Graph {nodes}) = graph
-  nodesMap $ toUnfoldable nodes
+  nodesMap nodes
 
 eqGraph :: (Graph Node Edge) -> (Graph Node Edge) -> Boolean
 eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n2) && (e1 == e2)

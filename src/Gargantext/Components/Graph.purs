@@ -136,7 +136,7 @@ type SigmaSettings =
   -- , edgeColor :: String
   , edgeHoverColor :: String
   , edgeHoverExtremities :: Boolean
-  -- , edgeHoverPrecision :: Number
+  , edgeHoverPrecision :: Number
   , edgeHoverSizeRatio :: Number
   -- , edgesPowRatio :: Number
   -- , enableCamera :: Boolean
@@ -218,6 +218,7 @@ sigmaSettings =
   , enableEdgeHovering: true
   , edgeHoverExtremities: true
   , edgeHoverColor: "edge"
+  , edgeHoverPrecision: 2.0
   , edgeHoverSizeRatio: 2.0
   , enableHovering: true
   , font: "Droid Sans"                -- font params
@@ -226,7 +227,7 @@ sigmaSettings =
   , labelSize : "fixed"
   , labelSizeRatio: 1.0               -- label size in ratio of node size
   , labelThreshold: 1.0               -- min node cam size to start showing label
-  , maxEdgeSize: 1.0
+  , maxEdgeSize: 2.0
   , maxNodeSize: 10.0
   , minEdgeSize: 0.5              -- in fact used in tina as edge size
   , minNodeSize: 5.0
