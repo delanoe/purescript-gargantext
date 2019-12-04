@@ -136,7 +136,7 @@ type SigmaSettings =
   -- , edgeColor :: String
   , edgeHoverColor :: String
   , edgeHoverExtremities :: Boolean
-  -- , edgeHoverPrecision :: Number
+  , edgeHoverPrecision :: Number
   , edgeHoverSizeRatio :: Number
   -- , edgesPowRatio :: Number
   -- , enableCamera :: Boolean
@@ -218,6 +218,7 @@ sigmaSettings =
   , enableEdgeHovering: false
   , edgeHoverExtremities: true
   , edgeHoverColor: "edge"
+  , edgeHoverPrecision: 2.0
   , edgeHoverSizeRatio: 2.0
   , enableHovering: true
   , font: "Droid Sans"                -- font params
