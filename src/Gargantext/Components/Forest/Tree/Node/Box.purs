@@ -1,18 +1,20 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
-import DOM.Simple.Console (log2)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
+import DOM.Simple.Event (class IsEvent)
 import Effect.Aff (Aff, launchAff, runAff)
 import Effect.Class (liftEffect)
+import Effect (Effect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (fileTypeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView)
 import Gargantext.Components.Search.Types (allLangs)
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
@@ -29,6 +31,7 @@ import Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, voi
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Reactix.SyntheticEvent as RE
 import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
 import Web.File.File (toBlob)
@@ -105,13 +108,11 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
         dropClass (Just _ /\ _)  _           = "file-dropped"
         dropClass _              (true /\ _) = "file-dropped"
         dropClass (Nothing /\ _) _           = ""
-        dropHandler (_ /\ setDroppedFile) e = unsafePartial $ do
-          let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
-          liftEffect $ log2 "drop:" ff
+        dropHandler (_ /\ setDroppedFile) e = do
           -- prevent redirection when file is dropped
           E.preventDefault e
           E.stopPropagation e
-          let blob = toBlob $ ff
+          blob <- R2.dataTransferFileBlob e
           void $ runAff (\_ -> pure unit) do
             contents <- readAsText blob
             liftEffect $ setDroppedFile
@@ -356,7 +357,7 @@ panelAction d {id, name, nodeType, action, session, search} p = case action of
     (Just (Documentation x)) -> fragmentPT $ "More information on" <> show nodeType
 
     (Just (Link _))                      -> fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
-    (Just Upload)                        -> fragmentPT "Soon, you will be able to upload  your file here"
+    (Just Upload)                        -> uploadFileView d {id, mFileType: Nothing}
     (Just Download)                      -> fragmentPT "Soon, you will be able to dowload your file here"
 
     (Just SearchBox)         -> R.fragment [ H.p {"style": {"margin" :"10px"}} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]

@@ -15,6 +15,7 @@ import Prelude
 import Data.Maybe ( Maybe(..), maybe )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
+import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Effect ( Effect )
 import Effect.Uncurried ( mkEffectFn1 )
@@ -51,8 +52,12 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
       let wrapperProps =
             { className: "annotated-field-wrapper" }
 
-          onSelect _ Nothing event = maybeShowMenu setMenu setTermList ngrams event
+          onSelect text' Nothing event = do
+            log2 "[onSelect] text'" text'
+            maybeShowMenu setMenu setTermList ngrams event
           onSelect text' (Just list) event = do
+            log2 "[onSelect] text'" text'
+            log2 "[onSelect] list" list
             let x = E.clientX event
                 y = E.clientY event
                 setList t = do
