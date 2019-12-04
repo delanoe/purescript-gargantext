@@ -8,6 +8,7 @@ import Prim.Row (class Union)
 import URI.Query (Query)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 
 newtype SessionId = SessionId String
@@ -17,8 +18,17 @@ derive instance genericSessionId :: Generic SessionId _
 instance eqSessionId :: Eq SessionId where
   eq = genericEq
 
+instance ordSessionId :: Ord SessionId where
+  compare = genericCompare
+
 instance showSessionId :: Show SessionId where
   show (SessionId s) = s
+
+instance decodeJsonSessionId :: DecodeJson SessionId where
+  decodeJson json = SessionId <$> decodeJson json
+
+instance encodeJsonSessionId :: EncodeJson SessionId where
+  encodeJson (SessionId s) = encodeJson s
 
 data TermSize = MonoTerm | MultiTerm
 

@@ -1,12 +1,15 @@
 module Gargantext.Components.Forest.Tree where
 
-import Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>), (||))
+import Prelude (Unit, bind, discard, map, pure, void, identity, ($), (+), (<>), (||))
 import DOM.Simple.Console (log2)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe, maybe)
 -- import Data.Newtype (class Newtype)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Gargantext.Components.Forest.Memories as Memories
+import Gargantext.Components.Forest.Memories (Memories, Memory)
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
@@ -18,10 +21,12 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 ------------------------------------------------------------------------
-type Props = ( root          :: ID
+type Props = ( root          :: Int
              , mCurrentRoute :: Maybe AppRoute
              , session       :: Session
              , frontends     :: Frontends
+             , memory        :: Memory
+             , remember      :: Memories.Action -> Effect Unit
              )
 
 treeView :: Record Props -> R.Element
@@ -39,61 +44,71 @@ treeLoadView :: R.State Reload -> Record Props -> R.Element
 treeLoadView reload p = R.createElement el p []
   where
     el = R.staticComponent "TreeLoadView" cpt
-    cpt {root, mCurrentRoute, session, frontends} _ = do
+    cpt {root, mCurrentRoute, session, frontends, memory, remember} _ = do
       loader root (loadNode session) $ \loaded ->
-        loadedTreeView reload {tree: loaded, mCurrentRoute, session, frontends}
+        loadedTreeView {tree: loaded, reload, mCurrentRoute, session, frontends}
 
-type TreeViewProps = ( tree          :: FTree
-                     , mCurrentRoute :: Maybe AppRoute
-                     , frontends     :: Frontends
-                     , session       :: Session 
-                     )
+type TreeViewProps =
+  ( tree          :: FTree
+  , reload        :: R.State Reload
+  , mCurrentRoute :: Maybe AppRoute
+  , frontends     :: Frontends
+  , session       :: Session 
+  , memory        :: Memory
+  , remember      :: Memories.Action -> Effect Unit
+  )
 
-loadedTreeView :: R.State Reload -> Record TreeViewProps -> R.Element
-loadedTreeView reload p = R.createElement el p []
-  where
-    el = R.hooksComponent "LoadedTreeView" cpt
-    cpt {tree, mCurrentRoute, session, frontends} _ = do
-      treeState <- R.useState' {tree}
+loadedTreeView :: Record TreeViewProps -> R.Element
+loadedTreeView props = R.createElement loadedTreeViewCpt props []
 
-      pure $ H.div {className: "tree"}
-        [ toHtml reload treeState session frontends mCurrentRoute ]
+loadedTreeViewCpt :: R.Component TreeViewProps
+loadedTreeViewCpt = R.hooksComponent "LoadedTreeView" cpt where
+  cpt {tree, mCurrentRoute, session, frontends, memory, remember} _ = do
+    treeState <- R.useState' {tree}
+    pure $ H.div {className: "tree"}
+      [ toHtml reload treeState session frontends mCurrentRoute ]
 
 ------------------------------------------------------------------------
-toHtml :: R.State Reload
-       -> R.State Tree
-       -> Session
-       -> Frontends
-       -> Maybe AppRoute
-       -> R.Element
-toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType, open}) ary)} /\ _) session frontends mCurrentRoute = R.createElement el {} []
+toHtml
+  :: R.State Reload
+  -> R.State Tree
+  -> Session
+  -> Frontends
+  -> Maybe AppRoute
+  -> Memory
+  -> Memories.Action -> Effect Unit
+  -> R.Element
+toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType, open}) ary)} /\ _) session frontends mCurrentRoute memory remember = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     pAction = performAction session reload treeState
 
     cpt props _ = do
+      open <- 
       folderOpen@(o /\ _) <- R.useState' false
-      let open' = o || open
+      let open' = o || maybe false fst open
       let withId (NTree (LNode {id: id', open:open'}) _) = id'
 
       pure $ H.ul {}
         [ H.li {}
           ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute, open:open'} folderOpen session frontends ]
-            <> childNodes session frontends reload folderOpen mCurrentRoute ary
+            <> childNodes session frontends reload folderOpen mCurrentRoute memory remember ary
           )
         ]
 
-
-childNodes :: Session
-           -> Frontends
-           -> R.State Reload
-           -> R.State Boolean
-           -> Maybe AppRoute
-           -> Array FTree
-           -> Array R.Element
-childNodes _ _ _ _ _ [] = []
-childNodes _ _ _ (false /\ _) _ _ = []
-childNodes session frontends reload (true /\ _) mCurrentRoute ary =
+childNodes
+  :: Session
+     -> Frontends
+     -> R.State Reload
+     -> R.State Boolean
+     -> Maybe AppRoute
+     -> Memory
+     -> Memories.Action -> Effect Unit
+     -> Array FTree
+     -> Array R.Element
+childNodes _ _ _ _ _ _ _ [] = []
+childNodes _ _ _ (false /\ _) _ _ _ _ = []
+childNodes session frontends reload (true /\ _) mCurrentRoute memory remember ary =
   map (\ctree -> childNode {tree: ctree}) ary
     where
       childNode :: Tree -> R.Element
@@ -101,7 +116,7 @@ childNodes session frontends reload (true /\ _) mCurrentRoute ary =
       el = R.hooksComponent "ChildNodeView" cpt
       cpt {tree} _ = do
         treeState <- R.useState' {tree}
-        pure $ toHtml reload treeState session frontends mCurrentRoute
+        pure $ toHtml reload treeState session frontends mCurrentRoute memory remember
 
 
 performAction :: Session

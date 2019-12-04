@@ -9,6 +9,8 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.Data.Lang (Lang(..))
+import Gargantext.Components.Forest.Memories as Memories
+import Gargantext.Components.Forest.Memories (Memories, useMemories)
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Login (login)
@@ -43,15 +45,17 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
   frontends = defaultFrontends
   cpt _ _ = do
     sessions   <- useSessions
+    memories   <- useMemories
     route      <- useHashRouter router Home
     
     showLogin  <- R.useState' false
     showCorpus <- R.useState' false
     
-    let forested      = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
+    let forested      = forestLayout frontends (fst sessions) (fst route) (snd showLogin) memories
     let mCurrentRoute = fst route
     let backends      = fromFoldable defaultBackends
-    let withSession = \sid f -> maybe' (\_ -> forested $ homeLayout EN) f $ Sessions.lookup sid (fst sessions)
+    let currentSession = Sessions.lookup sid (fst sessions)
+    let withSession = \sid f -> maybe' (\_ -> forested $ homeLayout EN) f currentSession
     pure $ case fst showLogin of
       true -> forested $ login { sessions, backends, visible: showLogin }
       false ->
@@ -75,18 +79,25 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
             withSession sid $
               \session ->
                 simpleLayout $
-                  explorerLayout { graphId, mCurrentRoute, session
+                  explorerLayout { graphId, mCurrentRoute, session, memories
                                  , sessions: (fst sessions), treeId: Nothing, frontends}
 
-forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
-forestLayout frontends sessions route showLogin child =
+forestLayout
+  :: Frontends
+  -> Sessions
+  -> AppRoute
+  -> R2.Setter Boolean
+  -> R2.Reductor Memories Memories.Action
+  -> R.Element
+  -> R.Element
+forestLayout frontends sessions route showLogin memories child =
   R.fragment [ topBar {}, row main, footer {} ]
   where
     row child' = H.div {className: "row"} [child']
     main =
       R.fragment
       [ H.div {className: "col-md-2", style: {paddingTop: "60px"}}
-              [ forest {sessions, route, frontends, showLogin} ]
+              [ forest {sessions, route, frontends, showLogin, memories} ]
       , mainPage child
       ]
 

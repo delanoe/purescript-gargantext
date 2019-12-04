@@ -9,6 +9,8 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, unSessions)
 import Gargantext.Components.Forest.Tree (treeView)
+import Gargantext.Components.Forest.Memories as Memories
+import Gargantext.Components.Forest.Memories (Memories)
 import Gargantext.Utils.Reactix as R2
 
 type Props =
@@ -16,6 +18,7 @@ type Props =
   , route     :: AppRoute
   , frontends :: Frontends
   , showLogin :: R2.Setter Boolean
+  , memories  :: R2.Reductor Memories Memories.Action
   )
 
 forest :: Record Props -> R.Element
@@ -23,7 +26,7 @@ forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
 forestCpt = R.staticComponent "G.C.Forest.forest" cpt where
-  cpt {sessions, route, frontends, showLogin} _ =
+  cpt {sessions, route, frontends, showLogin, memories} _ =
     R.fragment $ A.cons (plus showLogin) trees
     where
       trees = tree <$> unSessions sessions
