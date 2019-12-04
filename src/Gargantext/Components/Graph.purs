@@ -225,11 +225,11 @@ sigmaSettings =
   , hideEdgesOnMove: true
   , labelSize : "fixed"
   , labelSizeRatio: 1.0               -- label size in ratio of node size
-  , labelThreshold: 1.0               -- min node cam size to start showing label
+  , labelThreshold: 5.0               -- min node cam size to start showing label
   , maxEdgeSize: 1.0
-  , maxNodeSize: 10.0
+  , maxNodeSize: 7.0
   , minEdgeSize: 0.5              -- in fact used in tina as edge size
-  , minNodeSize: 5.0
+  , minNodeSize: 0.1
   , mouseEnabled: true
   , mouseZoomDuration: 150.0
   , nodeBorderColor: "node"           -- choices: 'default' color vs. node color

@@ -17,6 +17,7 @@ import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as RH
+import Math (log)
 
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax (Sigma)
@@ -207,7 +208,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
     nodeFn i (GET.Node n) =
       Seq.singleton
         { id    : n.id_
-        , size  : toNumber n.size
+        , size  : log (toNumber n.size + 1.0)
         , label : n.label
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)
