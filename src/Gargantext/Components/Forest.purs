@@ -35,10 +35,10 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin =
   H.button {on: {click}, className: "btn btn-primary"}
-  [ H.div { "type": "", className: "fa fa-universal-access fa-lg"} []
+  [ H.div { "type": "", className: "fa fa-universal-access fa-lg"} [H.text " Log "]
   , H.div {} [H.text "    "]
-  , H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
-  , H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
+  --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
+  --, H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
   ]
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
