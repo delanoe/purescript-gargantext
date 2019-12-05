@@ -95,8 +95,10 @@ childNodes :: Session
 childNodes _ _ _ _ _ [] = []
 childNodes _ _ _ (false /\ _) _ _ = []
 childNodes session frontends reload (true /\ _) mCurrentRoute ary =
-  map (\ctree -> childNode {tree: ctree}) $ ary -- map (Array.sortWith $ map (\(LNode {id}) -> id)) ary
+  map (\ctree -> childNode {tree: ctree}) $ sorted ary
     where
+      sorted :: Array FTree -> Array FTree
+      sorted = Array.sortWith (\(NTree (LNode {id}) _) -> id)
       childNode :: Tree -> R.Element
       childNode props = R.createElement el props []
       el = R.hooksComponent "ChildNodeView" cpt
