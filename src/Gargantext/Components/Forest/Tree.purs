@@ -6,6 +6,7 @@ import Data.Maybe (Maybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Data.Array as Array
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
@@ -94,8 +95,10 @@ childNodes :: Session
 childNodes _ _ _ _ _ [] = []
 childNodes _ _ _ (false /\ _) _ _ = []
 childNodes session frontends reload (true /\ _) mCurrentRoute ary =
-  map (\ctree -> childNode {tree: ctree}) ary
+  map (\ctree -> childNode {tree: ctree}) $ sorted ary
     where
+      sorted :: Array FTree -> Array FTree
+      sorted = Array.sortWith (\(NTree (LNode {id}) _) -> id)
       childNode :: Tree -> R.Element
       childNode props = R.createElement el props []
       el = R.hooksComponent "ChildNodeView" cpt
