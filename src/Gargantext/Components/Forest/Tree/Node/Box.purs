@@ -1,18 +1,16 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
-import DOM.Simple.Console (log2)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff, runAff)
+import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..))
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (fileTypeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView)
 import Gargantext.Components.Search.Types (allLangs)
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
@@ -24,15 +22,12 @@ import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeType(..), NodePath(..), fldr)
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
-import Partial.Unsafe (unsafePartial)
-import Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (<>), (==))
+import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<>), (==))
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
-import Web.File.File (toBlob)
-import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
 
@@ -105,14 +100,12 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
         dropClass (Just _ /\ _)  _           = "file-dropped"
         dropClass _              (true /\ _) = "file-dropped"
         dropClass (Nothing /\ _) _           = ""
-        dropHandler (_ /\ setDroppedFile) e = unsafePartial $ do
-          let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
-          liftEffect $ log2 "drop:" ff
+        dropHandler (_ /\ setDroppedFile) e = do
           -- prevent redirection when file is dropped
           E.preventDefault e
           E.stopPropagation e
-          let blob = toBlob $ ff
-          void $ runAff (\_ -> pure unit) do
+          blob <- R2.dataTransferFileBlob e
+          void $ launchAff do
             contents <- readAsText blob
             liftEffect $ setDroppedFile
                        $ const
@@ -356,7 +349,7 @@ panelAction d {id, name, nodeType, action, session, search} p = case action of
     (Just (Documentation x)) -> fragmentPT $ "More information on" <> show nodeType
 
     (Just (Link _))                      -> fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
-    (Just Upload)                        -> fragmentPT "Soon, you will be able to upload  your file here"
+    (Just Upload)                        -> uploadFileView d {session, id}
     (Just Download)                      -> fragmentPT "Soon, you will be able to dowload your file here"
 
     (Just SearchBox)         -> R.fragment [ H.p {"style": {"margin" :"10px"}} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]

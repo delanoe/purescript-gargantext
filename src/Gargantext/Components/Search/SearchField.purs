@@ -1,12 +1,13 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex) where
 
-import Prelude (const, map, pure, show, ($), (&&), (<), (<$>), (<>), (==))
+import Prelude (const, map, pure, show, discard, ($), (&&), (<), (<$>), (<>), (==))
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (length)
 import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Gargantext.Utils.Reactix as R2
 import FFI.Simple ((..))
 import Reactix as R
@@ -321,6 +322,7 @@ submitButton (search /\ setSearch) =
          } [ H.text "Launch Search" ]
   where
     doSearch = \_ -> do
+      log2 "[submitButton] searching" search
       case search.term of
         "" -> setSearch $ const defaultSearch
         _  -> setSearch $ const search

@@ -1,23 +1,86 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
+import Prelude (class Show, Unit, const, discard, map, pure, show, ($), (<>), bind, void)
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
-import Effect.Aff (Aff, launchAff)
-import Gargantext.Sessions (Session, postWwwUrlencoded)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..))
-import Gargantext.Routes (SessionRoute(..))
-import Prelude (class Show, Unit, const, discard, map, pure, show, ($), (<>))
-import Data.Maybe (Maybe(..))
-import URI.Extra.QueryPairs as QP
-import Gargantext.Components.Forest.Tree.Node.Action
-import Reactix as R
 import Data.Tuple (Tuple)
-import URI.Query as Q
-import Reactix.DOM.HTML as H
+import Data.Tuple.Nested ((/\))
+import Effect.Aff (Aff, launchAff)
+import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
+import Partial.Unsafe (unsafePartial)
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import URI.Extra.QueryPairs as QP
+import URI.Query as Q
+import Web.File.FileReader.Aff (readAsText)
+
+import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Types (class ToQuery, toQuery, NodeType(..))
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
-import Data.Tuple.Nested ((/\))
+
+type Props =
+  ( id :: Int
+  , session :: Session
+  )
+
+
+uploadFileView :: (Action -> Aff Unit) -> Record Props -> R.Element
+uploadFileView d props = R.createElement (uploadFileViewCpt d) props []
+
+uploadFileViewCpt :: (Action -> Aff Unit) -> R.Component Props
+uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
+  where
+    cpt {id} _ = do
+      mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
+      fileType :: R.State FileType <- R.useState' CSV
+
+      pure $ H.div {} [
+        H.div {} [ H.text "Upload file!" ]
+      , H.div {} [ H.input {type: "file", placeholder: "Choose file", on: {change: onChangeContents mContents}} ]
+      , H.div {}
+        [ R2.select {className: "col-md-12 form-control"
+                    , onChange: onChangeFileType fileType}
+          (map renderOption [CSV, PresseRIS])
+        ]
+      , H.div {}
+        [ uploadButton id mContents fileType ]
+      ]
+
+    renderOption opt = H.option {} [ H.text $ show opt ]
+
+    onChangeContents (mContents /\ setMContents) = mkEffectFn1 $ \e -> do
+      blob <- R2.inputFileBlob e
+      E.preventDefault e
+      E.stopPropagation e
+      void $ launchAff do
+        contents <- readAsText blob
+        liftEffect $ do
+          setMContents $ const $ Just $ UploadFileContents contents
+
+    onChangeFileType (fileType /\ setFileType) = mkEffectFn1 $ \e -> do
+      setFileType $ const $ unsafePartial $ fromJust $ readFileType $ e .. "target" .. "value"
+
+    uploadButton :: Int -> R.State (Maybe UploadFileContents) -> R.State FileType -> R.Element
+    uploadButton id (mContents /\ setMContents) (fileType /\ setFileType) =
+      H.button {className: "btn btn-primary", disabled, onClick} [ H.text "Upload" ]
+      where
+        disabled = case mContents of
+          Nothing -> "1"
+          Just _ -> ""
+
+        onClick = mkEffectFn1 $ \e -> do
+          let contents = unsafePartial $ fromJust mContents
+          void $ launchAff do
+            _ <- d $ UploadFile fileType contents
+            liftEffect $ do
+              setMContents $ const $ Nothing
+              setFileType $ const $ CSV
 
 -- START File Type View
 type FileTypeProps =
@@ -107,5 +170,4 @@ uploadFile session id fileType (UploadFileContents fileContents) =
     postWwwUrlencoded session p fileContents
   where
     q = FileUploadQuery { fileType: fileType }
-    p = NodeAPI Node (Just id) $ "upload" <> Q.print (toQuery q)
-
+    p = NodeAPI Node (Just id) $ "add/file" <> Q.print (toQuery q)

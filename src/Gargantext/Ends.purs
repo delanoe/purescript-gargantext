@@ -3,16 +3,14 @@ module Gargantext.Ends
   -- ( )
   where
 
-import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==))
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, (:=), (~>), jsonEmptyObject, (.:))
+import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, (:=), (~>), jsonEmptyObject, (.:))
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
-import Data.Maybe (Maybe, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Gargantext.Routes as R
-import Gargantext.Types
-   ( ApiVersion, Limit, NodePath, NodeType(..), Offset, TabType(..)
-   , TermSize(..), nodePath, nodeTypePath, showTabType')
+import Gargantext.Types (ApiVersion, Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType')
+import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==))
 
 -- | A means of generating a url to visit, a destination
 class ToUrl conf p where
@@ -149,12 +147,23 @@ sessionPath (R.PutNgrams t listId termList i) =
 sessionPath (R.NodeAPI nt i p) = nodeTypePath nt
                               <> (maybe "" (\i' -> "/" <> show i') i)
                               <> (if p == "" then "" else "/" <> p)
-sessionPath (R.Search {listId,limit,offset,orderBy} i) =
-  sessionPath $ R.NodeAPI Corpus i
+sessionPath (R.Search {listId, limit, offset, orderBy} Nothing) =
+  sessionPath $ R.NodeAPI Corpus Nothing
      $ "search?list_id=" <> show listId
     <> offsetUrl offset
     <> limitUrl limit
     <> orderUrl orderBy
+sessionPath (R.Search {listId, limit, offset, orderBy} (Just corpusId)) =
+  sessionPath $ R.NodeAPI Corpus (Just corpusId)
+     $ "search?list_id=" <> show listId
+    <> offsetUrl offset
+    <> limitUrl limit
+    <> orderUrl orderBy
+-- sessionPath (R.Search {listId, limit, offset, orderBy} (Just corpusId)) =
+--     "search/" <> (show corpusId) <> "/list/" <> (show listId) <> "?"
+--     <> offsetUrl offset
+--     <> limitUrl limit
+--     <> orderUrl orderBy
 sessionPath (R.CorpusMetrics {tabType, listId, limit} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ "metrics"
