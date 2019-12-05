@@ -1,15 +1,15 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Prelude (class Show, Unit, const, discard, map, pure, show, ($), (<>), bind, void, unit)
-import Data.Maybe (Maybe(..))
+import Prelude (class Show, Unit, const, discard, map, pure, show, ($), (<>), bind, void)
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
-import Effect.Aff (Aff, launchAff, runAff)
+import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import FFI.Simple ((..))
+import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -24,34 +24,63 @@ import Gargantext.Types (class ToQuery, toQuery, NodeType(..))
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 
-
-type UploadFileProps =
+type Props =
   ( id :: Int
-  , mFileType :: Maybe FileType
+  , session :: Session
   )
 
 
-uploadFileView :: (Action -> Aff Unit) -> Record UploadFileProps -> R.Element
+uploadFileView :: (Action -> Aff Unit) -> Record Props -> R.Element
 uploadFileView d props = R.createElement (uploadFileViewCpt d) props []
 
-uploadFileViewCpt :: (Action -> Aff Unit) -> R.Component UploadFileProps
+uploadFileViewCpt :: (Action -> Aff Unit) -> R.Component Props
 uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
   where
-    cpt {mFileType} _ = do
+    cpt {id} _ = do
+      mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
+      fileType :: R.State FileType <- R.useState' CSV
+
       pure $ H.div {} [
         H.div {} [ H.text "Upload file!" ]
-      , H.div {} [ H.input {type: "file", placeholder: "Choose file", on: {change: onChange}} ]
+      , H.div {} [ H.input {type: "file", placeholder: "Choose file", on: {change: onChangeContents mContents}} ]
+      , H.div {}
+        [ R2.select {className: "col-md-12 form-control"
+                    , onChange: onChangeFileType fileType}
+          (map renderOption [CSV, PresseRIS])
+        ]
+      , H.div {}
+        [ uploadButton id mContents fileType ]
       ]
-    onChange = mkEffectFn1 $ \e -> do
-      log2 "[uploadFileViewCpt onChange] e" e
+
+    renderOption opt = H.option {} [ H.text $ show opt ]
+
+    onChangeContents (mContents /\ setMContents) = mkEffectFn1 $ \e -> do
       blob <- R2.inputFileBlob e
       E.preventDefault e
       E.stopPropagation e
-      log2 "[uploadFileViewCpt onChange] blob" blob
-      void $ runAff (\_ -> pure unit) do
+      void $ launchAff do
         contents <- readAsText blob
         liftEffect $ do
-          log2 "[uploadFileViewCpt] contents" contents
+          setMContents $ const $ Just $ UploadFileContents contents
+
+    onChangeFileType (fileType /\ setFileType) = mkEffectFn1 $ \e -> do
+      setFileType $ const $ unsafePartial $ fromJust $ readFileType $ e .. "target" .. "value"
+
+    uploadButton :: Int -> R.State (Maybe UploadFileContents) -> R.State FileType -> R.Element
+    uploadButton id (mContents /\ setMContents) (fileType /\ setFileType) =
+      H.button {className: "btn btn-primary", disabled, onClick} [ H.text "Upload" ]
+      where
+        disabled = case mContents of
+          Nothing -> "1"
+          Just _ -> ""
+
+        onClick = mkEffectFn1 $ \e -> do
+          let contents = unsafePartial $ fromJust mContents
+          void $ launchAff do
+            _ <- d $ UploadFile fileType contents
+            liftEffect $ do
+              setMContents $ const $ Nothing
+              setFileType $ const $ CSV
 
 -- START File Type View
 type FileTypeProps =

@@ -1,15 +1,11 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
-import DOM.Simple.Event (class IsEvent)
-import Effect.Aff (Aff, launchAff, runAff)
+import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Effect (Effect)
 import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..))
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
@@ -26,16 +22,12 @@ import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeType(..), NodePath(..), fldr)
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
-import Partial.Unsafe (unsafePartial)
-import Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (<>), (==))
+import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<>), (==))
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Reactix.SyntheticEvent as RE
 import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
-import Web.File.File (toBlob)
-import Web.File.FileList (FileList, item)
 import Web.File.FileReader.Aff (readAsText)
 
 
@@ -113,7 +105,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
           E.preventDefault e
           E.stopPropagation e
           blob <- R2.dataTransferFileBlob e
-          void $ runAff (\_ -> pure unit) do
+          void $ launchAff do
             contents <- readAsText blob
             liftEffect $ setDroppedFile
                        $ const
@@ -357,7 +349,7 @@ panelAction d {id, name, nodeType, action, session, search} p = case action of
     (Just (Documentation x)) -> fragmentPT $ "More information on" <> show nodeType
 
     (Just (Link _))                      -> fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
-    (Just Upload)                        -> uploadFileView d {id, mFileType: Nothing}
+    (Just Upload)                        -> uploadFileView d {session, id}
     (Just Download)                      -> fragmentPT "Soon, you will be able to dowload your file here"
 
     (Just SearchBox)         -> R.fragment [ H.p {"style": {"margin" :"10px"}} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
