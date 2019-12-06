@@ -186,7 +186,7 @@ markSelectedNodes sigma selectedNodeIds graphNodes = do
 
 updateEdges :: Sigma.Sigma -> EdgesMap -> Effect Unit
 updateEdges sigma edgesMap = do
-  Sigma.forEachNode sigma \e -> do
+  Sigma.forEachEdge sigma \e -> do
     let mTEdge = Map.lookup e.id edgesMap
     case mTEdge of
       Nothing -> error $ "Edge id " <> e.id <> " not found in edgesMap"
