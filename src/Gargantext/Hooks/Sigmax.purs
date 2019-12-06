@@ -184,6 +184,31 @@ markSelectedNodes sigma selectedNodeIds graphNodes = do
   Sigma.refresh sigma
 
 
+updateEdges :: Sigma.Sigma -> EdgesMap -> Effect Unit
+updateEdges sigma edgesMap = do
+  Sigma.forEachNode sigma \e -> do
+    let mTEdge = Map.lookup e.id edgesMap
+    case mTEdge of
+      Nothing -> error $ "Edge id " <> e.id <> " not found in edgesMap"
+      (Just tEdge@{color: tColor}) -> do
+        _ <- pure $ (e .= "color") tColor
+        pure unit
+  Sigma.refresh sigma
+
+
+updateNodes :: Sigma.Sigma -> NodesMap -> Effect Unit
+updateNodes sigma nodesMap = do
+  Sigma.forEachNode sigma \n -> do
+    let mTNode = Map.lookup n.id nodesMap
+    case mTNode of
+      Nothing -> error $ "Node id " <> n.id <> " not found in nodesMap"
+      (Just tNode@{color: tColor, hidden: tHidden}) -> do
+        _ <- pure $ (n .= "color") tColor
+        _ <- pure $ (n .= "hidden") tHidden
+        pure unit
+  Sigma.refresh sigma
+
+
 bindSelectedNodesClick :: R.Ref Sigma -> R.State SelectedNodeIds -> Effect Unit
 bindSelectedNodesClick sigmaRef (_ /\ setSelectedNodeIds) =
   dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do

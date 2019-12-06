@@ -55,24 +55,24 @@ edgeSizeControl sigmaRef (state /\ setState) =
       }
     }
 
-nodeSizeControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
-nodeSizeControl sigmaRef (state /\ setState) =
+nodeSizeControl :: R.State Range.NumberRange -> R.Element
+nodeSizeControl (state /\ setState) =
   rangeControl {
       caption: "Node Size"
     , sliderProps: {
-        bounds: Range.Closed { min: 5.0, max: 15.0 }
+        bounds: Range.Closed { min: 0.0, max: 15.0 }
       , initialValue: state
       , epsilon: 0.1
       , step: 1.0
       , width: 10.0
       , height: 5.0
       , onChange: \range@(Range.Closed {min, max}) -> do
-          let sigma = R.readRef sigmaRef
-          Sigmax.dependOnSigma sigma "[nodeSizeControl] sigma: Nothing" $ \s -> do
-            Sigma.setSettings s {
-              minNodeSize: min
-            , maxNodeSize: max
-            }
+          -- let sigma = R.readRef sigmaRef
+          -- Sigmax.dependOnSigma sigma "[nodeSizeControl] sigma: Nothing" $ \s -> do
+          --   Sigma.setSettings s {
+          --     minNodeSize: min
+          --   , maxNodeSize: max
+          --   }
           setState $ const range
       }
     }

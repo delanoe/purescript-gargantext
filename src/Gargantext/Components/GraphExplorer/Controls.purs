@@ -11,7 +11,8 @@ module Gargantext.Components.GraphExplorer.Controls
  ) where
 
 import Data.Maybe (Maybe(..))
-import Data.Tuple (fst)
+import Data.Set as Set
+import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\), get1)
 import Effect (Effect)
 import Effect.Timer (setTimeout)
@@ -26,6 +27,7 @@ import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelS
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
@@ -33,6 +35,9 @@ type Controls =
   ( cursorSize      :: R.State Number
   , graphStage      :: R.State Graph.Stage
   , multiNodeSelect :: R.Ref Boolean
+  , nodeSize        :: R.State Range.NumberRange
+  , selectedEdgeIds :: R.State (Set.Set String)
+  , selectedNodeIds :: R.State (Set.Set String)
   , showControls    :: R.State Boolean
   , showSidePanel   :: R.State GET.SidePanelState
   , showTree        :: R.State Boolean
@@ -45,7 +50,6 @@ controlsToSigmaSettings { cursorSize: (cursorSize /\ _)} = Graph.sigmaSettings
 type LocalControls =
   ( edgeSize :: R.State Range.NumberRange
   , labelSize :: R.State Number
-  , nodeSize :: R.State Range.NumberRange
   , pauseForceAtlas :: R.State Boolean
   , showEdges :: R.State Boolean
   )
@@ -54,14 +58,14 @@ initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
   edgeSize <- R.useState' $ Range.Closed { min: 0.5, max: 1.0 }
   labelSize <- R.useState' 14.0
-  nodeSize <- R.useState' $ Range.Closed { min: 5.0, max: 10.0 }
+  --nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 10.0 }
   pauseForceAtlas <- R.useState' true
   showEdges <- R.useState' true
 
   pure $ {
     edgeSize
   , labelSize
-  , nodeSize
+  --, nodeSize
   , pauseForceAtlas
   , showEdges
   }
@@ -85,6 +89,12 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
           _          -> pure unit
 
       R.useEffect' $ Sigmax.handleForceAtlas2Pause props.sigmaRef localControls.pauseForceAtlas (get1 localControls.showEdges) mFAPauseRef
+
+      R.useEffect' $ do
+        if fst props.showSidePanel == GET.InitialClosed && (not Set.isEmpty $ fst props.selectedNodeIds) then
+          snd props.showSidePanel $ \_ -> GET.Opened
+        else
+          pure unit
 
       R.useEffectOnce' $ do
         timeoutId <- setTimeout 2000 $ do
@@ -114,7 +124,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- search topics
                 , RH.li {} [ cursorSizeButton props.cursorSize ] -- cursor size: 0-100
                 , RH.li {} [ labelSizeButton props.sigmaRef localControls.labelSize ] -- labels size: 1-4
-                , RH.li {} [ nodeSizeControl props.sigmaRef localControls.nodeSize ] -- node size : 5-15
+                , RH.li {} [ nodeSizeControl props.nodeSize ]
                   -- zoom: 0 -100 - calculate ratio
                   -- toggle multi node selection
                   -- save button
@@ -127,15 +137,21 @@ useGraphControls = do
   cursorSize      <- R.useState' 10.0
   graphStage      <- R.useState' Graph.Init
   multiNodeSelect <- R.useRef false
+  nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 10.0 }
+  showTree <- R.useState' false
+  selectedNodeIds <- R.useState' $ Set.empty
+  selectedEdgeIds <- R.useState' $ Set.empty
   showControls    <- R.useState' false
   showSidePanel   <- R.useState' GET.InitialClosed
-  showTree <- R.useState' false
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
 
   pure { cursorSize
        , graphStage
        , multiNodeSelect
+       , nodeSize
+       , selectedEdgeIds
+       , selectedNodeIds
        , showControls
        , showSidePanel
        , showTree

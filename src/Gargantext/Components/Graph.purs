@@ -32,9 +32,10 @@ type Props sigma forceatlas2 =
   , graph :: Graph
   , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
-  , sigmaSettings :: sigma
   , sigmaRef :: R.Ref Sigmax.Sigma
+  , sigmaSettings :: sigma
   , stage :: R.State Stage
+  , transformedGraph :: Graph
   )
 
 graph :: forall s fa2. Record (Props s fa2) -> R.Element
@@ -91,14 +92,14 @@ graphCpt = R.hooksComponent "Graph" cpt
           pure $ pure unit
 
     stageHooks props@{stage: (Ready /\ setStage)} = do
-      let edgesMap = SigmaxTypes.edgesGraphMap props.graph
-      let nodesMap = SigmaxTypes.nodesGraphMap props.graph
+      let tEdgesMap = SigmaxTypes.edgesGraphMap props.transformedGraph
+      let tNodesMap = SigmaxTypes.nodesGraphMap props.transformedGraph
 
       -- TODO Probably this can be optimized to re-mark selected nodes only when they changed
       R.useEffect' $ do
         Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
-          Sigmax.markSelectedEdges sigma (fst props.selectedEdgeIds) edgesMap
-          Sigmax.markSelectedNodes sigma (fst props.selectedNodeIds) nodesMap
+          Sigmax.updateEdges sigma tEdgesMap
+          Sigmax.updateNodes sigma tNodesMap
 
     stageHooks _ = pure unit
 
@@ -228,9 +229,9 @@ sigmaSettings =
   , labelSizeRatio: 2.0               -- label size in ratio of node size
   , labelThreshold: 5.0               -- min node cam size to start showing label
   , maxEdgeSize: 1.0
-  , maxNodeSize: 7.0
+  , maxNodeSize: 8.0
   , minEdgeSize: 0.5              -- in fact used in tina as edge size
-  , minNodeSize: 0.1
+  , minNodeSize: 1.0
   , mouseEnabled: true
   , mouseZoomDuration: 150.0
   , nodeBorderColor: "default"           -- choices: "default" color vs. "node" color
