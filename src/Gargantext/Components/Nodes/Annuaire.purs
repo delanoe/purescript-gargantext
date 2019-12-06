@@ -15,7 +15,7 @@ import Gargantext.Ends (url, Frontends)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), AffTableResult, TableResult)
 import Gargantext.Hooks.Loader (useLoader)
 
 newtype IndividuView =
@@ -25,8 +25,8 @@ newtype IndividuView =
   , role    :: String
   , company :: String }
 
-toRows :: AnnuaireTable -> Array (Maybe Contact)
-toRows (AnnuaireTable a) = a.annuaireTable
+--toRows :: AnnuaireTable -> Array (Maybe Contact)
+--toRows (AnnuaireTable a) = a.annuaireTable
 
 -- | Top level layout component. Loads an annuaire by id and renders
 -- | the annuaire using the result
@@ -100,7 +100,7 @@ type PageProps =
   , frontends :: Frontends
   , pagePath :: R.State PagePath
   -- , info :: AnnuaireInfo
-  , table :: AnnuaireTable
+  , table :: TableResult Contact
   )
 
 page :: Record PageProps -> R.Element
@@ -110,12 +110,11 @@ pageCpt :: R.Component PageProps
 pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
   where
     cpt { session, pagePath, frontends
-        , table: (AnnuaireTable {annuaireTable})} _ = do
+        , table: ({count: totalRecords, docs})} _ = do
       pure $ T.table { rows, params, container, colNames, totalRecords, wrapColElts }
       where
-        totalRecords = 4361 -- TODO
         path = fst pagePath
-        rows = (\c -> {row: contactCells session frontends (fst pagePath).nodeId c, delete: false}) <$> annuaireTable
+        rows = (\c -> {row: contactCells session frontends (fst pagePath).nodeId c, delete: false}) <$> docs
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
         wrapColElts = const identity
@@ -125,8 +124,8 @@ pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
 
 type AnnuaireId = Int
 
-contactCells :: Session -> Frontends -> AnnuaireId -> Maybe Contact -> Array R.Element
-contactCells session frontends aId = maybe [] render
+contactCells :: Session -> Frontends -> AnnuaireId -> Contact -> Array R.Element
+contactCells session frontends aId = render
   where
     render (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) }) =
       --let nodepath = NodePath (sessionId session) NodeContact (Just id)
@@ -190,16 +189,16 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
                         }
 
 
-newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe Contact)}
+--newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe Contact)}
 
-instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
-  decodeJson json = do
-    rows <- decodeJson json
-    pure $ AnnuaireTable { annuaireTable : rows}
+--instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
+--  decodeJson json = do
+--    rows <- decodeJson json
+--    pure $ AnnuaireTable { annuaireTable : rows}
 
 ------------------------------------------------------------------------
 
-loadPage :: Session -> PagePath -> Aff AnnuaireTable
+loadPage :: Session -> PagePath -> AffTableResult Contact
 loadPage session {nodeId, params: { offset, limit, orderBy }} =
     get session children
  -- TODO orderBy

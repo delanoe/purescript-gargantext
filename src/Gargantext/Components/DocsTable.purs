@@ -34,7 +34,7 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (AppRoute, SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, post, delete, put)
-import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..))
+import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..), AffTableResult)
 ------------------------------------------------------------------------
 
 data Category = Trash | UnRead | Checked | Topic | Favorite
@@ -339,7 +339,7 @@ loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offs
     , orderBy: convOrderBy orderBy
     , tabType
     , query
-    }) :: Aff {count :: Int, docs :: Array Response}
+    }) :: AffTableResult Response
   let docs = res2corpus <$> res.docs
   pure $
     if mock then

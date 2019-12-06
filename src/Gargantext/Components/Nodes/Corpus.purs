@@ -10,7 +10,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get)
 
@@ -77,8 +77,8 @@ loadCorpus {session, nodeId: listId} = do
   -- fetch corpus via lists parentId
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
   corpusNode     <- get session $ corpusNodeRoute     corpusId ""
-  defaultListIds <- get session $ defaultListIdsRoute corpusId
-  case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
+  defaultListIds <- (get session $ defaultListIdsRoute corpusId) :: forall a. DecodeJson a => AffTableResult (NodePoly a)
+  case (head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
       pure {corpusId, corpusNode, defaultListId}
     Nothing ->

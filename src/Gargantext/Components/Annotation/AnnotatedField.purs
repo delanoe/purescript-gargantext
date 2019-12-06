@@ -48,7 +48,7 @@ annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
   where
     cpt {ngrams,setTermList,text} _ = do
-      menu /\ setMenu <- R.useState $ const Nothing
+      mMenu@(_ /\ setMenu) <- R.useState $ const Nothing
       let wrapperProps =
             { className: "annotated-field-wrapper" }
 
@@ -70,7 +70,7 @@ annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
 
           runs =
             HTML.div { className: "annotated-field-runs" } $ map annotateRun compiled
-      pure $ HTML.div wrapperProps [maybeAddMenu setMenu runs menu]
+      pure $ HTML.div wrapperProps [maybeAddMenu mMenu runs]
 
 
 -- forall e. IsMouseEvent e => R2.Setter (Maybe AnnotationMenu) -> R2.Setter ? -> ? -> e -> Effect Unit
@@ -89,16 +89,17 @@ maybeShowMenu setMenu setTermList ngrams event = do
                 setTermList n list t
                 setMenu (const Nothing)
           E.preventDefault event
+          range <- Sel.getRange sel 0
+          log2 "[maybeShowMenu] selection range" $ Sel.rangeToTuple range
           setMenu (const $ Just { x, y, list, menuType: NewNgram, setList })
     Nothing -> pure unit
 
 maybeAddMenu
-  :: R2.Setter (Maybe AnnotationMenu)
+  :: R.State (Maybe AnnotationMenu)
   -> R.Element
-  -> Maybe AnnotationMenu
   -> R.Element
-maybeAddMenu setMenu e (Just props) = annotationMenu setMenu props <> e
-maybeAddMenu _ e _ = e
+maybeAddMenu (Just props /\ setMenu) e = annotationMenu setMenu props <> e
+maybeAddMenu _ e = e
 
 compile :: NgramsTable -> Maybe String -> Array (Tuple String (Maybe TermList))
 compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)

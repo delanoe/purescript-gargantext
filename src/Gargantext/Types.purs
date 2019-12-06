@@ -4,6 +4,7 @@ import Prelude
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe)
+import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import URI.Query (Query)
 import Data.Generic.Rep (class Generic)
@@ -405,3 +406,6 @@ derive instance genericTabType :: Generic TabType _
 
 instance showTabType :: Show TabType where
   show = genericShow
+
+type TableResult a = {count :: Int, docs :: Array a}
+type AffTableResult a = Aff (TableResult a)

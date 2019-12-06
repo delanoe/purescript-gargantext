@@ -3,6 +3,7 @@ module Gargantext.Utils.Selection where
 import Prelude
 import Data.Maybe (Maybe, maybe)
 import Data.Nullable (Nullable, toMaybe)
+import Data.Tuple (Tuple(..))
 import DOM.Simple.Types (Element, DOMRect)
 import DOM.Simple.Element as Element
 import Effect (Effect)
@@ -42,6 +43,10 @@ selectionToString s = s ... "toString" $ []
 -- | Renders a range as a string
 rangeToString :: Range -> String
 rangeToString s = s ... "toString" $ []
+
+--- | Convert range to an offset tuple
+rangeToTuple :: Range -> Tuple Int Int
+rangeToTuple r = Tuple (r .. "startOffset") (r .. "endOffset")
 
 -- | Whether the anchor and focus are at the same point
 isRangeCollapsed :: Range -> Boolean
