@@ -6,8 +6,7 @@ module Gargantext.Components.NgramsTable
 import Prelude
   ( class Show, Unit, bind, const, discard, identity, map, mempty, not
   , pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<)
-  , (==), (||) )
-import Control.Monad (unless)
+  , (==), (||), otherwise )
 import Data.Array as A
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (Lens', to, view, (%~), (.~), (^.), (^..), (^?))
@@ -19,7 +18,7 @@ import Data.Lens.Record (prop)
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, isNothing)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
@@ -41,12 +40,12 @@ import Gargantext.Types
   , readTermSize, termLists, termSizes)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.NgramsTable.Core
-  ( CoreState, NgramsElement(..), NgramsPatch(..), NgramsTablePatch
+  ( CoreState, NgramsElement(..), NgramsPatch(..), NgramsTablePatch, _PatchMap
   , NgramsTable, NgramsTerm, PageParams, Replace, Versioned(..)
   , VersionedNgramsTable, _NgramsElement, _NgramsTable, _children
-  , _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsTablePatch
-  , applyPatchSet, commitPatch, convOrderBy, initialPageParams, loadNgramsTable
-  , patchSetFromMap, replace, singletonNgramsTablePatch, isEmptyNgramsTablePatch
+  , _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches
+  , applyPatchSet, commitPatch, syncPatches, convOrderBy, initialPageParams, loadNgramsTable
+  , patchSetFromMap, replace, singletonNgramsTablePatch
   , normNgram, ngramsTermText, fromNgramsPatches, PatchMap(..), rootsOf )
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Table as T
@@ -80,7 +79,9 @@ _ngramsSelection = prop (SProxy :: SProxy "ngramsSelection")
 
 initialState :: VersionedNgramsTable -> State
 initialState (Versioned {version}) =
-  { ngramsTablePatch: mempty
+  { ngramsLocalPatch: mempty
+  , ngramsStagePatch: mempty
+  , ngramsValidPatch: mempty
   , ngramsVersion:    version
   , ngramsParent:     Nothing
   , ngramsChildren:   mempty
@@ -97,7 +98,7 @@ data Action
   -- If the `Boolean` is `true` it means we want to add it if it is not here,
   -- if it is `false` it is meant to be removed if not here.
   | AddTermChildren
-  | Refresh
+  | Synchronize
   | ToggleSelect NgramsTerm
   -- ^ Toggles the NgramsTerm in the `Set` `ngramsSelection`.
   | ToggleSelectAll
@@ -245,7 +246,7 @@ toggleMaybe b Nothing  = Just b
 data Action'
   = SetParentResetChildren' (Maybe NgramsTerm)
   | ToggleChild' (Maybe NgramsTerm) NgramsTerm
-  | Refresh'
+  | Synchronize'
 
 -- NEXT
 type Props =
@@ -270,7 +271,7 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NgramsTable.loadedNgramsTable" cpt
     performNgramsAction :: Action' -> State -> Effect State
     performNgramsAction (SetParentResetChildren' term) = pure -- TODO
     performNgramsAction (ToggleChild' b c) = pure -- TODO
-    performNgramsAction Refresh' = pure -- TODO
+    performNgramsAction Synchronize' = pure -- TODO
 
 type LoadedNgramsTableProps =
   ( tabNgramType :: CTabNgramType
@@ -295,31 +296,28 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
       modifyState_ $ (_ngramsSelection .~ mempty)
                  <<< (_ngramsSelectAll .~ false)
     performAction ToggleSelectAll { versioned: Versioned { data: initTable } }
-                                  { ngramsTablePatch } =
+                                  state =
       let
-        ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
+        ngramsTable = applyNgramsPatches state initTable
         roots = rootsOf ngramsTable
       in
       modifyState_ $ (_ngramsSelection .~ roots)
                  <<< (_ngramsSelectAll .~ true)
-    performAction Refresh {path: path /\ _} {ngramsVersion} = do
-      commitPatch path (Versioned {version: ngramsVersion, data: mempty})
-      -- Here we purposedly send an empty patch as a way to synchronize with
-      -- the server.
-    performAction (CommitPatch pt) {path: path /\ _} {ngramsVersion} =
-      unless (isEmptyNgramsTablePatch pt) $
-        commitPatch path (Versioned {version: ngramsVersion, data: pt})
+    performAction Synchronize {path: path /\ _} state = do
+      syncPatches path state
+    performAction (CommitPatch pt) _ {ngramsVersion} =
+      commitPatch (Versioned {version: ngramsVersion, data: pt})
 
     performAction AddTermChildren _ {ngramsParent: Nothing} =
         -- impossible but harmless
         pure unit
-    performAction AddTermChildren {path: path /\ _}
+    performAction AddTermChildren _
                   { ngramsParent: Just parent
                   , ngramsChildren
                   , ngramsVersion
                   } = do
         modifyState_ $ setParentResetChildren Nothing
-        commitPatch path (Versioned {version: ngramsVersion, data: pt})
+        commitPatch (Versioned {version: ngramsVersion, data: pt})
       where
         pc = patchSetFromMap ngramsChildren
         pe = NgramsPatch { patch_list: mempty, patch_children: pc }
@@ -329,10 +327,10 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
     render dispatch { path: path@({scoreType, params} /\ setPath)
                     , versioned: Versioned { data: initTable }
                     , tabNgramType }
-                    { ngramsTablePatch, ngramsParent, ngramsChildren,
-                      ngramsSelection, ngramsSelectAll }
+                    state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
+                          , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
-      [ autoUpdateElt { duration: 3000, effect: dispatch Refresh }
+      [ autoUpdateElt { duration: 3000, effect: dispatch Synchronize }
       , R2.scuff $ T.table { params: params /\ setParams -- TODO-LENS
                            , rows, container, colNames, wrapColElts, totalRecords
                            }
@@ -353,7 +351,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
         wrapColElts _                       = identity
         container = tableContainer {path, dispatch, ngramsParent, ngramsChildren, ngramsSelection, ngramsTable, tabNgramType, ngramsSelectAll}
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
-        ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
+        ngramsTable = applyNgramsPatches state initTable
         orderWith =
           case convOrderBy <$> params.orderBy of
             Just ScoreAsc  -> A.sortWith \x -> (snd x) ^. _NgramsElement <<< _occurrences
@@ -382,6 +380,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
           ngramsChildren ^. at ngrams == Just false
         convertRow (Tuple ngrams ngramsElement) =
           { row: R2.buff <$> renderNgramsItem { ngramsTable, ngrams,
+                                                ngramsLocalPatch,
                                                 ngramsParent, ngramsElement,
                                                 ngramsSelection, dispatch }
           , delete: false
@@ -470,13 +469,14 @@ renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit } =
 
 renderNgramsItem :: { ngrams :: NgramsTerm
                     , ngramsTable :: NgramsTable
+                    , ngramsLocalPatch :: NgramsTablePatch
                     , ngramsElement :: NgramsElement
                     , ngramsParent :: Maybe NgramsTerm
                     , ngramsSelection :: Set NgramsTerm
                     , dispatch :: Action -> Effect Unit
                     } -> Array ReactElement
 renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
-                 , ngramsSelection, dispatch } =
+                 , ngramsSelection, ngramsLocalPatch, dispatch } =
   [ selected
   , checkbox GraphTerm
   , checkbox StopTerm
@@ -491,7 +491,7 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
   ]
   where
     termList    = ngramsElement ^. _NgramsElement <<< _list
-    ngramsStyle = [termStyle termList]
+    ngramsStyle = [termStyle termList ngramsOpacity]
     ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
     ngramsClick = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
     selected    =
@@ -512,13 +512,17 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
         , onChange $ const $ dispatch $
             setTermListA ngrams (replace termList termList'')
         ]
+    ngramsOpacity
+      | isNothing (ngramsLocalPatch.ngramsPatches ^. _PatchMap <<< at ngrams) = 1.0
+      -- ^ TODO here we do not look at ngramsNewElems, shall we?
+      | otherwise                                                             = 0.5
 
     cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
 
-termStyle :: TermList -> DOM.Props
-termStyle GraphTerm     = style {color: "green"}
-termStyle StopTerm      = style {color: "red", textDecoration : "line-through"}
-termStyle CandidateTerm = style {color: "black"}
+termStyle :: TermList -> Number -> DOM.Props
+termStyle GraphTerm     opacity = style {color: "green", opacity}
+termStyle StopTerm      opacity = style {color: "red",   opacity, textDecoration: "line-through"}
+termStyle CandidateTerm opacity = style {color: "black", opacity}
 
 nextTermList :: TermList -> TermList
 nextTermList GraphTerm     = StopTerm

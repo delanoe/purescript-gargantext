@@ -17,7 +17,7 @@ import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable.Core
   ( CoreState, NgramsPatch(..), NgramsTerm, Replace, Versioned(..)
   , VersionedNgramsTable, addNewNgram, applyNgramsTablePatch, commitPatch
-  , loadNgramsTable, replace, singletonNgramsTablePatch )
+  , loadNgramsTable, replace, singletonNgramsTablePatch, syncPatches )
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -54,7 +54,9 @@ initialState
      | props }
   -> State
 initialState {loaded: {ngramsTable: Versioned {version}}} =
-  { ngramsTablePatch: mempty
+  { ngramsLocalPatch: mempty
+  , ngramsStagePatch: mempty
+  , ngramsValidPatch: mempty
   , ngramsVersion:    version
   }
 
@@ -62,7 +64,7 @@ initialState {loaded: {ngramsTable: Versioned {version}}} =
 data Action
   = SetTermListItem NgramsTerm (Replace TermList)
   | AddNewNgram NgramsTerm TermList
-  | Refresh
+  | Synchronize
 
 newtype Status = Status { failed    :: Int
                         , succeeded :: Int
@@ -296,24 +298,26 @@ docViewSpec :: Spec State Props Action
 docViewSpec = simpleSpec performAction render
   where
     performAction :: PerformAction State Props Action
-    performAction Refresh {path} {ngramsVersion} = do
-        commitPatch path (Versioned {version: ngramsVersion, data: mempty})
-    performAction (SetTermListItem n pl) {path} {ngramsVersion} =
-        commitPatch path (Versioned {version: ngramsVersion, data: pt})
+    performAction Synchronize {path} state = do
+        syncPatches path state
+    performAction (SetTermListItem n pl) _ {ngramsVersion} =
+        commitPatch (Versioned {version: ngramsVersion, data: pt})
       where
         pe = NgramsPatch { patch_list: pl, patch_children: mempty }
         pt = singletonNgramsTablePatch n pe
-    performAction (AddNewNgram ngram termList) {path} {ngramsVersion} =
-        commitPatch path (Versioned {version: ngramsVersion, data: pt})
+    performAction (AddNewNgram ngram termList) _ {ngramsVersion} =
+        commitPatch (Versioned {version: ngramsVersion, data: pt})
       where
         pt = addNewNgram ngram termList
 
     render :: Render State Props Action
     render dispatch { loaded: { ngramsTable: Versioned { data: initTable }, document } }
-                    { ngramsTablePatch }
+                    { ngramsLocalPatch
+                    , ngramsValidPatch
+                    }
                     _reactChildren =
       [ autoUpdateElt { duration: 3000
-                      , effect:   dispatch Refresh
+                      , effect:   dispatch Synchronize
                       }
       , div [className "container1"]
         [
@@ -343,7 +347,7 @@ docViewSpec = simpleSpec performAction render
         ]
       ]
         where
-          ngramsTable = applyNgramsTablePatch ngramsTablePatch initTable
+          ngramsTable = applyNgramsTablePatch (ngramsLocalPatch <> ngramsValidPatch) initTable
           setTermList ngram Nothing        newList = dispatch $ AddNewNgram ngram newList
           setTermList ngram (Just oldList) newList = dispatch $ SetTermListItem ngram (replace oldList newList)
           annotate text = R2.scuff $ AnnotatedField.annotatedField { ngrams: ngramsTable, setTermList, text }

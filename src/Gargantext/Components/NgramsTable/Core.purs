@@ -25,9 +25,11 @@ module Gargantext.Components.NgramsTable.Core
   , replace
   , PatchSet(..)
   , PatchMap(..)
+  , _PatchMap
   , patchSetFromMap
   , applyPatchSet
   , applyNgramsTablePatch
+  , applyNgramsPatches
   , rootsOf
   , singletonPatchMap
   , fromNgramsPatches
@@ -40,6 +42,7 @@ module Gargantext.Components.NgramsTable.Core
   , _parent
   , _root
   , commitPatch
+  , syncPatches
   , addNewNgram
   )
   where
@@ -581,10 +584,19 @@ applyNgramsTablePatch { ngramsPatches, ngramsNewElems: n } (NgramsTable m) =
   execState (reParentNgramsTablePatch ngramsPatches) $
   NgramsTable $ applyPatchMap applyNgramsPatch ngramsPatches (newElemsTable n <> m)
 
+applyNgramsPatches :: forall s. CoreState s -> NgramsTable -> NgramsTable
+applyNgramsPatches {ngramsLocalPatch, ngramsStagePatch, ngramsValidPatch} =
+  applyNgramsTablePatch (ngramsLocalPatch <> ngramsStagePatch <> ngramsValidPatch)
 -----------------------------------------------------------------------------------
 
 type CoreState s =
-  { ngramsTablePatch :: NgramsTablePatch
+  { ngramsLocalPatch :: NgramsTablePatch
+                     -- ^ These patches are local and not yet staged.
+  , ngramsStagePatch :: NgramsTablePatch
+                     -- ^ These patches are staged (scheduled for synchronization).
+                     --   Requests are being performed at the moment.
+  , ngramsValidPatch :: NgramsTablePatch
+                     -- ^ These patches have been synchronized with the server.
   , ngramsVersion    :: Version
   | s
   }
@@ -610,17 +622,30 @@ putNgramsPatches :: forall s. CoreParams s -> Versioned NgramsPatches -> Aff (Ve
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
-commitPatch :: forall p s. CoreParams p
-            -> Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
-commitPatch props (Versioned {version, data: tablePatch@{ngramsPatches, ngramsNewElems}}) = do
-  let pt = Versioned { version, data: ngramsPatches }
-  lift $ postNewElems ngramsNewElems props
-  Versioned {version: newVersion, data: newPatch} <- lift $ putNgramsPatches props pt
+syncPatches :: forall p s. CoreParams p -> CoreState s -> StateCoTransformer (CoreState s) Unit
+syncPatches props { ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPatches}
+                  , ngramsStagePatch
+                  , ngramsValidPatch
+                  , ngramsVersion
+                  } = do
+  when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
+    modifyState_ $ \s ->
+      s { ngramsLocalPatch = fromNgramsPatches mempty
+        , ngramsStagePatch = ngramsLocalPatch
+        }
+    let pt = Versioned { version: ngramsVersion, data: ngramsPatches }
+    lift $ postNewElems ngramsNewElems props
+    Versioned {version: newVersion, data: newPatch} <- lift $ putNgramsPatches props pt
+    modifyState_ $ \s ->
+      s { ngramsVersion    = newVersion
+        , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
+        , ngramsStagePatch = fromNgramsPatches mempty
+        }
+
+commitPatch :: forall s. Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
+commitPatch (Versioned {version, data: tablePatch}) = do
   modifyState_ $ \s ->
-    s { ngramsVersion    = newVersion
-      , ngramsTablePatch = fromNgramsPatches newPatch <> tablePatch <> s.ngramsTablePatch
-      }
-    -- TODO: check that pt.version == s.ngramsTablePatch.version
+    s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
 
 loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
 loadNgramsTable
