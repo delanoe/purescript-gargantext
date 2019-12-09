@@ -21,6 +21,7 @@ type Renderer = { "type" :: String, container :: Element }
 type Node =
   ( id    :: String
   , label :: String
+  , hidden :: Boolean
   , x     :: Number
   , y     :: Number
   , size  :: Number
