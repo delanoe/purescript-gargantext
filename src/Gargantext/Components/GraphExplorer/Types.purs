@@ -88,7 +88,7 @@ type State = (
   --, showSidePanel :: R.State Boolean
   --, showControls :: R.State Boolean
   --, showTree :: R.State Boolean
-  --, sigmaGraphData :: R.State (Maybe Graph.Graph)
+  --, sigmaGraphData :: R.State (Maybe SigmaxTypes.SGraph)
   --, sigmaSettings :: R.State ({|Graph.SigmaSettings})
     --treeId :: R.State (Maybe TreeId)
   )

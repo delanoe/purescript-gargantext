@@ -10,7 +10,9 @@ module Gargantext.Components.GraphExplorer.Controls
  , getMultiNodeSelect, setMultiNodeSelect
  ) where
 
-import Data.Maybe (Maybe(..))
+import Data.Array as A
+import Data.Maybe (Maybe(..), maybe)
+import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\), get1)
@@ -34,7 +36,7 @@ import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( cursorSize      :: R.State Number
-  , graph           :: Graph.Graph
+  , graph           :: SigmaxTypes.SGraph
   , graphStage      :: R.State Graph.Stage
   , multiNodeSelect :: R.Ref Boolean
   , nodeSize        :: R.State Range.NumberRange
@@ -110,6 +112,11 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
         R.setRef mFAPauseRef $ Just timeoutId
         pure unit
 
+      let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxTypes.graphNodes props.graph
+      let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
+      let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
+      let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
+
       pure $ case getShowControls props of
         false -> RH.div {} []
         true -> RH.div { className: "col-md-12", style: { paddingBottom: "10px" } }
@@ -127,7 +134,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- search topics
                 , RH.li {} [ cursorSizeButton props.cursorSize ] -- cursor size: 0-100
                 , RH.li {} [ labelSizeButton props.sigmaRef localControls.labelSize ] -- labels size: 1-4
-                , RH.li {} [ nodeSizeControl props.nodeSize ]
+                , RH.li {} [ nodeSizeControl nodeSizeRange props.nodeSize ]
                   -- zoom: 0 -100 - calculate ratio
                   -- toggle multi node selection
                   -- save button
@@ -136,12 +143,15 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
               ]
             ]
 
-useGraphControls :: Graph.Graph -> R.Hooks (Record Controls)
+useGraphControls :: SigmaxTypes.SGraph -> R.Hooks (Record Controls)
 useGraphControls graph = do
+  let edges = SigmaxTypes.graphEdges graph
+  let nodes = SigmaxTypes.graphNodes graph
+
   cursorSize      <- R.useState' 10.0
   graphStage      <- R.useState' Graph.Init
   multiNodeSelect <- R.useRef false
-  nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 10.0 }
+  nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
   showTree <- R.useState' false
   selectedNodeIds <- R.useState' $ Set.empty
   selectedEdgeIds <- R.useState' $ Set.empty

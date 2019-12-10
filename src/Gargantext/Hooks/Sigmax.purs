@@ -1,6 +1,8 @@
 module Gargantext.Hooks.Sigmax
   where
 
+import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), (||), not, const, map)
+
 import Data.Array as A
 import Data.Either (either)
 import Data.Foldable (sequence_)
@@ -20,9 +22,8 @@ import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple ((.=))
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Types (Graph(..), EdgesMap, NodesMap, SelectedNodeIds, SelectedEdgeIds)
+import Gargantext.Hooks.Sigmax.Types (Graph(..), SGraph, EdgesMap, NodesMap, SelectedNodeIds, SelectedEdgeIds)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), not)
 import Reactix as R
 
 type Sigma =
@@ -209,15 +210,16 @@ updateNodes sigma nodesMap = do
   Sigma.refresh sigma
 
 
-bindSelectedNodesClick :: R.Ref Sigma -> R.State SelectedNodeIds -> Effect Unit
-bindSelectedNodesClick sigmaRef (_ /\ setSelectedNodeIds) =
+bindSelectedNodesClick :: R.Ref Sigma -> R.State SelectedNodeIds -> R.State SelectedEdgeIds -> SGraph -> Effect Unit
+bindSelectedNodesClick sigmaRef (_ /\ setSelectedNodeIds) (_ /\ setSelectedEdgeIds) (Graph {edges, nodes}) =
   dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
-    Sigma.bindClickNode sigma $ \node -> do
-      setSelectedNodeIds \nids ->
-        if Set.member node.id nids then
-          Set.delete node.id nids
-        else
-          Set.insert node.id nids
+    Sigma.bindClickNodes sigma $ \nodes -> do
+      let nodeIds = Set.fromFoldable $ map _.id nodes
+      setSelectedNodeIds $ const nodeIds
+      setSelectedEdgeIds \_ ->
+        Set.fromFoldable
+          $ Seq.map _.id
+          $ Seq.filter (\e -> Set.member e.source nodeIds) edges
 
 bindSelectedEdgesClick :: R.Ref Sigma -> R.State SelectedEdgeIds -> Effect Unit
 bindSelectedEdgesClick sigmaRef (_ /\ setSelectedEdgeIds) =

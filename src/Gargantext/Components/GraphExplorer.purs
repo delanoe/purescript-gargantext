@@ -6,7 +6,7 @@ import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
@@ -15,9 +15,10 @@ import Data.Tuple.Nested ((/\))
 -- import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
+import Math (log)
+import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
-import Math (log)
 
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax as Sigmax
@@ -47,7 +48,7 @@ type LayoutProps =
   )
 
 type Props = (
-    graph :: Graph.Graph
+    graph :: SigmaxTypes.SGraph
   , mMetaData :: Maybe GET.MetaData
   | LayoutProps
   )
@@ -150,7 +151,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
       [forest {sessions, route, frontends, showLogin}]
 
-    mSidebar :: Graph.Graph
+    mSidebar :: SigmaxTypes.SGraph
              -> Maybe GET.MetaData
              -> { frontends :: Frontends
                 , showSidePanel :: GET.SidePanelState
@@ -171,7 +172,7 @@ type GraphProps = (
     controls :: Record Controls.Controls
   , elRef :: R.Ref (Nullable Element)
   , graphId :: GraphId
-  , graph :: Graph.Graph
+  , graph :: SigmaxTypes.SGraph
   , graphStage :: R.State Graph.Stage
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds
@@ -200,7 +201,7 @@ graphView props = R.createElement el props []
         , transformedGraph
         }
 
-convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) Graph.Graph
+convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxTypes.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
   where
     nodes = foldMapWithIndex nodeFn r.nodes
@@ -359,23 +360,29 @@ getNodes :: Session -> GraphId -> Aff GET.GraphData
 getNodes session graphId = get session $ NodeAPI Graph (Just graphId) ""
 
 
-transformGraph :: Record Controls.Controls -> Graph.Graph -> Graph.Graph
-transformGraph controls graph@(SigmaxTypes.Graph {nodes, edges}) = SigmaxTypes.Graph {nodes: newNodes, edges: newEdges}
+transformGraph :: Record Controls.Controls -> SigmaxTypes.SGraph -> SigmaxTypes.SGraph
+transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEdges}
   where
+    edges = SigmaxTypes.graphEdges graph
+    nodes = SigmaxTypes.graphNodes graph
     graphEdgesMap = SigmaxTypes.edgesGraphMap graph
     graphNodesMap = SigmaxTypes.nodesGraphMap graph
     newNodes = nodeSizes <$> nodeMarked <$> nodes
     newEdges = edgeMarked <$> edges
+    hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
     nodeSizes node@{ size } =
       if Range.within (fst controls.nodeSize) size then
         node
       else
         node { hidden = true }
-    edgeMarked edge@{ id } =
-      if Set.member id (fst controls.selectedEdgeIds) then
-        edge { color = "#ff0000" }
-      else
-        edge
+    edgeMarked edge@{ id } = do
+      let isSelected = Set.member id (fst controls.selectedEdgeIds)
+      let sourceNode = Map.lookup edge.source graphNodesMap
+      case Tuple hasSelection isSelected of
+        Tuple false true  -> edge { color = "#ff0000" }
+        Tuple true  true  -> edge { color = (unsafePartial $ fromJust sourceNode).color }
+        Tuple true  false -> edge { color = "#dddddd" }
+        _                 -> edge
     nodeMarked node@{ id } =
       if Set.member id (fst controls.selectedNodeIds) then
         node { color = "#ff0000" }

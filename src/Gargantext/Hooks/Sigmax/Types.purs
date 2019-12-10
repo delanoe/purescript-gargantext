@@ -1,6 +1,6 @@
 module Gargantext.Hooks.Sigmax.Types where
 
-import Prelude (map, ($), (&&), (==))
+import Prelude (map, ($), (&&), (==), class Ord, Ordering, compare)
 import Data.Map as Map
 import Data.Sequence (Seq)
 import Data.Set as Set
@@ -38,6 +38,14 @@ type SelectedNodeIds = Set.Set String
 type SelectedEdgeIds = Set.Set String
 type EdgesMap = Map.Map String (Record Edge)
 type NodesMap = Map.Map String (Record Node)
+
+type SGraph = Graph Node Edge
+
+graphEdges :: SGraph -> Seq (Record Edge)
+graphEdges (Graph {edges}) = edges
+
+graphNodes :: SGraph -> Seq (Record Node)
+graphNodes (Graph {nodes}) = nodes
 
 edgesGraphMap :: Graph Node Edge -> EdgesMap
 edgesGraphMap graph = do

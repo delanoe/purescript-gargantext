@@ -8,7 +8,6 @@ import Prelude (bind, const, discard, pure, ($), unit)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
@@ -22,20 +21,18 @@ import Gargantext.Hooks.Sigmax.Sigma as Sigma
 
 type OnProps  = ()
 
-type Graph = SigmaxTypes.Graph SigmaxTypes.Node SigmaxTypes.Edge
-
 data Stage = Init | Ready | Cleanup
 
 type Props sigma forceatlas2 =
   ( elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
-  , graph :: Graph
+  , graph :: SigmaxTypes.SGraph
   , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , sigmaRef :: R.Ref Sigmax.Sigma
   , sigmaSettings :: sigma
   , stage :: R.State Stage
-  , transformedGraph :: Graph
+  , transformedGraph :: SigmaxTypes.SGraph
   )
 
 graph :: forall s fa2. Record (Props s fa2) -> R.Element
@@ -80,8 +77,8 @@ graphCpt = R.hooksComponent "Graph" cpt
                 Sigma.startForceAtlas2 sig props.forceAtlas2Settings
 
                 -- bind the click event only initially, when ref was empty
-                Sigmax.bindSelectedNodesClick props.sigmaRef props.selectedNodeIds
-                Sigmax.bindSelectedEdgesClick props.sigmaRef props.selectedEdgeIds
+                Sigmax.bindSelectedNodesClick props.sigmaRef props.selectedNodeIds props.selectedEdgeIds props.graph
+                --Sigmax.bindSelectedEdgesClick props.sigmaRef props.selectedEdgeIds
           Just sig -> do
             pure unit
 

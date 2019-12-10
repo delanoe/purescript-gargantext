@@ -142,6 +142,11 @@ bindClickNode s f = bind_ s "clickNode" $ \e -> do
 unbindClickNode :: Sigma -> Effect Unit
 unbindClickNode s = unbind_ s "clickNode"
 
+bindClickNodes :: Sigma -> (Array (Record Types.Node) -> Effect Unit) -> Effect Unit
+bindClickNodes s f = bind_ s "clickNodes" $ \e -> do
+  let nodes = e .. "data" .. "node" :: Array (Record Types.Node)
+  f nodes
+
 bindOverNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
 bindOverNode s f = bind_ s "overNode" $ \e -> do
   let node = e .. "data" .. "node" :: Record Types.Node
