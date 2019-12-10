@@ -23,6 +23,7 @@ import Reactix.DOM.HTML as RH
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSizeControl)
+import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -33,11 +34,12 @@ import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( cursorSize      :: R.State Number
+  , graph           :: Graph.Graph
   , graphStage      :: R.State Graph.Stage
   , multiNodeSelect :: R.Ref Boolean
   , nodeSize        :: R.State Range.NumberRange
-  , selectedEdgeIds :: R.State (Set.Set String)
-  , selectedNodeIds :: R.State (Set.Set String)
+  , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds
+  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , showControls    :: R.State Boolean
   , showSidePanel   :: R.State GET.SidePanelState
   , showTree        :: R.State Boolean
@@ -60,6 +62,7 @@ initialLocalControls = do
   labelSize <- R.useState' 14.0
   --nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 10.0 }
   pauseForceAtlas <- R.useState' true
+  search <- R.useState' ""
   showEdges <- R.useState' true
 
   pure $ {
@@ -128,12 +131,13 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- zoom: 0 -100 - calculate ratio
                   -- toggle multi node selection
                   -- save button
+                , RH.li {} [ nodeSearchControl { selectedNodeIds: props.selectedNodeIds } ]
                 ]
               ]
             ]
 
-useGraphControls :: R.Hooks (Record Controls)
-useGraphControls = do
+useGraphControls :: Graph.Graph -> R.Hooks (Record Controls)
+useGraphControls graph = do
   cursorSize      <- R.useState' 10.0
   graphStage      <- R.useState' Graph.Init
   multiNodeSelect <- R.useRef false
@@ -147,6 +151,7 @@ useGraphControls = do
   sigmaRef <- R.useRef sigma
 
   pure { cursorSize
+       , graph
        , graphStage
        , multiNodeSelect
        , nodeSize
