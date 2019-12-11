@@ -56,19 +56,28 @@ controlsToggleButton state =
     , onClick: \_ -> snd state not
     }
 
-edgesToggleButton :: R.Ref Sigmax.Sigma -> R.State Boolean -> R.Element
-edgesToggleButton sigmaRef state =
-  toggleButton {
-      state: state
-    , onMessage: "Hide Edges"
-    , offMessage: "Show Edges"
-    , onClick: \_ -> do
-      let sigma = R.readRef sigmaRef
-      let (toggled /\ setToggled) = state
-      Sigmax.dependOnSigma sigma "[edgesToggleButton] sigma: Nothing" $ \s -> do
-        Sigmax.setEdges s $ not toggled
-      setToggled not
-    }
+type EdgesButtonProps = (
+  state :: R.State SigmaxTypes.ShowEdgesState
+)
+
+edgesToggleButton :: Record EdgesButtonProps -> R.Element
+edgesToggleButton props = R.createElement edgesToggleButtonCpt props []
+
+edgesToggleButtonCpt :: R.Component EdgesButtonProps
+edgesToggleButtonCpt = R.hooksComponent "EdgesToggleButton" cpt
+  where
+    cpt {state: (state /\ setState)} _ = do
+      pure $
+        H.span {}
+          [
+            H.button
+              { className: "btn btn-primary", on: {click: onClick setState} }
+              [ H.text (text state) ]
+          ]
+    text s = if SigmaxTypes.edgeStateHidden s then "Show edges" else "Hide edges"
+
+    -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
+    onClick setState _ = setState SigmaxTypes.toggleShowEdgesState
 
 multiSelectEnabledButton :: R.State Boolean -> R.Element
 multiSelectEnabledButton state =

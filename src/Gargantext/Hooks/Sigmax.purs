@@ -110,8 +110,8 @@ dependOnContainer container notFoundMsg f = do
 -- | pausing can be done not only via buttons but also from the initial
 -- | setTimer.
 --handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
-handleForceAtlas2Pause :: R.Ref Sigma -> R.State ST.ForceAtlasState -> Boolean -> R.Ref (Maybe TimeoutId) -> Effect Unit
-handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) showEdges mFAPauseRef = do
+handleForceAtlas2Pause :: R.Ref Sigma -> R.State ST.ForceAtlasState -> R.Ref (Maybe TimeoutId) -> Effect Unit
+handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
   let sigma = R.readRef sigmaRef
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
     --log2 "[handleForceAtlas2Pause] mSigma: Just " s
@@ -122,18 +122,15 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) showEdges mFAPauseRef = 
       Tuple ST.InitialRunning false -> do
         -- hide edges during forceAtlas rendering, this prevents flickering
         Sigma.restartForceAtlas2 s
-        setEdges s false
       Tuple ST.Running false -> do
         -- hide edges during forceAtlas rendering, this prevents flickering
         Sigma.restartForceAtlas2 s
-        setEdges s false
         case R.readRef mFAPauseRef of
           Nothing -> pure unit
           Just timeoutId -> clearTimeout timeoutId
       Tuple ST.Paused true -> do
         -- restore edges state
         Sigma.stopForceAtlas2 s
-        setEdges s showEdges
       _ -> pure unit
     -- handle case when user pressed pause/start fa button before timeout fired
     --case R.readRef mFAPauseRef of
@@ -149,14 +146,16 @@ setEdges sigma val = do
       , drawEdgeLabels: val
       , hideEdgesOnMove: not val
     }
-  -- prevent showing edges (via show edges button) when FA is running (flickering)
-  isFARunning <- Sigma.isForceAtlas2Running sigma
-  case Tuple val isFARunning of
-    Tuple false _ ->
-      Sigma.setSettings sigma settings
-    Tuple true false ->
-      Sigma.setSettings sigma settings
-    _ -> pure unit
+  Sigma.setSettings sigma settings
+
+  -- -- prevent showing edges (via show edges button) when FA is running (flickering)
+  -- isFARunning <- Sigma.isForceAtlas2Running sigma
+  -- case Tuple val isFARunning of
+  --   Tuple false _ ->
+  --     Sigma.setSettings sigma settings
+  --   Tuple true false ->
+  --     Sigma.setSettings sigma settings
+  --   _ -> pure unit
 
 markSelectedEdges :: Sigma.Sigma -> ST.SelectedEdgeIds -> ST.EdgesMap -> Effect Unit
 markSelectedEdges sigma selectedEdgeIds graphEdges = do
@@ -199,7 +198,7 @@ updateEdges sigma edgesMap = do
         _ <- pure $ (e .= "color") tColor
         _ <- pure $ (e .= "hidden") tHidden
         pure unit
-  Sigma.refresh sigma
+  --Sigma.refresh sigma
 
 
 updateNodes :: Sigma.Sigma -> ST.NodesMap -> Effect Unit
@@ -212,7 +211,7 @@ updateNodes sigma nodesMap = do
         _ <- pure $ (n .= "color") tColor
         _ <- pure $ (n .= "hidden") tHidden
         pure unit
-  Sigma.refresh sigma
+  --Sigma.refresh sigma
 
 
 -- | Toggles item visibility in the selected set

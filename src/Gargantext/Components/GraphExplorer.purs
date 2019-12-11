@@ -12,6 +12,7 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Math (log)
@@ -85,12 +86,16 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
         if SigmaxTypes.eqGraph readData graph then
           pure unit
         else do
+          -- Graph data changed, reinitialize sigma.
           let rSigma = R.readRef controls.sigmaRef
           Sigmax.cleanupSigma rSigma "explorerCpt"
           R.setRef dataRef graph
+          -- Reinitialize bunch of state as well.
           snd controls.selectedNodeIds $ const Set.empty
+          snd controls.showEdges $ const SigmaxTypes.EShow
           snd controls.forceAtlasState $ const SigmaxTypes.InitialRunning
           snd controls.graphStage $ const Graph.Init
+          snd controls.showSidePanel $ const GET.InitialClosed
 
       pure $
         RH.div
@@ -193,6 +198,7 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
         , graph
         , multiSelectEnabledRef
         , selectedNodeIds: controls.selectedNodeIds
+        , showEdges: controls.showEdges
         , sigmaRef: controls.sigmaRef
         , sigmaSettings: Graph.sigmaSettings
         , stage: controls.graphStage
@@ -379,7 +385,7 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
     hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
 
     newNodes = nodeSizeFilter <$> nodeMarked <$> nodes
-    newEdges = edgeConfluenceFilter <$> edgeWeightFilter <$> edgeMarked <$> edges
+    newEdges = edgeConfluenceFilter <$> edgeWeightFilter <$> edgeShowFilter <$> edgeMarked <$> edges
 
     nodeSizeFilter node@{ size } =
       if Range.within (fst controls.nodeSize) size then
@@ -392,6 +398,11 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
         edge
       else
         edge { hidden = true }
+    edgeShowFilter edge =
+      if (SigmaxTypes.edgeStateHidden $ fst controls.showEdges) then
+        edge { hidden = true }
+      else
+        edge
     edgeWeightFilter edge@{ weight } =
       if Range.within (fst controls.edgeWeight) weight then
         edge
