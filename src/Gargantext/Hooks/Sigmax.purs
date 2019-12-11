@@ -191,8 +191,9 @@ updateEdges sigma edgesMap = do
     let mTEdge = Map.lookup e.id edgesMap
     case mTEdge of
       Nothing -> error $ "Edge id " <> e.id <> " not found in edgesMap"
-      (Just tEdge@{color: tColor}) -> do
+      (Just {color: tColor, hidden: tHidden}) -> do
         _ <- pure $ (e .= "color") tColor
+        _ <- pure $ (e .= "hidden") tHidden
         pure unit
   Sigma.refresh sigma
 
@@ -203,7 +204,7 @@ updateNodes sigma nodesMap = do
     let mTNode = Map.lookup n.id nodesMap
     case mTNode of
       Nothing -> error $ "Node id " <> n.id <> " not found in nodesMap"
-      (Just tNode@{color: tColor, hidden: tHidden}) -> do
+      (Just {color: tColor, hidden: tHidden}) -> do
         _ <- pure $ (n .= "color") tColor
         _ <- pure $ (n .= "hidden") tHidden
         pure unit
@@ -224,9 +225,7 @@ multiSelectUpdate new selected = foldl fld selected new
 bindSelectedNodesClick :: Sigma.Sigma -> R.State SelectedNodeIds -> R.Ref Boolean -> Effect Unit
 bindSelectedNodesClick sigma (_ /\ setSelectedNodeIds) multiSelectEnabledRef =
   Sigma.bindClickNodes sigma $ \nodes -> do
-    log2 "[bindSelectedNodesClick] nodes" nodes
     let multiSelectEnabled = R.readRef multiSelectEnabledRef
-    log2 "[bindSelectedNodesClick] multiSelectEnabled" multiSelectEnabled
     let nodeIds = Set.fromFoldable $ map _.id nodes
     if multiSelectEnabled then
       setSelectedNodeIds $ multiSelectUpdate nodeIds
@@ -237,7 +236,6 @@ bindSelectedEdgesClick :: R.Ref Sigma -> R.State SelectedEdgeIds -> Effect Unit
 bindSelectedEdgesClick sigmaRef (_ /\ setSelectedEdgeIds) =
   dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
     Sigma.bindClickEdge sigma $ \edge -> do
-      log2 "[bindClickEdge] edge" edge
       setSelectedEdgeIds \eids ->
         if Set.member edge.id eids then
           Set.delete edge.id eids

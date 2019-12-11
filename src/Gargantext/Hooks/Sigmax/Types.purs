@@ -30,9 +30,12 @@ type Node =
 type Edge =
   ( id :: String
   , color :: String
+  , confluence :: Number
+  , hidden :: Boolean
   , size :: Number
   , source :: String
-  , target :: String )
+  , target :: String
+  , weight :: Number )
 
 type SelectedNodeIds = Set.Set String
 type SelectedEdgeIds = Set.Set String

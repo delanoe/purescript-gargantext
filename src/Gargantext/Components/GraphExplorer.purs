@@ -216,7 +216,14 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
         cDef (GET.Cluster {clustDefault}) = clustDefault
     nodesMap = SigmaxTypes.nodesMap nodes
     edges = foldMap edgeFn r.edges
-    edgeFn (GET.Edge e) = Seq.singleton {id : e.id_, color, size: 1.0, source : e.source, target : e.target}
+    edgeFn (GET.Edge e) = Seq.singleton { id : e.id_
+                                        , color
+                                        , confluence : e.confluence
+                                        , hidden : false
+                                        , size: 1.0
+                                        , source : e.source
+                                        , target : e.target
+                                        , weight : e.weight }
       where
         color = case Map.lookup e.source nodesMap of
           Nothing   -> "#000000"
@@ -370,14 +377,26 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
         $ Seq.filter (\e -> Set.member e.source (fst controls.selectedNodeIds)) edges
     hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
 
-    newNodes = nodeSizes <$> nodeMarked <$> nodes
-    newEdges = edgeMarked <$> edges
+    newNodes = nodeSizeFilter <$> nodeMarked <$> nodes
+    newEdges = edgeConfluenceFilter <$> edgeWeightFilter <$> edgeMarked <$> edges
 
-    nodeSizes node@{ size } =
+    nodeSizeFilter node@{ size } =
       if Range.within (fst controls.nodeSize) size then
         node
       else
         node { hidden = true }
+
+    edgeConfluenceFilter edge@{ confluence } =
+      if Range.within (fst controls.edgeConfluence) confluence then
+        edge
+      else
+        edge { hidden = true }
+    edgeWeightFilter edge@{ weight } =
+      if Range.within (fst controls.edgeWeight) weight then
+        edge
+      else
+        edge { hidden = true }
+
     edgeMarked edge@{ id } = do
       let isSelected = Set.member id selectedEdgeIds
       let sourceNode = Map.lookup edge.source graphNodesMap

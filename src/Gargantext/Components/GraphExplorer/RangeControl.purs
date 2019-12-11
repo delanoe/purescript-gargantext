@@ -1,7 +1,8 @@
 module Gargantext.Components.GraphExplorer.RangeControl
   ( Props
   , rangeControl
-  , edgeSizeControl
+  , edgeConfluenceControl
+  , edgeWeightControl
   , nodeSizeControl
   ) where
 
@@ -33,25 +34,41 @@ rangeControlCpt = R.hooksComponent "RangeButton" cpt
           , RS.rangeSlider sliderProps
           ]
 
-edgeSizeControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
-edgeSizeControl sigmaRef (state /\ setState) =
+edgeConfluenceControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
+edgeConfluenceControl sigmaRef (state /\ setState) =
   rangeControl {
-      caption: "Edge Size"
+      caption: "Edge Confluence Weight"
     , sliderProps: {
-        bounds: Range.Closed { min: 0.0, max: 3.0 }
+        bounds: Range.Closed { min: 0.0, max: 1.0 }
       , initialValue: state
-      , epsilon: 0.1
+      , epsilon: 0.01
       , step: 1.0
       , width: 10.0
       , height: 5.0
-      , onChange: \range@(Range.Closed {min, max}) -> do
-          let sigma = R.readRef sigmaRef
-          Sigmax.dependOnSigma sigma "[edgeSizeControl] sigma: Nothing" $ \s -> do
-            Sigma.setSettings s {
-              minEdgeSize: min
-            , maxEdgeSize: max
-            }
-          setState $ const range
+      , onChange: setState <<< const
+      }
+    }
+
+edgeWeightControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
+edgeWeightControl sigmaRef (state /\ setState) =
+  rangeControl {
+      caption: "Edge Weight"
+    , sliderProps: {
+        bounds: Range.Closed { min: 0.0, max: 3.0 }
+      , initialValue: state
+      , epsilon: 0.01
+      , step: 1.0
+      , width: 10.0
+      , height: 5.0
+      , onChange: setState <<< const
+      -- , onChange: \range@(Range.Closed {min, max}) -> do
+      --     let sigma = R.readRef sigmaRef
+      --     Sigmax.dependOnSigma sigma "[edgeWeightControl] sigma: Nothing" $ \s -> do
+      --       Sigma.setSettings s {
+      --         minEdgeSize: min
+      --       , maxEdgeSize: max
+      --       }
+      --     setState $ const range
       }
     }
 

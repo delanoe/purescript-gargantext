@@ -23,7 +23,7 @@ import Reactix.DOM.HTML as RH
 
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton)
-import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSizeControl)
+import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, pauseForceAtlasButton)
@@ -35,6 +35,8 @@ import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( cursorSize      :: R.State Number
+  , edgeConfluence :: R.State Range.NumberRange
+  , edgeWeight :: R.State Range.NumberRange
   , graph           :: SigmaxTypes.SGraph
   , graphStage      :: R.State Graph.Stage
   , multiSelectEnabled :: R.State Boolean
@@ -50,15 +52,13 @@ controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
 controlsToSigmaSettings { cursorSize: (cursorSize /\ _)} = Graph.sigmaSettings
 
 type LocalControls =
-  ( edgeSize :: R.State Range.NumberRange
-  , labelSize :: R.State Number
+  ( labelSize :: R.State Number
   , pauseForceAtlas :: R.State Boolean
   , showEdges :: R.State Boolean
   )
 
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
-  edgeSize <- R.useState' $ Range.Closed { min: 0.5, max: 1.0 }
   labelSize <- R.useState' 14.0
   --nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 10.0 }
   pauseForceAtlas <- R.useState' true
@@ -66,8 +66,7 @@ initialLocalControls = do
   showEdges <- R.useState' true
 
   pure $ {
-    edgeSize
-  , labelSize
+    labelSize
   --, nodeSize
   , pauseForceAtlas
   , showEdges
@@ -124,7 +123,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   RH.li {} [ centerButton props.sigmaRef ]
                 , RH.li {} [ pauseForceAtlasButton props.sigmaRef localControls.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
                 , RH.li {} [ edgesToggleButton props.sigmaRef localControls.showEdges ]
-                , RH.li {} [ edgeSizeControl props.sigmaRef localControls.edgeSize ] -- edge size : 0-3
+                , RH.li {} [ edgeConfluenceControl props.sigmaRef props.edgeConfluence ]
+                , RH.li {} [ edgeWeightControl props.sigmaRef props.edgeWeight ]
                   -- change level
                   -- file upload
                   -- run demo
@@ -147,6 +147,8 @@ useGraphControls graph = do
   let nodes = SigmaxTypes.graphNodes graph
 
   cursorSize      <- R.useState' 10.0
+  edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
+  edgeWeight <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   graphStage      <- R.useState' Graph.Init
   multiSelectEnabled <- R.useState' false
   nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
@@ -158,6 +160,8 @@ useGraphControls graph = do
   sigmaRef <- R.useRef sigma
 
   pure { cursorSize
+       , edgeConfluence
+       , edgeWeight
        , graph
        , graphStage
        , multiSelectEnabled
