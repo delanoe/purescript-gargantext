@@ -20,6 +20,7 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 
 type Props = (
     state :: R.State Boolean
@@ -78,16 +79,29 @@ multiSelectEnabledButton state =
     , onClick: \_ -> snd state not
     }
 
-pauseForceAtlasButton :: R.Ref Sigmax.Sigma -> R.State Boolean -> R.Element
-pauseForceAtlasButton sigmaRef state =
-  toggleButton {
-      state: state
-    , onMessage: "Pause Force Atlas"
-    , offMessage: "Start Force Atlas"
-    , onClick: \_ -> do
-      let (_ /\ setToggled) = state
-      setToggled not
-    }
+type ForceAtlasProps = (
+  state :: R.State SigmaxTypes.ForceAtlasState
+)
+
+pauseForceAtlasButton :: Record ForceAtlasProps -> R.Element
+pauseForceAtlasButton props = R.createElement pauseForceAtlasButtonCpt props []
+
+pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
+pauseForceAtlasButtonCpt = R.hooksComponent "ForceAtlasToggleButton" cpt
+  where
+    cpt {state: (state /\ setState)} _ = do
+      pure $
+        H.span {}
+          [
+            H.button
+              { className: "btn btn-primary", on: {click: onClick setState} }
+              [ H.text (text state) ]
+          ]
+    text SigmaxTypes.InitialRunning = "Pause Force Atlas"
+    text SigmaxTypes.Running = "Pause Force Atlas"
+    text SigmaxTypes.Paused = "Start Force Atlas"
+
+    onClick setState _ = setState SigmaxTypes.toggleForceAtlasState
 
 treeToggleButton :: R.State Boolean -> R.Element
 treeToggleButton state =

@@ -1,6 +1,6 @@
 module Gargantext.Hooks.Sigmax.Types where
 
-import Prelude (map, ($), (&&), (==), class Ord, Ordering, compare)
+import Prelude (map, ($), (&&), (==), class Ord, Ordering, compare, class Eq)
 import Data.Map as Map
 import Data.Sequence (Seq)
 import Data.Set as Set
@@ -63,3 +63,13 @@ nodesGraphMap graph =
 
 eqGraph :: (Graph Node Edge) -> (Graph Node Edge) -> Boolean
 eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n2) && (e1 == e2)
+
+
+data ForceAtlasState = InitialRunning | Running | Paused
+
+derive instance eqForceAtlasState :: Eq ForceAtlasState
+
+toggleForceAtlasState :: ForceAtlasState -> ForceAtlasState
+toggleForceAtlasState InitialRunning = Paused
+toggleForceAtlasState Running = Paused
+toggleForceAtlasState Paused = Running

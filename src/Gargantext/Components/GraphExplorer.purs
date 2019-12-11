@@ -89,6 +89,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
           Sigmax.cleanupSigma rSigma "explorerCpt"
           R.setRef dataRef graph
           snd controls.selectedNodeIds $ const Set.empty
+          snd controls.forceAtlasState $ const SigmaxTypes.InitialRunning
           snd controls.graphStage $ const Graph.Init
 
       pure $

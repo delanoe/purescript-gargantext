@@ -22,7 +22,7 @@ import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple ((.=))
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Types (Graph(..), SGraph, EdgesMap, NodesMap, SelectedNodeIds, SelectedEdgeIds, graphEdges)
+import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 
@@ -32,7 +32,7 @@ type Sigma =
   , cleanup :: R.Ref (Seq (Effect Unit))
   }
 
-type Data n e = { graph :: R.Ref (Graph n e) }
+type Data n e = { graph :: R.Ref (ST.Graph n e) }
 
 initSigma :: R.Hooks Sigma
 initSigma = do
@@ -85,8 +85,8 @@ refreshData sigma graph
     refreshingMsg = "[refreshData] Refreshing graph"
     errorMsg = "[refreshData] Error reading graph data:"
 
-sigmafy :: forall n e. Graph n e -> Sigma.Graph n e
-sigmafy (Graph g) = {nodes,edges}
+sigmafy :: forall n e. ST.Graph n e -> Sigma.Graph n e
+sigmafy (ST.Graph g) = {nodes,edges}
   where
     nodes = A.fromFoldable g.nodes
     edges = A.fromFoldable g.edges
@@ -110,7 +110,7 @@ dependOnContainer container notFoundMsg f = do
 -- | pausing can be done not only via buttons but also from the initial
 -- | setTimer.
 --handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
-handleForceAtlas2Pause :: R.Ref Sigma -> R.State Boolean -> Boolean -> R.Ref (Maybe TimeoutId) -> Effect Unit
+handleForceAtlas2Pause :: R.Ref Sigma -> R.State ST.ForceAtlasState -> Boolean -> R.Ref (Maybe TimeoutId) -> Effect Unit
 handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) showEdges mFAPauseRef = do
   let sigma = R.readRef sigmaRef
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
@@ -119,14 +119,18 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) showEdges mFAPauseRef = 
     isFARunning <- Sigma.isForceAtlas2Running s
     --log2 "[handleForceAtlas2Pause] isFARunning: " isFARunning
     case Tuple toggled isFARunning of
-      Tuple true false -> do
+      Tuple ST.InitialRunning false -> do
+        -- hide edges during forceAtlas rendering, this prevents flickering
+        Sigma.restartForceAtlas2 s
+        setEdges s false
+      Tuple ST.Running false -> do
         -- hide edges during forceAtlas rendering, this prevents flickering
         Sigma.restartForceAtlas2 s
         setEdges s false
         case R.readRef mFAPauseRef of
           Nothing -> pure unit
           Just timeoutId -> clearTimeout timeoutId
-      Tuple false true -> do
+      Tuple ST.Paused true -> do
         -- restore edges state
         Sigma.stopForceAtlas2 s
         setEdges s showEdges
@@ -154,7 +158,7 @@ setEdges sigma val = do
       Sigma.setSettings sigma settings
     _ -> pure unit
 
-markSelectedEdges :: Sigma.Sigma -> SelectedEdgeIds -> EdgesMap -> Effect Unit
+markSelectedEdges :: Sigma.Sigma -> ST.SelectedEdgeIds -> ST.EdgesMap -> Effect Unit
 markSelectedEdges sigma selectedEdgeIds graphEdges = do
   Sigma.forEachEdge sigma \e -> do
     case Map.lookup e.id graphEdges of
@@ -169,7 +173,7 @@ markSelectedEdges sigma selectedEdgeIds graphEdges = do
         pure unit
   Sigma.refresh sigma
 
-markSelectedNodes :: Sigma.Sigma -> SelectedNodeIds -> NodesMap -> Effect Unit
+markSelectedNodes :: Sigma.Sigma -> ST.SelectedNodeIds -> ST.NodesMap -> Effect Unit
 markSelectedNodes sigma selectedNodeIds graphNodes = do
   Sigma.forEachNode sigma \n -> do
     case Map.lookup n.id graphNodes of
@@ -185,7 +189,7 @@ markSelectedNodes sigma selectedNodeIds graphNodes = do
   Sigma.refresh sigma
 
 
-updateEdges :: Sigma.Sigma -> EdgesMap -> Effect Unit
+updateEdges :: Sigma.Sigma -> ST.EdgesMap -> Effect Unit
 updateEdges sigma edgesMap = do
   Sigma.forEachEdge sigma \e -> do
     let mTEdge = Map.lookup e.id edgesMap
@@ -198,7 +202,7 @@ updateEdges sigma edgesMap = do
   Sigma.refresh sigma
 
 
-updateNodes :: Sigma.Sigma -> NodesMap -> Effect Unit
+updateNodes :: Sigma.Sigma -> ST.NodesMap -> Effect Unit
 updateNodes sigma nodesMap = do
   Sigma.forEachNode sigma \n -> do
     let mTNode = Map.lookup n.id nodesMap
@@ -212,7 +216,7 @@ updateNodes sigma nodesMap = do
 
 
 -- | Toggles item visibility in the selected set
-multiSelectUpdate :: SelectedNodeIds -> SelectedNodeIds -> SelectedNodeIds
+multiSelectUpdate :: ST.SelectedNodeIds -> ST.SelectedNodeIds -> ST.SelectedNodeIds
 multiSelectUpdate new selected = foldl fld selected new
   where
     fld selectedAcc item =
@@ -222,7 +226,7 @@ multiSelectUpdate new selected = foldl fld selected new
         Set.insert item selectedAcc
 
 
-bindSelectedNodesClick :: Sigma.Sigma -> R.State SelectedNodeIds -> R.Ref Boolean -> Effect Unit
+bindSelectedNodesClick :: Sigma.Sigma -> R.State ST.SelectedNodeIds -> R.Ref Boolean -> Effect Unit
 bindSelectedNodesClick sigma (_ /\ setSelectedNodeIds) multiSelectEnabledRef =
   Sigma.bindClickNodes sigma $ \nodes -> do
     let multiSelectEnabled = R.readRef multiSelectEnabledRef
@@ -232,7 +236,7 @@ bindSelectedNodesClick sigma (_ /\ setSelectedNodeIds) multiSelectEnabledRef =
     else
       setSelectedNodeIds $ const nodeIds
 
-bindSelectedEdgesClick :: R.Ref Sigma -> R.State SelectedEdgeIds -> Effect Unit
+bindSelectedEdgesClick :: R.Ref Sigma -> R.State ST.SelectedEdgeIds -> Effect Unit
 bindSelectedEdgesClick sigmaRef (_ /\ setSelectedEdgeIds) =
   dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
     Sigma.bindClickEdge sigma $ \edge -> do
