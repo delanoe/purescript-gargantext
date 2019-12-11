@@ -14,7 +14,6 @@ import Reactix.DOM.HTML as RH
 import Gargantext.Data.Array (catMaybes)
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
-import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
@@ -22,7 +21,7 @@ import Gargantext.Sessions (Session)
 
 type Props =
   ( frontends :: Frontends
-  , graph :: Graph.Graph
+  , graph :: SigmaxTypes.SGraph
   , metaData :: GET.MetaData
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , session :: Session

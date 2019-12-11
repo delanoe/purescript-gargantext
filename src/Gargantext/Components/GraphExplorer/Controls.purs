@@ -7,10 +7,11 @@ module Gargantext.Components.GraphExplorer.Controls
  , getShowTree, setShowTree
  , getShowControls, setShowControls
  , getCursorSize, setCursorSize
- , getMultiNodeSelect, setMultiNodeSelect
  ) where
 
-import Data.Maybe (Maybe(..))
+import Data.Array as A
+import Data.Maybe (Maybe(..), maybe)
+import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\), get1)
@@ -22,9 +23,10 @@ import Reactix.DOM.HTML as RH
 
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton)
-import Gargantext.Components.GraphExplorer.RangeControl (edgeSizeControl, nodeSizeControl)
+import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
+import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
-import Gargantext.Components.GraphExplorer.ToggleButton (edgesToggleButton, pauseForceAtlasButton)
+import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
@@ -33,11 +35,13 @@ import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( cursorSize      :: R.State Number
+  , edgeConfluence :: R.State Range.NumberRange
+  , edgeWeight :: R.State Range.NumberRange
+  , graph           :: SigmaxTypes.SGraph
   , graphStage      :: R.State Graph.Stage
-  , multiNodeSelect :: R.Ref Boolean
+  , multiSelectEnabled :: R.State Boolean
   , nodeSize        :: R.State Range.NumberRange
-  , selectedEdgeIds :: R.State (Set.Set String)
-  , selectedNodeIds :: R.State (Set.Set String)
+  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , showControls    :: R.State Boolean
   , showSidePanel   :: R.State GET.SidePanelState
   , showTree        :: R.State Boolean
@@ -48,23 +52,21 @@ controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
 controlsToSigmaSettings { cursorSize: (cursorSize /\ _)} = Graph.sigmaSettings
 
 type LocalControls =
-  ( edgeSize :: R.State Range.NumberRange
-  , labelSize :: R.State Number
+  ( labelSize :: R.State Number
   , pauseForceAtlas :: R.State Boolean
   , showEdges :: R.State Boolean
   )
 
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
-  edgeSize <- R.useState' $ Range.Closed { min: 0.5, max: 1.0 }
   labelSize <- R.useState' 14.0
   --nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 10.0 }
   pauseForceAtlas <- R.useState' true
+  search <- R.useState' ""
   showEdges <- R.useState' true
 
   pure $ {
-    edgeSize
-  , labelSize
+    labelSize
   --, nodeSize
   , pauseForceAtlas
   , showEdges
@@ -107,6 +109,11 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
         R.setRef mFAPauseRef $ Just timeoutId
         pure unit
 
+      let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxTypes.graphNodes props.graph
+      let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
+      let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
+      let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
+
       pure $ case getShowControls props of
         false -> RH.div {} []
         true -> RH.div { className: "col-md-12", style: { paddingBottom: "10px" } }
@@ -116,7 +123,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   RH.li {} [ centerButton props.sigmaRef ]
                 , RH.li {} [ pauseForceAtlasButton props.sigmaRef localControls.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
                 , RH.li {} [ edgesToggleButton props.sigmaRef localControls.showEdges ]
-                , RH.li {} [ edgeSizeControl props.sigmaRef localControls.edgeSize ] -- edge size : 0-3
+                , RH.li {} [ edgeConfluenceControl props.sigmaRef props.edgeConfluence ]
+                , RH.li {} [ edgeWeightControl props.sigmaRef props.edgeWeight ]
                   -- change level
                   -- file upload
                   -- run demo
@@ -124,33 +132,40 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- search topics
                 , RH.li {} [ cursorSizeButton props.cursorSize ] -- cursor size: 0-100
                 , RH.li {} [ labelSizeButton props.sigmaRef localControls.labelSize ] -- labels size: 1-4
-                , RH.li {} [ nodeSizeControl props.nodeSize ]
+                , RH.li {} [ nodeSizeControl nodeSizeRange props.nodeSize ]
                   -- zoom: 0 -100 - calculate ratio
-                  -- toggle multi node selection
+                , RH.li {} [ multiSelectEnabledButton props.multiSelectEnabled ]  -- toggle multi node selection
                   -- save button
+                , RH.li {} [ nodeSearchControl { selectedNodeIds: props.selectedNodeIds } ]
                 ]
               ]
             ]
 
-useGraphControls :: R.Hooks (Record Controls)
-useGraphControls = do
+useGraphControls :: SigmaxTypes.SGraph -> R.Hooks (Record Controls)
+useGraphControls graph = do
+  let edges = SigmaxTypes.graphEdges graph
+  let nodes = SigmaxTypes.graphNodes graph
+
   cursorSize      <- R.useState' 10.0
+  edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
+  edgeWeight <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   graphStage      <- R.useState' Graph.Init
-  multiNodeSelect <- R.useRef false
-  nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 10.0 }
+  multiSelectEnabled <- R.useState' false
+  nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
   showTree <- R.useState' false
   selectedNodeIds <- R.useState' $ Set.empty
-  selectedEdgeIds <- R.useState' $ Set.empty
   showControls    <- R.useState' false
   showSidePanel   <- R.useState' GET.InitialClosed
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
 
   pure { cursorSize
+       , edgeConfluence
+       , edgeWeight
+       , graph
        , graphStage
-       , multiNodeSelect
+       , multiSelectEnabled
        , nodeSize
-       , selectedEdgeIds
        , selectedNodeIds
        , showControls
        , showSidePanel
@@ -167,9 +182,6 @@ getShowTree { showTree: ( should /\ _ ) } = should
 getCursorSize :: Record Controls -> Number
 getCursorSize { cursorSize: ( size /\ _ ) } = size
 
-getMultiNodeSelect :: Record Controls -> Boolean
-getMultiNodeSelect { multiNodeSelect } = R.readRef multiNodeSelect
-
 setShowControls :: Record Controls -> Boolean -> Effect Unit
 setShowControls { showControls: ( _ /\ set ) } v = set $ const v
 
@@ -178,6 +190,3 @@ setShowTree { showTree: ( _ /\ set ) } v = set $ not <<< const v
 
 setCursorSize :: Record Controls -> Number -> Effect Unit
 setCursorSize { cursorSize: ( _ /\ setSize ) } v = setSize $ const v
-
-setMultiNodeSelect :: Record Controls -> Boolean -> Effect Unit
-setMultiNodeSelect { multiNodeSelect } = R.setRef multiNodeSelect

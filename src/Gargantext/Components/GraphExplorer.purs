@@ -6,18 +6,18 @@ import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
--- import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
+import Math (log)
+import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
-import Math (log)
 
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax as Sigmax
@@ -47,7 +47,7 @@ type LayoutProps =
   )
 
 type Props = (
-    graph :: Maybe Graph.Graph
+    graph :: SigmaxTypes.SGraph
   , mMetaData :: Maybe GET.MetaData
   | LayoutProps
   )
@@ -64,7 +64,7 @@ explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
       where
         handler loaded =
           explorer { graphId, mCurrentRoute, mMetaData
-                   , session, sessions, graph: Just graph, frontends, showLogin}
+                   , session, sessions, graph, frontends, showLogin}
           where (Tuple mMetaData graph) = convert loaded
 
 --------------------------------------------------------------
@@ -77,19 +77,19 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     cpt {frontends, graph, graphId, mCurrentRoute, mMetaData, session, sessions, showLogin} _ = do
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
-      controls <- Controls.useGraphControls
+      controls <- Controls.useGraphControls graph
+      multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
-        case Tuple (R.readRef dataRef) graph of
-          Tuple Nothing Nothing -> pure unit
-          Tuple (Just g1) (Just g2) | SigmaxTypes.eqGraph g1 g2 -> pure unit
-          _ -> do
-            let rSigma = R.readRef controls.sigmaRef
-            Sigmax.cleanupSigma rSigma "explorerCpt"
-            R.setRef dataRef graph
-            snd controls.selectedEdgeIds $ const Set.empty
-            snd controls.selectedNodeIds $ const Set.empty
-            snd controls.graphStage $ const Graph.Init
+        let readData = R.readRef dataRef
+        if SigmaxTypes.eqGraph readData graph then
+          pure unit
+        else do
+          let rSigma = R.readRef controls.sigmaRef
+          Sigmax.cleanupSigma rSigma "explorerCpt"
+          R.setRef dataRef graph
+          snd controls.selectedNodeIds $ const Set.empty
+          snd controls.graphStage $ const Graph.Init
 
       pure $
         RH.div
@@ -105,15 +105,12 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                 , row [ Controls.controls controls ]
                 , row [ tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
                       , RH.div { ref: graphRef, id: "graph-view", className: graphClassName controls, style: {height: "95%"} } []  -- graph container
-                      , mGraph { controls
-                               , elRef: graphRef
-                               , graphId
-                               , graph
-                               , graphStage: controls.graphStage
-                               , selectedEdgeIds: controls.selectedEdgeIds
-                               , selectedNodeIds: controls.selectedNodeIds
-                               , sigmaRef: controls.sigmaRef
-                               }
+                      , graphView { controls
+                                  , elRef: graphRef
+                                  , graphId
+                                  , graph
+                                  , multiSelectEnabledRef
+                                  }
                       , mSidebar graph mMetaData { frontends
                                                  , session
                                                  , selectedNodeIds: controls.selectedNodeIds
@@ -150,29 +147,15 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
       [forest {sessions, route, frontends, showLogin}]
 
-    mGraph :: { controls :: Record Controls.Controls
-              , elRef :: R.Ref (Nullable Element)
-              , graphId :: GraphId
-              , graph :: Maybe Graph.Graph
-              , graphStage :: R.State Graph.Stage
-              , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
-              , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds
-              , sigmaRef :: R.Ref Sigmax.Sigma
-              }
-           -> R.Element
-    mGraph {graph: Nothing} = RH.div {} []
-    mGraph r@{graph: Just graph} = graphView $ r { graph = graph }
-
-    mSidebar :: Maybe Graph.Graph
+    mSidebar :: SigmaxTypes.SGraph
              -> Maybe GET.MetaData
              -> { frontends :: Frontends
                 , showSidePanel :: GET.SidePanelState
                 , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
                 , session :: Session }
              -> R.Element
-    mSidebar Nothing _ _ = RH.div {} []
     mSidebar _ Nothing _ = RH.div {} []
-    mSidebar (Just graph) (Just metaData) {frontends, session, selectedNodeIds, showSidePanel} =
+    mSidebar graph (Just metaData) {frontends, session, selectedNodeIds, showSidePanel} =
       Sidebar.sidebar { frontends
                       , graph
                       , metaData
@@ -185,36 +168,37 @@ type GraphProps = (
     controls :: Record Controls.Controls
   , elRef :: R.Ref (Nullable Element)
   , graphId :: GraphId
-  , graph :: Graph.Graph
-  , graphStage :: R.State Graph.Stage
-  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
-  , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds
-  , sigmaRef :: R.Ref Sigmax.Sigma
+  , graph :: SigmaxTypes.SGraph
+  , multiSelectEnabledRef :: R.Ref Boolean
 )
 
 graphView :: Record GraphProps -> R.Element
 --graphView sigmaRef props = R.createElement (R.memo el memoCmp) props []
-graphView props = R.createElement el props []
+graphView props = R.createElement graphViewCpt props []
+
+graphViewCpt :: R.Component GraphProps
+graphViewCpt = R.hooksComponent "GraphView" cpt
   where
-    --memoCmp props1 props2 = props1.graphId == props2.graphId
-    el = R.hooksComponent "GraphView" cpt
-    cpt {controls, elRef, graphId, graph, selectedEdgeIds, selectedNodeIds, sigmaRef} _children = do
+    cpt {controls, elRef, graphId, graph, multiSelectEnabledRef} _children = do
       -- TODO Cache this?
       let transformedGraph = transformGraph controls graph
+
+      R.useEffect1' (fst controls.multiSelectEnabled) $ do
+        R.setRef multiSelectEnabledRef $ fst controls.multiSelectEnabled
 
       pure $ Graph.graph {
           elRef
         , forceAtlas2Settings: Graph.forceAtlas2Settings
         , graph
-        , selectedEdgeIds
-        , selectedNodeIds
-        , sigmaRef
+        , multiSelectEnabledRef
+        , selectedNodeIds: controls.selectedNodeIds
+        , sigmaRef: controls.sigmaRef
         , sigmaSettings: Graph.sigmaSettings
-        , stage: props.graphStage
+        , stage: controls.graphStage
         , transformedGraph
         }
 
-convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) Graph.Graph
+convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxTypes.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
   where
     nodes = foldMapWithIndex nodeFn r.nodes
@@ -232,7 +216,14 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
         cDef (GET.Cluster {clustDefault}) = clustDefault
     nodesMap = SigmaxTypes.nodesMap nodes
     edges = foldMap edgeFn r.edges
-    edgeFn (GET.Edge e) = Seq.singleton {id : e.id_, color, size: 1.0, source : e.source, target : e.target}
+    edgeFn (GET.Edge e) = Seq.singleton { id : e.id_
+                                        , color
+                                        , confluence : e.confluence
+                                        , hidden : false
+                                        , size: 1.0
+                                        , source : e.source
+                                        , target : e.target
+                                        , weight : e.weight }
       where
         color = case Map.lookup e.source nodesMap of
           Nothing   -> "#000000"
@@ -373,23 +364,47 @@ getNodes :: Session -> GraphId -> Aff GET.GraphData
 getNodes session graphId = get session $ NodeAPI Graph (Just graphId) ""
 
 
-transformGraph :: Record Controls.Controls -> Graph.Graph -> Graph.Graph
-transformGraph controls graph@(SigmaxTypes.Graph {nodes, edges}) = SigmaxTypes.Graph {nodes: newNodes, edges: newEdges}
+transformGraph :: Record Controls.Controls -> SigmaxTypes.SGraph -> SigmaxTypes.SGraph
+transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEdges}
   where
+    edges = SigmaxTypes.graphEdges graph
+    nodes = SigmaxTypes.graphNodes graph
     graphEdgesMap = SigmaxTypes.edgesGraphMap graph
     graphNodesMap = SigmaxTypes.nodesGraphMap graph
-    newNodes = nodeSizes <$> nodeMarked <$> nodes
-    newEdges = edgeMarked <$> edges
-    nodeSizes node@{ size } =
+    selectedEdgeIds =
+      Set.fromFoldable
+        $ Seq.map _.id
+        $ Seq.filter (\e -> Set.member e.source (fst controls.selectedNodeIds)) edges
+    hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
+
+    newNodes = nodeSizeFilter <$> nodeMarked <$> nodes
+    newEdges = edgeConfluenceFilter <$> edgeWeightFilter <$> edgeMarked <$> edges
+
+    nodeSizeFilter node@{ size } =
       if Range.within (fst controls.nodeSize) size then
         node
       else
         node { hidden = true }
-    edgeMarked edge@{ id } =
-      if Set.member id (fst controls.selectedEdgeIds) then
-        edge { color = "#ff0000" }
-      else
+
+    edgeConfluenceFilter edge@{ confluence } =
+      if Range.within (fst controls.edgeConfluence) confluence then
         edge
+      else
+        edge { hidden = true }
+    edgeWeightFilter edge@{ weight } =
+      if Range.within (fst controls.edgeWeight) weight then
+        edge
+      else
+        edge { hidden = true }
+
+    edgeMarked edge@{ id } = do
+      let isSelected = Set.member id selectedEdgeIds
+      let sourceNode = Map.lookup edge.source graphNodesMap
+      case Tuple hasSelection isSelected of
+        Tuple false true  -> edge { color = "#ff0000" }
+        Tuple true  true  -> edge { color = (unsafePartial $ fromJust sourceNode).color }
+        Tuple true  false -> edge { color = "#dddddd" }
+        _                 -> edge
     nodeMarked node@{ id } =
       if Set.member id (fst controls.selectedNodeIds) then
         node { color = "#ff0000" }

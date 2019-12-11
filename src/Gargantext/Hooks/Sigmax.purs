@@ -1,9 +1,11 @@
 module Gargantext.Hooks.Sigmax
   where
 
+import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), (||), not, const, map)
+
 import Data.Array as A
 import Data.Either (either)
-import Data.Foldable (sequence_)
+import Data.Foldable (sequence_, foldl)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
@@ -20,9 +22,8 @@ import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple ((.=))
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Types (Graph(..), EdgesMap, NodesMap, SelectedNodeIds, SelectedEdgeIds)
+import Gargantext.Hooks.Sigmax.Types (Graph(..), SGraph, EdgesMap, NodesMap, SelectedNodeIds, SelectedEdgeIds, graphEdges)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), not)
 import Reactix as R
 
 type Sigma =
@@ -190,8 +191,9 @@ updateEdges sigma edgesMap = do
     let mTEdge = Map.lookup e.id edgesMap
     case mTEdge of
       Nothing -> error $ "Edge id " <> e.id <> " not found in edgesMap"
-      (Just tEdge@{color: tColor}) -> do
+      (Just {color: tColor, hidden: tHidden}) -> do
         _ <- pure $ (e .= "color") tColor
+        _ <- pure $ (e .= "hidden") tHidden
         pure unit
   Sigma.refresh sigma
 
@@ -202,28 +204,38 @@ updateNodes sigma nodesMap = do
     let mTNode = Map.lookup n.id nodesMap
     case mTNode of
       Nothing -> error $ "Node id " <> n.id <> " not found in nodesMap"
-      (Just tNode@{color: tColor, hidden: tHidden}) -> do
+      (Just {color: tColor, hidden: tHidden}) -> do
         _ <- pure $ (n .= "color") tColor
         _ <- pure $ (n .= "hidden") tHidden
         pure unit
   Sigma.refresh sigma
 
 
-bindSelectedNodesClick :: R.Ref Sigma -> R.State SelectedNodeIds -> Effect Unit
-bindSelectedNodesClick sigmaRef (_ /\ setSelectedNodeIds) =
-  dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
-    Sigma.bindClickNode sigma $ \node -> do
-      setSelectedNodeIds \nids ->
-        if Set.member node.id nids then
-          Set.delete node.id nids
-        else
-          Set.insert node.id nids
+-- | Toggles item visibility in the selected set
+multiSelectUpdate :: SelectedNodeIds -> SelectedNodeIds -> SelectedNodeIds
+multiSelectUpdate new selected = foldl fld selected new
+  where
+    fld selectedAcc item =
+      if Set.member item selectedAcc then
+        Set.delete item selectedAcc
+      else
+        Set.insert item selectedAcc
+
+
+bindSelectedNodesClick :: Sigma.Sigma -> R.State SelectedNodeIds -> R.Ref Boolean -> Effect Unit
+bindSelectedNodesClick sigma (_ /\ setSelectedNodeIds) multiSelectEnabledRef =
+  Sigma.bindClickNodes sigma $ \nodes -> do
+    let multiSelectEnabled = R.readRef multiSelectEnabledRef
+    let nodeIds = Set.fromFoldable $ map _.id nodes
+    if multiSelectEnabled then
+      setSelectedNodeIds $ multiSelectUpdate nodeIds
+    else
+      setSelectedNodeIds $ const nodeIds
 
 bindSelectedEdgesClick :: R.Ref Sigma -> R.State SelectedEdgeIds -> Effect Unit
 bindSelectedEdgesClick sigmaRef (_ /\ setSelectedEdgeIds) =
   dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
     Sigma.bindClickEdge sigma $ \edge -> do
-      log2 "[bindClickEdge] edge" edge
       setSelectedEdgeIds \eids ->
         if Set.member edge.id eids then
           Set.delete edge.id eids
