@@ -110,7 +110,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   ]
                 , rowControls [ Controls.controls controls ]
                 , row [ tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
-                      , RH.div { ref: graphRef, id: "graph-view", className: graphClassName controls, style: {height: "95%"} } []  -- graph container
+                      , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []  -- graph container
                       , graphView { controls
                                   , elRef: graphRef
                                   , graphId
@@ -128,12 +128,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
               ]
             ]
           ]
-
-    graphClassName :: Record Controls.Controls -> String
-    --graphClassName {showSidePanel: (GET.Opened /\ _), showTree: (true /\ _)} = "col-md-8"
-    --graphClassName {showTree: (true /\ _)} = "col-md-10"
-    --graphClassName {showSidePanel: (GET.Opened /\ _)} = "col-md-10"
-    graphClassName _ = "col-md-12"
 
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }

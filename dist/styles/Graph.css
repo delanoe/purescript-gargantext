@@ -20,6 +20,9 @@
   overflow-y: scroll;
   z-index: 1;
 }
+#graph-explorer #graph-view {
+  height: 95%;
+}
 #graph-explorer #sp-container {
   position: absolute;
   left: 70%;
