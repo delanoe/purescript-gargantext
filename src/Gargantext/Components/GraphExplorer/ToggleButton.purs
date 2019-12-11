@@ -1,5 +1,8 @@
 module Gargantext.Components.GraphExplorer.ToggleButton
-  ( Props, toggleButton, toggleButtonCpt
+  ( Props
+  , toggleButton
+  , toggleButtonCpt
+  , multiSelectEnabledButton
   , controlsToggleButton
   , edgesToggleButton
   , sidebarToggleButton
@@ -64,6 +67,15 @@ edgesToggleButton sigmaRef state =
       Sigmax.dependOnSigma sigma "[edgesToggleButton] sigma: Nothing" $ \s -> do
         Sigmax.setEdges s $ not toggled
       setToggled not
+    }
+
+multiSelectEnabledButton :: R.State Boolean -> R.Element
+multiSelectEnabledButton state =
+  toggleButton {
+      state: state
+    , onMessage: "Single-node"
+    , offMessage: "Multi-node"
+    , onClick: \_ -> snd state not
     }
 
 pauseForceAtlasButton :: R.Ref Sigmax.Sigma -> R.State Boolean -> R.Element

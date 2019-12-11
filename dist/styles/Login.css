@@ -79,18 +79,6 @@ li#rename #rename-a {
   width: 1300px;
 }
 
-#search-popup-tooltip {
-  position: absolute;
-  left: 300px;
-  top: -300px;
-  background-color: white;
-  z-index: 1000;
-}
-#search-popup-tooltip:hover {
-  border: none;
-  text-decoration: none;
-}
-
 #create-node-tooltip {
   position: absolute;
   left: 96px;
@@ -214,6 +202,11 @@ li:hover a#rename-leaf {
   display: flex;
   flew-wrap: wrap;
   justify-content: center;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: space-between;
 }
 
 a:focus, a:hover {

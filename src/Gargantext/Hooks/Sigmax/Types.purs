@@ -48,17 +48,15 @@ graphNodes :: SGraph -> Seq (Record Node)
 graphNodes (Graph {nodes}) = nodes
 
 edgesGraphMap :: Graph Node Edge -> EdgesMap
-edgesGraphMap graph = do
-  let (Graph {edges}) = graph
-  Map.fromFoldable $ map (\e -> Tuple e.id e) edges
+edgesGraphMap graph =
+  Map.fromFoldable $ map (\e -> Tuple e.id e) $ graphEdges graph
 
 nodesMap :: Seq (Record Node) -> NodesMap
 nodesMap nodes = Map.fromFoldable $ map (\n -> Tuple n.id n) nodes
 
 nodesGraphMap :: Graph Node Edge -> NodesMap
-nodesGraphMap graph = do
-  let (Graph {nodes}) = graph
-  nodesMap nodes
+nodesGraphMap graph =
+  nodesMap $ graphNodes graph
 
 eqGraph :: (Graph Node Edge) -> (Graph Node Edge) -> Boolean
 eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n2) && (e1 == e2)

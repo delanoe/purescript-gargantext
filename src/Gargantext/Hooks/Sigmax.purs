@@ -5,7 +5,7 @@ import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (
 
 import Data.Array as A
 import Data.Either (either)
-import Data.Foldable (sequence_)
+import Data.Foldable (sequence_, foldl)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
@@ -22,7 +22,7 @@ import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple ((.=))
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Hooks.Sigmax.Types (Graph(..), SGraph, EdgesMap, NodesMap, SelectedNodeIds, SelectedEdgeIds)
+import Gargantext.Hooks.Sigmax.Types (Graph(..), SGraph, EdgesMap, NodesMap, SelectedNodeIds, SelectedEdgeIds, graphEdges)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 
@@ -210,16 +210,28 @@ updateNodes sigma nodesMap = do
   Sigma.refresh sigma
 
 
-bindSelectedNodesClick :: R.Ref Sigma -> R.State SelectedNodeIds -> R.State SelectedEdgeIds -> SGraph -> Effect Unit
-bindSelectedNodesClick sigmaRef (_ /\ setSelectedNodeIds) (_ /\ setSelectedEdgeIds) (Graph {edges, nodes}) =
-  dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
-    Sigma.bindClickNodes sigma $ \nodes -> do
-      let nodeIds = Set.fromFoldable $ map _.id nodes
+-- | Toggles item visibility in the selected set
+multiSelectUpdate :: SelectedNodeIds -> SelectedNodeIds -> SelectedNodeIds
+multiSelectUpdate new selected = foldl fld selected new
+  where
+    fld selectedAcc item =
+      if Set.member item selectedAcc then
+        Set.delete item selectedAcc
+      else
+        Set.insert item selectedAcc
+
+
+bindSelectedNodesClick :: Sigma.Sigma -> R.State SelectedNodeIds -> R.Ref Boolean -> Effect Unit
+bindSelectedNodesClick sigma (_ /\ setSelectedNodeIds) multiSelectEnabledRef =
+  Sigma.bindClickNodes sigma $ \nodes -> do
+    log2 "[bindSelectedNodesClick] nodes" nodes
+    let multiSelectEnabled = R.readRef multiSelectEnabledRef
+    log2 "[bindSelectedNodesClick] multiSelectEnabled" multiSelectEnabled
+    let nodeIds = Set.fromFoldable $ map _.id nodes
+    if multiSelectEnabled then
+      setSelectedNodeIds $ multiSelectUpdate nodeIds
+    else
       setSelectedNodeIds $ const nodeIds
-      setSelectedEdgeIds \_ ->
-        Set.fromFoldable
-          $ Seq.map _.id
-          $ Seq.filter (\e -> Set.member e.source nodeIds) edges
 
 bindSelectedEdgesClick :: R.Ref Sigma -> R.State SelectedEdgeIds -> Effect Unit
 bindSelectedEdgesClick sigmaRef (_ /\ setSelectedEdgeIds) =

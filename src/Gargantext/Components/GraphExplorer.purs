@@ -2,6 +2,7 @@ module Gargantext.Components.GraphExplorer where
 
 import Gargantext.Prelude hiding (max,min)
 
+import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
@@ -12,7 +13,7 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
--- import DOM.Simple.Console (log2)
+import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Math (log)
@@ -88,7 +89,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
           let rSigma = R.readRef controls.sigmaRef
           Sigmax.cleanupSigma rSigma "explorerCpt"
           R.setRef dataRef graph
-          snd controls.selectedEdgeIds $ const Set.empty
           snd controls.selectedNodeIds $ const Set.empty
           snd controls.graphStage $ const Graph.Init
 
@@ -110,10 +110,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                                   , elRef: graphRef
                                   , graphId
                                   , graph
-                                  , graphStage: controls.graphStage
-                                  , selectedEdgeIds: controls.selectedEdgeIds
-                                  , selectedNodeIds: controls.selectedNodeIds
-                                  , sigmaRef: controls.sigmaRef
                                   }
                       , mSidebar graph mMetaData { frontends
                                                  , session
@@ -173,10 +169,6 @@ type GraphProps = (
   , elRef :: R.Ref (Nullable Element)
   , graphId :: GraphId
   , graph :: SigmaxTypes.SGraph
-  , graphStage :: R.State Graph.Stage
-  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
-  , selectedEdgeIds :: R.State SigmaxTypes.SelectedEdgeIds
-  , sigmaRef :: R.Ref Sigmax.Sigma
 )
 
 graphView :: Record GraphProps -> R.Element
@@ -185,19 +177,30 @@ graphView props = R.createElement el props []
   where
     --memoCmp props1 props2 = props1.graphId == props2.graphId
     el = R.hooksComponent "GraphView" cpt
-    cpt {controls, elRef, graphId, graph, selectedEdgeIds, selectedNodeIds, sigmaRef} _children = do
+    cpt {controls, elRef, graphId, graph} _children = do
       -- TODO Cache this?
       let transformedGraph = transformGraph controls graph
+
+      multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
+
+      R.useEffect' $ do
+        let nodeColor {id, color} = [id, color]
+        let onlySelected g = Seq.filter (\n -> Set.member n.id (fst controls.selectedNodeIds)) $ SigmaxTypes.graphNodes g
+        log2 "[graphView] selectedNodeIds" $ A.fromFoldable $ fst controls.selectedNodeIds
+        log2 "[graphView] transformedGraph.nodes" $ A.fromFoldable $ map nodeColor $ onlySelected transformedGraph
+        log2 "[graphView] graph.nodes" $ A.fromFoldable $ map nodeColor $ onlySelected graph
+
+        R.setRef multiSelectEnabledRef $ fst controls.multiSelectEnabled
 
       pure $ Graph.graph {
           elRef
         , forceAtlas2Settings: Graph.forceAtlas2Settings
         , graph
-        , selectedEdgeIds
-        , selectedNodeIds
-        , sigmaRef
+        , multiSelectEnabledRef
+        , selectedNodeIds: controls.selectedNodeIds
+        , sigmaRef: controls.sigmaRef
         , sigmaSettings: Graph.sigmaSettings
-        , stage: props.graphStage
+        , stage: controls.graphStage
         , transformedGraph
         }
 
@@ -367,16 +370,22 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
     nodes = SigmaxTypes.graphNodes graph
     graphEdgesMap = SigmaxTypes.edgesGraphMap graph
     graphNodesMap = SigmaxTypes.nodesGraphMap graph
+    selectedEdgeIds =
+      Set.fromFoldable
+        $ Seq.map _.id
+        $ Seq.filter (\e -> Set.member e.source (fst controls.selectedNodeIds)) edges
+    hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
+
     newNodes = nodeSizes <$> nodeMarked <$> nodes
     newEdges = edgeMarked <$> edges
-    hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
+
     nodeSizes node@{ size } =
       if Range.within (fst controls.nodeSize) size then
         node
       else
         node { hidden = true }
     edgeMarked edge@{ id } = do
-      let isSelected = Set.member id (fst controls.selectedEdgeIds)
+      let isSelected = Set.member id selectedEdgeIds
       let sourceNode = Map.lookup edge.source graphNodesMap
       case Tuple hasSelection isSelected of
         Tuple false true  -> edge { color = "#ff0000" }

@@ -33,14 +33,18 @@ sizeButtonCpt = R.hooksComponent "NodeSearchControl" cpt
       (search /\ setSearch) <- R.useState' ""
 
       pure $
-        H.span {}
-          [ H.input { type: "text"
-                    , className: "form-control"
-                    , defaultValue: search
-                    , on: { input: \e -> setSearch $ const $ e .. "target" .. "value" }
+        H.div { className: "form-group" }
+          [ H.div { className: "input-group" }
+            [ H.input { type: "text"
+                      , className: "form-control"
+                      , defaultValue: search
+                      , on: { input: \e -> setSearch $ const $ e .. "target" .. "value" }
+                      }
+            , H.div { className: "btn input-group-addon"
+                    , on: { click: \_ -> log2 "[sizeButtonCpt] search" search }
                     }
-          , H.button { className: "btn btn-primary"
-                     , on: { click: \_ -> log2 "[sizeButtonCpt] search" search }} [ H.text "Search" ]
+              [ H.span { className: "fa fa-search" } [] ]
+            ]
           ]
 
 -- TODO Wherefrom do I get graph nodes?
