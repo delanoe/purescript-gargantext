@@ -108,7 +108,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ Toggle.controlsToggleButton controls.showControls ]
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
-                , row [ Controls.controls controls ]
+                , rowControls [ Controls.controls controls ]
                 , row [ tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
                       , RH.div { ref: graphRef, id: "graph-view", className: graphClassName controls, style: {height: "95%"} } []  -- graph container
                       , graphView { controls
@@ -117,29 +117,29 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                                   , graph
                                   , multiSelectEnabledRef
                                   }
-                      , mSidebar graph mMetaData { frontends
-                                                 , session
-                                                 , selectedNodeIds: controls.selectedNodeIds
-                                                 , showSidePanel: fst controls.showSidePanel
-                                                 }
+                      , mSidebar mMetaData { frontends
+                                           , graph
+                                           , session
+                                           , selectedNodeIds: controls.selectedNodeIds
+                                           , showSidePanel: fst controls.showSidePanel
+                                           }
                       ]
-                , row [
-                  ]
                 ]
               ]
             ]
           ]
 
     graphClassName :: Record Controls.Controls -> String
-    graphClassName {showSidePanel: (GET.Opened /\ _), showTree: (true /\ _)} = "col-md-8"
-    graphClassName {showTree: (true /\ _)} = "col-md-10"
-    graphClassName {showSidePanel: (GET.Opened /\ _)} = "col-md-10"
+    --graphClassName {showSidePanel: (GET.Opened /\ _), showTree: (true /\ _)} = "col-md-8"
+    --graphClassName {showTree: (true /\ _)} = "col-md-10"
+    --graphClassName {showSidePanel: (GET.Opened /\ _)} = "col-md-10"
     graphClassName _ = "col-md-12"
 
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1  = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
     row   = RH.div { className: "row" }
+    rowControls = RH.div { className: "row controls" }
     col       = RH.div { className: "col-md-4" }
     pullLeft  = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }
@@ -150,18 +150,17 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
          -> R.Element
     tree false _ _ = RH.div { id: "tree" } []
     tree true {sessions, mCurrentRoute: route, frontends} showLogin =
-      RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
-      [forest {sessions, route, frontends, showLogin}]
+      RH.div {className: "col-md-2 graph-tree"} [forest {sessions, route, frontends, showLogin}]
 
-    mSidebar :: SigmaxTypes.SGraph
-             -> Maybe GET.MetaData
+    mSidebar :: Maybe GET.MetaData
              -> { frontends :: Frontends
+                , graph :: SigmaxTypes.SGraph
                 , showSidePanel :: GET.SidePanelState
                 , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
                 , session :: Session }
              -> R.Element
-    mSidebar _ Nothing _ = RH.div {} []
-    mSidebar graph (Just metaData) {frontends, session, selectedNodeIds, showSidePanel} =
+    mSidebar Nothing _ = RH.div {} []
+    mSidebar (Just metaData) {frontends, graph, session, selectedNodeIds, showSidePanel} =
       Sidebar.sidebar { frontends
                       , graph
                       , metaData
