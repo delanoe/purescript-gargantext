@@ -4,7 +4,7 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude (bind, const, discard, pure, ($), unit, map)
+import Prelude (bind, const, discard, pure, ($), unit, map, not, show)
 
 import Data.Array as A
 import Data.Either (Either(..))
@@ -32,6 +32,7 @@ type Props sigma forceatlas2 =
   , graph :: SigmaxTypes.SGraph
   , multiSelectEnabledRef :: R.Ref Boolean
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , showEdges :: R.State SigmaxTypes.ShowEdgesState
   , sigmaRef :: R.Ref Sigmax.Sigma
   , sigmaSettings :: sigma
   , stage :: R.State Stage
@@ -90,7 +91,7 @@ graphCpt = R.hooksComponent "Graph" cpt
           log "[graphCpt] cleanup"
           pure $ pure unit
 
-    stageHooks props@{sigmaRef, stage: (Ready /\ setStage), transformedGraph} = do
+    stageHooks props@{showEdges: (showEdges /\ _), sigmaRef, stage: (Ready /\ setStage), transformedGraph} = do
       let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
       let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
 
@@ -99,6 +100,7 @@ graphCpt = R.hooksComponent "Graph" cpt
         Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
           Sigmax.updateEdges sigma tEdgesMap
           Sigmax.updateNodes sigma tNodesMap
+          Sigmax.setEdges sigma (not $ SigmaxTypes.edgeStateHidden showEdges)
 
     stageHooks _ = pure unit
 

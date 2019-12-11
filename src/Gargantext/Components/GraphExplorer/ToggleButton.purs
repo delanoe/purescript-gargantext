@@ -20,6 +20,7 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 
 type Props = (
     state :: R.State Boolean
@@ -55,19 +56,28 @@ controlsToggleButton state =
     , onClick: \_ -> snd state not
     }
 
-edgesToggleButton :: R.Ref Sigmax.Sigma -> R.State Boolean -> R.Element
-edgesToggleButton sigmaRef state =
-  toggleButton {
-      state: state
-    , onMessage: "Hide Edges"
-    , offMessage: "Show Edges"
-    , onClick: \_ -> do
-      let sigma = R.readRef sigmaRef
-      let (toggled /\ setToggled) = state
-      Sigmax.dependOnSigma sigma "[edgesToggleButton] sigma: Nothing" $ \s -> do
-        Sigmax.setEdges s $ not toggled
-      setToggled not
-    }
+type EdgesButtonProps = (
+  state :: R.State SigmaxTypes.ShowEdgesState
+)
+
+edgesToggleButton :: Record EdgesButtonProps -> R.Element
+edgesToggleButton props = R.createElement edgesToggleButtonCpt props []
+
+edgesToggleButtonCpt :: R.Component EdgesButtonProps
+edgesToggleButtonCpt = R.hooksComponent "EdgesToggleButton" cpt
+  where
+    cpt {state: (state /\ setState)} _ = do
+      pure $
+        H.span {}
+          [
+            H.button
+              { className: "btn btn-primary", on: {click: onClick setState} }
+              [ H.text (text state) ]
+          ]
+    text s = if SigmaxTypes.edgeStateHidden s then "Show edges" else "Hide edges"
+
+    -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
+    onClick setState _ = setState SigmaxTypes.toggleShowEdgesState
 
 multiSelectEnabledButton :: R.State Boolean -> R.Element
 multiSelectEnabledButton state =
@@ -78,16 +88,29 @@ multiSelectEnabledButton state =
     , onClick: \_ -> snd state not
     }
 
-pauseForceAtlasButton :: R.Ref Sigmax.Sigma -> R.State Boolean -> R.Element
-pauseForceAtlasButton sigmaRef state =
-  toggleButton {
-      state: state
-    , onMessage: "Pause Force Atlas"
-    , offMessage: "Start Force Atlas"
-    , onClick: \_ -> do
-      let (_ /\ setToggled) = state
-      setToggled not
-    }
+type ForceAtlasProps = (
+  state :: R.State SigmaxTypes.ForceAtlasState
+)
+
+pauseForceAtlasButton :: Record ForceAtlasProps -> R.Element
+pauseForceAtlasButton props = R.createElement pauseForceAtlasButtonCpt props []
+
+pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
+pauseForceAtlasButtonCpt = R.hooksComponent "ForceAtlasToggleButton" cpt
+  where
+    cpt {state: (state /\ setState)} _ = do
+      pure $
+        H.span {}
+          [
+            H.button
+              { className: "btn btn-primary", on: {click: onClick setState} }
+              [ H.text (text state) ]
+          ]
+    text SigmaxTypes.InitialRunning = "Pause Force Atlas"
+    text SigmaxTypes.Running = "Pause Force Atlas"
+    text SigmaxTypes.Paused = "Start Force Atlas"
+
+    onClick setState _ = setState SigmaxTypes.toggleForceAtlasState
 
 treeToggleButton :: R.State Boolean -> R.Element
 treeToggleButton state =

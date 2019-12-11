@@ -12,6 +12,7 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Math (log)
@@ -85,11 +86,16 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
         if SigmaxTypes.eqGraph readData graph then
           pure unit
         else do
+          -- Graph data changed, reinitialize sigma.
           let rSigma = R.readRef controls.sigmaRef
           Sigmax.cleanupSigma rSigma "explorerCpt"
           R.setRef dataRef graph
+          -- Reinitialize bunch of state as well.
           snd controls.selectedNodeIds $ const Set.empty
+          snd controls.showEdges $ const SigmaxTypes.EShow
+          snd controls.forceAtlasState $ const SigmaxTypes.InitialRunning
           snd controls.graphStage $ const Graph.Init
+          snd controls.showSidePanel $ const GET.InitialClosed
 
       pure $
         RH.div
@@ -102,38 +108,32 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ Toggle.controlsToggleButton controls.showControls ]
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
-                , row [ Controls.controls controls ]
+                , rowControls [ Controls.controls controls ]
                 , row [ tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
-                      , RH.div { ref: graphRef, id: "graph-view", className: graphClassName controls, style: {height: "95%"} } []  -- graph container
+                      , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []  -- graph container
                       , graphView { controls
                                   , elRef: graphRef
                                   , graphId
                                   , graph
                                   , multiSelectEnabledRef
                                   }
-                      , mSidebar graph mMetaData { frontends
-                                                 , session
-                                                 , selectedNodeIds: controls.selectedNodeIds
-                                                 , showSidePanel: fst controls.showSidePanel
-                                                 }
+                      , mSidebar mMetaData { frontends
+                                           , graph
+                                           , session
+                                           , selectedNodeIds: controls.selectedNodeIds
+                                           , showSidePanel: fst controls.showSidePanel
+                                           }
                       ]
-                , row [
-                  ]
                 ]
               ]
             ]
           ]
 
-    graphClassName :: Record Controls.Controls -> String
-    graphClassName {showSidePanel: (GET.Opened /\ _), showTree: (true /\ _)} = "col-md-8"
-    graphClassName {showTree: (true /\ _)} = "col-md-10"
-    graphClassName {showSidePanel: (GET.Opened /\ _)} = "col-md-10"
-    graphClassName _ = "col-md-12"
-
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1  = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
     row   = RH.div { className: "row" }
+    rowControls = RH.div { className: "row controls" }
     col       = RH.div { className: "col-md-4" }
     pullLeft  = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }
@@ -144,18 +144,17 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
          -> R.Element
     tree false _ _ = RH.div { id: "tree" } []
     tree true {sessions, mCurrentRoute: route, frontends} showLogin =
-      RH.div {className: "col-md-2", style: {paddingTop: "60px"}}
-      [forest {sessions, route, frontends, showLogin}]
+      RH.div {className: "col-md-2 graph-tree"} [forest {sessions, route, frontends, showLogin}]
 
-    mSidebar :: SigmaxTypes.SGraph
-             -> Maybe GET.MetaData
+    mSidebar :: Maybe GET.MetaData
              -> { frontends :: Frontends
+                , graph :: SigmaxTypes.SGraph
                 , showSidePanel :: GET.SidePanelState
                 , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
                 , session :: Session }
              -> R.Element
-    mSidebar _ Nothing _ = RH.div {} []
-    mSidebar graph (Just metaData) {frontends, session, selectedNodeIds, showSidePanel} =
+    mSidebar Nothing _ = RH.div {} []
+    mSidebar (Just metaData) {frontends, graph, session, selectedNodeIds, showSidePanel} =
       Sidebar.sidebar { frontends
                       , graph
                       , metaData
@@ -192,6 +191,7 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
         , graph
         , multiSelectEnabledRef
         , selectedNodeIds: controls.selectedNodeIds
+        , showEdges: controls.showEdges
         , sigmaRef: controls.sigmaRef
         , sigmaSettings: Graph.sigmaSettings
         , stage: controls.graphStage
@@ -378,7 +378,7 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
     hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
 
     newNodes = nodeSizeFilter <$> nodeMarked <$> nodes
-    newEdges = edgeConfluenceFilter <$> edgeWeightFilter <$> edgeMarked <$> edges
+    newEdges = edgeConfluenceFilter <$> edgeWeightFilter <$> edgeShowFilter <$> edgeMarked <$> edges
 
     nodeSizeFilter node@{ size } =
       if Range.within (fst controls.nodeSize) size then
@@ -391,6 +391,11 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
         edge
       else
         edge { hidden = true }
+    edgeShowFilter edge =
+      if (SigmaxTypes.edgeStateHidden $ fst controls.showEdges) then
+        edge { hidden = true }
+      else
+        edge
     edgeWeightFilter edge@{ weight } =
       if Range.within (fst controls.edgeWeight) weight then
         edge

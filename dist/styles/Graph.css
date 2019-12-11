@@ -10,6 +10,19 @@
   display: flex;
   max-width: 200px;
 }
+#graph-explorer .row.controls {
+  height: 79px;
+}
+#graph-explorer .graph-tree {
+  position: absolute;
+  top: 120px;
+  max-height: 600px;
+  overflow-y: scroll;
+  z-index: 1;
+}
+#graph-explorer #graph-view {
+  height: 95%;
+}
 #graph-explorer #sp-container {
   position: absolute;
   left: 70%;
@@ -17,6 +30,8 @@
   z-index: 1;
   border: 1px white solid;
   background-color: white;
+  max-height: 600px;
+  overflow-y: scroll;
 }
 #graph-explorer #sp-container #myTab {
   marginBottom: 18px;

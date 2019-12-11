@@ -14,7 +14,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\), get1)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Timer (setTimeout)
 import Prelude
@@ -37,12 +37,14 @@ type Controls =
   ( cursorSize      :: R.State Number
   , edgeConfluence :: R.State Range.NumberRange
   , edgeWeight :: R.State Range.NumberRange
+  , forceAtlasState :: R.State SigmaxTypes.ForceAtlasState
   , graph           :: SigmaxTypes.SGraph
   , graphStage      :: R.State Graph.Stage
   , multiSelectEnabled :: R.State Boolean
   , nodeSize        :: R.State Range.NumberRange
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , showControls    :: R.State Boolean
+  , showEdges       :: R.State SigmaxTypes.ShowEdgesState
   , showSidePanel   :: R.State GET.SidePanelState
   , showTree        :: R.State Boolean
   , sigmaRef        :: R.Ref Sigmax.Sigma
@@ -53,23 +55,15 @@ controlsToSigmaSettings { cursorSize: (cursorSize /\ _)} = Graph.sigmaSettings
 
 type LocalControls =
   ( labelSize :: R.State Number
-  , pauseForceAtlas :: R.State Boolean
-  , showEdges :: R.State Boolean
   )
 
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
   labelSize <- R.useState' 14.0
-  --nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 10.0 }
-  pauseForceAtlas <- R.useState' true
   search <- R.useState' ""
-  showEdges <- R.useState' true
 
   pure $ {
     labelSize
-  --, nodeSize
-  , pauseForceAtlas
-  , showEdges
   }
 
 controls :: Record Controls -> R.Element
@@ -84,30 +78,41 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
       -- If user pauses FA before auto is triggered, clear the timeoutId
       mFAPauseRef <- R.useRef Nothing
 
-      -- when graph is changed, cleanup the mFAPauseRef
+      -- When graph is changed, cleanup the mFAPauseRef so that forceAtlas
+      -- timeout is retriggered.
       R.useEffect' $ do
         case fst props.graphStage of
           Graph.Init -> R.setRef mFAPauseRef Nothing
           _          -> pure unit
 
-      R.useEffect' $ Sigmax.handleForceAtlas2Pause props.sigmaRef localControls.pauseForceAtlas (get1 localControls.showEdges) mFAPauseRef
+      -- Handle case when FA is paused from outside events, eg. the automatic timer.
+      R.useEffect' $ Sigmax.handleForceAtlas2Pause props.sigmaRef props.forceAtlasState mFAPauseRef
 
+      -- Handle automatic edge hiding when FA is running (to prevent flickering).
+      R.useEffect2' props.sigmaRef props.forceAtlasState $
+        snd props.showEdges $ SigmaxTypes.forceAtlasEdgeState (fst props.forceAtlasState)
+
+      -- Automatic opening of sidebar when a node is selected (but only first time).
       R.useEffect' $ do
         if fst props.showSidePanel == GET.InitialClosed && (not Set.isEmpty $ fst props.selectedNodeIds) then
           snd props.showSidePanel $ \_ -> GET.Opened
         else
           pure unit
 
-      R.useEffectOnce' $ do
-        timeoutId <- setTimeout 2000 $ do
-          let (toggled /\ setToggled) = localControls.pauseForceAtlas
-          if toggled then
-            setToggled $ const false
-          else
-            pure unit
-          R.setRef mFAPauseRef Nothing
-        R.setRef mFAPauseRef $ Just timeoutId
-        pure unit
+      -- Timer to turn off the initial FA. This is because FA eats up lot of
+      -- CPU, has memory leaks etc.
+      R.useEffect1' (fst props.forceAtlasState) $ do
+        if (fst props.forceAtlasState) == SigmaxTypes.InitialRunning then do
+          timeoutId <- setTimeout 2000 $ do
+            let (toggled /\ setToggled) = props.forceAtlasState
+            case toggled of
+              SigmaxTypes.InitialRunning -> setToggled $ const SigmaxTypes.Paused
+              _ -> pure unit
+            R.setRef mFAPauseRef Nothing
+          R.setRef mFAPauseRef $ Just timeoutId
+          pure unit
+         else
+           pure unit
 
       let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxTypes.graphNodes props.graph
       let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
@@ -121,8 +126,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
               [ RH.ul {}
                 [ -- change type button (?)
                   RH.li {} [ centerButton props.sigmaRef ]
-                , RH.li {} [ pauseForceAtlasButton props.sigmaRef localControls.pauseForceAtlas ] -- spatialization (pause ForceAtlas2)
-                , RH.li {} [ edgesToggleButton props.sigmaRef localControls.showEdges ]
+                , RH.li {} [ pauseForceAtlasButton {state: props.forceAtlasState} ]
+                , RH.li {} [ edgesToggleButton {state: props.showEdges} ]
                 , RH.li {} [ edgeConfluenceControl props.sigmaRef props.edgeConfluence ]
                 , RH.li {} [ edgeWeightControl props.sigmaRef props.edgeWeight ]
                   -- change level
@@ -149,12 +154,14 @@ useGraphControls graph = do
   cursorSize      <- R.useState' 10.0
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
+  forceAtlasState <- R.useState' SigmaxTypes.InitialRunning
   graphStage      <- R.useState' Graph.Init
   multiSelectEnabled <- R.useState' false
   nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
   showTree <- R.useState' false
   selectedNodeIds <- R.useState' $ Set.empty
   showControls    <- R.useState' false
+  showEdges <- R.useState' SigmaxTypes.EShow
   showSidePanel   <- R.useState' GET.InitialClosed
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
@@ -162,12 +169,14 @@ useGraphControls graph = do
   pure { cursorSize
        , edgeConfluence
        , edgeWeight
+       , forceAtlasState
        , graph
        , graphStage
        , multiSelectEnabled
        , nodeSize
        , selectedNodeIds
        , showControls
+       , showEdges
        , showSidePanel
        , showTree
        , sigmaRef
