@@ -2,7 +2,6 @@ module Gargantext.Components.GraphExplorer where
 
 import Gargantext.Prelude hiding (max,min)
 
-import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Foldable (foldMap)
 import Data.Int (toNumber)
@@ -13,7 +12,6 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Math (log)
@@ -80,6 +78,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls graph
+      multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
         let readData = R.readRef dataRef
@@ -110,6 +109,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                                   , elRef: graphRef
                                   , graphId
                                   , graph
+                                  , multiSelectEnabledRef
                                   }
                       , mSidebar graph mMetaData { frontends
                                                  , session
@@ -169,27 +169,21 @@ type GraphProps = (
   , elRef :: R.Ref (Nullable Element)
   , graphId :: GraphId
   , graph :: SigmaxTypes.SGraph
+  , multiSelectEnabledRef :: R.Ref Boolean
 )
 
 graphView :: Record GraphProps -> R.Element
 --graphView sigmaRef props = R.createElement (R.memo el memoCmp) props []
-graphView props = R.createElement el props []
+graphView props = R.createElement graphViewCpt props []
+
+graphViewCpt :: R.Component GraphProps
+graphViewCpt = R.hooksComponent "GraphView" cpt
   where
-    --memoCmp props1 props2 = props1.graphId == props2.graphId
-    el = R.hooksComponent "GraphView" cpt
-    cpt {controls, elRef, graphId, graph} _children = do
+    cpt {controls, elRef, graphId, graph, multiSelectEnabledRef} _children = do
       -- TODO Cache this?
       let transformedGraph = transformGraph controls graph
 
-      multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
-
-      R.useEffect' $ do
-        let nodeColor {id, color} = [id, color]
-        let onlySelected g = Seq.filter (\n -> Set.member n.id (fst controls.selectedNodeIds)) $ SigmaxTypes.graphNodes g
-        log2 "[graphView] selectedNodeIds" $ A.fromFoldable $ fst controls.selectedNodeIds
-        log2 "[graphView] transformedGraph.nodes" $ A.fromFoldable $ map nodeColor $ onlySelected transformedGraph
-        log2 "[graphView] graph.nodes" $ A.fromFoldable $ map nodeColor $ onlySelected graph
-
+      R.useEffect1' (fst controls.multiSelectEnabled) $ do
         R.setRef multiSelectEnabledRef $ fst controls.multiSelectEnabled
 
       pure $ Graph.graph {

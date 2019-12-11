@@ -148,7 +148,7 @@ useGraphControls graph = do
 
   cursorSize      <- R.useState' 10.0
   graphStage      <- R.useState' Graph.Init
-  multiSelectEnabled <- R.useState' true
+  multiSelectEnabled <- R.useState' false
   nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
   showTree <- R.useState' false
   selectedNodeIds <- R.useState' $ Set.empty
