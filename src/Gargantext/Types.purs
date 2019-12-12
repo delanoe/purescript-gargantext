@@ -80,7 +80,7 @@ instance showTermList :: Show TermList where
 
 -- TODO: Can we replace the show instance above with this?
 termListName :: TermList -> String
-termListName GraphTerm = "Graph List"
+termListName GraphTerm = "Map List"
 termListName StopTerm = "Stop List"
 termListName CandidateTerm = "Candidate List"
 
