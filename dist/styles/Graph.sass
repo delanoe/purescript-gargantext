@@ -1,8 +1,8 @@
 @mixin sidePanelCommon
   position: absolute
-  top: 150px
   max-height: 600px
   overflow-y: scroll
+  top: 150px
   z-index: 1
 
 #graph-explorer
@@ -48,3 +48,12 @@
   #tree
     position: absolute
     z-index: 1
+
+.input-with-autocomplete
+  .completions
+    position: absolute
+    max-height: 300px
+    overflow-y: scroll
+    width: 300px
+    top: 50px
+    z-index: 5

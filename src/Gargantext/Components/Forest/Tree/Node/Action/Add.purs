@@ -11,7 +11,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action(..), ID, Name)
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
 import Gargantext.Types (NodeType(..), readNodeType)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, map, pure, show, ($), (<>), (>))
+import Prelude (Unit, bind, const, discard, map, pure, show, ($), (<>), (>), (<<<))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -54,34 +54,29 @@ createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el
             ]
               where
                 SettingsBox {edit} = settingsBox nt
-                maybeEdit = [ if edit
-                              then
+                maybeEdit = [ if edit then
                                 H.div {className: "form-group"}
-                                      [ H.input { type: "text"
-                                                , placeholder: "Node name"
-                                                , defaultValue: "Write Name here"
-                                                , className: "form-control"
-                                                , onInput: mkEffectFn1 $ \e -> setNodeName
-                                                                       $ const
-                                                                       $ e .. "target" .. "value"
-                                               }
-                                      ]
+                                   [ H.input { type: "text"
+                                             , placeholder: "Node name"
+                                             , defaultValue: "Write Name here"
+                                             , className: "form-control"
+                                             , onInput: mkEffectFn1 $ setNodeName <<< const <<< R2.unsafeEventValue
+                                            }
+                                   ]
                               else
                                 H.div {} []
                              ]
 
-                maybeChoose = [ if length nodeTypes > 1
-                                then 
-                                  R.fragment [H.div {className: "form-group"} $ [ R2.select { className: "form-control"
-                                                    , onChange: mkEffectFn1 $ \e -> setNodeType
-                                                                  $ const
-                                                                  $ readIt 
-                                                                  $ e .. "target" .. "value"
-                                                    }
-                                         (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
+                maybeChoose = [ if length nodeTypes > 1 then
+                                  R.fragment [
+                                    H.div {className: "form-group"} $ [
+                                       R2.select { className: "form-control"
+                                                 , onChange: mkEffectFn1 $ setNodeType <<< const <<< readIt <<< R2.unsafeEventValue
+                                                 }
+                                       (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
                                          ]
                                          -- , showConfig nt
-                                         ]
+                                    ]
                                 else
                                 H.button { className : "btn btn-primary"
                                            , type : "button"

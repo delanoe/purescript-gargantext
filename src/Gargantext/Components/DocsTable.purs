@@ -16,9 +16,9 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log3)
+import DOM.Simple.Console (log3)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
@@ -28,11 +28,10 @@ import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Components.Table as T
 import Gargantext.Components.Loader (loader)
-import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
-import Gargantext.Routes (AppRoute, SessionRoute(NodeAPI))
+import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, post, delete, put)
 import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..), AffTableResult)
 ------------------------------------------------------------------------

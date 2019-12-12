@@ -15,9 +15,9 @@
 }
 #graph-explorer .graph-tree {
   position: absolute;
-  top: 150px;
   max-height: 600px;
   overflow-y: scroll;
+  top: 150px;
   z-index: 1;
 }
 #graph-explorer #graph-view {
@@ -25,9 +25,9 @@
 }
 #graph-explorer #sp-container {
   position: absolute;
-  top: 150px;
   max-height: 600px;
   overflow-y: scroll;
+  top: 150px;
   z-index: 1;
   left: 70%;
   border: 1px white solid;
@@ -48,6 +48,15 @@
 #graph-explorer #tree {
   position: absolute;
   z-index: 1;
+}
+
+.input-with-autocomplete .completions {
+  position: absolute;
+  max-height: 300px;
+  overflow-y: scroll;
+  width: 300px;
+  top: 50px;
+  z-index: 5;
 }
 
 /*# sourceMappingURL=Graph.css.map */

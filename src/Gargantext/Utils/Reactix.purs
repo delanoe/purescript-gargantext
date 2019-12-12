@@ -223,3 +223,6 @@ inputFileBlob e = unsafePartial $ do
 dataTransferFileBlob e = unsafePartial $ do
     let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
     pure $ toBlob ff
+
+blur :: DOM.Element -> Effect Unit
+blur el = el ... "blur" $ []
