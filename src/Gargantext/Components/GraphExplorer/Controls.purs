@@ -114,6 +114,16 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
          else
            pure unit
 
+      let edgesConfluenceSorted = A.sortWith (_.confluence) $ Seq.toUnfoldable $ SigmaxTypes.graphEdges props.graph
+      let edgeConfluenceMin = maybe 0.0 _.confluence $ A.head edgesConfluenceSorted
+      let edgeConfluenceMax = maybe 100.0 _.confluence $ A.last edgesConfluenceSorted
+      let edgeConfluenceRange = Range.Closed { min: edgeConfluenceMin, max: edgeConfluenceMax }
+
+      let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxTypes.graphEdges props.graph
+      let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
+      let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
+      let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
+
       let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxTypes.graphNodes props.graph
       let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
       let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
@@ -128,8 +138,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   RH.li {} [ centerButton props.sigmaRef ]
                 , RH.li {} [ pauseForceAtlasButton {state: props.forceAtlasState} ]
                 , RH.li {} [ edgesToggleButton {state: props.showEdges} ]
-                , RH.li {} [ edgeConfluenceControl props.sigmaRef props.edgeConfluence ]
-                , RH.li {} [ edgeWeightControl props.sigmaRef props.edgeWeight ]
+                , RH.li {} [ edgeConfluenceControl edgeConfluenceRange props.edgeConfluence ]
+                , RH.li {} [ edgeWeightControl edgeWeightRange props.edgeWeight ]
                   -- change level
                   -- file upload
                   -- run demo
@@ -148,9 +158,6 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 
 useGraphControls :: SigmaxTypes.SGraph -> R.Hooks (Record Controls)
 useGraphControls graph = do
-  let edges = SigmaxTypes.graphEdges graph
-  let nodes = SigmaxTypes.graphNodes graph
-
   cursorSize      <- R.useState' 10.0
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
