@@ -22,18 +22,21 @@ type Renderer = { "type" :: String, container :: Element }
 
 
 type Node =
-  ( id    :: String
-  , label :: String
+  ( borderColor :: String
+  , color :: String
   , hidden :: Boolean
+  , id    :: String
+  , label :: String
+  , size  :: Number
+  , type  :: String  -- available types: circle, cross, def, diamond, equilateral, pacman, square, star
   , x     :: Number
   , y     :: Number
-  , size  :: Number
-  , color :: String )
+  )
 
 type Edge =
-  ( id :: String
-  , color :: String
+  ( color :: String
   , confluence :: Number
+  , id :: String
   , hidden :: Boolean
   , size :: Number
   , source :: String

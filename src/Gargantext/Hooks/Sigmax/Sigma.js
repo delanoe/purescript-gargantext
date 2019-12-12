@@ -6,7 +6,21 @@ if (typeof window !== 'undefined') {
   window.sigma = sigma;
 }
 
-require('sigma/plugins/garg.js').init(sigma, window);
+const CustomShapes = require('sigma/plugins/garg.js').init(sigma, window).customShapes;
+require('sigma/src/utils/sigma.utils.js').init(sigma);
+
+sigma.canvas.nodes.hovered = (node, context, settings) => {
+  // hack
+  // We need to temporarily set node.type to 'def'. This is for 2 reasons
+  // 1. Make it render as a normal node
+  // 2. Avoid infinite recursion (hovers.def calls node renderer and we would end up here back
+  //    again with node.type = 'hovered')
+  node.type = 'def';
+  sigma.canvas.hovers.def(node, context, settings);
+  node.type = 'hovered';
+};
+
+CustomShapes.init();
 
 function _sigma(left, right, opts) {
   try {

@@ -3,12 +3,13 @@ module Gargantext.Components.Forest.Tree.Node.Action.Rename where
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..))
-import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Types (NodeType)
-import Prelude (Unit, bind, const, discard, pure, ($))
+import Prelude (Unit, bind, const, discard, pure, ($), (<<<))
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Types (NodeType)
+import Gargantext.Utils.Reactix as R2
 
 
 -- | START Rename Box
@@ -35,7 +36,7 @@ renameBox d p (true /\ setRenameBoxOpen) = R.createElement el p []
                     , placeholder: "Rename Node"
                     , defaultValue: name
                     , className: "form-control"
-                    , onInput: mkEffectFn1 $ \e -> setRenameNodeName $ const $ e .. "target" .. "value"
+                    , onInput: mkEffectFn1 $ setRenameNodeName <<< const <<< R2.unsafeEventValue
                     }
           ]
         renameBtn (newName /\ _) =

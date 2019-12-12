@@ -1,7 +1,7 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex) where
 
-import Prelude (const, map, pure, show, discard, ($), (&&), (<), (<$>), (<>), (==))
+import Prelude (const, map, pure, show, discard, ($), (&&), (<), (<$>), (<>), (==), (<<<))
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (length)
 import Data.Set as Set
@@ -9,7 +9,6 @@ import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Gargantext.Utils.Reactix as R2
-import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Components.Search.Types -- (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs, HAL_Filters(..), IMT_org(..))
@@ -185,7 +184,7 @@ langList (lang /\ setLang) langs =
       liItem :: Lang -> R.Element
       liItem l = H.option {className : "text-primary center"} [ H.text (show l) ]
 
-      lang' e = readLang $ e .. "target" .. "value"
+      lang' = readLang <<< R2.unsafeEventValue
 
 
 langNav :: R.State Search -> Array Lang -> R.Element
@@ -260,7 +259,7 @@ databaseInput ({datafield} /\ setSearch) dbs =
       liItem  db' = H.option {className : "text-primary center"} [ H.text (show db') ]
 
       onChange e = do
-        let value = e .. "target" .. "value"
+        let value = R2.unsafeEventValue e
         setSearch $ _ {datafield =  Just $ External $ readDatabase value }
 
 
@@ -276,7 +275,7 @@ orgInput ({datafield} /\ setSearch) orgs =
       liItem :: Org -> R.Element
       liItem  org = H.option {className : "text-primary center"} [ H.text (show org) ]
       onChange e = do
-        let value = e .. "target" .. "value"
+        let value = R2.unsafeEventValue e
         setSearch $ _ { datafield = Just $ External $ Just $ HAL $ readOrg value }
 
 filterInput :: R.State String -> R.Element
@@ -284,10 +283,7 @@ filterInput (term /\ setTerm) =
   H.div {className: "form-group"} [ H.input { defaultValue: term
                               , className: "form-control"
                               , type: "text"
-                              , on: { change: \e -> setTerm
-                                                  $ const
-                                                  $ e .. "target" .. "value"
-                                    }
+                              , on: { change: setTerm <<< const <<< R2.unsafeEventValue }
                               , "required pattern": "[[0-9]+[ ]+]*"
                               -- TODO                          ^FIXME not sure about the regex comprehension: that should match "123 2334 44545" only (Integers separated by one space)
                               -- form validation with CSS
@@ -308,8 +304,7 @@ searchInput ({term} /\ setSearch) =
   ]
   where
     onChange e = do
-      let value = e .. "target" .. "value"
-      setSearch $ _ {term = value }
+      setSearch $ _ { term = R2.unsafeEventValue e }
 
 
 submitButton :: R.State Search

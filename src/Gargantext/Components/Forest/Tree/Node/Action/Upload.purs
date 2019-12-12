@@ -64,7 +64,7 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
           setMContents $ const $ Just $ UploadFileContents contents
 
     onChangeFileType (fileType /\ setFileType) = mkEffectFn1 $ \e -> do
-      setFileType $ const $ unsafePartial $ fromJust $ readFileType $ e .. "target" .. "value"
+      setFileType $ const $ unsafePartial $ fromJust $ readFileType $ R2.unsafeEventValue e
 
     uploadButton :: Int -> R.State (Maybe UploadFileContents) -> R.State FileType -> R.Element
     uploadButton id (mContents /\ setMContents) (fileType /\ setFileType) =
@@ -131,7 +131,7 @@ fileTypeView d p (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ 
           ]
           where
             onChange = mkEffectFn1 $ \e ->
-              setDroppedFile $ const $ Just $ DroppedFile $ {contents, fileType: readFileType $ e .. "target" .. "value"}
+              setDroppedFile $ const $ Just $ DroppedFile $ {contents, fileType: readFileType $ R2.unsafeEventValue e}
         renderOption opt = H.option {} [ H.text $ show opt ]
         panelFooter =
           H.div {className: "panel-footer"}

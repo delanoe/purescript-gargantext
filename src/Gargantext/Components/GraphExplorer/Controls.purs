@@ -43,6 +43,7 @@ type Controls =
   , multiSelectEnabled :: R.State Boolean
   , nodeSize        :: R.State Range.NumberRange
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , selectorSize    :: R.State Int
   , showControls    :: R.State Boolean
   , showEdges       :: R.State SigmaxTypes.ShowEdgesState
   , showSidePanel   :: R.State GET.SidePanelState
@@ -60,7 +61,6 @@ type LocalControls =
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
   labelSize <- R.useState' 14.0
-  search <- R.useState' ""
 
   pure $ {
     labelSize
@@ -114,6 +114,16 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
          else
            pure unit
 
+      let edgesConfluenceSorted = A.sortWith (_.confluence) $ Seq.toUnfoldable $ SigmaxTypes.graphEdges props.graph
+      let edgeConfluenceMin = maybe 0.0 _.confluence $ A.head edgesConfluenceSorted
+      let edgeConfluenceMax = maybe 100.0 _.confluence $ A.last edgesConfluenceSorted
+      let edgeConfluenceRange = Range.Closed { min: edgeConfluenceMin, max: edgeConfluenceMax }
+
+      let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxTypes.graphEdges props.graph
+      let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
+      let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
+      let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
+
       let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxTypes.graphNodes props.graph
       let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
       let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
@@ -128,8 +138,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   RH.li {} [ centerButton props.sigmaRef ]
                 , RH.li {} [ pauseForceAtlasButton {state: props.forceAtlasState} ]
                 , RH.li {} [ edgesToggleButton {state: props.showEdges} ]
-                , RH.li {} [ edgeConfluenceControl props.sigmaRef props.edgeConfluence ]
-                , RH.li {} [ edgeWeightControl props.sigmaRef props.edgeWeight ]
+                , RH.li {} [ edgeConfluenceControl edgeConfluenceRange props.edgeConfluence ]
+                , RH.li {} [ edgeWeightControl edgeWeightRange props.edgeWeight ]
                   -- change level
                   -- file upload
                   -- run demo
@@ -141,16 +151,14 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- zoom: 0 -100 - calculate ratio
                 , RH.li {} [ multiSelectEnabledButton props.multiSelectEnabled ]  -- toggle multi node selection
                   -- save button
-                , RH.li {} [ nodeSearchControl { selectedNodeIds: props.selectedNodeIds } ]
+                , RH.li {} [ nodeSearchControl { graph: props.graph
+                                               , selectedNodeIds: props.selectedNodeIds } ]
                 ]
               ]
             ]
 
 useGraphControls :: SigmaxTypes.SGraph -> R.Hooks (Record Controls)
 useGraphControls graph = do
-  let edges = SigmaxTypes.graphEdges graph
-  let nodes = SigmaxTypes.graphNodes graph
-
   cursorSize      <- R.useState' 10.0
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
@@ -160,6 +168,7 @@ useGraphControls graph = do
   nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
   showTree <- R.useState' false
   selectedNodeIds <- R.useState' $ Set.empty
+  selectorSize <- R.useState' 5
   showControls    <- R.useState' false
   showEdges <- R.useState' SigmaxTypes.EShow
   showSidePanel   <- R.useState' GET.InitialClosed
@@ -175,6 +184,7 @@ useGraphControls graph = do
        , multiSelectEnabled
        , nodeSize
        , selectedNodeIds
+       , selectorSize
        , showControls
        , showEdges
        , showSidePanel

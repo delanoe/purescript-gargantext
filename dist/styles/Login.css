@@ -204,7 +204,7 @@ li:hover a#rename-leaf {
   justify-content: center;
 }
 
-.flex-center {
+.flex-space-between, .flex-center {
   display: flex;
   justify-content: space-between;
 }

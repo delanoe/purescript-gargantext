@@ -34,12 +34,12 @@ rangeControlCpt = R.hooksComponent "RangeButton" cpt
           , RS.rangeSlider sliderProps
           ]
 
-edgeConfluenceControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
-edgeConfluenceControl sigmaRef (state /\ setState) =
+edgeConfluenceControl :: Range.NumberRange -> R.State Range.NumberRange -> R.Element
+edgeConfluenceControl (Range.Closed { min, max }) (state /\ setState) =
   rangeControl {
       caption: "Edge Confluence Weight"
     , sliderProps: {
-        bounds: Range.Closed { min: 0.0, max: 1.0 }
+        bounds: Range.Closed { min, max }
       , initialValue: state
       , epsilon: 0.01
       , step: 1.0
@@ -49,47 +49,32 @@ edgeConfluenceControl sigmaRef (state /\ setState) =
       }
     }
 
-edgeWeightControl :: R.Ref Sigmax.Sigma -> R.State Range.NumberRange -> R.Element
-edgeWeightControl sigmaRef (state /\ setState) =
+edgeWeightControl :: Range.NumberRange -> R.State Range.NumberRange -> R.Element
+edgeWeightControl (Range.Closed { min, max }) (state /\ setState) =
   rangeControl {
       caption: "Edge Weight"
     , sliderProps: {
-        bounds: Range.Closed { min: 0.0, max: 3.0 }
+        bounds: Range.Closed { min, max }
       , initialValue: state
       , epsilon: 0.01
       , step: 1.0
       , width: 10.0
       , height: 5.0
       , onChange: setState <<< const
-      -- , onChange: \range@(Range.Closed {min, max}) -> do
-      --     let sigma = R.readRef sigmaRef
-      --     Sigmax.dependOnSigma sigma "[edgeWeightControl] sigma: Nothing" $ \s -> do
-      --       Sigma.setSettings s {
-      --         minEdgeSize: min
-      --       , maxEdgeSize: max
-      --       }
-      --     setState $ const range
       }
     }
 
 nodeSizeControl :: Range.NumberRange -> R.State Range.NumberRange -> R.Element
-nodeSizeControl (Range.Closed { min: rangeMin, max: rangeMax }) (state /\ setState) =
+nodeSizeControl (Range.Closed { min, max }) (state /\ setState) =
   rangeControl {
       caption: "Node Size"
     , sliderProps: {
-        bounds: Range.Closed { min: rangeMin, max: rangeMax }
+        bounds: Range.Closed { min, max }
       , initialValue: state
       , epsilon: 0.1
       , step: 1.0
       , width: 10.0
       , height: 5.0
-      , onChange: \range@(Range.Closed {min, max}) -> do
-          -- let sigma = R.readRef sigmaRef
-          -- Sigmax.dependOnSigma sigma "[nodeSizeControl] sigma: Nothing" $ \s -> do
-          --   Sigma.setSettings s {
-          --     minNodeSize: min
-          --   , maxNodeSize: max
-          --   }
-          setState $ const range
+      , onChange: setState <<< const
       }
     }
