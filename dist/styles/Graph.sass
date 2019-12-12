@@ -1,3 +1,10 @@
+@mixin sidePanelCommon
+  position: absolute
+  top: 150px
+  max-height: 600px
+  overflow-y: scroll
+  z-index: 1
+
 #graph-explorer
   #toolbar
     display: flex
@@ -14,24 +21,16 @@
     height: 79px
 
   .graph-tree
-    position: absolute
-    top: 120px
-    max-height: 600px
-    overflow-y: scroll
-    z-index: 1
+    @include sidePanelCommon
 
   #graph-view
     height: 95%
 
   #sp-container
-    position: absolute
+    @include sidePanelCommon
     left: 70%
-    top: 150px
-    z-index: 1
     border: 1px white solid
     background-color: white
-    max-height: 600px
-    overflow-y: scroll
 
     #myTab
       marginBottom: 18px

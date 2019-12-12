@@ -49,7 +49,7 @@
         "purescript": "^0.13.5",
         "purs-loader": "^3.3.0",
         "react-testing-library": "^6.1.2",
-        "sass": "^1.22.9",
+        "sass": "^1.23.7",
         "source-map-loader": "^0.2.4",
         "spago": "^0.10.0",
         "style-loader": "^0.23.1",
