@@ -32,6 +32,7 @@ type Props sigma forceatlas2 =
   , graph :: SigmaxTypes.SGraph
   , multiSelectEnabledRef :: R.Ref Boolean
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , selectorSize :: R.State Int
   , showEdges :: R.State SigmaxTypes.ShowEdgesState
   , sigmaRef :: R.Ref Sigmax.Sigma
   , sigmaSettings :: sigma
@@ -101,6 +102,10 @@ graphCpt = R.hooksComponent "Graph" cpt
           Sigmax.updateEdges sigma tEdgesMap
           Sigmax.updateNodes sigma tNodesMap
           Sigmax.setEdges sigma (not $ SigmaxTypes.edgeStateHidden showEdges)
+
+      -- R.useEffect1' (fst props.selectorSize) $ do
+      --   Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
+      --     Sigmax.selectorWithSize sigma $ fst props.selectorSize
 
     stageHooks _ = pure unit
 

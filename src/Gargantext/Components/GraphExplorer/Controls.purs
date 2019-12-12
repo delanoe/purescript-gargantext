@@ -43,6 +43,7 @@ type Controls =
   , multiSelectEnabled :: R.State Boolean
   , nodeSize        :: R.State Range.NumberRange
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , selectorSize    :: R.State Int
   , showControls    :: R.State Boolean
   , showEdges       :: R.State SigmaxTypes.ShowEdgesState
   , showSidePanel   :: R.State GET.SidePanelState
@@ -167,6 +168,7 @@ useGraphControls graph = do
   nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
   showTree <- R.useState' false
   selectedNodeIds <- R.useState' $ Set.empty
+  selectorSize <- R.useState' 5
   showControls    <- R.useState' false
   showEdges <- R.useState' SigmaxTypes.EShow
   showSidePanel   <- R.useState' GET.InitialClosed
@@ -182,6 +184,7 @@ useGraphControls graph = do
        , multiSelectEnabled
        , nodeSize
        , selectedNodeIds
+       , selectorSize
        , showControls
        , showEdges
        , showSidePanel

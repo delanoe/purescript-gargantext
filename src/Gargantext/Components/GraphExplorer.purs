@@ -189,6 +189,7 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
         , graph
         , multiSelectEnabledRef
         , selectedNodeIds: controls.selectedNodeIds
+        , selectorSize: controls.selectorSize
         , showEdges: controls.showEdges
         , sigmaRef: controls.sigmaRef
         , sigmaSettings: Graph.sigmaSettings
@@ -202,16 +203,19 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
     nodes = foldMapWithIndex nodeFn r.nodes
     nodeFn i (GET.Node n) =
       Seq.singleton
-        { id    : n.id_
-        , size  : log (toNumber n.size + 1.0)
+        { borderColor: color
+        , color : color
         , hidden : false
+        , id    : n.id_
         , label : n.label
+        , size  : log (toNumber n.size + 1.0)
+        , type  : "def"  -- default type
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)
-        , color : GET.intColor (cDef n.attributes)
         }
       where
         cDef (GET.Cluster {clustDefault}) = clustDefault
+        color = GET.intColor (cDef n.attributes)
     nodesMap = SigmaxTypes.nodesMap nodes
     edges = foldMap edgeFn r.edges
     edgeFn (GET.Edge e) = Seq.singleton { id : e.id_
@@ -410,6 +414,6 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
         _                 -> edge
     nodeMarked node@{ id } =
       if Set.member id (fst controls.selectedNodeIds) then
-        node { color = "#ff0000" }
+        node { borderColor = "#000", type = "hovered" }
       else
         node

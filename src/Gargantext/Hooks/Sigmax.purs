@@ -132,12 +132,6 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
         -- restore edges state
         Sigma.stopForceAtlas2 s
       _ -> pure unit
-    -- handle case when user pressed pause/start fa button before timeout fired
-    --case R.readRef mFAPauseRef of
-    --  Nothing -> pure unit
-    --  Just timeoutId -> do
-    --    R.setRef mFAPauseRef Nothing
-    --    clearTimeout timeoutId
 
 setEdges :: Sigma.Sigma -> Boolean -> Effect Unit
 setEdges sigma val = do
@@ -147,45 +141,6 @@ setEdges sigma val = do
       , hideEdgesOnMove: not val
     }
   Sigma.setSettings sigma settings
-
-  -- -- prevent showing edges (via show edges button) when FA is running (flickering)
-  -- isFARunning <- Sigma.isForceAtlas2Running sigma
-  -- case Tuple val isFARunning of
-  --   Tuple false _ ->
-  --     Sigma.setSettings sigma settings
-  --   Tuple true false ->
-  --     Sigma.setSettings sigma settings
-  --   _ -> pure unit
-
-markSelectedEdges :: Sigma.Sigma -> ST.SelectedEdgeIds -> ST.EdgesMap -> Effect Unit
-markSelectedEdges sigma selectedEdgeIds graphEdges = do
-  Sigma.forEachEdge sigma \e -> do
-    case Map.lookup e.id graphEdges of
-      Nothing -> error $ "Edge id " <> e.id <> " not found in graphEdges map"
-      Just {color} -> do
-        let newColor =
-              if Set.member e.id selectedEdgeIds then
-                "#ff0000"
-              else
-                color
-        _ <- pure $ (e .= "color") newColor
-        pure unit
-  Sigma.refresh sigma
-
-markSelectedNodes :: Sigma.Sigma -> ST.SelectedNodeIds -> ST.NodesMap -> Effect Unit
-markSelectedNodes sigma selectedNodeIds graphNodes = do
-  Sigma.forEachNode sigma \n -> do
-    case Map.lookup n.id graphNodes of
-      Nothing -> error $ "Node id " <> n.id <> " not found in graphNodes map"
-      Just {color} -> do
-        let newColor =
-              if Set.member n.id selectedNodeIds then
-                "#ff0000"
-              else
-                color
-        _ <- pure $ (n .= "color") newColor
-        pure unit
-  Sigma.refresh sigma
 
 
 updateEdges :: Sigma.Sigma -> ST.EdgesMap -> Effect Unit
@@ -207,9 +162,14 @@ updateNodes sigma nodesMap = do
     let mTNode = Map.lookup n.id nodesMap
     case mTNode of
       Nothing -> error $ "Node id " <> n.id <> " not found in nodesMap"
-      (Just {color: tColor, hidden: tHidden}) -> do
+      (Just { borderColor: tBorderColor
+             , color: tColor
+             , hidden: tHidden
+             , type: tType}) -> do
+        _ <- pure $ (n .= "borderColor") tBorderColor
         _ <- pure $ (n .= "color") tColor
         _ <- pure $ (n .= "hidden") tHidden
+        _ <- pure $ (n .= "type") tType
         pure unit
   --Sigma.refresh sigma
 
@@ -244,3 +204,39 @@ bindSelectedEdgesClick sigmaRef (_ /\ setSelectedEdgeIds) =
           Set.delete edge.id eids
         else
           Set.insert edge.id eids
+
+selectorWithSize :: Sigma.Sigma -> Int -> Effect Unit
+selectorWithSize sigma size = do
+  pure unit
+
+-- DEPRECATED
+
+markSelectedEdges :: Sigma.Sigma -> ST.SelectedEdgeIds -> ST.EdgesMap -> Effect Unit
+markSelectedEdges sigma selectedEdgeIds graphEdges = do
+  Sigma.forEachEdge sigma \e -> do
+    case Map.lookup e.id graphEdges of
+      Nothing -> error $ "Edge id " <> e.id <> " not found in graphEdges map"
+      Just {color} -> do
+        let newColor =
+              if Set.member e.id selectedEdgeIds then
+                "#ff0000"
+              else
+                color
+        _ <- pure $ (e .= "color") newColor
+        pure unit
+  Sigma.refresh sigma
+
+markSelectedNodes :: Sigma.Sigma -> ST.SelectedNodeIds -> ST.NodesMap -> Effect Unit
+markSelectedNodes sigma selectedNodeIds graphNodes = do
+  Sigma.forEachNode sigma \n -> do
+    case Map.lookup n.id graphNodes of
+      Nothing -> error $ "Node id " <> n.id <> " not found in graphNodes map"
+      Just {color} -> do
+        let newColor =
+              if Set.member n.id selectedNodeIds then
+                "#ff0000"
+              else
+                color
+        _ <- pure $ (n .= "color") newColor
+        pure unit
+  Sigma.refresh sigma
