@@ -60,7 +60,6 @@ type LocalControls =
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
   labelSize <- R.useState' 14.0
-  search <- R.useState' ""
 
   pure $ {
     labelSize
@@ -151,7 +150,8 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- zoom: 0 -100 - calculate ratio
                 , RH.li {} [ multiSelectEnabledButton props.multiSelectEnabled ]  -- toggle multi node selection
                   -- save button
-                , RH.li {} [ nodeSearchControl { selectedNodeIds: props.selectedNodeIds } ]
+                , RH.li {} [ nodeSearchControl { graph: props.graph
+                                               , selectedNodeIds: props.selectedNodeIds } ]
                 ]
               ]
             ]
