@@ -1,17 +1,24 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex) where
 
-import Prelude (const, map, pure, show, discard, ($), (&&), (<), (<$>), (<>), (==), (<<<))
+import Prelude (const, map, pure, show, discard, ($), (&&), (<), (<$>), (<>), (==), (<<<), Unit, bind)
 import Data.Maybe (Maybe(..), maybe)
+import Data.Newtype (over)
 import Data.String (length)
 import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
+import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
+import Effect (Effect)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Components.Modals.Modal (modalShow)
 import Gargantext.Components.Search.Types -- (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs, HAL_Filters(..), IMT_org(..))
+import Gargantext.Sessions (Session)
 
 select :: forall props.
           R.IsComponent String props (Array R.Element)
@@ -45,13 +52,16 @@ type Props =
   , langs     :: Array Lang
   -- State hook for a search, how we get data in and out
   , search    :: R.State Search
+  , session   :: Session
   )
 
 searchField :: Record Props -> R.Element
 searchField p = R.createElement searchFieldComponent p []
 
-searchFieldComponent :: R.Memo Props
-searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
+--searchFieldComponent :: R.Memo Props
+--searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
+searchFieldComponent :: R.Component Props
+searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
   where
     cpt props@{search: search@(s /\ _)} _ = do
       pure $
@@ -60,7 +70,7 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
             H.div { className: "row" }
               [
                 H.div { className: "col-md-12" }
-                [ searchInput search
+                [ searchInput {search}
                 , if length s.term < 3
                   then
                     H.div {}[]
@@ -87,11 +97,11 @@ searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
           , H.div { className : "panel-footer" }
                 [ if needsLang s.datafield then langNav search props.langs else H.div {} []
                 , H.div {} []
-                , H.div {className: "flex-center"} [submitButton search]
+                , H.div {className: "flex-center"} [submitButton {search, session: props.session}]
                 ]
           ]
-    eqProps p p' =    (fst p.search == fst p'.search)
-                   && (p.databases  == p'.databases )
+    eqProps :: Record Props -> Record Props -> Boolean
+    eqProps p p' =    (p.databases  == p'.databases )
                    && (p.langs      == p'.langs     )
                    && (eqSearch (fst p.search) (fst p'.search))
 --                   && (fst p.filters == fst p'.filters   )
@@ -293,31 +303,78 @@ filterInput (term /\ setTerm) =
                       ]
 
 
-searchInput :: R.State Search -> R.Element
-searchInput ({term} /\ setSearch) =
-  H.div { className : "" }
-  [ H.input { defaultValue: term
-            , className: "form-control"
-            , type: "text"
-            , on: { change : onChange }
-            , placeholder: "Your Query here" }
-  ]
-  where
-    onChange e = do
-      setSearch $ _ { term = R2.unsafeEventValue e }
+type SearchInputProps =
+  (
+    search :: R.State Search
+  )
 
+searchInput :: Record SearchInputProps -> R.Element
+searchInput p = R.createElement searchInputComponent p []
 
-submitButton :: R.State Search
-             -> R.Element
-submitButton (search /\ setSearch) =
-  H.button { className: "btn btn-primary"
-         , type: "button"
-         , on: {click: doSearch}
-         , style: { width: "100%" } 
-         } [ H.text "Launch Search" ]
+searchInputComponent :: R.Component SearchInputProps
+searchInputComponent = R.hooksComponent "G.C.S.SearchInput" cpt
   where
-    doSearch = \_ -> do
-      log2 "[submitButton] searching" search
-      case search.term of
-        "" -> setSearch $ const defaultSearch
-        _  -> setSearch $ const search
+    cpt {search: (search /\ setSearch)} _ = do
+      pure $
+        H.div { className : "" }
+        [ H.input { defaultValue: search.term
+                  , className: "form-control"
+                  , type: "text"
+                  , on: { change : onChange setSearch }
+                  , placeholder: "Your Query here" }
+        ]
+    onChange setSearch e = do
+      let value = R2.unsafeEventValue e
+      setSearch $ _ { term = value }
+
+type SubmitButtonProps =
+  (
+    search :: R.State Search
+  , session :: Session
+  )
+
+submitButton :: Record SubmitButtonProps -> R.Element
+submitButton p = R.createElement submitButtonComponent p []
+
+submitButtonComponent :: R.Component SubmitButtonProps
+submitButtonComponent = R.hooksComponent "G.C.S.SubmitButton" cpt
+  where
+    cpt {search: search /\ setSearch, session} _ =
+      pure $
+        H.button { className: "btn btn-primary"
+                 , type: "button"
+                 , on: {click: doSearch session search}
+                 , style: { width: "100%" }
+                 } [ H.text "Launch Search" ]
+
+    doSearch s q = \_ -> do
+      log2 "[submitButton] searching" q
+      triggerSearch s q
+      --case search.term of
+      --  "" -> setSearch $ const defaultSearch
+      --  _  -> setSearch $ const q
+
+triggerSearch :: Session -> Search -> Effect Unit
+triggerSearch s q =
+  launchAff_ $ do
+
+    liftEffect $ do
+      -- log2 "Searching datafield: " $ show q.database
+      log2 "Searching term: " q.term
+      log2 "Searching lang: " q.lang
+
+    r <- (performSearch s $ searchQuery q) :: Aff Unit
+
+    liftEffect $ do
+      log2 "Return:" r
+      modalShow "addCorpus"
+
+searchQuery :: Search -> SearchQuery
+searchQuery {datafield: Nothing, term} =
+  over SearchQuery (_ {query=term}) defaultSearchQuery
+searchQuery {datafield, lang, term, node_id} =
+  over SearchQuery (_ { datafield=datafield
+                      , lang=lang
+                      , query=term
+                      , node_id=node_id
+                      }) defaultSearchQuery
