@@ -1,7 +1,7 @@
 module Gargantext.Hooks.Sigmax
   where
 
-import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), (||), not, const, map)
+import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), not, const, map)
 
 import Data.Array as A
 import Data.Either (either)

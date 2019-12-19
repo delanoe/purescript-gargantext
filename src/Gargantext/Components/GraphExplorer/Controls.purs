@@ -25,7 +25,7 @@ import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
-import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton)
+import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
@@ -56,14 +56,17 @@ controlsToSigmaSettings { cursorSize: (cursorSize /\ _)} = Graph.sigmaSettings
 
 type LocalControls =
   ( labelSize :: R.State Number
+  , mouseSelectorSize :: R.State Number
   )
 
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
   labelSize <- R.useState' 14.0
+  mouseSelectorSize <- R.useState' 10.0
 
   pure $ {
     labelSize
+  , mouseSelectorSize
   }
 
 controls :: Record Controls -> R.Element
@@ -153,6 +156,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- save button
                 , RH.li {} [ nodeSearchControl { graph: props.graph
                                                , selectedNodeIds: props.selectedNodeIds } ]
+                , RH.li {} [ mouseSelectorSizeButton props.sigmaRef localControls.mouseSelectorSize ]
                 ]
               ]
             ]

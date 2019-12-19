@@ -414,6 +414,6 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
         _                 -> edge
     nodeMarked node@{ id } =
       if Set.member id (fst controls.selectedNodeIds) then
-        node { borderColor = "#000", type = "hovered" }
+        node { borderColor = "#000", type = "selected" }
       else
         node

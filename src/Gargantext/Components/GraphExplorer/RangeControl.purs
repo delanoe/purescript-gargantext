@@ -12,8 +12,6 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.RangeSlider as RS
-import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Range as Range
 
 type Props = (
