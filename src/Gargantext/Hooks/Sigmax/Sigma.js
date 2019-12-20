@@ -37,9 +37,15 @@ let sigmaMouseSelector = (sigma, options) => {
     //renderer.resize(renderer.width - 1, renderer.height - 1);
     //renderer.resize(renderer.width + 1, renderer.height + 1);
     const _context = _renderer.contexts.mouseSelector;
+    // These are used to prevent using the 'click' event when in fact this was a drag
+    let _clickPositionX = null;
+    let _clickPositionY = null;
+    let _isValidClick = false;
 
     _container.onmousemove = function(e) { return mouseMove(e); };
     _context.canvas.onclick = function(e) { return onClick(e); };
+    _container.onmousedown = function(e) { return onMouseDown(e); }
+    _container.onmouseup = function(e) { return onMouseUp(e); }
     s.bind('click', function(e) { return onClick(e); })
     // The mouseSelector canvas will pass its events down to the "mouse" canvas.
     _context.canvas.style.pointerEvents = 'none';
@@ -49,7 +55,25 @@ let sigmaMouseSelector = (sigma, options) => {
     this.unbindAll = () => {
       console.log('[sigmaMouseSelector] unbinding');
       _container.onclick = null;
-      _container.onmousemove = null;
+      _context.canvas.onmousemove = null;
+      _container.onmousedown = null;
+      _container.onmouseup = null;
+    }
+
+    const onMouseDown = (e) => {
+      _clickPositionX = e.clientX;
+      _clickPositionY = e.clientY;
+    }
+
+    const onMouseUp = (e) => {
+      // Prevent triggering click when in fact this was a drag
+      if ((_clickPositionX != e.clientX) || (_clickPositionY != e.clientY)) {
+        _clickPositionX = null;
+        _clickPositionY = null;
+        _isValidClick = false;
+      } else {
+        _isValidClick = true;
+      }
     }
 
     const mouseMove = (e) => {
@@ -73,11 +97,14 @@ let sigmaMouseSelector = (sigma, options) => {
     }
 
     const onClick = (e) => {
+      if(!_isValidClick) {
+        return;
+      }
       const size = _s.settings('mouseSelectorSize') || 3;
       const x = e.data.clientX - _offset.left - size/2;
       const y = e.data.clientY - _offset.top - size/2;
       const prefix = _renderer.options.prefix;
-      console.log('[sigmaMouseSelector] clicked', e, x, y, size);
+      //console.log('[sigmaMouseSelector] clicked', e, x, y, size);
       let nodes = [];
       _s.graph.nodes().forEach((node) => {
         const nodeX = node[prefix + 'x'];
@@ -86,7 +113,13 @@ let sigmaMouseSelector = (sigma, options) => {
           nodes.push(node);
         }
       });
-      console.log('[sigmaMouseSelector] nodes', nodes);
+      //console.log('[sigmaMouseSelector] nodes', nodes);
+      _renderer.dispatchEvent('clickNodes', {
+        node: nodes,
+        captor: e.data
+      })
+      _clickPositionX = null;
+      _clickPositionY = null;
     }
 
     const calculateOffset = (element) => {
