@@ -5798,9 +5798,9 @@ shelljs@^0.8.2:
     interpret "^1.0.0"
     rechoir "^0.6.2"
 
-"sigma@git://github.com/jjl/sigma.js#garg":
+"sigma@git://github.com/poorscript/sigma.js#garg":
   version "1.2.1"
-  resolved "git://github.com/jjl/sigma.js#64a0e1ccd48550387ad4a56292dcbaef3258c929"
+  resolved "git://github.com/poorscript/sigma.js#2ad537301ac0b12cae9a687fc1cb444dbe971c7c"
 
 signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"
