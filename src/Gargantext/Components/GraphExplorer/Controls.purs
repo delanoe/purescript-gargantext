@@ -172,7 +172,7 @@ useGraphControls graph = do
   nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
   showTree <- R.useState' false
   selectedNodeIds <- R.useState' $ Set.empty
-  selectorSize <- R.useState' 5
+  selectorSize <- R.useState' 15
   showControls    <- R.useState' false
   showEdges <- R.useState' SigmaxTypes.EShow
   showSidePanel   <- R.useState' GET.InitialClosed

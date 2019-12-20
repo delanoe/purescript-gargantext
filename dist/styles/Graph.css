@@ -17,7 +17,7 @@
   position: absolute;
   max-height: 600px;
   overflow-y: scroll;
-  top: 150px;
+  top: 170px;
   z-index: 1;
 }
 #graph-explorer #graph-view {
@@ -27,7 +27,7 @@
   position: absolute;
   max-height: 600px;
   overflow-y: scroll;
-  top: 150px;
+  top: 170px;
   z-index: 1;
   left: 70%;
   border: 1px white solid;

@@ -1,16 +1,16 @@
 module Gargantext.Hooks.Sigmax.Types where
 
-import Prelude (map, ($), (&&), (==), class Eq, class Ord, class Show, Ordering, compare)
+import DOM.Simple.Types (Element)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Map as Map
-import Data.Sequence (Seq)
+import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
-import DOM.Simple.Types (Element)
+import Prelude (map, ($), (&&), (||), (==), class Eq, class Ord, class Show, Ordering, compare)
 
-newtype Graph n e = Graph { nodes :: Seq {|n}, edges :: Seq {|e} }
+newtype Graph n e = Graph { nodes :: Seq.Seq {|n}, edges :: Seq.Seq {|e} }
 
 --derive instance eqGraph :: Eq Graph
 
@@ -40,7 +40,9 @@ type Edge =
   , hidden :: Boolean
   , size :: Number
   , source :: String
+  , sourceNode :: Record Node
   , target :: String
+  , targetNode :: Record Node
   , weight :: Number )
 
 type SelectedNodeIds = Set.Set String
@@ -50,24 +52,44 @@ type NodesMap = Map.Map String (Record Node)
 
 type SGraph = Graph Node Edge
 
-graphEdges :: SGraph -> Seq (Record Edge)
+graphEdges :: SGraph -> Seq.Seq (Record Edge)
 graphEdges (Graph {edges}) = edges
 
-graphNodes :: SGraph -> Seq (Record Node)
+graphNodes :: SGraph -> Seq.Seq (Record Node)
 graphNodes (Graph {nodes}) = nodes
 
-edgesGraphMap :: Graph Node Edge -> EdgesMap
+edgesGraphMap :: SGraph -> EdgesMap
 edgesGraphMap graph =
   Map.fromFoldable $ map (\e -> Tuple e.id e) $ graphEdges graph
 
-nodesMap :: Seq (Record Node) -> NodesMap
+edgesById :: SGraph -> SelectedEdgeIds -> Seq.Seq (Record Edge)
+edgesById g edgeIds = Seq.filter (\e -> Set.member e.id edgeIds) $ graphEdges g
+
+nodesMap :: Seq.Seq (Record Node) -> NodesMap
 nodesMap nodes = Map.fromFoldable $ map (\n -> Tuple n.id n) nodes
 
-nodesGraphMap :: Graph Node Edge -> NodesMap
+nodesGraphMap :: SGraph -> NodesMap
 nodesGraphMap graph =
   nodesMap $ graphNodes graph
 
-eqGraph :: (Graph Node Edge) -> (Graph Node Edge) -> Boolean
+nodesById :: SGraph -> SelectedNodeIds -> Seq.Seq (Record Node)
+nodesById g nodeIds = Seq.filter (\n -> Set.member n.id nodeIds) $ graphNodes g
+
+neighbours :: SGraph -> Seq.Seq (Record Node) -> Seq.Seq (Record Node)
+neighbours g nodes = Seq.fromFoldable $ Set.unions [Set.fromFoldable nodes, sources, targets]
+  where
+    nMap = nodesMap $ graphNodes g
+    nodeIds = Set.fromFoldable $ Seq.map _.id nodes
+    selectedEdges = neighbouringEdges g nodeIds
+    sources = Set.fromFoldable $ nodesById g $ Set.fromFoldable $ Seq.map _.source selectedEdges
+    targets = Set.fromFoldable $ nodesById g $ Set.fromFoldable $ Seq.map _.target selectedEdges
+
+neighbouringEdges :: SGraph -> SelectedNodeIds -> Seq.Seq (Record Edge)
+neighbouringEdges g nodeIds = Seq.filter condition $ graphEdges g
+  where
+    condition {source, target} = (Set.member source nodeIds) || (Set.member target nodeIds)
+
+eqGraph :: SGraph -> SGraph -> Boolean
 eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n2) && (e1 == e2)
 
 

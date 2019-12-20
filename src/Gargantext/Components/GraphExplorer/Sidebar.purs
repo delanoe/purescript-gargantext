@@ -6,12 +6,12 @@ import Prelude
 import Data.Array (head)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple.Nested((/\))
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
-import Gargantext.Data.Array (catMaybes)
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -53,11 +53,16 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                          , data: {toggle: "tab"}
                          , href: "#home"
                          , role: "tab"
-                         , aria: {controls: "home", selected: "true"}}
-                    [ RH.text "Selected nodes" ] ] ]
+                         , aria: {controls: "home", selected: "true"}
+                         }
+                    [ RH.text "Selected nodes" ]
+                  ]
+                ]
               , RH.div { className: "tab-content", id: "myTabContent" }
                 [ RH.div { className: "", id: "home", role: "tabpanel" }
-                  (badge <$> badges props.selectedNodeIds nodesMap) ] ]
+                  (Seq.toUnfoldable $ (Seq.map (badge props.selectedNodeIds) (badges props.graph props.selectedNodeIds)))
+                ]
+              ]
             {-, RH.div { className: "col-md-12", id: "horizontal-checkbox" }
               [ RH.ul {}
                 [ checkbox "Pubs"
@@ -74,8 +79,13 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
             ]
           ]
         ]
-    badge text =
-      RH.a { className: "badge badge-light" } [ RH.text text ]
+    badge (_ /\ setSelectedNodeIds) {id, label} =
+      RH.a { className: "badge badge-light"
+           , on: { click: onClick }
+           } [ RH.text label ]
+      where
+        onClick e = do
+          setSelectedNodeIds $ const $ Set.singleton id
     checkbox text =
       RH.li {}
       [ RH.span {} [ RH.text text ]
@@ -83,10 +93,10 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                  , className: "checkbox"
                  , checked: true
                  , title: "Mark as completed" } ]
-    badges (selectedNodeIds /\ _) nodesMap = map (\n -> n.label)
-                                           $ catMaybes
-                                           $ map (\n -> Map.lookup n nodesMap)
-                                           $ Set.toUnfoldable selectedNodeIds
+    badges :: SigmaxTypes.SGraph -> R.State SigmaxTypes.SelectedNodeIds -> Seq.Seq (Record SigmaxTypes.Node)
+    badges graph (selectedNodeIds /\ _) = SigmaxTypes.neighbours graph selectedNodes
+      where
+        selectedNodes = SigmaxTypes.nodesById graph selectedNodeIds
 
     query _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
     query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
