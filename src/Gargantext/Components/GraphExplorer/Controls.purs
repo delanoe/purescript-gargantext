@@ -1,12 +1,10 @@
 module Gargantext.Components.GraphExplorer.Controls
  ( Controls
- , controlsToSigmaSettings
  , useGraphControls
  , controls
  , controlsCpt
  , getShowTree, setShowTree
  , getShowControls, setShowControls
- , getCursorSize, setCursorSize
  ) where
 
 import Data.Array as A
@@ -25,7 +23,7 @@ import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
-import Gargantext.Components.GraphExplorer.SlideButton (cursorSizeButton, labelSizeButton, mouseSelectorSizeButton)
+import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
@@ -34,8 +32,7 @@ import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
 type Controls =
-  ( cursorSize      :: R.State Number
-  , edgeConfluence :: R.State Range.NumberRange
+  ( edgeConfluence :: R.State Range.NumberRange
   , edgeWeight :: R.State Range.NumberRange
   , forceAtlasState :: R.State SigmaxTypes.ForceAtlasState
   , graph           :: SigmaxTypes.SGraph
@@ -49,9 +46,6 @@ type Controls =
   , showTree        :: R.State Boolean
   , sigmaRef        :: R.Ref Sigmax.Sigma
   )
-
-controlsToSigmaSettings :: Record Controls -> Record Graph.SigmaSettings
-controlsToSigmaSettings { cursorSize: (cursorSize /\ _)} = Graph.sigmaSettings
 
 type LocalControls =
   ( labelSize :: R.State Number
@@ -147,7 +141,6 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   -- run demo
                   -- search button
                   -- search topics
-                , RH.li {} [ cursorSizeButton props.cursorSize ] -- cursor size: 0-100
                 , RH.li {} [ labelSizeButton props.sigmaRef localControls.labelSize ] -- labels size: 1-4
                 , RH.li {} [ nodeSizeControl nodeSizeRange props.nodeSize ]
                   -- zoom: 0 -100 - calculate ratio
@@ -162,7 +155,6 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 
 useGraphControls :: SigmaxTypes.SGraph -> R.Hooks (Record Controls)
 useGraphControls graph = do
-  cursorSize      <- R.useState' 10.0
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   forceAtlasState <- R.useState' SigmaxTypes.InitialRunning
@@ -177,8 +169,7 @@ useGraphControls graph = do
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
 
-  pure { cursorSize
-       , edgeConfluence
+  pure { edgeConfluence
        , edgeWeight
        , forceAtlasState
        , graph
@@ -199,14 +190,8 @@ getShowControls { showControls: ( should /\ _ ) } = should
 getShowTree :: Record Controls -> Boolean
 getShowTree { showTree: ( should /\ _ ) } = should
 
-getCursorSize :: Record Controls -> Number
-getCursorSize { cursorSize: ( size /\ _ ) } = size
-
 setShowControls :: Record Controls -> Boolean -> Effect Unit
 setShowControls { showControls: ( _ /\ set ) } v = set $ const v
 
 setShowTree :: Record Controls -> Boolean -> Effect Unit
 setShowTree { showTree: ( _ /\ set ) } v = set $ not <<< const v
-
-setCursorSize :: Record Controls -> Number -> Effect Unit
-setCursorSize { cursorSize: ( _ /\ setSize ) } v = setSize $ const v

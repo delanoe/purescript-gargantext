@@ -9,7 +9,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Traversable (traverse)
+import Data.Traversable (traverse_)
 import Data.Tuple.Nested((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -126,8 +126,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
 
     deleteNodes :: Session -> Array Int -> Effect Unit
     deleteNodes session nodeIds = do
-      _ <- traverse (launchAff_ <<< deleteNode session) nodeIds
-      pure unit
+      traverse_ (launchAff_ <<< deleteNode session) nodeIds
 
     deleteNode :: Session -> Int -> Aff Int
     deleteNode session nodeId = delete session $ NodeAPI Node (Just nodeId) ""

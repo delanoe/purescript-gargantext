@@ -1,14 +1,12 @@
 module Gargantext.Components.GraphExplorer.SlideButton
   ( Props
   , sizeButton
-  , cursorSizeButton
   , labelSizeButton
   , mouseSelectorSizeButton
   ) where
 
 import Global (readFloat)
 import Prelude
-import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
@@ -45,16 +43,6 @@ sizeButtonCpt = R.hooksComponent "SizeButton" cpt
                     , on: {input: onChange}
                     }
           ]
-
-cursorSizeButton :: R.State Number -> R.Element
-cursorSizeButton state =
-  sizeButton {
-      state
-    , caption: "Cursor Size"
-    , min: 1.0
-    , max: 4.0
-    , onChange: snd state <<< const <<< readFloat <<< R2.unsafeEventValue
-    }
 
 labelSizeButton :: R.Ref Sigmax.Sigma -> R.State Number -> R.Element
 labelSizeButton sigmaRef state =

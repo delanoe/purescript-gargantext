@@ -6,7 +6,6 @@ import Data.Nullable (Nullable)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, runEffectFn1)
 import React (ReactRef, SyntheticEventHandler)
-import React.SyntheticEvent (SyntheticMouseEvent)
 import Record.Unsafe (unsafeGet)
 import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Types (class Optional)
@@ -92,7 +91,6 @@ foreign import data CameraInstance' :: # Type
 type SigmaInstance = { | SigmaInstance' }
 type CameraInstance = { | CameraInstance' }
 
-foreign import sigmaOnMouseMove :: {cursorSize :: Number} -> SyntheticMouseEvent -> Effect Unit
 cameras :: SigmaInstance -> Array CameraInstance
 cameras = unsafeGet "cameras"
 
