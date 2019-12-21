@@ -226,3 +226,9 @@ dataTransferFileBlob e = unsafePartial $ do
 
 blur :: DOM.Element -> Effect Unit
 blur el = el ... "blur" $ []
+
+row :: Array R.Element -> R.Element
+row children = H.div { className: "row" } children
+
+col12 :: Array R.Element -> R.Element
+col12 children = H.div { className: "col-md-12" } children

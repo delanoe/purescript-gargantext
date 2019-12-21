@@ -157,7 +157,7 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
     error <- R.useState' ""
     username <- R.useState' ""
     password <- R.useState' ""
-    pure $ H.div {className: "row"}
+    pure $ R2.row
       [ cardGroup
         [ card
           [ cardBlock

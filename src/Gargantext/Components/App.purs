@@ -81,9 +81,8 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
 forestLayout frontends sessions route showLogin child =
-  R.fragment [ topBar {}, row main, footer {} ]
+  R.fragment [ topBar {}, R2.row [main], footer {} ]
   where
-    row child' = H.div {className: "row"} [child']
     main =
       R.fragment
       [ H.div {className: "col-md-2", style: {paddingTop: "60px"}}

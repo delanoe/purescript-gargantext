@@ -98,7 +98,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       pure $
         RH.div
           { id: "graph-explorer" }
-          [ row
+          [ R2.row
             [ outer
               [ inner
                 [ row1
@@ -107,7 +107,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
                 , rowControls [ Controls.controls controls ]
-                , row [ tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
+                , R2.row [
+                        tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
                       , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []  -- graph container
                       , graphView { controls
                                   , elRef: graphRef
@@ -130,7 +131,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1  = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
-    row   = RH.div { className: "row" }
     rowControls = RH.div { className: "row controls" }
     col       = RH.div { className: "col-md-4" }
     pullLeft  = RH.div { className: "pull-left" }

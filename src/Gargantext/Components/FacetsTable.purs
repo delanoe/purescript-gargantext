@@ -28,6 +28,7 @@ import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
 import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..))
 import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.DecodeMaybe ((.|))
+import Gargantext.Utils.Reactix as R2
 ------------------------------------------------------------------------
 
 type NodeID = Int
@@ -191,7 +192,7 @@ docViewCpt = R.hooksComponent "G.C.FacetsTable.DocView" cpt
           snd path $ const ipp
 
       pure $ H.div { className: "container1" }
-        [ H.div { className: "row" }
+        [ R2.row
           [ chart
           , H.div { className: "col-md-12" }
             [ pageLayout { deletions, frontends, totalRecords, container, session, path } ]
@@ -241,7 +242,7 @@ docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
         , H.p {} [ H.text "" ]
         , H.br {}
         , H.div { className: "container-fluid" }
-          [ H.div { className: "row" }
+          [ R2.row
             [ chart
             , H.div { className: "col-md-12" }
               [ pageLayout { frontends, totalRecords, deletions, container, session, path }

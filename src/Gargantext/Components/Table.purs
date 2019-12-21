@@ -90,12 +90,12 @@ tableHeaderLayoutCpt = R.hooksComponent "G.C.Table.tableHeaderLayout" cpt
   where
     cpt {title, desc, query, date, user} _ =
       pure $ R.fragment
-      [ H.div {className: "row"}
+      [ R2.row
         [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
         , H.div {className: "col-md-9"}
           [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
         ]
-      , H.div {className: "row"}
+      , R2.row
         [ H.div {className: "jumbotron1", style: {padding: "12px 0px 20px 12px"}}
           [ H.div {className: "col-md-8 content"}
             [ H.p {}
@@ -158,7 +158,7 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 defaultContainer {title} props = R.fragment
-  [ H.div {className: "row"}
+  [ R2.row
     [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
     , H.div {className: "col-md-4"} [ props.paginationLinks ]
     , H.div {className: "col-md-4"} [ props.pageSizeControl ]

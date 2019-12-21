@@ -254,7 +254,7 @@ docViewCpt = R.hooksComponent "G.C.DocsTable.docView" cpt where
       , layout: { frontends, session, nodeId, tabType, listId
                 , corpusId, totalRecords, chart, showSearch } } _ = do
     pure $ H.div {className: "container1"}
-      [ H.div {className: "row"}
+      [ R2.row
         [ chart
         , if showSearch then searchBar query else H.div {} []
         , H.div {className: "col-md-12"}

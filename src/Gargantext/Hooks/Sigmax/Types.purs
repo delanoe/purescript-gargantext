@@ -78,7 +78,6 @@ nodesById g nodeIds = Seq.filter (\n -> Set.member n.id nodeIds) $ graphNodes g
 neighbours :: SGraph -> Seq.Seq (Record Node) -> Seq.Seq (Record Node)
 neighbours g nodes = Seq.fromFoldable $ Set.unions [Set.fromFoldable nodes, sources, targets]
   where
-    nMap = nodesMap $ graphNodes g
     nodeIds = Set.fromFoldable $ Seq.map _.id nodes
     selectedEdges = neighbouringEdges g nodeIds
     sources = Set.fromFoldable $ nodesById g $ Set.fromFoldable $ Seq.map _.source selectedEdges
