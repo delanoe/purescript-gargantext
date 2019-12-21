@@ -70,6 +70,16 @@ foreign import _addRenderer
             r
             (Either err Unit)
 
+bindMouseSelectorPlugin :: forall err. Sigma -> Effect (Either err Unit)
+bindMouseSelectorPlugin = runEffectFn3 _bindMouseSelectorPlugin Left Right
+
+foreign import _bindMouseSelectorPlugin
+  :: forall a b err.
+  EffectFn3 (a -> Either a b)
+            (b -> Either a b)
+            Sigma
+            (Either err Unit)
+
 killRenderer :: forall r err. Sigma -> r -> Effect (Either err Unit)
 killRenderer = runEffectFn4 _killRenderer Left Right
 

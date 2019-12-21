@@ -19,7 +19,6 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 
 type Props = (

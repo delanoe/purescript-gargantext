@@ -224,7 +224,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
 
         panelHeading renameBoxOpen@(open /\ _) =
           H.div {className: "panel-heading"}
-                [ H.div {className: "row" }
+                [ R2.row
                         [ H.div {className: "col-md-8"}
                                 [ renameBox d {id, name, nodeType} renameBoxOpen ]
 

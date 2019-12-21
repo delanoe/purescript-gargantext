@@ -3,7 +3,7 @@ module Gargantext.Data.Array
 
 import Data.Array as DA
 import Data.Maybe
-import Data.Sequence as DS
+import Data.Sequence as Seq
 import Data.Tuple (Tuple(..))
 import Prelude (bind, flip, identity, (<<<))
 
@@ -16,9 +16,9 @@ splitEvery n xs =
   in DA.cons h (splitEvery n t)
 
 splitAt :: forall a. Int -> Array a -> Tuple (Array a) (Array a)
-splitAt n ls = Tuple (DS.toUnfoldable x) (DS.toUnfoldable xs)
+splitAt n ls = Tuple (Seq.toUnfoldable x) (Seq.toUnfoldable xs)
   where
-    Tuple x xs = DS.splitAt n (DS.fromFoldable ls)
+    Tuple x xs = Seq.splitAt n (Seq.fromFoldable ls)
 
 ----------------------------------------------------------------------
 -- | Array with Maybe tools
@@ -36,4 +36,15 @@ concatMap = flip bind
 singleton :: forall a. a -> Array a
 singleton a = [a]
 
+----------------------------------------------------------------------
+-- | Seq with Maybe tools
+seqMapMaybe :: forall a b. (a -> Maybe b) -> Seq.Seq a -> Seq.Seq b
+seqMapMaybe f = seqConcatMap (maybe Seq.empty Seq.singleton <<< f)
 
+seqCatMaybes :: forall a. Seq.Seq (Maybe a) -> Seq.Seq a
+seqCatMaybes = seqMapMaybe identity
+
+----------------------------------------------------------------------
+-- | Seq misc tools
+seqConcatMap :: forall a b. (a -> Seq.Seq b) -> Seq.Seq a -> Seq.Seq b
+seqConcatMap = flip bind

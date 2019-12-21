@@ -149,14 +149,14 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                } props =
   H.div {className: "container-fluid"}
   [ H.div {className: "jumbotron1"}
-    [ H.div {className: "row"}
+    [ R2.row
       [ H.div {className: "panel panel-default"}
         [ H.div {className: "panel-heading"}
           [ H.h2 {className: "panel-title", style: {textAlign : "center"}}
             [ H.span {className: "glyphicon glyphicon-hand-down"} []
             , H.text "Extracted Terms"
             ]
-          , H.div {className: "row"}
+          , R2.row
             [ H.div {className: "col-md-3", style: {marginTop: "6px"}}
               [ H.input { className: "form-control"
                         , name: "search"

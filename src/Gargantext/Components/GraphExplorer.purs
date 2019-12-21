@@ -98,7 +98,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       pure $
         RH.div
           { id: "graph-explorer" }
-          [ row
+          [ R2.row
             [ outer
               [ inner
                 [ row1
@@ -107,7 +107,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
                   ]
                 , rowControls [ Controls.controls controls ]
-                , row [ tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
+                , R2.row [
+                        tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
                       , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []  -- graph container
                       , graphView { controls
                                   , elRef: graphRef
@@ -130,7 +131,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
     row1  = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
-    row   = RH.div { className: "row" }
     rowControls = RH.div { className: "row controls" }
     col       = RH.div { className: "col-md-4" }
     pullLeft  = RH.div { className: "pull-left" }
@@ -189,7 +189,6 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
         , graph
         , multiSelectEnabledRef
         , selectedNodeIds: controls.selectedNodeIds
-        , selectorSize: controls.selectorSize
         , showEdges: controls.showEdges
         , sigmaRef: controls.sigmaRef
         , sigmaSettings: Graph.sigmaSettings
@@ -201,7 +200,7 @@ convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxTypes.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
   where
     nodes = foldMapWithIndex nodeFn r.nodes
-    nodeFn i (GET.Node n) =
+    nodeFn _i (GET.Node n) =
       Seq.singleton
         { borderColor: color
         , color : color
@@ -224,12 +223,14 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
                                         , hidden : false
                                         , size: 1.0
                                         , source : e.source
+                                        , sourceNode
                                         , target : e.target
+                                        , targetNode
                                         , weight : e.weight }
       where
-        color = case Map.lookup e.source nodesMap of
-          Nothing   -> "#000000"
-          Just node -> node.color
+        sourceNode = unsafePartial $ fromJust $ Map.lookup e.source nodesMap
+        targetNode = unsafePartial $ fromJust $ Map.lookup e.target nodesMap
+        color = sourceNode.color
 
 defaultPalette :: Array String
 defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff"
@@ -371,16 +372,14 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
   where
     edges = SigmaxTypes.graphEdges graph
     nodes = SigmaxTypes.graphNodes graph
-    graphEdgesMap = SigmaxTypes.edgesGraphMap graph
-    graphNodesMap = SigmaxTypes.nodesGraphMap graph
     selectedEdgeIds =
       Set.fromFoldable
         $ Seq.map _.id
-        $ Seq.filter (\e -> Set.member e.source (fst controls.selectedNodeIds)) edges
+        $ SigmaxTypes.neighbouringEdges graph (fst controls.selectedNodeIds)
     hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
 
-    newNodes = nodeSizeFilter <$> nodeMarked <$> nodes
-    newEdges = edgeConfluenceFilter <$> edgeWeightFilter <$> edgeShowFilter <$> edgeMarked <$> edges
+    newNodes = Seq.map (nodeSizeFilter <<< nodeMarked) nodes
+    newEdges = Seq.map (edgeConfluenceFilter <<< edgeWeightFilter <<< edgeShowFilter <<< edgeMarked) edges
 
     nodeSizeFilter node@{ size } =
       if Range.within (fst controls.nodeSize) size then
@@ -404,16 +403,15 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
       else
         edge { hidden = true }
 
-    edgeMarked edge@{ id } = do
+    edgeMarked edge@{ id, sourceNode } = do
       let isSelected = Set.member id selectedEdgeIds
-      let sourceNode = Map.lookup edge.source graphNodesMap
       case Tuple hasSelection isSelected of
         Tuple false true  -> edge { color = "#ff0000" }
-        Tuple true  true  -> edge { color = (unsafePartial $ fromJust sourceNode).color }
-        Tuple true  false -> edge { color = "#dddddd" }
+        Tuple true  true  -> edge { color = sourceNode.color }
+        Tuple true false  -> edge { color = "rgba(221, 221, 221, 0.5)" }
         _                 -> edge
     nodeMarked node@{ id } =
       if Set.member id (fst controls.selectedNodeIds) then
-        node { borderColor = "#000", type = "hovered" }
+        node { borderColor = "#000", type = "selected" }
       else
         node

@@ -1,13 +1,12 @@
 module Gargantext.Components.GraphExplorer.SlideButton
   ( Props
   , sizeButton
-  , cursorSizeButton
   , labelSizeButton
+  , mouseSelectorSizeButton
   ) where
 
 import Global (readFloat)
 import Prelude
-import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
@@ -45,30 +44,38 @@ sizeButtonCpt = R.hooksComponent "SizeButton" cpt
                     }
           ]
 
-cursorSizeButton :: R.State Number -> R.Element
-cursorSizeButton state =
-  sizeButton {
-      state: state
-    , caption: "Cursor Size"
-    , min: 1.0
-    , max: 4.0
-    , onChange: \e -> snd state $ const $ readFloat $ R2.unsafeEventValue e
-    }
-
 labelSizeButton :: R.Ref Sigmax.Sigma -> R.State Number -> R.Element
 labelSizeButton sigmaRef state =
   sizeButton {
-      state: state
+      state
     , caption: "Label Size"
     , min: 5.0
     , max: 30.0
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
       let newValue = readFloat $ R2.unsafeEventValue e
-      let (value /\ setValue) = state
+      let (_ /\ setValue) = state
       Sigmax.dependOnSigma sigma "[labelSizeButton] sigma: Nothing" $ \s -> do
         Sigma.setSettings s {
           defaultLabelSize: newValue
         }
       setValue $ const newValue
     }
+
+mouseSelectorSizeButton :: R.Ref Sigmax.Sigma -> R.State Number -> R.Element
+mouseSelectorSizeButton sigmaRef state =
+  sizeButton {
+      state
+    , caption: "Selector Size"
+    , min: 1.0
+    , max: 50.0
+    , onChange: \e -> do
+      let sigma = R.readRef sigmaRef
+      let (_ /\ setValue) = state
+      let newValue = readFloat $ R2.unsafeEventValue e
+      Sigmax.dependOnSigma sigma "[mouseSelectorSizeButton] sigma: Nothing" $ \s -> do
+        Sigma.setSettings s {
+          mouseSelectorSize: newValue
+        }
+      setValue $ const newValue
+  }

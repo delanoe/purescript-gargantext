@@ -4,13 +4,11 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude (bind, const, discard, pure, ($), unit, map, not, show)
+import Prelude (bind, const, discard, not, pure, unit, ($))
 
-import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
@@ -32,7 +30,6 @@ type Props sigma forceatlas2 =
   , graph :: SigmaxTypes.SGraph
   , multiSelectEnabledRef :: R.Ref Boolean
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
-  , selectorSize :: R.State Int
   , showEdges :: R.State SigmaxTypes.ShowEdgesState
   , sigmaRef :: R.Ref Sigmax.Sigma
   , sigmaSettings :: sigma
@@ -72,6 +69,7 @@ graphCpt = R.hooksComponent "Graph" cpt
                   _ <- Sigma.addRenderer sig {
                       "type": "canvas"
                     , container: c
+                    , additionalContexts: ["mouseSelector"]
                     }
                   pure unit
 
@@ -80,6 +78,8 @@ graphCpt = R.hooksComponent "Graph" cpt
                 Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
                   -- bind the click event only initially, when ref was empty
                   Sigmax.bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabledRef
+                  _ <- Sigma.bindMouseSelectorPlugin sigma
+                  pure unit
 
                 Sigmax.setEdges sig false
                 Sigma.startForceAtlas2 sig props.forceAtlas2Settings
@@ -102,10 +102,6 @@ graphCpt = R.hooksComponent "Graph" cpt
           Sigmax.updateEdges sigma tEdgesMap
           Sigmax.updateNodes sigma tNodesMap
           Sigmax.setEdges sigma (not $ SigmaxTypes.edgeStateHidden showEdges)
-
-      -- R.useEffect1' (fst props.selectorSize) $ do
-      --   Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
-      --     Sigmax.selectorWithSize sigma $ fst props.selectorSize
 
     stageHooks _ = pure unit
 
@@ -172,6 +168,7 @@ type SigmaSettings =
   , mouseEnabled :: Boolean
   -- , mouseInertiaDuration :: Number
   -- , mouseInertiaRatio :: Number
+  , mouseSelectorSize :: Number
   -- , mouseWheelEnabled :: Boolean
   , mouseZoomDuration :: Number
   , nodeBorderColor :: String
@@ -239,6 +236,7 @@ sigmaSettings =
   , minEdgeSize: 0.5              -- in fact used in tina as edge size
   , minNodeSize: 1.0
   , mouseEnabled: true
+  , mouseSelectorSize: 15.0
   , mouseZoomDuration: 150.0
   , nodeBorderColor: "default"           -- choices: "default" color vs. "node" color
   --, nodesPowRatio : 10.8

@@ -79,7 +79,6 @@ instance showSelectedNode :: Show SelectedNode where
 
 type State = (
   --  corpusId :: R.State Int
-  --, cursorSize :: R.State Number
   --, filePath :: R.State String
   --, graphData :: R.State GraphData
   --, legendData :: R.State (Array Legend)

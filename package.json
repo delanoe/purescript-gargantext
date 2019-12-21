@@ -20,7 +20,7 @@
         "prop-types": "15.6.2",
         "react": "^16.10",
         "react-dom": "^16.10",
-        "sigma": "git://github.com/jjl/sigma.js#garg"
+        "sigma": "git://github.com/poorscript/sigma.js#garg"
     },
     "eslintConfig": {
         "extends": "react-app"
