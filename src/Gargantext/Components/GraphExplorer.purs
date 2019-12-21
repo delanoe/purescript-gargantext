@@ -189,7 +189,6 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
         , graph
         , multiSelectEnabledRef
         , selectedNodeIds: controls.selectedNodeIds
-        , selectorSize: controls.selectorSize
         , showEdges: controls.showEdges
         , sigmaRef: controls.sigmaRef
         , sigmaSettings: Graph.sigmaSettings

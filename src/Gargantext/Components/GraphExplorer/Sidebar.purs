@@ -9,6 +9,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Data.Set as Set
+import Data.Traversable (traverse)
 import Data.Tuple.Nested((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -25,7 +26,6 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, delete)
 import Gargantext.Types (NodeType(..))
-import Gargantext.Utils.Monad (mapM_)
 import Gargantext.Utils.Reactix as R2
 
 type Props =
@@ -125,8 +125,9 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
       deleteNodes session nodeIds
 
     deleteNodes :: Session -> Array Int -> Effect Unit
-    deleteNodes session nodeIds =
-      mapM_ (launchAff_ <<< deleteNode session) nodeIds
+    deleteNodes session nodeIds = do
+      _ <- traverse (launchAff_ <<< deleteNode session) nodeIds
+      pure unit
 
     deleteNode :: Session -> Int -> Aff Int
     deleteNode session nodeId = delete session $ NodeAPI Node (Just nodeId) ""
