@@ -8,7 +8,7 @@ import Data.Map as Map
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
-import Prelude (map, ($), (&&), (||), (==), class Eq, class Ord, class Show, Ordering, compare)
+import Prelude (class Eq, class Show, map, ($), (&&), (==), (||))
 
 newtype Graph n e = Graph { nodes :: Seq.Seq {|n}, edges :: Seq.Seq {|e} }
 

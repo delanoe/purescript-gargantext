@@ -55,7 +55,8 @@ favCategory _        = Favorite
 
 trashCategory :: Category -> Category
 trashCategory _     = Trash
-trashCategory Trash = UnRead
+-- TODO: ?
+--trashCategory Trash = UnRead
 
 decodeCategory :: Int -> Category
 decodeCategory 0 = Trash
@@ -81,17 +82,17 @@ caroussel session nodeId setLocalCategories r cat = H.div {className:"flex"} div
 
                         else
                           H.div { className : icon c (cat == c)
-                            , on: { click: onClick nodeId setLocalCategories r c}
+                            , on: { click: onClick c}
                              } []
                     ) (caroussel' cat)
 
     caroussel' :: Category -> Array Category
     caroussel' Trash = take 2 categories
-    caroussel' cat   = take 3 $ drop (cat2score cat - 1 ) categories
+    caroussel' c   = take 3 $ drop (cat2score c - 1 ) categories
 
-    onClick nodeId setLocalCategories r cat = \_-> do
-      setLocalCategories $ Map.insert r._id cat
-      void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [r._id], category: cat}
+    onClick c = \_-> do
+      setLocalCategories $ Map.insert r._id c
+      void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [r._id], category: c}
 
 
 icon :: Category -> Boolean -> String
