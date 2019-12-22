@@ -16,6 +16,7 @@ import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
@@ -41,7 +42,7 @@ graph :: forall s fa2. Record (Props s fa2) -> R.Element
 graph props = R.createElement graphCpt props []
 
 graphCpt :: forall s fa2. R.Component (Props s fa2)
-graphCpt = R.hooksComponent "Graph" cpt
+graphCpt = R.hooksComponent "G.C.Graph" cpt
   where
     cpt props _ = do
       stageHooks props
@@ -83,6 +84,9 @@ graphCpt = R.hooksComponent "Graph" cpt
 
                 Sigmax.setEdges sig false
                 Sigma.startForceAtlas2 sig props.forceAtlas2Settings
+
+                louvain <- Louvain.init unit
+                log2 "[graphCpt] louvain" louvain
           Just sig -> do
             pure unit
 
