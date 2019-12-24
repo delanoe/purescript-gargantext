@@ -173,7 +173,17 @@ louvainGraph g cluster = Graph {nodes: newNodes, edges: newEdges}
     edges = graphEdges g
 
     newNodes = (nodeClusterColor cluster) <$> nodes
-    newEdges = edges
+    nm = nodesMap newNodes
+    newEdges = (edgeClusterColor cluster nm) <$> edges
+
+edgeClusterColor cluster nm e = e { color = sourceNode.color, sourceNode = sourceNode, targetNode = targetNode }
+  where
+    sourceNode = case Map.lookup e.source nm of
+      Just sn -> sn
+      Nothing -> e.sourceNode
+    targetNode = case Map.lookup e.target nm of
+      Just tn -> tn
+      Nothing -> e.targetNode
 
 nodeClusterColor cluster n = n { color = newColor }
   where

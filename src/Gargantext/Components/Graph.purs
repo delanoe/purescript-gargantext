@@ -9,7 +9,6 @@ import Prelude (bind, const, discard, not, pure, unit, ($))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.Sequence as Seq
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
@@ -17,7 +16,6 @@ import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
-import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
