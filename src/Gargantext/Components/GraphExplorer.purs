@@ -18,6 +18,7 @@ import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
@@ -178,7 +179,14 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
   where
     cpt {controls, elRef, graphId, graph, multiSelectEnabledRef} _children = do
       -- TODO Cache this?
-      let transformedGraph = transformGraph controls graph
+      let louvainGraph =
+            if (fst controls.showLouvain) then
+              let louvain = Louvain.louvain unit in
+              let cluster = Louvain.init louvain (SigmaxTypes.louvainNodes graph) (SigmaxTypes.louvainEdges graph) in
+              SigmaxTypes.louvainGraph graph cluster
+            else
+              graph
+      let transformedGraph = transformGraph controls louvainGraph
 
       R.useEffect1' (fst controls.multiSelectEnabled) $ do
         R.setRef multiSelectEnabledRef $ fst controls.multiSelectEnabled
@@ -231,15 +239,6 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
         sourceNode = unsafePartial $ fromJust $ Map.lookup e.source nodesMap
         targetNode = unsafePartial $ fromJust $ Map.lookup e.target nodesMap
         color = sourceNode.color
-
-defaultPalette :: Array String
-defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff"
-                 ,"#b399df","#ffdfed","#33c8f3","#739e9a"
-                 ,"#caeca3","#f6f7e5","#f9bcca","#ccb069"
-                 ,"#c9ffde","#c58683","#6c9eb0","#ffd3cf"
-                 ,"#ccffc7","#52a1b0","#d2ecff","#99fffe"
-                 ,"#9295ae","#5ea38b","#fff0b3","#d99e68"
-                 ]
 
 -- clusterColor :: Cluster -> Color
 -- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `molength defrultPalette)

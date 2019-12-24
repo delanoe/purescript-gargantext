@@ -9,6 +9,7 @@ import Prelude (bind, const, discard, not, pure, unit, ($))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
+import Data.Sequence as Seq
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
@@ -85,8 +86,7 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
                 Sigmax.setEdges sig false
                 Sigma.startForceAtlas2 sig props.forceAtlas2Settings
 
-                louvain <- Louvain.init unit
-                log2 "[graphCpt] louvain" louvain
+                pure unit
           Just sig -> do
             pure unit
 

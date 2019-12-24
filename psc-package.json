@@ -33,6 +33,7 @@
     "string-parsers",
     "strings",
     "thermite",
+    "tuples-native",
     "uint",
     "uri",
     "web-html"

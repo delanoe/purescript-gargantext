@@ -204,6 +204,11 @@ let additions =
           ]
           "https://github.com/irresponsible/purescript-reactix"
           "v0.4.2"
+      , tuples-native =
+          mkPackage
+          [ "generics-rep", "prelude", "typelevel", "unsafe-coerce" ]
+          "https://github.com/athanclark/purescript-tuples-native"
+          "v2.0.1"
       , uint =
           mkPackage
           [ "maybe", "math", "generics-rep" ]

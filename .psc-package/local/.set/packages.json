@@ -3069,6 +3069,16 @@
     "repo": "https://github.com/purescript/purescript-tuples.git",
     "version": "v5.1.0"
   },
+  "tuples-native": {
+    "dependencies": [
+      "generics-rep",
+      "prelude",
+      "typelevel",
+      "unsafe-coerce"
+    ],
+    "repo": "https://github.com/athanclark/purescript-tuples-native",
+    "version": "v2.0.1"
+  },
   "type-equality": {
     "dependencies": [],
     "repo": "https://github.com/purescript/purescript-type-equality.git",

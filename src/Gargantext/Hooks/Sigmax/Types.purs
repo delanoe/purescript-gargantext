@@ -1,14 +1,18 @@
 module Gargantext.Hooks.Sigmax.Types where
 
 import DOM.Simple.Types (Element)
+import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Map as Map
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
-import Prelude (class Eq, class Show, map, ($), (&&), (==), (||))
+import Gargantext.Data.Louvain as Louvain
+import Partial.Unsafe (unsafePartial)
+import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), mod)
 
 newtype Graph n e = Graph { nodes :: Seq.Seq {|n}, edges :: Seq.Seq {|e} }
 
@@ -155,3 +159,35 @@ forceAtlasEdgeState Running EShow = ETempHiddenThenShow
 forceAtlasEdgeState Running es = es
 forceAtlasEdgeState Paused ETempHiddenThenShow = EShow
 forceAtlasEdgeState Paused es = es
+
+
+louvainEdges :: SGraph -> Array (Record Louvain.Edge)
+louvainEdges g = Seq.toUnfoldable $ Seq.map (\{source, target, weight} -> {source, target, weight}) (graphEdges g)
+louvainNodes :: SGraph -> Array Louvain.Node
+louvainNodes g = Seq.toUnfoldable $ Seq.map _.id (graphNodes g)
+
+louvainGraph :: SGraph -> Louvain.LouvainCluster -> SGraph
+louvainGraph g cluster = Graph {nodes: newNodes, edges: newEdges}
+  where
+    nodes = graphNodes g
+    edges = graphEdges g
+
+    newNodes = (nodeClusterColor cluster) <$> nodes
+    newEdges = edges
+
+nodeClusterColor cluster n = n { color = newColor }
+  where
+    newColor = case Map.lookup n.id cluster of
+      Nothing -> n.color
+      Just c  -> do
+        let idx = c `mod` (A.length defaultPalette)
+        unsafePartial $ fromJust $ defaultPalette A.!! idx
+
+defaultPalette :: Array String
+defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff"
+                 ,"#b399df","#ffdfed","#33c8f3","#739e9a"
+                 ,"#caeca3","#f6f7e5","#f9bcca","#ccb069"
+                 ,"#c9ffde","#c58683","#6c9eb0","#ffd3cf"
+                 ,"#ccffc7","#52a1b0","#d2ecff","#99fffe"
+                 ,"#9295ae","#5ea38b","#fff0b3","#d99e68"
+                 ]
