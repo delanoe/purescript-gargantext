@@ -10,9 +10,11 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
-import Gargantext.Data.Louvain as Louvain
 import Partial.Unsafe (unsafePartial)
 import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), mod, not)
+
+import Gargantext.Data.Louvain as Louvain
+import Gargantext.Types as GT
 
 newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 
@@ -28,6 +30,8 @@ type Renderer = { "type" :: String, container :: Element }
 type Node =
   ( borderColor :: String
   , color :: String
+  , equilateral :: { numPoints :: Int }
+  , gargType :: GT.Mode
   , hidden :: Boolean
   , id    :: String
   , label :: String

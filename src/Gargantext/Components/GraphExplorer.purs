@@ -2,8 +2,9 @@ module Gargantext.Components.GraphExplorer where
 
 import Gargantext.Prelude hiding (max,min)
 
-import Data.FoldableWithIndex (foldMapWithIndex)
+import DOM.Simple.Types (Element)
 import Data.Foldable (foldMap)
+import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
@@ -11,29 +12,27 @@ import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
-import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
-import Math (log)
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-
-import Gargantext.Data.Louvain as Louvain
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Components.Forest (forest)
+import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Components.Graph as Graph
-import Gargantext.Components.Forest (forest)
+import Gargantext.Data.Louvain as Louvain
 import Gargantext.Ends (Frontends)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
 import Gargantext.Sessions (Session, Sessions, get)
-import Gargantext.Types (NodeType(Graph))
+import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
+import Math (log)
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as RH
 
 type GraphId = Int
 
@@ -212,17 +211,20 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
       Seq.singleton
         { borderColor: color
         , color : color
+        , equilateral: { numPoints: 3 }
+        , gargType
         , hidden : false
         , id    : n.id_
         , label : n.label
         , size  : log (toNumber n.size + 1.0)
-        , type  : "def"  -- default type
+        , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)
         }
       where
         cDef (GET.Cluster {clustDefault}) = clustDefault
         color = GET.intColor (cDef n.attributes)
+        gargType =  unsafePartial $ fromJust $ Types.modeFromString n.type_
     nodesMap = SigmaxTypes.nodesMap nodes
     edges = foldMap edgeFn r.edges
     edgeFn (GET.Edge e) = Seq.singleton { id : e.id_
@@ -240,130 +242,16 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
         targetNode = unsafePartial $ fromJust $ Map.lookup e.target nodesMap
         color = sourceNode.color
 
--- clusterColor :: Cluster -> Color
--- clusterColor (Cluster {clustDefault}) = unsafePartial $ fromJust $ defaultPalette !! (clustDefault `molength defrultPalette)
-    
---               div [className "col-md-12", style {"padding-bottom" : "10px"}]
---             [ menu [_id "toolbar"]
---               [ ul'
---                 [
---                 --  li' [ button [className "btn btn-success btn-sm"] [text "Change Type"] ]
---                 -- ,
---                 -- , li' [ button [className "btn btn-primary btn-sm"] [text "Change Level"] ]
---                 {- ,li [style {display : "inline-block"}]
---                   [ form'
---                     [ input [_type "file"
---                             , name "file"
---                          --   , onChange (\e -> d $ SetFile (getFile e) (unsafeCoerce $ d <<< SetProgress))
---                             , className "btn btn-primary"]
-
---                     -- , text $ show st.readyState
---                     ]
---                   ]
---                 -}
---                 {-, li' [ input [_type "button"
---                               , className "btn btn-warning btn-sm"
---                               ,value "Run Demo"
---                             --  , onClick \_ -> d SetGraph, disabled (st.readyState /= DONE)
---                               ]
---                       ]
---                       -}
---                 {-, li'
---                   [ form'
---                     [ div [className "col-lg-2"]
---                       [
---                         div [className "input-group"]
---                         [
---                           span [className "input-group-btn"]
---                           [
---                             button [className "btn btn-primary", _type "button"]
---                             [ span [className "glyphicon glyphicon-search"] []
---                             ]
---                           ]
---                           , input [_type "text", className "form-control", placeholder "select topics"]
---                         ]
---                       ]
-
---                     ]
---                   ]
---                 -}
---                  li [className "col-md-1"]
---                   [ span [] [text "Selector"]
---                   , input [ _type "range"
---                           , _id "cursorSizeRange"
---                           , min "0"
---                           , max "100"
---                           , defaultValue (show st.cursorSize)
---                           , onChange \e -> d $ ChangeCursorSize (numberTargetValue e)
---                           ]
---                   ]
---                 , li [className "col-md-1"]
---                   [ span [] [text "Labels"],input [_type "range"
---                                                  , _id "labelSizeRange"
---                                                  , max "4"
---                                                  , defaultValue <<< show $ sigmaSettings ^. _labelSizeRatio
---                                                  , min "1"
---                                                  , onChange \e -> d $ ChangeLabelSize (numberTargetValue e)
---                                                  ]
---                   ]
-
---                 , li [className "col-md-1"]
---                   [ span [] [text "Nodes"],input [_type "range"
---                                                  , _id "nodeSizeRange"
---                                                  , max "15"
---                                                  , defaultValue <<< show $ sigmaSettings ^. _minNodeSize
---                                                  , min "5"
---                                                  , onChange \e -> d $ ChangeNodeSize (numberTargetValue e)
---                                                  ]
---                   ]
---                 {-, li [className "col-md-2"]
---                   [ span [] [text "Edges"],input [_type "range", _id "myRange", value "90"]
---                   ]
---                 -}
---                 -- , li'
---                   -- [ button [ className "btn btn-primary"
---                   --          , onClick \_ -> modCamera0 (const {x: 0.0, y: 0.0, ratio: 1.0})
---                   --          ] [text "Center"]
---                   -- ]
---                 -- , li [className "col-md-1"]
---                 --   [ span [] [text "Zoom"],input [ _type "range"
---                 --                                 , _id "cameraRatio"
---                 --                                 , max "100"
---                 --                                 , defaultValue "0"
---                 --                                 , min "0"
---                 --                                 , onChange \e -> do
---                 --                                     let ratio = (100.0 - numberTargetValue e) / 100.0pa
---                 --                                     modCamera0 (const {ratio})
---                 --                                 ]
---                 --   ]
---                 , li [className "col-md-1"]
---                   [ span [] [text "MultiNode"]
---                   , input
---                     [ _type "checkbox"
---                     , className "checkbox"
---                     -- , checked
---                     , onChange $ const $ d ToggleMultiNodeSelection
---                     ]
---                   ]
---                 , li'
---                   [ button [ className "btn btn-primary"
---                            , onClick \_ -> pauseForceAtlas2
---                            ] [text "Spatialization"]
---                   ]
---                 {-, li'
---                   [ button [className "btn btn-primary"
---                             , onClick \_ -> do
---                                              _ <- log "Hey there" -- $ show st.camera
---                                              pure unit
---                            ] [text "Save"] -- TODO: Implement Save!
---                   ]
---                 -}
---                 ]
---               ]
+-- | See sigmajs/plugins/sigma.renderers.customShapes/shape-library.js
+modeGraphType :: Types.Mode -> String
+modeGraphType Types.Authors = "square"
+modeGraphType Types.Institutes = "equilateral"
+modeGraphType Types.Sources = "star"
+modeGraphType Types.Terms = "def"
 
 
 getNodes :: Session -> GraphId -> Aff GET.GraphData
-getNodes session graphId = get session $ NodeAPI Graph (Just graphId) ""
+getNodes session graphId = get session $ NodeAPI Types.Graph (Just graphId) ""
 
 
 transformGraph :: Record Controls.Controls -> SigmaxTypes.SGraph -> SigmaxTypes.SGraph

@@ -164,10 +164,12 @@ updateNodes sigma nodesMap = do
       Nothing -> error $ "Node id " <> n.id <> " not found in nodesMap"
       (Just { borderColor: tBorderColor
              , color: tColor
+             , equilateral: tEquilateral
              , hidden: tHidden
              , type: tType}) -> do
         _ <- pure $ (n .= "borderColor") tBorderColor
         _ <- pure $ (n .= "color") tColor
+        _ <- pure $ (n .= "equilateral") tEquilateral
         _ <- pure $ (n .= "hidden") tHidden
         _ <- pure $ (n .= "type") tType
         pure unit
