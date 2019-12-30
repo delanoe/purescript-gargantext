@@ -51,7 +51,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
       let nodesMap = SigmaxTypes.nodesGraphMap props.graph
 
       pure $
-        RH.div { id: "sp-container", className: "col-md-3" }
+        RH.div { id: "sp-container" }
         [ RH.div {}
           [ R2.row
             [ R2.col12
