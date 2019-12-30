@@ -149,6 +149,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                 , RH.li {} [ multiSelectEnabledButton props.multiSelectEnabled ]  -- toggle multi node selection
                   -- save button
                 , RH.li {} [ nodeSearchControl { graph: props.graph
+                                               , multiSelectEnabled: props.multiSelectEnabled
                                                , selectedNodeIds: props.selectedNodeIds } ]
                 , RH.li {} [ mouseSelectorSizeButton props.sigmaRef localControls.mouseSelectorSize ]
                 ]

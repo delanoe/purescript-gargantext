@@ -1,6 +1,6 @@
 module Gargantext.Data.Louvain where
 
-import Prelude (Unit, unit, ($), (<$>))
+import Prelude (Unit, (<$>))
 import Data.Function.Uncurried (Fn1, runFn1, Fn3, runFn3)
 import Data.Map as Map
 import Data.Tuple (Tuple(..))
