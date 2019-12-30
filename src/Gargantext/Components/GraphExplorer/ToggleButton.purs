@@ -83,8 +83,8 @@ louvainToggleButton :: R.State Boolean -> R.Element
 louvainToggleButton state =
   toggleButton {
       state: state
-    , onMessage: "Louvain on"
-    , offMessage: "Louvain off"
+    , onMessage: "Louvain off"
+    , offMessage: "Louvain on"
     , onClick: \_ -> snd state not
     }
 

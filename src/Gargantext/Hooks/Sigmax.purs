@@ -1,7 +1,7 @@
 module Gargantext.Hooks.Sigmax
   where
 
-import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), not, const, map)
+import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), (&&), not, const, map)
 
 import Data.Array as A
 import Data.Either (either)
@@ -208,6 +208,21 @@ bindSelectedEdgesClick sigmaRef (_ /\ setSelectedEdgeIds) =
 selectorWithSize :: Sigma.Sigma -> Int -> Effect Unit
 selectorWithSize sigma size = do
   pure unit
+
+performDiff :: Sigma.Sigma -> ST.SGraph -> Effect Unit
+performDiff sigma g = do
+  sigmaEdgeIds <- Sigma.sigmaEdgeIds sigma
+  sigmaNodeIds <- Sigma.sigmaNodeIds sigma
+  let {add: Tuple addEdges addNodes, remove: Tuple removeEdges removeNodes} = ST.sigmaDiff sigmaEdgeIds sigmaNodeIds g
+  traverse_ (Sigma.addNode sigma) addNodes
+  traverse_ (Sigma.addEdge sigma) addEdges
+  traverse_ (Sigma.removeEdge sigma) removeEdges
+  traverse_ (Sigma.removeNode sigma) removeNodes
+  if (Seq.null addEdges) && (Seq.null addNodes) && (Set.isEmpty removeEdges) && (Set.isEmpty removeNodes) then
+    pure unit
+  else do
+    Sigma.refresh sigma
+    Sigma.killForceAtlas2 sigma
 
 -- DEPRECATED
 

@@ -377,30 +377,45 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
         $ SigmaxTypes.neighbouringEdges graph (fst controls.selectedNodeIds)
     hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
 
-    newNodes = Seq.map (nodeSizeFilter <<< nodeMarked) nodes
-    newEdges = Seq.map (edgeConfluenceFilter <<< edgeWeightFilter <<< edgeShowFilter <<< edgeMarked) edges
+    --newNodes = Seq.map (nodeSizeFilter <<< nodeMarked) nodes
+    --newEdges = Seq.map (edgeConfluenceFilter <<< edgeWeightFilter <<< edgeShowFilter <<< edgeMarked) edges
+    newEdges' = Seq.filter edgeFilter $ Seq.map (edgeShowFilter <<< edgeMarked) edges
+    newNodes = Seq.filter nodeFilter $ Seq.map (nodeMarked) nodes
+    newEdges = Seq.filter (edgeInGraph $ Set.fromFoldable $ Seq.map _.id newNodes) newEdges'
 
-    nodeSizeFilter node@{ size } =
-      if Range.within (fst controls.nodeSize) size then
-        node
-      else
-        node { hidden = true }
+    edgeFilter e = edgeConfluenceFilter e &&
+                   edgeWeightFilter e
+                   --edgeShowFilter e
+    nodeFilter n = nodeSizeFilter n
 
-    edgeConfluenceFilter edge@{ confluence } =
-      if Range.within (fst controls.edgeConfluence) confluence then
-        edge
-      else
-        edge { hidden = true }
+    --nodeSizeFilter node@{ size } =
+    --  if Range.within (fst controls.nodeSize) size then
+    --    node
+    --  else
+    --    node { hidden = true }
+    nodeSizeFilter node@{ size } = Range.within (fst controls.nodeSize) size
+
+    --edgeConfluenceFilter edge@{ confluence } =
+    --  if Range.within (fst controls.edgeConfluence) confluence then
+    --    edge
+    --  else
+    --    edge { hidden = true }
+    edgeConfluenceFilter edge@{ confluence } = Range.within (fst controls.edgeConfluence) confluence
     edgeShowFilter edge =
       if (SigmaxTypes.edgeStateHidden $ fst controls.showEdges) then
         edge { hidden = true }
       else
         edge
-    edgeWeightFilter edge@{ weight } =
-      if Range.within (fst controls.edgeWeight) weight then
-        edge
-      else
-        edge { hidden = true }
+    --edgeWeightFilter edge@{ weight } =
+    --  if Range.within (fst controls.edgeWeight) weight then
+    --    edge
+    --  else
+    --    edge { hidden = true }
+    edgeWeightFilter :: Record SigmaxTypes.Edge -> Boolean
+    edgeWeightFilter edge@{ weight } = Range.within (fst controls.edgeWeight) weight
+
+    edgeInGraph :: SigmaxTypes.SelectedNodeIds -> Record SigmaxTypes.Edge -> Boolean
+    edgeInGraph nodeIds e = (Set.member e.source nodeIds) && (Set.member e.target nodeIds)
 
     edgeMarked edge@{ id, sourceNode } = do
       let isSelected = Set.member id selectedEdgeIds

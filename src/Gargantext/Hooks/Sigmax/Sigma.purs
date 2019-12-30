@@ -3,6 +3,7 @@ module Gargantext.Hooks.Sigmax.Sigma where
 import Prelude
 import Data.Either (Either(..))
 import Data.Nullable (notNull, null, Nullable)
+import Data.Set as Set
 import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import FFI.Simple ((..))
@@ -33,18 +34,14 @@ instance edgeProps
 type Graph n e = { nodes :: Array {|n}, edges :: Array {|e} }
 type SigmaOpts s = { settings :: s }
 
-sigma :: forall opts err. SigmaOpts opts -> Effect (Either err Sigma)
-sigma = runEffectFn3 _sigma Left Right
-
 foreign import _sigma ::
   forall a b opts err.
   EffectFn3 (a -> Either a b)
             (b -> Either a b)
             (SigmaOpts opts)
             (Either err Sigma)
-
-graphRead :: forall node edge err. Sigma -> Graph node edge -> Effect (Either err Unit)
-graphRead = runEffectFn4 _graphRead Left Right
+sigma :: forall opts err. SigmaOpts opts -> Effect (Either err Sigma)
+sigma = runEffectFn3 _sigma Left Right
 
 foreign import _graphRead ::
   forall a b data_ err.
@@ -53,25 +50,22 @@ foreign import _graphRead ::
             Sigma
             data_
             (Either err Unit)
-
-refresh :: Sigma -> Effect Unit
-refresh = runEffectFn1 _refresh
+graphRead :: forall node edge err. Sigma -> Graph node edge -> Effect (Either err Unit)
+graphRead = runEffectFn4 _graphRead Left Right
 
 foreign import _refresh :: EffectFn1 Sigma Unit
-
-addRenderer :: forall r err. Sigma -> r -> Effect (Either err Unit)
-addRenderer = runEffectFn4 _addRenderer Left Right
+refresh :: Sigma -> Effect Unit
+refresh = runEffectFn1 _refresh
 
 foreign import _addRenderer
   :: forall a b r err.
   EffectFn4 (a -> Either a b)
             (b -> Either a b)
-            Sigma 
+            Sigma
             r
             (Either err Unit)
-
-bindMouseSelectorPlugin :: forall err. Sigma -> Effect (Either err Unit)
-bindMouseSelectorPlugin = runEffectFn3 _bindMouseSelectorPlugin Left Right
+addRenderer :: forall r err. Sigma -> r -> Effect (Either err Unit)
+addRenderer = runEffectFn4 _addRenderer Left Right
 
 foreign import _bindMouseSelectorPlugin
   :: forall a b err.
@@ -79,23 +73,23 @@ foreign import _bindMouseSelectorPlugin
             (b -> Either a b)
             Sigma
             (Either err Unit)
-
-killRenderer :: forall r err. Sigma -> r -> Effect (Either err Unit)
-killRenderer = runEffectFn4 _killRenderer Left Right
+bindMouseSelectorPlugin :: forall err. Sigma -> Effect (Either err Unit)
+bindMouseSelectorPlugin = runEffectFn3 _bindMouseSelectorPlugin Left Right
 
 foreign import _killRenderer
   :: forall a b r err.
   EffectFn4 (a -> Either a b)
             (b -> Either a b)
-            Sigma 
+            Sigma
             r
             (Either err Unit)
-
-getRendererContainer :: Sigma -> Effect Element
-getRendererContainer = runEffectFn1 _getRendererContainer
+killRenderer :: forall r err. Sigma -> r -> Effect (Either err Unit)
+killRenderer = runEffectFn4 _killRenderer Left Right
 
 foreign import _getRendererContainer
   :: EffectFn1 Sigma Element
+getRendererContainer :: Sigma -> Effect Element
+getRendererContainer = runEffectFn1 _getRendererContainer
 
 swapRendererContainer :: R.Ref (Nullable Element) -> Sigma -> Effect Unit
 swapRendererContainer ref s = do
@@ -103,46 +97,65 @@ swapRendererContainer ref s = do
   log2 "[swapRendererContainer] el" el
   R.setRef ref $ notNull el
 
-setRendererContainer :: Sigma -> Element -> Effect Unit
-setRendererContainer = runEffectFn2 _setRendererContainer
-
 foreign import _setRendererContainer
   :: EffectFn2 Sigma Element Unit
-
-killSigma :: forall err. Sigma -> Effect (Either err Unit)
-killSigma = runEffectFn3 _killSigma Left Right
-
-clear :: Sigma -> Effect Unit
-clear = runEffectFn1 _clear
-
-foreign import _clear :: EffectFn1 Sigma Unit
+setRendererContainer :: Sigma -> Element -> Effect Unit
+setRendererContainer = runEffectFn2 _setRendererContainer
 
 foreign import _killSigma
   :: forall a b err.
   EffectFn3 (a -> Either a b)
             (b -> Either a b)
-            Sigma 
+            Sigma
             (Either err Unit)
+killSigma :: forall err. Sigma -> Effect (Either err Unit)
+killSigma = runEffectFn3 _killSigma Left Right
 
+foreign import _clear :: EffectFn1 Sigma Unit
+clear :: Sigma -> Effect Unit
+clear = runEffectFn1 _clear
+
+foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 bind_ :: forall e. Sigma -> String -> (e -> Effect Unit) -> Effect Unit
 bind_ s e h = runEffectFn3 _bind s e (mkEffectFn1 h)
 
-foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
-
+foreign import _unbind :: EffectFn2 Sigma String Unit
 unbind_ :: Sigma -> String -> Effect Unit
 unbind_ s e = runEffectFn2 _unbind s e
 
-foreign import _unbind :: EffectFn2 Sigma String Unit
+foreign import _edgeIds :: EffectFn1 Sigma (Array String)
+sigmaEdgeIds :: Sigma -> Effect Types.SelectedEdgeIds
+sigmaEdgeIds s =  do
+  edgeIds <- runEffectFn1 _edgeIds s
+  pure $ Set.fromFoldable edgeIds
 
+foreign import _nodeIds :: EffectFn1 Sigma (Array String)
+sigmaNodeIds :: Sigma -> Effect Types.SelectedNodeIds
+sigmaNodeIds s = do
+  nodeIds <- runEffectFn1 _nodeIds s
+  pure $ Set.fromFoldable nodeIds
+
+foreign import _addEdge :: EffectFn2 Sigma (Record Types.Edge) Unit
+addEdge :: Sigma -> Record Types.Edge -> Effect Unit
+addEdge s e = runEffectFn2 _addEdge s e
+foreign import _removeEdge :: EffectFn2 Sigma String Unit
+removeEdge :: Sigma -> String -> Effect Unit
+removeEdge s eId = runEffectFn2 _removeEdge s eId
+
+foreign import _addNode :: EffectFn2 Sigma (Record Types.Node) Unit
+addNode :: Sigma -> Record Types.Node -> Effect Unit
+addNode s n = runEffectFn2 _addNode s n
+foreign import _removeNode :: EffectFn2 Sigma String Unit
+removeNode :: Sigma -> String -> Effect Unit
+removeNode s nId = runEffectFn2 _removeNode s nId
+
+foreign import _forEachNode :: EffectFn2 Sigma (EffectFn1 (Record Types.Node) Unit) Unit
 forEachNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
 forEachNode s f = runEffectFn2 _forEachNode s (mkEffectFn1 f)
 
-foreign import _forEachNode :: EffectFn2 Sigma (EffectFn1 (Record Types.Node) Unit) Unit
-
+foreign import _forEachEdge :: EffectFn2 Sigma (EffectFn1 (Record Types.Edge) Unit) Unit
 forEachEdge :: Sigma -> (Record Types.Edge -> Effect Unit) -> Effect Unit
 forEachEdge s f = runEffectFn2 _forEachEdge s (mkEffectFn1 f)
-
-foreign import _forEachEdge :: EffectFn2 Sigma (EffectFn1 (Record Types.Edge) Unit) Unit
 
 bindClickNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
 bindClickNode s f = bind_ s "clickNode" $ \e -> do
@@ -178,12 +191,11 @@ bindOverEdge s f = bind_ s "overEdge" $ \e -> do
   let edge = e .. "data" .. "edge" :: Record Types.Edge
   f edge
 
+foreign import _setSettings :: forall settings. EffectFn2 Sigma settings Unit
 setSettings :: forall settings. Sigma -> settings -> Effect Unit
 setSettings s settings = do
   runEffectFn2 _setSettings s settings
   refresh s
-
-foreign import _setSettings :: forall settings. EffectFn2 Sigma settings Unit
 
 startForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
 startForceAtlas2 = runEffectFn2 _startForceAtlas2

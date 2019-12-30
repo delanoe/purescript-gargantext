@@ -126,12 +126,12 @@ badge (_ /\ setSelectedNodeIds) {id, label} =
       setSelectedNodeIds $ const $ Set.singleton id
 
 badges :: SigmaxTypes.SGraph -> R.State SigmaxTypes.SelectedNodeIds -> Seq.Seq (Record SigmaxTypes.Node)
-badges graph (selectedNodeIds /\ _) = SigmaxTypes.nodesById graph selectedNodeIds
+badges graph (selectedNodeIds /\ _) = SigmaxTypes.graphNodes $ SigmaxTypes.nodesById graph selectedNodeIds
 
 neighbourBadges :: SigmaxTypes.SGraph -> R.State SigmaxTypes.SelectedNodeIds -> Seq.Seq (Record SigmaxTypes.Node)
 neighbourBadges graph (selectedNodeIds /\ _) = SigmaxTypes.neighbours graph selectedNodes
   where
-    selectedNodes = SigmaxTypes.nodesById graph selectedNodeIds
+    selectedNodes = SigmaxTypes.graphNodes $ SigmaxTypes.nodesById graph selectedNodeIds
 
 deleteNodes :: TermList -> Session -> Array Int -> Effect Unit
 deleteNodes termList session nodeIds = do

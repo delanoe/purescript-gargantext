@@ -101,6 +101,7 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
       -- TODO Probably this can be optimized to re-mark selected nodes only when they changed
       R.useEffect' $ do
         Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
+          Sigmax.performDiff sigma transformedGraph
           Sigmax.updateEdges sigma tEdgesMap
           Sigmax.updateNodes sigma tNodesMap
           Sigmax.setEdges sigma (not $ SigmaxTypes.edgeStateHidden showEdges)

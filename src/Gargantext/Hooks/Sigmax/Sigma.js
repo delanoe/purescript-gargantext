@@ -203,6 +203,12 @@ function startForceAtlas2(sigma, settings) { sigma.startForceAtlas2(settings); }
 function stopForceAtlas2(sigma) { sigma.stopForceAtlas2(); }
 function killForceAtlas2(sigma) { sigma.killForceAtlas2(); }
 function isForceAtlas2Running(sigma) { return sigma.isForceAtlas2Running(); }
+function edgeIds(sigma) { return sigma.graph.edges().map(function(e) { return e.id; }); }
+function nodeIds(sigma) { return sigma.graph.nodes().map(function(n) { return n.id; }); }
+function addEdge(sigma, e) { return sigma.graph.addEdge(e); }
+function removeEdge(sigma, e) { return sigma.graph.dropEdge(e); }
+function addNode(sigma, n) { return sigma.graph.addNode(n); }
+function removeNode(sigma, n) { return sigma.graph.dropNode(n); }
 
 function getCameras(sigma) {
   // For some reason, sigma.cameras is an object with integer keys
@@ -234,3 +240,9 @@ exports._killForceAtlas2 = killForceAtlas2;
 exports._isForceAtlas2Running = isForceAtlas2Running;
 exports._getCameras = getCameras;
 exports._goTo = goTo;
+exports._edgeIds = edgeIds;
+exports._nodeIds = nodeIds;
+exports._addEdge = addEdge;
+exports._removeEdge = removeEdge;
+exports._addNode = addNode;
+exports._removeNode = removeNode;
