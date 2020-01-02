@@ -162,7 +162,7 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                         , placeholder: "Search"
                         , type: "value"
                         , value: searchQuery
-                        , on: {input: \e -> setSearchQuery (R2.unsafeEventValue e)}}
+                        , on: {input: setSearchQuery <<< R2.unsafeEventValue}}
               , H.div {} (
                    if A.null props.tableBody && searchQuery /= "" then [
                      H.button { className: "btn btn-primary"
@@ -175,14 +175,14 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                 [ R2.select { id: "picklistmenu"
                             , className: "form-control custom-select"
                             , value: (maybe "" show termListFilter)
-                            , on: {change: (\e -> setTermListFilter $ readTermList $ R2.unsafeEventValue e)}}
+                            , on: {change: setTermListFilter <<< readTermList <<< R2.unsafeEventValue}}
                   (map optps1 termLists)]]
             , H.div {className: "col-md-2", style: {marginTop : "6px"}}
               [ H.li {className: "list-group-item"}
                 [ R2.select {id: "picktermtype"
                             , className: "form-control custom-select"
                             , value: (maybe "" show termSizeFilter)
-                            , on: {change: (\e -> setTermSizeFilter $ readTermSize $ R2.unsafeEventValue e)}}
+                            , on: {change: setTermSizeFilter <<< readTermSize <<< R2.unsafeEventValue}}
                     (map optps1 termSizes)]]
             , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
               [ H.li {className: " list-group-item"}

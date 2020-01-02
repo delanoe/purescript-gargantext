@@ -26,6 +26,8 @@ newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 
 type Renderer = { "type" :: String, container :: Element }
 
+type NodeId = String
+type EdgeId = String
 
 type Node =
   ( borderColor :: String
@@ -33,7 +35,7 @@ type Node =
   , equilateral :: { numPoints :: Int }
   , gargType :: GT.Mode
   , hidden :: Boolean
-  , id    :: String
+  , id    :: NodeId
   , label :: String
   , size  :: Number
   , type  :: String  -- available types: circle, cross, def, diamond, equilateral, pacman, square, star
@@ -44,17 +46,17 @@ type Node =
 type Edge =
   ( color :: String
   , confluence :: Number
-  , id :: String
+  , id :: EdgeId
   , hidden :: Boolean
   , size :: Number
-  , source :: String
+  , source :: NodeId
   , sourceNode :: Record Node
-  , target :: String
+  , target :: NodeId
   , targetNode :: Record Node
   , weight :: Number )
 
-type SelectedNodeIds = Set.Set String
-type SelectedEdgeIds = Set.Set String
+type SelectedNodeIds = Set.Set NodeId
+type SelectedEdgeIds = Set.Set EdgeId
 type EdgesMap = Map.Map String (Record Edge)
 type NodesMap = Map.Map String (Record Node)
 
