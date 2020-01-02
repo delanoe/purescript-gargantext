@@ -9,6 +9,30 @@ if (typeof window !== 'undefined') {
 const CustomShapes = require('sigma/plugins/garg.js').init(sigma, window).customShapes;
 require('sigma/src/utils/sigma.utils.js').init(sigma);
 
+// Black circle around a node
+(function() {
+  var originalDef = sigma.canvas.nodes.def;
+
+  sigma.canvas.nodes.def = (node, context, settings) => {
+    var prefix = settings('prefix') || '';
+
+    originalDef(node, context, settings);
+
+    context.strokeStyle = '#000';
+    context.lineWidth = 1;
+    context.beginPath();
+    context.arc(
+      node[prefix + 'x'],
+      node[prefix + 'y'],
+      node[prefix + 'size'],
+      0,
+      Math.PI * 2,
+      true
+    );
+    context.stroke();
+  }
+})()
+
 sigma.canvas.nodes.selected = (node, context, settings) => {
   // hack
   // We need to temporarily set node.type to 'def'. This is for 2 reasons
