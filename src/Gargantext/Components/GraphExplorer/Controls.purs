@@ -24,7 +24,7 @@ import Gargantext.Components.GraphExplorer.Button (centerButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSelectorSizeButton)
-import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, pauseForceAtlasButton)
+import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
@@ -42,6 +42,7 @@ type Controls =
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , showControls    :: R.State Boolean
   , showEdges       :: R.State SigmaxTypes.ShowEdgesState
+  , showLouvain     :: R.State Boolean
   , showSidePanel   :: R.State GET.SidePanelState
   , showTree        :: R.State Boolean
   , sigmaRef        :: R.Ref Sigmax.Sigma
@@ -134,6 +135,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                   RH.li {} [ centerButton props.sigmaRef ]
                 , RH.li {} [ pauseForceAtlasButton {state: props.forceAtlasState} ]
                 , RH.li {} [ edgesToggleButton {state: props.showEdges} ]
+                , RH.li {} [ louvainToggleButton props.showLouvain ]
                 , RH.li {} [ edgeConfluenceControl edgeConfluenceRange props.edgeConfluence ]
                 , RH.li {} [ edgeWeightControl edgeWeightRange props.edgeWeight ]
                   -- change level
@@ -147,6 +149,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                 , RH.li {} [ multiSelectEnabledButton props.multiSelectEnabled ]  -- toggle multi node selection
                   -- save button
                 , RH.li {} [ nodeSearchControl { graph: props.graph
+                                               , multiSelectEnabled: props.multiSelectEnabled
                                                , selectedNodeIds: props.selectedNodeIds } ]
                 , RH.li {} [ mouseSelectorSizeButton props.sigmaRef localControls.mouseSelectorSize ]
                 ]
@@ -161,11 +164,12 @@ useGraphControls graph = do
   graphStage      <- R.useState' Graph.Init
   multiSelectEnabled <- R.useState' false
   nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
-  showTree <- R.useState' false
   selectedNodeIds <- R.useState' $ Set.empty
   showControls    <- R.useState' false
   showEdges <- R.useState' SigmaxTypes.EShow
+  showLouvain <- R.useState' false
   showSidePanel   <- R.useState' GET.InitialClosed
+  showTree <- R.useState' false
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
 
@@ -179,6 +183,7 @@ useGraphControls graph = do
        , selectedNodeIds
        , showControls
        , showEdges
+       , showLouvain
        , showSidePanel
        , showTree
        , sigmaRef

@@ -13,22 +13,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType(..), TabType(..), TabSubType(..))
-
-data Mode = Authors | Sources | Institutes | Terms
-
-derive instance genericMode :: Generic Mode _
-
-instance showMode :: Show Mode where
-  show = genericShow
-
-derive instance eqMode :: Eq Mode
-
-modeTabType :: Mode -> CTabNgramType
-modeTabType Authors    = CTabAuthors
-modeTabType Sources    = CTabSources
-modeTabType Institutes = CTabInstitutes
-modeTabType Terms      = CTabTerms
+import Gargantext.Types (Mode(..), modeTabType, CTabNgramType(..), TabType(..), TabSubType(..))
 
 type Props =
   ( session :: Session

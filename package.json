@@ -7,6 +7,7 @@
         "build": "pulp --psc-package browserify -t dist/bundle.js",
         "sass": "sass dist/styles/",
         "dev": "webpack-dev-server --env dev --mode development",
+        "docs": "pulp docs -- --format html",
         "repl": "pulp --psc-package repl",
         "clean": "rm -Rf output",
         "test": "pulp test"

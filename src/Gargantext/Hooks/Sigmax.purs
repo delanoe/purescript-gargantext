@@ -1,7 +1,7 @@
 module Gargantext.Hooks.Sigmax
   where
 
-import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), not, const, map)
+import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), (&&), not, const, map)
 
 import Data.Array as A
 import Data.Either (either)
@@ -74,11 +74,12 @@ cleanupSigma sigma context = traverse_ kill (readSigma sigma)
 refreshData :: forall n e. Sigma.Sigma -> Sigma.Graph n e -> Effect Unit
 refreshData sigma graph
   =   log clearingMsg
-  *>  Sigma.clear sigma
+  *>  Sigma.clear sigmaGraph
   *>  log readingMsg
-  *>  Sigma.graphRead sigma graph
+  *>  Sigma.graphRead sigmaGraph graph
   >>= either (log2 errorMsg) refresh
   where
+    sigmaGraph = Sigma.graph sigma
     refresh _ = log refreshingMsg *> Sigma.refresh sigma
     clearingMsg = "[refreshData] Clearing existing graph data"
     readingMsg = "[refreshData] Reading graph data"
@@ -116,7 +117,7 @@ handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
     --log2 "[handleForceAtlas2Pause] mSigma: Just " s
     --log2 "[handleForceAtlas2Pause] toggled: " toggled
-    isFARunning <- Sigma.isForceAtlas2Running s
+    let isFARunning = Sigma.isForceAtlas2Running s
     --log2 "[handleForceAtlas2Pause] isFARunning: " isFARunning
     case Tuple toggled isFARunning of
       Tuple ST.InitialRunning false -> do
@@ -145,7 +146,7 @@ setEdges sigma val = do
 
 updateEdges :: Sigma.Sigma -> ST.EdgesMap -> Effect Unit
 updateEdges sigma edgesMap = do
-  Sigma.forEachEdge sigma \e -> do
+  Sigma.forEachEdge (Sigma.graph sigma) \e -> do
     let mTEdge = Map.lookup e.id edgesMap
     case mTEdge of
       Nothing -> error $ "Edge id " <> e.id <> " not found in edgesMap"
@@ -158,16 +159,18 @@ updateEdges sigma edgesMap = do
 
 updateNodes :: Sigma.Sigma -> ST.NodesMap -> Effect Unit
 updateNodes sigma nodesMap = do
-  Sigma.forEachNode sigma \n -> do
+  Sigma.forEachNode (Sigma.graph sigma) \n -> do
     let mTNode = Map.lookup n.id nodesMap
     case mTNode of
       Nothing -> error $ "Node id " <> n.id <> " not found in nodesMap"
       (Just { borderColor: tBorderColor
              , color: tColor
+             , equilateral: tEquilateral
              , hidden: tHidden
-             , type: tType}) -> do
+             , type: tType }) -> do
         _ <- pure $ (n .= "borderColor") tBorderColor
         _ <- pure $ (n .= "color") tColor
+        _ <- pure $ (n .= "equilateral") tEquilateral
         _ <- pure $ (n .= "hidden") tHidden
         _ <- pure $ (n .= "type") tType
         pure unit
@@ -209,11 +212,27 @@ selectorWithSize :: Sigma.Sigma -> Int -> Effect Unit
 selectorWithSize sigma size = do
   pure unit
 
+performDiff :: Sigma.Sigma -> ST.SGraph -> Effect Unit
+performDiff sigma g = do
+  if (Seq.null addEdges) && (Seq.null addNodes) && (Set.isEmpty removeEdges) && (Set.isEmpty removeNodes) then
+    pure unit
+  else do
+    traverse_ (Sigma.addNode sigmaGraph) addNodes
+    traverse_ (Sigma.addEdge sigmaGraph) addEdges
+    traverse_ (Sigma.removeEdge sigmaGraph) removeEdges
+    traverse_ (Sigma.removeNode sigmaGraph) removeNodes
+    Sigma.refresh sigma
+    Sigma.killForceAtlas2 sigma
+  where
+    sigmaGraph = Sigma.graph sigma
+    sigmaEdgeIds = Sigma.sigmaEdgeIds sigmaGraph
+    sigmaNodeIds = Sigma.sigmaNodeIds sigmaGraph
+    {add: Tuple addEdges addNodes, remove: Tuple removeEdges removeNodes} = ST.sigmaDiff sigmaEdgeIds sigmaNodeIds g
 -- DEPRECATED
 
 markSelectedEdges :: Sigma.Sigma -> ST.SelectedEdgeIds -> ST.EdgesMap -> Effect Unit
 markSelectedEdges sigma selectedEdgeIds graphEdges = do
-  Sigma.forEachEdge sigma \e -> do
+  Sigma.forEachEdge (Sigma.graph sigma) \e -> do
     case Map.lookup e.id graphEdges of
       Nothing -> error $ "Edge id " <> e.id <> " not found in graphEdges map"
       Just {color} -> do
@@ -228,7 +247,7 @@ markSelectedEdges sigma selectedEdgeIds graphEdges = do
 
 markSelectedNodes :: Sigma.Sigma -> ST.SelectedNodeIds -> ST.NodesMap -> Effect Unit
 markSelectedNodes sigma selectedNodeIds graphNodes = do
-  Sigma.forEachNode sigma \n -> do
+  Sigma.forEachNode (Sigma.graph sigma) \n -> do
     case Map.lookup n.id graphNodes of
       Nothing -> error $ "Node id " <> n.id <> " not found in graphNodes map"
       Just {color} -> do

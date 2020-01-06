@@ -29,9 +29,10 @@
   overflow-y: scroll;
   top: 170px;
   z-index: 1;
-  left: 70%;
   border: 1px white solid;
   background-color: white;
+  left: 70%;
+  width: 30%;
 }
 #graph-explorer #sp-container #myTab {
   marginBottom: 18px;

@@ -27,7 +27,6 @@ import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
 
 type Props =

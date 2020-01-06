@@ -9,6 +9,7 @@ import Prim.Row (class Union)
 import URI.Query (Query)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 
 newtype SessionId = SessionId String
@@ -409,3 +410,27 @@ instance showTabType :: Show TabType where
 
 type TableResult a = {count :: Int, docs :: Array a}
 type AffTableResult a = Aff (TableResult a)
+
+data Mode = Authors | Sources | Institutes | Terms
+
+derive instance genericMode :: Generic Mode _
+
+instance showMode :: Show Mode where
+  show = genericShow
+
+derive instance eqMode :: Eq Mode
+instance ordMode :: Ord Mode where
+  compare = genericCompare
+
+modeTabType :: Mode -> CTabNgramType
+modeTabType Authors    = CTabAuthors
+modeTabType Sources    = CTabSources
+modeTabType Institutes = CTabInstitutes
+modeTabType Terms      = CTabTerms
+
+modeFromString :: String -> Maybe Mode
+modeFromString "Authors" = Just Authors
+modeFromString "Sources" = Just Sources
+modeFromString "Institutes" = Just Institutes
+modeFromString "Terms" = Just Terms
+modeFromString _ = Nothing

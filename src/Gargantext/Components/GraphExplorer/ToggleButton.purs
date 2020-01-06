@@ -2,9 +2,10 @@ module Gargantext.Components.GraphExplorer.ToggleButton
   ( Props
   , toggleButton
   , toggleButtonCpt
-  , multiSelectEnabledButton
   , controlsToggleButton
   , edgesToggleButton
+  , louvainToggleButton
+  , multiSelectEnabledButton
   , sidebarToggleButton
   , pauseForceAtlasButton
   , treeToggleButton
@@ -77,6 +78,15 @@ edgesToggleButtonCpt = R.hooksComponent "EdgesToggleButton" cpt
 
     -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
     onClick setState _ = setState SigmaxTypes.toggleShowEdgesState
+
+louvainToggleButton :: R.State Boolean -> R.Element
+louvainToggleButton state =
+  toggleButton {
+      state: state
+    , onMessage: "Louvain off"
+    , offMessage: "Louvain on"
+    , onClick: \_ -> snd state not
+    }
 
 multiSelectEnabledButton :: R.State Boolean -> R.Element
 multiSelectEnabledButton state =

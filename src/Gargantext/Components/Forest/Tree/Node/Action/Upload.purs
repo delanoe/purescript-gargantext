@@ -8,7 +8,6 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..))
 import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as E
 import Reactix as R

@@ -18,6 +18,7 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 
 type Props = (
     graph           :: SigmaxTypes.SGraph
+  , multiSelectEnabled :: R.State Boolean
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   )
 
@@ -37,36 +38,38 @@ nodeSearchControl props = R.createElement sizeButtonCpt props []
 sizeButtonCpt :: R.Component Props
 sizeButtonCpt = R.hooksComponent "NodeSearchControl" cpt
   where
-    cpt {graph, selectedNodeIds} _ = do
+    cpt {graph, multiSelectEnabled, selectedNodeIds} _ = do
       search@(search' /\ setSearch) <- R.useState' ""
 
       pure $
         H.div { className: "form-group" }
           [ H.div { className: "input-group" }
             [ inputWithAutocomplete { autocompleteSearch: autocompleteSearch graph
-                                    , onAutocompleteClick: \s -> triggerSearch graph s selectedNodeIds
-                                    , onEnterPress: \s -> triggerSearch graph s selectedNodeIds
+                                    , onAutocompleteClick: \s -> triggerSearch graph s multiSelectEnabled selectedNodeIds
+                                    , onEnterPress: \s -> triggerSearch graph s multiSelectEnabled selectedNodeIds
                                     , state: search }
             , H.div { className: "btn input-group-addon"
-                    , on: { click: \_ -> triggerSearch graph search' selectedNodeIds }
+                    , on: { click: \_ -> triggerSearch graph search' multiSelectEnabled selectedNodeIds }
                     }
               [ H.span { className: "fa fa-search" } [] ]
             ]
           ]
 
-    autocompleteSearch :: SigmaxTypes.SGraph -> String -> Array String
-    autocompleteSearch graph s = Seq.toUnfoldable $ (_.label) <$> searchNodes s nodes
-      where
-        nodes = SigmaxTypes.graphNodes graph
+autocompleteSearch :: SigmaxTypes.SGraph -> String -> Array String
+autocompleteSearch graph s = Seq.toUnfoldable $ (_.label) <$> searchNodes s nodes
+  where
+    nodes = SigmaxTypes.graphNodes graph
 
-    triggerSearch :: SigmaxTypes.SGraph
-                  -> String
-                  -> R.State SigmaxTypes.SelectedNodeIds
-                  -> Effect Unit
-    triggerSearch graph search (_ /\ setSelectedNodeIds) = do
-      let nodes = SigmaxTypes.graphNodes graph
-      let matching = (_.id) <$> searchNodes search nodes
+triggerSearch :: SigmaxTypes.SGraph
+              -> String
+              -> R.State Boolean
+              -> R.State SigmaxTypes.SelectedNodeIds
+              -> Effect Unit
+triggerSearch graph search (multiSelectEnabled /\ _) (_ /\ setSelectedNodeIds) = do
+  let graphNodes = SigmaxTypes.graphNodes graph
+  let matching = Set.fromFoldable $ (_.id) <$> searchNodes search graphNodes
 
-      log2 "[triggerSearch] search" search
+  log2 "[triggerSearch] search" search
 
-      setSelectedNodeIds $ const $ Set.fromFoldable matching
+  setSelectedNodeIds $ \nodes ->
+    Set.union matching $ if multiSelectEnabled then nodes else Set.empty

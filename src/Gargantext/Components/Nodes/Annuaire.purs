@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Annuaire where
 
-import Prelude (bind, identity, pure, const, discard, ($), (<$>), (<>))
+import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array (head)
 import Data.Maybe (Maybe(..), maybe)
