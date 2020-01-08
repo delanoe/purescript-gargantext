@@ -8,6 +8,7 @@ module Gargantext.Components.GraphExplorer.Controls
  ) where
 
 import Data.Array as A
+import Data.Int as I
 import Data.Maybe (Maybe(..), maybe)
 import Data.Sequence as Seq
 import Data.Set as Set
@@ -116,10 +117,14 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
       let edgeConfluenceMax = maybe 100.0 _.confluence $ A.last edgesConfluenceSorted
       let edgeConfluenceRange = Range.Closed { min: edgeConfluenceMin, max: edgeConfluenceMax }
 
-      let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxTypes.graphEdges props.graph
-      let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
-      let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
-      let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
+      --let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxTypes.graphEdges props.graph
+      --let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
+      --let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
+      --let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
+      let edgeWeightRange = Range.Closed {
+           min: 0.0
+         , max: I.toNumber $ Seq.length $ SigmaxTypes.graphEdges props.graph
+         }
 
       let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxTypes.graphNodes props.graph
       let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
@@ -159,7 +164,10 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 useGraphControls :: SigmaxTypes.SGraph -> R.Hooks (Record Controls)
 useGraphControls graph = do
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
-  edgeWeight <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
+  edgeWeight <- R.useState' $ Range.Closed {
+      min: 0.0
+    , max: I.toNumber $ Seq.length $ SigmaxTypes.graphEdges graph
+    }
   forceAtlasState <- R.useState' SigmaxTypes.InitialRunning
   graphStage      <- R.useState' Graph.Init
   multiSelectEnabled <- R.useState' false

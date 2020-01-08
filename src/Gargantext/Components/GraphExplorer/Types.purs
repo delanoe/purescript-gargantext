@@ -24,11 +24,11 @@ newtype Cluster = Cluster { clustDefault :: Int }
 derive instance newtypeCluster :: Newtype Cluster _
 
 newtype Edge = Edge
-  { id_ :: String
+  { confluence :: Number
+  , id_ :: String
   , source :: String
   , target :: String
   , weight :: Number
-  , confluence :: Number
   }
 
 derive instance newtypeEdge :: Newtype Edge _

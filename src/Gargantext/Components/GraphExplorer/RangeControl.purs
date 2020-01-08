@@ -54,7 +54,7 @@ edgeWeightControl (Range.Closed { min, max }) (state /\ setState) =
     , sliderProps: {
         bounds: Range.Closed { min, max }
       , initialValue: state
-      , epsilon: 0.01
+      , epsilon: 1.0
       , step: 1.0
       , width: 10.0
       , height: 5.0

@@ -2,8 +2,7 @@ module Gargantext.Components.GraphExplorer where
 
 import Gargantext.Prelude hiding (max,min)
 
-import DOM.Simple.Types (Element)
-import Data.Foldable (foldMap)
+import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
 import Data.Map as Map
@@ -13,6 +12,7 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Math (log)
 import Partial.Unsafe (unsafePartial)
@@ -251,17 +251,19 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
         color = GET.intColor (cDef n.attributes)
         gargType =  unsafePartial $ fromJust $ Types.modeFromString n.type_
     nodesMap = SigmaxTypes.nodesMap nodes
-    edges = foldMap edgeFn r.edges
-    edgeFn (GET.Edge e) = Seq.singleton { id : e.id_
-                                        , color
-                                        , confluence : e.confluence
-                                        , hidden : false
-                                        , size: 1.0
-                                        , source : e.source
-                                        , sourceNode
-                                        , target : e.target
-                                        , targetNode
-                                        , weight : e.weight }
+    edges = foldMapWithIndex edgeFn $ A.sortWith (\(GET.Edge {weight}) -> weight) r.edges
+    edgeFn i (GET.Edge e) = Seq.singleton { id : e.id_
+                                          , color
+                                          , confluence : e.confluence
+                                          , hidden : false
+                                          , size: 1.0
+                                          , source : e.source
+                                          , sourceNode
+                                          , target : e.target
+                                          , targetNode
+                                          , weight : e.weight
+                                          , weightIdx: i
+                                          }
       where
         sourceNode = unsafePartial $ fromJust $ Map.lookup e.source nodesMap
         targetNode = unsafePartial $ fromJust $ Map.lookup e.target nodesMap
@@ -325,7 +327,7 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
     --  else
     --    edge { hidden = true }
     edgeWeightFilter :: Record SigmaxTypes.Edge -> Boolean
-    edgeWeightFilter edge@{ weight } = Range.within (fst controls.edgeWeight) weight
+    edgeWeightFilter edge@{ weightIdx } = Range.within (fst controls.edgeWeight) $ toNumber weightIdx
 
     edgeInGraph :: SigmaxTypes.SelectedNodeIds -> Record SigmaxTypes.Edge -> Boolean
     edgeInGraph nodeIds e = (Set.member e.source nodeIds) && (Set.member e.target nodeIds)

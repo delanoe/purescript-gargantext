@@ -53,7 +53,9 @@ type Edge =
   , sourceNode :: Record Node
   , target :: NodeId
   , targetNode :: Record Node
-  , weight :: Number )
+  , weight :: Number
+  , weightIdx :: Int
+  )
 
 type SelectedNodeIds = Set.Set NodeId
 type SelectedEdgeIds = Set.Set EdgeId
