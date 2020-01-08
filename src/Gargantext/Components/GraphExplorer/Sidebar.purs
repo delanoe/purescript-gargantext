@@ -4,17 +4,17 @@ module Gargantext.Components.GraphExplorer.Sidebar
 
 import Prelude
 
-import DOM.Simple.Console (log2)
-import Data.Array (head)
+import Control.Parallel (parTraverse)
+import Data.Array (head, last)
 import Data.Int (fromString)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -26,14 +26,14 @@ import Gargantext.Components.RandomText (words)
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
-import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session, delete)
-import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Sessions (Session)
+import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 
 type Props =
   ( frontends :: Frontends
   , graph :: SigmaxTypes.SGraph
+  , graphVersion :: R.State Int
   , metaData :: GET.MetaData
   , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
   , session :: Session
@@ -66,10 +66,10 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                 , RH.div { className: "tab-content" }
                   [
                     RH.button { className: "btn btn-danger"
-                              , on: { click: onClickRemove CandidateTerm props.session props.metaData nodesMap props.selectedNodeIds }}
+                              , on: { click: onClickRemove CandidateTerm props.session props.metaData nodesMap props.selectedNodeIds props.graphVersion }}
                     [ RH.text "Remove candidate" ]
                   , RH.button { className: "btn btn-danger"
-                              , on: { click: onClickRemove StopTerm props.session props.metaData nodesMap props.selectedNodeIds }}
+                              , on: { click: onClickRemove StopTerm props.session props.metaData nodesMap props.selectedNodeIds props.graphVersion }}
                     [ RH.text "Remove stop" ]
                   ]
                 , RH.li { className: "nav-item" }
@@ -112,11 +112,9 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                  , checked: true
                  , title: "Mark as completed" } ]
 
-    onClickRemove rType session metaData nodesMap (selectedNodeIds /\ _) e = do
-      log2 "[onClickRemove] selectedNodeIds" selectedNodeIds
+    onClickRemove rType session metaData nodesMap (selectedNodeIds /\ _) graphVersion e = do
       let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable selectedNodeIds
-      deleteNodes rType session metaData nodes
-
+      deleteNodes rType session metaData graphVersion nodes
 
 
 badge :: R.State SigmaxTypes.SelectedNodeIds -> Record SigmaxTypes.Node -> R.Element
@@ -136,9 +134,15 @@ neighbourBadges graph (selectedNodeIds /\ _) = SigmaxTypes.neighbours graph sele
   where
     selectedNodes = SigmaxTypes.graphNodes $ SigmaxTypes.nodesById graph selectedNodeIds
 
-deleteNodes :: TermList -> Session -> GET.MetaData -> Array (Record SigmaxTypes.Node) -> Effect Unit
-deleteNodes termList session metaData nodes = do
-  traverse_ (launchAff_ <<< deleteNode termList session metaData) nodes
+deleteNodes :: TermList -> Session -> GET.MetaData -> R.State Int -> Array (Record SigmaxTypes.Node) -> Effect Unit
+deleteNodes termList session metaData (_ /\ setGraphVersion) nodes = do
+  launchAff_ do
+    patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
+    let mPatch = last patches
+    case mPatch of
+      Nothing -> pure unit
+      Just (NTC.Versioned patch) -> liftEffect do
+        setGraphVersion $ const $ patch.version
 
 deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxTypes.Node -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches coreParams versioned

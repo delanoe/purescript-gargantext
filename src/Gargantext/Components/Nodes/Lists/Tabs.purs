@@ -1,8 +1,6 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
 import Prelude
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
@@ -13,7 +11,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (Mode(..), modeTabType, CTabNgramType(..), TabType(..), TabSubType(..))
+import Gargantext.Types (Mode(..), TabSubType(..), TabType(..), modeTabType)
 
 type Props =
   ( session :: Session
