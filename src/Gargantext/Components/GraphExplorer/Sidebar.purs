@@ -8,14 +8,19 @@ import DOM.Simple.Console (log2)
 import Data.Array (head)
 import Data.Int (fromString)
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as RH
+
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Data.Array (mapMaybe)
@@ -23,10 +28,8 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, delete)
-import Gargantext.Types (NodeType(..), TermList(..))
+import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as RH
 
 type Props =
   ( frontends :: Frontends
@@ -63,10 +66,10 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                 , RH.div { className: "tab-content" }
                   [
                     RH.button { className: "btn btn-danger"
-                              , on: { click: onClickRemove CandidateTerm props.session props.selectedNodeIds }}
+                              , on: { click: onClickRemove CandidateTerm props.session props.metaData nodesMap props.selectedNodeIds }}
                     [ RH.text "Remove candidate" ]
                   , RH.button { className: "btn btn-danger"
-                              , on: { click: onClickRemove StopTerm props.session props.selectedNodeIds }}
+                              , on: { click: onClickRemove StopTerm props.session props.metaData nodesMap props.selectedNodeIds }}
                     [ RH.text "Remove stop" ]
                   ]
                 , RH.li { className: "nav-item" }
@@ -109,10 +112,10 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                  , checked: true
                  , title: "Mark as completed" } ]
 
-    onClickRemove rType session (selectedNodeIds /\ _) e = do
+    onClickRemove rType session metaData nodesMap (selectedNodeIds /\ _) e = do
       log2 "[onClickRemove] selectedNodeIds" selectedNodeIds
-      let nodeIds = mapMaybe fromString $ Set.toUnfoldable selectedNodeIds
-      deleteNodes rType session nodeIds
+      let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable selectedNodeIds
+      deleteNodes rType session metaData nodes
 
 
 
@@ -133,12 +136,31 @@ neighbourBadges graph (selectedNodeIds /\ _) = SigmaxTypes.neighbours graph sele
   where
     selectedNodes = SigmaxTypes.graphNodes $ SigmaxTypes.nodesById graph selectedNodeIds
 
-deleteNodes :: TermList -> Session -> Array Int -> Effect Unit
-deleteNodes termList session nodeIds = do
-  traverse_ (launchAff_ <<< deleteNode termList session) nodeIds
+deleteNodes :: TermList -> Session -> GET.MetaData -> Array (Record SigmaxTypes.Node) -> Effect Unit
+deleteNodes termList session metaData nodes = do
+  traverse_ (launchAff_ <<< deleteNode termList session metaData) nodes
 
-deleteNode :: TermList -> Session -> Int -> Aff Int
-deleteNode termList session nodeId = delete session $ NodeAPI Node (Just nodeId) ""
+deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxTypes.Node -> Aff NTC.VersionedNgramsPatches
+deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches coreParams versioned
+  where
+    nodeId :: Int
+    nodeId = unsafePartial $ fromJust $ fromString node.id
+    versioned :: NTC.VersionedNgramsPatches
+    versioned = NTC.Versioned {version: metaData.list.version, data: np}
+    coreParams :: NTC.CoreParams ()
+    coreParams = {session, nodeId: nodeId, listIds: [metaData.list.listId], tabType}
+    tabNgramType :: CTabNgramType
+    tabNgramType = modeTabType node.gargType
+    tabType :: TabType
+    tabType = TabCorpus (TabNgramType tabNgramType)
+    term :: NTC.NgramsTerm
+    term = NTC.normNgram tabNgramType node.label
+    pt :: NTC.NgramsTablePatch
+    pt = NTC.fromNgramsPatches np
+    np :: NTC.NgramsPatches
+    np = NTC.singletonPatchMap term $ NTC.NgramsPatch { patch_children: mempty, patch_list }
+    patch_list :: NTC.Replace TermList
+    patch_list = NTC.Replace { new: termList, old: GraphTerm }
 
 
 query :: Frontends -> GET.MetaData -> Session -> SigmaxTypes.NodesMap -> R.State SigmaxTypes.SelectedNodeIds -> R.Element
@@ -154,6 +176,6 @@ query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) 
       Just n -> words n.label
     side corpusId = GET.GraphSideCorpus {
           corpusId
-        , listId: metaData.listId
+        , listId: metaData.list.listId
         , corpusLabel: metaData.title
         }

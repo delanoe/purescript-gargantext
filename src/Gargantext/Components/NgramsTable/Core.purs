@@ -15,6 +15,7 @@ module Gargantext.Components.NgramsTable.Core
   , findNgramTermList
   , Version
   , Versioned(..)
+  , VersionedNgramsPatches
   , VersionedNgramsTable
   , CoreState
   , highlightNgrams
@@ -42,6 +43,7 @@ module Gargantext.Components.NgramsTable.Core
   , _parent
   , _root
   , commitPatch
+  , putNgramsPatches
   , syncPatches
   , addNewNgram
   )
@@ -507,6 +509,7 @@ applyPatchMap applyPatchValue (PatchMap p) = mapWithIndex f
         Just pv -> applyPatchValue pv v
 
 type NgramsPatches = PatchMap NgramsTerm NgramsPatch
+type VersionedNgramsPatches = Versioned NgramsPatches
 
 type NewElems = Map NgramsTerm TermList
 
@@ -618,7 +621,7 @@ addNewNgram ngrams list =
   { ngramsPatches: mempty
   , ngramsNewElems: Map.singleton ngrams list }
 
-putNgramsPatches :: forall s. CoreParams s -> Versioned NgramsPatches -> Aff (Versioned NgramsPatches)
+putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff VersionedNgramsPatches
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 

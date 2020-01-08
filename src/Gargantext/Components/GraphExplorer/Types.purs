@@ -37,6 +37,7 @@ derive instance newtypeEdge :: Newtype Edge _
 type InclusiveRange t = { min :: t, max :: t }
 
 type ListId      = Int
+type Version     = Int
 type CorpusId    = Int
 type CorpusLabel = String
 
@@ -61,8 +62,10 @@ newtype MetaData = MetaData
     title :: String
   , legend :: Array Legend
   , corpusId :: Array Int
-  , listId   :: ListId
-  , version  :: Int
+  , list :: {
+      listId   :: ListId
+    , version  :: Version
+    }
   }
 
 getLegend :: GraphData -> Maybe (Array Legend)
@@ -97,7 +100,7 @@ initialGraphData = GraphData {
     nodes: []
   , edges: []
   , sides: []
-  , metaData : Just $ MetaData {title : "", legend : [], corpusId : [], listId : 0, version : 0}
+  , metaData : Just $ MetaData {title : "", legend : [], corpusId : [], list: {listId : 0, version : 0}}
   }
 
 instance decodeJsonGraphData :: DecodeJson GraphData where
@@ -108,7 +111,8 @@ instance decodeJsonGraphData :: DecodeJson GraphData where
     -- TODO: sides
     metadata <- obj .: "metadata"
     corpusIds <- metadata .: "corpusId"
-    listId'   <- metadata .: "listId"
+    list      <- metadata .: "list"
+    listId'   <- list .: "listId"
     metaData <- obj .: "metadata"
     let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Publications", listId : listId'}
     let sides = side <$> corpusIds
@@ -133,9 +137,10 @@ instance decodeJsonMetaData :: DecodeJson MetaData where
     title <- obj .: "title"
     legend <- obj .: "legend"
     corpusId <- obj .: "corpusId"
-    listId <- obj .: "listId"
-    version <- obj .: "version"
-    pure $ MetaData { title, legend, corpusId, listId, version}
+    list <- obj .: "list"
+    listId <- list .: "listId"
+    version <- list .: "version"
+    pure $ MetaData { title, legend, corpusId, list: {listId, version}}
 
 
 instance decodeJsonLegend :: DecodeJson Legend where
