@@ -28,6 +28,8 @@ exports._jLouvain = (function(){
 		};
 
 		function obj_values(obj){
+			return Object.values(obj);
+			/*
 			 var vals = [];
 			 for( var key in obj ) {
 			     if ( obj.hasOwnProperty(key) ) {
@@ -35,10 +37,11 @@ exports._jLouvain = (function(){
 			     }
 			 }
 			 return vals;
+			*/
 		};
 
 		function get_degree_for_node(graph, node){
-			var neighbours = graph._assoc_mat[node] ? Object.keys(graph._assoc_mat[node]) : [];
+			var neighbours = get_neighbours_of_node(graph, node);
 			var weight = 0;
 			neighbours.forEach(function(neighbour,i){
 				var value = graph._assoc_mat[node][neighbour] || 1;
@@ -53,8 +56,7 @@ exports._jLouvain = (function(){
 			if(typeof graph._assoc_mat[node] == 'undefined')
 				return [];
 
-			var neighbours = Object.keys(graph._assoc_mat[node]);		
-			return neighbours;
+			return Object.keys(graph._assoc_mat[node]);
 		}
 		
 		
