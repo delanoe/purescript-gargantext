@@ -28,21 +28,22 @@ import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSe
 import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
 type Controls =
   ( edgeConfluence :: R.State Range.NumberRange
   , edgeWeight :: R.State Range.NumberRange
-  , forceAtlasState :: R.State SigmaxTypes.ForceAtlasState
-  , graph           :: SigmaxTypes.SGraph
+  , forceAtlasState :: R.State SigmaxT.ForceAtlasState
+  , graph           :: SigmaxT.SGraph
   , graphStage      :: R.State Graph.Stage
   , multiSelectEnabled :: R.State Boolean
   , nodeSize        :: R.State Range.NumberRange
-  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , removedNodeIds  :: R.State SigmaxT.NodeIds
+  , selectedNodeIds :: R.State SigmaxT.NodeIds
   , showControls    :: R.State Boolean
-  , showEdges       :: R.State SigmaxTypes.ShowEdgesState
+  , showEdges       :: R.State SigmaxT.ShowEdgesState
   , showLouvain     :: R.State Boolean
   , showSidePanel   :: R.State GET.SidePanelState
   , showTree        :: R.State Boolean
@@ -88,7 +89,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 
       -- Handle automatic edge hiding when FA is running (to prevent flickering).
       R.useEffect2' props.sigmaRef props.forceAtlasState $
-        snd props.showEdges $ SigmaxTypes.forceAtlasEdgeState (fst props.forceAtlasState)
+        snd props.showEdges $ SigmaxT.forceAtlasEdgeState (fst props.forceAtlasState)
 
       -- Automatic opening of sidebar when a node is selected (but only first time).
       R.useEffect' $ do
@@ -100,11 +101,11 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
       -- Timer to turn off the initial FA. This is because FA eats up lot of
       -- CPU, has memory leaks etc.
       R.useEffect1' (fst props.forceAtlasState) $ do
-        if (fst props.forceAtlasState) == SigmaxTypes.InitialRunning then do
+        if (fst props.forceAtlasState) == SigmaxT.InitialRunning then do
           timeoutId <- setTimeout 2000 $ do
             let (toggled /\ setToggled) = props.forceAtlasState
             case toggled of
-              SigmaxTypes.InitialRunning -> setToggled $ const SigmaxTypes.Paused
+              SigmaxT.InitialRunning -> setToggled $ const SigmaxT.Paused
               _ -> pure unit
             R.setRef mFAPauseRef Nothing
           R.setRef mFAPauseRef $ Just timeoutId
@@ -112,21 +113,21 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
          else
            pure unit
 
-      let edgesConfluenceSorted = A.sortWith (_.confluence) $ Seq.toUnfoldable $ SigmaxTypes.graphEdges props.graph
+      let edgesConfluenceSorted = A.sortWith (_.confluence) $ Seq.toUnfoldable $ SigmaxT.graphEdges props.graph
       let edgeConfluenceMin = maybe 0.0 _.confluence $ A.head edgesConfluenceSorted
       let edgeConfluenceMax = maybe 100.0 _.confluence $ A.last edgesConfluenceSorted
       let edgeConfluenceRange = Range.Closed { min: edgeConfluenceMin, max: edgeConfluenceMax }
 
-      --let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxTypes.graphEdges props.graph
+      --let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxT.graphEdges props.graph
       --let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
       --let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
       --let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
       let edgeWeightRange = Range.Closed {
            min: 0.0
-         , max: I.toNumber $ Seq.length $ SigmaxTypes.graphEdges props.graph
+         , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges props.graph
          }
 
-      let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxTypes.graphNodes props.graph
+      let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxT.graphNodes props.graph
       let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
       let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
       let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
@@ -161,20 +162,21 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
               ]
             ]
 
-useGraphControls :: SigmaxTypes.SGraph -> R.Hooks (Record Controls)
+useGraphControls :: SigmaxT.SGraph -> R.Hooks (Record Controls)
 useGraphControls graph = do
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed {
       min: 0.0
-    , max: I.toNumber $ Seq.length $ SigmaxTypes.graphEdges graph
+    , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
     }
-  forceAtlasState <- R.useState' SigmaxTypes.InitialRunning
+  forceAtlasState <- R.useState' SigmaxT.InitialRunning
   graphStage      <- R.useState' Graph.Init
   multiSelectEnabled <- R.useState' false
   nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
-  selectedNodeIds <- R.useState' $ Set.empty
+  removedNodeIds <- R.useState' SigmaxT.emptyNodeIds
+  selectedNodeIds <- R.useState' SigmaxT.emptyNodeIds
   showControls    <- R.useState' false
-  showEdges <- R.useState' SigmaxTypes.EShow
+  showEdges <- R.useState' SigmaxT.EShow
   showLouvain <- R.useState' false
   showSidePanel   <- R.useState' GET.InitialClosed
   showTree <- R.useState' false
@@ -188,6 +190,7 @@ useGraphControls graph = do
        , graphStage
        , multiSelectEnabled
        , nodeSize
+       , removedNodeIds
        , selectedNodeIds
        , showControls
        , showEdges

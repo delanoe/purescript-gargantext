@@ -142,13 +142,13 @@ nodes :: SigmaGraph -> Seq.Seq (Record Types.Node)
 nodes = Seq.fromFoldable <<< nodes_
 
 -- | Fetch ids of graph edges in a sigmajs instance.
-sigmaEdgeIds :: SigmaGraph -> Types.SelectedEdgeIds
+sigmaEdgeIds :: SigmaGraph -> Types.EdgeIds
 sigmaEdgeIds sg =  Set.fromFoldable edgeIds
   where
     edgeIds = _.id <$> edges sg
 
 -- | Fetch ids of graph nodes in a sigmajs instance.
-sigmaNodeIds :: SigmaGraph -> Types.SelectedNodeIds
+sigmaNodeIds :: SigmaGraph -> Types.NodeIds
 sigmaNodeIds sg = Set.fromFoldable nodeIds
   where
     nodeIds = _.id <$> nodes sg

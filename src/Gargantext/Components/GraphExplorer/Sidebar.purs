@@ -11,6 +11,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
+import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
@@ -25,17 +26,18 @@ import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 
 type Props =
   ( frontends :: Frontends
-  , graph :: SigmaxTypes.SGraph
+  , graph :: SigmaxT.SGraph
   , graphVersion :: R.State Int
   , metaData :: GET.MetaData
-  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , removedNodeIds :: R.State SigmaxT.NodeIds
+  , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session :: Session
   , showSidePanel :: GET.SidePanelState
   )
@@ -51,7 +53,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
     cpt {showSidePanel: GET.InitialClosed} _children = do
       pure $ RH.div {} []
     cpt props _children = do
-      let nodesMap = SigmaxTypes.nodesGraphMap props.graph
+      let nodesMap = SigmaxT.nodesGraphMap props.graph
 
       pure $
         RH.div { id: "sp-container" }
@@ -65,12 +67,8 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                   ]
                 , RH.div { className: "tab-content" }
                   [
-                    RH.button { className: "btn btn-danger"
-                              , on: { click: onClickRemove CandidateTerm props.session props.metaData nodesMap props.selectedNodeIds props.graphVersion }}
-                    [ RH.text "Remove candidate" ]
-                  , RH.button { className: "btn btn-danger"
-                              , on: { click: onClickRemove StopTerm props.session props.metaData nodesMap props.selectedNodeIds props.graphVersion }}
-                    [ RH.text "Remove stop" ]
+                    removeButton "Remove candidate" CandidateTerm props nodesMap
+                  , removeButton "Remove stop" StopTerm props nodesMap
                   ]
                 , RH.li { className: "nav-item" }
                   [ RH.a { id: "home-tab"
@@ -112,39 +110,49 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                  , checked: true
                  , title: "Mark as completed" } ]
 
-    onClickRemove rType session metaData nodesMap (selectedNodeIds /\ _) graphVersion e = do
-      let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable selectedNodeIds
-      deleteNodes rType session metaData graphVersion nodes
+    removeButton text rType props nodesMap =
+      if Set.isEmpty $ fst props.selectedNodeIds then
+        RH.div {} []
+      else
+        RH.button { className: "btn btn-danger"
+                  , on: { click: onClickRemove rType props nodesMap }}
+        [ RH.text text ]
+
+    onClickRemove rType props nodesMap e = do
+      let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable $ fst props.selectedNodeIds
+      deleteNodes rType props.session props.metaData props.graphVersion nodes
+      snd props.removedNodeIds $ const $ fst props.selectedNodeIds
+      snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
 
 
-badge :: R.State SigmaxTypes.SelectedNodeIds -> Record SigmaxTypes.Node -> R.Element
-badge (_ /\ setSelectedNodeIds) {id, label} =
+badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
+badge (_ /\ setNodeIds) {id, label} =
   RH.a { className: "badge badge-light"
         , on: { click: onClick }
         } [ RH.text label ]
   where
     onClick e = do
-      setSelectedNodeIds $ const $ Set.singleton id
+      setNodeIds $ const $ Set.singleton id
 
-badges :: SigmaxTypes.SGraph -> R.State SigmaxTypes.SelectedNodeIds -> Seq.Seq (Record SigmaxTypes.Node)
-badges graph (selectedNodeIds /\ _) = SigmaxTypes.graphNodes $ SigmaxTypes.nodesById graph selectedNodeIds
+badges :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
+badges graph (selectedNodeIds /\ _) = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
-neighbourBadges :: SigmaxTypes.SGraph -> R.State SigmaxTypes.SelectedNodeIds -> Seq.Seq (Record SigmaxTypes.Node)
-neighbourBadges graph (selectedNodeIds /\ _) = SigmaxTypes.neighbours graph selectedNodes
+neighbourBadges :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
+neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selectedNodes
   where
-    selectedNodes = SigmaxTypes.graphNodes $ SigmaxTypes.nodesById graph selectedNodeIds
+    selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
-deleteNodes :: TermList -> Session -> GET.MetaData -> R.State Int -> Array (Record SigmaxTypes.Node) -> Effect Unit
+deleteNodes :: TermList -> Session -> GET.MetaData -> R.State Int -> Array (Record SigmaxT.Node) -> Effect Unit
 deleteNodes termList session metaData (_ /\ setGraphVersion) nodes = do
   launchAff_ do
     patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
     let mPatch = last patches
     case mPatch of
       Nothing -> pure unit
-      Just (NTC.Versioned patch) -> liftEffect do
-        setGraphVersion $ const $ patch.version
+      Just (NTC.Versioned patch) -> pure unit --liftEffect do
+        --setGraphVersion $ const $ patch.version
 
-deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxTypes.Node -> Aff NTC.VersionedNgramsPatches
+deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxT.Node -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches coreParams versioned
   where
     nodeId :: Int
@@ -167,7 +175,7 @@ deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches 
     patch_list = NTC.Replace { new: termList, old: GraphTerm }
 
 
-query :: Frontends -> GET.MetaData -> Session -> SigmaxTypes.NodesMap -> R.State SigmaxTypes.SelectedNodeIds -> R.Element
+query :: Frontends -> GET.MetaData -> Session -> SigmaxT.NodesMap -> R.State SigmaxT.NodeIds -> R.Element
 query _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
 query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
   query' (head metaData.corpusId)

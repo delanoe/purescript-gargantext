@@ -29,7 +29,7 @@ type Props sigma forceatlas2 =
   , forceAtlas2Settings :: forceatlas2
   , graph :: SigmaxTypes.SGraph
   , multiSelectEnabledRef :: R.Ref Boolean
-  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , selectedNodeIds :: R.State SigmaxTypes.NodeIds
   , showEdges :: R.State SigmaxTypes.ShowEdgesState
   , sigmaRef :: R.Ref Sigmax.Sigma
   , sigmaSettings :: sigma

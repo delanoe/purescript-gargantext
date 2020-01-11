@@ -57,10 +57,15 @@ type Edge =
   , weightIdx :: Int
   )
 
-type SelectedNodeIds = Set.Set NodeId
-type SelectedEdgeIds = Set.Set EdgeId
+type NodeIds = Set.Set NodeId
+type EdgeIds = Set.Set EdgeId
 type EdgesMap = Map.Map String (Record Edge)
 type NodesMap = Map.Map String (Record Node)
+
+emptyEdgeIds :: EdgeIds
+emptyEdgeIds = Set.empty
+emptyNodeIds :: NodeIds
+emptyNodeIds = Set.empty
 
 type SGraph = Graph Node Edge
 
@@ -70,7 +75,7 @@ type SGraph = Graph Node Edge
 type SigmaDiff =
   (
     add :: Tuple (Seq.Seq (Record Edge)) (Seq.Seq (Record Node))
-  , remove :: Tuple SelectedEdgeIds SelectedNodeIds
+  , remove :: Tuple EdgeIds NodeIds
   )
 
 graphEdges :: SGraph -> Seq.Seq (Record Edge)
@@ -96,7 +101,7 @@ nodesGraphMap graph =
 nodesFilter :: (Record Node -> Boolean) -> SGraph -> SGraph
 nodesFilter f (Graph {edges, nodes}) = Graph { edges, nodes: Seq.filter f nodes }
 
-nodesById :: SGraph -> SelectedNodeIds -> SGraph
+nodesById :: SGraph -> NodeIds -> SGraph
 nodesById g nodeIds = nodesFilter (\n -> Set.member n.id nodeIds) g
 
 -- | "Subtract" second graph from first one (only node/edge id's are compared, not other props)
@@ -112,7 +117,7 @@ sub graph (Graph {nodes, edges}) = newGraph
     newGraph = nodesFilter (\n -> not (Set.member n.id nodeIds)) filteredEdges
 
 -- | Compute a diff between current sigma graph and whatever is set via customer controls
-sigmaDiff :: SelectedEdgeIds -> SelectedNodeIds -> SGraph -> Record SigmaDiff
+sigmaDiff :: EdgeIds -> NodeIds -> SGraph -> Record SigmaDiff
 sigmaDiff sigmaEdges sigmaNodes g@(Graph {nodes, edges}) = {add, remove}
   where
     add = Tuple addEdges addNodes
@@ -133,7 +138,7 @@ neighbours g nodes = Seq.fromFoldable $ Set.unions [Set.fromFoldable nodes, sour
     sources = Set.fromFoldable $ graphNodes $ nodesById g $ Set.fromFoldable $ Seq.map _.source selectedEdges
     targets = Set.fromFoldable $ graphNodes $ nodesById g $ Set.fromFoldable $ Seq.map _.target selectedEdges
 
-neighbouringEdges :: SGraph -> SelectedNodeIds -> Seq.Seq (Record Edge)
+neighbouringEdges :: SGraph -> NodeIds -> Seq.Seq (Record Edge)
 neighbouringEdges g nodeIds = Seq.filter condition $ graphEdges g
   where
     condition {source, target} = (Set.member source nodeIds) || (Set.member target nodeIds)

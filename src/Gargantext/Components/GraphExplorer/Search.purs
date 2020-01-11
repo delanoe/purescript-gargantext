@@ -14,21 +14,21 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
-import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Hooks.Sigmax.Types as SigmaxT
 
 type Props = (
-    graph           :: SigmaxTypes.SGraph
+    graph           :: SigmaxT.SGraph
   , multiSelectEnabled :: R.State Boolean
-  , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+  , selectedNodeIds :: R.State SigmaxT.NodeIds
   )
 
 -- | Whether a node matches a search string
-nodeMatchesSearch :: String -> Record SigmaxTypes.Node -> Boolean
+nodeMatchesSearch :: String -> Record SigmaxT.Node -> Boolean
 nodeMatchesSearch s n = S.contains (S.Pattern $ normalize s) (normalize n.label)
   where
     normalize = S.toLower
 
-searchNodes :: String -> Seq.Seq (Record SigmaxTypes.Node) -> Seq.Seq (Record SigmaxTypes.Node)
+searchNodes :: String -> Seq.Seq (Record SigmaxT.Node) -> Seq.Seq (Record SigmaxT.Node)
 searchNodes "" _ = Seq.empty
 searchNodes s nodes = Seq.filter (nodeMatchesSearch s) nodes
 
@@ -55,21 +55,21 @@ sizeButtonCpt = R.hooksComponent "NodeSearchControl" cpt
             ]
           ]
 
-autocompleteSearch :: SigmaxTypes.SGraph -> String -> Array String
+autocompleteSearch :: SigmaxT.SGraph -> String -> Array String
 autocompleteSearch graph s = Seq.toUnfoldable $ (_.label) <$> searchNodes s nodes
   where
-    nodes = SigmaxTypes.graphNodes graph
+    nodes = SigmaxT.graphNodes graph
 
-triggerSearch :: SigmaxTypes.SGraph
+triggerSearch :: SigmaxT.SGraph
               -> String
               -> R.State Boolean
-              -> R.State SigmaxTypes.SelectedNodeIds
+              -> R.State SigmaxT.NodeIds
               -> Effect Unit
-triggerSearch graph search (multiSelectEnabled /\ _) (_ /\ setSelectedNodeIds) = do
-  let graphNodes = SigmaxTypes.graphNodes graph
+triggerSearch graph search (multiSelectEnabled /\ _) (_ /\ setNodeIds) = do
+  let graphNodes = SigmaxT.graphNodes graph
   let matching = Set.fromFoldable $ (_.id) <$> searchNodes search graphNodes
 
   log2 "[triggerSearch] search" search
 
-  setSelectedNodeIds $ \nodes ->
-    Set.union matching $ if multiSelectEnabled then nodes else Set.empty
+  setNodeIds $ \nodes ->
+    Set.union matching $ if multiSelectEnabled then nodes else SigmaxT.emptyNodeIds

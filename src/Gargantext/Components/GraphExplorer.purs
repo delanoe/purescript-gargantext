@@ -29,7 +29,7 @@ import Gargantext.Data.Louvain as Louvain
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
 import Gargantext.Sessions (Session, Sessions, get)
 import Gargantext.Types as Types
@@ -48,7 +48,7 @@ type LayoutProps =
   )
 
 type Props = (
-    graph :: SigmaxTypes.SGraph
+    graph :: SigmaxT.SGraph
   , graphVersion :: R.State Int
   , mMetaData :: Maybe GET.MetaData
   | LayoutProps
@@ -102,7 +102,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       R.useEffect' $ do
         let readData = R.readRef dataRef
         let gv = R.readRef graphVersionRef
-        if (SigmaxTypes.eqGraph readData graph) || (gv == fst graphVersion) then
+        if SigmaxT.eqGraph readData graph then
           pure unit
         else do
           -- Graph data changed, reinitialize sigma.
@@ -111,9 +111,10 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
           R.setRef dataRef graph
           R.setRef graphVersionRef (fst graphVersion)
           -- Reinitialize bunch of state as well.
-          snd controls.selectedNodeIds $ const Set.empty
-          snd controls.showEdges $ const SigmaxTypes.EShow
-          snd controls.forceAtlasState $ const SigmaxTypes.InitialRunning
+          snd controls.removedNodeIds $ const SigmaxT.emptyNodeIds
+          snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
+          snd controls.showEdges $ const SigmaxT.EShow
+          snd controls.forceAtlasState $ const SigmaxT.InitialRunning
           snd controls.graphStage $ const Graph.Init
           snd controls.showSidePanel $ const GET.InitialClosed
 
@@ -141,6 +142,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                       , mSidebar mMetaData { frontends
                                            , graph
                                            , graphVersion
+                                           , removedNodeIds: controls.removedNodeIds
                                            , session
                                            , selectedNodeIds: controls.selectedNodeIds
                                            , showSidePanel: fst controls.showSidePanel
@@ -169,18 +171,20 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
 
     mSidebar :: Maybe GET.MetaData
              -> { frontends :: Frontends
-                , graph :: SigmaxTypes.SGraph
+                , graph :: SigmaxT.SGraph
                 , graphVersion :: R.State Int
+                , removedNodeIds :: R.State SigmaxT.NodeIds
                 , showSidePanel :: GET.SidePanelState
-                , selectedNodeIds :: R.State SigmaxTypes.SelectedNodeIds
+                , selectedNodeIds :: R.State SigmaxT.NodeIds
                 , session :: Session }
              -> R.Element
     mSidebar Nothing _ = RH.div {} []
-    mSidebar (Just metaData) {frontends, graph, graphVersion, session, selectedNodeIds, showSidePanel} =
+    mSidebar (Just metaData) {frontends, graph, graphVersion, removedNodeIds, session, selectedNodeIds, showSidePanel} =
       Sidebar.sidebar { frontends
                       , graph
                       , graphVersion
                       , metaData
+                      , removedNodeIds
                       , session
                       , selectedNodeIds
                       , showSidePanel
@@ -190,7 +194,7 @@ type GraphProps = (
     controls :: Record Controls.Controls
   , elRef :: R.Ref (Nullable Element)
   , graphId :: GraphId
-  , graph :: SigmaxTypes.SGraph
+  , graph :: SigmaxT.SGraph
   , multiSelectEnabledRef :: R.Ref Boolean
 )
 
@@ -206,8 +210,8 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
       let louvainGraph =
             if (fst controls.showLouvain) then
               let louvain = Louvain.louvain unit in
-              let cluster = Louvain.init louvain (SigmaxTypes.louvainNodes graph) (SigmaxTypes.louvainEdges graph) in
-              SigmaxTypes.louvainGraph graph cluster
+              let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph) (SigmaxT.louvainEdges graph) in
+              SigmaxT.louvainGraph graph cluster
             else
               graph
       let transformedGraph = transformGraph controls louvainGraph
@@ -228,8 +232,8 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
         , transformedGraph
         }
 
-convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxTypes.SGraph
-convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
+convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
+convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
   where
     nodes = foldMapWithIndex nodeFn r.nodes
     nodeFn _i (GET.Node n) =
@@ -250,7 +254,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxTypes.Graph {nodes, edges}
         cDef (GET.Cluster {clustDefault}) = clustDefault
         color = GET.intColor (cDef n.attributes)
         gargType =  unsafePartial $ fromJust $ Types.modeFromString n.type_
-    nodesMap = SigmaxTypes.nodesMap nodes
+    nodesMap = SigmaxT.nodesMap nodes
     edges = foldMapWithIndex edgeFn $ A.sortWith (\(GET.Edge {weight}) -> weight) r.edges
     edgeFn i (GET.Edge e) = Seq.singleton { id : e.id_
                                           , color
@@ -281,15 +285,15 @@ getNodes :: Session -> R.State Int -> GraphId -> Aff GET.GraphData
 getNodes session (graphVersion /\ _) graphId = get session $ NodeAPI Types.Graph (Just graphId) ("?version=" <> show graphVersion)
 
 
-transformGraph :: Record Controls.Controls -> SigmaxTypes.SGraph -> SigmaxTypes.SGraph
-transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEdges}
+transformGraph :: Record Controls.Controls -> SigmaxT.SGraph -> SigmaxT.SGraph
+transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
   where
-    edges = SigmaxTypes.graphEdges graph
-    nodes = SigmaxTypes.graphNodes graph
+    edges = SigmaxT.graphEdges graph
+    nodes = SigmaxT.graphNodes graph
     selectedEdgeIds =
       Set.fromFoldable
         $ Seq.map _.id
-        $ SigmaxTypes.neighbouringEdges graph (fst controls.selectedNodeIds)
+        $ SigmaxT.neighbouringEdges graph (fst controls.selectedNodeIds)
     hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
 
     --newNodes = Seq.map (nodeSizeFilter <<< nodeMarked) nodes
@@ -301,7 +305,8 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
     edgeFilter e = edgeConfluenceFilter e &&
                    edgeWeightFilter e
                    --edgeShowFilter e
-    nodeFilter n = nodeSizeFilter n
+    nodeFilter n = nodeSizeFilter n &&
+                   nodeRemovedFilter n
 
     --nodeSizeFilter node@{ size } =
     --  if Range.within (fst controls.nodeSize) size then
@@ -310,6 +315,8 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
     --    node { hidden = true }
     nodeSizeFilter node@{ size } = Range.within (fst controls.nodeSize) size
 
+    nodeRemovedFilter node@{ id } = not $ Set.member id $ fst controls.removedNodeIds
+
     --edgeConfluenceFilter edge@{ confluence } =
     --  if Range.within (fst controls.edgeConfluence) confluence then
     --    edge
@@ -317,7 +324,7 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
     --    edge { hidden = true }
     edgeConfluenceFilter edge@{ confluence } = Range.within (fst controls.edgeConfluence) confluence
     edgeShowFilter edge =
-      if (SigmaxTypes.edgeStateHidden $ fst controls.showEdges) then
+      if (SigmaxT.edgeStateHidden $ fst controls.showEdges) then
         edge { hidden = true }
       else
         edge
@@ -326,10 +333,10 @@ transformGraph controls graph = SigmaxTypes.Graph {nodes: newNodes, edges: newEd
     --    edge
     --  else
     --    edge { hidden = true }
-    edgeWeightFilter :: Record SigmaxTypes.Edge -> Boolean
+    edgeWeightFilter :: Record SigmaxT.Edge -> Boolean
     edgeWeightFilter edge@{ weightIdx } = Range.within (fst controls.edgeWeight) $ toNumber weightIdx
 
-    edgeInGraph :: SigmaxTypes.SelectedNodeIds -> Record SigmaxTypes.Edge -> Boolean
+    edgeInGraph :: SigmaxT.NodeIds -> Record SigmaxT.Edge -> Boolean
     edgeInGraph nodeIds e = (Set.member e.source nodeIds) && (Set.member e.target nodeIds)
 
     edgeMarked edge@{ id, sourceNode } = do

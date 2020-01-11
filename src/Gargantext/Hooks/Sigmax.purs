@@ -178,7 +178,7 @@ updateNodes sigma nodesMap = do
 
 
 -- | Toggles item visibility in the selected set
-multiSelectUpdate :: ST.SelectedNodeIds -> ST.SelectedNodeIds -> ST.SelectedNodeIds
+multiSelectUpdate :: ST.NodeIds -> ST.NodeIds -> ST.NodeIds
 multiSelectUpdate new selected = foldl fld selected new
   where
     fld selectedAcc item =
@@ -188,21 +188,21 @@ multiSelectUpdate new selected = foldl fld selected new
         Set.insert item selectedAcc
 
 
-bindSelectedNodesClick :: Sigma.Sigma -> R.State ST.SelectedNodeIds -> R.Ref Boolean -> Effect Unit
-bindSelectedNodesClick sigma (_ /\ setSelectedNodeIds) multiSelectEnabledRef =
+bindSelectedNodesClick :: Sigma.Sigma -> R.State ST.NodeIds -> R.Ref Boolean -> Effect Unit
+bindSelectedNodesClick sigma (_ /\ setNodeIds) multiSelectEnabledRef =
   Sigma.bindClickNodes sigma $ \nodes -> do
     let multiSelectEnabled = R.readRef multiSelectEnabledRef
     let nodeIds = Set.fromFoldable $ map _.id nodes
     if multiSelectEnabled then
-      setSelectedNodeIds $ multiSelectUpdate nodeIds
+      setNodeIds $ multiSelectUpdate nodeIds
     else
-      setSelectedNodeIds $ const nodeIds
+      setNodeIds $ const nodeIds
 
-bindSelectedEdgesClick :: R.Ref Sigma -> R.State ST.SelectedEdgeIds -> Effect Unit
-bindSelectedEdgesClick sigmaRef (_ /\ setSelectedEdgeIds) =
+bindSelectedEdgesClick :: R.Ref Sigma -> R.State ST.EdgeIds -> Effect Unit
+bindSelectedEdgesClick sigmaRef (_ /\ setEdgeIds) =
   dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
     Sigma.bindClickEdge sigma $ \edge -> do
-      setSelectedEdgeIds \eids ->
+      setEdgeIds \eids ->
         if Set.member edge.id eids then
           Set.delete edge.id eids
         else
@@ -230,7 +230,7 @@ performDiff sigma g = do
     {add: Tuple addEdges addNodes, remove: Tuple removeEdges removeNodes} = ST.sigmaDiff sigmaEdgeIds sigmaNodeIds g
 -- DEPRECATED
 
-markSelectedEdges :: Sigma.Sigma -> ST.SelectedEdgeIds -> ST.EdgesMap -> Effect Unit
+markSelectedEdges :: Sigma.Sigma -> ST.EdgeIds -> ST.EdgesMap -> Effect Unit
 markSelectedEdges sigma selectedEdgeIds graphEdges = do
   Sigma.forEachEdge (Sigma.graph sigma) \e -> do
     case Map.lookup e.id graphEdges of
@@ -245,7 +245,7 @@ markSelectedEdges sigma selectedEdgeIds graphEdges = do
         pure unit
   Sigma.refresh sigma
 
-markSelectedNodes :: Sigma.Sigma -> ST.SelectedNodeIds -> ST.NodesMap -> Effect Unit
+markSelectedNodes :: Sigma.Sigma -> ST.NodeIds -> ST.NodesMap -> Effect Unit
 markSelectedNodes sigma selectedNodeIds graphNodes = do
   Sigma.forEachNode (Sigma.graph sigma) \n -> do
     case Map.lookup n.id graphNodes of
