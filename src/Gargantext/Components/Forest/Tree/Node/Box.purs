@@ -22,7 +22,7 @@ import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeType(..), NodePath(..), fldr)
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<>), (==))
+import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<>), (==), (-), (+))
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -223,7 +223,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
           , title: "Node settings"
           , data: { toggle: "tooltip"
                   , placement: "right"},
-            style: { top: y, left: x }
+            style: { top: y - 65.0, left: x + 10.0 }
           }
 
         SettingsBox {edit, doc, buttons} = settingsBox nodeType
