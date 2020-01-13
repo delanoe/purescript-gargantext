@@ -46,9 +46,7 @@ li#rename #rename-a {
 }
 
 #node-popup-tooltip {
-  position: absolute;
-  left: 96px;
-  top: -64px;
+  position: fixed;
   background-color: white;
   z-index: 1000;
 }

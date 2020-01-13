@@ -2,6 +2,9 @@ module Gargantext.Components.Forest.Tree.Node where
 
 import Prelude (class Eq, class Show, show, (&&), (<>), (==))
 import Data.Array (foldl)
+import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
+
 import Gargantext.Types
 
 ------------------------------------------------------------------------
@@ -62,7 +65,6 @@ glyphiconNodeAction _                 = ""
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
-
 data SettingsBox =
   SettingsBox { show    :: Boolean
               , edit    :: Boolean
@@ -72,134 +74,143 @@ data SettingsBox =
 ------------------------------------------------------------------------
 
 settingsBox :: NodeType -> SettingsBox
-settingsBox NodeUser = SettingsBox { show : true
-                                   , edit : false
-                                   , doc  : Documentation NodeUser
-                                   , buttons : [ SearchBox
-                                               , Add [ FolderPrivate
-                                                     , FolderShared
-                                                     , FolderPublic
-                                                     ]
-                                               , Delete
-                                               ]
-                                   }
+settingsBox NodeUser = SettingsBox {
+    show: true
+  , edit : false
+  , doc  : Documentation NodeUser
+  , buttons : [ SearchBox
+              , Add [ FolderPrivate
+                    , FolderShared
+                    , FolderPublic
+                    ]
+              , Delete
+              ]
+  }
 
-settingsBox FolderPrivate = SettingsBox { show: true
-                                        , edit : false
-                                        , doc  : Documentation FolderPrivate
-                                        , buttons : [ SearchBox
-                                                    , Add [ Corpus
-                                                          , Folder
-                                                          , Annuaire
-                                                          ]
-                                                    , Delete]
-                                        }
+settingsBox FolderPrivate = SettingsBox {
+    show: true
+  , edit : false
+  , doc  : Documentation FolderPrivate
+  , buttons : [ SearchBox
+              , Add [ Corpus
+                    , Folder
+                    , Annuaire
+                    ]
+              , Delete]
+  }
 
-settingsBox Team = SettingsBox { show: true
-                                , edit : false
-                                , doc  : Documentation Team
-                                , buttons : [ SearchBox
-                                            , Add [ Corpus
-                                                  , Folder
-                                                  , Annuaire
-                                                  ]
-                                            , Delete]
-                                }
+settingsBox Team = SettingsBox {
+    show: true
+  , edit : false
+  , doc  : Documentation Team
+  , buttons : [ SearchBox
+              , Add [ Corpus
+                    , Folder
+                    , Annuaire
+                    ]
+              , Delete]
+  }
 
-settingsBox FolderShared = SettingsBox { show: true
-                                       , edit : true
-                                       , doc  : Documentation FolderShared
-                                       , buttons : [ Add [Team, FolderShared]
-                                                   , Delete
-                                                   ]
-                                       }
+settingsBox FolderShared = SettingsBox {
+    show: true
+  , edit : true
+  , doc  : Documentation FolderShared
+  , buttons : [ Add [Team, FolderShared]
+              , Delete
+              ]
+  }
 
-
-settingsBox FolderPublic = SettingsBox { show : true
-                                       , edit : false
-                                       , doc  : Documentation FolderPublic
-                                       , buttons : [{-, SearchBox
+settingsBox FolderPublic = SettingsBox {
+    show: true
+  , edit : false
+  , doc  : Documentation FolderPublic
+  , buttons : [{-, SearchBox
                                                     , Add [ Corpus
                                                           , Folder
                                                           ]-}
-                                                     Delete
-                                                    ]
-                                        }
+    Delete
+    ]
+  }
 
-settingsBox Folder = SettingsBox { show : true
-                                 , edit : true
-                                 , doc  : Documentation Folder
-                                 , buttons : [ SearchBox
-                                             , Add [ Corpus
-                                                   , Folder
-                                                   , Annuaire
-                                                   ]
-                                             , Delete
-                                             ]
-                                 }
+settingsBox Folder = SettingsBox {
+    show: true
+  , edit : true
+  , doc  : Documentation Folder
+  , buttons : [ SearchBox
+              , Add [ Corpus
+                    , Folder
+                    , Annuaire
+                    ]
+              , Delete
+              ]
+  }
 
-settingsBox Corpus = SettingsBox { show : true
-                                 , edit : true
-                                 , doc  : Documentation Corpus
-                                 , buttons : [ SearchBox
-                                             , Add [ NodeList
-                                                   , Graph
-                                                   , Dashboard
-                                                   ]
-                                             , Upload
-                                             , Download
-                                             --, Share
-                                             --, Move
-                                             --, Clone
-                                             , Link Annuaire
-                                             , Delete
-                                             ]
-                                 }
+settingsBox Corpus = SettingsBox {
+    show: true
+  , edit : true
+  , doc  : Documentation Corpus
+  , buttons : [ SearchBox
+              , Add [ NodeList
+                    , Graph
+                    , Dashboard
+                    ]
+              , Upload
+              , Download
+                --, Share
+                --, Move
+                --, Clone
+              , Link Annuaire
+              , Delete
+              ]
+  }
 
-settingsBox Texts = SettingsBox { show : true
-                                , edit : false
-                                , doc  : Documentation Texts
-                                , buttons : [ Upload
-                                            , Download
-                                            , Delete
-                                            ]
-                                }
+settingsBox Texts = SettingsBox {
+    show: true
+  , edit : false
+  , doc  : Documentation Texts
+  , buttons : [ Upload
+              , Download
+              , Delete
+              ]
+  }
 
-settingsBox Graph = SettingsBox { show : true
-                                , edit : false
-                                , doc  : Documentation Graph
-                                , buttons : [ Documentation Graph
-                                            , Download
-                                            , Delete
-                                            ]
-                                }
+settingsBox Graph = SettingsBox {
+    show: true
+  , edit : false
+  , doc  : Documentation Graph
+  , buttons : [ Documentation Graph
+              , Download
+              , Delete
+              ]
+  }
 
-settingsBox NodeList = SettingsBox { show : true
-                                   , edit : false
-                                   , doc  : Documentation NodeList
-                                   , buttons : [ Upload
-                                               , Download
-                                               , Delete
-                                               ]
-                                }
+settingsBox NodeList = SettingsBox {
+    show: true
+  , edit : false
+  , doc  : Documentation NodeList
+  , buttons : [ Upload
+              , Download
+              , Delete
+              ]
+  }
 
-settingsBox Dashboard = SettingsBox { show : true
-                                    , edit : false
-                                    , doc  : Documentation Dashboard
-                                    , buttons : [Delete]
-                                }
+settingsBox Dashboard = SettingsBox {
+    show: true
+  , edit : false
+  , doc  : Documentation Dashboard
+  , buttons : [Delete]
+  }
 
-settingsBox Annuaire = SettingsBox { show : true
-                                    , edit : false
-                                    , doc  : Documentation Annuaire
-                                    , buttons : [Delete]
-                                }
+settingsBox Annuaire = SettingsBox {
+    show: true
+  , edit : false
+  , doc  : Documentation Annuaire
+  , buttons : [Delete]
+  }
 
-settingsBox _ = SettingsBox { show : false
-                            , edit : false
-                            , doc  : Documentation NodeUser
-                            , buttons : []
-                          }
-
-
-
+settingsBox _ = SettingsBox {
+    show: false
+  , edit : false
+  , doc  : Documentation NodeUser
+  , buttons : []
+  }

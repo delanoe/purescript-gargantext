@@ -48,9 +48,10 @@ nodeMainSpan :: (Action -> Aff Unit)
 nodeMainSpan d p folderOpen session frontends = R.createElement el p []
   where
     el = R.hooksComponent "NodeMainSpan" cpt
-    cpt {id, name, nodeType, mCurrentRoute} _ = do
+    cpt props@{id, name, nodeType, mCurrentRoute} _ = do
       -- only 1 popup at a time is allowed to be opened
       popupOpen   <- R.useState' (Nothing :: Maybe NodePopup)
+      popupPosition <- R.useState' (Nothing :: Maybe R2.Point)
       droppedFile <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver  <- R.useState' false
 
@@ -60,36 +61,45 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
               , style: {marginLeft: "22px"}
               }
           [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
-                     , name: name'} ]
-        , if showBox then popOverIcon popupOpen else H.div {} []
-        , if showBox
-             then nodePopupView  d { id
-                                   , name:name'
-                                   , nodeType
-                                   , action: Nothing
-                                   , session
-                                   } popupOpen
-             else H.div {} []
+                     , name: name' props} ]
+        , popOverIcon showBox popupOpen popupPosition
+        , mNodePopupView props showBox popupOpen popupPosition
         , fileTypeView   d {id, nodeType} droppedFile isDragOver
         ]
           where
-            name' = if nodeType == NodeUser then show session else name
-            SettingsBox {show:showBox} = settingsBox nodeType
+            SettingsBox {show: showBox} = settingsBox nodeType
 
+    name' {name, nodeType} = if nodeType == NodeUser then show session else name
 
     folderIcon nodeType folderOpen'@(open /\ _) =
       H.a {onClick: R2.effToggler folderOpen'}
       [ H.i {className: fldr nodeType open} [] ]
 
-    popOverIcon (popOver /\ setPopOver) =
+    popOverIcon false _ _ = H.div {} []
+    popOverIcon true (popOver /\ setPopOver) (_ /\ setPopupPosition) =
       H.a { className: "glyphicon glyphicon-cog"
           , id: "rename-leaf"
-          , on: { click: \_ -> setPopOver $ toggle }
+          , on: { click: toggle popOver }
           } []
       where
-        toggle Nothing = Just NodePopup
-        toggle _       = Nothing
+        toggle Nothing e = do
+          setPopupPosition $ const $ Just $ R2.mousePosition e
+          setPopOver $ const $ Just NodePopup
+        toggle _ _ = do
+          setPopupPosition $ const Nothing
+          setPopOver $ const Nothing
 
+    mNodePopupView _ false _ _ = H.div {} []
+    mNodePopupView _ _ (Nothing /\ _) _ = H.div {} []
+    mNodePopupView _ _ _ (Nothing /\ _) = H.div {} []
+    mNodePopupView props@{id, nodeType} true popupOpen (Just position /\ _) =
+      nodePopupView d { id
+                      , action: Nothing
+                      , name: name' props
+                      , nodeType
+                      , position
+                      , session
+                      } popupOpen
 
     dropProps droppedFile isDragOver =
       { className: dropClass droppedFile isDragOver
@@ -159,9 +169,10 @@ mCorpusId _ = Nothing
 -- | START Popup View
 type NodePopupProps =
   ( id       :: ID
+  , action   :: Maybe NodeAction
   , name     :: Name
   , nodeType :: NodeType
-  , action   :: Maybe NodeAction
+  , position :: R2.Point
   , session  :: Session
   )
 
@@ -178,11 +189,11 @@ nodePopupView :: (Action -> Aff Unit)
 nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p []
   where
     el = R.hooksComponent "NodePopupView" cpt
-    cpt {id, name, nodeType, action, session} _ = do
+    cpt {id, action, name, nodeType, position, session} _ = do
       renameBoxOpen <- R.useState' false
       nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {id, name, nodeType, action}
       search <- R.useState' $ defaultSearch { node_id = Just id }
-      pure $ H.div tooltipProps $
+      pure $ H.div (tooltipProps position) $
         [ H.div {id: "arrow"} []
         , H.div { className: "popup-container" }
           [ H.div { className: "panel panel-default" }
@@ -206,12 +217,14 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
           ]
         ]
       where
-        tooltipProps = { className: ""
-                       , id: "node-popup-tooltip"
-                       , title: "Node settings"
-                       , data: { toggle: "tooltip"
-                               , placement: "right"}
-                       }
+        tooltipProps (R2.Point {x, y}) = {
+          className: ""
+          , id: "node-popup-tooltip"
+          , title: "Node settings"
+          , data: { toggle: "tooltip"
+                  , placement: "right"},
+            style: { top: y, left: x }
+          }
 
         SettingsBox {edit, doc, buttons} = settingsBox nodeType
 
