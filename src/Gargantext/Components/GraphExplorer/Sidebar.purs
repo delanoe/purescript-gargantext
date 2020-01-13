@@ -15,7 +15,6 @@ import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
-import Effect.Class (liftEffect)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -42,6 +41,8 @@ type Props =
   , showSidePanel :: GET.SidePanelState
   )
 
+type MRemovalRoot = Maybe SigmaxT.NodeId
+
 sidebar :: Record Props -> R.Element
 sidebar props = R.createElement sidebarCpt props []
 
@@ -54,6 +55,17 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
       pure $ RH.div {} []
     cpt props _children = do
       let nodesMap = SigmaxT.nodesGraphMap props.graph
+      selectedNodeIdsRef <- R.useRef $ fst props.selectedNodeIds
+      mRemovalRoot <- R.useState' $ getMRemovalRoot props.selectedNodeIds
+
+      -- we need to handle changing of selectedNodeIds, otherwise mRemovalRoot
+      -- won't be automatically updated
+      R.useEffect' do
+        if R.readRef selectedNodeIdsRef == fst props.selectedNodeIds then
+          pure unit
+        else do
+          R.setRef selectedNodeIdsRef $ fst props.selectedNodeIds
+          snd mRemovalRoot $ const $ getMRemovalRoot props.selectedNodeIds
 
       pure $
         RH.div { id: "sp-container" }
@@ -63,12 +75,12 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
               [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
                 [ RH.div { className: "tab-content" }
                   [ RH.div { className: "", role: "tabpanel" }
-                    (Seq.toUnfoldable $ (Seq.map (badge props.selectedNodeIds) (badges props.graph props.selectedNodeIds)))
+                    $ badges props.graph props.selectedNodeIds mRemovalRoot
                   ]
                 , RH.div { className: "tab-content" }
                   [
-                    removeButton "Remove candidate" CandidateTerm props nodesMap
-                  , removeButton "Remove stop" StopTerm props nodesMap
+                    removeButton "Remove candidate" CandidateTerm props nodesMap mRemovalRoot
+                  , removeButton "Remove stop" StopTerm props nodesMap mRemovalRoot
                   ]
                 , RH.li { className: "nav-item" }
                   [ RH.a { id: "home-tab"
@@ -83,18 +95,9 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                 ]
               , RH.div { className: "tab-content", id: "myTabContent" }
                 [ RH.div { className: "", id: "home", role: "tabpanel" }
-                  (Seq.toUnfoldable $ (Seq.map (badge props.selectedNodeIds) (neighbourBadges props.graph props.selectedNodeIds)))
+                  $ neighbourBadges props.graph props.selectedNodeIds
                 ]
               ]
-            {-, RH.div { className: "col-md-12", id: "horizontal-checkbox" }
-              [ RH.ul {}
-                [ checkbox "Pubs"
-                , checkbox "Projects"
-                , checkbox "Patents"
-                , checkbox "Others"
-                ]
-              ]
-              -}
             , RH.div { className: "col-md-12", id: "query" }
               [
                 query props.frontends props.metaData props.session nodesMap props.selectedNodeIds
@@ -102,55 +105,106 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
             ]
           ]
         ]
-    checkbox text =
-      RH.li {}
-      [ RH.span {} [ RH.text text ]
-      , RH.input { type: "checkbox"
-                 , className: "checkbox"
-                 , checked: true
-                 , title: "Mark as completed" } ]
 
-    removeButton text rType props nodesMap =
-      if Set.isEmpty $ fst props.selectedNodeIds then
-        RH.div {} []
-      else
-        RH.button { className: "btn btn-danger"
-                  , on: { click: onClickRemove rType props nodesMap }}
-        [ RH.text text ]
-
-    onClickRemove rType props nodesMap e = do
-      let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable $ fst props.selectedNodeIds
-      deleteNodes rType props.session props.metaData props.graphVersion nodes
-      snd props.removedNodeIds $ const $ fst props.selectedNodeIds
-      snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
+    getMRemovalRoot :: R.State SigmaxT.NodeIds -> MRemovalRoot
+    getMRemovalRoot (selectedNodeIds /\ _) = head $ Set.toUnfoldable selectedNodeIds
 
 
-badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
-badge (_ /\ setNodeIds) {id, label} =
-  RH.a { className: "badge badge-light"
-        , on: { click: onClick }
-        } [ RH.text label ]
+removeButton :: String -> TermList -> Record Props -> SigmaxT.NodesMap -> MRemovalRoot -> R.Element
+removeButton text rType props nodesMap Nothing = RH.div {} []
+removeButton text rType props nodesMap (Just removalRoot) = RH.div {} []
+  RH.button { className: "btn btn-danger"
+            , on: { click: onClickRemove }}
+  [ RH.text text ]
   where
-    onClick e = do
+    onClickRemove :: forall e. e -> Effect Unit
+    onClickRemove e = do
+      let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable $ fst props.selectedNodeIds
+      case Map.lookup removalRoot nodesMap of
+        Nothing -> pure unit
+        Just removalRootNode -> do
+          deleteNodes rType props.session props.metaData props.graphVersion removalRootNode $ filter (/= removalRootNode) nodes
+          snd props.removedNodeIds $ const $ fst props.selectedNodeIds
+          snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
+
+
+badges :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> R.State (Maybe SigmaxT.NodeId) -> Array R.Element
+badges graph selectedNodeIds mRemovalRoot = Seq.toUnfoldable $ Seq.map (badgeRR selectedNodeIds mRemovalRoot) (badgeNodes graph selectedNodeIds)
+
+badge :: R.State SigmaxT.NodeIds -> String -> Array R.Element -> Record SigmaxT.Node -> R.Element
+badge (_ /\ setNodeIds) additionalClassName children {id, label} =
+  RH.a { className: "badge badge-light " <> additionalClassName }
+    $ [
+      RH.span { on: { click: onClick } } [ RH.text label ]
+    ] <> children
+  where
+    onClick _ = do
       setNodeIds $ const $ Set.singleton id
 
-badges :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
-badges graph (selectedNodeIds /\ _) = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
+badgeRR :: R.State SigmaxT.NodeIds -> R.State (Maybe SigmaxT.NodeId) -> Record SigmaxT.Node -> R.Element
+badgeRR selectedNodeIds (mRemovalRoot /\ setMRemovalRoot) node@{id} = badge selectedNodeIds additionalClassName children node
+  where
+    children = [ RH.span { className, on: { click: onClick } } [] ]
+    className = if mRemovalRoot == (Just id) then "" else "glyphicon glyphicon-chevron-up"
+    additionalClassName = if mRemovalRoot == (Just id) then "badge-primary" else ""
+    onClick _ = do
+      setMRemovalRoot $ const $ Just id
 
-neighbourBadges :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
-neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selectedNodes
+badgeNodes :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
+badgeNodes graph (selectedNodeIds /\ _) = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
+
+neighbourBadges :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Array R.Element
+neighbourBadges graph selectedNodeIds =  Seq.toUnfoldable $ Seq.map (badge selectedNodeIds "" []) (neighbourBadgeNodes graph selectedNodeIds)
+
+neighbourBadgeNodes :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
+neighbourBadgeNodes graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selectedNodes
   where
     selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
-deleteNodes :: TermList -> Session -> GET.MetaData -> R.State Int -> Array (Record SigmaxT.Node) -> Effect Unit
-deleteNodes termList session metaData (_ /\ setGraphVersion) nodes = do
+
+-- API
+deleteNodes :: TermList -> Session -> GET.MetaData -> R.State Int -> Record SigmaxT.Node -> Array (Record SigmaxT.Node) -> Effect Unit
+deleteNodes termList session metaData (_ /\ setGraphVersion) rootNode childNodes = do
   launchAff_ do
-    patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
-    let mPatch = last patches
-    case mPatch of
-      Nothing -> pure unit
-      Just (NTC.Versioned patch) -> pure unit --liftEffect do
-        --setGraphVersion $ const $ patch.version
+    patch <- deleteRootNode termList session metaData rootNode childNodes
+    --patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
+    --let mPatch = last patches
+    --case mPatch of
+    --  Nothing -> pure unit
+    --  Just (NTC.Versioned patch) -> pure unit
+    --    --liftEffect do
+    --    --setGraphVersion $ const $ patch.version
+
+deleteRootNode :: TermList -> Session -> GET.MetaData -> Record SigmaxT.Node -> Array (Record SigmaxT.Node) -> Aff NTC.VersionedNgramsPatches
+deleteRootNode termList session (GET.MetaData metaData) rootNode childNodes = NTC.putNgramsPatches coreParams versioned
+  where
+    nodeId = unsafePartial <<< fromJust <<< fromString <<< _.id
+    rootNodeId :: Int
+    rootNodeId = nodeId rootNode
+    childNodeIds :: Array Int
+    childNodeIds = nodeId <$> childNodes
+    versioned :: NTC.VersionedNgramsPatches
+    versioned = NTC.Versioned {version: metaData.list.version, data: np}
+    coreParams :: NTC.CoreParams ()
+    coreParams = {session, nodeId: rootNodeId, listIds: [metaData.list.listId], tabType}
+    tabNgramType :: CTabNgramType
+    tabNgramType = modeTabType rootNode.gargType
+    tabType :: TabType
+    tabType = TabCorpus (TabNgramType tabNgramType)
+    term :: NTC.NgramsTerm
+    term = NTC.normNgram tabNgramType node.label
+    pt :: NTC.NgramsTablePatch
+    pt = NTC.fromNgramsPatches np
+
+patch :: TermList -> TermList -> Record SigmaxT.Node -> Array (Record SigmaxT.Node) -> NTC.NgramsPatches
+patch termList oldTermList node childNodes = np
+  where
+    np :: NTC.NgramsPatches
+    np = NTC.singletonPatchMap term $ NTC.NgramsPatch { patch_children, patch_list }
+    patch_list :: NTC.Replace TermList
+    patch_list = NTC.Replace { new: termList, old: oldTermList }
+    patch_children :: NTC.PatchSet NTC.NgramsTerm
+    patch_children = NTC.patchSetFromMap $ Map.fromFoldable $
 
 deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxT.Node -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches coreParams versioned

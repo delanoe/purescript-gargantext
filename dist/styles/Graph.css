@@ -34,6 +34,10 @@
   left: 70%;
   width: 30%;
 }
+#graph-explorer #sp-container .badge-primary {
+  background-color: #d9534f;
+  color: #fff;
+}
 #graph-explorer #sp-container #myTab {
   marginBottom: 18px;
   marginTop: 18px;
