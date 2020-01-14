@@ -19,10 +19,10 @@ import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (NodeType(..), NodePath(..), fldr)
+import Gargantext.Types (NodeType(..), NodePath(..), fldr, AsyncTask(..))
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<>), (==), (-), (+))
+import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<$>), (<>), (==), (-), (+))
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -34,6 +34,7 @@ import Web.File.FileReader.Aff (readAsText)
 -- Main Node
 type NodeMainSpanProps =
   ( id            :: ID
+  , asyncTasks    :: Array AsyncTask
   , name          :: Name
   , nodeType      :: NodeType
   , mCurrentRoute :: Maybe AppRoute
@@ -48,7 +49,7 @@ nodeMainSpan :: (Action -> Aff Unit)
 nodeMainSpan d p folderOpen session frontends = R.createElement el p []
   where
     el = R.hooksComponent "NodeMainSpan" cpt
-    cpt props@{id, name, nodeType, mCurrentRoute} _ = do
+    cpt props@{id, asyncTasks, name, nodeType, mCurrentRoute} _ = do
       -- only 1 popup at a time is allowed to be opened
       popupOpen   <- R.useState' (Nothing :: Maybe NodePopup)
       popupPosition <- R.useState' (Nothing :: Maybe R2.Point)
@@ -65,6 +66,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
         , popOverIcon showBox popupOpen popupPosition
         , mNodePopupView props showBox popupOpen popupPosition
         , fileTypeView   d {id, nodeType} droppedFile isDragOver
+        , H.div {} (progressBar <$> asyncTasks)
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType
@@ -130,6 +132,8 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
       E.stopPropagation e
       setIsDragOver $ const true
     onDragLeave (_ /\ setIsDragOver) _ = setIsDragOver $ const false
+
+    progressBar (AsyncTask {id}) = H.div {className: "progress"} [ H.text id ]
 
 {-
 fldr nt open = if open

@@ -7,7 +7,6 @@ import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Effect.Uncurried (mkEffectFn1)
 import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as E
 import Reactix as R
@@ -19,7 +18,7 @@ import Web.File.FileReader.Aff (readAsText)
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, postWwwUrlencoded)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..))
+import Gargantext.Types (class ToQuery, toQuery, NodeType(..), AsyncTask(..))
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 
@@ -44,16 +43,17 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
       , H.div {} [ H.input {type: "file", placeholder: "Choose file", on: {change: onChangeContents mContents}} ]
       , H.div {}
         [ R2.select {className: "col-md-12 form-control"
-                    , onChange: onChangeFileType fileType}
+                    , on: {change: onChangeFileType fileType}
+                    }
           (map renderOption [CSV, PresseRIS])
         ]
       , H.div {}
-        [ uploadButton id mContents fileType ]
+        [ uploadButton d id mContents fileType ]
       ]
 
     renderOption opt = H.option {} [ H.text $ show opt ]
 
-    onChangeContents (mContents /\ setMContents) = mkEffectFn1 $ \e -> do
+    onChangeContents (mContents /\ setMContents) e = do
       blob <- R2.inputFileBlob e
       E.preventDefault e
       E.stopPropagation e
@@ -62,24 +62,24 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
         liftEffect $ do
           setMContents $ const $ Just $ UploadFileContents contents
 
-    onChangeFileType (fileType /\ setFileType) = mkEffectFn1 $ \e -> do
+    onChangeFileType (fileType /\ setFileType) e = do
       setFileType $ const $ unsafePartial $ fromJust $ readFileType $ R2.unsafeEventValue e
 
-    uploadButton :: Int -> R.State (Maybe UploadFileContents) -> R.State FileType -> R.Element
-    uploadButton id (mContents /\ setMContents) (fileType /\ setFileType) =
-      H.button {className: "btn btn-primary", disabled, onClick} [ H.text "Upload" ]
-      where
-        disabled = case mContents of
-          Nothing -> "1"
-          Just _ -> ""
+uploadButton :: (Action -> Aff Unit) -> Int -> R.State (Maybe UploadFileContents) -> R.State FileType -> R.Element
+uploadButton d id (mContents /\ setMContents) (fileType /\ setFileType) =
+  H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
+  where
+    disabled = case mContents of
+      Nothing -> "1"
+      Just _ -> ""
 
-        onClick = mkEffectFn1 $ \e -> do
-          let contents = unsafePartial $ fromJust mContents
-          void $ launchAff do
-            _ <- d $ UploadFile fileType contents
-            liftEffect $ do
-              setMContents $ const $ Nothing
-              setFileType $ const $ CSV
+    onClick e = do
+      let contents = unsafePartial $ fromJust mContents
+      void $ launchAff do
+        _ <- d $ UploadFile fileType contents
+        liftEffect $ do
+          setMContents $ const $ Nothing
+          setFileType $ const $ CSV
 
 -- START File Type View
 type FileTypeProps =
@@ -115,9 +115,10 @@ fileTypeView d p (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ 
               [ H.h5 {} [H.text "Choose file type"] ]
             , H.div {className: "col-md-2"}
               [ H.a {className: "btn glyphitem glyphicon glyphicon-remove-circle"
-                    , onClick: mkEffectFn1 $ \_ -> do
-                        setDroppedFile $ const Nothing
-                        setIsDragOver $ const false
+                    , on: {click: \_ -> do
+                              setDroppedFile $ const Nothing
+                              setIsDragOver $ const false
+                          }
                     , title: "Close"} []
               ]
             ]
@@ -125,11 +126,12 @@ fileTypeView d p (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ 
         panelBody =
           H.div {className: "panel-body"}
           [ R2.select {className: "col-md-12 form-control"
-                      , onChange: onChange}
+                      , on: {change: onChange}
+                      }
             (map renderOption [CSV, PresseRIS])
           ]
           where
-            onChange = mkEffectFn1 $ \e ->
+            onChange e =
               setDroppedFile $ const $ Just $ DroppedFile $ {contents, fileType: readFileType $ R2.unsafeEventValue e}
         renderOption opt = H.option {} [ H.text $ show opt ]
         panelFooter =
@@ -139,9 +141,10 @@ fileTypeView d p (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ 
               Just ft ->
                 H.button {className: "btn btn-success"
                          , type: "button"
-                         , onClick: mkEffectFn1 $ \_ -> do
-                             setDroppedFile $ const Nothing
-                             launchAff $ d $ UploadFile ft contents
+                         , on: {click: \_ -> do
+                                   setDroppedFile $ const Nothing
+                                   launchAff $ d $ UploadFile ft contents
+                               }
                          } [H.text "Upload"]
               Nothing ->
                 H.button {className: "btn btn-success disabled"
@@ -164,9 +167,9 @@ instance fileUploadQueryToQuery :: ToQuery FileUploadQuery where
     where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
           pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
 
-uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff (Array FileHash)
+uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff AsyncTask
 uploadFile session id fileType (UploadFileContents fileContents) =
     postWwwUrlencoded session p fileContents
   where
     q = FileUploadQuery { fileType: fileType }
-    p = NodeAPI Node (Just id) $ "add/file" <> Q.print (toQuery q)
+    p = NodeAPI Corpus (Just id) $ "add/file/async" <> Q.print (toQuery q)
