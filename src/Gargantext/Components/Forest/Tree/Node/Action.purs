@@ -9,7 +9,7 @@ import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post, delete)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), AsyncTask(..))
 import Prelude hiding (div)
 
 data Action = Submit       String
@@ -85,7 +85,7 @@ instance encodeJsonCreateValue :: EncodeJson CreateValue where
 
 data NTree a = NTree a (Array (NTree a))
 type FTree = NTree LNode
-type Tree = { tree :: FTree }
+type Tree = { tree :: FTree, asyncTasks :: Array AsyncTask }
 
 instance ntreeFunctor :: Functor NTree where
   map f (NTree x ary) = NTree (f x) (map (map f) ary)

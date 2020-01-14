@@ -1,12 +1,12 @@
 module Gargantext.Components.Forest.Tree where
 
+import Data.Array as A
 import DOM.Simple.Console (log2)
 import Data.Maybe (Maybe)
 -- import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Data.Array as Array
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
@@ -55,7 +55,7 @@ loadedTreeView reload p = R.createElement el p []
   where
     el = R.hooksComponent "LoadedTreeView" cpt
     cpt {tree, mCurrentRoute, session, frontends} _ = do
-      treeState <- R.useState' {tree}
+      treeState <- R.useState' {tree, asyncTasks: []}
 
       pure $ H.div {className: "tree"}
         [ toHtml reload treeState session frontends mCurrentRoute ]
@@ -67,7 +67,7 @@ toHtml :: R.State Reload
        -> Frontends
        -> Maybe AppRoute
        -> R.Element
-toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) session frontends mCurrentRoute = R.createElement el {} []
+toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary), asyncTasks} /\ _) session frontends mCurrentRoute = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     pAction = performAction session reload treeState
@@ -79,7 +79,7 @@ toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary)} /\ _) 
 
       pure $ H.ul {}
         [ H.li {}
-          ( [ nodeMainSpan pAction {id, name, nodeType, mCurrentRoute} folderOpen session frontends ]
+          ( [ nodeMainSpan pAction {id, asyncTasks, name, nodeType, mCurrentRoute} folderOpen session frontends ]
             <> childNodes session frontends reload folderOpen mCurrentRoute ary
           )
         ]
@@ -95,15 +95,15 @@ childNodes :: Session
 childNodes _ _ _ _ _ [] = []
 childNodes _ _ _ (false /\ _) _ _ = []
 childNodes session frontends reload (true /\ _) mCurrentRoute ary =
-  map (\ctree -> childNode {tree: ctree}) $ sorted ary
+  map (\ctree -> childNode {tree: ctree, asyncTasks: []}) $ sorted ary
     where
       sorted :: Array FTree -> Array FTree
-      sorted = Array.sortWith (\(NTree (LNode {id}) _) -> id)
+      sorted = A.sortWith (\(NTree (LNode {id}) _) -> id)
       childNode :: Tree -> R.Element
       childNode props = R.createElement el props []
       el = R.hooksComponent "ChildNodeView" cpt
       cpt {tree} _ = do
-        treeState <- R.useState' {tree}
+        treeState <- R.useState' {tree, asyncTasks: []}
         pure $ toHtml reload treeState session frontends mCurrentRoute
 
 
@@ -124,7 +124,7 @@ performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTre
   void $ createNode session id $ CreateValue {name, nodeType}
   liftEffect $ setReload (_ + 1)
 
-performAction session _ ({tree: NTree (LNode {id}) _} /\ _) (UploadFile fileType contents) = do
-  hashes <- uploadFile session id fileType contents
-  liftEffect $ log2 "uploaded:" hashes
-
+performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (UploadFile fileType contents) = do
+  task <- uploadFile session id fileType contents
+  liftEffect $ setTree $ \t@{asyncTasks} -> t { asyncTasks = A.cons task asyncTasks }
+  liftEffect $ log2 "uploaded, task:" task

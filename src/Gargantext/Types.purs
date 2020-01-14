@@ -1,7 +1,7 @@
 module Gargantext.Types where
 
 import Prelude
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), jsonEmptyObject)
+import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
@@ -434,3 +434,17 @@ modeFromString "Sources" = Just Sources
 modeFromString "Institutes" = Just Institutes
 modeFromString "Terms" = Just Terms
 modeFromString _ = Nothing
+
+newtype AsyncTask = AsyncTask {
+    id :: String
+  , status :: String
+  }
+
+derive instance genericAsyncTask :: Generic AsyncTask _
+
+instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
+  decodeJson json = do
+    obj <- decodeJson json
+    id <- obj .: "id"
+    status <- obj .: "status"
+    pure $ AsyncTask {id, status}
