@@ -14,6 +14,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
+import Gargantext.Types (AsyncTask(..))
 import Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -55,7 +56,7 @@ loadedTreeView reload p = R.createElement el p []
   where
     el = R.hooksComponent "LoadedTreeView" cpt
     cpt {tree, mCurrentRoute, session, frontends} _ = do
-      treeState <- R.useState' {tree, asyncTasks: []}
+      treeState <- R.useState' {tree, asyncTasks: [AsyncTask {id: "1hello", status: "pending"}]}
 
       pure $ H.div {className: "tree"}
         [ toHtml reload treeState session frontends mCurrentRoute ]
@@ -102,8 +103,8 @@ childNodes session frontends reload (true /\ _) mCurrentRoute ary =
       childNode :: Tree -> R.Element
       childNode props = R.createElement el props []
       el = R.hooksComponent "ChildNodeView" cpt
-      cpt {tree} _ = do
-        treeState <- R.useState' {tree, asyncTasks: []}
+      cpt {tree, asyncTasks} _ = do
+        treeState <- R.useState' {tree, asyncTasks}
         pure $ toHtml reload treeState session frontends mCurrentRoute
 
 

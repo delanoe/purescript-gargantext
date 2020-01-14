@@ -11,6 +11,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView)
+import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar)
 import Gargantext.Components.Search.Types (allLangs)
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
@@ -22,7 +23,7 @@ import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeType(..), NodePath(..), fldr, AsyncTask(..))
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<$>), (<>), (==), (-), (+))
+import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<>), (==), (-), (+))
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -66,7 +67,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
         , popOverIcon showBox popupOpen popupPosition
         , mNodePopupView props showBox popupOpen popupPosition
         , fileTypeView   d {id, nodeType} droppedFile isDragOver
-        , H.div {} (progressBar <$> asyncTasks)
+        , H.div {} (map (\t -> asyncProgressBar {corpusId: id, asyncTask: t}) asyncTasks)
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType
@@ -132,8 +133,6 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
       E.stopPropagation e
       setIsDragOver $ const true
     onDragLeave (_ /\ setIsDragOver) _ = setIsDragOver $ const false
-
-    progressBar (AsyncTask {id}) = H.div {className: "progress"} [ H.text id ]
 
 {-
 fldr nt open = if open
