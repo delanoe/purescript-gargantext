@@ -10,7 +10,9 @@
         "docs": "pulp docs -- --format html",
         "repl": "pulp --psc-package repl",
         "clean": "rm -Rf output",
-        "test": "pulp test"
+        "test": "pulp test",
+        "prestart": "cp src/index.html dist",
+        "start": "python3 -m http.server --directory dist"
     },
     "dependencies": {
         "@babel/polyfill": "^7.0.0",

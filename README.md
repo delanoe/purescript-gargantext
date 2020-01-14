@@ -161,7 +161,7 @@ You can then serve the `dist` directory with your favourite webserver.
 
 Examples:
 
-* `python3 -m http.server dist`
+* `python3 -m http.server --directory dist` (requires Python 3.7+)
 
 <!-- To get a live-reloading development server -->
 
