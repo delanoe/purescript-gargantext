@@ -6,6 +6,7 @@
         "compile": "pulp --psc-package build",
         "build": "pulp --psc-package browserify -t dist/bundle.js",
         "sass": "sass dist/styles/",
+        "predev": "yarn prestart",
         "dev": "webpack-dev-server --env dev --mode development",
         "docs": "pulp docs -- --format html",
         "repl": "pulp --psc-package repl",
