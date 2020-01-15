@@ -226,5 +226,8 @@ post session@(Session {token}) p = REST.post (Just token) (toUrl session p)
 postWwwUrlencoded :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> String -> Aff b
 postWwwUrlencoded session@(Session {token}) p = REST.postWwwUrlencoded (Just token) (toUrl session p)
 
+postMultipartFormData :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> String -> Aff b
+postMultipartFormData session@(Session {token}) p = REST.postMultipartFormData (Just token) (toUrl session p)
+
 getls :: Effect Storage
 getls = window >>= localStorage

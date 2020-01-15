@@ -17,7 +17,7 @@ import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Sessions (Session, postWwwUrlencoded, postMultipartFormData)
 import Gargantext.Types (class ToQuery, toQuery, NodeType(..), AsyncTask(..))
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
@@ -169,7 +169,8 @@ instance fileUploadQueryToQuery :: ToQuery FileUploadQuery where
 
 uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff AsyncTask
 uploadFile session id fileType (UploadFileContents fileContents) =
-    postWwwUrlencoded session p fileContents
+    --postWwwUrlencoded session p fileContents
+    postMultipartFormData session p fileContents
   where
     q = FileUploadQuery { fileType: fileType }
     p = NodeAPI Corpus (Just id) $ "add/file/async" <> Q.print (toQuery q)
