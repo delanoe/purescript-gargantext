@@ -169,8 +169,8 @@ instance fileUploadQueryToQuery :: ToQuery FileUploadQuery where
 
 uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff AsyncTask
 uploadFile session id fileType (UploadFileContents fileContents) =
-    --postWwwUrlencoded session p fileContents
-    postMultipartFormData session p fileContents
+    postWwwUrlencoded session p fileContents
+    --postMultipartFormData session p fileContents
   where
     q = FileUploadQuery { fileType: fileType }
-    p = NodeAPI Corpus (Just id) $ "add/file/async" <> Q.print (toQuery q)
+    p = NodeAPI Corpus (Just id) $ "add/form/async" <> Q.print (toQuery q)
