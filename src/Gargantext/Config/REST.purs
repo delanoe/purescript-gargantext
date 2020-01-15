@@ -1,21 +1,23 @@
 module Gargantext.Config.REST where
 
-import Prelude (Unit, bind, pure, ($), (<$>), (<<<), (<>))
-
 import Affjax (defaultRequest, printResponseFormatError, request)
-import Affjax.RequestBody (RequestBody(..), string)
+import Affjax.RequestBody (RequestBody(..), formData, formURLEncoded, string)
 import Affjax.RequestHeader (RequestHeader(..))
 import Affjax.ResponseFormat as ResponseFormat
-import Effect.Class (liftEffect)
+import DOM.Simple.Console (log)
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson)
 import Data.Either (Either(..))
+import Data.Foldable (foldMap)
+import Data.FormURLEncoded as FormURLEncoded
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
-import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON)
-import Data.Foldable (foldMap)
-import DOM.Simple.Console (log)
+import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON, multipartFormData)
+import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff, throwError)
+import Effect.Class (liftEffect)
 import Effect.Exception (error)
+import Prelude (Unit, bind, pure, ($), (<$>), (<<<), (<>))
+import Web.XHR.FormData as XHRFormData
 
 type Token = String
 
@@ -80,7 +82,7 @@ postWwwUrlencoded mtoken url body = do
                           foldMap (\token ->
                             [RequestHeader "Authorization" $  "Bearer " <> token]
                           ) mtoken
-             , content  = Just $ string body
+             , content  = Just $ formURLEncoded urlEncodedBody
              }
   case affResp.body of
     Left err -> do
@@ -90,6 +92,33 @@ postWwwUrlencoded mtoken url body = do
       --_ <- liftEffect $ log json.status
       --_ <- liftEffect $ log json.headers
       --_ <- liftEffect $ log json.body
+      case decodeJson json of
+        Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
+        Right b -> pure b
+  where
+    urlEncodedBody = FormURLEncoded.fromArray [Tuple "body" (Just body)]
+
+postMultipartFormData :: forall b. DecodeJson b => Maybe Token -> String -> String -> Aff b
+postMultipartFormData mtoken url body = do
+  fd <- liftEffect $ XHRFormData.new
+  _ <- liftEffect $ XHRFormData.append (XHRFormData.EntryName "body") body fd
+  affResp <- request $ defaultRequest
+             { url = url
+             , responseFormat = ResponseFormat.json
+             , method = Left POST
+             , headers = [ ContentType multipartFormData
+                         , Accept applicationJSON
+                         ] <>
+                         foldMap (\token ->
+                           [ RequestHeader "Authorization" $ "Bearer " <> token ]
+                         ) mtoken
+             , content = Just $ formData fd
+             }
+  case affResp.body of
+    Left err -> do
+      _ <-  liftEffect $ log $ printResponseFormatError err
+      throwError $ error $ printResponseFormatError err
+    Right json -> do
       case decodeJson json of
         Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
         Right b -> pure b
