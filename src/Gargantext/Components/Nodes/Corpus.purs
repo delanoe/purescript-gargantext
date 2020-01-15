@@ -9,6 +9,7 @@ import Effect.Exception (error)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Prelude
+import Gargantext.Components.MarkdownEditor (markdownEditor)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
@@ -24,9 +25,13 @@ corpusLayoutCpt = R.staticComponent "G.P.Corpus.corpusLayout" cpt
   where
     cpt {nodeId} _ =
       H.div {}
-      [ H.iframe { src: gargMd , width: "100%", height: "100%", style: {"border-style": "none"}} []
+      [
+        markdownEditor {md, nodeId}
+        --H.iframe { src: gargMd , width: "100%", height: "100%", style: {"border-style": "none"}} []
       ]
     gargMd = "https://hackmd.iscpif.fr/g9Aah4iwQtCayIzsKQjA0Q#"
+    md = "# Hello world"
+
 newtype CorpusInfo =
   CorpusInfo
   { title        :: String
