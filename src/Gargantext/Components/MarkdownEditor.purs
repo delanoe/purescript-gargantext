@@ -1,7 +1,10 @@
 module Gargantext.Components.MarkdownEditor where
 
 import Data.Either (either, Either(..))
-import Prelude (($), (>>>), identity, pure)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (Nullable, null, toMaybe)
+import FFI.Simple ((.=))
+import Prelude (($), (>>>), bind, discard, identity, pure, unit)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Text.Markdown.SlamDown.Parser (parseMd)
@@ -28,6 +31,15 @@ markdownEditor p = R.createElement markdownEditorCpt p []
 markdownEditorCpt :: R.Component Props
 markdownEditorCpt = R.hooksComponent "G.C.MarkdownEditor" cpt
   where
-    cpt {md, nodeId} _ =
-      pure $
-      H.div {} [ H.text $ compileMd md ]
+    cpt {md, nodeId} _ = do
+      ref <- R.useRef null
+
+      R.useEffect1' md $ do
+        let mDiv = toMaybe $ R.readRef ref
+        case mDiv of
+          Nothing -> pure unit
+          Just d -> do
+            _ <- pure $ ("innerHTML" .= d) $ compileMd md
+            pure unit
+
+      pure $ H.div { ref } []
