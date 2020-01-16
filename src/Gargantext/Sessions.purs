@@ -223,7 +223,7 @@ deleteWithBody session@(Session {token}) p = REST.deleteWithBody (Just token) (t
 post :: forall a b p. EncodeJson a => DecodeJson b => ToUrl Session p => Session -> p -> a -> Aff b
 post session@(Session {token}) p = REST.post (Just token) (toUrl session p)
 
-postWwwUrlencoded :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> String -> Aff b
+postWwwUrlencoded :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> REST.FormDataParams -> Aff b
 postWwwUrlencoded session@(Session {token}) p = REST.postWwwUrlencoded (Just token) (toUrl session p)
 
 postMultipartFormData :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> String -> Aff b

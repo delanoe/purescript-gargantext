@@ -3,7 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 import Prelude (class Show, Unit, const, discard, map, pure, show, ($), (<>), bind, void)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
-import Data.Tuple (Tuple)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
@@ -169,8 +169,12 @@ instance fileUploadQueryToQuery :: ToQuery FileUploadQuery where
 
 uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff AsyncTask
 uploadFile session id fileType (UploadFileContents fileContents) =
-    postWwwUrlencoded session p fileContents
+    postWwwUrlencoded session p bodyParams
     --postMultipartFormData session p fileContents
   where
     q = FileUploadQuery { fileType: fileType }
-    p = NodeAPI Corpus (Just id) $ "add/form/async" <> Q.print (toQuery q)
+    p = NodeAPI Corpus (Just id) $ "add/file/async" <> Q.print (toQuery q)
+    bodyParams = [
+        Tuple "_wf_data" (Just fileContents)
+      , Tuple "_wf_filetype" (Just $ show fileType)
+      ]
