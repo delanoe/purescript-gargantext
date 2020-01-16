@@ -6,8 +6,15 @@
   width: 40%;
 }
 .markdown-editor .html {
+  margin-left: 25px;
+  padding-left: 25px;
   width: 60%;
-  padding-left: 10px;
+}
+.markdown-editor .html ul li {
+  list-style: disc !important;
+}
+.markdown-editor .html ol li {
+  list-style: decimal !important;
 }
 
 /*# sourceMappingURL=MarkdownEditor.css.map */
