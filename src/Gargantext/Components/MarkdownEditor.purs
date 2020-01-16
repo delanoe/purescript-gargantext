@@ -54,7 +54,9 @@ markdownEditorCpt = R.hooksComponent "G.C.MarkdownEditor" cpt
 
       pure $ H.div { className: "markdown-editor" } [
         H.div { className: "md" } [
-          H.textarea { on: {change: onChange ref editedMd} } [ H.text $ fst editedMd ]
+          H.textarea { className: "form-control"
+                     , rows: 30
+                     , on: {change: onChange ref editedMd} } [ H.text $ fst editedMd ]
         ]
       , H.div { ref, className: "html" } []
       ]
