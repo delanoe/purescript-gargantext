@@ -52,14 +52,19 @@ markdownEditorCpt = R.hooksComponent "G.C.MarkdownEditor" cpt
             _ <- pure $ (d .= "innerHTML") $ compileMd $ fst editedMd
             pure $ pure unit
 
-      pure $ H.div { className: "markdown-editor" } [
-        H.div { className: "md" } [
-          H.textarea { className: "form-control"
-                     , rows: 30
-                     , on: {change: onChange ref editedMd} } [ H.text $ fst editedMd ]
-        ]
-      , H.div { ref, className: "html" } []
-      ]
+      pure $ H.div { className: "markdown-editor" }
+                   [ H.div { className: "row"}
+                     [ H.div { className: "col-md-5" } [ H.div { ref, className: "html" } []]
+                     , H.div { className: "col-md-5" }
+                             [ H.div { className: "md" }
+                              [ H.textarea { className: "form-control"
+                                           , rows: 10
+                                           , on: {change: onChange ref editedMd}
+                                           } [ H.text $ fst editedMd ]
+                              ]
+                             ]
+                     ]
+                   ]
 
     onChange :: forall e. R.Ref (Nullable Element) -> R.State String -> e -> Effect Unit
     onChange ref (_ /\ setEditedMd) e = do
