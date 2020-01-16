@@ -69,9 +69,11 @@ deleteWithBody mtoken url = send DELETE mtoken url <<< Just
 post :: forall a b. EncodeJson a => DecodeJson b => Maybe Token -> String -> a -> Aff b
 post mtoken url = send POST mtoken url <<< Just
 
+type FormDataParams = Array (Tuple String (Maybe String))
+
 -- TODO too much duplicate code with `send`
-postWwwUrlencoded :: forall b. DecodeJson b => Maybe Token -> String -> String -> Aff b
-postWwwUrlencoded mtoken url body = do
+postWwwUrlencoded :: forall b. DecodeJson b => Maybe Token -> String -> FormDataParams -> Aff b
+postWwwUrlencoded mtoken url bodyParams = do
   affResp <- request $ defaultRequest
              { url = url
              , responseFormat = ResponseFormat.json
@@ -96,7 +98,7 @@ postWwwUrlencoded mtoken url body = do
         Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
         Right b -> pure b
   where
-    urlEncodedBody = FormURLEncoded.fromArray [Tuple "body" (Just body)]
+    urlEncodedBody = FormURLEncoded.fromArray bodyParams
 
 postMultipartFormData :: forall b. DecodeJson b => Maybe Token -> String -> String -> Aff b
 postMultipartFormData mtoken url body = do
