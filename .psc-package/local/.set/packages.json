@@ -2060,7 +2060,7 @@
     "dependencies": [
       "prelude"
     ],
-    "repo": "https://github.com/poorscript/purescript-precise",
+    "repo": "https://github.com/purescript-contrib/purescript-precise",
     "version": "master"
   },
   "prelude": {

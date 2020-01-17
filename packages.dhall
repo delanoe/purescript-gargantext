@@ -209,9 +209,8 @@ let additions =
       , precise =
           mkPackage
           [ "prelude" ]
-          {- "https://github.com/purescript-contrib/purescript-precise"
-          "v3.0.1" -}
-          "https://github.com/poorscript/purescript-precise"
+          "https://github.com/purescript-contrib/purescript-precise"
+          {- "v3.0.1" -}
           "master"
       , reactix =
           mkPackage
