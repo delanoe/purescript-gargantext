@@ -1,0 +1,31 @@
+.code-editor .toolbar {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+.code-editor .editor {
+  display: flex;
+  width: 100%;
+}
+.code-editor .editor .code {
+  flex-grow: 1;
+}
+.code-editor .editor .code code {
+  background-color: #f7f7f9;
+  color: #000;
+  display: block;
+  height: 500px;
+}
+.code-editor .editor .html {
+  flex-grow: 2;
+  margin-left: 25px;
+  padding-left: 25px;
+}
+.code-editor .editor .html ul li {
+  list-style: disc !important;
+}
+.code-editor .editor .html ol li {
+  list-style: decimal !important;
+}
+
+/*# sourceMappingURL=CodeEditor.css.map */
