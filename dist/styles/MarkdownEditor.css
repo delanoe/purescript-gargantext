@@ -1,19 +1,25 @@
-.markdown-editor {
+.code-editor {
   display: flex;
   width: 100%;
 }
-.markdown-editor .md {
+.code-editor .code {
   width: 40%;
 }
-.markdown-editor .html {
+.code-editor .code code {
+  background-color: #f7f7f9;
+  color: #000;
+  display: block;
+  height: 500px;
+}
+.code-editor .html {
   margin-left: 25px;
   padding-left: 25px;
   width: 60%;
 }
-.markdown-editor .html ul li {
+.code-editor .html ul li {
   list-style: disc !important;
 }
-.markdown-editor .html ol li {
+.code-editor .html ol li {
   list-style: decimal !important;
 }
 

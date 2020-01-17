@@ -4,12 +4,13 @@ import Prelude ((<<<))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array (head)
 import Data.Maybe (Maybe(..))
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Prelude
-import Gargantext.Components.MarkdownEditor (markdownEditor)
+import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
@@ -26,11 +27,13 @@ corpusLayoutCpt = R.staticComponent "G.P.Corpus.corpusLayout" cpt
     cpt {nodeId} _ =
       H.div {}
       [
-        markdownEditor {md, nodeId}
+        CE.codeEditor {code, codeType: CE.Markdown, onChange}
         --H.iframe { src: gargMd , width: "100%", height: "100%", style: {"border-style": "none"}} []
       ]
     gargMd = "https://hackmd.iscpif.fr/g9Aah4iwQtCayIzsKQjA0Q#"
-    md = "# Hello world"
+    code = "# Hello world\n\n## subtitle\n\n- item 1\n- item 2\n\n1. num 1\n2. num 2\n\n[purescript link](https://purescript.org)"
+    onChange c = do
+      log2 "[corpusLayoutCpt] c" c
 
 newtype CorpusInfo =
   CorpusInfo

@@ -16,7 +16,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Effect.Uncurried (EffectFn1, runEffectFn1, mkEffectFn1, mkEffectFn2)
+import Effect.Uncurried (EffectFn1, runEffectFn1, mkEffectFn1, EffectFn2, runEffectFn2, mkEffectFn2)
 import FFI.Simple ((..), (...), defineProperty, delay, args2, args3)
 import Partial.Unsafe (unsafePartial)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
@@ -232,3 +232,13 @@ row children = H.div { className: "row" } children
 
 col12 :: Array R.Element -> R.Element
 col12 children = H.div { className: "col-md-12" } children
+
+innerText :: DOM.Element -> String
+innerText e = e .. "innerText"
+
+foreign import data Selection :: Type
+
+getSelection :: Unit -> Effect Selection
+getSelection = runEffectFn1 _getSelection
+
+foreign import _getSelection :: EffectFn1 Unit Selection

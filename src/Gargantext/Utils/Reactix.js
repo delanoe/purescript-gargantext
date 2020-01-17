@@ -7,4 +7,9 @@ function addRootElement(rootElem) {
   );
 }
 
+function getSelection(_u) {
+  return window.getSelection();
+}
+
 exports._addRootElement = addRootElement;
+exports._getSelection = getSelection;
