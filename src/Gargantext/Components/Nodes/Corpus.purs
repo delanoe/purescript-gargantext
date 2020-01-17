@@ -28,7 +28,7 @@ corpusLayoutCpt = R.hooksComponent "G.P.Corpus.corpusLayout" cpt
     cpt {nodeId} _ = do
       pure $ H.div {}
         [
-          CE.codeEditor {code, codeType: CE.Markdown, onChange}
+          CE.codeEditor {code, defaultCodeType: CE.Markdown, onChange}
           --H.iframe { src: gargMd , width: "100%", height: "100%", style: {"border-style": "none"}} []
         ]
     --gargMd = "https://hackmd.iscpif.fr/g9Aah4iwQtCayIzsKQjA0Q#"
