@@ -1,16 +1,16 @@
 module Gargantext.Components.Forest where
 
-import Prelude (const, pure, ($), (<$>))
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested((/\))
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Data.Tuple.Nested ((/\))
+import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, unSessions)
-import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Utils.Reactix as R2
+import Prelude (const, pure, ($), (<$>))
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 type Props =
   ( frontends :: Frontends
@@ -24,7 +24,7 @@ forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
 forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
-  cpt {frontends, route, sessions, showLogin} _ = R2.useCache (frontends /\ route /\ sessions) (cpt' showLogin)
+  cpt {frontends, route, sessions, showLogin } _ = R2.useCache (frontends /\ route /\ sessions) (cpt' showLogin)
   cpt' showLogin (frontends /\ route /\ sessions) =
     pure $ R.fragment $ A.cons (plus showLogin) trees
     where

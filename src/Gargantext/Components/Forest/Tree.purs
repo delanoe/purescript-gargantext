@@ -1,25 +1,28 @@
 module Gargantext.Components.Forest.Tree where
 
-import Data.Array as A
+import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Prelude
+
 import DOM.Simple.Console (log2)
+import Data.Array as A
 import Data.Maybe (Maybe)
--- import Data.Newtype (class Newtype)
+import Data.Set (Set)
+import Data.Set as Set
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
-
-import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
-import Gargantext.Ends (Frontends)
 import Gargantext.Components.Loader (loader)
+import Gargantext.Components.Login.Types (TreeId)
+import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (AsyncTask(..))
+import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 ------------------------------------------------------------------------
 type Props = ( root          :: ID
@@ -34,34 +37,44 @@ treeView props = R.createElement treeViewCpt props []
 treeViewCpt :: R.Component Props
 treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
   where
-    cpt props _children = do
+    cpt { root, mCurrentRoute, session, frontends } _children = do
       -- NOTE: this is a hack to reload the tree view on demand
       reload <- R.useState' (0 :: Reload)
-      pure $ treeLoadView reload props
+      openNodes <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: Set TreeId)
+      pure $ treeLoadView reload
+        { root, mCurrentRoute, session, frontends, openNodes }
 
-treeLoadView :: R.State Reload -> Record Props -> R.Element
+type Props' = ( root          :: ID
+              , mCurrentRoute :: Maybe AppRoute
+              , session       :: Session
+              , frontends     :: Frontends
+              , openNodes     :: R.State (Set TreeId)
+              )
+
+treeLoadView :: R.State Reload -> Record Props' -> R.Element
 treeLoadView reload p = R.createElement el p []
   where
     el = R.staticComponent "TreeLoadView" cpt
-    cpt {root, mCurrentRoute, session, frontends} _ = do
+    cpt {root, mCurrentRoute, session, frontends, openNodes} _ = do
       loader root (loadNode session) $ \loaded ->
-        loadedTreeView reload {tree: loaded, mCurrentRoute, session, frontends}
+        loadedTreeView reload {tree: loaded, mCurrentRoute, session, frontends, openNodes}
 
 type TreeViewProps = ( tree          :: FTree
                      , mCurrentRoute :: Maybe AppRoute
                      , frontends     :: Frontends
                      , session       :: Session 
+                     , openNodes     :: R.State (Set TreeId)
                      )
 
 loadedTreeView :: R.State Reload -> Record TreeViewProps -> R.Element
 loadedTreeView reload p = R.createElement el p []
   where
     el = R.hooksComponent "LoadedTreeView" cpt
-    cpt {tree, mCurrentRoute, session, frontends} _ = do
+    cpt {tree, mCurrentRoute, session, frontends, openNodes} _ = do
       treeState <- R.useState' {tree, asyncTasks: []}
 
       pure $ H.div {className: "tree"}
-        [ toHtml reload treeState session frontends mCurrentRoute ]
+        [ toHtml reload treeState session frontends mCurrentRoute openNodes ]
 
 ------------------------------------------------------------------------
 toHtml :: R.State Reload
@@ -69,14 +82,18 @@ toHtml :: R.State Reload
        -> Session
        -> Frontends
        -> Maybe AppRoute
+       -> R.State (Set TreeId)
        -> R.Element
-toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asyncTasks} /\ setTreeState) session frontends mCurrentRoute = R.createElement el {} []
+toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asyncTasks} /\ setTreeState) session frontends mCurrentRoute openNodes = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     pAction = performAction session reload treeState
 
     cpt props _ = do
-      folderOpen <- R.useState' true
+      let folderIsOpen = Set.member id (fst openNodes)
+      let setFn = if folderIsOpen then Set.delete else Set.insert
+      let toggleFolderIsOpen _ = (snd openNodes) (setFn id)
+      let folderOpen = Tuple folderIsOpen toggleFolderIsOpen
 
       let withId (NTree (LNode {id: id'}) _) = id'
 
@@ -89,7 +106,7 @@ toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asy
                                    , nodeType
                                    , onAsyncTaskFinish
                                    } folderOpen session frontends ]
-            <> childNodes session frontends reload folderOpen mCurrentRoute ary
+            <> childNodes session frontends reload folderOpen mCurrentRoute openNodes ary
           )
         ]
 
@@ -103,11 +120,12 @@ childNodes :: Session
            -> R.State Reload
            -> R.State Boolean
            -> Maybe AppRoute
+           -> R.State (Set TreeId)
            -> Array FTree
            -> Array R.Element
-childNodes _ _ _ _ _ [] = []
-childNodes _ _ _ (false /\ _) _ _ = []
-childNodes session frontends reload (true /\ _) mCurrentRoute ary =
+childNodes _ _ _ _ _ _ [] = []
+childNodes _ _ _ (false /\ _) _ _ _ = []
+childNodes session frontends reload (true /\ _) mCurrentRoute openNodes ary =
   map (\ctree -> childNode {tree: ctree, asyncTasks: []}) $ sorted ary
     where
       sorted :: Array FTree -> Array FTree
@@ -117,8 +135,7 @@ childNodes session frontends reload (true /\ _) mCurrentRoute ary =
       el = R.hooksComponent "ChildNodeView" cpt
       cpt {tree, asyncTasks} _ = do
         treeState <- R.useState' {tree, asyncTasks}
-        pure $ toHtml reload treeState session frontends mCurrentRoute
-
+        pure $ toHtml reload treeState session frontends mCurrentRoute openNodes
 
 performAction :: Session
               -> R.State Int

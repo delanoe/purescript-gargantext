@@ -2,6 +2,7 @@ module Gargantext.Components.GraphExplorer where
 
 import Gargantext.Prelude hiding (max,min)
 
+import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
@@ -12,13 +13,7 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
-import Math (log)
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
@@ -35,6 +30,10 @@ import Gargantext.Sessions (Session, Sessions, get)
 import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
+import Math (log)
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as RH
 
 type GraphId = Int
 
@@ -70,7 +69,7 @@ explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
     el = R.hooksComponent "G.C.GE.explorerLayoutView" cpt
-    cpt {frontends, graphId, mCurrentRoute, session, sessions, showLogin} _ = do
+    cpt {frontends, graphId, mCurrentRoute, session, sessions, showLogin } _ = do
       useLoader graphId (getNodes session graphVersion) handler
       where
         handler loaded =
@@ -82,7 +81,7 @@ explorerLayoutView graphVersion p = R.createElement el p []
                    , mMetaData
                    , session
                    , sessions
-                   , showLogin}
+                   , showLogin }
           where (Tuple mMetaData graph) = convert loaded
 
 --------------------------------------------------------------
@@ -92,7 +91,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt {frontends, graph, graphId, graphVersion, mCurrentRoute, mMetaData, session, sessions, showLogin} _ = do
+    cpt {frontends, graph, graphId, graphVersion, mCurrentRoute, mMetaData, session, sessions, showLogin } _ = do
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef <- R.useRef (fst graphVersion)
@@ -167,7 +166,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
          -> R.Element
     tree false _ _ = RH.div { id: "tree" } []
     tree true {sessions, mCurrentRoute: route, frontends} showLogin =
-      RH.div {className: "col-md-2 graph-tree"} [forest {sessions, route, frontends, showLogin}]
+      RH.div {className: "col-md-2 graph-tree"} [forest {sessions, route, frontends, showLogin }]
 
     mSidebar :: Maybe GET.MetaData
              -> { frontends :: Frontends
