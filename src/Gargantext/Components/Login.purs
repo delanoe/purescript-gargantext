@@ -204,7 +204,7 @@ termsLink _ =
 requestAccessLink :: {} -> R.Element
 requestAccessLink _ =
   H.a { target: "_blank", href: applyUrl } [ H.text " request access" ]
-  where applyUrl = "https://iscpif.fr/services/applyforourservices/"
+  where applyUrl = "https://iscpif.fr/apply-for-a-services-account/"
 
 usernameInput :: R.State String -> R.Element
 usernameInput username =
