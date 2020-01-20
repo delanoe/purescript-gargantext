@@ -6,7 +6,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Timer (setTimeout)
 import Math (min)
 import Partial.Unsafe (unsafePartial)
-import Prelude ((+), ($), (<>), (<<<), pure, bind, discard, unit, show)
+import Prelude (bind, discard, pure, show, unit, ($), (+), (<>))
 import Reactix as R
 import Reactix.DOM.HTML as H
 

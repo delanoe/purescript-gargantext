@@ -2,22 +2,22 @@ module Gargantext.Components.CodeEditor where
 
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (either, Either(..))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
-import Data.Tuple (fst, snd)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
 import Effect (Effect)
 import FFI.Simple ((.=), delay)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Text.Markdown.SlamDown.Parser (parseMd)
 import Text.Markdown.SlamDown.Smolder as MD
-import Text.Markdown.SlamDown.Syntax (SlamDownP(..))
+import Text.Markdown.SlamDown.Syntax (SlamDownP)
 import Text.Smolder.Renderer.String (render)
 
 import Gargantext.Prelude
@@ -113,6 +113,7 @@ codeEditorCpt = R.hooksComponent "G.C.CodeEditor" cpt
                      , on: { input: onEditChange (fst codeType) codeRef htmlRef editorCodeRef error }
                      } []
               ]
+           , H.div { className: "v-divider " <> (dividerHidden $ fst viewType) } [ H.text " " ]
            , H.div { ref: htmlRef, className: "html " <> (previewHidden $ fst viewType) } []
            ]
         ]
@@ -121,6 +122,10 @@ codeEditorCpt = R.hooksComponent "G.C.CodeEditor" cpt
     codeHidden Code = ""
     codeHidden Both = ""
     codeHidden _ = "hidden"
+
+    dividerHidden :: ViewType -> String
+    dividerHidden Both = ""
+    dividerHidden _ = "hidden"
 
     previewHidden :: ViewType -> String
     previewHidden Preview = ""
