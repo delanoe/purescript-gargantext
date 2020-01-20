@@ -4,6 +4,7 @@
         "rebuild-set": "spago psc-package-insdhall",
         "install-ps": "psc-package install",
         "compile": "pulp --psc-package build",
+        "prebuild": "yarn compile",
         "build": "pulp --psc-package browserify -t dist/bundle.js",
         "sass": "sass dist/styles/",
         "predev": "yarn prestart",
