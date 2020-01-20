@@ -5,12 +5,14 @@ import Gargantext.Prelude
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import Effect.Timer (setTimeout)
 import Gargantext.Components.Forest.Tree.Node.Action (ID)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (AsyncTask(..), NodeType(..))
+import Gargantext.Types (AsyncTask(..), AsyncProgress(..), NodeType(..))
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -36,7 +38,8 @@ asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.asyncProgressBar" cpt
       R.useEffect' $ do
         _ <- setTimeout 1000 $ do
           launchAff_ $ do
-            queryProgress props
+            progress <- queryProgress props
+            liftEffect $ log2 "[asyncProgressBarCpt] progress" progress
           setProgress \p -> min 100.0 (p + 10.0)
         pure unit
 
@@ -52,7 +55,7 @@ asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.asyncProgressBar" cpt
     toInt :: Number -> Int
     toInt n = unsafePartial $ fromJust $ fromNumber n
 
-queryProgress :: Record Props -> Aff Unit
+queryProgress :: Record Props -> Aff AsyncProgress
 queryProgress {asyncTask: AsyncTask {id}, corpusId, session} = get session p
   where
-    p = NodeAPI Corpus (Just corpusId) $ "add/form/async/" <> id <> "/poll"
+    p = NodeAPI Corpus (Just corpusId) $ "add/form/async/" <> id <> "/poll?limit=1"
