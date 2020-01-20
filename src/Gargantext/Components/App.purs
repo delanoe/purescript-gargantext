@@ -44,7 +44,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
   cpt _ _ = do
     sessions   <- useSessions
     route      <- useHashRouter router Home
-    
+
     showLogin  <- R.useState' false
     showCorpus <- R.useState' false
     

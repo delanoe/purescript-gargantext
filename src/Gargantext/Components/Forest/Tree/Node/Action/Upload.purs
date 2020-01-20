@@ -1,6 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Prelude (class Show, Unit, const, discard, map, pure, show, ($), (<>), bind, void)
+import Prelude (class Show, Unit, bind, const, discard, map, pure, show, void, ($))
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple(..))
@@ -12,13 +12,12 @@ import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as QP
-import URI.Query as Q
 import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, postWwwUrlencoded, postMultipartFormData)
-import Gargantext.Types (class ToQuery, toQuery, NodeType(..), AsyncTask(..))
+import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Types (class ToQuery, AsyncTask, NodeType(..))
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 

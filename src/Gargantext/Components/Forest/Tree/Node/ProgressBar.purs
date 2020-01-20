@@ -1,23 +1,26 @@
 module Gargantext.Components.Forest.Tree.Node.ProgressBar where
 
+import Gargantext.Prelude
+
 import Data.Int (fromNumber)
-import Data.Maybe (fromJust)
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Tuple.Nested ((/\))
+import Effect.Aff (Aff, launchAff_)
 import Effect.Timer (setTimeout)
-import Math (min)
+import Gargantext.Components.Forest.Tree.Node.Action (ID)
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session, get)
+import Gargantext.Types (AsyncTask(..), NodeType(..))
 import Partial.Unsafe (unsafePartial)
-import Prelude ((+), ($), (<>), (<<<), pure, bind, discard, unit, show)
 import Reactix as R
 import Reactix.DOM.HTML as H
-
-import Gargantext.Components.Forest.Tree.Node.Action (ID)
-import Gargantext.Types (AsyncTask(..))
 
 
 type Props =
   (
     asyncTask :: AsyncTask
   , corpusId  :: ID
+  , session   :: Session
   )
 
 
@@ -27,11 +30,13 @@ asyncProgressBar p = R.createElement asyncProgressBarCpt p []
 asyncProgressBarCpt :: R.Component Props
 asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.asyncProgressBar" cpt
   where
-    cpt {asyncTask: (AsyncTask {id}), corpusId} _ = do
+    cpt props@{asyncTask: (AsyncTask {id}), corpusId} _ = do
       (progress /\ setProgress) <- R.useState' 0.0
 
       R.useEffect' $ do
         _ <- setTimeout 1000 $ do
+          launchAff_ $ do
+            queryProgress props
           setProgress \p -> min 100.0 (p + 10.0)
         pure unit
 
@@ -46,3 +51,8 @@ asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.asyncProgressBar" cpt
 
     toInt :: Number -> Int
     toInt n = unsafePartial $ fromJust $ fromNumber n
+
+queryProgress :: Record Props -> Aff Unit
+queryProgress {asyncTask: AsyncTask {id}, corpusId, session} = get session p
+  where
+    p = NodeAPI Corpus (Just corpusId) $ "add/form/async/" <> id <> "/poll"

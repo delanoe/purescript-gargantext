@@ -67,7 +67,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
         , popOverIcon showBox popupOpen popupPosition
         , mNodePopupView props showBox popupOpen popupPosition
         , fileTypeView   d {id, nodeType} droppedFile isDragOver
-        , H.div {} (map (\t -> asyncProgressBar {corpusId: id, asyncTask: t}) asyncTasks)
+        , H.div {} (map (\t -> asyncProgressBar {asyncTask: t, corpusId: id, session}) asyncTasks)
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType

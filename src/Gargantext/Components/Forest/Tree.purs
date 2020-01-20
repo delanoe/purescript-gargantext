@@ -56,7 +56,7 @@ loadedTreeView reload p = R.createElement el p []
   where
     el = R.hooksComponent "LoadedTreeView" cpt
     cpt {tree, mCurrentRoute, session, frontends} _ = do
-      treeState <- R.useState' {tree, asyncTasks: [AsyncTask {id: "1hello", status: "pending"}]}
+      treeState <- R.useState' {tree, asyncTasks: []}
 
       pure $ H.div {className: "tree"}
         [ toHtml reload treeState session frontends mCurrentRoute ]
