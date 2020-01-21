@@ -174,7 +174,7 @@ uploadFile session id fileType (UploadFileContents fileContents) =
   where
     q = FileUploadQuery { fileType: fileType }
     --p = NodeAPI Corpus (Just id) $ "add/file/async/nobody" <> Q.print (toQuery q)
-    p = NodeAPI Corpus (Just id) $ "add/form/async/nobody" -- <> Q.print (toQuery q)
+    p = NodeAPI Corpus (Just id) $ "add/form/async" -- <> Q.print (toQuery q)
     bodyParams = [
         Tuple "_wf_data" (Just fileContents)
       , Tuple "_wf_filetype" (Just $ show fileType)
