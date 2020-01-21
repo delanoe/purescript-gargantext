@@ -7,6 +7,11 @@ import Data.Maybe (Maybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
+
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
@@ -15,9 +20,6 @@ import Gargantext.Components.Loader (loader)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (AsyncTask(..))
-import Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 ------------------------------------------------------------------------
 type Props = ( root          :: ID
@@ -68,7 +70,7 @@ toHtml :: R.State Reload
        -> Frontends
        -> Maybe AppRoute
        -> R.Element
-toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary), asyncTasks} /\ _) session frontends mCurrentRoute = R.createElement el {} []
+toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asyncTasks} /\ setTreeState) session frontends mCurrentRoute = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     pAction = performAction session reload treeState
@@ -80,10 +82,20 @@ toHtml reload treeState@({tree: (NTree (LNode {id, name, nodeType}) ary), asyncT
 
       pure $ H.ul {}
         [ H.li {}
-          ( [ nodeMainSpan pAction {id, asyncTasks, name, nodeType, mCurrentRoute} folderOpen session frontends ]
+          ( [ nodeMainSpan pAction { id
+                                   , asyncTasks
+                                   , mCurrentRoute
+                                   , name
+                                   , nodeType
+                                   , onAsyncTaskFinish
+                                   } folderOpen session frontends ]
             <> childNodes session frontends reload folderOpen mCurrentRoute ary
           )
         ]
+
+    onAsyncTaskFinish (AsyncTask {id}) = setTreeState $ const $ ts { asyncTasks = newAsyncTasks }
+      where
+        newAsyncTasks = A.filter (\(AsyncTask {id: id'}) -> id /= id') asyncTasks
 
 
 childNodes :: Session

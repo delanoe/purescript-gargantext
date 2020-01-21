@@ -6,7 +6,6 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import URI.Query (Query)
@@ -440,16 +439,20 @@ modeFromString _ = Nothing
 
 type AsyncTaskID = String
 
-data AsyncTaskStatus = IsRunning
+data AsyncTaskStatus = Running | Failed | Finished | Killed
 derive instance genericAsyncTaskStatus :: Generic AsyncTaskStatus _
+derive instance eqAsyncTaskStatus :: Eq AsyncTaskStatus
 instance decodeJsonAsyncTaskStatus :: DecodeJson AsyncTaskStatus where
   decodeJson json = do
     obj <- decodeJson json
     pure $ readAsyncTaskStatus obj
 
 readAsyncTaskStatus :: String -> AsyncTaskStatus
-readAsyncTaskStatus "IsRunning" = IsRunning
-readAsyncTaskStatus _ = IsRunning
+readAsyncTaskStatus "failed"   = Failed
+readAsyncTaskStatus "finished" = Finished
+readAsyncTaskStatus "killed"   = Killed
+readAsyncTaskStatus "running"  = Running
+readAsyncTaskStatus _ = Running
 
 newtype AsyncTask = AsyncTask {
     id :: AsyncTaskID
@@ -495,11 +498,11 @@ instance decodeJsonAsyncTaskLog :: DecodeJson AsyncTaskLog where
     pure $ AsyncTaskLog {events, failed, remaining, succeeded}
 
 progressPercent :: AsyncProgress -> Number
-progressPercent (AsyncProgress {log}) = nom/denom
+progressPercent (AsyncProgress {log}) = perc
   where
-    Tuple nom denom = case A.head log of
-      Nothing -> Tuple 0.0 1.0
-      Just (AsyncTaskLog {failed, remaining, succeeded}) -> Tuple nom_ denom_
+    perc = case A.head log of
+      Nothing -> 0.0
+      Just (AsyncTaskLog {failed, remaining, succeeded}) -> 100.0*nom/denom
         where
-          nom_ = toNumber $ failed + succeeded
-          denom_ = toNumber $ failed + succeeded + remaining
+          nom = toNumber $ failed + succeeded
+          denom = toNumber $ failed + succeeded + remaining

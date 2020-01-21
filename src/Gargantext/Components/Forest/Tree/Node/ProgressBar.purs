@@ -5,14 +5,14 @@ import Gargantext.Prelude
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
+import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Effect.Timer (setTimeout)
+import Effect.Timer (clearInterval, setInterval)
 import Gargantext.Components.Forest.Tree.Node.Action (ID)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (AsyncTask(..), AsyncProgress(..), NodeType(..))
+import Gargantext.Types (AsyncProgress(..), AsyncTask(..), AsyncTaskStatus(..), NodeType(..), progressPercent)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -22,6 +22,7 @@ type Props =
   (
     asyncTask :: AsyncTask
   , corpusId  :: ID
+  , onFinish  :: Unit -> Effect Unit
   , session   :: Session
   )
 
@@ -32,15 +33,26 @@ asyncProgressBar p = R.createElement asyncProgressBarCpt p []
 asyncProgressBarCpt :: R.Component Props
 asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.asyncProgressBar" cpt
   where
-    cpt props@{asyncTask: (AsyncTask {id}), corpusId} _ = do
+    cpt props@{asyncTask: (AsyncTask {id}), corpusId, onFinish} _ = do
       (progress /\ setProgress) <- R.useState' 0.0
+      intervalIdRef <- R.useRef Nothing
 
-      R.useEffect' $ do
-        _ <- setTimeout 1000 $ do
+      R.useEffectOnce' $ do
+        intervalId <- setInterval 1000 $ do
           launchAff_ $ do
-            progress <- queryProgress props
-            liftEffect $ log2 "[asyncProgressBarCpt] progress" progress
-          setProgress \p -> min 100.0 (p + 10.0)
+            asyncProgress@(AsyncProgress {status}) <- queryProgress props
+            liftEffect do
+              setProgress \p -> min 100.0 $ progressPercent asyncProgress
+              if (status == Finished) || (status == Killed) || (status == Failed) then do
+                _ <- case R.readRef intervalIdRef of
+                  Nothing -> pure unit
+                  Just iid -> clearInterval iid
+                onFinish unit
+              else
+                pure unit
+
+        R.setRef intervalIdRef $ Just intervalId
+
         pure unit
 
 
