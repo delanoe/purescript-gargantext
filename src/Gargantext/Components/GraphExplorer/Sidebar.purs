@@ -5,7 +5,7 @@ module Gargantext.Components.GraphExplorer.Sidebar
 import Prelude
 
 import Control.Parallel (parTraverse)
-import Data.Array (head, last)
+import Data.Array (last, uncons)
 import Data.Int (fromString)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
@@ -143,14 +143,37 @@ neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selected
     selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 deleteNodes :: TermList -> Session -> GET.MetaData -> R.State Int -> Array (Record SigmaxT.Node) -> Effect Unit
-deleteNodes termList session metaData (_ /\ setGraphVersion) nodes = do
+deleteNodes termList session (GET.MetaData metaData) (_ /\ setGraphVersion) nodes = do
   launchAff_ do
-    patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
-    let mPatch = last patches
-    case mPatch of
-      Nothing -> pure unit
-      Just (NTC.Versioned patch) -> pure unit --liftEffect do
-        --setGraphVersion $ const $ patch.version
+    patch <- NTC.putNgramsPatches coreParams versioned
+    where
+      patches :: NTC.NgramsPatches
+      patches = ngramsPatches termList nodes
+      versioned :: NTC.VersionedNgramsPatches
+      versioned = NTC.Versioned {version: metaData.list.version, data: patches}
+
+    -- patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
+    -- let mPatch = last patches
+    -- case mPatch of
+    --   Nothing -> pure unit
+    --   Just (NTC.Versioned patch) -> pure unit --liftEffect do
+    --     --setGraphVersion $ const $ patch.version
+
+ngramsPatches :: TermList -> Array (Record SigmaxT.Node) -> NTC.NgramsPatches
+ngramsPatches termList nodes =
+  case uncons nodes of
+    Nothing -> mempty
+    Just {head: node, tail} -> np <> (ngramsPatches termList tail)
+      where
+        np :: NTC.NgramsPatches
+        np = NTC.singletonPatchMap term $ NTC.NgramsPatch { patch_children: mempty, patch_list }
+        term :: NTC.NgramsTerm
+        term = NTC.normNgram tabNgramType node.label
+        tabNgramType :: CTabNgramType
+        tabNgramType = modeTabType node.gargType
+        patch_list :: NTC.Replace TermList
+        patch_list = NTC.Replace { new: termList, old: GraphTerm }
+
 
 deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxT.Node -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches coreParams versioned
