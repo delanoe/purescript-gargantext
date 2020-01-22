@@ -10,6 +10,15 @@
   text-rendering: inherit
   text-transform: inherit
 
+@mixin common-overlay-props()
+  box-sizing: inherit
+  display: inherit
+  margin: 0px
+  padding: 10px
+  overflow-wrap: break-word
+  white-space: pre-wrap
+  word-break: keep-all
+
 .code-editor
   .toolbar
     display: flex
@@ -18,37 +27,42 @@
   .editor
     display: flex
     width: 100%
-    .code
+    .code-area
       flex-grow: 1
-      height: 500px
-      position: relative
-      font-family: Fira code,Fira Mono,Consolas,Menlo,Courier,monospace
-      font-size: 12px
-      font-variant-ligatures: common-ligatures
-      line-height: 1.5
-      textarea
-        border: 0px
-        margin: 0px
-        padding: 10px
-        position: absolute
-        left: 0px
-        top: 0px
-        resize: none
-        height: 100%
-        width: 100%
-        overflow: hidden
-        -webkit-text-fill-color: transparent
-        @include font-inherit()
-      code
-        background: rgba(0, 0, 0, 0) none repeat scroll 0% 0%
-        border: 0px none
-        margin: 0px
-        padding: 10px
-        color: #000
-        display: block
-        pointer-events: none
+      max-height: 200px
+      overflow: auto
+      .code-container
+        background-color: #fafafa
+        box-sizing: border-box
         position: relative
-        @include font-inherit()
+        font-family: Fira code,Fira Mono,Consolas,Menlo,Courier,monospace
+        font-size: 12px
+        font-variant-ligatures: common-ligatures
+        line-height: 1.5
+        overflow: hidden
+        padding: 0px
+        text-align: left
+        textarea
+          border: 0px
+          color: inherit
+          position: absolute
+          left: 0px
+          top: 0px
+          resize: none
+          height: 100%
+          overflow: hidden
+          width: 100%
+          -webkit-text-fill-color: transparent
+          @include common-overlay-props()
+          @include font-inherit()
+        pre
+          background: rgba(0, 0, 0, 0) none repeat scroll 0% 0%
+          border: 0px none
+          color: #000
+          pointer-events: none
+          position: relative
+          @include common-overlay-props()
+          @include font-inherit()
     .v-divider
       border-left: 1px solid gray
       cursor: sw-resize

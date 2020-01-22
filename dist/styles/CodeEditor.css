@@ -7,27 +7,41 @@
   display: flex;
   width: 100%;
 }
-.code-editor .editor .code {
+.code-editor .editor .code-area {
   flex-grow: 1;
-  height: 500px;
+  max-height: 200px;
+  overflow: auto;
+}
+.code-editor .editor .code-area .code-container {
+  background-color: #fafafa;
+  box-sizing: border-box;
   position: relative;
   font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
   font-size: 12px;
   font-variant-ligatures: common-ligatures;
   line-height: 1.5;
+  overflow: hidden;
+  padding: 0px;
+  text-align: left;
 }
-.code-editor .editor .code textarea {
+.code-editor .editor .code-area .code-container textarea {
   border: 0px;
-  margin: 0px;
-  padding: 10px;
+  color: inherit;
   position: absolute;
   left: 0px;
   top: 0px;
   resize: none;
   height: 100%;
-  width: 100%;
   overflow: hidden;
+  width: 100%;
   -webkit-text-fill-color: transparent;
+  box-sizing: inherit;
+  display: inherit;
+  margin: 0px;
+  padding: 10px;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: keep-all;
   font-family: inherit;
   font-size: inherit;
   font-style: inherit;
@@ -39,15 +53,19 @@
   text-rendering: inherit;
   text-transform: inherit;
 }
-.code-editor .editor .code code {
+.code-editor .editor .code-area .code-container pre {
   background: rgba(0, 0, 0, 0) none repeat scroll 0% 0%;
   border: 0px none;
-  margin: 0px;
-  padding: 10px;
   color: #000;
-  display: block;
   pointer-events: none;
   position: relative;
+  box-sizing: inherit;
+  display: inherit;
+  margin: 0px;
+  padding: 10px;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: keep-all;
   font-family: inherit;
   font-size: inherit;
   font-style: inherit;

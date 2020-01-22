@@ -7,9 +7,9 @@ import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
+import Data.String.Utils (endsWith)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
 import Effect (Effect)
 import FFI.Simple ((.=), delay)
@@ -48,14 +48,21 @@ type Props =
   , onChange :: String -> Effect Unit
   )
 
+-- Fixes newlines in code
+-- This is useful eg for proper rendering of the textarea overlay
+codeNlFix :: CodeType -> Code -> Code
+codeNlFix Markdown "" = " "
+codeNlFix Markdown c = if endsWith "\n" c then (c <> " ") else c
+codeNlFix _ c = c
+
 compile :: CodeType -> Code -> Either Error Html
 compile JSON code = result
   where
     parsedE = jsonParser code
     result = case parsedE of
       Left err -> Left err
-      Right parsed -> Right $ "<pre>" <> (R2.stringify parsed 2) <> "</pre>"
-compile Markdown code = Right $ compileMd code
+      Right parsed -> Right $ R2.stringify parsed 2
+compile Markdown code = Right $ compileMd $ codeNlFix Markdown code
 
 -- TODO Replace with markdown-it?
 -- https://pursuit.purescript.org/packages/purescript-markdown-it
@@ -91,13 +98,8 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
         pure $ pure unit
 
       R.useEffectOnce $ delay unit $ \_ -> do
-        let mCodeOverlayEl = toMaybe $ R.readRef controls.codeOverlayElRef
-        case mCodeOverlayEl of
-          Nothing -> pure $ pure unit
-          Just codeOverlayEl -> do
-            _ <- pure $ (codeOverlayEl .= "innerText") code
-            HLJS.highlightBlock codeOverlayEl
-            pure $ pure unit
+        _ <- setCodeOverlay controls code
+        pure $ pure unit
 
       pure $ H.div { className: "code-editor" } [
           toolbar controls
@@ -105,17 +107,20 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
            errorComponent {error: controls.error}
         ]
         , H.div { className: "row editor" } [
-           H.div { className: "code " <> (codeHidden $ fst controls.viewType) } [
-              H.textarea { defaultValue: code
-                         , on: { change: onEditChange controls }
-                         , ref: controls.codeElRef } [ ]
-            , H.code { className: ""
-                     -- , contentEditable: "true"
-                     , ref: controls.codeOverlayElRef
-                     , rows: 30
-                     --, on: { input: onEditChange (fst codeType) codeElRef htmlRef editorCodeRef error }
-                     } []
-              ]
+           H.div { className: "code-area " <> (codeHidden $ fst controls.viewType) } [
+             H.div { className: "code-container" } [
+               H.textarea { defaultValue: code
+                          , on: { change: onEditChange controls }
+                          , placeholder: "Type some code..."
+                          , ref: controls.codeElRef } [ ]
+               , H.pre  { className: ""
+                          -- , contentEditable: "true"
+                        , ref: controls.codeOverlayElRef
+                        , rows: 30
+                          --, on: { input: onEditChange (fst codeType) codeElRef htmlRef editorCodeRef error }
+                        } []
+               ]
+             ]
            , H.div { className: "v-divider " <> (dividerHidden $ fst controls.viewType) } [ H.text " " ]
            , H.div { className: "html " <> (previewHidden $ fst controls.viewType)
                    , ref: controls.htmlElRef
@@ -139,22 +144,21 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
 
     onEditChange :: forall e. Record Controls -> e -> Effect Unit
     onEditChange controls@{codeElRef, codeOverlayElRef, editorCodeRef} e = do
-      log2 "[onChange] e" e
-      let mCodeOverlayEl = toMaybe $ R.readRef codeOverlayElRef
-      case mCodeOverlayEl of
-        Nothing -> log "[onChange] mCodeOverlayEl = Nothing"
-        Just codeOverlayEl -> do
-          --R.setRef editorCodeRef $ R2.innerText codeOverlayEl
-          let code = R2.unsafeEventValue e
-          R.setRef editorCodeRef code
-          _ <- case (toMaybe $ R.readRef codeElRef) of
-            Nothing -> pure unit
-            Just codeEl -> do
-              _ <- pure $ (codeOverlayEl .= "innerText") code
-              HLJS.highlightBlock codeOverlayEl
-              pure unit
-          pure unit
+      let code = R2.unsafeEventValue e
+      R.setRef editorCodeRef code
+      setCodeOverlay controls code
       renderHtml (R.readRef controls.editorCodeRef) controls
+
+setCodeOverlay :: Record Controls -> Code -> Effect Unit
+setCodeOverlay {codeOverlayElRef, codeType: (codeType /\ _)} code = do
+  let mCodeOverlayEl = toMaybe $ R.readRef codeOverlayElRef
+  _ <- case mCodeOverlayEl of
+    Nothing -> pure unit
+    Just codeOverlayEl -> do
+      _ <- pure $ (codeOverlayEl .= "innerText") $ codeNlFix codeType code
+      HLJS.highlightBlock codeOverlayEl
+      pure unit
+  pure unit
 
 renderHtml :: Code -> Record Controls -> Effect Unit
 renderHtml code {codeType: (codeType /\ _), htmlElRef, error: (_ /\ setError)} =

@@ -20,7 +20,7 @@ import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (NodeType(..), NodePath(..), fldr, AsyncTask(..))
+import Gargantext.Types (AsyncTask, NodePath(..), NodeType(..), fldr)
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
 import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<>), (==), (-), (+))
