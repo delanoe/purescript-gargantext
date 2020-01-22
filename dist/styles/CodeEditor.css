@@ -9,12 +9,55 @@
 }
 .code-editor .editor .code {
   flex-grow: 1;
+  height: 500px;
+  position: relative;
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  font-size: 12px;
+  font-variant-ligatures: common-ligatures;
+  line-height: 1.5;
+}
+.code-editor .editor .code textarea {
+  border: 0px;
+  margin: 0px;
+  padding: 10px;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  resize: none;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  -webkit-text-fill-color: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-variant-ligatures: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-indent: inherit;
+  text-rendering: inherit;
+  text-transform: inherit;
 }
 .code-editor .editor .code code {
-  background-color: #f7f7f9;
+  background: rgba(0, 0, 0, 0) none repeat scroll 0% 0%;
+  border: 0px none;
+  margin: 0px;
+  padding: 10px;
   color: #000;
   display: block;
-  height: 500px;
+  pointer-events: none;
+  position: relative;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-variant-ligatures: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-indent: inherit;
+  text-rendering: inherit;
+  text-transform: inherit;
 }
 .code-editor .editor .v-divider {
   border-left: 1px solid gray;
