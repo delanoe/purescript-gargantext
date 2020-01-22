@@ -70,8 +70,14 @@ compileMd = compileMd' MD.defaultToMarkupOptions
 codeEditor :: Record Props -> R.Element
 codeEditor p = R.createElement codeEditorCpt p []
 
+-- The code editor contains 3 components:
+-- - a hidden textarea
+-- - textarea code overlay
+-- - html preview
+-- The overlay is to provide seamless syntax highlighting on top of the textarea.
+-- I took the idea from: https://github.com/satya164/react-simple-code-editor
 codeEditorCpt :: R.Component Props
-codeEditorCpt = R.hooksComponent "G.C.CodeEditor" cpt
+codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
   where
     cpt {code, defaultCodeType, onChange} _ = do
       controls <- initControls code defaultCodeType
@@ -79,7 +85,7 @@ codeEditorCpt = R.hooksComponent "G.C.CodeEditor" cpt
       -- Initial rendering of elements with given data
 
       -- Note: delay is necessary here, otherwise initially the HTML won't get
-      -- rendered (mDiv is still null)
+      -- rendered (DOM Element refs are still null)
       R.useEffectOnce $ delay unit $ \_ -> do
         _ <- renderHtml code controls
         pure $ pure unit
@@ -94,13 +100,7 @@ codeEditorCpt = R.hooksComponent "G.C.CodeEditor" cpt
             pure $ pure unit
 
       pure $ H.div { className: "code-editor" } [
-        H.div { className: "row toolbar" } [
-             codeTypeSelector {
-                  codeType: controls.codeType
-                , onChange: onChangeCodeType controls
-                }
-           , viewTypeSelector {state: controls.viewType}
-           ]
+          toolbar controls
         , H.div { className: "row error" } [
            errorComponent {error: controls.error}
         ]
@@ -137,12 +137,6 @@ codeEditorCpt = R.hooksComponent "G.C.CodeEditor" cpt
     previewHidden Both = ""
     previewHidden _ = "hidden"
 
-    -- Handle rerendering of preview when viewType changed
-    onChangeCodeType :: forall e. Record Controls -> e -> Effect Unit
-    onChangeCodeType controls _ = do
-        _ <- renderHtml (R.readRef controls.editorCodeRef) controls
-        pure unit
-
     onEditChange :: forall e. Record Controls -> e -> Effect Unit
     onEditChange controls@{codeElRef, codeOverlayElRef, editorCodeRef} e = do
       log2 "[onChange] e" e
@@ -175,6 +169,28 @@ renderHtml code {codeType: (codeType /\ _), htmlElRef, error: (_ /\ setError)} =
           _ <- pure $ (htmlEl .= "innerHTML") compiled
           pure unit
 
+toolbar :: Record Controls -> R.Element
+toolbar p = R.createElement toolbarCpt p []
+
+toolbarCpt :: R.Component Controls
+toolbarCpt = R.hooksComponent "G.C.CE.toolbar" cpt
+  where
+    cpt controls@{codeType, error, viewType} _ = do
+      pure $
+        H.div { className: "row toolbar" } [
+             codeTypeSelector {
+                  codeType
+                , onChange: onChangeCodeType controls
+                }
+           , viewTypeSelector {state: viewType}
+           ]
+
+    -- Handle rerendering of preview when viewType changed
+    onChangeCodeType :: forall e. Record Controls -> e -> Effect Unit
+    onChangeCodeType controls _ = do
+        _ <- renderHtml (R.readRef controls.editorCodeRef) controls
+        pure unit
+
 
 type ErrorComponentProps =
   (
@@ -185,7 +201,7 @@ errorComponent :: Record ErrorComponentProps -> R.Element
 errorComponent p = R.createElement errorComponentCpt p []
 
 errorComponentCpt :: R.Component ErrorComponentProps
-errorComponentCpt = R.hooksComponent "G.C.ErrorComponent" cpt
+errorComponentCpt = R.hooksComponent "G.C.CE.ErrorComponent" cpt
   where
     cpt {error: (Nothing /\ _)} _ = pure $ H.div {} []
     cpt {error: ((Just error) /\ _)} _ = do
@@ -202,7 +218,7 @@ codeTypeSelector :: Record CodeTypeSelectorProps -> R.Element
 codeTypeSelector p = R.createElement codeTypeSelectorCpt p []
 
 codeTypeSelectorCpt :: R.Component CodeTypeSelectorProps
-codeTypeSelectorCpt = R.hooksComponent "G.C.CodeTypeSelector" cpt
+codeTypeSelectorCpt = R.hooksComponent "G.C.CE.CodeTypeSelector" cpt
   where
     cpt {codeType, onChange} _ = do
       pure $ R2.select { className: "form-control"
@@ -235,7 +251,7 @@ viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
 viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
 
 viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
-viewTypeSelectorCpt = R.hooksComponent "G.C.ViewTypeSelector" cpt
+viewTypeSelectorCpt = R.hooksComponent "G.C.CE.ViewTypeSelector" cpt
   where
     cpt {state} _ =
       pure $ H.div { className: "btn-group" } [
