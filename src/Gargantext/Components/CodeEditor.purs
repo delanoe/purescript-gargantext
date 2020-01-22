@@ -51,9 +51,8 @@ type Props =
 -- Fixes newlines in code
 -- This is useful eg for proper rendering of the textarea overlay
 codeNlFix :: CodeType -> Code -> Code
-codeNlFix Markdown "" = " "
-codeNlFix Markdown c = if endsWith "\n" c then (c <> " ") else c
-codeNlFix _ c = c
+codeNlFix _ "" = " "
+codeNlFix _ c = if endsWith "\n" c then (c <> " ") else c
 
 compile :: CodeType -> Code -> Either Error Html
 compile JSON code = result
@@ -63,6 +62,11 @@ compile JSON code = result
       Left err -> Left err
       Right parsed -> Right $ R2.stringify parsed 2
 compile Markdown code = Right $ compileMd $ codeNlFix Markdown code
+
+previewPostProcess :: CodeType -> Element -> Effect Unit
+previewPostProcess Markdown _ = pure unit
+previewPostProcess JSON htmlEl = do
+  HLJS.highlightBlock htmlEl
 
 -- TODO Replace with markdown-it?
 -- https://pursuit.purescript.org/packages/purescript-markdown-it
@@ -113,7 +117,7 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
                           , on: { change: onEditChange controls }
                           , placeholder: "Type some code..."
                           , ref: controls.codeElRef } [ ]
-               , H.pre  { className: ""
+               , H.pre  { className: (langClass $ fst controls.codeType)
                           -- , contentEditable: "true"
                         , ref: controls.codeOverlayElRef
                         , rows: 30
@@ -122,7 +126,7 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
                ]
              ]
            , H.div { className: "v-divider " <> (dividerHidden $ fst controls.viewType) } [ H.text " " ]
-           , H.div { className: "html " <> (previewHidden $ fst controls.viewType)
+           , H.div { className: "html " <> (langClass $ fst controls.codeType) <> (previewHidden $ fst controls.viewType)
                    , ref: controls.htmlElRef
                    } []
            ]
@@ -136,6 +140,10 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     dividerHidden :: ViewType -> String
     dividerHidden Both = ""
     dividerHidden _ = "hidden"
+
+    langClass :: CodeType -> String
+    langClass JSON = "language-json"
+    langClass Markdown = "language-md"
 
     previewHidden :: ViewType -> String
     previewHidden Preview = ""
@@ -171,6 +179,7 @@ renderHtml code {codeType: (codeType /\ _), htmlElRef, error: (_ /\ setError)} =
         Right compiled -> do
           setError $ const Nothing
           _ <- pure $ (htmlEl .= "innerHTML") compiled
+          previewPostProcess codeType htmlEl
           pure unit
 
 toolbar :: Record Controls -> R.Element
@@ -192,8 +201,8 @@ toolbarCpt = R.hooksComponent "G.C.CE.toolbar" cpt
     -- Handle rerendering of preview when viewType changed
     onChangeCodeType :: forall e. Record Controls -> e -> Effect Unit
     onChangeCodeType controls _ = do
-        _ <- renderHtml (R.readRef controls.editorCodeRef) controls
-        pure unit
+      setCodeOverlay controls (R.readRef controls.editorCodeRef)
+      renderHtml (R.readRef controls.editorCodeRef) controls
 
 
 type ErrorComponentProps =
