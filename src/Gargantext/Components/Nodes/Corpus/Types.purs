@@ -1,7 +1,9 @@
 module Gargantext.Components.Nodes.Corpus.Types where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
 import Data.Either (Either(..))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe)
 
 import Gargantext.Prelude
@@ -15,23 +17,31 @@ type Tag = String
 type Title = String
 type MarkdownText = String
 
-newtype CorpusHyperdata =
-  CorpusHyperdata
+newtype Hyperdata =
+  Hyperdata
   {
-    fields :: Array (CorpusField CorpusFieldType)
+    fields :: Array FTField
   }
-instance decodeCorpusHyperdata :: DecodeJson CorpusHyperdata where
+instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj <- decodeJson json
     fields <- obj .: "fields"
-    pure $ CorpusHyperdata {fields}
+    pure $ Hyperdata {fields}
+instance encodeHyperdata :: EncodeJson Hyperdata where
+  encodeJson (Hyperdata {fields}) = do
+       "fields"  := fields
+    ~> jsonEmptyObject
 
-newtype CorpusField a = CorpusField {
+newtype Field a = Field {
     name :: String
   , typ  :: a
   }
+type FTField = Field FieldType
+derive instance genericFTField :: Generic (Field FieldType) _
+instance eqFTField :: Eq (Field FieldType) where
+  eq = genericEq
 
-data CorpusFieldType = JSON {
+data FieldType = JSON {
     authors        :: Author
   , desc           :: Description
   , query          :: Query
@@ -42,7 +52,10 @@ data CorpusFieldType = JSON {
     tag              :: Tag
   , text             :: MarkdownText
   }
-instance decodeCorpusField :: DecodeJson (CorpusField CorpusFieldType) where
+derive instance genericFieldType :: Generic FieldType _
+instance eqFieldType :: Eq FieldType where
+  eq = genericEq
+instance decodeFTField :: DecodeJson (Field FieldType) where
   decodeJson json = do
     obj <- decodeJson json
     name <- obj .: "name"
@@ -61,7 +74,37 @@ instance decodeCorpusField :: DecodeJson (CorpusField CorpusFieldType) where
         text <- data_ .: "text"
         pure $ Markdown {tag, text}
       _ -> Left $ "Unsupported 'type' " <> type_
-    pure $ CorpusField {name, typ}
+    pure $ Field {name, typ}
+instance encodeFTField :: EncodeJson (Field FieldType) where
+  encodeJson (Field {name, typ}) =
+        "data"  := typ
+    ~>  "name"  := name
+    ~> "type"   := typ' typ
+    ~> jsonEmptyObject
+    where
+      typ' (JSON _) = "JSON"
+      typ' (Markdown _) = "Markdown"
+instance encodeFieldType :: EncodeJson FieldType where
+  encodeJson (JSON {authors, desc, query, tag, title}) =
+       "authors" := authors
+    ~> "desc"    := desc
+    ~> "query"   := query
+    ~> "tag"     := "JsonField"
+    ~> "title"   := title
+    ~> jsonEmptyObject
+  encodeJson (Markdown {text}) =
+       "tag"  := "MarkdownField"
+    ~> "text" := text
+    ~> jsonEmptyObject
+
+defaultField :: FTField
+defaultField = Field {
+  name: "New file"
+  , typ: Markdown {
+    tag: "MarkdownField"
+    , text: "# New file"
+    }
+  }
 
 newtype CorpusInfo =
   CorpusInfo

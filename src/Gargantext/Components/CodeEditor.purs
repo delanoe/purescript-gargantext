@@ -43,9 +43,9 @@ instance showViewType :: Show ViewType where
   show = genericShow
 
 type Props =
-  ( code :: String
+  ( code :: Code
   , defaultCodeType :: CodeType
-  , onChange :: String -> Effect Unit
+  , onChange :: Code -> Effect Unit
   )
 
 -- Fixes newlines in code
@@ -114,7 +114,7 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
            H.div { className: "code-area " <> (codeHidden $ fst controls.viewType) } [
              H.div { className: "code-container" } [
                H.textarea { defaultValue: code
-                          , on: { change: onEditChange controls }
+                          , on: { change: onEditChange controls onChange }
                           , placeholder: "Type some code..."
                           , ref: controls.codeElRef } [ ]
                , H.pre  { className: (langClass $ fst controls.codeType)
@@ -150,12 +150,13 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     previewHidden Both = ""
     previewHidden _ = " hidden"
 
-    onEditChange :: forall e. Record Controls -> e -> Effect Unit
-    onEditChange controls@{codeElRef, codeOverlayElRef, editorCodeRef} e = do
+    onEditChange :: forall e. Record Controls -> (Code -> Effect Unit) -> e -> Effect Unit
+    onEditChange controls@{codeElRef, codeOverlayElRef, editorCodeRef} onChange e = do
       let code = R2.unsafeEventValue e
       R.setRef editorCodeRef code
       setCodeOverlay controls code
       renderHtml (R.readRef controls.editorCodeRef) controls
+      onChange code
 
 setCodeOverlay :: Record Controls -> Code -> Effect Unit
 setCodeOverlay {codeOverlayElRef, codeType: (codeType /\ _)} code = do
