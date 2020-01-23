@@ -12,7 +12,8 @@ import Reactix.DOM.HTML as H
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.Nodes.Corpus (CorpusData, CorpusInfo(..), loadCorpus)
+import Gargantext.Components.Nodes.Corpus (loadCorpus)
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, CorpusInfo(..))
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table

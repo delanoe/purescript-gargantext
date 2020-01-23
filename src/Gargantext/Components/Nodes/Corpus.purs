@@ -1,7 +1,6 @@
 module Gargantext.Components.Nodes.Corpus where
 
-import Prelude ((<<<))
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
+import Data.Argonaut (class DecodeJson, encodeJson)
 import Data.Array (head)
 import Data.Maybe (Maybe(..))
 import DOM.Simple.Console (log2)
@@ -11,78 +10,79 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
+
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
+import Gargantext.Components.Nodes.Corpus.Types
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..), AffTableResult)
+import Gargantext.Utils.Reactix as R2
 
-type Props = ( nodeId :: Int )
+type Props = (
+    nodeId  :: Int
+  , session :: Session
+  )
 
 corpusLayout :: Record Props -> R.Element
 corpusLayout props = R.createElement corpusLayoutCpt props []
 
 corpusLayoutCpt :: R.Component Props
-corpusLayoutCpt = R.hooksComponent "G.P.Corpus.corpusLayout" cpt
+corpusLayoutCpt = R.hooksComponent "G.C.N.C.corpusLayout" cpt
   where
-    cpt {nodeId} _ = do
+    cpt props@{nodeId, session} _ =
+      useLoader props loadCorpus' $
+        \corpus -> corpusLayoutView {corpus, nodeId, session}
+
+type ViewProps = (
+    corpus  :: NodePoly CorpusHyperdata
+  | Props
+  )
+
+corpusLayoutView :: Record ViewProps -> R.Element
+corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
+
+corpusLayoutViewCpt :: R.Component ViewProps
+corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
+  where
+    cpt {corpus: (NodePoly {hyperdata: CorpusHyperdata {fields}}), nodeId, session} _ = do
       pure $ H.div {}
-        [
-          CE.codeEditor {code, defaultCodeType: CE.Markdown, onChange}
+        (corpusFieldCodeEditor {nodeId, session} <$> fields)
           --H.iframe { src: gargMd , width: "100%", height: "100%", style: {"border-style": "none"}} []
-        ]
     --gargMd = "https://hackmd.iscpif.fr/g9Aah4iwQtCayIzsKQjA0Q#"
-    code = "# Hello world\n\n## subtitle\n\n- item 1\n- item 2\n\n1. num 1\n2. num 2\n\n[purescript link](https://purescript.org)"
+
+corpusFieldCodeEditor :: Record LoadProps -> CorpusField CorpusFieldType -> R.Element
+corpusFieldCodeEditor p (CorpusField {name, typ}) =
+  H.div { className: "row panel panel-default" } [
+      H.div { className: "panel-heading" } [ H.text name ]
+    , H.div { className: "panel-body" } [
+        corpusFieldCodeEditor' typ
+      ]
+    ]
+corpusFieldCodeEditor' :: CorpusFieldType -> R.Element
+corpusFieldCodeEditor' (Markdown {text}) =
+  CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange}
+  where
     onChange c = do
-      log2 "[corpusLayoutCpt] c" c
+      log2 "[corpusFieldCodeEditor'] Markdown c" c
+corpusFieldCodeEditor' (JSON j) = do
+  CE.codeEditor {code, defaultCodeType: CE.JSON, onChange}
+  where
+    code = R2.stringify (encodeJson j) 2
+    onChange c = do
+      log2 "[corpusFieldCodeEditor'] JSON c" c
 
-newtype CorpusInfo =
-  CorpusInfo
-  { title        :: String
-  , desc         :: String
-  , query        :: String
-  , authors      :: String
-  , chart        :: (Maybe (Array Number))
-  , totalRecords :: Int }
+type LoadProps = (
+    nodeId  :: Int
+  , session :: Session
+  )
 
-hyperdataDefault :: CorpusInfo
-hyperdataDefault =
-  CorpusInfo
-  { title : "Default title"
-  , desc  : " Default desc"
-  , query : " Default Query"
-  , authors : " Author(s): default"
-  , chart   : Nothing
-  , totalRecords : 0 }
+loadCorpus' :: Record LoadProps -> Aff (NodePoly CorpusHyperdata)
+loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
-corpusInfoDefault :: NodePoly CorpusInfo
-corpusInfoDefault =
-  NodePoly
-  { id : 0
-  , typename : 0
-  , userId : 0
-  , parentId : 0
-  , name : "Default name"
-  , date  : " Default date"
-  , hyperdata : hyperdataDefault }
-
-instance decodeCorpusInfo :: DecodeJson CorpusInfo where
-  decodeJson json = do
-    obj <- decodeJson json
-    title <- obj .: "title"
-    desc  <- obj .: "desc"
-    query <- obj .: "query"
-    authors <- obj .: "authors"
-    chart   <- obj .:? "chart"
-    let totalRecords = 47361 -- TODO
-    pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
-
-type CorpusData = { corpusId :: Int
-                  , corpusNode :: NodePoly CorpusInfo
-                  , defaultListId :: Int}
-
-loadCorpus :: { session :: Session, nodeId :: Int } -> Aff CorpusData
-loadCorpus {session, nodeId: listId} = do
+loadCorpus :: Record LoadProps -> Aff CorpusData
+loadCorpus {nodeId, session} = do
   -- fetch corpus via lists parentId
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
   corpusNode     <- get session $ corpusNodeRoute     corpusId ""
@@ -93,6 +93,6 @@ loadCorpus {session, nodeId: listId} = do
     Nothing ->
       throwError $ error "Missing default list"
   where
-    nodePolyRoute       = NodeAPI Corpus (Just listId) ""
+    nodePolyRoute       = NodeAPI Corpus (Just nodeId) ""
     corpusNodeRoute     = NodeAPI Corpus <<< Just
     defaultListIdsRoute = Children NodeList 0 1 Nothing <<< Just

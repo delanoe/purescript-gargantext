@@ -3,7 +3,8 @@ module Gargantext.Components.Nodes.Lists where
 import Reactix as R
 --------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Components.Nodes.Corpus (CorpusInfo(..), loadCorpus)
+import Gargantext.Components.Nodes.Corpus (loadCorpus)
+import Gargantext.Components.Nodes.Corpus.Types (CorpusInfo(..))
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
