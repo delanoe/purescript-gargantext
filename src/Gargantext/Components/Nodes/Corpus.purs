@@ -1,8 +1,10 @@
 module Gargantext.Components.Nodes.Corpus where
 
 import Data.Argonaut (class DecodeJson, encodeJson)
-import Data.Array (head)
+import Data.Array as A
 import Data.Maybe (Maybe(..))
+import Data.Tuple (fst)
+import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
@@ -47,10 +49,28 @@ corpusLayoutViewCpt :: R.Component ViewProps
 corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
   where
     cpt {corpus: (NodePoly {hyperdata: CorpusHyperdata {fields}}), nodeId, session} _ = do
-      pure $ H.div {}
-        (corpusFieldCodeEditor {nodeId, session} <$> fields)
+      fieldsS <- R.useState' fields
+
+      pure $ H.div {} [
+          H.div {} (corpusFieldCodeEditor {nodeId, session} <$> (fst fieldsS))
+        , H.div { className: "row" } [
+            H.div { className: "btn btn-default"
+                  , on: { click: onClick fieldsS }
+                  } [
+              H.span { className: "glyphicon glyphicon-plus" } [  ]
+            ]
+          ]
+        ]
           --H.iframe { src: gargMd , width: "100%", height: "100%", style: {"border-style": "none"}} []
     --gargMd = "https://hackmd.iscpif.fr/g9Aah4iwQtCayIzsKQjA0Q#"
+    onClick (_ /\ setFieldsS) _ = do
+      setFieldsS $ \fieldsS -> A.snoc fieldsS $ CorpusField {
+          name: "New file"
+        , typ: Markdown {
+            tag: "MarkdownField"
+          , text: "# New file"
+          }
+        }
 
 corpusFieldCodeEditor :: Record LoadProps -> CorpusField CorpusFieldType -> R.Element
 corpusFieldCodeEditor p (CorpusField {name, typ}) =
@@ -60,6 +80,7 @@ corpusFieldCodeEditor p (CorpusField {name, typ}) =
         corpusFieldCodeEditor' typ
       ]
     ]
+
 corpusFieldCodeEditor' :: CorpusFieldType -> R.Element
 corpusFieldCodeEditor' (Markdown {text}) =
   CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange}
@@ -87,7 +108,7 @@ loadCorpus {nodeId, session} = do
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
   corpusNode     <- get session $ corpusNodeRoute     corpusId ""
   defaultListIds <- (get session $ defaultListIdsRoute corpusId) :: forall a. DecodeJson a => AffTableResult (NodePoly a)
-  case (head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
       pure {corpusId, corpusNode, defaultListId}
     Nothing ->
