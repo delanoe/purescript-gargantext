@@ -135,20 +135,20 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     codeHidden :: ViewType -> String
     codeHidden Code = ""
     codeHidden Both = ""
-    codeHidden _ = "hidden"
+    codeHidden _ = " hidden"
 
     dividerHidden :: ViewType -> String
     dividerHidden Both = ""
-    dividerHidden _ = "hidden"
+    dividerHidden _ = " hidden"
 
     langClass :: CodeType -> String
-    langClass JSON = "language-json"
-    langClass Markdown = "language-md"
+    langClass JSON = " language-json"
+    langClass Markdown = " language-md"
 
     previewHidden :: ViewType -> String
     previewHidden Preview = ""
     previewHidden Both = ""
-    previewHidden _ = "hidden"
+    previewHidden _ = " hidden"
 
     onEditChange :: forall e. Record Controls -> e -> Effect Unit
     onEditChange controls@{codeElRef, codeOverlayElRef, editorCodeRef} e = do
