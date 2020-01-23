@@ -12,7 +12,7 @@ import Effect.Timer (clearInterval, setInterval)
 import Gargantext.Components.Forest.Tree.Node.Action (ID)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (AsyncProgress(..), AsyncTask(..), AsyncTaskStatus(..), NodeType(..), progressPercent)
+import Gargantext.Types as GT
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -20,7 +20,7 @@ import Reactix.DOM.HTML as H
 
 type Props =
   (
-    asyncTask :: AsyncTask
+    asyncTask :: GT.AsyncTaskWithType
   , corpusId  :: ID
   , onFinish  :: Unit -> Effect Unit
   , session   :: Session
@@ -33,17 +33,17 @@ asyncProgressBar p = R.createElement asyncProgressBarCpt p []
 asyncProgressBarCpt :: R.Component Props
 asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.asyncProgressBar" cpt
   where
-    cpt props@{asyncTask: (AsyncTask {id}), corpusId, onFinish} _ = do
+    cpt props@{asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}}), corpusId, onFinish} _ = do
       (progress /\ setProgress) <- R.useState' 0.0
       intervalIdRef <- R.useRef Nothing
 
       R.useEffectOnce' $ do
         intervalId <- setInterval 1000 $ do
           launchAff_ $ do
-            asyncProgress@(AsyncProgress {status}) <- queryProgress props
+            asyncProgress@(GT.AsyncProgress {status}) <- queryProgress props
             liftEffect do
-              setProgress \p -> min 100.0 $ progressPercent asyncProgress
-              if (status == Finished) || (status == Killed) || (status == Failed) then do
+              setProgress \p -> min 100.0 $ GT.progressPercent asyncProgress
+              if (status == GT.Finished) || (status == GT.Killed) || (status == GT.Failed) then do
                 _ <- case R.readRef intervalIdRef of
                   Nothing -> pure unit
                   Just iid -> clearInterval iid
@@ -67,7 +67,8 @@ asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.asyncProgressBar" cpt
     toInt :: Number -> Int
     toInt n = unsafePartial $ fromJust $ fromNumber n
 
-queryProgress :: Record Props -> Aff AsyncProgress
-queryProgress {asyncTask: AsyncTask {id}, corpusId, session} = get session p
+queryProgress :: Record Props -> Aff GT.AsyncProgress
+queryProgress {asyncTask: GT.AsyncTaskWithType {task: GT.AsyncTask {id}, typ}, corpusId, session} = get session p
   where
-    p = NodeAPI Corpus (Just corpusId) $ "add/form/async/" <> id <> "/poll?limit=1"
+    p = NodeAPI GT.Corpus (Just corpusId) $ path <> id <> "/poll?limit=1"
+    path = GT.asyncTaskTypePath typ

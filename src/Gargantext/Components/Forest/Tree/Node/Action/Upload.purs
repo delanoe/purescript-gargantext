@@ -15,9 +15,9 @@ import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded)
-import Gargantext.Types (class ToQuery, AsyncTask, NodeType(..))
+import Gargantext.Types as GT
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 
@@ -83,7 +83,7 @@ uploadButton d id (mContents /\ setMContents) (fileType /\ setFileType) =
 -- START File Type View
 type FileTypeProps =
   ( id :: ID
-  , nodeType :: NodeType)
+  , nodeType :: GT.NodeType)
 
 fileTypeView :: (Action -> Aff Unit)
              -> Record FileTypeProps
@@ -159,21 +159,22 @@ newtype FileUploadQuery = FileUploadQuery {
     fileType :: FileType
   }
 derive instance newtypeSearchQuery :: Newtype FileUploadQuery _
-instance fileUploadQueryToQuery :: ToQuery FileUploadQuery where
+instance fileUploadQueryToQuery :: GT.ToQuery FileUploadQuery where
   toQuery (FileUploadQuery {fileType}) =
     QP.print id id $ QP.QueryPairs $
          pair "fileType" fileType
     where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
           pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
 
-uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff AsyncTask
-uploadFile session id fileType (UploadFileContents fileContents) =
-    postWwwUrlencoded session p bodyParams
+uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff GT.AsyncTaskWithType
+uploadFile session id fileType (UploadFileContents fileContents) = do
+    task <- postWwwUrlencoded session p bodyParams
+    pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
     --postMultipartFormData session p fileContents
   where
     q = FileUploadQuery { fileType: fileType }
-    --p = NodeAPI Corpus (Just id) $ "add/file/async/nobody" <> Q.print (toQuery q)
-    p = NodeAPI Corpus (Just id) $ "add/form/async" -- <> Q.print (toQuery q)
+    --p = NodeAPI GT.Corpus (Just id) $ "add/file/async/nobody" <> Q.print (toQuery q)
+    p = GR.NodeAPI GT.Corpus (Just id) $ GT.asyncTaskTypePath GT.Form
     bodyParams = [
         Tuple "_wf_data" (Just fileContents)
       , Tuple "_wf_filetype" (Just $ show fileType)

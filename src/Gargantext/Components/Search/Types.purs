@@ -1,22 +1,24 @@
 module Gargantext.Components.Search.Types where
 
-import Prelude (class Eq, class Show, show, ($), (<>), map)
-import Data.Set (Set)
-import Data.Ord
-import Data.Set as Set
 import Data.Array (concat)
-import Data.Argonaut (class EncodeJson, class DecodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
+import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
+import Data.Set (Set)
+import Data.Set as Set
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Ends (class ToUrl, backendUrl)
-import Gargantext.Sessions (Session(..), post)
-import Gargantext.Types (class ToQuery, toQuery)
-import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
+
+import Gargantext.Prelude (class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>))
+
+import Gargantext.Ends (class ToUrl, backendUrl)
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session(..), post)
+import Gargantext.Types as GT
+import Gargantext.Utils (id)
 
 ------------------------------------------------------------------------
 class Doc a where
@@ -329,9 +331,9 @@ defaultSearchQuery = SearchQuery
 
 instance toUrlSessionSearchQuery :: ToUrl Session SearchQuery where
   toUrl (Session {backend}) q = backendUrl backend q2
-    where q2 = "new" <> Q.print (toQuery q)
+    where q2 = "new" <> Q.print (GT.toQuery q)
   
-instance searchQueryToQuery :: ToQuery SearchQuery where
+instance searchQueryToQuery :: GT.ToQuery SearchQuery where
   toQuery (SearchQuery {offset, limit, order}) =
     QP.print id id $ QP.QueryPairs
                    $ pair "offset" offset
@@ -350,7 +352,9 @@ instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
     ~> "lang"       := maybe "EN" show lang
     ~> jsonEmptyObject
 
-performSearch :: forall a. DecodeJson a => Session -> SearchQuery -> Aff a
-performSearch session q = post session q q
-
-
+performSearch :: Session -> Int -> SearchQuery -> Aff GT.AsyncTaskWithType
+performSearch session nodeId q = do
+  task <- post session p q
+  pure $ GT.AsyncTaskWithType {task, typ: GT.Query}
+  where
+    p = GR.NodeAPI GT.Corpus (Just nodeId) $ GT.asyncTaskTypePath GT.Query
