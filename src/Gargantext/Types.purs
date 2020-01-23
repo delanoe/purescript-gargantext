@@ -2,7 +2,9 @@ module Gargantext.Types where
 
 import Prelude
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
+import Data.Array as A
 import Data.Either (Either(..))
+import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
@@ -435,11 +437,27 @@ modeFromString "Institutes" = Just Institutes
 modeFromString "Terms" = Just Terms
 modeFromString _ = Nothing
 
-newtype AsyncTask = AsyncTask {
-    id :: String
-  , status :: String
-  }
+type AsyncTaskID = String
 
+data AsyncTaskStatus = Running | Failed | Finished | Killed
+derive instance genericAsyncTaskStatus :: Generic AsyncTaskStatus _
+derive instance eqAsyncTaskStatus :: Eq AsyncTaskStatus
+instance decodeJsonAsyncTaskStatus :: DecodeJson AsyncTaskStatus where
+  decodeJson json = do
+    obj <- decodeJson json
+    pure $ readAsyncTaskStatus obj
+
+readAsyncTaskStatus :: String -> AsyncTaskStatus
+readAsyncTaskStatus "failed"   = Failed
+readAsyncTaskStatus "finished" = Finished
+readAsyncTaskStatus "killed"   = Killed
+readAsyncTaskStatus "running"  = Running
+readAsyncTaskStatus _ = Running
+
+newtype AsyncTask = AsyncTask {
+    id :: AsyncTaskID
+  , status :: AsyncTaskStatus
+  }
 derive instance genericAsyncTask :: Generic AsyncTask _
 
 instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
@@ -448,3 +466,43 @@ instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
     id <- obj .: "id"
     status <- obj .: "status"
     pure $ AsyncTask {id, status}
+
+newtype AsyncProgress = AsyncProgress {
+    id :: AsyncTaskID
+  , log :: Array AsyncTaskLog
+  , status :: AsyncTaskStatus
+  }
+derive instance genericAsyncProgress :: Generic AsyncProgress _
+instance decodeJsonAsyncProgress :: DecodeJson AsyncProgress where
+  decodeJson json = do
+    obj <- decodeJson json
+    id <- obj .: "id"
+    log <- obj .: "log"
+    status <- obj .: "status"
+    pure $ AsyncProgress {id, log, status}
+
+newtype AsyncTaskLog = AsyncTaskLog {
+    events :: Array String
+  , failed :: Int
+  , remaining :: Int
+  , succeeded :: Int
+  }
+derive instance genericAsyncTaskLog :: Generic AsyncTaskLog _
+instance decodeJsonAsyncTaskLog :: DecodeJson AsyncTaskLog where
+  decodeJson json = do
+    obj <- decodeJson json
+    events <- obj .: "events"
+    failed <- obj .: "failed"
+    remaining <- obj .: "remaining"
+    succeeded <- obj .: "succeeded"
+    pure $ AsyncTaskLog {events, failed, remaining, succeeded}
+
+progressPercent :: AsyncProgress -> Number
+progressPercent (AsyncProgress {log}) = perc
+  where
+    perc = case A.head log of
+      Nothing -> 0.0
+      Just (AsyncTaskLog {failed, remaining, succeeded}) -> 100.0*nom/denom
+        where
+          nom = toNumber $ failed + succeeded
+          denom = toNumber $ failed + succeeded + remaining

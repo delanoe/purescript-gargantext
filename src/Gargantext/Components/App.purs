@@ -1,36 +1,34 @@
 module Gargantext.Components.App where
 
 import Prelude
+
 import Data.Array (fromFoldable)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
 import Gargantext.Components.Data.Lang (Lang(..))
+import Gargantext.Components.Folder (folder)
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Login (login)
--- import Gargantext.Components.Search.SearchBar as SB
--- import Gargantext.Components.Search.Types (allDatabases)
-import Gargantext.Config (defaultFrontends, defaultBackends)
-import Gargantext.Components.Folder (folder)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts (annuaireUserLayout, userLayout)
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
-import Gargantext.Components.Nodes.Corpus.Document (documentLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
+import Gargantext.Components.Nodes.Corpus.Document (documentLayout)
+import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists (listsLayout)
 import Gargantext.Components.Nodes.Texts (textsLayout)
-import Gargantext.Components.Nodes.Home (homeLayout)
+import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Ends (Frontends)
+import Gargantext.Hooks.Router (useHashRouter)
 import Gargantext.Router (router)
 import Gargantext.Routes (AppRoute(..))
-import Gargantext.Hooks.Router (useHashRouter)
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Sessions as Sessions
 import Gargantext.Sessions (Sessions, useSessions)
+import Gargantext.Sessions as Sessions
+import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 -- TODO (what does this mean?)
 -- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
@@ -44,10 +42,10 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
   cpt _ _ = do
     sessions   <- useSessions
     route      <- useHashRouter router Home
-    
+
     showLogin  <- R.useState' false
     showCorpus <- R.useState' false
-    
+
     let forested      = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
     let mCurrentRoute = fst route
     let backends      = fromFoldable defaultBackends
@@ -77,16 +75,16 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
                 simpleLayout $
                   explorerLayout { graphId, mCurrentRoute, session
                                  , sessions: (fst sessions), frontends
-                                 , showLogin}
+                                 , showLogin }
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
-forestLayout frontends sessions route showLogin child =
+forestLayout frontends sessions route showLogin child = do
   R.fragment [ topBar {}, R2.row [main], footer {} ]
   where
     main =
       R.fragment
       [ H.div {className: "col-md-2", style: {paddingTop: "60px"}}
-              [ forest {sessions, route, frontends, showLogin} ]
+              [ forest {sessions, route, frontends, showLogin } ]
       , mainPage child
       ]
 

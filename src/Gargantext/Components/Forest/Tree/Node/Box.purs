@@ -3,9 +3,19 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import URI.Extra.QueryPairs as NQP
+import URI.Query as Query
+import Web.File.FileReader.Aff (readAsText)
+
+import Gargantext.Prelude
+
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
@@ -23,22 +33,16 @@ import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (AsyncTask, NodePath(..), NodeType(..), fldr)
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, identity, map, pure, show, void, ($), (<>), (==), (-), (+))
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import URI.Extra.QueryPairs as NQP
-import URI.Query as Query
-import Web.File.FileReader.Aff (readAsText)
 
 
 -- Main Node
 type NodeMainSpanProps =
   ( id            :: ID
   , asyncTasks    :: Array AsyncTask
+  , mCurrentRoute :: Maybe AppRoute
   , name          :: Name
   , nodeType      :: NodeType
-  , mCurrentRoute :: Maybe AppRoute
+  , onAsyncTaskFinish :: AsyncTask -> Effect Unit
   )
 
 nodeMainSpan :: (Action -> Aff Unit)
@@ -50,7 +54,7 @@ nodeMainSpan :: (Action -> Aff Unit)
 nodeMainSpan d p folderOpen session frontends = R.createElement el p []
   where
     el = R.hooksComponent "NodeMainSpan" cpt
-    cpt props@{id, asyncTasks, name, nodeType, mCurrentRoute} _ = do
+    cpt props@{id, asyncTasks, mCurrentRoute, name, nodeType, onAsyncTaskFinish} _ = do
       -- only 1 popup at a time is allowed to be opened
       popupOpen   <- R.useState' (Nothing :: Maybe NodePopup)
       popupPosition <- R.useState' (Nothing :: Maybe R2.Point)
@@ -67,7 +71,10 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
         , popOverIcon showBox popupOpen popupPosition
         , mNodePopupView props showBox popupOpen popupPosition
         , fileTypeView   d {id, nodeType} droppedFile isDragOver
-        , H.div {} (map (\t -> asyncProgressBar {corpusId: id, asyncTask: t}) asyncTasks)
+        , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
+                                                , corpusId: id
+                                                , onFinish: \_ -> onAsyncTaskFinish t
+                                                , session }) asyncTasks)
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType
