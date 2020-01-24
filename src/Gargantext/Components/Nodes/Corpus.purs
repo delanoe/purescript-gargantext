@@ -64,9 +64,6 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
       let fieldsWithIndex = A.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex
 
-      R.useEffect' $ do
-        log2 "[corpusLayoutViewCpt] reload" $ fst reload
-
       pure $ H.div {} [
           H.div { className: "row" } [
             H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
@@ -125,7 +122,6 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
 
     onChange :: R.State (Array FTFieldWithIndex) -> Index -> FieldType -> Effect Unit
     onChange (_ /\ setFields) idx typ = do
-      log2 "[fieldsCodeEditorCpt] onChange" typ
       setFields $ \fields ->
         case A.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields of
           Nothing -> fields
@@ -157,13 +153,12 @@ fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
 fieldCodeEditorCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorCpt" cpt
   where
-    cpt {field: Field {typ: Markdown md@{text}}, onChange} _ = do
-      pure $ CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange: onChange'}
+    cpt {field: Field {typ: Haskell hs@{code}}, onChange} _ = do
+      pure $ CE.codeEditor {code, defaultCodeType: CE.Haskell, onChange: onChange'}
       where
         onChange' :: CE.Code -> Effect Unit
         onChange' c = do
-          log2 "[fieldCodeEditor'] Markdown c" c
-          onChange $ Markdown $ md { text = c }
+          onChange $ Haskell $ hs { code = c }
     cpt {field: Field {typ: JSON j}, onChange} _ = do
       pure $ CE.codeEditor {code, defaultCodeType: CE.JSON, onChange: onChange'}
       where
@@ -171,12 +166,17 @@ fieldCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorCpt" cpt
 
         onChange' :: CE.Code -> Effect Unit
         onChange' c = do
-          log2 "[fieldCodeEditor'] JSON c" c
           case jsonParser c of
             Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
             Right j' -> case decodeJson j' of
               Left err -> log2 "[fieldCodeEditor'] cannot decode json" j'
               Right j'' -> onChange $ JSON j''
+    cpt {field: Field {typ: Markdown md@{text}}, onChange} _ = do
+      pure $ CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange: onChange'}
+      where
+        onChange' :: CE.Code -> Effect Unit
+        onChange' c = do
+          onChange $ Markdown $ md { text = c }
 
 type LoadProps = (
     nodeId  :: Int

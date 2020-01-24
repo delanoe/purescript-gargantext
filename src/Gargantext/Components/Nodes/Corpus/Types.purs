@@ -15,6 +15,7 @@ type Description = String
 type Query = String
 type Tag = String
 type Title = String
+type HaskellCode = String
 type MarkdownText = String
 
 newtype Hyperdata =
@@ -41,7 +42,12 @@ derive instance genericFTField :: Generic (Field FieldType) _
 instance eqFTField :: Eq (Field FieldType) where
   eq = genericEq
 
-data FieldType = JSON {
+data FieldType =
+    Haskell {
+    code             :: HaskellCode
+  , tag              :: Tag
+  }
+  | JSON {
     authors        :: Author
   , desc           :: Description
   , query          :: Query
@@ -62,6 +68,10 @@ instance decodeFTField :: DecodeJson (Field FieldType) where
     type_ <- obj .: "type"
     data_ <- obj .: "data"
     typ <- case type_ of
+      "Haskell" -> do
+        code <- data_ .: "code"
+        tag <- data_ .: "tag"
+        pure $ Haskell {code, tag}
       "JSON" -> do
         authors <- data_ .: "authors"
         desc <- data_ .: "desc"
@@ -77,14 +87,19 @@ instance decodeFTField :: DecodeJson (Field FieldType) where
     pure $ Field {name, typ}
 instance encodeFTField :: EncodeJson (Field FieldType) where
   encodeJson (Field {name, typ}) =
-        "data"  := typ
-    ~>  "name"  := name
+       "data"  := typ
+    ~> "name"  := name
     ~> "type"   := typ' typ
     ~> jsonEmptyObject
     where
+      typ' (Haskell _) = "Haskell"
       typ' (JSON _) = "JSON"
       typ' (Markdown _) = "Markdown"
 instance encodeFieldType :: EncodeJson FieldType where
+  encodeJson (Haskell {code}) =
+       "code" := code
+    ~> "tag"  := "HaskellField"
+    ~> jsonEmptyObject
   encodeJson (JSON {authors, desc, query, tag, title}) =
        "authors" := authors
     ~> "desc"    := desc

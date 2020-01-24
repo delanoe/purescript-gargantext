@@ -90,15 +90,19 @@
   margin-left: 25px;
   padding-left: 25px;
 }
+.code-editor .editor .html.language-haskell {
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  white-space: pre;
+}
+.code-editor .editor .html.language-json {
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  white-space: pre;
+}
 .code-editor .editor .html.language-md ul li {
   list-style: disc !important;
 }
 .code-editor .editor .html.language-md ol li {
   list-style: decimal !important;
-}
-.code-editor .editor .html.language-json {
-  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
-  white-space: pre;
 }
 
 /*# sourceMappingURL=CodeEditor.css.map */

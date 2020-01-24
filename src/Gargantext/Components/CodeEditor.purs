@@ -18,7 +18,7 @@ import Reactix.DOM.HTML as H
 import Text.Markdown.SlamDown.Parser (parseMd)
 import Text.Markdown.SlamDown.Smolder as MD
 import Text.Markdown.SlamDown.Syntax (SlamDownP)
-import Text.Smolder.Renderer.String (render)
+import Text.Smolder.Renderer.String as Smolder
 
 import Gargantext.Prelude
 import Gargantext.Utils.HighlightJS as HLJS
@@ -28,7 +28,7 @@ type Code = String
 type Html = String
 type Error = String
 
-data CodeType = JSON | Markdown
+data CodeType = Haskell | JSON | Markdown
 derive instance genericCodeType :: Generic CodeType _
 instance eqCodeType :: Eq CodeType where
   eq = genericEq
@@ -54,29 +54,35 @@ codeNlFix :: CodeType -> Code -> Code
 codeNlFix _ "" = " "
 codeNlFix _ c = if endsWith "\n" c then (c <> " ") else c
 
-compile :: CodeType -> Code -> Either Error Html
-compile JSON code = result
+render :: CodeType -> Code -> Either Error Html
+render Haskell code = Right $ renderHaskell $ codeNlFix Haskell code
+render JSON code = result
   where
     parsedE = jsonParser code
     result = case parsedE of
       Left err -> Left err
       Right parsed -> Right $ R2.stringify parsed 2
-compile Markdown code = Right $ compileMd $ codeNlFix Markdown code
+render Markdown code = Right $ renderMd $ codeNlFix Markdown code
 
 previewPostProcess :: CodeType -> Element -> Effect Unit
-previewPostProcess Markdown _ = pure unit
+previewPostProcess Haskell htmlEl = do
+  HLJS.highlightBlock htmlEl
 previewPostProcess JSON htmlEl = do
   HLJS.highlightBlock htmlEl
+previewPostProcess Markdown _ = pure unit
 
 -- TODO Replace with markdown-it?
 -- https://pursuit.purescript.org/packages/purescript-markdown-it
-compileMd' :: forall e. MD.ToMarkupOptions e -> String -> String
-compileMd' options input =
-  either identity (MD.toMarkup' options >>> render)
+renderMd' :: forall e. MD.ToMarkupOptions e -> String -> String
+renderMd' options input =
+  either identity (MD.toMarkup' options >>> Smolder.render)
   (parseMd input :: Either String (SlamDownP String))
 
-compileMd :: String -> String
-compileMd = compileMd' MD.defaultToMarkupOptions
+renderMd :: String -> String
+renderMd = renderMd' MD.defaultToMarkupOptions
+
+renderHaskell :: String -> String
+renderHaskell s = s
 
 codeEditor :: Record Props -> R.Element
 codeEditor p = R.createElement codeEditorCpt p []
@@ -142,6 +148,7 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     dividerHidden _ = " hidden"
 
     langClass :: CodeType -> String
+    langClass Haskell = " language-haskell"
     langClass JSON = " language-json"
     langClass Markdown = " language-md"
 
@@ -174,12 +181,12 @@ renderHtml code {codeType: (codeType /\ _), htmlElRef, error: (_ /\ setError)} =
   case (toMaybe $ R.readRef htmlElRef) of
     Nothing -> pure unit
     Just htmlEl -> do
-      case compile codeType code of
+      case render codeType code of
         Left err -> do
           setError $ const $ Just err
-        Right compiled -> do
+        Right rendered -> do
           setError $ const Nothing
-          _ <- pure $ (htmlEl .= "innerHTML") compiled
+          _ <- pure $ (htmlEl .= "innerHTML") rendered
           previewPostProcess codeType htmlEl
           pure unit
 
@@ -239,7 +246,7 @@ codeTypeSelectorCpt = R.hooksComponent "G.C.CE.CodeTypeSelector" cpt
                 , on: { change: onSelectChange codeType onChange }
                 , style: { width: "150px" }
                 , value: show $ fst codeType }
-        (option <$> [JSON, Markdown])
+        (option <$> [Haskell, JSON, Markdown])
 
     option :: CodeType -> R.Element
     option value = H.option { value: show value } [ H.text $ show value ]
@@ -247,6 +254,7 @@ codeTypeSelectorCpt = R.hooksComponent "G.C.CE.CodeTypeSelector" cpt
     onSelectChange :: forall e. R.State CodeType -> (CodeType -> Effect Unit) -> e -> Effect Unit
     onSelectChange (_ /\ setCodeType) onChange e = do
       let codeType = case value of
+            "Haskell"  -> Haskell
             "JSON"     -> JSON
             "Markdown" -> Markdown
             _          -> Markdown
