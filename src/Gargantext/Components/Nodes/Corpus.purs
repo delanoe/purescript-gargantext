@@ -65,21 +65,21 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
       fieldsS <- R.useState' fieldsWithIndex
 
       pure $ H.div {} [
-          H.div { className: "row" } [
-            H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
-                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
-                  } [
-               H.span { className: "glyphicon glyphicon-save" } [  ]
-            ]
-          ]
+        H.div { className: "row" } [
+           H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
+                 , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
+                 } [
+              H.span { className: "glyphicon glyphicon-save" } [  ]
+              ]
+           ]
         , H.div {} [ fieldsCodeEditor {nodeId, session, fields: fieldsS} ]
         , H.div { className: "row" } [
-            H.div { className: "btn btn-default"
-                  , on: { click: onClickAdd fieldsS }
-                  } [
+           H.div { className: "btn btn-default"
+                 , on: { click: onClickAdd fieldsS }
+                 } [
               H.span { className: "glyphicon glyphicon-plus" } [  ]
-            ]
-          ]
+              ]
+           ]
         ]
 
     saveEnabled :: Array FTFieldWithIndex -> R.State (Array FTFieldWithIndex) -> String
@@ -118,6 +118,7 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
         (\(Tuple idx field) ->
           fieldCodeEditorWrapper { field
                                  , onChange: onChange fS idx
+                                 , onRemove: onRemove fS idx
                                  }) <$> fields
 
     onChange :: R.State (Array FTFieldWithIndex) -> Index -> FieldType -> Effect Unit
@@ -127,10 +128,18 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
           Nothing -> fields
           Just newFields -> newFields
 
+    onRemove :: R.State (Array FTFieldWithIndex) -> Index -> Unit -> Effect Unit
+    onRemove (_ /\ setFields) idx _ = do
+      setFields $ \fields ->
+        case A.deleteAt idx fields of
+          Nothing -> fields
+          Just newFields -> newFields
+
 type FieldCodeEditorProps =
   (
     field :: FTField
   , onChange :: FieldType -> Effect Unit
+  , onRemove :: Unit -> Effect Unit
   )
 
 fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
@@ -139,9 +148,18 @@ fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props [
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt" cpt
   where
-    cpt props@{field: Field {name, typ}} _ = do
+    cpt props@{field: Field {name, typ}, onRemove} _ = do
       pure $ H.div { className: "row panel panel-default" } [
-        H.div { className: "panel-heading" } [ H.text name ]
+        H.div { className: "panel-heading" } [
+           H.span {} [ H.text name ]
+           , H.div { className: "pull-right" } [
+              H.div { className: "btn btn-danger"
+                    , on: { click: \_ -> onRemove unit }
+                    } [
+                 H.span { className: "glyphicon glyphicon-minus" } [  ]
+                 ]
+              ]
+           ]
         , H.div { className: "panel-body" } [
            fieldCodeEditor props
            ]
@@ -153,30 +171,39 @@ fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
 fieldCodeEditorCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorCpt" cpt
   where
-    cpt {field: Field {typ: Haskell hs@{code}}, onChange} _ = do
-      pure $ CE.codeEditor {code, defaultCodeType: CE.Haskell, onChange: onChange'}
-      where
-        onChange' :: CE.Code -> Effect Unit
-        onChange' c = do
-          onChange $ Haskell $ hs { code = c }
-    cpt {field: Field {typ: JSON j}, onChange} _ = do
-      pure $ CE.codeEditor {code, defaultCodeType: CE.JSON, onChange: onChange'}
+    cpt {field: Field {typ: typ@(Haskell {haskell})}, onChange} _ = do
+      pure $ CE.codeEditor {code: haskell, defaultCodeType: CE.Haskell, onChange: changeCode onChange typ}
+    cpt {field: Field {typ: typ@(JSON j)}, onChange} _ = do
+      pure $ CE.codeEditor {code, defaultCodeType: CE.JSON, onChange: changeCode onChange typ}
       where
         code = R2.stringify (encodeJson j) 2
+    cpt {field: Field {typ: typ@(Markdown {text})}, onChange} _ = do
+      pure $ CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange: changeCode onChange typ}
 
-        onChange' :: CE.Code -> Effect Unit
-        onChange' c = do
-          case jsonParser c of
-            Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
-            Right j' -> case decodeJson j' of
-              Left err -> log2 "[fieldCodeEditor'] cannot decode json" j'
-              Right j'' -> onChange $ JSON j''
-    cpt {field: Field {typ: Markdown md@{text}}, onChange} _ = do
-      pure $ CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange: onChange'}
-      where
-        onChange' :: CE.Code -> Effect Unit
-        onChange' c = do
-          onChange $ Markdown $ md { text = c }
+-- Perofrms the matrix of code type changes
+-- (FieldType -> Effect Unit) is the callback function for fields array
+-- FieldType is the current element that we will modify
+-- CE.CodeType is the editor code type (might have been the cause of the trigger)
+-- CE.Code is the editor code (might have been the cause of the trigger)
+changeCode :: (FieldType -> Effect Unit) -> FieldType -> CE.CodeType -> CE.Code -> Effect Unit
+changeCode onc (Haskell hs) CE.Haskell c = onc $ Haskell $ hs { haskell = c }
+changeCode onc (Haskell {haskell}) CE.JSON c = onc $ JSON $ defaultJSON' { desc = haskell }
+changeCode onc (Haskell {haskell}) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = haskell }
+changeCode onc (JSON j@{desc}) CE.Haskell c = onc $ Haskell $ defaultHaskell' { haskell = haskell }
+  where
+    haskell = R2.stringify (encodeJson j) 2
+changeCode onc (JSON j) CE.JSON c = do
+  case jsonParser c of
+    Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
+    Right j' -> case decodeJson j' of
+      Left err -> log2 "[fieldCodeEditor'] cannot decode json" j'
+      Right j'' -> onc $ JSON j''
+changeCode onc (JSON j) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = text }
+  where
+    text = R2.stringify (encodeJson j) 2
+changeCode onc (Markdown md) CE.Haskell c = onc $ Haskell $ defaultHaskell' { haskell = c }
+changeCode onc (Markdown md) CE.JSON c = onc $ Markdown $ defaultMarkdown' { text = c }
+changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md { text = c }
 
 type LoadProps = (
     nodeId  :: Int

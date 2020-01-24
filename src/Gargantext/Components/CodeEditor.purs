@@ -45,7 +45,7 @@ instance showViewType :: Show ViewType where
 type Props =
   ( code :: Code
   , defaultCodeType :: CodeType
-  , onChange :: Code -> Effect Unit
+  , onChange :: CodeType -> Code -> Effect Unit
   )
 
 -- Fixes newlines in code
@@ -112,7 +112,7 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
         pure $ pure unit
 
       pure $ H.div { className: "code-editor" } [
-          toolbar controls
+          toolbar {controls, onChange}
         , H.div { className: "row error" } [
            errorComponent {error: controls.error}
         ]
@@ -157,13 +157,13 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     previewHidden Both = ""
     previewHidden _ = " hidden"
 
-    onEditChange :: forall e. Record Controls -> (Code -> Effect Unit) -> e -> Effect Unit
-    onEditChange controls@{codeElRef, codeOverlayElRef, editorCodeRef} onChange e = do
+    onEditChange :: forall e. Record Controls -> (CodeType -> Code -> Effect Unit) -> e -> Effect Unit
+    onEditChange controls@{codeElRef, codeOverlayElRef, codeType: (codeType /\ _), editorCodeRef} onChange e = do
       let code = R2.unsafeEventValue e
       R.setRef editorCodeRef code
       setCodeOverlay controls code
       renderHtml (R.readRef controls.editorCodeRef) controls
-      onChange code
+      onChange codeType code
 
 setCodeOverlay :: Record Controls -> Code -> Effect Unit
 setCodeOverlay {codeOverlayElRef, codeType: (codeType /\ _)} code = do
@@ -190,27 +190,35 @@ renderHtml code {codeType: (codeType /\ _), htmlElRef, error: (_ /\ setError)} =
           previewPostProcess codeType htmlEl
           pure unit
 
-toolbar :: Record Controls -> R.Element
+type ToolbarProps = (
+    controls :: Record Controls
+  , onChange :: CodeType -> Code -> Effect Unit
+  )
+
+toolbar :: Record ToolbarProps -> R.Element
 toolbar p = R.createElement toolbarCpt p []
 
-toolbarCpt :: R.Component Controls
+toolbarCpt :: R.Component ToolbarProps
 toolbarCpt = R.hooksComponent "G.C.CE.toolbar" cpt
   where
-    cpt controls@{codeType, error, viewType} _ = do
+    cpt props@{controls: {codeType, error, viewType}} _ = do
       pure $
         H.div { className: "row toolbar" } [
              codeTypeSelector {
                   codeType
-                , onChange: onChangeCodeType controls
+                , onChange: onChangeCodeType props
                 }
            , viewTypeSelector {state: viewType}
            ]
 
     -- Handle rerendering of preview when viewType changed
-    onChangeCodeType :: forall e. Record Controls -> e -> Effect Unit
-    onChangeCodeType controls _ = do
-      setCodeOverlay controls (R.readRef controls.editorCodeRef)
-      renderHtml (R.readRef controls.editorCodeRef) controls
+    onChangeCodeType :: forall e. Record ToolbarProps -> e -> Effect Unit
+    onChangeCodeType {controls, onChange} _ = do
+      setCodeOverlay controls code
+      renderHtml code controls
+      onChange (fst controls.codeType) code
+      where
+        code = R.readRef controls.editorCodeRef
 
 
 type ErrorComponentProps =

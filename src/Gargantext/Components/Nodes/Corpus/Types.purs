@@ -44,7 +44,7 @@ instance eqFTField :: Eq (Field FieldType) where
 
 data FieldType =
     Haskell {
-    code             :: HaskellCode
+    haskell          :: HaskellCode
   , tag              :: Tag
   }
   | JSON {
@@ -69,9 +69,9 @@ instance decodeFTField :: DecodeJson (Field FieldType) where
     data_ <- obj .: "data"
     typ <- case type_ of
       "Haskell" -> do
-        code <- data_ .: "code"
+        haskell <- data_ .: "haskell"
         tag <- data_ .: "tag"
-        pure $ Haskell {code, tag}
+        pure $ Haskell {haskell, tag}
       "JSON" -> do
         authors <- data_ .: "authors"
         desc <- data_ .: "desc"
@@ -96,8 +96,8 @@ instance encodeFTField :: EncodeJson (Field FieldType) where
       typ' (JSON _) = "JSON"
       typ' (Markdown _) = "Markdown"
 instance encodeFieldType :: EncodeJson FieldType where
-  encodeJson (Haskell {code}) =
-       "code" := code
+  encodeJson (Haskell {haskell}) =
+       "haskell" := haskell
     ~> "tag"  := "HaskellField"
     ~> jsonEmptyObject
   encodeJson (JSON {authors, desc, query, tag, title}) =
@@ -112,13 +112,34 @@ instance encodeFieldType :: EncodeJson FieldType where
     ~> "text" := text
     ~> jsonEmptyObject
 
+defaultHaskell :: FieldType
+defaultHaskell = Haskell defaultHaskell'
+defaultHaskell' = {
+    haskell: ""
+  , tag: "HaskellField"
+  }
+
+defaultJSON :: FieldType
+defaultJSON = JSON defaultJSON'
+defaultJSON' = {
+    authors: ""
+  , desc: ""
+  , query: ""
+  , tag: "JSONField"
+  , title: ""
+}
+
+defaultMarkdown :: FieldType
+defaultMarkdown = Markdown defaultMarkdown'
+defaultMarkdown' = {
+    tag: "MarkdownField"
+  , text: "# New file"
+  }
+
 defaultField :: FTField
 defaultField = Field {
-  name: "New file"
-  , typ: Markdown {
-    tag: "MarkdownField"
-    , text: "# New file"
-    }
+    name: "New file"
+  , typ: defaultMarkdown
   }
 
 newtype CorpusInfo =
