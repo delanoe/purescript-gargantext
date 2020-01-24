@@ -322,8 +322,9 @@ loadCorpus :: Record LoadProps -> Aff CorpusData
 loadCorpus {nodeId, session} = do
   -- fetch corpus via lists parentId
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
-  corpusNode     <- get session $ corpusNodeRoute     corpusId ""
-  defaultListIds <- (get session $ defaultListIdsRoute corpusId) :: forall a. DecodeJson a => AffTableResult (NodePoly a)
+  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
+                    :: forall a. DecodeJson a => AffTableResult (NodePoly a)
   case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
       pure {corpusId, corpusNode, defaultListId}
@@ -333,3 +334,22 @@ loadCorpus {nodeId, session} = do
     nodePolyRoute       = NodeAPI Corpus (Just nodeId) ""
     corpusNodeRoute     = NodeAPI Corpus <<< Just
     defaultListIdsRoute = Children NodeList 0 1 Nothing <<< Just
+
+
+loadCorpusWithChild :: Record LoadProps -> Aff CorpusData
+loadCorpusWithChild {nodeId:childId, session} = do
+  -- fetch corpus via lists parentId
+  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session $ listNodeRoute childId ""
+  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
+                    :: forall a. DecodeJson a => AffTableResult (NodePoly a)
+  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+    Just (NodePoly { id: defaultListId }) ->
+      pure {corpusId, corpusNode, defaultListId}
+    Nothing ->
+      throwError $ error "Missing default list"
+  where
+    corpusNodeRoute     = NodeAPI Corpus <<< Just
+    listNodeRoute       = NodeAPI Node <<< Just
+    defaultListIdsRoute = Children NodeList 0 1 Nothing <<< Just
+
