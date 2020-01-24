@@ -20,6 +20,7 @@ import Gargantext.Prelude
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Corpus.Types
+import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get, put)
@@ -51,6 +52,8 @@ type ViewProps = (
   | Props
   )
 
+-- We need FTFields with indices because it's the only way to identify the
+-- FTField element inside a component (there are no UUIDs and such)
 type Index = Int
 type FTFieldWithIndex = Tuple Index FTField
 
@@ -113,11 +116,15 @@ fieldsCodeEditor props = R.createElement fieldsCodeEditorCpt props []
 fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
 fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
   where
-    cpt {nodeId, fields: fS@(fields /\ setFields), session} _ = do
+    cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
       pure $ H.div {} $
         (\(Tuple idx field) ->
-          fieldCodeEditorWrapper { field
+          fieldCodeEditorWrapper { canMoveDown: idx < (A.length fields - 1)
+                                 , canMoveUp: idx > 0
+                                 , field
                                  , onChange: onChange fS idx
+                                 , onMoveDown: onMoveDown fS idx
+                                 , onMoveUp: onMoveUp fS idx
                                  , onRemove: onRemove fS idx
                                  , onRename: onRename fS idx
                                  }) <$> fields
@@ -129,12 +136,20 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
           Nothing -> fields
           Just newFields -> newFields
 
+    onMoveDown :: R.State (Array FTFieldWithIndex) -> Index -> Unit -> Effect Unit
+    onMoveDown (fs /\ setFields) idx _ = do
+      setFields $ recomputeIndices <<< (GDA.swap idx (idx + 1))
+
+    onMoveUp :: R.State (Array FTFieldWithIndex) -> Index -> Unit -> Effect Unit
+    onMoveUp (_ /\ setFields) idx _ = do
+      setFields $ recomputeIndices <<< (GDA.swap idx (idx - 1))
+
     onRemove :: R.State (Array FTFieldWithIndex) -> Index -> Unit -> Effect Unit
     onRemove (_ /\ setFields) idx _ = do
       setFields $ \fields ->
         case A.deleteAt idx fields of
           Nothing -> fields
-          Just newFields -> newFields
+          Just newFields -> recomputeIndices newFields
 
     onRename :: R.State (Array FTFieldWithIndex) -> Index -> String -> Effect Unit
     onRename (_ /\ setFields) idx newName = do
@@ -143,10 +158,17 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
           Nothing -> fields
           Just newFields -> newFields
 
+    recomputeIndices :: Array FTFieldWithIndex -> Array FTFieldWithIndex
+    recomputeIndices = A.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
+
 type FieldCodeEditorProps =
   (
-    field :: FTField
+    canMoveDown :: Boolean
+  , canMoveUp :: Boolean
+  , field :: FTField
   , onChange :: FieldType -> Effect Unit
+  , onMoveDown :: Unit -> Effect Unit
+  , onMoveUp :: Unit -> Effect Unit
   , onRemove :: Unit -> Effect Unit
   , onRename :: String -> Effect Unit
   )
@@ -157,7 +179,7 @@ fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props [
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt" cpt
   where
-    cpt props@{field: Field {name, typ}, onRemove, onRename} _ = do
+    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
       pure $ H.div { className: "row panel panel-default" } [
         H.div { className: "panel-heading" } [
           H.div { className: "code-editor-heading" } [
@@ -169,12 +191,29 @@ fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt"
                   H.span { className: "glyphicon glyphicon-trash" } [  ]
                   ]
                 ]
+              , moveDownButton canMoveDown
+              , moveUpButton canMoveUp
             ]
          ]
         , H.div { className: "panel-body" } [
            fieldCodeEditor props
            ]
         ]
+      where
+        moveDownButton false = H.div {} []
+        moveDownButton true =
+          H.div { className: "btn btn-default"
+                , on: { click: \_ -> onMoveDown unit }
+                } [
+            H.span { className: "glyphicon glyphicon-arrow-down" } [  ]
+            ]
+        moveUpButton false = H.div {} []
+        moveUpButton true =
+          H.div { className: "btn btn-default"
+                , on: { click: \_ -> onMoveUp unit }
+                } [
+            H.span { className: "glyphicon glyphicon-arrow-up" } [  ]
+            ]
 
 type RenameableProps =
   (

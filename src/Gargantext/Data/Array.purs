@@ -48,3 +48,13 @@ seqCatMaybes = seqMapMaybe identity
 -- | Seq misc tools
 seqConcatMap :: forall a b. (a -> Seq.Seq b) -> Seq.Seq a -> Seq.Seq b
 seqConcatMap = flip bind
+
+-- swap 2 array indices
+swap :: forall a. Int -> Int -> Array a -> Array a
+swap i j arr = DA.updateAtIndices updates arr
+  where
+    updates = case DA.index arr i of
+      Nothing -> []
+      Just iEl -> case DA.index arr j of
+        Nothing -> []
+        Just jEl -> [ Tuple i jEl, Tuple j iEl ]
