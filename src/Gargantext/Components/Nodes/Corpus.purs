@@ -119,6 +119,7 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
           fieldCodeEditorWrapper { field
                                  , onChange: onChange fS idx
                                  , onRemove: onRemove fS idx
+                                 , onRename: onRename fS idx
                                  }) <$> fields
 
     onChange :: R.State (Array FTFieldWithIndex) -> Index -> FieldType -> Effect Unit
@@ -135,11 +136,19 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
           Nothing -> fields
           Just newFields -> newFields
 
+    onRename :: R.State (Array FTFieldWithIndex) -> Index -> String -> Effect Unit
+    onRename (_ /\ setFields) idx newName = do
+      setFields $ \fields ->
+        case A.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fields of
+          Nothing -> fields
+          Just newFields -> newFields
+
 type FieldCodeEditorProps =
   (
     field :: FTField
   , onChange :: FieldType -> Effect Unit
   , onRemove :: Unit -> Effect Unit
+  , onRename :: String -> Effect Unit
   )
 
 fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
@@ -148,22 +157,65 @@ fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props [
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt" cpt
   where
-    cpt props@{field: Field {name, typ}, onRemove} _ = do
+    cpt props@{field: Field {name, typ}, onRemove, onRename} _ = do
       pure $ H.div { className: "row panel panel-default" } [
         H.div { className: "panel-heading" } [
-           H.span {} [ H.text name ]
-           , H.div { className: "pull-right" } [
-              H.div { className: "btn btn-danger"
-                    , on: { click: \_ -> onRemove unit }
-                    } [
-                 H.span { className: "glyphicon glyphicon-minus" } [  ]
-                 ]
-              ]
-           ]
+          H.div { className: "code-editor-heading" } [
+              renameable {onRename, text: name}
+            , H.div { className: "buttons-right" } [
+                H.div { className: "btn btn-danger"
+                      , on: { click: \_ -> onRemove unit }
+                      } [
+                  H.span { className: "glyphicon glyphicon-trash" } [  ]
+                  ]
+                ]
+            ]
+         ]
         , H.div { className: "panel-body" } [
            fieldCodeEditor props
            ]
         ]
+
+type RenameableProps =
+  (
+    onRename :: String -> Effect Unit
+  , text :: String
+  )
+
+renameable :: Record RenameableProps -> R.Element
+renameable props = R.createElement renameableCpt props []
+
+renameableCpt :: R.Component RenameableProps
+renameableCpt = R.hooksComponent "G.C.N.C.renameableCpt" cpt
+  where
+    cpt {onRename, text} _ = do
+      isEditing <- R.useState' false
+      state <- R.useState' text
+
+      pure $ H.div { className: "renameable" } [
+        textCpt isEditing onRename state
+      ]
+
+    textCpt :: R.State Boolean -> (String -> Effect Unit) -> R.State String -> R.Element
+    textCpt (false /\ setIsEditing) _ (text /\ _) = H.div {} [
+        H.span { className: "text" } [ H.text text ]
+      , H.span { className: "btn btn-default"
+               , on: { click: \_ -> setIsEditing $ const true } } [
+          H.span { className: "glyphicon glyphicon-pencil" } []
+        ]
+    ]
+    textCpt (true /\ setIsEditing) onRename (text /\ setText) = H.div {} [
+        H.input { defaultValue: text
+                , className: "form-control text"
+                , on: { change: \e -> setText $ const $ R2.unsafeEventValue e } }
+      , H.span { className: "btn btn-default"
+              , on: { click: \_ -> do
+                      setIsEditing $ const false
+                      onRename text
+                    } } [
+          H.span { className: "glyphicon glyphicon-save" } []
+        ]
+    ]
 
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
