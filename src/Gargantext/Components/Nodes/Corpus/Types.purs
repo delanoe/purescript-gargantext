@@ -5,6 +5,7 @@ import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
+import Data.List as List
 import Data.Maybe (Maybe)
 
 import Gargantext.Prelude
@@ -23,7 +24,7 @@ type Hash = String
 newtype Hyperdata =
   Hyperdata
   {
-    fields :: Array FTField
+    fields :: List.List FTField
   }
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do

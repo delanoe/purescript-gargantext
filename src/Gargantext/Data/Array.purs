@@ -2,10 +2,11 @@ module Gargantext.Data.Array
   where
 
 import Data.Array as DA
+import Data.List as List
 import Data.Maybe
 import Data.Sequence as Seq
 import Data.Tuple (Tuple(..))
-import Prelude (bind, flip, identity, (<<<))
+import Prelude (bind, flip, identity, (<<<), ($))
 
 ----------------------------------------------------------------------
 -- | Split arrays tools
@@ -59,5 +60,8 @@ swap i j arr = DA.updateAtIndices updates arr
         Nothing -> []
         Just jEl -> [ Tuple i jEl, Tuple j iEl ]
 
+swapList :: forall a. Int -> Int -> List.List a -> List.List a
+swapList i j seq = List.fromFoldable $ swap i j $ List.toUnfoldable seq
+
 swapSeq :: forall a. Int -> Int -> Seq.Seq a -> Seq.Seq a
-swapSeq i j seq = Seq.fromFoldable $ swap i j $ Seq.toFoldable seq
+swapSeq i j seq = Seq.fromFoldable $ swap i j $ Seq.toUnfoldable seq

@@ -4,8 +4,8 @@ import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.List as List
 import Data.Maybe (Maybe(..))
-import Data.Sequence as Seq
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
@@ -58,6 +58,7 @@ type ViewProps = (
 -- FTField element inside a component (there are no UUIDs and such)
 type Index = Int
 type FTFieldWithIndex = Tuple Index FTField
+type FTFieldsWithIndex = List.List FTFieldWithIndex
 
 corpusLayoutView :: Record ViewProps -> R.Element
 corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
@@ -66,7 +67,7 @@ corpusLayoutViewCpt :: R.Component ViewProps
 corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
   where
     cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
-      let fieldsWithIndex = A.mapWithIndex (\idx -> \t -> Tuple idx t) fields
+      let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex
 
       pure $ H.div {} [
@@ -89,10 +90,10 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
            ]
         ]
 
-    saveEnabled :: Array FTFieldWithIndex -> R.State (Array FTFieldWithIndex) -> String
+    saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
     saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
 
-    onClickSave :: forall e. { fields :: R.State (Array FTFieldWithIndex)
+    onClickSave :: forall e. { fields :: R.State FTFieldsWithIndex
                              , nodeId :: Int
                              , reload :: R.State Int
                              , session :: Session } -> e -> Effect Unit
@@ -104,13 +105,13 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
                      , session }
         liftEffect $ setReload $ (+) 1
 
-    onClickAdd :: forall e. R.State (Array FTFieldWithIndex) -> e -> Effect Unit
+    onClickAdd :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
     onClickAdd (_ /\ setFieldsS) _ = do
-      setFieldsS $ \fieldsS -> A.snoc fieldsS $ Tuple (A.length fieldsS) defaultField
+      setFieldsS $ \fieldsS -> List.snoc fieldsS $ Tuple (List.length fieldsS) defaultField
 
 type FieldsCodeEditorProps =
   (
-    fields :: R.State (Array FTFieldWithIndex)
+    fields :: R.State FTFieldsWithIndex
     | LoadProps
   )
 
@@ -121,50 +122,51 @@ fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
 fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
   where
     cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
-      pure $ H.div {} $
-        (\idxField@(Tuple idx field) ->
-          fieldCodeEditorWrapper { canMoveDown: idx < (A.length fields - 1)
-                                 , canMoveUp: idx > 0
-                                 , field
-                                 , hash: hash idxField
-                                 , onChange: onChange fS idx
-                                 , onMoveDown: onMoveDown fS idx
-                                 , onMoveUp: onMoveUp fS idx
-                                 , onRemove: onRemove fS idx
-                                 , onRename: onRename fS idx
-                                 }) <$> fields
+      pure $ H.div {} $ List.toUnfoldable editors
+      where
+        editors = (\idxField@(Tuple idx field) ->
+                    fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields - 1)
+                                           , canMoveUp: idx > 0
+                                           , field
+                                           , hash: hash idxField
+                                           , onChange: onChange fS idx
+                                           , onMoveDown: onMoveDown fS idx
+                                           , onMoveUp: onMoveUp fS idx
+                                           , onRemove: onRemove fS idx
+                                           , onRename: onRename fS idx
+                                           }) <$> fields
 
-    onChange :: R.State (Array FTFieldWithIndex) -> Index -> FieldType -> Effect Unit
+    onChange :: R.State FTFieldsWithIndex -> Index -> FieldType -> Effect Unit
     onChange (_ /\ setFields) idx typ = do
       setFields $ \fields ->
-        case A.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields of
+        case List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields of
           Nothing -> fields
           Just newFields -> newFields
 
-    onMoveDown :: R.State (Array FTFieldWithIndex) -> Index -> Unit -> Effect Unit
+    onMoveDown :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onMoveDown (fs /\ setFields) idx _ = do
-      setFields $ recomputeIndices <<< (GDA.swap idx (idx + 1))
+      setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
 
-    onMoveUp :: R.State (Array FTFieldWithIndex) -> Index -> Unit -> Effect Unit
+    onMoveUp :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onMoveUp (_ /\ setFields) idx _ = do
-      setFields $ recomputeIndices <<< (GDA.swap idx (idx - 1))
+      setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
 
-    onRemove :: R.State (Array FTFieldWithIndex) -> Index -> Unit -> Effect Unit
+    onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onRemove (_ /\ setFields) idx _ = do
       setFields $ \fields ->
-        case A.deleteAt idx fields of
+        case List.deleteAt idx fields of
           Nothing -> fields
           Just newFields -> recomputeIndices newFields
 
-    onRename :: R.State (Array FTFieldWithIndex) -> Index -> String -> Effect Unit
+    onRename :: R.State FTFieldsWithIndex -> Index -> String -> Effect Unit
     onRename (_ /\ setFields) idx newName = do
       setFields $ \fields ->
-        case A.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fields of
+        case List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fields of
           Nothing -> fields
           Just newFields -> newFields
 
-    recomputeIndices :: Array FTFieldWithIndex -> Array FTFieldWithIndex
-    recomputeIndices = A.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
+    recomputeIndices :: FTFieldsWithIndex -> FTFieldsWithIndex
+    recomputeIndices = List.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
 
 hash :: FTFieldWithIndex -> Hash
 hash (Tuple idx f) = GUC.md5 $ "--idx--" <> (show idx) <> "--field--" <> (show f)
