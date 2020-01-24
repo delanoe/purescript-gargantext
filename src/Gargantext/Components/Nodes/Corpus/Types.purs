@@ -4,6 +4,7 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe)
 
 import Gargantext.Prelude
@@ -17,6 +18,7 @@ type Tag = String
 type Title = String
 type HaskellCode = String
 type MarkdownText = String
+type Hash = String
 
 newtype Hyperdata =
   Hyperdata
@@ -41,6 +43,8 @@ type FTField = Field FieldType
 derive instance genericFTField :: Generic (Field FieldType) _
 instance eqFTField :: Eq (Field FieldType) where
   eq = genericEq
+instance showFTField :: Show (Field FieldType) where
+  show = genericShow
 
 data FieldType =
     Haskell {
@@ -61,6 +65,8 @@ data FieldType =
 derive instance genericFieldType :: Generic FieldType _
 instance eqFieldType :: Eq FieldType where
   eq = genericEq
+instance showFieldType :: Show FieldType where
+  show = genericShow
 instance decodeFTField :: DecodeJson (Field FieldType) where
   decodeJson json = do
     obj <- decodeJson json

@@ -5,7 +5,8 @@ import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..), fst)
+import Data.Sequence as Seq
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -25,6 +26,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (NodeType(..), AffTableResult)
+import Gargantext.Utils.Crypto as GUC
 import Gargantext.Utils.Reactix as R2
 
 type Props = (
@@ -75,7 +77,9 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
               H.span { className: "glyphicon glyphicon-save" } [  ]
               ]
            ]
-        , H.div {} [ fieldsCodeEditor {nodeId, session, fields: fieldsS} ]
+        , H.div {} [ fieldsCodeEditor { fields: fieldsS
+                                      , nodeId
+                                      , session } ]
         , H.div { className: "row" } [
            H.div { className: "btn btn-default"
                  , on: { click: onClickAdd fieldsS }
@@ -118,10 +122,11 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
   where
     cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
       pure $ H.div {} $
-        (\(Tuple idx field) ->
+        (\idxField@(Tuple idx field) ->
           fieldCodeEditorWrapper { canMoveDown: idx < (A.length fields - 1)
                                  , canMoveUp: idx > 0
                                  , field
+                                 , hash: hash idxField
                                  , onChange: onChange fS idx
                                  , onMoveDown: onMoveDown fS idx
                                  , onMoveUp: onMoveUp fS idx
@@ -161,11 +166,15 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
     recomputeIndices :: Array FTFieldWithIndex -> Array FTFieldWithIndex
     recomputeIndices = A.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
 
+hash :: FTFieldWithIndex -> Hash
+hash (Tuple idx f) = GUC.md5 $ "--idx--" <> (show idx) <> "--field--" <> (show f)
+
 type FieldCodeEditorProps =
   (
     canMoveDown :: Boolean
   , canMoveUp :: Boolean
   , field :: FTField
+  , hash :: Hash
   , onChange :: FieldType -> Effect Unit
   , onMoveDown :: Unit -> Effect Unit
   , onMoveUp :: Unit -> Effect Unit
@@ -179,8 +188,8 @@ fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props [
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt" cpt
   where
-    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
-      pure $ H.div { className: "row panel panel-default" } [
+    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, hash, onMoveDown, onMoveUp, onRemove, onRename} _ = do
+      pure $ H.div { className: "row panel panel-default hash-" <> hash } [
         H.div { className: "panel-heading" } [
           H.div { className: "code-editor-heading" } [
               renameable {onRename, text: name}
@@ -232,29 +241,29 @@ renameableCpt = R.hooksComponent "G.C.N.C.renameableCpt" cpt
       state <- R.useState' text
 
       pure $ H.div { className: "renameable" } [
-        textCpt isEditing onRename state
+        textCpt isEditing state
       ]
-
-    textCpt :: R.State Boolean -> (String -> Effect Unit) -> R.State String -> R.Element
-    textCpt (false /\ setIsEditing) _ (text /\ _) = H.div {} [
-        H.span { className: "text" } [ H.text text ]
-      , H.span { className: "btn btn-default"
-               , on: { click: \_ -> setIsEditing $ const true } } [
-          H.span { className: "glyphicon glyphicon-pencil" } []
+      where
+        textCpt :: R.State Boolean -> R.State String -> R.Element
+        textCpt (false /\ setIsEditing) (text /\ _) = H.div {} [
+            H.span { className: "text" } [ H.text text ]
+          , H.span { className: "btn btn-default"
+                  , on: { click: \_ -> setIsEditing $ const true } } [
+              H.span { className: "glyphicon glyphicon-pencil" } []
+            ]
         ]
-    ]
-    textCpt (true /\ setIsEditing) onRename (text /\ setText) = H.div {} [
-        H.input { defaultValue: text
-                , className: "form-control text"
-                , on: { change: \e -> setText $ const $ R2.unsafeEventValue e } }
-      , H.span { className: "btn btn-default"
-              , on: { click: \_ -> do
-                      setIsEditing $ const false
-                      onRename text
-                    } } [
-          H.span { className: "glyphicon glyphicon-save" } []
+        textCpt (true /\ setIsEditing) (text /\ setText) = H.div {} [
+            H.input { defaultValue: text
+                    , className: "form-control text"
+                    , on: { change: \e -> setText $ const $ R2.unsafeEventValue e } }
+          , H.span { className: "btn btn-default"
+                  , on: { click: \_ -> do
+                          setIsEditing $ const false
+                          onRename text
+                        } } [
+              H.span { className: "glyphicon glyphicon-save" } []
+            ]
         ]
-    ]
 
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []

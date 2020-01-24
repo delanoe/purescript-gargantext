@@ -58,3 +58,6 @@ swap i j arr = DA.updateAtIndices updates arr
       Just iEl -> case DA.index arr j of
         Nothing -> []
         Just jEl -> [ Tuple i jEl, Tuple j iEl ]
+
+swapSeq :: forall a. Int -> Int -> Seq.Seq a -> Seq.Seq a
+swapSeq i j seq = Seq.fromFoldable $ swap i j $ Seq.toFoldable seq
