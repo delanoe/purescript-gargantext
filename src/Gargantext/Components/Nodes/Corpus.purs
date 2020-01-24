@@ -8,8 +8,9 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
-import Effect.Aff (Aff, launchAff_, throwError)
 import Effect (Effect)
+import Effect.Aff (Aff, launchAff_, throwError)
+import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -30,18 +31,23 @@ type Props = (
   , session :: Session
   )
 
+type Reload = R.State Int
+
 corpusLayout :: Record Props -> R.Element
 corpusLayout props = R.createElement corpusLayoutCpt props []
 
 corpusLayoutCpt :: R.Component Props
 corpusLayoutCpt = R.hooksComponent "G.C.N.C.corpusLayout" cpt
   where
-    cpt props@{nodeId, session} _ =
-      useLoader props loadCorpus' $
-        \corpus -> corpusLayoutView {corpus, nodeId, session}
+    cpt {nodeId, session} _ = do
+      reload <- R.useState' 0
+
+      useLoader {nodeId, reload: fst reload, session} loadCorpusWithReload $
+        \corpus -> corpusLayoutView {corpus, nodeId, reload, session}
 
 type ViewProps = (
     corpus  :: NodePoly Hyperdata
+  , reload  :: Reload
   | Props
   )
 
@@ -54,14 +60,17 @@ corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
 corpusLayoutViewCpt :: R.Component ViewProps
 corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
   where
-    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, session} _ = do
+    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
       let fieldsWithIndex = A.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex
+
+      R.useEffect' $ do
+        log2 "[corpusLayoutViewCpt] reload" $ fst reload
 
       pure $ H.div {} [
           H.div { className: "row" } [
             H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
-                  , on: { click: onClickSave {fields: fieldsS, nodeId, session} }
+                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
                   } [
                H.span { className: "glyphicon glyphicon-save" } [  ]
             ]
@@ -81,13 +90,15 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
 
     onClickSave :: forall e. { fields :: R.State (Array FTFieldWithIndex)
                              , nodeId :: Int
+                             , reload :: R.State Int
                              , session :: Session } -> e -> Effect Unit
-    onClickSave {fields: (fieldsS /\ _), nodeId, session} _ = do
+    onClickSave {fields: (fieldsS /\ _), nodeId, reload: (_ /\ setReload), session} _ = do
       log2 "[corpusLayoutViewCpt] onClickSave fieldsS" fieldsS
       launchAff_ do
         saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
                      , nodeId
                      , session }
+        liftEffect $ setReload $ (+) 1
 
     onClickAdd :: forall e. R.State (Array FTFieldWithIndex) -> e -> Effect Unit
     onClickAdd (_ /\ setFieldsS) _ = do
@@ -175,13 +186,19 @@ type LoadProps = (
 loadCorpus' :: Record LoadProps -> Aff (NodePoly Hyperdata)
 loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
+-- Just to make reloading effective
+loadCorpusWithReload :: {reload :: Int  | LoadProps} -> Aff (NodePoly Hyperdata)
+loadCorpusWithReload {nodeId, reload, session} = get session $ NodeAPI Corpus (Just nodeId) $ "?_reload=" <> (show reload)
+
 type SaveProps = (
   hyperdata :: Hyperdata
   | LoadProps
   )
 
 saveCorpus :: Record SaveProps -> Aff Unit
-saveCorpus {hyperdata, nodeId, session} = put session (NodeAPI Corpus (Just nodeId) "") hyperdata
+saveCorpus {hyperdata, nodeId, session} = do
+  id_ <- (put session (NodeAPI Corpus (Just nodeId) "") hyperdata) :: Aff Int
+  pure unit
 
 loadCorpus :: Record LoadProps -> Aff CorpusData
 loadCorpus {nodeId, session} = do
