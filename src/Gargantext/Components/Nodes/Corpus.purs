@@ -188,7 +188,7 @@ loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
 -- Just to make reloading effective
 loadCorpusWithReload :: {reload :: Int  | LoadProps} -> Aff (NodePoly Hyperdata)
-loadCorpusWithReload {nodeId, reload, session} = get session $ NodeAPI Corpus (Just nodeId) $ "?_reload=" <> (show reload)
+loadCorpusWithReload {nodeId, session} = loadCorpus' {nodeId, session}
 
 type SaveProps = (
   hyperdata :: Hyperdata
