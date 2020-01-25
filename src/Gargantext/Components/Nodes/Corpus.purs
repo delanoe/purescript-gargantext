@@ -75,7 +75,7 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
            H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
                  } [
-              H.span { className: "glyphicon glyphicon-floppy-open" } [  ]
+              H.span { className: "glyphicon glyphicon-floppy-disk" } [  ]
               ]
            ]
         , H.div {} [ fieldsCodeEditor { fields: fieldsS
@@ -263,7 +263,7 @@ renameableCpt = R.hooksComponent "G.C.N.C.renameableCpt" cpt
                           setIsEditing $ const false
                           onRename text
                         } } [
-              H.span { className: "glyphicon glyphicon-floppy-open" } []
+              H.span { className: "glyphicon glyphicon-floppy-disk" } []
             ]
         ]
 
