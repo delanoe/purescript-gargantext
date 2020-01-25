@@ -7,19 +7,19 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
-
 --------------------------------------------------------
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.Nodes.Corpus (loadCorpus)
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, CorpusInfo(..))
+import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..), getCorpusInfo, CorpusInfo(..))
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
+--------------------------------------------------------
 
 type Props = ( frontends :: Frontends, session :: Session, nodeId :: Int )
 
@@ -30,16 +30,16 @@ textsLayout props = R.createElement textsLayoutCpt props []
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = R.hooksComponent "G.C.Nodes.Texts.textsLayout" cpt where
   cpt {session,nodeId,frontends} _ = do
-    pure $ loader {session, nodeId} loadCorpus paint
+    pure $ loader {session, nodeId} loadCorpusWithChild paint
     where
       paint corpusData@{corpusId, corpusNode, defaultListId} =
         R.fragment [ Table.tableHeaderLayout headerProps, tabs' ]
         where
-          NodePoly { name, date, hyperdata: CorpusInfo corpus } = corpusNode
-          {desc, query, authors: user} = corpus
+          NodePoly { name, date, hyperdata: Hyperdata h } = corpusNode
+          CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
           tabs' = tabs {session, corpusId, corpusData, frontends}
           title = "Corpus " <> name
-          headerProps = { title, desc, query, date, user }
+          headerProps = { title, desc, query, date, user:authors }
 
 data Mode = MoreLikeFav | MoreLikeTrash
 

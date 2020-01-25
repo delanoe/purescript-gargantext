@@ -1,5 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Types where
 
+import Data.Maybe (Maybe(..))
+import Data.Array (head)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -63,6 +65,29 @@ data FieldType =
     tag              :: Tag
   , text             :: MarkdownText
   }
+
+isJSON :: FieldType -> Boolean
+isJSON (JSON _) = true
+isJSON _        = false
+
+getCorpusInfo :: Array (Field FieldType) -> CorpusInfo
+getCorpusInfo as = case head as of
+  Just (Field {typ: JSON {authors, desc,query,title}}) -> CorpusInfo { title
+                                                                     , desc
+                                                                     , query
+                                                                     , authors
+                                                                     , chart:Nothing
+                                                                     , totalRecords:0
+                                                                     }
+  _                                -> CorpusInfo { title:"Empty"
+                                                 , desc:""
+                                                 , query:""
+                                                 , authors:""
+                                                 , chart:Nothing
+                                                 , totalRecords:0
+                                                 }
+
+
 derive instance genericFieldType :: Generic FieldType _
 instance eqFieldType :: Eq FieldType where
   eq = genericEq
@@ -99,8 +124,8 @@ instance encodeFTField :: EncodeJson (Field FieldType) where
     ~> "type"   := typ' typ
     ~> jsonEmptyObject
     where
-      typ' (Haskell _) = "Haskell"
-      typ' (JSON _) = "JSON"
+      typ' (Haskell _)  = "Haskell"
+      typ' (JSON _)     = "JSON"
       typ' (Markdown _) = "Markdown"
 instance encodeFieldType :: EncodeJson FieldType where
   encodeJson (Haskell {haskell}) =
@@ -170,5 +195,5 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
 
 type CorpusData = { corpusId :: Int
-                  , corpusNode :: NodePoly CorpusInfo
+                  , corpusNode :: NodePoly Hyperdata -- CorpusInfo
                   , defaultListId :: Int}
