@@ -1,7 +1,6 @@
 module Gargantext.Components.Nodes.Corpus.Types where
 
 import Data.Maybe (Maybe(..))
-import Data.Array (head)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -70,8 +69,8 @@ isJSON :: FieldType -> Boolean
 isJSON (JSON _) = true
 isJSON _        = false
 
-getCorpusInfo :: Array (Field FieldType) -> CorpusInfo
-getCorpusInfo as = case head as of
+getCorpusInfo :: List.List (Field FieldType) -> CorpusInfo
+getCorpusInfo as = case List.head as of
   Just (Field {typ: JSON {authors, desc,query,title}}) -> CorpusInfo { title
                                                                      , desc
                                                                      , query
