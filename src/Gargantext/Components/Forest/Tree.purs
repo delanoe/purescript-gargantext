@@ -41,36 +41,43 @@ treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
       -- NOTE: this is a hack to reload the tree view on demand
       reload <- R.useState' (0 :: Reload)
       openNodes <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: Set TreeId)
-      pure $ treeLoadView reload
-        { root, mCurrentRoute, session, frontends, openNodes }
+      pure $ treeLoadView
+        { root, mCurrentRoute, session, frontends, openNodes, reload }
 
 type Props' = ( root          :: ID
               , mCurrentRoute :: Maybe AppRoute
               , session       :: Session
               , frontends     :: Frontends
               , openNodes     :: R.State (Set TreeId)
+              , reload :: R.State Reload
               )
 
-treeLoadView :: R.State Reload -> Record Props' -> R.Element
-treeLoadView reload p = R.createElement el p []
+treeLoadView :: Record Props' -> R.Element
+treeLoadView p = R.createElement treeLoadView' p []
+
+treeLoadView' :: R.Component Props'
+treeLoadView' = R.staticComponent "TreeLoadView" cpt
   where
-    el = R.staticComponent "TreeLoadView" cpt
-    cpt {root, mCurrentRoute, session, frontends, openNodes} _ = do
+    cpt {root, mCurrentRoute, session, frontends, openNodes, reload} _ = do
       loader root (loadNode session) $ \loaded ->
-        loadedTreeView reload {tree: loaded, mCurrentRoute, session, frontends, openNodes}
+        loadedTreeView {tree: loaded, mCurrentRoute, session, frontends, openNodes, reload}
 
 type TreeViewProps = ( tree          :: FTree
                      , mCurrentRoute :: Maybe AppRoute
                      , frontends     :: Frontends
-                     , session       :: Session 
+                     , session       :: Session
                      , openNodes     :: R.State (Set TreeId)
+                     , reload :: R.State Reload
                      )
 
-loadedTreeView :: R.State Reload -> Record TreeViewProps -> R.Element
-loadedTreeView reload p = R.createElement el p []
+
+loadedTreeView :: Record TreeViewProps -> R.Element
+loadedTreeView p = R.createElement loadedTreeView' p []
+
+loadedTreeView' :: R.Component TreeViewProps
+loadedTreeView' = R.hooksComponent "LoadedTreeView" cpt
   where
-    el = R.hooksComponent "LoadedTreeView" cpt
-    cpt {tree, mCurrentRoute, session, frontends, openNodes} _ = do
+    cpt {tree, mCurrentRoute, session, frontends, openNodes, reload} _ = do
       treeState <- R.useState' {tree, asyncTasks: []}
 
       pure $ H.div {className: "tree"}
@@ -110,9 +117,9 @@ toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asy
           )
         ]
 
-    onAsyncTaskFinish (AsyncTask {id}) = setTreeState $ const $ ts { asyncTasks = newAsyncTasks }
+    onAsyncTaskFinish (AsyncTask {id: id_}) = setTreeState $ const $ ts { asyncTasks = newAsyncTasks }
       where
-        newAsyncTasks = A.filter (\(AsyncTask {id: id'}) -> id /= id') asyncTasks
+        newAsyncTasks = A.filter (\(AsyncTask {id: id'}) -> id_ /= id') asyncTasks
 
 
 childNodes :: Session
