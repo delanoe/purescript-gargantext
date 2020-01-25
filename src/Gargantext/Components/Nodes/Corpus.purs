@@ -6,7 +6,7 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.List as List
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -20,7 +20,7 @@ import Gargantext.Prelude
 
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Corpus.Types
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, FTField, Field(..), FieldType(..), Hash, Hyperdata(..), defaultField, defaultHaskell', defaultJSON', defaultMarkdown')
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
@@ -75,7 +75,7 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
            H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
                  } [
-              H.span { className: "glyphicon glyphicon-save" } [  ]
+              H.span { className: "glyphicon glyphicon-floppy-open" } [  ]
               ]
            ]
         , H.div {} [ fieldsCodeEditor { fields: fieldsS
@@ -263,7 +263,7 @@ renameableCpt = R.hooksComponent "G.C.N.C.renameableCpt" cpt
                           setIsEditing $ const false
                           onRename text
                         } } [
-              H.span { className: "glyphicon glyphicon-save" } []
+              H.span { className: "glyphicon glyphicon-floppy-open" } []
             ]
         ]
 
