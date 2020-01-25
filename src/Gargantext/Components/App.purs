@@ -57,7 +57,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
           Home  -> forested $ homeLayout EN
           Login -> login { sessions, backends, visible: showLogin }
           Folder sid _      -> withSession sid $ \_ -> forested (folder {})
-          Corpus sid nodeId -> withSession sid $ \_ -> forested $ corpusLayout { nodeId }
+          Corpus sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId  -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
           Lists sid nodeId  -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
           Dashboard sid _nodeId  -> withSession sid $ \session -> forested $ dashboardLayout {}

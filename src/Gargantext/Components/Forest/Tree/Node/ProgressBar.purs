@@ -14,6 +14,7 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types as GT
 import Partial.Unsafe (unsafePartial)
+
 import Reactix as R
 import Reactix.DOM.HTML as H
 

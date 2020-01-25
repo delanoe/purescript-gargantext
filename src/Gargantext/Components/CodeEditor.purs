@@ -2,32 +2,33 @@ module Gargantext.Components.CodeEditor where
 
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (either, Either(..))
-import Data.Maybe (Maybe(..))
-import Data.Nullable (Nullable, null, toMaybe)
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
-import DOM.Simple.Types (Element)
-import Effect (Effect)
-import FFI.Simple ((.=), delay)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (Nullable, null, toMaybe)
+import Data.String.Utils (endsWith)
+import Data.Tuple (fst)
+import Data.Tuple.Nested ((/\))
+import DOM.Simple.Types (Element)
+import Effect (Effect)
+import FFI.Simple ((.=), delay)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Text.Markdown.SlamDown.Parser (parseMd)
 import Text.Markdown.SlamDown.Smolder as MD
-import Text.Markdown.SlamDown.Syntax (SlamDownP(..))
-import Text.Smolder.Renderer.String (render)
+import Text.Markdown.SlamDown.Syntax (SlamDownP)
+import Text.Smolder.Renderer.String as Smolder
 
 import Gargantext.Prelude
+import Gargantext.Utils.HighlightJS as HLJS
 import Gargantext.Utils.Reactix as R2
 
 type Code = String
 type Html = String
 type Error = String
 
-data CodeType = JSON | Markdown
+data CodeType = Haskell | JSON | Markdown
 derive instance genericCodeType :: Generic CodeType _
 instance eqCodeType :: Eq CodeType where
   eq = genericEq
@@ -42,120 +43,182 @@ instance showViewType :: Show ViewType where
   show = genericShow
 
 type Props =
-  ( code :: String
+  ( code :: Code
   , defaultCodeType :: CodeType
-  , onChange :: String -> Effect Unit
+  , onChange :: CodeType -> Code -> Effect Unit
   )
 
-compile :: CodeType -> Code -> Either Error Html
-compile JSON code = result
+-- Fixes newlines in code
+-- This is useful eg for proper rendering of the textarea overlay
+codeNlFix :: CodeType -> Code -> Code
+codeNlFix _ "" = " "
+codeNlFix _ c = if endsWith "\n" c then (c <> " ") else c
+
+render :: CodeType -> Code -> Either Error Html
+render Haskell code = Right $ renderHaskell $ codeNlFix Haskell code
+render JSON code = result
   where
     parsedE = jsonParser code
     result = case parsedE of
       Left err -> Left err
-      Right parsed -> Right $ "<pre>" <> (R2.stringify parsed 2) <> "</pre>"
-compile Markdown code = Right $ compileMd code
+      Right parsed -> Right $ R2.stringify parsed 2
+render Markdown code = Right $ renderMd $ codeNlFix Markdown code
+
+previewPostProcess :: CodeType -> Element -> Effect Unit
+previewPostProcess Haskell htmlEl = do
+  HLJS.highlightBlock htmlEl
+previewPostProcess JSON htmlEl = do
+  HLJS.highlightBlock htmlEl
+previewPostProcess Markdown _ = pure unit
 
 -- TODO Replace with markdown-it?
 -- https://pursuit.purescript.org/packages/purescript-markdown-it
-compileMd' :: forall e. MD.ToMarkupOptions e -> String -> String
-compileMd' options input =
-  either identity (MD.toMarkup' options >>> render)
+renderMd' :: forall e. MD.ToMarkupOptions e -> String -> String
+renderMd' options input =
+  either identity (MD.toMarkup' options >>> Smolder.render)
   (parseMd input :: Either String (SlamDownP String))
 
-compileMd :: String -> String
-compileMd = compileMd' MD.defaultToMarkupOptions
+renderMd :: String -> String
+renderMd = renderMd' MD.defaultToMarkupOptions
+
+renderHaskell :: String -> String
+renderHaskell s = s
 
 codeEditor :: Record Props -> R.Element
 codeEditor p = R.createElement codeEditorCpt p []
 
+-- The code editor contains 3 components:
+-- - a hidden textarea
+-- - textarea code overlay
+-- - html preview
+-- The overlay is to provide seamless syntax highlighting on top of the textarea.
+-- I took the idea from: https://github.com/satya164/react-simple-code-editor
 codeEditorCpt :: R.Component Props
-codeEditorCpt = R.hooksComponent "G.C.CodeEditor" cpt
+codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
   where
     cpt {code, defaultCodeType, onChange} _ = do
-      htmlRef <- R.useRef null
-      codeRef <- R.useRef null
-      editorCodeRef <- R.useRef code
-      codeType <- R.useState' defaultCodeType
-      error <- R.useState' Nothing
-      viewType <- R.useState' Both
+      controls <- initControls code defaultCodeType
 
       -- Initial rendering of elements with given data
 
       -- Note: delay is necessary here, otherwise initially the HTML won't get
-      -- rendered (mDiv is still null)
+      -- rendered (DOM Element refs are still null)
       R.useEffectOnce $ delay unit $ \_ -> do
-        _ <- renderHtml (fst codeType) code htmlRef error
+        _ <- renderHtml code controls
         pure $ pure unit
 
       R.useEffectOnce $ delay unit $ \_ -> do
-        let mCodeEl = toMaybe $ R.readRef codeRef
-        case mCodeEl of
-          Nothing -> pure $ pure unit
-          Just codeEl -> do
-            _ <- pure $ (codeEl .= "innerText") code
-            pure $ pure unit
+        _ <- setCodeOverlay controls code
+        pure $ pure unit
 
       pure $ H.div { className: "code-editor" } [
-        H.div { className: "row toolbar" } [
-             codeTypeSelector {codeType, onChange: onChangeCodeType editorCodeRef htmlRef error}
-           , viewTypeSelector {state: viewType}
-           ]
+          toolbar {controls, onChange}
         , H.div { className: "row error" } [
-           errorComponent {error}
+           errorComponent {error: controls.error}
         ]
         , H.div { className: "row editor" } [
-           H.div { className: "code " <> (codeHidden $ fst viewType) } [
-              H.code { className: ""
-                     , contentEditable: "true"
-                     , ref: codeRef
-                     , rows: 30
-                     , on: { input: onEditChange (fst codeType) codeRef htmlRef editorCodeRef error }
-                     } []
-              ]
-           , H.div { ref: htmlRef, className: "html " <> (previewHidden $ fst viewType) } []
+           H.div { className: "code-area " <> (codeHidden $ fst controls.viewType) } [
+             H.div { className: "code-container" } [
+               H.textarea { defaultValue: code
+                          , on: { change: onEditChange controls onChange }
+                          , placeholder: "Type some code..."
+                          , ref: controls.codeElRef } [ ]
+               , H.pre  { className: (langClass $ fst controls.codeType)
+                          -- , contentEditable: "true"
+                        , ref: controls.codeOverlayElRef
+                        , rows: 30
+                          --, on: { input: onEditChange (fst codeType) codeElRef htmlRef editorCodeRef error }
+                        } []
+               ]
+             ]
+           , H.div { className: "v-divider " <> (dividerHidden $ fst controls.viewType) } [ H.text " " ]
+           , H.div { className: "html " <> (langClass $ fst controls.codeType) <> (previewHidden $ fst controls.viewType)
+                   , ref: controls.htmlElRef
+                   } []
            ]
         ]
 
     codeHidden :: ViewType -> String
     codeHidden Code = ""
     codeHidden Both = ""
-    codeHidden _ = "hidden"
+    codeHidden _ = " hidden"
+
+    dividerHidden :: ViewType -> String
+    dividerHidden Both = ""
+    dividerHidden _ = " hidden"
+
+    langClass :: CodeType -> String
+    langClass Haskell = " language-haskell"
+    langClass JSON = " language-json"
+    langClass Markdown = " language-md"
 
     previewHidden :: ViewType -> String
     previewHidden Preview = ""
     previewHidden Both = ""
-    previewHidden _ = "hidden"
+    previewHidden _ = " hidden"
+
+    onEditChange :: forall e. Record Controls -> (CodeType -> Code -> Effect Unit) -> e -> Effect Unit
+    onEditChange controls@{codeElRef, codeOverlayElRef, codeType: (codeType /\ _), editorCodeRef} onChange e = do
+      let code = R2.unsafeEventValue e
+      R.setRef editorCodeRef code
+      setCodeOverlay controls code
+      renderHtml (R.readRef controls.editorCodeRef) controls
+      onChange codeType code
+
+setCodeOverlay :: Record Controls -> Code -> Effect Unit
+setCodeOverlay {codeOverlayElRef, codeType: (codeType /\ _)} code = do
+  let mCodeOverlayEl = toMaybe $ R.readRef codeOverlayElRef
+  _ <- case mCodeOverlayEl of
+    Nothing -> pure unit
+    Just codeOverlayEl -> do
+      _ <- pure $ (codeOverlayEl .= "innerText") $ codeNlFix codeType code
+      HLJS.highlightBlock codeOverlayEl
+      pure unit
+  pure unit
+
+renderHtml :: Code -> Record Controls -> Effect Unit
+renderHtml code {codeType: (codeType /\ _), htmlElRef, error: (_ /\ setError)} =
+  case (toMaybe $ R.readRef htmlElRef) of
+    Nothing -> pure unit
+    Just htmlEl -> do
+      case render codeType code of
+        Left err -> do
+          setError $ const $ Just err
+        Right rendered -> do
+          setError $ const Nothing
+          _ <- pure $ (htmlEl .= "innerHTML") rendered
+          previewPostProcess codeType htmlEl
+          pure unit
+
+type ToolbarProps = (
+    controls :: Record Controls
+  , onChange :: CodeType -> Code -> Effect Unit
+  )
+
+toolbar :: Record ToolbarProps -> R.Element
+toolbar p = R.createElement toolbarCpt p []
+
+toolbarCpt :: R.Component ToolbarProps
+toolbarCpt = R.hooksComponent "G.C.CE.toolbar" cpt
+  where
+    cpt props@{controls: {codeType, error, viewType}} _ = do
+      pure $
+        H.div { className: "row toolbar" } [
+             codeTypeSelector {
+                  codeType
+                , onChange: onChangeCodeType props
+                }
+           , viewTypeSelector {state: viewType}
+           ]
 
     -- Handle rerendering of preview when viewType changed
-    onChangeCodeType :: R.Ref String -> R.Ref (Nullable Element) -> R.State (Maybe Error) -> CodeType -> Effect Unit
-    onChangeCodeType editorCodeRef htmlRef error codeType = do
-        _ <- renderHtml codeType (R.readRef editorCodeRef) htmlRef error
-        pure unit
-
-    onEditChange :: forall e. CodeType -> R.Ref (Nullable Element) -> R.Ref (Nullable Element) -> R.Ref String -> R.State (Maybe Error) -> e -> Effect Unit
-    onEditChange codeType codeRef htmlRef editorCodeRef error e = do
-      log2 "[onChange] e" e
-      let mCode = toMaybe $ R.readRef codeRef
-      case mCode of
-        Nothing -> log "[onChange] mCode = Nothing"
-        Just code -> do
-          R.setRef editorCodeRef $ R2.innerText code
-          pure unit
-      renderHtml codeType (R.readRef editorCodeRef) htmlRef error
-
-    renderHtml :: CodeType -> Code -> R.Ref (Nullable Element) -> R.State (Maybe Error) -> Effect Unit
-    renderHtml codeType code htmlRef (_ /\ setError) =
-      case (toMaybe $ R.readRef htmlRef) of
-        Nothing -> pure unit
-        Just htmlEl -> do
-          case compile codeType code of
-            Left err -> do
-              setError $ const $ Just err
-            Right compiled -> do
-              setError $ const Nothing
-              _ <- pure $ (htmlEl .= "innerHTML") compiled
-              pure unit
+    onChangeCodeType :: forall e. Record ToolbarProps -> e -> Effect Unit
+    onChangeCodeType {controls, onChange} _ = do
+      setCodeOverlay controls code
+      renderHtml code controls
+      onChange (fst controls.codeType) code
+      where
+        code = R.readRef controls.editorCodeRef
 
 
 type ErrorComponentProps =
@@ -167,7 +230,7 @@ errorComponent :: Record ErrorComponentProps -> R.Element
 errorComponent p = R.createElement errorComponentCpt p []
 
 errorComponentCpt :: R.Component ErrorComponentProps
-errorComponentCpt = R.hooksComponent "G.C.ErrorComponent" cpt
+errorComponentCpt = R.hooksComponent "G.C.CE.ErrorComponent" cpt
   where
     cpt {error: (Nothing /\ _)} _ = pure $ H.div {} []
     cpt {error: ((Just error) /\ _)} _ = do
@@ -184,14 +247,14 @@ codeTypeSelector :: Record CodeTypeSelectorProps -> R.Element
 codeTypeSelector p = R.createElement codeTypeSelectorCpt p []
 
 codeTypeSelectorCpt :: R.Component CodeTypeSelectorProps
-codeTypeSelectorCpt = R.hooksComponent "G.C.CodeTypeSelector" cpt
+codeTypeSelectorCpt = R.hooksComponent "G.C.CE.CodeTypeSelector" cpt
   where
     cpt {codeType, onChange} _ = do
       pure $ R2.select { className: "form-control"
                 , on: { change: onSelectChange codeType onChange }
                 , style: { width: "150px" }
                 , value: show $ fst codeType }
-        (option <$> [JSON, Markdown])
+        (option <$> [Haskell, JSON, Markdown])
 
     option :: CodeType -> R.Element
     option value = H.option { value: show value } [ H.text $ show value ]
@@ -199,6 +262,7 @@ codeTypeSelectorCpt = R.hooksComponent "G.C.CodeTypeSelector" cpt
     onSelectChange :: forall e. R.State CodeType -> (CodeType -> Effect Unit) -> e -> Effect Unit
     onSelectChange (_ /\ setCodeType) onChange e = do
       let codeType = case value of
+            "Haskell"  -> Haskell
             "JSON"     -> JSON
             "Markdown" -> Markdown
             _          -> Markdown
@@ -217,7 +281,7 @@ viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
 viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
 
 viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
-viewTypeSelectorCpt = R.hooksComponent "G.C.ViewTypeSelector" cpt
+viewTypeSelectorCpt = R.hooksComponent "G.C.CE.ViewTypeSelector" cpt
   where
     cpt {state} _ =
       pure $ H.div { className: "btn-group" } [
@@ -242,3 +306,34 @@ viewTypeSelectorCpt = R.hooksComponent "G.C.ViewTypeSelector" cpt
     icon Preview = "glyphicon-eye-open"
     icon Both = "glyphicon-transfer"
     icon Code = "glyphicon-pencil"
+
+type Controls =
+  (
+      codeElRef :: R.Ref (Nullable Element)
+    , codeType :: R.State CodeType
+    , codeOverlayElRef :: R.Ref (Nullable Element)
+    , editorCodeRef :: R.Ref Code
+    , error :: R.State (Maybe Error)
+    , htmlElRef :: R.Ref (Nullable Element)
+    , viewType :: R.State ViewType
+  )
+
+initControls :: Code -> CodeType -> R.Hooks (Record Controls)
+initControls code defaultCodeType = do
+  htmlElRef <- R.useRef null
+  codeElRef <- R.useRef null
+  codeOverlayElRef <- R.useRef null
+  codeType <- R.useState' defaultCodeType
+  editorCodeRef <- R.useRef code
+  error <- R.useState' Nothing
+  viewType <- R.useState' Both
+
+  pure $ {
+      codeElRef
+    , codeType
+    , codeOverlayElRef
+    , editorCodeRef
+    , error
+    , htmlElRef
+    , viewType
+    }
