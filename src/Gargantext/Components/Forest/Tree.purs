@@ -20,7 +20,6 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (AsyncTask(..))
-import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -29,6 +28,7 @@ type Props = ( root          :: ID
              , mCurrentRoute :: Maybe AppRoute
              , session       :: Session
              , frontends     :: Frontends
+             , openNodes     :: R.State (Set TreeId)
              )
 
 treeView :: Record Props -> R.Element
@@ -37,10 +37,9 @@ treeView props = R.createElement treeViewCpt props []
 treeViewCpt :: R.Component Props
 treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
   where
-    cpt { root, mCurrentRoute, session, frontends } _children = do
+    cpt { root, mCurrentRoute, session, frontends, openNodes } _children = do
       -- NOTE: this is a hack to reload the tree view on demand
       reload <- R.useState' (0 :: Reload)
-      openNodes <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: Set TreeId)
       pure $ treeLoadView
         { root, mCurrentRoute, session, frontends, openNodes, reload }
 
