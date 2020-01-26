@@ -12,9 +12,8 @@ import Data.Argonaut as Argonaut
 import Data.Argonaut as Json
 import Data.Argonaut.Core (Json)
 import Data.Either (hush)
-import Data.Foldable (for_)
 import Data.Function.Uncurried (Fn2, runFn2)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
@@ -23,6 +22,7 @@ import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Effect.Uncurried (EffectFn1, mkEffectFn1, mkEffectFn2, runEffectFn1)
+import Effect.Unsafe (unsafePerformEffect)
 import FFI.Simple ((..), (...), defineProperty, delay, args2, args3)
 import Partial.Unsafe (unsafePartial)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
@@ -267,25 +267,17 @@ type LocalStorageKey = String
 
 useLocalStorageState :: forall s. Argonaut.DecodeJson s => Argonaut.EncodeJson s => LocalStorageKey -> s -> R.Hooks (R.State s)
 useLocalStorageState key s = do
-  ref <- R.useRef s
-
-  R.useEffectOnce' do
+  -- we need to synchronously get the initial state from local storage
+  Tuple state setState' <- R.useState \_ -> unsafePerformEffect do
     item :: Maybe String <- getItem key =<< getls
     let json = hush <<< Argonaut.jsonParser =<< item
     let parsed = hush <<< Argonaut.decodeJson =<< json
-    for_ parsed \(x :: s) -> R.setRef ref x
-
-  let init = R.readRef ref
-
-  Tuple state setState' <- R.useState' init
+    pure $ fromMaybe s parsed
 
   let
     setState update = do
-      let new = update (R.readRef ref)
-
+      let new = update state
       setState' (\_ -> new)
-      R.setRef ref new
-
       let json = Json.stringify $ Argonaut.encodeJson new
       storage <- getls
       setItem key json storage
