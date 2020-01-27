@@ -49,7 +49,7 @@ type Props' = ( root          :: ID
               , session       :: Session
               , frontends     :: Frontends
               , openNodes     :: R.State (Set TreeId)
-              , reload :: R.State Reload
+              , reload        :: R.State Reload
               )
 
 treeLoadView :: Record Props' -> R.Element
@@ -67,7 +67,7 @@ type TreeViewProps = ( tree          :: FTree
                      , frontends     :: Frontends
                      , session       :: Session
                      , openNodes     :: R.State (Set TreeId)
-                     , reload :: R.State Reload
+                     , reload        :: R.State Reload
                      )
 
 
