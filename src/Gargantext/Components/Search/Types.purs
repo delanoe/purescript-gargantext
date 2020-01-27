@@ -304,14 +304,16 @@ instance showSearchOrder :: Show SearchOrder where
   show ScoreDesc = "ScoreDesc"
 
 ------------------------------------------------------------------------
+
 newtype SearchQuery = SearchQuery
   { query     :: String
+  , databases :: Array Database
   , datafield :: Maybe DataField
-  , lang      :: Maybe Lang
-  , node_id   :: Maybe Int
   , files_id  :: Array String
-  , offset    :: Maybe Int
+  , lang      :: Maybe Lang
   , limit     :: Maybe Int
+  , node_id   :: Maybe Int
+  , offset    :: Maybe Int
   , order     :: Maybe SearchOrder
   }
 
@@ -320,12 +322,13 @@ derive instance newtypeSearchQuery :: Newtype SearchQuery _
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
   { query: ""
+  , databases: []
   , datafield: Nothing
-  , lang    : Nothing
-  , node_id : Nothing
   , files_id : []
-  , offset: Nothing
+  , lang    : Nothing
   , limit: Nothing
+  , node_id : Nothing
+  , offset: Nothing
   , order: Nothing
   }
 
@@ -344,12 +347,13 @@ instance searchQueryToQuery :: GT.ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, datafield, node_id, lang})
+  encodeJson (SearchQuery {query, databases, datafield, node_id, lang})
     =  "query"      := query
-    ~> "datafield"  := "" -- fromMaybe "" datafield
+    -- ~> "datafield"  := "" -- fromMaybe "" datafield
+    ~> "databases"  := databases
+    ~> "lang"       := maybe "EN" show lang
     ~> "node_id"    := fromMaybe 0 node_id
     -- ~> "files_id"   := files_id
-    ~> "lang"       := maybe "EN" show lang
     ~> jsonEmptyObject
 
 performSearch :: Session -> Int -> SearchQuery -> Aff GT.AsyncTaskWithType

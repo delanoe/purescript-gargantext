@@ -29,23 +29,26 @@ select :: forall props.
           -> R.Element
 select = R.createElement "select"
 
-type Search = { datafield :: Maybe DataField
-              , term      :: String
+type Search = { databases :: Array Database
+              , datafield :: Maybe DataField
               , lang      :: Maybe Lang
               , node_id   :: Maybe Int
+              , term      :: String
               }
 
 eqSearch :: Search -> Search -> Boolean
-eqSearch s s' =    (s.datafield == s'.datafield)
+eqSearch s s' =    (s.databases == s'.databases)
+                && (s.datafield == s'.datafield)
                 && (s.term == s'.term)
                 && (s.lang == s'.lang)
                 && (s.node_id == s'.node_id)
 
 defaultSearch :: Search
-defaultSearch = { datafield: Nothing
-                , term: ""
-                , lang: Nothing
+defaultSearch = { databases: []
+                , datafield: Nothing
                 , node_id: Nothing
+                , lang: Nothing
+                , term: ""
                 }
 
 type Props =
@@ -368,7 +371,8 @@ searchQuery :: Search -> SearchQuery
 searchQuery {datafield: Nothing, term} =
   over SearchQuery (_ {query=term}) defaultSearchQuery
 searchQuery {databases, datafield, lang, term, node_id} =
-  over SearchQuery (_ { datafield=datafield
+  over SearchQuery (_ { databases=databases
+                      , datafield=datafield
                       , lang=lang
                       , query=term
                       , node_id=node_id

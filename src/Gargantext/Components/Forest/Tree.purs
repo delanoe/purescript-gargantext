@@ -152,7 +152,7 @@ performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTre
 
 performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (SearchQuery task) = do
   liftEffect $ setTree $ \t@{asyncTasks} -> t { asyncTasks = A.cons task asyncTasks }
-  liftEffect $ log2 "search query, task:" task
+  liftEffect $ log2 "[performAction] SearchQuery task:" task
 
 performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (Submit name)  = do
   void $ renameNode session id $ RenameValue {name}
