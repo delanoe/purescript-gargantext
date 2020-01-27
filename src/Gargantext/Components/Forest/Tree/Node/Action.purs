@@ -20,7 +20,7 @@ data Action = Submit       String
 -----------------------------------------------------
 -- UploadFile Action
 -- file upload types
-data FileType = CSV | PresseRIS
+data FileType = CSV | CSV_HAL | PresseRIS
 
 derive instance genericFileType :: Generic FileType _
 
@@ -31,6 +31,7 @@ instance showFileType :: Show FileType where
     show = genericShow
 
 readFileType :: String -> Maybe FileType
+readFileType "CSV_HAL"   = Just CSV_HAL
 readFileType "CSV"       = Just CSV
 readFileType "PresseRIS" = Just PresseRIS
 readFileType _           = Nothing
