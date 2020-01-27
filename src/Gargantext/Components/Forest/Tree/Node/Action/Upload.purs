@@ -61,13 +61,17 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
 
             , H.div {} [ R2.select {className: "col-md-12 form-control"
                        , on: {change: onChangeLang lang}
-                       } (map renderOption [EN, FR])
+                       } (map renderOptionLang [EN, FR])
                        ]
 
             , H.div {} [ uploadButton d id mContents fileType lang ]
             ]
 
+    renderOptionLang :: FileType -> R.Element
     renderOption opt = H.option {} [ H.text $ show opt ]
+
+    renderOptionLang :: Lang -> R.Element
+    renderOptionLang opt = H.option {} [ H.text $ show opt ]
 
     onChangeContents (mContents /\ setMContents) e = do
       blob <- R2.inputFileBlob e
