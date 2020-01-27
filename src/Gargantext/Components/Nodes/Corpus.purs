@@ -20,7 +20,7 @@ import Gargantext.Prelude
 
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, FTField, Field(..), FieldType(..), Hyperdata(..), defaultField, defaultHaskell', defaultJSON', defaultMarkdown')
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, FTField, Field(..), FieldType(..), Hash, Hyperdata(..), defaultField, defaultHaskell', defaultJSON', defaultMarkdown')
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
@@ -136,11 +136,10 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
       pure $ H.div {} $ List.toUnfoldable (editors masterKey)
       where
         editors masterKey =
-          (\idxField@(Tuple idx field) ->
+          (\(Tuple idx field) ->
             fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields - 1)
                                    , canMoveUp: idx > 0
                                    , field
-                                   , hash: hash idxField
                                    , key: (show $ fst masterKey) <> "-" <> (show idx)
                                    , onChange: onChange fS idx
                                    , onMoveDown: onMoveDown masterKey fS idx
@@ -158,13 +157,13 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
 
     onMoveDown :: R.State Int -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onMoveDown (_ /\ setMasterKey) (fs /\ setFields) idx _ = do
-      setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
       setMasterKey $ (+) 1
+      setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
 
     onMoveUp :: R.State Int -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onMoveUp (_ /\ setMasterKey) (_ /\ setFields) idx _ = do
-      setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
       setMasterKey $ (+) 1
+      setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
 
     onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onRemove (_ /\ setFields) idx _ = do
@@ -191,7 +190,6 @@ type FieldCodeEditorProps =
     canMoveDown :: Boolean
   , canMoveUp :: Boolean
   , field :: FTField
-  , hash :: Hash  -- TODO this isn't needed anymore
   , key :: String
   , onChange :: FieldType -> Effect Unit
   , onMoveDown :: Unit -> Effect Unit
@@ -206,8 +204,8 @@ fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props [
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt" cpt
   where
-    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, hash, onMoveDown, onMoveUp, onRemove, onRename} _ = do
-      pure $ H.div { className: "row panel panel-default hash-" <> hash } [
+    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
+      pure $ H.div { className: "row panel panel-default" } [
         H.div { className: "panel-heading" } [
           H.div { className: "code-editor-heading" } [
               renameable {onRename, text: name}

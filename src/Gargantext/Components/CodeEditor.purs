@@ -10,10 +10,8 @@ import Data.Nullable (Nullable, null, toMaybe)
 import Data.String.Utils (endsWith)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import DOM.Simple.Types (Element)
 import Effect (Effect)
-import FFI.Simple ((.=), delay)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Text.Markdown.SlamDown.Parser (parseMd)
@@ -99,32 +97,11 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
   where
     cpt {code, defaultCodeType, onChange} _ = do
       controls <- initControls code defaultCodeType
-      -- codeRef <- R.useRef code
-      -- defaultCodeTypeRef <- R.useRef defaultCodeType
 
-      -- R.useEffect2' code defaultCodeType $ do
-      --   if R.readRef codeRef == code && R.readRef defaultCodeTypeRef == defaultCodeType then
-      --     pure unit
-      --   else do
-      --     log2 "[codeEditorCpt] code" code
-      --     log2 "[codeEditorCpt] defaultCodeType" defaultCodeType
-      --     R.setRef codeRef code
-      --     R.setRef defaultCodeTypeRef defaultCodeType
-      --     reinitControls controls code defaultCodeType
-      --     setCodeOverlay controls code
-      --     renderHtml code controls
-
-      -- Initial rendering of elements with given data
-
-      -- Note: delay is necessary here, otherwise initially the HTML won't get
-      -- rendered (DOM Element refs are still null)
-      R.useEffectOnce $ delay unit $ \_ -> do
-        _ <- renderHtml code controls
-        pure $ pure unit
-
-      R.useEffectOnce $ delay unit $ \_ -> do
-        _ <- setCodeOverlay controls code
-        pure $ pure unit
+      R.useEffect2' (fst controls.codeS) (fst controls.codeType) $ do
+        let code' = fst controls.codeS
+        setCodeOverlay controls code'
+        renderHtml code' controls
 
       pure $ H.div { className: "code-editor" } [
           toolbar {controls, onChange}
@@ -176,8 +153,6 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     onEditChange controls@{codeElRef, codeOverlayElRef, codeType: (codeType /\ _), codeS} onChange e = do
       let code = R2.unsafeEventValue e
       snd codeS $ const code
-      setCodeOverlay controls code
-      renderHtml (fst codeS) controls
       onChange codeType code
 
 setCodeOverlay :: Record Controls -> Code -> Effect Unit
@@ -229,8 +204,6 @@ toolbarCpt = R.hooksComponent "G.C.CE.toolbar" cpt
     -- Handle rerendering of preview when viewType changed
     onChangeCodeType :: forall e. Record ToolbarProps -> e -> Effect Unit
     onChangeCodeType {controls, onChange} _ = do
-      setCodeOverlay controls code
-      renderHtml code controls
       onChange (fst controls.codeType) code
       where
         code = fst controls.codeS
