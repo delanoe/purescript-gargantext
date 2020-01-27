@@ -67,7 +67,7 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
             , H.div {} [ uploadButton d id mContents fileType lang ]
             ]
 
-    renderOptionLang :: FileType -> R.Element
+    renderOption :: FileType -> R.Element
     renderOption opt = H.option {} [ H.text $ show opt ]
 
     renderOptionLang :: Lang -> R.Element
