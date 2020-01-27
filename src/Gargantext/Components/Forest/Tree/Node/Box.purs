@@ -22,7 +22,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createN
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar)
-import Gargantext.Components.Search.Types (allLangs)
+import Gargantext.Components.Search.Types (allLangs, Lang(EN))
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
 
@@ -132,6 +132,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
                        $ Just
                        $ DroppedFile { contents: (UploadFileContents contents)
                                      , fileType: Just CSV
+                                     , lang: Just EN
                                      }
     onDragOverHandler (_ /\ setIsDragOver) e = do
       -- prevent redirection when file is dropped

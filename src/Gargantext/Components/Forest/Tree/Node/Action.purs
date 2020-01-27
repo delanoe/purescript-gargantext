@@ -10,6 +10,7 @@ import Effect.Aff (Aff)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post, delete)
 import Gargantext.Types (NodeType(..), AsyncTask(..))
+import Gargantext.Components.Search.Types (Lang(..))
 import Prelude hiding (div)
 
 data Action = Submit       String
@@ -20,7 +21,7 @@ data Action = Submit       String
 -----------------------------------------------------
 -- UploadFile Action
 -- file upload types
-data FileType = CSV | CSV_HAL | PresseRIS
+data FileType = CSV | CSV_HAL | WOS | PresseRIS
 
 derive instance genericFileType :: Generic FileType _
 
@@ -31,14 +32,16 @@ instance showFileType :: Show FileType where
     show = genericShow
 
 readFileType :: String -> Maybe FileType
-readFileType "CSV_HAL"   = Just CSV_HAL
 readFileType "CSV"       = Just CSV
+readFileType "CSV_HAL"   = Just CSV_HAL
 readFileType "PresseRIS" = Just PresseRIS
+readFileType "WOS"       = Just WOS
 readFileType _           = Nothing
 
 data DroppedFile = DroppedFile {
     contents :: UploadFileContents
   , fileType :: Maybe FileType
+  , lang     :: Maybe Lang
     }
 type FileHash = String
 
@@ -47,7 +50,6 @@ type ID   = Int
 type Reload = Int
 
 newtype UploadFileContents = UploadFileContents String
-
 
 createNode :: Session -> ID -> CreateValue -> Aff (Array ID)
 createNode session parentId = post session $ NodeAPI Node (Just parentId) ""
@@ -91,7 +93,6 @@ type Tree = { tree :: FTree, asyncTasks :: Array AsyncTask }
 instance ntreeFunctor :: Functor NTree where
   map f (NTree x ary) = NTree (f x) (map (map f) ary)
 
-
 newtype LNode = LNode { id :: ID
                       , name :: Name
                       , nodeType :: NodeType
@@ -101,8 +102,8 @@ derive instance newtypeLNode :: Newtype LNode _
 
 instance decodeJsonLNode :: DecodeJson LNode where
   decodeJson json = do
-    obj <- decodeJson json
-    id_ <- obj .: "id"
+    obj  <- decodeJson json
+    id_  <- obj .: "id"
     name <- obj .: "name"
     nodeType <- obj .: "type"
     pure $ LNode { id : id_
@@ -111,10 +112,10 @@ instance decodeJsonLNode :: DecodeJson LNode where
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
   decodeJson json = do
-    obj <- decodeJson json
-    node <- obj .: "node"
-    nodes <- obj .: "children"
-    node' <- decodeJson node
+    obj    <- decodeJson json
+    node   <- obj .: "node"
+    nodes  <- obj .: "children"
+    node'  <- decodeJson node
     nodes' <- decodeJson nodes
     pure $ NTree node' nodes'
 

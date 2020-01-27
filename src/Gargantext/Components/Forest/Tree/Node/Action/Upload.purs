@@ -13,7 +13,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsText)
-
+import Gargantext.Components.Search.Types (readLang, Lang(..))
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, postWwwUrlencoded)
@@ -35,20 +35,37 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
   where
     cpt {id} _ = do
       mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
-      fileType :: R.State FileType <- R.useState' CSV
+      fileType :: R.State FileType     <- R.useState' CSV
+      lang     :: R.State (Maybe Lang) <- R.useState' (Just EN)
 
       pure $ H.div {} [
-        H.div {} [ H.text "Upload file!" ]
-      , H.div {} [ H.input {type: "file", placeholder: "Choose file", on: {change: onChangeContents mContents}} ]
-      , H.div {}
-        [ R2.select {className: "col-md-12 form-control"
-                    , on: {change: onChangeFileType fileType}
-                    }
-          (map renderOption [CSV, CSV_HAL])
-        ]
-      , H.div {}
-        [ uploadButton d id mContents fileType ]
-      ]
+              H.div {} [ H.text "Upload file!" ]
+
+            , H.div {} [ H.input { type: "file"
+                                 , placeholder: "Choose file"
+                                 , on: {change: onChangeContents mContents}
+                                 }
+                       ]
+
+            , H.div {} [ R2.select {className: "col-md-12 form-control"
+                                   , on: {change: onChangeFileType fileType}
+                                   }
+                          ( map renderOption [ CSV
+                                             , CSV_HAL
+                                             , WOS
+                                             , PresseRIS
+                                             ]
+                           )
+                       ]
+
+
+            , H.div {} [ R2.select {className: "col-md-12 form-control"
+                       , on: {change: onChangeLang lang}
+                       } (map renderOption [EN, FR])
+                       ]
+
+            , H.div {} [ uploadButton d id mContents fileType lang ]
+            ]
 
     renderOption opt = H.option {} [ H.text $ show opt ]
 
@@ -62,10 +79,26 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
           setMContents $ const $ Just $ UploadFileContents contents
 
     onChangeFileType (fileType /\ setFileType) e = do
-      setFileType $ const $ unsafePartial $ fromJust $ readFileType $ R2.unsafeEventValue e
+      setFileType $ const
+                  $ unsafePartial
+                  $ fromJust
+                  $ readFileType 
+                  $ R2.unsafeEventValue e
 
-uploadButton :: (Action -> Aff Unit) -> Int -> R.State (Maybe UploadFileContents) -> R.State FileType -> R.Element
-uploadButton d id (mContents /\ setMContents) (fileType /\ setFileType) =
+    onChangeLang (lang /\ setLang) e = do
+      setLang $ const
+              $ unsafePartial
+              $ readLang
+              $ R2.unsafeEventValue e
+
+
+uploadButton :: (Action -> Aff Unit)
+             -> Int
+             -> R.State (Maybe UploadFileContents)
+             -> R.State FileType
+             -> R.State (Maybe Lang)
+             -> R.Element
+uploadButton d id (mContents /\ setMContents) (fileType /\ setFileType) (lang /\ setLang) =
   H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
   where
     disabled = case mContents of
@@ -78,7 +111,8 @@ uploadButton d id (mContents /\ setMContents) (fileType /\ setFileType) =
         _ <- d $ UploadFile fileType contents
         liftEffect $ do
           setMContents $ const $ Nothing
-          setFileType $ const $ CSV
+          setFileType  $ const $ CSV
+          setLang      $ const $ Just EN
 
 -- START File Type View
 type FileTypeProps =
@@ -127,11 +161,14 @@ fileTypeView d p (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ 
           [ R2.select {className: "col-md-12 form-control"
                       , on: {change: onChange}
                       }
-            (map renderOption [CSV, CSV_HAL])
+            (map renderOption [CSV, CSV_HAL, WOS])
           ]
           where
-            onChange e =
-              setDroppedFile $ const $ Just $ DroppedFile $ {contents, fileType: readFileType $ R2.unsafeEventValue e}
+            onChange e l =
+              setDroppedFile $ const $ Just $ DroppedFile $ { contents
+                                                            , fileType: readFileType $ R2.unsafeEventValue e
+                                                            , lang    : readLang     $ R2.unsafeEventValue l
+                                                            }
         renderOption opt = H.option {} [ H.text $ show opt ]
         panelFooter =
           H.div {className: "panel-footer"}
