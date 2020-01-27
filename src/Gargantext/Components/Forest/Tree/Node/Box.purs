@@ -31,6 +31,11 @@ import URI.Query as Query
 import Web.File.FileReader.Aff (readAsText)
 
 
+import DOM.Simple.Types
+import DOM.Simple.Window
+import DOM.Simple.EventListener
+import Effect.Console
+
 -- Main Node
 type NodeMainSpanProps =
   ( id            :: ID
@@ -285,7 +290,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
 
         componentIsTex (search /\ setSearch) =
           H.iframe { src: isTexTermUrl search.term , width: "100%", height: "100%"} []
-        isTexUrl = "https://istex.gargantext.org"
+        isTexUrl =  "http://0.0.0.0:8080/"--"https://istex.gargantext.org"
         isTexLocalUrl = "http://localhost:8083"
         isTexTermUrl term = isTexUrl <> query
           where
@@ -392,3 +397,4 @@ reallyDelete d = H.div {className: "panel-footer"}
               [H.text " Yes, delete!"]
             ]
 
+windowCallBack = addEventListener window "message" (callback errorShow)
