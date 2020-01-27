@@ -191,6 +191,27 @@ let additions =
           [ "aff", "arraybuffer-types", "web-file", "web-html" ]
           "https://github.com/nwolverson/purescript-dom-filereader"
           "v5.0.0"
+      , markdown =
+          mkPackage
+          [ "precise" ]
+          {- "https://github.com/slamdata/purescript-markdown"
+          "v12.0.0" -}
+          "https://github.com/poorscript/purescript-markdown"
+          "master"
+      , markdown-smolder =
+          mkPackage
+          [ "markdown"
+          , "smolder" ]
+          {- "https://github.com/hgiasac/purescript-markdown-smolder"
+          "v2.0.1" -}
+          "https://github.com/poorscript/purescript-markdown-smolder"
+          "master"
+      , precise =
+          mkPackage
+          [ "prelude" ]
+          "https://github.com/purescript-contrib/purescript-precise"
+          {- "v3.0.1" -}
+          "master"
       , reactix =
           mkPackage
           [ "aff"

@@ -8,33 +8,11 @@ let HtmlWebpackPlugin = require('html-webpack-plugin');
 let CleanWebpackPlugin = require('clean-webpack-plugin');
 let isWatch = process.argv.some(a => a === '--watch');
 
-// TODO: We have agreed to move to spago, but not done it yet
-// let spago_sources = async () =>
-//   exec.quiet(
-//     "psc-package sources",
-//     { options: 'strict' }
-//   ).then(function (res) {
-//     let sources = res.stdout.split(/\r?\n/);
-//     sources.pop(); // extra newline at the end of output
-//     return sources;
-//   });
-
 let dist = path.join(__dirname, 'dist');
 let src = path.join(__dirname, 'src');
 let test = path.join(__dirname, 'test');
 
-// kill when spago
-let futured = async () => new Promise((resolve, _) => resolve([]));
-
-module.exports = (env) =>
-  // spago_sources()
-  futured()
-  .then(function (ps_sources) {
-
-    ps_sources.push('src/**/*.purs');
-    // TODO: testing in browser and headless
-    // if (env === "browser" || env === "headless")
-    //   ps_sources.push('test/Main.purs');
+module.exports = (env) =>{
     let config = {
       cache: true,
       mode: 'development',
@@ -52,22 +30,6 @@ module.exports = (env) =>
       },
       module: {
         rules: [
-          {test: /\.purs$/,
-           exclude: /(node_modules)/,
-           use: [
-             {loader: "purs-loader",
-              options: {
-                src: ps_sources,
-                output: dist,
-                pscIde: true,
-                pscIdeClientArgs: {port: 4002},
-                pscIdeServerArgs: {port: 4002},
-                pscArgs: {codegen: "js,sourcemaps"},
-                pscPackage: true,
-                bundle: false,
-                watch: isWatch}},
-             {loader: "source-map-loader"},
-           ]},
           {test: /\.css$/,
            exclude: /(node_modules)/,
            use: ["style-loader", "css-loader"]},
@@ -75,13 +37,13 @@ module.exports = (env) =>
            exclude: /(node_modules)/,
            use: [ "file-loader" ]},
           {test: /\.js$/,
-           exclude: /(node_modules)/,
+           exclude: [/(node_modules)/, /(output)/],
            use: ["babel-loader", "source-map-loader"]}
         ]
       },
       resolve: {
         modules: [ 'node_modules' ],
-        extensions: [ '.purs', '.js']
+        extensions: [ '.js']
       },
       plugins: [
       // TODO: can we put the checked-in assets in dist somewhere else
@@ -110,4 +72,4 @@ module.exports = (env) =>
       console.log("unknown env: ", env);
     }
     return config;
-  });
+  };
