@@ -1,5 +1,6 @@
 module Gargantext.Components.CodeEditor where
 
+import DOM.Simple.Types (Element)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (either, Either(..))
 import Data.Generic.Rep (class Generic)
@@ -10,8 +11,8 @@ import Data.Nullable (Nullable, null, toMaybe)
 import Data.String.Utils (endsWith)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Types (Element)
 import Effect (Effect)
+import FFI.Simple ((.=))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Text.Markdown.SlamDown.Parser (parseMd)
