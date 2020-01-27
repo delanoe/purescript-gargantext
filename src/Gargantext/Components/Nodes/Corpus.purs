@@ -6,7 +6,7 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.List as List
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..), fst)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -69,6 +69,15 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
     cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex
+      fieldsRef <- R.useRef fields
+
+      -- handle props change of fields
+      R.useEffect1' fields $ do
+        if R.readRef fieldsRef == fields then
+          pure unit
+        else do
+          R.setRef fieldsRef fields
+          snd fieldsS $ const fieldsWithIndex
 
       pure $ H.div {} [
         H.div { className: "row" } [
@@ -122,19 +131,22 @@ fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
 fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
   where
     cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
-      pure $ H.div {} $ List.toUnfoldable editors
+      masterKey <- R.useState' 0
+
+      pure $ H.div {} $ List.toUnfoldable (editors masterKey)
       where
-        editors = (\idxField@(Tuple idx field) ->
-                    fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields - 1)
-                                           , canMoveUp: idx > 0
-                                           , field
-                                           , hash: hash idxField
-                                           , onChange: onChange fS idx
-                                           , onMoveDown: onMoveDown fS idx
-                                           , onMoveUp: onMoveUp fS idx
-                                           , onRemove: onRemove fS idx
-                                           , onRename: onRename fS idx
-                                           }) <$> fields
+        editors masterKey =
+          (\(Tuple idx field) ->
+            fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields - 1)
+                                   , canMoveUp: idx > 0
+                                   , field
+                                   , key: (show $ fst masterKey) <> "-" <> (show idx)
+                                   , onChange: onChange fS idx
+                                   , onMoveDown: onMoveDown masterKey fS idx
+                                   , onMoveUp: onMoveUp masterKey fS idx
+                                   , onRemove: onRemove fS idx
+                                   , onRename: onRename fS idx
+                                   }) <$> fields
 
     onChange :: R.State FTFieldsWithIndex -> Index -> FieldType -> Effect Unit
     onChange (_ /\ setFields) idx typ = do
@@ -143,12 +155,14 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
           Nothing -> fields
           Just newFields -> newFields
 
-    onMoveDown :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveDown (fs /\ setFields) idx _ = do
+    onMoveDown :: R.State Int -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
+    onMoveDown (_ /\ setMasterKey) (fs /\ setFields) idx _ = do
+      setMasterKey $ (+) 1
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
 
-    onMoveUp :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveUp (_ /\ setFields) idx _ = do
+    onMoveUp :: R.State Int -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
+    onMoveUp (_ /\ setMasterKey) (_ /\ setFields) idx _ = do
+      setMasterKey $ (+) 1
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
 
     onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
@@ -176,7 +190,7 @@ type FieldCodeEditorProps =
     canMoveDown :: Boolean
   , canMoveUp :: Boolean
   , field :: FTField
-  , hash :: Hash
+  , key :: String
   , onChange :: FieldType -> Effect Unit
   , onMoveDown :: Unit -> Effect Unit
   , onMoveUp :: Unit -> Effect Unit
@@ -190,8 +204,8 @@ fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props [
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt" cpt
   where
-    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, hash, onMoveDown, onMoveUp, onRemove, onRename} _ = do
-      pure $ H.div { className: "row panel panel-default hash-" <> hash } [
+    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
+      pure $ H.div { className: "row panel panel-default" } [
         H.div { className: "panel-heading" } [
           H.div { className: "code-editor-heading" } [
               renameable {onRename, text: name}
@@ -241,30 +255,53 @@ renameableCpt = R.hooksComponent "G.C.N.C.renameableCpt" cpt
     cpt {onRename, text} _ = do
       isEditing <- R.useState' false
       state <- R.useState' text
+      textRef <- R.useRef text
+
+      -- handle props change of text
+      R.useEffect1' text $ do
+        if R.readRef textRef == text then
+          pure unit
+        else do
+          R.setRef textRef text
+          snd state $ const text
 
       pure $ H.div { className: "renameable" } [
-        textCpt isEditing state
+        renameableText {isEditing, onRename, state}
       ]
-      where
-        textCpt :: R.State Boolean -> R.State String -> R.Element
-        textCpt (false /\ setIsEditing) (text /\ _) = H.div {} [
-            H.span { className: "text" } [ H.text text ]
-          , H.span { className: "btn btn-default"
-                  , on: { click: \_ -> setIsEditing $ const true } } [
-              H.span { className: "glyphicon glyphicon-pencil" } []
-            ]
+
+type RenameableTextProps =
+  (
+    isEditing :: R.State Boolean
+  , onRename :: String -> Effect Unit
+  , state :: R.State String
+  )
+
+renameableText :: Record RenameableTextProps -> R.Element
+renameableText props = R.createElement renameableTextCpt props []
+
+renameableTextCpt :: R.Component RenameableTextProps
+renameableTextCpt = R.hooksComponent "G.C.N.C.renameableTextCpt" cpt
+  where
+    cpt {isEditing: (false /\ setIsEditing), state: (text /\ _)} _ = do
+      pure $ H.div {} [
+        H.span { className: "text" } [ H.text text ]
+        , H.span { className: "btn btn-default"
+                 , on: { click: \_ -> setIsEditing $ const true } } [
+           H.span { className: "glyphicon glyphicon-pencil" } []
+           ]
         ]
-        textCpt (true /\ setIsEditing) (text /\ setText) = H.div {} [
-            H.input { defaultValue: text
-                    , className: "form-control text"
-                    , on: { change: \e -> setText $ const $ R2.unsafeEventValue e } }
-          , H.span { className: "btn btn-default"
-                  , on: { click: \_ -> do
-                          setIsEditing $ const false
-                          onRename text
-                        } } [
-              H.span { className: "glyphicon glyphicon-floppy-disk" } []
-            ]
+    cpt {isEditing: (true /\ setIsEditing), onRename, state: (text /\ setText)} _ = do
+      pure $ H.div {} [
+        H.input { defaultValue: text
+                , className: "form-control text"
+                , on: { change: \e -> setText $ const $ R2.unsafeEventValue e } }
+        , H.span { className: "btn btn-default"
+                 , on: { click: \_ -> do
+                            setIsEditing $ const false
+                            onRename text
+                       } } [
+           H.span { className: "glyphicon glyphicon-floppy-disk" } []
+           ]
         ]
 
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
