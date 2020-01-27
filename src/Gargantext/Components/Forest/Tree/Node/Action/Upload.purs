@@ -44,7 +44,7 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
         [ R2.select {className: "col-md-12 form-control"
                     , on: {change: onChangeFileType fileType}
                     }
-          (map renderOption [CSV, PresseRIS])
+          (map renderOption [CSV, CSV_HAL])
         ]
       , H.div {}
         [ uploadButton d id mContents fileType ]
@@ -127,7 +127,7 @@ fileTypeView d p (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ 
           [ R2.select {className: "col-md-12 form-control"
                       , on: {change: onChange}
                       }
-            (map renderOption [CSV, PresseRIS])
+            (map renderOption [CSV, CSV_HAL])
           ]
           where
             onChange e =

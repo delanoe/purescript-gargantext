@@ -29,6 +29,7 @@ type Props = ( root          :: ID
              , session       :: Session
              , frontends     :: Frontends
              , openNodes     :: R.State (Set TreeId)
+             , reload        :: R.State Int
              )
 
 treeView :: Record Props -> R.Element

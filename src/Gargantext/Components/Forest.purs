@@ -31,13 +31,20 @@ forestCpt :: R.Component Props
 forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
   cpt {frontends, route, sessions, showLogin } _ = do
     openNodes <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: Set TreeId)
-    R2.useCache (frontends /\ route /\ sessions /\ fst openNodes) (cpt' openNodes showLogin)
-  cpt' openNodes showLogin (frontends /\ route /\ sessions /\ openNodesState) = do
+    reload <- R.useState' (0 :: Int)
+    R2.useCache (frontends /\ route /\ sessions /\ fst openNodes) (cpt' reload openNodes showLogin)
+  cpt' reload openNodes showLogin (frontends /\ route /\ sessions /\ openNodesState) = do
     pure $ R.fragment $ A.cons (plus showLogin) trees
     where
       trees = tree <$> unSessions sessions
       tree s@(Session {treeId}) =
-        treeView { root: treeId, frontends, mCurrentRoute: Just route, session: s, openNodes }
+        treeView { root: treeId
+                 , frontends
+                 , mCurrentRoute: Just route
+                 , session: s
+                 , openNodes
+                 , reload
+                 }
 
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin =
