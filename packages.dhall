@@ -185,7 +185,7 @@ let additions =
           , "unsafe-coerce"
           ]
           "https://github.com/irresponsible/purescript-dom-simple"
-          "v0.2.4"
+          "v0.2.6"
       , dom-filereader =
           mkPackage
           [ "aff", "arraybuffer-types", "web-file", "web-html" ]
