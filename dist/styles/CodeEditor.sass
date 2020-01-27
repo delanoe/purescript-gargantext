@@ -1,3 +1,35 @@
+@mixin font-inherit()
+  font-family: inherit
+  font-size: inherit
+  font-style: inherit
+  font-variant-ligatures: inherit
+  font-weight: inherit
+  letter-spacing: inherit
+  line-height: inherit
+  text-indent: inherit
+  text-rendering: inherit
+  text-transform: inherit
+
+@mixin common-overlay-props()
+  box-sizing: inherit
+  display: inherit
+  margin: 0px
+  padding: 10px
+  overflow-wrap: break-word
+  white-space: pre-wrap
+  word-break: keep-all
+
+.code-editor-heading
+  display: flex
+  //justify-content: space-between
+  .renameable
+    flex-grow: 2
+    .text
+      padding-right: 10px
+  .buttons-right
+    display: flex
+    justify-content: flex-end
+
 .code-editor
   .toolbar
     display: flex
@@ -6,20 +38,63 @@
   .editor
     display: flex
     width: 100%
-    .code
+    .code-area
       flex-grow: 1
-      code
-        background-color: #f7f7f9
-        color: #000
-        display: block
-        height: 500px
+      max-height: 200px
+      overflow: auto
+      .code-container
+        background-color: #fafafa
+        box-sizing: border-box
+        position: relative
+        font-family: Fira code,Fira Mono,Consolas,Menlo,Courier,monospace
+        font-size: 12px
+        font-variant-ligatures: common-ligatures
+        line-height: 1.5
+        overflow: hidden
+        padding: 0px
+        text-align: left
+        textarea
+          border: 0px
+          color: inherit
+          position: absolute
+          left: 0px
+          top: 0px
+          resize: none
+          height: 100%
+          overflow: hidden
+          width: 100%
+          -webkit-text-fill-color: transparent
+          @include common-overlay-props()
+          @include font-inherit()
+        pre
+          background: rgba(0, 0, 0, 0) none repeat scroll 0% 0%
+          border: 0px none
+          color: #000
+          pointer-events: none
+          position: relative
+          @include common-overlay-props()
+          @include font-inherit()
+    .v-divider
+      border-left: 1px solid gray
+      cursor: sw-resize
+      height: 100%
+      margin-left: 5px
+      margin-right: 5px
+      width: 1px
     .html
       flex-grow: 2
       margin-left: 25px
       padding-left: 25px
-      ul
-        li
-          list-style: disc !important
-      ol
-        li
-          list-style: decimal !important
+      &.language-haskell
+        font-family: Fira code,Fira Mono,Consolas,Menlo,Courier,monospace
+        white-space: pre
+      &.language-json
+        font-family: Fira code,Fira Mono,Consolas,Menlo,Courier,monospace
+        white-space: pre
+      &.language-md
+        ul
+          li
+            list-style: disc !important
+        ol
+          li
+            list-style: decimal !important

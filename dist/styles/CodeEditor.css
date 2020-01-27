@@ -1,3 +1,17 @@
+.code-editor-heading {
+  display: flex;
+}
+.code-editor-heading .renameable {
+  flex-grow: 2;
+}
+.code-editor-heading .renameable .text {
+  padding-right: 10px;
+}
+.code-editor-heading .buttons-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .code-editor .toolbar {
   display: flex;
   justify-content: flex-start;
@@ -7,24 +21,101 @@
   display: flex;
   width: 100%;
 }
-.code-editor .editor .code {
+.code-editor .editor .code-area {
   flex-grow: 1;
+  max-height: 200px;
+  overflow: auto;
 }
-.code-editor .editor .code code {
-  background-color: #f7f7f9;
+.code-editor .editor .code-area .code-container {
+  background-color: #fafafa;
+  box-sizing: border-box;
+  position: relative;
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  font-size: 12px;
+  font-variant-ligatures: common-ligatures;
+  line-height: 1.5;
+  overflow: hidden;
+  padding: 0px;
+  text-align: left;
+}
+.code-editor .editor .code-area .code-container textarea {
+  border: 0px;
+  color: inherit;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  resize: none;
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+  -webkit-text-fill-color: transparent;
+  box-sizing: inherit;
+  display: inherit;
+  margin: 0px;
+  padding: 10px;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-variant-ligatures: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-indent: inherit;
+  text-rendering: inherit;
+  text-transform: inherit;
+}
+.code-editor .editor .code-area .code-container pre {
+  background: rgba(0, 0, 0, 0) none repeat scroll 0% 0%;
+  border: 0px none;
   color: #000;
-  display: block;
-  height: 500px;
+  pointer-events: none;
+  position: relative;
+  box-sizing: inherit;
+  display: inherit;
+  margin: 0px;
+  padding: 10px;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-variant-ligatures: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-indent: inherit;
+  text-rendering: inherit;
+  text-transform: inherit;
+}
+.code-editor .editor .v-divider {
+  border-left: 1px solid gray;
+  cursor: sw-resize;
+  height: 100%;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 1px;
 }
 .code-editor .editor .html {
   flex-grow: 2;
   margin-left: 25px;
   padding-left: 25px;
 }
-.code-editor .editor .html ul li {
+.code-editor .editor .html.language-haskell {
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  white-space: pre;
+}
+.code-editor .editor .html.language-json {
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  white-space: pre;
+}
+.code-editor .editor .html.language-md ul li {
   list-style: disc !important;
 }
-.code-editor .editor .html ol li {
+.code-editor .editor .html.language-md ol li {
   list-style: decimal !important;
 }
 

@@ -637,7 +637,7 @@
       "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-dom-simple",
-    "version": "v0.2.4"
+    "version": "v0.2.6"
   },
   "dotenv": {
     "dependencies": [

@@ -34,6 +34,7 @@
     "spec-quickcheck",
     "string-parsers",
     "strings",
+    "stringutils",
     "thermite",
     "tuples-native",
     "uint",

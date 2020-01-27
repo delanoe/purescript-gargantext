@@ -1,32 +1,30 @@
 -- | A module for authenticating to create sessions and handling them
 module Gargantext.Sessions where
 
-import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<), bind)
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:))
+import DOM.Simple.Console (log2)
+import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:))
 import Data.Argonaut.Core (Json, fromArray, jsonEmptyObject, stringify)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
-import Data.Traversable (traverse)
-import DOM.Simple.Console (log2)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..))
-import Data.Sequence as Seq
 import Data.Sequence (Seq)
+import Data.Sequence as Seq
+import Data.Traversable (traverse)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Reactix as R
-import Web.HTML (window)
-import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (Storage, getItem, setItem, removeItem)
-import Gargantext.Components.Login.Types
-  (AuthRequest(..), AuthResponse(..), AuthInvalid(..), AuthData(..))
+import Gargantext.Components.Login.Types (AuthRequest(..), AuthResponse(..), AuthInvalid(..), AuthData(..))
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend, backendUrl, toUrl, sessionPath)
 import Gargantext.Routes (SessionRoute)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
+import Gargantext.Utils.Reactix (getls)
 import Gargantext.Utils.Reactix as R2
+import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<), bind)
+import Reactix as R
+import Web.Storage.Storage (getItem, removeItem, setItem)
 
 
 -- | A Session represents an authenticated session for a user at a
@@ -228,6 +226,3 @@ postWwwUrlencoded session@(Session {token}) p = REST.postWwwUrlencoded (Just tok
 
 postMultipartFormData :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> String -> Aff b
 postMultipartFormData session@(Session {token}) p = REST.postMultipartFormData (Just token) (toUrl session p)
-
-getls :: Effect Storage
-getls = window >>= localStorage

@@ -6,7 +6,7 @@ import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
-import Gargantext.Components.Nodes.Corpus (CorpusData)
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
