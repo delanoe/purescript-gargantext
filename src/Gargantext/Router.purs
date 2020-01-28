@@ -11,6 +11,9 @@ router :: Match AppRoute
 router = oneOf
   [ Login            <$   route "login"
   , Folder           <$> (route "folder"     *> sid) <*> int
+  , Folder           <$> (route "folderPrivate" *> sid) <*> int
+  , Folder           <$> (route "folderShared" *> sid) <*> int
+  , Folder           <$> (route "folderPublic" *> sid) <*> int
   , CorpusDocument   <$> (route "corpus"     *> sid) <*> int
                         <*> (lit "list" *> int)
                         <*> (lit "document" *> int)

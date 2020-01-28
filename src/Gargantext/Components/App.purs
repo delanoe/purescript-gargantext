@@ -10,7 +10,6 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.Data.Lang (LandingLang(..))
-import Gargantext.Components.Folder (folder)
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Login (login)
@@ -51,14 +50,16 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
     let mCurrentRoute = fst route
     let backends      = fromFoldable defaultBackends
     let withSession = \sid f -> maybe' (\_ -> forested $ homeLayout LL_EN) f $ Sessions.lookup sid (fst sessions)
+
     pure $ case fst showLogin of
       true -> forested $ login { sessions, backends, visible: showLogin }
       false ->
         case fst route of
           Home  -> forested $ homeLayout LL_EN
           Login -> login { sessions, backends, visible: showLogin }
-          Folder sid _      -> withSession sid $ \_ -> forested (folder {})
-          Corpus sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          --Folder sid _      -> withSession sid $ \_ -> forested (folder {})
+          Folder sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          Corpus sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
           Texts sid nodeId  -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
           Lists sid nodeId  -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
           Dashboard sid _nodeId  -> withSession sid $ \session -> forested $ dashboardLayout {}

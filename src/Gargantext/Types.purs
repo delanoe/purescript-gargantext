@@ -10,7 +10,6 @@ import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Tuple (Tuple)
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import URI.Query (Query)
@@ -128,22 +127,22 @@ instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
      ~> jsonEmptyObject
 
 data NodeType = NodeUser
-              | Folder | FolderPrivate | FolderShared | FolderPublic
+              | Folder | FolderPrivate | FolderPublic | FolderShared
               | Annuaire
-              | NodeContact
               | Corpus
-              | Team
-              | Url_Document
               | Dashboard
               | Error
               | Graph
-              | Phylo
               | Individu
               | Node
-              | Nodes
-              | Tree
+              | NodeContact
               | NodeList
+              | Nodes
+              | Phylo
+              | Team
               | Texts
+              | Tree
+              | Url_Document
 
 derive instance eqNodeType :: Eq NodeType
 
@@ -152,47 +151,47 @@ instance showNodeType :: Show NodeType where
 
   show Folder        = "NodeFolder"
   show FolderPrivate = "NodeFolderPrivate"
-  show FolderShared    = "NodeFolderShared"
   show FolderPublic  = "NodeFolderPublic"
+  show FolderShared    = "NodeFolderShared"
 
   show Annuaire      = "Annuaire"
-  show NodeContact   = "NodeContact"
   show Corpus        = "NodeCorpus"
   show Dashboard     = "NodeDashboard"
-  show Url_Document  = "NodeDocument"
   show Error         = "NodeError"
   show Graph         = "NodeGraph"
-  show Phylo         = "NodePhylo"
   show Individu      = "NodeIndividu"
   show Node          = "Node"
-  show Nodes         = "Nodes"
-  show Tree          = "NodeTree"
-  show Team          = "NodeTeam"
+  show NodeContact   = "NodeContact"
   show NodeList      = "NodeList"
+  show Nodes         = "Nodes"
+  show Phylo         = "NodePhylo"
+  show Team          = "NodeTeam"
   show Texts         = "NodeTexts"
+  show Tree          = "NodeTree"
+  show Url_Document  = "NodeDocument"
 
 readNodeType :: String -> NodeType
 readNodeType "NodeUser"      = NodeUser
 
 readNodeType "NodeFolder"    = Folder
 readNodeType "NodeFolderPrivate" = FolderPrivate
-readNodeType "NodeFolderShared"  = FolderShared
 readNodeType "NodeFolderPublic"  = FolderPublic
+readNodeType "NodeFolderShared"  = FolderShared
 
-readNodeType "NodeAnnuaire"  = Annuaire
-readNodeType "NodeDashboard" = Dashboard
 readNodeType "Document"      = Url_Document
-readNodeType "NodeGraph"     = Graph
-readNodeType "NodePhylo"     = Phylo
 readNodeType "Individu"      = Individu
 readNodeType "Node"          = Node
-readNodeType "Nodes"         = Nodes
-readNodeType "NodeCorpus"    = Corpus
+readNodeType "NodeAnnuaire"  = Annuaire
 readNodeType "NodeContact"   = NodeContact
-readNodeType "Tree"          = Tree
-readNodeType "NodeTeam"      = Team
+readNodeType "NodeCorpus"    = Corpus
+readNodeType "NodeDashboard" = Dashboard
+readNodeType "NodeGraph"     = Graph
 readNodeType "NodeList"      = NodeList
+readNodeType "NodePhylo"     = Phylo
+readNodeType "NodeTeam"      = Team
 readNodeType "NodeTexts"     = Texts
+readNodeType "Nodes"         = Nodes
+readNodeType "Tree"          = Tree
 readNodeType _               = Error
 
 
@@ -248,26 +247,26 @@ instance encodeJsonNodeType :: EncodeJson NodeType where
   encodeJson nodeType = encodeJson $ show nodeType
 
 nodeTypePath :: NodeType -> String
-nodeTypePath Folder    = "folder"
-nodeTypePath FolderPrivate = "folderPrivate"
-nodeTypePath FolderShared  = "folderShared"
-nodeTypePath FolderPublic  = "folderPublic"
 nodeTypePath Annuaire  = "annuaire"
 nodeTypePath Corpus    = "corpus"
 nodeTypePath Dashboard = "dashboard"
-nodeTypePath Url_Document  = "document"
 nodeTypePath Error     = "ErrorNodeType"
+nodeTypePath Folder    = "folder"
+nodeTypePath FolderPrivate = "folderPrivate"
+nodeTypePath FolderPublic  = "folderPublic"
+nodeTypePath FolderShared  = "folderShared"
 nodeTypePath Graph     = "graph"
-nodeTypePath Phylo     = "phylo"
 nodeTypePath Individu  = "individu"
 nodeTypePath Node      = "node"
-nodeTypePath Nodes     = "nodes"
-nodeTypePath NodeUser  = "user"
 nodeTypePath NodeContact = "contact"
-nodeTypePath Tree      = "tree"
 nodeTypePath NodeList  = "lists"
-nodeTypePath Texts     = "texts"
+nodeTypePath NodeUser  = "user"
+nodeTypePath Nodes     = "nodes"
+nodeTypePath Phylo     = "phylo"
 nodeTypePath Team      = "team"
+nodeTypePath Texts     = "texts"
+nodeTypePath Tree      = "tree"
+nodeTypePath Url_Document  = "document"
 ------------------------------------------------------------
 
 type ListId = Int
