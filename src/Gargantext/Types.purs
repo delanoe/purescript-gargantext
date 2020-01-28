@@ -4,15 +4,16 @@ import Prelude
 import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
 import Data.Array as A
 import Data.Either (Either(..))
-import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), maybe)
-import Effect.Aff (Aff)
-import Prim.Row (class Union)
-import URI.Query (Query)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
+import Data.Int (toNumber)
+import Data.Maybe (Maybe(..), maybe)
+import Data.Tuple (Tuple)
+import Effect.Aff (Aff)
+import Prim.Row (class Union)
+import URI.Query (Query)
 
 newtype SessionId = SessionId String
 
@@ -437,6 +438,16 @@ modeFromString "Institutes" = Just Institutes
 modeFromString "Terms" = Just Terms
 modeFromString _ = Nothing
 
+-- Async tasks
+
+-- corresponds to /add/form/async or /add/query/async
+data AsyncTaskType = Form | Query
+derive instance genericAsyncTaskType :: Generic AsyncTaskType _
+
+asyncTaskTypePath :: AsyncTaskType -> String
+asyncTaskTypePath Form = "add/form/async/"
+asyncTaskTypePath Query = "add/query/async/"
+
 type AsyncTaskID = String
 
 data AsyncTaskStatus = Running | Failed | Finished | Killed
@@ -455,7 +466,7 @@ readAsyncTaskStatus "running"  = Running
 readAsyncTaskStatus _ = Running
 
 newtype AsyncTask = AsyncTask {
-    id :: AsyncTaskID
+    id     :: AsyncTaskID
   , status :: AsyncTaskStatus
   }
 derive instance genericAsyncTask :: Generic AsyncTask _
@@ -466,6 +477,11 @@ instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
     id <- obj .: "id"
     status <- obj .: "status"
     pure $ AsyncTask {id, status}
+
+newtype AsyncTaskWithType = AsyncTaskWithType {
+    task :: AsyncTask
+  , typ  :: AsyncTaskType
+  }
 
 newtype AsyncProgress = AsyncProgress {
     id :: AsyncTaskID

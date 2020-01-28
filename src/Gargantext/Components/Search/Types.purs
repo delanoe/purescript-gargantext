@@ -1,55 +1,29 @@
 module Gargantext.Components.Search.Types where
 
-import Prelude (class Eq, class Show, show, ($), (<>), map)
-import Data.Set (Set)
-import Data.Ord
-import Data.Set as Set
 import Data.Array (concat)
-import Data.Argonaut (class EncodeJson, class DecodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
+import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
+import Data.Set (Set)
+import Data.Set as Set
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Ends (class ToUrl, backendUrl)
-import Gargantext.Sessions (Session(..), post)
-import Gargantext.Types (class ToQuery, toQuery)
-import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
+
+import Gargantext.Prelude (class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>))
+
+import Gargantext.Components.Data.Lang
+import Gargantext.Ends (class ToUrl, backendUrl)
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session(..), post)
+import Gargantext.Types as GT
+import Gargantext.Utils (id)
 
 ------------------------------------------------------------------------
 class Doc a where
   doc :: a -> String
-
-------------------------------------------------------------------------
--- | Lang search specifications
-allLangs :: Array Lang
-allLangs = [ EN
-           , FR
-           , Universal
-           , No_extraction
-           ]
-
-data Lang = FR | EN | Universal | No_extraction
-
-instance showLang :: Show Lang where
-  show FR = "FR"
-  show EN = "EN"
-  show Universal = "All"
-  show No_extraction = "Nothing"
-
-derive instance eqLang :: Eq Lang
-
-readLang :: String -> Maybe Lang
-readLang "FR"  = Just FR
-readLang "EN"  = Just EN
-readLang "All" = Just Universal
-readLang "Nothing" = Just No_extraction
-readLang _           = Nothing
-
-instance encodeJsonLang :: EncodeJson Lang where
-  encodeJson a = encodeJson (show a)
 
 ------------------------------------------------------------------------
 -- | DataField search specifications
@@ -302,14 +276,16 @@ instance showSearchOrder :: Show SearchOrder where
   show ScoreDesc = "ScoreDesc"
 
 ------------------------------------------------------------------------
+
 newtype SearchQuery = SearchQuery
   { query     :: String
+  , databases :: Array Database
   , datafield :: Maybe DataField
-  , lang      :: Maybe Lang
-  , node_id   :: Maybe Int
   , files_id  :: Array String
-  , offset    :: Maybe Int
+  , lang      :: Maybe Lang
   , limit     :: Maybe Int
+  , node_id   :: Maybe Int
+  , offset    :: Maybe Int
   , order     :: Maybe SearchOrder
   }
 
@@ -318,20 +294,21 @@ derive instance newtypeSearchQuery :: Newtype SearchQuery _
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
   { query: ""
+  , databases: []
   , datafield: Nothing
-  , lang    : Nothing
-  , node_id : Nothing
   , files_id : []
-  , offset: Nothing
+  , lang    : Nothing
   , limit: Nothing
+  , node_id : Nothing
+  , offset: Nothing
   , order: Nothing
   }
 
 instance toUrlSessionSearchQuery :: ToUrl Session SearchQuery where
   toUrl (Session {backend}) q = backendUrl backend q2
-    where q2 = "new" <> Q.print (toQuery q)
+    where q2 = "new" <> Q.print (GT.toQuery q)
   
-instance searchQueryToQuery :: ToQuery SearchQuery where
+instance searchQueryToQuery :: GT.ToQuery SearchQuery where
   toQuery (SearchQuery {offset, limit, order}) =
     QP.print id id $ QP.QueryPairs
                    $ pair "offset" offset
@@ -342,15 +319,18 @@ instance searchQueryToQuery :: ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, datafield, node_id, lang})
+  encodeJson (SearchQuery {query, databases, datafield, node_id, lang})
     =  "query"      := query
-    ~> "datafield"  := "" -- fromMaybe "" datafield
+    -- ~> "datafield"  := "" -- fromMaybe "" datafield
+    ~> "databases"  := databases
+    ~> "lang"       := maybe "EN" show lang
     ~> "node_id"    := fromMaybe 0 node_id
     -- ~> "files_id"   := files_id
-    ~> "lang"       := maybe "EN" show lang
     ~> jsonEmptyObject
 
-performSearch :: forall a. DecodeJson a => Session -> SearchQuery -> Aff a
-performSearch session q = post session q q
-
-
+performSearch :: Session -> Int -> SearchQuery -> Aff GT.AsyncTaskWithType
+performSearch session nodeId q = do
+  task <- post session p q
+  pure $ GT.AsyncTaskWithType {task, typ: GT.Query}
+  where
+    p = GR.NodeAPI GT.Corpus (Just nodeId) $ GT.asyncTaskTypePath GT.Query

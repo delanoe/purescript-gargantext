@@ -6,7 +6,10 @@ import Data.Array (fromFoldable)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
-import Gargantext.Components.Data.Lang (Lang(..))
+import Reactix as R
+import Reactix.DOM.HTML as H
+
+import Gargantext.Components.Data.Lang (LandingLang(..))
 import Gargantext.Components.Folder (folder)
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
@@ -27,8 +30,6 @@ import Gargantext.Routes (AppRoute(..))
 import Gargantext.Sessions (Sessions, useSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 -- TODO (what does this mean?)
 -- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
@@ -49,12 +50,12 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
     let forested      = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
     let mCurrentRoute = fst route
     let backends      = fromFoldable defaultBackends
-    let withSession = \sid f -> maybe' (\_ -> forested $ homeLayout EN) f $ Sessions.lookup sid (fst sessions)
+    let withSession = \sid f -> maybe' (\_ -> forested $ homeLayout LL_EN) f $ Sessions.lookup sid (fst sessions)
     pure $ case fst showLogin of
       true -> forested $ login { sessions, backends, visible: showLogin }
       false ->
         case fst route of
-          Home  -> forested $ homeLayout EN
+          Home  -> forested $ homeLayout LL_EN
           Login -> login { sessions, backends, visible: showLogin }
           Folder sid _      -> withSession sid $ \_ -> forested (folder {})
           Corpus sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }

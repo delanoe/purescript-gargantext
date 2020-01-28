@@ -12,6 +12,9 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
 import Gargantext.Components.Loader (loader)
@@ -19,9 +22,8 @@ import Gargantext.Components.Login.Types (TreeId)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (AsyncTask(..))
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Types as GT
+import Gargantext.Utils.Reactix as R2
 
 ------------------------------------------------------------------------
 type Props = ( root          :: ID
@@ -117,9 +119,9 @@ toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asy
           )
         ]
 
-    onAsyncTaskFinish (AsyncTask {id: id_}) = setTreeState $ const $ ts { asyncTasks = newAsyncTasks }
+    onAsyncTaskFinish (GT.AsyncTaskWithType {task: GT.AsyncTask {id}}) = setTreeState $ const $ ts { asyncTasks = newAsyncTasks }
       where
-        newAsyncTasks = A.filter (\(AsyncTask {id: id'}) -> id_ /= id') asyncTasks
+        newAsyncTasks = A.filter (\(GT.AsyncTaskWithType {task: GT.AsyncTask {id: id'}}) -> id /= id') asyncTasks
 
 
 childNodes :: Session
@@ -149,17 +151,21 @@ performAction :: Session
               -> R.State Tree
               -> Action
               -> Aff Unit
+performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) (CreateSubmit name nodeType) = do
+  void $ createNode session id $ CreateValue {name, nodeType}
+  liftEffect $ setReload (_ + 1)
+
 performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
   void $ deleteNode session id
   liftEffect $ setReload (_ + 1)
 
+performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (SearchQuery task) = do
+  liftEffect $ setTree $ \t@{asyncTasks} -> t { asyncTasks = A.cons task asyncTasks }
+  liftEffect $ log2 "[performAction] SearchQuery task:" task
+
 performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (Submit name)  = do
   void $ renameNode session id $ RenameValue {name}
   liftEffect $ setTree $ \s@{tree: NTree (LNode node) arr} -> s {tree = NTree (LNode node {name = name}) arr}
-
-performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) (CreateSubmit name nodeType) = do
-  void $ createNode session id $ CreateValue {name, nodeType}
-  liftEffect $ setReload (_ + 1)
 
 performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (UploadFile fileType contents) = do
   task <- uploadFile session id fileType contents

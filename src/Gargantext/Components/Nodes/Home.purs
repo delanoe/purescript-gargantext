@@ -10,7 +10,7 @@ import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Data.Landing
   (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
-import Gargantext.Components.Data.Lang (Lang(..))
+import Gargantext.Components.Data.Lang (LandingLang(..))
 
 type Props = ()
 
@@ -36,13 +36,13 @@ performAction Enter = void $ setHash "/search"
 performAction Login = void $ setHash "/login"
 performAction SignUp = pure unit
 
-langLandingData :: Lang -> LandingData
-langLandingData FR = Fr.landingData
-langLandingData EN = En.landingData
+langLandingData :: LandingLang -> LandingData
+langLandingData LL_FR = Fr.landingData
+langLandingData LL_EN = En.landingData
 
 ------------------------------------------------------------------------
 
-homeLayout :: Lang -> R.Element
+homeLayout :: LandingLang -> R.Element
 homeLayout lang = R.createElement homeLayoutCpt {landingData} []
   where landingData = langLandingData lang
 
