@@ -1,7 +1,7 @@
 module Gargantext.Components.Forest.Tree where
 
-import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Prelude
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), CreateValue(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, createNode, deleteNode, loadNode, renameNode)
+import Gargantext.Prelude (Unit, bind, const, discard, map, pure, void, ($), (+), (/=), (<>))
 
 import DOM.Simple.Console (log2)
 import Data.Array as A
@@ -23,7 +23,6 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
-import Gargantext.Utils.Reactix as R2
 
 ------------------------------------------------------------------------
 type Props = ( root          :: ID
@@ -117,9 +116,9 @@ toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asy
           )
         ]
 
-    onAsyncTaskFinish (GT.AsyncTaskWithType {task: GT.AsyncTask {id}}) = setTreeState $ const $ ts { asyncTasks = newAsyncTasks }
+    onAsyncTaskFinish (GT.AsyncTaskWithType {task: GT.AsyncTask {id: id'}}) = setTreeState $ const $ ts { asyncTasks = newAsyncTasks }
       where
-        newAsyncTasks = A.filter (\(GT.AsyncTaskWithType {task: GT.AsyncTask {id: id'}}) -> id /= id') asyncTasks
+        newAsyncTasks = A.filter (\(GT.AsyncTaskWithType {task: GT.AsyncTask {id: id''}}) -> id' /= id'') asyncTasks
 
 
 childNodes :: Session
@@ -150,33 +149,17 @@ performAction :: Session
               -> R.State Tree
               -> Action
               -> Aff Unit
--- <<<<<<< HEAD
-{-
-performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) (CreateSubmit name nodeType) = do
-  void $ createNode session id $ CreateValue {name, nodeType}
-  liftEffect $ setReload (_ + 1)
-  -}
--- performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
--- =======
 performAction session (_ /\ setReload) (_ /\ setOpenNodes) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
--- >>>>>>> dev
   void $ deleteNode session id
   liftEffect do
     setOpenNodes (Set.delete id)
     setReload (_ + 1)
 
--- <<<<<<< HEAD
 performAction session (_ /\ setReload) _ ({tree: NTree (LNode {id}) _} /\ setTree) (SearchQuery task) = do
   liftEffect $ setTree $ \t@{asyncTasks} -> t { asyncTasks = A.cons task asyncTasks }
   liftEffect $ log2 "[performAction] SearchQuery task:" task
   liftEffect $ setReload (_ + 1)
 
-{-
-performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (Submit name)  = do
-  void $ renameNode session id $ RenameValue {name}
-  liftEffect $ setTree $ \s@{tree: NTree (LNode node) arr} -> s {tree = NTree (LNode node {name = name}) arr}
--- =======
-  --}
 performAction session _ _ ({tree: NTree (LNode {id}) _} /\ setTree) (Submit name)  = do
   void $ renameNode session id $ RenameValue {name}
   liftEffect $ setTree $ \s@{tree: NTree (LNode node) arr} -> s {tree = NTree (LNode node {name = name}) arr}
@@ -187,9 +170,7 @@ performAction session (_ /\ setReload) (_ /\ setOpenNodes) (s@{tree: NTree (LNod
     setOpenNodes (Set.insert id)
     setReload (_ + 1)
 
--- performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (UploadFile fileType contents) = do
 performAction session _ _ ({tree: NTree (LNode {id}) _} /\ setTree) (UploadFile fileType contents) = do
--- >>>>>>> dev
   task <- uploadFile session id fileType contents
   liftEffect $ setTree $ \t@{asyncTasks} -> t { asyncTasks = A.cons task asyncTasks }
   liftEffect $ log2 "uploaded, task:" task
