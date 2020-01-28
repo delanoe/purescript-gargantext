@@ -151,9 +151,9 @@ instance showNodeType :: Show NodeType where
   show NodeUser      = "NodeUser"
 
   show Folder        = "NodeFolder"
-  show FolderPrivate = "NodeFolderPrivate"
-  show FolderShared    = "NodeFolderShared"
-  show FolderPublic  = "NodeFolderPublic"
+  show FolderPrivate = "NodeFolderPrivate"  -- Node Private Worktop
+  show FolderShared    = "NodeFolderShared" -- Node Share Worktop
+  show FolderPublic  = "NodeFolderPublic"   -- Node Public Worktop
 
   show Annuaire      = "Annuaire"
   show NodeContact   = "NodeContact"
@@ -198,8 +198,11 @@ readNodeType _               = Error
 
 fldr :: NodeType -> Boolean -> String
 fldr NodeUser false = "fa fa-user-circle"
-fldr NodeUser true  = "fa fa-user-circle-o"
-
+fldr NodeUser true  = "fa fa-user"
+------------------------------------------------------
+fldr Folder  false  = "fa fa-folder-o"
+fldr Folder  true   = "fa fa-folder-open"
+------------------------------------------------------
 fldr FolderPrivate true  = "fa fa-lock"
 fldr FolderPrivate false = "fa fa-expeditedssl"
 
@@ -209,6 +212,7 @@ fldr Team  true   = "fa fa-users"
 fldr Team  false  = "fa fa-users"
 
 fldr FolderPublic _  = "fa fa-globe"
+------------------------------------------------------
 
 fldr Corpus _ = "fa fa-book" -- "fa fa-snowflake-o"
 
@@ -219,14 +223,14 @@ fldr Texts _ = "fa fa-newspaper-o"
 fldr Dashboard _ = "fa fa-signal"
 fldr NodeList _ = "fa fa-list"
 
-fldr Annuaire true  = "fa fa-address-book-o"
-fldr Annuaire false = "fa fa-address-book"
+fldr Annuaire true  = "fa fa-address-card-o"
+fldr Annuaire false = "fa fa-address-card"
 
 fldr NodeContact true  = "fa fa-address-card-o"
 fldr NodeContact false = "fa fa-address-card"
 
-fldr _        false  = "fa fa-folder"
-fldr _        true   = "fa fa-folder-o"
+fldr _        false  = "fa fa-folder-o"
+fldr _        true   = "fa fa-folder-open"
 
 
 
