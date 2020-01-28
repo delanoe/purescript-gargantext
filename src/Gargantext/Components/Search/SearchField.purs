@@ -1,24 +1,26 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex) where
 
-import Prelude (const, map, pure, show, discard, ($), (&&), (<), (<$>), (<>), (==), (<<<), Unit, bind)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (over)
 import Data.String (length)
 import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
-import Effect.Aff (Aff, launchAff_)
+import DOM.Simple.Console (log, log2)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect (Effect)
-import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Components.Modals.Modal (modalShow)
-import Gargantext.Components.Search.Types -- (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs, HAL_Filters(..), IMT_org(..))
+import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, ($), (&&), (<), (<$>), (<<<), (<>), (==))
+
+import Gargantext.Components.Data.Lang (Lang)
+import Gargantext.Components.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, readDatabase, readOrg) -- (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs, HAL_Filters(..), IMT_org(..))
 import Gargantext.Sessions (Session)
+import Gargantext.Types as GT
+import Gargantext.Utils.Reactix as R2
 
 select :: forall props.
           R.IsComponent String props (Array R.Element)
@@ -27,23 +29,26 @@ select :: forall props.
           -> R.Element
 select = R.createElement "select"
 
-type Search = { datafield :: Maybe DataField
-              , term      :: String
+type Search = { databases :: Array Database
+              , datafield :: Maybe DataField
               , lang      :: Maybe Lang
               , node_id   :: Maybe Int
+              , term      :: String
               }
 
 eqSearch :: Search -> Search -> Boolean
-eqSearch s s' =    (s.datafield == s'.datafield)
+eqSearch s s' =    (s.databases == s'.databases)
+                && (s.datafield == s'.datafield)
                 && (s.term == s'.term)
                 && (s.lang == s'.lang)
                 && (s.node_id == s'.node_id)
 
 defaultSearch :: Search
-defaultSearch = { datafield: Nothing
-                , term: ""
-                , lang: Nothing
+defaultSearch = { databases: []
+                , datafield: Nothing
                 , node_id: Nothing
+                , lang: Nothing
+                , term: ""
                 }
 
 type Props =
@@ -51,6 +56,7 @@ type Props =
   ( databases :: Array Database
   , langs     :: Array Lang
   -- State hook for a search, how we get data in and out
+  , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
   , search    :: R.State Search
   , session   :: Session
   )
@@ -63,7 +69,7 @@ searchField p = R.createElement searchFieldComponent p []
 searchFieldComponent :: R.Component Props
 searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
   where
-    cpt props@{search: search@(s /\ _)} _ = do
+    cpt props@{onSearch, search: search@(s /\ _)} _ = do
       pure $
         H.div { className: "search-field-group", style: { width: "100%" } }
           [
@@ -97,7 +103,7 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
           , H.div { className : "panel-footer" }
                 [ if needsLang s.datafield then langNav search props.langs else H.div {} []
                 , H.div {} []
-                , H.div {className: "flex-center"} [submitButton {search, session: props.session}]
+                , H.div {className: "flex-center"} [submitButton {onSearch, search, session: props.session}]
                 ]
           ]
     eqProps :: Record Props -> Record Props -> Boolean
@@ -182,21 +188,6 @@ updateFilter org _ = (Just (External (Just (HAL (Just (IMT imtOrgs'))))))
                   else Set.fromFoldable [org]
 
 ------------------------------------------------------------------------
-langList :: R.State Search -> Array Lang -> R.Element
-langList (lang /\ setLang) langs =
-              H.div { className: "form-group" }
-                   [ H.div {className: "text-primary center"} [H.text "with lang"]
-                   , R2.select { className: "form-control"
-                               , on: { change: \e -> setLang $ _ {lang = lang' e}}
-                               } (liItem <$> langs)
-                   ]
-    where
-      liItem :: Lang -> R.Element
-      liItem l = H.option {className : "text-primary center"} [ H.text (show l) ]
-
-      lang' = readLang <<< R2.unsafeEventValue
-
-
 langNav :: R.State Search -> Array Lang -> R.Element
 langNav ({lang} /\ setSearch) langs =
   R.fragment [ H.div {className: "text-primary center"} [H.text "with lang"]
@@ -329,7 +320,8 @@ searchInputComponent = R.hooksComponent "G.C.S.SearchInput" cpt
 
 type SubmitButtonProps =
   (
-    search :: R.State Search
+    onSearch :: GT.AsyncTaskWithType -> Effect Unit
+  , search :: R.State Search
   , session :: Session
   )
 
@@ -339,41 +331,48 @@ submitButton p = R.createElement submitButtonComponent p []
 submitButtonComponent :: R.Component SubmitButtonProps
 submitButtonComponent = R.hooksComponent "G.C.S.SubmitButton" cpt
   where
-    cpt {search: search /\ setSearch, session} _ =
+    cpt {onSearch, search: (search /\ _), session} _ =
       pure $
         H.button { className: "btn btn-primary"
                  , type: "button"
-                 , on: {click: doSearch session search}
+                 , on: {click: doSearch onSearch session search}
                  , style: { width: "100%" }
                  } [ H.text "Launch Search" ]
 
-    doSearch s q = \_ -> do
+    doSearch os s q = \_ -> do
       log2 "[submitButton] searching" q
-      triggerSearch s q
+      triggerSearch os s q
       --case search.term of
       --  "" -> setSearch $ const defaultSearch
       --  _  -> setSearch $ const q
 
-triggerSearch :: Session -> Search -> Effect Unit
-triggerSearch s q =
+triggerSearch :: (GT.AsyncTaskWithType -> Effect Unit) -> Session -> Search -> Effect Unit
+triggerSearch os s q =
   launchAff_ $ do
 
     liftEffect $ do
       -- log2 "Searching datafield: " $ show q.database
-      log2 "Searching term: " q.term
-      log2 "Searching lang: " q.lang
+      log2 "[triggerSearch] Searching term: " q.term
+      log2 "[triggerSearch] Searching lang: " q.lang
 
-    r <- (performSearch s $ searchQuery q) :: Aff Unit
+    case q.node_id of
+      Nothing -> liftEffect $ log "[triggerSearch] node_id is Nothing, don't know what to do"
+      Just id -> do
+        task <- performSearch s id $ searchQuery q
+        liftEffect $ do
+          log2 "[triggerSearch] task" task
+          os task
 
-    liftEffect $ do
-      log2 "Return:" r
-      modalShow "addCorpus"
+    --liftEffect $ do
+    --  log2 "Return:" r
+    --  modalShow "addCorpus"
 
 searchQuery :: Search -> SearchQuery
 searchQuery {datafield: Nothing, term} =
   over SearchQuery (_ {query=term}) defaultSearchQuery
-searchQuery {datafield, lang, term, node_id} =
-  over SearchQuery (_ { datafield=datafield
+searchQuery {databases, datafield, lang, term, node_id} =
+  over SearchQuery (_ { databases=databases
+                      , datafield=datafield
                       , lang=lang
                       , query=term
                       , node_id=node_id

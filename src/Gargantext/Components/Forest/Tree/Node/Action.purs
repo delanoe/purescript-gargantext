@@ -7,15 +7,17 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
-import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, get, put, post, delete)
-import Gargantext.Types (NodeType(..), AsyncTask(..))
-import Gargantext.Components.Search.Types (Lang(..))
 import Prelude hiding (div)
 
-data Action = Submit       String
+import Gargantext.Components.Data.Lang (Lang)
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session, get, put, post, delete)
+import Gargantext.Types as GT
+
+data Action = CreateSubmit String GT.NodeType
             | DeleteNode
-            | CreateSubmit String NodeType
+            | SearchQuery GT.AsyncTaskWithType
+            | Submit       String
             | UploadFile   FileType UploadFileContents
 
 -----------------------------------------------------
@@ -52,16 +54,16 @@ type Reload = Int
 newtype UploadFileContents = UploadFileContents String
 
 createNode :: Session -> ID -> CreateValue -> Aff (Array ID)
-createNode session parentId = post session $ NodeAPI Node (Just parentId) ""
+createNode session parentId = post session $ NodeAPI GT.Node (Just parentId) ""
 
 renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
-renameNode session renameNodeId = put session $ NodeAPI Node (Just renameNodeId) "rename"
+renameNode session renameNodeId = put session $ NodeAPI GT.Node (Just renameNodeId) "rename"
 
 deleteNode :: Session -> ID -> Aff ID
-deleteNode session nodeId = delete session $ NodeAPI Node (Just nodeId) ""
+deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 
 loadNode :: Session -> ID -> Aff FTree
-loadNode session nodeId = get session $ NodeAPI Tree (Just nodeId) ""
+loadNode session nodeId = get session $ NodeAPI GT.Tree (Just nodeId) ""
 
 
 newtype RenameValue = RenameValue
@@ -77,7 +79,7 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
 newtype CreateValue = CreateValue
   {
     name :: Name
-  , nodeType :: NodeType
+  , nodeType :: GT.NodeType
   }
 
 instance encodeJsonCreateValue :: EncodeJson CreateValue where
@@ -88,14 +90,14 @@ instance encodeJsonCreateValue :: EncodeJson CreateValue where
 
 data NTree a = NTree a (Array (NTree a))
 type FTree = NTree LNode
-type Tree = { tree :: FTree, asyncTasks :: Array AsyncTask }
+type Tree = { tree :: FTree, asyncTasks :: Array GT.AsyncTaskWithType }
 
 instance ntreeFunctor :: Functor NTree where
   map f (NTree x ary) = NTree (f x) (map (map f) ary)
 
 newtype LNode = LNode { id :: ID
                       , name :: Name
-                      , nodeType :: NodeType
+                      , nodeType :: GT.NodeType
                       }
 
 derive instance newtypeLNode :: Newtype LNode _
