@@ -96,10 +96,10 @@ toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asy
     pAction = performAction session reload openNodes treeState
 
     cpt props _ = do
-      let folderIsOpen = Set.member id (fst openNodes)
-      let setFn = if folderIsOpen then Set.delete else Set.insert
+      let folderIsOpen         = Set.member id (fst openNodes)
+      let setFn                = if folderIsOpen then Set.delete else Set.insert
       let toggleFolderIsOpen _ = (snd openNodes) (setFn id)
-      let folderOpen = Tuple folderIsOpen toggleFolderIsOpen
+      let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
 
       let withId (NTree (LNode {id: id'}) _) = id'
 

@@ -180,13 +180,13 @@ _list = prop (SProxy :: SProxy "list")
 
 derive instance newtypeNgramsElement :: Newtype NgramsElement _
 
-_NgramsElement :: Iso' NgramsElement {
-      children :: Set NgramsTerm
-    , list :: TermList
-    , ngrams :: NgramsTerm
+_NgramsElement    :: Iso' NgramsElement {
+      children    :: Set NgramsTerm
+    , list        :: TermList
+    , ngrams      :: NgramsTerm
     , occurrences :: Int
-    , parent :: Maybe NgramsTerm
-    , root :: Maybe NgramsTerm
+    , parent      :: Maybe NgramsTerm
+    , root        :: Maybe NgramsTerm
     }
 _NgramsElement = _Newtype
 

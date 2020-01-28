@@ -167,7 +167,10 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
               , H.div {} (
                    if A.null props.tableBody && searchQuery /= "" then [
                      H.button { className: "btn btn-primary"
-                              , on: {click: const $ dispatch $ addNewNgramA $ normNgram tabNgramType searchQuery}
+                              , on: {click: const $ dispatch
+                                                  $ addNewNgramA
+                                                  $ normNgram tabNgramType searchQuery
+                                                }
                               }
                      [ H.text ("Add " <> searchQuery) ]
                      ] else [])]
@@ -204,7 +207,7 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                 ngramsClick {depth: 1, ngrams: child} =
                   Just $ dispatch $ ToggleChild false child
                 ngramsClick _ = Nothing
-                ngramsEdit _ = Nothing
+                ngramsEdit  _ = Nothing
               in
               [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
               , R2.buff $ renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
@@ -336,7 +339,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
                            }
       ]
       where
-        totalRecords = 47361 -- TODO
+        totalRecords = 0 -- TODO, 0 to show first users that it is fake (until it is fixed)
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
         selected =
           input
@@ -354,7 +357,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
         ngramsTable = applyNgramsPatches state initTable
         orderWith =
           case convOrderBy <$> params.orderBy of
-            Just ScoreAsc  -> A.sortWith \x -> (snd x) ^. _NgramsElement <<< _occurrences
+            Just ScoreAsc  -> A.sortWith \x -> (snd x)        ^. _NgramsElement <<< _occurrences
             Just ScoreDesc -> A.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
             _              -> identity -- the server ordering is enough here
 
@@ -365,7 +368,12 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
 
         ngramsParentRoot :: Maybe NgramsTerm
         ngramsParentRoot =
-          (\np -> ngramsTable ^? at np <<< _Just <<< _NgramsElement <<< _root <<< _Just) =<< ngramsParent
+          (\np -> ngramsTable ^? at np
+                            <<< _Just
+                            <<< _NgramsElement
+                            <<< _root
+                            <<< _Just
+            ) =<< ngramsParent
 
         displayRow (NgramsElement {ngrams, root}) =
           root == Nothing

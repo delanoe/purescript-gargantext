@@ -79,7 +79,7 @@ type TableHeaderLayoutProps =
   )
 
 initialParams :: Params
-initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing}
+initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Just (DESC $ ColumnName "Score")}
 -- TODO: Not sure this is the right place for this
 
 tableHeaderLayout :: Record TableHeaderLayoutProps -> R.Element

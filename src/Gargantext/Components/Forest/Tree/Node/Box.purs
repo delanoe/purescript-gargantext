@@ -57,10 +57,10 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
     el = R.hooksComponent "NodeMainSpan" cpt
     cpt props@{id, asyncTasks, mCurrentRoute, name, nodeType, onAsyncTaskFinish} _ = do
       -- only 1 popup at a time is allowed to be opened
-      popupOpen   <- R.useState' (Nothing :: Maybe NodePopup)
+      popupOpen     <- R.useState' (Nothing :: Maybe NodePopup)
       popupPosition <- R.useState' (Nothing :: Maybe R2.Point)
-      droppedFile <- R.useState' (Nothing :: Maybe DroppedFile)
-      isDragOver  <- R.useState' false
+      droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
+      isDragOver    <- R.useState' false
 
       pure $ H.span (dropProps droppedFile isDragOver) $
         [ folderIcon nodeType folderOpen
