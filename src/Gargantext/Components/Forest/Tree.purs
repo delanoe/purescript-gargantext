@@ -1,35 +1,31 @@
 module Gargantext.Components.Forest.Tree where
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), CreateValue(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, createNode, deleteNode, loadNode, renameNode)
-import Gargantext.Prelude (Unit, bind, const, discard, map, pure, void, ($), (+), (/=), (<>))
-
 import DOM.Simple.Console (log2)
 import Data.Array as A
 import Data.Maybe (Maybe)
-import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), CreateValue(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, createNode, deleteNode, loadNode, renameNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
 import Gargantext.Components.Loader (loader)
-import Gargantext.Components.Login.Types (TreeId)
 import Gargantext.Ends (Frontends)
+import Gargantext.Prelude (Unit, bind, const, discard, map, pure, void, ($), (+), (/=), (<>))
 import Gargantext.Routes (AppRoute)
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
 import Gargantext.Types as GT
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 ------------------------------------------------------------------------
 type Props = ( root          :: ID
              , mCurrentRoute :: Maybe AppRoute
              , session       :: Session
              , frontends     :: Frontends
-             , openNodes     :: R.State (Set TreeId)
+             , openNodes     :: R.State OpenNodes
              , reload        :: R.State Reload
              )
 
@@ -47,7 +43,7 @@ type Props' = ( root          :: ID
               , mCurrentRoute :: Maybe AppRoute
               , session       :: Session
               , frontends     :: Frontends
-              , openNodes     :: R.State (Set TreeId)
+              , openNodes     :: R.State OpenNodes
               , reload        :: R.State Reload
               )
 
@@ -65,7 +61,7 @@ type TreeViewProps = ( tree          :: FTree
                      , mCurrentRoute :: Maybe AppRoute
                      , frontends     :: Frontends
                      , session       :: Session
-                     , openNodes     :: R.State (Set TreeId)
+                     , openNodes     :: R.State OpenNodes
                      , reload :: R.State Reload
                      )
 
@@ -88,7 +84,7 @@ toHtml :: R.State Reload
        -> Session
        -> Frontends
        -> Maybe AppRoute
-       -> R.State (Set TreeId)
+       -> R.State OpenNodes
        -> R.Element
 toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asyncTasks} /\ setTreeState) session frontends mCurrentRoute openNodes = R.createElement el {} []
   where
@@ -96,10 +92,11 @@ toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asy
     pAction = performAction session reload openNodes treeState
 
     cpt props _ = do
-      let folderIsOpen         = Set.member id (fst openNodes)
-      let setFn                = if folderIsOpen then Set.delete else Set.insert
-      let toggleFolderIsOpen _ = (snd openNodes) (setFn id)
-      let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
+      let nodeId = mkNodeId session id
+      let folderIsOpen = Set.member nodeId (fst openNodes)
+      let setFn = if folderIsOpen then Set.delete else Set.insert
+      let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
+      let folderOpen = Tuple folderIsOpen toggleFolderIsOpen
 
       let withId (NTree (LNode {id: id'}) _) = id'
 
@@ -126,7 +123,7 @@ childNodes :: Session
            -> R.State Reload
            -> R.State Boolean
            -> Maybe AppRoute
-           -> R.State (Set TreeId)
+           -> R.State OpenNodes
            -> Array FTree
            -> Array R.Element
 childNodes _ _ _ _ _ _ [] = []
@@ -145,14 +142,14 @@ childNodes session frontends reload (true /\ _) mCurrentRoute openNodes ary =
 
 performAction :: Session
               -> R.State Int
-              -> R.State (Set TreeId)
+              -> R.State OpenNodes
               -> R.State Tree
               -> Action
               -> Aff Unit
 performAction session (_ /\ setReload) (_ /\ setOpenNodes) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
   void $ deleteNode session id
   liftEffect do
-    setOpenNodes (Set.delete id)
+    setOpenNodes (Set.delete (mkNodeId session id))
     setReload (_ + 1)
 
 performAction session (_ /\ setReload) _ ({tree: NTree (LNode {id}) _} /\ setTree) (SearchQuery task) = do
@@ -167,7 +164,7 @@ performAction session _ _ ({tree: NTree (LNode {id}) _} /\ setTree) (Submit name
 performAction session (_ /\ setReload) (_ /\ setOpenNodes) (s@{tree: NTree (LNode {id}) _} /\ setTree) (CreateSubmit name nodeType) = do
   void $ createNode session id $ CreateValue {name, nodeType}
   liftEffect do
-    setOpenNodes (Set.insert id)
+    setOpenNodes (Set.insert (mkNodeId session id))
     setReload (_ + 1)
 
 performAction session _ _ ({tree: NTree (LNode {id}) _} /\ setTree) (UploadFile fileType contents) = do

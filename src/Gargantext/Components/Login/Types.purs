@@ -1,9 +1,8 @@
 module Gargantext.Components.Login.Types where
 
 import Prelude
-import Data.Argonaut ( class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject
-                      , (.:), (.:!), (:=), (~>)
-                      )
+
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (.:!), (:=), (~>))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Lens (Iso', iso)
