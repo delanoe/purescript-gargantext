@@ -31,7 +31,7 @@ type Props = ( root          :: ID
              , session       :: Session
              , frontends     :: Frontends
              , openNodes     :: R.State (Set TreeId)
-             , reload        :: R.State Int
+             , reload        :: R.State Reload
              )
 
 treeView :: Record Props -> R.Element
@@ -40,9 +40,7 @@ treeView props = R.createElement treeViewCpt props []
 treeViewCpt :: R.Component Props
 treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
   where
-    cpt { root, mCurrentRoute, session, frontends, openNodes } _children = do
-      -- NOTE: this is a hack to reload the tree view on demand
-      reload <- R.useState' (0 :: Reload)
+    cpt { root, mCurrentRoute, session, frontends, openNodes, reload } _children = do
       pure $ treeLoadView
         { root, mCurrentRoute, session, frontends, openNodes, reload }
 
@@ -69,7 +67,7 @@ type TreeViewProps = ( tree          :: FTree
                      , frontends     :: Frontends
                      , session       :: Session
                      , openNodes     :: R.State (Set TreeId)
-                     , reload        :: R.State Reload
+                     , reload :: R.State Reload
                      )
 
 
@@ -96,7 +94,7 @@ toHtml :: R.State Reload
 toHtml reload treeState@(ts@{tree: (NTree (LNode {id, name, nodeType}) ary), asyncTasks} /\ setTreeState) session frontends mCurrentRoute openNodes = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
-    pAction = performAction session reload treeState
+    pAction = performAction session reload openNodes treeState
 
     cpt props _ = do
       let folderIsOpen = Set.member id (fst openNodes)
@@ -148,26 +146,50 @@ childNodes session frontends reload (true /\ _) mCurrentRoute openNodes ary =
 
 performAction :: Session
               -> R.State Int
+              -> R.State (Set TreeId)
               -> R.State Tree
               -> Action
               -> Aff Unit
+-- <<<<<<< HEAD
+{-
 performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) (CreateSubmit name nodeType) = do
   void $ createNode session id $ CreateValue {name, nodeType}
   liftEffect $ setReload (_ + 1)
-
-performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
+  -}
+-- performAction session (_ /\ setReload) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
+-- =======
+performAction session (_ /\ setReload) (_ /\ setOpenNodes) (s@{tree: NTree (LNode {id}) _} /\ setTree) DeleteNode = do
+-- >>>>>>> dev
   void $ deleteNode session id
-  liftEffect $ setReload (_ + 1)
+  liftEffect do
+    setOpenNodes (Set.delete id)
+    setReload (_ + 1)
 
-performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (SearchQuery task) = do
+-- <<<<<<< HEAD
+performAction session (_ /\ setReload) _ ({tree: NTree (LNode {id}) _} /\ setTree) (SearchQuery task) = do
   liftEffect $ setTree $ \t@{asyncTasks} -> t { asyncTasks = A.cons task asyncTasks }
   liftEffect $ log2 "[performAction] SearchQuery task:" task
+  liftEffect $ setReload (_ + 1)
 
+{-
 performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (Submit name)  = do
   void $ renameNode session id $ RenameValue {name}
   liftEffect $ setTree $ \s@{tree: NTree (LNode node) arr} -> s {tree = NTree (LNode node {name = name}) arr}
+-- =======
+  --}
+performAction session _ _ ({tree: NTree (LNode {id}) _} /\ setTree) (Submit name)  = do
+  void $ renameNode session id $ RenameValue {name}
+  liftEffect $ setTree $ \s@{tree: NTree (LNode node) arr} -> s {tree = NTree (LNode node {name = name}) arr}
 
-performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (UploadFile fileType contents) = do
+performAction session (_ /\ setReload) (_ /\ setOpenNodes) (s@{tree: NTree (LNode {id}) _} /\ setTree) (CreateSubmit name nodeType) = do
+  void $ createNode session id $ CreateValue {name, nodeType}
+  liftEffect do
+    setOpenNodes (Set.insert id)
+    setReload (_ + 1)
+
+-- performAction session _ ({tree: NTree (LNode {id}) _} /\ setTree) (UploadFile fileType contents) = do
+performAction session _ _ ({tree: NTree (LNode {id}) _} /\ setTree) (UploadFile fileType contents) = do
+-- >>>>>>> dev
   task <- uploadFile session id fileType contents
   liftEffect $ setTree $ \t@{asyncTasks} -> t { asyncTasks = A.cons task asyncTasks }
   liftEffect $ log2 "uploaded, task:" task

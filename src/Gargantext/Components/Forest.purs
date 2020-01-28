@@ -9,6 +9,7 @@ import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.Forest.Tree (treeView)
+import Gargantext.Components.Forest.Tree.Node.Action (Reload)
 import Gargantext.Components.Login.Types (TreeId)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
@@ -30,21 +31,18 @@ forest props = R.createElement forestCpt props []
 forestCpt :: R.Component Props
 forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
   cpt {frontends, route, sessions, showLogin } _ = do
+    -- NOTE: this is a hack to reload the tree view on demand
+    reload <- R.useState' (0 :: Reload)
     openNodes <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: Set TreeId)
-    reload <- R.useState' (0 :: Int)
-    R2.useCache (frontends /\ route /\ sessions /\ fst openNodes) (cpt' reload openNodes showLogin)
-  cpt' reload openNodes showLogin (frontends /\ route /\ sessions /\ openNodesState) = do
+    R2.useCache
+      (frontends /\ route /\ sessions /\ fst openNodes /\ fst reload)
+      (cpt' openNodes reload showLogin)
+  cpt' openNodes reload showLogin (frontends /\ route /\ sessions /\ _ /\ _) = do
     pure $ R.fragment $ A.cons (plus showLogin) trees
     where
       trees = tree <$> unSessions sessions
       tree s@(Session {treeId}) =
-        treeView { root: treeId
-                 , frontends
-                 , mCurrentRoute: Just route
-                 , session: s
-                 , openNodes
-                 , reload
-                 }
+        treeView { root: treeId, frontends, mCurrentRoute: Just route, session: s, openNodes, reload }
 
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin =

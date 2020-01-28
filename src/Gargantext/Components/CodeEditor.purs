@@ -1,5 +1,6 @@
 module Gargantext.Components.CodeEditor where
 
+import DOM.Simple.Types (Element)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (either, Either(..))
 import Data.Generic.Rep (class Generic)
@@ -8,11 +9,10 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.String.Utils (endsWith)
-import Data.Tuple (fst)
+import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Types (Element)
 import Effect (Effect)
-import FFI.Simple ((.=), delay)
+import FFI.Simple ((.=))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Text.Markdown.SlamDown.Parser (parseMd)
@@ -99,17 +99,10 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     cpt {code, defaultCodeType, onChange} _ = do
       controls <- initControls code defaultCodeType
 
-      -- Initial rendering of elements with given data
-
-      -- Note: delay is necessary here, otherwise initially the HTML won't get
-      -- rendered (DOM Element refs are still null)
-      R.useEffectOnce $ delay unit $ \_ -> do
-        _ <- renderHtml code controls
-        pure $ pure unit
-
-      R.useEffectOnce $ delay unit $ \_ -> do
-        _ <- setCodeOverlay controls code
-        pure $ pure unit
+      R.useEffect2' (fst controls.codeS) (fst controls.codeType) $ do
+        let code' = fst controls.codeS
+        setCodeOverlay controls code'
+        renderHtml code' controls
 
       pure $ H.div { className: "code-editor" } [
           toolbar {controls, onChange}
@@ -127,7 +120,7 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
                           -- , contentEditable: "true"
                         , ref: controls.codeOverlayElRef
                         , rows: 30
-                          --, on: { input: onEditChange (fst codeType) codeElRef htmlRef editorCodeRef error }
+                          --, on: { input: onEditChange (fst codeType) codeElRef htmlRef codeRef error }
                         } []
                ]
              ]
@@ -158,11 +151,9 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     previewHidden _ = " hidden"
 
     onEditChange :: forall e. Record Controls -> (CodeType -> Code -> Effect Unit) -> e -> Effect Unit
-    onEditChange controls@{codeElRef, codeOverlayElRef, codeType: (codeType /\ _), editorCodeRef} onChange e = do
+    onEditChange controls@{codeElRef, codeOverlayElRef, codeType: (codeType /\ _), codeS} onChange e = do
       let code = R2.unsafeEventValue e
-      R.setRef editorCodeRef code
-      setCodeOverlay controls code
-      renderHtml (R.readRef controls.editorCodeRef) controls
+      snd codeS $ const code
       onChange codeType code
 
 setCodeOverlay :: Record Controls -> Code -> Effect Unit
@@ -214,11 +205,9 @@ toolbarCpt = R.hooksComponent "G.C.CE.toolbar" cpt
     -- Handle rerendering of preview when viewType changed
     onChangeCodeType :: forall e. Record ToolbarProps -> e -> Effect Unit
     onChangeCodeType {controls, onChange} _ = do
-      setCodeOverlay controls code
-      renderHtml code controls
       onChange (fst controls.codeType) code
       where
-        code = R.readRef controls.editorCodeRef
+        code = fst controls.codeS
 
 
 type ErrorComponentProps =
@@ -310,9 +299,9 @@ viewTypeSelectorCpt = R.hooksComponent "G.C.CE.ViewTypeSelector" cpt
 type Controls =
   (
       codeElRef :: R.Ref (Nullable Element)
+    , codeS :: R.State Code
     , codeType :: R.State CodeType
     , codeOverlayElRef :: R.Ref (Nullable Element)
-    , editorCodeRef :: R.Ref Code
     , error :: R.State (Maybe Error)
     , htmlElRef :: R.Ref (Nullable Element)
     , viewType :: R.State ViewType
@@ -321,19 +310,25 @@ type Controls =
 initControls :: Code -> CodeType -> R.Hooks (Record Controls)
 initControls code defaultCodeType = do
   htmlElRef <- R.useRef null
+  codeS <- R.useState' code
   codeElRef <- R.useRef null
   codeOverlayElRef <- R.useRef null
   codeType <- R.useState' defaultCodeType
-  editorCodeRef <- R.useRef code
   error <- R.useState' Nothing
   viewType <- R.useState' Both
 
   pure $ {
       codeElRef
+    , codeS
     , codeType
     , codeOverlayElRef
-    , editorCodeRef
     , error
     , htmlElRef
     , viewType
     }
+
+reinitControls :: Record Controls -> Code -> CodeType -> Effect Unit
+reinitControls c@{codeType, codeS, error} code defaultCodeType = do
+  snd codeType $ const defaultCodeType
+  snd codeS $ const code
+  snd error $ const Nothing
