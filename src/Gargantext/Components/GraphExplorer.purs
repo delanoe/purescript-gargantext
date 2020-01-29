@@ -38,45 +38,63 @@ import Reactix.DOM.HTML as RH
 type GraphId = Int
 
 type LayoutProps =
-  ( graphId :: GraphId
-  , frontends :: Frontends
+  ( frontends :: Frontends
+  , graphId :: GraphId
   , mCurrentRoute :: AppRoute
   , session :: Session
   , sessions :: Sessions
   , showLogin :: R.State Boolean
   )
 
-type Props = (
-    graph :: SigmaxT.SGraph
-  , graphVersion :: R.State Int
-  , mMetaData :: Maybe GET.MetaData
+type LayoutPropsWithKey =
+  (
+    key :: String
   | LayoutProps
   )
 
+type LayoutPropsWithGraphVersion =
+  (
+    graphVersion :: R.State Int
+  | LayoutProps
+  )
+
+type Props = (
+    graph :: SigmaxT.SGraph
+  , mMetaData :: Maybe GET.MetaData
+  | LayoutPropsWithGraphVersion
+  )
+
+type PropsWithKey =
+  (
+    key :: String
+  | Props
+  )
+
 --------------------------------------------------------------
-explorerLayout :: Record LayoutProps -> R.Element
+explorerLayout :: Record LayoutPropsWithKey -> R.Element
 explorerLayout props = R.createElement explorerLayoutCpt props []
 
-explorerLayoutCpt :: R.Component LayoutProps
-explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
+explorerLayoutCpt :: R.Component LayoutPropsWithKey
+explorerLayoutCpt = R.hooksComponent "G.C.GE.explorerLayout" cpt
   where
-    cpt props _ = do
+    cpt {frontends, graphId, mCurrentRoute, session, sessions, showLogin} _ = do
       graphVersion <- R.useState' 0
 
-      pure $ explorerLayoutView graphVersion props
+      pure $ explorerLayoutView {frontends, graphId, graphVersion, mCurrentRoute, session, sessions, showLogin}
 
-explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
-explorerLayoutView graphVersion p = R.createElement el p []
+explorerLayoutView :: Record LayoutPropsWithGraphVersion -> R.Element
+explorerLayoutView p = R.createElement el p []
   where
     el = R.hooksComponent "G.C.GE.explorerLayoutView" cpt
-    cpt {frontends, graphId, mCurrentRoute, session, sessions, showLogin } _ = do
-      useLoader graphId (getNodes session graphVersion) handler
+    cpt {frontends, graphId, graphVersion, mCurrentRoute, session, sessions, showLogin } _ = do
+      useLoader {graphId, graphVersion: fst graphVersion, session} getNodes handler
       where
         handler loaded =
           explorer { frontends
                    , graph
                    , graphId
                    , graphVersion
+                   , key: show $ fst graphVersion
                    , mCurrentRoute
                    , mMetaData
                    , session
@@ -85,37 +103,37 @@ explorerLayoutView graphVersion p = R.createElement el p []
           where (Tuple mMetaData graph) = convert loaded
 
 --------------------------------------------------------------
-explorer :: Record Props -> R.Element
+explorer :: Record PropsWithKey -> R.Element
 explorer props = R.createElement explorerCpt props []
 
-explorerCpt :: R.Component Props
-explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
+explorerCpt :: R.Component PropsWithKey
+explorerCpt = R.hooksComponent "G.C.GE.explorer" cpt
   where
     cpt {frontends, graph, graphId, graphVersion, mCurrentRoute, mMetaData, session, sessions, showLogin } _ = do
-      dataRef <- R.useRef graph
       graphRef <- R.useRef null
-      graphVersionRef <- R.useRef (fst graphVersion)
       controls <- Controls.useGraphControls graph
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
-      R.useEffect' $ do
-        let readData = R.readRef dataRef
-        let gv = R.readRef graphVersionRef
-        if SigmaxT.eqGraph readData graph then
-          pure unit
-        else do
-          -- Graph data changed, reinitialize sigma.
-          let rSigma = R.readRef controls.sigmaRef
-          Sigmax.cleanupSigma rSigma "explorerCpt"
-          R.setRef dataRef graph
-          R.setRef graphVersionRef (fst graphVersion)
-          -- Reinitialize bunch of state as well.
-          snd controls.removedNodeIds $ const SigmaxT.emptyNodeIds
-          snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
-          snd controls.showEdges $ const SigmaxT.EShow
-          snd controls.forceAtlasState $ const SigmaxT.InitialRunning
-          snd controls.graphStage $ const Graph.Init
-          snd controls.showSidePanel $ const GET.InitialClosed
+      -- NOTE This is not needed anymore, we just use 'key' in props to rerender
+      -- the component
+
+      -- dataRef <- R.useRef graph
+      -- R.useEffect' $ do
+      --   let readData = R.readRef dataRef
+      --   if SigmaxT.eqGraph readData graph then
+      --     pure unit
+      --   else do
+      --     -- Graph data changed, reinitialize sigma.
+      --     let rSigma = R.readRef controls.sigmaRef
+      --     Sigmax.cleanupSigma rSigma "explorerCpt"
+      --     R.setRef dataRef graph
+      --     -- Reinitialize bunch of state as well.
+      --     snd controls.removedNodeIds $ const SigmaxT.emptyNodeIds
+      --     snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
+      --     snd controls.showEdges $ const SigmaxT.EShow
+      --     snd controls.forceAtlasState $ const SigmaxT.InitialRunning
+      --     snd controls.graphStage $ const Graph.Init
+      --     snd controls.showSidePanel $ const GET.InitialClosed
 
       pure $
         RH.div
@@ -280,8 +298,17 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> R.State Int -> GraphId -> Aff GET.GraphData
-getNodes session (graphVersion /\ _) graphId = get session $ NodeAPI Types.Graph (Just graphId) ("?version=" <> show graphVersion)
+type GetNodesProps =
+  (
+    graphId :: GraphId
+  , graphVersion :: Int
+  , session :: Session
+  )
+
+
+getNodes :: Record GetNodesProps -> Aff GET.GraphData
+getNodes {graphId, graphVersion, session} =
+  get session $ NodeAPI Types.Graph (Just graphId) ("?version=" <> show graphVersion)
 
 
 transformGraph :: Record Controls.Controls -> SigmaxT.SGraph -> SigmaxT.SGraph

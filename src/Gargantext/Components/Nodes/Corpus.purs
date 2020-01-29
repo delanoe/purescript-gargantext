@@ -34,6 +34,8 @@ type Props = (
   , session :: Session
   )
 
+-- TODO Remove key. This requires removal of inner state derived from props in
+-- corpusLayoutView
 type PropsWithKey = (
     key :: String
   | Props
