@@ -315,7 +315,7 @@ initControls code defaultCodeType = do
   codeOverlayElRef <- R.useRef null
   codeType <- R.useState' defaultCodeType
   error <- R.useState' Nothing
-  viewType <- R.useState' Both
+  viewType <- R.useState' Preview
 
   pure $ {
       codeElRef
