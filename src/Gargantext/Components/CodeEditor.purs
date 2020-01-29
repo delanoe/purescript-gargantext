@@ -192,22 +192,15 @@ toolbar p = R.createElement toolbarCpt p []
 toolbarCpt :: R.Component ToolbarProps
 toolbarCpt = R.hooksComponent "G.C.CE.toolbar" cpt
   where
-    cpt props@{controls: {codeType, error, viewType}} _ = do
+    cpt {controls: {codeS, codeType, error, viewType}, onChange} _ = do
       pure $
         H.div { className: "row toolbar" } [
              codeTypeSelector {
                   codeType
-                , onChange: onChangeCodeType props
+                , onChange: \newCodeType -> onChange newCodeType (fst codeS)
                 }
            , viewTypeSelector {state: viewType}
            ]
-
-    -- Handle rerendering of preview when viewType changed
-    onChangeCodeType :: forall e. Record ToolbarProps -> e -> Effect Unit
-    onChangeCodeType {controls, onChange} _ = do
-      onChange (fst controls.codeType) code
-      where
-        code = fst controls.codeS
 
 
 type ErrorComponentProps =

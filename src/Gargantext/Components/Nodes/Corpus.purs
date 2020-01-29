@@ -78,7 +78,7 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
       fieldsS <- R.useState' fieldsWithIndex
       fieldsRef <- R.useRef fields
 
-      -- handle props change of fields
+      -- handle change of props-derived state
       R.useEffect1' fields $ do
         if R.readRef fieldsRef == fields then
           pure unit
