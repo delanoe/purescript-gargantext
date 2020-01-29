@@ -211,8 +211,8 @@ fldr FolderShared  false = "fa fa-share-circle"
 fldr Team  true   = "fa fa-users"
 fldr Team  false  = "fa fa-users-closed"
 
-fldr FolderPublic true  = "fa fa-globe"
-fldr FolderPublic false = "fa fa-globe-circle"
+fldr FolderPublic true  = "fa fa-globe-circle"
+fldr FolderPublic false = "fa fa-globe"
 ------------------------------------------------------
 
 fldr Corpus true  = "fa fa-book"
