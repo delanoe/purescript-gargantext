@@ -80,12 +80,12 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
 forestLayout frontends sessions route showLogin child = do
-  R.fragment [ topBar {}, R2.row [main], footer {} ]
+  R.fragment [ topBar' frontends sessions route showLogin, R2.row [main], footer {} ]
   where
     main =
       R.fragment
       [ H.div {className: "col-md-2", style: {paddingTop: "60px"}}
-              [ forest {sessions, route, frontends, showLogin } ]
+      [ {-forest {sessions, route, frontends, showLogin }-} ]
       , mainPage child
       ]
 
@@ -99,6 +99,24 @@ mainPage child =
   [ H.div {id: "page-wrapper"}
     [ H.div {className: "container-fluid"} [ child ] ] ]
 
+
+topBar' :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element
+topBar' frontends sessions route showLogin  =
+  H.div { id: "dafixedtop", role: "navigation"
+        , className: "navbar navbar-inverse navbar-fixed-top" }
+  [ H.div { className: "container-fluid" }
+    [ H.div { className: "navbar-inner" }
+      [ logo
+      -- , H.div {className: "col-md-2", style: {paddingTop: "60px"}} [forest {sessions, route, frontends, showLogin}]
+      , forest {sessions, route, frontends, showLogin}
+      , H.div { className: "collapse navbar-collapse" } [ divDropdownInfo ]
+      ]
+      ]
+    ]
+      -- SB.searchBar {session, databases: allDatabases}
+
+
+
 topBar :: {} -> R.Element
 topBar _ =
   H.div { id: "dafixedtop", role: "navigation"
@@ -107,7 +125,7 @@ topBar _ =
     [ H.div { className: "navbar-inner" }
       [ logo
       , H.div { className: "collapse navbar-collapse" }
-        [ divDropdownLeft ] ] ] ]
+        [ divDropdownInfo ] ] ] ]
       -- SB.searchBar {session, databases: allDatabases}
 
 logo :: R.Element
@@ -119,18 +137,18 @@ logo =
     src = "images/logoSmall.png"
     title = "Back to home."
 
-divDropdownLeft :: R.Element
-divDropdownLeft =
-  divDropdownLeft' $
+divDropdownInfo :: R.Element
+divDropdownInfo =
+  divDropdownInfo' $
     LiNav { title : "About Gargantext"
           , href  : "#"
           , icon  : "glyphicon glyphicon-info-sign"
           , text  : "Info" }
 
-divDropdownLeft' :: LiNav -> R.Element
-divDropdownLeft' mb =
+divDropdownInfo' :: LiNav -> R.Element
+divDropdownInfo' mb =
   H.ul {className: "nav navbar-nav"}
-  [ H.ul {className: "nav navbar-nav pull-left"}
+  [ H.ul {className: "nav navbar-nav pull-right"}
     [ H.li {className: "dropdown"} [ menuButton mb, menuElements' ] ] ]
 
 menuButton :: LiNav -> R.Element
