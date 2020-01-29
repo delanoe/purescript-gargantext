@@ -141,8 +141,8 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     dividerHidden _ = " hidden"
 
     langClass :: CodeType -> String
-    langClass Haskell = " language-haskell"
-    langClass JSON = " language-json"
+    langClass Haskell  = " language-haskell"
+    langClass JSON     = " language-json"
     langClass Markdown = " language-md"
 
     previewHidden :: ViewType -> String

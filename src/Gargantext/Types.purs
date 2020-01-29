@@ -207,14 +207,16 @@ fldr FolderPrivate true  = "fa fa-lock"
 fldr FolderPrivate false = "fa fa-expeditedssl"
 
 fldr FolderShared  true  = "fa fa-share-alt"
-fldr FolderShared  false = "fa fa-share-alt-square"
+fldr FolderShared  false = "fa fa-share-circle"
 fldr Team  true   = "fa fa-users"
-fldr Team  false  = "fa fa-users"
+fldr Team  false  = "fa fa-users-closed"
 
-fldr FolderPublic _  = "fa fa-globe"
+fldr FolderPublic true  = "fa fa-globe"
+fldr FolderPublic false = "fa fa-globe-circle"
 ------------------------------------------------------
 
-fldr Corpus _ = "fa fa-book" -- "fa fa-snowflake-o"
+fldr Corpus true  = "fa fa-book"
+fldr Corpus false = "fa fa-book-circle"
 
 fldr Phylo _ = "fa fa-code-fork"
 
