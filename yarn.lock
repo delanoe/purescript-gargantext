@@ -5174,10 +5174,10 @@ prr@~1.0.1:
   resolved "https://registry.yarnpkg.com/prr/-/prr-1.0.1.tgz#d3fc114ba06995a45ec6893f484ceb1d78f5f476"
   integrity sha1-0/wRS6BplaRexok/SEzrHXj19HY=
 
-psc-package@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/psc-package/-/psc-package-3.0.1.tgz#2b1fd7a45480664b0d783ddb4c6dc5066e4ec12f"
-  integrity sha512-lBA0vXzxeoftzbtpfgZqr2t0rzzecQ9uCXCQOLd74t+5Z72/HP/u7MRNtx8gyBDdLccY90xdjRfSXYwVrdDvgQ==
+psc-package@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/psc-package/-/psc-package-4.0.0.tgz#80cecc88fca0fa82f4e0b23c6f085673c475801e"
+  integrity sha512-A8MEQQOmOT9wkXsd+fY3UXyWWfSA8WYr23MKJmXdqyXXff1RSOIUitLjh9zsWKXF2Tl9fpZsdx7RC3VfQ0JNXA==
   dependencies:
     follow-redirects "^1.5.9"
     shelljs "^0.8.2"

@@ -1,7 +1,7 @@
 {
   "name": "gargantext",
   "set": "local",
-  "source": ".psc-package",
+  "source": ".psc-package/local/.set/packages.json",
   "depends": [
     "affjax",
     "argonaut",

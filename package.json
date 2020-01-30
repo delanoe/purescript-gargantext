@@ -50,7 +50,7 @@
         "imports-loader": "^0.8.0",
         "mini-css-extract-plugin": "^0.5.0",
         "psc": "^0.1.1",
-        "psc-package": "^3.0.1",
+        "psc-package": "^4.0.0",
         "pulp": "^13.0.0",
         "purescript": "^0.13.6",
         "purescript-language-server": "^0.12.7",
