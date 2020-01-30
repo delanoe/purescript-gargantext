@@ -24,6 +24,7 @@
 [data-icon]:before { content: attr(data-icon); }
 
 [data-icon]:before,
+
 .fa{
 display:inline-block;
 font:normal normal normal 14px/1 ForkAwesome;
@@ -147,8 +148,6 @@ line-height:inherit}
 font-size:2em}
 .fa-inverse{
 color:#fff}
-
-
 .fa-500px:before,
 .fa-activitypub:before,
 .fa-address-book:before,
@@ -569,6 +568,7 @@ color:#fff}
 .fa-list-ul:before,
 .fa-location-arrow:before,
 .fa-lock:before,
+.fa-lock-circle:before,
 .fa-long-arrow-down:before,
 .fa-long-arrow-left:before,
 .fa-long-arrow-right:before,
@@ -1347,6 +1347,7 @@ color:#fff}
 .fa-list-ul:before { content: "\f0ca"; }
 .fa-location-arrow:before { content: "\f124"; }
 .fa-lock:before { content: "\f023"; }
+.fa-lock-circle:before { content: "\f341"; }
 .fa-long-arrow-down:before { content: "\f175"; }
 .fa-long-arrow-left:before { content: "\f177"; }
 .fa-long-arrow-right:before { content: "\f178"; }

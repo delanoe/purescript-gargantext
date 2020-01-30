@@ -204,7 +204,7 @@ fldr Folder  false  = "fa fa-folder-o"
 fldr Folder  true   = "fa fa-folder-open"
 ------------------------------------------------------
 fldr FolderPrivate true  = "fa fa-lock"
-fldr FolderPrivate false = "fa fa-expeditedssl"
+fldr FolderPrivate false = "fa fa-lock-circle"
 
 fldr FolderShared  true  = "fa fa-share-alt"
 fldr FolderShared  false = "fa fa-share-circle"
