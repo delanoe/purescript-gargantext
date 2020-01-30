@@ -200,8 +200,8 @@ fldr :: NodeType -> Boolean -> String
 fldr NodeUser false = "fa fa-user-circle"
 fldr NodeUser true  = "fa fa-user"
 ------------------------------------------------------
-fldr Folder  false  = "fa fa-folder-o"
-fldr Folder  true   = "fa fa-folder-open"
+fldr Folder  false  = "fa fa-folder"
+fldr Folder  true   = "fa fa-folder-open-o"
 ------------------------------------------------------
 fldr FolderPrivate true  = "fa fa-lock"
 fldr FolderPrivate false = "fa fa-lock-circle"
