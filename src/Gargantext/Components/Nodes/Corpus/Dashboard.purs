@@ -1,35 +1,78 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
-import Prelude (map, show, ($), (<$>), (<>))
 import Data.Array (zipWith)
 import Data.Int (toNumber)
 import Data.Tuple (Tuple(..))
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
+
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis', tooltipTriggerAxis)
 import Gargantext.Components.Charts.Options.Data
 import Gargantext.Components.Charts.Options.Series
   ( TreeNode, Trees(..), mkTree, seriesBarD1, seriesFunnelD1, seriesPieD1
   , seriesSankey, seriesScatterD2, treeLeaf, treeNode )
+import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
+import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
+import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Sessions (Session)
+import Gargantext.Types (TabSubType(..), TabType(..))
 
-dashboardLayout :: {} -> R.Element
+type Props =
+  (
+    nodeId :: Int
+  , session :: Session
+  )
+
+dashboardLayout :: Record Props -> R.Element
 dashboardLayout props = R.createElement dashboardLayoutCpt props []
 
-dashboardLayoutCpt :: R.Component ()
-dashboardLayoutCpt = R.staticComponent "G.P.Corpus.Dashboard.dashboardLayout" cpt
+dashboardLayoutCpt :: R.Component Props
+dashboardLayoutCpt = R.hooksComponent "G.P.C.D.dashboardLayout" cpt
   where
-    cpt _ _ =
-      R.fragment
-      [ H.h1 {} [ H.text "DashBoard" ]
-      , H.div {className: "row"}
-        [ H.div {className: "col-md-9 content"} [ chart globalPublis ]
-        , H.div {className: "col-md-3 content"} [ chart naturePublis ] ]
-      , chart distriBySchool
-      , H.div {className: "row"} (aSchool <$> schools)
-      , chart scatterEx
-      , chart sankeyEx
-      , chart treeMapEx
-      , chart treeEx ]
+    cpt params@{nodeId, session} _ = do
+      useLoader params loadCorpusWithChild $
+        \corpusData@{corpusId, defaultListId, corpusNode: NodePoly poly} ->
+          let { name, date, hyperdata : Hyperdata h} = poly
+              CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
+          in
+          dashboardLayoutLoaded {corpusId, nodeId, session}
+
+type LoadedProps =
+  (
+    corpusId :: Int
+  | Props
+  )
+
+dashboardLayoutLoaded :: Record LoadedProps -> R.Element
+dashboardLayoutLoaded props = R.createElement dashboardLayoutLoadedCpt props []
+
+dashboardLayoutLoadedCpt :: R.Component LoadedProps
+dashboardLayoutLoadedCpt = R.hooksComponent "G.P.C.D.dashboardLayoutLoaded" cpt
+  where
+    cpt props _ = do
+      pure $ H.div {} [
+          H.h1 {} [ H.text "DashBoard" ]
+        , H.div {className: "row"} [
+           --H.div {className: "col-md-9 content"} [ chart globalPublis ]
+           H.div {className: "col-md-9 content"} [ histo (globalPublisParams props) ]
+           , H.div {className: "col-md-3 content"} [ chart naturePublis ]
+           ]
+        , chart distriBySchool
+        , H.div {className: "row"} (aSchool <$> schools)
+        , chart scatterEx
+        , chart sankeyEx
+        , chart treeMapEx
+        , chart treeEx
+        ]
+
+    globalPublisParams {corpusId, session} = {path, session}
+      where
+        path = {corpusId, tabType: TabCorpus TabDocs}
+
     aSchool school = H.div {className: "col-md-4 content"} [ chart $ focus school ]
     schools = [ "Télécom Bretagne", "Mines Nantes", "Eurecom" ]
     myData =
