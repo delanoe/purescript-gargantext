@@ -17,6 +17,7 @@ import Gargantext.Components.Charts.Options.Series
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
+import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
@@ -68,25 +69,33 @@ dashboardLayoutLoadedCpt = R.hooksComponent "G.P.C.D.dashboardLayoutLoaded" cpt
         --, chart distriBySchool
         , pie (authorsParams props)
         , H.div {className: "row"} (aSchool <$> schools)
-        , chart scatterEx
+        --, chart scatterEx
+        , metrics (termsParams props)
         , chart sankeyEx
         , tree (institutesParams props)
         --, chart treeMapEx
         --, chart treeEx
         ]
 
-    globalPublisParams {corpusId, session} = { path, session}
-      where
-        path = {corpusId, tabType: TabCorpus TabDocs}
     authorsParams {corpusId, session} = {path, session}
       where
         path = {corpusId, tabType: TabCorpus (TabNgramType $ modeTabType Authors)}
+    globalPublisParams {corpusId, session} = { path, session}
+      where
+        path = {corpusId, tabType: TabCorpus TabDocs}
     institutesParams {corpusId, defaultListId, session} = {path, session}
       where
         path = { corpusId
                , limit: Just 1000  -- TODO Fix
                , listId: defaultListId  -- TODO Is this correct?
                , tabType: TabCorpus (TabNgramType $ modeTabType Institutes)
+               }
+    termsParams {corpusId, defaultListId, session} = {path, session}
+      where
+        path = { corpusId
+               , limit: Just 1000  -- TODO Fix
+               , listId: defaultListId  -- TODO Is this correct?
+               , tabType: TabCorpus (TabNgramType $ modeTabType Terms)
                }
 
     aSchool school = H.div {className: "col-md-4 content"} [ chart $ focus school ]
@@ -165,19 +174,19 @@ naturePublis = Options
 --   , tooltip   : tooltipTriggerAxis -- Necessary?
 --   }
 
-scatterEx :: Options
-scatterEx = Options
-  { mainTitle : "Scatter test"
-  , subTitle  : "Scatter subtitle"
-  , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "", show: true, min:0}
-  , series    : [ seriesScatterD2 {name: "name1", symbolSize: 10.0} (dataSerieV <$> [[2.0,3.0],[3.0,4.0]])
-                , seriesScatterD2 {name: "name2", symbolSize: 5.0 } (dataSerieV <$> [[1.0,3.0],[5.0,4.0]])
-                , seriesScatterD2 {name: "name3", symbolSize: 10.0} (dataSerieV <$> [[10.0,3.0],[8.0,4.0]])
-                ]
-  , addZoom   : false
-  , tooltip   : tooltipTriggerAxis -- Necessary?
-  }
+-- scatterEx :: Options
+-- scatterEx = Options
+--   { mainTitle : "Scatter test"
+--   , subTitle  : "Scatter subtitle"
+--   , xAxis     : xAxis' []
+--   , yAxis     : yAxis' { position: "", show: true, min:0}
+--   , series    : [ seriesScatterD2 {name: "name1", symbolSize: 10.0} (dataSerieV <$> [[2.0,3.0],[3.0,4.0]])
+--                 , seriesScatterD2 {name: "name2", symbolSize: 5.0 } (dataSerieV <$> [[1.0,3.0],[5.0,4.0]])
+--                 , seriesScatterD2 {name: "name3", symbolSize: 10.0} (dataSerieV <$> [[10.0,3.0],[8.0,4.0]])
+--                 ]
+--   , addZoom   : false
+--   , tooltip   : tooltipTriggerAxis -- Necessary?
+--   }
 
 sankeyEx :: Options
 sankeyEx = Options
