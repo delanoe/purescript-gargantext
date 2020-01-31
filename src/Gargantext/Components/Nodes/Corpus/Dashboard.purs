@@ -2,6 +2,7 @@ module Gargantext.Components.Nodes.Corpus.Dashboard where
 
 import Data.Array (zipWith)
 import Data.Int (toNumber)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -17,6 +18,7 @@ import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
+import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session)
@@ -40,11 +42,12 @@ dashboardLayoutCpt = R.hooksComponent "G.P.C.D.dashboardLayout" cpt
           let { name, date, hyperdata : Hyperdata h} = poly
               CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
           in
-          dashboardLayoutLoaded {corpusId, nodeId, session}
+          dashboardLayoutLoaded {corpusId, defaultListId, nodeId, session}
 
 type LoadedProps =
   (
     corpusId :: Int
+  , defaultListId :: Int
   | Props
   )
 
@@ -67,16 +70,24 @@ dashboardLayoutLoadedCpt = R.hooksComponent "G.P.C.D.dashboardLayoutLoaded" cpt
         , H.div {className: "row"} (aSchool <$> schools)
         , chart scatterEx
         , chart sankeyEx
-        , chart treeMapEx
-        , chart treeEx
+        , tree (institutesParams props)
+        --, chart treeMapEx
+        --, chart treeEx
         ]
 
-    globalPublisParams {corpusId, session} = {path, session}
+    globalPublisParams {corpusId, session} = { path, session}
       where
         path = {corpusId, tabType: TabCorpus TabDocs}
     authorsParams {corpusId, session} = {path, session}
       where
         path = {corpusId, tabType: TabCorpus (TabNgramType $ modeTabType Authors)}
+    institutesParams {corpusId, defaultListId, session} = {path, session}
+      where
+        path = { corpusId
+               , limit: Just 1000  -- TODO Fix
+               , listId: defaultListId  -- TODO Is this correct?
+               , tabType: TabCorpus (TabNgramType $ modeTabType Institutes)
+               }
 
     aSchool school = H.div {className: "col-md-4 content"} [ chart $ focus school ]
     schools = [ "Télécom Bretagne", "Mines Nantes", "Eurecom" ]
@@ -192,67 +203,66 @@ sankeyEx = Options
   , addZoom   : false
   }
 
-treeData :: Array TreeNode
-treeData =
-  [ treeNode "nodeA" 10
-    [ treeNode "nodeAa" 4 []
-    , treeNode "nodeAb" 5 []
-    , treeNode "nodeAc" 1
-      [ treeNode "nodeAca" 5 []
-      , treeNode "nodeAcb" 5 [] ] ]
-  , treeNode "nodeB" 20
-    [ treeNode "nodeBa" 20
-      [ treeNode "nodeBa1" 20 [] ]]
-  , treeNode "nodeC" 20
-    [ treeNode "nodeCa" 20
-      [ treeNode "nodeCa1" 10 []
-      , treeNode "nodeCa2" 10 [] ]
-    , treeNode "nodeD" 20
-      [ treeNode "nodeDa" 20
-        [ treeNode "nodeDa1" 2 []
-        , treeNode "nodeDa2" 2 []
-        , treeNode "nodeDa3" 2 []
-        , treeNode "nodeDa4" 2 []
-        , treeNode "nodeDa5" 2 []
-        , treeNode "nodeDa6" 2 []
-        , treeNode "nodeDa7" 2 []
-        , treeNode "nodeDa8" 2 []
-        , treeNode "nodeDa9" 2 []
-        , treeNode "nodeDa10" 2 [] ]]]]
+-- treeData :: Array TreeNode
+-- treeData =
+--   [ treeNode "nodeA" 10
+--     [ treeNode "nodeAa" 4 []
+--     , treeNode "nodeAb" 5 []
+--     , treeNode "nodeAc" 1
+--       [ treeNode "nodeAca" 5 []
+--       , treeNode "nodeAcb" 5 [] ] ]
+--   , treeNode "nodeB" 20
+--     [ treeNode "nodeBa" 20
+--       [ treeNode "nodeBa1" 20 [] ]]
+--   , treeNode "nodeC" 20
+--     [ treeNode "nodeCa" 20
+--       [ treeNode "nodeCa1" 10 []
+--       , treeNode "nodeCa2" 10 [] ]
+--     , treeNode "nodeD" 20
+--       [ treeNode "nodeDa" 20
+--         [ treeNode "nodeDa1" 2 []
+--         , treeNode "nodeDa2" 2 []
+--         , treeNode "nodeDa3" 2 []
+--         , treeNode "nodeDa4" 2 []
+--         , treeNode "nodeDa5" 2 []
+--         , treeNode "nodeDa6" 2 []
+--         , treeNode "nodeDa7" 2 []
+--         , treeNode "nodeDa8" 2 []
+--         , treeNode "nodeDa9" 2 []
+--         , treeNode "nodeDa10" 2 [] ]]]]
 
-treeData' :: Array TreeNode
-treeData' =
-  [ treeNode "nodeA" 10
-    [ treeLeaf "nodeAa" 4
-    , treeLeaf "nodeAb" 5
-    , treeNode "nodeAc" 1 [ treeLeaf "nodeAca" 5, treeLeaf "nodeAcb" 5 ]]
-  , treeNode "nodeB" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-  , treeNode "nodeC" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-  , treeNode "nodeD" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-  , treeNode "nodeE" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-  , treeNode "nodeF" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-  , treeNode "nodeG" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
-  , treeNode "nodeH" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]]
+-- treeData' :: Array TreeNode
+-- treeData' =
+--   [ treeNode "nodeA" 10
+--     [ treeLeaf "nodeAa" 4
+--     , treeLeaf "nodeAb" 5
+--     , treeNode "nodeAc" 1 [ treeLeaf "nodeAca" 5, treeLeaf "nodeAcb" 5 ]]
+--   , treeNode "nodeB" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+--   , treeNode "nodeC" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+--   , treeNode "nodeD" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+--   , treeNode "nodeE" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+--   , treeNode "nodeF" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+--   , treeNode "nodeG" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]
+--   , treeNode "nodeH" 20 [ treeNode "nodeBa" 20 [ treeLeaf "nodeBa1" 20]]]
 
-treeMapEx :: Options
-treeMapEx = Options
-  { mainTitle : ""
-  , subTitle  : ""
-  , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "", show: false, min:0}
-  , series    : [mkTree TreeMap treeData]
-  , addZoom   : false
-  , tooltip   : tooltipTriggerAxis -- Necessary?
-  }
+-- treeMapEx :: Options
+-- treeMapEx = Options
+--   { mainTitle : ""
+--   , subTitle  : ""
+--   , xAxis     : xAxis' []
+--   , yAxis     : yAxis' { position: "", show: false, min:0}
+--   , series    : [mkTree TreeMap treeData]
+--   , addZoom   : false
+--   , tooltip   : tooltipTriggerAxis -- Necessary?
+--   }
 
-treeEx :: Options
-treeEx = Options
-  { mainTitle : "Tree"
-  , subTitle  : "Radial"
-  , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "", show: false, min:0}
-  , series    : [mkTree TreeRadial treeData']
-  , addZoom   : false
-  , tooltip   : tooltipTriggerAxis -- Necessary?
-  }
-
+-- treeEx :: Options
+-- treeEx = Options
+--   { mainTitle : "Tree"
+--   , subTitle  : "Radial"
+--   , xAxis     : xAxis' []
+--   , yAxis     : yAxis' { position: "", show: false, min:0}
+--   , series    : [mkTree TreeRadial treeData']
+--   , addZoom   : false
+--   , tooltip   : tooltipTriggerAxis -- Necessary?
+--   }
