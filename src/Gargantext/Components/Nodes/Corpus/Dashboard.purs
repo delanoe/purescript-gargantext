@@ -16,10 +16,11 @@ import Gargantext.Components.Charts.Options.Series
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
+import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
 import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (TabSubType(..), TabType(..))
+import Gargantext.Types (Mode(..), TabSubType(..), TabType(..), modeTabType)
 
 type Props =
   (
@@ -58,10 +59,11 @@ dashboardLayoutLoadedCpt = R.hooksComponent "G.P.C.D.dashboardLayoutLoaded" cpt
           H.h1 {} [ H.text "DashBoard" ]
         , H.div {className: "row"} [
            --H.div {className: "col-md-9 content"} [ chart globalPublis ]
-           H.div {className: "col-md-9 content"} [ histo (globalPublisParams props) ]
+             H.div {className: "col-md-9 content"} [ histo (globalPublisParams props) ]
            , H.div {className: "col-md-3 content"} [ chart naturePublis ]
            ]
-        , chart distriBySchool
+        --, chart distriBySchool
+        , pie (authorsParams props)
         , H.div {className: "row"} (aSchool <$> schools)
         , chart scatterEx
         , chart sankeyEx
@@ -72,6 +74,9 @@ dashboardLayoutLoadedCpt = R.hooksComponent "G.P.C.D.dashboardLayoutLoaded" cpt
     globalPublisParams {corpusId, session} = {path, session}
       where
         path = {corpusId, tabType: TabCorpus TabDocs}
+    authorsParams {corpusId, session} = {path, session}
+      where
+        path = {corpusId, tabType: TabCorpus (TabNgramType $ modeTabType Authors)}
 
     aSchool school = H.div {className: "col-md-4 content"} [ chart $ focus school ]
     schools = [ "Télécom Bretagne", "Mines Nantes", "Eurecom" ]
@@ -115,39 +120,39 @@ naturePublis = Options
 
 -----------------------------------------------------------------------------------------------------------
 
-globalPublis_x :: Array Int
-globalPublis_x = [1982,1986,1987,1988,1990,1993,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017]
-globalPublis_y :: Array Int
-globalPublis_y = [1,4,2,1,1,2,1,1,8,38,234,76,40,82,75,202,1475,1092,1827,2630,4978,3668,4764,5915,4602,5269,6814,4018]
+-- globalPublis_x :: Array Int
+-- globalPublis_x = [1982,1986,1987,1988,1990,1993,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017]
+-- globalPublis_y :: Array Int
+-- globalPublis_y = [1,4,2,1,1,2,1,1,8,38,234,76,40,82,75,202,1475,1092,1827,2630,4978,3668,4764,5915,4602,5269,6814,4018]
 
 
-globalPublis :: Options
-globalPublis = Options
-  { mainTitle : "Histogram"
-  , subTitle  : "Distribution of publications over time"
-  , xAxis     : xAxis' (map show globalPublis_x)
-  , yAxis     : yAxis' { position: "left", show: true, min:0}
-  , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: toNumber n }) globalPublis_y]
-  , addZoom   : true
-  , tooltip   : tooltipTriggerAxis -- Necessary?
-  }
+-- globalPublis :: Options
+-- globalPublis = Options
+--   { mainTitle : "Histogram"
+--   , subTitle  : "Distribution of publications over time"
+--   , xAxis     : xAxis' (map show globalPublis_x)
+--   , yAxis     : yAxis' { position: "left", show: true, min:0}
+--   , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: toNumber n }) globalPublis_y]
+--   , addZoom   : true
+--   , tooltip   : tooltipTriggerAxis -- Necessary?
+--   }
 
 
 
-distriBySchool_y :: Array (Tuple String Int)
-distriBySchool_y = [Tuple "Télécom Bretagne" 1150,Tuple "Télécom SudParis" 946,Tuple "Mines Nantes" 547,Tuple "Télécom ParisTech" 429,Tuple "IMT Atlantique" 205,Tuple "Mines Alès" 56
-                   ,Tuple "Télécom Ecole de Management" 52,Tuple "Mines Albi-Carmaux" 6]
+-- distriBySchool_y :: Array (Tuple String Int)
+-- distriBySchool_y = [Tuple "Télécom Bretagne" 1150,Tuple "Télécom SudParis" 946,Tuple "Mines Nantes" 547,Tuple "Télécom ParisTech" 429,Tuple "IMT Atlantique" 205,Tuple "Mines Alès" 56
+--                    ,Tuple "Télécom Ecole de Management" 52,Tuple "Mines Albi-Carmaux" 6]
 
-distriBySchool :: Options
-distriBySchool = Options
-  { mainTitle : "School production in 2017"
-  , subTitle  : "Distribution by school"
-  , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position : "", show: false, min:0}
-  , series    : [ seriesPieD1 {name: "Pie data"} (map (\(Tuple n v) -> dataSerie {name: n, value: toNumber v}) distriBySchool_y)]
-  , addZoom   : false
-  , tooltip   : tooltipTriggerAxis -- Necessary?
-  }
+-- distriBySchool :: Options
+-- distriBySchool = Options
+--   { mainTitle : "School production in 2017"
+--   , subTitle  : "Distribution by school"
+--   , xAxis     : xAxis' []
+--   , yAxis     : yAxis' { position : "", show: false, min:0}
+--   , series    : [ seriesPieD1 {name: "Pie data"} (map (\(Tuple n v) -> dataSerie {name: n, value: toNumber v}) distriBySchool_y)]
+--   , addZoom   : false
+--   , tooltip   : tooltipTriggerAxis -- Necessary?
+--   }
 
 scatterEx :: Options
 scatterEx = Options
