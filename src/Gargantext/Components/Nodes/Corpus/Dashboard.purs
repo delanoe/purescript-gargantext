@@ -63,15 +63,15 @@ dashboardLayoutLoadedCpt = R.hooksComponent "G.P.C.D.dashboardLayoutLoaded" cpt
           H.h1 {} [ H.text "DashBoard" ]
         , H.div {className: "row"} [
            --H.div {className: "col-md-9 content"} [ chart globalPublis ]
-             H.div {className: "col-md-9 content"} [ histo (globalPublisParams props) ]
-           , H.div {className: "col-md-3 content"} [ chart naturePublis ]
+             H.div {className: "col-md-12 content"} [ histo (globalPublisParams props) ]
+           --, H.div {className: "col-md-3 content"} [ chart naturePublis ]
            ]
         --, chart distriBySchool
         , pie (authorsParams props)
-        , H.div {className: "row"} (aSchool <$> schools)
+        --, H.div {className: "row"} (aSchool <$> schools)
         --, chart scatterEx
         , metrics (termsParams props)
-        , chart sankeyEx
+        --, chart sankeyEx
         , tree (institutesParams props)
         --, chart treeMapEx
         --, chart treeEx
@@ -118,25 +118,25 @@ dashboardLayoutLoadedCpt = R.hooksComponent "G.P.C.D.dashboardLayoutLoaded" cpt
 
 -----------------------------------------------------------------------------------------------------------
 
-naturePublis_x :: Array String
-naturePublis_x = ["Com","Articles","Thèses","Reports"]
+-- naturePublis_x :: Array String
+-- naturePublis_x = ["Com","Articles","Thèses","Reports"]
 
-naturePublis_y' :: Array Int
-naturePublis_y' = [23901,17417,1188,1176]
+-- naturePublis_y' :: Array Int
+-- naturePublis_y' = [23901,17417,1188,1176]
 
-naturePublis_y :: Array DataD1
-naturePublis_y = zipWith (\n v -> dataSerie {name: n, value: toNumber v }) naturePublis_x naturePublis_y'
+-- naturePublis_y :: Array DataD1
+-- naturePublis_y = zipWith (\n v -> dataSerie {name: n, value: toNumber v }) naturePublis_x naturePublis_y'
 
-naturePublis :: Options
-naturePublis = Options
-  { mainTitle : "Nature of publications"
-  , subTitle  : "Distribution by type"
-  , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "left", show: false, min:0}
-  , series    : [seriesFunnelD1 { name: "Funnel Data" } naturePublis_y]
-  , addZoom   : false
-  , tooltip   : tooltipTriggerAxis -- Necessary?
-  }
+-- naturePublis :: Options
+-- naturePublis = Options
+--   { mainTitle : "Nature of publications"
+--   , subTitle  : "Distribution by type"
+--   , xAxis     : xAxis' []
+--   , yAxis     : yAxis' { position: "left", show: false, min:0}
+--   , series    : [seriesFunnelD1 { name: "Funnel Data" } naturePublis_y]
+--   , addZoom   : false
+--   , tooltip   : tooltipTriggerAxis -- Necessary?
+--   }
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -188,29 +188,29 @@ naturePublis = Options
 --   , tooltip   : tooltipTriggerAxis -- Necessary?
 --   }
 
-sankeyEx :: Options
-sankeyEx = Options
-  { mainTitle : ""
-  , subTitle  : ""
-  , xAxis     : xAxis' []
-  , yAxis     : yAxis' { position: "", show: false, min:0}
-  , series    :
-     [ seriesSankey
-         { "data":
-             [ {name : "a"}, {name : "b"}
-             , {name:"c"},   {name:"d"} ]
-         , links:
-             [ {source : "a", target : "b", value :2.0}
-             , {source : "a", target : "c", value :1.0}
-             , {source : "b", target : "c", value :1.0}
-             , {source : "b", target : "d", value :3.0}
-             ]
-         , layout: "none"
-         }
-     ]
-  , tooltip   : tooltipTriggerAxis -- Necessary?
-  , addZoom   : false
-  }
+-- sankeyEx :: Options
+-- sankeyEx = Options
+--   { mainTitle : ""
+--   , subTitle  : ""
+--   , xAxis     : xAxis' []
+--   , yAxis     : yAxis' { position: "", show: false, min:0}
+--   , series    :
+--      [ seriesSankey
+--          { "data":
+--              [ {name : "a"}, {name : "b"}
+--              , {name:"c"},   {name:"d"} ]
+--          , links:
+--              [ {source : "a", target : "b", value :2.0}
+--              , {source : "a", target : "c", value :1.0}
+--              , {source : "b", target : "c", value :1.0}
+--              , {source : "b", target : "d", value :3.0}
+--              ]
+--          , layout: "none"
+--          }
+--      ]
+--   , tooltip   : tooltipTriggerAxis -- Necessary?
+--   , addZoom   : false
+--   }
 
 -- treeData :: Array TreeNode
 -- treeData =
