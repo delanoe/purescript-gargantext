@@ -88,7 +88,7 @@ toHtml :: R.State Reload
        -> Maybe AppRoute
        -> R.State OpenNodes
        -> R.Element
-toHtml reload tree@(NTree (LNode {id, name, nodeType}) ary) tasks@(asyncTasks /\ setAsyncTasks) session frontends mCurrentRoute openNodes = R.createElement el {} []
+toHtml reload@(_ /\ setReload) tree@(NTree (LNode {id, name, nodeType}) ary) tasks@(asyncTasks /\ setAsyncTasks) session frontends mCurrentRoute openNodes = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     pAction = performAction session tree reload openNodes tasks
@@ -115,7 +115,9 @@ toHtml reload tree@(NTree (LNode {id, name, nodeType}) ary) tasks@(asyncTasks /\
           )
         ]
 
-    onAsyncTaskFinish (GT.AsyncTaskWithType {task: GT.AsyncTask {id: id'}}) = setAsyncTasks $ const newAsyncTasks
+    onAsyncTaskFinish (GT.AsyncTaskWithType {task: GT.AsyncTask {id: id'}}) = do
+      setAsyncTasks $ const newAsyncTasks
+      setReload (_ + 1)
       where
         newAsyncTasks = A.filter (\(GT.AsyncTaskWithType {task: GT.AsyncTask {id: id''}}) -> id' /= id'') asyncTasks
 
