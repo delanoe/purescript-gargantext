@@ -120,10 +120,10 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
         liCpt org =
           H.li {}
           [ H.input { type: "checkbox"
-                  , checked: isIn org search.datafield
-                  , on: {
-                    change: \_ -> (setSearch $ _ { datafield = updateFilter org search.datafield })
-                    }
+                    , defaultChecked: isIn org search.datafield
+                    , on: {
+                      change: \_ -> (setSearch $ _ { datafield = updateFilter org search.datafield })
+                      }
                   }
           , if org == All_IMT
             then H.i {} [H.text  $ " " <> show org]

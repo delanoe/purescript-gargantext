@@ -343,7 +343,9 @@ pageCpt = R.hooksComponent "G.C.FacetsTable.Page" cpt
             , maybeStricken delete [ H.text source ]
             , maybeStricken delete [ H.text authors ]
               -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
-            , H.input { type: "checkbox", checked: isChecked id, on: { click: toggleClick } }
+            , H.input { type: "checkbox"
+                      , defaultChecked: isChecked id
+                      , on: { click: toggleClick } }
             ]
           , delete: true }
           where

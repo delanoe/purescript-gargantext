@@ -114,7 +114,7 @@ sidebarCpt = R.hooksComponent "G.C.GE.S.sidebar" cpt
       [ RH.span {} [ RH.text text ]
       , RH.input { type: "checkbox"
                  , className: "checkbox"
-                 , checked: true
+                 , defaultChecked: true
                  , title: "Mark as completed" } ]
 
     removeButton text rType props nodesMap =
