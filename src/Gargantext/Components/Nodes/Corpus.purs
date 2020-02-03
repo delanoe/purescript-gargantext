@@ -5,7 +5,7 @@ import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.List as List
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
@@ -84,7 +84,7 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
            H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
                  } [
-              H.span { className: "glyphicon glyphicon-floppy-disk" } [  ]
+              H.span { className: "fa fa-floppy-o" } [  ]
               ]
            ]
         , H.div {} [ fieldsCodeEditor { fields: fieldsS
@@ -94,7 +94,7 @@ corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
            H.div { className: "btn btn-default"
                  , on: { click: onClickAdd fieldsS }
                  } [
-              H.span { className: "glyphicon glyphicon-plus" } [  ]
+              H.span { className: "fa fa-plus" } [  ]
               ]
            ]
         ]
@@ -151,9 +151,8 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
     onChange :: R.State FTFieldsWithIndex -> Index -> FieldType -> Effect Unit
     onChange (_ /\ setFields) idx typ = do
       setFields $ \fields ->
-        case List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields of
-          Nothing -> fields
-          Just newFields -> newFields
+        fromMaybe fields $
+          List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields
 
     onMoveDown :: R.State Int -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onMoveDown (_ /\ setMasterKey) (fs /\ setFields) idx _ = do
@@ -168,16 +167,12 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
     onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onRemove (_ /\ setFields) idx _ = do
       setFields $ \fields ->
-        case List.deleteAt idx fields of
-          Nothing -> fields
-          Just newFields -> recomputeIndices newFields
+        fromMaybe fields $ List.deleteAt idx fields
 
     onRename :: R.State FTFieldsWithIndex -> Index -> String -> Effect Unit
     onRename (_ /\ setFields) idx newName = do
       setFields $ \fields ->
-        case List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fields of
-          Nothing -> fields
-          Just newFields -> newFields
+        fromMaybe fields $ List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fields
 
     recomputeIndices :: FTFieldsWithIndex -> FTFieldsWithIndex
     recomputeIndices = List.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
@@ -213,7 +208,7 @@ fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt"
                 H.div { className: "btn btn-danger"
                       , on: { click: \_ -> onRemove unit }
                       } [
-                  H.span { className: "glyphicon glyphicon-trash" } [  ]
+                  H.span { className: "fa fa-trash" } [  ]
                   ]
                 ]
               , moveDownButton canMoveDown
@@ -230,14 +225,14 @@ fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt"
           H.div { className: "btn btn-default"
                 , on: { click: \_ -> onMoveDown unit }
                 } [
-            H.span { className: "glyphicon glyphicon-arrow-down" } [  ]
+            H.span { className: "fa fa-arrow-down" } [  ]
             ]
         moveUpButton false = H.div {} []
         moveUpButton true =
           H.div { className: "btn btn-default"
                 , on: { click: \_ -> onMoveUp unit }
                 } [
-            H.span { className: "glyphicon glyphicon-arrow-up" } [  ]
+            H.span { className: "fa fa-arrow-up" } [  ]
             ]
 
 type RenameableProps =
@@ -287,7 +282,7 @@ renameableTextCpt = R.hooksComponent "G.C.N.C.renameableTextCpt" cpt
         H.span { className: "text" } [ H.text text ]
         , H.span { className: "btn btn-default"
                  , on: { click: \_ -> setIsEditing $ const true } } [
-           H.span { className: "glyphicon glyphicon-pencil" } []
+           H.span { className: "fa fa-pencil" } []
            ]
         ]
     cpt {isEditing: (true /\ setIsEditing), onRename, state: (text /\ setText)} _ = do
@@ -300,7 +295,7 @@ renameableTextCpt = R.hooksComponent "G.C.N.C.renameableTextCpt" cpt
                             setIsEditing $ const false
                             onRename text
                        } } [
-           H.span { className: "glyphicon glyphicon-floppy-disk" } []
+           H.span { className: "fa fa-floppy-o" } []
            ]
         ]
 

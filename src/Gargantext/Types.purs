@@ -16,6 +16,7 @@ import Prim.Row (class Union)
 import URI.Query (Query)
 
 newtype SessionId = SessionId String
+type NodeID = Int
 
 derive instance genericSessionId :: Generic SessionId _
 
