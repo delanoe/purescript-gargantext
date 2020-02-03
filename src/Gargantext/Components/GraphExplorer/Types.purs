@@ -48,10 +48,10 @@ newtype GraphSideCorpus = GraphSideCorpus
   }
 
 newtype GraphData = GraphData
-  { nodes :: Array Node
-  , edges :: Array Edge
-  , sides :: Array GraphSideCorpus
+  { edges :: Array Edge
   , metaData :: Maybe MetaData
+  , nodes :: Array Node
+  , sides :: Array GraphSideCorpus
   }
 
 derive instance newtypeGraphData :: Newtype GraphData _
@@ -106,8 +106,8 @@ initialGraphData = GraphData {
 instance decodeJsonGraphData :: DecodeJson GraphData where
   decodeJson json = do
     obj <- decodeJson json
-    nodes <- obj .: "nodes"
     edges <- obj .: "edges"
+    nodes <- obj .: "nodes"
     -- TODO: sides
     metadata <- obj .: "metadata"
     corpusIds <- metadata .: "corpusId"
@@ -116,7 +116,7 @@ instance decodeJsonGraphData :: DecodeJson GraphData where
     metaData <- obj .: "metadata"
     let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Publications", listId : listId'}
     let sides = side <$> corpusIds
-    pure $ GraphData { nodes, edges, sides, metaData }
+    pure $ GraphData { edges, metaData, nodes, sides }
 
 instance decodeJsonNode :: DecodeJson Node where
   decodeJson json = do

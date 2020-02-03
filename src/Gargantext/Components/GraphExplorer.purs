@@ -2,7 +2,6 @@ module Gargantext.Components.GraphExplorer where
 
 import Gargantext.Prelude hiding (max,min)
 
-import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
@@ -13,6 +12,7 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.Graph as Graph
@@ -70,7 +70,7 @@ explorerLayoutView graphVersion p = R.createElement el p []
   where
     el = R.hooksComponent "G.C.GE.explorerLayoutView" cpt
     cpt {frontends, graphId, mCurrentRoute, session, sessions, showLogin } _ = do
-      useLoader graphId (getNodes session graphVersion) handler
+      useLoader {graphId, graphVersion: fst graphVersion, session} getNodes handler
       where
         handler loaded =
           explorer { frontends
@@ -280,8 +280,9 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> R.State Int -> GraphId -> Aff GET.GraphData
-getNodes session (graphVersion /\ _) graphId = get session $ NodeAPI Types.Graph (Just graphId) ("?version=" <> show graphVersion)
+getNodes :: {graphId :: GraphId, graphVersion :: Int, session :: Session} -> Aff GET.GraphData
+getNodes {graphId, graphVersion, session} =
+  get session $ NodeAPI Types.Graph (Just graphId) ("?version=" <> show graphVersion)
 
 
 transformGraph :: Record Controls.Controls -> SigmaxT.SGraph -> SigmaxT.SGraph
