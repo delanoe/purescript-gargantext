@@ -160,8 +160,10 @@ performAction session (NTree (LNode {id}) _) (_ /\ setReload) _ (_ /\ setAsyncTa
   liftEffect $ log2 "[performAction] SearchQuery task:" task
   liftEffect $ setReload (_ + 1)
 
-performAction session (NTree (LNode {id}) _) _ _ _ (Submit name)  = do
+performAction session (NTree (LNode {id}) _) (_ /\ setReload) _ _ (Submit name)  = do
   void $ renameNode session id $ RenameValue {name}
+  liftEffect do
+    setReload (_ + 1)
 
 performAction session (NTree (LNode {id}) _) (_ /\ setReload) (_ /\ setOpenNodes) _ (CreateSubmit name nodeType) = do
   void $ createNode session id $ CreateValue {name, nodeType}
