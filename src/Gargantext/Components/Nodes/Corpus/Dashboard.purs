@@ -1,10 +1,9 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
 import Data.Array as A
-import Data.String.Common as DSC
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -33,12 +32,7 @@ dashboardLayoutCpt :: R.Component Props
 dashboardLayoutCpt = R.hooksComponent "G.P.C.D.dashboardLayout" cpt
   where
     cpt params@{nodeId, session} _ = do
-      predefinedCharts <- R.useState' [
-        --   P.CDocsHistogram
-        -- , P.CAuthorsPie
-        -- , P.CTermsMetrics
-        -- , P.CInstitutesTree
-      ]
+      predefinedCharts <- R.useState' []
       useLoader params loadCorpusWithChild $
         \corpusData@{corpusId, defaultListId, corpusNode: NodePoly poly} -> do
           let { name, date, hyperdata : Hyperdata h} = poly
@@ -67,16 +61,18 @@ dashboardLayoutLoadedCpt = R.hooksComponent "G.C.N.C.D.dashboardLayoutLoaded" cp
       where
         addNew = H.div { className: "row" } [
           H.span { className: "btn btn-default"
-                 , on: { click: onClick }} [ H.span { className: "fa fa-plus" } [] ]
+                 , on: { click: onClickAdd }} [ H.span { className: "fa fa-plus" } [] ]
           ]
           where
-            onClick _ = setPredefinedCharts $ A.cons P.CDocsHistogram
+            onClickAdd _ = setPredefinedCharts $ A.cons P.CDocsHistogram
         charts = A.mapWithIndex chartIdx predefinedCharts
         chartIdx idx chart =
           renderChart { chart, corpusId, defaultListId, onChange, onRemove, session }
           where
-            onChange c = setPredefinedCharts $
-              \cs -> fromMaybe cs (A.modifyAt idx (\_ -> c) cs)
+            onChange c = do
+              log2 "[dashboardLayout] idx" idx
+              log2 "[dashboardLayout] new chart" c
+              setPredefinedCharts $ \cs -> fromMaybe cs (A.modifyAt idx (\_ -> c) cs)
             onRemove _ = setPredefinedCharts $
               \cs -> fromMaybe cs $ A.deleteAt idx cs
 
@@ -112,7 +108,7 @@ renderChartCpt = R.hooksComponent "G.C.N.C.D.renderChart" cpt
       where
         option pc =
           H.option { value: show pc } [ H.text $ show pc ]
-        onSelectChange e = onChange $ P.readChart' e
+        onSelectChange e = onChange $ P.readChart' value
           where
             value = R2.unsafeEventValue e
         onRemoveClick _ = onRemove unit
