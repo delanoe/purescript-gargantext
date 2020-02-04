@@ -204,7 +204,7 @@ type SigmaSettings =
   -- selected nodes <=> special label
 sigmaSettings :: {|SigmaSettings}
 sigmaSettings =
-  { animationsTime: 5500.0
+  { animationsTime: 30000.0
   , autoRescale: true
   , autoResize: true
   , batchEdgesDrawing: true
@@ -217,7 +217,7 @@ sigmaSettings =
   , defaultLabelSize: 8.0                -- (old tina: showLabelsIfZoom)
   , defaultNodeBorderColor : "#000"   -- <- if nodeBorderColor = 'default'
   , defaultNodeColor: "#FFF"
-  , doubleClickEnabled: false
+  , doubleClickEnabled: false -- indicates whether or not the graph can be zoomed on double-click
   , drawEdgeLabels: true
   , drawEdges: true
   , drawLabels: true
@@ -228,10 +228,10 @@ sigmaSettings =
   , edgeHoverPrecision: 2.0
   , edgeHoverSizeRatio: 2.0
   , enableHovering: true
-  , font: "Droid Sans"                -- font params
+  , font: "arial"                -- font params
   , fontStyle: "bold"
   , hideEdgesOnMove: true
-  , labelSize : "fixed"
+  , labelSize : "proportional" -- alt : proportional
   , labelSizeRatio: 2.0               -- label size in ratio of node size
   , labelThreshold: 5.0               -- min node cam size to start showing label
   , maxEdgeSize: 1.0
@@ -256,7 +256,7 @@ sigmaSettings =
   , verbose : true
   , zoomMax: 1.7
   , zoomMin: 0.0
-  , zoomingRatio: 3.2
+  , zoomingRatio: 1.7
   }
   
 type ForceAtlas2Settings =
@@ -280,17 +280,17 @@ type ForceAtlas2Settings =
 
 forceAtlas2Settings :: {|ForceAtlas2Settings}
 forceAtlas2Settings =
-  { adjustSizes : false
+  { adjustSizes : true
   , barnesHutOptimize   : true
   , edgeWeightInfluence : 1.0
     -- fixedY : false
   , gravity : 1.0
-  , iterationsPerRender : 4.0
+  , iterationsPerRender : 10.0
   , linLogMode : false  -- false
   , outboundAttractionDistribution: false
-  , scalingRatio : 4.0
+  , scalingRatio : 10.0
   , skipHidden: false
-  , slowDown : 0.7
-  , startingIterations : 2.0
+  , slowDown : 1.0
+  , startingIterations : 10.0
   , strongGravityMode : false
   }
