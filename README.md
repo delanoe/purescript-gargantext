@@ -90,6 +90,10 @@ Once you have node and yarn installed, you may install deps with:
 ```shell
 yarn install && yarn add psc-package && yarn install-ps && yarn build
 ```
+You need to copy index.html:
+```shell
+cp src/index.html dist/
+```
 
 (Be careful, to update or upgrade your install, maybe you need to remove
 old files in node_modules).

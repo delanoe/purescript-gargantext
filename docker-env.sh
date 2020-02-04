@@ -13,53 +13,76 @@ dockerrun(){
   sudo docker run -u "$UID" -e PATH="$P" -v $PWD:/app -w /app "$@"
 }
 
+NODE=node:buster-garg
+
+dockerrunnode(){
+  dockerrun "$NODE" "$@"
+}
+
 unalias npm yarn bower pulp repl &>/dev/null || :
 unset   npm yarn bower pulp repl &>/dev/null || :
 
 npm(){
-  dockerrun node npm "$@"
+  dockerrunnode npm "$@"
 }
 
 yarn(){
-  dockerrun node yarn "$@"
+  dockerrunnode yarn "$@"
 }
 
 bower(){
-  dockerrun node bower "$@"
+  dockerrunnode bower "$@"
 }
 
 dependencies(){
-  dockerrun node psc-dependencies "$@"
+  dockerrunnode psc-dependencies "$@"
 }
 
 package(){
-  dockerrun node psc-package "$@"
+  dockerrunnode psc-package "$@"
 }
 
 pulp(){
-  dockerrun node pulp --psc-package "$@"
+  dockerrunnode pulp --psc-package "$@"
 }
 
 repl(){
-  dockerrun -ti node pulp --psc-package repl "$@"
+  dockerrun -ti "$NODE" pulp --psc-package repl "$@"
+}
+
+sass(){
+  dockerrunnode yarn sass
 }
 
 check(){
   pulp test "$@"
 }
 
+pscpackagehack(){
+  cp $HOME/bin/psc-package node_modules/.bin
+}
+
 setup(){
   yarn install     &&
   yarn rebuild-set &&
+  pscpackagehack   &&
   yarn install-ps
 }
 
 build(){
-  pulp browserify --to dist/bundle.js
+  echo prefer: compile
+  yarn build
+ #pulp browserify --to dist/bundle.js
+}
+
+compile(){
+  yarn compile
 }
 
 serve(){
-  dockerrun node http-server -p 2015 --cors dist
+ #yarn dev
+ #dockerrunnode http-server -p 2015 --cors dist
+  dockerrunnode webpack-dev-server --env dev --mode development
 }
 
 dev(){
