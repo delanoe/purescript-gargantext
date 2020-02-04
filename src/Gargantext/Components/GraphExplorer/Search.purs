@@ -6,7 +6,6 @@ module Gargantext.Components.GraphExplorer.Search
 import Prelude
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.String as S
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -14,6 +13,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
+import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 
 type Props = (
@@ -24,9 +24,7 @@ type Props = (
 
 -- | Whether a node matches a search string
 nodeMatchesSearch :: String -> Record SigmaxT.Node -> Boolean
-nodeMatchesSearch s n = S.contains (S.Pattern $ normalize s) (normalize n.label)
-  where
-    normalize = S.toLower
+nodeMatchesSearch s n = queryMatchesLabel s n.label
 
 searchNodes :: String -> Seq.Seq (Record SigmaxT.Node) -> Seq.Seq (Record SigmaxT.Node)
 searchNodes "" _ = Seq.empty
