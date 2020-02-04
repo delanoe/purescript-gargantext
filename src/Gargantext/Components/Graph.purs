@@ -282,11 +282,11 @@ forceAtlas2Settings :: {|ForceAtlas2Settings}
 forceAtlas2Settings =
   { adjustSizes : false
   , barnesHutOptimize   : true
-  , edgeWeightInfluence : 0.0
+  , edgeWeightInfluence : 1.0
     -- fixedY : false
   , gravity : 1.0
   , iterationsPerRender : 4.0
-  , linLogMode : true  -- false
+  , linLogMode : false  -- false
   , outboundAttractionDistribution: false
   , scalingRatio : 4.0
   , skipHidden: false
