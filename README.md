@@ -91,6 +91,9 @@ Once you have node and yarn installed, you may install deps with:
 yarn install && yarn add psc-package && yarn install-ps && yarn build
 ```
 
+(Be careful, to update or upgrade your install, maybe you need to remove
+old files in node_modules).
+
 ### Development
 
 You can compile the purescript code with:
