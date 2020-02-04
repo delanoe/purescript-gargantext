@@ -88,7 +88,7 @@ Some options:
 Once you have node and yarn installed, you may install deps with:
 
 ```shell
-yarn install && yarn install-ps
+yarn install && yarn add psc-package && yarn install-ps && yarn build
 ```
 
 ### Development
