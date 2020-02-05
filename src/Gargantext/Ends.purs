@@ -169,14 +169,14 @@ sessionPath (R.CorpusMetrics {tabType, listId, limit} i) =
      $ "metrics"
     <> "?ngrams=" <> show listId
     <> "&ngramsType=" <> showTabType' tabType
-    <> maybe "" (\x -> "&limit=" <> show x) limit
+    <> maybe "" limitUrl limit
 -- TODO fix this url path
 sessionPath (R.Chart {chartType, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ show chartType
     <> "?ngramsType=" <> showTabType' tabType
     <> "&listType=GraphTerm" -- <> show listId
-    -- <> maybe "" (\x -> "&limit=" <> show x) limit
+    -- <> maybe "" limitUrl limit
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 
 ------- misc routing stuff

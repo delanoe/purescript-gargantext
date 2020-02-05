@@ -510,8 +510,14 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
     ngramsStyle = [termStyle termList ngramsOpacity]
     ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
     ngramsClick
-      | ngramsTransient = const Nothing
-      | otherwise       = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+      = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+      -- ^ This is the old behavior it is nicer to use since one can
+      --   rapidly change the ngram list without waiting for confirmation.
+      --   However this might expose bugs. One of them can be reproduced
+      --   by clicking a multiple times on the same ngram, sometimes it stays
+      --   transient.
+      -- | ngramsTransient = const Nothing
+      -- | otherwise       = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
     selected    =
       input
         [ _type "checkbox"
