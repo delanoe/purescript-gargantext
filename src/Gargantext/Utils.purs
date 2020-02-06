@@ -5,7 +5,7 @@ import Data.Lens (Lens', lens)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Set as Set
 import Data.Set (Set)
-import Data.String (length)
+import Data.String as S
 
 -- | Astonishingly, not in the prelude
 id :: forall a. a -> a
@@ -62,7 +62,12 @@ glyphiconActive icon b = glyphicon icon <> if b then " active" else ""
 zeroPad :: Int -> Int -> String
 zeroPad pad num = zeros <> (show num)
   where
-    numDigits = length $ show num
+    numDigits = S.length $ show num
     zeros = if numDigits < pad then zeros' (pad - numDigits) else ""
     zeros' 0 = ""
     zeros' n = "0" <> (zeros' (n - 1))
+
+queryMatchesLabel :: String -> String -> Boolean
+queryMatchesLabel q l = S.contains (S.Pattern $ normalize q) (normalize l)
+  where
+    normalize = S.toLower

@@ -6,7 +6,7 @@ module Gargantext.Components.NgramsTable
 import Prelude
   ( class Show, Unit, bind, const, discard, identity, map, mempty, not
   , pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<)
-  , (==), (||), otherwise )
+  , (==), (||), otherwise, when )
 import Data.Array as A
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (Lens', to, view, (%~), (.~), (^.), (^..), (^?))
@@ -18,7 +18,7 @@ import Data.Lens.Record (prop)
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe, isNothing)
+import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
@@ -31,7 +31,8 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import React (ReactClass, ReactElement, Children)
 import React.DOM (a, i, input, li, span, text, ul)
-import React.DOM.Props (_type, checked, className, onChange, onClick, style)
+import React.DOM.Props ( _type, checked, className, onChange, onClick, style
+                       , readOnly)
 import React.DOM.Props as DOM
 import Thermite as Thermite
 import Thermite (modifyState_)
@@ -50,6 +51,7 @@ import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
+import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
 
 import Unsafe.Coerce (unsafeCoerce)
@@ -327,7 +329,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
         pt = singletonNgramsTablePatch parent pe
 
     render :: Thermite.Render State (Record LoadedNgramsTableProps) Action
-    render dispatch { path: path@({scoreType, params} /\ setPath)
+    render dispatch { path: path@({searchQuery, scoreType, params, termListFilter} /\ setPath)
                     , versioned: Versioned { data: initTable }
                     , tabNgramType }
                     state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
@@ -375,7 +377,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
                             <<< _Just
             ) =<< ngramsParent
 
-        displayRow (NgramsElement {ngrams, root}) =
+        displayRow (NgramsElement {ngrams, root, list}) =
           root == Nothing
           -- ^ Display only nodes without parents
           && ngramsChildren ^. at ngrams /= Just true
@@ -384,8 +386,14 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
           -- ^ and which are not our new parent
           && Just ngrams /= ngramsParentRoot
           -- ^ and which are not the root of our new parent
-          || -- Unless they are scheduled to be removed.
-          ngramsChildren ^. at ngrams == Just false
+          && queryMatchesLabel searchQuery (ngramsTermText ngrams)
+          -- ^ and which matches the search query.
+          && maybe true (_ == list) termListFilter
+          -- ^ and which matches the ListType filter.
+          || ngramsChildren ^. at ngrams == Just false
+          -- ^ unless they are scheduled to be removed.
+          || tablePatchHasNgrams ngramsLocalPatch ngrams
+          -- ^ unless they are being processed at the moment.
         convertRow (Tuple ngrams ngramsElement) =
           { row: R2.buff <$> renderNgramsItem { ngramsTable, ngrams,
                                                 ngramsLocalPatch,
@@ -501,7 +509,15 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
     termList    = ngramsElement ^. _NgramsElement <<< _list
     ngramsStyle = [termStyle termList ngramsOpacity]
     ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
-    ngramsClick = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+    ngramsClick
+      = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+      -- ^ This is the old behavior it is nicer to use since one can
+      --   rapidly change the ngram list without waiting for confirmation.
+      --   However this might expose bugs. One of them can be reproduced
+      --   by clicking a multiple times on the same ngram, sometimes it stays
+      --   transient.
+      -- | ngramsTransient = const Nothing
+      -- | otherwise       = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
     selected    =
       input
         [ _type "checkbox"
@@ -517,15 +533,21 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
         [ _type "checkbox"
         , className "checkbox"
         , checked chkd
-        , onChange $ const $ dispatch $
+        , readOnly ngramsTransient
+        , onChange $ const $ when (not ngramsTransient) $ dispatch $
             setTermListA ngrams (replace termList termList'')
         ]
-    ngramsOpacity
-      | isNothing (ngramsLocalPatch.ngramsPatches ^. _PatchMap <<< at ngrams) = 1.0
+    ngramsTransient = tablePatchHasNgrams ngramsLocalPatch ngrams
       -- ^ TODO here we do not look at ngramsNewElems, shall we?
-      | otherwise                                                             = 0.5
+    ngramsOpacity
+      | ngramsTransient = 0.5
+      | otherwise       = 1.0
 
     cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
+
+tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
+tablePatchHasNgrams ngramsTablePatch ngrams =
+  isJust $ ngramsTablePatch.ngramsPatches ^. _PatchMap <<< at ngrams
 
 termStyle :: TermList -> Number -> DOM.Props
 termStyle GraphTerm     opacity = style {color: "green", opacity}
