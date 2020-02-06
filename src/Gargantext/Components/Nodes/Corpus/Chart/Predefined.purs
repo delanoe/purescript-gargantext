@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Predefined where
 
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
@@ -27,6 +28,12 @@ instance showPredefinedChart :: Show PredefinedChart where
 derive instance eqPredefinedChart :: Eq PredefinedChart
 instance ordPredefinedChart :: Ord PredefinedChart where
   compare = genericCompare
+instance decodePredefinedChart :: DecodeJson PredefinedChart where
+  decodeJson json = do
+    obj <- decodeJson json
+    pure $ readChart' obj
+instance encodePredefinedChart :: EncodeJson PredefinedChart where
+  encodeJson c = encodeJson $ show c
 
 readChart' :: String -> PredefinedChart
 readChart' "CDocsHistogram" = CDocsHistogram

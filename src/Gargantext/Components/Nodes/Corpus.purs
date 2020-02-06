@@ -396,3 +396,14 @@ loadCorpusWithChild {nodeId:childId, session} = do
     listNodeRoute       = NodeAPI Node <<< Just
     defaultListIdsRoute = Children NodeList 0 1 Nothing <<< Just
 
+
+type LoadWithReloadProps =
+  (
+    reload :: Int
+  | LoadProps
+  )
+
+
+-- Just to make reloading effective
+loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff CorpusData
+loadCorpusWithChildAndReload {nodeId, reload, session} = loadCorpusWithChild {nodeId, session}

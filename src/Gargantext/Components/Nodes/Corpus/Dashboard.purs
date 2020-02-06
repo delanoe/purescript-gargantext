@@ -2,18 +2,21 @@ module Gargantext.Components.Nodes.Corpus.Dashboard where
 
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
+import Gargantext.Components.Nodes.Corpus (loadCorpusWithChildAndReload, saveCorpus)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
-import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
+import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, updateHyperdataCharts, CorpusInfo(..), Hyperdata(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Sessions (Session)
@@ -29,21 +32,39 @@ dashboardLayout :: Record Props -> R.Element
 dashboardLayout props = R.createElement dashboardLayoutCpt props []
 
 dashboardLayoutCpt :: R.Component Props
-dashboardLayoutCpt = R.hooksComponent "G.P.C.D.dashboardLayout" cpt
+dashboardLayoutCpt = R.hooksComponent "G.C.N.C.D.dashboardLayout" cpt
   where
     cpt params@{nodeId, session} _ = do
-      predefinedCharts <- R.useState' []
-      useLoader params loadCorpusWithChild $
+      reload <- R.useState' 0
+
+      useLoader {nodeId, reload: fst reload, session} loadCorpusWithChildAndReload $
         \corpusData@{corpusId, defaultListId, corpusNode: NodePoly poly} -> do
           let { name, date, hyperdata : Hyperdata h} = poly
-          let CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
-          dashboardLayoutLoaded {corpusId, defaultListId, nodeId, predefinedCharts, session}
+          let CorpusInfo {authors, charts, desc, query} = getCorpusInfo h.fields
+          dashboardLayoutLoaded { charts
+                                , corpusId
+                                , defaultListId
+                                , key: show $ fst reload
+                                , nodeId
+                                , onChange: onChange corpusId reload (Hyperdata h)
+                                , session }
+
+      where
+        onChange :: NodeID -> R.State Int -> Hyperdata -> Array P.PredefinedChart -> Effect Unit
+        onChange corpusId (_ /\ setReload) h charts = do
+          launchAff_ do
+            saveCorpus $ { hyperdata: updateHyperdataCharts h charts
+                         , nodeId: corpusId
+                         , session }
+            liftEffect $ setReload $ (+) 1
 
 type LoadedProps =
   (
-    corpusId :: NodeID
+    charts :: Array P.PredefinedChart
+  , corpusId :: NodeID
   , defaultListId :: Int
-  , predefinedCharts :: R.State (Array P.PredefinedChart)
+  , key :: String
+  , onChange :: Array P.PredefinedChart -> Effect Unit
   | Props
   )
 
@@ -53,28 +74,27 @@ dashboardLayoutLoaded props = R.createElement dashboardLayoutLoadedCpt props []
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
 dashboardLayoutLoadedCpt = R.hooksComponent "G.C.N.C.D.dashboardLayoutLoaded" cpt
   where
-    cpt props@{ corpusId, defaultListId, predefinedCharts: (predefinedCharts /\ setPredefinedCharts), session } _ = do
+    cpt props@{ charts, corpusId, defaultListId, onChange, session } _ = do
       pure $
         H.div {} ([
             H.h1 {} [ H.text "DashBoard" ]
-          ] <> charts <> [addNew])
+          ] <> chartsEls <> [addNew])
       where
         addNew = H.div { className: "row" } [
           H.span { className: "btn btn-default"
                  , on: { click: onClickAdd }} [ H.span { className: "fa fa-plus" } [] ]
           ]
           where
-            onClickAdd _ = setPredefinedCharts $ A.cons P.CDocsHistogram
-        charts = A.mapWithIndex chartIdx predefinedCharts
+            onClickAdd _ = onChange $ A.cons P.CDocsHistogram charts
+        chartsEls = A.mapWithIndex chartIdx charts
         chartIdx idx chart =
-          renderChart { chart, corpusId, defaultListId, onChange, onRemove, session }
+          renderChart { chart, corpusId, defaultListId, onChange: onChangeChart, onRemove, session }
           where
-            onChange c = do
+            onChangeChart c = do
               log2 "[dashboardLayout] idx" idx
               log2 "[dashboardLayout] new chart" c
-              setPredefinedCharts $ \cs -> fromMaybe cs (A.modifyAt idx (\_ -> c) cs)
-            onRemove _ = setPredefinedCharts $
-              \cs -> fromMaybe cs $ A.deleteAt idx cs
+              onChange $ fromMaybe charts (A.modifyAt idx (\_ -> c) charts)
+            onRemove _ = onChange $ fromMaybe charts $ A.deleteAt idx charts
 
 type PredefinedChartProps =
   (
