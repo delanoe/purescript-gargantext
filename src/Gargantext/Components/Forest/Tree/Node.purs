@@ -79,10 +79,6 @@ settingsBox NodeUser = SettingsBox {
   , edit : false
   , doc  : Documentation NodeUser
   , buttons : [ SearchBox
-              , Add [ FolderPrivate
-                    , FolderShared
-                    , FolderPublic
-                    ]
               , Delete
               ]
   }
@@ -96,7 +92,7 @@ settingsBox FolderPrivate = SettingsBox {
                     , Folder
                     , Annuaire
                     ]
-              , Delete]
+              ]
   }
 
 settingsBox Team = SettingsBox {
@@ -116,7 +112,6 @@ settingsBox FolderShared = SettingsBox {
   , edit : true
   , doc  : Documentation FolderShared
   , buttons : [ Add [Team, FolderShared]
-              , Delete
               ]
   }
 
@@ -128,7 +123,6 @@ settingsBox FolderPublic = SettingsBox {
                                                     , Add [ Corpus
                                                           , Folder
                                                           ]-}
-    Delete
     ]
   }
 
