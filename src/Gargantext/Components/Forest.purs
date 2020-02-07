@@ -4,16 +4,14 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Components.Forest.Tree.Node.Action (Reload)
-import Gargantext.Components.Login.Types (TreeId)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
-import Gargantext.Sessions (Session(..), Sessions, unSessions)
+import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -33,7 +31,7 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
   cpt {frontends, route, sessions, showLogin } _ = do
     -- NOTE: this is a hack to reload the tree view on demand
     reload <- R.useState' (0 :: Reload)
-    openNodes <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: Set TreeId)
+    openNodes <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
     R2.useCache
       (frontends /\ route /\ sessions /\ fst openNodes /\ fst reload)
       (cpt' openNodes reload showLogin)

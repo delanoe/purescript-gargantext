@@ -150,9 +150,9 @@ instance showNodeType :: Show NodeType where
   show NodeUser      = "NodeUser"
 
   show Folder        = "NodeFolder"
-  show FolderPrivate = "NodeFolderPrivate"
-  show FolderPublic  = "NodeFolderPublic"
-  show FolderShared    = "NodeFolderShared"
+  show FolderPrivate = "NodeFolderPrivate"  -- Node Private Worktop
+  show FolderShared  = "NodeFolderShared" -- Node Share Worktop
+  show FolderPublic  = "NodeFolderPublic"   -- Node Public Worktop
 
   show Annuaire      = "Annuaire"
   show Corpus        = "NodeCorpus"
@@ -197,19 +197,25 @@ readNodeType _               = Error
 
 fldr :: NodeType -> Boolean -> String
 fldr NodeUser false = "fa fa-user-circle"
-fldr NodeUser true  = "fa fa-user-circle-o"
-
+fldr NodeUser true  = "fa fa-user"
+------------------------------------------------------
+fldr Folder  false  = "fa fa-folder"
+fldr Folder  true   = "fa fa-folder-open-o"
+------------------------------------------------------
 fldr FolderPrivate true  = "fa fa-lock"
-fldr FolderPrivate false = "fa fa-expeditedssl"
+fldr FolderPrivate false = "fa fa-lock-circle"
 
 fldr FolderShared  true  = "fa fa-share-alt"
-fldr FolderShared  false = "fa fa-share-alt-square"
+fldr FolderShared  false = "fa fa-share-circle"
 fldr Team  true   = "fa fa-users"
-fldr Team  false  = "fa fa-users"
+fldr Team  false  = "fa fa-users-closed"
 
-fldr FolderPublic _  = "fa fa-globe"
+fldr FolderPublic true  = "fa fa-globe-circle"
+fldr FolderPublic false = "fa fa-globe"
+------------------------------------------------------
 
-fldr Corpus _ = "fa fa-book" -- "fa fa-snowflake-o"
+fldr Corpus true  = "fa fa-book"
+fldr Corpus false = "fa fa-book-circle"
 
 fldr Phylo _ = "fa fa-code-fork"
 
@@ -218,14 +224,14 @@ fldr Texts _ = "fa fa-newspaper-o"
 fldr Dashboard _ = "fa fa-signal"
 fldr NodeList _ = "fa fa-list"
 
-fldr Annuaire true  = "fa fa-address-book-o"
-fldr Annuaire false = "fa fa-address-book"
+fldr Annuaire true  = "fa fa-address-card-o"
+fldr Annuaire false = "fa fa-address-card"
 
 fldr NodeContact true  = "fa fa-address-card-o"
 fldr NodeContact false = "fa fa-address-card"
 
-fldr _        false  = "fa fa-folder"
-fldr _        true   = "fa fa-folder-o"
+fldr _        false  = "fa fa-folder-o"
+fldr _        true   = "fa fa-folder-open"
 
 
 

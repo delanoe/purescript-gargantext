@@ -12,12 +12,13 @@ import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
+import Data.Set (Set)
 import Data.Traversable (traverse)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Gargantext.Components.Login.Types (AuthRequest(..), AuthResponse(..), AuthInvalid(..), AuthData(..))
+import Gargantext.Components.Login.Types (AuthData(..), AuthInvalid(..), AuthRequest(..), AuthResponse(..), TreeId)
 import Gargantext.Config.REST as REST
-import Gargantext.Ends (class ToUrl, Backend, backendUrl, toUrl, sessionPath)
+import Gargantext.Ends (class ToUrl, Backend(..), backendUrl, sessionPath, toUrl)
 import Gargantext.Routes (SessionRoute)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
 import Gargantext.Utils.Reactix (getls)
@@ -33,7 +34,8 @@ newtype Session = Session
   { backend  :: Backend
   , username :: String
   , token    :: String
-  , treeId   :: Int }
+  , treeId   :: TreeId
+  }
 
 ------------------------------------------------------------------------
 -- | Main instances
@@ -57,9 +59,6 @@ sessionUrl (Session {backend}) = backendUrl backend
 
 sessionId :: Session -> SessionId
 sessionId = SessionId <<< show
-
-instance toUrlSessionString :: ToUrl Session String where
-  toUrl = sessionUrl
 
 --------------------
 -- | JSON instances
@@ -139,6 +138,20 @@ tryRemove sid old@(Sessions ss) = ret where
   ret
     | new == old = Left unit
     | otherwise =  Right new
+
+-- open tree nodes data
+type OpenNodes = Set NodeId
+
+type NodeId =
+  { treeId :: TreeId  -- Id of the node
+  , baseUrl :: String -- the baseUrl of the backend
+  }
+
+mkNodeId :: Session -> TreeId -> NodeId
+mkNodeId (Session {backend: Backend {baseUrl}}) treeId = { treeId, baseUrl }
+
+instance toUrlSessionString :: ToUrl Session String where
+  toUrl = sessionUrl
 
 data Action
   = Login Session

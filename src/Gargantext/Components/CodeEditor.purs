@@ -141,8 +141,8 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     dividerHidden _ = " hidden"
 
     langClass :: CodeType -> String
-    langClass Haskell = " language-haskell"
-    langClass JSON = " language-json"
+    langClass Haskell  = " language-haskell"
+    langClass JSON     = " language-json"
     langClass Markdown = " language-md"
 
     previewHidden :: ViewType -> String
@@ -308,7 +308,7 @@ initControls code defaultCodeType = do
   codeOverlayElRef <- R.useRef null
   codeType <- R.useState' defaultCodeType
   error <- R.useState' Nothing
-  viewType <- R.useState' Both
+  viewType <- R.useState' Preview
 
   pure $ {
       codeElRef

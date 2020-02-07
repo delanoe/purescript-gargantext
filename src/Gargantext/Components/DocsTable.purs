@@ -343,7 +343,7 @@ loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offs
   let docs = res2corpus <$> res.docs
   pure $
     if mock then
-      Tuple 4737 (take limit $ drop offset sampleData)
+      Tuple 0 (take limit $ drop offset sampleData)
     else
       Tuple res.count docs
   where

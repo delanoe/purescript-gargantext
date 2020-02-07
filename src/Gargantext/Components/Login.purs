@@ -105,9 +105,9 @@ chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
         search = [ H.input {className: "form-control", type:"text", placeholder: "Search for your institute"}]
         new    = [ H.h3 {} [H.text "Last connection(s)"]
                  , H.table {className : "table"}
-                 [ H.thead {className: "thead-dark"} [ H.tr {} [ H.th {} [H.text "Label of instance"]
-                                                                         , H.th {} [H.text "Gargurl"]
-                                                                         , H.th {} [ H.text ""]
+                 [ H.thead {className: "thead-dark"} [ H.tr {} [ H.th {} [ H.text ""]
+                                                               , H.th {} [H.text "Label of instance"]
+                                                               , H.th {} [H.text "Gargurl"]
                                                                ]
                                                      ]
                            , H.tbody {} (map (renderBackend backend) backends)
@@ -127,17 +127,18 @@ renderSessions sessions = R.fragment (renderSession sessions <$> unSessions (fst
                                                 where
                                                   click _ = (snd sessions') (Sessions.Logout session)
 
-
 renderBackend :: R.State (Maybe Backend) -> Backend -> R.Element
 renderBackend state backend@(Backend {name}) =
-  H.tr {} [ H.td {} [H.a { on : {click}} [H.text label]]
+  H.tr {} [ iconLog
+          , H.td {} [H.a { on : {click}} [H.text label]]
           , H.td {} [ H.text url ]
-          , H.td {} [H.a { on : {click}
-                         , className : "glyphitem glyphicon glyphicon-log-in"
-                         , title: "Log In"} []
-                    ]
           ]
     where
+      iconLog = H.td {} [ H.a { on : {click}
+                        , className : "glyphitem glyphicon glyphicon-log-in"
+                        , title: "Log In"} []
+                        ]
+
       click _ = (snd state) (const $ Just backend)
       label   = DST.toUpper $ fromMaybe "" $ head $ DST.split (DST.Pattern ".") name
       url     = "garg://" <> name

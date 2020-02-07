@@ -65,12 +65,15 @@ data FieldType =
   , text             :: MarkdownText
   }
 
-isJSON :: FieldType -> Boolean
-isJSON (JSON _) = true
-isJSON _        = false
+
+isJSON :: Field FieldType -> Boolean
+isJSON (Field {typ}) = isJSON' typ
+  where
+    isJSON' (JSON _) = true
+    isJSON' _        = false
 
 getCorpusInfo :: List.List (Field FieldType) -> CorpusInfo
-getCorpusInfo as = case List.head as of
+getCorpusInfo as = case List.head (List.filter isJSON as) of
   Just (Field {typ: JSON {authors, desc,query,title}}) -> CorpusInfo { title
                                                                      , desc
                                                                      , query
