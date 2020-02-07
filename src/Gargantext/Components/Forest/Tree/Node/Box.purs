@@ -71,7 +71,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
                      , name: name' props} ]
         , popOverIcon showBox popupOpen popupPosition
         , mNodePopupView props showBox popupOpen popupPosition
-        , fileTypeView   d {id, nodeType} droppedFile isDragOver
+        , fileTypeView {action: d, droppedFile, id, isDragOver, nodeType}
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                 , corpusId: id
                                                 , onFinish: \_ -> onAsyncTaskFinish t
@@ -374,7 +374,7 @@ panelAction d {id, name, nodeType, action, session, search} p = case action of
     (Just (Documentation x)) -> fragmentPT $ "More information on" <> show nodeType
 
     (Just (Link _))                      -> fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
-    (Just Upload)                        -> uploadFileView d {session, id}
+    (Just Upload)                        -> uploadFileView d {id, nodeType, session}
     (Just Download)                      -> fragmentPT "Soon, you will be able to dowload your file here"
 
     (Just SearchBox)         -> R.fragment [ H.p {"style": {"margin" :"10px"}} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]

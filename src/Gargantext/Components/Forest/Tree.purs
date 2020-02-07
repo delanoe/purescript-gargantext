@@ -169,7 +169,7 @@ performAction session (NTree (LNode {id}) _) (_ /\ setReload) (_ /\ setOpenNodes
     setOpenNodes (Set.insert (mkNodeId session id))
     setReload (_ + 1)
 
-performAction session (NTree (LNode {id}) _) _ _ (_ /\ setAsyncTasks) (UploadFile fileType contents) = do
-  task <- uploadFile session id fileType contents
+performAction session (NTree (LNode {id}) _) _ _ (_ /\ setAsyncTasks) (UploadFile nodeType fileType contents) = do
+  task <- uploadFile session nodeType id fileType contents
   liftEffect $ setAsyncTasks $ A.cons task
   liftEffect $ log2 "uploaded, task:" task
