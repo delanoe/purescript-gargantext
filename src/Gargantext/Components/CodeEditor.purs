@@ -124,7 +124,9 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
                         } []
                ]
              ]
-           , H.div { className: "v-divider " <> (dividerHidden $ fst controls.viewType) } [ H.text " " ]
+           , H.div { className: "v-divider " <> (dividerHidden $ fst controls.viewType) } [
+              H.span { className: "fa fa-bars handle" } []
+            ]
            , H.div { className: "html " <> (langClass $ fst controls.codeType) <> (previewHidden $ fst controls.viewType)
                    , ref: controls.htmlElRef
                    } []

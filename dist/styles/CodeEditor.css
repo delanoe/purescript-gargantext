@@ -93,12 +93,17 @@
   text-transform: inherit;
 }
 .code-editor .editor .v-divider {
+  align-items: center;
   border-left: 1px solid gray;
-  cursor: sw-resize;
-  height: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
   margin-left: 5px;
   margin-right: 5px;
   width: 1px;
+}
+.code-editor .editor .v-divider .handle {
+  cursor: ew-resize;
 }
 .code-editor .editor .html {
   flex-grow: 2;
