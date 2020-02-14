@@ -1,6 +1,5 @@
 module Gargantext.Components.CodeEditor where
 
-import DOM.Simple.Types (Element)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (either, Either(..))
 import Data.Generic.Rep (class Generic)
@@ -11,10 +10,15 @@ import Data.Nullable (Nullable, null, toMaybe)
 import Data.String.Utils (endsWith)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
+import DOM.Simple.Element (boundingRect)
+import DOM.Simple.Event (MouseEvent)
+import DOM.Simple.Types (DOMRect, Element)
 import Effect (Effect)
-import FFI.Simple ((.=))
+import FFI.Simple ((..), (.=))
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Reactix.SyntheticEvent (SyntheticEvent)
 import Text.Markdown.SlamDown.Parser (parseMd)
 import Text.Markdown.SlamDown.Smolder as MD
 import Text.Markdown.SlamDown.Syntax (SlamDownP)
@@ -87,6 +91,24 @@ renderHaskell s = s
 codeEditor :: Record Props -> R.Element
 codeEditor p = R.createElement codeEditorCpt p []
 
+type Divider = (
+    codeAreaRef:: R.Ref (Nullable Element)
+  , codeAreaPositionRef:: R.Ref (Maybe DOMRect)
+  , dividerInitialPositionRef:: R.Ref (Maybe R2.Point)
+  )
+
+initDivider :: R.Hooks (Record Divider)
+initDivider = do
+  codeAreaRef <- R.useRef null
+  codeAreaPositionRef <- R.useRef Nothing
+  dividerInitialPositionRef <- R.useRef Nothing
+
+  pure $ {
+      codeAreaRef
+    , codeAreaPositionRef
+    , dividerInitialPositionRef
+    }
+
 -- The code editor contains 3 components:
 -- - a hidden textarea
 -- - textarea code overlay
@@ -99,18 +121,26 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     cpt {code, defaultCodeType, onChange} _ = do
       controls <- initControls code defaultCodeType
 
+      divider <- initDivider
+
       R.useEffect2' (fst controls.codeS) (fst controls.codeType) $ do
         let code' = fst controls.codeS
         setCodeOverlay controls code'
         renderHtml code' controls
 
-      pure $ H.div { className: "code-editor" } [
+      pure $ H.div { className: "code-editor"
+                   , on: {
+                       mouseMove: onDividerMouseMove divider
+                     , mouseUp: onDividerMouseUp divider
+                     }
+                   } [
           toolbar {controls, onChange}
         , H.div { className: "row error" } [
            errorComponent {error: controls.error}
         ]
         , H.div { className: "row editor" } [
-           H.div { className: "code-area " <> (codeHidden $ fst controls.viewType) } [
+           H.div { className: "code-area " <> (codeHidden $ fst controls.viewType)
+                 , ref: divider.codeAreaRef } [
              H.div { className: "code-container" } [
                H.textarea { defaultValue: code
                           , on: { change: onEditChange controls onChange }
@@ -125,7 +155,10 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
                ]
              ]
            , H.div { className: "v-divider " <> (dividerHidden $ fst controls.viewType) } [
-              H.span { className: "fa fa-bars handle" } []
+              H.span { className: "fa fa-bars handle"
+                     , on: {
+                       mouseDown: onDividerMouseDown divider
+                       } } []
             ]
            , H.div { className: "html " <> (langClass $ fst controls.codeType) <> (previewHidden $ fst controls.viewType)
                    , ref: controls.htmlElRef
@@ -157,6 +190,36 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
       let code = R2.unsafeEventValue e
       snd codeS $ const code
       onChange codeType code
+
+    onDividerMouseDown :: Record Divider -> SyntheticEvent MouseEvent -> Effect Unit
+    onDividerMouseDown {codeAreaRef, codeAreaPositionRef, dividerInitialPositionRef} e = do
+      case (toMaybe $ R.readRef codeAreaRef) of
+        Nothing -> pure unit
+        Just codeAreaEl -> do
+          R.setRef codeAreaPositionRef $ Just $ boundingRect codeAreaEl
+          R.setRef dividerInitialPositionRef $ Just $ R2.mousePosition e
+
+    onDividerMouseMove :: Record Divider -> SyntheticEvent MouseEvent -> Effect Unit
+    onDividerMouseMove {codeAreaRef, codeAreaPositionRef, dividerInitialPositionRef} e = do
+      case (toMaybe $ R.readRef codeAreaRef) of
+        Nothing -> pure unit
+        Just codeAreaEl -> do
+          case (R.readRef codeAreaPositionRef) of
+            Nothing -> pure unit
+            Just codeAreaPosition -> do
+              case (R.readRef dividerInitialPositionRef) of
+                Nothing -> pure unit
+                Just (R2.Point dividerInitialPosition) -> do
+                  let (R2.Point pos) = R2.mousePosition e
+                  let diff = dividerInitialPosition.x - codeAreaPosition.right
+                  let width = pos.x - codeAreaPosition.left - diff
+                  let style = codeAreaEl .. "style"
+                  pure $ (style .= "width") width
+
+    onDividerMouseUp :: forall e. Record Divider -> e -> Effect Unit
+    onDividerMouseUp {codeAreaPositionRef, dividerInitialPositionRef} _ = do
+      R.setRef codeAreaPositionRef Nothing
+      R.setRef dividerInitialPositionRef Nothing
 
 setCodeOverlay :: Record Controls -> Code -> Effect Unit
 setCodeOverlay {codeOverlayElRef, codeType: (codeType /\ _)} code = do

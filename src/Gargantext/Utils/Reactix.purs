@@ -3,7 +3,6 @@ module Gargantext.Utils.Reactix where
 import Prelude
 
 import DOM.Simple as DOM
-import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
@@ -21,7 +20,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Effect.Uncurried (EffectFn1, mkEffectFn1, mkEffectFn2, runEffectFn1)
+import Effect.Uncurried (EffectFn1, mkEffectFn1, mkEffectFn2, runEffectFn1, EffectFn2, runEffectFn2)
 import Effect.Unsafe (unsafePerformEffect)
 import FFI.Simple ((..), (...), defineProperty, delay, args2, args3)
 import Partial.Unsafe (unsafePartial)
@@ -196,8 +195,6 @@ appendChild n c = delay unit $ \_ -> pure $ n ... "appendChild" $ [c]
 appendChildToParentId :: forall c. IsNode c => String -> c -> Effect Unit
 appendChildToParentId ps c = delay unit $ \_ -> do
   parentEl <- getElementById ps
-  log2 "[appendChildToParentId] ps" ps
-  log2 "[appendChildToParentId] parentEl" parentEl
   case parentEl of
     Nothing -> pure unit
     Just el -> appendChild el c
