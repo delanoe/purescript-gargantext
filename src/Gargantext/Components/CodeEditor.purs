@@ -240,9 +240,10 @@ codeTypeSelectorCpt = R.hooksComponent "G.C.CE.CodeTypeSelector" cpt
   where
     cpt {codeType, onChange} _ = do
       pure $ R2.select { className: "form-control"
-                , on: { change: onSelectChange codeType onChange }
-                , style: { width: "150px" }
-                , value: show $ fst codeType }
+                       , defaultValue: show $ fst codeType
+                       , on: { change: onSelectChange codeType onChange }
+                       , style: { width: "150px" }
+                       }
         (option <$> [Haskell, JSON, Markdown])
 
     option :: CodeType -> R.Element

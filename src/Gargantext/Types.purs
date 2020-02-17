@@ -16,6 +16,7 @@ import Prim.Row (class Union)
 import URI.Query (Query)
 
 newtype SessionId = SessionId String
+type NodeID = Int
 
 derive instance genericSessionId :: Generic SessionId _
 
@@ -207,7 +208,7 @@ fldr FolderPrivate true  = "fa fa-lock"
 fldr FolderPrivate false = "fa fa-lock-circle"
 
 fldr FolderShared  true  = "fa fa-share-alt"
-fldr FolderShared  false = "fa fa-share-circle"
+fldr FolderShared  false = "fa fa-share-alt"
 fldr Team  true   = "fa fa-users"
 fldr Team  false  = "fa fa-users-closed"
 
@@ -216,7 +217,7 @@ fldr FolderPublic false = "fa fa-globe"
 ------------------------------------------------------
 
 fldr Corpus true  = "fa fa-book"
-fldr Corpus false = "fa fa-book-circle"
+fldr Corpus false = "fa fa-book"
 
 fldr Phylo _ = "fa fa-code-fork"
 

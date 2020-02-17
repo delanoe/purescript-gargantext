@@ -25,13 +25,12 @@ import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
-import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..))
+import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..), NodeID)
 import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
 ------------------------------------------------------------------------
 
-type NodeID = Int
 type TotalRecords = Int
 
 -- Example:

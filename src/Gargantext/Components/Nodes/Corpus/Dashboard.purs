@@ -1,33 +1,30 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
-import Data.Array (zipWith)
-import Data.Int (toNumber)
-import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
+import Data.Array as A
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Tuple (fst)
+import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
+import Effect (Effect)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis', tooltipTriggerAxis)
-import Gargantext.Components.Charts.Options.Data
-import Gargantext.Components.Charts.Options.Series
-  ( TreeNode, Trees(..), mkTree, seriesBarD1, seriesFunnelD1, seriesPieD1
-  , seriesSankey, seriesScatterD2, treeLeaf, treeNode )
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
-import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
-import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
-import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
-import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
+import Gargantext.Components.Nodes.Corpus (loadCorpusWithChildAndReload, saveCorpus)
+import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
+import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, updateHyperdataCharts, CorpusInfo(..), Hyperdata(..))
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Utils.Reactix as R2
 import Gargantext.Sessions (Session)
-import Gargantext.Types (Mode(..), TabSubType(..), TabType(..), modeTabType)
+import Gargantext.Types (NodeID)
 
 type Props =
   (
-    nodeId :: Int
+    nodeId :: NodeID
   , session :: Session
   )
 
@@ -35,20 +32,39 @@ dashboardLayout :: Record Props -> R.Element
 dashboardLayout props = R.createElement dashboardLayoutCpt props []
 
 dashboardLayoutCpt :: R.Component Props
-dashboardLayoutCpt = R.hooksComponent "G.P.C.D.dashboardLayout" cpt
+dashboardLayoutCpt = R.hooksComponent "G.C.N.C.D.dashboardLayout" cpt
   where
     cpt params@{nodeId, session} _ = do
-      useLoader params loadCorpusWithChild $
-        \corpusData@{corpusId, defaultListId, corpusNode: NodePoly poly} ->
+      reload <- R.useState' 0
+
+      useLoader {nodeId, reload: fst reload, session} loadCorpusWithChildAndReload $
+        \corpusData@{corpusId, defaultListId, corpusNode: NodePoly poly} -> do
           let { name, date, hyperdata : Hyperdata h} = poly
-              CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
-          in
-          dashboardLayoutLoaded {corpusId, defaultListId, nodeId, session}
+          let CorpusInfo {authors, charts, desc, query} = getCorpusInfo h.fields
+          dashboardLayoutLoaded { charts
+                                , corpusId
+                                , defaultListId
+                                , key: show $ fst reload
+                                , nodeId
+                                , onChange: onChange corpusId reload (Hyperdata h)
+                                , session }
+
+      where
+        onChange :: NodeID -> R.State Int -> Hyperdata -> Array P.PredefinedChart -> Effect Unit
+        onChange corpusId (_ /\ setReload) h charts = do
+          launchAff_ do
+            saveCorpus $ { hyperdata: updateHyperdataCharts h charts
+                         , nodeId: corpusId
+                         , session }
+            liftEffect $ setReload $ (+) 1
 
 type LoadedProps =
   (
-    corpusId :: Int
+    charts :: Array P.PredefinedChart
+  , corpusId :: NodeID
   , defaultListId :: Int
+  , key :: String
+  , onChange :: Array P.PredefinedChart -> Effect Unit
   | Props
   )
 
@@ -56,65 +72,89 @@ dashboardLayoutLoaded :: Record LoadedProps -> R.Element
 dashboardLayoutLoaded props = R.createElement dashboardLayoutLoadedCpt props []
 
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
-dashboardLayoutLoadedCpt = R.hooksComponent "G.P.C.D.dashboardLayoutLoaded" cpt
+dashboardLayoutLoadedCpt = R.hooksComponent "G.C.N.C.D.dashboardLayoutLoaded" cpt
   where
-    cpt props _ = do
-      pure $ H.div {} [
-          H.h1 {} [ H.text "DashBoard" ]
-        , H.div {className: "row"} [
-           --H.div {className: "col-md-9 content"} [ chart globalPublis ]
-             H.div {className: "col-md-12 content"} [ histo (globalPublisParams props) ]
-           --, H.div {className: "col-md-3 content"} [ chart naturePublis ]
-           ]
-        --, chart distriBySchool
-        , pie (authorsParams props)
-        --, H.div {className: "row"} (aSchool <$> schools)
-        --, chart scatterEx
-        , metrics (termsParams props)
-        --, chart sankeyEx
-        , tree (institutesParams props)
-        --, chart treeMapEx
-        --, chart treeEx
+    cpt props@{ charts, corpusId, defaultListId, onChange, session } _ = do
+      pure $
+        H.div {} ([
+            H.h1 {} [ H.text "DashBoard" ]
+          ] <> chartsEls <> [addNew])
+      where
+        addNew = H.div { className: "row" } [
+          H.span { className: "btn btn-default"
+                 , on: { click: onClickAdd }} [ H.span { className: "fa fa-plus" } [] ]
+          ]
+          where
+            onClickAdd _ = onChange $ A.cons P.CDocsHistogram charts
+        chartsEls = A.mapWithIndex chartIdx charts
+        chartIdx idx chart =
+          renderChart { chart, corpusId, defaultListId, onChange: onChangeChart, onRemove, session }
+          where
+            onChangeChart c = do
+              log2 "[dashboardLayout] idx" idx
+              log2 "[dashboardLayout] new chart" c
+              onChange $ fromMaybe charts (A.modifyAt idx (\_ -> c) charts)
+            onRemove _ = onChange $ fromMaybe charts $ A.deleteAt idx charts
+
+type PredefinedChartProps =
+  (
+    corpusId :: NodeID
+  , chart :: P.PredefinedChart
+  , defaultListId :: Int
+  , onChange :: P.PredefinedChart -> Effect Unit
+  , onRemove :: Unit -> Effect Unit
+  , session :: Session
+  )
+
+renderChart :: Record PredefinedChartProps -> R.Element
+renderChart props = R.createElement renderChartCpt props []
+
+renderChartCpt :: R.Component PredefinedChartProps
+renderChartCpt = R.hooksComponent "G.C.N.C.D.renderChart" cpt
+  where
+    cpt { chart, corpusId, defaultListId, onChange, onRemove, session } _ = do
+      pure $ H.div { className: "row" } [
+          H.div {} [
+            R2.select { defaultValue: show chart
+                      , on: { change: onSelectChange }
+                      } (option <$> P.allPredefinedCharts)
+          ]
+        , H.div {} [
+            H.span { className: "btn btn-danger"
+                   , on: { click: onRemoveClick }} [ H.span { className: "fa fa-trash" } [] ]
+          ]
+        , P.render chart params
         ]
+      where
+        option pc =
+          H.option { value: show pc } [ H.text $ show pc ]
+        onSelectChange e = onChange $ P.readChart' value
+          where
+            value = R2.unsafeEventValue e
+        onRemoveClick _ = onRemove unit
+        params = { corpusId
+                 , limit: Just 1000
+                 , listId: Just defaultListId
+                 , session
+                 }
 
-    authorsParams {corpusId, session} = {path, session}
-      where
-        path = {corpusId, tabType: TabCorpus (TabNgramType $ modeTabType Authors)}
-    globalPublisParams {corpusId, session} = { path, session}
-      where
-        path = {corpusId, tabType: TabCorpus TabDocs}
-    institutesParams {corpusId, defaultListId, session} = {path, session}
-      where
-        path = { corpusId
-               , limit: Just 1000  -- TODO Fix
-               , listId: defaultListId  -- TODO Is this correct?
-               , tabType: TabCorpus (TabNgramType $ modeTabType Institutes)
-               }
-    termsParams {corpusId, defaultListId, session} = {path, session}
-      where
-        path = { corpusId
-               , limit: Just 1000  -- TODO Fix
-               , listId: defaultListId  -- TODO Is this correct?
-               , tabType: TabCorpus (TabNgramType $ modeTabType Terms)
-               }
-
-    aSchool school = H.div {className: "col-md-4 content"} [ chart $ focus school ]
-    schools = [ "Télécom Bretagne", "Mines Nantes", "Eurecom" ]
-    myData =
-      [seriesBarD1 {name: "Bar Data"}
-       [ dataSerie {name: "val1", value: 50.0}
-       , dataSerie {name: "val2", value: 70.0}
-       , dataSerie {name: "val3", value: 80.0} ] ]
-    focus :: String -> Options
-    focus school =
-      Options
-      { mainTitle : "Focus " <> school
-      , subTitle  : "Total scientific publications"
-      , xAxis     : xAxis' ["2015", "2016", "2017"]
-      , yAxis     : yAxis' { position: "left", show: false, min : 0 }
-      , series    : myData
-      , addZoom   : false
-      , tooltip   : tooltipTriggerAxis } -- Necessary?
+    -- aSchool school = H.div {className: "col-md-4 content"} [ chart $ focus school ]
+    -- schools = [ "Télécom Bretagne", "Mines Nantes", "Eurecom" ]
+    -- myData =
+    --   [seriesBarD1 {name: "Bar Data"}
+    --    [ dataSerie {name: "val1", value: 50.0}
+    --    , dataSerie {name: "val2", value: 70.0}
+    --    , dataSerie {name: "val3", value: 80.0} ] ]
+    -- focus :: String -> Options
+    -- focus school =
+    --   Options
+    --   { mainTitle : "Focus " <> school
+    --   , subTitle  : "Total scientific publications"
+    --   , xAxis     : xAxis' ["2015", "2016", "2017"]
+    --   , yAxis     : yAxis' { position: "left", show: false, min : 0 }
+    --   , series    : myData
+    --   , addZoom   : false
+    --   , tooltip   : tooltipTriggerAxis } -- Necessary?
 
 -----------------------------------------------------------------------------------------------------------
 

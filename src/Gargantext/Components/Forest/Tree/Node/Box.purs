@@ -54,7 +54,7 @@ nodeMainSpan :: (Action -> Aff Unit)
              -> R.Element
 nodeMainSpan d p folderOpen session frontends = R.createElement el p []
   where
-    el = R.hooksComponent "NodeMainSpan" cpt
+    el = R.hooksComponent "G.C.F.T.N.B.NodeMainSpan" cpt
     cpt props@{id, asyncTasks, mCurrentRoute, name, nodeType, onAsyncTaskFinish} _ = do
       -- only 1 popup at a time is allowed to be opened
       popupOpen     <- R.useState' (Nothing :: Maybe NodePopup)
