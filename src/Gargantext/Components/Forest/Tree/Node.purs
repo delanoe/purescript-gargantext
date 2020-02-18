@@ -199,7 +199,8 @@ settingsBox Annuaire = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation Annuaire
-  , buttons : [Delete]
+  , buttons : [ Upload
+              , Delete ]
   }
 
 settingsBox _ = SettingsBox {

@@ -24,6 +24,7 @@ import Gargantext.Utils.Reactix as R2
 
 type Props =
   ( id :: Int
+  , nodeType :: GT.NodeType
   , session :: Session
   )
 
@@ -34,7 +35,7 @@ uploadFileView d props = R.createElement (uploadFileViewCpt d) props []
 uploadFileViewCpt :: (Action -> Aff Unit) -> R.Component Props
 uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
   where
-    cpt {id} _ = do
+    cpt {id, nodeType} _ = do
       mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
       fileType :: R.State FileType     <- R.useState' CSV
       lang     :: R.State (Maybe Lang) <- R.useState' (Just EN)
@@ -65,7 +66,7 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
                        } (map renderOptionLang [EN, FR])
                        ]
 
-            , H.div {} [ uploadButton d id mContents fileType lang ]
+            , H.div {} [ uploadButton {action: d, fileType, lang, id, mContents, nodeType } ]
             ]
 
     renderOptionFT :: FileType -> R.Element
@@ -97,42 +98,54 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
               $ R2.unsafeEventValue e
 
 
-uploadButton :: (Action -> Aff Unit)
-             -> Int
-             -> R.State (Maybe UploadFileContents)
-             -> R.State FileType
-             -> R.State (Maybe Lang)
-             -> R.Element
-uploadButton d id (mContents /\ setMContents) (fileType /\ setFileType) (lang /\ setLang) =
-  H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
-  where
-    disabled = case mContents of
-      Nothing -> "1"
-      Just _ -> ""
+type UploadButtonProps =
+  (
+    action :: Action -> Aff Unit
+  , fileType :: R.State FileType
+  , id :: Int
+  , lang :: R.State (Maybe Lang)
+  , mContents :: R.State (Maybe UploadFileContents)
+  , nodeType :: GT.NodeType
+  )
 
-    onClick e = do
-      let contents = unsafePartial $ fromJust mContents
-      void $ launchAff do
-        _ <- d $ UploadFile fileType contents
-        liftEffect $ do
-          setMContents $ const $ Nothing
-          setFileType  $ const $ CSV
-          setLang      $ const $ Just EN
+uploadButton :: Record UploadButtonProps -> R.Element
+uploadButton props = R.createElement uploadButtonCpt props []
+
+uploadButtonCpt :: R.Component UploadButtonProps
+uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
+  where
+    cpt {action, fileType: (fileType /\ setFileType), id, lang: (lang /\ setLang), mContents: (mContents /\ setMContents), nodeType} _ = do
+        pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
+      where
+        disabled = case mContents of
+          Nothing -> "1"
+          Just _ -> ""
+
+        onClick e = do
+          let contents = unsafePartial $ fromJust mContents
+          void $ launchAff do
+            _ <- action $ UploadFile nodeType fileType contents
+            liftEffect $ do
+              setMContents $ const $ Nothing
+              setFileType  $ const $ CSV
+              setLang      $ const $ Just EN
 
 -- START File Type View
 type FileTypeProps =
-  ( id :: ID
-  , nodeType :: GT.NodeType)
+  ( action :: Action -> Aff Unit
+  , droppedFile :: R.State (Maybe DroppedFile)
+  , id :: ID
+  , isDragOver :: R.State Boolean
+  , nodeType :: GT.NodeType
+  )
 
-fileTypeView :: (Action -> Aff Unit)
-             -> Record FileTypeProps
-             -> R.State (Maybe DroppedFile)
-             -> R.State Boolean
-             -> R.Element
-fileTypeView d p (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ /\ setIsDragOver) = R.createElement el p []
+fileTypeView :: Record FileTypeProps -> R.Element
+fileTypeView p = R.createElement fileTypeViewCpt p []
+
+fileTypeViewCpt :: R.Component FileTypeProps
+fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
   where
-    el = R.hooksComponent "FileTypeView" cpt
-    cpt {id} _ = do
+    cpt {action, droppedFile: (Just (DroppedFile {contents, fileType}) /\ setDroppedFile), isDragOver: (_ /\ setIsDragOver), nodeType} _ = do
       pure $ H.div tooltipProps $
         [ H.div {className: "panel panel-default"}
           [ panelHeading
@@ -184,7 +197,7 @@ fileTypeView d p (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ 
                          , type: "button"
                          , on: {click: \_ -> do
                                    setDroppedFile $ const Nothing
-                                   launchAff $ d $ UploadFile ft contents
+                                   launchAff $ action $ UploadFile nodeType ft contents
                                }
                          } [H.text "Upload"]
               Nothing ->
@@ -192,10 +205,10 @@ fileTypeView d p (Just (DroppedFile {contents, fileType}) /\ setDroppedFile) (_ 
                          , type: "button"
                          } [H.text "Upload"]
           ]
-fileTypeView _ _ (Nothing /\ _) _ = R.createElement el {} []
-  where
-    el = R.hooksComponent "FileTypeView" cpt
-    cpt props _ = pure $ H.div {} []
+
+    cpt {droppedFile: (Nothing /\ _)} _ = do
+      pure $ H.div {} []
+
 
 newtype FileUploadQuery = FileUploadQuery {
     fileType :: FileType
@@ -208,15 +221,15 @@ instance fileUploadQueryToQuery :: GT.ToQuery FileUploadQuery where
     where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
           pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
 
-uploadFile :: Session -> ID -> FileType -> UploadFileContents -> Aff GT.AsyncTaskWithType
-uploadFile session id fileType (UploadFileContents fileContents) = do
+uploadFile :: Session -> GT.NodeType -> ID -> FileType -> UploadFileContents -> Aff GT.AsyncTaskWithType
+uploadFile session nodeType id fileType (UploadFileContents fileContents) = do
     task <- postWwwUrlencoded session p bodyParams
     pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
     --postMultipartFormData session p fileContents
   where
     q = FileUploadQuery { fileType: fileType }
     --p = NodeAPI GT.Corpus (Just id) $ "add/file/async/nobody" <> Q.print (toQuery q)
-    p = GR.NodeAPI GT.Corpus (Just id) $ GT.asyncTaskTypePath GT.Form
+    p = GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
     bodyParams = [
         Tuple "_wf_data" (Just fileContents)
       , Tuple "_wf_filetype" (Just $ show fileType)
