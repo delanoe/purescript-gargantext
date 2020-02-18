@@ -156,7 +156,7 @@ instance showNodeType :: Show NodeType where
   show FolderShared    = "NodeFolderShared" -- Node Share Worktop
   show FolderPublic  = "NodeFolderPublic"   -- Node Public Worktop
 
-  show Annuaire      = "Annuaire"
+  show Annuaire      = "NodeAnnuaire"
   show NodeContact   = "NodeContact"
   show Corpus        = "NodeCorpus"
   show Dashboard     = "NodeDashboard"
@@ -194,6 +194,7 @@ readNodeType "Tree"          = Tree
 readNodeType "NodeTeam"      = Team
 readNodeType "NodeList"      = NodeList
 readNodeType "NodeTexts"     = Texts
+readNodeType "Annuaire"      = Annuaire
 readNodeType _               = Error
 
 
