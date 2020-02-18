@@ -97,7 +97,7 @@ settingsBox FolderPrivate = SettingsBox {
 
 settingsBox Team = SettingsBox {
     show: true
-  , edit : false
+  , edit : true
   , doc  : Documentation Team
   , buttons : [ SearchBox
               , Add [ Corpus

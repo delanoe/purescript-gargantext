@@ -203,6 +203,8 @@ color:#fff}
 .fa-audio-description:before,
 .fa-backward:before,
 .fa-balance-scale:before,
+.fa-ballot:before,
+.fa-ballot-circle:before,
 .fa-ban:before,
 .fa-bandcamp:before,
 .fa-bar-chart:before,
@@ -982,6 +984,8 @@ color:#fff}
 .fa-audio-description:before { content: "\f29e"; }
 .fa-backward:before { content: "\f04a"; }
 .fa-balance-scale:before { content: "\f24e"; }
+.fa-ballot:before { content: "\f342"; }
+.fa-ballot-circle:before { content: "\f343"; }
 .fa-ban:before { content: "\f05e"; }
 .fa-bandcamp:before { content: "\f2d5"; }
 .fa-bar-chart:before { content: "\f080"; }
