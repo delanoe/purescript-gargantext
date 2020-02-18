@@ -24,7 +24,6 @@
 [data-icon]:before { content: attr(data-icon); }
 
 [data-icon]:before,
-
 .fa{
 display:inline-block;
 font:normal normal normal 14px/1 ForkAwesome;
