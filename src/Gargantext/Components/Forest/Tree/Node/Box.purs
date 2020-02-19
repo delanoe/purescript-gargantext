@@ -1,39 +1,37 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
-import Data.Array as A
+import Gargantext.Prelude
+
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff, launchAff_)
+import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import URI.Extra.QueryPairs as NQP
-import URI.Query as Query
-import Web.File.FileReader.Aff (readAsText)
-
-import Gargantext.Prelude
-
+import Gargantext.Components.Data.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar)
-import Gargantext.Components.Data.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
-
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import URI.Extra.QueryPairs as NQP
+import URI.Query as Query
+import Web.File.FileReader.Aff (readAsText)
 
 
 -- Main Node
@@ -65,7 +63,10 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
       pure $ H.span (dropProps droppedFile isDragOver) $
         [ folderIcon nodeType folderOpen
         , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
-              , style: {marginLeft: "22px"}
+              , style: { marginLeft: case nodeType of
+                                       NodeUser -> "1rem"
+                                       _        -> "22px"
+                       }
               }
           [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
                      , name: name' props} ]
