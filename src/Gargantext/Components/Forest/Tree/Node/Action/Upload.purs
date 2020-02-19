@@ -33,7 +33,7 @@ uploadFileView :: (Action -> Aff Unit) -> Record Props -> R.Element
 uploadFileView d props = R.createElement (uploadFileViewCpt d) props []
 
 uploadFileViewCpt :: (Action -> Aff Unit) -> R.Component Props
-uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
+uploadFileViewCpt d = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
   where
     cpt {id, nodeType} _ = do
       mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
@@ -234,3 +234,12 @@ uploadFile session nodeType id fileType (UploadFileContents fileContents) = do
         Tuple "_wf_data" (Just fileContents)
       , Tuple "_wf_filetype" (Just $ show fileType)
       ]
+
+uploadTermListView :: (Action -> Aff Unit) -> Record Props -> R.Element
+uploadTermListView d props = R.createElement (uploadFileViewCpt d) props []
+
+uploadTermListViewCpt :: (Action -> Aff Unit) -> R.Component Props
+uploadTermListViewCpt d = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
+  where
+    cpt {id, nodeType} _ = do
+      pure $ H.div {} [ H.text "Upload term list" ]

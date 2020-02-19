@@ -22,6 +22,7 @@ data NodeAction = Documentation NodeType
                 | Move     | Clone  | Delete
                 | Share    | Link NodeType
                 | Add (Array NodeType)
+                | CopyFromCorpus
 
 
 instance eqNodeAction :: Eq NodeAction where
@@ -36,6 +37,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq Share Share       = true
   eq (Link x) (Link y) = true && (x == y)
   eq (Add x) (Add y)   = true && (x == y)
+  eq CopyFromCorpus CopyFromCorpus = true
   eq _ _               = false
 
 instance showNodeAction :: Show NodeAction where
@@ -50,6 +52,7 @@ instance showNodeAction :: Show NodeAction where
   show Share             = "Share"
   show (Link x)          = "Link to " <> show x
   show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
+  show CopyFromCorpus    = "Copy from corpus"
 
 
 glyphiconNodeAction :: NodeAction -> String
@@ -60,6 +63,7 @@ glyphiconNodeAction SearchBox         = "search"
 glyphiconNodeAction Upload            = "upload"
 glyphiconNodeAction (Link _)          = "transfer"
 glyphiconNodeAction Download          = "download"
+glyphiconNodeAction CopyFromCorpus    = "random"
 glyphiconNodeAction _                 = ""
 
 
@@ -183,6 +187,7 @@ settingsBox NodeList = SettingsBox {
   , edit : false
   , doc  : Documentation NodeList
   , buttons : [ Upload
+              , CopyFromCorpus
               , Download
               , Delete
               ]
