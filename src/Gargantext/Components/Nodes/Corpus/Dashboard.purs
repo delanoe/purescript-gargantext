@@ -14,9 +14,8 @@ import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.Nodes.Corpus (loadCorpusWithChildAndReload, saveCorpus)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
-import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, updateHyperdataCharts, CorpusInfo(..), Hyperdata(..))
+import Gargantext.Components.Nodes.Dashboard.Types as DT
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Sessions (Session)
@@ -37,25 +36,25 @@ dashboardLayoutCpt = R.hooksComponent "G.C.N.C.D.dashboardLayout" cpt
     cpt params@{nodeId, session} _ = do
       reload <- R.useState' 0
 
-      useLoader {nodeId, reload: fst reload, session} loadCorpusWithChildAndReload $
-        \corpusData@{corpusId, defaultListId, corpusNode: NodePoly poly} -> do
-          let { name, date, hyperdata : Hyperdata h} = poly
-          let CorpusInfo {authors, charts, desc, query} = getCorpusInfo h.fields
+      useLoader {nodeId, reload: fst reload, session} DT.loadDashboardWithReload $
+        \dashboardData@{hyperdata: DT.Hyperdata h, parentId} -> do
+          let { charts } = h
           dashboardLayoutLoaded { charts
-                                , corpusId
-                                , defaultListId
+                                , corpusId: parentId
+                                , defaultListId: 0
                                 , key: show $ fst reload
                                 , nodeId
-                                , onChange: onChange corpusId reload (Hyperdata h)
+                                , onChange: onChange nodeId reload (DT.Hyperdata h)
                                 , session }
 
       where
-        onChange :: NodeID -> R.State Int -> Hyperdata -> Array P.PredefinedChart -> Effect Unit
-        onChange corpusId (_ /\ setReload) h charts = do
+        onChange :: NodeID -> R.State Int -> DT.Hyperdata -> Array P.PredefinedChart -> Effect Unit
+        onChange nodeId (_ /\ setReload) (DT.Hyperdata h) charts = do
           launchAff_ do
-            saveCorpus $ { hyperdata: updateHyperdataCharts h charts
-                         , nodeId: corpusId
-                         , session }
+            DT.saveDashboard {
+                hyperdata: DT.Hyperdata $ h { charts = charts }
+              , nodeId
+              , session }
             liftEffect $ setReload $ (+) 1
 
 type LoadedProps =
@@ -98,8 +97,8 @@ dashboardLayoutLoadedCpt = R.hooksComponent "G.C.N.C.D.dashboardLayoutLoaded" cp
 
 type PredefinedChartProps =
   (
-    corpusId :: NodeID
-  , chart :: P.PredefinedChart
+    chart :: P.PredefinedChart
+  , corpusId :: NodeID
   , defaultListId :: Int
   , onChange :: P.PredefinedChart -> Effect Unit
   , onRemove :: Unit -> Effect Unit
