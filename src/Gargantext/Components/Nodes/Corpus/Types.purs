@@ -57,7 +57,6 @@ data FieldType =
   }
   | JSON {
     authors        :: Author
-  , charts         :: Array P.PredefinedChart
   , desc           :: Description
   , query          :: Query
   , tag            :: Tag
@@ -77,30 +76,18 @@ isJSON (Field {typ}) = isJSON' typ
 
 getCorpusInfo :: List.List FTField -> CorpusInfo
 getCorpusInfo as = case List.head (List.filter isJSON as) of
-  Just (Field {typ: JSON {authors, charts, desc, query, title}}) -> CorpusInfo { title
-                                                                     , desc
-                                                                     , query
-                                                                     , authors
-                                                                     , charts
-                                                                     , totalRecords: 0
-                                                                     }
+  Just (Field {typ: JSON {authors, desc, query, title}}) -> CorpusInfo { title
+                                                                       , desc
+                                                                       , query
+                                                                       , authors
+                                                                       , totalRecords: 0
+                                                                       }
   _                                -> CorpusInfo { title:"Empty"
                                                  , desc:""
                                                  , query:""
                                                  , authors:""
-                                                 , charts: []
                                                  , totalRecords: 0
                                                  }
-
-
-updateHyperdataCharts :: Hyperdata -> Array P.PredefinedChart -> Hyperdata
-updateHyperdataCharts (Hyperdata h@{fields}) charts = Hyperdata $ h { fields = updateFieldsCharts fields charts }
-
-updateFieldsCharts :: List.List FTField -> Array P.PredefinedChart -> List.List FTField
-updateFieldsCharts List.Nil _ = List.Nil
-updateFieldsCharts fs [] = fs
-updateFieldsCharts ((Field f@{typ: JSON j@{charts}}):as) pcharts = (Field $ f { typ = JSON $ j { charts = pcharts } }):as
-updateFieldsCharts (a@(Field {typ: _}):as) pcharts = a:(updateFieldsCharts as pcharts)
 
 derive instance genericFieldType :: Generic FieldType _
 instance eqFieldType :: Eq FieldType where
@@ -120,12 +107,11 @@ instance decodeFTField :: DecodeJson (Field FieldType) where
         pure $ Haskell {haskell, tag}
       "JSON" -> do
         authors <- data_ .: "authors"
-        charts <- data_ .: "charts"
         desc <- data_ .: "desc"
         query <- data_ .: "query"
         tag <- data_ .: "tag"
         title <- data_ .: "title"
-        pure $ JSON {authors, charts, desc, query, tag, title}
+        pure $ JSON {authors, desc, query, tag, title}
       "Markdown" -> do
         tag <- data_ .: "tag"
         text <- data_ .: "text"
@@ -147,9 +133,8 @@ instance encodeFieldType :: EncodeJson FieldType where
        "haskell" := haskell
     ~> "tag"  := "HaskellField"
     ~> jsonEmptyObject
-  encodeJson (JSON {authors, charts, desc, query, tag, title}) =
+  encodeJson (JSON {authors, desc, query, tag, title}) =
        "authors" := authors
-    ~> "charts"  := charts
     ~> "desc"    := desc
     ~> "query"   := query
     ~> "tag"     := "JsonField"
@@ -171,7 +156,6 @@ defaultJSON :: FieldType
 defaultJSON = JSON defaultJSON'
 defaultJSON' = {
     authors: ""
-  , charts: []
   , desc: ""
   , query: ""
   , tag: "JSONField"
@@ -195,7 +179,6 @@ newtype CorpusInfo =
   CorpusInfo
   { title        :: String
   , authors      :: String
-  , charts       :: Array P.PredefinedChart
   , desc         :: String
   , query        :: String
   , totalRecords :: Int }
@@ -207,9 +190,8 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     desc  <- obj .: "desc"
     query <- obj .: "query"
     authors <- obj .: "authors"
-    charts  <- obj .: "charts"
     let totalRecords = 47361 -- TODO
-    pure $ CorpusInfo {title, authors, charts, desc, query, totalRecords}
+    pure $ CorpusInfo {title, authors, desc, query, totalRecords}
 
 type CorpusData = { corpusId :: Int
                   , corpusNode :: NodePoly Hyperdata -- CorpusInfo
