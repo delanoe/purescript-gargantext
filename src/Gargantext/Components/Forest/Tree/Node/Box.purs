@@ -4,6 +4,7 @@ import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
@@ -411,10 +412,10 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
 
     cpt {action: Link _} _ = do
       pure $ fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
-    cpt {action: Upload, dispatch: d, id, nodeType: GT.NodeList, session} _ = do
-      pure $ uploadTermListView d {id, nodeType: GT.NodeList, session}
-    cpt {action: Upload, dispatch: d, id, nodeType, session} _ = do
-      pure $ uploadFileView d {id, nodeType, session}
+    cpt {action: Upload, dispatch, id, nodeType: GT.NodeList, session} _ = do
+      pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
+    cpt {action: Upload, dispatch, id, nodeType, session} _ = do
+      pure $ uploadFileView {dispatch, id, nodeType, session}
     cpt {action: Download} _ = do
       pure $ fragmentPT "Soon, you will be able to dowload your file here"
     cpt props@{action: SearchBox, search, session} _ = do
