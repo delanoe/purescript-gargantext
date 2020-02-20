@@ -211,4 +211,8 @@ a:focus, a:hover {
   cursor: pointer;
 }
 
+.copy-from-corpus .tree .node {
+  padding-left: 10px;
+}
+
 /*# sourceMappingURL=Login.css.map */

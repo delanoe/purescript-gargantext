@@ -22,7 +22,7 @@ import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar)
 import Gargantext.Components.Data.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Search.SearchBar (searchBar)
@@ -434,6 +434,8 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
         ]
     cpt {action: Add xs, dispatch: d, id, name, nodePopupState: p, nodeType} _ = do
       pure $ createNodeView d {id, name, nodeType} p xs
+    cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
+      pure $ copyFromCorpusView {dispatch, id, nodeType, session}
     cpt _ _ = do
       pure $ H.div {} []
 

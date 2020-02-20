@@ -1,10 +1,10 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Prelude (class Show, Unit, bind, const, discard, map, pure, show, void, ($))
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Effect (Effect)
@@ -15,10 +15,13 @@ import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsText)
 
+import Gargantext.Prelude
+
 import Gargantext.Components.Data.Lang (readLang, Lang(..))
 import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Sessions (Session(..), postWwwUrlencoded, get)
 import Gargantext.Types as GT
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
@@ -43,9 +46,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
       lang     :: R.State (Maybe Lang) <- R.useState' (Just EN)
 
       pure $ H.div {} [
-              H.div {} [ H.text "Upload file!" ]
-
-            , H.div {} [ H.input { type: "file"
+              H.div {} [ H.input { type: "file"
                                  , placeholder: "Choose file"
                                  , on: {change: onChangeContents mContents}
                                  }
@@ -250,9 +251,7 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
       mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
 
       pure $ H.div {} [
-        H.div {} [ H.text "Upload file!" ]
-
-      , H.div {} [ H.input { type: "file"
+        H.div {} [ H.input { type: "file"
                             , placeholder: "Choose file"
                             , on: {change: onChangeContents mContents}
                             }
@@ -270,19 +269,6 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
         contents <- readAsText blob
         liftEffect $ do
           setMContents $ const $ Just $ UploadFileContents contents
-
-    onChangeFileType (fileType /\ setFileType) e = do
-      setFileType $ const
-                  $ unsafePartial
-                  $ fromJust
-                  $ readFileType 
-                  $ R2.unsafeEventValue e
-
-    onChangeLang (lang /\ setLang) e = do
-      setLang $ const
-              $ unsafePartial
-              $ readLang
-              $ R2.unsafeEventValue e
 
 
 type UploadTermButtonProps =
@@ -312,3 +298,96 @@ uploadTermButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadTermButton" cpt
             _ <- dispatch $ UploadFile nodeType CSV contents
             liftEffect $ do
               setMContents $ const $ Nothing
+
+copyFromCorpusView :: Record Props -> R.Element
+copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []
+
+copyFromCorpusViewCpt :: R.Component Props
+copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
+  where
+    cpt {dispatch, id, nodeType, session} _ = do
+      useLoader session loadCorporaTree $
+        \tree ->
+          copyFromCorpusViewLoaded {dispatch, id, nodeType, session, tree}
+
+type CorpusTreeProps =
+  (
+    tree :: FTree
+    | Props
+  )
+
+copyFromCorpusViewLoaded :: Record CorpusTreeProps -> R.Element
+copyFromCorpusViewLoaded props = R.createElement copyFromCorpusViewLoadedCpt props []
+
+copyFromCorpusViewLoadedCpt :: R.Component CorpusTreeProps
+copyFromCorpusViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusViewLoadedCpt" cpt
+  where
+    cpt p@{dispatch, id, nodeType, session, tree} _ = do
+      mCorpusId :: R.State (Maybe ID) <- R.useState' Nothing
+
+      pure $ H.div { className: "copy-from-corpus" } [
+        H.div { className: "tree" } [copyFromCorpusTreeView p]
+
+      , H.div {} [ copyFromCorpusButton { dispatch, id, mCorpusId, nodeType, session } ]
+      ]
+
+    -- onChangeContents :: forall e. R.State (Maybe ID) -> E.SyntheticEvent_ e -> Effect Unit
+    -- onChangeContents (mCorpusId /\ setMCorpusId) e = do
+    --   E.preventDefault e
+    --   E.stopPropagation e
+    --   setMCorpusId $ const $ Just 1
+
+copyFromCorpusTreeView :: Record CorpusTreeProps -> R.Element
+copyFromCorpusTreeView props = R.createElement copyFromCorpusTreeViewCpt props []
+
+copyFromCorpusTreeViewCpt :: R.Component CorpusTreeProps
+copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeViewCpt" cpt
+  where
+    cpt p@{tree: NTree (LNode { name }) ary} _ = do
+      pure $ H.div { className: "node" } ([
+        H.span {} [ H.text name ]
+      ] <> children)
+      where
+        children = map (\c -> copyFromCorpusTreeView (p { tree = c })) ary
+
+type CopyFromCorpusButtonProps =
+  (
+    dispatch :: Action -> Aff Unit
+  , id :: Int
+  , mCorpusId :: R.State (Maybe Int)
+  , nodeType :: GT.NodeType
+  , session :: Session
+  )
+
+copyFromCorpusButton :: Record CopyFromCorpusButtonProps -> R.Element
+copyFromCorpusButton props = R.createElement copyFromCorpusButtonCpt props []
+
+copyFromCorpusButtonCpt :: R.Component CopyFromCorpusButtonProps
+copyFromCorpusButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusButton" cpt
+  where
+    cpt {dispatch, id, mCorpusId: (mCorpusId /\ setMCorpusId), nodeType, session} _ = do
+      R.useEffect' $ do
+        log2 "[copyFromCorpusButton] session" session
+
+      pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Copy" ]
+      where
+        disabled = case mCorpusId of
+          Nothing -> "1"
+          Just _ -> ""
+
+        onClick :: forall e. e -> Effect Unit
+        onClick e = do
+          pure unit
+          -- let corpusId = unsafePartial $ fromJust mCorpusId
+          -- void $ launchAff do
+          --   _ <- dispatch $ UploadFile nodeType CSV contents
+          --   liftEffect $ do
+          --     setMContents $ const $ Nothing
+
+loadCorporaTree :: Session -> Aff FTree
+loadCorporaTree session = getCorporaTree session treeId
+  where
+    Session { treeId } = session
+
+getCorporaTree :: Session -> Int -> Aff FTree
+getCorporaTree session treeId = get session $ GR.NodeAPI GT.Tree (Just treeId) "?type=NodeList&type=NodeCorpus"
