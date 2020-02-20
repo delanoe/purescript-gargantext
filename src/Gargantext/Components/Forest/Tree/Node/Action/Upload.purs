@@ -1,5 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
+import Data.Array as A
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple(..), fst, snd)
@@ -323,19 +324,9 @@ copyFromCorpusViewLoadedCpt :: R.Component CorpusTreeProps
 copyFromCorpusViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusViewLoadedCpt" cpt
   where
     cpt p@{dispatch, id, nodeType, session, tree} _ = do
-      mCorpusId :: R.State (Maybe ID) <- R.useState' Nothing
-
       pure $ H.div { className: "copy-from-corpus" } [
         H.div { className: "tree" } [copyFromCorpusTreeView p]
-
-      , H.div {} [ copyFromCorpusButton { dispatch, id, mCorpusId, nodeType, session } ]
       ]
-
-    -- onChangeContents :: forall e. R.State (Maybe ID) -> E.SyntheticEvent_ e -> Effect Unit
-    -- onChangeContents (mCorpusId /\ setMCorpusId) e = do
-    --   E.preventDefault e
-    --   E.stopPropagation e
-    --   setMCorpusId $ const $ Just 1
 
 copyFromCorpusTreeView :: Record CorpusTreeProps -> R.Element
 copyFromCorpusTreeView props = R.createElement copyFromCorpusTreeViewCpt props []
@@ -343,46 +334,21 @@ copyFromCorpusTreeView props = R.createElement copyFromCorpusTreeViewCpt props [
 copyFromCorpusTreeViewCpt :: R.Component CorpusTreeProps
 copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeViewCpt" cpt
   where
-    cpt p@{tree: NTree (LNode { name }) ary} _ = do
+    cpt p@{id, tree: NTree (LNode { id: sourceId, name, nodeType }) ary} _ = do
       pure $ H.div { className: "node" } ([
-        H.span {} [ H.text name ]
+        H.span { className: "name " <> clickable
+               , on: { click: onClick }
+               } [ H.text name ]
       ] <> children)
       where
         children = map (\c -> copyFromCorpusTreeView (p { tree = c })) ary
-
-type CopyFromCorpusButtonProps =
-  (
-    dispatch :: Action -> Aff Unit
-  , id :: Int
-  , mCorpusId :: R.State (Maybe Int)
-  , nodeType :: GT.NodeType
-  , session :: Session
-  )
-
-copyFromCorpusButton :: Record CopyFromCorpusButtonProps -> R.Element
-copyFromCorpusButton props = R.createElement copyFromCorpusButtonCpt props []
-
-copyFromCorpusButtonCpt :: R.Component CopyFromCorpusButtonProps
-copyFromCorpusButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusButton" cpt
-  where
-    cpt {dispatch, id, mCorpusId: (mCorpusId /\ setMCorpusId), nodeType, session} _ = do
-      R.useEffect' $ do
-        log2 "[copyFromCorpusButton] session" session
-
-      pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Copy" ]
-      where
-        disabled = case mCorpusId of
-          Nothing -> "1"
-          Just _ -> ""
-
-        onClick :: forall e. e -> Effect Unit
-        onClick e = do
-          pure unit
-          -- let corpusId = unsafePartial $ fromJust mCorpusId
-          -- void $ launchAff do
-          --   _ <- dispatch $ UploadFile nodeType CSV contents
-          --   liftEffect $ do
-          --     setMContents $ const $ Nothing
+        validNodeType = (A.elem nodeType [GT.Corpus, GT.NodeList]) && (id /= sourceId)
+        clickable = if validNodeType then "clickable" else ""
+        onClick _ = case validNodeType of
+          false -> pure unit
+          true  -> do
+            log2 "[copyFromCorpusTreeViewCpt] issue copy into" id
+            log2 "[copyFromCorpusTreeViewCpt] issue copy from" sourceId
 
 loadCorporaTree :: Session -> Aff FTree
 loadCorporaTree session = getCorporaTree session treeId
