@@ -5,6 +5,7 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
@@ -14,7 +15,7 @@ import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar)
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
@@ -34,6 +35,9 @@ import URI.Query as Query
 import Web.File.FileReader.Aff (readAsText)
 
 
+type Dispatch = Action -> Aff Unit
+
+
 -- Main Node
 type NodeMainSpanProps =
   ( id            :: ID
@@ -44,7 +48,7 @@ type NodeMainSpanProps =
   , onAsyncTaskFinish :: GT.AsyncTaskWithType -> Effect Unit
   )
 
-nodeMainSpan :: (Action -> Aff Unit)
+nodeMainSpan :: Dispatch
              -> Record NodeMainSpanProps
              -> R.State Boolean
              -> Session
@@ -105,13 +109,14 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
     mNodePopupView _ _ (Nothing /\ _) _ = H.div {} []
     mNodePopupView _ _ _ (Nothing /\ _) = H.div {} []
     mNodePopupView props@{asyncTasks, id, nodeType} true popupOpen (Just position /\ _) =
-      nodePopupView d { id
-                      , action: Nothing
-                      , name: name' props
-                      , nodeType
-                      , position
-                      , session
-                      } popupOpen
+      nodePopupView { id
+                    , dispatch: d
+                    , name: name' props
+                    , nodePopupState: popupOpen
+                    , nodeType
+                    , position
+                    , session
+                    }
 
     dropProps droppedFile isDragOver =
       { className: dropClass droppedFile isDragOver
@@ -182,8 +187,9 @@ mCorpusId _ = Nothing
 -- | START Popup View
 type NodePopupProps =
   ( id       :: ID
-  , action   :: Maybe NodeAction
+  , dispatch :: Dispatch
   , name     :: Name
+  , nodePopupState :: R.State (Maybe NodePopup)
   , nodeType :: GT.NodeType
   , position :: R2.Point
   , session  :: Session
@@ -195,35 +201,34 @@ iconAStyle = { color         : "black"
              , paddingBottom : "6px"
              }
 
-nodePopupView :: (Action -> Aff Unit)
-              -> Record NodePopupProps
-              -> R.State (Maybe NodePopup)
-              -> R.Element
-nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p []
+nodePopupView :: Record NodePopupProps -> R.Element
+nodePopupView p = R.createElement nodePopupCpt p []
+
+nodePopupCpt :: R.Component NodePopupProps
+nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
   where
-    el = R.hooksComponent "NodePopupView" cpt
-    cpt {id, action, name, nodeType, position, session} _ = do
+    cpt p@{nodePopupState: mPop@(Just NodePopup /\ setPopupOpen)} _ = do
       renameBoxOpen <- R.useState' false
-      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {id, name, nodeType, action}
-      search <- R.useState' $ defaultSearch { node_id = Just id }
-      pure $ H.div (tooltipProps position) $
+      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {action: Nothing, id: p.id, name: p.name, nodeType: p.nodeType}
+      search <- R.useState' $ defaultSearch { node_id = Just p.id }
+      pure $ H.div (tooltipProps p.position) $
         [ H.div {id: "arrow"} []
         , H.div { className: "popup-container" }
           [ H.div { className: "panel panel-default" }
             [ H.div {className: ""}
               [ H.div { className : "col-md-11"}
-                [ H.h3 { className: GT.fldr nodeType true} [H.text $ show nodeType]
-                , H.p {className: "text-primary center"} [H.text name]
+                [ H.h3 { className: GT.fldr p.nodeType true} [H.text $ show p.nodeType]
+                , H.p {className: "text-primary center"} [H.text p.name]
                 ]
               ]
-            , panelHeading renameBoxOpen
-            , panelBody    nodePopupState d
-            , panelAction d {id, name, nodeType, action:nodePopup.action, session, search} mPop
+            , panelHeading renameBoxOpen p
+            , panelBody    nodePopupState p
+            , mPanelAction nodePopup.action p search
             ]
           , if nodePopup.action == Just SearchBox then
               H.div {}
                 [
-                  searchIsTexIframe id session search
+                  searchIsTexIframe p search
                 ]
             else
               H.div {} []
@@ -239,16 +244,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
             style: { top: y - 65.0, left: x + 10.0 }
           }
 
-        SettingsBox {edit, doc, buttons} = settingsBox nodeType
-
-        removeCircleGeneral (Just _) setNodePopup = removeCircle setNodePopup
-        removeCircleGeneral Nothing _ = H.div {} []
-        removeCircle setNodePopup =
-          H.div { className: glyphicon "remove-circle"
-                , onClick : setNodePopup $ const {id, name, nodeType, action :Nothing}
-                } []
-
-        panelHeading renameBoxOpen@(open /\ _) =
+        panelHeading renameBoxOpen@(open /\ _) {dispatch: d, id, name, nodeType} =
           H.div {className: "panel-heading"}
                 [ R2.row
                         [ H.div {className: "col-md-8"}
@@ -267,6 +263,9 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
                         ]
                 ]
           where
+            SettingsBox {edit, doc, buttons} = settingsBox nodeType
+
+            editIcon :: R.State Boolean -> R.Element
             editIcon (false /\ setRenameBoxOpen) =
               H.div {className : "col-md-1"}
               [ H.a { className: glyphicon "pencil"
@@ -279,14 +278,31 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
               ]
             editIcon (true /\ _) = H.div {} []
 
-        panelBody nodePopupState d' =
+        panelBody :: R.State (Record ActionState) -> Record NodePopupProps -> R.Element
+        panelBody nodePopupState {dispatch: d, nodeType} =
           H.div {className: "panel-body flex-space-between"}
-                [ H.div {className: "flex-center"} [buttonClick nodePopupState d' doc]
+                [ H.div {className: "flex-center"} [buttonClick {action: doc, state: nodePopupState}]
                 , H.div {className: "flex-center"}
-                        $ map (buttonClick nodePopupState d') buttons
+                        $ map (\t -> buttonClick {action: t, state: nodePopupState}) buttons
                 ]
+          where
+            SettingsBox {edit, doc, buttons} = settingsBox nodeType
 
-        searchIsTexIframe _id _session search@(search' /\ _) =
+        mPanelAction :: Maybe NodeAction -> Record NodePopupProps -> R.State Search -> R.Element
+        mPanelAction Nothing _ _ = H.div {} []
+        mPanelAction (Just a) p search =
+            panelAction {
+                  action: a
+                , dispatch: p.dispatch
+                , id: p.id
+                , name: p.name
+                , nodePopupState: mPop
+                , nodeType: p.nodeType
+                , search
+                , session: p.session
+                }
+
+        searchIsTexIframe {nodeType} search@(search' /\ _) =
           if isIsTex search'.datafield then
             H.div { className: "istex-search panel panel-default" }
             [
@@ -308,36 +324,48 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
               Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
               ]
 
-nodePopupView _ p _ = R.createElement el p []
-  where
-    el = R.hooksComponent "CreateNodeView" cpt
     cpt _ _ = pure $ H.div {} []
 
 
-buttonClick :: R.State { id        :: ID
-                        , name     :: Name
-                        , nodeType :: GT.NodeType
-                        , action   :: Maybe NodeAction
-                        }
-            -> (Action -> Aff Unit)
-            -> NodeAction
-            -> R.Element
-buttonClick (node@{action} /\ setNodePopup) _ todo = H.div {className: "col-md-1"}
-            [ H.a { style: iconAStyle
-                  , className: glyphiconActive (glyphiconNodeAction todo)
-                                               (action == (Just todo)   )
-                  , id: show todo
-                  , title: show todo
-                  , onClick : mkEffectFn1
-                            $ \_ -> setNodePopup
-                            $ const (node { action = action' })
-                }
-              []
-            ]
-              where
-                action' = if action == (Just todo)
-                             then Nothing
-                             else (Just todo)
+type ActionState =
+  (
+    action :: Maybe NodeAction
+  , id :: ID
+  , name :: Name
+  , nodeType :: GT.NodeType
+  )
+
+
+type ButtonClickProps =
+  (
+    action :: NodeAction
+  , state :: R.State (Record ActionState)
+  )
+
+
+buttonClick :: Record ButtonClickProps -> R.Element
+buttonClick p = R.createElement buttonClickCpt p []
+
+buttonClickCpt :: R.Component ButtonClickProps
+buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
+  where
+    cpt {action: todo, state: (node@{action} /\ setNodePopup)} _ = do
+      pure $ H.div {className: "col-md-1"}
+        [ H.a { style: iconAStyle
+              , className: glyphiconActive (glyphiconNodeAction todo)
+                                            (action == (Just todo)   )
+              , id: show todo
+              , title: show todo
+              , onClick : mkEffectFn1
+                        $ \_ -> setNodePopup
+                        $ const (node { action = action' })
+            }
+          []
+        ]
+      where
+        action' = if action == (Just todo)
+                      then Nothing
+                      else (Just todo)
 
 
 -- END Popup View
@@ -352,45 +380,70 @@ type Open = Boolean
 
 type PanelActionProps =
   ( id       :: ID
-  , action   :: Maybe NodeAction
+  , action   :: NodeAction
+  , dispatch :: Dispatch
   , name     :: Name
+  , nodePopupState :: R.State (Maybe NodePopup)
   , nodeType :: GT.NodeType
   , session  :: Session
   , search   :: R.State Search
   )
 
-panelAction :: (Action -> Aff Unit)
-            -> Record PanelActionProps
-            -> R.State (Maybe NodePopup)
-            -> R.Element
-panelAction d {id, name, nodeType, action, session, search} p = case action of
-    (Just (Documentation GT.NodeUser))      -> R.fragment [H.div {style: {margin: "10px"}} [ infoTitle GT.NodeUser
-                                                                 , H.p {} [ H.text "This account is personal"]
-                                                                 , H.p {} [ H.text "See the instances terms of uses."]
-                                                                 ]
-                                                        ]
-    (Just (Documentation GT.FolderPrivate)) -> fragmentPT "This folder and its children are private only!"
-    (Just (Documentation GT.FolderPublic))  -> fragmentPT "Soon, you will be able to build public folders to share your work with the world!"
-    (Just (Documentation GT.FolderShared))  -> fragmentPT "Soon, you will be able to build teams folders to share your work"
-    (Just (Documentation x)) -> fragmentPT $ "More information on" <> show nodeType
+panelAction :: Record PanelActionProps -> R.Element
+panelAction p = R.createElement panelActionCpt p []
 
-    (Just (Link _))                      -> fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
-    (Just Upload)                        -> uploadFileView d {id, nodeType, session}
-    (Just Download)                      -> fragmentPT "Soon, you will be able to dowload your file here"
-
-    (Just SearchBox)         -> R.fragment [ H.p {"style": {"margin" :"10px"}} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
-                                           , searchBar {langs: allLangs, onSearch, search, session}
-                                           ]
-    (Just Delete)            -> case nodeType of
-        GT.NodeUser -> R.fragment [ H.div {style: {margin: "10px"}} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]]
-        _        -> R.fragment [ H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."]), reallyDelete d]
-    (Just (Add xs))          -> createNodeView d {id, name, nodeType} p xs
-    _                        -> H.div {} []
+panelActionCpt :: R.Component PanelActionProps
+panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
   where
+    cpt {action: Documentation GT.NodeUser} _ = do
+      pure $ R.fragment [
+        H.div {style: {margin: "10px"}} [ infoTitle GT.NodeUser
+                                        , H.p {} [ H.text "This account is personal"]
+                                        , H.p {} [ H.text "See the instances terms of uses."]
+                                        ]
+        ]
+    cpt {action: Documentation GT.FolderPrivate} _ = do
+      pure $ fragmentPT "This folder and its children are private only!"
+    cpt {action: Documentation GT.FolderPublic} _ = do
+      pure $ fragmentPT "Soon, you will be able to build public folders to share your work with the world!"
+    cpt {action: Documentation GT.FolderShared} _ = do
+      pure $ fragmentPT "Soon, you will be able to build teams folders to share your work"
+    cpt {action: Documentation x, nodeType} _ = do
+      pure $ fragmentPT $ "More information on" <> show nodeType
+
+    cpt {action: Link _} _ = do
+      pure $ fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
+    cpt {action: Upload, dispatch, id, nodeType: GT.NodeList, session} _ = do
+      pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
+    cpt {action: Upload, dispatch, id, nodeType, session} _ = do
+      pure $ uploadFileView {dispatch, id, nodeType, session}
+    cpt {action: Download} _ = do
+      pure $ fragmentPT "Soon, you will be able to dowload your file here"
+    cpt props@{action: SearchBox, search, session} _ = do
+      pure $ R.fragment [
+          H.p {"style": {"margin" :"10px"}} [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
+        , searchBar {langs: allLangs, onSearch: onSearch props, search, session}
+      ]
+    cpt {action: Delete, nodeType: GT.NodeUser} _ = do
+      pure $ R.fragment [
+        H.div {style: {margin: "10px"}} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]
+      ]
+    cpt {action: Delete, dispatch: d} _ = do
+      pure $ R.fragment [
+        H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."])
+        , reallyDelete d
+        ]
+    cpt {action: Add xs, dispatch: d, id, name, nodePopupState: p, nodeType} _ = do
+      pure $ createNodeView d {id, name, nodeType} p xs
+    cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
+      pure $ copyFromCorpusView {dispatch, id, nodeType, session}
+    cpt _ _ = do
+      pure $ H.div {} []
+
     fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 
-    onSearch :: GT.AsyncTaskWithType -> Effect Unit
-    onSearch task = do
+    onSearch :: Record PanelActionProps -> GT.AsyncTaskWithType -> Effect Unit
+    onSearch {dispatch: d, nodePopupState: p} task = do
       _ <- launchAff $ d (SearchQuery task)
       -- close popup
       snd p $ const Nothing
@@ -402,7 +455,7 @@ infoTitle nt = H.div {style: {margin: "10px"}} [ H.h3 {} [H.text "Documentation 
                         , H.h3 {className: GT.fldr nt true} [ H.text $ show nt ]
                         ]
 
-reallyDelete :: (Action -> Aff Unit) -> R.Element
+reallyDelete :: Dispatch -> R.Element
 reallyDelete d = H.div {className: "panel-footer"}
             [ H.a { type: "button"
                   , className: "btn glyphicon glyphicon-trash"

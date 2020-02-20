@@ -1,12 +1,14 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Prelude (class Show, Unit, bind, const, discard, map, pure, show, void, ($))
+import Data.Array as A
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
+import Effect (Effect)
 import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as E
 import Reactix as R
@@ -14,36 +16,38 @@ import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsText)
 
+import Gargantext.Prelude
+
 import Gargantext.Components.Data.Lang (readLang, Lang(..))
 import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Sessions (Session(..), postWwwUrlencoded, get)
 import Gargantext.Types as GT
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 
 type Props =
-  ( id :: Int
+  ( dispatch :: Action -> Aff Unit
+  , id :: Int
   , nodeType :: GT.NodeType
   , session :: Session
   )
 
 
-uploadFileView :: (Action -> Aff Unit) -> Record Props -> R.Element
-uploadFileView d props = R.createElement (uploadFileViewCpt d) props []
+uploadFileView :: Record Props -> R.Element
+uploadFileView props = R.createElement uploadFileViewCpt props []
 
-uploadFileViewCpt :: (Action -> Aff Unit) -> R.Component Props
-uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
+uploadFileViewCpt :: R.Component Props
+uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
   where
-    cpt {id, nodeType} _ = do
+    cpt {dispatch: d, id, nodeType} _ = do
       mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
       fileType :: R.State FileType     <- R.useState' CSV
       lang     :: R.State (Maybe Lang) <- R.useState' (Just EN)
 
       pure $ H.div {} [
-              H.div {} [ H.text "Upload file!" ]
-
-            , H.div {} [ H.input { type: "file"
+              H.div {} [ H.input { type: "file"
                                  , placeholder: "Choose file"
                                  , on: {change: onChangeContents mContents}
                                  }
@@ -75,6 +79,7 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
     renderOptionLang :: Lang -> R.Element
     renderOptionLang opt = H.option {} [ H.text $ show opt ]
 
+    onChangeContents :: forall e. R.State (Maybe UploadFileContents) -> E.SyntheticEvent_ e -> Effect Unit
     onChangeContents (mContents /\ setMContents) e = do
       blob <- R2.inputFileBlob e
       E.preventDefault e
@@ -84,6 +89,7 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
         liftEffect $ do
           setMContents $ const $ Just $ UploadFileContents contents
 
+    onChangeFileType :: forall e. R.State FileType -> e -> Effect Unit
     onChangeFileType (fileType /\ setFileType) e = do
       setFileType $ const
                   $ unsafePartial
@@ -91,6 +97,7 @@ uploadFileViewCpt d = R.hooksComponent "UploadFileView" cpt
                   $ readFileType 
                   $ R2.unsafeEventValue e
 
+    onChangeLang :: forall e. R.State (Maybe Lang) -> e -> Effect Unit
     onChangeLang (lang /\ setLang) e = do
       setLang $ const
               $ unsafePartial
@@ -234,3 +241,119 @@ uploadFile session nodeType id fileType (UploadFileContents fileContents) = do
         Tuple "_wf_data" (Just fileContents)
       , Tuple "_wf_filetype" (Just $ show fileType)
       ]
+
+uploadTermListView :: Record Props -> R.Element
+uploadTermListView props = R.createElement uploadTermListViewCpt props []
+
+uploadTermListViewCpt :: R.Component Props
+uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
+  where
+    cpt {dispatch, id, nodeType} _ = do
+      mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
+
+      pure $ H.div {} [
+        H.div {} [ H.input { type: "file"
+                            , placeholder: "Choose file"
+                            , on: {change: onChangeContents mContents}
+                            }
+                  ]
+
+      , H.div {} [ uploadTermButton { dispatch, id, mContents, nodeType } ]
+      ]
+
+    onChangeContents :: forall e. R.State (Maybe UploadFileContents) -> E.SyntheticEvent_ e -> Effect Unit
+    onChangeContents (mContents /\ setMContents) e = do
+      blob <- R2.inputFileBlob e
+      E.preventDefault e
+      E.stopPropagation e
+      void $ launchAff do
+        contents <- readAsText blob
+        liftEffect $ do
+          setMContents $ const $ Just $ UploadFileContents contents
+
+
+type UploadTermButtonProps =
+  (
+    dispatch :: Action -> Aff Unit
+  , id :: Int
+  , mContents :: R.State (Maybe UploadFileContents)
+  , nodeType :: GT.NodeType
+  )
+
+uploadTermButton :: Record UploadTermButtonProps -> R.Element
+uploadTermButton props = R.createElement uploadTermButtonCpt props []
+
+uploadTermButtonCpt :: R.Component UploadTermButtonProps
+uploadTermButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadTermButton" cpt
+  where
+    cpt {dispatch, id, mContents: (mContents /\ setMContents), nodeType} _ = do
+        pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
+      where
+        disabled = case mContents of
+          Nothing -> "1"
+          Just _ -> ""
+
+        onClick e = do
+          let contents = unsafePartial $ fromJust mContents
+          void $ launchAff do
+            _ <- dispatch $ UploadFile nodeType CSV contents
+            liftEffect $ do
+              setMContents $ const $ Nothing
+
+copyFromCorpusView :: Record Props -> R.Element
+copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []
+
+copyFromCorpusViewCpt :: R.Component Props
+copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
+  where
+    cpt {dispatch, id, nodeType, session} _ = do
+      useLoader session loadCorporaTree $
+        \tree ->
+          copyFromCorpusViewLoaded {dispatch, id, nodeType, session, tree}
+
+type CorpusTreeProps =
+  (
+    tree :: FTree
+    | Props
+  )
+
+copyFromCorpusViewLoaded :: Record CorpusTreeProps -> R.Element
+copyFromCorpusViewLoaded props = R.createElement copyFromCorpusViewLoadedCpt props []
+
+copyFromCorpusViewLoadedCpt :: R.Component CorpusTreeProps
+copyFromCorpusViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusViewLoadedCpt" cpt
+  where
+    cpt p@{dispatch, id, nodeType, session, tree} _ = do
+      pure $ H.div { className: "copy-from-corpus" } [
+        H.div { className: "tree" } [copyFromCorpusTreeView p]
+      ]
+
+copyFromCorpusTreeView :: Record CorpusTreeProps -> R.Element
+copyFromCorpusTreeView props = R.createElement copyFromCorpusTreeViewCpt props []
+
+copyFromCorpusTreeViewCpt :: R.Component CorpusTreeProps
+copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeViewCpt" cpt
+  where
+    cpt p@{id, tree: NTree (LNode { id: sourceId, name, nodeType }) ary} _ = do
+      pure $ H.div { className: "node" } ([
+        H.span { className: "name " <> clickable
+               , on: { click: onClick }
+               } [ H.text name ]
+      ] <> children)
+      where
+        children = map (\c -> copyFromCorpusTreeView (p { tree = c })) ary
+        validNodeType = (A.elem nodeType [GT.Corpus, GT.NodeList]) && (id /= sourceId)
+        clickable = if validNodeType then "clickable" else ""
+        onClick _ = case validNodeType of
+          false -> pure unit
+          true  -> do
+            log2 "[copyFromCorpusTreeViewCpt] issue copy into" id
+            log2 "[copyFromCorpusTreeViewCpt] issue copy from" sourceId
+
+loadCorporaTree :: Session -> Aff FTree
+loadCorporaTree session = getCorporaTree session treeId
+  where
+    Session { treeId } = session
+
+getCorporaTree :: Session -> Int -> Aff FTree
+getCorporaTree session treeId = get session $ GR.NodeAPI GT.Tree (Just treeId) "?type=NodeList&type=NodeCorpus"
