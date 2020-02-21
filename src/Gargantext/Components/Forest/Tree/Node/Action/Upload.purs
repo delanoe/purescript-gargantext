@@ -335,14 +335,16 @@ copyFromCorpusTreeViewCpt :: R.Component CorpusTreeProps
 copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeViewCpt" cpt
   where
     cpt p@{id, tree: NTree (LNode { id: sourceId, name, nodeType }) ary} _ = do
-      pure $ H.div { className: "node" } ([
-        H.span { className: "name " <> clickable
-               , on: { click: onClick }
-               } [ H.text name ]
-      ] <> children)
+      pure $ {- H.div {} [ H.h5 { className: GT.fldr nodeType true} []
+      , -} H.div { className: "node" } ([ H.span { className: "name " <> clickable
+                                                              , on: { click: onClick }
+                                                              } [ H.text name ]
+
+                                                     ] <> children)
+                      -- ]
       where
         children = map (\c -> copyFromCorpusTreeView (p { tree = c })) ary
-        validNodeType = (A.elem nodeType [GT.Corpus, GT.NodeList]) && (id /= sourceId)
+        validNodeType = (A.elem nodeType [GT.NodeList]) && (id /= sourceId)
         clickable = if validNodeType then "clickable" else ""
         onClick _ = case validNodeType of
           false -> pure unit
@@ -356,4 +358,12 @@ loadCorporaTree session = getCorporaTree session treeId
     Session { treeId } = session
 
 getCorporaTree :: Session -> Int -> Aff FTree
-getCorporaTree session treeId = get session $ GR.NodeAPI GT.Tree (Just treeId) "?type=NodeList&type=NodeCorpus"
+getCorporaTree session treeId = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
+  where
+    nodeTypes = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" [ GT.FolderPrivate
+                                                             , GT.FolderShared
+                                                             , GT.Team
+                                                             , GT.FolderPublic
+                                                             , GT.Folder
+                                                             , GT.Corpus
+                                                             , GT.NodeList]
