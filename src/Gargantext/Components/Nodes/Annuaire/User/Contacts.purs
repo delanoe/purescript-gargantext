@@ -14,10 +14,7 @@ import Data.String (joinWith)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Gargantext.Components.Loader (loader)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
-  ( Contact(..), ContactData, ContactTouch(..), ContactWhere(..)
-  , ContactWho(..), HyperData(..), HyperdataContact(..) )
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
@@ -41,6 +38,7 @@ display title elems =
         , H.div { className: "col-md-8"} elems
         ]]]]
 
+getFirstName :: Maybe ContactWho -> String
 getFirstName obj = fromMaybe "Empty title" $ getFirstName' <$> obj
 getFirstName' = fromMaybe "Empty first name" <<< _.firstName <<< unwrap
 
@@ -96,23 +94,34 @@ getMail' :: ContactTouch -> String
 getMail' = fromMaybe "Empty mail" <<< _.mail <<< unwrap
 
 -- | TODO format data in better design (UI) shape
-contactInfos :: HyperdataContact -> Array R.Element
-contactInfos (HyperdataContact {who:who, ou:ou}) = item <$> items
+contactInfos :: HyperdataUser -> Array R.Element
+contactInfos (HyperdataUser { shared }) = item <$> contactInfoItems shared
   where
-    items =
-      [ "Last Name"     /\ getLastName who
-      , "First Name"    /\ getFirstName who
-      , "Organisation"  /\ getOrga ou
-      , "Lab/Team/Dept" /\ getOrga ou
-      , "Office"        /\ getOffice ou
-      , "City"          /\ getCity ou
-      , "Country"       /\ getCountry ou
-      , "Role"          /\ getRole ou
-      , "Phone"         /\ getPhone ou
-      , "Mail"          /\ getMail ou ]
     item (name /\ value) =
       H.li { className: "list-group-item" }
         (infoRender (name /\ (" " <> value)))
+contactInfoItems Nothing =
+  [ "Last Name"     /\ "Empty Last Name"
+  , "First Name"    /\ "Empty First Name"
+  , "Organisation"  /\ "Empty Organisation"
+  , "Lab/Team/Dept" /\ "Empty Lab/Team/Dept"
+  , "Office"        /\ "Empty Office"
+  , "City"          /\ "Empty City"
+  , "Country"       /\ "Empty Country"
+  , "Role"          /\ "Empty Role"
+  , "Phone"         /\ "Empty Phone"
+  , "Mail"          /\ "Empty Mail" ]
+contactInfoItems (Just (HyperdataContact {who:who, ou:ou})) =
+  [ "Last Name"     /\ getLastName who
+  , "First Name"    /\ getFirstName who
+  , "Organisation"  /\ getOrga ou
+  , "Lab/Team/Dept" /\ getOrga ou
+  , "Office"        /\ getOffice ou
+  , "City"          /\ getCity ou
+  , "Country"       /\ getCountry ou
+  , "Role"          /\ getRole ou
+  , "Phone"         /\ getPhone ou
+  , "Mail"          /\ getMail ou ]
 
 listInfo :: Tuple String String -> R.Element
 listInfo s = listElement $ infoRender s
@@ -131,10 +140,11 @@ userLayout :: Record LayoutProps -> R.Element
 userLayout props = R.createElement userLayoutCpt props []
 
 userLayoutCpt :: R.Component LayoutProps
-userLayoutCpt = R.staticComponent "G.C.Nodes.Annuaire.User.Contacts.userLayout" cpt
+userLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.userLayout" cpt
   where
-    cpt {frontends, nodeId, session} _ =
-      loader nodeId (getContact session) $
+    cpt {frontends, nodeId, session} _ = do
+      --loader nodeId (getContact session) $
+      useLoader nodeId (getContact session) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
           [ display (fromMaybe "no name" name) (contactInfos hyperdata)
@@ -143,7 +153,7 @@ userLayoutCpt = R.staticComponent "G.C.Nodes.Annuaire.User.Contacts.userLayout" 
 -- | toUrl to get data
 getContact :: Session -> Int -> Aff ContactData
 getContact session id = do
-  contactNode <- get session $ Routes.NodeAPI NodeContact (Just id) ""
+  contactNode <- get session $ Routes.NodeAPI Node (Just id) ""
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of

@@ -17,7 +17,7 @@ newtype Contact =
   , parentId :: Maybe Int
   , name :: Maybe String
   , date :: Maybe String
-  , hyperdata :: HyperdataContact
+  , hyperdata :: HyperdataUser
   }
 
 derive instance newtypeContact :: Newtype Contact _
@@ -100,6 +100,18 @@ instance decodeContactTouch :: DecodeJson ContactTouch
       phone <- obj .:! "phone"
       url   <- obj .:! "url"
       pure $ ContactTouch {mail, phone, url}
+
+
+newtype HyperdataUser =
+  HyperdataUser { shared :: Maybe HyperdataContact }
+derive instance newtypeHyperdataUser :: Newtype HyperdataUser _
+
+instance decodeHyperdataUser :: DecodeJson HyperdataUser
+  where
+    decodeJson json = do
+      obj <- decodeJson json
+      shared            <- obj .:! "shared"
+      pure $ HyperdataUser { shared }
 
 
 newtype HyperdataContact =
