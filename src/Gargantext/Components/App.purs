@@ -58,11 +58,11 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
           Home  -> forested $ homeLayout LL_EN
           Login -> login { sessions, backends, visible: showLogin }
           --Folder sid _      -> withSession sid $ \_ -> forested (folder {})
-          Folder sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          FolderPublic sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          FolderShared sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          Corpus sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          Folder sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          FolderPublic sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          FolderShared sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          Corpus sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
           Texts sid nodeId  -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
           Lists sid nodeId  -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
           Dashboard sid nodeId  -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
