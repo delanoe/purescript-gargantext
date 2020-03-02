@@ -8,12 +8,12 @@ import Data.Array (head)
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Tuple (Tuple(..), fst, snd)
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested (Tuple3, (/\))
 import Data.Newtype (unwrap)
 import Data.String (joinWith)
 import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -23,7 +23,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Ends (Frontends)
-import Gargantext.Sessions (Session, get)
+import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 
@@ -43,123 +43,68 @@ display title elems =
         , H.div { className: "col-md-8"} elems
         ]]]]
 
-getFirstName :: Maybe ContactWho -> String
-getFirstName obj = fromMaybe "Empty title" $ getFirstName' <$> obj
-getFirstName' = fromMaybe "Empty first name" <<< _.firstName <<< unwrap
-
-getLastName obj = fromMaybe "Empty title" $ getLastName' <$> obj
-getLastName' = fromMaybe "Empty last name"  <<< _.lastName <<< unwrap
-
--- | ContactWhere infos
--- TODO factor below
-getRole :: Array ContactWhere -> String
-getRole = maybe "Empty Contact-Where" getRole' <<< head
-  where
-    getRole' = fromMaybe "Empty Role" <<< _.role <<< unwrap
-
-getOrga :: Array ContactWhere -> String
-getOrga = maybe "Emtpy Contact-Where" getOrga' <<< head
-  where
-    getOrga' :: ContactWhere -> String
-    getOrga' obj = joinWith ", " $ (\(ContactWhere {organization: o}) ->o) obj
-
-getDept :: Array ContactWhere -> String
-getDept = maybe "Empty Department" getDept' <<< head
-  where
-    getDept' :: ContactWhere -> String
-    getDept' obj = joinWith ", " $ (\(ContactWhere {labTeamDepts: l}) ->l) obj
-
-getOffice :: Array ContactWhere -> String
-getOffice = fromMaybe "Empty Office"
-          <<< maybe Nothing (\(ContactWhere {office:x}) -> x)
-          <<< head
-
-getCity :: Array ContactWhere -> String
-getCity = fromMaybe "Empty City"
-          <<< maybe Nothing (\(ContactWhere {city:x}) -> x)
-          <<< head
-
-getCountry :: Array ContactWhere -> String
-getCountry = fromMaybe "Empty Country"
-          <<< maybe Nothing (\(ContactWhere {country:x}) -> x)
-          <<< head
-
--- | ContactWhere / Touch infos
-getTouch :: Array ContactWhere -> Maybe ContactTouch
-getTouch = maybe Nothing (\(ContactWhere {touch}) -> touch) <<< head
-
-getPhone :: Array ContactWhere -> String
-getPhone obj = fromMaybe "Empty touch info" $ getPhone' <$> (getTouch obj)
-getPhone' :: ContactTouch -> String
-getPhone' = fromMaybe "Empty phone" <<< _.phone <<< unwrap
-
-getMail :: Array ContactWhere -> String
-getMail obj = fromMaybe "Empty info" $ getMail' <$> (getTouch obj)
-getMail' :: ContactTouch -> String
-getMail' = fromMaybe "Empty mail" <<< _.mail <<< unwrap
-
 -- | TODO format data in better design (UI) shape
-contactInfos :: HyperdataUser  -> (HyperdataUser -> Effect Unit) -> Array R.Element
-contactInfos h@(HyperdataUser { shared }) onUpdateHyperdata =
-  (item <$> contactInfoItems shared)
-   <> [ contactInfoItem {hyperdata: h, lens: _shared <<< _who <<< _lastName, onUpdateHyperdata} ]
+contactInfos :: HyperdataUser -> (HyperdataUser -> Effect Unit) -> Array R.Element
+contactInfos h onUpdateHyperdata = item <$> contactInfoItems
   where
-    item (name /\ value) =
-      H.li { className: "list-group-item" }
-        (infoRender (name /\ (" " <> value)))
+    item {label, defaultVal, lens} =
+      contactInfoItem { hyperdata: h
+                      , label
+                      , lens
+                      , onUpdateHyperdata
+                      , placeholder: defaultVal }
 
-contactInfoItems :: Maybe HyperdataContact -> Array (Tuple String String)
-contactInfoItems Nothing =
-  [ "Last Name"     /\ "Empty Last Name"
-  , "First Name"    /\ "Empty First Name"
-  , "Organisation"  /\ "Empty Organisation"
-  , "Lab/Team/Dept" /\ "Empty Lab/Team/Dept"
-  , "Office"        /\ "Empty Office"
-  , "City"          /\ "Empty City"
-  , "Country"       /\ "Empty Country"
-  , "Role"          /\ "Empty Role"
-  , "Phone"         /\ "Empty Phone"
-  , "Mail"          /\ "Empty Mail" ]
-contactInfoItems (Just (HyperdataContact {who:who, ou:ou})) =
-  [ "Last Name"     /\ getLastName who
-  , "First Name"    /\ getFirstName who
-  , "Organisation"  /\ getOrga ou
-  , "Lab/Team/Dept" /\ getOrga ou
-  , "Office"        /\ getOffice ou
-  , "City"          /\ getCity ou
-  , "Country"       /\ getCountry ou
-  , "Role"          /\ getRole ou
-  , "Phone"         /\ getPhone ou
-  , "Mail"          /\ getMail ou ]
+contactInfoItems :: Array {label:: String, defaultVal:: String, lens:: HyperdataUserLens}
+contactInfoItems =
+  [ {label: "Last Name", defaultVal: "Empty Last Name", lens: _shared <<< _who <<< _lastName}
+  , {label: "First Name", defaultVal: "Empty First Name", lens: _shared <<< _who <<< _firstName}
+  , {label: "Organisation", defaultVal: "Empty Organisation", lens: _shared <<< _ouFirst <<< _organizationJoinComma}
+  , {label: "Lab/Team/Dept", defaultVal: "Empty Lab/Team/Dept", lens: _shared <<< _ouFirst <<< _labTeamDeptsJoinComma}
+  , {label: "Office", defaultVal: "Empty Office", lens: _shared <<< _ouFirst <<< _office}
+  , {label: "City", defaultVal: "Empty City", lens: _shared <<< _ouFirst <<< _city}
+  , {label: "Country", defaultVal: "Empty Country", lens: _shared <<< _ouFirst <<< _country}
+  , {label: "Role", defaultVal: "Empty Role", lens: _shared <<< _ouFirst <<< _role}
+  , {label: "Phone", defaultVal: "Empty Phone", lens: _shared <<< _ouFirst <<< _touch <<< _phone}
+  , {label: "Mail", defaultVal: "Empty Mail", lens: _shared <<< _ouFirst <<< _touch <<< _mail} ]
 
-type HyperdataUserLens = L.Lens' HyperdataUser String
+type HyperdataUserLens = L.ALens' HyperdataUser String
 
 type ContactInfoItemProps =
   (
     hyperdata :: HyperdataUser
+  , label :: String
   , lens :: HyperdataUserLens
   , onUpdateHyperdata :: HyperdataUser -> Effect Unit
+  , placeholder :: String
   )
 
 contactInfoItem :: Record ContactInfoItemProps -> R.Element
 contactInfoItem props = R.createElement contactInfoItemCpt props []
 
 contactInfoItemCpt :: R.Component ContactInfoItemProps
---contactInfoItemCpt :: forall r. R.Component ( lens :: L.Lens' HyperdataUser String | r )
 contactInfoItemCpt = R.hooksComponent "G.C.N.A.U.C.contactInfoItem" cpt
   where
-    cpt {hyperdata, lens, onUpdateHyperdata} _ = do
+    cpt {hyperdata, label, lens, onUpdateHyperdata, placeholder} _ = do
       isEditing <- R.useState' false
-      let value = (L.view lens hyperdata) :: String
+      let value = (L.view cLens hyperdata) :: String
       valueRef <- R.useRef value
 
       pure $ H.li { className: "list-group-item" } [
-        item isEditing valueRef
+          H.span { className: "badge badge-default badge-pill"} [ H.text label ]
+        , item isEditing valueRef
       ]
       where
+        cLens = L.cloneLens lens
+        usePlaceholder valueRef =
+          if R.readRef valueRef == "" then
+            Tuple true placeholder
+          else
+            Tuple false $ R.readRef valueRef
         item (false /\ setIsEditing) valueRef =
           H.span {} [
-              H.text $ R.readRef valueRef
+              H.span { className: if (fst $ usePlaceholder valueRef) then "text-muted" else "" } [
+                H.text $ snd $ usePlaceholder valueRef
+              ]
             , H.span { className: "fa fa-pencil"
                      , on: {click: onClick} } []
           ]
@@ -169,15 +114,16 @@ contactInfoItemCpt = R.hooksComponent "G.C.N.A.U.C.contactInfoItem" cpt
           H.span {} [
               H.input { className: "form-control"
                       , defaultValue: R.readRef valueRef
-                      , on: {change: \e -> R.setRef valueRef $ R2.unsafeEventValue e} }
+                      , on: {change: \e -> R.setRef valueRef $ R2.unsafeEventValue e}
+                      , placeholder }
             , H.span { className: "fa fa-floppy-o"
                      , on: {click: onClick} } []
           ]
           where
             onClick _ = do
               setIsEditing $ const false
-              -- let newHyperdata = (L.over lens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
-              -- onUpdateHyperdata newHyperdata
+              let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
+              onUpdateHyperdata newHyperdata
 
 listInfo :: Tuple String String -> R.Element
 listInfo s = listElement $ infoRender s
@@ -209,6 +155,8 @@ userLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.userLayout" c
         onUpdateHyperdata :: HyperdataUser -> Effect Unit
         onUpdateHyperdata hd = do
           log2 "[onUpdateHyperdata] hd" hd
+          launchAff_ $ do
+            saveContactHyperdata session nodeId hd
 
 -- | toUrl to get data
 getContact :: Session -> Int -> Aff ContactData
@@ -222,6 +170,10 @@ getContact session id = do
   --  Nothing ->
   --    throwError $ error "Missing default list"
   pure {contactNode, defaultListId: 424242}
+
+saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff Int
+saveContactHyperdata session id h = do
+  put session (Routes.NodeAPI Node (Just id) "") h
 
 
 type AnnuaireLayoutProps =
