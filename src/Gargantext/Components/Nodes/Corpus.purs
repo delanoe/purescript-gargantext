@@ -36,10 +36,16 @@ type Props = (
 
 type Reload = R.State Int
 
-corpusLayout :: Record Props -> R.Element
+type KeyProps =
+  (
+    key :: String
+    | Props
+  )
+
+corpusLayout :: Record KeyProps -> R.Element
 corpusLayout props = R.createElement corpusLayoutCpt props []
 
-corpusLayoutCpt :: R.Component Props
+corpusLayoutCpt :: R.Component KeyProps
 corpusLayoutCpt = R.hooksComponent "G.C.N.C.corpusLayout" cpt
   where
     cpt {nodeId, session} _ = do
