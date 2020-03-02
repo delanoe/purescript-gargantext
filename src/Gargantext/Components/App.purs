@@ -57,7 +57,11 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
         case fst route of
           Home  -> forested $ homeLayout LL_EN
           Login -> login { sessions, backends, visible: showLogin }
-          Folder sid _      -> withSession sid $ \_ -> forested (folder {})
+          --Folder sid _      -> withSession sid $ \_ -> forested (folder {})
+          Folder sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          FolderPublic sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          FolderShared sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Corpus sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId  -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
           Lists sid nodeId  -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }

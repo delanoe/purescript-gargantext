@@ -8,6 +8,9 @@ data AppRoute
   = Home
   | Login
   | Folder SessionId Int
+  | FolderPrivate SessionId Int
+  | FolderPublic SessionId Int
+  | FolderShared SessionId Int
   | Corpus SessionId  Int
     | Document       SessionId Int Int
     | CorpusDocument SessionId Int Int Int
@@ -40,6 +43,9 @@ instance showAppRoute :: Show AppRoute where
   show Home                     = "Home"
   show Login                    = "Login"
   show (Folder s i)             = "Folder"   <> show i <> " (" <> show s <> ")"
+  show (FolderPrivate s i)      = "FolderPrivate"   <> show i <> " (" <> show s <> ")"
+  show (FolderPublic s i)       = "FolderPublic"   <> show i <> " (" <> show s <> ")"
+  show (FolderShared s i)       = "FolderShared"   <> show i <> " (" <> show s <> ")"
   show (Corpus s i)             = "Corpus"   <> show i <> " (" <> show s <> ")"
   show (Document _ s i)         = "Document" <> show i <> " (" <> show s <> ")"
   show (CorpusDocument s _ _ i) = "CorpusDocument" <> show i <> " (" <> show s <> ")"
@@ -55,6 +61,9 @@ appPath :: AppRoute -> String
 appPath Home                 = ""
 appPath Login                = "login"
 appPath (Folder s i)         = "folder/"     <> show s <> "/" <> show i
+appPath (FolderPrivate s i)  = "folderPrivate/"     <> show s <> "/" <> show i
+appPath (FolderPublic s i)   = "folderPublic/"     <> show s <> "/" <> show i
+appPath (FolderShared s i)   = "folderShared/"     <> show s <> "/" <> show i
 appPath (CorpusDocument s c l i) = "corpus/" <> show s <> "/" <> show c <> "/list/" <> show l <> "/document/" <> show i
 appPath (Corpus s i)         = "corpus/"     <> show s <> "/" <> show i
 appPath (Document s l i)     = "list/"       <> show s <> "/" <> show l <> "/document/" <> show i
