@@ -83,6 +83,7 @@ settingsBox NodeUser = SettingsBox {
   , edit : false
   , doc  : Documentation NodeUser
   , buttons : [ SearchBox
+              , Add [FolderPrivate, FolderShared, FolderPublic]
               , Delete
               ]
   }
@@ -115,7 +116,8 @@ settingsBox FolderShared = SettingsBox {
     show: true
   , edit : true
   , doc  : Documentation FolderShared
-  , buttons : [ Add [Team]
+  , buttons : [ Add [Team, FolderShared]
+              , Delete
               ]
   }
 
