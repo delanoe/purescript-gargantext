@@ -3,6 +3,7 @@ module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types where
 import Prelude
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
+import Data.Array as A
 import Data.Lens
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Map (Map)
@@ -95,6 +96,20 @@ instance decodeContactWhere :: DecodeJson ContactWhere
       let l = fromMaybe [] labTeamDepts
 
       pure $ ContactWhere {organization:o, labTeamDepts:l, role, office, country, city, touch, entry, exit}
+
+defaultContactWhere :: ContactWhere
+defaultContactWhere =
+  ContactWhere {
+    organization: []
+  , labTeamDepts: []
+  , role: Nothing
+  , office: Nothing
+  , country: Nothing
+  , city: Nothing
+  , touch: Nothing
+  , entry: Nothing
+  , exit: Nothing
+  }
 
 newtype ContactTouch =
   ContactTouch
@@ -210,19 +225,27 @@ type ContactData = {contactNode :: Contact, defaultListId :: Int}
 _shared :: Lens' HyperdataUser HyperdataContact
 _shared = lens getter setter
   where
-    getter (HyperdataUser h@{shared: Nothing}) = defaultHyperdataContact
-    getter (HyperdataUser h@{shared: Just shared'}) = shared'
+    getter (HyperdataUser h@{shared}) = fromMaybe defaultHyperdataContact shared
     setter (HyperdataUser h) c = HyperdataUser $ h { shared = Just c }
 
 _who :: Lens' HyperdataContact ContactWho
 _who = lens getter setter
   where
-    getter (HyperdataContact hc@{who: Nothing}) = defaultContactWho
-    getter (HyperdataContact hc@{who: Just who'}) = who'
+    getter (HyperdataContact hc@{who}) = fromMaybe defaultContactWho who
     setter (HyperdataContact hc) w = HyperdataContact $ hc { who = Just w }
+_ouFirst :: Lens' HyperdataContact ContactWhere
+_ouFirst = lens getter setter
+  where
+    getter (HyperdataContact hc@{ou}) = fromMaybe defaultContactWhere $ A.head ou
+    setter (HyperdataContact hc@{ou}) o = HyperdataContact $ hc { ou = fromMaybe [o] $ A.updateAt 0 o ou }
+
 _lastName :: Lens' ContactWho String
 _lastName = lens getter setter
   where
-    getter (ContactWho cw@{lastName: Nothing}) = ""
-    getter (ContactWho cw@{lastName: Just ln}) = ln
+    getter (ContactWho cw@{lastName}) = fromMaybe "" lastName
     setter (ContactWho cw) ln = ContactWho $ cw { lastName = Just ln }
+_firstName :: Lens' ContactWho String
+_firstName = lens getter setter
+  where
+    getter (ContactWho cw@{firstName}) = fromMaybe "" firstName
+    setter (ContactWho cw) fn = ContactWho $ cw { firstName = Just fn }

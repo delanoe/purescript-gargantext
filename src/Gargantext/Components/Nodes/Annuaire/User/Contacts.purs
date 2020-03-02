@@ -8,7 +8,7 @@ import Data.Array (head)
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Tuple (Tuple(..), fst, snd)
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested (Tuple3, (/\))
 import Data.Newtype (unwrap)
 import Data.String (joinWith)
 import DOM.Simple.Console (log2)
@@ -99,17 +99,33 @@ getMail' :: ContactTouch -> String
 getMail' = fromMaybe "Empty mail" <<< _.mail <<< unwrap
 
 -- | TODO format data in better design (UI) shape
-contactInfos :: HyperdataUser  -> (HyperdataUser -> Effect Unit) -> Array R.Element
-contactInfos h@(HyperdataUser { shared }) onUpdateHyperdata =
-  (item <$> contactInfoItems shared)
-   <> [ contactInfoItem {hyperdata: h, lens: _shared <<< _who <<< _lastName, onUpdateHyperdata} ]
+contactInfos :: HyperdataUser -> (HyperdataUser -> Effect Unit) -> Array R.Element
+contactInfos h onUpdateHyperdata = item <$> contactInfoItems
   where
-    item (name /\ value) =
-      H.li { className: "list-group-item" }
-        (infoRender (name /\ (" " <> value)))
+    item (label /\ defaultVal /\ lens) =
+      contactInfoItem { hyperdata: h
+                      , label
+                      , lens
+                      , onUpdateHyperdata }
 
-contactInfoItems :: Maybe HyperdataContact -> Array (Tuple String String)
-contactInfoItems Nothing =
+    -- item (name /\ value) =
+    --   H.li { className: "list-group-item" }
+    --     (infoRender (name /\ (" " <> value)))
+
+contactInfoItems :: Array (Tuple3 String String HyperdataUserLens)
+contactInfoItems =
+  [ "Last Name"     /\ "Empty Last Name"     /\ (_shared <<< _who <<< _lastName)
+  , "First Name"    /\ "Empty First Name"    /\ (_shared <<< _who <<< _firstName)
+  , "Organisation"  /\ "Empty Organisation"  /\ (_shared <<< _who <<< _lastName)
+  , "Lab/Team/Dept" /\ "Empty Lab/Team/Dept" /\ (_shared <<< _who <<< _lastName)
+  , "Office"        /\ "Empty Office"        /\ (_shared <<< _who <<< _lastName)
+  , "City"          /\ "Empty City"          /\ (_shared <<< _who <<< _lastName)
+  , "Country"       /\ "Empty Country"       /\ (_shared <<< _who <<< _lastName)
+  , "Role"          /\ "Empty Role"          /\ (_shared <<< _who <<< _lastName)
+  , "Phone"         /\ "Empty Phone"         /\ (_shared <<< _who <<< _lastName)
+  , "Mail"          /\ "Empty Mail"          /\ (_shared <<< _who <<< _lastName) ]
+contactInfoItems' :: Maybe HyperdataContact -> Array (Tuple String String)
+contactInfoItems' Nothing =
   [ "Last Name"     /\ "Empty Last Name"
   , "First Name"    /\ "Empty First Name"
   , "Organisation"  /\ "Empty Organisation"
@@ -120,7 +136,7 @@ contactInfoItems Nothing =
   , "Role"          /\ "Empty Role"
   , "Phone"         /\ "Empty Phone"
   , "Mail"          /\ "Empty Mail" ]
-contactInfoItems (Just (HyperdataContact {who:who, ou:ou})) =
+contactInfoItems' (Just (HyperdataContact {who:who, ou:ou})) =
   [ "Last Name"     /\ getLastName who
   , "First Name"    /\ getFirstName who
   , "Organisation"  /\ getOrga ou
@@ -132,11 +148,13 @@ contactInfoItems (Just (HyperdataContact {who:who, ou:ou})) =
   , "Phone"         /\ getPhone ou
   , "Mail"          /\ getMail ou ]
 
-type HyperdataUserLens = L.Lens' HyperdataUser String
+--type HyperdataUserLens = L.Lens' HyperdataUser String
+type HyperdataUserLens = L.ALens' HyperdataUser String
 
 type ContactInfoItemProps =
   (
     hyperdata :: HyperdataUser
+  , label :: String
   , lens :: HyperdataUserLens
   , onUpdateHyperdata :: HyperdataUser -> Effect Unit
   )
@@ -148,15 +166,17 @@ contactInfoItemCpt :: R.Component ContactInfoItemProps
 --contactInfoItemCpt :: forall r. R.Component ( lens :: L.Lens' HyperdataUser String | r )
 contactInfoItemCpt = R.hooksComponent "G.C.N.A.U.C.contactInfoItem" cpt
   where
-    cpt {hyperdata, lens, onUpdateHyperdata} _ = do
+    cpt {hyperdata, label, lens, onUpdateHyperdata} _ = do
       isEditing <- R.useState' false
-      let value = (L.view lens hyperdata) :: String
+      let value = (L.view cLens hyperdata) :: String
       valueRef <- R.useRef value
 
       pure $ H.li { className: "list-group-item" } [
-        item isEditing valueRef
+          H.span { className: "badge badge-default badge-pill"} [ H.text label ]
+        , item isEditing valueRef
       ]
       where
+        cLens = L.cloneLens lens
         item (false /\ setIsEditing) valueRef =
           H.span {} [
               H.text $ R.readRef valueRef
@@ -176,8 +196,8 @@ contactInfoItemCpt = R.hooksComponent "G.C.N.A.U.C.contactInfoItem" cpt
           where
             onClick _ = do
               setIsEditing $ const false
-              -- let newHyperdata = (L.over lens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
-              -- onUpdateHyperdata newHyperdata
+              let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
+              onUpdateHyperdata newHyperdata
 
 listInfo :: Tuple String String -> R.Element
 listInfo s = listElement $ infoRender s
