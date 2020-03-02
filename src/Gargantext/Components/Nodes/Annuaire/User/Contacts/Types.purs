@@ -3,8 +3,10 @@ module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types where
 import Prelude
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:!))
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Lens
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Map (Map)
+import Data.Tuple (Tuple(..))
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Newtype (class Newtype)
 
@@ -46,6 +48,16 @@ instance decodeContactWho :: DecodeJson ContactWho
       let f = fromMaybe [] freetags
 
       pure $ ContactWho {idWho, firstName, lastName, keywords:k, freetags:f}
+
+defaultContactWho :: ContactWho
+defaultContactWho =
+  ContactWho {
+      idWho: Nothing
+    , firstName: Nothing
+    , lastName: Nothing
+    , keywords: []
+    , freetags: []
+    }
 
 newtype ContactWhere =
   ContactWhere
@@ -113,6 +125,12 @@ instance decodeHyperdataUser :: DecodeJson HyperdataUser
       shared            <- obj .:! "shared"
       pure $ HyperdataUser { shared }
 
+defaultHyperdataUser :: HyperdataUser
+defaultHyperdataUser =
+  HyperdataUser {
+    shared: Just defaultHyperdataContact
+  }
+
 
 newtype HyperdataContact =
      HyperdataContact { bdd :: Maybe String
@@ -143,21 +161,34 @@ instance decodeHyperdataContact :: DecodeJson HyperdataContact
 
       pure $ HyperdataContact {bdd, who, ou:ou', title, source, lastValidation, uniqId, uniqIdBdd}
 
+defaultHyperdataContact :: HyperdataContact
+defaultHyperdataContact =
+  HyperdataContact {
+      bdd: Nothing
+    , who: Nothing
+    , ou: []
+    , title: Nothing
+    , source: Nothing
+    , lastValidation: Nothing
+    , uniqId: Nothing
+    , uniqIdBdd: Nothing
+    }
 
-newtype HyperData c s =
-  HyperData
-  { common :: c
-  , shared :: s
-  , specific :: Map String String
-  }
 
-instance decodeUserHyperData :: (DecodeJson c, DecodeJson s) =>
-                                DecodeJson (HyperData c s) where
-  decodeJson json = do
-    common <- decodeJson json
-    shared <- decodeJson json
-    specific <- decodeJson json
-    pure $ HyperData {common, shared, specific}
+-- newtype HyperData c s =
+--   HyperData
+--   { common :: c
+--   , shared :: s
+--   , specific :: Map String String
+--   }
+
+-- instance decodeUserHyperData :: (DecodeJson c, DecodeJson s) =>
+--                                 DecodeJson (HyperData c s) where
+--   decodeJson json = do
+--     common <- decodeJson json
+--     shared <- decodeJson json
+--     specific <- decodeJson json
+--     pure $ HyperData {common, shared, specific}
 
 instance decodeUser :: DecodeJson Contact where
   decodeJson json = do
@@ -175,3 +206,23 @@ instance decodeUser :: DecodeJson Contact where
                    }
 
 type ContactData = {contactNode :: Contact, defaultListId :: Int}
+
+_shared :: Lens' HyperdataUser HyperdataContact
+_shared = lens getter setter
+  where
+    getter (HyperdataUser h@{shared: Nothing}) = defaultHyperdataContact
+    getter (HyperdataUser h@{shared: Just shared'}) = shared'
+    setter (HyperdataUser h) c = HyperdataUser $ h { shared = Just c }
+
+_who :: Lens' HyperdataContact ContactWho
+_who = lens getter setter
+  where
+    getter (HyperdataContact hc@{who: Nothing}) = defaultContactWho
+    getter (HyperdataContact hc@{who: Just who'}) = who'
+    setter (HyperdataContact hc) w = HyperdataContact $ hc { who = Just w }
+_lastName :: Lens' ContactWho String
+_lastName = lens getter setter
+  where
+    getter (ContactWho cw@{lastName: Nothing}) = ""
+    getter (ContactWho cw@{lastName: Just ln}) = ln
+    setter (ContactWho cw) ln = ContactWho $ cw { lastName = Just ln }

@@ -4,16 +4,20 @@ module Gargantext.Components.Nodes.Annuaire.User.Contacts
   , userLayout )
   where
 
-import Prelude (bind, pure, ($), (<<<), (<>), (<$>), show)
 import Data.Array (head)
+import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Data.Newtype (unwrap)
 import Data.String (joinWith)
+import DOM.Simple.Console (log2)
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Hooks.Loader (useLoader)
@@ -21,6 +25,7 @@ import Gargantext.Routes as Routes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..))
+import Gargantext.Utils.Reactix as R2
 
 display :: String -> Array R.Element -> R.Element
 display title elems =
@@ -81,7 +86,7 @@ getCountry = fromMaybe "Empty Country"
 
 -- | ContactWhere / Touch infos
 getTouch :: Array ContactWhere -> Maybe ContactTouch
-getTouch = maybe Nothing (\(ContactWhere {touch:x}) -> x) <<< head
+getTouch = maybe Nothing (\(ContactWhere {touch}) -> touch) <<< head
 
 getPhone :: Array ContactWhere -> String
 getPhone obj = fromMaybe "Empty touch info" $ getPhone' <$> (getTouch obj)
@@ -94,12 +99,16 @@ getMail' :: ContactTouch -> String
 getMail' = fromMaybe "Empty mail" <<< _.mail <<< unwrap
 
 -- | TODO format data in better design (UI) shape
-contactInfos :: HyperdataUser -> Array R.Element
-contactInfos (HyperdataUser { shared }) = item <$> contactInfoItems shared
+contactInfos :: HyperdataUser  -> (HyperdataUser -> Effect Unit) -> Array R.Element
+contactInfos h@(HyperdataUser { shared }) onUpdateHyperdata =
+  (item <$> contactInfoItems shared)
+   <> [ contactInfoItem {hyperdata: h, lens: _shared <<< _who <<< _lastName, onUpdateHyperdata} ]
   where
     item (name /\ value) =
       H.li { className: "list-group-item" }
         (infoRender (name /\ (" " <> value)))
+
+contactInfoItems :: Maybe HyperdataContact -> Array (Tuple String String)
 contactInfoItems Nothing =
   [ "Last Name"     /\ "Empty Last Name"
   , "First Name"    /\ "Empty First Name"
@@ -123,6 +132,53 @@ contactInfoItems (Just (HyperdataContact {who:who, ou:ou})) =
   , "Phone"         /\ getPhone ou
   , "Mail"          /\ getMail ou ]
 
+type HyperdataUserLens = L.Lens' HyperdataUser String
+
+type ContactInfoItemProps =
+  (
+    hyperdata :: HyperdataUser
+  , lens :: HyperdataUserLens
+  , onUpdateHyperdata :: HyperdataUser -> Effect Unit
+  )
+
+contactInfoItem :: Record ContactInfoItemProps -> R.Element
+contactInfoItem props = R.createElement contactInfoItemCpt props []
+
+contactInfoItemCpt :: R.Component ContactInfoItemProps
+--contactInfoItemCpt :: forall r. R.Component ( lens :: L.Lens' HyperdataUser String | r )
+contactInfoItemCpt = R.hooksComponent "G.C.N.A.U.C.contactInfoItem" cpt
+  where
+    cpt {hyperdata, lens, onUpdateHyperdata} _ = do
+      isEditing <- R.useState' false
+      let value = (L.view lens hyperdata) :: String
+      valueRef <- R.useRef value
+
+      pure $ H.li { className: "list-group-item" } [
+        item isEditing valueRef
+      ]
+      where
+        item (false /\ setIsEditing) valueRef =
+          H.span {} [
+              H.text $ R.readRef valueRef
+            , H.span { className: "fa fa-pencil"
+                     , on: {click: onClick} } []
+          ]
+          where
+            onClick _ = setIsEditing $ const true
+        item (true /\ setIsEditing) valueRef =
+          H.span {} [
+              H.input { className: "form-control"
+                      , defaultValue: R.readRef valueRef
+                      , on: {change: \e -> R.setRef valueRef $ R2.unsafeEventValue e} }
+            , H.span { className: "fa fa-floppy-o"
+                     , on: {click: onClick} } []
+          ]
+          where
+            onClick _ = do
+              setIsEditing $ const false
+              -- let newHyperdata = (L.over lens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
+              -- onUpdateHyperdata newHyperdata
+
 listInfo :: Tuple String String -> R.Element
 listInfo s = listElement $ infoRender s
 
@@ -143,12 +199,16 @@ userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.userLayout" cpt
   where
     cpt {frontends, nodeId, session} _ = do
-      --loader nodeId (getContact session) $
       useLoader nodeId (getContact session) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
-          [ display (fromMaybe "no name" name) (contactInfos hyperdata)
+          [ display (fromMaybe "no name" name) (contactInfos hyperdata onUpdateHyperdata)
           , Tabs.tabs {frontends, nodeId, contactData, session} ]
+
+      where
+        onUpdateHyperdata :: HyperdataUser -> Effect Unit
+        onUpdateHyperdata hd = do
+          log2 "[onUpdateHyperdata] hd" hd
 
 -- | toUrl to get data
 getContact :: Session -> Int -> Aff ContactData
@@ -179,8 +239,12 @@ annuaireUserLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.annua
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
-          [ display (fromMaybe "no name" name) (contactInfos hyperdata)
+          [ display (fromMaybe "no name" name) (contactInfos hyperdata onUpdateHyperdata)
           , Tabs.tabs {frontends, nodeId, contactData, session} ]
+
+      where
+        onUpdateHyperdata :: HyperdataUser -> Effect Unit
+        onUpdateHyperdata _ = pure unit
 
 getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData
 getAnnuaireContact session annuaireId id = do
