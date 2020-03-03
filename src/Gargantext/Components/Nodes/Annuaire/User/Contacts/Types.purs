@@ -225,7 +225,7 @@ instance encodeHyperdataContact :: EncodeJson HyperdataContact
     encodeJson (HyperdataContact {bdd, lastValidation, ou, source, title, uniqId, uniqIdBdd, who}) =
          "bdd" := bdd
       ~> "lastValidation" := lastValidation
-      ~> "ou" := ou
+      ~> "where" := ou
       ~> "source" := source
       ~> "title" := title
       ~> "uniqId" := uniqId

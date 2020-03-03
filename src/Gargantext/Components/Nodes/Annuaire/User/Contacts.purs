@@ -13,6 +13,7 @@ import Data.Newtype (unwrap)
 import Data.String (joinWith)
 import DOM.Simple.Console (log2)
 import Effect (Effect)
+import Effect.Class (liftEffect)
 import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -112,7 +113,8 @@ contactInfoItemCpt = R.hooksComponent "G.C.N.A.U.C.contactInfoItem" cpt
             onClick _ = setIsEditing $ const true
         item (true /\ setIsEditing) valueRef =
           H.span {} [
-              H.input { className: "form-control"
+              H.input { autoFocus: true
+                      , className: "form-control"
                       , defaultValue: R.readRef valueRef
                       , on: {change: \e -> R.setRef valueRef $ R2.unsafeEventValue e}
                       , placeholder }
@@ -145,18 +147,21 @@ userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.userLayout" cpt
   where
     cpt {frontends, nodeId, session} _ = do
-      useLoader nodeId (getContact session) $
+      reload <- R.useState' 0
+
+      useLoader {nodeId, reload: fst reload, session} getContactWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
-          [ display (fromMaybe "no name" name) (contactInfos hyperdata onUpdateHyperdata)
+          [ display (fromMaybe "no name" name) (contactInfos hyperdata (onUpdateHyperdata reload))
           , Tabs.tabs {frontends, nodeId, contactData, session} ]
 
       where
-        onUpdateHyperdata :: HyperdataUser -> Effect Unit
-        onUpdateHyperdata hd = do
+        onUpdateHyperdata :: R.State Int -> HyperdataUser -> Effect Unit
+        onUpdateHyperdata (_ /\ setReload) hd = do
           log2 "[onUpdateHyperdata] hd" hd
           launchAff_ $ do
-            saveContactHyperdata session nodeId hd
+            _ <- saveContactHyperdata session nodeId hd
+            liftEffect $ setReload $ (+) 1
 
 -- | toUrl to get data
 getContact :: Session -> Int -> Aff ContactData
@@ -170,6 +175,9 @@ getContact session id = do
   --  Nothing ->
   --    throwError $ error "Missing default list"
   pure {contactNode, defaultListId: 424242}
+
+getContactWithReload :: {nodeId :: Int, reload :: Int, session :: Session} -> Aff ContactData
+getContactWithReload {nodeId, session} = getContact session nodeId
 
 saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff Int
 saveContactHyperdata session id h = do
