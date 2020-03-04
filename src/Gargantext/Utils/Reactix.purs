@@ -283,3 +283,8 @@ useLocalStorageState key s = do
       setItem key json storage
 
   pure (Tuple state setState)
+
+foreign import _setCookie :: EffectFn1 String Unit
+
+setCookie :: String -> Effect Unit
+setCookie = runEffectFn1 _setCookie
