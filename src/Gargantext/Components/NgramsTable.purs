@@ -335,7 +335,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
                     state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
                           , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
-      [ autoUpdateElt { duration: 3000, effect: dispatch Synchronize }
+      [ autoUpdateElt { duration: 5000, effect: dispatch Synchronize }
       , R2.scuff $ T.table { params: params /\ setParams -- TODO-LENS
                            , rows, container, colNames, wrapColElts, totalRecords
                            }
@@ -550,9 +550,10 @@ tablePatchHasNgrams ngramsTablePatch ngrams =
   isJust $ ngramsTablePatch.ngramsPatches ^. _PatchMap <<< at ngrams
 
 termStyle :: TermList -> Number -> DOM.Props
-termStyle GraphTerm     opacity = style {color: "green", opacity}
-termStyle StopTerm      opacity = style {color: "red",   opacity, textDecoration: "line-through"}
-termStyle CandidateTerm opacity = style {color: "black", opacity}
+termStyle GraphTerm     opacity = style { color: "green", opacity}
+termStyle StopTerm      opacity = style { color: "red",   opacity
+                                        , textDecoration: "line-through"}
+termStyle CandidateTerm opacity = style { color: "black", opacity}
 
 nextTermList :: TermList -> TermList
 nextTermList GraphTerm     = StopTerm
