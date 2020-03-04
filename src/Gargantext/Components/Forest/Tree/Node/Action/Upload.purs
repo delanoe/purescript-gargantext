@@ -142,11 +142,11 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
 
 -- START File Type View
 type FileTypeProps =
-  ( action :: Action -> Aff Unit
+  ( action      :: Action -> Aff Unit
   , droppedFile :: R.State (Maybe DroppedFile)
-  , id :: ID
-  , isDragOver :: R.State Boolean
-  , nodeType :: GT.NodeType
+  , id          :: ID
+  , isDragOver  :: R.State Boolean
+  , nodeType    :: GT.NodeType
   )
 
 fileTypeView :: Record FileTypeProps -> R.Element
@@ -246,9 +246,9 @@ uploadFile session nodeType id fileType {mName, contents: UploadFileContents con
     --p = NodeAPI GT.Corpus (Just id) $ "add/file/async/nobody" <> Q.print (toQuery q)
     p = GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
     bodyParams = [
-        Tuple "_wf_data" (Just contents)
+        Tuple "_wf_data"     (Just contents)
       , Tuple "_wf_filetype" (Just $ show fileType)
-      , Tuple "_wf_name" mName
+      , Tuple "_wf_name"      mName
       ]
 
 uploadTermListView :: Record Props -> R.Element
@@ -273,7 +273,7 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
     onChangeContents :: forall e. R.State (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
     onChangeContents (mFile /\ setMFile) e = do
       let mF = R2.inputFileNameWithBlob 0 e
-      E.preventDefault e
+      E.preventDefault  e
       E.stopPropagation e
       case mF of
         Nothing -> pure unit

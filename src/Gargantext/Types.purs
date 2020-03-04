@@ -153,7 +153,7 @@ instance showNodeType :: Show NodeType where
 
   show Folder        = "NodeFolder"
   show FolderPrivate = "NodeFolderPrivate"  -- Node Private Worktop
-  show FolderShared    = "NodeFolderShared" -- Node Share Worktop
+  show FolderShared  = "NodeFolderShared"   -- Node Share Worktop
   show FolderPublic  = "NodeFolderPublic"   -- Node Public Worktop
 
   show Annuaire      = "NodeAnnuaire"
@@ -453,7 +453,7 @@ data AsyncTaskType = Form | Query
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 
 asyncTaskTypePath :: AsyncTaskType -> String
-asyncTaskTypePath Form = "add/form/async/"
+asyncTaskTypePath Form  = "add/form/async/"
 asyncTaskTypePath Query = "add/query/async/"
 
 type AsyncTaskID = String
