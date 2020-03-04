@@ -34,7 +34,8 @@ import Reactix.React (react)
 import Reactix.SyntheticEvent as RE
 import Reactix.Utils (currySecond, hook, tuple)
 import Unsafe.Coerce (unsafeCoerce)
-import Web.File.File (toBlob)
+import Web.File.Blob (Blob)
+import Web.File.File as WF
 import Web.File.FileList (FileList, item)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -221,17 +222,28 @@ useCache i f = do
     R.unsafeHooksEffect (R.setRef oRef $ Just new)
     pure new
 
+inputFile :: forall e. Int -> e -> Maybe WF.File
+inputFile n e = item n $ ((el .. "files") :: FileList)
+  where
+    el = e .. "target"
+
 -- | Get blob from an 'onchange' e.target event
-inputFileBlob e = unsafePartial $ do
-  let el = e .. "target"
-  let ff = fromJust $ item 0 $ ((el .. "files") :: FileList)
-  pure $ toBlob ff
+inputFileBlob n e = unsafePartial $ do
+  let ff = fromJust $ inputFile n e
+  pure $ WF.toBlob ff
+
+inputFileNameWithBlob :: forall e. Int -> e -> Maybe {blob :: Blob, name :: String}
+inputFileNameWithBlob n e = case ff of
+    Nothing -> Nothing
+    Just f  -> Just {blob: WF.toBlob f, name: WF.name f}
+  where
+    ff = inputFile n e
 
 -- | Get blob from a drop event
 --dataTransferFileBlob :: forall e. DE.IsEvent e => RE.SyntheticEvent e -> Effect Blob
 dataTransferFileBlob e = unsafePartial $ do
     let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
-    pure $ toBlob ff
+    pure $ WF.toBlob ff
 
 blur :: DOM.Element -> Effect Unit
 blur el = el ... "blur" $ []
