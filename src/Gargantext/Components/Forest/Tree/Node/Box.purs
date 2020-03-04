@@ -417,6 +417,13 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
       pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
     cpt {action: Upload, dispatch, id, nodeType, session} _ = do
       pure $ uploadFileView {dispatch, id, nodeType, session}
+    cpt {action: Download, id, nodeType: NodeList, session} _ = do
+      let href = url session $ Routes.NodeAPI GT.Node (Just id) ""
+      pure $ R.fragment [
+        H.span { className: "row" } [
+           H.a { className: "col-md-12", href, target: "_blank" } [ H.text "Download file" ]
+        ]
+      ]
     cpt {action: Download} _ = do
       pure $ fragmentPT "Soon, you will be able to dowload your file here"
     cpt props@{action: SearchBox, search, session} _ = do
