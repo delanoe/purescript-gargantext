@@ -18,7 +18,7 @@ data Action = CreateSubmit String GT.NodeType
             | DeleteNode
             | SearchQuery GT.AsyncTaskWithType
             | Submit       String
-            | UploadFile  GT.NodeType FileType UploadFileContents
+            | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
 
 -----------------------------------------------------
 -- UploadFile Action
@@ -52,6 +52,10 @@ type ID   = Int
 type Reload = Int
 
 newtype UploadFileContents = UploadFileContents String
+type UploadFile = {
+    contents :: UploadFileContents
+  , name     :: String
+  }
 
 createNode :: Session -> ID -> CreateValue -> Aff (Array ID)
 createNode session parentId = post session $ NodeAPI GT.Node (Just parentId) ""

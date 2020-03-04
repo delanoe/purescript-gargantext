@@ -14,6 +14,7 @@ import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as QP
+import Web.File.File as WF
 import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Prelude
@@ -42,14 +43,14 @@ uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
   where
     cpt {dispatch: d, id, nodeType} _ = do
-      mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
+      mFile :: R.State (Maybe UploadFile) <- R.useState' Nothing
       fileType :: R.State FileType     <- R.useState' CSV
       lang     :: R.State (Maybe Lang) <- R.useState' (Just EN)
 
       pure $ H.div {} [
               H.div {} [ H.input { type: "file"
                                  , placeholder: "Choose file"
-                                 , on: {change: onChangeContents mContents}
+                                 , on: {change: onChangeContents mFile}
                                  }
                        ]
 
@@ -70,7 +71,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
                        } (map renderOptionLang [EN, FR])
                        ]
 
-            , H.div {} [ uploadButton {action: d, fileType, lang, id, mContents, nodeType } ]
+            , H.div {} [ uploadButton {action: d, fileType, lang, id, mFile, nodeType } ]
             ]
 
     renderOptionFT :: FileType -> R.Element
@@ -79,15 +80,17 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
     renderOptionLang :: Lang -> R.Element
     renderOptionLang opt = H.option {} [ H.text $ show opt ]
 
-    onChangeContents :: forall e. R.State (Maybe UploadFileContents) -> E.SyntheticEvent_ e -> Effect Unit
-    onChangeContents (mContents /\ setMContents) e = do
-      blob <- R2.inputFileBlob e
+    onChangeContents :: forall e. R.State (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
+    onChangeContents (mFile /\ setMFile) e = do
+      let mF = R2.inputFileNameWithBlob 0 e
       E.preventDefault e
       E.stopPropagation e
-      void $ launchAff do
-        contents <- readAsText blob
-        liftEffect $ do
-          setMContents $ const $ Just $ UploadFileContents contents
+      case mF of
+        Nothing -> pure unit
+        Just {blob, name} -> void $ launchAff do
+          contents <- readAsText blob
+          liftEffect $ do
+            setMFile $ const $ Just $ {contents: UploadFileContents contents, name}
 
     onChangeFileType :: forall e. R.State FileType -> e -> Effect Unit
     onChangeFileType (fileType /\ setFileType) e = do
@@ -111,7 +114,7 @@ type UploadButtonProps =
   , fileType :: R.State FileType
   , id :: Int
   , lang :: R.State (Maybe Lang)
-  , mContents :: R.State (Maybe UploadFileContents)
+  , mFile :: R.State (Maybe UploadFile)
   , nodeType :: GT.NodeType
   )
 
@@ -121,19 +124,19 @@ uploadButton props = R.createElement uploadButtonCpt props []
 uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
   where
-    cpt {action, fileType: (fileType /\ setFileType), id, lang: (lang /\ setLang), mContents: (mContents /\ setMContents), nodeType} _ = do
+    cpt {action, fileType: (fileType /\ setFileType), id, lang: (lang /\ setLang), mFile: (mFile /\ setMFile), nodeType} _ = do
         pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
       where
-        disabled = case mContents of
+        disabled = case mFile of
           Nothing -> "1"
           Just _ -> ""
 
         onClick e = do
-          let contents = unsafePartial $ fromJust mContents
+          let {name, contents} = unsafePartial $ fromJust mFile
           void $ launchAff do
-            _ <- action $ UploadFile nodeType fileType contents
+            _ <- action $ UploadFile nodeType fileType (Just name) contents
             liftEffect $ do
-              setMContents $ const $ Nothing
+              setMFile     $ const $ Nothing
               setFileType  $ const $ CSV
               setLang      $ const $ Just EN
 
@@ -204,7 +207,7 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
                          , type: "button"
                          , on: {click: \_ -> do
                                    setDroppedFile $ const Nothing
-                                   launchAff $ action $ UploadFile nodeType ft contents
+                                   launchAff $ action $ UploadFile nodeType ft Nothing contents
                                }
                          } [H.text "Upload"]
               Nothing ->
@@ -228,8 +231,13 @@ instance fileUploadQueryToQuery :: GT.ToQuery FileUploadQuery where
     where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
           pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
 
-uploadFile :: Session -> GT.NodeType -> ID -> FileType -> UploadFileContents -> Aff GT.AsyncTaskWithType
-uploadFile session nodeType id fileType (UploadFileContents fileContents) = do
+uploadFile :: Session
+           -> GT.NodeType
+           -> ID
+           -> FileType
+           -> {contents :: UploadFileContents, mName :: Maybe String}
+           -> Aff GT.AsyncTaskWithType
+uploadFile session nodeType id fileType {mName, contents: UploadFileContents contents} = do
     task <- postWwwUrlencoded session p bodyParams
     pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
     --postMultipartFormData session p fileContents
@@ -238,8 +246,9 @@ uploadFile session nodeType id fileType (UploadFileContents fileContents) = do
     --p = NodeAPI GT.Corpus (Just id) $ "add/file/async/nobody" <> Q.print (toQuery q)
     p = GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
     bodyParams = [
-        Tuple "_wf_data" (Just fileContents)
+        Tuple "_wf_data" (Just contents)
       , Tuple "_wf_filetype" (Just $ show fileType)
+      , Tuple "_wf_name" mName
       ]
 
 uploadTermListView :: Record Props -> R.Element
@@ -249,34 +258,36 @@ uploadTermListViewCpt :: R.Component Props
 uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
-      mContents :: R.State (Maybe UploadFileContents) <- R.useState' Nothing
+      mFile :: R.State (Maybe UploadFile) <- R.useState' Nothing
 
       pure $ H.div {} [
         H.div {} [ H.input { type: "file"
                             , placeholder: "Choose file"
-                            , on: {change: onChangeContents mContents}
+                            , on: {change: onChangeContents mFile}
                             }
                   ]
 
-      , H.div {} [ uploadTermButton { dispatch, id, mContents, nodeType } ]
+      , H.div {} [ uploadTermButton { dispatch, id, mFile, nodeType } ]
       ]
 
-    onChangeContents :: forall e. R.State (Maybe UploadFileContents) -> E.SyntheticEvent_ e -> Effect Unit
-    onChangeContents (mContents /\ setMContents) e = do
-      blob <- R2.inputFileBlob e
+    onChangeContents :: forall e. R.State (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
+    onChangeContents (mFile /\ setMFile) e = do
+      let mF = R2.inputFileNameWithBlob 0 e
       E.preventDefault e
       E.stopPropagation e
-      void $ launchAff do
-        contents <- readAsText blob
-        liftEffect $ do
-          setMContents $ const $ Just $ UploadFileContents contents
+      case mF of
+        Nothing -> pure unit
+        Just {blob, name} -> void $ launchAff do
+          contents <- readAsText blob
+          liftEffect $ do
+            setMFile $ const $ Just $ {contents: UploadFileContents contents, name}
 
 
 type UploadTermButtonProps =
   (
     dispatch :: Action -> Aff Unit
   , id :: Int
-  , mContents :: R.State (Maybe UploadFileContents)
+  , mFile :: R.State (Maybe UploadFile)
   , nodeType :: GT.NodeType
   )
 
@@ -286,19 +297,19 @@ uploadTermButton props = R.createElement uploadTermButtonCpt props []
 uploadTermButtonCpt :: R.Component UploadTermButtonProps
 uploadTermButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadTermButton" cpt
   where
-    cpt {dispatch, id, mContents: (mContents /\ setMContents), nodeType} _ = do
+    cpt {dispatch, id, mFile: (mFile /\ setMFile), nodeType} _ = do
         pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
       where
-        disabled = case mContents of
+        disabled = case mFile of
           Nothing -> "1"
           Just _ -> ""
 
         onClick e = do
-          let contents = unsafePartial $ fromJust mContents
+          let {name, contents} = unsafePartial $ fromJust mFile
           void $ launchAff do
-            _ <- dispatch $ UploadFile nodeType CSV contents
+            _ <- dispatch $ UploadFile nodeType CSV (Just name) contents
             liftEffect $ do
-              setMContents $ const $ Nothing
+              setMFile $ const $ Nothing
 
 copyFromCorpusView :: Record Props -> R.Element
 copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []
