@@ -286,8 +286,8 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
 type UploadTermButtonProps =
   (
     dispatch :: Action -> Aff Unit
-  , id :: Int
-  , mFile :: R.State (Maybe UploadFile)
+  , id       :: Int
+  , mFile    :: R.State (Maybe UploadFile)
   , nodeType :: GT.NodeType
   )
 
