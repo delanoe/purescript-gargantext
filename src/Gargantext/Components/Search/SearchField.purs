@@ -2,12 +2,14 @@ module Gargantext.Components.Search.SearchField
   ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex) where
 
 import Prelude (const, map, pure, show, discard, ($), (&&), (<), (<$>), (<>), (==), (<<<), Unit, bind)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Newtype (over)
 import Data.String (length)
 import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import Data.Nullable (Nullable, toMaybe)
+import Effect.Console (logShow)
 import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
@@ -29,6 +31,7 @@ select = R.createElement "select"
 
 type Search = { datafield :: Maybe DataField
               , term      :: String
+              , url       :: String
               , lang      :: Maybe Lang
               , node_id   :: Maybe Int
               }
@@ -42,6 +45,7 @@ eqSearch s s' =    (s.datafield == s'.datafield)
 defaultSearch :: Search
 defaultSearch = { datafield: Nothing
                 , term: ""
+                , url: ""
                 , lang: Nothing
                 , node_id: Nothing
                 }
@@ -318,6 +322,7 @@ searchInputComponent = R.hooksComponent "G.C.S.SearchInput" cpt
       pure $
         H.div { className : "" }
         [ H.input { defaultValue: search.term
+                  , value: search.term
                   , className: "form-control"
                   , type: "text"
                   , on: { change : onChange setSearch }

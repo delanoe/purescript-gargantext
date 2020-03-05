@@ -4,6 +4,7 @@ module Gargantext.Components.Search.SearchBar
 
 import Prelude (pure, ($))
 import Data.Tuple.Nested ((/\))
+import Data.Nullable (Nullable)
 import Reactix as R
 import Reactix.DOM.HTML as H
 

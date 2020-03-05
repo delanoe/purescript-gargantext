@@ -3,6 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import Data.Nullable (Nullable, null)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
@@ -34,10 +35,10 @@ import Gargantext.Types (AsyncTask, NodePath(..), NodeType(..), fldr)
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
 
-
 import DOM.Simple.Types
 import DOM.Simple.Window
 import DOM.Simple.EventListener
+import DOM.Simple.Event
 import Effect.Console
 
 -- Main Node
@@ -162,7 +163,7 @@ fldr nt open = if open
 -- START node text
 type NodeTextProps =
   ( isSelected :: Boolean
-  , name :: Name 
+  , name :: Name
   )
 
 nodeText :: Record NodeTextProps -> R.Element
@@ -206,6 +207,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
     el = R.hooksComponent "NodePopupView" cpt
     cpt {id, action, name, nodeType, position, session} _ = do
       renameBoxOpen <- R.useState' false
+      iframeRef <- R.useRef null
       nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {id, name, nodeType, action}
       search <- R.useState' $ defaultSearch { node_id = Just id }
       pure $ H.div (tooltipProps position) $
@@ -225,7 +227,7 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
           , if nodePopup.action == Just SearchBox then
               H.div {}
                 [
-                  searchIsTexIframe id session search
+                  searchIsTexIframe id session search iframeRef
                 ]
             else
               H.div {} []
@@ -288,19 +290,36 @@ nodePopupView d p mPop@(Just NodePopup /\ setPopupOpen) = R.createElement el p [
                         $ map (buttonClick nodePopupState d') buttons
                 ]
 
-        searchIsTexIframe _id _session search@(search' /\ _) =
+        searchIsTexIframe _id _session search@(search' /\ _) iframeRef =
           if isIsTex search'.datafield then
             H.div { className: "istex-search panel panel-default" }
             [
               H.h3 { className: fldr nodeType true} []
-            , componentIsTex search
+            , componentIsTex search iframeRef
             ]
           else
             H.div {} []
 
-        componentIsTex (search /\ setSearch) =
-          H.iframe { src: isTexTermUrl search.term , width: "100%", height: "100%"} []
-        isTexUrl =  "http://0.0.0.0:8080/"--"https://istex.gargantext.org"
+        componentIsTex (search /\ setSearch) iframeRef =
+          H.iframe { src: isTexTermUrl search.term
+                    ,width: "100%"
+                    ,height: "100%"
+                    ,ref: iframeRef
+                    ,on: {
+                      load: \_ -> do
+                         addEventListener window "message" changeSearchOnMessage
+                         R2.postMessage iframeRef search.term
+                         }
+                   } []
+          where
+            changeSearchOnMessage :: Callback MessageEvent
+            changeSearchOnMessage = callback $ \m -> if R2.getMessageOrigin m == isTexUrl
+                                                     then do
+                                                       let {url, term} = R2.getMessageData m
+                                                       setSearch $ _ {url = url, term = term}
+                                                     else
+                                                       pure unit
+        isTexUrl =  "http://0.0.0.0:8080"--"https://istex.gargantext.org"
         isTexLocalUrl = "http://localhost:8083"
         isTexTermUrl term = isTexUrl <> query
           where
@@ -406,5 +425,3 @@ reallyDelete d = H.div {className: "panel-footer"}
                   , onClick: mkEffectFn1 $ \_ -> launchAff $ d $ DeleteNode}
               [H.text " Yes, delete!"]
             ]
-
-windowCallBack = addEventListener window "message" (callback errorShow)
