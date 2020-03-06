@@ -1,3 +1,6 @@
+#dafixedtop
+  z-index: 999  // correction for the popover
+
 .logoSmall
   line-height: 15px
   height: 10px
@@ -45,12 +48,7 @@ li#rename
 
 
 #node-popup-tooltip
-  //position : absolute
-  position: fixed
-  //left : 96px
-  //top: -64px
   background-color: white
-  z-index: 1000
   &:hover
     border: none
     text-decoration: none
@@ -60,6 +58,7 @@ li#rename
     .panel
       border: 1px solid rgba(0,0,0,0.2)
       box-shadow: 0 2px 5px rgba(0,0,0,0.2)
+      margin-bottom: 0px
       .glyphicon-pencil
         color: black
       .panel-body
@@ -107,6 +106,8 @@ li
     position: absolute
     text-decoration: none
     margin-left: 20px
+    cursor: pointer
+    z-index: 1
 
   &:hover
     a#rename
@@ -131,16 +132,6 @@ li
     display: inline-block
     opacity: 1
     transform: scale(1.4)
-
-#arrow
-  width: 0
-  height: 0
-  border-top: 10px solid transparent
-  border-bottom: 10px solid transparent
-  border-right:10px solid darkgray
-  position : relative
-  top: 55px
-  left: -9px
 
 #sp-container
   -webkit-transition: width 2s  // For Safari 3.1 to 6.0

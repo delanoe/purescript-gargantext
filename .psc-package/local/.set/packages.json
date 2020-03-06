@@ -1480,7 +1480,7 @@
       "precise"
     ],
     "repo": "https://github.com/poorscript/purescript-markdown",
-    "version": "master"
+    "version": "2020-03-04"
   },
   "markdown-smolder": {
     "dependencies": [
@@ -1488,7 +1488,7 @@
       "smolder"
     ],
     "repo": "https://github.com/poorscript/purescript-markdown-smolder",
-    "version": "master"
+    "version": "2020-03-04"
   },
   "math": {
     "dependencies": [],
@@ -2061,7 +2061,7 @@
       "prelude"
     ],
     "repo": "https://github.com/purescript-contrib/purescript-precise",
-    "version": "master"
+    "version": "v4.0.0"
   },
   "prelude": {
     "dependencies": [],
@@ -2370,7 +2370,7 @@
       "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-reactix",
-    "version": "v0.4.2"
+    "version": "v0.4.3"
   },
   "read": {
     "dependencies": [
@@ -2988,8 +2988,8 @@
       "react",
       "react-dom"
     ],
-    "repo": "https://github.com/np/purescript-thermite.git",
-    "version": "hide"
+    "repo": "https://github.com/poorscript/purescript-thermite.git",
+    "version": "hide-2020-03-04"
   },
   "these": {
     "dependencies": [

@@ -106,7 +106,7 @@ let additions =
             , "unsafe-coerce"
             ]
             "https://github.com/irresponsible/purescript-reactix"
-            "v0.4.2"
+            "v0.4.3"
       , tuples-native =
           mkPackage
             [ "generics-rep", "prelude", "typelevel", "unsafe-coerce" ]

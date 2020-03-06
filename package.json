@@ -25,6 +25,7 @@
         "highlightjs": "^9.16.2",
         "prop-types": "15.6.2",
         "react": "^16.10",
+        "react-awesome-popover": "^6.1.1",
         "react-dom": "^16.10",
         "sigma": "git://github.com/poorscript/sigma.js#garg"
     },

@@ -1,3 +1,7 @@
+#dafixedtop {
+  z-index: 999;
+}
+
 .logoSmall {
   line-height: 15px;
   height: 10px;
@@ -46,9 +50,7 @@ li#rename #rename-a {
 }
 
 #node-popup-tooltip {
-  position: fixed;
   background-color: white;
-  z-index: 1000;
 }
 #node-popup-tooltip:hover {
   border: none;
@@ -61,6 +63,7 @@ li#rename #rename-a {
 #node-popup-tooltip .popup-container .panel {
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin-bottom: 0px;
 }
 #node-popup-tooltip .popup-container .panel .glyphicon-pencil {
   color: black;
@@ -110,6 +113,8 @@ li a#rename-leaf {
   position: absolute;
   text-decoration: none;
   margin-left: 20px;
+  cursor: pointer;
+  z-index: 1;
 }
 li:hover a#rename {
   display: block;
@@ -133,17 +138,6 @@ li:hover a#rename-leaf {
   display: inline-block;
   opacity: 1;
   transform: scale(1.4);
-}
-
-#arrow {
-  width: 0;
-  height: 0;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  border-right: 10px solid darkgray;
-  position: relative;
-  top: 55px;
-  left: -9px;
 }
 
 #sp-container {

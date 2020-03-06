@@ -3,6 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
+import Data.Nullable (null)
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
@@ -10,6 +11,13 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import URI.Extra.QueryPairs as NQP
+import URI.Query as Query
+import Web.File.FileReader.Aff (readAsText)
+
 import Gargantext.Components.Data.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
@@ -26,13 +34,8 @@ import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
+import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import URI.Extra.QueryPairs as NQP
-import URI.Query as Query
-import Web.File.FileReader.Aff (readAsText)
 
 
 type Dispatch = Action -> Aff Unit
@@ -59,10 +62,10 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
     el = R.hooksComponent "G.C.F.T.N.B.NodeMainSpan" cpt
     cpt props@{id, asyncTasks, mCurrentRoute, name, nodeType, onAsyncTaskFinish} _ = do
       -- only 1 popup at a time is allowed to be opened
-      popupOpen     <- R.useState' (Nothing :: Maybe NodePopup)
-      popupPosition <- R.useState' (Nothing :: Maybe R2.Point)
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
+
+      popperRef <- R.useRef null
 
       pure $ H.span (dropProps droppedFile isDragOver) $
         [ folderIcon nodeType folderOpen
@@ -74,8 +77,10 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
               }
           [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
                      , name: name' props} ]
-        , popOverIcon showBox popupOpen popupPosition
-        , mNodePopupView props showBox popupOpen popupPosition
+        , Popover.popover {} [
+            popOverIcon true
+          , mNodePopupView props showBox
+        ]
         , fileTypeView {action: d, droppedFile, id, isDragOver, nodeType}
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                 , corpusId: id
@@ -91,30 +96,18 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
       H.a {onClick: R2.effToggler folderOpen'}
       [ H.i {className: GT.fldr nodeType open} [] ]
 
-    popOverIcon false _ _ = H.div {} []
-    popOverIcon true (popOver /\ setPopOver) (_ /\ setPopupPosition) =
+    popOverIcon false = H.div {} []
+    popOverIcon true =
       H.a { className: "glyphicon glyphicon-cog"
           , id: "rename-leaf"
-          , on: { click: toggle popOver }
           } []
-      where
-        toggle Nothing e = do
-          setPopupPosition $ const $ Just $ R2.mousePosition e
-          setPopOver $ const $ Just NodePopup
-        toggle _ _ = do
-          setPopupPosition $ const Nothing
-          setPopOver $ const Nothing
 
-    mNodePopupView _ false _ _ = H.div {} []
-    mNodePopupView _ _ (Nothing /\ _) _ = H.div {} []
-    mNodePopupView _ _ _ (Nothing /\ _) = H.div {} []
-    mNodePopupView props@{asyncTasks, id, nodeType} true popupOpen (Just position /\ _) =
+    mNodePopupView _ false = H.div {} []
+    mNodePopupView props@{asyncTasks, id, nodeType} true =
       nodePopupView { id
                     , dispatch: d
                     , name: name' props
-                    , nodePopupState: popupOpen
                     , nodeType
-                    , position
                     , session
                     }
 
@@ -189,10 +182,16 @@ type NodePopupProps =
   ( id       :: ID
   , dispatch :: Dispatch
   , name     :: Name
-  , nodePopupState :: R.State (Maybe NodePopup)
   , nodeType :: GT.NodeType
-  , position :: R2.Point
   , session  :: Session
+  )
+
+type NodePopupS =
+  (
+      action   :: Maybe NodeAction
+    , id       :: ID
+    , name     :: Name
+    , nodeType :: GT.NodeType
   )
 
 iconAStyle :: { color :: String, paddingTop :: String, paddingBottom :: String}
@@ -207,13 +206,12 @@ nodePopupView p = R.createElement nodePopupCpt p []
 nodePopupCpt :: R.Component NodePopupProps
 nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
   where
-    cpt p@{nodePopupState: mPop@(Just NodePopup /\ setPopupOpen)} _ = do
+    cpt p _ = do
       renameBoxOpen <- R.useState' false
       nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {action: Nothing, id: p.id, name: p.name, nodeType: p.nodeType}
       search <- R.useState' $ defaultSearch { node_id = Just p.id }
-      pure $ H.div (tooltipProps p.position) $
-        [ H.div {id: "arrow"} []
-        , H.div { className: "popup-container" }
+      pure $ H.div tooltipProps $
+        [ H.div { className: "popup-container" }
           [ H.div { className: "panel panel-default" }
             [ H.div {className: ""}
               [ H.div { className : "col-md-11"}
@@ -223,7 +221,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
               ]
             , panelHeading renameBoxOpen p
             , panelBody    nodePopupState p
-            , mPanelAction nodePopup.action p search
+            , mPanelAction nodePopupState p search
             ]
           , if nodePopup.action == Just SearchBox then
               H.div {}
@@ -235,13 +233,13 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
           ]
         ]
       where
-        tooltipProps (R2.Point {x, y}) = {
+        tooltipProps = {
           className: ""
           , id: "node-popup-tooltip"
           , title: "Node settings"
           , data: { toggle: "tooltip"
-                  , placement: "right"},
-            style: { top: y - 65.0, left: x + 10.0 }
+                  , placement: "right"}
+            --, style: { top: y - 65.0, left: x + 10.0 }
           }
 
         panelHeading renameBoxOpen@(open /\ _) {dispatch: d, id, name, nodeType} =
@@ -255,8 +253,6 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                                 , H.div {className: "col-md-1"}
                                         [ H.a { "type"   : "button"
                                               , className: glyphicon "remove-circle"
-                                              , onClick  : mkEffectFn1
-                                                         $ \_ -> setPopupOpen $ const Nothing
                                               , title    : "Close"} []
                                         ]
                                  ]
@@ -288,15 +284,15 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
           where
             SettingsBox {edit, doc, buttons} = settingsBox nodeType
 
-        mPanelAction :: Maybe NodeAction -> Record NodePopupProps -> R.State Search -> R.Element
-        mPanelAction Nothing _ _ = H.div {} []
-        mPanelAction (Just a) p search =
+        mPanelAction :: R.State (Record NodePopupS) -> Record NodePopupProps -> R.State Search -> R.Element
+        mPanelAction ({action: Nothing} /\ _) _ _ = H.div {} []
+        mPanelAction ({action: Just action} /\ _) p search =
             panelAction {
-                  action: a
+                  action
                 , dispatch: p.dispatch
                 , id: p.id
                 , name: p.name
-                , nodePopupState: mPop
+                , nodePopup: Just NodePopup
                 , nodeType: p.nodeType
                 , search
                 , session: p.session
@@ -323,8 +319,6 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
             qp = NQP.QueryPairs [
               Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
               ]
-
-    cpt _ _ = pure $ H.div {} []
 
 
 type ActionState =
@@ -383,7 +377,7 @@ type PanelActionProps =
   , action   :: NodeAction
   , dispatch :: Dispatch
   , name     :: Name
-  , nodePopupState :: R.State (Maybe NodePopup)
+  , nodePopup :: Maybe NodePopup
   , nodeType :: GT.NodeType
   , session  :: Session
   , search   :: R.State Search
@@ -440,8 +434,8 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
         H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."])
         , reallyDelete d
         ]
-    cpt {action: Add xs, dispatch: d, id, name, nodePopupState: p, nodeType} _ = do
-      pure $ createNodeView d {id, name, nodeType} p xs
+    cpt {action: Add xs, dispatch: d, id, name, nodePopup: p, nodeType} _ = do
+      pure $ createNodeView d {id, name, nodeType} xs
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}
     cpt _ _ = do
@@ -450,10 +444,11 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 
     onSearch :: Record PanelActionProps -> GT.AsyncTaskWithType -> Effect Unit
-    onSearch {dispatch: d, nodePopupState: p} task = do
+    onSearch {dispatch: d, nodePopup: p} task = do
       _ <- launchAff $ d (SearchQuery task)
       -- close popup
-      snd p $ const Nothing
+      -- TODO
+      --snd p $ const Nothing
       pure unit
 
 
