@@ -125,10 +125,10 @@ settingsBox FolderPublic = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation FolderPublic
-  , buttons : [{-, SearchBox
-                                                    , Add [ Corpus
-                                                          , Folder
-                                                          ]-}
+  , buttons : [ SearchBox
+              , Add [ Corpus
+                    , Folder
+                    ]
     ]
   }
 
