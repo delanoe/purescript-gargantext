@@ -91,7 +91,7 @@ toHtml :: R.State Reload
 toHtml reload@(_ /\ setReload) tree@(NTree (LNode {id, name, nodeType}) ary) tasks@(asyncTasks /\ setAsyncTasks) session frontends mCurrentRoute openNodes = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
-    pAction = performAction session tree reload openNodes tasks
+    pAction = performAction {openNodes, reload, session, tasks, tree}
 
     cpt props _ = do
       let nodeId = mkNodeId session id
@@ -144,36 +144,49 @@ childNodes session frontends reload (true /\ _) mCurrentRoute openNodes ary =
         tasks <- R.useState' asyncTasks
         pure $ toHtml reload tree tasks session frontends mCurrentRoute openNodes
 
-performAction :: Session
-              -> FTree
-              -> R.State Int
-              -> R.State OpenNodes
-              -> R.State (Array GT.AsyncTaskWithType)
+performAction :: { openNodes :: R.State OpenNodes
+                 , reload :: R.State Int
+                 , session :: Session
+                 , tasks :: R.State (Array GT.AsyncTaskWithType)
+                 , tree :: FTree }
               -> Action
               -> Aff Unit
-performAction session (NTree (LNode {id}) _) (_ /\ setReload) (_ /\ setOpenNodes) _ DeleteNode = do
+performAction { openNodes: (_ /\ setOpenNodes)
+              , reload: (_ /\ setReload)
+              , session
+              , tree: (NTree (LNode {id}) _) } DeleteNode = do
   void $ deleteNode session id
   liftEffect do
     setOpenNodes (Set.delete (mkNodeId session id))
     setReload (_ + 1)
 
-performAction session (NTree (LNode {id}) _) (_ /\ setReload) _ (_ /\ setAsyncTasks) (SearchQuery task) = do
+performAction { reload: (_ /\ setReload)
+              , session
+              , tasks: (_ /\ setAsyncTasks)
+              , tree: (NTree (LNode {id}) _) } (SearchQuery task) = do
   liftEffect $ setAsyncTasks $ A.cons task
   liftEffect $ log2 "[performAction] SearchQuery task:" task
   liftEffect $ setReload (_ + 1)
 
-performAction session (NTree (LNode {id}) _) (_ /\ setReload) _ _ (Submit name)  = do
+performAction { reload: (_ /\ setReload)
+              , session
+              , tree: (NTree (LNode {id}) _) } (Submit name)  = do
   void $ renameNode session id $ RenameValue {name}
   liftEffect do
     setReload (_ + 1)
 
-performAction session (NTree (LNode {id}) _) (_ /\ setReload) (_ /\ setOpenNodes) _ (CreateSubmit name nodeType) = do
+performAction { openNodes: (_ /\ setOpenNodes)
+              , reload: (_ /\ setReload)
+              , session
+              , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
   void $ createNode session id $ CreateValue {name, nodeType}
   liftEffect do
     setOpenNodes (Set.insert (mkNodeId session id))
     setReload (_ + 1)
 
-performAction session (NTree (LNode {id}) _) _ _ (_ /\ setAsyncTasks) (UploadFile nodeType fileType mName contents) = do
+performAction { session
+              , tasks: (_ /\ setAsyncTasks)
+              , tree: (NTree (LNode {id}) _) } (UploadFile nodeType fileType mName contents) = do
   task <- uploadFile session nodeType id fileType {mName, contents}
   liftEffect $ setAsyncTasks $ A.cons task
   liftEffect $ log2 "uploaded, task:" task
