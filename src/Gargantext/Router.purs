@@ -14,6 +14,7 @@ router = oneOf
   , FolderPrivate    <$> (route "folderPrivate"     *> sid) <*> int
   , FolderPublic     <$> (route "folderPublic"     *> sid) <*> int
   , FolderShared     <$> (route "folderShared"     *> sid) <*> int
+  , Team             <$> (route "team"     *> sid) <*> int
   , CorpusDocument   <$> (route "corpus"     *> sid) <*> int
                         <*> (lit "list" *> int)
                         <*> (lit "document" *> int)
