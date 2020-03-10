@@ -3,57 +3,44 @@ module Gargantext.Components.NgramsTable
   , mainNgramsTable
   ) where
 
-import Prelude
-  ( class Show, Unit, bind, const, discard, identity, map, mempty, not
-  , pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<)
-  , (==), (||), otherwise, when )
 import Data.Array as A
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (Lens', to, view, (%~), (.~), (^.), (^..), (^?))
-import Data.Lens.Common (_Just)
 import Data.Lens.At (at)
-import Data.Lens.Index (ix)
+import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
+import Data.Lens.Index (ix)
 import Data.Lens.Record (prop)
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Monoid.Additive (Additive(..))
+import Data.Newtype (over2, unwrap)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), snd)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import React (ReactClass, ReactElement, Children)
-import React.DOM (a, i, input, li, span, text, ul)
-import React.DOM.Props ( _type, checked, className, onChange, onClick, style
-                       , readOnly)
-import React.DOM.Props as DOM
-import Thermite as Thermite
-import Thermite (modifyState_)
-import Gargantext.Types
-  ( CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList
-  , readTermSize, termLists, termSizes)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.NgramsTable.Core
-  ( CoreState, NgramsElement(..), NgramsPatch(..), NgramsTablePatch, _PatchMap
-  , NgramsTable, NgramsTerm, PageParams, Replace, Versioned(..)
-  , VersionedNgramsTable, _NgramsElement, _NgramsTable, _children
-  , _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches
-  , applyPatchSet, commitPatch, syncPatches, convOrderBy, initialPageParams, loadNgramsTable
-  , patchSetFromMap, replace, singletonNgramsTablePatch
-  , normNgram, ngramsTermText, fromNgramsPatches, PatchMap(..), rootsOf )
 import Gargantext.Components.Loader (loader)
+import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTable, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
+import Gargantext.Types (CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
-
+import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), otherwise, when)
+import React (ReactClass, ReactElement, Children)
+import React.DOM (a, i, input, li, span, text, ul)
+import React.DOM.Props (_type, checked, className, onChange, onClick, style, readOnly)
+import React.DOM.Props as DOM
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Thermite (modifyState_)
+import Thermite as Thermite
 import Unsafe.Coerce (unsafeCoerce)
 
 type State =
@@ -105,15 +92,14 @@ data Action
   -- ^ Toggles the NgramsTerm in the `Set` `ngramsSelection`.
   | ToggleSelectAll
 
-setTermListA :: NgramsTerm -> Replace TermList -> Action
+setTermListA :: NgramsTerm -> Replace TermList -> NgramsTablePatch
 setTermListA n patch_list =
-  CommitPatch $
-    singletonNgramsTablePatch n $
+  singletonNgramsTablePatch n $
     NgramsPatch { patch_list, patch_children: mempty }
 
-setTermListSetA :: NgramsTable -> Set NgramsTerm -> TermList -> Action
+setTermListSetA :: NgramsTable -> Set NgramsTerm -> TermList -> NgramsTablePatch
 setTermListSetA ngramsTable ns new_list =
-  CommitPatch $ fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
+  fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
   where
     f :: NgramsTerm -> Unit -> NgramsPatch
     f n unit = NgramsPatch { patch_list, patch_children: mempty }
@@ -138,6 +124,9 @@ tableContainer :: { path            :: R.State PageParams
                   , ngramsTable     :: NgramsTable
                   , tabNgramType    :: CTabNgramType
                   , ngramsSelectAll :: Boolean
+                  , offlineNgramsTablePatch :: R.State NgramsTablePatch
+                  , stageOrCommitPatch :: NgramsTablePatch -> Effect Unit
+                  , offlineMode     :: R.State Boolean
                   }
                -> Record T.TableContainerProps -> R.Element
 tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
@@ -148,6 +137,9 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                , ngramsTable: ngramsTableCache
                , tabNgramType
                , ngramsSelectAll
+               , offlineNgramsTablePatch: Tuple offlineNgramsTablePatchValue setOfflineNgramsTablePatch
+               , stageOrCommitPatch
+               , offlineMode: Tuple isOfflineMode setOfflineMode
                } props =
   H.div {className: "container-fluid"}
   [ H.div {className: "jumbotron1"}
@@ -166,6 +158,19 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                         , type: "value"
                         , value: searchQuery
                         , on: {input: setSearchQuery <<< R2.unsafeEventValue}}
+              , H.label {}
+                  [ H.input { className: ""
+                            , name: "offline-mode-checkbox"
+                            , type: "checkbox"
+                            , value: isOfflineMode
+                            , on: { click: \_ -> do
+                                -- when toggling off offline mode, make sure to commit any missing patches
+                                when isOfflineMode do
+                                  dispatch $ CommitPatch offlineNgramsTablePatchValue
+                                  setOfflineNgramsTablePatch mempty
+                                setOfflineMode not }}
+                  , H.text "Offline mode"
+                  ]
               , H.div {} (
                    if A.null props.tableBody && searchQuery /= "" then [
                      H.button { className: "btn btn-primary"
@@ -241,7 +246,9 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
     setSearchQuery    x = setPath $ _ { searchQuery = x }
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
-    setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
+    setSelection xs = do
+      let patch = setTermListSetA ngramsTableCache ngramsSelection xs
+      stageOrCommitPatch patch
 
 toggleMaybe :: forall a. a -> Maybe a -> Maybe a
 toggleMaybe _ (Just _) = Nothing
@@ -282,6 +289,8 @@ type LoadedNgramsTableProps =
   ( tabNgramType :: CTabNgramType
   , path         :: R.State PageParams
   , versioned    :: VersionedNgramsTable
+  , offlineNgramsTablePatch :: R.State NgramsTablePatch
+  , offlineMode  :: R.State Boolean
   )
 
 loadedNgramsTableSpec :: Thermite.Spec State (Record LoadedNgramsTableProps) Action
@@ -331,7 +340,10 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
     render :: Thermite.Render State (Record LoadedNgramsTableProps) Action
     render dispatch { path: path@({searchQuery, scoreType, params, termListFilter} /\ setPath)
                     , versioned: Versioned { data: initTable }
-                    , tabNgramType }
+                    , tabNgramType
+                    , offlineNgramsTablePatch
+                    , offlineMode
+                    }
                     state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
                           , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
@@ -341,6 +353,22 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
                            }
       ]
       where
+        -- commit the patch if not in offline mode
+        -- stage the patch by appending to a total offline patch in offline mode
+        -- this patch is to be used when toggling off offline mode
+        stageOrCommitPatch patch =
+          if fst offlineMode
+            then do
+              -- append patch to state
+              snd offlineNgramsTablePatch $ \p -> do
+                { ngramsNewElems: p.ngramsNewElems <> patch.ngramsNewElems
+                -- note that simply appending a Replace node inside of the patches always yields non-Keep
+                -- this can be very confusing because changing back a term can break
+                , ngramsPatches: over2 PatchMap Map.union patch.ngramsPatches p.ngramsPatches
+                }
+            else do
+              dispatch $ CommitPatch patch
+
         totalRecords = 0 -- TODO, 0 to show first users that it is fake (until it is fixed)
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
         selected =
@@ -354,7 +382,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
         wrapColElts (T.ColumnName "Select") = const [R2.buff selected]
         wrapColElts (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
         wrapColElts _                       = identity
-        container = tableContainer {path, dispatch, ngramsParent, ngramsChildren, ngramsSelection, ngramsTable, tabNgramType, ngramsSelectAll}
+        container = tableContainer {path, dispatch, ngramsParent, ngramsChildren, ngramsSelection, ngramsTable, tabNgramType, ngramsSelectAll, offlineNgramsTablePatch, stageOrCommitPatch, offlineMode}
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
         ngramsTable = applyNgramsPatches state initTable
         orderWith =
@@ -394,11 +422,15 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
           -- ^ unless they are scheduled to be removed.
           || tablePatchHasNgrams ngramsLocalPatch ngrams
           -- ^ unless they are being processed at the moment.
+
         convertRow (Tuple ngrams ngramsElement) =
           { row: R2.buff <$> renderNgramsItem { ngramsTable, ngrams,
                                                 ngramsLocalPatch,
                                                 ngramsParent, ngramsElement,
-                                                ngramsSelection, dispatch }
+                                                ngramsSelection, dispatch,
+                                                stageOrCommitPatch,
+                                                offlineNgramsTablePatch,
+                                                isOfflineMode: fst offlineMode }
           , delete: false
           }
 
@@ -426,8 +458,18 @@ mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
   where
     cpt {nodeId, defaultListId, tabType, session, tabNgramType} _ = do
       path /\ setPath <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
-      let paint versioned = loadedNgramsTable' {tabNgramType, path: path /\ setPath, versioned}
-      pure $ loader path loadNgramsTable paint
+
+      offlineNgramsTablePatch :: R.State NgramsTablePatch <- R.useState' mempty
+      offlineMode <- R.useState' false
+
+      let paint versioned = loadedNgramsTable' {tabNgramType, path: path /\ setPath, versioned, offlineMode, offlineNgramsTablePatch}
+
+      -- don't use searchQuery to filter out results.
+      -- filtering is done locally when checking if rows should be displayed anyway further below.
+      let _stubbedPath = initialPageParams path.session path.nodeId path.listIds path.tabType
+      let stubbedPath = path { searchQuery = "" }
+
+      pure $ loader stubbedPath loadNgramsTable paint
 
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
@@ -490,9 +532,13 @@ renderNgramsItem :: { ngrams :: NgramsTerm
                     , ngramsParent :: Maybe NgramsTerm
                     , ngramsSelection :: Set NgramsTerm
                     , dispatch :: Action -> Effect Unit
+                    , stageOrCommitPatch :: NgramsTablePatch -> Effect Unit
+                    , offlineNgramsTablePatch :: R.State NgramsTablePatch
+                    , isOfflineMode :: Boolean
                     } -> Array ReactElement
 renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
-                 , ngramsSelection, ngramsLocalPatch, dispatch } =
+                 , ngramsSelection, ngramsLocalPatch, dispatch
+                 , stageOrCommitPatch, offlineNgramsTablePatch, isOfflineMode } =
   [ selected
   , checkbox GraphTerm
   , checkbox StopTerm
@@ -507,10 +553,20 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
   ]
   where
     termList    = ngramsElement ^. _NgramsElement <<< _list
-    ngramsStyle = [termStyle termList ngramsOpacity]
+    ngramsStyle = [termStyle termList ngramsOpacity, pendingChangesStyle]
+    offlinePatchMap = unwrap (fst offlineNgramsTablePatch).ngramsPatches
+    mOfflinePatch = Map.lookup ngrams offlinePatchMap
+    matchingOfflinePatchTerm = case _.patch_list <<< unwrap <$> mOfflinePatch of
+      Just (Replace { new: term }) -> Just term
+      _ -> Nothing
+    isPendingChanges = isJust mOfflinePatch
+    pendingChangesStyle =
+      if isPendingChanges
+        then style { color: "orange", opacity: ngramsOpacity}
+        else style {}
     ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
     ngramsClick
-      = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+      = Just <<< cycleTermListItem <<< view _ngrams
       -- ^ This is the old behavior it is nicer to use since one can
       --   rapidly change the ngram list without waiting for confirmation.
       --   However this might expose bugs. One of them can be reproduced
@@ -526,7 +582,9 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
         , onChange $ const $ dispatch $ ToggleSelect ngrams
         ]
     checkbox termList' =
-      let chkd = termList == termList'
+      let chkd = case matchingOfflinePatchTerm of
+            Just termList_ -> termList_ == termList'
+            _ -> termList == termList'
           termList'' = if chkd then CandidateTerm else termList'
       in
       input
@@ -534,8 +592,9 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
         , className "checkbox"
         , checked chkd
         , readOnly ngramsTransient
-        , onChange $ const $ when (not ngramsTransient) $ dispatch $
-            setTermListA ngrams (replace termList termList'')
+        , onChange \_ -> when (not ngramsTransient) do
+            let patch = setTermListA ngrams (replace termList termList'')
+            stageOrCommitPatch patch
         ]
     ngramsTransient = tablePatchHasNgrams ngramsLocalPatch ngrams
       -- ^ TODO here we do not look at ngramsNewElems, shall we?
@@ -543,7 +602,9 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
       | ngramsTransient = 0.5
       | otherwise       = 1.0
 
-    cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
+    cycleTermListItem n = do
+      let patch = setTermListA n (replace termList (nextTermList termList))
+      stageOrCommitPatch patch
 
 tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
 tablePatchHasNgrams ngramsTablePatch ngrams =

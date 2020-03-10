@@ -420,6 +420,8 @@ newtype NgramsPatch = NgramsPatch
   , patch_list     :: Replace TermList
   }
 
+derive instance newtypeNgramsPatch :: Newtype NgramsPatch _
+
 instance semigroupNgramsPatch :: Semigroup NgramsPatch where
   append (NgramsPatch p) (NgramsPatch q) = NgramsPatch
     { patch_children: p.patch_children <> q.patch_children
