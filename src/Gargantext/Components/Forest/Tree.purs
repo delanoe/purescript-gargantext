@@ -20,13 +20,18 @@ import Gargantext.Types as GT
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+type CommonProps =
+  (
+      frontends :: Frontends
+    , mCurrentRoute :: Maybe AppRoute
+    , openNodes :: R.State OpenNodes
+    , reload :: R.State Reload
+    , session :: Session
+  )
+
 ------------------------------------------------------------------------
 type Props = ( root          :: ID
-             , mCurrentRoute :: Maybe AppRoute
-             , session       :: Session
-             , frontends     :: Frontends
-             , openNodes     :: R.State OpenNodes
-             , reload        :: R.State Reload
+             | CommonProps
              )
 
 treeView :: Record Props -> R.Element
@@ -39,18 +44,10 @@ treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
       pure $ treeLoadView
         { root, mCurrentRoute, session, frontends, openNodes, reload }
 
-type Props' = ( root          :: ID
-              , mCurrentRoute :: Maybe AppRoute
-              , session       :: Session
-              , frontends     :: Frontends
-              , openNodes     :: R.State OpenNodes
-              , reload        :: R.State Reload
-              )
-
-treeLoadView :: Record Props' -> R.Element
+treeLoadView :: Record Props -> R.Element
 treeLoadView p = R.createElement treeLoadView' p []
 
-treeLoadView' :: R.Component Props'
+treeLoadView' :: R.Component Props
 treeLoadView' = R.hooksComponent "TreeLoadView" cpt
   where
     cpt {root, mCurrentRoute, session, frontends, openNodes, reload} _ = do
@@ -59,11 +56,7 @@ treeLoadView' = R.hooksComponent "TreeLoadView" cpt
       useLoader {root, counter: fst reload} fetch paint
 
 type TreeViewProps = ( tree          :: FTree
-                     , mCurrentRoute :: Maybe AppRoute
-                     , frontends     :: Frontends
-                     , session       :: Session
-                     , openNodes     :: R.State OpenNodes
-                     , reload :: R.State Reload
+                     | CommonProps
                      )
 
 
@@ -83,13 +76,9 @@ loadedTreeView' = R.hooksComponent "LoadedTreeView" cpt
 
 type ToHtmlProps =
   (
-    frontends :: Frontends
-  , mCurrentRoute :: Maybe AppRoute
-  , openNodes :: R.State OpenNodes
-  , reload :: R.State Reload
-  , session :: Session
-  , tasks :: R.State (Array GT.AsyncTaskWithType)
+    tasks :: R.State (Array GT.AsyncTaskWithType)
   , tree :: FTree
+  | CommonProps
   )
 
 toHtml :: Record ToHtmlProps -> R.Element
@@ -122,7 +111,7 @@ toHtml { frontends
                                    , nodeType
                                    , onAsyncTaskFinish
                                    } folderOpen session frontends ]
-            <> childNodes session frontends reload folderOpen mCurrentRoute openNodes ary
+            <> childNodes {children: ary, folderOpen, frontends, mCurrentRoute, openNodes, reload, session }
           )
         ]
 
@@ -133,18 +122,19 @@ toHtml { frontends
         newAsyncTasks = A.filter (\(GT.AsyncTaskWithType {task: GT.AsyncTask {id: id''}}) -> id' /= id'') asyncTasks
 
 
-childNodes :: Session
-           -> Frontends
-           -> R.State Reload
-           -> R.State Boolean
-           -> Maybe AppRoute
-           -> R.State OpenNodes
-           -> Array FTree
-           -> Array R.Element
-childNodes _ _ _ _ _ _ [] = []
-childNodes _ _ _ (false /\ _) _ _ _ = []
-childNodes session frontends reload (true /\ _) mCurrentRoute openNodes ary =
-  map (\ctree -> childNode {tree: ctree, asyncTasks: []}) $ sorted ary
+type ChildNodesProps =
+  (
+      children :: Array FTree
+    , folderOpen :: R.State Boolean
+    | CommonProps
+  )
+
+
+childNodes :: Record ChildNodesProps -> Array R.Element
+childNodes { children: [] } = []
+childNodes { folderOpen: (false /\ _) } = []
+childNodes { children, folderOpen: (true /\ _), frontends, mCurrentRoute, openNodes, reload, session } =
+  map (\ctree -> childNode {tree: ctree, asyncTasks: []}) $ sorted children
     where
       sorted :: Array FTree -> Array FTree
       sorted = A.sortWith (\(NTree (LNode {id}) _) -> id)
@@ -156,7 +146,7 @@ childNodes session frontends reload (true /\ _) mCurrentRoute openNodes ary =
         pure $ toHtml { frontends, mCurrentRoute, openNodes, reload, session, tasks, tree }
 
 performAction :: { openNodes :: R.State OpenNodes
-                 , reload :: R.State Int
+                 , reload :: R.State Reload
                  , session :: Session
                  , tasks :: R.State (Array GT.AsyncTaskWithType)
                  , tree :: FTree }
