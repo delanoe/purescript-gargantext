@@ -77,18 +77,29 @@ loadedTreeView' = R.hooksComponent "LoadedTreeView" cpt
       tasks <- R.useState' []
 
       pure $ H.div {className: "tree"}
-        [ toHtml reload tree tasks session frontends mCurrentRoute openNodes ]
+        [ toHtml { frontends, mCurrentRoute, openNodes, reload, session, tasks, tree } ]
 
 ------------------------------------------------------------------------
-toHtml :: R.State Reload
-       -> FTree
-       -> R.State (Array GT.AsyncTaskWithType)
-       -> Session
-       -> Frontends
-       -> Maybe AppRoute
-       -> R.State OpenNodes
-       -> R.Element
-toHtml reload@(_ /\ setReload) tree@(NTree (LNode {id, name, nodeType}) ary) tasks@(asyncTasks /\ setAsyncTasks) session frontends mCurrentRoute openNodes = R.createElement el {} []
+
+type ToHtmlProps =
+  (
+    frontends :: Frontends
+  , mCurrentRoute :: Maybe AppRoute
+  , openNodes :: R.State OpenNodes
+  , reload :: R.State Reload
+  , session :: Session
+  , tasks :: R.State (Array GT.AsyncTaskWithType)
+  , tree :: FTree
+  )
+
+toHtml :: Record ToHtmlProps -> R.Element
+toHtml { frontends
+       , mCurrentRoute
+       , openNodes
+       , reload: reload@(_ /\ setReload)
+       , session
+       , tasks: tasks@(asyncTasks /\ setAsyncTasks)
+       , tree: tree@(NTree (LNode {id, name, nodeType}) ary) } = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
     pAction = performAction {openNodes, reload, session, tasks, tree}
@@ -142,7 +153,7 @@ childNodes session frontends reload (true /\ _) mCurrentRoute openNodes ary =
       el = R.hooksComponent "ChildNodeView" cpt
       cpt {tree, asyncTasks} _ = do
         tasks <- R.useState' asyncTasks
-        pure $ toHtml reload tree tasks session frontends mCurrentRoute openNodes
+        pure $ toHtml { frontends, mCurrentRoute, openNodes, reload, session, tasks, tree }
 
 performAction :: { openNodes :: R.State OpenNodes
                  , reload :: R.State Int
