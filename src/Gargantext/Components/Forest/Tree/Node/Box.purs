@@ -40,24 +40,29 @@ import Gargantext.Utils.Reactix as R2
 
 type Dispatch = Action -> Aff Unit
 
+type CommonProps =
+  (
+      dispatch :: Dispatch
+    , session :: Session
+  )
+
 
 -- Main Node
 type NodeMainSpanProps =
   ( id            :: ID
   , asyncTasks    :: Array GT.AsyncTaskWithType
+  , folderOpen    :: R.State Boolean
+  , frontends :: Frontends
   , mCurrentRoute :: Maybe AppRoute
   , name          :: Name
   , nodeType      :: GT.NodeType
   , onAsyncTaskFinish :: GT.AsyncTaskWithType -> Effect Unit
+  | CommonProps
   )
 
-nodeMainSpan :: Dispatch
-             -> Record NodeMainSpanProps
-             -> R.State Boolean
-             -> Session
-             -> Frontends
+nodeMainSpan :: Record NodeMainSpanProps
              -> R.Element
-nodeMainSpan d p folderOpen session frontends = R.createElement el p []
+nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el p []
   where
     el = R.hooksComponent "G.C.F.T.N.B.NodeMainSpan" cpt
     cpt props@{id, asyncTasks, mCurrentRoute, name, nodeType, onAsyncTaskFinish} _ = do
@@ -81,7 +86,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
             popOverIcon true
           , mNodePopupView props showBox
         ]
-        , fileTypeView {action: d, droppedFile, id, isDragOver, nodeType}
+        , fileTypeView {dispatch, droppedFile, id, isDragOver, nodeType}
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                 , corpusId: id
                                                 , onFinish: \_ -> onAsyncTaskFinish t
@@ -105,7 +110,7 @@ nodeMainSpan d p folderOpen session frontends = R.createElement el p []
     mNodePopupView _ false = H.div {} []
     mNodePopupView props@{asyncTasks, id, nodeType} true =
       nodePopupView { id
-                    , dispatch: d
+                    , dispatch
                     , name: name' props
                     , nodeType
                     , session
@@ -180,10 +185,9 @@ mCorpusId _ = Nothing
 -- | START Popup View
 type NodePopupProps =
   ( id       :: ID
-  , dispatch :: Dispatch
   , name     :: Name
   , nodeType :: GT.NodeType
-  , session  :: Session
+  | CommonProps
   )
 
 type NodePopupS =
@@ -242,11 +246,11 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
             --, style: { top: y - 65.0, left: x + 10.0 }
           }
 
-        panelHeading renameBoxOpen@(open /\ _) {dispatch: d, id, name, nodeType} =
+        panelHeading renameBoxOpen@(open /\ _) {dispatch, id, name, nodeType} =
           H.div {className: "panel-heading"}
                 [ R2.row
                         [ H.div {className: "col-md-8"}
-                                [ renameBox d {id, name, nodeType} renameBoxOpen ]
+                                [ renameBox { dispatch, id, name, nodeType, renameBoxOpen } ]
 
                         , H.div {className: "flex-end"}
                                 [ if edit then editIcon renameBoxOpen else H.div {} []
@@ -431,13 +435,13 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
       pure $ R.fragment [
         H.div {style: {margin: "10px"}} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]
       ]
-    cpt {action: Delete, dispatch: d} _ = do
+    cpt {action: Delete, dispatch} _ = do
       pure $ R.fragment [
         H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."])
-        , reallyDelete d
+        , reallyDelete dispatch
         ]
-    cpt {action: Add xs, dispatch: d, id, name, nodePopup: p, nodeType} _ = do
-      pure $ createNodeView d {id, name, nodeType} xs
+    cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
+      pure $ createNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}
     cpt _ _ = do
@@ -446,8 +450,8 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 
     onSearch :: Record PanelActionProps -> GT.AsyncTaskWithType -> Effect Unit
-    onSearch {dispatch: d, nodePopup: p} task = do
-      _ <- launchAff $ d (SearchQuery task)
+    onSearch {dispatch, nodePopup: p} task = do
+      _ <- launchAff $ dispatch (SearchQuery task)
       -- close popup
       -- TODO
       --snd p $ const Nothing

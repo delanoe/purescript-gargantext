@@ -3,7 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff)
@@ -14,13 +14,12 @@ import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as QP
-import Web.File.File as WF
 import Web.File.FileReader.Aff (readAsText)
 
-import Gargantext.Prelude
+import Gargantext.Prelude (class Show, Unit, bind, const, discard, map, pure, show, unit, void, ($), (&&), (/=), (<>))
 
 import Gargantext.Components.Data.Lang (readLang, Lang(..))
-import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FTree, FileType(..), ID, LNode(..), NTree(..), UploadFile, UploadFileContents(..), readFileType)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), postWwwUrlencoded, get)
@@ -28,8 +27,10 @@ import Gargantext.Types as GT
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 
+type Dispatch = Action -> Aff Unit
+
 type Props =
-  ( dispatch :: Action -> Aff Unit
+  ( dispatch :: Dispatch
   , id :: Int
   , nodeType :: GT.NodeType
   , session :: Session
@@ -42,7 +43,7 @@ uploadFileView props = R.createElement uploadFileViewCpt props []
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
   where
-    cpt {dispatch: d, id, nodeType} _ = do
+    cpt {dispatch, id, nodeType} _ = do
       mFile :: R.State (Maybe UploadFile) <- R.useState' Nothing
       fileType :: R.State FileType     <- R.useState' CSV
       lang     :: R.State (Maybe Lang) <- R.useState' (Just EN)
@@ -71,7 +72,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
                        } (map renderOptionLang [EN, FR])
                        ]
 
-            , H.div {} [ uploadButton {action: d, fileType, lang, id, mFile, nodeType } ]
+            , H.div {} [ uploadButton {dispatch, fileType, lang, id, mFile, nodeType } ]
             ]
 
     renderOptionFT :: FileType -> R.Element
@@ -110,7 +111,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
 
 type UploadButtonProps =
   (
-    action :: Action -> Aff Unit
+    dispatch :: Dispatch
   , fileType :: R.State FileType
   , id :: Int
   , lang :: R.State (Maybe Lang)
@@ -124,7 +125,7 @@ uploadButton props = R.createElement uploadButtonCpt props []
 uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
   where
-    cpt {action, fileType: (fileType /\ setFileType), id, lang: (lang /\ setLang), mFile: (mFile /\ setMFile), nodeType} _ = do
+    cpt {dispatch, fileType: (fileType /\ setFileType), id, lang: (lang /\ setLang), mFile: (mFile /\ setMFile), nodeType} _ = do
         pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
       where
         disabled = case mFile of
@@ -134,7 +135,7 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
         onClick e = do
           let {name, contents} = unsafePartial $ fromJust mFile
           void $ launchAff do
-            _ <- action $ UploadFile nodeType fileType (Just name) contents
+            _ <- dispatch $ UploadFile nodeType fileType (Just name) contents
             liftEffect $ do
               setMFile     $ const $ Nothing
               setFileType  $ const $ CSV
@@ -142,7 +143,7 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
 
 -- START File Type View
 type FileTypeProps =
-  ( action      :: Action -> Aff Unit
+  ( dispatch    :: Dispatch
   , droppedFile :: R.State (Maybe DroppedFile)
   , id          :: ID
   , isDragOver  :: R.State Boolean
@@ -155,7 +156,7 @@ fileTypeView p = R.createElement fileTypeViewCpt p []
 fileTypeViewCpt :: R.Component FileTypeProps
 fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
   where
-    cpt {action, droppedFile: (Just (DroppedFile {contents, fileType}) /\ setDroppedFile), isDragOver: (_ /\ setIsDragOver), nodeType} _ = do
+    cpt {dispatch, droppedFile: (Just (DroppedFile {contents, fileType}) /\ setDroppedFile), isDragOver: (_ /\ setIsDragOver), nodeType} _ = do
       pure $ H.div tooltipProps $
         [ H.div {className: "panel panel-default"}
           [ panelHeading
@@ -207,7 +208,7 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
                          , type: "button"
                          , on: {click: \_ -> do
                                    setDroppedFile $ const Nothing
-                                   launchAff $ action $ UploadFile nodeType ft Nothing contents
+                                   launchAff $ dispatch $ UploadFile nodeType ft Nothing contents
                                }
                          } [H.text "Upload"]
               Nothing ->
@@ -285,7 +286,7 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
 
 type UploadTermButtonProps =
   (
-    dispatch :: Action -> Aff Unit
+    dispatch :: Dispatch
   , id       :: Int
   , mFile    :: R.State (Maybe UploadFile)
   , nodeType :: GT.NodeType

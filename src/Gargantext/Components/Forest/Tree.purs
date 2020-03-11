@@ -104,13 +104,17 @@ toHtml { frontends
 
       pure $ H.ul {}
         [ H.li {}
-          ( [ nodeMainSpan pAction { id
-                                   , asyncTasks
-                                   , mCurrentRoute
-                                   , name
-                                   , nodeType
-                                   , onAsyncTaskFinish
-                                   } folderOpen session frontends ]
+          ( [ nodeMainSpan { id
+                           , asyncTasks
+                           , dispatch: pAction
+                           , folderOpen
+                           , frontends
+                           , mCurrentRoute
+                           , name
+                           , nodeType
+                           , onAsyncTaskFinish
+                           , session
+                           } ]
             <> childNodes {children: ary, folderOpen, frontends, mCurrentRoute, openNodes, reload, session }
           )
         ]
