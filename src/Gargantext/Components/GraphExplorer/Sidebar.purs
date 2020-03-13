@@ -24,15 +24,18 @@ import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Data.Array (mapMaybe)
-import Gargantext.Ends (Frontends)
+import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
 type Props =
   ( frontends :: Frontends
   , graph :: SigmaxT.SGraph
+  , graphId :: Int
   , graphVersion :: R.State Int
   , metaData :: GET.MetaData
   , removedNodeIds :: R.State SigmaxT.NodeIds
@@ -63,6 +66,11 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                 [ RH.div { className: "tab-content" }
                   [ RH.div { className: "", role: "tabpanel" }
                     (Seq.toUnfoldable $ (Seq.map (badge props.selectedNodeIds) (badges props.graph props.selectedNodeIds)))
+                  ]
+                , RH.div { className: "gexf" } [
+                   RH.a { className: "btn btn-default"
+                        , href: gexfHref props.session props.graphId
+                        , target: "_blank" } [ RH.text "Download GEXF" ]
                   ]
                 , RH.div { className: "tab-content" }
                   [
@@ -122,6 +130,9 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
       deleteNodes rType props.session props.metaData props.graphVersion nodes
       snd props.removedNodeIds $ const $ fst props.selectedNodeIds
       snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
+
+    gexfHref :: Session -> Int -> String
+    gexfHref session graphId = url session $ Routes.NodeAPI GT.Graph (Just graphId) "gexf"
 
 
 badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
