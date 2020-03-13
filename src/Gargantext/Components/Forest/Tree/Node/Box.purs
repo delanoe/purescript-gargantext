@@ -4,7 +4,7 @@ import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
-import Data.Tuple (Tuple(..), snd)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -69,6 +69,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
+      popoverOpen   <- R.useState' false
 
       popperRef <- R.useRef null
 
@@ -82,7 +83,9 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
               }
           [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
                      , name: name' props} ]
-        , Popover.popover {} [
+        , Popover.popover { open: fst popoverOpen
+                          , onClose: \_ -> snd popoverOpen $ const false
+                          , onOpen: \_ -> snd popoverOpen $ const true } [
             popOverIcon true
           , mNodePopupView props showBox
         ]

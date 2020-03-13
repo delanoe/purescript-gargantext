@@ -1,13 +1,16 @@
 module Gargantext.Utils.Popover where
 
-import Data.Nullable (Nullable)
-import DOM.Simple.Types (Element)
+import Effect (Effect)
 import Reactix as R
-import Type.Row as TR
 
 import Gargantext.Prelude
 
-type Props = ()
+type Props =
+  (
+    open :: Boolean
+  , onClose :: Unit -> Effect Unit
+  , onOpen :: Unit -> Effect Unit
+  )
 
 foreign import popoverCpt :: R.Component Props
 
