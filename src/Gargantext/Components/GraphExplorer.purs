@@ -140,6 +140,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                                   }
                       , mSidebar mMetaData { frontends
                                            , graph
+                                           , graphId
                                            , graphVersion
                                            , removedNodeIds: controls.removedNodeIds
                                            , session
@@ -171,6 +172,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     mSidebar :: Maybe GET.MetaData
              -> { frontends :: Frontends
                 , graph :: SigmaxT.SGraph
+                , graphId :: GraphId
                 , graphVersion :: R.State Int
                 , removedNodeIds :: R.State SigmaxT.NodeIds
                 , showSidePanel :: GET.SidePanelState
@@ -178,9 +180,10 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                 , session :: Session }
              -> R.Element
     mSidebar Nothing _ = RH.div {} []
-    mSidebar (Just metaData) {frontends, graph, graphVersion, removedNodeIds, session, selectedNodeIds, showSidePanel} =
+    mSidebar (Just metaData) {frontends, graph, graphId, graphVersion, removedNodeIds, session, selectedNodeIds, showSidePanel} =
       Sidebar.sidebar { frontends
                       , graph
+                      , graphId
                       , graphVersion
                       , metaData
                       , removedNodeIds
