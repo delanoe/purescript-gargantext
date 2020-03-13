@@ -7,3 +7,6 @@ if (typeof window !== 'undefined') {
 }
 
 exports.popoverCpt = popover;
+exports._setState = function(el, open) {
+    el.setState({open: open});
+}

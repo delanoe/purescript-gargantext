@@ -3,14 +3,16 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
-import Data.Nullable (null)
+import Data.Nullable (null, toMaybe)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple as DOM
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
+import FFI.Simple ((..))
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -69,9 +71,8 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
-      popoverOpen   <- R.useState' false
 
-      popperRef <- R.useRef null
+      popoverRef <- R.useRef null
 
       pure $ H.span (dropProps droppedFile isDragOver) $
         [ folderIcon nodeType folderOpen
@@ -83,12 +84,15 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
               }
           [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
                      , name: name' props} ]
-        , Popover.popover { open: fst popoverOpen
-                          , onClose: \_ -> snd popoverOpen $ const false
-                          , onOpen: \_ -> snd popoverOpen $ const true } [
-            popOverIcon true
-          , mNodePopupView props showBox
-        ]
+        , if showBox then
+            Popover.popover { open: false
+                            , onClose: \_ -> pure unit
+                            , onOpen: \_ -> pure unit
+                            , ref: popoverRef } [
+                popOverIcon
+              , mNodePopupView props (onPopoverClose popoverRef)
+            ]
+          else H.div {} []
         , fileTypeView {dispatch, droppedFile, id, isDragOver, nodeType}
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                 , corpusId: id
@@ -97,6 +101,8 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType
+            onPopoverClose popoverRef _ = do
+              Popover.setOpen popoverRef false
 
     name' {name, nodeType} = if nodeType == GT.NodeUser then show session else name
 
@@ -104,18 +110,17 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
       H.a {onClick: R2.effToggler folderOpen'}
       [ H.i {className: GT.fldr nodeType open} [] ]
 
-    popOverIcon false = H.div {} []
-    popOverIcon true =
+    popOverIcon =
       H.a { className: "glyphicon glyphicon-cog"
           , id: "rename-leaf"
           } []
 
-    mNodePopupView _ false = H.div {} []
-    mNodePopupView props@{asyncTasks, id, nodeType} true =
+    mNodePopupView props@{asyncTasks, id, nodeType} onPopoverClose =
       nodePopupView { id
                     , dispatch
                     , name: name' props
                     , nodeType
+                    , onPopoverClose
                     , session
                     }
 
@@ -190,6 +195,7 @@ type NodePopupProps =
   ( id       :: ID
   , name     :: Name
   , nodeType :: GT.NodeType
+  , onPopoverClose :: DOM.Element -> Effect Unit
   | CommonProps
   )
 
@@ -260,6 +266,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                                 , H.div {className: "col-md-1"}
                                         [ H.a { "type"   : "button"
                                               , className: glyphicon "remove-circle"
+                                              , on: { click: \e -> p.onPopoverClose $ R2.unsafeEventTarget e }
                                               , title    : "Close"} []
                                         ]
                                  ]
@@ -274,8 +281,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
               [ H.a { className: glyphicon "pencil"
                     , id       : "rename1"
                     , title    : "Rename"
-                    , onClick  : mkEffectFn1
-                               $ \_ -> setRenameBoxOpen $ const true
+                    , on: { click: \_ -> setRenameBoxOpen $ const true }
                     }
                 []
               ]
