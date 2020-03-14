@@ -76,14 +76,6 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
 
       pure $ H.span (dropProps droppedFile isDragOver) $
         [ folderIcon nodeType folderOpen
-        , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
-              , style: { marginLeft: case nodeType of
-                                       NodeUser -> "1rem"
-                                       _        -> "22px"
-                       }
-              }
-          [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
-                     , name: name' props} ]
         , if showBox then
             Popover.popover { open: false
                             , onClose: \_ -> pure unit
@@ -93,6 +85,10 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
               , mNodePopupView props (onPopoverClose popoverRef)
             ]
           else H.div {} []
+        , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
+              }
+          [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
+                     , name: name' props} ]
         , fileTypeView {dispatch, droppedFile, id, isDragOver, nodeType}
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                 , corpusId: id
@@ -107,13 +103,12 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
     name' {name, nodeType} = if nodeType == GT.NodeUser then show session else name
 
     folderIcon nodeType folderOpen'@(open /\ _) =
-      H.a {onClick: R2.effToggler folderOpen'}
+      H.a { className: "folder-icon"
+          , onClick: R2.effToggler folderOpen' }
       [ H.i {className: GT.fldr nodeType open} [] ]
 
     popOverIcon =
-      H.a { className: "glyphicon glyphicon-cog"
-          , id: "rename-leaf"
-          } []
+      H.a { className: "settings fa fa-cog" } []
 
     mNodePopupView props@{asyncTasks, id, nodeType} onPopoverClose =
       nodePopupView { id
@@ -125,7 +120,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
                     }
 
     dropProps droppedFile isDragOver =
-      { className: dropClass droppedFile isDragOver
+      { className: "leaf " <> (dropClass droppedFile isDragOver)
       , on: { drop: dropHandler droppedFile
             , dragOver: onDragOverHandler isDragOver
             , dragLeave: onDragLeave isDragOver } }
