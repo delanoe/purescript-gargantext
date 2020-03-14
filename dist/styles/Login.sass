@@ -95,26 +95,25 @@ li#rename
       min-width: 200px
 
 li
-  a#rename
-    display: none
-    position: absolute
-    text-decoration: none
-    left: 26px
+  .leaf
+    display: flex
+    flex-direction: row
+    justify-content: flex-start
 
-  a#rename-leaf
-    display: none
-    position: absolute
-    text-decoration: none
-    margin-left: 20px
-    cursor: pointer
-    z-index: 1
+    .folder-icon
+      padding: 0 2 0 2
 
-  &:hover
-    a#rename
+    a.settings
+      cursor: pointer
       display: block
+      padding: 0 2 0 2
+      text-decoration: none
+      visibility: hidden
+      z-index: 1
 
-    a#rename-leaf
-      display: block
+    &:hover
+      a.settings
+        visibility: visible
 
 
 .glyphitem

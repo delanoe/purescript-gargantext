@@ -102,25 +102,24 @@ li#rename #rename-a {
   min-width: 200px;
 }
 
-li a#rename {
-  display: none;
-  position: absolute;
-  text-decoration: none;
-  left: 26px;
+li .leaf {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
 }
-li a#rename-leaf {
-  display: none;
-  position: absolute;
-  text-decoration: none;
-  margin-left: 20px;
+li .leaf .folder-icon {
+  padding: 0 2 0 2;
+}
+li .leaf a.settings {
   cursor: pointer;
+  display: block;
+  padding: 0 2 0 2;
+  text-decoration: none;
+  visibility: hidden;
   z-index: 1;
 }
-li:hover a#rename {
-  display: block;
-}
-li:hover a#rename-leaf {
-  display: block;
+li .leaf:hover a.settings {
+  visibility: visible;
 }
 
 .glyphitem {
