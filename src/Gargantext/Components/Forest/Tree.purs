@@ -8,6 +8,11 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as RecordE
+
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), CreateValue(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, createNode, deleteNode, loadNode, renameNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
@@ -17,8 +22,6 @@ import Gargantext.Prelude (Unit, bind, const, discard, map, pure, void, ($), (+)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
 import Gargantext.Types as GT
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 type CommonProps =
   (
@@ -82,18 +85,19 @@ type ToHtmlProps =
   )
 
 toHtml :: Record ToHtmlProps -> R.Element
-toHtml { frontends
-       , mCurrentRoute
-       , openNodes
-       , reload: reload@(_ /\ setReload)
-       , session
-       , tasks: tasks@(asyncTasks /\ setAsyncTasks)
-       , tree: tree@(NTree (LNode {id, name, nodeType}) ary) } = R.createElement el {} []
+toHtml p@{ frontends
+         , mCurrentRoute
+         , openNodes
+         , reload: reload@(_ /\ setReload)
+         , session
+         , tasks: tasks@(asyncTasks /\ setAsyncTasks)
+         , tree: tree@(NTree (LNode {id, name, nodeType}) ary) } = R.createElement el {} []
   where
     el = R.hooksComponent "NodeView" cpt
-    pAction = performAction {openNodes, reload, session, tasks, tree}
+    commonProps = RecordE.pick p :: Record CommonProps
+    pAction = performAction (RecordE.pick p :: Record PerformActionProps)
 
-    cpt props _ = do
+    cpt _ _ = do
       let nodeId = mkNodeId session id
       let folderIsOpen = Set.member nodeId (fst openNodes)
       let setFn = if folderIsOpen then Set.delete else Set.insert
@@ -115,7 +119,9 @@ toHtml { frontends
                            , onAsyncTaskFinish
                            , session
                            } ]
-            <> childNodes {children: ary, folderOpen, frontends, mCurrentRoute, openNodes, reload, session }
+            <> childNodes (Record.merge commonProps
+                                        { children: ary
+                                        , folderOpen })
           )
         ]
 
@@ -137,9 +143,10 @@ type ChildNodesProps =
 childNodes :: Record ChildNodesProps -> Array R.Element
 childNodes { children: [] } = []
 childNodes { folderOpen: (false /\ _) } = []
-childNodes { children, folderOpen: (true /\ _), frontends, mCurrentRoute, openNodes, reload, session } =
+childNodes props@{ children } =
   map (\ctree -> childNode {tree: ctree, asyncTasks: []}) $ sorted children
     where
+      commonProps = RecordE.pick props :: Record CommonProps
       sorted :: Array FTree -> Array FTree
       sorted = A.sortWith (\(NTree (LNode {id}) _) -> id)
       childNode :: Tree -> R.Element
@@ -147,13 +154,18 @@ childNodes { children, folderOpen: (true /\ _), frontends, mCurrentRoute, openNo
       el = R.hooksComponent "ChildNodeView" cpt
       cpt {tree, asyncTasks} _ = do
         tasks <- R.useState' asyncTasks
-        pure $ toHtml { frontends, mCurrentRoute, openNodes, reload, session, tasks, tree }
+        pure $ toHtml (Record.merge commonProps
+                                    { tasks, tree })
 
-performAction :: { openNodes :: R.State OpenNodes
-                 , reload :: R.State Reload
-                 , session :: Session
-                 , tasks :: R.State (Array GT.AsyncTaskWithType)
-                 , tree :: FTree }
+type PerformActionProps =
+  ( openNodes :: R.State OpenNodes
+  , reload :: R.State Reload
+  , session :: Session
+  , tasks :: R.State (Array GT.AsyncTaskWithType)
+  , tree :: FTree
+  )
+
+performAction :: Record PerformActionProps
               -> Action
               -> Aff Unit
 performAction { openNodes: (_ /\ setOpenNodes)

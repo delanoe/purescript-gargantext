@@ -110,7 +110,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
     popOverIcon =
       H.a { className: "settings fa fa-cog" } []
 
-    mNodePopupView props@{asyncTasks, id, nodeType} onPopoverClose =
+    mNodePopupView props@{id, nodeType} onPopoverClose =
       nodePopupView { id
                     , dispatch
                     , name: name' props

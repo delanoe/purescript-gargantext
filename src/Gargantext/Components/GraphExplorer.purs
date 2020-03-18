@@ -34,12 +34,13 @@ import Math (log)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
+import Record as Record
 
 type GraphId = Int
 
 type LayoutProps =
-  ( graphId :: GraphId
-  , frontends :: Frontends
+  ( frontends :: Frontends
+  , graphId :: GraphId
   , mCurrentRoute :: AppRoute
   , session :: Session
   , sessions :: Sessions
@@ -69,19 +70,11 @@ explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
     el = R.hooksComponent "G.C.GE.explorerLayoutView" cpt
-    cpt {frontends, graphId, mCurrentRoute, session, sessions, showLogin } _ = do
+    cpt props@{graphId, session} _ = do
       useLoader graphId (getNodes session graphVersion) handler
       where
         handler loaded =
-          explorer { frontends
-                   , graph
-                   , graphId
-                   , graphVersion
-                   , mCurrentRoute
-                   , mMetaData
-                   , session
-                   , sessions
-                   , showLogin }
+          explorer (Record.merge props { graph, graphVersion, mMetaData })
           where (Tuple mMetaData graph) = convert loaded
 
 --------------------------------------------------------------
@@ -91,7 +84,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt {frontends, graph, graphId, graphVersion, mCurrentRoute, mMetaData, session, sessions, showLogin } _ = do
+    cpt props@{frontends, graph, graphId, graphVersion, mCurrentRoute, mMetaData, session, sessions, showLogin } _ = do
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef <- R.useRef (fst graphVersion)
@@ -169,25 +162,21 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       RH.div {className: "col-md-2 graph-tree"} [forest {sessions, route, frontends, showLogin }]
 
     mSidebar :: Maybe GET.MetaData
-             -> { frontends :: Frontends
-                , graph :: SigmaxT.SGraph
-                , graphVersion :: R.State Int
-                , removedNodeIds :: R.State SigmaxT.NodeIds
-                , showSidePanel :: GET.SidePanelState
-                , selectedNodeIds :: R.State SigmaxT.NodeIds
-                , session :: Session }
+             -> Record MSidebarProps
              -> R.Element
     mSidebar Nothing _ = RH.div {} []
-    mSidebar (Just metaData) {frontends, graph, graphVersion, removedNodeIds, session, selectedNodeIds, showSidePanel} =
-      Sidebar.sidebar { frontends
-                      , graph
-                      , graphVersion
-                      , metaData
-                      , removedNodeIds
-                      , session
-                      , selectedNodeIds
-                      , showSidePanel
-                      }
+    mSidebar (Just metaData) props =
+      Sidebar.sidebar (Record.merge props { metaData })
+
+type MSidebarProps =
+  ( frontends :: Frontends
+  , graph :: SigmaxT.SGraph
+  , graphVersion :: R.State Int
+  , removedNodeIds :: R.State SigmaxT.NodeIds
+  , showSidePanel :: GET.SidePanelState
+  , selectedNodeIds :: R.State SigmaxT.NodeIds
+  , session :: Session
+  )
 
 type GraphProps = (
     controls :: Record Controls.Controls
@@ -255,18 +244,20 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         gargType =  unsafePartial $ fromJust $ Types.modeFromString n.type_
     nodesMap = SigmaxT.nodesMap nodes
     edges = foldMapWithIndex edgeFn $ A.sortWith (\(GET.Edge {weight}) -> weight) r.edges
-    edgeFn i (GET.Edge e) = Seq.singleton { id : e.id_
-                                          , color
-                                          , confluence : e.confluence
-                                          , hidden : false
-                                          , size: 1.0
-                                          , source : e.source
-                                          , sourceNode
-                                          , target : e.target
-                                          , targetNode
-                                          , weight : e.weight
-                                          , weightIdx: i
-                                          }
+    edgeFn i (GET.Edge e) =
+      Seq.singleton
+        { id : e.id_
+        , color
+        , confluence : e.confluence
+        , hidden : false
+        , size: 1.0
+        , source : e.source
+        , sourceNode
+        , target : e.target
+        , targetNode
+        , weight : e.weight
+        , weightIdx: i
+        }
       where
         sourceNode = unsafePartial $ fromJust $ Map.lookup e.source nodesMap
         targetNode = unsafePartial $ fromJust $ Map.lookup e.target nodesMap
