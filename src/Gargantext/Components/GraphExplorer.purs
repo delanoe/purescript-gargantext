@@ -133,6 +133,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                                   }
                       , mSidebar mMetaData { frontends
                                            , graph
+                                           , graphId
                                            , graphVersion
                                            , removedNodeIds: controls.removedNodeIds
                                            , session
@@ -171,6 +172,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
 type MSidebarProps =
   ( frontends :: Frontends
   , graph :: SigmaxT.SGraph
+  , graphId :: GraphId
   , graphVersion :: R.State Int
   , removedNodeIds :: R.State SigmaxT.NodeIds
   , showSidePanel :: GET.SidePanelState
