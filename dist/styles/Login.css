@@ -51,6 +51,10 @@ li#rename #rename-a {
 
 #node-popup-tooltip {
   background-color: white;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
 }
 #node-popup-tooltip:hover {
   border: none;
