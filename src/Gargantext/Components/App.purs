@@ -231,25 +231,24 @@ footerCpt = R.staticComponent "G.C.Layout.footer" cpt
     cpt _ _ =
       H.div { className: "container" }
       [ H.hr {}
-      , H.footer {}
-        [ H.p {}
-          [ H.text "Gargantext "
-          , H.span {className: "glyphicon glyphicon-registration-mark"} []
-          , H.text $ ", version 4.0 (frontend: " <> GV.versionS <> ", backend: TODO)"
-          , H.a { href: "http://www.cnrs.fr"
-                , target: "blank"
-                , title: "Project hosted by CNRS."
-                }
-            [ H.text ", Copyrights "
-            , H.span { className: "glyphicon glyphicon-copyright-mark" } []
-            , H.text " CNRS 2017-Present"
-            ]
-          , H.a { href: "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
-                , target: "blank"
-                , title: "Legal instructions of the project."
-                }
-            [ H.text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
-          , H.text "."
-          ]]
+        , H.footer {}
+          [ H.p {}
+            [ H.text "Gargantext "
+            , H.span {className: "glyphicon glyphicon-registration-mark"} []
+            , H.text $ ", version 4.0 (frontend: " <> GV.version <> ", backend: TODO)"
+            , H.a { href: "http://www.cnrs.fr"
+                  , target: "blank"
+                  , title: "Project hosted by CNRS."
+                  }
+              [ H.text ", Copyrights "
+              , H.span { className: "glyphicon glyphicon-copyright-mark" } []
+              , H.text " CNRS 2017-Present"
+              ]
+            , H.a { href: "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
+                  , target: "blank"
+                  , title: "Legal instructions of the project."
+                  }
+              [ H.text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
+            , H.text "."
+            ]]
         ]
-
