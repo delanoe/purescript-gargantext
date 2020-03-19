@@ -39,6 +39,7 @@
     "tuples-native",
     "uint",
     "uri",
+    "versions",
     "web-html"
   ]
 }

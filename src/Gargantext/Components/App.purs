@@ -30,6 +30,7 @@ import Gargantext.Routes (AppRoute(..))
 import Gargantext.Sessions (Sessions, useSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Version as GV
 
 -- TODO (what does this mean?)
 -- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
@@ -234,7 +235,7 @@ footerCpt = R.staticComponent "G.C.Layout.footer" cpt
         [ H.p {}
           [ H.text "Gargantext "
           , H.span {className: "glyphicon glyphicon-registration-mark"} []
-          , H.text ", version 4.0"
+          , H.text $ ", version 4.0 (frontend: " <> GV.versionS <> ", backend: TODO)"
           , H.a { href: "http://www.cnrs.fr"
                 , target: "blank"
                 , title: "Project hosted by CNRS."
