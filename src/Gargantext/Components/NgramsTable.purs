@@ -3,17 +3,13 @@ module Gargantext.Components.NgramsTable
   , mainNgramsTable
   ) where
 
-import Prelude
-  ( class Show, Unit, bind, const, discard, identity, map, mempty, not
-  , pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<)
-  , (==), (||), otherwise, when )
 import Data.Array as A
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (Lens', to, view, (%~), (.~), (^.), (^..), (^?))
-import Data.Lens.Common (_Just)
 import Data.Lens.At (at)
-import Data.Lens.Index (ix)
+import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
+import Data.Lens.Index (ix)
 import Data.Lens.Record (prop)
 import Data.List as List
 import Data.Map (Map)
@@ -26,34 +22,26 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
+import Debug.Trace (spy)
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import React (ReactClass, ReactElement, Children)
-import React.DOM (a, i, input, li, span, text, ul)
-import React.DOM.Props ( _type, checked, className, onChange, onClick, style
-                       , readOnly)
-import React.DOM.Props as DOM
-import Thermite as Thermite
-import Thermite (modifyState_)
-import Gargantext.Types
-  ( CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList
-  , readTermSize, termLists, termSizes)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.NgramsTable.Core
-  ( CoreState, NgramsElement(..), NgramsPatch(..), NgramsTablePatch, _PatchMap
-  , NgramsTable, NgramsTerm, PageParams, Replace, Versioned(..)
-  , VersionedNgramsTable, _NgramsElement, _NgramsTable, _children
-  , _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches
-  , applyPatchSet, commitPatch, syncPatches, convOrderBy, initialPageParams, loadNgramsTable
-  , patchSetFromMap, replace, singletonNgramsTablePatch
-  , normNgram, ngramsTermText, fromNgramsPatches, PatchMap(..), rootsOf )
 import Gargantext.Components.Loader (loader)
+import Gargantext.Components.LoadingSpinner (loadingSpinner)
+import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTable, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
+import Gargantext.Types (CTabNgramType, Mode(..), OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
-
+import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), otherwise, when)
+import React (ReactClass, ReactElement, Children)
+import React.DOM (a, i, input, li, span, text, ul)
+import React.DOM.Props (_type, checked, className, onChange, onClick, style, readOnly)
+import React.DOM.Props as DOM
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Thermite (modifyState_)
+import Thermite as Thermite
 import Unsafe.Coerce (unsafeCoerce)
 
 type State =
@@ -427,7 +415,13 @@ mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
     cpt {nodeId, defaultListId, tabType, session, tabNgramType} _ = do
       path /\ setPath <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
       let paint versioned = loadedNgramsTable' {tabNgramType, path: path /\ setPath, versioned}
-      pure $ loader path loadNgramsTable paint
+
+      -- TODO: get rid of ngramsTble loading
+      -- pure $ loader path loadNgramsTable paint
+      pure $ loader path loadNgramsTableAll \loaded -> do
+        case Map.lookup Sources loaded of
+          Just versioned -> paint versioned
+          Nothing -> loadingSpinner {}
 
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)

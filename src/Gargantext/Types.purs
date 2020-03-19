@@ -1,7 +1,8 @@
 module Gargantext.Types where
 
 import Prelude
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
+
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -10,7 +11,6 @@ import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Tuple (Tuple)
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import URI.Query (Query)
@@ -425,6 +425,15 @@ type AffTableResult a = Aff (TableResult a)
 data Mode = Authors | Sources | Institutes | Terms
 
 derive instance genericMode :: Generic Mode _
+
+decodeMode :: String -> Either String Mode
+decodeMode tag =
+  case tag of
+    "Authors" -> Right Authors
+    "Institutes" -> Right Institutes
+    "Sources" -> Right Sources
+    "NgramsTerms" -> Right Terms
+    _ -> Left $ "Error decoding mode: unknown tag '" <> tag <> "'"
 
 instance showMode :: Show Mode where
   show = genericShow
