@@ -239,7 +239,7 @@ versionCpt :: R.Component VersionProps
 versionCpt = R.hooksComponent "G.C.A.version" cpt
   where
     cpt { session } _ = do
-      (ver /\ setVer) <- R.useState' ""
+      (ver /\ setVer) <- R.useState' "No Backend Version"
 
       R.useEffect' $ do
         launchAff_ $ do
@@ -250,7 +250,7 @@ versionCpt = R.hooksComponent "G.C.A.version" cpt
         H.footer {}
           [
             H.span {} [ H.text $ "Frontend version: " <> GV.version <> ", " ]
-          , H.span {} [ H.text $ "backend version: " <> ver ]
+          , H.span {} [ H.text $ "backend version: "  <> ver ]
           , warning ver GV.version
           ]
       ]
