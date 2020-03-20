@@ -6,11 +6,13 @@ import Data.Array (fromFoldable)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
+import Data.Tuple.Nested ((/\))
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.Data.Lang (LandingLang(..))
-import Gargantext.Components.Folder (folder)
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Login (login)
@@ -51,7 +53,10 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
     let forested      = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
     let mCurrentRoute = fst route
     let backends      = fromFoldable defaultBackends
-    let withSession = \sid f -> maybe' (\_ -> forested $ homeLayout LL_EN) f $ Sessions.lookup sid (fst sessions)
+    let ff f session = R.fragment [ f session, version { session }  ]
+    let withSession sid f =
+          maybe' (const $ forested $ homeLayout LL_EN) (ff f) $ Sessions.lookup sid (fst sessions)
+
     pure $ case fst showLogin of
       true -> forested $ login { sessions, backends, visible: showLogin }
       false ->
@@ -86,7 +91,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
 
 forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
 forestLayout frontends sessions route showLogin child = do
-  R.fragment [ topBar {}, R2.row [main], footer {} ]
+  R.fragment [ topBar {}, R2.row [main], footer { } ]
   where
     main =
       R.fragment
@@ -222,20 +227,52 @@ liNav (LiNav { title : title'
                           ]
                   ]
 
+type VersionProps =
+  (
+    session :: Sessions.Session
+  )
+
+version :: Record VersionProps -> R.Element
+version props = R.createElement versionCpt props []
+
+versionCpt :: R.Component VersionProps
+versionCpt = R.hooksComponent "G.C.A.version" cpt
+  where
+    cpt { session } _ = do
+      (ver /\ setVer) <- R.useState' ""
+
+      R.useEffect' $ do
+        launchAff_ $ do
+          v <- GV.getBackendVersion session
+          liftEffect $ setVer $ const v
+
+      pure $ H.div { className: "container" } [
+        H.footer {}
+          [
+            H.span {} [ H.text $ "Frontend version: " <> GV.version <> ", " ]
+          , H.span {} [ H.text $ "backend version: " <> ver ]
+          , warning ver GV.version
+          ]
+      ]
+    warning backendVer frontendVer =
+      if backendVer == frontendVer then
+        H.div {} []
+      else
+        H.div { className: "text-danger" } [ H.text "Versions do not match" ]
+
 footer :: {} -> R.Element
 footer props = R.createElement footerCpt props []
 
 footerCpt :: R.Component ()
-footerCpt = R.staticComponent "G.C.Layout.footer" cpt
+footerCpt = R.hooksComponent "G.C.A.footer" cpt
   where
-    cpt _ _ =
-      H.div { className: "container" }
-      [ H.hr {}
+    cpt _ _ = do
+      pure $ H.div { className: "container" }
+        [ H.hr {}
         , H.footer {}
           [ H.p {}
             [ H.text "Gargantext "
             , H.span {className: "glyphicon glyphicon-registration-mark"} []
-            , H.text $ ", version 4.0 (frontend: " <> GV.version <> ", backend: TODO)"
             , H.a { href: "http://www.cnrs.fr"
                   , target: "blank"
                   , title: "Project hosted by CNRS."
