@@ -54,10 +54,9 @@ import Prelude
 
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.State (class MonadState, execState)
-import Data.Argonaut (class DecodeJson, class EncodeJson, Json, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (:=), (~>))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (:=), (~>))
 import Data.Array (head)
 import Data.Array as A
-import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
@@ -73,7 +72,7 @@ import Data.Lens.Record (prop)
 import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
+import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
 import Data.Set as Set
@@ -81,15 +80,15 @@ import Data.String as S
 import Data.String.Regex (Regex, regex, replace) as R
 import Data.String.Regex.Flags (global, multiline) as R
 import Data.Symbol (SProxy(..))
-import Data.Traversable (class Traversable, traverse, traverse_, sequence)
+import Data.Traversable (class Traversable, for, sequence, traverse, traverse_)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Tuple (Tuple(..))
-import Effect.Aff (Aff, error, throwError)
+import Effect.Aff (Aff)
 import Foreign.Object as FO
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post)
-import Gargantext.Types (CTabNgramType(..), Mode, OrderBy(..), ScoreType(..), TabType, TermList(..), TermSize, decodeMode)
+import Gargantext.Types (CTabNgramType(..), OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
@@ -667,51 +666,23 @@ loadNgramsTable
                           , termListFilter, termSizeFilter
                           , searchQuery, scoreType } (Just nodeId)
 
-decodeLists :: FO.Object (Versioned Json) -> Either String NgramsList
-decodeLists obj = do
-  tuples :: Array (Tuple Mode VersionedNgramsTable) <- traverse decodeModeMember $ FO.toUnfoldable obj
-  pure $ Map.fromFoldable tuples
-  where
-    decodeModeMember :: Tuple String (Versioned Json) -> Either String (Tuple Mode VersionedNgramsTable)
-    decodeModeMember (Tuple key versioned) = do
-      mode <- decodeMode key
-      versionedNgramsTable <- decodeVersionedNgramsTable versioned
-      pure $ Tuple mode versionedNgramsTable
+type NgramsListByTabType = Map TabType VersionedNgramsTable
 
-    decodeVersionedNgramsTable :: Versioned Json -> Either String VersionedNgramsTable
-    decodeVersionedNgramsTable (Versioned r) = do
-      dataObj :: FO.Object { size :: Int, list :: TermList, children :: Set NgramsTerm } <- decodeJson r."data"
-      let
-        (tuples :: Array _) =
-          FO.toUnfoldable dataObj <#> \(Tuple key values) ->
-            let ngrams = NormNgramsTerm key
-            in Tuple ngrams $ mkNgramsElement ngrams values
-      pure $ Versioned r { "data" = NgramsTable $ Map.fromFoldable tuples }
+loadNgramsTableAll :: PageParams -> Aff NgramsListByTabType
+loadNgramsTableAll { nodeId, listIds, session, scoreType } = do
+  let
+    cTagNgramTypes =
+      [ CTabTerms
+      , CTabSources
+      , CTabAuthors
+      , CTabInstitutes
+      ]
+    query tabType = GetNgramsTableAll { tabType, listIds, scoreType } (Just nodeId)
 
-    mkNgramsElement :: NgramsTerm -> { size :: Int, list :: TermList, children :: Set NgramsTerm } -> NgramsElement
-    mkNgramsElement ngrams r = NgramsElement
-      { ngrams
-      , list: r.list
-      , children: r.children
-      , parent: Nothing
-      , root: Nothing
-      , occurrences: 1 -- TODO: to be fixed by using different route?
-      }
-
-type NgramsList = (Map Mode VersionedNgramsTable)
-
-loadNgramsTableAll :: PageParams -> Aff NgramsList
-loadNgramsTableAll
-  { nodeId, listIds, termListFilter, termSizeFilter, session, scoreType
-  , searchQuery, tabType, params: {offset, limit, orderBy}}
-  = do
-      obj <- get session query
-      case decodeLists obj of
-        Right x -> pure x
-        Left e -> throwError $ error $ "Failed to load ngrams list: " <> e
-
-     where query = ListsRoute listId
-           listId = fromMaybe 0 $ Array.head listIds -- listIds should be singleton list in main lists view
+  Map.fromFoldable <$> for cTagNgramTypes \cTagNgramType -> do
+    let tabType = TabCorpus $ TabNgramType cTagNgramType
+    result :: VersionedNgramsTable <- get session $ query tabType
+    pure $ Tuple tabType result
 
 convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
 convOrderBy (T.ASC  (T.ColumnName "Score")) = ScoreAsc

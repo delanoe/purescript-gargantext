@@ -299,6 +299,12 @@ type NgramsGetOpts =
   , searchQuery    :: String
   }
 
+type NgramsGetTableAllOpts =
+  { tabType        :: TabType
+  , listIds        :: Array ListId
+  , scoreType      :: ScoreType
+  }
+
 type SearchOpts =
   { {-id :: Int
     , query    :: Array String
@@ -380,6 +386,7 @@ instance decodeJsonApiVersion :: DecodeJson ApiVersion where
 data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
 
 derive instance eqCTabNgramType :: Eq CTabNgramType
+derive instance ordCTabNgramType :: Ord CTabNgramType
 
 instance showCTabNgramType :: Show CTabNgramType where
   show CTabTerms      = "Terms"
@@ -390,6 +397,7 @@ instance showCTabNgramType :: Show CTabNgramType where
 data PTabNgramType = PTabPatents | PTabBooks | PTabCommunication
 
 derive instance eqPTabNgramType :: Eq PTabNgramType
+derive instance ordPTabNgramType :: Ord PTabNgramType
 
 instance showPTabNgramType :: Show PTabNgramType where
   show PTabPatents       = "Patents"
@@ -399,6 +407,7 @@ instance showPTabNgramType :: Show PTabNgramType where
 data TabSubType a = TabDocs | TabNgramType a | TabTrash | TabMoreLikeFav | TabMoreLikeTrash
 
 derive instance eqTabSubType :: Eq a => Eq (TabSubType a)
+derive instance ordTabSubType :: Ord a => Ord (TabSubType a)
 
 instance showTabSubType :: Show a => Show (TabSubType a) where
   show TabDocs          = "Docs"
@@ -413,6 +422,7 @@ data TabType
   | TabDocument (TabSubType CTabNgramType)    
 
 derive instance eqTabType :: Eq TabType
+derive instance ordTabType :: Ord TabType
 
 derive instance genericTabType :: Generic TabType _
 

@@ -22,15 +22,14 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
-import Debug.Trace (spy)
 import Effect (Effect)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTable, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
+import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, Mode(..), OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
+import Gargantext.Types (CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
 import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), otherwise, when)
@@ -416,11 +415,9 @@ mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
       path /\ setPath <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
       let paint versioned = loadedNgramsTable' {tabNgramType, path: path /\ setPath, versioned}
 
-      -- TODO: get rid of ngramsTble loading
-      -- pure $ loader path loadNgramsTable paint
       pure $ loader path loadNgramsTableAll \loaded -> do
-        case Map.lookup Sources loaded of
-          Just versioned -> paint versioned
+        case Map.lookup tabType loaded of
+          Just (versioned :: VersionedNgramsTable) -> paint versioned
           Nothing -> loadingSpinner {}
 
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
