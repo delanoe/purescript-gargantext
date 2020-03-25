@@ -14,6 +14,12 @@ import Data.Set as Set
 import Data.Tuple (fst, snd, Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Math (log)
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as RH
+import Record as Record
+
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
@@ -30,11 +36,6 @@ import Gargantext.Sessions (Session, Sessions, get)
 import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Math (log)
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-import Record as Record
 
 type GraphId = Int
 

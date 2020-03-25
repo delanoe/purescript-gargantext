@@ -135,6 +135,11 @@ let additions =
             [ "prelude", "maybe", "strings" ]
             "https://github.com/truqu/purescript-read"
             "v1.0.1"
+      , versions =
+          mkPackage
+            [ "prelude" ]
+            "https://github.com/hdgarrood/purescript-versions.git"
+            "v5.0.1"
       }
 
 in  upstream ⫽ overrides ⫽ additions
