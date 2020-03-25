@@ -136,8 +136,15 @@ sessionPath (R.GetNgrams opts i)    =
     termSizeFilter MultiTerm = "&minTermSize=2"
     search "" = ""
     search s = "&search=" <> s
+sessionPath (R.GetNgramsTableAll opts i) =
+  sessionPath $ R.NodeAPI Node i
+     $ "ngrams?ngramsType="
+    <> showTabType' opts.tabType
+    <> foldMap (\x -> "&list=" <> show x) opts.listIds
+    <> limitUrl 100000
 sessionPath (R.ListDocument lId dId) =
   sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ maybe 0 identity dId))
+sessionPath (R.ListsRoute lId) = "lists/" <> show lId
 sessionPath (R.PutNgrams t listId termList i) =
   sessionPath $ R.NodeAPI Node i
       $ "ngrams?ngramsType="

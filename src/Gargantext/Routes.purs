@@ -1,8 +1,9 @@
 module Gargantext.Routes where
 
 import Prelude
+
 import Data.Maybe (Maybe)
-import Gargantext.Types (ChartOpts, CorpusMetricOpts, Id, Limit, ListId, NgramsGetOpts, NodeType, Offset, OrderBy, SearchOpts, SessionId, TabType, TermList)
+import Gargantext.Types (ChartOpts, CorpusMetricOpts, Id, Limit, ListId, NgramsGetOpts, NodeType, Offset, OrderBy, SearchOpts, SessionId, TabType, TermList, NgramsGetTableAllOpts)
 
 data AppRoute
   = Home
@@ -32,9 +33,11 @@ data SessionRoute
   = Tab TabType (Maybe Id)
   | Children NodeType Offset Limit (Maybe OrderBy) (Maybe Id)
   | GetNgrams NgramsGetOpts (Maybe Id)
+  | GetNgramsTableAll NgramsGetTableAllOpts (Maybe Id)
   | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
   -- ^ This name is not good. In particular this URL is used both in PUT and POST.
   | NodeAPI NodeType (Maybe Id) String
+  | ListsRoute ListId
   | ListDocument (Maybe ListId) (Maybe Id)
   | Search SearchOpts (Maybe Id)
   | CorpusMetrics CorpusMetricOpts  (Maybe Id)

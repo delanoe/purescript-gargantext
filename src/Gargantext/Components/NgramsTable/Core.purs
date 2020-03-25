@@ -21,6 +21,7 @@ module Gargantext.Components.NgramsTable.Core
   , highlightNgrams
   , initialPageParams
   , loadNgramsTable
+  , loadNgramsTableAll
   , convOrderBy
   , Replace(..) -- Ideally we should keep the constructors hidden
   , replace
@@ -50,50 +51,48 @@ module Gargantext.Components.NgramsTable.Core
   where
 
 import Prelude
-import Control.Monad.State (class MonadState, execState)
+
 import Control.Monad.Cont.Trans (lift)
+import Control.Monad.State (class MonadState, execState)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (:=), (~>))
 import Data.Array (head)
 import Data.Array as A
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson
-                     , jsonEmptyObject, (:=), (~>), (.:), (.:!) )
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
 import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
-import Data.Newtype (class Newtype)
 import Data.Lens (Iso', Lens', use, view, (%=), (.~), (?=), (^?))
-import Data.Lens.Common (_Just)
 import Data.Lens.At (class At, at)
-import Data.Lens.Index (class Index, ix)
+import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded, traverseOf_)
-import Data.Lens.Record (prop)
+import Data.Lens.Index (class Index, ix)
 import Data.Lens.Iso.Newtype (_Newtype)
+import Data.Lens.Record (prop)
 import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe, isNothing)
-import Data.Traversable (class Traversable, traverse, traverse_, sequence)
-import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
+import Data.Maybe (Maybe(..), isNothing, maybe)
+import Data.Newtype (class Newtype)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
 import Data.String.Regex (Regex, regex, replace) as R
 import Data.String.Regex.Flags (global, multiline) as R
 import Data.Symbol (SProxy(..))
+import Data.Traversable (class Traversable, for, sequence, traverse, traverse_)
+import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Tuple (Tuple(..))
--- import Debug.Trace
 import Effect.Aff (Aff)
 import Foreign.Object as FO
-import Thermite (StateCoTransformer, modifyState_)
-import Partial (crashWith)
-import Partial.Unsafe (unsafePartial)
-
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post)
-import Gargantext.Types (OrderBy(..), CTabNgramType(..), TabType, TermList(..), TermSize, ScoreType(..))
+import Gargantext.Types (CTabNgramType(..), OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
+import Partial (crashWith)
+import Partial.Unsafe (unsafePartial)
+import Thermite (StateCoTransformer, modifyState_)
 
 type CoreParams s =
   { nodeId  :: Int
@@ -666,6 +665,24 @@ loadNgramsTable
                           , orderBy: convOrderBy <$> orderBy
                           , termListFilter, termSizeFilter
                           , searchQuery, scoreType } (Just nodeId)
+
+type NgramsListByTabType = Map TabType VersionedNgramsTable
+
+loadNgramsTableAll :: PageParams -> Aff NgramsListByTabType
+loadNgramsTableAll { nodeId, listIds, session, scoreType } = do
+  let
+    cTagNgramTypes =
+      [ CTabTerms
+      , CTabSources
+      , CTabAuthors
+      , CTabInstitutes
+      ]
+    query tabType = GetNgramsTableAll { tabType, listIds, scoreType } (Just nodeId)
+
+  Map.fromFoldable <$> for cTagNgramTypes \cTagNgramType -> do
+    let tabType = TabCorpus $ TabNgramType cTagNgramType
+    result :: VersionedNgramsTable <- get session $ query tabType
+    pure $ Tuple tabType result
 
 convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
 convOrderBy (T.ASC  (T.ColumnName "Score")) = ScoreAsc
