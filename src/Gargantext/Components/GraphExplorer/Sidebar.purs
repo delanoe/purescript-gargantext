@@ -13,15 +13,18 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Components.GraphExplorer.API as GAPI
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.NgramsTable.Core as NTC
-import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
+import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends, url)
@@ -29,7 +32,7 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
-import Gargantext.Types as GT
+import Gargantext.Types (NodeType(..)) as GT
 import Gargantext.Utils.Reactix as R2
 
 type Props =
@@ -127,7 +130,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
 
     onClickRemove rType props nodesMap e = do
       let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable $ fst props.selectedNodeIds
-      deleteNodes rType props.session props.metaData props.graphVersion nodes
+      deleteNodes rType props.session props.metaData props.graphId props.graphVersion nodes
       snd props.removedNodeIds $ const $ fst props.selectedNodeIds
       snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
 
@@ -152,15 +155,22 @@ neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selected
   where
     selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
-deleteNodes :: TermList -> Session -> GET.MetaData -> R.State Int -> Array (Record SigmaxT.Node) -> Effect Unit
-deleteNodes termList session metaData (_ /\ setGraphVersion) nodes = do
+deleteNodes :: TermList -> Session -> GET.MetaData -> Int -> R.State Int -> Array (Record SigmaxT.Node) -> Effect Unit
+deleteNodes termList session (GET.MetaData metaData) graphId _ nodes = do
   launchAff_ do
-    patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
-    let mPatch = last patches
-    case mPatch of
-      Nothing -> pure unit
-      Just (NTC.Versioned patch) -> pure unit --liftEffect do
-        --setGraphVersion $ const $ patch.version
+    task <- GAPI.graphAsyncUpdate { graphId, listId, nodes, termList, session, version }
+    liftEffect $ log2 "task" task
+  where
+    listId = metaData.list.listId
+    version = metaData.list.version
+
+  -- launchAff_ do
+  --   patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
+  --   let mPatch = last patches
+  --   case mPatch of
+  --     Nothing -> pure unit
+  --     Just (NTC.Versioned patch) -> pure unit --liftEffect do
+  --       --setGraphVersion $ const $ patch.version
 
 deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxT.Node -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches coreParams versioned
@@ -170,7 +180,7 @@ deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches 
     versioned :: NTC.VersionedNgramsPatches
     versioned = NTC.Versioned {version: metaData.list.version, data: np}
     coreParams :: NTC.CoreParams ()
-    coreParams = {session, nodeId: nodeId, listIds: [metaData.list.listId], tabType}
+    coreParams = {session, nodeId, listIds: [metaData.list.listId], tabType}
     tabNgramType :: CTabNgramType
     tabNgramType = modeTabType node.gargType
     tabType :: TabType
@@ -192,7 +202,7 @@ query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) 
   where
     query' Nothing = RH.div {} []
     query' (Just corpusId) =
-      GT.tabs {frontends, session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: [side corpusId]}
+      CGT.tabs {frontends, session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: [side corpusId]}
     q id = case Map.lookup id nodesMap of
       Nothing -> []
       Just n -> words n.label

@@ -37,6 +37,7 @@ data SessionRoute
   | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
   -- ^ This name is not good. In particular this URL is used both in PUT and POST.
   | NodeAPI NodeType (Maybe Id) String
+  | GraphAPI Id String
   | ListsRoute ListId
   | ListDocument (Maybe ListId) (Maybe Id)
   | Search SearchOpts (Maybe Id)

@@ -436,21 +436,15 @@ data Mode = Authors | Sources | Institutes | Terms
 
 derive instance genericMode :: Generic Mode _
 
-decodeMode :: String -> Either String Mode
-decodeMode tag =
-  case tag of
-    "Authors" -> Right Authors
-    "Institutes" -> Right Institutes
-    "Sources" -> Right Sources
-    "NgramsTerms" -> Right Terms
-    _ -> Left $ "Error decoding mode: unknown tag '" <> tag <> "'"
-
 instance showMode :: Show Mode where
   show = genericShow
 
 derive instance eqMode :: Eq Mode
 instance ordMode :: Ord Mode where
   compare = genericCompare
+
+instance encodeMode :: EncodeJson Mode where
+  encodeJson x = encodeJson $ show x
 
 modeTabType :: Mode -> CTabNgramType
 modeTabType Authors    = CTabAuthors
@@ -468,12 +462,13 @@ modeFromString _ = Nothing
 -- Async tasks
 
 -- corresponds to /add/form/async or /add/query/async
-data AsyncTaskType = Form | Query
+data AsyncTaskType = Form | GraphT | Query
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 
 asyncTaskTypePath :: AsyncTaskType -> String
-asyncTaskTypePath Form  = "add/form/async/"
-asyncTaskTypePath Query = "add/query/async/"
+asyncTaskTypePath Form   = "add/form/async/"
+asyncTaskTypePath GraphT = "async/nobody/"
+asyncTaskTypePath Query  = "add/query/async/"
 
 type AsyncTaskID = String
 
