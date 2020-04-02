@@ -46,6 +46,7 @@ type LayoutProps =
   , session :: Session
   , sessions :: Sessions
   , showLogin :: R.State Boolean
+  , treeReload :: R.State Int
   )
 
 type Props = (
@@ -85,7 +86,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt props@{frontends, graph, graphId, graphVersion, mCurrentRoute, mMetaData, session, sessions, showLogin } _ = do
+    cpt props@{frontends, graph, graphId, graphVersion, mCurrentRoute, mMetaData, session, sessions, showLogin, treeReload } _ = do
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef <- R.useRef (fst graphVersion)
@@ -124,7 +125,12 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   ]
                 , rowControls [ Controls.controls controls ]
                 , R2.row [
-                        tree (fst controls.showTree) {sessions, mCurrentRoute, frontends} (snd showLogin)
+                        tree { frontends
+                             , mCurrentRoute
+                             , reload: props.treeReload
+                             , sessions
+                             , show: fst controls.showTree
+                             , showLogin: snd showLogin }
                       , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []  -- graph container
                       , graphView { controls
                                   , elRef: graphRef
@@ -140,6 +146,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                                            , session
                                            , selectedNodeIds: controls.selectedNodeIds
                                            , showSidePanel: fst controls.showSidePanel
+                                           , treeReload
                                            }
                       ]
                 ]
@@ -155,13 +162,12 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     pullLeft  = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }
 
-    tree :: Boolean
-         -> {sessions :: Sessions, mCurrentRoute :: AppRoute, frontends :: Frontends}
-         -> R2.Setter Boolean
-         -> R.Element
-    tree false _ _ = RH.div { id: "tree" } []
-    tree true {sessions, mCurrentRoute: route, frontends} showLogin =
-      RH.div {className: "col-md-2 graph-tree"} [forest {sessions, route, frontends, showLogin }]
+    tree :: Record TreeProps -> R.Element
+    tree { show: false } = RH.div { id: "tree" } []
+    tree { frontends, mCurrentRoute: route, reload, sessions, showLogin } =
+      RH.div {className: "col-md-2 graph-tree"} [
+        forest { frontends, reload, route, sessions, showLogin }
+      ]
 
     mSidebar :: Maybe GET.MetaData
              -> Record MSidebarProps
@@ -169,6 +175,16 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     mSidebar Nothing _ = RH.div {} []
     mSidebar (Just metaData) props =
       Sidebar.sidebar (Record.merge props { metaData })
+
+type TreeProps =
+  (
+    frontends :: Frontends
+  , mCurrentRoute :: AppRoute
+  , reload :: R.State Int
+  , sessions :: Sessions
+  , show :: Boolean
+  , showLogin :: R2.Setter Boolean
+  )
 
 type MSidebarProps =
   ( frontends :: Frontends
@@ -179,6 +195,7 @@ type MSidebarProps =
   , showSidePanel :: GET.SidePanelState
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session :: Session
+  , treeReload :: R.State Int
   )
 
 type GraphProps = (

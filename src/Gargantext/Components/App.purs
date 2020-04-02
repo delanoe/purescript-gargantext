@@ -7,6 +7,7 @@ import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
@@ -50,7 +51,14 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
     showLogin  <- R.useState' false
     showCorpus <- R.useState' false
 
-    let forested      = forestLayout frontends (fst sessions) (fst route) (snd showLogin)
+    treeReload <- R.useState' 0
+
+    let forested child = forestLayout { child
+                                      , frontends
+                                      , reload: treeReload
+                                      , route:  fst route
+                                      , sessions: fst sessions
+                                      , showLogin: snd showLogin }
     let mCurrentRoute = fst route
     let backends      = fromFoldable defaultBackends
     let ff f session = R.fragment [ f session, version { session }  ]
@@ -85,18 +93,32 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
             withSession sid $
               \session ->
                 simpleLayout $
-                  explorerLayout { graphId, mCurrentRoute, session
-                                 , sessions: (fst sessions), frontends
-                                 , showLogin }
+                  explorerLayout { frontends
+                                 , graphId
+                                 , mCurrentRoute
+                                 , session
+                                 , sessions: (fst sessions)
+                                 , showLogin
+                                 , treeReload }
 
-forestLayout :: Frontends -> Sessions -> AppRoute -> R2.Setter Boolean -> R.Element -> R.Element
-forestLayout frontends sessions route showLogin child = do
+type ForestLayoutProps =
+  (
+    child :: R.Element
+  , frontends :: Frontends
+  , reload :: R.State Int
+  , route :: AppRoute
+  , sessions :: Sessions
+  , showLogin :: R2.Setter Boolean
+  )
+
+forestLayout :: Record ForestLayoutProps -> R.Element
+forestLayout { child, frontends, reload, route, sessions, showLogin } = do
   R.fragment [ topBar {}, R2.row [main], footer { } ]
   where
     main =
       R.fragment
       [ H.div {className: "col-md-2", style: {paddingTop: "60px"}}
-              [ forest {sessions, route, frontends, showLogin } ]
+              [ forest { frontends, reload, route, sessions, showLogin } ]
       , mainPage child
       ]
 

@@ -7,17 +7,20 @@ import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Components.Forest.Tree.Node.Action (Reload)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 type Props =
   ( frontends :: Frontends
+  , reload :: R.State Int
   , route     :: AppRoute
   , sessions  :: Sessions
   , showLogin :: R2.Setter Boolean
@@ -28,14 +31,14 @@ forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
 forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
-  cpt {frontends, route, sessions, showLogin } _ = do
+  cpt { frontends, reload: extReload, route, sessions, showLogin } _ = do
     -- NOTE: this is a hack to reload the tree view on demand
     reload <- R.useState' (0 :: Reload)
     openNodes <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
     R2.useCache
-      (frontends /\ route /\ sessions /\ fst openNodes /\ fst reload)
+      (frontends /\ route /\ sessions /\ fst openNodes /\ fst extReload /\ fst reload)
       (cpt' openNodes reload showLogin)
-  cpt' openNodes reload showLogin (frontends /\ route /\ sessions /\ _ /\ _) = do
+  cpt' openNodes reload showLogin (frontends /\ route /\ sessions /\ _ /\ _ /\ _) = do
     pure $ R.fragment $ A.cons (plus showLogin) trees
     where
       trees = tree <$> unSessions sessions
@@ -54,4 +57,4 @@ plus showLogin =
   -- [ H.i { className: "material-icons md-36"} [] ]
   where
     click _ = do
-      showLogin (const true)
+      showLogin $ const true
