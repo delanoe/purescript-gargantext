@@ -17,6 +17,7 @@ import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Effect.Timer (setInterval)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -32,7 +33,7 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
-import Gargantext.Types (NodeType(..)) as GT
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
 type Props =
@@ -130,7 +131,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
 
     onClickRemove rType props nodesMap e = do
       let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable $ fst props.selectedNodeIds
-      deleteNodes rType props.session props.metaData props.graphId props.graphVersion nodes
+      deleteNodes rType props.session props.metaData props.graphId nodes
       snd props.removedNodeIds $ const $ fst props.selectedNodeIds
       snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
 
@@ -155,22 +156,30 @@ neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selected
   where
     selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
-deleteNodes :: TermList -> Session -> GET.MetaData -> Int -> R.State Int -> Array (Record SigmaxT.Node) -> Effect Unit
-deleteNodes termList session (GET.MetaData metaData) graphId _ nodes = do
-  launchAff_ do
-    task <- GAPI.graphAsyncUpdate { graphId, listId, nodes, termList, session, version }
-    liftEffect $ log2 "task" task
-  where
-    listId = metaData.list.listId
-    version = metaData.list.version
-
+deleteNodes :: TermList -> Session -> GET.MetaData -> Int -> Array (Record SigmaxT.Node) -> Effect Unit
+deleteNodes termList session metaData graphId nodes = do
   -- launchAff_ do
-  --   patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
-  --   let mPatch = last patches
-  --   case mPatch of
-  --     Nothing -> pure unit
-  --     Just (NTC.Versioned patch) -> pure unit --liftEffect do
-  --       --setGraphVersion $ const $ patch.version
+  --   task <- GAPI.graphAsyncUpdate { graphId, listId, nodes, termList, session, version }
+  --   liftEffect $ log2 "task" task
+  -- where
+  --   listId = metaData.list.listId
+  --   version = metaData.list.version
+
+  launchAff_ do
+    patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
+    let mPatch = last patches
+    case mPatch of
+      Nothing -> pure unit
+      Just (NTC.Versioned patch) -> do
+        task <- GAPI.graphAsyncRecompute { graphId, session }
+        _ <- liftEffect $ setInterval 1000 $ launchAff_ $ do
+          let (GT.AsyncTaskWithType { task: GT.AsyncTask { id } }) = task
+          asyncProgress@(GT.AsyncProgress {status}) <- GAPI.queryProgress { graphId, session, taskId: id }
+          liftEffect $ log2 "progress" asyncProgress
+        pure unit
+        --pure unit
+        --liftEffect do
+        --setGraphVersion $ const $ patch.version
 
 deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxT.Node -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches coreParams versioned
