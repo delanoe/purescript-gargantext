@@ -2,6 +2,7 @@ module Gargantext.Components.GraphExplorer.API where
 
 import Gargantext.Prelude
 
+import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 
@@ -58,3 +59,27 @@ type QueryProgressParams =
 queryProgress :: Record QueryProgressParams -> Aff GT.AsyncProgress
 queryProgress { graphId, session, taskId } = do
   get session $ GR.GraphAPI graphId $ "async/" <> taskId <> "/poll"
+
+type GraphVersions =
+  (
+    gv_graph :: Maybe Int
+  , gv_repo :: Int
+  )
+
+type GraphVersionsParams =
+  (
+    graphId :: Int
+  , session :: Session
+  )
+
+graphVersions :: Record GraphVersionsParams -> Aff (Record GraphVersions)
+graphVersions { graphId, session }  = get session $ GR.GraphAPI graphId $ "versions"
+
+type UpdateGraphVersionsParams =
+  (
+    graphId :: Int
+  , session :: Session
+  )
+
+updateGraphVersions :: Record UpdateGraphVersionsParams -> Aff GET.GraphData
+updateGraphVersions { graphId, session } = post session (GR.GraphAPI graphId $ "versions") {}

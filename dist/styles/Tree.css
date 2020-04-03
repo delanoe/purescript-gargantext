@@ -1,0 +1,17 @@
+.tree {
+  margin-top: 10px;
+}
+.tree .file-dropped {
+  background-color: #d8dfe5;
+}
+.tree .node-actions {
+  padding-left: 5px;
+}
+.tree .node-actions .update-button.enabled {
+  cursor: pointer;
+}
+.tree .node-actions .update-button.disabled {
+  cursor: wait;
+}
+
+/*# sourceMappingURL=Tree.css.map */

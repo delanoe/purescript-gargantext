@@ -3,16 +3,14 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
-import Data.Nullable (null, toMaybe)
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Nullable (null)
+import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
-import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff)
+import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
-import FFI.Simple ((..))
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -27,9 +25,11 @@ import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createN
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar)
+import Gargantext.Components.GraphExplorer.API as GEAPI
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
 import Gargantext.Ends (Frontends, url)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
@@ -88,7 +88,8 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
         , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
               }
           [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
-                     , name: name' props} ]
+                     , name: name' props } ]
+        , nodeActions { id, nodeType, session }
         , fileTypeView {dispatch, droppedFile, id, isDragOver, nodeType}
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                 , corpusId: id
@@ -166,18 +167,105 @@ fldr nt open = if open
 -- START node text
 type NodeTextProps =
   ( isSelected :: Boolean
-  , name :: Name 
+  , name :: Name
   )
 
 nodeText :: Record NodeTextProps -> R.Element
-nodeText p = R.createElement el p []
+nodeText p = R.createElement nodeTextCpt p []
+
+nodeTextCpt :: R.Component NodeTextProps
+nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
   where
-    el = R.hooksComponent "NodeText" cpt
-    cpt {isSelected: true, name} _ = do
-      pure $ H.u {} [H.b {} [H.text ("| " <> name <> " |    ")]]
+    cpt { isSelected: true, name } _ = do
+      pure $ H.u {} [
+        H.b {} [
+           H.text ("| " <> name <> " |    ")
+         ]
+        ]
     cpt {isSelected: false, name} _ = do
       pure $ H.text (name <> "    ")
 -- END node text
+
+-- START nodeActions
+
+type NodeActionsProps =
+  (
+    id :: ID
+  , nodeType :: GT.NodeType
+  , session :: Session
+  )
+
+nodeActions :: Record NodeActionsProps -> R.Element
+nodeActions p = R.createElement nodeActionsCpt p []
+
+nodeActionsCpt :: R.Component NodeActionsProps
+nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
+  where
+    cpt { id, nodeType: GT.Graph, session } _ = do
+      refresh <- R.useState' 0
+
+      useLoader (id /\ fst refresh) (graphVersions session) $ \gv ->
+        nodeActionsGraph { id, graphVersions: gv, session, triggerRefresh: triggerRefresh refresh }
+    cpt _ _ = do
+      pure $ H.div {} []
+
+    graphVersions session (graphId /\ _) =
+      GEAPI.graphVersions { graphId, session }
+    triggerRefresh (_ /\ setRefresh) _ = setRefresh $ (+) 1
+
+type NodeActionsGraphProps =
+  (
+    id :: ID
+  , graphVersions :: Record GEAPI.GraphVersions
+  , session :: Session
+  , triggerRefresh :: Unit -> Effect Unit
+  )
+
+nodeActionsGraph :: Record NodeActionsGraphProps -> R.Element
+nodeActionsGraph p = R.createElement nodeActionsGraphCpt p []
+
+nodeActionsGraphCpt :: R.Component NodeActionsGraphProps
+nodeActionsGraphCpt = R.hooksComponent "G.C.F.T.N.B.nodeActionsGraph" cpt
+  where
+    cpt { id, graphVersions, session, triggerRefresh } _ = do
+      pure $ H.div { className: "node-actions" } [
+        if graphVersions.gv_graph == Just graphVersions.gv_repo then
+          H.div {} []
+        else
+          graphUpdateButton { id, session, triggerRefresh }
+      ]
+
+type GraphUpdateButtonProps =
+  (
+    id :: ID
+  , session :: Session
+  , triggerRefresh :: Unit -> Effect Unit
+  )
+
+graphUpdateButton :: Record GraphUpdateButtonProps -> R.Element
+graphUpdateButton p = R.createElement graphUpdateButtonCpt p []
+
+graphUpdateButtonCpt :: R.Component GraphUpdateButtonProps
+graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
+  where
+    cpt { id, session, triggerRefresh } _ = do
+      enabled <- R.useState' true
+
+      pure $ H.div { className: "update-button " <> if (fst enabled) then "enabled" else "disabled text-muted" } [
+        H.span { className: "fa fa-refresh"
+               , on: { click: onClick enabled } } []
+      ]
+      where
+        onClick (false /\ _) _ = pure unit
+        onClick (true /\ setEnabled) _ = do
+          launchAff_ $ do
+            liftEffect $ setEnabled $ const false
+            g <- GEAPI.updateGraphVersions { graphId: id, session }
+            liftEffect $ setEnabled $ const true
+            liftEffect $ triggerRefresh unit
+          pure unit
+
+-- END nodeActions
 
 mCorpusId :: Maybe AppRoute -> Maybe Int
 mCorpusId (Just (Routes.Corpus _ id)) = Just id

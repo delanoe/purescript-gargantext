@@ -159,13 +159,6 @@ li .leaf:hover a.settings {
   height: auto;
 }
 
-.tree {
-  margin-top: 10px;
-}
-.tree .file-dropped {
-  background-color: #d8dfe5;
-}
-
 #graph-tree .tree {
   margin-top: 27px;
 }
