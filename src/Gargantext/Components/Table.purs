@@ -161,20 +161,19 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
         , tableHead: H.tr {} (colHeader <$> colNames)
         --, tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) $ filterRows { state } rows
         , totalPages
-        , tableRows: filterRows { state } rows
+        , tableRows: rows
         , totalRecords
         }
 
 type FilterRowsParams =
   (
-    state :: State
+    params :: Params
   )
 
 filterRows :: Record FilterRowsParams -> Rows -> Rows
-filterRows { state } rs = newRs
+filterRows { params: { offset, limit, orderBy } } rs = newRs
   where
-    { offset, limit, orderBy } = stateParams state
-    newRs = A.take (pageSizes2Int state.pageSize) $ A.drop offset $ rs
+    newRs = A.take limit $ A.drop offset $ rs
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 defaultContainer {title} props = R.fragment

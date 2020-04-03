@@ -340,12 +340,13 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
              colNames
            , container
            , params: params /\ setParams -- TODO-LENS
-           , rows
+           , rows: filteredRows
            , totalRecords
            , wrapColElts
            }
       ]
       where
+        filteredRows = T.filterRows { params: params } rows
         totalRecords = A.length rows
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
         selected =
