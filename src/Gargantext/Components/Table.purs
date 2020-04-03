@@ -153,13 +153,9 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
         when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
       pure $ container
         {
-        --   pageSizeControl: sizeDD pageSize
-        -- , pageSizeDescription: textDescription page pageSize' totalRecords
-        -- , paginationLinks: pagination setPage totalPages page
           page: (page /\ setPage)
         , pageSize
         , tableHead: H.tr {} (colHeader <$> colNames)
-        --, tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) $ filterRows { state } rows
         , totalPages
         , tableRows: rows
         , totalRecords
@@ -200,10 +196,6 @@ graphContainer {title} props =
   ]
   where
     tableBody rows = map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
-   -- TODO better rendering of the paginationLinks
-   -- , props.pageSizeControl
-   -- , props.pageSizeDescription
-   -- , props.paginationLinks
 
 sizeDD :: R.State PageSizes -> R.Element
 sizeDD (ps /\ setPageSize) =
