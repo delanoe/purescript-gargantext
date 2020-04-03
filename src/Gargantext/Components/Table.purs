@@ -1,7 +1,8 @@
 module Gargantext.Components.Table where
 
-import Prelude
-import Data.Array (filter)
+import Gargantext.Prelude
+
+import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
@@ -9,15 +10,17 @@ import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
+
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix (effectLink)
 
 type TableContainerProps =
-  ( pageSizeControl     :: R.Element
-  , pageSizeDescription :: R.Element
-  , paginationLinks     :: R.Element
+  ( page                :: R.State Int
+  , pageSize            :: R.State PageSizes
   , tableHead           :: R.Element
-  , tableBody           :: Array R.Element
+  , tableRows           :: Rows
+  , totalPages          :: Int
+  , totalRecords        :: Int
   )
 
 type Row = { row :: Array R.Element, delete :: Boolean }
@@ -50,12 +53,12 @@ derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 
 type Props =
   ( colNames     :: Array ColumnName
-  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
-                 -- ^ Use `const identity` as a default behavior.
-  , totalRecords :: Int
+  , container    :: Record TableContainerProps -> R.Element
   , params       :: R.State Params
   , rows         :: Rows
-  , container    :: Record TableContainerProps -> R.Element
+  , totalRecords :: Int
+  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
+                 -- ^ Use `const identity` as a default behavior.
   )
 
 type State =
@@ -127,7 +130,7 @@ table props = R.createElement tableCpt props []
 tableCpt :: R.Component Props
 tableCpt = R.hooksComponent "G.C.Table.table" cpt
   where
-    cpt {container, colNames, wrapColElts, totalRecords, rows, params} _ = do
+    cpt { colNames, container, params, rows, totalRecords, wrapColElts } _ = do
       pageSize@(pageSize' /\ setPageSize) <- R.useState' PS10
       (page /\ setPage) <- R.useState' 1
       (orderBy /\ setOrderBy) <- R.useState' Nothing
@@ -149,25 +152,44 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
       R.useEffect2' params state do
         when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
       pure $ container
-        { pageSizeControl: sizeDD pageSize
-        , pageSizeDescription: textDescription page pageSize' totalRecords
-        , paginationLinks: pagination setPage totalPages page
+        {
+        --   pageSizeControl: sizeDD pageSize
+        -- , pageSizeDescription: textDescription page pageSize' totalRecords
+        -- , paginationLinks: pagination setPage totalPages page
+          page: (page /\ setPage)
+        , pageSize
         , tableHead: H.tr {} (colHeader <$> colNames)
-        , tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
+        --, tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) $ filterRows { state } rows
+        , totalPages
+        , tableRows: filterRows { state } rows
+        , totalRecords
         }
+
+type FilterRowsParams =
+  (
+    state :: State
+  )
+
+filterRows :: Record FilterRowsParams -> Rows -> Rows
+filterRows { state } rs = newRs
+  where
+    { offset, limit, orderBy } = stateParams state
+    newRs = A.take (pageSizes2Int state.pageSize) $ A.drop offset $ rs
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 defaultContainer {title} props = R.fragment
   [ R2.row
-    [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
-    , H.div {className: "col-md-4"} [ props.paginationLinks ]
-    , H.div {className: "col-md-4"} [ props.pageSizeControl ]
+    [ H.div {className: "col-md-4"} [ textDescription (fst props.page) (fst props.pageSize) props.totalRecords ]
+    , H.div {className: "col-md-4"} [ pagination props.page props.totalPages ]
+    , H.div {className: "col-md-4"} [ sizeDD props.pageSize ]
     ]
   , H.table {className: "table"}
     [ H.thead {className: "thead-dark"} [ props.tableHead ]
-    , H.tbody {} props.tableBody
+    , H.tbody {} (tableBody props.tableRows)
     ]
   ]
+  where
+    tableBody rows = map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
 
 -- TODO: this needs to be in Gargantext.Pages.Corpus.Graph.Tabs
 graphContainer :: {title :: String} -> Record TableContainerProps -> R.Element
@@ -175,8 +197,10 @@ graphContainer {title} props =
   -- TODO title in tabs name (above)
   H.table {className: "table"}
   [ H.thead {className: "thead-dark"} [ props.tableHead ]
-  , H.tbody {} props.tableBody
+  , H.tbody {} (tableBody props.tableRows)
   ]
+  where
+    tableBody rows = map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
    -- TODO better rendering of the paginationLinks
    -- , props.pageSizeControl
    -- , props.pageSizeDescription
@@ -189,7 +213,7 @@ sizeDD (ps /\ setPageSize) =
     className = "form-control"
     change e = setPageSize $ const (string2PageSize $ R2.unsafeEventValue e)
     sizes = map option pageSizes
-    option size = H.option {value} [H.text value]
+    option size = H.option { defaultValue: value } [ H.text value ]
       where value = show size
 
 textDescription :: Int -> PageSizes -> Int -> R.Element
@@ -201,8 +225,10 @@ textDescription currPage pageSize totalRecords =
     end  = if end' > totalRecords then totalRecords else end'
     msg = "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords
 
-pagination :: (R2.Setter Int) -> Int -> Int -> R.Element
-pagination changePage tp cp =
+--pagination :: (R2.Setter Int) -> Int -> Int -> R.Element
+pagination :: R.State Int -> Int -> R.Element
+--pagination changePage tp cp =
+pagination (cp /\ changePage) tp =
   H.span {} $
     [ H.text " ", prev, first, ldots]
     <>
@@ -238,8 +264,8 @@ pagination changePage tp cp =
                 H.text " ... "
                 else
                 H.text ""
-      lnums = map changePageLink' $ filter (1  < _) [cp - 2, cp - 1]
-      rnums = map changePageLink' $ filter (tp > _) [cp + 1, cp + 2]
+      lnums = map changePageLink' $ A.filter (1  < _) [cp - 2, cp - 1]
+      rnums = map changePageLink' $ A.filter (tp > _) [cp + 1, cp + 2]
 
       changePageLink :: Int -> String -> R.Element
       changePageLink i s =

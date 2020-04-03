@@ -111,7 +111,7 @@ pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
   where
     cpt { session, pagePath, frontends
         , table: ({count: totalRecords, docs})} _ = do
-      pure $ T.table { rows, params, container, colNames, totalRecords, wrapColElts }
+      pure $ T.table { colNames, container, params, rows, totalRecords, wrapColElts }
       where
         path = fst pagePath
         rows = (\c -> {row: contactCells session frontends (fst pagePath).nodeId c, delete: false}) <$> docs

@@ -3,6 +3,8 @@ module Gargantext.Components.NgramsTable
   , mainNgramsTable
   ) where
 
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (Lens', to, view, (%~), (.~), (^.), (^..), (^?))
@@ -20,19 +22,10 @@ import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), snd)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.Loader (loader)
-import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
-import Gargantext.Components.Table as T
-import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
-import Gargantext.Utils (queryMatchesLabel)
-import Gargantext.Utils.Reactix as R2
-import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), otherwise, when)
 import React (ReactClass, ReactElement, Children)
 import React.DOM (a, i, input, li, span, text, ul)
 import React.DOM.Props (_type, checked, className, onChange, onClick, style, readOnly)
@@ -42,6 +35,17 @@ import Reactix.DOM.HTML as H
 import Thermite (modifyState_)
 import Thermite as Thermite
 import Unsafe.Coerce (unsafeCoerce)
+
+import Gargantext.Components.AutoUpdate (autoUpdateElt)
+import Gargantext.Components.Loader (loader)
+import Gargantext.Components.LoadingSpinner (loadingSpinner)
+import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
+import Gargantext.Components.Table as T
+import Gargantext.Sessions (Session)
+import Gargantext.Types (CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
+import Gargantext.Utils (queryMatchesLabel)
+import Gargantext.Utils.Reactix as R2
+
 
 type State =
   CoreState
@@ -117,118 +121,127 @@ addNewNgramA ngram = CommitPatch $ addNewNgram ngram CandidateTerm
 
 type Dispatch = Action -> Effect Unit
 
-tableContainer :: { path            :: R.State PageParams
-                  , dispatch        :: Dispatch
-                  , ngramsParent    :: Maybe NgramsTerm
-                  , ngramsChildren  :: Map NgramsTerm Boolean
-                  , ngramsSelection :: Set NgramsTerm
-                  , ngramsTable     :: NgramsTable
-                  , tabNgramType    :: CTabNgramType
-                  , ngramsSelectAll :: Boolean
-                  }
-               -> Record T.TableContainerProps -> R.Element
-tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
-               , dispatch
-               , ngramsParent
-               , ngramsChildren
-               , ngramsSelection
-               , ngramsTable: ngramsTableCache
-               , tabNgramType
-               , ngramsSelectAll
-               } props =
-  H.div {className: "container-fluid"}
-  [ H.div {className: "jumbotron1"}
-    [ R2.row
-      [ H.div {className: "panel panel-default"}
-        [ H.div {className: "panel-heading"}
-          [ H.h2 {className: "panel-title", style: {textAlign : "center"}}
-            [ H.span {className: "glyphicon glyphicon-hand-down"} []
-            , H.text "Extracted Terms"
-            ]
-          , R2.row
-            [ H.div {className: "col-md-3", style: {marginTop: "6px"}}
-              [ H.input { className: "form-control"
-                        , name: "search"
-                        , placeholder: "Search"
-                        , type: "value"
-                        , value: searchQuery
-                        , on: {input: setSearchQuery <<< R2.unsafeEventValue}}
-              , H.div {} (
-                   if A.null props.tableBody && searchQuery /= "" then [
-                     H.button { className: "btn btn-primary"
-                              , on: {click: const $ dispatch
-                                                  $ addNewNgramA
-                                                  $ normNgram tabNgramType searchQuery
-                                                }
-                              }
-                     [ H.text ("Add " <> searchQuery) ]
-                     ] else [])]
-            , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-              [ H.li {className: " list-group-item"}
-                [ R2.select { id: "picklistmenu"
-                            , className: "form-control custom-select"
-                            , value: (maybe "" show termListFilter)
-                            , on: {change: setTermListFilter <<< readTermList <<< R2.unsafeEventValue}}
-                  (map optps1 termLists)]]
-            , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-              [ H.li {className: "list-group-item"}
-                [ R2.select {id: "picktermtype"
-                            , className: "form-control custom-select"
-                            , value: (maybe "" show termSizeFilter)
-                            , on: {change: setTermSizeFilter <<< readTermSize <<< R2.unsafeEventValue}}
-                    (map optps1 termSizes)]]
-            , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
-              [ H.li {className: " list-group-item"}
-                [ props.pageSizeDescription
-                , props.pageSizeControl
-                , H.text " items / "
-                , props.paginationLinks]]
-            ]]
-        , H.div {}
-          (maybe [] (\ngrams ->
-              let
-                ngramsTable =
-                  ngramsTableCache # at ngrams
-                                 <<< _Just
-                                 <<< _NgramsElement
-                                 <<< _children
-                                 %~ applyPatchSet (patchSetFromMap ngramsChildren)
-                ngramsClick {depth: 1, ngrams: child} =
-                  Just $ dispatch $ ToggleChild false child
-                ngramsClick _ = Nothing
-                ngramsEdit  _ = Nothing
-              in
-              [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
-              , R2.buff $ renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
-              , H.button {className: "btn btn-primary", on: {click: (const $ dispatch AddTermChildren)}} [H.text "Save"]
-              , H.button {className: "btn btn-secondary", on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}} [H.text "Cancel"]
-              ]) ngramsParent)
-          , H.div {id: "terms_table", className: "panel-body"}
-            [ H.table {className: "table able"}
-              [ H.thead {className: "tableHeader"} [props.tableHead]
-              , H.tbody {} props.tableBody]]
+type TableContainerParams =
+  (
+    dispatch        :: Dispatch
+  , ngramsChildren  :: Map NgramsTerm Boolean
+  , ngramsParent    :: Maybe NgramsTerm
+  , ngramsSelectAll :: Boolean
+  , ngramsSelection :: Set NgramsTerm
+  , ngramsTable     :: NgramsTable
+  , path            :: R.State PageParams
+  , tabNgramType    :: CTabNgramType
+  )
 
-          , if ngramsSelectAll then H.li {className: " list-group-item"}
-                [ H.button { className: "btn btn-primary"
-                           , on: {click: const $ setSelection GraphTerm }
-                           }
-                  [ H.text "Map" ]
-                , H.button { className: "btn btn-primary"
-                           , on: {click: const $ setSelection StopTerm }
-                           }
-                  [ H.text "Stop" ]
-                  ]
-                else H.div {}[]
-                ]
-              ]
-            ]
-          ]
+tableContainer :: Record TableContainerParams
+               -> Record T.TableContainerProps
+               -> R.Element
+tableContainer params p = R.createElement (tableContainerCpt params) p []
+
+tableContainerCpt :: Record TableContainerParams -> R.Component T.TableContainerProps
+tableContainerCpt { dispatch
+                  , ngramsChildren
+                  , ngramsParent
+                  , ngramsSelectAll
+                  , ngramsSelection
+                  , ngramsTable: ngramsTableCache
+                  , path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
+                  , tabNgramType } = R.hooksComponent "G.C.N.tableContainer" cpt
   where
+    cpt props _ = do
+      pure $ H.div {className: "container-fluid"}
+        [ H.div {className: "jumbotron1"}
+          [ R2.row
+            [ H.div {className: "panel panel-default"}
+              [ H.div {className: "panel-heading"}
+                [ H.h2 {className: "panel-title", style: {textAlign : "center"}}
+                  [ H.span {className: "glyphicon glyphicon-hand-down"} []
+                  , H.text "Extracted Terms"
+                  ]
+                , R2.row
+                  [ H.div {className: "col-md-3", style: {marginTop: "6px"}}
+                    [ H.input { className: "form-control"
+                              , name: "search" , placeholder: "Search"
+                              , type: "value"
+                              , defaultValue: searchQuery
+                              , on: {input: setSearchQuery <<< R2.unsafeEventValue}}
+                    , H.div {} (
+                        if A.null props.tableRows && searchQuery /= "" then [
+                          H.button { className: "btn btn-primary"
+                                    , on: {click: const $ dispatch
+                                                        $ addNewNgramA
+                                                        $ normNgram tabNgramType searchQuery
+                                                      }
+                                    }
+                          [ H.text ("Add " <> searchQuery) ]
+                          ] else [])]
+                  , H.div {className: "col-md-2", style: {marginTop : "6px"}}
+                    [ H.li {className: " list-group-item"}
+                      [ R2.select { id: "picklistmenu"
+                                  , className: "form-control custom-select"
+                                  , defaultValue: (maybe "" show termListFilter)
+                                  , on: {change: setTermListFilter <<< readTermList <<< R2.unsafeEventValue}}
+                        (map optps1 termLists)]]
+                  , H.div {className: "col-md-2", style: {marginTop : "6px"}}
+                    [ H.li {className: "list-group-item"}
+                      [ R2.select {id: "picktermtype"
+                                  , className: "form-control custom-select"
+                                  , defaultValue: (maybe "" show termSizeFilter)
+                                  , on: {change: setTermSizeFilter <<< readTermSize <<< R2.unsafeEventValue}}
+                          (map optps1 termSizes)]]
+                  , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
+                    [ H.li {className: " list-group-item"}
+                      [ T.textDescription (fst props.page) (fst props.pageSize) props.totalRecords
+                      , T.sizeDD props.pageSize
+                      , H.text " items / "
+                      , T.pagination props.page props.totalPages ]]
+                  ]]
+              , H.div {}
+                (maybe [] (\ngrams ->
+                    let
+                      ngramsTable =
+                        ngramsTableCache # at ngrams
+                                      <<< _Just
+                                      <<< _NgramsElement
+                                      <<< _children
+                                      %~ applyPatchSet (patchSetFromMap ngramsChildren)
+                      ngramsClick {depth: 1, ngrams: child} =
+                        Just $ dispatch $ ToggleChild false child
+                      ngramsClick _ = Nothing
+                      ngramsEdit  _ = Nothing
+                    in
+                    [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
+                    , R2.buff $ renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
+                    , H.button {className: "btn btn-primary", on: {click: (const $ dispatch AddTermChildren)}} [H.text "Save"]
+                    , H.button {className: "btn btn-secondary", on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}} [H.text "Cancel"]
+                    ]) ngramsParent)
+                , H.div {id: "terms_table", className: "panel-body"}
+                  [ H.table {className: "table able"}
+                    [ H.thead {className: "tableHeader"} [props.tableHead]
+                    , H.tbody {} (tableBody props.tableRows) ]]
+
+                , if ngramsSelectAll then H.li {className: " list-group-item"}
+                      [ H.button { className: "btn btn-primary"
+                                , on: {click: const $ setSelection GraphTerm }
+                                }
+                        [ H.text "Map" ]
+                      , H.button { className: "btn btn-primary"
+                                , on: {click: const $ setSelection StopTerm }
+                                }
+                        [ H.text "Stop" ]
+                        ]
+                      else H.div {}[]
+                      ]
+                    ]
+                  ]
+                ]
     -- WHY setPath     f = origSetPageParams (const $ f path)
     setSearchQuery    x = setPath $ _ { searchQuery = x }
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
     setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
+
+    tableBody rows = map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
 
 toggleMaybe :: forall a. a -> Maybe a -> Maybe a
 toggleMaybe _ (Just _) = Nothing
@@ -317,18 +330,23 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
 
     render :: Thermite.Render State (Record LoadedNgramsTableProps) Action
     render dispatch { path: path@({searchQuery, scoreType, params, termListFilter} /\ setPath)
-                    , versioned: Versioned { data: initTable }
-                    , tabNgramType }
+                    , tabNgramType
+                    , versioned: Versioned { data: initTable } }
                     state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
                           , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
       [ autoUpdateElt { duration: 5000, effect: dispatch Synchronize }
-      , R2.scuff $ T.table { params: params /\ setParams -- TODO-LENS
-                           , rows, container, colNames, wrapColElts, totalRecords
-                           }
+      , R2.scuff $ T.table {
+             colNames
+           , container
+           , params: params /\ setParams -- TODO-LENS
+           , rows
+           , totalRecords
+           , wrapColElts
+           }
       ]
       where
-        totalRecords = 0 -- TODO, 0 to show first users that it is fake (until it is fixed)
+        totalRecords = A.length rows
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
         selected =
           input
@@ -341,7 +359,14 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
         wrapColElts (T.ColumnName "Select") = const [R2.buff selected]
         wrapColElts (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
         wrapColElts _                       = identity
-        container = tableContainer {path, dispatch, ngramsParent, ngramsChildren, ngramsSelection, ngramsTable, tabNgramType, ngramsSelectAll}
+        container = tableContainer { dispatch
+                                   , ngramsChildren
+                                   , ngramsParent
+                                   , ngramsSelectAll
+                                   , ngramsSelection
+                                   , ngramsTable
+                                   , path
+                                   , tabNgramType }
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
         ngramsTable = applyNgramsPatches state initTable
         orderWith =
@@ -394,7 +419,7 @@ loadedNgramsTableClass = Thermite.createClass "LoadedNgramsNgramsTable"
   loadedNgramsTableSpec (\{versioned} -> initialState versioned)
 
 loadedNgramsTable' :: Record LoadedNgramsTableProps -> R.Element
-loadedNgramsTable' props = R2.createElement' (loadedNgramsTableClass) props []
+loadedNgramsTable' props = R2.createElement' loadedNgramsTableClass props []
 
 type MainNgramsTableProps =
   ( nodeId        :: Int
@@ -552,5 +577,5 @@ nextTermList StopTerm      = CandidateTerm
 nextTermList CandidateTerm = GraphTerm
 
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> R.Element
-optps1 { desc, mval } = H.option {value} [H.text desc]
+optps1 { desc, mval } = H.option { defaultValue: value } [H.text desc]
   where value = maybe "" show mval
