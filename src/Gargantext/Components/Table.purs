@@ -1,7 +1,7 @@
 module Gargantext.Components.Table where
 
 import Prelude
-import Data.Array (filter)
+import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
@@ -156,6 +156,17 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
         , tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
         }
 
+
+type FilterRowsParams =
+  (
+    params :: Params
+  )
+
+filterRows :: Record FilterRowsParams -> Rows -> Rows
+filterRows { params: { limit, offset, orderBy } } rs = newRs
+  where
+    newRs = A.take limit $ A.drop offset $ rs
+
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 defaultContainer {title} props = R.fragment
   [ R2.row
@@ -238,8 +249,8 @@ pagination changePage tp cp =
                 H.text " ... "
                 else
                 H.text ""
-      lnums = map changePageLink' $ filter (1  < _) [cp - 2, cp - 1]
-      rnums = map changePageLink' $ filter (tp > _) [cp + 1, cp + 2]
+      lnums = map changePageLink' $ A.filter (1  < _) [cp - 2, cp - 1]
+      rnums = map changePageLink' $ A.filter (tp > _) [cp + 1, cp + 2]
 
       changePageLink :: Int -> String -> R.Element
       changePageLink i s =
