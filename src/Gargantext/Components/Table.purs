@@ -133,33 +133,43 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
     cpt { colNames, container, params, rows, totalRecords, wrapColElts } _ = do
       pageSize@(pageSize' /\ setPageSize) <- R.useState' PS10
       (page /\ setPage) <- R.useState' 1
-      (orderBy /\ setOrderBy) <- R.useState' Nothing
+      ob@(orderBy /\ setOrderBy) <- R.useState' Nothing
       let
         state = {pageSize: pageSize', orderBy, page}
         ps = pageSizes2Int pageSize'
         totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
-        colHeader :: ColumnName -> R.Element
-        colHeader c = H.th {scope: "col"} [ H.b {} cs ]
-          where
-            lnk mc = effectLink (setOrderBy (const mc))
-            cs :: Array R.Element
-            cs =
-              wrapColElts c $
-              case orderBy of
-                Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC ", lnk Nothing (columnName c)]
-                Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ",  lnk Nothing (columnName c)]
-                _ -> [lnk (Just (ASC c)) (columnName c)]
+
       R.useEffect2' params state do
         when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
+
       pure $ container
         {
           page: (page /\ setPage)
         , pageSize
-        , tableHead: H.tr {} (colHeader <$> colNames)
+        , tableHead: H.tr {} (tableColHeader { orderBy: ob, wrapColElts } <$> colNames)
         , totalPages
         , tableRows: rows
         , totalRecords
         }
+
+type TableColHeaderParams =
+  (
+    orderBy :: R.State OrderBy
+  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
+  )
+
+tableColHeader :: Record TableColHeaderParams -> ColumnName -> R.Element
+tableColHeader { orderBy: (orderBy /\ setOrderBy)
+               , wrapColElts } c = H.th {scope: "col"} [ H.b {} cs ]
+  where
+    lnk mc = effectLink (setOrderBy (const mc))
+    cs :: Array R.Element
+    cs =
+      wrapColElts c $
+      case orderBy of
+        Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC ", lnk Nothing (columnName c)]
+        Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ",  lnk Nothing (columnName c)]
+        _ -> [lnk (Just (ASC c)) (columnName c)]
 
 type FilterRowsParams =
   (
