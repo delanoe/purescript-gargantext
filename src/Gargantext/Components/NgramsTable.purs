@@ -323,12 +323,17 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
                           , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
       [ autoUpdateElt { duration: 5000, effect: dispatch Synchronize }
-      , R2.scuff $ T.table { params: params /\ setParams -- TODO-LENS
-                           , rows, container, colNames, wrapColElts, totalRecords
+      , R2.scuff $ T.table { colNames
+                           , container
+                           , params: params /\ setParams -- TODO-LENS
+                           , rows: filteredRows
+                           , totalRecords
+                           , wrapColElts
                            }
       ]
       where
-        totalRecords = 0 -- TODO, 0 to show first users that it is fake (until it is fixed)
+        totalRecords = A.length rows
+        filteredRows = T.filterRows { params } rows
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
         selected =
           input
