@@ -203,22 +203,13 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
               , H.button {className: "btn btn-primary", on: {click: (const $ dispatch AddTermChildren)}} [H.text "Save"]
               , H.button {className: "btn btn-secondary", on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}} [H.text "Cancel"]
               ]) ngramsParent)
+          , selectAllButtons ngramsSelectAll
           , H.div {id: "terms_table", className: "panel-body"}
             [ H.table {className: "table able"}
               [ H.thead {className: "tableHeader"} [props.tableHead]
-              , H.tbody {} props.tableBody]]
+              , H.tbody {} props.tableBody] ]
 
-          , if ngramsSelectAll then H.li {className: " list-group-item"}
-                [ H.button { className: "btn btn-primary"
-                           , on: {click: const $ setSelection GraphTerm }
-                           }
-                  [ H.text "Map" ]
-                , H.button { className: "btn btn-primary"
-                           , on: {click: const $ setSelection StopTerm }
-                           }
-                  [ H.text "Stop" ]
-                  ]
-                else H.div {}[]
+          , selectAllButtons ngramsSelectAll
                 ]
               ]
             ]
@@ -229,6 +220,20 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
     setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
+
+    selectAllButtons false = H.div {} []
+    selectAllButtons true =
+      H.li {className: " list-group-item"} [
+        H.button { className: "btn btn-primary"
+                 , on: {click: const $ setSelection GraphTerm }
+                 } [ H.text "Map" ]
+        , H.button { className: "btn btn-primary"
+                   , on: {click: const $ setSelection StopTerm }
+                   } [ H.text "Stop" ]
+        , H.button { className: "btn btn-primary"
+                   , on: {click: const $ setSelection CandidateTerm }
+                   } [ H.text "Candidate" ]
+      ]
 
 toggleMaybe :: forall a. a -> Maybe a -> Maybe a
 toggleMaybe _ (Just _) = Nothing
