@@ -9,7 +9,9 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..), maybe)
 import Gargantext.Routes as R
-import Gargantext.Types (ApiVersion, Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType')
+import Gargantext.Types (ApiVersion, Limit, NodePath, NodeType(..), Offset,
+    TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType', ListId,
+    TermList)
 import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==))
 
 -- | A means of generating a url to visit, a destination
@@ -124,8 +126,8 @@ sessionPath (R.GetNgrams opts i)    =
     <> offsetUrl opts.offset
     <> limitUrl opts.limit
     <> orderByUrl opts.orderBy
-    <> foldMap (\x -> "&list=" <> show x) opts.listIds
-    <> foldMap (\x -> "&listType=" <> show x) opts.termListFilter
+    <> foldMap listUrl opts.listIds
+    <> foldMap listTypeUrl opts.termListFilter
     <> foldMap termSizeFilter opts.termSizeFilter
     <> "&scoreType=" <> show opts.scoreType
     <> search opts.searchQuery
@@ -138,12 +140,17 @@ sessionPath (R.GetNgrams opts i)    =
     search s = "&search=" <> s
 sessionPath (R.ListDocument lId dId) =
   sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ maybe 0 identity dId))
-sessionPath (R.PutNgrams t listId termList i) =
+sessionPath (R.PutNgrams t listId i) =
   sessionPath $ R.NodeAPI Node i
       $ "ngrams?ngramsType="
      <> showTabType' t
-     <> maybe "" (\x -> "&list=" <> show x) listId
-     <> foldMap (\x -> "&listType=" <> show x) termList
+     <> listUrl listId
+sessionPath (R.PostNgrams t listId termList i) =
+  sessionPath $ R.NodeAPI Node i
+      $ "ngrams?ngramsType="
+     <> showTabType' t
+     <> listUrl listId
+     <> foldMap listTypeUrl termList
 sessionPath (R.NodeAPI nt i p) = nodeTypePath nt
                               <> (maybe "" (\i' -> "/" <> show i') i)
                               <> (if p == "" then "" else "/" <> p)
@@ -192,6 +199,12 @@ orderUrl = maybe "" (\x -> "&order=" <> show x)
 
 orderByUrl :: forall a. Show a => Maybe a -> String
 orderByUrl = maybe "" (\x -> "&orderBy=" <> show x)
+
+listUrl :: ListId -> String
+listUrl l = "&list=" <> show l
+
+listTypeUrl :: TermList -> String
+listTypeUrl l = "&listType=" <> show l
 
 -- nodeTypePath :: NodeType -> Path
 -- nodeTypePath = NodeAPI

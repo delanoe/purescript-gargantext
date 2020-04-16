@@ -332,7 +332,8 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
     render dispatch { path: path@({searchQuery, scoreType, params, termListFilter} /\ setPath)
                     , versioned: Versioned { data: initTable }
                     , tabNgramType }
-                    state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
+                    state@{ ngramsParent, ngramsChildren
+                          , ngramsLocalPatch, ngramsStagePatch, ngramsValidPatch
                           , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
       [ autoUpdateElt { duration: 3000, effect: dispatch Synchronize }
@@ -394,9 +395,15 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
           -- ^ unless they are scheduled to be removed.
           || tablePatchHasNgrams ngramsLocalPatch ngrams
           -- ^ unless they are being processed at the moment.
+          || tablePatchHasNgrams ngramsStagePatch ngrams
+          -- ^ unless they are being processed at the moment.
+          || tablePatchHasNgrams ngramsValidPatch ngrams
+          -- ^ unless they are part of our local patches.
         convertRow (Tuple ngrams ngramsElement) =
           { row: R2.buff <$> renderNgramsItem { ngramsTable, ngrams,
                                                 ngramsLocalPatch,
+                                                ngramsStagePatch,
+                                                ngramsValidPatch,
                                                 ngramsParent, ngramsElement,
                                                 ngramsSelection, dispatch }
           , delete: false

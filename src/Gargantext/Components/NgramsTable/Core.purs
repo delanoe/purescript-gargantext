@@ -616,7 +616,7 @@ postNewNgrams newNgrams mayList {nodeId, listIds, tabType, session} =
   when (not (A.null newNgrams)) $ do
     (_ :: Array Unit) <- post session p newNgrams
     pure unit
-  where p = PutNgrams tabType (head listIds) mayList (Just nodeId)
+  where p = PostNgrams tabType (head listIds) mayList (Just nodeId)
 
 postNewElems :: forall s. NewElems -> CoreParams s -> Aff Unit
 postNewElems newElems params = void $ traverseWithIndex postNewElem newElems
@@ -630,7 +630,7 @@ addNewNgram ngrams list =
 
 putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff VersionedNgramsPatches
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
-  where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
+  where putNgrams = PutNgrams tabType (unsafePartial $ head listIds) (Just nodeId)
 
 syncPatches :: forall p s. CoreParams p -> CoreState s -> StateCoTransformer (CoreState s) Unit
 syncPatches props { ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPatches}
