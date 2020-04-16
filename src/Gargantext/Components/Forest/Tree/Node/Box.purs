@@ -18,7 +18,7 @@ import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
 import Web.File.FileReader.Aff (readAsText)
 
-import Gargantext.Components.Data.Lang (allLangs, Lang(EN))
+import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)

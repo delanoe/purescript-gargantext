@@ -13,7 +13,7 @@ import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Components.Data.Lang (LandingLang(..))
+import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Login (login)

@@ -468,7 +468,7 @@ derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath Form   = "add/form/async/"
 asyncTaskTypePath GraphT = "async/nobody/"
-asyncTaskTypePath Query  = "add/query/async/"
+asyncTaskTypePath Query  = "add/query/async/nobody/"
 
 type AsyncTaskID = String
 

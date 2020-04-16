@@ -18,7 +18,7 @@ import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, map, pure, show, unit, void, ($), (&&), (/=), (<>))
 
-import Gargantext.Components.Data.Lang (readLang, Lang(..))
+import Gargantext.Components.Lang (readLang, Lang(..))
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FTree, FileType(..), ID, LNode(..), NTree(..), UploadFile, UploadFileContents(..), readFileType)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR

@@ -9,7 +9,7 @@ import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
 import Prelude hiding (div)
 
-import Gargantext.Components.Data.Lang (Lang)
+import Gargantext.Components.Lang (Lang)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post, delete)
 import Gargantext.Types as GT

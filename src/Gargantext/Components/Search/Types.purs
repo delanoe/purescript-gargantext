@@ -14,7 +14,7 @@ import URI.Query as Q
 
 import Gargantext.Prelude (class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>))
 
-import Gargantext.Components.Data.Lang
+import Gargantext.Components.Lang
 import Gargantext.Ends (class ToUrl, backendUrl)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), post)
@@ -42,7 +42,7 @@ data DataField = Gargantext
 
 instance showDataField :: Show DataField where
   show Gargantext   = "Gargantext"
-  show (External x) = "External" -- <> show x
+  show (External _) = "Others" -- <> show x
   show Web          = "Web"
   show Files        = "Files"
 
@@ -55,6 +55,11 @@ instance docDataField :: Doc DataField where
 
 derive instance eqDataField :: Eq DataField
 
+instance encodeJsonDataField :: EncodeJson DataField where
+  encodeJson Gargantext   = encodeJson "Internal PubMed" -- later Internal Maybe Database
+  encodeJson (External (Just db)) = encodeJson $ "External " <> show db
+  encodeJson a                    = encodeJson (show a)
+
 {-
 instance eqDataField :: Eq DataField where
   eq Gargantext Gargantext = true
@@ -66,7 +71,8 @@ instance eqDataField :: Eq DataField where
 -- | Database search specifications
 
 allDatabases :: Array Database
-allDatabases = [ PubMed
+allDatabases = [ Empty
+               , PubMed
                , HAL Nothing
                , IsTex
                , Isidore
@@ -76,6 +82,7 @@ allDatabases = [ PubMed
                ]
 
 data Database = All_Databases
+              | Empty
               | PubMed
               | HAL (Maybe Org)
               | IsTex
@@ -89,6 +96,7 @@ instance showDatabase :: Show Database where
   show (HAL _)= "HAL"
   show IsTex  = "IsTex"
   show Isidore= "Isidore"
+  show Empty  = "Empty"
 --  show News   = "News"
 --  show SocialNetworks = "Social Networks"
 
@@ -98,6 +106,7 @@ instance docDatabase :: Doc Database where
   doc (HAL _)     = "All open science (archives ouvertes)"
   doc IsTex       = "All Elsevier enriched by CNRS/INIST"
   doc Isidore     = "All (French) Social Sciences"
+  doc Empty       = "Empty"
 --  doc News        = "Web filtered by News"
 --  doc SocialNetworks = "Web filtered by MicroBlogs"
 
@@ -116,6 +125,7 @@ derive instance eqDatabase :: Eq Database
 
 instance encodeJsonDatabase :: EncodeJson Database where
   encodeJson a = encodeJson (show a)
+
 ------------------------------------------------------------------------
 -- | Organization specifications
 
@@ -279,7 +289,7 @@ instance showSearchOrder :: Show SearchOrder where
 
 newtype SearchQuery = SearchQuery
   { query     :: String
-  , databases :: Array Database
+  , databases :: Array DataField
   , datafield :: Maybe DataField
   , files_id  :: Array String
   , lang      :: Maybe Lang
@@ -297,11 +307,11 @@ defaultSearchQuery = SearchQuery
   , databases: []
   , datafield: Nothing
   , files_id : []
-  , lang    : Nothing
-  , limit: Nothing
-  , node_id : Nothing
-  , offset: Nothing
-  , order: Nothing
+  , lang     : Nothing
+  , limit    : Nothing
+  , node_id  : Nothing
+  , offset   : Nothing
+  , order    : Nothing
   }
 
 instance toUrlSessionSearchQuery :: ToUrl Session SearchQuery where

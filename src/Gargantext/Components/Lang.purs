@@ -1,4 +1,4 @@
-module Gargantext.Components.Data.Lang where
+module Gargantext.Components.Lang where
 
 import Data.Argonaut (class EncodeJson, encodeJson)
 import Data.Maybe (Maybe(..))
