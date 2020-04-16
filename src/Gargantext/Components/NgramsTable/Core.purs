@@ -336,14 +336,14 @@ replace old new
   | old == new = Keep
   | otherwise  = Replace { old, new }
 
-instance semigroupReplace :: Semigroup (Replace a) where
+derive instance eqReplace :: Eq a => Eq (Replace a)
+
+instance semigroupReplace :: Eq a => Semigroup (Replace a) where
   append Keep p = p
   append p Keep = p
-  append (Replace { old: _m, new }) (Replace { old, new: _m' }) =
-    -- assert _m == _m'
-    Replace { old, new }
+  append (Replace { new }) (Replace { old }) = replace old new
 
-instance semigroupMonoid :: Monoid (Replace a) where
+instance semigroupMonoid :: Eq a => Monoid (Replace a) where
   mempty = Keep
 
 applyReplace :: forall a. Eq a => Replace a -> a -> a
@@ -419,6 +419,9 @@ newtype NgramsPatch = NgramsPatch
   , patch_list     :: Replace TermList
   }
 
+derive instance eqNgramsPatch  :: Eq NgramsPatch
+derive instance eqPatchSetNgramsTerm  :: Eq (PatchSet NgramsTerm)
+
 instance semigroupNgramsPatch :: Semigroup NgramsPatch where
   append (NgramsPatch p) (NgramsPatch q) = NgramsPatch
     { patch_children: p.patch_children <> q.patch_children
@@ -455,10 +458,12 @@ applyNgramsPatch (NgramsPatch p) (NgramsElement e) = NgramsElement
 
 newtype PatchMap k p = PatchMap (Map k p)
 
-instance semigroupPatchMap :: (Ord k, Semigroup p) => Semigroup (PatchMap k p) where
-  append (PatchMap p) (PatchMap q) = PatchMap (Map.unionWith append p q)
+instance semigroupPatchMap :: (Ord k, Eq p, Monoid p) => Semigroup (PatchMap k p) where
+  append (PatchMap p) (PatchMap q) = PatchMap pMap
+    where
+      pMap = Map.filter (\v -> v /= mempty) $ Map.unionWith append p q
 
-instance monoidPatchMap :: (Ord k, Semigroup p) => Monoid (PatchMap k p) where
+instance monoidPatchMap :: (Ord k, Eq p, Monoid p) => Monoid (PatchMap k p) where
   mempty = PatchMap Map.empty
 
 derive instance newtypePatchMap :: Newtype (PatchMap k p) _

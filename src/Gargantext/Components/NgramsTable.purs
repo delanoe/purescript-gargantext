@@ -26,7 +26,7 @@ import Effect (Effect)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
+import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
@@ -151,7 +151,7 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                         , name: "search"
                         , placeholder: "Search"
                         , type: "value"
-                        , value: searchQuery
+                        , defaultValue: searchQuery
                         , on: {input: setSearchQuery <<< R2.unsafeEventValue}}
               , H.div {} (
                    if A.null props.tableBody && searchQuery /= "" then [
@@ -167,14 +167,14 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
               [ H.li {className: " list-group-item"}
                 [ R2.select { id: "picklistmenu"
                             , className: "form-control custom-select"
-                            , value: (maybe "" show termListFilter)
+                            , defaultValue: (maybe "" show termListFilter)
                             , on: {change: setTermListFilter <<< readTermList <<< R2.unsafeEventValue}}
                   (map optps1 termLists)]]
             , H.div {className: "col-md-2", style: {marginTop : "6px"}}
               [ H.li {className: "list-group-item"}
                 [ R2.select {id: "picktermtype"
                             , className: "form-control custom-select"
-                            , value: (maybe "" show termSizeFilter)
+                            , defaultValue: (maybe "" show termSizeFilter)
                             , on: {change: setTermSizeFilter <<< readTermSize <<< R2.unsafeEventValue}}
                     (map optps1 termSizes)]]
             , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
@@ -271,9 +271,10 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NgramsTable.loadedNgramsTable" cpt
     performNgramsAction Synchronize' = pure -- TODO
 
 type LoadedNgramsTableProps =
-  ( tabNgramType :: CTabNgramType
-  , path         :: R.State PageParams
+  ( path         :: R.State PageParams
+  , tabNgramType :: CTabNgramType
   , versioned    :: VersionedNgramsTable
+  , withAutoUpdate :: Boolean
   )
 
 loadedNgramsTableSpec :: Thermite.Spec State (Record LoadedNgramsTableProps) Action
@@ -323,20 +324,22 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
     render :: Thermite.Render State (Record LoadedNgramsTableProps) Action
     render dispatch { path: path@({searchQuery, scoreType, params, termListFilter} /\ setPath)
                     , versioned: Versioned { data: initTable }
-                    , tabNgramType }
+                    , tabNgramType
+                    , withAutoUpdate }
                     state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
                           , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
-      [ autoUpdateElt { duration: 5000, effect: dispatch Synchronize }
-      , R2.scuff $ T.table { colNames
+      (autoUpdate <> [
+        R2.scuff $ T.table { colNames
                            , container
                            , params: params /\ setParams -- TODO-LENS
                            , rows: filteredRows
                            , totalRecords
                            , wrapColElts
                            }
-      ]
+      ])
       where
+        autoUpdate = if withAutoUpdate then [ autoUpdateElt { duration: 5000, effect: dispatch Synchronize } ] else []
         totalRecords = A.length rows
         filteredRows = T.filterRows { params } rows
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
@@ -413,6 +416,7 @@ type MainNgramsTableProps =
   , tabType       :: TabType
   , session       :: Session
   , tabNgramType  :: CTabNgramType
+  , withAutoUpdate :: Boolean
   )
 
 mainNgramsTable :: Record MainNgramsTableProps -> R.Element
@@ -421,9 +425,14 @@ mainNgramsTable props = R.createElement mainNgramsTableCpt props []
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
   where
-    cpt {nodeId, defaultListId, tabType, session, tabNgramType} _ = do
+    cpt {nodeId, defaultListId, tabType, session, tabNgramType, withAutoUpdate} _ = do
       path /\ setPath <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
-      let paint versioned = loadedNgramsTable' {tabNgramType, path: path /\ setPath, versioned}
+      let paint versioned = loadedNgramsTable' {
+              tabNgramType
+            , path: path /\ setPath
+            , versioned
+            , withAutoUpdate
+            }
 
       pure $ loader path loadNgramsTableAll \loaded -> do
         case Map.lookup tabType loaded of
@@ -535,7 +544,7 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
         , className "checkbox"
         , checked chkd
         , readOnly ngramsTransient
-        , onChange $ const $ when (not ngramsTransient) $ dispatch $
+        , onChange $ const $ dispatch $
             setTermListA ngrams (replace termList termList'')
         ]
     ngramsTransient = tablePatchHasNgrams ngramsLocalPatch ngrams
@@ -562,5 +571,5 @@ nextTermList StopTerm      = CandidateTerm
 nextTermList CandidateTerm = GraphTerm
 
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> R.Element
-optps1 { desc, mval } = H.option {value} [H.text desc]
+optps1 { desc, mval } = H.option { defaultValue: value } [H.text desc]
   where value = maybe "" show mval
