@@ -146,7 +146,7 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
                 Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC ", lnk Nothing (columnName c)]
                 Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ",  lnk Nothing (columnName c)]
                 _ -> [lnk (Just (ASC c)) (columnName c)]
-      R.useEffect2' params state do
+      R.useEffect2' (fst params) state do
         when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
       pure $ container
         { pageSizeControl: sizeDD pageSize
