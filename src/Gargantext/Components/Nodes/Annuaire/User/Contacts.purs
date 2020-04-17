@@ -4,13 +4,10 @@ module Gargantext.Components.Nodes.Annuaire.User.Contacts
   , userLayout )
   where
 
-import Data.Array (head)
 import Data.Lens as L
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..), fst, snd)
-import Data.Tuple.Nested (Tuple3, (/\))
-import Data.Newtype (unwrap)
-import Data.String (joinWith)
+import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Class (liftEffect)
@@ -18,8 +15,8 @@ import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Prelude
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes

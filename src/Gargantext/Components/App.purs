@@ -7,7 +7,6 @@ import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
