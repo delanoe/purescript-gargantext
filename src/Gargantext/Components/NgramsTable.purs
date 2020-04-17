@@ -91,6 +91,7 @@ data Action
   | ToggleSelect NgramsTerm
   -- ^ Toggles the NgramsTerm in the `Set` `ngramsSelection`.
   | ToggleSelectAll
+  | ResetPatches
 
 setTermListA :: NgramsTerm -> Replace TermList -> Action
 setTermListA n patch_list =
@@ -305,7 +306,8 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
       syncPatches path state
     performAction (CommitPatch pt) _ {ngramsVersion} =
       commitPatch (Versioned {version: ngramsVersion, data: pt})
-
+    performAction ResetPatches _ {ngramsVersion} =
+      modifyState_ $ \s -> s { ngramsLocalPatch = { ngramsNewElems: mempty, ngramsPatches: mempty } }
     performAction AddTermChildren _ {ngramsParent: Nothing} =
         -- impossible but harmless
         pure unit
@@ -329,7 +331,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
                     state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
                           , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
-      (autoUpdate <> [
+      (autoUpdate <> resetSaveButtons <> [
         R2.scuff $ T.table { colNames
                            , container
                            , params: params /\ setParams -- TODO-LENS
@@ -340,6 +342,12 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
       ])
       where
         autoUpdate = if withAutoUpdate then [ autoUpdateElt { duration: 5000, effect: dispatch Synchronize } ] else []
+        resetButton = H.button { className: "btn btn-primary"
+                               , on: { click: \_ -> dispatch ResetPatches } } [ H.text "Reset" ]
+        saveButton = H.button { className: "btn btn-primary"
+                              , on: { click: \_ -> dispatch Synchronize }} [ H.text "Save" ]
+        resetSaveButtons = if ngramsLocalPatch == mempty then [] else
+          [ R2.scuff $ H.div {} [ resetButton, saveButton ] ]
         totalRecords = A.length rows
         filteredRows = T.filterRows { params } rows
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
