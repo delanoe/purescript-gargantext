@@ -84,6 +84,7 @@ import Data.Traversable (class Traversable, for, sequence, traverse, traverse_)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
+import Effect.Exception.Unsafe (unsafeThrow)
 import Foreign.Object as FO
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(..))
@@ -341,6 +342,7 @@ derive instance eqReplace :: Eq a => Eq (Replace a)
 instance semigroupReplace :: Eq a => Semigroup (Replace a) where
   append Keep p = p
   append p Keep = p
+  append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
   append (Replace { new }) (Replace { old }) = replace old new
 
 instance semigroupMonoid :: Eq a => Monoid (Replace a) where
@@ -467,6 +469,7 @@ instance monoidPatchMap :: (Ord k, Eq p, Monoid p) => Monoid (PatchMap k p) wher
   mempty = PatchMap Map.empty
 
 derive instance newtypePatchMap :: Newtype (PatchMap k p) _
+derive instance eqPatchMap :: (Eq k, Eq p) => Eq (PatchMap k p)
 
 _PatchMap :: forall k p. Iso' (PatchMap k p) (Map k p)
 _PatchMap = _Newtype
