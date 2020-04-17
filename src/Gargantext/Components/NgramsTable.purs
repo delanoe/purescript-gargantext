@@ -34,8 +34,8 @@ import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
 import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, otherwise, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
 import React (ReactClass, Children)
-import React.DOM (a, input, span, text)
-import React.DOM.Props (_type, checked, className, onChange, onClick, style)
+import React.DOM (a, span, text)
+import React.DOM.Props (onClick, style)
 import React.DOM.Props as DOM
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -162,15 +162,17 @@ tableContainerCpt { dispatch
                             , defaultValue: searchQuery
                             , on: {input: setSearchQuery <<< R2.unsafeEventValue}}
                   , H.div {} (
-                       if A.null props.tableBody && searchQuery /= "" then [
-                         H.button { className: "btn btn-primary"
-                                  , on: {click: const $ dispatch
-                                         $ addNewNgramA
-                                         $ normNgram tabNgramType searchQuery
-                                        }
-                                  }
-                         [ H.text ("Add " <> searchQuery) ]
-                         ] else [])]
+                      if A.null props.tableBody && searchQuery /= "" then [
+                        H.button { className: "btn btn-primary"
+                                , on: {click: const $ dispatch
+                                        $ addNewNgramA
+                                        $ normNgram tabNgramType searchQuery
+                                      }
+                                }
+                        [ H.text ("Add " <> searchQuery) ]
+                        ] else []
+                      )
+                  ]
                 , H.div {className: "col-md-2", style: {marginTop : "6px"}}
                   [ H.li {className: " list-group-item"}
                     [ R2.select { id: "picklistmenu"
@@ -191,7 +193,8 @@ tableContainerCpt { dispatch
                     , props.pageSizeControl
                     , H.text " items / "
                     , props.paginationLinks]]
-                ]]
+                ]
+              ]
             , H.div {}
               (maybe [] (\ngrams ->
                           let
@@ -337,35 +340,40 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
                     state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
                           , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
-      (autoUpdate <> resetSaveButtons <> [
-        R2.scuff $ T.table { colNames
-                           , container
-                           , params: params /\ setParams -- TODO-LENS
-                           , rows: filteredRows
-                           , totalRecords
-                           , wrapColElts
-                           }
-      ])
+      R2.scuff <$> (
+        autoUpdate <> resetSaveButtons <> [
+          T.table { colNames
+                  , container
+                  , params: params /\ setParams -- TODO-LENS
+                  , rows: filteredRows
+                  , totalRecords
+                  , wrapColElts
+                  }
+        ]
+      )
       where
-        autoUpdate = if withAutoUpdate then [ autoUpdateElt { duration: 5000, effect: dispatch Synchronize } ] else []
+        autoUpdate :: Array R.Element
+        autoUpdate = if withAutoUpdate then [ R2.buff $ autoUpdateElt { duration: 5000, effect: dispatch Synchronize } ] else []
+        resetButton :: R.Element
         resetButton = H.button { className: "btn btn-primary"
                                , on: { click: \_ -> dispatch ResetPatches } } [ H.text "Reset" ]
+        saveButton :: R.Element
         saveButton = H.button { className: "btn btn-primary"
                               , on: { click: \_ -> dispatch Synchronize }} [ H.text "Save" ]
+        resetSaveButtons :: Array R.Element
         resetSaveButtons = if ngramsLocalPatch == mempty then [] else
-          [ R2.scuff $ H.div {} [ resetButton, saveButton ] ]
+          [ H.div {} [ resetButton, saveButton ] ]
+
         totalRecords = A.length rows
         filteredRows = T.filterRows { params } rows
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
         selected =
-          input
-            [ _type "checkbox"
-            , className "checkbox"
-            , checked ngramsSelectAll
-            , onChange $ const $ dispatch $ ToggleSelectAll
-            ]
+          H.input { checked: ngramsSelectAll
+                  , className: "checkbox"
+                  , on: { change: const $ dispatch $ ToggleSelectAll }
+                  , type: "checkbox" }
         -- This is used to *decorate* the Select header with the checkbox.
-        wrapColElts (T.ColumnName "Select") = const [R2.buff selected]
+        wrapColElts (T.ColumnName "Select") = const [selected]
         wrapColElts (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
         wrapColElts _                       = identity
         container = tableContainer { dispatch
@@ -454,8 +462,8 @@ mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
     cpt {nodeId, defaultListId, tabType, session, tabNgramType, withAutoUpdate} _ = do
       path /\ setPath <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
       let paint versioned = loadedNgramsTable' {
-              tabNgramType
-            , path: path /\ setPath
+              path: path /\ setPath
+            , tabNgramType
             , versioned
             , withAutoUpdate
             }
