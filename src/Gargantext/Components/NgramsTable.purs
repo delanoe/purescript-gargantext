@@ -26,16 +26,16 @@ import Effect (Effect)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
+import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
-import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), otherwise, when)
-import React (ReactClass, ReactElement, Children)
-import React.DOM (a, i, input, li, span, text, ul)
-import React.DOM.Props (_type, checked, className, onChange, onClick, style, readOnly)
+import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, otherwise, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
+import React (ReactClass, Children)
+import React.DOM (a, input, span, text)
+import React.DOM.Props (_type, checked, className, onChange, onClick, style)
 import React.DOM.Props as DOM
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -200,7 +200,7 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                 ngramsEdit  _ = Nothing
               in
               [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
-              , R2.buff $ renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
+              , renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
               , H.button {className: "btn btn-primary", on: {click: (const $ dispatch AddTermChildren)}} [H.text "Save"]
               , H.button {className: "btn btn-secondary", on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}} [H.text "Cancel"]
               ]) ngramsParent)
@@ -371,6 +371,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
             Just ScoreDesc -> A.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
             _              -> identity -- the server ordering is enough here
 
+        rows :: T.Rows
         rows = convertRow <$> orderWith (addOcc <$> Map.toUnfoldable (Map.filter displayRow (ngramsTable ^. _NgramsTable)))
         addOcc (Tuple ne ngramsElement) =
           let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
@@ -403,10 +404,13 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
           || tablePatchHasNgrams ngramsLocalPatch ngrams
           -- ^ unless they are being processed at the moment.
         convertRow (Tuple ngrams ngramsElement) =
-          { row: R2.buff <$> renderNgramsItem { ngramsTable, ngrams,
-                                                ngramsLocalPatch,
-                                                ngramsParent, ngramsElement,
-                                                ngramsSelection, dispatch }
+          { row: renderNgramsItem { dispatch
+                                  , ngrams
+                                  , ngramsElement
+                                  , ngramsLocalPatch
+                                  , ngramsParent
+                                  , ngramsSelection
+                                  , ngramsTable }
           , delete: false
           }
 
@@ -450,37 +454,48 @@ mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 
-tree :: { ngramsTable :: NgramsTable
-        , ngramsStyle :: Array DOM.Props
-        , ngramsEdit  :: NgramsClick
-        , ngramsClick :: NgramsClick
-        } -> NgramsDepth -> ReactElement
-tree params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick} nd =
-  li [ style {width : "100%"} ]
-    ([ i icon []
-     , tag [text $ " " <> ngramsTermText nd.ngrams]
-     ] <> maybe [] edit (ngramsEdit nd) <>
-     [ forest cs
-     ])
-  where
-    tag =
-      case ngramsClick nd of
-        Just effect ->
-          a (ngramsStyle <> [onClick $ const effect])
-        Nothing ->
-          span ngramsStyle
-    edit effect = [ text " "
-                  , i [ className "glyphicon glyphicon-pencil"
-                      , onClick $ const effect ] [] ]
-    leaf = List.null cs
-    icon = gray <> [className $ "glyphicon glyphicon-chevron-" <> if open then "down" else "right"]
-    open = not leaf || false {- TODO -}
-    gray = if leaf then [style {color: "#adb5bd"}] else []
-    cs   = ngramsTable ^.. ix nd.ngrams <<< _NgramsElement <<< _children <<< folded
+type TreeProps =
+  (
+    ngramsClick :: NgramsClick
+  , ngramsDepth :: NgramsDepth
+  , ngramsEdit  :: NgramsClick
+  , ngramsStyle :: Array DOM.Props
+  , ngramsTable :: NgramsTable
+  )
 
-    forest =
-      let depth = nd.depth + 1 in
-      ul [] <<< map (\ngrams -> tree params {depth, ngrams}) <<< List.toUnfoldable
+tree :: Record TreeProps -> R.Element
+tree p = R.createElement treeCpt p []
+
+treeCpt :: R.Component TreeProps
+treeCpt = R.hooksComponent "G.C.NT.tree" cpt
+  where
+    cpt params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick, ngramsDepth: nd} _ =
+      pure $
+        H.li { style: {width : "100%"} }
+          ([ H.i { className, style } [] ]
+           <> [ R2.buff $ tag [ text $ " " <> ngramsTermText nd.ngrams ] ]
+           <> maybe [] edit (ngramsEdit nd)
+           <> [ forest cs ])
+      where
+        tag =
+          case ngramsClick nd of
+            Just effect ->
+              a (ngramsStyle <> [onClick $ const effect])
+            Nothing ->
+              span ngramsStyle
+        edit effect = [ H.text " "
+                      , H.i { className: "glyphicon glyphicon-pencil"
+                            , on: { click: const effect } } []
+                      ]
+        leaf = List.null cs
+        className = "glyphicon glyphicon-chevron-" <> if open then "down" else "right"
+        style = if leaf then {color: "#adb5bd"} else {color: ""}
+        open = not leaf || false {- TODO -}
+        cs   = ngramsTable ^.. ix nd.ngrams <<< _NgramsElement <<< _children <<< folded
+
+        forest =
+          let depth = nd.depth + 1 in
+          H.ul {} <<< map (\ngrams -> tree (params { ngramsDepth = {depth, ngrams} })) <<< List.toUnfoldable
 
 sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
 sumOccurrences' ngramsTable label =
@@ -490,78 +505,103 @@ sumOccurrences :: NgramsTable -> NgramsElement -> Additive Int
 sumOccurrences ngramsTable (NgramsElement {occurrences, children}) =
     Additive occurrences <> children ^. folded <<< to (sumOccurrences' ngramsTable)
 
-renderNgramsTree :: { ngrams      :: NgramsTerm
-                    , ngramsTable :: NgramsTable
-                    , ngramsStyle :: Array DOM.Props
-                    , ngramsClick :: NgramsClick
-                    , ngramsEdit  :: NgramsClick
-                    } -> ReactElement
-renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit } =
-  ul [] [
-    span [className "tree"] [tree {ngramsTable, ngramsStyle, ngramsClick, ngramsEdit} {ngrams, depth: 0}]
-  ]
+type RenderNgramsTree =
+  ( ngrams      :: NgramsTerm
+  , ngramsClick :: NgramsClick
+  , ngramsEdit  :: NgramsClick
+  , ngramsStyle :: Array DOM.Props
+  , ngramsTable :: NgramsTable
+  )
 
-renderNgramsItem :: { ngrams :: NgramsTerm
-                    , ngramsTable :: NgramsTable
-                    , ngramsLocalPatch :: NgramsTablePatch
-                    , ngramsElement :: NgramsElement
-                    , ngramsParent :: Maybe NgramsTerm
-                    , ngramsSelection :: Set NgramsTerm
-                    , dispatch :: Action -> Effect Unit
-                    } -> Array ReactElement
-renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
-                 , ngramsSelection, ngramsLocalPatch, dispatch } =
-  [ selected
-  , checkbox GraphTerm
-  , checkbox StopTerm
-  , if ngramsParent == Nothing
-    then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
-    else
-      a [onClick $ const $ dispatch $ ToggleChild true ngrams]
-        [ i [className "glyphicon glyphicon-plus"] []
-        , span ngramsStyle [text $ " " <> ngramsTermText ngrams]
-        ]
-  , text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
-  ]
+renderNgramsTree :: Record RenderNgramsTree -> R.Element
+renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
+
+renderNgramsTreeCpt :: R.Component RenderNgramsTree
+renderNgramsTreeCpt = R.hooksComponent "G.C.NT.renderNgramsTree" cpt
   where
-    termList    = ngramsElement ^. _NgramsElement <<< _list
-    ngramsStyle = [termStyle termList ngramsOpacity]
-    ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
-    ngramsClick
-      = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
-      -- ^ This is the old behavior it is nicer to use since one can
-      --   rapidly change the ngram list without waiting for confirmation.
-      --   However this might expose bugs. One of them can be reproduced
-      --   by clicking a multiple times on the same ngram, sometimes it stays
-      --   transient.
-      -- | ngramsTransient = const Nothing
-      -- | otherwise       = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
-    selected    =
-      input
-        [ _type "checkbox"
-        , className "checkbox"
-        , checked $ Set.member ngrams ngramsSelection
-        , onChange $ const $ dispatch $ ToggleSelect ngrams
+    cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit } _ =
+      pure $ H.ul {} [
+        H.span { className: "tree" } [
+          tree { ngramsClick
+                , ngramsDepth: {ngrams, depth: 0}
+                , ngramsEdit
+                , ngramsStyle
+                , ngramsTable
+                }
         ]
-    checkbox termList' =
-      let chkd = termList == termList'
-          termList'' = if chkd then CandidateTerm else termList'
-      in
-      input
-        [ _type "checkbox"
-        , className "checkbox"
-        , checked chkd
-        , readOnly ngramsTransient
-        , onChange $ const $ dispatch $
-            setTermListA ngrams (replace termList termList'')
-        ]
-    ngramsTransient = tablePatchHasNgrams ngramsLocalPatch ngrams
-      -- ^ TODO here we do not look at ngramsNewElems, shall we?
-    ngramsOpacity
-      | ngramsTransient = 0.5
-      | otherwise       = 1.0
+      ]
 
-    cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
+type RenderNgramsItem =
+  ( dispatch :: Action -> Effect Unit
+  , ngrams :: NgramsTerm
+  , ngramsElement :: NgramsElement
+  , ngramsLocalPatch :: NgramsTablePatch
+  , ngramsParent :: Maybe NgramsTerm
+  , ngramsSelection :: Set NgramsTerm
+  , ngramsTable :: NgramsTable
+  )
+
+renderNgramsItem :: Record RenderNgramsItem -> R.Element
+renderNgramsItem p = R.createElement renderNgramsItemCpt p []
+
+renderNgramsItemCpt :: R.Component RenderNgramsItem
+renderNgramsItemCpt = R.hooksComponent "G.C.NT.renderNgramsItem" cpt
+  where
+    cpt { dispatch
+        , ngrams
+        , ngramsElement
+        , ngramsLocalPatch
+        , ngramsParent
+        , ngramsSelection
+        , ngramsTable } _ =
+      pure $ T.makeRow [
+          selected
+        , checkbox GraphTerm
+        , checkbox StopTerm
+        , if ngramsParent == Nothing
+          then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
+          else
+            H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } } [
+                H.i { className: "glyphicon glyphicon-plus" } []
+              , (R2.buff $ span ngramsStyle [text $ " " <> ngramsTermText ngrams])
+            ]
+        , H.text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
+      ]
+      where
+        termList    = ngramsElement ^. _NgramsElement <<< _list
+        ngramsStyle = [termStyle termList ngramsOpacity]
+        ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
+        ngramsClick
+          = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+          -- ^ This is the old behavior it is nicer to use since one can
+          --   rapidly change the ngram list without waiting for confirmation.
+          --   However this might expose bugs. One of them can be reproduced
+          --   by clicking a multiple times on the same ngram, sometimes it stays
+          --   transient.
+          -- | ngramsTransient = const Nothing
+          -- | otherwise       = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+        selected    =
+          H.input { checked: Set.member ngrams ngramsSelection
+                  , className: "checkbox"
+                  , on: { change: const $ dispatch $ ToggleSelect ngrams }
+                  , type: "checkbox" }
+        checkbox termList' =
+          let chkd = termList == termList'
+              termList'' = if chkd then CandidateTerm else termList'
+          in
+          H.input { checked: chkd
+                  , className: "checkbox"
+                  , on: { change: const $ dispatch $
+                          setTermListA ngrams (replace termList termList'') }
+                  , readOnly: ngramsTransient
+                  , type: "checkbox" }
+        ngramsTransient = tablePatchHasNgrams ngramsLocalPatch ngrams
+          -- ^ TODO here we do not look at ngramsNewElems, shall we?
+        ngramsOpacity
+          | ngramsTransient = 0.5
+          | otherwise       = 1.0
+
+        cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
 
 tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
 tablePatchHasNgrams ngramsTablePatch ngrams =

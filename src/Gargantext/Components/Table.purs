@@ -20,7 +20,7 @@ type TableContainerProps =
   , tableBody           :: Array R.Element
   )
 
-type Row = { row :: Array R.Element, delete :: Boolean }
+type Row = { row :: R.Element, delete :: Boolean }
 type Rows = Array Row
 
 type OrderBy = Maybe (OrderByDirection ColumnName)
@@ -153,8 +153,11 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
         , pageSizeDescription: textDescription page pageSize' totalRecords
         , paginationLinks: pagination setPage totalPages page
         , tableHead: H.tr {} (colHeader <$> colNames)
-        , tableBody: map (H.tr {} <<< map (\c -> H.td {} [c]) <<< _.row) rows
+        , tableBody: map _.row rows
         }
+
+makeRow :: Array R.Element -> R.Element
+makeRow els = H.tr {} $ (\c -> H.td {} [c]) <$> els
 
 
 type FilterRowsParams =

@@ -114,7 +114,12 @@ pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
       pure $ T.table { rows, params, container, colNames, totalRecords, wrapColElts }
       where
         path = fst pagePath
-        rows = (\c -> {row: contactCells session frontends (fst pagePath).nodeId c, delete: false}) <$> docs
+        rows = (\c -> {
+                   row: contactCells { annuaireId: (fst pagePath).nodeId
+                                     , frontends
+                                     , contact: c
+                                     , session }
+                   , delete: false }) <$> docs
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
         wrapColElts = const identity
@@ -124,11 +129,26 @@ pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
 
 type AnnuaireId = Int
 
-contactCells :: Session -> Frontends -> AnnuaireId -> CT.Contact -> Array R.Element
-contactCells session frontends aId = render
+type ContactCellsProps =
+  (
+    annuaireId :: AnnuaireId
+  , contact    :: CT.Contact
+  , frontends  :: Frontends
+  , session   :: Session
+  )
+
+contactCells :: Record ContactCellsProps -> R.Element
+contactCells p = R.createElement contactCellsCpt p []
+
+contactCellsCpt :: R.Component ContactCellsProps
+contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
   where
-    render (CT.Contact { id, hyperdata : (CT.HyperdataUser {shared: Nothing} )}) =
-        [ H.text ""
+    cpt { annuaireId
+        , contact: (CT.Contact { id, hyperdata: (CT.HyperdataUser {shared: Nothing}) })
+        , frontends
+        , session } _ =
+      pure $ T.makeRow [
+        H.text ""
         , H.span {} [ H.text "name" ]
         --, H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
         , H.text "No ContactWhere"
@@ -136,26 +156,34 @@ contactCells session frontends aId = render
         , H.div {className: "nooverflow"}
           [ H.text "No ContactWhereRole" ]
         ]
-    render (CT.Contact { id, hyperdata : (CT.HyperdataUser {shared: Just (CT.HyperdataContact contact@{who: who, ou:ou}) } )}) =
-      --let nodepath = NodePath (sessionId session) NodeContact (Just id)
-      let nodepath = Routes.ContactPage (sessionId session) aId id
-          href = url frontends nodepath in
-      [ H.text ""
-      , H.a { href} [ H.text $ maybe "name" identity contact.title ]
-      --, H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
-      , H.text $ maybe "No ContactWhere" contactWhereOrg  (head $ ou)
-      , H.text $ maybe "No ContactWhereDept" contactWhereDept (head $ ou)
-      , H.div {className: "nooverflow"}
-        [ H.text $ maybe "No ContactWhereRole" contactWhereRole (head $ ou) ] ]
+    cpt { annuaireId
+        , contact: (CT.Contact { id
+                               , hyperdata: (CT.HyperdataUser {shared: Just (CT.HyperdataContact contact@{who, ou})}) })
+        , frontends
+        , session } _ =
+        pure $ T.makeRow [
+          H.text ""
+          , H.a { href } [ H.text $ maybe "name" identity contact.title ]
+            --, H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
+          , H.text $ maybe "No ContactWhere" contactWhereOrg  (head $ ou)
+          , H.text $ maybe "No ContactWhereDept" contactWhereDept (head $ ou)
+          , H.div {className: "nooverflow"} [
+              H.text $ maybe "No ContactWhereRole" contactWhereRole (head $ ou)
+            ]
+          ]
+          where
+            --nodepath = NodePath (sessionId session) NodeContact (Just id)
+            nodepath = Routes.ContactPage (sessionId session) annuaireId id
+            href = url frontends nodepath
 
-    contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
-    contactWhereOrg (CT.ContactWhere { organization: orga }) =
-      maybe "No orga (list)" identity (head orga)
-    contactWhereDept (CT.ContactWhere { labTeamDepts : [] }) = "Empty Dept"
-    contactWhereDept (CT.ContactWhere { labTeamDepts : dept }) =
-      maybe "No Dept (list)" identity (head dept)
-    contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
-    contactWhereRole (CT.ContactWhere { role: Just role }) = role
+            contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
+            contactWhereOrg (CT.ContactWhere { organization: orga }) =
+              maybe "No orga (list)" identity (head orga)
+            contactWhereDept (CT.ContactWhere { labTeamDepts : [] }) = "Empty Dept"
+            contactWhereDept (CT.ContactWhere { labTeamDepts : dept }) =
+              maybe "No Dept (list)" identity (head dept)
+            contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
+            contactWhereRole (CT.ContactWhere { role: Just role }) = role
 
 
 data HyperdataAnnuaire = HyperdataAnnuaire
