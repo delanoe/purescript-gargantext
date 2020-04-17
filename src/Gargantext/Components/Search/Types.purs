@@ -40,6 +40,7 @@ data DataField = Gargantext
                | Web
                | Files
 
+
 instance showDataField :: Show DataField where
   show Gargantext   = "Gargantext"
   show (External _) = "Others" -- <> show x
@@ -52,23 +53,38 @@ instance docDataField :: Doc DataField where
   doc Web          = "All the web crawled with meta-search-engine SearX"
   doc Files        = "Zip files with formats.."
 
-
 derive instance eqDataField :: Eq DataField
 
 instance encodeJsonDataField :: EncodeJson DataField where
-  encodeJson Gargantext   = encodeJson "Internal PubMed" -- later Internal Maybe Database
+  encodeJson Gargantext           = encodeJson "Internal PubMed" -- later Internal Maybe Database
   encodeJson (External (Just db)) = encodeJson $ "External " <> show db
   encodeJson a                    = encodeJson (show a)
 
-{-
-instance eqDataField :: Eq DataField where
-  eq Gargantext Gargantext = true
-  eq (External _) (External _) = true
-  eq Web Web = true
-  eq _ _ = false
-  -}
+----------------------------------------
+instance showDataOriginApi :: Show DataOriginApi where
+  show (InternalOrigin io) = "InternalOrigin " <> show io.api
+  show (ExternalOrigin io) = "ExternalOrigin " <> show io.api
+
+derive instance eqDataOriginApi :: Eq DataOriginApi
+ 
+data DataOriginApi = InternalOrigin { api :: Database }
+                   | ExternalOrigin { api :: Database }
+
+
+instance encodeJsonDataOriginApi :: EncodeJson DataOriginApi where
+  encodeJson (InternalOrigin dta) = "api" := dta.api ~> jsonEmptyObject
+  encodeJson (ExternalOrigin dta) = "api" := dta.api ~> jsonEmptyObject
+
+datafield2dataOriginApi :: DataField -> DataOriginApi
+datafield2dataOriginApi (External (Just a)) = ExternalOrigin { api : a }
+datafield2dataOriginApi _                   = InternalOrigin { api : IsTex } -- TOD fixme 
+
 ------------------------------------------------------------------------
 -- | Database search specifications
+
+datafield2database :: DataField -> Database
+datafield2database (External (Just x)) = x
+datafield2database _                   = Empty
 
 allDatabases :: Array Database
 allDatabases = [ Empty
@@ -289,7 +305,7 @@ instance showSearchOrder :: Show SearchOrder where
 
 newtype SearchQuery = SearchQuery
   { query     :: String
-  , databases :: Array DataField
+  , databases :: Database
   , datafield :: Maybe DataField
   , files_id  :: Array String
   , lang      :: Maybe Lang
@@ -304,7 +320,7 @@ derive instance newtypeSearchQuery :: Newtype SearchQuery _
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
   { query: ""
-  , databases: []
+  , databases: Empty
   , datafield: Nothing
   , files_id : []
   , lang     : Nothing

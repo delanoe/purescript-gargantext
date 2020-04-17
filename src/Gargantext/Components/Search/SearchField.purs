@@ -1,7 +1,7 @@
 module Gargantext.Components.Search.SearchField
   ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex) where
 
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (over)
 import Data.String (length)
 import Data.Set as Set
@@ -18,7 +18,7 @@ import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, ($), (&&
 
 import Gargantext.Data.Array (catMaybes)
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Components.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, readDatabase, readOrg) -- (Database(..), readDatabase, Lang(..), readLang, Org(..), readOrg, allOrgs, allIMTorgs, HAL_Filters(..), IMT_org(..))
+import Gargantext.Components.Search.Types (DataOriginApi(..), DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, readDatabase, readOrg, datafield2database)
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -30,7 +30,7 @@ select :: forall props.
           -> R.Element
 select = R.createElement "select"
 
-type Search = { databases :: Array DataField
+type Search = { databases :: Database
               , datafield :: Maybe DataField
               , lang      :: Maybe Lang
               , node_id   :: Maybe Int
@@ -45,7 +45,7 @@ eqSearch s s' =    (s.databases == s'.databases)
                 && (s.term      == s'.term)
 
 defaultSearch :: Search
-defaultSearch = { databases: []
+defaultSearch = { databases: Empty
                 , datafield: Nothing
                 , node_id  : Nothing
                 , lang     : Nothing
@@ -261,7 +261,7 @@ dataFieldNav ({datafield} /\ setSearch) datafields =
                                then " active"
                                else ""
             , on: { click: \_ -> setSearch $ _ { datafield = Just df'
-                                               , databases = [df']
+                  , databases = datafield2database df'
                                                }
                     }
             -- just one database query for now
@@ -312,8 +312,8 @@ databaseInput (search /\ setSearch) dbs =
 
       onChange e = do
         let value = readDatabase $ R2.unsafeEventValue e
-        setSearch $ _ { datafield =  Just $ External value
-                      , databases = [External value] -- should append this
+        setSearch $ _ { datafield = Just $ External value
+                      , databases = fromMaybe Empty value
                       }
 
 
