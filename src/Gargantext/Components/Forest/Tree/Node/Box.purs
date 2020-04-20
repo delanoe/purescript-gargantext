@@ -430,8 +430,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                                                        setSearch $ _ {url = url, term = term}
                                                      else
                                                        pure unit
-        isTexUrl =  "http://0.0.0.0:8080"--"https://istex.gargantext.org"
-        isTexLocalUrl = "http://localhost:8083"
+        --isTexUrl =  "http://0.0.0.0:8080"--"https://istex.gargantext.org"
+        isTexUrl =  "https://istex.gargantext.org"
+        -- isTexLocalUrl = "http://localhost:8083"
         isTexTermUrl term = isTexUrl <> query
           where
             query = Query.print $ NQP.print identity identity qp
