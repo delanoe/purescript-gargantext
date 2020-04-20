@@ -171,8 +171,8 @@ settingsBox Graph = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation Graph
-  , buttons : [ -- Download
-              -- , Delete
+  , buttons : [ Download -- TODO as GEXF or JSON
+              , Delete
               ]
   }
 
