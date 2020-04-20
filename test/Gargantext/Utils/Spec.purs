@@ -1,18 +1,31 @@
 module Gargantext.Utils.Spec where
 
 import Prelude
-import Data.Array (index)
-import Data.Foldable (all)
-import Data.Maybe (Maybe(..), isJust)
-import Data.String (drop, stripPrefix, Pattern(..))
-import Data.Tuple (Tuple(..))
+
+import Data.Argonaut as Argonaut
+import Data.Either (Either(..), isLeft)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Gargantext.Utils as GU
+import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Gargantext.Utils.Crypto as GUC
 import Gargantext.Utils.Math as GUM
--- import Test.QuickCheck ((===), (/==), (<?>), Result(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Spec.QuickCheck (quickCheck')
+
+data Fruit
+  = Boat { hi :: Int }
+  | Gravy String
+  | Pork Int
+
+derive instance eqFruit :: Eq Fruit
+derive instance genericFruit :: Generic Fruit _
+instance showFruit :: Show Fruit where
+  show = genericShow
+instance decodeJsonFruit :: Argonaut.DecodeJson Fruit where
+  decodeJson = genericSumDecodeJson
+instance encodeJsonFruit :: Argonaut.EncodeJson Fruit where
+  encodeJson = genericSumEncodeJson
 
 spec :: Spec Unit
 spec =
@@ -40,3 +53,26 @@ spec =
       let text = "The quick brown fox jumps over the lazy dog"
       let textMd5 = "9e107d9d372bb6826bd81d3542a419d6"
       GUC.md5 text `shouldEqual` textMd5
+
+    it "genericSumDecodeJson works" do
+      let result1 = Argonaut.decodeJson =<< Argonaut.jsonParser """{"Boat":{"hi":1}}"""
+      result1 `shouldEqual` Right (Boat { hi: 1 })
+
+      let result2 = Argonaut.decodeJson =<< Argonaut.jsonParser """{"Gravy":"hi"}"""
+      result2 `shouldEqual` Right (Gravy "hi")
+
+      let result3 = Argonaut.decodeJson =<< Argonaut.jsonParser """{"Boat":123}"""
+      isLeft (result3 :: Either String Fruit) `shouldEqual` true
+
+    it "genericSumEncodeJson works and loops back with decode" do
+      let input1 = Boat { hi: 1 }
+      let result1 = Argonaut.encodeJson input1
+      let result1' = Argonaut.decodeJson result1
+      Argonaut.stringify result1 `shouldEqual` """{"Boat":{"hi":1}}"""
+      result1' `shouldEqual` Right input1
+
+      let input2 = Gravy "hi"
+      let result2 = Argonaut.encodeJson input2
+      let result2' = Argonaut.decodeJson result2
+      Argonaut.stringify result2 `shouldEqual` """{"Gravy":"hi"}"""
+      result2' `shouldEqual` Right input2
