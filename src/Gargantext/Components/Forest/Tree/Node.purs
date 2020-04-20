@@ -22,6 +22,7 @@ data NodeAction = Documentation NodeType
                 | Move     | Clone  | Delete
                 | Share    | Link NodeType
                 | Add (Array NodeType)
+                | CopyFromCorpus
 
 
 instance eqNodeAction :: Eq NodeAction where
@@ -36,6 +37,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq Share Share       = true
   eq (Link x) (Link y) = true && (x == y)
   eq (Add x) (Add y)   = true && (x == y)
+  eq CopyFromCorpus CopyFromCorpus = true
   eq _ _               = false
 
 instance showNodeAction :: Show NodeAction where
@@ -50,6 +52,7 @@ instance showNodeAction :: Show NodeAction where
   show Share             = "Share"
   show (Link x)          = "Link to " <> show x
   show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
+  show CopyFromCorpus    = "Copy from corpus"
 
 
 glyphiconNodeAction :: NodeAction -> String
@@ -60,6 +63,7 @@ glyphiconNodeAction SearchBox         = "search"
 glyphiconNodeAction Upload            = "upload"
 glyphiconNodeAction (Link _)          = "transfer"
 glyphiconNodeAction Download          = "download"
+glyphiconNodeAction CopyFromCorpus    = "random"
 glyphiconNodeAction _                 = ""
 
 
@@ -78,33 +82,25 @@ settingsBox NodeUser = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation NodeUser
-  , buttons : [ SearchBox
-              , Add [ FolderPrivate
-                    , FolderShared
-                    , FolderPublic
-                    ]
-              , Delete
-              ]
+  , buttons : [ Delete ]
   }
 
 settingsBox FolderPrivate = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation FolderPrivate
-  , buttons : [ SearchBox
-              , Add [ Corpus
+  , buttons : [ Add [ Corpus
                     , Folder
                     , Annuaire
                     ]
-              , Delete]
+              ]
   }
 
 settingsBox Team = SettingsBox {
     show: true
-  , edit : false
+  , edit : true
   , doc  : Documentation Team
-  , buttons : [ SearchBox
-              , Add [ Corpus
+  , buttons : [ Add [ Corpus
                     , Folder
                     , Annuaire
                     ]
@@ -116,7 +112,7 @@ settingsBox FolderShared = SettingsBox {
   , edit : true
   , doc  : Documentation FolderShared
   , buttons : [ Add [Team, FolderShared]
-              , Delete
+              -- , Delete
               ]
   }
 
@@ -124,11 +120,9 @@ settingsBox FolderPublic = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation FolderPublic
-  , buttons : [{-, SearchBox
-                                                    , Add [ Corpus
-                                                          , Folder
-                                                          ]-}
-    Delete
+  , buttons : [ Add [ Corpus
+                    , Folder
+                    ]
     ]
   }
 
@@ -136,8 +130,7 @@ settingsBox Folder = SettingsBox {
     show: true
   , edit : true
   , doc  : Documentation Folder
-  , buttons : [ SearchBox
-              , Add [ Corpus
+  , buttons : [ Add [ Corpus
                     , Folder
                     , Annuaire
                     ]
@@ -150,10 +143,10 @@ settingsBox Corpus = SettingsBox {
   , edit : true
   , doc  : Documentation Corpus
   , buttons : [ SearchBox
-              , Add [ NodeList
+              {- , Add [ NodeList
                     , Graph
                     , Dashboard
-                    ]
+                    ] -}
               , Upload
               , Download
                 --, Share
@@ -170,7 +163,7 @@ settingsBox Texts = SettingsBox {
   , doc  : Documentation Texts
   , buttons : [ Upload
               , Download
-              , Delete
+              -- , Delete
               ]
   }
 
@@ -178,8 +171,7 @@ settingsBox Graph = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation Graph
-  , buttons : [ Documentation Graph
-              , Download
+  , buttons : [ Download -- TODO as GEXF or JSON
               , Delete
               ]
   }
@@ -189,8 +181,9 @@ settingsBox NodeList = SettingsBox {
   , edit : false
   , doc  : Documentation NodeList
   , buttons : [ Upload
+              , CopyFromCorpus
               , Download
-              , Delete
+              -- , Delete
               ]
   }
 
@@ -198,14 +191,16 @@ settingsBox Dashboard = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation Dashboard
-  , buttons : [Delete]
+  , buttons : []
   }
 
 settingsBox Annuaire = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation Annuaire
-  , buttons : [Delete]
+  , buttons : [ Upload
+              , Delete 
+              ]
   }
 
 settingsBox _ = SettingsBox {

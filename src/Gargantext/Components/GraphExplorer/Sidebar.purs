@@ -15,30 +15,35 @@ import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.NgramsTable.Core as NTC
-import Gargantext.Components.Nodes.Corpus.Graph.Tabs as GT
+import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Data.Array (mapMaybe)
-import Gargantext.Ends (Frontends)
+import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
 type Props =
   ( frontends :: Frontends
   , graph :: SigmaxT.SGraph
+  , graphId :: Int
   , graphVersion :: R.State Int
   , metaData :: GET.MetaData
   , removedNodeIds :: R.State SigmaxT.NodeIds
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session :: Session
   , showSidePanel :: GET.SidePanelState
+  , treeReload :: R.State Int
   )
 
 sidebar :: Record Props -> R.Element
@@ -63,6 +68,11 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                 [ RH.div { className: "tab-content" }
                   [ RH.div { className: "", role: "tabpanel" }
                     (Seq.toUnfoldable $ (Seq.map (badge props.selectedNodeIds) (badges props.graph props.selectedNodeIds)))
+                  ]
+                , RH.div { className: "gexf" } [
+                   RH.a { className: "btn btn-default"
+                        , href: gexfHref props.session props.graphId
+                        , target: "_blank" } [ RH.text "Download GEXF" ]
                   ]
                 , RH.div { className: "tab-content" }
                   [
@@ -119,9 +129,17 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
 
     onClickRemove rType props nodesMap e = do
       let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable $ fst props.selectedNodeIds
-      deleteNodes rType props.session props.metaData props.graphVersion nodes
+      deleteNodes { graphId: props.graphId
+                  , metaData: props.metaData
+                  , nodes
+                  , session: props.session
+                  , termList: rType
+                  , treeReload: props.treeReload }
       snd props.removedNodeIds $ const $ fst props.selectedNodeIds
       snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
+
+    gexfHref :: Session -> Int -> String
+    gexfHref session graphId = url session $ Routes.NodeAPI GT.Graph (Just graphId) "gexf"
 
 
 badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
@@ -141,15 +159,25 @@ neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selected
   where
     selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
-deleteNodes :: TermList -> Session -> GET.MetaData -> R.State Int -> Array (Record SigmaxT.Node) -> Effect Unit
-deleteNodes termList session metaData (_ /\ setGraphVersion) nodes = do
+type DeleteNodes =
+  (
+    graphId :: Int
+  , metaData :: GET.MetaData
+  , nodes :: Array (Record SigmaxT.Node)
+  , session :: Session
+  , termList :: TermList
+  , treeReload :: R.State Int
+  )
+
+deleteNodes :: Record DeleteNodes -> Effect Unit
+deleteNodes { graphId, metaData, nodes, session, termList, treeReload } = do
   launchAff_ do
     patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
     let mPatch = last patches
     case mPatch of
       Nothing -> pure unit
-      Just (NTC.Versioned patch) -> pure unit --liftEffect do
-        --setGraphVersion $ const $ patch.version
+      Just (NTC.Versioned patch) -> do
+        liftEffect $ snd treeReload $ (+) 1
 
 deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxT.Node -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches coreParams versioned
@@ -159,7 +187,7 @@ deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches 
     versioned :: NTC.VersionedNgramsPatches
     versioned = NTC.Versioned {version: metaData.list.version, data: np}
     coreParams :: NTC.CoreParams ()
-    coreParams = {session, nodeId: nodeId, listIds: [metaData.list.listId], tabType}
+    coreParams = {session, nodeId, listIds: [metaData.list.listId], tabType}
     tabNgramType :: CTabNgramType
     tabNgramType = modeTabType node.gargType
     tabType :: TabType
@@ -181,7 +209,7 @@ query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) 
   where
     query' Nothing = RH.div {} []
     query' (Just corpusId) =
-      GT.tabs {frontends, session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: [side corpusId]}
+      CGT.tabs {frontends, session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: [side corpusId]}
     q id = case Map.lookup id nodesMap of
       Nothing -> []
       Just n -> words n.label

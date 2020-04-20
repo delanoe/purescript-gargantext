@@ -57,4 +57,4 @@ ngramsViewCpt = R.staticComponent "ListsNgramsView" cpt
         chart Authors = pie {session, path}
         chart Sources = bar {session, path}
         chart Institutes = tree {session, path: path2}
-        chart Terms = metrics {session, path: path2}
+        chart Terms      = metrics {session, path: path2}

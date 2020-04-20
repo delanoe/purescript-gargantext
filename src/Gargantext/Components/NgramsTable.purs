@@ -3,22 +3,18 @@ module Gargantext.Components.NgramsTable
   , mainNgramsTable
   ) where
 
-import Prelude
-  ( class Show, Unit, bind, const, discard, identity, map, mempty, not
-  , pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<)
-  , (==), (||), otherwise )
 import Data.Array as A
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (Lens', to, view, (%~), (.~), (^.), (^..), (^?))
-import Data.Lens.Common (_Just)
 import Data.Lens.At (at)
-import Data.Lens.Index (ix)
+import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
+import Data.Lens.Index (ix)
 import Data.Lens.Record (prop)
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe, isNothing)
+import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
@@ -27,31 +23,24 @@ import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import React (ReactClass, ReactElement, Children)
-import React.DOM (a, i, input, li, span, text, ul)
-import React.DOM.Props (_type, checked, className, onChange, onClick, style)
-import React.DOM.Props as DOM
-import Thermite as Thermite
-import Thermite (modifyState_)
-import Gargantext.Types
-  ( CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList
-  , readTermSize, termLists, termSizes)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.NgramsTable.Core
-  ( CoreState, NgramsElement(..), NgramsPatch(..), NgramsTablePatch, _PatchMap
-  , NgramsTable, NgramsTerm, PageParams, Replace, Versioned(..)
-  , VersionedNgramsTable, _NgramsElement, _NgramsTable, _children
-  , _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches
-  , applyPatchSet, commitPatch, syncPatches, convOrderBy, initialPageParams, loadNgramsTable
-  , patchSetFromMap, replace, singletonNgramsTablePatch
-  , normNgram, ngramsTermText, fromNgramsPatches, PatchMap(..), rootsOf )
 import Gargantext.Components.Loader (loader)
+import Gargantext.Components.LoadingSpinner (loadingSpinner)
+import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
+import Gargantext.Types (CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
+import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
-
+import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), otherwise, when)
+import React (ReactClass, ReactElement, Children)
+import React.DOM (a, i, input, li, span, text, ul)
+import React.DOM.Props (_type, checked, className, onChange, onClick, style, readOnly)
+import React.DOM.Props as DOM
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Thermite (modifyState_)
+import Thermite as Thermite
 import Unsafe.Coerce (unsafeCoerce)
 
 type State =
@@ -167,7 +156,10 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
               , H.div {} (
                    if A.null props.tableBody && searchQuery /= "" then [
                      H.button { className: "btn btn-primary"
-                              , on: {click: const $ dispatch $ addNewNgramA $ normNgram tabNgramType searchQuery}
+                              , on: {click: const $ dispatch
+                                                  $ addNewNgramA
+                                                  $ normNgram tabNgramType searchQuery
+                                                }
                               }
                      [ H.text ("Add " <> searchQuery) ]
                      ] else [])]
@@ -204,29 +196,20 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                 ngramsClick {depth: 1, ngrams: child} =
                   Just $ dispatch $ ToggleChild false child
                 ngramsClick _ = Nothing
-                ngramsEdit _ = Nothing
+                ngramsEdit  _ = Nothing
               in
               [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
               , R2.buff $ renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
               , H.button {className: "btn btn-primary", on: {click: (const $ dispatch AddTermChildren)}} [H.text "Save"]
               , H.button {className: "btn btn-secondary", on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}} [H.text "Cancel"]
               ]) ngramsParent)
+          , selectAllButtons ngramsSelectAll
           , H.div {id: "terms_table", className: "panel-body"}
             [ H.table {className: "table able"}
               [ H.thead {className: "tableHeader"} [props.tableHead]
-              , H.tbody {} props.tableBody]]
+              , H.tbody {} props.tableBody] ]
 
-          , if ngramsSelectAll then H.li {className: " list-group-item"}
-                [ H.button { className: "btn btn-primary"
-                           , on: {click: const $ setSelection GraphTerm }
-                           }
-                  [ H.text "Map" ]
-                , H.button { className: "btn btn-primary"
-                           , on: {click: const $ setSelection StopTerm }
-                           }
-                  [ H.text "Stop" ]
-                  ]
-                else H.div {}[]
+          , selectAllButtons ngramsSelectAll
                 ]
               ]
             ]
@@ -237,6 +220,20 @@ tableContainer { path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
     setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
+
+    selectAllButtons false = H.div {} []
+    selectAllButtons true =
+      H.li {className: " list-group-item"} [
+        H.button { className: "btn btn-primary"
+                 , on: {click: const $ setSelection GraphTerm }
+                 } [ H.text "Map" ]
+        , H.button { className: "btn btn-primary"
+                   , on: {click: const $ setSelection StopTerm }
+                   } [ H.text "Stop" ]
+        , H.button { className: "btn btn-primary"
+                   , on: {click: const $ setSelection CandidateTerm }
+                   } [ H.text "Candidate" ]
+      ]
 
 toggleMaybe :: forall a. a -> Maybe a -> Maybe a
 toggleMaybe _ (Just _) = Nothing
@@ -324,19 +321,24 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
         pt = singletonNgramsTablePatch parent pe
 
     render :: Thermite.Render State (Record LoadedNgramsTableProps) Action
-    render dispatch { path: path@({scoreType, params} /\ setPath)
+    render dispatch { path: path@({searchQuery, scoreType, params, termListFilter} /\ setPath)
                     , versioned: Versioned { data: initTable }
                     , tabNgramType }
                     state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
                           , ngramsSelection, ngramsSelectAll }
                     _reactChildren =
-      [ autoUpdateElt { duration: 3000, effect: dispatch Synchronize }
-      , R2.scuff $ T.table { params: params /\ setParams -- TODO-LENS
-                           , rows, container, colNames, wrapColElts, totalRecords
+      [ autoUpdateElt { duration: 5000, effect: dispatch Synchronize }
+      , R2.scuff $ T.table { colNames
+                           , container
+                           , params: params /\ setParams -- TODO-LENS
+                           , rows: filteredRows
+                           , totalRecords
+                           , wrapColElts
                            }
       ]
       where
-        totalRecords = 47361 -- TODO
+        totalRecords = A.length rows
+        filteredRows = T.filterRows { params } rows
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
         selected =
           input
@@ -354,7 +356,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
         ngramsTable = applyNgramsPatches state initTable
         orderWith =
           case convOrderBy <$> params.orderBy of
-            Just ScoreAsc  -> A.sortWith \x -> (snd x) ^. _NgramsElement <<< _occurrences
+            Just ScoreAsc  -> A.sortWith \x -> (snd x)        ^. _NgramsElement <<< _occurrences
             Just ScoreDesc -> A.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
             _              -> identity -- the server ordering is enough here
 
@@ -365,9 +367,14 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
 
         ngramsParentRoot :: Maybe NgramsTerm
         ngramsParentRoot =
-          (\np -> ngramsTable ^? at np <<< _Just <<< _NgramsElement <<< _root <<< _Just) =<< ngramsParent
+          (\np -> ngramsTable ^? at np
+                            <<< _Just
+                            <<< _NgramsElement
+                            <<< _root
+                            <<< _Just
+            ) =<< ngramsParent
 
-        displayRow (NgramsElement {ngrams, root}) =
+        displayRow (NgramsElement {ngrams, root, list}) =
           root == Nothing
           -- ^ Display only nodes without parents
           && ngramsChildren ^. at ngrams /= Just true
@@ -376,8 +383,14 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
           -- ^ and which are not our new parent
           && Just ngrams /= ngramsParentRoot
           -- ^ and which are not the root of our new parent
-          || -- Unless they are scheduled to be removed.
-          ngramsChildren ^. at ngrams == Just false
+          && queryMatchesLabel searchQuery (ngramsTermText ngrams)
+          -- ^ and which matches the search query.
+          && maybe true (_ == list) termListFilter
+          -- ^ and which matches the ListType filter.
+          || ngramsChildren ^. at ngrams == Just false
+          -- ^ unless they are scheduled to be removed.
+          || tablePatchHasNgrams ngramsLocalPatch ngrams
+          -- ^ unless they are being processed at the moment.
         convertRow (Tuple ngrams ngramsElement) =
           { row: R2.buff <$> renderNgramsItem { ngramsTable, ngrams,
                                                 ngramsLocalPatch,
@@ -411,7 +424,11 @@ mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
     cpt {nodeId, defaultListId, tabType, session, tabNgramType} _ = do
       path /\ setPath <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
       let paint versioned = loadedNgramsTable' {tabNgramType, path: path /\ setPath, versioned}
-      pure $ loader path loadNgramsTable paint
+
+      pure $ loader path loadNgramsTableAll \loaded -> do
+        case Map.lookup tabType loaded of
+          Just (versioned :: VersionedNgramsTable) -> paint versioned
+          Nothing -> loadingSpinner {}
 
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
@@ -493,7 +510,15 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
     termList    = ngramsElement ^. _NgramsElement <<< _list
     ngramsStyle = [termStyle termList ngramsOpacity]
     ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
-    ngramsClick = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+    ngramsClick
+      = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+      -- ^ This is the old behavior it is nicer to use since one can
+      --   rapidly change the ngram list without waiting for confirmation.
+      --   However this might expose bugs. One of them can be reproduced
+      --   by clicking a multiple times on the same ngram, sometimes it stays
+      --   transient.
+      -- | ngramsTransient = const Nothing
+      -- | otherwise       = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
     selected    =
       input
         [ _type "checkbox"
@@ -509,20 +534,27 @@ renderNgramsItem { ngramsTable, ngrams, ngramsElement, ngramsParent
         [ _type "checkbox"
         , className "checkbox"
         , checked chkd
-        , onChange $ const $ dispatch $
+        , readOnly ngramsTransient
+        , onChange $ const $ when (not ngramsTransient) $ dispatch $
             setTermListA ngrams (replace termList termList'')
         ]
-    ngramsOpacity
-      | isNothing (ngramsLocalPatch.ngramsPatches ^. _PatchMap <<< at ngrams) = 1.0
+    ngramsTransient = tablePatchHasNgrams ngramsLocalPatch ngrams
       -- ^ TODO here we do not look at ngramsNewElems, shall we?
-      | otherwise                                                             = 0.5
+    ngramsOpacity
+      | ngramsTransient = 0.5
+      | otherwise       = 1.0
 
     cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
 
+tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
+tablePatchHasNgrams ngramsTablePatch ngrams =
+  isJust $ ngramsTablePatch.ngramsPatches ^. _PatchMap <<< at ngrams
+
 termStyle :: TermList -> Number -> DOM.Props
-termStyle GraphTerm     opacity = style {color: "green", opacity}
-termStyle StopTerm      opacity = style {color: "red",   opacity, textDecoration: "line-through"}
-termStyle CandidateTerm opacity = style {color: "black", opacity}
+termStyle GraphTerm     opacity = style { color: "green", opacity}
+termStyle StopTerm      opacity = style { color: "red",   opacity
+                                        , textDecoration: "line-through"}
+termStyle CandidateTerm opacity = style { color: "black", opacity}
 
 nextTermList :: TermList -> TermList
 nextTermList GraphTerm     = StopTerm

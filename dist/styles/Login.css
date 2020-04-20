@@ -1,3 +1,7 @@
+#dafixedtop {
+  z-index: 999;
+}
+
 .logoSmall {
   line-height: 15px;
   height: 10px;
@@ -46,9 +50,11 @@ li#rename #rename-a {
 }
 
 #node-popup-tooltip {
-  position: fixed;
   background-color: white;
-  z-index: 1000;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
 }
 #node-popup-tooltip:hover {
   border: none;
@@ -61,6 +67,7 @@ li#rename #rename-a {
 #node-popup-tooltip .popup-container .panel {
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin-bottom: 0px;
 }
 #node-popup-tooltip .popup-container .panel .glyphicon-pencil {
   color: black;
@@ -99,23 +106,24 @@ li#rename #rename-a {
   min-width: 200px;
 }
 
-li a#rename {
-  display: none;
-  position: absolute;
-  text-decoration: none;
-  left: 26px;
+li .leaf {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
 }
-li a#rename-leaf {
-  display: none;
-  position: absolute;
-  text-decoration: none;
-  margin-left: 20px;
+li .leaf .folder-icon {
+  padding: 0 2 0 2;
 }
-li:hover a#rename {
+li .leaf a.settings {
+  cursor: pointer;
   display: block;
+  padding: 0 2 0 2;
+  text-decoration: none;
+  visibility: hidden;
+  z-index: 1;
 }
-li:hover a#rename-leaf {
-  display: block;
+li .leaf:hover a.settings {
+  visibility: visible;
 }
 
 .glyphitem {
@@ -135,17 +143,6 @@ li:hover a#rename-leaf {
   transform: scale(1.4);
 }
 
-#arrow {
-  width: 0;
-  height: 0;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  border-right: 10px solid darkgray;
-  position: relative;
-  top: 55px;
-  left: -9px;
-}
-
 #sp-container {
   -webkit-transition: width 2s;
   transition: width 2s;
@@ -160,13 +157,6 @@ li:hover a#rename-leaf {
 .nooverflow:hover {
   overflow: visible;
   height: auto;
-}
-
-.tree {
-  margin-top: 10px;
-}
-.tree .file-dropped {
-  background-color: #d8dfe5;
 }
 
 #graph-tree .tree {
@@ -209,6 +199,17 @@ li:hover a#rename-leaf {
 
 a:focus, a:hover {
   cursor: pointer;
+}
+
+.copy-from-corpus .tree .node {
+  padding-left: 10px;
+}
+.copy-from-corpus .tree .node .name.clickable {
+  color: #337ab7;
+  cursor: pointer;
+}
+.copy-from-corpus .tree .node .name.clickable:hover {
+  text-decoration: underline;
 }
 
 /*# sourceMappingURL=Login.css.map */

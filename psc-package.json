@@ -1,7 +1,7 @@
 {
   "name": "gargantext",
   "set": "local",
-  "source": ".psc-package",
+  "source": ".psc-package/local/.set/packages.json",
   "depends": [
     "affjax",
     "argonaut",
@@ -27,6 +27,7 @@
     "random",
     "reactix",
     "read",
+    "record-extra",
     "routing",
     "sequences",
     "smolder",
@@ -39,6 +40,7 @@
     "tuples-native",
     "uint",
     "uri",
+    "versions",
     "web-html"
   ]
 }

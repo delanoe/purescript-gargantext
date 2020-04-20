@@ -1,20 +1,22 @@
 module Gargantext.Types where
 
 import Prelude
-import Data.Argonaut ( class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
+
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Ord (genericCompare)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import URI.Query (Query)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Ord (genericCompare)
-import Data.Generic.Rep.Show (genericShow)
 
 newtype SessionId = SessionId String
+type NodeID = Int
 
 derive instance genericSessionId :: Generic SessionId _
 
@@ -150,11 +152,11 @@ instance showNodeType :: Show NodeType where
   show NodeUser      = "NodeUser"
 
   show Folder        = "NodeFolder"
-  show FolderPrivate = "NodeFolderPrivate"
-  show FolderShared    = "NodeFolderShared"
-  show FolderPublic  = "NodeFolderPublic"
+  show FolderPrivate = "NodeFolderPrivate"  -- Node Private Worktop
+  show FolderShared  = "NodeFolderShared"   -- Node Share Worktop
+  show FolderPublic  = "NodeFolderPublic"   -- Node Public Worktop
 
-  show Annuaire      = "Annuaire"
+  show Annuaire      = "NodeAnnuaire"
   show NodeContact   = "NodeContact"
   show Corpus        = "NodeCorpus"
   show Dashboard     = "NodeDashboard"
@@ -192,24 +194,31 @@ readNodeType "Tree"          = Tree
 readNodeType "NodeTeam"      = Team
 readNodeType "NodeList"      = NodeList
 readNodeType "NodeTexts"     = Texts
+readNodeType "Annuaire"      = Annuaire
 readNodeType _               = Error
 
 
 fldr :: NodeType -> Boolean -> String
 fldr NodeUser false = "fa fa-user-circle"
-fldr NodeUser true  = "fa fa-user-circle-o"
-
+fldr NodeUser true  = "fa fa-user"
+------------------------------------------------------
+fldr Folder  false  = "fa fa-folder"
+fldr Folder  true   = "fa fa-folder-open-o"
+------------------------------------------------------
 fldr FolderPrivate true  = "fa fa-lock"
-fldr FolderPrivate false = "fa fa-expeditedssl"
+fldr FolderPrivate false = "fa fa-lock-circle"
 
 fldr FolderShared  true  = "fa fa-share-alt"
-fldr FolderShared  false = "fa fa-share-alt-square"
+fldr FolderShared  false = "fa fa-share-circle"
 fldr Team  true   = "fa fa-users"
-fldr Team  false  = "fa fa-users"
+fldr Team  false  = "fa fa-users-closed"
 
-fldr FolderPublic _  = "fa fa-globe"
+fldr FolderPublic true  = "fa fa-globe-circle"
+fldr FolderPublic false = "fa fa-globe"
+------------------------------------------------------
 
-fldr Corpus _ = "fa fa-book" -- "fa fa-snowflake-o"
+fldr Corpus true  = "fa fa-book"
+fldr Corpus false = "fa fa-book-circle"
 
 fldr Phylo _ = "fa fa-code-fork"
 
@@ -218,14 +227,14 @@ fldr Texts _ = "fa fa-newspaper-o"
 fldr Dashboard _ = "fa fa-signal"
 fldr NodeList _ = "fa fa-list"
 
-fldr Annuaire true  = "fa fa-address-book-o"
-fldr Annuaire false = "fa fa-address-book"
+fldr Annuaire true  = "fa fa-address-card-o"
+fldr Annuaire false = "fa fa-address-card"
 
 fldr NodeContact true  = "fa fa-address-card-o"
 fldr NodeContact false = "fa fa-address-card"
 
-fldr _        false  = "fa fa-folder"
-fldr _        true   = "fa fa-folder-o"
+fldr _        false  = "fa fa-folder-o"
+fldr _        true   = "fa fa-folder-open"
 
 
 
@@ -288,6 +297,12 @@ type NgramsGetOpts =
   , termSizeFilter :: Maybe TermSize
   , scoreType      :: ScoreType
   , searchQuery    :: String
+  }
+
+type NgramsGetTableAllOpts =
+  { tabType        :: TabType
+  , listIds        :: Array ListId
+  , scoreType      :: ScoreType
   }
 
 type SearchOpts =
@@ -371,6 +386,7 @@ instance decodeJsonApiVersion :: DecodeJson ApiVersion where
 data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
 
 derive instance eqCTabNgramType :: Eq CTabNgramType
+derive instance ordCTabNgramType :: Ord CTabNgramType
 
 instance showCTabNgramType :: Show CTabNgramType where
   show CTabTerms      = "Terms"
@@ -381,6 +397,7 @@ instance showCTabNgramType :: Show CTabNgramType where
 data PTabNgramType = PTabPatents | PTabBooks | PTabCommunication
 
 derive instance eqPTabNgramType :: Eq PTabNgramType
+derive instance ordPTabNgramType :: Ord PTabNgramType
 
 instance showPTabNgramType :: Show PTabNgramType where
   show PTabPatents       = "Patents"
@@ -390,6 +407,7 @@ instance showPTabNgramType :: Show PTabNgramType where
 data TabSubType a = TabDocs | TabNgramType a | TabTrash | TabMoreLikeFav | TabMoreLikeTrash
 
 derive instance eqTabSubType :: Eq a => Eq (TabSubType a)
+derive instance ordTabSubType :: Ord a => Ord (TabSubType a)
 
 instance showTabSubType :: Show a => Show (TabSubType a) where
   show TabDocs          = "Docs"
@@ -404,6 +422,7 @@ data TabType
   | TabDocument (TabSubType CTabNgramType)    
 
 derive instance eqTabType :: Eq TabType
+derive instance ordTabType :: Ord TabType
 
 derive instance genericTabType :: Generic TabType _
 
@@ -424,6 +443,9 @@ derive instance eqMode :: Eq Mode
 instance ordMode :: Ord Mode where
   compare = genericCompare
 
+instance encodeMode :: EncodeJson Mode where
+  encodeJson x = encodeJson $ show x
+
 modeTabType :: Mode -> CTabNgramType
 modeTabType Authors    = CTabAuthors
 modeTabType Sources    = CTabSources
@@ -436,6 +458,17 @@ modeFromString "Sources" = Just Sources
 modeFromString "Institutes" = Just Institutes
 modeFromString "Terms" = Just Terms
 modeFromString _ = Nothing
+
+-- Async tasks
+
+-- corresponds to /add/form/async or /add/query/async
+data AsyncTaskType = Form | GraphT | Query
+derive instance genericAsyncTaskType :: Generic AsyncTaskType _
+
+asyncTaskTypePath :: AsyncTaskType -> String
+asyncTaskTypePath Form   = "add/form/async/"
+asyncTaskTypePath Query  = "query/"
+asyncTaskTypePath GraphT = "async/"
 
 type AsyncTaskID = String
 
@@ -455,7 +488,7 @@ readAsyncTaskStatus "running"  = Running
 readAsyncTaskStatus _ = Running
 
 newtype AsyncTask = AsyncTask {
-    id :: AsyncTaskID
+    id     :: AsyncTaskID
   , status :: AsyncTaskStatus
   }
 derive instance genericAsyncTask :: Generic AsyncTask _
@@ -466,6 +499,11 @@ instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
     id <- obj .: "id"
     status <- obj .: "status"
     pure $ AsyncTask {id, status}
+
+newtype AsyncTaskWithType = AsyncTaskWithType {
+    task :: AsyncTask
+  , typ  :: AsyncTaskType
+  }
 
 newtype AsyncProgress = AsyncProgress {
     id :: AsyncTaskID

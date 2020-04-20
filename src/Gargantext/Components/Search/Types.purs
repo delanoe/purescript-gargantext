@@ -1,55 +1,29 @@
 module Gargantext.Components.Search.Types where
 
-import Prelude (class Eq, class Show, show, ($), (<>), map)
-import Data.Set (Set)
-import Data.Ord
-import Data.Set as Set
 import Data.Array (concat)
-import Data.Argonaut (class EncodeJson, class DecodeJson, jsonEmptyObject, (:=), (~>), encodeJson)
+import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
+import Data.Set (Set)
+import Data.Set as Set
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Ends (class ToUrl, backendUrl)
-import Gargantext.Sessions (Session(..), post)
-import Gargantext.Types (class ToQuery, toQuery)
-import Gargantext.Utils (id)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
+
+import Gargantext.Prelude (class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>))
+
+import Gargantext.Components.Lang
+import Gargantext.Ends (class ToUrl, backendUrl)
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session(..), post)
+import Gargantext.Types as GT
+import Gargantext.Utils (id)
 
 ------------------------------------------------------------------------
 class Doc a where
   doc :: a -> String
-
-------------------------------------------------------------------------
--- | Lang search specifications
-allLangs :: Array Lang
-allLangs = [ EN
-           , FR
-           , Universal
-           , No_extraction
-           ]
-
-data Lang = FR | EN | Universal | No_extraction
-
-instance showLang :: Show Lang where
-  show FR = "FR"
-  show EN = "EN"
-  show Universal = "All"
-  show No_extraction = "Nothing"
-
-derive instance eqLang :: Eq Lang
-
-readLang :: String -> Maybe Lang
-readLang "FR"  = Just FR
-readLang "EN"  = Just EN
-readLang "All" = Just Universal
-readLang "Nothing" = Just No_extraction
-readLang _           = Nothing
-
-instance encodeJsonLang :: EncodeJson Lang where
-  encodeJson a = encodeJson (show a)
 
 ------------------------------------------------------------------------
 -- | DataField search specifications
@@ -66,9 +40,10 @@ data DataField = Gargantext
                | Web
                | Files
 
+
 instance showDataField :: Show DataField where
   show Gargantext   = "Gargantext"
-  show (External x) = "External" -- <> show x
+  show (External _) = "Others" -- <> show x
   show Web          = "Web"
   show Files        = "Files"
 
@@ -78,21 +53,42 @@ instance docDataField :: Doc DataField where
   doc Web          = "All the web crawled with meta-search-engine SearX"
   doc Files        = "Zip files with formats.."
 
-
 derive instance eqDataField :: Eq DataField
 
-{-
-instance eqDataField :: Eq DataField where
-  eq Gargantext Gargantext = true
-  eq (External _) (External _) = true
-  eq Web Web = true
-  eq _ _ = false
-  -}
+instance encodeJsonDataField :: EncodeJson DataField where
+  encodeJson Gargantext           = encodeJson "Internal PubMed" -- later Internal Maybe Database
+  encodeJson (External (Just db)) = encodeJson $ "External " <> show db
+  encodeJson a                    = encodeJson (show a)
+
+----------------------------------------
+instance showDataOriginApi :: Show DataOriginApi where
+  show (InternalOrigin io) = "InternalOrigin " <> show io.api
+  show (ExternalOrigin io) = "ExternalOrigin " <> show io.api
+
+derive instance eqDataOriginApi :: Eq DataOriginApi
+ 
+data DataOriginApi = InternalOrigin { api :: Database }
+                   | ExternalOrigin { api :: Database }
+
+
+instance encodeJsonDataOriginApi :: EncodeJson DataOriginApi where
+  encodeJson (InternalOrigin dta) = "api" := dta.api ~> jsonEmptyObject
+  encodeJson (ExternalOrigin dta) = "api" := dta.api ~> jsonEmptyObject
+
+datafield2dataOriginApi :: DataField -> DataOriginApi
+datafield2dataOriginApi (External (Just a)) = ExternalOrigin { api : a }
+datafield2dataOriginApi _                   = InternalOrigin { api : IsTex } -- TOD fixme 
+
 ------------------------------------------------------------------------
 -- | Database search specifications
 
+datafield2database :: DataField -> Database
+datafield2database (External (Just x)) = x
+datafield2database _                   = Empty
+
 allDatabases :: Array Database
-allDatabases = [ PubMed
+allDatabases = [ Empty
+               , PubMed
                , HAL Nothing
                , IsTex
                , Isidore
@@ -102,6 +98,7 @@ allDatabases = [ PubMed
                ]
 
 data Database = All_Databases
+              | Empty
               | PubMed
               | HAL (Maybe Org)
               | IsTex
@@ -115,6 +112,7 @@ instance showDatabase :: Show Database where
   show (HAL _)= "HAL"
   show IsTex  = "IsTex"
   show Isidore= "Isidore"
+  show Empty  = "Empty"
 --  show News   = "News"
 --  show SocialNetworks = "Social Networks"
 
@@ -124,6 +122,7 @@ instance docDatabase :: Doc Database where
   doc (HAL _)     = "All open science (archives ouvertes)"
   doc IsTex       = "All Elsevier enriched by CNRS/INIST"
   doc Isidore     = "All (French) Social Sciences"
+  doc Empty       = "Empty"
 --  doc News        = "Web filtered by News"
 --  doc SocialNetworks = "Web filtered by MicroBlogs"
 
@@ -142,6 +141,7 @@ derive instance eqDatabase :: Eq Database
 
 instance encodeJsonDatabase :: EncodeJson Database where
   encodeJson a = encodeJson (show a)
+
 ------------------------------------------------------------------------
 -- | Organization specifications
 
@@ -302,14 +302,16 @@ instance showSearchOrder :: Show SearchOrder where
   show ScoreDesc = "ScoreDesc"
 
 ------------------------------------------------------------------------
+
 newtype SearchQuery = SearchQuery
   { query     :: String
+  , databases :: Database
   , datafield :: Maybe DataField
-  , lang      :: Maybe Lang
-  , node_id   :: Maybe Int
   , files_id  :: Array String
-  , offset    :: Maybe Int
+  , lang      :: Maybe Lang
   , limit     :: Maybe Int
+  , node_id   :: Maybe Int
+  , offset    :: Maybe Int
   , order     :: Maybe SearchOrder
   }
 
@@ -318,20 +320,21 @@ derive instance newtypeSearchQuery :: Newtype SearchQuery _
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
   { query: ""
+  , databases: Empty
   , datafield: Nothing
-  , lang    : Nothing
-  , node_id : Nothing
   , files_id : []
-  , offset: Nothing
-  , limit: Nothing
-  , order: Nothing
+  , lang     : Nothing
+  , limit    : Nothing
+  , node_id  : Nothing
+  , offset   : Nothing
+  , order    : Nothing
   }
 
 instance toUrlSessionSearchQuery :: ToUrl Session SearchQuery where
   toUrl (Session {backend}) q = backendUrl backend q2
-    where q2 = "new" <> Q.print (toQuery q)
+    where q2 = "new" <> Q.print (GT.toQuery q)
   
-instance searchQueryToQuery :: ToQuery SearchQuery where
+instance searchQueryToQuery :: GT.ToQuery SearchQuery where
   toQuery (SearchQuery {offset, limit, order}) =
     QP.print id id $ QP.QueryPairs
                    $ pair "offset" offset
@@ -342,15 +345,18 @@ instance searchQueryToQuery :: ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, datafield, node_id, lang})
+  encodeJson (SearchQuery {query, databases, datafield, node_id, lang})
     =  "query"      := query
-    ~> "datafield"  := "" -- fromMaybe "" datafield
+    -- ~> "datafield"  := "" -- fromMaybe "" datafield
+    ~> "databases"  := databases
+    ~> "lang"       := maybe "EN" show lang
     ~> "node_id"    := fromMaybe 0 node_id
     -- ~> "files_id"   := files_id
-    ~> "lang"       := maybe "EN" show lang
     ~> jsonEmptyObject
 
-performSearch :: forall a. DecodeJson a => Session -> SearchQuery -> Aff a
-performSearch session q = post session q q
-
-
+performSearch :: Session -> Int -> SearchQuery -> Aff GT.AsyncTaskWithType
+performSearch session nodeId q = do
+  task <- post session p q
+  pure $ GT.AsyncTaskWithType {task, typ: GT.Query}
+  where
+    p = GR.NodeAPI GT.Corpus (Just nodeId) $ GT.asyncTaskTypePath GT.Query

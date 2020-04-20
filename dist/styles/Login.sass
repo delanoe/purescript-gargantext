@@ -1,3 +1,6 @@
+#dafixedtop
+  z-index: 999  // correction for the popover
+
 .logoSmall
   line-height: 15px
   height: 10px
@@ -45,12 +48,11 @@ li#rename
 
 
 #node-popup-tooltip
-  //position : absolute
-  position: fixed
-  //left : 96px
-  //top: -64px
   background-color: white
-  z-index: 1000
+  border-bottom-left-radius: 6px
+  border-bottom-right-radius: 6px
+  border-top-left-radius: 6px
+  border-top-right-radius: 6px
   &:hover
     border: none
     text-decoration: none
@@ -60,6 +62,7 @@ li#rename
     .panel
       border: 1px solid rgba(0,0,0,0.2)
       box-shadow: 0 2px 5px rgba(0,0,0,0.2)
+      margin-bottom: 0px
       .glyphicon-pencil
         color: black
       .panel-body
@@ -96,24 +99,25 @@ li#rename
       min-width: 200px
 
 li
-  a#rename
-    display: none
-    position: absolute
-    text-decoration: none
-    left: 26px
+  .leaf
+    display: flex
+    flex-direction: row
+    justify-content: flex-start
 
-  a#rename-leaf
-    display: none
-    position: absolute
-    text-decoration: none
-    margin-left: 20px
+    .folder-icon
+      padding: 0 2 0 2
 
-  &:hover
-    a#rename
+    a.settings
+      cursor: pointer
       display: block
+      padding: 0 2 0 2
+      text-decoration: none
+      visibility: hidden
+      z-index: 1
 
-    a#rename-leaf
-      display: block
+    &:hover
+      a.settings
+        visibility: visible
 
 
 .glyphitem
@@ -132,16 +136,6 @@ li
     opacity: 1
     transform: scale(1.4)
 
-#arrow
-  width: 0
-  height: 0
-  border-top: 10px solid transparent
-  border-bottom: 10px solid transparent
-  border-right:10px solid darkgray
-  position : relative
-  top: 55px
-  left: -9px
-
 #sp-container
   -webkit-transition: width 2s  // For Safari 3.1 to 6.0
   transition: width 2s
@@ -155,11 +149,6 @@ li
   &:hover
     overflow: visible
     height: auto
-
-.tree
-  margin-top: 10px
-  .file-dropped
-    background-color: #d8dfe5
 
 #graph-tree
   .tree
@@ -197,3 +186,14 @@ li
 
 a:focus, a:hover
   cursor: pointer
+
+.copy-from-corpus
+  .tree
+    .node
+      padding-left: 10px
+      .name
+        &.clickable
+          color: #337ab7
+          cursor: pointer
+          &:hover
+            text-decoration: underline

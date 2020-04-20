@@ -117,6 +117,7 @@ sessionPath :: R.SessionRoute -> String
 sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType' t))
 sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
 sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId) <> p
+sessionPath (R.GraphAPI gId p)      = "graph/" <> (show gId) <> "/" <> p
 sessionPath (R.GetNgrams opts i)    =
   base opts.tabType
      $ "ngrams?ngramsType="
@@ -136,8 +137,15 @@ sessionPath (R.GetNgrams opts i)    =
     termSizeFilter MultiTerm = "&minTermSize=2"
     search "" = ""
     search s = "&search=" <> s
+sessionPath (R.GetNgramsTableAll opts i) =
+  sessionPath $ R.NodeAPI Node i
+     $ "ngrams?ngramsType="
+    <> showTabType' opts.tabType
+    <> foldMap (\x -> "&list=" <> show x) opts.listIds
+    <> limitUrl 100000
 sessionPath (R.ListDocument lId dId) =
   sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ maybe 0 identity dId))
+sessionPath (R.ListsRoute lId) = "lists/" <> show lId
 sessionPath (R.PutNgrams t listId termList i) =
   sessionPath $ R.NodeAPI Node i
       $ "ngrams?ngramsType="
@@ -169,14 +177,14 @@ sessionPath (R.CorpusMetrics {tabType, listId, limit} i) =
      $ "metrics"
     <> "?ngrams=" <> show listId
     <> "&ngramsType=" <> showTabType' tabType
-    <> maybe "" (\x -> "&limit=" <> show x) limit
+    <> maybe "" limitUrl limit
 -- TODO fix this url path
 sessionPath (R.Chart {chartType, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ show chartType
     <> "?ngramsType=" <> showTabType' tabType
     <> "&listType=GraphTerm" -- <> show listId
-    -- <> maybe "" (\x -> "&limit=" <> show x) limit
+    -- <> maybe "" limitUrl limit
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 
 ------- misc routing stuff

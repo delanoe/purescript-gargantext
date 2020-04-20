@@ -16,20 +16,21 @@ import Reactix.DOM.HTML as H
 
 -- START Create Node
 
+type Dispatch = Action -> Aff Unit
+
 data NodePopup = CreatePopup | NodePopup
 
 type CreateNodeProps =
   ( id       :: ID
+  , dispatch :: Dispatch
   , name     :: Name
   , nodeType :: NodeType
+  , nodeTypes :: Array NodeType
   )
 
-createNodeView :: (Action -> Aff Unit)
-               -> Record CreateNodeProps
-               -> R.State (Maybe NodePopup)
-               -> Array NodeType
+createNodeView :: Record CreateNodeProps
                -> R.Element
-createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el p []
+createNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt {id, name} _ = do
@@ -94,8 +95,9 @@ createNodeView d p@{nodeType} (_ /\ setPopupOpen) nodeTypes = R.createElement el
           [ H.button {className: "btn btn-primary text-center"
                      , type: "button"
                      , onClick: mkEffectFn1 $ \_ -> do
-                         setPopupOpen $ const Nothing
-                         launchAff    $ d $ CreateSubmit name' nt
+                         -- TODO
+                         --setPopupOpen $ const Nothing
+                         launchAff    $ dispatch $ CreateSubmit name' nt
                      } [H.text "Add"]
           ]
 

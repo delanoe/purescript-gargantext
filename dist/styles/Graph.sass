@@ -1,9 +1,9 @@
 @mixin sidePanelCommon
   position: absolute
   max-height: 600px
-  overflow-y: scroll
+  //overflow-y: scroll
   top: 170px
-  z-index: 1
+  //z-index: 1
 
 #graph-explorer
   #toolbar
@@ -22,6 +22,8 @@
 
   .graph-tree
     @include sidePanelCommon
+    background-color: #fff
+    z-index: 1
 
   #graph-view
     height: 95%
@@ -31,7 +33,7 @@
     border: 1px white solid
     background-color: white
     left: 70%
-    width: 30%
+    width: 28%
 
     #myTab
       marginBottom: 18px

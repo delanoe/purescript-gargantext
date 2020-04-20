@@ -6,12 +6,14 @@ import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
+import Data.List ((:))
 import Data.List as List
 import Data.Maybe (Maybe)
 
 import Gargantext.Prelude
 
 import Gargantext.Components.Node (NodePoly)
+import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 
 type Author = String
 type Description = String
@@ -65,27 +67,27 @@ data FieldType =
   , text             :: MarkdownText
   }
 
-isJSON :: FieldType -> Boolean
-isJSON (JSON _) = true
-isJSON _        = false
 
-getCorpusInfo :: List.List (Field FieldType) -> CorpusInfo
-getCorpusInfo as = case List.head as of
-  Just (Field {typ: JSON {authors, desc,query,title}}) -> CorpusInfo { title
-                                                                     , desc
-                                                                     , query
-                                                                     , authors
-                                                                     , chart:Nothing
-                                                                     , totalRecords:0
-                                                                     }
+isJSON :: FTField -> Boolean
+isJSON (Field {typ}) = isJSON' typ
+  where
+    isJSON' (JSON _) = true
+    isJSON' _        = false
+
+getCorpusInfo :: List.List FTField -> CorpusInfo
+getCorpusInfo as = case List.head (List.filter isJSON as) of
+  Just (Field {typ: JSON {authors, desc, query, title}}) -> CorpusInfo { title
+                                                                       , desc
+                                                                       , query
+                                                                       , authors
+                                                                       , totalRecords: 0
+                                                                       }
   _                                -> CorpusInfo { title:"Empty"
                                                  , desc:""
                                                  , query:""
                                                  , authors:""
-                                                 , chart:Nothing
-                                                 , totalRecords:0
+                                                 , totalRecords: 0
                                                  }
-
 
 derive instance genericFieldType :: Generic FieldType _
 instance eqFieldType :: Eq FieldType where
@@ -176,10 +178,9 @@ defaultField = Field {
 newtype CorpusInfo =
   CorpusInfo
   { title        :: String
+  , authors      :: String
   , desc         :: String
   , query        :: String
-  , authors      :: String
-  , chart        :: (Maybe (Array Number))
   , totalRecords :: Int }
 
 instance decodeCorpusInfo :: DecodeJson CorpusInfo where
@@ -189,10 +190,9 @@ instance decodeCorpusInfo :: DecodeJson CorpusInfo where
     desc  <- obj .: "desc"
     query <- obj .: "query"
     authors <- obj .: "authors"
-    chart   <- obj .:? "chart"
     let totalRecords = 47361 -- TODO
-    pure $ CorpusInfo {title, desc, query, authors, chart, totalRecords}
+    pure $ CorpusInfo {title, authors, desc, query, totalRecords}
 
 type CorpusData = { corpusId :: Int
                   , corpusNode :: NodePoly Hyperdata -- CorpusInfo
-                  , defaultListId :: Int}
+                  , defaultListId :: Int }

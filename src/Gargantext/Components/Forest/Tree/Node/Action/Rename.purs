@@ -12,14 +12,19 @@ import Gargantext.Types (NodeType)
 import Gargantext.Utils.Reactix as R2
 
 
+type Dispatch = Action -> Aff Unit
+
 -- | START Rename Box
 type RenameBoxProps =
   ( id :: ID
+  , dispatch :: Dispatch
   , name :: Name
-  , nodeType :: NodeType)
+  , nodeType :: NodeType
+  , renameBoxOpen :: R.State Boolean
+  )
 
-renameBox :: (Action -> Aff Unit) -> Record RenameBoxProps -> R.State Boolean -> R.Element
-renameBox d p (true /\ setRenameBoxOpen) = R.createElement el p []
+renameBox :: Record RenameBoxProps -> R.Element
+renameBox p@{ dispatch, renameBoxOpen: (true /\ setRenameBoxOpen) } = R.createElement el p []
   where
     el = R.hooksComponent "RenameBox" cpt
     cpt {id, name, nodeType} _ = do
@@ -44,7 +49,7 @@ renameBox d p (true /\ setRenameBoxOpen) = R.createElement el p []
               , type: "button"
               , onClick: mkEffectFn1 $ \_ -> do
                     setRenameBoxOpen $ const false
-                    launchAff $ d $ Submit newName
+                    launchAff $ dispatch $ Submit newName
               , title: "Rename"
               } []
         cancelBtn =
@@ -53,7 +58,7 @@ renameBox d p (true /\ setRenameBoxOpen) = R.createElement el p []
               , onClick: mkEffectFn1 $ \_ -> setRenameBoxOpen $ const false
               , title: "Cancel"
               } []
-renameBox _ p (false /\ _) = R.createElement el p []
+renameBox p@{ renameBoxOpen: (false /\ _) } = R.createElement el p []
   where
     el = R.hooksComponent "RenameBox" cpt
     cpt {name} _ = pure $ H.div {} []

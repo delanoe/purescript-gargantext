@@ -16,8 +16,8 @@
 #graph-explorer .graph-tree {
   position: absolute;
   max-height: 600px;
-  overflow-y: scroll;
   top: 170px;
+  background-color: #fff;
   z-index: 1;
 }
 #graph-explorer #graph-view {
@@ -26,13 +26,11 @@
 #graph-explorer #sp-container {
   position: absolute;
   max-height: 600px;
-  overflow-y: scroll;
   top: 170px;
-  z-index: 1;
   border: 1px white solid;
   background-color: white;
   left: 70%;
-  width: 30%;
+  width: 28%;
 }
 #graph-explorer #sp-container #myTab {
   marginBottom: 18px;

@@ -33,7 +33,7 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, post, delete, put)
-import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..), AffTableResult)
+import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..), AffTableResult, NodeID)
 ------------------------------------------------------------------------
 
 data Category = Trash | UnRead | Checked | Topic | Favorite
@@ -143,7 +143,6 @@ categoryRoute nodeId = NodeAPI Node (Just nodeId) "category"
 putCategories :: Session -> Int -> CategoryQuery -> Aff (Array Int)
 putCategories session nodeId = put session $ categoryRoute nodeId
 
-type NodeID = Int
 type TotalRecords = Int
 
 type LayoutProps =
@@ -343,7 +342,7 @@ loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offs
   let docs = res2corpus <$> res.docs
   pure $
     if mock then
-      Tuple 4737 (take limit $ drop offset sampleData)
+      Tuple 0 (take limit $ drop offset sampleData)
     else
       Tuple res.count docs
   where

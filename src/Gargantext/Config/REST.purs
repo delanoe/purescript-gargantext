@@ -2,10 +2,11 @@ module Gargantext.Config.REST where
 
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..), formData, formURLEncoded, string)
-import Affjax.RequestHeader (RequestHeader(..))
+import Affjax.RequestHeader as ARH
 import Affjax.ResponseFormat as ResponseFormat
 import DOM.Simple.Console (log)
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson)
+import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.FormURLEncoded as FormURLEncoded
@@ -16,8 +17,10 @@ import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Prelude (Unit, bind, pure, ($), (<$>), (<<<), (<>))
 import Web.XHR.FormData as XHRFormData
+
+import Gargantext.Prelude
+import Gargantext.Utils.Reactix as R2
 
 type Token = String
 
@@ -29,14 +32,19 @@ send m mtoken url reqbody = do
          { url = url
          , responseFormat = ResponseFormat.json
          , method = Left m
-         , headers =  [ ContentType applicationJSON
-                      , Accept applicationJSON
+         , headers =  [ ARH.ContentType applicationJSON
+                      , ARH.Accept applicationJSON
                       ] <>
                       foldMap (\token ->
-                        [RequestHeader "Authorization" $  "Bearer " <> token]
+                        [ARH.RequestHeader "Authorization" $  "Bearer " <> token]
                       ) mtoken
          , content  = (Json <<< encodeJson) <$> reqbody
          }
+  case mtoken of
+    Nothing -> pure unit
+    Just token -> liftEffect $ do
+      let cookie = "JWT-Cookie=" <> token <> "; Path=/;" --" HttpOnly; Secure; SameSite=Lax"
+      R2.setCookie cookie
   case affResp.body of
     Left err -> do
       _ <-  liftEffect $ log $ printResponseFormatError err
@@ -78,11 +86,11 @@ postWwwUrlencoded mtoken url bodyParams = do
              { url = url
              , responseFormat = ResponseFormat.json
              , method = Left POST
-             , headers =  [ ContentType applicationFormURLEncoded
-                          , Accept applicationJSON
+             , headers =  [ ARH.ContentType applicationFormURLEncoded
+                          , ARH.Accept applicationJSON
                           ] <>
                           foldMap (\token ->
-                            [RequestHeader "Authorization" $  "Bearer " <> token]
+                            [ARH.RequestHeader "Authorization" $  "Bearer " <> token]
                           ) mtoken
              , content  = Just $ formURLEncoded urlEncodedBody
              }
@@ -108,11 +116,11 @@ postMultipartFormData mtoken url body = do
              { url = url
              , responseFormat = ResponseFormat.json
              , method = Left POST
-             , headers = [ ContentType multipartFormData
-                         , Accept applicationJSON
+             , headers = [ ARH.ContentType multipartFormData
+                         , ARH.Accept applicationJSON
                          ] <>
                          foldMap (\token ->
-                           [ RequestHeader "Authorization" $ "Bearer " <> token ]
+                           [ ARH.RequestHeader "Authorization" $ "Bearer " <> token ]
                          ) mtoken
              , content = Just $ formData fd
              }

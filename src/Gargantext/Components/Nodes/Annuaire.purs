@@ -9,7 +9,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), HyperdataContact(..), ContactWhere(..))
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Routes (SessionRoute(..))
@@ -100,7 +100,7 @@ type PageProps =
   , frontends :: Frontends
   , pagePath :: R.State PagePath
   -- , info :: AnnuaireInfo
-  , table :: TableResult Contact
+  , table :: TableResult CT.Contact
   )
 
 page :: Record PageProps -> R.Element
@@ -124,10 +124,19 @@ pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
 
 type AnnuaireId = Int
 
-contactCells :: Session -> Frontends -> AnnuaireId -> Contact -> Array R.Element
+contactCells :: Session -> Frontends -> AnnuaireId -> CT.Contact -> Array R.Element
 contactCells session frontends aId = render
   where
-    render (Contact { id, hyperdata : (HyperdataContact contact@{who: who, ou:ou} ) }) =
+    render (CT.Contact { id, hyperdata : (CT.HyperdataUser {shared: Nothing} )}) =
+        [ H.text ""
+        , H.span {} [ H.text "name" ]
+        --, H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
+        , H.text "No ContactWhere"
+        , H.text "No ContactWhereDept"
+        , H.div {className: "nooverflow"}
+          [ H.text "No ContactWhereRole" ]
+        ]
+    render (CT.Contact { id, hyperdata : (CT.HyperdataUser {shared: Just (CT.HyperdataContact contact@{who: who, ou:ou}) } )}) =
       --let nodepath = NodePath (sessionId session) NodeContact (Just id)
       let nodepath = Routes.ContactPage (sessionId session) aId id
           href = url frontends nodepath in
@@ -135,17 +144,18 @@ contactCells session frontends aId = render
       , H.a { href} [ H.text $ maybe "name" identity contact.title ]
       --, H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
       , H.text $ maybe "No ContactWhere" contactWhereOrg  (head $ ou)
-      , H.text $ maybe "No ContactWhere" contactWhereDept (head $ ou)
+      , H.text $ maybe "No ContactWhereDept" contactWhereDept (head $ ou)
       , H.div {className: "nooverflow"}
-        [ H.text $ maybe "No ContactWhere" contactWhereRole (head $ ou) ] ]
-    contactWhereOrg (ContactWhere { organization: [] }) = "No Organization"
-    contactWhereOrg (ContactWhere { organization: orga }) =
+        [ H.text $ maybe "No ContactWhereRole" contactWhereRole (head $ ou) ] ]
+
+    contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
+    contactWhereOrg (CT.ContactWhere { organization: orga }) =
       maybe "No orga (list)" identity (head orga)
-    contactWhereDept (ContactWhere { labTeamDepts : [] }) = "Empty Dept"
-    contactWhereDept (ContactWhere { labTeamDepts : dept }) =
+    contactWhereDept (CT.ContactWhere { labTeamDepts : [] }) = "Empty Dept"
+    contactWhereDept (CT.ContactWhere { labTeamDepts : dept }) =
       maybe "No Dept (list)" identity (head dept)
-    contactWhereRole (ContactWhere { role: Nothing }) = "Empty Role"
-    contactWhereRole (ContactWhere { role: Just role }) = role
+    contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
+    contactWhereRole (CT.ContactWhere { role: Just role }) = role
 
 
 data HyperdataAnnuaire = HyperdataAnnuaire
@@ -198,7 +208,7 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
 
 ------------------------------------------------------------------------
 
-loadPage :: Session -> PagePath -> AffTableResult Contact
+loadPage :: Session -> PagePath -> AffTableResult CT.Contact
 loadPage session {nodeId, params: { offset, limit, orderBy }} =
     get session children
  -- TODO orderBy
