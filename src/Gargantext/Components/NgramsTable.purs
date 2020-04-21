@@ -491,16 +491,16 @@ tree p = R.createElement treeCpt p []
 treeCpt :: R.Component TreeProps
 treeCpt = R.hooksComponent "G.C.NT.tree" cpt
   where
-    cpt params@{ngramsTable, ngramsStyle, ngramsEdit, ngramsClick, ngramsDepth: nd} _ =
+    cpt params@{ ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle, ngramsTable } _ =
       pure $
         H.li { style: {width : "100%"} }
           ([ H.i { className, style } [] ]
-           <> [ R2.buff $ tag [ text $ " " <> ngramsTermText nd.ngrams ] ]
-           <> maybe [] edit (ngramsEdit nd)
+           <> [ R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ] ]
+           <> maybe [] edit (ngramsEdit ngramsDepth)
            <> [ forest cs ])
       where
         tag =
-          case ngramsClick nd of
+          case ngramsClick ngramsDepth of
             Just effect ->
               a (ngramsStyle <> [onClick $ const effect])
             Nothing ->
@@ -513,10 +513,10 @@ treeCpt = R.hooksComponent "G.C.NT.tree" cpt
         className = "glyphicon glyphicon-chevron-" <> if open then "down" else "right"
         style = if leaf then {color: "#adb5bd"} else {color: ""}
         open = not leaf || false {- TODO -}
-        cs   = ngramsTable ^.. ix nd.ngrams <<< _NgramsElement <<< _children <<< folded
+        cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsElement <<< _children <<< folded
 
         forest =
-          let depth = nd.depth + 1 in
+          let depth = ngramsDepth.depth + 1 in
           H.ul {} <<< map (\ngrams -> tree (params { ngramsDepth = {depth, ngrams} })) <<< List.toUnfoldable
 
 sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
