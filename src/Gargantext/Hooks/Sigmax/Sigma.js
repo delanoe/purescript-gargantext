@@ -42,6 +42,7 @@ sigma.canvas.nodes.selected = (node, context, settings) => {
   node.type = 'def';
   sigma.canvas.hovers.def(node, context, settings);
   node.type = 'selected';
+  console.log('hovers, settings:', settings);
 };
 
 CustomShapes.init();
