@@ -24,7 +24,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
-import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar)
+import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.GraphExplorer.API as GEAPI
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
@@ -89,9 +89,13 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
               }
           [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
                      , name: name' props } ]
-        , nodeActions { id, nodeType, session }
+        , nodeActions { id
+                      , nodeType
+                      , refreshTree: const $ dispatch RefreshTree
+                      , session }
         , fileTypeView {dispatch, droppedFile, id, isDragOver, nodeType}
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
+                                                , barType: Pie
                                                 , corpusId: id
                                                 , onFinish: const $ onAsyncTaskFinish t
                                                 , session }) asyncTasks)
@@ -192,6 +196,7 @@ type NodeActionsProps =
   (
     id :: ID
   , nodeType :: GT.NodeType
+  , refreshTree :: Unit -> Aff Unit
   , session :: Session
   )
 
@@ -201,24 +206,21 @@ nodeActions p = R.createElement nodeActionsCpt p []
 nodeActionsCpt :: R.Component NodeActionsProps
 nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
   where
-    cpt { id, nodeType: GT.Graph, session } _ = do
-      refresh <- R.useState' 0
-
-      useLoader (id /\ fst refresh) (graphVersions session) $ \gv ->
-        nodeActionsGraph { id, graphVersions: gv, session, triggerRefresh: triggerRefresh refresh }
+    cpt { id, nodeType: GT.Graph, refreshTree, session } _ = do
+      useLoader id (graphVersions session) $ \gv ->
+        nodeActionsGraph { id, graphVersions: gv, session, triggerRefresh: triggerRefresh refreshTree }
     cpt _ _ = do
       pure $ H.div {} []
 
-    graphVersions session (graphId /\ _) =
-      GEAPI.graphVersions { graphId, session }
-    triggerRefresh (_ /\ setRefresh) _ = setRefresh $ (+) 1
+    graphVersions session graphId = GEAPI.graphVersions { graphId, session }
+    triggerRefresh refreshTree = refreshTree
 
 type NodeActionsGraphProps =
   (
     id :: ID
   , graphVersions :: Record GEAPI.GraphVersions
   , session :: Session
-  , triggerRefresh :: Unit -> Effect Unit
+  , triggerRefresh :: Unit -> Aff Unit
   )
 
 nodeActionsGraph :: Record NodeActionsGraphProps -> R.Element
@@ -239,7 +241,7 @@ type GraphUpdateButtonProps =
   (
     id :: ID
   , session :: Session
-  , triggerRefresh :: Unit -> Effect Unit
+  , triggerRefresh :: Unit -> Aff Unit
   )
 
 graphUpdateButton :: Record GraphUpdateButtonProps -> R.Element
@@ -262,7 +264,7 @@ graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
             liftEffect $ setEnabled $ const false
             g <- GEAPI.updateGraphVersions { graphId: id, session }
             liftEffect $ setEnabled $ const true
-            liftEffect $ triggerRefresh unit
+            triggerRefresh unit
           pure unit
 
 -- END nodeActions

@@ -19,9 +19,13 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 
+data BarType = Bar | Pie
+
+
 type Props =
   (
     asyncTask :: GT.AsyncTaskWithType
+  , barType   :: BarType
   , corpusId  :: ID
   , onFinish  :: Unit -> Effect Unit
   , session   :: Session
