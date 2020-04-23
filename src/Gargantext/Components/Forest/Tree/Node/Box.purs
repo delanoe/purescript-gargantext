@@ -93,7 +93,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
         , fileTypeView {dispatch, droppedFile, id, isDragOver, nodeType}
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                 , corpusId: id
-                                                , onFinish: \_ -> onAsyncTaskFinish t
+                                                , onFinish: const $ onAsyncTaskFinish t
                                                 , session }) asyncTasks)
         ]
           where

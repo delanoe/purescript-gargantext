@@ -183,7 +183,6 @@ performAction { reload: (_ /\ setReload)
               , tree: (NTree (LNode {id}) _) } (SearchQuery task) = do
   liftEffect $ setAsyncTasks $ A.cons task
   liftEffect $ log2 "[performAction] SearchQuery task:" task
-  liftEffect $ setReload (_ + 1)
 
 performAction { reload: (_ /\ setReload)
               , session
