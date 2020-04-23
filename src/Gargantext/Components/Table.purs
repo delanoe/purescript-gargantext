@@ -64,6 +64,12 @@ type State =
   , orderBy  :: OrderBy
   }
 
+paramsState :: Params -> State
+paramsState {offset, limit, orderBy} = {pageSize, page, orderBy}
+  where
+    pageSize = int2PageSizes limit
+    page = offset / limit + 1
+
 stateParams :: State -> Params
 stateParams {pageSize, page, orderBy} = {offset, limit, orderBy}
   where
@@ -128,9 +134,10 @@ tableCpt :: R.Component Props
 tableCpt = R.hooksComponent "G.C.Table.table" cpt
   where
     cpt {container, colNames, wrapColElts, totalRecords, rows, params} _ = do
-      pageSize@(pageSize' /\ setPageSize) <- R.useState' PS10
-      (page /\ setPage) <- R.useState' 1
-      (orderBy /\ setOrderBy) <- R.useState' Nothing
+      let initialState = paramsState $ fst params
+      pageSize@(pageSize' /\ setPageSize) <- R.useState' initialState.pageSize
+      (page /\ setPage) <- R.useState' initialState.page
+      (orderBy /\ setOrderBy) <- R.useState' initialState.orderBy
       let
         state = {pageSize: pageSize', orderBy, page}
         ps = pageSizes2Int pageSize'
@@ -276,6 +283,9 @@ instance showPageSize :: Show PageSizes where
   show PS50  = "50"
   show PS100 = "100"
   show PS200 = "200"
+
+int2PageSizes :: Int -> PageSizes
+int2PageSizes i = string2PageSize $ show i
 
 pageSizes2Int :: PageSizes -> Int
 pageSizes2Int PS10  = 10
