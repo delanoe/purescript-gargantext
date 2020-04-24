@@ -36,9 +36,9 @@ asyncProgressBar :: Record Props -> R.Element
 asyncProgressBar p = R.createElement asyncProgressBarCpt p []
 
 asyncProgressBarCpt :: R.Component Props
-asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.asyncProgressBar" cpt
+asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.PB.asyncProgressBar" cpt
   where
-    cpt props@{asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}}), corpusId, onFinish} _ = do
+    cpt props@{asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}}), barType, corpusId, onFinish} _ = do
       (progress /\ setProgress) <- R.useState' 0.0
       intervalIdRef <- R.useRef Nothing
 
@@ -61,16 +61,41 @@ asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.asyncProgressBar" cpt
         pure unit
 
 
+      pure $ progressIndicator { barType, label: id, progress: toInt progress }
+
+    toInt :: Number -> Int
+    toInt n = unsafePartial $ fromJust $ fromNumber n
+
+type ProgressIndicatorProps =
+  (
+    barType :: BarType
+  , label :: String
+  , progress :: Int
+  )
+
+progressIndicator :: Record ProgressIndicatorProps -> R.Element
+progressIndicator p = R.createElement progressIndicatorCpt p []
+
+progressIndicatorCpt :: R.Component ProgressIndicatorProps
+progressIndicatorCpt = R.hooksComponent "G.C.F.T.N.PB.progressIndicator" cpt
+  where
+    cpt { barType: Bar, label, progress } _ = do
       pure $
         H.div { className: "progress" } [
           H.div { className: "progress-bar"
                 , role: "progressbar"
-                , style: { width: (show $ toInt progress) <> "%" }
-                } [ H.text id ]
+                , style: { width: (show $ progress) <> "%" }
+                } [ H.text label ]
         ]
 
-    toInt :: Number -> Int
-    toInt n = unsafePartial $ fromJust $ fromNumber n
+    cpt { barType: Pie, label, progress } _ = do
+      pure $
+        H.div { className: "progress-pie" } [
+          H.div { className: "progress-pie-segment"
+                , style: { "--over50": if progress < 50 then "0" else "1"
+                         , "--value": show $ progress } } [
+          ]
+        ]
 
 queryProgress :: Record Props -> Aff GT.AsyncProgress
 queryProgress {asyncTask: GT.AsyncTaskWithType {task: GT.AsyncTask {id}, typ}, corpusId, session} = get session p
