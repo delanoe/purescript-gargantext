@@ -134,31 +134,25 @@ tableCpt :: R.Component Props
 tableCpt = R.hooksComponent "G.C.Table.table" cpt
   where
     cpt {container, colNames, wrapColElts, totalRecords, rows, params} _ = do
-      let initialState = paramsState $ fst params
-      pageSize@(pageSize' /\ setPageSize) <- R.useState' initialState.pageSize
-      (page /\ setPage) <- R.useState' initialState.page
-      (orderBy /\ setOrderBy) <- R.useState' initialState.orderBy
       let
-        state = {pageSize: pageSize', orderBy, page}
-        ps = pageSizes2Int pageSize'
+        state = paramsState $ fst params
+        ps = pageSizes2Int state.pageSize
         totalPages = (totalRecords / ps) + min 1 (totalRecords `mod` ps)
         colHeader :: ColumnName -> R.Element
         colHeader c = H.th {scope: "col"} [ H.b {} cs ]
           where
-            lnk mc = effectLink (setOrderBy (const mc))
+            lnk mc = effectLink $ snd params $ _ { orderBy = mc }
             cs :: Array R.Element
             cs =
               wrapColElts c $
-              case orderBy of
+              case state.orderBy of
                 Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC ", lnk Nothing (columnName c)]
                 Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ",  lnk Nothing (columnName c)]
                 _ -> [lnk (Just (ASC c)) (columnName c)]
-      R.useEffect2' (fst params) state do
-        when (fst params /= stateParams state) $ (snd params) (const $ stateParams state)
       pure $ container
-        { pageSizeControl: sizeDD pageSize
-        , pageSizeDescription: textDescription page pageSize' totalRecords
-        , paginationLinks: pagination setPage totalPages page
+        { pageSizeControl: sizeDD params
+        , pageSizeDescription: textDescription state.page state.pageSize totalRecords
+        , paginationLinks: pagination params totalPages
         , tableHead: H.tr {} (colHeader <$> colNames)
         , tableBody: map _.row rows
         }
@@ -203,12 +197,13 @@ graphContainer {title} props =
    -- , props.pageSizeDescription
    -- , props.paginationLinks
 
-sizeDD :: R.State PageSizes -> R.Element
-sizeDD (ps /\ setPageSize) =
-  H.span {} [ R2.select { className, defaultValue: ps, on: {change} } sizes ]
+sizeDD :: R.State Params -> R.Element
+sizeDD (params /\ setParams) =
+  H.span {} [ R2.select { className, defaultValue: pageSize, on: {change} } sizes ]
   where
+    {pageSize} = paramsState params
     className = "form-control"
-    change e = setPageSize $ const (string2PageSize $ R2.unsafeEventValue e)
+    change e = setParams $ \p -> stateParams $ (paramsState p) { pageSize = string2PageSize $ R2.unsafeEventValue e }
     sizes = map option pageSizes
     option size = H.option {value} [H.text value]
       where value = show size
@@ -222,51 +217,53 @@ textDescription currPage pageSize totalRecords =
     end  = if end' > totalRecords then totalRecords else end'
     msg = "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords
 
-pagination :: (R2.Setter Int) -> Int -> Int -> R.Element
-pagination changePage tp cp =
+pagination :: R.State Params -> Int -> R.Element
+pagination (params /\ setParams) tp =
   H.span {} $
     [ H.text " ", prev, first, ldots]
     <>
     lnums
     <>
-    [H.b {} [H.text $ " " <> show cp <> " "]]
+    [H.b {} [H.text $ " " <> show page <> " "]]
     <>
     rnums
     <>
     [ rdots, last, next ]
     where
-      prev = if cp == 1 then
+      {page} = paramsState params
+      changePage page = setParams $ \p -> stateParams $ (paramsState p) { page = page }
+      prev = if page == 1 then
                H.text " Prev. "
              else
-               changePageLink (cp - 1) "Prev."
-      next = if cp == tp then
+               changePageLink (page - 1) "Prev."
+      next = if page == tp then
                H.text " Next "
              else
-               changePageLink (cp + 1) "Next"
-      first = if cp == 1 then
+               changePageLink (page + 1) "Next"
+      first = if page == 1 then
                 H.text ""
               else
                 changePageLink' 1
-      last = if cp == tp then
+      last = if page == tp then
                H.text ""
              else
                changePageLink' tp
-      ldots = if cp >= 5 then
+      ldots = if page >= 5 then
                 H.text " ... "
                 else
                 H.text ""
-      rdots = if cp + 3 < tp then
+      rdots = if page + 3 < tp then
                 H.text " ... "
                 else
                 H.text ""
-      lnums = map changePageLink' $ A.filter (1  < _) [cp - 2, cp - 1]
-      rnums = map changePageLink' $ A.filter (tp > _) [cp + 1, cp + 2]
+      lnums = map changePageLink' $ A.filter (1  < _) [page - 2, page - 1]
+      rnums = map changePageLink' $ A.filter (tp > _) [page + 1, page + 2]
 
       changePageLink :: Int -> String -> R.Element
       changePageLink i s =
         H.span {}
           [ H.text " "
-          , effectLink (changePage (const i)) s
+          , effectLink (changePage i) s
           , H.text " "
           ]
 

@@ -143,7 +143,7 @@ tableContainerCpt { dispatch
                   , tabNgramType
                   } = R.hooksComponent "G.C.NT.tableContainer" cpt
   where
-    cpt props _ =
+    cpt props _ = do
       pure $ H.div {className: "container-fluid"} [
         H.div {className: "jumbotron1"}
         [ R2.row
@@ -457,21 +457,38 @@ mainNgramsTable :: Record MainNgramsTableProps -> R.Element
 mainNgramsTable props = R.createElement mainNgramsTableCpt props []
 
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
-mainNgramsTableCpt = R.hooksComponent "MainNgramsTable" cpt
+mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
   where
     cpt {nodeId, defaultListId, tabType, session, tabNgramType, withAutoUpdate} _ = do
-      path /\ setPath <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
-      let paint versioned = loadedNgramsTable' {
-              path: path /\ setPath
-            , tabNgramType
-            , versioned
-            , withAutoUpdate
-            }
+      let path = initialPageParams session nodeId [defaultListId] tabType
 
       pure $ loader path loadNgramsTableAll \loaded -> do
         case Map.lookup tabType loaded of
-          Just (versioned :: VersionedNgramsTable) -> paint versioned
+          Just (versioned :: VersionedNgramsTable) -> mainNgramsTablePaint {path, tabNgramType, versioned, withAutoUpdate}
           Nothing -> loadingSpinner {}
+
+type MainNgramsTablePaintProps =
+  (
+    path :: PageParams
+  , tabNgramType  :: CTabNgramType
+  , versioned :: VersionedNgramsTable
+  , withAutoUpdate :: Boolean
+  )
+
+mainNgramsTablePaint :: Record MainNgramsTablePaintProps -> R.Element
+mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
+
+mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
+mainNgramsTablePaintCpt = R.hooksComponent "G.C.NT.mainNgramsTablePaint" cpt
+  where
+    cpt {path, tabNgramType, versioned, withAutoUpdate} _ = do
+      pathS <- R.useState' path
+      pure $ loadedNgramsTable' {
+        path: pathS
+      , tabNgramType
+      , versioned
+      , withAutoUpdate
+      }
 
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
@@ -641,5 +658,5 @@ nextTermList StopTerm      = CandidateTerm
 nextTermList CandidateTerm = GraphTerm
 
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> R.Element
-optps1 { desc, mval } = H.option { defaultValue: value } [H.text desc]
+optps1 { desc, mval } = H.option { value: value } [H.text desc]
   where value = maybe "" show mval
