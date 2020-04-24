@@ -82,18 +82,14 @@ settingsBox NodeUser = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation NodeUser
-  , buttons : [ SearchBox
-              , Add [FolderPrivate, FolderShared, FolderPublic]
-              , Delete
-              ]
+  , buttons : [ Delete ]
   }
 
 settingsBox FolderPrivate = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation FolderPrivate
-  , buttons : [ SearchBox
-              , Add [ Corpus
+  , buttons : [ Add [ Corpus
                     , Folder
                     , Annuaire
                     ]
@@ -104,8 +100,7 @@ settingsBox Team = SettingsBox {
     show: true
   , edit : true
   , doc  : Documentation Team
-  , buttons : [ SearchBox
-              , Add [ Corpus
+  , buttons : [ Add [ Corpus
                     , Folder
                     , Annuaire
                     ]
@@ -117,7 +112,7 @@ settingsBox FolderShared = SettingsBox {
   , edit : true
   , doc  : Documentation FolderShared
   , buttons : [ Add [Team, FolderShared]
-              , Delete
+              -- , Delete
               ]
   }
 
@@ -125,8 +120,7 @@ settingsBox FolderPublic = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation FolderPublic
-  , buttons : [ SearchBox
-              , Add [ Corpus
+  , buttons : [ Add [ Corpus
                     , Folder
                     ]
     ]
@@ -136,8 +130,7 @@ settingsBox Folder = SettingsBox {
     show: true
   , edit : true
   , doc  : Documentation Folder
-  , buttons : [ SearchBox
-              , Add [ Corpus
+  , buttons : [ Add [ Corpus
                     , Folder
                     , Annuaire
                     ]
@@ -170,7 +163,7 @@ settingsBox Texts = SettingsBox {
   , doc  : Documentation Texts
   , buttons : [ Upload
               , Download
-              , Delete
+              -- , Delete
               ]
   }
 
@@ -178,8 +171,7 @@ settingsBox Graph = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation Graph
-  , buttons : [ Documentation Graph
-              , Download
+  , buttons : [ Download -- TODO as GEXF or JSON
               , Delete
               ]
   }
@@ -191,7 +183,7 @@ settingsBox NodeList = SettingsBox {
   , buttons : [ Upload
               , CopyFromCorpus
               , Download
-              , Delete
+              -- , Delete
               ]
   }
 
@@ -199,7 +191,7 @@ settingsBox Dashboard = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation Dashboard
-  , buttons : [Delete]
+  , buttons : []
   }
 
 settingsBox Annuaire = SettingsBox {
@@ -207,7 +199,8 @@ settingsBox Annuaire = SettingsBox {
   , edit : false
   , doc  : Documentation Annuaire
   , buttons : [ Upload
-              , Delete ]
+              , Delete 
+              ]
   }
 
 settingsBox _ = SettingsBox {

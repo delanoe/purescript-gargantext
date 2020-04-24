@@ -4,16 +4,14 @@ module Gargantext.Components.Search.SearchBar
 
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude (Unit, pure, ($))
-
-import Gargantext.Components.Data.Lang (Lang)
-import Gargantext.Components.Search.Types (allDatabases) -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
+import Gargantext.Components.Lang (Lang)
 import Gargantext.Components.Search.SearchField (Search, searchField)
+import Gargantext.Components.Search.Types (allDatabases) -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
+import Gargantext.Prelude (Unit, pure, ($))
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 type Props = ( langs     :: Array Lang
              , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
