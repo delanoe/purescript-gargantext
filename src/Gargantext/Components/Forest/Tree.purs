@@ -168,14 +168,14 @@ type PerformActionProps =
 performAction :: Record PerformActionProps
               -> Action
               -> Aff Unit
-performAction { openNodes: (_ /\ setOpenNodes)
-              , reload: (_ /\ setReload)
-              , session
-              , tree: (NTree (LNode {id}) _) } DeleteNode = do
+performAction p@{ openNodes: (_ /\ setOpenNodes)
+                , reload: (_ /\ setReload)
+                , session
+                , tree: (NTree (LNode {id}) _) } DeleteNode = do
   void $ deleteNode session id
   liftEffect do
     setOpenNodes (Set.delete (mkNodeId session id))
-    setReload (_ + 1)
+  performAction p RefreshTree
 
 performAction { reload: (_ /\ setReload)
               , session
@@ -183,23 +183,21 @@ performAction { reload: (_ /\ setReload)
               , tree: (NTree (LNode {id}) _) } (SearchQuery task) = do
   liftEffect $ setAsyncTasks $ A.cons task
   liftEffect $ log2 "[performAction] SearchQuery task:" task
-  liftEffect $ setReload (_ + 1)
 
-performAction { reload: (_ /\ setReload)
-              , session
-              , tree: (NTree (LNode {id}) _) } (Submit name)  = do
+performAction p@{ reload: (_ /\ setReload)
+                , session
+                , tree: (NTree (LNode {id}) _) } (Submit name)  = do
   void $ renameNode session id $ RenameValue {name}
-  liftEffect do
-    setReload (_ + 1)
+  performAction p RefreshTree
 
-performAction { openNodes: (_ /\ setOpenNodes)
-              , reload: (_ /\ setReload)
-              , session
-              , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
+performAction p@{ openNodes: (_ /\ setOpenNodes)
+                , reload: (_ /\ setReload)
+                , session
+                , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
   void $ createNode session id $ CreateValue {name, nodeType}
   liftEffect do
     setOpenNodes (Set.insert (mkNodeId session id))
-    setReload (_ + 1)
+  performAction p RefreshTree
 
 performAction { session
               , tasks: (_ /\ setAsyncTasks)
@@ -207,3 +205,6 @@ performAction { session
   task <- uploadFile session nodeType id fileType {mName, contents}
   liftEffect $ setAsyncTasks $ A.cons task
   liftEffect $ log2 "uploaded, task:" task
+
+performAction { reload: (_ /\ setReload) } RefreshTree = do
+  liftEffect $ setReload (_ + 1)
