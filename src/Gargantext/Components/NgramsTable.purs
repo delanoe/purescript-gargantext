@@ -391,6 +391,8 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
           case convOrderBy <$> params.orderBy of
             Just ScoreAsc  -> A.sortWith \x -> (snd x)        ^. _NgramsElement <<< _occurrences
             Just ScoreDesc -> A.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
+            Just TermAsc   -> A.sortWith \x -> (snd x)        ^. _NgramsElement <<< _ngrams
+            Just TermDesc  -> A.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _ngrams
             _              -> identity -- the server ordering is enough here
 
         rows :: T.Rows
