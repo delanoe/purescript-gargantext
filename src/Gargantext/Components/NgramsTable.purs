@@ -26,24 +26,21 @@ import Effect (Effect)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatch, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatches)
+import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
-import Gargantext.Utils (queryMatchesLabel)
+import Gargantext.Utils (queryMatchesLabel, toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, otherwise, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
-import React (ReactClass, Children)
 import React.DOM (a, span, text)
 import React.DOM.Props (onClick, style)
 import React.DOM.Props as DOM
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Thermite (modifyState_)
-import Thermite as Thermite
 import Unsafe.Coerce (unsafeCoerce)
 
-type State =
+type State' =
   CoreState
   ( ngramsParent     :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
   , ngramsChildren   :: Map NgramsTerm Boolean
@@ -66,9 +63,35 @@ _ngramsSelectAll = prop (SProxy :: SProxy "ngramsSelectAll")
 _ngramsSelection :: forall row. Lens' { ngramsSelection :: Set NgramsTerm | row } (Set NgramsTerm)
 _ngramsSelection = prop (SProxy :: SProxy "ngramsSelection")
 
-initialState :: VersionedNgramsTable -> State
-initialState (Versioned {version}) =
+initialState' :: VersionedNgramsTable -> State'
+initialState' (Versioned {version}) =
   { ngramsLocalPatch: mempty
+  , ngramsStagePatch: mempty
+  , ngramsValidPatch: mempty
+  , ngramsVersion:    version
+  , ngramsParent:     Nothing
+  , ngramsChildren:   mempty
+  , ngramsSelectAll:  false
+  , ngramsSelection:  mempty
+  }
+
+type State =
+  CoreState (
+    ngramsParent     :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
+  , ngramsChildren   :: Map NgramsTerm Boolean
+                     -- ^ Used only when grouping.
+                     --   This updates the children of `ngramsParent`,
+                     --   ngrams set to `true` are to be added, and `false` to
+                     --   be removed.
+  , ngramsSelection  :: Set NgramsTerm
+                     -- ^ The set of selected checkboxes of the first column.
+  , ngramsSelectAll  :: Boolean
+                     -- ^ The checkbox to select all the checkboxes of the first column.
+  )
+
+initialState :: VersionedNgramsTable -> State
+initialState (Versioned {version}) = {
+    ngramsLocalPatch: mempty
   , ngramsStagePatch: mempty
   , ngramsValidPatch: mempty
   , ngramsVersion:    version
@@ -156,22 +179,22 @@ tableContainerCpt { dispatch
               , R2.row
                 [ H.div {className: "col-md-3", style: {marginTop: "6px"}}
                   [ H.input { className: "form-control"
-                            , name: "search"
-                            , placeholder: "Search"
-                            , type: "value"
                             , defaultValue: searchQuery
-                            , on: {input: setSearchQuery <<< R2.unsafeEventValue}}
+                            , name: "search"
+                            , on: {input: setSearchQuery <<< R2.unsafeEventValue}
+                            , placeholder: "Search"
+                            , type: "value" }
                   , H.div {} (
-                      if A.null props.tableBody && searchQuery /= "" then [
-                        H.button { className: "btn btn-primary"
-                                , on: {click: const $ dispatch
-                                        $ addNewNgramA
-                                        $ normNgram tabNgramType searchQuery
-                                      }
-                                }
-                        [ H.text ("Add " <> searchQuery) ]
-                        ] else []
-                      )
+                    if A.null props.tableBody && searchQuery /= "" then [
+                      H.button { className: "btn btn-primary"
+                               , on: {click: const $ dispatch
+                                     $ addNewNgramA
+                                     $ normNgram tabNgramType searchQuery
+                                     }
+                               }
+                      [ H.text ("Add " <> searchQuery) ]
+                      ] else []
+                    )
                   ]
                 , H.div {className: "col-md-2", style: {marginTop : "6px"}}
                   [ H.li {className: " list-group-item"}
@@ -282,65 +305,29 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NgramsTable.loadedNgramsTable" cpt
 
 type LoadedNgramsTableProps =
   ( path         :: R.State PageParams
+  , state        :: R.State State
   , tabNgramType :: CTabNgramType
   , versioned    :: VersionedNgramsTable
   , withAutoUpdate :: Boolean
   )
 
-loadedNgramsTableSpec :: Thermite.Spec State (Record LoadedNgramsTableProps) Action
-loadedNgramsTableSpec = Thermite.simpleSpec performAction render
+loadedNgramsTableSpec :: Record LoadedNgramsTableProps -> R.Element
+loadedNgramsTableSpec p = R.createElement loadedNgramsTableSpecCpt p []
+
+loadedNgramsTableSpecCpt :: R.Component LoadedNgramsTableProps
+loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
   where
-    setParentResetChildren :: Maybe NgramsTerm -> State -> State
-    setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
-
-    performAction :: Thermite.PerformAction State (Record LoadedNgramsTableProps) Action
-    performAction (SetParentResetChildren p) _ _ =
-      modifyState_ $ setParentResetChildren p
-    performAction (ToggleChild b c) _ _ =
-      modifyState_ $ _ngramsChildren <<< at c %~ toggleMaybe b
-    performAction (ToggleSelect c) _ _ =
-      modifyState_ $ _ngramsSelection <<< at c %~ toggleMaybe unit
-    performAction ToggleSelectAll _ { ngramsSelectAll: true } =
-      modifyState_ $ (_ngramsSelection .~ mempty)
-                 <<< (_ngramsSelectAll .~ false)
-    performAction ToggleSelectAll { versioned: Versioned { data: initTable } }
-                                  state =
-      let
-        ngramsTable = applyNgramsPatches state initTable
-        roots = rootsOf ngramsTable
-      in
-      modifyState_ $ (_ngramsSelection .~ roots)
-                 <<< (_ngramsSelectAll .~ true)
-    performAction Synchronize {path: path /\ _} state = do
-      syncPatches path state
-    performAction (CommitPatch pt) _ {ngramsVersion} =
-      commitPatch (Versioned {version: ngramsVersion, data: pt})
-    performAction ResetPatches _ {ngramsVersion} =
-      modifyState_ $ \s -> s { ngramsLocalPatch = { ngramsNewElems: mempty, ngramsPatches: mempty } }
-    performAction AddTermChildren _ {ngramsParent: Nothing} =
-        -- impossible but harmless
-        pure unit
-    performAction AddTermChildren _
-                  { ngramsParent: Just parent
-                  , ngramsChildren
-                  , ngramsVersion
-                  } = do
-        modifyState_ $ setParentResetChildren Nothing
-        commitPatch (Versioned {version: ngramsVersion, data: pt})
-      where
-        pc = patchSetFromMap ngramsChildren
-        pe = NgramsPatch { patch_list: mempty, patch_children: pc }
-        pt = singletonNgramsTablePatch parent pe
-
-    render :: Thermite.Render State (Record LoadedNgramsTableProps) Action
-    render dispatch { path: path@({searchQuery, scoreType, params, termListFilter} /\ setPath)
-                    , versioned: Versioned { data: initTable }
-                    , tabNgramType
-                    , withAutoUpdate }
-                    state@{ ngramsParent, ngramsChildren, ngramsLocalPatch
-                          , ngramsSelection, ngramsSelectAll }
-                    _reactChildren =
-      R2.scuff <$> (
+    cpt { path: path@(path'@{searchQuery, scoreType, params, termListFilter} /\ setPath)
+        , state: (state@{ ngramsChildren
+                        , ngramsLocalPatch
+                        , ngramsParent
+                        , ngramsSelectAll
+                        , ngramsSelection
+                        , ngramsVersion } /\ setState)
+        , tabNgramType
+        , versioned: Versioned { data: initTable }
+        , withAutoUpdate } _ = do
+      pure $ R.fragment $
         autoUpdate <> resetSaveButtons <> [
           T.table { colNames
                   , container
@@ -350,19 +337,60 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
                   , wrapColElts
                   }
         ]
-      )
       where
         autoUpdate :: Array R.Element
-        autoUpdate = if withAutoUpdate then [ R2.buff $ autoUpdateElt { duration: 5000, effect: dispatch Synchronize } ] else []
+        autoUpdate = if withAutoUpdate then [ R2.buff $ autoUpdateElt { duration: 5000, effect: performAction Synchronize } ] else []
         resetButton :: R.Element
         resetButton = H.button { className: "btn btn-primary"
-                               , on: { click: \_ -> dispatch ResetPatches } } [ H.text "Reset" ]
+                               , on: { click: \_ -> performAction ResetPatches } } [ H.text "Reset" ]
         saveButton :: R.Element
         saveButton = H.button { className: "btn btn-primary"
-                              , on: { click: \_ -> dispatch Synchronize }} [ H.text "Save" ]
+                              , on: { click: \_ -> performAction Synchronize }} [ H.text "Save" ]
         resetSaveButtons :: Array R.Element
         resetSaveButtons = if ngramsLocalPatch == mempty then [] else
           [ H.div {} [ resetButton, saveButton ] ]
+
+        setParentResetChildren :: Maybe NgramsTerm -> State -> State
+        setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
+
+        performAction :: Action -> Effect Unit
+        performAction (SetParentResetChildren p) =
+          setState $ setParentResetChildren p
+        performAction (ToggleChild b c) =
+          setState $ \s@{ ngramsChildren: nc } -> s { ngramsChildren = newNC nc }
+          where
+            newNC nc = Map.alter (maybe Nothing $ const (Just b)) c nc
+          -- modifyState_ $ _ngramsChildren <<< at c %~ toggleMaybe b
+        performAction (ToggleSelect c) =
+          setState $ \s@{ ngramsSelection: ns } -> s { ngramsSelection = toggleSet c ns }
+          -- modifyState_ $ _ngramsSelection <<< at c %~ toggleMaybe unit
+        performAction ToggleSelectAll =
+          setState toggler
+          where
+            toggler s@{ ngramsSelectAll: true } = s { ngramsSelection = Set.empty :: Set NgramsTerm
+                                                    , ngramsSelectAll = false }
+            toggler s = s { ngramsSelection = roots
+                          , ngramsSelectAll = true }
+              where
+                ngramsTable = applyNgramsPatches state initTable
+                roots = rootsOf ngramsTable
+        performAction Synchronize = syncPatchesR path' (state /\ setState)
+        performAction (CommitPatch pt) =
+          commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
+        performAction ResetPatches =
+          setState $ \s -> s { ngramsLocalPatch = { ngramsNewElems: mempty, ngramsPatches: mempty } }
+          -- modifyState_ $ \s -> s { ngramsLocalPatch = { ngramsNewElems: mempty, ngramsPatches: mempty } }
+        performAction AddTermChildren =
+          case ngramsParent of
+            Nothing ->
+              -- impossible but harmless
+              pure unit
+            Just parent -> do
+              let pc = patchSetFromMap ngramsChildren
+                  pe = NgramsPatch { patch_list: mempty, patch_children: pc }
+                  pt = singletonNgramsTablePatch parent pe
+              setState $ setParentResetChildren Nothing
+              commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
 
         totalRecords = A.length rows
         filteredRows = T.filterRows { params } rows
@@ -370,13 +398,13 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
         selected =
           H.input { checked: ngramsSelectAll
                   , className: "checkbox"
-                  , on: { change: const $ dispatch $ ToggleSelectAll }
+                  , on: { change: const $ performAction $ ToggleSelectAll }
                   , type: "checkbox" }
         -- This is used to *decorate* the Select header with the checkbox.
         wrapColElts (T.ColumnName "Select") = const [selected]
         wrapColElts (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
         wrapColElts _                       = identity
-        container = tableContainer { dispatch
+        container = tableContainer { dispatch: performAction
                                    , ngramsChildren
                                    , ngramsParent
                                    , ngramsSelectAll
@@ -428,7 +456,7 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
           || tablePatchHasNgrams ngramsLocalPatch ngrams
           -- ^ unless they are being processed at the moment.
         convertRow (Tuple ngrams ngramsElement) =
-          { row: renderNgramsItem { dispatch
+          { row: renderNgramsItem { dispatch: performAction
                                   , ngrams
                                   , ngramsElement
                                   , ngramsLocalPatch
@@ -437,13 +465,6 @@ loadedNgramsTableSpec = Thermite.simpleSpec performAction render
                                   , ngramsTable }
           , delete: false
           }
-
-loadedNgramsTableClass :: ReactClass { children :: Children | LoadedNgramsTableProps }
-loadedNgramsTableClass = Thermite.createClass "LoadedNgramsNgramsTable"
-  loadedNgramsTableSpec (\{versioned} -> initialState versioned)
-
-loadedNgramsTable' :: Record LoadedNgramsTableProps -> R.Element
-loadedNgramsTable' props = R2.createElement' (loadedNgramsTableClass) props []
 
 type MainNgramsTableProps =
   ( nodeId        :: Int
@@ -466,7 +487,8 @@ mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
 
       pure $ loader path loadNgramsTableAll \loaded -> do
         case Map.lookup tabType loaded of
-          Just (versioned :: VersionedNgramsTable) -> mainNgramsTablePaint {path, tabNgramType, versioned, withAutoUpdate}
+          Just (versioned :: VersionedNgramsTable) ->
+            mainNgramsTablePaint {path, tabNgramType, versioned, withAutoUpdate}
           Nothing -> loadingSpinner {}
 
 type MainNgramsTablePaintProps =
@@ -485,8 +507,10 @@ mainNgramsTablePaintCpt = R.hooksComponent "G.C.NT.mainNgramsTablePaint" cpt
   where
     cpt {path, tabNgramType, versioned, withAutoUpdate} _ = do
       pathS <- R.useState' path
-      pure $ loadedNgramsTable' {
+      state <- R.useState' $ initialState versioned
+      pure $ loadedNgramsTableSpec {
         path: pathS
+      , state
       , tabNgramType
       , versioned
       , withAutoUpdate

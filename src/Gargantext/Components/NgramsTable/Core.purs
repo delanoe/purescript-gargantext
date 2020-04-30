@@ -44,8 +44,10 @@ module Gargantext.Components.NgramsTable.Core
   , _parent
   , _root
   , commitPatch
+  , commitPatchR
   , putNgramsPatches
   , syncPatches
+  , syncPatchesR
   , addNewNgram
   )
   where
@@ -83,17 +85,22 @@ import Data.Symbol (SProxy(..))
 import Data.Traversable (class Traversable, for, sequence, traverse, traverse_)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Tuple (Tuple(..))
-import Effect.Aff (Aff)
+import Data.Tuple.Nested ((/\))
+import Effect.Aff (Aff, launchAff_)
+import Effect (Effect)
+import Effect.Class (liftEffect)
 import Effect.Exception.Unsafe (unsafeThrow)
 import Foreign.Object as FO
+import Reactix (State) as R
+import Partial (crashWith)
+import Partial.Unsafe (unsafePartial)
+import Thermite (StateCoTransformer, modifyState_)
+
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post)
 import Gargantext.Types (CTabNgramType(..), OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
-import Partial (crashWith)
-import Partial.Unsafe (unsafePartial)
-import Thermite (StateCoTransformer, modifyState_)
 
 type CoreParams s =
   { nodeId  :: Int
@@ -639,6 +646,7 @@ putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff Vers
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
+-- DEPRECATED: use the Reactix version `syncPatchesR`
 syncPatches :: forall p s. CoreParams p -> CoreState s -> StateCoTransformer (CoreState s) Unit
 syncPatches props { ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPatches}
                   , ngramsStagePatch
@@ -659,9 +667,36 @@ syncPatches props { ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPa
         , ngramsStagePatch = fromNgramsPatches mempty
         }
 
+syncPatchesR :: forall p s. CoreParams p -> R.State (CoreState s) -> Effect Unit
+syncPatchesR props ({ ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPatches}
+                   , ngramsStagePatch
+                   , ngramsValidPatch
+                   , ngramsVersion
+                   } /\ setState) = do
+  when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
+    setState $ \s ->
+      s { ngramsLocalPatch = fromNgramsPatches mempty
+        , ngramsStagePatch = ngramsLocalPatch
+        }
+    let pt = Versioned { version: ngramsVersion, data: ngramsPatches }
+    launchAff_ $ do
+      _ <- postNewElems ngramsNewElems props
+      Versioned {version: newVersion, data: newPatch} <- putNgramsPatches props pt
+      liftEffect $ setState $ \s ->
+        s { ngramsVersion    = newVersion
+          , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
+          , ngramsStagePatch = fromNgramsPatches mempty
+          }
+
+-- DEPRECATED: use `commitPatchR`
 commitPatch :: forall s. Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
 commitPatch (Versioned {version, data: tablePatch}) = do
   modifyState_ $ \s ->
+    s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
+
+commitPatchR :: forall s. Versioned NgramsTablePatch -> R.State (CoreState s) -> Effect Unit
+commitPatchR (Versioned {version, data: tablePatch}) (_ /\ setState) = do
+  setState $ \s ->
     s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
 
 loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
