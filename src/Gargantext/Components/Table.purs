@@ -7,6 +7,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Utils.Reactix as R2
@@ -150,7 +151,7 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
                 Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ",  lnk Nothing (columnName c)]
                 _ -> [lnk (Just (ASC c)) (columnName c)]
       pure $ container
-        { pageSizeControl: sizeDD params
+        { pageSizeControl: sizeDD { params }
         , pageSizeDescription: textDescription state.page state.pageSize totalRecords
         , paginationLinks: pagination params totalPages
         , tableHead: H.tr {} (colHeader <$> colNames)
@@ -197,16 +198,30 @@ graphContainer {title} props =
    -- , props.pageSizeDescription
    -- , props.paginationLinks
 
-sizeDD :: R.State Params -> R.Element
-sizeDD (params /\ setParams) =
-  H.span {} [ R2.select { className, defaultValue: pageSize, on: {change} } sizes ]
+type SizeDDProps =
+  (
+    params :: R.State Params
+  )
+
+sizeDD :: Record SizeDDProps -> R.Element
+sizeDD p = R.createElement sizeDDCpt p []
+
+sizeDDCpt :: R.Component SizeDDProps
+sizeDDCpt = R.hooksComponent "G.C.T.sizeDD" cpt
   where
-    {pageSize} = paramsState params
-    className = "form-control"
-    change e = setParams $ \p -> stateParams $ (paramsState p) { pageSize = string2PageSize $ R2.unsafeEventValue e }
-    sizes = map option pageSizes
-    option size = H.option {value} [H.text value]
-      where value = show size
+    cpt {params: params /\ setParams} _ = do
+      pure $ H.span {} [
+        R2.select { className, defaultValue: show pageSize, on: {change} } sizes
+      ]
+      where
+        {pageSize} = paramsState params
+        className = "form-control"
+        change e = do
+          let ps = string2PageSize $ R2.unsafeEventValue e
+          setParams $ \p -> stateParams $ (paramsState p) { pageSize = ps }
+        sizes = map option pageSizes
+        option size = H.option {value} [H.text value]
+          where value = show size
 
 textDescription :: Int -> PageSizes -> Int -> R.Element
 textDescription currPage pageSize totalRecords =
