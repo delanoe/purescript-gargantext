@@ -20,18 +20,9 @@ import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), snd)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.Loader (loader)
-import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
-import Gargantext.Components.Table as T
-import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, OrderBy(..), TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
-import Gargantext.Utils (queryMatchesLabel, toggleSet)
-import Gargantext.Utils.Reactix as R2
 import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, otherwise, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
 import React.DOM (a, span, text)
 import React.DOM.Props (onClick, style)
@@ -39,6 +30,16 @@ import React.DOM.Props as DOM
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
+
+import Gargantext.Components.AutoUpdate (autoUpdateElt)
+import Gargantext.Components.Loader (loader)
+import Gargantext.Components.LoadingSpinner (loadingSpinner)
+import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
+import Gargantext.Components.Table as T
+import Gargantext.Sessions (Session)
+import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
+import Gargantext.Utils (queryMatchesLabel, toggleSet)
+import Gargantext.Utils.Reactix as R2
 
 type State' =
   CoreState
@@ -181,13 +182,13 @@ tableContainerCpt { dispatch
                   [ H.input { className: "form-control"
                             , defaultValue: searchQuery
                             , name: "search"
-                            , on: {input: setSearchQuery <<< R2.unsafeEventValue}
+                            , on: { input: setSearchQuery <<< R2.unsafeEventValue }
                             , placeholder: "Search"
                             , type: "value" }
                   , H.div {} (
                     if A.null props.tableBody && searchQuery /= "" then [
                       H.button { className: "btn btn-primary"
-                               , on: {click: const $ dispatch
+                               , on: { click: const $ dispatch
                                      $ addNewNgramA
                                      $ normNgram tabNgramType searchQuery
                                      }
@@ -197,7 +198,7 @@ tableContainerCpt { dispatch
                     )
                   ]
                 , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-                  [ H.li {className: " list-group-item"}
+                  [ H.li {className: "list-group-item"}
                     [ R2.select { id: "picklistmenu"
                                 , className: "form-control custom-select"
                                 , defaultValue: (maybe "" show termListFilter)
@@ -211,7 +212,7 @@ tableContainerCpt { dispatch
                                 , on: {change: setTermSizeFilter <<< readTermSize <<< R2.unsafeEventValue}}
                       (map optps1 termSizes)]]
                 , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
-                  [ H.li {className: " list-group-item"}
+                  [ H.li {className: "list-group-item"}
                     [ props.pageSizeDescription
                     , props.pageSizeControl
                     , H.text " items / "
@@ -249,7 +250,7 @@ tableContainerCpt { dispatch
         ]
       ]
     -- WHY setPath     f = origSetPageParams (const $ f path)
-    setSearchQuery    x = setPath $ _ { searchQuery = x }
+    setSearchQuery x    = setPath $ _ { searchQuery    = x }
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
     setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
@@ -325,12 +326,21 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                         , ngramsSelection
                         , ngramsVersion } /\ setState)
         , tabNgramType
-        , versioned: Versioned { data: initTable }
+        , versioned: versioned@(Versioned { data: initTable })
         , withAutoUpdate } _ = do
+
       pure $ R.fragment $
         autoUpdate <> resetSaveButtons <> [
           T.table { colNames
-                  , container
+                  , container: tableContainer { dispatch: performAction
+                                              , ngramsChildren
+                                              , ngramsParent
+                                              , ngramsSelectAll
+                                              , ngramsSelection
+                                              , ngramsTable
+                                              , path
+                                              , tabNgramType
+                                              }
                   , params: params /\ setParams -- TODO-LENS
                   , rows: filteredRows
                   , totalRecords
@@ -394,67 +404,19 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
 
         totalRecords = A.length rows
         filteredRows = T.filterRows { params } rows
-        colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
-        selected =
-          H.input { checked: ngramsSelectAll
-                  , className: "checkbox"
-                  , on: { change: const $ performAction $ ToggleSelectAll }
-                  , type: "checkbox" }
-        -- This is used to *decorate* the Select header with the checkbox.
-        wrapColElts (T.ColumnName "Select") = const [selected]
-        wrapColElts (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
-        wrapColElts _                       = identity
-        container = tableContainer { dispatch: performAction
-                                   , ngramsChildren
-                                   , ngramsParent
-                                   , ngramsSelectAll
-                                   , ngramsSelection
-                                   , ngramsTable
-                                   , path
-                                   , tabNgramType
-                                   }
-        setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
-        ngramsTable = applyNgramsPatches state initTable
-        orderWith =
-          case convOrderBy <$> params.orderBy of
-            Just ScoreAsc  -> A.sortWith \x -> (snd x)        ^. _NgramsElement <<< _occurrences
-            Just ScoreDesc -> A.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
-            Just TermAsc   -> A.sortWith \x -> (snd x)        ^. _NgramsElement <<< _ngrams
-            Just TermDesc  -> A.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _ngrams
-            _              -> identity -- the server ordering is enough here
-
         rows :: T.Rows
-        rows = convertRow <$> orderWith (addOcc <$> Map.toUnfoldable (Map.filter displayRow (ngramsTable ^. _NgramsTable)))
+        rows = convertRow
+          <$> orderWith (
+                addOcc
+            <$> List.fromFoldable (Map.toUnfoldable (Map.filter rowsFilter (ngramsTable ^. _NgramsTable)))
+            )
+        rowsFilter = displayRow state searchQuery versioned termListFilter
         addOcc (Tuple ne ngramsElement) =
           let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
           Tuple ne (ngramsElement # _NgramsElement <<< _occurrences .~ occurrences)
 
-        ngramsParentRoot :: Maybe NgramsTerm
-        ngramsParentRoot =
-          (\np -> ngramsTable ^? at np
-                            <<< _Just
-                            <<< _NgramsElement
-                            <<< _root
-                            <<< _Just
-            ) =<< ngramsParent
+        ngramsTable = applyNgramsPatches state initTable
 
-        displayRow (NgramsElement {ngrams, root, list}) =
-          root == Nothing
-          -- ^ Display only nodes without parents
-          && ngramsChildren ^. at ngrams /= Just true
-          -- ^ and which are not scheduled to be added already
-          && Just ngrams /= ngramsParent
-          -- ^ and which are not our new parent
-          && Just ngrams /= ngramsParentRoot
-          -- ^ and which are not the root of our new parent
-          && queryMatchesLabel searchQuery (ngramsTermText ngrams)
-          -- ^ and which matches the search query.
-          && maybe true (_ == list) termListFilter
-          -- ^ and which matches the ListType filter.
-          || ngramsChildren ^. at ngrams == Just false
-          -- ^ unless they are scheduled to be removed.
-          || tablePatchHasNgrams ngramsLocalPatch ngrams
-          -- ^ unless they are being processed at the moment.
         convertRow (Tuple ngrams ngramsElement) =
           { row: renderNgramsItem { dispatch: performAction
                                   , ngrams
@@ -465,6 +427,61 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                                   , ngramsTable }
           , delete: false
           }
+        orderWith =
+          case convOrderBy <$> params.orderBy of
+            Just ScoreAsc  -> List.sortBy \x -> (snd x)        ^. _NgramsElement <<< _occurrences
+            Just ScoreDesc -> List.sortBy \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
+            Just TermAsc   -> List.sortBy \x -> (snd x)        ^. _NgramsElement <<< _ngrams
+            Just TermDesc  -> List.sortBy \x -> Down $ (snd x) ^. _NgramsElement <<< _ngrams
+            _              -> identity -- the server ordering is enough here
+
+        colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
+        selected =
+          H.input { checked: ngramsSelectAll
+                  , className: "checkbox"
+                  , on: { change: const $ performAction $ ToggleSelectAll }
+                  , type: "checkbox" }
+        -- This is used to *decorate* the Select header with the checkbox.
+        wrapColElts (T.ColumnName "Select") = const [selected]
+        wrapColElts (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
+        wrapColElts _                       = identity
+        setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
+
+
+displayRow :: State -> SearchQuery -> VersionedNgramsTable -> Maybe TermList -> NgramsElement -> Boolean
+displayRow state@{ ngramsChildren
+                 , ngramsLocalPatch
+                 , ngramsParent }
+           searchQuery
+           (Versioned { data: initTable })
+           termListFilter
+           (NgramsElement {ngrams, root, list}) =
+  root == Nothing
+  -- ^ Display only nodes without parents
+  && ngramsChildren ^. at ngrams /= Just true
+  -- ^ and which are not scheduled to be added already
+  && Just ngrams /= ngramsParent
+  -- ^ and which are not our new parent
+  && Just ngrams /= ngramsParentRoot
+  -- ^ and which are not the root of our new parent
+  && queryMatchesLabel searchQuery (ngramsTermText ngrams)
+  -- ^ and which matches the search query.
+  && maybe true (_ == list) termListFilter
+  -- ^ and which matches the ListType filter.
+  || ngramsChildren ^. at ngrams == Just false
+  -- ^ unless they are scheduled to be removed.
+  || tablePatchHasNgrams ngramsLocalPatch ngrams
+  -- ^ unless they are being processed at the moment.
+  where
+    ngramsTable = applyNgramsPatches state initTable
+    ngramsParentRoot :: Maybe NgramsTerm
+    ngramsParentRoot =
+      (\np -> ngramsTable ^? at np
+                        <<< _Just
+                        <<< _NgramsElement
+                        <<< _root
+                        <<< _Just
+        ) =<< ngramsParent
 
 type MainNgramsTableProps =
   ( nodeId        :: Int

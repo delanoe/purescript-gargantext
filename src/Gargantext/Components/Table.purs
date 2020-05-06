@@ -154,8 +154,8 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
         { pageSizeControl: sizeDD { params }
         , pageSizeDescription: textDescription state.page state.pageSize totalRecords
         , paginationLinks: pagination params totalPages
-        , tableHead: H.tr {} (colHeader <$> colNames)
         , tableBody: map _.row rows
+        , tableHead: H.tr {} (colHeader <$> colNames)
         }
 
 makeRow :: Array R.Element -> R.Element
