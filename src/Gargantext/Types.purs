@@ -287,6 +287,8 @@ derive instance genericScoreType :: Generic ScoreType _
 instance showScoreType :: Show ScoreType where
   show = genericShow
 
+type SearchQuery = String
+
 type NgramsGetOpts =
   { tabType        :: TabType
   , offset         :: Offset
@@ -296,7 +298,7 @@ type NgramsGetOpts =
   , termListFilter :: Maybe TermList
   , termSizeFilter :: Maybe TermSize
   , scoreType      :: ScoreType
-  , searchQuery    :: String
+  , searchQuery    :: SearchQuery
   }
 
 type NgramsGetTableAllOpts =
