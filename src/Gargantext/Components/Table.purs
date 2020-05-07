@@ -4,6 +4,7 @@ import Prelude
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.List as L
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
@@ -22,7 +23,7 @@ type TableContainerProps =
   )
 
 type Row = { row :: R.Element, delete :: Boolean }
-type Rows = Array Row
+type Rows = L.List Row
 
 type OrderBy = Maybe (OrderByDirection ColumnName)
 
@@ -154,7 +155,7 @@ tableCpt = R.hooksComponent "G.C.Table.table" cpt
         { pageSizeControl: sizeDD { params }
         , pageSizeDescription: textDescription state.page state.pageSize totalRecords
         , paginationLinks: pagination params totalPages
-        , tableBody: map _.row rows
+        , tableBody: map _.row $ A.fromFoldable rows
         , tableHead: H.tr {} (colHeader <$> colNames)
         }
 
@@ -170,7 +171,7 @@ type FilterRowsParams =
 filterRows :: Record FilterRowsParams -> Rows -> Rows
 filterRows { params: { limit, offset, orderBy } } rs = newRs
   where
-    newRs = A.take limit $ A.drop offset $ rs
+    newRs = L.take limit $ L.drop offset $ rs
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 defaultContainer {title} props = R.fragment

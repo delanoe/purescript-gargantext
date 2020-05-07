@@ -10,6 +10,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
+import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
@@ -393,7 +394,7 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
       { colNames
       , container: T.defaultContainer { title: "Documents" }
       , params
-      , rows: rows localCategories
+      , rows: L.fromFoldable $ rows localCategories
       , totalRecords
       , wrapColElts
       }

@@ -8,6 +8,7 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyO
 import Data.Array (concat, filter)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.List as L
 import Data.Maybe (Maybe(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -332,7 +333,7 @@ pageCpt = R.hooksComponent "G.C.FacetsTable.Page" cpt
         documentUrl id =
             url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
         comma = H.span {} [ H.text ", " ]
-        rows = row <$> filter (not <<< isDeleted) documents
+        rows = L.fromFoldable $ row <$> filter (not <<< isDeleted) documents
         row dv@(DocumentsView {id, score, title, source, authors, pairs, delete, category}) =
           { row:
             T.makeRow [
