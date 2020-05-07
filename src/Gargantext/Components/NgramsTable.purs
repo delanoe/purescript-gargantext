@@ -11,7 +11,7 @@ import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
 import Data.Lens.Record (prop)
-import Data.List as List
+import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, isJust)
@@ -39,6 +39,7 @@ import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet)
+import Gargantext.Utils.List as L
 import Gargantext.Utils.Reactix as R2
 
 type State' =
@@ -402,13 +403,13 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
               setState $ setParentResetChildren Nothing
               commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
 
-        totalRecords = A.length rows
+        totalRecords = L.length rows
         filteredRows = T.filterRows { params } rows
         rows :: T.Rows
         rows = convertRow
           <$> orderWith (
                 addOcc
-            <$> List.fromFoldable (Map.toUnfoldable (Map.filter rowsFilter (ngramsTable ^. _NgramsTable)))
+            <$> Map.toUnfoldable (Map.filter rowsFilter (ngramsTable ^. _NgramsTable))
             )
         rowsFilter = displayRow state searchQuery versioned termListFilter
         addOcc (Tuple ne ngramsElement) =
@@ -429,10 +430,10 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
           }
         orderWith =
           case convOrderBy <$> params.orderBy of
-            Just ScoreAsc  -> List.sortBy \x -> (snd x)        ^. _NgramsElement <<< _occurrences
-            Just ScoreDesc -> List.sortBy \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
-            Just TermAsc   -> List.sortBy \x -> (snd x)        ^. _NgramsElement <<< _ngrams
-            Just TermDesc  -> List.sortBy \x -> Down $ (snd x) ^. _NgramsElement <<< _ngrams
+            Just ScoreAsc  -> L.sortWith \x -> (snd x)        ^. _NgramsElement <<< _occurrences
+            Just ScoreDesc -> L.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
+            Just TermAsc   -> L.sortWith \x -> (snd x)        ^. _NgramsElement <<< _ngrams
+            Just TermDesc  -> L.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _ngrams
             _              -> identity -- the server ordering is enough here
 
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
@@ -569,7 +570,7 @@ treeCpt = R.hooksComponent "G.C.NT.tree" cpt
                       , H.i { className: "glyphicon glyphicon-pencil"
                             , on: { click: const effect } } []
                       ]
-        leaf = List.null cs
+        leaf = L.null cs
         className = "glyphicon glyphicon-chevron-" <> if open then "down" else "right"
         style = if leaf then {color: "#adb5bd"} else {color: ""}
         open = not leaf || false {- TODO -}
@@ -577,7 +578,7 @@ treeCpt = R.hooksComponent "G.C.NT.tree" cpt
 
         forest =
           let depth = ngramsDepth.depth + 1 in
-          H.ul {} <<< map (\ngrams -> tree (params { ngramsDepth = {depth, ngrams} })) <<< List.toUnfoldable
+          H.ul {} <<< map (\ngrams -> tree (params { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
 
 sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
 sumOccurrences' ngramsTable label =

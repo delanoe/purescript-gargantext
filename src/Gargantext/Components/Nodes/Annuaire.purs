@@ -2,13 +2,15 @@ module Gargantext.Components.Nodes.Annuaire where
 
 import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
-import Data.Array (head)
+import Data.Array as A
+import Data.List as L
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)
@@ -119,7 +121,7 @@ pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
                                      , frontends
                                      , contact: c
                                      , session }
-                   , delete: false }) <$> docs
+                   , delete: false }) <$> L.fromFoldable docs
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
         wrapColElts = const identity
@@ -165,10 +167,10 @@ contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
           H.text ""
           , H.a { href } [ H.text $ maybe "name" identity contact.title ]
             --, H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
-          , H.text $ maybe "No ContactWhere" contactWhereOrg  (head $ ou)
-          , H.text $ maybe "No ContactWhereDept" contactWhereDept (head $ ou)
+          , H.text $ maybe "No ContactWhere" contactWhereOrg  (A.head $ ou)
+          , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
           , H.div {className: "nooverflow"} [
-              H.text $ maybe "No ContactWhereRole" contactWhereRole (head $ ou)
+              H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
             ]
           ]
           where
@@ -178,10 +180,10 @@ contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
 
             contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
             contactWhereOrg (CT.ContactWhere { organization: orga }) =
-              maybe "No orga (list)" identity (head orga)
+              maybe "No orga (list)" identity (A.head orga)
             contactWhereDept (CT.ContactWhere { labTeamDepts : [] }) = "Empty Dept"
             contactWhereDept (CT.ContactWhere { labTeamDepts : dept }) =
-              maybe "No Dept (list)" identity (head dept)
+              maybe "No Dept (list)" identity (A.head dept)
             contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
             contactWhereRole (CT.ContactWhere { role: Just role }) = role
 
