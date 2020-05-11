@@ -189,10 +189,13 @@ performAction p@{ reload: (_ /\ setReload)
   performAction p RefreshTree
 
 performAction p@{ openNodes: (_ /\ setOpenNodes)
-                , reload: (_ /\ setReload)
+                , reload:    (_ /\ setReload)
+                , tasks:     (_ /\ setAsyncTasks)
                 , session
                 , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
-  void $ createNode session id $ CreateValue {name, nodeType}
+  -- task <- createNodeAsync session id $ CreateValue {name, nodeType}
+  task <- createNode session id $ CreateValue {name, nodeType}
+  -- liftEffect $ setAsyncTasks $ A.cons task
   liftEffect do
     setOpenNodes (Set.insert (mkNodeId session id))
   performAction p RefreshTree
