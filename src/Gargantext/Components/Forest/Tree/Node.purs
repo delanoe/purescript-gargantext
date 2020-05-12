@@ -18,7 +18,7 @@ filterWithRights (show action if user can only)
 ------------------------------------------------------------------------
 data NodeAction = Documentation NodeType
                 | SearchBox
-                | Download | Upload | Refresh
+                | Download | Upload | Refresh | Config
                 | Move     | Clone  | Delete
                 | Share    | Link NodeType
                 | Add (Array NodeType)
@@ -38,6 +38,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq (Link x) (Link y) = true && (x == y)
   eq (Add x) (Add y)   = true && (x == y)
   eq CopyFromCorpus CopyFromCorpus = true
+  eq Config Config     = true
   eq _ _               = false
 
 instance showNodeAction :: Show NodeAction where
@@ -50,6 +51,7 @@ instance showNodeAction :: Show NodeAction where
   show Clone             = "Clone"
   show Delete            = "Delete"
   show Share             = "Share"
+  show Config            = "Config"
   show (Link x)          = "Link to " <> show x
   show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
   show CopyFromCorpus    = "Copy from corpus"
@@ -64,6 +66,8 @@ glyphiconNodeAction Upload            = "upload"
 glyphiconNodeAction (Link _)          = "transfer"
 glyphiconNodeAction Download          = "download"
 glyphiconNodeAction CopyFromCorpus    = "random"
+glyphiconNodeAction Refresh           = "refresh"
+glyphiconNodeAction Config            = "wrench"
 glyphiconNodeAction _                 = ""
 
 
@@ -161,7 +165,8 @@ settingsBox Texts = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation Texts
-  , buttons : [ Upload
+  , buttons : [ Refresh
+              , Upload
               , Download
               -- , Delete
               ]
@@ -171,7 +176,9 @@ settingsBox Graph = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation Graph
-  , buttons : [ Download -- TODO as GEXF or JSON
+  , buttons : [ Refresh
+              , Config
+              , Download -- TODO as GEXF or JSON
               , Delete
               ]
   }
@@ -180,7 +187,9 @@ settingsBox NodeList = SettingsBox {
     show: true
   , edit : false
   , doc  : Documentation NodeList
-  , buttons : [ Upload
+  , buttons : [ Refresh
+              , Config
+              , Upload
               , CopyFromCorpus
               , Download
               -- , Delete
