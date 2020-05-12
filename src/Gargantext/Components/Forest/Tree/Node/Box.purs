@@ -395,19 +395,21 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
           where
             SettingsBox {edit, doc, buttons} = settingsBox nodeType
 
-        mPanelAction :: R.State (Record NodePopupS) -> Record NodePopupProps -> R.State Search -> R.Element
+        mPanelAction :: R.State (Record NodePopupS)
+                     -> Record NodePopupProps
+                     -> R.State Search
+                     -> R.Element
         mPanelAction ({action: Nothing} /\ _) _ _ = H.div {} []
         mPanelAction ({action: Just action} /\ _) p search =
-            panelAction {
-                  action
-                , dispatch: p.dispatch
-                , id: p.id
-                , name: p.name
-                , nodePopup: Just NodePopup
-                , nodeType: p.nodeType
-                , search
-                , session: p.session
-                }
+            panelAction { action
+                        , dispatch: p.dispatch
+                        , id: p.id
+                        , name: p.name
+                        , nodePopup: Just NodePopup
+                        , nodeType: p.nodeType
+                        , search
+                        , session: p.session
+                        }
 
         searchIsTexIframe {nodeType} search@(search' /\ _) =
           if isIsTex search'.datafield then
@@ -514,7 +516,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Documentation GT.FolderShared} _ = do
       pure $ fragmentPT "Soon, you will be able to build teams folders to share your work"
     cpt {action: Documentation x, nodeType} _ = do
-      pure $ fragmentPT $ "More information on" <> show nodeType
+      pure $ fragmentPT $ "More information on " <> show nodeType
 
     cpt {action: Link _} _ = do
       pure $ fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
@@ -549,8 +551,10 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
         ]
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
       pure $ createNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
+
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}
+
     cpt _ _ = do
       pure $ H.div {} []
 
