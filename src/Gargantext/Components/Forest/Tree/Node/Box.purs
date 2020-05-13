@@ -385,7 +385,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
               ]
             editIcon (true /\ _) = H.div {} []
 
-        panelBody :: R.State (Record ActionState) -> Record NodePopupProps -> R.Element
+        panelBody :: R.State (Record ActionState)
+                  -> Record NodePopupProps
+                  -> R.Element
         panelBody nodePopupState {dispatch: d, nodeType} =
           H.div {className: "panel-body flex-space-between"}
                 [ H.div {className: "flex-center"} [buttonClick {action: doc, state: nodePopupState}]
@@ -533,6 +535,16 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
                      , target: "_blank" } [ H.text "Download file" ]
                ]
       ]
+
+    cpt {action: Download, id, nodeType: GT.Graph, session} _ = do
+      pure $ R.fragment [ H.div { className: "gexf" } [
+                   H.a { className: "btn btn-default"
+                        , href: url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
+                        , target: "_blank" } [ H.text "Download GEXF" ]
+                  ]
+      ]
+
+
     cpt {action: Download} _ = do
       pure $ fragmentPT "Soon, you will be able to dowload your file here"
     cpt props@{action: SearchBox, search, session} _ = do
