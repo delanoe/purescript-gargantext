@@ -291,10 +291,6 @@ searchInputCpt = R.hooksComponent "G.C.NT.searchInput" cpt
                      , placeholder: "Search"
                      , type: "value" }
 
-toggleMaybe :: forall a. a -> Maybe a -> Maybe a
-toggleMaybe _ (Just _) = Nothing
-toggleMaybe b Nothing  = Just b
-
 -- NEXT
 data Action'
   = SetParentResetChildren' (Maybe NgramsTerm)
@@ -353,7 +349,8 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
 
       pure $ R.fragment $
         autoUpdate <> resetSaveButtons <> [
-          T.table { colNames
+          search
+        , T.table { colNames
                   , container: tableContainer { dispatch: performAction
                                               , ngramsChildren
                                               , ngramsParent
