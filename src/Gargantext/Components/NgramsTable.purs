@@ -22,6 +22,7 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, otherwise, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
 import React.DOM (a, span, text)
@@ -151,6 +152,7 @@ type TableContainerProps =
   , ngramsSelection :: Set NgramsTerm
   , ngramsTable     :: NgramsTable
   , path            :: R.State PageParams
+  , search          :: R.Element
   , tabNgramType    :: CTabNgramType
   )
 
@@ -165,10 +167,14 @@ tableContainerCpt { dispatch
                   , ngramsSelection
                   , ngramsTable: ngramsTableCache
                   , path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
+                  , search
                   , tabNgramType
                   } = R.hooksComponent "G.C.NT.tableContainer" cpt
   where
     cpt props _ = do
+      R.useEffect' $ do
+        log2 "[tableContainer] searchQuery" searchQuery
+
       pure $ H.div {className: "container-fluid"} [
         H.div {className: "jumbotron1"}
         [ R2.row
@@ -180,12 +186,7 @@ tableContainerCpt { dispatch
                 ]
               , R2.row
                 [ H.div {className: "col-md-3", style: {marginTop: "6px"}}
-                  [ H.input { className: "form-control"
-                            , defaultValue: searchQuery
-                            , name: "search"
-                            , on: { input: setSearchQuery <<< R2.unsafeEventValue }
-                            , placeholder: "Search"
-                            , type: "value" }
+                  [ search
                   , H.div {} (
                     if A.null props.tableBody && searchQuery /= "" then [
                       H.button { className: "btn btn-primary"
@@ -251,7 +252,6 @@ tableContainerCpt { dispatch
         ]
       ]
     -- WHY setPath     f = origSetPageParams (const $ f path)
-    setSearchQuery x    = setPath $ _ { searchQuery    = x }
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
     setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
@@ -269,6 +269,27 @@ tableContainerCpt { dispatch
                   , on: {click: const $ setSelection CandidateTerm }
                   } [ H.text "Candidate" ]
       ]
+
+type SearchInputProps =
+  (
+    key :: String  -- to prevent refreshing & losing input
+  , onSearch :: String -> Effect Unit
+  , searchQuery :: String
+  )
+
+searchInput :: Record SearchInputProps -> R.Element
+searchInput props = R.createElement searchInputCpt props []
+
+searchInputCpt :: R.Component SearchInputProps
+searchInputCpt = R.hooksComponent "G.C.NT.searchInput" cpt
+  where
+    cpt { onSearch, searchQuery } _ = do
+      pure $ H.input { className: "form-control"
+                     , defaultValue: searchQuery
+                     , name: "search"
+                     , on: { input: onSearch <<< R2.unsafeEventValue }
+                     , placeholder: "Search"
+                     , type: "value" }
 
 toggleMaybe :: forall a. a -> Maybe a -> Maybe a
 toggleMaybe _ (Just _) = Nothing
@@ -340,6 +361,7 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                                               , ngramsSelection
                                               , ngramsTable
                                               , path
+                                              , search
                                               , tabNgramType
                                               }
                   , params: params /\ setParams -- TODO-LENS
@@ -371,10 +393,8 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
           setState $ \s@{ ngramsChildren: nc } -> s { ngramsChildren = newNC nc }
           where
             newNC nc = Map.alter (maybe Nothing $ const (Just b)) c nc
-          -- modifyState_ $ _ngramsChildren <<< at c %~ toggleMaybe b
         performAction (ToggleSelect c) =
           setState $ \s@{ ngramsSelection: ns } -> s { ngramsSelection = toggleSet c ns }
-          -- modifyState_ $ _ngramsSelection <<< at c %~ toggleMaybe unit
         performAction ToggleSelectAll =
           setState toggler
           where
@@ -390,7 +410,6 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
           commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
         performAction ResetPatches =
           setState $ \s -> s { ngramsLocalPatch = { ngramsNewElems: mempty, ngramsPatches: mempty } }
-          -- modifyState_ $ \s -> s { ngramsLocalPatch = { ngramsNewElems: mempty, ngramsPatches: mempty } }
         performAction AddTermChildren =
           case ngramsParent of
             Nothing ->
@@ -411,6 +430,7 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                 addOcc
             <$> Map.toUnfoldable (Map.filter rowsFilter (ngramsTable ^. _NgramsTable))
             )
+        rowsFilter :: NgramsElement -> Boolean
         rowsFilter = displayRow state searchQuery versioned termListFilter
         addOcc (Tuple ne ngramsElement) =
           let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
@@ -447,6 +467,13 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
         wrapColElts (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
         wrapColElts _                       = identity
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
+
+        search :: R.Element
+        search = searchInput { key: "search-input"
+                             , onSearch: setSearchQuery
+                             , searchQuery: searchQuery }
+        setSearchQuery :: String -> Effect Unit
+        setSearchQuery x    = setPath $ _ { searchQuery    = x }
 
 
 displayRow :: State -> SearchQuery -> VersionedNgramsTable -> Maybe TermList -> NgramsElement -> Boolean
