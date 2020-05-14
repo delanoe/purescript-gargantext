@@ -168,7 +168,7 @@ type FilterRowsParams =
     params :: Params
   )
 
-filterRows :: Record FilterRowsParams -> Rows -> Rows
+filterRows :: forall a. Record FilterRowsParams -> L.List a -> L.List a
 filterRows { params: { limit, offset, orderBy } } rs = newRs
   where
     newRs = L.take limit $ L.drop offset $ rs
