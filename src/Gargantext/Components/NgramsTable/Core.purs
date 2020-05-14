@@ -552,9 +552,12 @@ singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
 singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap n p
 
 rootsOf :: NgramsTable -> Set NgramsTerm
-rootsOf (NgramsTable m) = Map.keys $ Map.filter isRoot m
+rootsOf (NgramsTable m) = Map.keys $ Map.mapMaybe isRoot m
   where
-    isRoot (NgramsElement {parent}) = isNothing parent
+    isRoot (NgramsElement { parent }) = parent
+-- rootsOf (NgramsTable m) = Map.keys $ Map.filter isRoot m
+--   where
+--     isRoot (NgramsElement {parent}) = isNothing parent
 
 type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
 

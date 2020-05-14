@@ -14,7 +14,7 @@ import Data.Lens.Record (prop)
 import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe, isJust)
+import Data.Maybe (Maybe(..), maybe, isJust, isNothing)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
@@ -343,7 +343,7 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                         , ngramsSelection
                         , ngramsVersion } /\ setState)
         , tabNgramType
-        , versioned: versioned@(Versioned { data: initTable })
+        , versioned: Versioned { data: initTable }
         , withAutoUpdate } _ = do
 
       pure $ R.fragment $
@@ -415,21 +415,48 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
               commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
 
         totalRecords = L.length rows
-        filteredRows = T.filterRows { params } rows
-        rows :: T.Rows
-        rows = convertRow
-          <$> orderWith (
-                addOcc
-            <$> Map.toUnfoldable (Map.filter rowsFilter (ngramsTable ^. _NgramsTable))
-            )
+        filteredRows = convertRow <$> T.filterRows { params } rows
+        rows :: L.List (Tuple NgramsTerm NgramsElement)
+        rows = orderWith (
+          addOccT <$> (
+             L.filter rowsFilterT $ Map.toUnfoldable (ngramsTable ^. _NgramsTable)
+             )
+          )
+                 -- Map.toUnfoldable (
+                 --    Map.mapMaybeWithKey addOccWithFilter (ngramsTable ^. _NgramsTable)
+                 --    )
+                 -- )
         rowsFilter :: NgramsElement -> Boolean
-        rowsFilter = displayRow state searchQuery ngramsTable termListFilter
-        addOcc (Tuple ne ngramsElement) =
+        rowsFilter = displayRow state searchQuery ngramsTable ngramsParentRoot termListFilter
+        rowsFilterT = rowsFilter <<< snd
+        addOccWithFilter ne ngramsElement =
+          if rowsFilter ngramsElement then
+            Just $ addOcc ne ngramsElement
+          else
+            Nothing
+        addOcc ne ngramsElement =
           let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
-          Tuple ne (ngramsElement # _NgramsElement <<< _occurrences .~ occurrences)
+          ngramsElement # _NgramsElement <<< _occurrences .~ occurrences
+        addOccT (Tuple ne ngramsElement) = Tuple ne $ addOcc ne ngramsElement
+        -- rows = convertRow
+        --   <$> orderWith (
+        --         addOcc
+        --     <$> Map.toUnfoldableUnordered (Map.filter rowsFilter (ngramsTable ^. _NgramsTable))
+        --     )
+        -- addOcc (Tuple ne ngramsElement) =
+        --   let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
+        --   Tuple ne (ngramsElement # _NgramsElement <<< _occurrences .~ occurrences)
 
         ngramsTable = applyNgramsPatches state initTable
         roots = rootsOf ngramsTable
+        ngramsParentRoot :: Maybe NgramsTerm
+        ngramsParentRoot =
+          (\np -> ngramsTable ^? at np
+                            <<< _Just
+                            <<< _NgramsElement
+                            <<< _root
+                            <<< _Just
+            ) =<< ngramsParent
 
         convertRow (Tuple ngrams ngramsElement) =
           { row: renderNgramsItem { dispatch: performAction
@@ -469,39 +496,33 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
         setSearchQuery x    = setPath $ _ { searchQuery    = x }
 
 
-displayRow :: State -> SearchQuery -> NgramsTable -> Maybe TermList -> NgramsElement -> Boolean
+displayRow :: State -> SearchQuery -> NgramsTable -> Maybe NgramsTerm -> Maybe TermList -> NgramsElement -> Boolean
 displayRow state@{ ngramsChildren
                  , ngramsLocalPatch
                  , ngramsParent }
            searchQuery
            ngramsTable
+           ngramsParentRoot
            termListFilter
            (NgramsElement {ngrams, root, list}) =
-  root == Nothing
-  -- ^ Display only nodes without parents
-  && ngramsChildren ^. at ngrams /= Just true
-  -- ^ and which are not scheduled to be added already
-  && Just ngrams /= ngramsParent
-  -- ^ and which are not our new parent
-  && Just ngrams /= ngramsParentRoot
-  -- ^ and which are not the root of our new parent
+     maybe true (_ == list) termListFilter
+  -- ^ and which matches the ListType filter.
   && queryMatchesLabel searchQuery (ngramsTermText ngrams)
   -- ^ and which matches the search query.
-  && maybe true (_ == list) termListFilter
-  -- ^ and which matches the ListType filter.
-  || ngramsChildren ^. at ngrams == Just false
-  -- ^ unless they are scheduled to be removed.
-  || tablePatchHasNgrams ngramsLocalPatch ngrams
-  -- ^ unless they are being processed at the moment.
-  where
-    ngramsParentRoot :: Maybe NgramsTerm
-    ngramsParentRoot =
-      (\np -> ngramsTable ^? at np
-                        <<< _Just
-                        <<< _NgramsElement
-                        <<< _root
-                        <<< _Just
-        ) =<< ngramsParent
+  && (
+    isNothing root
+    -- ^ Display only nodes without parents
+    && ngramsChildren ^. at ngrams /= Just true
+    -- ^ and which are not scheduled to be added already
+    && Just ngrams /= ngramsParent
+    -- ^ and which are not our new parent
+    && Just ngrams /= ngramsParentRoot
+    -- ^ and which are not the root of our new parent
+    || ngramsChildren ^. at ngrams == Just false
+    -- ^ unless they are scheduled to be removed.
+    || tablePatchHasNgrams ngramsLocalPatch ngrams
+    -- ^ unless they are being processed at the moment.
+  )
 
 type MainNgramsTableProps =
   ( nodeId        :: Int
