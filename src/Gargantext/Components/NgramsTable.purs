@@ -402,9 +402,6 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                                                     , ngramsSelectAll = false }
             toggler s = s { ngramsSelection = roots
                           , ngramsSelectAll = true }
-              where
-                ngramsTable = applyNgramsPatches state initTable
-                roots = rootsOf ngramsTable
         performAction Synchronize = syncPatchesR path' (state /\ setState)
         performAction (CommitPatch pt) =
           commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
@@ -431,12 +428,13 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
             <$> Map.toUnfoldable (Map.filter rowsFilter (ngramsTable ^. _NgramsTable))
             )
         rowsFilter :: NgramsElement -> Boolean
-        rowsFilter = displayRow state searchQuery versioned termListFilter
+        rowsFilter = displayRow state searchQuery ngramsTable termListFilter
         addOcc (Tuple ne ngramsElement) =
           let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
           Tuple ne (ngramsElement # _NgramsElement <<< _occurrences .~ occurrences)
 
         ngramsTable = applyNgramsPatches state initTable
+        roots = rootsOf ngramsTable
 
         convertRow (Tuple ngrams ngramsElement) =
           { row: renderNgramsItem { dispatch: performAction
@@ -476,12 +474,12 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
         setSearchQuery x    = setPath $ _ { searchQuery    = x }
 
 
-displayRow :: State -> SearchQuery -> VersionedNgramsTable -> Maybe TermList -> NgramsElement -> Boolean
+displayRow :: State -> SearchQuery -> NgramsTable -> Maybe TermList -> NgramsElement -> Boolean
 displayRow state@{ ngramsChildren
                  , ngramsLocalPatch
                  , ngramsParent }
            searchQuery
-           (Versioned { data: initTable })
+           ngramsTable
            termListFilter
            (NgramsElement {ngrams, root, list}) =
   root == Nothing
@@ -501,7 +499,6 @@ displayRow state@{ ngramsChildren
   || tablePatchHasNgrams ngramsLocalPatch ngrams
   -- ^ unless they are being processed at the moment.
   where
-    ngramsTable = applyNgramsPatches state initTable
     ngramsParentRoot :: Maybe NgramsTerm
     ngramsParentRoot =
       (\np -> ngramsTable ^? at np
