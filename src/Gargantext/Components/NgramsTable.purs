@@ -152,7 +152,6 @@ type TableContainerProps =
   , ngramsSelection :: Set NgramsTerm
   , ngramsTable     :: NgramsTable
   , path            :: R.State PageParams
-  , search          :: R.Element
   , tabNgramType    :: CTabNgramType
   )
 
@@ -167,14 +166,10 @@ tableContainerCpt { dispatch
                   , ngramsSelection
                   , ngramsTable: ngramsTableCache
                   , path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
-                  , search
                   , tabNgramType
                   } = R.hooksComponent "G.C.NT.tableContainer" cpt
   where
     cpt props _ = do
-      R.useEffect' $ do
-        log2 "[tableContainer] searchQuery" searchQuery
-
       pure $ H.div {className: "container-fluid"} [
         H.div {className: "jumbotron1"}
         [ R2.row
@@ -186,8 +181,7 @@ tableContainerCpt { dispatch
                 ]
               , R2.row
                 [ H.div {className: "col-md-3", style: {marginTop: "6px"}}
-                  [ search
-                  , H.div {} (
+                  [ H.div {} (
                     if A.null props.tableBody && searchQuery /= "" then [
                       H.button { className: "btn btn-primary"
                                , on: { click: const $ dispatch
@@ -284,12 +278,17 @@ searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = R.hooksComponent "G.C.NT.searchInput" cpt
   where
     cpt { onSearch, searchQuery } _ = do
-      pure $ H.input { className: "form-control"
-                     , defaultValue: searchQuery
-                     , name: "search"
-                     , on: { input: onSearch <<< R2.unsafeEventValue }
-                     , placeholder: "Search"
-                     , type: "value" }
+      pure $ H.div { className: "input-group" } [
+        H.div { className: "input-group-addon" } [
+           H.span { className: "fa fa-search" } []
+         ]
+      , H.input { className: "form-control"
+                , defaultValue: searchQuery
+                , name: "search"
+                , on: { input: onSearch <<< R2.unsafeEventValue }
+                , placeholder: "Search"
+                , type: "value" }
+        ]
 
 -- NEXT
 data Action'
@@ -358,7 +357,6 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                                               , ngramsSelection
                                               , ngramsTable
                                               , path
-                                              , search
                                               , tabNgramType
                                               }
                   , params: params /\ setParams -- TODO-LENS
