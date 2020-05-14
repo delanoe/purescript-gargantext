@@ -2,23 +2,15 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 
 import Gargantext.Prelude
 
+import DOM.Simple as DOM
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import URI.Extra.QueryPairs as NQP
-import URI.Query as Query
-import Web.File.FileReader.Aff (readAsText)
-
-import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
@@ -26,6 +18,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.GraphExplorer.API as GEAPI
+import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
 import Gargantext.Ends (Frontends, url)
@@ -38,6 +31,12 @@ import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import URI.Extra.QueryPairs as NQP
+import URI.Query as Query
+import Web.File.FileReader.Aff (readAsText)
 
 
 type Dispatch = Action -> Aff Unit
@@ -87,7 +86,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
           else H.div {} []
         , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
               }
-          [ nodeText { isSelected: (mCorpusId mCurrentRoute) == (Just id)
+          [ nodeText { isSelected: mAppRouteId mCurrentRoute == Just id
                      , name: name' props } ]
         , nodeActions { id
                       , nodeType
@@ -269,10 +268,24 @@ graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
 
 -- END nodeActions
 
-mCorpusId :: Maybe AppRoute -> Maybe Int
-mCorpusId (Just (Routes.Corpus _ id)) = Just id
-mCorpusId (Just (Routes.CorpusDocument _ id _ _)) = Just id
-mCorpusId _ = Nothing
+mAppRouteId :: Maybe AppRoute -> Maybe Int
+mAppRouteId (Just (Routes.Folder _ id)) = Just id
+mAppRouteId (Just (Routes.FolderPrivate _ id)) = Just id
+mAppRouteId (Just (Routes.FolderPublic _ id)) = Just id
+mAppRouteId (Just (Routes.FolderShared _ id)) = Just id
+mAppRouteId (Just (Routes.Team _ id)) = Just id
+mAppRouteId (Just (Routes.Corpus _ id)) = Just id
+mAppRouteId (Just (Routes.Document _ id _)) = Just id
+mAppRouteId (Just (Routes.CorpusDocument _ id _ _)) = Just id
+mAppRouteId (Just (Routes.PGraphExplorer _ id)) = Just id
+mAppRouteId (Just (Routes.Dashboard _ id)) = Just id
+mAppRouteId (Just (Routes.Texts _ id)) = Just id
+mAppRouteId (Just (Routes.Lists _ id)) = Just id
+mAppRouteId (Just (Routes.Annuaire _ id)) = Just id
+mAppRouteId (Just (Routes.UserPage _ id)) = Just id
+mAppRouteId (Just (Routes.ContactPage _ id _)) = Just id
+
+mAppRouteId _ = Nothing
 
 
 -- | START Popup View
