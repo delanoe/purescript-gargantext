@@ -60,8 +60,9 @@ modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
       logo =
         H.div {className: "col-md-10 col-md-push-1"}
             [ H.h2 {className: "text-primary center m-a-2"}
-        [ H.i {className: "material-icons md-36"} [ H.text "control_point" ]
-        , H.span {className: "icon-text"} [ H.text "Gargantext" ] ] ]
+        [
+          -- H.i {className: "material-icons md-36"} [ H.text "control_point" ]
+          H.span {className: "icon-text"} [ H.text "Gargantext" ] ] ]
 
       closing = H.button { "type": "button", className: "close"
                            , "data": { dismiss: "modal" } }
