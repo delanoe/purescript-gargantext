@@ -16,6 +16,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, isJust, isNothing)
 import Data.Monoid.Additive (Additive(..))
+import Data.Nullable (Nullable, toMaybe, null)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -53,15 +54,10 @@ type State' =
                      --   be removed.
   , ngramsSelection  :: Set NgramsTerm
                      -- ^ The set of selected checkboxes of the first column.
-  , ngramsSelectAll  :: Boolean
-                     -- ^ The checkbox to select all the checkboxes of the first column.
   )
 
 _ngramsChildren :: forall row. Lens' { ngramsChildren :: Map NgramsTerm Boolean | row } (Map NgramsTerm Boolean)
 _ngramsChildren = prop (SProxy :: SProxy "ngramsChildren")
-
-_ngramsSelectAll :: forall row. Lens' { ngramsSelectAll :: Boolean | row } Boolean
-_ngramsSelectAll = prop (SProxy :: SProxy "ngramsSelectAll")
 
 _ngramsSelection :: forall row. Lens' { ngramsSelection :: Set NgramsTerm | row } (Set NgramsTerm)
 _ngramsSelection = prop (SProxy :: SProxy "ngramsSelection")
@@ -74,7 +70,6 @@ initialState' (Versioned {version}) =
   , ngramsVersion:    version
   , ngramsParent:     Nothing
   , ngramsChildren:   mempty
-  , ngramsSelectAll:  false
   , ngramsSelection:  mempty
   }
 
@@ -88,8 +83,6 @@ type State =
                      --   be removed.
   , ngramsSelection  :: Set NgramsTerm
                      -- ^ The set of selected checkboxes of the first column.
-  , ngramsSelectAll  :: Boolean
-                     -- ^ The checkbox to select all the checkboxes of the first column.
   )
 
 initialState :: VersionedNgramsTable -> State
@@ -100,7 +93,6 @@ initialState (Versioned {version}) = {
   , ngramsVersion:    version
   , ngramsParent:     Nothing
   , ngramsChildren:   mempty
-  , ngramsSelectAll:  false
   , ngramsSelection:  mempty
   }
 
@@ -143,16 +135,16 @@ addNewNgramA :: NgramsTerm -> Action
 addNewNgramA ngram = CommitPatch $ addNewNgram ngram CandidateTerm
 
 type Dispatch = Action -> Effect Unit
+type PreConversionRows = L.List (Tuple NgramsTerm NgramsElement)
 
 type TableContainerProps =
-  ( dispatch        :: Dispatch
-  , ngramsChildren  :: Map NgramsTerm Boolean
-  , ngramsParent    :: Maybe NgramsTerm
-  , ngramsSelectAll :: Boolean
-  , ngramsSelection :: Set NgramsTerm
-  , ngramsTable     :: NgramsTable
-  , path            :: R.State PageParams
-  , tabNgramType    :: CTabNgramType
+  ( dispatch         :: Dispatch
+  , ngramsChildren   :: Map NgramsTerm Boolean
+  , ngramsParent     :: Maybe NgramsTerm
+  , ngramsSelection  :: Set NgramsTerm
+  , ngramsTable      :: NgramsTable
+  , path             :: R.State PageParams
+  , tabNgramType     :: CTabNgramType
   )
 
 tableContainer :: Record TableContainerProps -> Record T.TableContainerProps -> R.Element
@@ -162,7 +154,6 @@ tableContainerCpt :: Record TableContainerProps -> R.Component T.TableContainerP
 tableContainerCpt { dispatch
                   , ngramsChildren
                   , ngramsParent
-                  , ngramsSelectAll
                   , ngramsSelection
                   , ngramsTable: ngramsTableCache
                   , path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
@@ -234,13 +225,13 @@ tableContainerCpt { dispatch
                            , H.button {className: "btn btn-primary", on: {click: (const $ dispatch AddTermChildren)}} [H.text "Save"]
                            , H.button {className: "btn btn-secondary", on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}} [H.text "Cancel"]
                            ]) ngramsParent)
-            , selectAllButtons ngramsSelectAll
+            , selectButtons (selectionsExist ngramsSelection)
             , H.div {id: "terms_table", className: "panel-body"}
               [ H.table {className: "table able"}
                 [ H.thead {className: "tableHeader"} [props.tableHead]
                 , H.tbody {} props.tableBody] ]
 
-            , selectAllButtons ngramsSelectAll
+            , selectButtons (selectionsExist ngramsSelection)
             ]
           ]
         ]
@@ -250,8 +241,11 @@ tableContainerCpt { dispatch
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
     setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
 
-    selectAllButtons false = H.div {} []
-    selectAllButtons true =
+    selectionsExist :: Set NgramsTerm -> Boolean
+    selectionsExist = not <<< Set.isEmpty
+
+    selectButtons false = H.div {} []
+    selectButtons true =
       H.li {className: " list-group-item"} [
         H.button { className: "btn btn-primary"
                 , on: {click: const $ setSelection GraphTerm }
@@ -339,7 +333,6 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
         , state: (state@{ ngramsChildren
                         , ngramsLocalPatch
                         , ngramsParent
-                        , ngramsSelectAll
                         , ngramsSelection
                         , ngramsVersion } /\ setState)
         , tabNgramType
@@ -353,16 +346,18 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                   , container: tableContainer { dispatch: performAction
                                               , ngramsChildren
                                               , ngramsParent
-                                              , ngramsSelectAll
                                               , ngramsSelection
                                               , ngramsTable
                                               , path
                                               , tabNgramType
                                               }
                   , params: params /\ setParams -- TODO-LENS
-                  , rows: filteredRows
+                  , rows: filteredConvertedRows
                   , totalRecords
-                  , wrapColElts
+                  , wrapColElts: wrapColElts { allNgramsSelected
+                                             , dispatch: performAction
+                                             , ngramsSelection
+                                             }
                   }
         ]
       where
@@ -393,10 +388,11 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
         performAction ToggleSelectAll =
           setState toggler
           where
-            toggler s@{ ngramsSelectAll: true } = s { ngramsSelection = Set.empty :: Set NgramsTerm
-                                                    , ngramsSelectAll = false }
-            toggler s = s { ngramsSelection = roots
-                          , ngramsSelectAll = true }
+            toggler s@{ ngramsSelection } =
+              if allNgramsSelected then
+                s { ngramsSelection = Set.empty :: Set NgramsTerm }
+              else
+                s { ngramsSelection = selectNgramsOnFirstPage filteredRows }
         performAction Synchronize = syncPatchesR path' (state /\ setState)
         performAction (CommitPatch pt) =
           commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
@@ -415,8 +411,11 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
               commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
 
         totalRecords = L.length rows
-        filteredRows = convertRow <$> T.filterRows { params } rows
-        rows :: L.List (Tuple NgramsTerm NgramsElement)
+        filteredConvertedRows :: T.Rows
+        filteredConvertedRows = convertRow <$> filteredRows
+        filteredRows :: PreConversionRows
+        filteredRows = T.filterRows { params } rows
+        rows :: PreConversionRows
         rows = orderWith (
           addOccT <$> (
              L.filter rowsFilterT $ Map.toUnfoldable (ngramsTable ^. _NgramsTable)
@@ -446,6 +445,8 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
         -- addOcc (Tuple ne ngramsElement) =
         --   let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
         --   Tuple ne (ngramsElement # _NgramsElement <<< _occurrences .~ occurrences)
+
+        allNgramsSelected = allNgramsSelectedOnFirstPage ngramsSelection filteredRows
 
         ngramsTable = applyNgramsPatches state initTable
         roots = rootsOf ngramsTable
@@ -477,15 +478,10 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
             _              -> identity -- the server ordering is enough here
 
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
-        selected =
-          H.input { checked: ngramsSelectAll
-                  , className: "checkbox"
-                  , on: { change: const $ performAction $ ToggleSelectAll }
-                  , type: "checkbox" }
         -- This is used to *decorate* the Select header with the checkbox.
-        wrapColElts (T.ColumnName "Select") = const [selected]
-        wrapColElts (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
-        wrapColElts _                       = identity
+        wrapColElts scProps (T.ColumnName "Select") = const [selectionCheckbox scProps]
+        wrapColElts _       (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
+        wrapColElts _       _                       = identity
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
 
         search :: R.Element
@@ -494,6 +490,48 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                              , searchQuery: searchQuery }
         setSearchQuery :: String -> Effect Unit
         setSearchQuery x    = setPath $ _ { searchQuery    = x }
+
+
+allNgramsSelectedOnFirstPage :: Set NgramsTerm -> PreConversionRows -> Boolean
+allNgramsSelectedOnFirstPage selected rows = selected == (selectNgramsOnFirstPage rows)
+
+selectNgramsOnFirstPage :: PreConversionRows -> Set NgramsTerm
+selectNgramsOnFirstPage rows = Set.fromFoldable $ fst <$> rows
+
+
+type SelectionCheckboxProps =
+  (
+    allNgramsSelected :: Boolean
+  , dispatch          :: Dispatch
+  , ngramsSelection   :: Set NgramsTerm
+  )
+
+selectionCheckbox :: Record SelectionCheckboxProps -> R.Element
+selectionCheckbox props = R.createElement selectionCheckboxCpt props []
+
+selectionCheckboxCpt :: R.Component SelectionCheckboxProps
+selectionCheckboxCpt = R.hooksComponent "G.C.NT.selectionCheckbox" cpt
+  where
+    cpt { allNgramsSelected, dispatch, ngramsSelection } _ = do
+      ref <- R.useRef null
+
+      R.useEffect' $ do
+        let mCb = toMaybe $ R.readRef ref
+        case mCb of
+          Nothing -> pure unit
+          Just cb -> do
+            log2 "[loadedNgramsTableSpec] ngramsSelection" ngramsSelection
+            _ <- if allNgramsSelected || (Set.isEmpty ngramsSelection) then
+              R2.setIndeterminateCheckbox cb false
+            else
+              R2.setIndeterminateCheckbox cb true
+            pure unit
+
+      pure $ H.input { checked: allNgramsSelected
+                     , className: "checkbox"
+                     , on: { change: const $ dispatch $ ToggleSelectAll }
+                     , ref
+                     , type: "checkbox" }
 
 
 displayRow :: State -> SearchQuery -> NgramsTable -> Maybe NgramsTerm -> Maybe TermList -> NgramsElement -> Boolean
