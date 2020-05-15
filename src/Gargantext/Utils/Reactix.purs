@@ -307,7 +307,4 @@ focus nEl = case toMaybe nEl of
   Just el -> el ... "focus" $ []
 
 setIndeterminateCheckbox :: R.Element -> Boolean -> Effect R.Element
-setIndeterminateCheckbox el val = do
-  log2 "[setIntederminateCheckbox] el" el
-  log2 "[setIntederminateCheckbox] val" val
-  pure $ (el .= "indeterminate") val
+setIndeterminateCheckbox el val = pure $ (el .= "indeterminate") val

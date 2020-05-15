@@ -25,6 +25,7 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
+import FFI.Simple (delay)
 import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, otherwise, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
 import React.DOM (a, span, text)
 import React.DOM.Props (onClick, style)
@@ -515,12 +516,11 @@ selectionCheckboxCpt = R.hooksComponent "G.C.NT.selectionCheckbox" cpt
     cpt { allNgramsSelected, dispatch, ngramsSelection } _ = do
       ref <- R.useRef null
 
-      R.useEffect' $ do
+      R.useEffect' $ delay unit $ \_ -> do
         let mCb = toMaybe $ R.readRef ref
         case mCb of
           Nothing -> pure unit
           Just cb -> do
-            log2 "[loadedNgramsTableSpec] ngramsSelection" ngramsSelection
             _ <- if allNgramsSelected || (Set.isEmpty ngramsSelection) then
               R2.setIndeterminateCheckbox cb false
             else
