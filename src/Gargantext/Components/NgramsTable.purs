@@ -11,19 +11,18 @@ import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
 import Data.Lens.Record (prop)
-import Data.List as L
+import Data.List (List, filter, length, null, toUnfoldable) as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, isJust, isNothing)
 import Data.Monoid.Additive (Additive(..))
-import Data.Nullable (Nullable, toMaybe, null)
+import Data.Nullable (null, toMaybe)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import FFI.Simple (delay)
 import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, otherwise, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
@@ -42,7 +41,7 @@ import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet)
-import Gargantext.Utils.List as L
+import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
 
 type State' =
@@ -65,36 +64,36 @@ _ngramsSelection = prop (SProxy :: SProxy "ngramsSelection")
 
 initialState' :: VersionedNgramsTable -> State'
 initialState' (Versioned {version}) =
-  { ngramsLocalPatch: mempty
+  { ngramsChildren:   mempty
+  , ngramsLocalPatch: mempty
+  , ngramsParent:     Nothing
+  , ngramsSelection:  mempty
   , ngramsStagePatch: mempty
   , ngramsValidPatch: mempty
   , ngramsVersion:    version
-  , ngramsParent:     Nothing
-  , ngramsChildren:   mempty
-  , ngramsSelection:  mempty
   }
 
 type State =
   CoreState (
-    ngramsParent     :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
-  , ngramsChildren   :: Map NgramsTerm Boolean
+    ngramsChildren   :: Map NgramsTerm Boolean
                      -- ^ Used only when grouping.
                      --   This updates the children of `ngramsParent`,
                      --   ngrams set to `true` are to be added, and `false` to
                      --   be removed.
+  , ngramsParent     :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
   , ngramsSelection  :: Set NgramsTerm
                      -- ^ The set of selected checkboxes of the first column.
   )
 
 initialState :: VersionedNgramsTable -> State
 initialState (Versioned {version}) = {
-    ngramsLocalPatch: mempty
+    ngramsChildren:   mempty
+  , ngramsLocalPatch: mempty
+  , ngramsParent:     Nothing
+  , ngramsSelection:  mempty
   , ngramsStagePatch: mempty
   , ngramsValidPatch: mempty
   , ngramsVersion:    version
-  , ngramsParent:     Nothing
-  , ngramsChildren:   mempty
-  , ngramsSelection:  mempty
   }
 
 data Action
@@ -249,13 +248,13 @@ tableContainerCpt { dispatch
     selectButtons true =
       H.li {className: " list-group-item"} [
         H.button { className: "btn btn-primary"
-                , on: {click: const $ setSelection GraphTerm }
+                , on: { click: const $ setSelection GraphTerm }
                 } [ H.text "Map" ]
         , H.button { className: "btn btn-primary"
-                  , on: {click: const $ setSelection StopTerm }
+                  , on: { click: const $ setSelection StopTerm }
                   } [ H.text "Stop" ]
         , H.button { className: "btn btn-primary"
-                  , on: {click: const $ setSelection CandidateTerm }
+                  , on: { click: const $ setSelection CandidateTerm }
                   } [ H.text "Candidate" ]
       ]
 
@@ -389,7 +388,7 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
         performAction ToggleSelectAll =
           setState toggler
           where
-            toggler s@{ ngramsSelection } =
+            toggler s =
               if allNgramsSelected then
                 s { ngramsSelection = Set.empty :: Set NgramsTerm }
               else
