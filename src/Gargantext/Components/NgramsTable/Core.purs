@@ -49,6 +49,8 @@ module Gargantext.Components.NgramsTable.Core
   , syncPatches
   , syncPatchesR
   , addNewNgram
+  , Action(..)
+  , Dispatch
   )
   where
 
@@ -735,3 +737,22 @@ convOrderBy (T.ASC  (T.ColumnName "Score")) = ScoreAsc
 convOrderBy (T.DESC (T.ColumnName "Score")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
+
+
+data Action
+  = CommitPatch NgramsTablePatch
+  | SetParentResetChildren (Maybe NgramsTerm)
+  -- ^ This sets `ngramsParent` and resets `ngramsChildren`.
+  | ToggleChild Boolean NgramsTerm
+  -- ^ Toggles the NgramsTerm in the `PatchSet` `ngramsChildren`.
+  -- If the `Boolean` is `true` it means we want to add it if it is not here,
+  -- if it is `false` it is meant to be removed if not here.
+  | AddTermChildren
+  | Synchronize
+  | ToggleSelect NgramsTerm
+  -- ^ Toggles the NgramsTerm in the `Set` `ngramsSelection`.
+  | ToggleSelectAll
+  | ResetPatches
+
+
+type Dispatch = Action -> Effect Unit
