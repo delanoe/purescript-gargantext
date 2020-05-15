@@ -11,8 +11,7 @@ defaultBackends = local :| [prod, partner, demo, dev]
     partner = backend V10 "/api/" "https://imtv4.gargantext.org" "institut-mines-telecom.imt"
     demo    = backend V10 "/api/" "https://demo.gargantext.org" "demo.inshs.cnrs"
     dev     = backend V10 "/api/" "https://dev.gargantext.org"  "devel.inshs.cnrs"
-    -- local   = backend V10 "/api/" "http://localhost:8008"       "local.cnrs"
-    local   = backend V10 "/api/" "http://192.168.1.8:8008"       "local.cnrs"
+    local   = backend V10 "/api/" "http://localhost:8008"       "local.cnrs"
 
 defaultApps :: NonEmpty Array Frontend
 defaultApps = relative :| [prod, dev, demo, haskell, caddy]
@@ -21,8 +20,7 @@ defaultApps = relative :| [prod, dev, demo, haskell, caddy]
     prod     = frontend "/#/" "https://v4.gargantext.org" "v4.gargantext.org"
     dev      = frontend "/#/" "https://dev.gargantext.org" "gargantext.org (dev)"
     demo     = frontend "/#/" "https://demo.gargantext.org" "gargantext.org (demo)"
-    -- haskell  = frontend "/#/" "http://localhost:8008" "localhost.gargantext"
-    haskell  = frontend "/#/" "http://192.168.1.8:8008" "localhost.gargantext"
+    haskell  = frontend "/#/" "http://localhost:8008" "localhost.gargantext"
     python   = frontend "/#/" "http://localhost:8000" "localhost.python"
     caddy    = frontend "/#/" "http://localhost:2015" "localhost.caddy"
 
