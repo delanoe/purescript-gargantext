@@ -5,18 +5,17 @@ module Gargantext.Components.NgramsTable
 
 import Data.Array as A
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Lens (Lens', to, view, (%~), (.~), (^.), (^..), (^?))
+import Data.Lens (Lens', to, (%~), (.~), (^.), (^?))
 import Data.Lens.At (at)
 import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
 import Data.Lens.Record (prop)
-import Data.List (List, filter, length, null, toUnfoldable) as L
+import Data.List (List, filter, length) as L
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe, isJust, isNothing)
+import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Monoid.Additive (Additive(..))
-import Data.Nullable (null, toMaybe)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -24,11 +23,7 @@ import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import FFI.Simple (delay)
-import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, otherwise, pure, show, unit, (#), ($), (&&), (+), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
-import React.DOM (a, span, text)
-import React.DOM.Props (onClick, style)
-import React.DOM.Props as DOM
+import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
@@ -36,7 +31,8 @@ import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (CoreState, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, PageParams, PatchMap(..), Replace, Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _PatchMap, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
+import Gargantext.Components.NgramsTable.Core (Action(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
+import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
@@ -96,27 +92,6 @@ initialState (Versioned {version}) = {
   , ngramsVersion:    version
   }
 
-data Action
-  = CommitPatch NgramsTablePatch
-  | SetParentResetChildren (Maybe NgramsTerm)
-  -- ^ This sets `ngramsParent` and resets `ngramsChildren`.
-  | ToggleChild Boolean NgramsTerm
-  -- ^ Toggles the NgramsTerm in the `PatchSet` `ngramsChildren`.
-  -- If the `Boolean` is `true` it means we want to add it if it is not here,
-  -- if it is `false` it is meant to be removed if not here.
-  | AddTermChildren
-  | Synchronize
-  | ToggleSelect NgramsTerm
-  -- ^ Toggles the NgramsTerm in the `Set` `ngramsSelection`.
-  | ToggleSelectAll
-  | ResetPatches
-
-setTermListA :: NgramsTerm -> Replace TermList -> Action
-setTermListA n patch_list =
-  CommitPatch $
-    singletonNgramsTablePatch n $
-    NgramsPatch { patch_list, patch_children: mempty }
-
 setTermListSetA :: NgramsTable -> Set NgramsTerm -> TermList -> Action
 setTermListSetA ngramsTable ns new_list =
   CommitPatch $ fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
@@ -134,7 +109,6 @@ setTermListSetA ngramsTable ns new_list =
 addNewNgramA :: NgramsTerm -> Action
 addNewNgramA ngram = CommitPatch $ addNewNgram ngram CandidateTerm
 
-type Dispatch = Action -> Effect Unit
 type PreConversionRows = L.List (Tuple NgramsTerm NgramsElement)
 
 type TableContainerProps =
@@ -190,46 +164,32 @@ tableContainerCpt { dispatch
                                 , className: "form-control custom-select"
                                 , defaultValue: (maybe "" show termListFilter)
                                 , on: {change: setTermListFilter <<< readTermList <<< R2.unsafeEventValue}}
-                      (map optps1 termLists)]]
+                      (map optps1 termLists)]
+                  ]
                 , H.div {className: "col-md-2", style: {marginTop : "6px"}}
                   [ H.li {className: "list-group-item"}
                     [ R2.select {id: "picktermtype"
                                 , className: "form-control custom-select"
                                 , defaultValue: (maybe "" show termSizeFilter)
                                 , on: {change: setTermSizeFilter <<< readTermSize <<< R2.unsafeEventValue}}
-                      (map optps1 termSizes)]]
+                      (map optps1 termSizes)]
+                  ]
                 , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
                   [ H.li {className: "list-group-item"}
                     [ props.pageSizeDescription
                     , props.pageSizeControl
                     , H.text " items / "
-                    , props.paginationLinks]]
+                    , props.paginationLinks ]
+                  ]
                 ]
               ]
-            , H.div {}
-              (maybe [] (\ngrams ->
-                          let
-                            ngramsTable =
-                              ngramsTableCache # at ngrams
-                              <<< _Just
-                              <<< _NgramsElement
-                              <<< _children
-                              %~ applyPatchSet (patchSetFromMap ngramsChildren)
-                            ngramsClick {depth: 1, ngrams: child} =
-                              Just $ dispatch $ ToggleChild false child
-                            ngramsClick _ = Nothing
-                            ngramsEdit  _ = Nothing
-                          in
-                           [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
-                           , renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
-                           , H.button {className: "btn btn-primary", on: {click: (const $ dispatch AddTermChildren)}} [H.text "Save"]
-                           , H.button {className: "btn btn-secondary", on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}} [H.text "Cancel"]
-                           ]) ngramsParent)
+            , editor
             , selectButtons (selectionsExist ngramsSelection)
             , H.div {id: "terms_table", className: "panel-body"}
               [ H.table {className: "table able"}
                 [ H.thead {className: "tableHeader"} [props.tableHead]
-                , H.tbody {} props.tableBody] ]
+                , H.tbody {} props.tableBody]
+              ]
 
             , selectButtons (selectionsExist ngramsSelection)
             ]
@@ -240,6 +200,24 @@ tableContainerCpt { dispatch
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
     setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
+
+    editor = H.div {} $ maybe [] f ngramsParent
+      where
+        f ngrams = [
+            H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
+          , NTC.renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
+          , H.button {className: "btn btn-primary", on: {click: (const $ dispatch AddTermChildren)}} [H.text "Save"]
+          , H.button {className: "btn btn-secondary", on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}} [H.text "Cancel"]
+          ]
+          where
+            ngramsTable = ngramsTableCache # at ngrams
+                          <<< _Just
+                          <<< _NgramsElement
+                          <<< _children
+                          %~ applyPatchSet (patchSetFromMap ngramsChildren)
+            ngramsClick {depth: 1, ngrams: child} = Just $ dispatch $ ToggleChild false child
+            ngramsClick _ = Nothing
+            ngramsEdit  _ = Nothing
 
     selectionsExist :: Set NgramsTerm -> Boolean
     selectionsExist = not <<< Set.isEmpty
@@ -258,64 +236,8 @@ tableContainerCpt { dispatch
                   } [ H.text "Candidate" ]
       ]
 
-type SearchInputProps =
-  (
-    key :: String  -- to prevent refreshing & losing input
-  , onSearch :: String -> Effect Unit
-  , searchQuery :: String
-  )
-
-searchInput :: Record SearchInputProps -> R.Element
-searchInput props = R.createElement searchInputCpt props []
-
-searchInputCpt :: R.Component SearchInputProps
-searchInputCpt = R.hooksComponent "G.C.NT.searchInput" cpt
-  where
-    cpt { onSearch, searchQuery } _ = do
-      pure $ H.div { className: "input-group" } [
-        H.div { className: "input-group-addon" } [
-           H.span { className: "fa fa-search" } []
-         ]
-      , H.input { className: "form-control"
-                , defaultValue: searchQuery
-                , name: "search"
-                , on: { input: onSearch <<< R2.unsafeEventValue }
-                , placeholder: "Search"
-                , type: "value" }
-        ]
-
--- NEXT
-data Action'
-  = SetParentResetChildren' (Maybe NgramsTerm)
-  | ToggleChild' (Maybe NgramsTerm) NgramsTerm
-  | Synchronize'
-
 -- NEXT
 type Props =
-  ( path         :: R.State PageParams
-  , versioned    :: VersionedNgramsTable )
-
--- NEXT
-loadedNgramsTable :: Record Props -> R.Element
-loadedNgramsTable props = R.createElement loadedNgramsTableCpt props []
-
--- NEXT
-loadedNgramsTableCpt :: R.Component Props
-loadedNgramsTableCpt = R.hooksComponent "G.C.NgramsTable.loadedNgramsTable" cpt
-  where
-    cpt {versioned} _ = do
-      state <- useNgramsReducer (initialState versioned)
-      pure $ R.fragment []
-
-    useNgramsReducer :: State -> R.Hooks (R.Reducer State Action')
-    useNgramsReducer init = R2.useReductor' performNgramsAction init
-
-    performNgramsAction :: Action' -> State -> Effect State
-    performNgramsAction (SetParentResetChildren' term) = pure -- TODO
-    performNgramsAction (ToggleChild' b c) = pure -- TODO
-    performNgramsAction Synchronize' = pure -- TODO
-
-type LoadedNgramsTableProps =
   ( path         :: R.State PageParams
   , state        :: R.State State
   , tabNgramType :: CTabNgramType
@@ -323,11 +245,11 @@ type LoadedNgramsTableProps =
   , withAutoUpdate :: Boolean
   )
 
-loadedNgramsTableSpec :: Record LoadedNgramsTableProps -> R.Element
-loadedNgramsTableSpec p = R.createElement loadedNgramsTableSpecCpt p []
+loadedNgramsTable :: Record Props -> R.Element
+loadedNgramsTable p = R.createElement loadedNgramsTableCpt p []
 
-loadedNgramsTableSpecCpt :: R.Component LoadedNgramsTableProps
-loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
+loadedNgramsTableCpt :: R.Component Props
+loadedNgramsTableCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
   where
     cpt { path: path@(path'@{searchQuery, scoreType, params, termListFilter} /\ setPath)
         , state: (state@{ ngramsChildren
@@ -421,10 +343,6 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
              L.filter rowsFilterT $ Map.toUnfoldable (ngramsTable ^. _NgramsTable)
              )
           )
-                 -- Map.toUnfoldable (
-                 --    Map.mapMaybeWithKey addOccWithFilter (ngramsTable ^. _NgramsTable)
-                 --    )
-                 -- )
         rowsFilter :: NgramsElement -> Boolean
         rowsFilter = displayRow state searchQuery ngramsTable ngramsParentRoot termListFilter
         rowsFilterT = rowsFilter <<< snd
@@ -437,14 +355,6 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
           let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
           ngramsElement # _NgramsElement <<< _occurrences .~ occurrences
         addOccT (Tuple ne ngramsElement) = Tuple ne $ addOcc ne ngramsElement
-        -- rows = convertRow
-        --   <$> orderWith (
-        --         addOcc
-        --     <$> Map.toUnfoldableUnordered (Map.filter rowsFilter (ngramsTable ^. _NgramsTable))
-        --     )
-        -- addOcc (Tuple ne ngramsElement) =
-        --   let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
-        --   Tuple ne (ngramsElement # _NgramsElement <<< _occurrences .~ occurrences)
 
         allNgramsSelected = allNgramsSelectedOnFirstPage ngramsSelection filteredRows
 
@@ -460,13 +370,13 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
             ) =<< ngramsParent
 
         convertRow (Tuple ngrams ngramsElement) =
-          { row: renderNgramsItem { dispatch: performAction
-                                  , ngrams
-                                  , ngramsElement
-                                  , ngramsLocalPatch
-                                  , ngramsParent
-                                  , ngramsSelection
-                                  , ngramsTable }
+          { row: NTC.renderNgramsItem { dispatch: performAction
+                                      , ngrams
+                                      , ngramsElement
+                                      , ngramsLocalPatch
+                                      , ngramsParent
+                                      , ngramsSelection
+                                      , ngramsTable }
           , delete: false
           }
         orderWith =
@@ -479,58 +389,17 @@ loadedNgramsTableSpecCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
 
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
         -- This is used to *decorate* the Select header with the checkbox.
-        wrapColElts scProps (T.ColumnName "Select") = const [selectionCheckbox scProps]
+        wrapColElts scProps (T.ColumnName "Select") = const [NTC.selectionCheckbox scProps]
         wrapColElts _       (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
         wrapColElts _       _                       = identity
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
 
         search :: R.Element
-        search = searchInput { key: "search-input"
-                             , onSearch: setSearchQuery
-                             , searchQuery: searchQuery }
+        search = NTC.searchInput { key: "search-input"
+                                 , onSearch: setSearchQuery
+                                 , searchQuery: searchQuery }
         setSearchQuery :: String -> Effect Unit
         setSearchQuery x    = setPath $ _ { searchQuery    = x }
-
-
-allNgramsSelectedOnFirstPage :: Set NgramsTerm -> PreConversionRows -> Boolean
-allNgramsSelectedOnFirstPage selected rows = selected == (selectNgramsOnFirstPage rows)
-
-selectNgramsOnFirstPage :: PreConversionRows -> Set NgramsTerm
-selectNgramsOnFirstPage rows = Set.fromFoldable $ fst <$> rows
-
-
-type SelectionCheckboxProps =
-  (
-    allNgramsSelected :: Boolean
-  , dispatch          :: Dispatch
-  , ngramsSelection   :: Set NgramsTerm
-  )
-
-selectionCheckbox :: Record SelectionCheckboxProps -> R.Element
-selectionCheckbox props = R.createElement selectionCheckboxCpt props []
-
-selectionCheckboxCpt :: R.Component SelectionCheckboxProps
-selectionCheckboxCpt = R.hooksComponent "G.C.NT.selectionCheckbox" cpt
-  where
-    cpt { allNgramsSelected, dispatch, ngramsSelection } _ = do
-      ref <- R.useRef null
-
-      R.useEffect' $ delay unit $ \_ -> do
-        let mCb = toMaybe $ R.readRef ref
-        case mCb of
-          Nothing -> pure unit
-          Just cb -> do
-            _ <- if allNgramsSelected || (Set.isEmpty ngramsSelection) then
-              R2.setIndeterminateCheckbox cb false
-            else
-              R2.setIndeterminateCheckbox cb true
-            pure unit
-
-      pure $ H.input { checked: allNgramsSelected
-                     , className: "checkbox"
-                     , on: { change: const $ dispatch $ ToggleSelectAll }
-                     , ref
-                     , type: "checkbox" }
 
 
 displayRow :: State -> SearchQuery -> NgramsTable -> Maybe NgramsTerm -> Maybe TermList -> NgramsElement -> Boolean
@@ -556,8 +425,15 @@ displayRow state@{ ngramsChildren
   -- ^ and which are not the root of our new parent
   || ngramsChildren ^. at ngrams == Just false
   -- ^ unless they are scheduled to be removed.
-  || tablePatchHasNgrams ngramsLocalPatch ngrams
+  || NTC.tablePatchHasNgrams ngramsLocalPatch ngrams
   -- ^ unless they are being processed at the moment.
+
+
+allNgramsSelectedOnFirstPage :: Set NgramsTerm -> PreConversionRows -> Boolean
+allNgramsSelectedOnFirstPage selected rows = selected == (selectNgramsOnFirstPage rows)
+
+selectNgramsOnFirstPage :: PreConversionRows -> Set NgramsTerm
+selectNgramsOnFirstPage rows = Set.fromFoldable $ fst <$> rows
 
 
 type MainNgramsTableProps =
@@ -602,7 +478,7 @@ mainNgramsTablePaintCpt = R.hooksComponent "G.C.NT.mainNgramsTablePaint" cpt
     cpt {path, tabNgramType, versioned, withAutoUpdate} _ = do
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
-      pure $ loadedNgramsTableSpec {
+      pure $ loadedNgramsTable {
         path: pathS
       , state
       , tabNgramType
@@ -610,172 +486,13 @@ mainNgramsTablePaintCpt = R.hooksComponent "G.C.NT.mainNgramsTablePaint" cpt
       , withAutoUpdate
       }
 
-type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
-type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
-
-type TreeProps =
-  (
-    ngramsClick :: NgramsClick
-  , ngramsDepth :: NgramsDepth
-  , ngramsEdit  :: NgramsClick
-  , ngramsStyle :: Array DOM.Props
-  , ngramsTable :: NgramsTable
-  )
-
-tree :: Record TreeProps -> R.Element
-tree p = R.createElement treeCpt p []
-
-treeCpt :: R.Component TreeProps
-treeCpt = R.hooksComponent "G.C.NT.tree" cpt
-  where
-    cpt params@{ ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle, ngramsTable } _ =
-      pure $
-        H.li { style: {width : "100%"} }
-          ([ H.i { className, style } [] ]
-           <> [ R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ] ]
-           <> maybe [] edit (ngramsEdit ngramsDepth)
-           <> [ forest cs ])
-      where
-        tag =
-          case ngramsClick ngramsDepth of
-            Just effect ->
-              a (ngramsStyle <> [onClick $ const effect])
-            Nothing ->
-              span ngramsStyle
-        edit effect = [ H.text " "
-                      , H.i { className: "glyphicon glyphicon-pencil"
-                            , on: { click: const effect } } []
-                      ]
-        leaf = L.null cs
-        className = "glyphicon glyphicon-chevron-" <> if open then "down" else "right"
-        style = if leaf then {color: "#adb5bd"} else {color: ""}
-        open = not leaf || false {- TODO -}
-        cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsElement <<< _children <<< folded
-
-        forest =
-          let depth = ngramsDepth.depth + 1 in
-          H.ul {} <<< map (\ngrams -> tree (params { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
-
-sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
-sumOccurrences' ngramsTable label =
-    ngramsTable ^. ix label <<< to (sumOccurrences ngramsTable)
-
 sumOccurrences :: NgramsTable -> NgramsElement -> Additive Int
 sumOccurrences ngramsTable (NgramsElement {occurrences, children}) =
     Additive occurrences <> children ^. folded <<< to (sumOccurrences' ngramsTable)
-
-type RenderNgramsTree =
-  ( ngrams      :: NgramsTerm
-  , ngramsClick :: NgramsClick
-  , ngramsEdit  :: NgramsClick
-  , ngramsStyle :: Array DOM.Props
-  , ngramsTable :: NgramsTable
-  )
-
-renderNgramsTree :: Record RenderNgramsTree -> R.Element
-renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
-
-renderNgramsTreeCpt :: R.Component RenderNgramsTree
-renderNgramsTreeCpt = R.hooksComponent "G.C.NT.renderNgramsTree" cpt
-  where
-    cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit } _ =
-      pure $ H.ul {} [
-        H.span { className: "tree" } [
-          tree { ngramsClick
-                , ngramsDepth: {ngrams, depth: 0}
-                , ngramsEdit
-                , ngramsStyle
-                , ngramsTable
-                }
-        ]
-      ]
-
-type RenderNgramsItem =
-  ( dispatch :: Action -> Effect Unit
-  , ngrams :: NgramsTerm
-  , ngramsElement :: NgramsElement
-  , ngramsLocalPatch :: NgramsTablePatch
-  , ngramsParent :: Maybe NgramsTerm
-  , ngramsSelection :: Set NgramsTerm
-  , ngramsTable :: NgramsTable
-  )
-
-renderNgramsItem :: Record RenderNgramsItem -> R.Element
-renderNgramsItem p = R.createElement renderNgramsItemCpt p []
-
-renderNgramsItemCpt :: R.Component RenderNgramsItem
-renderNgramsItemCpt = R.hooksComponent "G.C.NT.renderNgramsItem" cpt
-  where
-    cpt { dispatch
-        , ngrams
-        , ngramsElement
-        , ngramsLocalPatch
-        , ngramsParent
-        , ngramsSelection
-        , ngramsTable } _ =
-      pure $ T.makeRow [
-          selected
-        , checkbox GraphTerm
-        , checkbox StopTerm
-        , if ngramsParent == Nothing
-          then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
-          else
-            H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } } [
-                H.i { className: "glyphicon glyphicon-plus" } []
-              , (R2.buff $ span ngramsStyle [text $ " " <> ngramsTermText ngrams])
-            ]
-        , H.text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
-      ]
-      where
-        termList    = ngramsElement ^. _NgramsElement <<< _list
-        ngramsStyle = [termStyle termList ngramsOpacity]
-        ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
-        ngramsClick
-          = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
-          -- ^ This is the old behavior it is nicer to use since one can
-          --   rapidly change the ngram list without waiting for confirmation.
-          --   However this might expose bugs. One of them can be reproduced
-          --   by clicking a multiple times on the same ngram, sometimes it stays
-          --   transient.
-          -- | ngramsTransient = const Nothing
-          -- | otherwise       = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
-        selected    =
-          H.input { checked: Set.member ngrams ngramsSelection
-                  , className: "checkbox"
-                  , on: { change: const $ dispatch $ ToggleSelect ngrams }
-                  , type: "checkbox" }
-        checkbox termList' =
-          let chkd = termList == termList'
-              termList'' = if chkd then CandidateTerm else termList'
-          in
-          H.input { checked: chkd
-                  , className: "checkbox"
-                  , on: { change: const $ dispatch $
-                          setTermListA ngrams (replace termList termList'') }
-                  , readOnly: ngramsTransient
-                  , type: "checkbox" }
-        ngramsTransient = tablePatchHasNgrams ngramsLocalPatch ngrams
-          -- ^ TODO here we do not look at ngramsNewElems, shall we?
-        ngramsOpacity
-          | ngramsTransient = 0.5
-          | otherwise       = 1.0
-
-        cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
-
-tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
-tablePatchHasNgrams ngramsTablePatch ngrams =
-  isJust $ ngramsTablePatch.ngramsPatches ^. _PatchMap <<< at ngrams
-
-termStyle :: TermList -> Number -> DOM.Props
-termStyle GraphTerm     opacity = style { color: "green", opacity}
-termStyle StopTerm      opacity = style { color: "red",   opacity
-                                        , textDecoration: "line-through"}
-termStyle CandidateTerm opacity = style { color: "black", opacity}
-
-nextTermList :: TermList -> TermList
-nextTermList GraphTerm     = StopTerm
-nextTermList StopTerm      = CandidateTerm
-nextTermList CandidateTerm = GraphTerm
+    where
+      sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
+      sumOccurrences' nt label =
+          nt ^. ix label <<< to (sumOccurrences nt)
 
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> R.Element
 optps1 { desc, mval } = H.option { value: value } [H.text desc]
