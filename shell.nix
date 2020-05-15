@@ -54,6 +54,8 @@ let
 
   build = pkgs.writeShellScriptBin "build" ''
     #!/usr/bin/env bash
+    set -e
+
     echo "Compiling"
     build-purs-from-store
     echo "Bundling"
