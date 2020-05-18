@@ -423,22 +423,24 @@ displayRow state@{ ngramsChildren
            ngramsParentRoot
            termListFilter
            (NgramsElement {ngrams, root, list}) =
-     isNothing root
-  -- ^ Display only nodes without parents
-  && maybe true (_ == list) termListFilter
-  -- ^ and which matches the ListType filter.
-  && queryMatchesLabel searchQuery (ngramsTermText ngrams)
-  -- ^ and which matches the search query.
-  && ngramsChildren ^. at ngrams /= Just true
-  -- ^ and which are not scheduled to be added already
-  && Just ngrams /= ngramsParent
-  -- ^ and which are not our new parent
-  && Just ngrams /= ngramsParentRoot
-  -- ^ and which are not the root of our new parent
-  || ngramsChildren ^. at ngrams == Just false
-  -- ^ unless they are scheduled to be removed.
-  || NTC.tablePatchHasNgrams ngramsLocalPatch ngrams
-  -- ^ unless they are being processed at the moment.
+  (
+      isNothing root
+    -- ^ Display only nodes without parents
+    && maybe true (_ == list) termListFilter
+    -- ^ and which matches the ListType filter.
+    && ngramsChildren ^. at ngrams /= Just true
+    -- ^ and which are not scheduled to be added already
+    && Just ngrams /= ngramsParent
+    -- ^ and which are not our new parent
+    && Just ngrams /= ngramsParentRoot
+    -- ^ and which are not the root of our new parent
+    || ngramsChildren ^. at ngrams == Just false
+    -- ^ unless they are scheduled to be removed.
+    || NTC.tablePatchHasNgrams ngramsLocalPatch ngrams
+    -- ^ unless they are being processed at the moment.
+  )
+    && queryMatchesLabel searchQuery (ngramsTermText ngrams)
+    -- ^ and which matches the search query.
 
 
 allNgramsSelectedOnFirstPage :: Set NgramsTerm -> PreConversionRows -> Boolean
