@@ -76,7 +76,7 @@ import Data.Lens.Record (prop)
 import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), isNothing, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
 import Data.Set as Set
@@ -126,7 +126,7 @@ initialPageParams :: Session -> Int -> Array Int -> TabType -> PageParams
 initialPageParams session nodeId listIds tabType =
   { nodeId
   , listIds
-  , params: T.initialParams
+  , params
   , tabType
   , termSizeFilter: Nothing
   , termListFilter: Just GraphTerm
@@ -134,6 +134,8 @@ initialPageParams session nodeId listIds tabType =
   , scoreType: Occurrences
   , session
   }
+  where
+    params = T.initialParams { orderBy = Just (T.DESC $ T.ColumnName "Score") }
 
 newtype NgramsTerm = NormNgramsTerm String
 

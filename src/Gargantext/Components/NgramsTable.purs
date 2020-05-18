@@ -184,14 +184,26 @@ tableContainerCpt { dispatch
                 ]
               ]
             , editor
-            , selectButtons (selectionsExist ngramsSelection)
+            , H.li {className: "list-group-item"} [
+              selectButtons (selectionsExist ngramsSelection)
+            ]
             , H.div {id: "terms_table", className: "panel-body"}
               [ H.table {className: "table able"}
                 [ H.thead {className: "tableHeader"} [props.tableHead]
-                , H.tbody {} props.tableBody]
-              ]
+                , H.tbody {} props.tableBody
+                ]
 
-            , selectButtons (selectionsExist ngramsSelection)
+              , H.li {className: "list-group-item"} [
+                 H.div { className: "row" } [
+                    H.div { className: "col-md-4" } [
+                       selectButtons (selectionsExist ngramsSelection)
+                      ]
+                    , H.div { className: "col-md-4 col-md-offset-4" } [
+                       props.paginationLinks
+                      ]
+                    ]
+                 ]
+              ]
             ]
           ]
         ]
@@ -224,7 +236,7 @@ tableContainerCpt { dispatch
 
     selectButtons false = H.div {} []
     selectButtons true =
-      H.li {className: " list-group-item"} [
+      H.div {} [
         H.button { className: "btn btn-primary"
                 , on: { click: const $ setSelection GraphTerm }
                 } [ H.text "Map" ]
@@ -281,7 +293,7 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
                                              , ngramsSelection
                                              }
                   }
-        ]
+        ] <> resetSaveButtons
       where
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then [ R2.buff $ autoUpdateElt { duration: 5000, effect: performAction Synchronize } ] else []
