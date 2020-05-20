@@ -61,6 +61,12 @@ let
     echo "Bundling"
     yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
   '';
+
+  repl = pkgs.writeShellScriptBin "repl" ''
+    #!/usr/bin/env bash
+
+    yarn pulp repl
+  '';
 in
 pkgs.mkShell {
   buildInputs = [
@@ -71,6 +77,7 @@ pkgs.mkShell {
     build-purs
     build-purs-from-store
     build
+    repl
     pkgs.yarn
   ];
 }
