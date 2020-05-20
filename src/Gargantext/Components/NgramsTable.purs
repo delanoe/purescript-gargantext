@@ -139,54 +139,64 @@ tableContainerCpt { dispatch
         H.div {className: "jumbotron1"}
         [ R2.row
           [ H.div {className: "panel panel-default"}
-            [ H.div {className: "panel-heading"}
-              [ H.h2 {className: "panel-title", style: {textAlign : "center"}}
-                [ H.span {className: "glyphicon glyphicon-hand-down"} []
-                , H.text "Extracted Terms"
-                ]
-              , R2.row
-                [ H.div {className: "col-md-3", style: {marginTop: "6px"}}
-                  [ H.div {} (
-                    if A.null props.tableBody && searchQuery /= "" then [
+            [ H.div {className: "panel-heading"} [
+              R2.row
+              [ H.div {className: "col-md-2", style: {marginTop: "6px"}}
+                [
+                  if A.null props.tableBody && searchQuery /= "" then
+                    H.li { className: "list-group-item" } [
                       H.button { className: "btn btn-primary"
-                               , on: { click: const $ dispatch
-                                     $ addNewNgramA
-                                     $ normNgram tabNgramType searchQuery
-                                     }
-                               }
+                                , on: { click: const $ dispatch
+                                      $ addNewNgramA
+                                      $ normNgram tabNgramType searchQuery
+                                      }
+                                }
                       [ H.text ("Add " <> searchQuery) ]
-                      ] else []
-                    )
-                  ]
-                , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-                  [ H.li {className: "list-group-item"}
-                    [ R2.select { id: "picklistmenu"
-                                , className: "form-control custom-select"
-                                , defaultValue: (maybe "" show termListFilter)
-                                , on: {change: setTermListFilter <<< readTermList <<< R2.unsafeEventValue}}
-                      (map optps1 termLists)]
-                  ]
-                , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-                  [ H.li {className: "list-group-item"}
-                    [ R2.select {id: "picktermtype"
-                                , className: "form-control custom-select"
-                                , defaultValue: (maybe "" show termSizeFilter)
-                                , on: {change: setTermSizeFilter <<< readTermSize <<< R2.unsafeEventValue}}
-                      (map optps1 termSizes)]
-                  ]
-                , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
-                  [ H.li {className: "list-group-item"}
-                    [ props.pageSizeDescription
-                    , props.pageSizeControl
-                    , H.text " items / "
-                    , props.paginationLinks ]
+                    ] else H.div {} []
+                ]
+              , H.div {className: "col-md-2", style: {marginTop : "6px"}}
+                [ H.li {className: "list-group-item"}
+                  [ R2.select { id: "picklistmenu"
+                              , className: "form-control custom-select"
+                              , defaultValue: (maybe "" show termListFilter)
+                              , on: {change: setTermListFilter <<< readTermList <<< R2.unsafeEventValue}}
+                    (map optps1 termLists)]
+                ]
+              , H.div {className: "col-md-2", style: {marginTop : "6px"}}
+                [ H.li {className: "list-group-item"}
+                  [ R2.select {id: "picktermtype"
+                              , className: "form-control custom-select"
+                              , defaultValue: (maybe "" show termSizeFilter)
+                              , on: {change: setTermSizeFilter <<< readTermSize <<< R2.unsafeEventValue}}
+                    (map optps1 termSizes)]
+                ]
+              , H.div { className: "col-md-2", style: { marginTop: "6px" } } [
+                  H.li {className: "list-group-item"} [
+                     H.div { className: "form-inline" } [
+                    H.div { className: "form-group" } [
+                       props.pageSizeControl
+                     , H.label {} [ H.text " items" ]
+                    --   H.div { className: "col-md-6" } [ props.pageSizeControl ]
+                    -- , H.div { className: "col-md-6" } [
+                    --    ]
+                    ]
+                    ]
                   ]
                 ]
+              , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}} [
+                   H.li {className: "list-group-item"} [
+                        props.pageSizeDescription
+                      , props.paginationLinks
+                      ]
+                   ]
+              ]
               ]
             , editor
-            , H.li {className: "list-group-item"} [
-              selectButtons (selectionsExist ngramsSelection)
-            ]
+            , if (selectionsExist ngramsSelection) then
+                H.li {className: "list-group-item"} [
+                  selectButtons true
+                ] else
+                H.div {} []
             , H.div {id: "terms_table", className: "panel-body"}
               [ H.table {className: "table able"}
                 [ H.thead {className: "tableHeader"} [props.tableHead]
@@ -275,7 +285,11 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
 
       pure $ R.fragment $
         autoUpdate <> resetSaveButtons <> [
-          search
+          H.h4 {style: {textAlign : "center"}} [
+              H.span {className: "glyphicon glyphicon-hand-down"} []
+            , H.text "Extracted Terms"
+            ]
+        , search
         , T.table { colNames
                   , container: tableContainer { dispatch: performAction
                                               , ngramsChildren
