@@ -24,12 +24,11 @@ import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
 import Gargantext.Types as GT
 
 type CommonProps =
-  (
-      frontends :: Frontends
-    , mCurrentRoute :: Maybe AppRoute
-    , openNodes :: R.State OpenNodes
-    , reload :: R.State Reload
-    , session :: Session
+  ( frontends     :: Frontends
+  , mCurrentRoute :: Maybe AppRoute
+  , openNodes     :: R.State OpenNodes
+  , reload        :: R.State Reload
+  , session       :: Session
   )
 
 ------------------------------------------------------------------------
@@ -93,16 +92,16 @@ toHtml p@{ frontends
          , tasks: tasks@(asyncTasks /\ setAsyncTasks)
          , tree: tree@(NTree (LNode {id, name, nodeType}) ary) } = R.createElement el {} []
   where
-    el = R.hooksComponent "NodeView" cpt
+    el          = R.hooksComponent "NodeView" cpt
     commonProps = RecordE.pick p :: Record CommonProps
-    pAction = performAction (RecordE.pick p :: Record PerformActionProps)
+    pAction     = performAction (RecordE.pick p :: Record PerformActionProps)
 
     cpt _ _ = do
-      let nodeId = mkNodeId session id
-      let folderIsOpen = Set.member nodeId (fst openNodes)
-      let setFn = if folderIsOpen then Set.delete else Set.insert
+      let nodeId               = mkNodeId session id
+      let folderIsOpen         = Set.member nodeId (fst openNodes)
+      let setFn                = if folderIsOpen then Set.delete else Set.insert
       let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
-      let folderOpen = Tuple folderIsOpen toggleFolderIsOpen
+      let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
 
       let withId (NTree (LNode {id: id'}) _) = id'
 
@@ -154,15 +153,14 @@ childNodes props@{ children } =
       el = R.hooksComponent "ChildNodeView" cpt
       cpt {tree, asyncTasks} _ = do
         tasks <- R.useState' asyncTasks
-        pure $ toHtml (Record.merge commonProps
-                                    { tasks, tree })
+        pure $ toHtml (Record.merge commonProps { tasks, tree })
 
 type PerformActionProps =
   ( openNodes :: R.State OpenNodes
-  , reload :: R.State Reload
-  , session :: Session
-  , tasks :: R.State (Array GT.AsyncTaskWithType)
-  , tree :: FTree
+  , reload    :: R.State Reload
+  , session   :: Session
+  , tasks     :: R.State (Array GT.AsyncTaskWithType)
+  , tree      :: FTree
   )
 
 performAction :: Record PerformActionProps

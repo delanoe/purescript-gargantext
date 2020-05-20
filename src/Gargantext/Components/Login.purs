@@ -3,11 +3,12 @@
   -- Select a backend and log into it
 module Gargantext.Components.Login where
 
-import Prelude (Unit, bind, const, discard, pure, show, ($), (<>), (*>), (<$>), (>), map)
+import Prelude (Unit, bind, const, discard, pure, show, ($), (<>), (*>), (<$>), (>), map, (==), (/=), not, (&&))
 import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (fst, snd)
+import Data.Tuple.Nested ((/\))
 import Data.String as DST
 import DOM.Simple.Console (log)
 import Data.Sequence as DS
@@ -32,7 +33,8 @@ import Gargantext.Utils.Reactix as R2
 type Props =
   ( backends :: Array Backend
   , sessions :: R2.Reductor Sessions Sessions.Action
-  , visible :: R.State Boolean )
+  , visible  :: R.State Boolean
+  )
 
 type ModalProps = ( visible :: R.State Boolean )
 
@@ -147,7 +149,8 @@ renderBackend state backend@(Backend {name}) =
 type FormProps =
   ( backend :: Backend
   , sessions :: R2.Reductor Sessions Sessions.Action
-  , visible :: R.State Boolean )
+  , visible :: R.State Boolean
+  )
 
 form :: Record FormProps -> R.Element
 form props = R.createElement formCpt props []
@@ -156,9 +159,10 @@ formCpt :: R.Component FormProps
 formCpt = R.hooksComponent "G.C.Login.form" cpt where
   cpt :: Record FormProps -> Array R.Element -> R.Hooks R.Element
   cpt props@{backend, sessions, visible} _ = do
-    error <- R.useState' ""
+    error    <- R.useState' ""
     username <- R.useState' ""
     password <- R.useState' ""
+    setBox@(checkBox /\ setCheckBox) <- R.useState' false
     pure $ R2.row
       [ cardGroup
         [ card
@@ -175,9 +179,18 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
               , center
                 [ H.label {}
                   [ H.div {className: "checkbox"}
-                    [ termsCheckbox {}, H.text "I accept the terms of use ", termsLink {} ] ]
-                , loginSubmit $
-                    onClick props error username password ] ] ] ] ] ]
+                    [ termsCheckbox setBox , H.text "I accept the terms of use ", termsLink {} ] ]
+                ] 
+              ]
+            , if checkBox == true
+                 && fst username /= ""
+                 && fst password /= ""
+                 then H.div {} [center [loginSubmit $ onClick props error username password]]
+                 else H.div {} []
+            ] 
+          ] 
+        ] 
+      ]
   onClick {backend, sessions, visible} error username password e =
     launchAff_ $ do
       let req = AuthRequest {username: fst username, password: fst password}
@@ -194,13 +207,18 @@ csrfTokenInput _ =
   H.input { type: "hidden", name: "csrfmiddlewaretoken"
           , value: csrfMiddlewareToken }-- TODO hard-coded CSRF token
 
-termsCheckbox :: {} -> R.Element
-termsCheckbox _ =
-  H.input { id: "terms-accept", type: "checkbox", value: "", className: "checkbox" }
+termsCheckbox :: R.State Boolean -> R.Element
+termsCheckbox setCheckBox =
+  H.input { id: "terms-accept"
+          , type: "checkbox"
+          , value: fst setCheckBox
+          , className: "checkbox"
+          , on: { click: \_ -> (snd setCheckBox) $ const $ not (fst setCheckBox)}
+          }
 
 termsLink :: {} -> R.Element
 termsLink _ =
-  H.a { target: "_blank", href: termsUrl } [ H.text " [ Read the terms of use ] " ]
+  H.a { target: "_blank", href: termsUrl } [ H.text " [Read the terms of use]" ]
   where termsUrl = "http://gitlab.iscpif.fr/humanities/tofu/tree/master"
 
 requestAccessLink :: {} -> R.Element
