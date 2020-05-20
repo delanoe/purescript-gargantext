@@ -31,11 +31,11 @@ import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (Action(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
+import Gargantext.Components.NgramsTable.Core (Action(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, filterTermSize, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.Table as T
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), readTermList, readTermSize, termLists, termSizes)
+import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, readTermList, readTermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet)
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
@@ -263,7 +263,7 @@ loadedNgramsTable p = R.createElement loadedNgramsTableCpt p []
 loadedNgramsTableCpt :: R.Component Props
 loadedNgramsTableCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
   where
-    cpt { path: path@(path'@{searchQuery, scoreType, params, termListFilter} /\ setPath)
+    cpt { path: path@(path'@{searchQuery, scoreType, params, termListFilter, termSizeFilter} /\ setPath)
         , state: (state@{ ngramsChildren
                         , ngramsLocalPatch
                         , ngramsParent
@@ -356,7 +356,7 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
              )
           )
         rowsFilter :: NgramsElement -> Boolean
-        rowsFilter = displayRow state searchQuery ngramsTable ngramsParentRoot termListFilter
+        rowsFilter = displayRow state searchQuery ngramsTable ngramsParentRoot termListFilter termSizeFilter
         rowsFilterT = rowsFilter <<< snd
         addOccWithFilter ne ngramsElement =
           if rowsFilter ngramsElement then
@@ -414,7 +414,7 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
         setSearchQuery x    = setPath $ _ { searchQuery    = x }
 
 
-displayRow :: State -> SearchQuery -> NgramsTable -> Maybe NgramsTerm -> Maybe TermList -> NgramsElement -> Boolean
+displayRow :: State -> SearchQuery -> NgramsTable -> Maybe NgramsTerm -> Maybe TermList -> Maybe TermSize -> NgramsElement -> Boolean
 displayRow state@{ ngramsChildren
                  , ngramsLocalPatch
                  , ngramsParent }
@@ -422,6 +422,7 @@ displayRow state@{ ngramsChildren
            ngramsTable
            ngramsParentRoot
            termListFilter
+           termSizeFilter
            (NgramsElement {ngrams, root, list}) =
   (
       isNothing root
@@ -434,6 +435,8 @@ displayRow state@{ ngramsChildren
     -- ^ and which are not our new parent
     && Just ngrams /= ngramsParentRoot
     -- ^ and which are not the root of our new parent
+    && filterTermSize termSizeFilter ngrams
+    -- ^ and which satisfies the chosen term size
     || ngramsChildren ^. at ngrams == Just false
     -- ^ unless they are scheduled to be removed.
     || NTC.tablePatchHasNgrams ngramsLocalPatch ngrams

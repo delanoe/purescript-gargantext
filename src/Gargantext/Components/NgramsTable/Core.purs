@@ -51,6 +51,8 @@ module Gargantext.Components.NgramsTable.Core
   , addNewNgram
   , Action(..)
   , Dispatch
+  , isSingleNgramsTerm
+  , filterTermSize
   )
   where
 
@@ -81,8 +83,10 @@ import Data.Newtype (class Newtype)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
+import Data.String.Common as DSC
 import Data.String.Regex (Regex, regex, replace) as R
 import Data.String.Regex.Flags (global, multiline) as R
+import Data.String.Utils as SU
 import Data.Symbol (SProxy(..))
 import Data.Traversable (class Traversable, for, sequence, traverse, traverse_)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
@@ -101,7 +105,7 @@ import Thermite (StateCoTransformer, modifyState_)
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post)
-import Gargantext.Types (CTabNgramType(..), OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize)
+import Gargantext.Types (CTabNgramType(..), OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 
 type CoreParams s =
@@ -758,3 +762,16 @@ data Action
 
 
 type Dispatch = Action -> Effect Unit
+
+isSingleNgramsTerm :: NgramsTerm -> Boolean
+isSingleNgramsTerm nt = isSingleTerm $ ngramsTermText nt
+  where
+    isSingleTerm :: String -> Boolean
+    isSingleTerm s = A.length words == 1
+      where
+        words = A.filter (not S.null) $ DSC.trim <$> (SU.words s)
+
+filterTermSize :: Maybe TermSize -> NgramsTerm -> Boolean
+filterTermSize (Just MonoTerm)  nt = isSingleNgramsTerm nt
+filterTermSize (Just MultiTerm) nt = not $ isSingleNgramsTerm nt
+filterTermSize _                _ = true
