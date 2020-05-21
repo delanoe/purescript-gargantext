@@ -19,7 +19,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 ------------------------------------------------------------------------
-import Gargantext.Components.Forms (clearfix, card, cardBlock, cardGroup, center, formGroup)
+import Gargantext.Components.Forms (clearfix, cardBlock, cardGroup, center, formGroup)
 import Gargantext.Components.Login.Types (AuthRequest(..))
 import Gargantext.Ends (Backend(..))
 import Gargantext.Sessions (Session, Sessions(..), postAuthRequest, unSessions)
@@ -55,7 +55,6 @@ modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
               [ H.div { className: "modal-header" }
                 [ closing
                 , logo
-                , H.h2 { className: "center modal-title" } [H.text "Instances manager"]
                 ]
               , H.div { className: "modal-body" } children ] ] ] ]
       modalClass s = "modal myModal" <> if s then "" else " fade"
@@ -88,7 +87,7 @@ loginCpt = R.hooksComponent "G.C.Login.login" cpt
         modal {visible} $
           case fst backend of
             Nothing -> chooser { backends, backend, sessions, visible }
-            Just b -> form { sessions, visible, backend: b }
+            Just b  -> form { sessions, visible, backend: b }
 
 type ChooserProps = ( backend :: R.State (Maybe Backend) | Props )
 
@@ -99,8 +98,9 @@ chooserCpt :: R.Component ChooserProps
 chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
   cpt :: Record ChooserProps -> Array R.Element -> R.Element
   cpt {backend, backends, sessions} _ =
-    R.fragment $ active <> new <> search
+    R.fragment $ title <> active <> new <> search
       where
+        title =  [H.h2 { className: "center modal-title" } [H.text "Instances manager"]]
         active = if DS.length ss > 0 then [ H.h3 {} [H.text "Active connection(s)"]
                  , H.ul {} [ renderSessions sessions]
                  ] else [] where
@@ -165,29 +165,27 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
     setBox@(checkBox /\ setCheckBox) <- R.useState' false
     pure $ R2.row
       [ cardGroup
-        [ card
-          [ cardBlock
-            [ center
-              [ H.h4 {className: "m-b-0"}
-                [ H.span {className: "icon-text"} [ H.text "Welcome :)" ] ]
-              , H.p {className: "text-muted"}
-                [ H.text $ "Login to your account or", requestAccessLink {} ] ]
-            , H.div {}
-              [ csrfTokenInput {}
-              , formGroup [ H.p {} [ H.text (fst error) ], usernameInput username ]
-              , formGroup [ passwordInput password, clearfix {} ]
-              , center
-                [ H.label {}
-                  [ H.div {className: "checkbox"}
-                    [ termsCheckbox setBox , H.text "I accept the terms of use ", termsLink {} ] ]
-                ] 
+        [ cardBlock
+          [ center
+            [ H.div {className: "text-muted"}
+              [ H.text $ "Login to garg://" <> show backend]
+              , requestAccessLink {} 
               ]
-            , if checkBox == true
-                 && fst username /= ""
-                 && fst password /= ""
-                 then H.div {} [center [loginSubmit $ onClick props error username password]]
-                 else H.div {} []
-            ] 
+          , H.div {}
+            [ csrfTokenInput {}
+            , formGroup [ H.p {} [ H.text (fst error) ], usernameInput username ]
+            , formGroup [ passwordInput password, clearfix {} ]
+            , center
+              [ H.label {}
+                [ H.div {className: "checkbox"}
+                  [ termsCheckbox setBox , H.text "I accept the terms of use ", termsLink {} ] ]
+              ] 
+            ]
+          , if checkBox == true
+               && fst username /= ""
+               && fst password /= ""
+               then H.div {} [center [loginSubmit $ onClick props error username password]]
+               else H.div {} []
           ] 
         ] 
       ]
