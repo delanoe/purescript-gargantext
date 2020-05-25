@@ -13,6 +13,7 @@ import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
+
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
@@ -502,34 +503,14 @@ panelAction p = R.createElement panelActionCpt p []
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
   where
-    cpt {action: Documentation nodeType} _ = actionDoc nodeType
-
+    cpt {action: Documentation nodeType}          _ = actionDoc      nodeType
+    cpt {action: Download, id, nodeType, session} _ = actionDownload nodeType id session
     cpt {action: Upload, dispatch, id, nodeType: GT.NodeList, session} _ = do
       pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
 
     cpt {action: Upload, dispatch, id, nodeType, session} _ = do
       pure $ uploadFileView {dispatch, id, nodeType, session}
 
-    cpt {action: Download, id, nodeType: NodeList, session} _ = do
-      let href = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
-      pure $ R.fragment [
-        H.span { className: "row" }
-               [ H.a { className: "col-md-12"
-                     , href
-                     , target: "_blank" } [ H.text "Download file" ]
-               ]
-      ]
-
-    cpt {action: Download, id, nodeType: GT.Graph, session} _ = do
-      pure $ R.fragment [ H.div { className: "gexf" } [
-                   H.a { className: "btn btn-default"
-                        , href: url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
-                        , target: "_blank" } [ H.text "Download GEXF" ]
-                  ]
-      ]
-
-    cpt {action: Download} _ = do
-      pure $ fragmentPT "Soon, you will be able to dowload your file here"
 
     cpt props@{action: SearchBox, search, session} _ = do
       pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
@@ -600,24 +581,45 @@ reallyDelete d = H.div {className: "panel-footer"}
 -- | Action : Upload
 
 
+-- | Action : Download
+actionDownload :: NodeType -> ID -> Session -> R.Hooks R.Element
+actionDownload NodeList id session = do
+  let href = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
+  pure $ R.fragment [
+    H.span { className: "row" }
+           [ H.a { className: "btn btn-default"
+                 , href
+                 , target: "_blank" } [ H.text "Download list" ]
+           ]
+  ]
+actionDownload GT.Graph id session = do
+  pure $ R.fragment [ H.div { className: "gexf" }
+                            [ H.a { className: "btn btn-default"
+                                     , href: url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
+                                     , target: "_blank" } [ H.text "Download GEXF" ]
+                            ]
+                    ]
+actionDownload _ _ _ = do
+  pure $ fragmentPT $ "Soon, you will be able to dowload your file here "
+
 
 
 -- | Action: Show Documentation
-actionDoc :: GT.NodeType -> R.Hooks R.Element
+actionDoc :: NodeType -> R.Hooks R.Element
 actionDoc nodeType =
   pure $ R.fragment [ H.div { style: {margin: "10px"} }
                             $ [ infoTitle nodeType ]
                             <> (map (\info -> H.p {} [H.text info]) $ docOf nodeType)
                     ]
   where
-    infoTitle :: GT.NodeType -> R.Element
+    infoTitle :: NodeType -> R.Element
     infoTitle nt = H.div { style: {margin: "10px"}}
                          [ H.h3 {} [H.text "Documentation about " ]
                          , H.h3 {className: GT.fldr nt true} [ H.text $ show nt ]
                          ]
 
 -- | TODO add documentation of all NodeType
-docOf :: GT.NodeType -> Array String
+docOf :: NodeType -> Array String
 docOf GT.NodeUser = [ "This account is personal"
                     , "See the instances terms of uses."
                     ]
