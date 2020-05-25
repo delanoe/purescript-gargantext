@@ -143,10 +143,10 @@ settingsBox Corpus = SettingsBox {
   , edit : true
   , doc  : Documentation Corpus
   , buttons : [ SearchBox
-              {- , Add [ NodeList
+              , Add [ NodeList
                     , Graph
                     , Dashboard
-                    ] -}
+                    ]
               , Upload
               , Download
                 --, Share

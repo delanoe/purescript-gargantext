@@ -34,7 +34,7 @@ createNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
   where
     el = R.hooksComponent "CreateNodeView" cpt
     cpt {id, name} _ = do
-      nodeName <- R.useState' "Default Name"
+      nodeName <- R.useState' "Name"
       nodeType' <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
       pure $ H.div {}
           [ panelBody   readNodeType nodeName nodeType'

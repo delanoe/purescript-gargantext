@@ -22,9 +22,9 @@ import Effect.Console (logShow)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Effect.Uncurried (EffectFn1, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn3)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn2, runEffectFn3)
 import Effect.Unsafe (unsafePerformEffect)
-import FFI.Simple ((..), (...), defineProperty, delay, args2, args3)
+import FFI.Simple ((..), (...), (.=), defineProperty, delay, args2, args3)
 import Partial.Unsafe (unsafePartial)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
 import React as React
@@ -320,3 +320,11 @@ foreign import _setCookie :: EffectFn1 String Unit
 
 setCookie :: String -> Effect Unit
 setCookie = runEffectFn1 _setCookie
+
+focus :: Nullable R.Element -> Effect Unit
+focus nEl = case toMaybe nEl of
+  Nothing -> pure unit
+  Just el -> el ... "focus" $ []
+
+setIndeterminateCheckbox :: R.Element -> Boolean -> Effect R.Element
+setIndeterminateCheckbox el val = pure $ (el .= "indeterminate") val

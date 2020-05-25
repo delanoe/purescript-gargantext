@@ -19,6 +19,7 @@ data Action = CreateSubmit String GT.NodeType
             | SearchQuery GT.AsyncTaskWithType
             | Submit       String
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
+            | RefreshTree
 
 -----------------------------------------------------
 -- UploadFile Action

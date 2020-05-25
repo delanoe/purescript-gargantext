@@ -44,9 +44,13 @@ module Gargantext.Components.NgramsTable.Core
   , _parent
   , _root
   , commitPatch
+  , commitPatchR
   , putNgramsPatches
   , syncPatches
+  , syncPatchesR
   , addNewNgram
+  , Action(..)
+  , Dispatch
   )
   where
 
@@ -83,16 +87,22 @@ import Data.Symbol (SProxy(..))
 import Data.Traversable (class Traversable, for, sequence, traverse, traverse_)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Tuple (Tuple(..))
-import Effect.Aff (Aff)
+import Data.Tuple.Nested ((/\))
+import Effect.Aff (Aff, launchAff_)
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import Effect.Exception.Unsafe (unsafeThrow)
 import Foreign.Object as FO
+import Reactix (State) as R
+import Partial (crashWith)
+import Partial.Unsafe (unsafePartial)
+import Thermite (StateCoTransformer, modifyState_)
+
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post)
 import Gargantext.Types (CTabNgramType(..), OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
-import Partial (crashWith)
-import Partial.Unsafe (unsafePartial)
-import Thermite (StateCoTransformer, modifyState_)
 
 type CoreParams s =
   { nodeId  :: Int
@@ -179,14 +189,14 @@ _list = prop (SProxy :: SProxy "list")
 
 derive instance newtypeNgramsElement :: Newtype NgramsElement _
 
-_NgramsElement    :: Iso' NgramsElement {
-      children    :: Set NgramsTerm
-    , list        :: TermList
-    , ngrams      :: NgramsTerm
-    , occurrences :: Int
-    , parent      :: Maybe NgramsTerm
-    , root        :: Maybe NgramsTerm
-    }
+_NgramsElement  :: Iso' NgramsElement {
+    children    :: Set NgramsTerm
+  , list        :: TermList
+  , ngrams      :: NgramsTerm
+  , occurrences :: Int
+  , parent      :: Maybe NgramsTerm
+  , root        :: Maybe NgramsTerm
+  }
 _NgramsElement = _Newtype
 
 instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
@@ -336,14 +346,15 @@ replace old new
   | old == new = Keep
   | otherwise  = Replace { old, new }
 
-instance semigroupReplace :: Semigroup (Replace a) where
+derive instance eqReplace :: Eq a => Eq (Replace a)
+
+instance semigroupReplace :: Eq a => Semigroup (Replace a) where
   append Keep p = p
   append p Keep = p
-  append (Replace { old: _m, new }) (Replace { old, new: _m' }) =
-    -- assert _m == _m'
-    Replace { old, new }
+  append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
+  append (Replace { new }) (Replace { old }) = replace old new
 
-instance semigroupMonoid :: Monoid (Replace a) where
+instance semigroupMonoid :: Eq a => Monoid (Replace a) where
   mempty = Keep
 
 applyReplace :: forall a. Eq a => Replace a -> a -> a
@@ -419,6 +430,9 @@ newtype NgramsPatch = NgramsPatch
   , patch_list     :: Replace TermList
   }
 
+derive instance eqNgramsPatch  :: Eq NgramsPatch
+derive instance eqPatchSetNgramsTerm  :: Eq (PatchSet NgramsTerm)
+
 instance semigroupNgramsPatch :: Semigroup NgramsPatch where
   append (NgramsPatch p) (NgramsPatch q) = NgramsPatch
     { patch_children: p.patch_children <> q.patch_children
@@ -455,13 +469,16 @@ applyNgramsPatch (NgramsPatch p) (NgramsElement e) = NgramsElement
 
 newtype PatchMap k p = PatchMap (Map k p)
 
-instance semigroupPatchMap :: (Ord k, Semigroup p) => Semigroup (PatchMap k p) where
-  append (PatchMap p) (PatchMap q) = PatchMap (Map.unionWith append p q)
+instance semigroupPatchMap :: (Ord k, Eq p, Monoid p) => Semigroup (PatchMap k p) where
+  append (PatchMap p) (PatchMap q) = PatchMap pMap
+    where
+      pMap = Map.filter (\v -> v /= mempty) $ Map.unionWith append p q
 
-instance monoidPatchMap :: (Ord k, Semigroup p) => Monoid (PatchMap k p) where
+instance monoidPatchMap :: (Ord k, Eq p, Monoid p) => Monoid (PatchMap k p) where
   mempty = PatchMap Map.empty
 
 derive instance newtypePatchMap :: Newtype (PatchMap k p) _
+derive instance eqPatchMap :: (Eq k, Eq p) => Eq (PatchMap k p)
 
 _PatchMap :: forall k p. Iso' (PatchMap k p) (Map k p)
 _PatchMap = _Newtype
@@ -537,9 +554,12 @@ singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
 singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap n p
 
 rootsOf :: NgramsTable -> Set NgramsTerm
-rootsOf (NgramsTable m) = Map.keys $ Map.filter isRoot m
+rootsOf (NgramsTable m) = Map.keys $ Map.mapMaybe isRoot m
   where
-    isRoot (NgramsElement {parent}) = isNothing parent
+    isRoot (NgramsElement { parent }) = parent
+-- rootsOf (NgramsTable m) = Map.keys $ Map.filter isRoot m
+--   where
+--     isRoot (NgramsElement {parent}) = isNothing parent
 
 type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
 
@@ -631,6 +651,7 @@ putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff Vers
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
+-- DEPRECATED: use the Reactix version `syncPatchesR`
 syncPatches :: forall p s. CoreParams p -> CoreState s -> StateCoTransformer (CoreState s) Unit
 syncPatches props { ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPatches}
                   , ngramsStagePatch
@@ -651,9 +672,36 @@ syncPatches props { ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPa
         , ngramsStagePatch = fromNgramsPatches mempty
         }
 
+syncPatchesR :: forall p s. CoreParams p -> R.State (CoreState s) -> Effect Unit
+syncPatchesR props ({ ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPatches}
+                   , ngramsStagePatch
+                   , ngramsValidPatch
+                   , ngramsVersion
+                   } /\ setState) = do
+  when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
+    setState $ \s ->
+      s { ngramsLocalPatch = fromNgramsPatches mempty
+        , ngramsStagePatch = ngramsLocalPatch
+        }
+    let pt = Versioned { version: ngramsVersion, data: ngramsPatches }
+    launchAff_ $ do
+      _ <- postNewElems ngramsNewElems props
+      Versioned {version: newVersion, data: newPatch} <- putNgramsPatches props pt
+      liftEffect $ setState $ \s ->
+        s { ngramsVersion    = newVersion
+          , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
+          , ngramsStagePatch = fromNgramsPatches mempty
+          }
+
+-- DEPRECATED: use `commitPatchR`
 commitPatch :: forall s. Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
 commitPatch (Versioned {version, data: tablePatch}) = do
   modifyState_ $ \s ->
+    s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
+
+commitPatchR :: forall s. Versioned NgramsTablePatch -> R.State (CoreState s) -> Effect Unit
+commitPatchR (Versioned {version, data: tablePatch}) (_ /\ setState) = do
+  setState $ \s ->
     s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
 
 loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
@@ -689,3 +737,22 @@ convOrderBy (T.ASC  (T.ColumnName "Score")) = ScoreAsc
 convOrderBy (T.DESC (T.ColumnName "Score")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
+
+
+data Action
+  = CommitPatch NgramsTablePatch
+  | SetParentResetChildren (Maybe NgramsTerm)
+  -- ^ This sets `ngramsParent` and resets `ngramsChildren`.
+  | ToggleChild Boolean NgramsTerm
+  -- ^ Toggles the NgramsTerm in the `PatchSet` `ngramsChildren`.
+  -- If the `Boolean` is `true` it means we want to add it if it is not here,
+  -- if it is `false` it is meant to be removed if not here.
+  | AddTermChildren
+  | Synchronize
+  | ToggleSelect NgramsTerm
+  -- ^ Toggles the NgramsTerm in the `Set` `ngramsSelection`.
+  | ToggleSelectAll
+  | ResetPatches
+
+
+type Dispatch = Action -> Effect Unit

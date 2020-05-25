@@ -10,6 +10,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
+import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
@@ -390,9 +391,13 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
   cpt { layout: {frontends, session, nodeId, corpusId, listId, totalRecords}, documents, params } _ = do
     localCategories <- R.useState' (mempty :: LocalCategories)
     pure $ T.table
-      { rows: rows localCategories
+      { colNames
       , container: T.defaultContainer { title: "Documents" }
-      , params, colNames, totalRecords, wrapColElts }
+      , params
+      , rows: L.fromFoldable $ rows localCategories
+      , totalRecords
+      , wrapColElts
+      }
       where
         sid = sessionId session
         gi Favorite  = "glyphicon glyphicon-star"
@@ -409,7 +414,7 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
           where
             row (DocumentsView r) =
               { row:
-                [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
+                T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                  caroussel session nodeId setLocalCategories r cat
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only

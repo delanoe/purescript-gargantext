@@ -84,7 +84,7 @@ type NgramsViewTabsProps =
 ngramsView :: Record NgramsViewTabsProps -> R.Element
 ngramsView {session,mode, defaultListId, nodeId} =
   NT.mainNgramsTable
-  { nodeId, defaultListId, tabType, session, tabNgramType }
+  { nodeId, defaultListId, tabType, session, tabNgramType, withAutoUpdate: false }
   where
     tabNgramType = modeTabType' mode
     tabType      = TabPairing $ TabNgramType $ modeTabType mode

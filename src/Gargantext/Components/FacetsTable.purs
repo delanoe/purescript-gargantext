@@ -8,6 +8,7 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyO
 import Data.Array (concat, filter)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.List as L
 import Data.Maybe (Maybe(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -332,18 +333,19 @@ pageCpt = R.hooksComponent "G.C.FacetsTable.Page" cpt
         documentUrl id =
             url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
         comma = H.span {} [ H.text ", " ]
-        rows = row <$> filter (not <<< isDeleted) documents
+        rows = L.fromFoldable $ row <$> filter (not <<< isDeleted) documents
         row dv@(DocumentsView {id, score, title, source, authors, pairs, delete, category}) =
           { row:
-            [ H.div {} [ H.a { className: gi category, on: {click: markClick} } [] ]
+            T.makeRow [
+              H.div {} [ H.a { className: gi category, on: {click: markClick} } [] ]
               -- TODO show date: Year-Month-Day only
-            , maybeStricken delete [ H.text $ publicationDate dv ]
-            , maybeStricken delete [ H.a {target: "_blank", href: documentUrl id} [ H.text title ] ]
-            , maybeStricken delete [ H.text source ]
-            , maybeStricken delete [ H.text authors ]
-              -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
-            , H.input { type: "checkbox", checked: isChecked id, on: { click: toggleClick } }
-            ]
+              , maybeStricken delete [ H.text $ publicationDate dv ]
+              , maybeStricken delete [ H.a {target: "_blank", href: documentUrl id} [ H.text title ] ]
+              , maybeStricken delete [ H.text source ]
+              , maybeStricken delete [ H.text authors ]
+                -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
+              , H.input { type: "checkbox", checked: isChecked id, on: { click: toggleClick } }
+              ]
           , delete: true }
           where
             markClick _ = markCategory session nodeId category [id]

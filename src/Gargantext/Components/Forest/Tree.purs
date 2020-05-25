@@ -24,12 +24,11 @@ import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
 import Gargantext.Types as GT
 
 type CommonProps =
-  (
-      frontends :: Frontends
-    , mCurrentRoute :: Maybe AppRoute
-    , openNodes :: R.State OpenNodes
-    , reload :: R.State Reload
-    , session :: Session
+  ( frontends     :: Frontends
+  , mCurrentRoute :: Maybe AppRoute
+  , openNodes     :: R.State OpenNodes
+  , reload        :: R.State Reload
+  , session       :: Session
   )
 
 ------------------------------------------------------------------------
@@ -93,16 +92,16 @@ toHtml p@{ frontends
          , tasks: tasks@(asyncTasks /\ setAsyncTasks)
          , tree: tree@(NTree (LNode {id, name, nodeType}) ary) } = R.createElement el {} []
   where
-    el = R.hooksComponent "NodeView" cpt
+    el          = R.hooksComponent "NodeView" cpt
     commonProps = RecordE.pick p :: Record CommonProps
-    pAction = performAction (RecordE.pick p :: Record PerformActionProps)
+    pAction     = performAction (RecordE.pick p :: Record PerformActionProps)
 
     cpt _ _ = do
-      let nodeId = mkNodeId session id
-      let folderIsOpen = Set.member nodeId (fst openNodes)
-      let setFn = if folderIsOpen then Set.delete else Set.insert
+      let nodeId               = mkNodeId session id
+      let folderIsOpen         = Set.member nodeId (fst openNodes)
+      let setFn                = if folderIsOpen then Set.delete else Set.insert
       let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
-      let folderOpen = Tuple folderIsOpen toggleFolderIsOpen
+      let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
 
       let withId (NTree (LNode {id: id'}) _) = id'
 
@@ -154,28 +153,27 @@ childNodes props@{ children } =
       el = R.hooksComponent "ChildNodeView" cpt
       cpt {tree, asyncTasks} _ = do
         tasks <- R.useState' asyncTasks
-        pure $ toHtml (Record.merge commonProps
-                                    { tasks, tree })
+        pure $ toHtml (Record.merge commonProps { tasks, tree })
 
 type PerformActionProps =
   ( openNodes :: R.State OpenNodes
-  , reload :: R.State Reload
-  , session :: Session
-  , tasks :: R.State (Array GT.AsyncTaskWithType)
-  , tree :: FTree
+  , reload    :: R.State Reload
+  , session   :: Session
+  , tasks     :: R.State (Array GT.AsyncTaskWithType)
+  , tree      :: FTree
   )
 
 performAction :: Record PerformActionProps
               -> Action
               -> Aff Unit
-performAction { openNodes: (_ /\ setOpenNodes)
-              , reload: (_ /\ setReload)
-              , session
-              , tree: (NTree (LNode {id}) _) } DeleteNode = do
+performAction p@{ openNodes: (_ /\ setOpenNodes)
+                , reload: (_ /\ setReload)
+                , session
+                , tree: (NTree (LNode {id}) _) } DeleteNode = do
   void $ deleteNode session id
   liftEffect do
     setOpenNodes (Set.delete (mkNodeId session id))
-    setReload (_ + 1)
+  performAction p RefreshTree
 
 performAction { reload: (_ /\ setReload)
               , session
@@ -183,23 +181,21 @@ performAction { reload: (_ /\ setReload)
               , tree: (NTree (LNode {id}) _) } (SearchQuery task) = do
   liftEffect $ setAsyncTasks $ A.cons task
   liftEffect $ log2 "[performAction] SearchQuery task:" task
-  liftEffect $ setReload (_ + 1)
 
-performAction { reload: (_ /\ setReload)
-              , session
-              , tree: (NTree (LNode {id}) _) } (Submit name)  = do
+performAction p@{ reload: (_ /\ setReload)
+                , session
+                , tree: (NTree (LNode {id}) _) } (Submit name)  = do
   void $ renameNode session id $ RenameValue {name}
-  liftEffect do
-    setReload (_ + 1)
+  performAction p RefreshTree
 
-performAction { openNodes: (_ /\ setOpenNodes)
-              , reload: (_ /\ setReload)
-              , session
-              , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
+performAction p@{ openNodes: (_ /\ setOpenNodes)
+                , reload: (_ /\ setReload)
+                , session
+                , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
   void $ createNode session id $ CreateValue {name, nodeType}
   liftEffect do
     setOpenNodes (Set.insert (mkNodeId session id))
-    setReload (_ + 1)
+  performAction p RefreshTree
 
 performAction { session
               , tasks: (_ /\ setAsyncTasks)
@@ -207,3 +203,6 @@ performAction { session
   task <- uploadFile session nodeType id fileType {mName, contents}
   liftEffect $ setAsyncTasks $ A.cons task
   liftEffect $ log2 "uploaded, task:" task
+
+performAction { reload: (_ /\ setReload) } RefreshTree = do
+  liftEffect $ setReload (_ + 1)

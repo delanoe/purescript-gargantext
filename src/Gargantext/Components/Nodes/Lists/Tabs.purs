@@ -46,7 +46,7 @@ ngramsViewCpt = R.staticComponent "ListsNgramsView" cpt
       R.fragment
         [ chart mode
         , NT.mainNgramsTable
-            {session, defaultListId, nodeId: corpusId, tabType, tabNgramType}
+            {session, defaultListId, nodeId: corpusId, tabType, tabNgramType, withAutoUpdate: false}
         ]
       where
         tabNgramType = modeTabType mode

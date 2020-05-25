@@ -287,6 +287,8 @@ derive instance genericScoreType :: Generic ScoreType _
 instance showScoreType :: Show ScoreType where
   show = genericShow
 
+type SearchQuery = String
+
 type NgramsGetOpts =
   { tabType        :: TabType
   , offset         :: Offset
@@ -296,7 +298,7 @@ type NgramsGetOpts =
   , termListFilter :: Maybe TermList
   , termSizeFilter :: Maybe TermSize
   , scoreType      :: ScoreType
-  , searchQuery    :: String
+  , searchQuery    :: SearchQuery
   }
 
 type NgramsGetTableAllOpts =
@@ -472,7 +474,7 @@ asyncTaskTypePath GraphT = "async/"
 
 type AsyncTaskID = String
 
-data AsyncTaskStatus = Running | Failed | Finished | Killed
+data AsyncTaskStatus = Running | Pending | Received | Started | Failed | Finished | Killed
 derive instance genericAsyncTaskStatus :: Generic AsyncTaskStatus _
 derive instance eqAsyncTaskStatus :: Eq AsyncTaskStatus
 instance decodeJsonAsyncTaskStatus :: DecodeJson AsyncTaskStatus where
@@ -481,10 +483,13 @@ instance decodeJsonAsyncTaskStatus :: DecodeJson AsyncTaskStatus where
     pure $ readAsyncTaskStatus obj
 
 readAsyncTaskStatus :: String -> AsyncTaskStatus
-readAsyncTaskStatus "failed"   = Failed
-readAsyncTaskStatus "finished" = Finished
-readAsyncTaskStatus "killed"   = Killed
-readAsyncTaskStatus "running"  = Running
+readAsyncTaskStatus "IsFailure"  = Failed
+readAsyncTaskStatus "IsFinished" = Finished
+readAsyncTaskStatus "IsKilled"   = Killed
+readAsyncTaskStatus "IsPending"  = Pending
+readAsyncTaskStatus "IsReceived" = Received
+readAsyncTaskStatus "IsRunning"  = Running
+readAsyncTaskStatus "IsStarted"  = Started
 readAsyncTaskStatus _ = Running
 
 newtype AsyncTask = AsyncTask {

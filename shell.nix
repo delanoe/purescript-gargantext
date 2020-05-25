@@ -51,6 +51,16 @@ let
     purs compile "src/**/*.purs" \
       ${builtins.toString (builtins.map storePath (builtins.attrValues purs-packages))}
   '';
+
+  build = pkgs.writeShellScriptBin "build" ''
+    #!/usr/bin/env bash
+    set -e
+
+    echo "Compiling"
+    build-purs-from-store
+    echo "Bundling"
+    yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
+  '';
 in
 pkgs.mkShell {
   buildInputs = [
@@ -60,6 +70,7 @@ pkgs.mkShell {
     install-purs-packages
     build-purs
     build-purs-from-store
+    build
     pkgs.yarn
   ];
 }
