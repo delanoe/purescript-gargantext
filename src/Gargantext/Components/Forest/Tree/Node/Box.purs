@@ -586,14 +586,26 @@ actionDownload :: NodeType -> ID -> Session -> R.Hooks R.Element
 actionDownload NodeList id session = downloadButton href label info
     where
       href  = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
-      label = "Download list"
-      info  = "Info about the JSON format"
+      label = "Download List"
+      info  = "Info about the List as JSON format"
 
 actionDownload GT.Graph id session = downloadButton href label info
     where
       href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
-      label = "Download GEXF"
-      info  = "Info about the GEXF format"
+      label = "Download Graph"
+      info  = "Info about the Graph as GEXF format"
+
+actionDownload GT.Corpus id session = downloadButton href label info
+    where
+      href  = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
+      label = "Download Corpus"
+      info  = "TODO: fix the backend route"
+
+actionDownload GT.Texts id session = downloadButton href label info
+    where
+      href  = url session $ Routes.NodeAPI GT.Texts (Just id) ""
+      label = "Download texts"
+      info  = "TODO: fix the backend route. What is the expected result ?"
 
 actionDownload _ _ _ = pure $ fragmentPT $ "Soon, you will be able to dowload your file here "
 
@@ -648,6 +660,5 @@ docOf nodeType         = ["More information on " <> show nodeType]
 
 
 fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
-
 
 
