@@ -18,7 +18,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createN
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
-import Gargantext.Components.GraphExplorer.API as GEAPI
+import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
@@ -89,7 +89,8 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
         , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
               }
           [ nodeText { isSelected: mAppRouteId mCurrentRoute == Just id
-                     , name: name' props } ]
+                     , name: name' props 
+                     } ]
         , nodeActions { id
                       , nodeType
                       , refreshTree: const $ dispatch RefreshTree
@@ -213,13 +214,13 @@ nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
     cpt _ _ = do
       pure $ H.div {} []
 
-    graphVersions session graphId = GEAPI.graphVersions { graphId, session }
+    graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
     triggerRefresh refreshTree = refreshTree
 
 type NodeActionsGraphProps =
   (
     id             :: ID
-  , graphVersions  :: Record GEAPI.GraphVersions
+  , graphVersions  :: Record GraphAPI.GraphVersions
   , session        :: Session
   , triggerRefresh :: Unit -> Aff Unit
   )
@@ -263,7 +264,7 @@ graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
         onClick (true /\ setEnabled) _ = do
           launchAff_ $ do
             liftEffect $ setEnabled $ const false
-            g <- GEAPI.updateGraphVersions { graphId: id, session }
+            g <- GraphAPI.updateGraphVersions { graphId: id, session }
             liftEffect $ setEnabled $ const true
             triggerRefresh unit
           pure unit
@@ -286,7 +287,6 @@ mAppRouteId (Just (Routes.UserPage       _ id)) = Just id
 mAppRouteId (Just (Routes.Document       _ id _ )) = Just id
 mAppRouteId (Just (Routes.ContactPage    _ id _ )) = Just id
 mAppRouteId (Just (Routes.CorpusDocument _ id _ _)) = Just id
-
 mAppRouteId _ = Nothing
 
 
