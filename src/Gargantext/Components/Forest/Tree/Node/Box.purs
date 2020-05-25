@@ -322,7 +322,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
     cpt p _ = do
       renameBoxOpen <- R.useState' false
       nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {action: Nothing, id: p.id, name: p.name, nodeType: p.nodeType}
-      search <- R.useState' $ defaultSearch { node_id = Just p.id }
+      search        <- R.useState' $ defaultSearch { node_id = Just p.id }
       pure $ H.div tooltipProps $
         [ H.div { className: "popup-container" }
           [ H.div { className: "panel panel-default" }
@@ -583,25 +583,43 @@ reallyDelete d = H.div {className: "panel-footer"}
 
 -- | Action : Download
 actionDownload :: NodeType -> ID -> Session -> R.Hooks R.Element
-actionDownload NodeList id session = do
-  let href = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
-  pure $ R.fragment [
-    H.span { className: "row" }
-           [ H.a { className: "btn btn-default"
-                 , href
-                 , target: "_blank" } [ H.text "Download list" ]
-           ]
-  ]
-actionDownload GT.Graph id session = do
-  pure $ R.fragment [ H.div { className: "gexf" }
-                            [ H.a { className: "btn btn-default"
-                                     , href: url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
-                                     , target: "_blank" } [ H.text "Download GEXF" ]
-                            ]
-                    ]
-actionDownload _ _ _ = do
-  pure $ fragmentPT $ "Soon, you will be able to dowload your file here "
+actionDownload NodeList id session = downloadButton href label info
+    where
+      href  = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
+      label = "Download list"
+      info  = "Info about the JSON format"
 
+actionDownload GT.Graph id session = downloadButton href label info
+    where
+      href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
+      label = "Download GEXF"
+      info  = "Info about the GEXF format"
+
+actionDownload _ _ _ = pure $ fragmentPT $ "Soon, you will be able to dowload your file here "
+
+
+type Href  = String
+type Label = String
+type Info  = String
+downloadButton :: Href -> Label -> Info -> R.Hooks R.Element
+downloadButton href label info = do
+  pure $ R.fragment [ H.div { className: "row"}
+                            [ H.div { className: "col-md-2"} []
+                            , H.div { className: "col-md-7 flex-center"}
+                                    [ H.p {} [H.text info] ]
+                            ]
+                    , H.span { className: "row" }
+                             [ H.div { className: "panel-footer"}
+                               [ H.div { className: "col-md-3"} []
+                                       , H.div { className: "col-md-3 flex-center"}
+                                               [ H.a { className: "btn btn-default"
+                                                     , href
+                                                     , target: "_blank" }
+                                                     [ H.text label ]
+                                               ]
+                                       ]
+                               ]
+                    ]
 
 
 -- | Action: Show Documentation
