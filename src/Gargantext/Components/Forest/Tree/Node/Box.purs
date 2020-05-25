@@ -502,8 +502,7 @@ panelAction p = R.createElement panelActionCpt p []
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
   where
-    cpt {action: Documentation nodeType} _ = doc nodeType
-    cpt {action: Link _} _ = pure $ fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
+    cpt {action: Documentation nodeType} _ = actionDoc nodeType
 
     cpt {action: Upload, dispatch, id, nodeType: GT.NodeList, session} _ = do
       pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
@@ -555,6 +554,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}
 
+    cpt {action: Link _} _ = pure $ fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
 {-
     cpt {action: Refresh, nodeType: GT.Graph, id, session} _ = do
 
@@ -595,25 +595,30 @@ reallyDelete d = H.div {className: "panel-footer"}
               [H.text " Yes, delete!"]
             ]
 
--- | Show Documentation
-infoTitle :: GT.NodeType -> R.Element
-infoTitle nt = H.div {style: {margin: "10px"}} [ H.h3 {} [H.text "Documentation about " ]
-                        , H.h3 {className: GT.fldr nt true} [ H.text $ show nt ]
-                        ]
+-- | Action : Upload
 
-doc :: GT.NodeType -> R.Hooks R.Element
-doc GT.NodeUser = pure $ R.fragment [ H.div { style: {margin: "10px"} }
+
+-- | Action: Show Documentation
+actionDoc :: GT.NodeType -> R.Hooks R.Element
+actionDoc GT.NodeUser = pure $ R.fragment [ H.div { style: {margin: "10px"} }
                                                 [ infoTitle GT.NodeUser
                                                 , H.p {} [ H.text "This account is personal"]
                                                 , H.p {} [ H.text "See the instances terms of uses."]
                                                 ]
                                         ]
 
-doc GT.FolderPrivate = pure $ fragmentPT "This folder and its children are private only!"
-doc GT.FolderPublic  = pure $ fragmentPT "Soon, you will be able to build public folders to share your work with the world!"
-doc GT.FolderShared  = pure $ fragmentPT "Soon, you will be able to build teams folders to share your work"
-doc nodeType         = pure $ fragmentPT $ "More information on " <> show nodeType
+actionDoc GT.FolderPrivate = pure $ fragmentPT "This folder and its children are private only!"
+actionDoc GT.FolderPublic  = pure $ fragmentPT "Soon, you will be able to build public folders to share your work with the world!"
+actionDoc GT.FolderShared  = pure $ fragmentPT "Soon, you will be able to build teams folders to share your work"
+actionDoc nodeType         = pure $ fragmentPT $ "More information on " <> show nodeType
 
+
+-- | Utils
+infoTitle :: GT.NodeType -> R.Element
+infoTitle nt = H.div { style: {margin: "10px"}}
+                     [ H.h3 {} [H.text "Documentation about " ]
+                     , H.h3 {className: GT.fldr nt true} [ H.text $ show nt ]
+                     ]
 
 fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 
