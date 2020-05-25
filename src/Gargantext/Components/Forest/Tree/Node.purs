@@ -194,7 +194,7 @@ settingsBox NodeList =
                           , Download
                           , Upload
                           , CopyFromCorpus
-                          -- , Delete
+                          , Delete
                           ]
               }
 
