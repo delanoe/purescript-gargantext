@@ -595,30 +595,37 @@ reallyDelete d = H.div {className: "panel-footer"}
               [H.text " Yes, delete!"]
             ]
 
+
+
 -- | Action : Upload
+
+
 
 
 -- | Action: Show Documentation
 actionDoc :: GT.NodeType -> R.Hooks R.Element
-actionDoc GT.NodeUser = pure $ R.fragment [ H.div { style: {margin: "10px"} }
-                                                [ infoTitle GT.NodeUser
-                                                , H.p {} [ H.text "This account is personal"]
-                                                , H.p {} [ H.text "See the instances terms of uses."]
-                                                ]
-                                        ]
+actionDoc nodeType =
+  pure $ R.fragment [ H.div { style: {margin: "10px"} }
+                            $ [ infoTitle nodeType ]
+                            <> (map (\info -> H.p {} [H.text info]) $ docOf nodeType)
+                    ]
+  where
+    infoTitle :: GT.NodeType -> R.Element
+    infoTitle nt = H.div { style: {margin: "10px"}}
+                         [ H.h3 {} [H.text "Documentation about " ]
+                         , H.h3 {className: GT.fldr nt true} [ H.text $ show nt ]
+                         ]
 
-actionDoc GT.FolderPrivate = pure $ fragmentPT "This folder and its children are private only!"
-actionDoc GT.FolderPublic  = pure $ fragmentPT "Soon, you will be able to build public folders to share your work with the world!"
-actionDoc GT.FolderShared  = pure $ fragmentPT "Soon, you will be able to build teams folders to share your work"
-actionDoc nodeType         = pure $ fragmentPT $ "More information on " <> show nodeType
+-- | TODO add documentation of all NodeType
+docOf :: GT.NodeType -> Array String
+docOf GT.NodeUser = [ "This account is personal"
+                    , "See the instances terms of uses."
+                    ]
+docOf GT.FolderPrivate = ["This folder and its children are private only."]
+docOf GT.FolderPublic  = ["Soon, you will be able to build public folders to share your work with the world!"]
+docOf GT.FolderShared  = ["Soon, you will be able to build teams folders to share your work"]
+docOf nodeType         = ["More information on " <> show nodeType]
 
-
--- | Utils
-infoTitle :: GT.NodeType -> R.Element
-infoTitle nt = H.div { style: {margin: "10px"}}
-                     [ H.h3 {} [H.text "Documentation about " ]
-                     , H.h3 {className: GT.fldr nt true} [ H.text $ show nt ]
-                     ]
 
 fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 
