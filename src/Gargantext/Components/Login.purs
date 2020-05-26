@@ -167,7 +167,7 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
       [ cardGroup
         [ cardBlock
           [ center
-          [ H.div {}{-className: "text-muted"-}
+          [ H.h4 {}{-className: "text-muted"-}
               [ H.text $ "Login to garg://" <> show backend]
               , requestAccessLink {}
               ]
