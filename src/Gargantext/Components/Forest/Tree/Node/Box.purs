@@ -330,8 +330,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
         [ H.div { className: "popup-container" }
           [ H.div { className: "panel panel-default" }
             [ H.div {className: ""}
-              [ H.div { className : "col-md-11"}
+            [ H.div { className : "col-md-10 flex-between"}
                 [ H.h3 { className: GT.fldr p.nodeType true} [H.text $ show p.nodeType]
+               -- , H.div { className : "col-md-1" } []
                 , H.p {className: "text-primary center"} [H.text p.name]
                 ]
               ]
@@ -511,6 +512,15 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload nodeType id session dispatch
     cpt {action: Delete, nodeType, dispatch} _ = actionDelete nodeType dispatch
 
+    cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
+      pure $ createNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
+
+    cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
+      pure $ copyFromCorpusView {dispatch, id, nodeType, session}
+
+    cpt {action: Link _} _ = pure $ fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
+
+
     cpt props@{action: SearchBox, search, session} _ = do
       pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
                               [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
@@ -526,13 +536,6 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
             pure unit
 
 
-    cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
-      pure $ createNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
-
-    cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
-      pure $ copyFromCorpusView {dispatch, id, nodeType, session}
-
-    cpt {action: Link _} _ = pure $ fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
 {-
     cpt {action: Refresh, nodeType: GT.Graph, id, session} _ = do
 
