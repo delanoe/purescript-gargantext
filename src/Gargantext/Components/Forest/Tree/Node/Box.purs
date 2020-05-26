@@ -509,7 +509,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Documentation nodeType}          _ = actionDoc      nodeType
     cpt {action: Download, id, nodeType, session} _ = actionDownload nodeType id session
     cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload nodeType id session dispatch
-
+    cpt {action: Delete, nodeType, dispatch} _ = actionDelete nodeType dispatch
 
     cpt props@{action: SearchBox, search, session} _ = do
       pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
@@ -524,30 +524,6 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
             -- TODO
             --snd p $ const Nothing
             pure unit
-
-
-    cpt {action: Delete, nodeType: GT.NodeUser} _ = do
-      pure $ R.fragment [
-        H.div {style: {margin: "10px"}} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]
-      ]
-
-    cpt {action: Delete, dispatch} _ = do
-      pure $ R.fragment [
-        H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."])
-        , reallyDelete dispatch
-        ]
-      where
-        reallyDelete :: Dispatch -> R.Element
-        reallyDelete d = H.div {className: "panel-footer"}
-                    [ H.a { type: "button"
-                          , className: "btn glyphicon glyphicon-trash"
-                          , id: "delete"
-                          , title: "Delete"
-                          , on: {click: \_ -> launchAff $ d $ DeleteNode}
-                          }
-                      [H.text " Yes, delete!"]
-                    ]
-
 
 
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
@@ -577,6 +553,29 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
       pure $ H.div {} []
 
 
+-- | Action : Delete
+actionDelete :: NodeType -> Dispatch -> R.Hooks R.Element
+actionDelete NodeUser _ = do
+  pure $ R.fragment [
+    H.div {style: {margin: "10px"}} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]
+  ]
+
+actionDelete _ dispatch = do
+  pure $ R.fragment [
+    H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."])
+    , reallyDelete dispatch
+    ]
+  where
+    reallyDelete :: Dispatch -> R.Element
+    reallyDelete d = H.div {className: "panel-footer"}
+                [ H.a { type: "button"
+                      , className: "btn glyphicon glyphicon-trash"
+                      , id: "delete"
+                      , title: "Delete"
+                      , on: {click: \_ -> launchAff $ d $ DeleteNode}
+                      }
+                  [H.text " Yes, delete!"]
+                ]
 
 
 
