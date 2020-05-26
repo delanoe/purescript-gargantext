@@ -307,7 +307,10 @@ type NodePopupS =
     , nodeType :: GT.NodeType
   )
 
-iconAStyle :: { color :: String, paddingTop :: String, paddingBottom :: String}
+iconAStyle :: { color      :: String
+              , paddingTop :: String
+              , paddingBottom :: String
+              }
 iconAStyle = { color         : "black"
              , paddingTop    : "6px"
              , paddingBottom : "6px"
@@ -505,6 +508,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
   where
     cpt {action: Documentation nodeType}          _ = actionDoc      nodeType
     cpt {action: Download, id, nodeType, session} _ = actionDownload nodeType id session
+
     cpt {action: Upload, dispatch, id, nodeType: GT.NodeList, session} _ = do
       pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
 
@@ -517,6 +521,15 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
                               [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
                         , searchBar {langs: allLangs, onSearch: searchOn props, search, session}
                         ]
+        where
+          searchOn :: Record PanelActionProps -> GT.AsyncTaskWithType -> Effect Unit
+          searchOn {dispatch, nodePopup: p} task = do
+            _ <- launchAff $ dispatch (SearchQuery task)
+            -- close popup
+            -- TODO
+            --snd p $ const Nothing
+            pure unit
+
 
     cpt {action: Delete, nodeType: GT.NodeUser} _ = do
       pure $ R.fragment [
@@ -528,6 +541,19 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
         H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."])
         , reallyDelete dispatch
         ]
+      where
+        reallyDelete :: Dispatch -> R.Element
+        reallyDelete d = H.div {className: "panel-footer"}
+                    [ H.a { type: "button"
+                          , className: "btn glyphicon glyphicon-trash"
+                          , id: "delete"
+                          , title: "Delete"
+                          , on: {click: \_ -> launchAff $ d $ DeleteNode}
+                          }
+                      [H.text " Yes, delete!"]
+                    ]
+
+
 
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
       pure $ createNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
@@ -556,25 +582,6 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
       pure $ H.div {} []
 
 
-    searchOn :: Record PanelActionProps -> GT.AsyncTaskWithType -> Effect Unit
-    searchOn {dispatch, nodePopup: p} task = do
-      _ <- launchAff $ dispatch (SearchQuery task)
-      -- close popup
-      -- TODO
-      --snd p $ const Nothing
-      pure unit
-
-
-reallyDelete :: Dispatch -> R.Element
-reallyDelete d = H.div {className: "panel-footer"}
-            [ H.a { type: "button"
-                  , className: "btn glyphicon glyphicon-trash"
-                  , id: "delete"
-                  , title: "Delete"
-                  , on: {click: \_ -> launchAff $ d $ DeleteNode}
-                  }
-              [H.text " Yes, delete!"]
-            ]
 
 
 
