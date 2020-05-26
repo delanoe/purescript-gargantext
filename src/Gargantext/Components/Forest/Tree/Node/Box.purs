@@ -508,12 +508,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
   where
     cpt {action: Documentation nodeType}          _ = actionDoc      nodeType
     cpt {action: Download, id, nodeType, session} _ = actionDownload nodeType id session
-
-    cpt {action: Upload, dispatch, id, nodeType: GT.NodeList, session} _ = do
-      pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
-
-    cpt {action: Upload, dispatch, id, nodeType, session} _ = do
-      pure $ uploadFileView {dispatch, id, nodeType, session}
+    cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload nodeType id session dispatch
 
 
     cpt props@{action: SearchBox, search, session} _ = do
@@ -586,6 +581,15 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
 
 
 -- | Action : Upload
+actionUpload :: NodeType -> ID -> Session -> Dispatch -> R.Hooks R.Element
+actionUpload NodeList id session dispatch =
+  pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
+
+actionUpload Corpus id session dispatch =
+  pure $ uploadFileView {dispatch, id, nodeType: Corpus, session}
+
+actionUpload _ _ _ _ =
+  pure $ fragmentPT $ "Soon, upload for this NodeType."
 
 
 -- | Action : Download
