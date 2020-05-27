@@ -167,19 +167,25 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
       [ cardGroup
         [ cardBlock
           [ center
-            [ H.div {className: "text-muted"}
+          [ H.div {}{-className: "text-muted"-}
               [ H.text $ "Login to garg://" <> show backend]
-              , requestAccessLink {} 
+              , requestAccessLink {}
               ]
           , H.div {}
             [ csrfTokenInput {}
             , formGroup [ H.p {} [ H.text (fst error) ], usernameInput username ]
             , formGroup [ passwordInput password, clearfix {} ]
             , center
-              [ H.label {}
-                [ H.div {className: "checkbox"}
-                  [ termsCheckbox setBox , H.text "I accept the terms of use ", termsLink {} ] ]
-              ] 
+               [ H.label {}
+                 [ H.div {className: "checkbox"}
+                    [ termsCheckbox setBox
+                    , H.text "I hereby accept "
+                    , H.a { target: "_blank"
+                          , href: "http://gitlab.iscpif.fr/humanities/tofu/tree/master"
+                          } [ H.text "the terms of use" ]
+                    ]
+                  ]
+                ]
             ]
           , if checkBox == true
                && fst username /= ""
@@ -216,7 +222,7 @@ termsCheckbox setCheckBox =
 
 termsLink :: {} -> R.Element
 termsLink _ =
-  H.a { target: "_blank", href: termsUrl } [ H.text " [Read the terms of use]" ]
+  H.a { target: "_blank", href: termsUrl } [ H.text "the terms of use" ]
   where termsUrl = "http://gitlab.iscpif.fr/humanities/tofu/tree/master"
 
 requestAccessLink :: {} -> R.Element

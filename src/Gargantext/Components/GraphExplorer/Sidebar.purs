@@ -69,11 +69,6 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                   [ RH.div { className: "", role: "tabpanel" }
                     (Seq.toUnfoldable $ (Seq.map (badge props.selectedNodeIds) (badges props.graph props.selectedNodeIds)))
                   ]
-                , RH.div { className: "gexf" } [
-                   RH.a { className: "btn btn-default"
-                        , href: gexfHref props.session props.graphId
-                        , target: "_blank" } [ RH.text "Download GEXF" ]
-                  ]
                 , RH.div { className: "tab-content" }
                   [
                     removeButton "Remove candidate" CandidateTerm props nodesMap
@@ -137,9 +132,6 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                   , treeReload: props.treeReload }
       snd props.removedNodeIds $ const $ fst props.selectedNodeIds
       snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
-
-    gexfHref :: Session -> Int -> String
-    gexfHref session graphId = url session $ Routes.NodeAPI GT.Graph (Just graphId) "gexf"
 
 
 badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element

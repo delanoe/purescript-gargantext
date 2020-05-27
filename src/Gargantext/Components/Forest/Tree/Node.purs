@@ -16,9 +16,12 @@ filterWithRights (show action if user can only)
 -}
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
+
+data Status a = IsBeta a | IsProd a
+
 data NodeAction = Documentation NodeType
                 | SearchBox
-                | Download | Upload | Refresh
+                | Download | Upload | Refresh | Config
                 | Move     | Clone  | Delete
                 | Share    | Link NodeType
                 | Add (Array NodeType)
@@ -36,8 +39,9 @@ instance eqNodeAction :: Eq NodeAction where
   eq Delete Delete     = true
   eq Share Share       = true
   eq (Link x) (Link y) = true && (x == y)
-  eq (Add x) (Add y)   = true && (x == y)
+  eq (Add  x) (Add  y) = true && (x == y)
   eq CopyFromCorpus CopyFromCorpus = true
+  eq Config Config     = true
   eq _ _               = false
 
 instance showNodeAction :: Show NodeAction where
@@ -50,6 +54,7 @@ instance showNodeAction :: Show NodeAction where
   show Clone             = "Clone"
   show Delete            = "Delete"
   show Share             = "Share"
+  show Config            = "Config"
   show (Link x)          = "Link to " <> show x
   show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
   show CopyFromCorpus    = "Copy from corpus"
@@ -64,10 +69,11 @@ glyphiconNodeAction Upload            = "upload"
 glyphiconNodeAction (Link _)          = "transfer"
 glyphiconNodeAction Download          = "download"
 glyphiconNodeAction CopyFromCorpus    = "random"
+glyphiconNodeAction Refresh           = "refresh"
+glyphiconNodeAction Config            = "wrench"
 glyphiconNodeAction _                 = ""
 
 
-------------------------------------------------------------------------
 ------------------------------------------------------------------------
 data SettingsBox =
   SettingsBox { show    :: Boolean
@@ -79,14 +85,14 @@ data SettingsBox =
 
 settingsBox :: NodeType -> SettingsBox
 settingsBox NodeUser = SettingsBox {
-    show: true
+    show : true
   , edit : false
   , doc  : Documentation NodeUser
   , buttons : [ Delete ]
   }
 
 settingsBox FolderPrivate = SettingsBox {
-    show: true
+    show : true
   , edit : false
   , doc  : Documentation FolderPrivate
   , buttons : [ Add [ Corpus
@@ -97,7 +103,7 @@ settingsBox FolderPrivate = SettingsBox {
   }
 
 settingsBox Team = SettingsBox {
-    show: true
+    show : true
   , edit : true
   , doc  : Documentation Team
   , buttons : [ Add [ Corpus
@@ -108,7 +114,7 @@ settingsBox Team = SettingsBox {
   }
 
 settingsBox FolderShared = SettingsBox {
-    show: true
+    show : true
   , edit : true
   , doc  : Documentation FolderShared
   , buttons : [ Add [Team, FolderShared]
@@ -117,7 +123,7 @@ settingsBox FolderShared = SettingsBox {
   }
 
 settingsBox FolderPublic = SettingsBox {
-    show: true
+    show : true
   , edit : false
   , doc  : Documentation FolderPublic
   , buttons : [ Add [ Corpus
@@ -126,86 +132,91 @@ settingsBox FolderPublic = SettingsBox {
     ]
   }
 
-settingsBox Folder = SettingsBox {
-    show: true
-  , edit : true
-  , doc  : Documentation Folder
-  , buttons : [ Add [ Corpus
-                    , Folder
-                    , Annuaire
-                    ]
-              , Delete
-              ]
-  }
+settingsBox Folder =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation Folder
+              , buttons : [ Add [ Corpus
+                                , Folder
+                                , Annuaire
+                                ]
+                          , Delete
+                          ]
+              }
 
-settingsBox Corpus = SettingsBox {
-    show: true
-  , edit : true
-  , doc  : Documentation Corpus
-  , buttons : [ SearchBox
-              , Add [ NodeList
-                    , Graph
-                    , Dashboard
-                    ]
-              , Upload
-              , Download
-                --, Share
-                --, Move
-                --, Clone
-              , Link Annuaire
-              , Delete
-              ]
-  }
+settingsBox Corpus =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation Corpus
+              , buttons : [ SearchBox
+                          , Add [ NodeList
+                                , Graph
+                                , Dashboard
+                                ]
+                          , Upload
+                          , Download
+                            --, Share
+                            --, Move
+                            --, Clone
+                          , Link Annuaire
+                          , Delete
+                          ]
+              }
 
-settingsBox Texts = SettingsBox {
-    show: true
-  , edit : false
-  , doc  : Documentation Texts
-  , buttons : [ Upload
-              , Download
-              -- , Delete
-              ]
-  }
+settingsBox Texts =
+  SettingsBox { show : true
+              , edit : false
+              , doc  : Documentation Texts
+              , buttons : [ Refresh
+                          , Upload
+                          , Download
+                          -- , Delete
+                          ]
+              }
 
-settingsBox Graph = SettingsBox {
-    show: true
-  , edit : false
-  , doc  : Documentation Graph
-  , buttons : [ Download -- TODO as GEXF or JSON
-              , Delete
-              ]
-  }
+settingsBox Graph =
+  SettingsBox { show : true
+              , edit : false
+              , doc  : Documentation Graph
+              , buttons : [ Refresh
+                          , Config
+                          , Download -- TODO as GEXF or JSON
+                          , Delete
+                          ]
+              }
 
-settingsBox NodeList = SettingsBox {
-    show: true
-  , edit : false
-  , doc  : Documentation NodeList
-  , buttons : [ Upload
-              , CopyFromCorpus
-              , Download
-              -- , Delete
-              ]
-  }
+settingsBox NodeList =
+  SettingsBox { show : true
+              , edit : false
+              , doc  : Documentation NodeList
+              , buttons : [ Refresh
+                          , Config
+                          , Download
+                          , Upload
+                          , CopyFromCorpus
+                          , Delete
+                          ]
+              }
 
-settingsBox Dashboard = SettingsBox {
-    show: true
-  , edit : false
-  , doc  : Documentation Dashboard
-  , buttons : []
-  }
+settingsBox Dashboard =
+  SettingsBox { show : true
+              , edit : false
+              , doc  : Documentation Dashboard
+              , buttons : []
+              }
 
-settingsBox Annuaire = SettingsBox {
-    show: true
-  , edit : false
-  , doc  : Documentation Annuaire
-  , buttons : [ Upload
-              , Delete 
-              ]
-  }
+settingsBox Annuaire =
+  SettingsBox { show : true
+              , edit : false
+              , doc  : Documentation Annuaire
+              , buttons : [ Upload
+                          , Delete
+                          ]
+              }
 
-settingsBox _ = SettingsBox {
-    show: false
-  , edit : false
-  , doc  : Documentation NodeUser
-  , buttons : []
-  }
+settingsBox _ =
+  SettingsBox { show : false
+              , edit : false
+              , doc  : Documentation NodeUser
+              , buttons : []
+              }

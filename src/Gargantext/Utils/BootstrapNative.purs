@@ -1,4 +1,4 @@
-module Gargantext.BootstrapNative where
+module Gargantext.Utils.BootstrapNative where
 
 import Effect (Effect)
 
