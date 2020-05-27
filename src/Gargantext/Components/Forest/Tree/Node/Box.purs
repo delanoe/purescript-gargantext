@@ -7,6 +7,8 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
+import Data.Nullable (Nullable, null)
+import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
@@ -40,6 +42,11 @@ import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
 import Web.File.FileReader.Aff (readAsText)
 
+import DOM.Simple.Types
+import DOM.Simple.Window
+import DOM.Simple.EventListener
+import DOM.Simple.Event
+import Effect.Console
 
 type Dispatch = Action -> Aff Unit
 
@@ -324,6 +331,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
   where
     cpt p _ = do
       renameBoxOpen <- R.useState' false
+      iframeRef <- R.useRef null
       nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {action: Nothing, id: p.id, name: p.name, nodeType: p.nodeType}
       search        <- R.useState' $ defaultSearch { node_id = Just p.id }
       pure $ H.div tooltipProps $
@@ -343,7 +351,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
           , if nodePopup.action == Just SearchBox then
               H.div {}
                 [
-                  searchIsTexIframe p search
+                  searchIsTexIframe p search iframeRef
                 ]
             else
               H.div {} []
@@ -418,20 +426,38 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                         , session  : p.session
                         }
 
-        searchIsTexIframe {nodeType} search@(search' /\ _) =
+        searchIsTexIframe {nodeType} search@(search' /\ _) iframeRef =
           if isIsTex search'.datafield then
             H.div { className: "istex-search panel panel-default" }
             [
               H.h3 { className: GT.fldr nodeType true} []
-            , componentIsTex search
+            , componentIsTex search iframeRef
             ]
           else
             H.div {} []
 
-        componentIsTex (search /\ setSearch) =
-          H.iframe { src: isTexTermUrl search.term , width: "100%", height: "100%"} []
-        isTexUrl = "https://istex.gargantext.org"
-        isTexLocalUrl = "http://localhost:8083"
+        componentIsTex (search /\ setSearch) iframeRef =
+          H.iframe { src: isTexTermUrl search.term
+                    ,width: "100%"
+                    ,height: "100%"
+                    ,ref: iframeRef
+                    ,on: {
+                      load: \_ -> do
+                         addEventListener window "message" changeSearchOnMessage
+                         R2.postMessage iframeRef search.term
+                         }
+                   } []
+          where
+            changeSearchOnMessage :: Callback MessageEvent
+            changeSearchOnMessage = callback $ \m -> if R2.getMessageOrigin m == isTexUrl
+                                                     then do
+                                                       let {url, term} = R2.getMessageData m
+                                                       setSearch $ _ {url = url, term = term}
+                                                     else
+                                                       pure unit
+        --isTexUrl =  "http://0.0.0.0:8080"--"https://istex.gargantext.org"
+        isTexUrl =  "https://istex.gargantext.org"
+        -- isTexLocalUrl = "http://localhost:8083"
         isTexTermUrl term = isTexUrl <> query
           where
             query = Query.print $ NQP.print identity identity qp
