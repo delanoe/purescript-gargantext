@@ -24,6 +24,7 @@ import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex_Advanced)
+import Gargantext.Components.Search.Types (DataField(..))
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute)
@@ -51,9 +52,8 @@ import Effect.Console
 type Dispatch = Action -> Aff Unit
 
 type CommonProps =
-  (
-      dispatch :: Dispatch
-    , session :: Session
+  ( dispatch :: Dispatch
+  , session :: Session
   )
 
 
@@ -202,8 +202,7 @@ nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
 -- START nodeActions
 
 type NodeActionsProps =
-  (
-    id :: ID
+  ( id :: ID
   , nodeType :: GT.NodeType
   , refreshTree :: Unit -> Aff Unit
   , session :: Session
@@ -225,8 +224,7 @@ nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
     triggerRefresh refreshTree = refreshTree
 
 type NodeActionsGraphProps =
-  (
-    id             :: ID
+  ( id             :: ID
   , graphVersions  :: Record GraphAPI.GraphVersions
   , session        :: Session
   , triggerRefresh :: Unit -> Aff Unit
@@ -247,8 +245,7 @@ nodeActionsGraphCpt = R.hooksComponent "G.C.F.T.N.B.nodeActionsGraph" cpt
       ]
 
 type GraphUpdateButtonProps =
-  (
-    id :: ID
+  ( id :: ID
   , session :: Session
   , triggerRefresh :: Unit -> Aff Unit
   )
@@ -349,10 +346,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
             , mPanelAction nodePopupState p search
             ]
           , if nodePopup.action == Just SearchBox then
-              H.div {}
-                [
-                  searchIsTexIframe p search iframeRef
-                ]
+              H.div {} [ searchIframes p search iframeRef ]
             else
               H.div {} []
           ]
@@ -425,46 +419,6 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                         , search
                         , session  : p.session
                         }
-
-        searchIsTexIframe {nodeType} search@(search' /\ _) iframeRef =
-          if isIsTex_Advanced search'.datafield then
-            H.div { className: "istex-search panel panel-default" }
-            [
-              H.h3 { className: GT.fldr nodeType true} []
-            , componentIsTex search iframeRef
-            ]
-          else
-            H.div {} []
-
-        componentIsTex (search /\ setSearch) iframeRef =
-          H.iframe { src: isTexTermUrl search.term
-                    ,width: "100%"
-                    ,height: "100%"
-                    ,ref: iframeRef
-                    ,on: {
-                      load: \_ -> do
-                         addEventListener window "message" changeSearchOnMessage
-                         R2.postMessage iframeRef search.term
-                         }
-                   } []
-          where
-            changeSearchOnMessage :: Callback MessageEvent
-            changeSearchOnMessage = callback $ \m -> if R2.getMessageOrigin m == isTexUrl
-                                                     then do
-                                                       let {url, term} = R2.getMessageData m
-                                                       setSearch $ _ {url = url, term = term}
-                                                     else
-                                                       pure unit
-        --isTexUrl =  "http://0.0.0.0:8080"--"https://istex.gargantext.org"
-        isTexUrl =  "https://istex.gargantext.org"
-        -- isTexLocalUrl = "http://localhost:8083"
-        isTexTermUrl term = isTexUrl <> query
-          where
-            query = Query.print $ NQP.print identity identity qp
-
-            qp = NQP.QueryPairs [
-              Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
-              ]
 
 
 type ActionState =
@@ -701,5 +655,50 @@ docOf nodeType         = ["More information on " <> show nodeType]
 
 
 fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
+
+--------------------
+-- | Iframes
+
+searchIframes {nodeType} search@(search' /\ _) iframeRef =
+  if isIsTex_Advanced search'.datafield then
+    H.div { className: "istex-search panel panel-default" }
+          [ H.h3 { className: GT.fldr nodeType true} []
+          , iframeWith "https://istex.gargantext.org" search iframeRef
+          ]
+  else
+    if Just Web == search'.datafield then
+      H.div { className: "istex-search panel panel-default" }
+            [ H.h3 { className: GT.fldr nodeType true} []
+            , iframeWith "https://searx.gargantext.org" search iframeRef
+            ]
+    else
+      H.div {} []
+
+iframeWith url (search /\ setSearch) iframeRef =
+  H.iframe { src: isTexTermUrl search.term
+            ,width: "100%"
+            ,height: "100%"
+            ,ref: iframeRef
+            ,on: {
+              load: \_ -> do
+                 addEventListener window "message" (changeSearchOnMessage url)
+                 R2.postMessage iframeRef search.term
+                 }
+           } []
+  where
+    changeSearchOnMessage :: String -> Callback MessageEvent
+    changeSearchOnMessage url = callback $ \m -> if R2.getMessageOrigin m == url
+                                             then do
+                                               let {url, term} = R2.getMessageData m
+                                               setSearch $ _ {url = url, term = term}
+                                             else
+                                               pure unit
+    isTexTermUrl term = url <> query
+      where
+        query = Query.print $ NQP.print identity identity qp
+
+        qp = NQP.QueryPairs [
+          Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
+          ]
 
 
