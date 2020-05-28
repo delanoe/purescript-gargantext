@@ -102,11 +102,11 @@ renderNgramsTreeCpt = R.hooksComponent "G.C.NT.renderNgramsTree" cpt
       pure $ H.ul {} [
         H.span { className: "tree" } [
           tree { ngramsClick
-                , ngramsDepth: {ngrams, depth: 0}
-                , ngramsEdit
-                , ngramsStyle
-                , ngramsTable
-                }
+               , ngramsDepth: {ngrams, depth: 0}
+               , ngramsEdit
+               , ngramsStyle
+               , ngramsTable
+               }
         ]
       ]
 

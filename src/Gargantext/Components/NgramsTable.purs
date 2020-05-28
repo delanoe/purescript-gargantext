@@ -22,6 +22,7 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
 import Reactix as R
@@ -237,7 +238,7 @@ tableContainerCpt { dispatch
                           <<< _NgramsElement
                           <<< _children
                           %~ applyPatchSet (patchSetFromMap ngramsChildren)
-            ngramsClick {depth: 1, ngrams: child} = Just $ dispatch $ ToggleChild false child
+            ngramsClick {depth: 1, ngrams: child} = Just $ dispatch $ ToggleChild true child
             ngramsClick _ = Nothing
             ngramsEdit  _ = Nothing
 
@@ -330,7 +331,7 @@ loadedNgramsTableCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
         performAction (ToggleChild b c) =
           setState $ \s@{ ngramsChildren: nc } -> s { ngramsChildren = newNC nc }
           where
-            newNC nc = Map.alter (maybe Nothing $ const (Just b)) c nc
+            newNC nc = Map.alter (maybe (Just b) (const Nothing)) c nc
         performAction (ToggleSelect c) =
           setState $ \s@{ ngramsSelection: ns } -> s { ngramsSelection = toggleSet c ns }
         performAction ToggleSelectAll =
