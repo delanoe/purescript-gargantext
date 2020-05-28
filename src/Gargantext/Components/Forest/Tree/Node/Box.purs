@@ -23,7 +23,7 @@ import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, Bar
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Search.SearchBar (searchBar)
-import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
+import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex_Advanced)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute)
@@ -299,9 +299,9 @@ mAppRouteId _ = Nothing
 
 -- | START Popup View
 type NodePopupProps =
-  ( id       :: ID
-  , name     :: Name
-  , nodeType :: GT.NodeType
+  ( id             :: ID
+  , name           :: Name
+  , nodeType       :: GT.NodeType
   , onPopoverClose :: DOM.Element -> Effect Unit
   | CommonProps
   )
@@ -427,7 +427,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                         }
 
         searchIsTexIframe {nodeType} search@(search' /\ _) iframeRef =
-          if isIsTex search'.datafield then
+          if isIsTex_Advanced search'.datafield then
             H.div { className: "istex-search panel panel-default" }
             [
               H.h3 { className: GT.fldr nodeType true} []
@@ -480,7 +480,6 @@ type ButtonClickProps =
   , state  :: R.State (Record ActionState)
   )
 
-
 buttonClick :: Record ButtonClickProps -> R.Element
 buttonClick p = R.createElement buttonClickCpt p []
 
@@ -505,9 +504,7 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
                       then Nothing
                       else (Just todo)
 
-
 -- END Popup View
-
 type NodeProps =
   ( id       :: ID
   , name     :: Name
@@ -586,7 +583,12 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
 actionDelete :: NodeType -> Dispatch -> R.Hooks R.Element
 actionDelete NodeUser _ = do
   pure $ R.fragment [
-    H.div {style: {margin: "10px"}} [H.text "Yes, we are RGPD compliant! But you can not delete User Node yet (we are still on development). Thanks for your comprehensin."]
+    H.div {style: {margin: "10px"}} 
+          [H.text $ "Yes, we are RGPD compliant!"
+                 <> " But you can not delete User Node yet."
+                 <> " We are still on development."
+                 <> " Thanks for your comprehensin."
+          ]
   ]
 
 actionDelete _ dispatch = do

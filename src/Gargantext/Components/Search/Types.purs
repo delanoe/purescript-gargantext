@@ -91,6 +91,7 @@ allDatabases = [ Empty
                , PubMed
                , HAL Nothing
                , IsTex
+               , IsTex_Advanced
                , Isidore
                --, Web
                --, News
@@ -102,6 +103,7 @@ data Database = All_Databases
               | PubMed
               | HAL (Maybe Org)
               | IsTex
+              | IsTex_Advanced
               | Isidore
 --              | News
 --              | SocialNetworks
@@ -111,6 +113,7 @@ instance showDatabase :: Show Database where
   show PubMed = "PubMed"
   show (HAL _)= "HAL"
   show IsTex  = "IsTex"
+  show IsTex_Advanced  = "IsTex_Advanced"
   show Isidore= "Isidore"
   show Empty  = "Empty"
 --  show News   = "News"
@@ -121,6 +124,7 @@ instance docDatabase :: Doc Database where
   doc PubMed      = "All Medical publications"
   doc (HAL _)     = "All open science (archives ouvertes)"
   doc IsTex       = "All Elsevier enriched by CNRS/INIST"
+  doc IsTex_Advanced = "IsTex advanced search"
   doc Isidore     = "All (French) Social Sciences"
   doc Empty       = "Empty"
 --  doc News        = "Web filtered by News"
@@ -130,8 +134,9 @@ readDatabase :: String -> Maybe Database
 readDatabase "All Databases" = Just All_Databases
 readDatabase "PubMed" = Just PubMed
 readDatabase "HAL"    = Just $ HAL Nothing
-readDatabase "IsTex"  = Just IsTex
 readDatabase "Isidore"= Just Isidore
+readDatabase "IsTex"  = Just IsTex
+readDatabase "IsTex_Advanced" = Just IsTex_Advanced
 -- readDatabase "Web"    = Just Web
 -- readDatabase "News"   = Just News
 -- readDatabase "Social Networks" = Just SocialNetworks

@@ -1,5 +1,5 @@
 module Gargantext.Components.Search.SearchField
-  ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex) where
+  ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex, isIsTex_Advanced) where
 
 import Data.Maybe (Maybe(..), maybe, fromMaybe, isJust)
 import Data.Newtype (over)
@@ -164,6 +164,17 @@ isIsTex ( Just
           )
         ) = true
 isIsTex _ = false
+
+isIsTex_Advanced :: Maybe DataField -> Boolean
+isIsTex_Advanced ( Just
+          ( External
+            ( Just ( IsTex_Advanced)
+            )
+          )
+        ) = true
+isIsTex_Advanced _ = false
+
+
 
 isIMT :: Maybe DataField -> Boolean
 isIMT ( Just 
