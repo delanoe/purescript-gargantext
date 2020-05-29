@@ -26,6 +26,8 @@ import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.GraphExplorer.API as GEAPI
+import Gargantext.Components.NgramsTable.API as NTAPI
+import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex)
 import Gargantext.Ends (Frontends, url)
@@ -209,6 +211,14 @@ nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
     cpt { id, nodeType: GT.Graph, refreshTree, session } _ = do
       useLoader id (graphVersions session) $ \gv ->
         nodeActionsGraph { id, graphVersions: gv, session, triggerRefresh: triggerRefresh refreshTree }
+    cpt { id, nodeType: GT.NodeList, refreshTree, session } _ = do
+      useLoader { nodeId: id, session } loadCorpusWithChild $
+        \{ corpusId } ->
+          nodeActionsNodeList { listId: id
+                              , nodeId: corpusId
+                              , nodeType: GT.TabNgramType GT.CTabTerms
+                              , session
+                              , triggerRefresh: triggerRefresh refreshTree }
     cpt _ _ = do
       pure $ H.div {} []
 
@@ -263,6 +273,58 @@ graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
           launchAff_ $ do
             liftEffect $ setEnabled $ const false
             g <- GEAPI.updateGraphVersions { graphId: id, session }
+            liftEffect $ setEnabled $ const true
+            triggerRefresh unit
+          pure unit
+
+type NodeActionsNodeListProps =
+  (
+    listId :: GT.ListId
+  , nodeId :: ID
+  , nodeType :: GT.TabSubType GT.CTabNgramType
+  , session :: Session
+  , triggerRefresh :: Unit -> Aff Unit
+  )
+
+nodeActionsNodeList :: Record NodeActionsNodeListProps -> R.Element
+nodeActionsNodeList p = R.createElement nodeActionsNodeListCpt p []
+
+nodeActionsNodeListCpt :: R.Component NodeActionsNodeListProps
+nodeActionsNodeListCpt = R.hooksComponent "G.C.F.T.N.B.nodeActionsNodeList" cpt
+  where
+    cpt props _ = do
+      pure $ H.div { className: "node-actions" } [
+        nodeListUpdateButton props
+      ]
+
+type NodeListUpdateButtonProps =
+  (
+    listId :: GT.ListId
+  , nodeId :: ID
+  , nodeType :: GT.TabSubType GT.CTabNgramType
+  , session :: Session
+  , triggerRefresh :: Unit -> Aff Unit
+  )
+
+nodeListUpdateButton :: Record NodeListUpdateButtonProps -> R.Element
+nodeListUpdateButton p = R.createElement nodeListUpdateButtonCpt p []
+
+nodeListUpdateButtonCpt :: R.Component NodeListUpdateButtonProps
+nodeListUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.nodeListUpdateButton" cpt
+  where
+    cpt { listId, nodeId, nodeType, session, triggerRefresh } _ = do
+      enabled <- R.useState' true
+
+      pure $ H.div { className: "update-button " <> if (fst enabled) then "enabled" else "disabled text-muted" } [
+        H.span { className: "fa fa-refresh"
+               , on: { click: onClick enabled } } []
+      ]
+      where
+        onClick (false /\ _) _ = pure unit
+        onClick (true /\ setEnabled) _ = do
+          launchAff_ $ do
+            liftEffect $ setEnabled $ const false
+            _ <- NTAPI.updateNodeList { listId, nodeId, nodeType, session }
             liftEffect $ setEnabled $ const true
             triggerRefresh unit
           pure unit

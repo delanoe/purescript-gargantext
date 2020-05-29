@@ -117,6 +117,7 @@ sessionPath :: R.SessionRoute -> String
 sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType' t))
 sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
 sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId) <> p
+sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.GraphAPI gId p)      = "graph/" <> (show gId) <> "/" <> p
 sessionPath (R.GetNgrams opts i)    =
   base opts.tabType

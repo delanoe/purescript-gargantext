@@ -385,6 +385,8 @@ instance decodeJsonApiVersion :: DecodeJson ApiVersion where
          _      -> pure V0
 ------------------------------------------------------------
 
+-- Types of ngrams. Used to display user-selectable tabs and is sent via API,
+-- wrapped in `TabNgramType a :: TabSubType`
 data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
 
 derive instance eqCTabNgramType :: Eq CTabNgramType
