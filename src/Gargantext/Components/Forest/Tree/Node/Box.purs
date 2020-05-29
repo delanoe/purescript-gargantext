@@ -298,8 +298,7 @@ nodeActionsNodeListCpt = R.hooksComponent "G.C.F.T.N.B.nodeActionsNodeList" cpt
       ]
 
 type NodeListUpdateButtonProps =
-  (
-    listId :: GT.ListId
+  ( listId :: GT.ListId
   , nodeId :: ID
   , nodeType :: GT.TabSubType GT.CTabNgramType
   , session :: Session
@@ -315,10 +314,11 @@ nodeListUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.nodeListUpdateButton" cp
     cpt { listId, nodeId, nodeType, session, triggerRefresh } _ = do
       enabled <- R.useState' true
 
-      pure $ H.div { className: "update-button " <> if (fst enabled) then "enabled" else "disabled text-muted" } [
-        H.span { className: "fa fa-refresh"
-               , on: { click: onClick enabled } } []
-      ]
+      pure $ H.div { className: "update-button " 
+                     <> if (fst enabled) then "enabled" else "disabled text-muted"
+                   } [ H.span { className: "fa fa-refresh"
+                     , on: { click: onClick enabled } } []
+                     ]
       where
         onClick (false /\ _) _ = pure unit
         onClick (true /\ setEnabled) _ = do
@@ -344,8 +344,8 @@ mAppRouteId (Just (Routes.Texts          _ id)) = Just id
 mAppRouteId (Just (Routes.Lists          _ id)) = Just id
 mAppRouteId (Just (Routes.Annuaire       _ id)) = Just id
 mAppRouteId (Just (Routes.UserPage       _ id)) = Just id
-mAppRouteId (Just (Routes.Document       _ id _ )) = Just id
-mAppRouteId (Just (Routes.ContactPage    _ id _ )) = Just id
+mAppRouteId (Just (Routes.Document       _ id _  )) = Just id
+mAppRouteId (Just (Routes.ContactPage    _ id _  )) = Just id
 mAppRouteId (Just (Routes.CorpusDocument _ id _ _)) = Just id
 mAppRouteId _ = Nothing
 
@@ -360,11 +360,10 @@ type NodePopupProps =
   )
 
 type NodePopupS =
-  (
-      action   :: Maybe NodeAction
-    , id       :: ID
-    , name     :: Name
-    , nodeType :: GT.NodeType
+  ( action   :: Maybe NodeAction
+  , id       :: ID
+  , name     :: Name
+  , nodeType :: GT.NodeType
   )
 
 iconAStyle :: { color      :: String
@@ -476,14 +475,12 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                         , session  : p.session
                         }
 
-
 type ActionState =
   ( action   :: Maybe NodeAction
   , id       :: ID
   , name     :: Name
   , nodeType :: GT.NodeType
   )
-
 
 type ButtonClickProps =
   ( action :: NodeAction
@@ -540,10 +537,10 @@ panelAction p = R.createElement panelActionCpt p []
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
   where
-    cpt {action: Documentation nodeType}          _ = actionDoc      nodeType
-    cpt {action: Download, id, nodeType, session} _ = actionDownload nodeType id session
-    cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload nodeType id session dispatch
-    cpt {action: Delete, nodeType, dispatch} _ = actionDelete nodeType dispatch
+    cpt {action: Documentation nodeType}                  _ = actionDoc      nodeType
+    cpt {action: Download, id, nodeType, session}         _ = actionDownload nodeType id session
+    cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload   nodeType id session dispatch
+    cpt {action: Delete, nodeType, dispatch}              _ = actionDelete   nodeType dispatch
 
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
       pure $ createNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
@@ -551,46 +548,43 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}
 
-    cpt {action: Link _} _ = pure $ fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
+    cpt {action: Link _} _ = pure $ fragmentPT $ "Soon, you will be able "
+                                 <> "to link the corpus with your Annuaire"
+                                 <> " (and reciprocally)."
 
-
-    cpt props@{action: SearchBox, search, session} _ = do
-      pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
-                              [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
-                        , searchBar {langs: allLangs, onSearch: searchOn props, search, session}
-                        ]
-        where
-          searchOn :: Record PanelActionProps -> GT.AsyncTaskWithType -> Effect Unit
-          searchOn {dispatch, nodePopup: p} task = do
-            _ <- launchAff $ dispatch (SearchQuery task)
-            -- close popup
-            -- TODO
-            --snd p $ const Nothing
-            pure unit
-
-
-{-
-    cpt {action: Refresh, nodeType: GT.Graph, id, session} _ = do
-
-      pure $ H.div {className: "panel-footer"}
-            [ H.a { type: "button"
-                  , className: "btn glyphicon glyphicon-trash"
-                  , id: "delete"
-                  , title: "Delete"
-                  , on: {click: \_ -> post session (GR.GraphAPI id $ GT.asyncTaskTypePath GT.GraphT) {}
-                        -- TODO pure $ GT.AsyncTaskWithType { task, typ: GT.GraphT }
-                        }
-                  }
-              [H.text " Yes, delete!"]
-            ]
---}
+    cpt props@{action: SearchBox, search, session, dispatch, nodePopup} _ =
+      actionSearch search session dispatch nodePopup
 
     cpt _ _ = do
       pure $ H.div {} []
 
+-- | Action : Search
+actionSearch :: R.State Search
+            -> Session
+            -> (Action -> Aff Unit)
+            -> Maybe NodePopup
+            -> R.Hooks R.Element
+actionSearch search session dispatch nodePopup =
+  pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
+                          [ H.text $ "Search and create a private "
+                                  <> "corpus with the search query as corpus name." ]
+                    , searchBar {langs: allLangs, onSearch: searchOn dispatch nodePopup, search, session}
+                    ]
+    where
+      searchOn :: (Action -> Aff Unit)
+               -> Maybe NodePopup
+               -> GT.AsyncTaskWithType
+               -> Effect Unit
+      searchOn dispatch p task = do
+        _ <- launchAff $ dispatch (SearchQuery task)
+        -- close popup
+        -- TODO
+        --snd p $ const Nothing
+        pure unit
+
 
 -- | Action : Delete
-actionDelete :: NodeType -> Dispatch -> R.Hooks R.Element
+actionDelete :: NodeType -> (Action -> Aff Unit) -> R.Hooks R.Element
 actionDelete NodeUser _ = do
   pure $ R.fragment [
     H.div {style: {margin: "10px"}} 
@@ -603,7 +597,12 @@ actionDelete NodeUser _ = do
 
 actionDelete _ dispatch = do
   pure $ R.fragment [
-    H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."])
+    H.div {style: {margin: "10px"}} 
+          (map (\t -> H.p {} [H.text t]) 
+               [ "Are your sure you want to delete it ?"
+               , "If yes, click again below."
+               ]
+          )
     , reallyDelete dispatch
     ]
   where
@@ -710,11 +709,11 @@ docOf GT.FolderShared  = ["Soon, you will be able to build teams folders to shar
 docOf nodeType         = ["More information on " <> show nodeType]
 
 
+fragmentPT :: String -> R.Element
 fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 
 --------------------
 -- | Iframes
-
 searchIframes :: Record NodePopupProps
               -> R.State Search
               -> R.Ref (Nullable DOM.Element)
@@ -765,5 +764,4 @@ iframeWith url (search /\ setSearch) iframeRef =
         qp = NQP.QueryPairs [
           Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
           ]
-
 
