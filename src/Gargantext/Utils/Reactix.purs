@@ -13,15 +13,16 @@ import Data.Argonaut as Json
 import Data.Argonaut.Core (Json)
 import Data.Either (hush)
 import Data.Function.Uncurried (Fn2, runFn2)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe, isJust)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Effect.Console (logShow)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn2)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn2, runEffectFn3)
 import Effect.Unsafe (unsafePerformEffect)
 import FFI.Simple ((..), (...), (.=), defineProperty, delay, args2, args3)
 import Partial.Unsafe (unsafePartial)
@@ -295,6 +296,25 @@ useLocalStorageState key s = do
       setItem key json storage
 
   pure (Tuple state setState)
+
+getMessageDataStr :: DE.MessageEvent -> String
+getMessageDataStr = getMessageData
+
+getMessageOrigin :: DE.MessageEvent -> String
+getMessageOrigin me = me .. "origin"
+
+getMessageData :: forall o. DE.MessageEvent -> o
+getMessageData me = me .. "data"
+
+foreign import _postMessage
+  :: forall r. EffectFn3 r String String Unit
+
+postMessage :: forall r. R.Ref (Nullable r) -> String -> Effect Unit
+postMessage ref msg = do
+  case (R.readNullableRef ref) of
+    (Just ifr) -> do
+      runEffectFn3 _postMessage ifr msg (ifr .. "src")
+    (Nothing) -> pure unit
 
 foreign import _setCookie :: EffectFn1 String Unit
 

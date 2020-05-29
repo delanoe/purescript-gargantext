@@ -3,11 +3,12 @@
   -- Select a backend and log into it
 module Gargantext.Components.Login where
 
-import Prelude (Unit, bind, const, discard, pure, show, ($), (<>), (*>), (<$>), (>), map)
+import Prelude (Unit, bind, const, discard, pure, show, ($), (<>), (*>), (<$>), (>), map, (==), (/=), not, (&&))
 import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (fst, snd)
+import Data.Tuple.Nested ((/\))
 import Data.String as DST
 import DOM.Simple.Console (log)
 import Data.Sequence as DS
@@ -18,7 +19,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 ------------------------------------------------------------------------
-import Gargantext.Components.Forms (clearfix, card, cardBlock, cardGroup, center, formGroup)
+import Gargantext.Components.Forms (clearfix, cardBlock, cardGroup, center, formGroup)
 import Gargantext.Components.Login.Types (AuthRequest(..))
 import Gargantext.Ends (Backend(..))
 import Gargantext.Sessions (Session, Sessions(..), postAuthRequest, unSessions)
@@ -32,7 +33,8 @@ import Gargantext.Utils.Reactix as R2
 type Props =
   ( backends :: Array Backend
   , sessions :: R2.Reductor Sessions Sessions.Action
-  , visible :: R.State Boolean )
+  , visible  :: R.State Boolean
+  )
 
 type ModalProps = ( visible :: R.State Boolean )
 
@@ -53,7 +55,6 @@ modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
               [ H.div { className: "modal-header" }
                 [ closing
                 , logo
-                , H.h2 { className: "center modal-title" } [H.text "Instances manager"]
                 ]
               , H.div { className: "modal-body" } children ] ] ] ]
       modalClass s = "modal myModal" <> if s then "" else " fade"
@@ -86,7 +87,7 @@ loginCpt = R.hooksComponent "G.C.Login.login" cpt
         modal {visible} $
           case fst backend of
             Nothing -> chooser { backends, backend, sessions, visible }
-            Just b -> form { sessions, visible, backend: b }
+            Just b  -> form { sessions, visible, backend: b }
 
 type ChooserProps = ( backend :: R.State (Maybe Backend) | Props )
 
@@ -97,8 +98,9 @@ chooserCpt :: R.Component ChooserProps
 chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
   cpt :: Record ChooserProps -> Array R.Element -> R.Element
   cpt {backend, backends, sessions} _ =
-    R.fragment $ active <> new <> search
+    R.fragment $ title <> active <> new <> search
       where
+        title =  [H.h2 { className: "center modal-title" } [H.text "Instances manager"]]
         active = if DS.length ss > 0 then [ H.h3 {} [H.text "Active connection(s)"]
                  , H.ul {} [ renderSessions sessions]
                  ] else [] where
@@ -147,7 +149,8 @@ renderBackend state backend@(Backend {name}) =
 type FormProps =
   ( backend :: Backend
   , sessions :: R2.Reductor Sessions Sessions.Action
-  , visible :: R.State Boolean )
+  , visible :: R.State Boolean
+  )
 
 form :: Record FormProps -> R.Element
 form props = R.createElement formCpt props []
@@ -156,28 +159,42 @@ formCpt :: R.Component FormProps
 formCpt = R.hooksComponent "G.C.Login.form" cpt where
   cpt :: Record FormProps -> Array R.Element -> R.Hooks R.Element
   cpt props@{backend, sessions, visible} _ = do
-    error <- R.useState' ""
+    error    <- R.useState' ""
     username <- R.useState' ""
     password <- R.useState' ""
+    setBox@(checkBox /\ setCheckBox) <- R.useState' false
     pure $ R2.row
       [ cardGroup
-        [ card
-          [ cardBlock
-            [ center
-              [ H.h4 {className: "m-b-0"}
-                [ H.span {className: "icon-text"} [ H.text "Welcome :)" ] ]
-              , H.p {className: "text-muted"}
-                [ H.text $ "Login to your account or", requestAccessLink {} ] ]
-            , H.div {}
-              [ csrfTokenInput {}
-              , formGroup [ H.p {} [ H.text (fst error) ], usernameInput username ]
-              , formGroup [ passwordInput password, clearfix {} ]
-              , center
-                [ H.label {}
-                  [ H.div {className: "checkbox"}
-                    [ termsCheckbox {}, H.text "I accept the terms of use ", termsLink {} ] ]
-                , loginSubmit $
-                    onClick props error username password ] ] ] ] ] ]
+        [ cardBlock
+          [ center
+          [ H.h4 {}{-className: "text-muted"-}
+              [ H.text $ "Login to garg://" <> show backend]
+              , requestAccessLink {}
+              ]
+          , H.div {}
+            [ csrfTokenInput {}
+            , formGroup [ H.p {} [ H.text (fst error) ], usernameInput username ]
+            , formGroup [ passwordInput password, clearfix {} ]
+            , center
+               [ H.label {}
+                 [ H.div {className: "checkbox"}
+                    [ termsCheckbox setBox
+                    , H.text "I hereby accept "
+                    , H.a { target: "_blank"
+                          , href: "http://gitlab.iscpif.fr/humanities/tofu/tree/master"
+                          } [ H.text "the terms of use" ]
+                    ]
+                  ]
+                ]
+            ]
+          , if checkBox == true
+               && fst username /= ""
+               && fst password /= ""
+               then H.div {} [center [loginSubmit $ onClick props error username password]]
+               else H.div {} []
+          ] 
+        ] 
+      ]
   onClick {backend, sessions, visible} error username password e =
     launchAff_ $ do
       let req = AuthRequest {username: fst username, password: fst password}
@@ -194,13 +211,18 @@ csrfTokenInput _ =
   H.input { type: "hidden", name: "csrfmiddlewaretoken"
           , value: csrfMiddlewareToken }-- TODO hard-coded CSRF token
 
-termsCheckbox :: {} -> R.Element
-termsCheckbox _ =
-  H.input { id: "terms-accept", type: "checkbox", value: "", className: "checkbox" }
+termsCheckbox :: R.State Boolean -> R.Element
+termsCheckbox setCheckBox =
+  H.input { id: "terms-accept"
+          , type: "checkbox"
+          , value: fst setCheckBox
+          , className: "checkbox"
+          , on: { click: \_ -> (snd setCheckBox) $ const $ not (fst setCheckBox)}
+          }
 
 termsLink :: {} -> R.Element
 termsLink _ =
-  H.a { target: "_blank", href: termsUrl } [ H.text " [ Read the terms of use ] " ]
+  H.a { target: "_blank", href: termsUrl } [ H.text "the terms of use" ]
   where termsUrl = "http://gitlab.iscpif.fr/humanities/tofu/tree/master"
 
 requestAccessLink :: {} -> R.Element

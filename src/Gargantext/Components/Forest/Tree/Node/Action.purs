@@ -12,7 +12,8 @@ import Prelude hiding (div)
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post, delete)
-import Gargantext.Types as GT
+import Gargantext.Routes as GR
+import Gargantext.Types  as GT
 
 data Action = CreateSubmit String GT.NodeType
             | DeleteNode
@@ -60,6 +61,16 @@ type UploadFile = {
 
 createNode :: Session -> ID -> CreateValue -> Aff (Array ID)
 createNode session parentId = post session $ NodeAPI GT.Node (Just parentId) ""
+
+createNodeAsync :: Session
+                -> ID
+                -> CreateValue
+                -> Aff GT.AsyncTaskWithType
+createNodeAsync session parentId q = do
+  task <- post session p q
+  pure $ GT.AsyncTaskWithType {task, typ: GT.CreateNode}
+  where
+    p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.CreateNode)
 
 renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
 renameNode session renameNodeId = put session $ NodeAPI GT.Node (Just renameNodeId) "rename"

@@ -3,6 +3,11 @@ module Gargantext.Components.Search.SearchBar
   ) where
 
 import Data.Tuple.Nested ((/\))
+import Data.Nullable (Nullable)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
+import Gargantext.Components.Search.Types -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Effect (Effect)
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Components.Search.SearchField (Search, searchField)
