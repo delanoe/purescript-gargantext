@@ -12,6 +12,7 @@ import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.License (license)
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
@@ -60,7 +61,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
                                       , showLogin: snd showLogin }
     let mCurrentRoute = fst route
     let backends      = fromFoldable defaultBackends
-    let ff f session = R.fragment [ f session, version { session }  ]
+    let ff f session = R.fragment [ f session, footer { session } ]
     let withSession sid f =
           maybe' (const $ forested $ homeLayout LL_EN) (ff f) $ Sessions.lookup sid (fst sessions)
 
@@ -112,7 +113,7 @@ type ForestLayoutProps =
 
 forestLayout :: Record ForestLayoutProps -> R.Element
 forestLayout { child, frontends, reload, route, sessions, showLogin } = do
-  R.fragment [ topBar {}, R2.row [main], footer { } ]
+  R.fragment [ topBar {}, R2.row [main] ]
   where
     main =
       R.fragment
@@ -123,7 +124,7 @@ forestLayout { child, frontends, reload, route, sessions, showLogin } = do
 
 -- Simple layout does not accommodate the tree
 simpleLayout :: R.Element -> R.Element
-simpleLayout child = R.fragment [ topBar {}, child, footer {}]
+simpleLayout child = R.fragment [ topBar {}, child, license]
 
 mainPage :: R.Element -> R.Element
 mainPage child =
@@ -248,6 +249,9 @@ liNav (LiNav { title : title'
                           ]
                   ]
 
+---------------------------------------------------------------------------
+-- | TODO put Version in the Tree/Root node
+
 type VersionProps =
   (
     session :: Sessions.Session
@@ -267,46 +271,38 @@ versionCpt = R.hooksComponent "G.C.A.version" cpt
           v <- GV.getBackendVersion session
           liftEffect $ setVer $ const v
 
-      pure $ H.div { className: "container" } [
-        H.footer {}
-          [
-            H.span {} [ H.text $ "Frontend version: " <> GV.version <> ", " ]
-          , H.span {} [ H.text $ "backend version: "  <> ver ]
-          , warning ver GV.version
-          ]
-      ]
-    warning backendVer frontendVer =
-      if backendVer == frontendVer then
-        H.div {} []
-      else
-        H.div { className: "text-danger" } [ H.text "Versions do not match" ]
+      pure $ H.div { className: "row" }
+                   [ H.div { className: versionCheck GV.version ver}
+                           [ H.h4 {} [H.text $ versionMessage GV.version ver]
+                           , H.div { className: "container" } [showVersions GV.version ver]
+                           ]
+                   ]
+          where
+            versionCheck v1 v2 = case v1 == v2 of
+                false -> "col alert alert-danger"
+                true  -> "col alert alert-success"
+            versionMessage v1 v2 = case v1 == v2 of
+                false -> "Versions do not match"
+                true  -> "Versions are up to date"
 
-footer :: {} -> R.Element
+    showVersions frontendVer backendVer =
+      H.div { className: "row" }
+            [ H.h5 {} [ H.text $ "Frontend version: " <> frontendVer ]
+            , H.h5 {} [ H.text $ "backend version: "  <> backendVer ]
+            ]
+
+footer :: Record VersionProps -> R.Element
 footer props = R.createElement footerCpt props []
 
-footerCpt :: R.Component ()
+footerCpt :: R.Component VersionProps
 footerCpt = R.hooksComponent "G.C.A.footer" cpt
   where
-    cpt _ _ = do
-      pure $ H.div { className: "container" }
-        [ H.hr {}
-        , H.footer {}
-          [ H.p {}
-            [ H.text "Gargantext "
-            , H.span {className: "glyphicon glyphicon-registration-mark"} []
-            , H.a { href: "http://www.cnrs.fr"
-                  , target: "blank"
-                  , title: "Project hosted by CNRS."
-                  }
-              [ H.text ", Copyrights "
-              , H.span { className: "glyphicon glyphicon-copyright-mark" } []
-              , H.text " CNRS 2017-Present"
+    cpt { session } _ = do
+      pure $ H.div 
+              { className: "container" }
+              [ H.hr {}
+              , H.footer {} [ version { session }
+                            , license
+                            ]
               ]
-            , H.a { href: "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
-                  , target: "blank"
-                  , title: "Legal instructions of the project."
-                  }
-              [ H.text ", Licences aGPLV3 and CECILL variant Affero compliant" ]
-            , H.text "."
-            ]]
-        ]
+

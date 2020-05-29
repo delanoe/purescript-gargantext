@@ -6,6 +6,7 @@ import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
+import Gargantext.License (license)
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Data.Landing
@@ -53,7 +54,9 @@ homeLayoutCpt = R.staticComponent "LayoutLanding" cpt
       H.span {}
       [ H.div { className: "container1" } [ jumboTitle landingData false ]
       , H.div { className: "container1" } [] -- TODO put research form
-      , H.div { className: "container1" } [ blocksRandomText' landingData ] ]
+      , H.div { className: "container1" } [ blocksRandomText' landingData ]
+      , license
+      ]
 
 ------------------------------------------------------------------------
 
