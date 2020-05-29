@@ -1,6 +1,6 @@
 module Gargantext.Utils.Popover where
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (Nullable, toMaybe)
 import DOM.Simple as DOM
 import DOM.Simple.Console (log2)
@@ -15,7 +15,8 @@ type PopoverRef = R.Ref (Nullable DOM.Element)
 
 type Props =
   (
-    open :: Boolean
+    arrow :: Boolean
+  , open :: Boolean
   , onClose :: Unit -> Effect Unit
   , onOpen :: Unit -> Effect Unit
   , ref :: PopoverRef
@@ -26,14 +27,10 @@ foreign import popoverCpt :: R.Component Props
 popover :: Record Props -> Array R.Element -> R.Element
 popover = R.rawCreateElement popoverCpt
 
-foreign import _setState :: EffectFn2 DOM.Element Boolean Unit
+foreign import _setState :: forall a. EffectFn2 DOM.Element a Unit
 
-setState :: DOM.Element -> Boolean -> Effect Unit
+setState :: forall a. DOM.Element -> a -> Effect Unit
 setState = runEffectFn2 _setState
 
 setOpen :: PopoverRef -> Boolean -> Effect Unit
-setOpen ref val =
-  case toMaybe $ R.readRef ref of
-    Nothing -> pure unit
-    Just p  -> do
-      setState p val
+setOpen ref val = maybe (pure unit) (\p -> setState p {open: val}) $ toMaybe $ R.readRef ref

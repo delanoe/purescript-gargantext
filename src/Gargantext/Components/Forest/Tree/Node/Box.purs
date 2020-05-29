@@ -87,7 +87,8 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
       pure $ H.span (dropProps droppedFile isDragOver) $
         [ folderIcon nodeType folderOpen
         , if showBox then
-            Popover.popover { open: false
+            Popover.popover { arrow: false
+                            , open: false
                             , onClose: \_ -> pure unit
                             , onOpen: \_ -> pure unit
                             , ref: popoverRef } [
