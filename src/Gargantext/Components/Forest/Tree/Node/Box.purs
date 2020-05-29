@@ -3,38 +3,38 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Gargantext.Prelude
 
 import DOM.Simple as DOM
+import DOM.Simple.Event
+import DOM.Simple.EventListener
+import DOM.Simple.Types
+import DOM.Simple.Window
 import Data.Maybe (Maybe(..))
-import Data.Nullable (null)
+import Data.Nullable (Nullable, null)
 import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Data.Nullable (Nullable, null)
-import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
+import Effect.Console
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
-
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.GraphExplorer.API as GraphAPI
+import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.NgramsTable.API as NTAPI
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex_Advanced)
 import Gargantext.Components.Search.Types (DataField(..))
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
-import Gargantext.Routes as GR
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
@@ -45,12 +45,6 @@ import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
 import Web.File.FileReader.Aff (readAsText)
 
-import DOM.Simple.Types
-import DOM.Simple.Window
-import DOM.Simple.EventListener
-import DOM.Simple.Event
-import Effect.Console
-
 type Dispatch = Action -> Aff Unit
 
 type CommonProps =
@@ -58,14 +52,13 @@ type CommonProps =
   , session :: Session
   )
 
-
 -- Main Node
 type NodeMainSpanProps =
   ( id                :: ID
   , asyncTasks        :: Array GT.AsyncTaskWithType
   , folderOpen        :: R.State Boolean
   , frontends         :: Frontends
-  , mCurrentRoute     :: Maybe AppRoute
+  , mCurrentRoute     :: Maybe Routes.AppRoute
   , name              :: Name
   , nodeType          :: GT.NodeType
   , onAsyncTaskFinish :: GT.AsyncTaskWithType -> Effect Unit
@@ -82,7 +75,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
 
-      popoverRef <- R.useRef null
+      popoverRef    <- R.useRef null
 
       pure $ H.span (dropProps droppedFile isDragOver) $
         [ folderIcon nodeType folderOpen
@@ -338,7 +331,7 @@ nodeListUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.nodeListUpdateButton" cp
 
 -- END nodeActions
 
-mAppRouteId :: Maybe AppRoute -> Maybe Int
+mAppRouteId :: Maybe Routes.AppRoute -> Maybe Int
 mAppRouteId (Just (Routes.Folder         _ id)) = Just id
 mAppRouteId (Just (Routes.FolderPrivate  _ id)) = Just id
 mAppRouteId (Just (Routes.FolderPublic   _ id)) = Just id
@@ -722,6 +715,10 @@ fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 --------------------
 -- | Iframes
 
+searchIframes :: Record NodePopupProps
+              -> R.State Search
+              -> R.Ref (Nullable DOM.Element)
+              -> R.Element
 searchIframes {nodeType} search@(search' /\ _) iframeRef =
   if isIsTex_Advanced search'.datafield then
     H.div { className: "istex-search panel panel-default" }
@@ -737,6 +734,10 @@ searchIframes {nodeType} search@(search' /\ _) iframeRef =
     else
       H.div {} []
 
+iframeWith :: String
+           -> R.State Search
+           -> R.Ref (Nullable DOM.Element)
+           -> R.Element
 iframeWith url (search /\ setSearch) iframeRef =
   H.iframe { src: isTexTermUrl search.term
             ,width: "100%"
@@ -750,12 +751,13 @@ iframeWith url (search /\ setSearch) iframeRef =
            } []
   where
     changeSearchOnMessage :: String -> Callback MessageEvent
-    changeSearchOnMessage url = callback $ \m -> if R2.getMessageOrigin m == url
-                                             then do
-                                               let {url, term} = R2.getMessageData m
-                                               setSearch $ _ {url = url, term = term}
-                                             else
-                                               pure unit
+    changeSearchOnMessage url =
+      callback $ \m -> if R2.getMessageOrigin m == url
+                         then do
+                           let {url, term} = R2.getMessageData m
+                           setSearch $ _ {url = url, term = term}
+                         else
+                           pure unit
     isTexTermUrl term = url <> query
       where
         query = Query.print $ NQP.print identity identity qp
