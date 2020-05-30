@@ -13,7 +13,7 @@ import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RecordE
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), CreateValue(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, createNode, deleteNode, loadNode, renameNode)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), AddNodeValue(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, addNode, deleteNode, loadNode, renameNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
 import Gargantext.Ends (Frontends)
@@ -209,7 +209,7 @@ performAction p@{ openNodes: (_ /\ setOpenNodes)
                 , session
                 , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
   -- task <- createNodeAsync session id $ CreateValue {name, nodeType}
-  task <- createNode session id $ CreateValue {name, nodeType}
+  task <- addNode session id $ AddNodeValue {name, nodeType}
   -- liftEffect $ setAsyncTasks $ A.cons task
   liftEffect do
     setOpenNodes (Set.insert (mkNodeId session id))

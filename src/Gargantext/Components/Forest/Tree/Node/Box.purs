@@ -18,7 +18,7 @@ import Effect.Console
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
@@ -542,7 +542,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Delete, nodeType, dispatch}              _ = actionDelete   nodeType dispatch
 
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
-      pure $ createNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
+      pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
 
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}

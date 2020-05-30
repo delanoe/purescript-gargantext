@@ -28,11 +28,11 @@ type CreateNodeProps =
   , nodeTypes :: Array NodeType
   )
 
-createNodeView :: Record CreateNodeProps
+addNodeView :: Record CreateNodeProps
                -> R.Element
-createNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
+addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
   where
-    el = R.hooksComponent "CreateNodeView" cpt
+    el = R.hooksComponent "AddNodeView" cpt
     cpt {id, name} _ = do
       nodeName <- R.useState' "Name"
       nodeType' <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
@@ -103,12 +103,10 @@ createNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
 
 -- END Create Node
 
-
 showConfig :: NodeType -> R.Element
 showConfig NodeUser      = H.div {} []
 showConfig FolderPrivate = H.div {} [H.text "This folder will be private only"]
 showConfig FolderShared  = H.div {} [H.text "This folder will be shared"]
 showConfig FolderPublic  = H.div {} [H.text "This folder will be public"]
 showConfig nt            = H.div {} [H.h4  {} [H.text $ "Config of " <> show nt ]]
-
 

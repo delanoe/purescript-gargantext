@@ -457,11 +457,11 @@ modeTabType Institutes = CTabInstitutes
 modeTabType Terms      = CTabTerms
 
 modeFromString :: String -> Maybe Mode
-modeFromString "Authors" = Just Authors
-modeFromString "Sources" = Just Sources
+modeFromString "Authors"    = Just Authors
+modeFromString "Sources"    = Just Sources
 modeFromString "Institutes" = Just Institutes
-modeFromString "Terms" = Just Terms
-modeFromString _ = Nothing
+modeFromString "Terms"      = Just Terms
+modeFromString _            = Nothing
 
 -- | Async tasks
 
@@ -469,7 +469,7 @@ modeFromString _ = Nothing
 data AsyncTaskType = Form
                    | GraphT
                    | Query
-                   | CreateNode
+                   | AddNode
                    | UpdateNode
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 
@@ -477,7 +477,7 @@ asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath Form   = "add/form/async/"
 asyncTaskTypePath Query  = "query/"
 asyncTaskTypePath GraphT = "async/"
-asyncTaskTypePath CreateNode = "async/nobody/"
+asyncTaskTypePath AddNode = "async/nobody/"
 asyncTaskTypePath UpdateNode = "async/"
 
 type AsyncTaskID = String

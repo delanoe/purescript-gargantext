@@ -60,18 +60,18 @@ type UploadFile =
   , name     :: String
   }
 
-createNode :: Session -> ID -> CreateValue -> Aff (Array ID)
-createNode session parentId = post session $ NodeAPI GT.Node (Just parentId) ""
+addNode :: Session -> ID -> AddNodeValue -> Aff (Array ID)
+addNode session parentId = post session $ NodeAPI GT.Node (Just parentId) ""
 
-createNodeAsync :: Session
+addNodeAsync :: Session
                 -> ID
-                -> CreateValue
+                -> AddNodeValue
                 -> Aff GT.AsyncTaskWithType
-createNodeAsync session parentId q = do
+addNodeAsync session parentId q = do
   task <- post session p q
-  pure $ GT.AsyncTaskWithType {task, typ: GT.CreateNode}
+  pure $ GT.AsyncTaskWithType {task, typ: GT.AddNode}
   where
-    p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.CreateNode)
+    p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
 
 renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
 renameNode session renameNodeId = put session $ NodeAPI GT.Node (Just renameNodeId) "rename"
@@ -87,29 +87,53 @@ updateNode :: Session -> ID -> Aff ID
 updateNode session nodeId = post session 
 -}
 
+-----------------------------------------------------------------------
 newtype RenameValue = RenameValue
-  { name :: Name
-  }
+  { name :: Name }
 
 instance encodeJsonRenameValue :: EncodeJson RenameValue where
   encodeJson (RenameValue {name})
      = "r_name" := name
     ~> jsonEmptyObject
 
-newtype CreateValue = CreateValue
+-----------------------------------------------------------------------
+newtype AddNodeValue = AddNodeValue
   { name     :: Name
   , nodeType :: GT.NodeType
   }
 
-instance encodeJsonCreateValue :: EncodeJson CreateValue where
-  encodeJson (CreateValue {name, nodeType})
+instance encodeJsonCreateValue :: EncodeJson AddNodeValue where
+  encodeJson (AddNodeValue {name, nodeType})
      = "pn_name"     := name
     ~> "pn_typename" := nodeType
     ~> jsonEmptyObject
 
+-----------------------------------------------------------------------
+data UpdateNodeParams = UpdateNodeParamsList { method :: Int }
+                      | UpdateNodeParamsGraph { method :: String }
+                      | UpdateNodeParamsTexts { method :: Int }
+
+instance encodeJsonUpdateNodeParams :: EncodeJson UpdateNodeParams
+  where
+    encodeJson (UpdateNodeParamsList { method })
+      = "method" := method
+      ~> jsonEmptyObject
+    encodeJson (UpdateNodeParamsGraph { method })
+      = "method" := method
+      ~> jsonEmptyObject
+    encodeJson (UpdateNodeParamsTexts { method })
+      = "method" := method
+      ~> jsonEmptyObject
+
+
+-----------------------------------------------------------------------
+
+
 data NTree a = NTree a (Array (NTree a))
 type FTree = NTree LNode
-type Tree = { tree :: FTree, asyncTasks :: Array GT.AsyncTaskWithType }
+type Tree = { tree       :: FTree
+            , asyncTasks :: Array GT.AsyncTaskWithType
+            }
 
 instance ntreeFunctor :: Functor NTree where
   map f (NTree x ary) = NTree (f x) (map (map f) ary)
@@ -129,7 +153,8 @@ instance decodeJsonLNode :: DecodeJson LNode where
     nodeType <- obj .: "type"
     pure $ LNode { id : id_
                  , name
-                 , nodeType}
+                 , nodeType
+                 }
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
   decodeJson json = do
