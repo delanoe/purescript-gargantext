@@ -13,7 +13,8 @@ import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RecordE
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), AddNodeValue(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, addNode, deleteNode, loadNode, renameNode)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, deleteNode, loadNode, renameNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode) 
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
 import Gargantext.Ends (Frontends)

@@ -1,6 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
 import Data.Array (length, head)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Maybe (Maybe(..), fromMaybe)
 -- import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
@@ -10,19 +11,48 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action(..), ID, Name)
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
 import Gargantext.Types (NodeType(..), readNodeType)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Sessions (Session, post)
+import Gargantext.Routes as GR
+import Gargantext.Types  as GT
 import Prelude (Unit, bind, const, discard, map, pure, show, ($), (<>), (>), (<<<))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 -- START Create Node
 
-type Dispatch = Action -> Aff Unit
+addNode :: Session -> ID -> AddNodeValue -> Aff (Array ID)
+addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 
+addNodeAsync :: Session
+                -> ID
+                -> AddNodeValue
+                -> Aff GT.AsyncTaskWithType
+addNodeAsync session parentId q = do
+  task <- post session p q
+  pure $ GT.AsyncTaskWithType {task, typ: GT.AddNode}
+  where
+    p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
+
+----------------------------------------------------------------------
+newtype AddNodeValue = AddNodeValue
+  { name     :: Name
+  , nodeType :: GT.NodeType
+  }
+
+instance encodeJsonAddNodeValue :: EncodeJson AddNodeValue where
+  encodeJson (AddNodeValue {name, nodeType})
+     = "pn_name"     := name
+    ~> "pn_typename" := nodeType
+    ~> jsonEmptyObject
+
+----------------------------------------------------------------------
+
+type Dispatch = Action -> Aff Unit
 data NodePopup = CreatePopup | NodePopup
 
 type CreateNodeProps =
   ( id       :: ID
-  , dispatch :: Dispatch
+  , dispatch :: Action -> Aff Unit
   , name     :: Name
   , nodeType :: NodeType
   , nodeTypes :: Array NodeType

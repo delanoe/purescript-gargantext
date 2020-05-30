@@ -43,11 +43,12 @@ readFileType "PresseRIS" = Just PresseRIS
 readFileType "WOS"       = Just WOS
 readFileType _           = Nothing
 
-data DroppedFile = DroppedFile {
-    contents :: UploadFileContents
-  , fileType :: Maybe FileType
-  , lang     :: Maybe Lang
-    }
+data DroppedFile =
+  DroppedFile { contents :: UploadFileContents
+              , fileType :: Maybe FileType
+              , lang     :: Maybe Lang
+              }
+
 type FileHash = String
 
 type Name = String
@@ -60,18 +61,7 @@ type UploadFile =
   , name     :: String
   }
 
-addNode :: Session -> ID -> AddNodeValue -> Aff (Array ID)
-addNode session parentId = post session $ NodeAPI GT.Node (Just parentId) ""
 
-addNodeAsync :: Session
-                -> ID
-                -> AddNodeValue
-                -> Aff GT.AsyncTaskWithType
-addNodeAsync session parentId q = do
-  task <- post session p q
-  pure $ GT.AsyncTaskWithType {task, typ: GT.AddNode}
-  where
-    p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
 
 renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
 renameNode session renameNodeId = put session $ NodeAPI GT.Node (Just renameNodeId) "rename"
@@ -97,17 +87,6 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
     ~> jsonEmptyObject
 
 -----------------------------------------------------------------------
-newtype AddNodeValue = AddNodeValue
-  { name     :: Name
-  , nodeType :: GT.NodeType
-  }
-
-instance encodeJsonCreateValue :: EncodeJson AddNodeValue where
-  encodeJson (AddNodeValue {name, nodeType})
-     = "pn_name"     := name
-    ~> "pn_typename" := nodeType
-    ~> jsonEmptyObject
-
 -----------------------------------------------------------------------
 data UpdateNodeParams = UpdateNodeParamsList { method :: Int }
                       | UpdateNodeParamsGraph { method :: String }
