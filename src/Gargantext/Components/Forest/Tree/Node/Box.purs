@@ -518,7 +518,6 @@ type NodeProps =
   , nodeType :: GT.NodeType
   )
 
-type Open = Boolean
 
 type PanelActionProps =
   ( id       :: ID
@@ -568,7 +567,11 @@ actionSearch search session dispatch nodePopup =
   pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
                           [ H.text $ "Search and create a private "
                                   <> "corpus with the search query as corpus name." ]
-                    , searchBar {langs: allLangs, onSearch: searchOn dispatch nodePopup, search, session}
+                    , searchBar { langs: allLangs
+                                , onSearch: searchOn dispatch nodePopup
+                                , search
+                                , session
+                                }
                     ]
     where
       searchOn :: (Action -> Aff Unit)

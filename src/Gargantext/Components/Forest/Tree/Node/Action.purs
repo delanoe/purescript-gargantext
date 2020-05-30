@@ -17,8 +17,9 @@ import Gargantext.Types  as GT
 
 data Action = CreateSubmit String GT.NodeType
             | DeleteNode
+            | UpdateNode  GT.AsyncTaskWithType
             | SearchQuery GT.AsyncTaskWithType
-            | Submit       String
+            | Submit      String
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | RefreshTree
 
@@ -54,8 +55,8 @@ type ID   = Int
 type Reload = Int
 
 newtype UploadFileContents = UploadFileContents String
-type UploadFile = {
-    contents :: UploadFileContents
+type UploadFile = 
+  { contents :: UploadFileContents
   , name     :: String
   }
 
@@ -81,10 +82,13 @@ deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 loadNode :: Session -> ID -> Aff FTree
 loadNode session nodeId = get session $ NodeAPI GT.Tree (Just nodeId) ""
 
+{-
+updateNode :: Session -> ID -> Aff ID
+updateNode session nodeId = post session 
+-}
 
 newtype RenameValue = RenameValue
-  {
-    name :: Name
+  { name :: Name
   }
 
 instance encodeJsonRenameValue :: EncodeJson RenameValue where
@@ -93,8 +97,7 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
     ~> jsonEmptyObject
 
 newtype CreateValue = CreateValue
-  {
-    name :: Name
+  { name     :: Name
   , nodeType :: GT.NodeType
   }
 

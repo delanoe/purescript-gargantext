@@ -463,10 +463,14 @@ modeFromString "Institutes" = Just Institutes
 modeFromString "Terms" = Just Terms
 modeFromString _ = Nothing
 
--- Async tasks
+-- | Async tasks
 
 -- corresponds to /add/form/async or /add/query/async
-data AsyncTaskType = Form | GraphT | Query | CreateNode
+data AsyncTaskType = Form
+                   | GraphT
+                   | Query
+                   | CreateNode
+                   | UpdateNode
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 
 asyncTaskTypePath :: AsyncTaskType -> String
@@ -474,10 +478,18 @@ asyncTaskTypePath Form   = "add/form/async/"
 asyncTaskTypePath Query  = "query/"
 asyncTaskTypePath GraphT = "async/"
 asyncTaskTypePath CreateNode = "async/nobody/"
+asyncTaskTypePath UpdateNode = "async/"
 
 type AsyncTaskID = String
 
-data AsyncTaskStatus = Running | Pending | Received | Started | Failed | Finished | Killed
+data AsyncTaskStatus = Running
+                     | Pending
+                     | Received
+                     | Started
+                     | Failed
+                     | Finished
+                     | Killed
+
 derive instance genericAsyncTaskStatus :: Generic AsyncTaskStatus _
 derive instance eqAsyncTaskStatus :: Eq AsyncTaskStatus
 instance decodeJsonAsyncTaskStatus :: DecodeJson AsyncTaskStatus where
@@ -495,44 +507,46 @@ readAsyncTaskStatus "IsRunning"  = Running
 readAsyncTaskStatus "IsStarted"  = Started
 readAsyncTaskStatus _ = Running
 
-newtype AsyncTask = AsyncTask {
-    id     :: AsyncTaskID
-  , status :: AsyncTaskStatus
-  }
+newtype AsyncTask =
+  AsyncTask { id     :: AsyncTaskID
+            , status :: AsyncTaskStatus
+            }
 derive instance genericAsyncTask :: Generic AsyncTask _
 
 instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
   decodeJson json = do
     obj <- decodeJson json
-    id <- obj .: "id"
+    id  <- obj .: "id"
     status <- obj .: "status"
     pure $ AsyncTask {id, status}
 
-newtype AsyncTaskWithType = AsyncTaskWithType {
-    task :: AsyncTask
-  , typ  :: AsyncTaskType
-  }
+newtype AsyncTaskWithType =
+  AsyncTaskWithType { task :: AsyncTask
+                    , typ  :: AsyncTaskType
+                    }
 
-newtype AsyncProgress = AsyncProgress {
-    id :: AsyncTaskID
-  , log :: Array AsyncTaskLog
-  , status :: AsyncTaskStatus
-  }
+newtype AsyncProgress =
+  AsyncProgress { id :: AsyncTaskID
+                , log :: Array AsyncTaskLog
+                , status :: AsyncTaskStatus
+                }
+
 derive instance genericAsyncProgress :: Generic AsyncProgress _
 instance decodeJsonAsyncProgress :: DecodeJson AsyncProgress where
   decodeJson json = do
     obj <- decodeJson json
-    id <- obj .: "id"
+    id  <- obj .: "id"
     log <- obj .: "log"
     status <- obj .: "status"
     pure $ AsyncProgress {id, log, status}
 
-newtype AsyncTaskLog = AsyncTaskLog {
-    events :: Array String
-  , failed :: Int
-  , remaining :: Int
-  , succeeded :: Int
-  }
+newtype AsyncTaskLog =
+  AsyncTaskLog { events :: Array String
+               , failed :: Int
+               , remaining :: Int
+               , succeeded :: Int
+               }
+
 derive instance genericAsyncTaskLog :: Generic AsyncTaskLog _
 instance decodeJsonAsyncTaskLog :: DecodeJson AsyncTaskLog where
   decodeJson json = do

@@ -23,6 +23,8 @@ import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
 import Gargantext.Types as GT
 
+------------------------------------------------------------------------
+
 type CommonProps =
   ( frontends     :: Frontends
   , mCurrentRoute :: Maybe AppRoute
@@ -38,44 +40,50 @@ type Props = ( root          :: ID
 
 treeView :: Record Props -> R.Element
 treeView props = R.createElement treeViewCpt props []
-
-treeViewCpt :: R.Component Props
-treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
   where
-    cpt { root, mCurrentRoute, session, frontends, openNodes, reload } _children = do
-      pure $ treeLoadView
-        { root, mCurrentRoute, session, frontends, openNodes, reload }
+    treeViewCpt :: R.Component Props
+    treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
+      where
+        cpt { root, mCurrentRoute, session, frontends, openNodes, reload } _children = do
+          pure $ treeLoadView
+            { root, mCurrentRoute, session, frontends, openNodes, reload }
 
 treeLoadView :: Record Props -> R.Element
-treeLoadView p = R.createElement treeLoadView' p []
-
-treeLoadView' :: R.Component Props
-treeLoadView' = R.hooksComponent "TreeLoadView" cpt
+treeLoadView p = R.createElement treeLoadViewCpt p []
   where
-    cpt {root, mCurrentRoute, session, frontends, openNodes, reload} _ = do
-      let fetch _ = loadNode session root
-      let paint loaded = loadedTreeView {tree: loaded, mCurrentRoute, session, frontends, openNodes, reload}
-      useLoader {root, counter: fst reload} fetch paint
+    treeLoadViewCpt :: R.Component Props
+    treeLoadViewCpt = R.hooksComponent "TreeLoadView" cpt
+      where
+        cpt {root, mCurrentRoute, session, frontends, openNodes, reload} _ = do
+          let fetch _ = loadNode session root
+          let paint loaded = loadedTreeView { tree: loaded
+                                            , mCurrentRoute
+                                            , session
+                                            , frontends
+                                            , openNodes, reload
+                                            }
+          useLoader { root
+                    , counter: fst reload
+                    } 
+                    fetch paint
 
 type TreeViewProps = ( tree          :: FTree
                      | CommonProps
                      )
 
-
 loadedTreeView :: Record TreeViewProps -> R.Element
-loadedTreeView p = R.createElement loadedTreeView' p []
-
-loadedTreeView' :: R.Component TreeViewProps
-loadedTreeView' = R.hooksComponent "LoadedTreeView" cpt
+loadedTreeView p = R.createElement loadedTreeViewCpt p []
   where
-    cpt {tree, mCurrentRoute, session, frontends, openNodes, reload} _ = do
-      tasks <- R.useState' []
+    loadedTreeViewCpt :: R.Component TreeViewProps
+    loadedTreeViewCpt = R.hooksComponent "LoadedTreeView" cpt
+      where
+        cpt {tree, mCurrentRoute, session, frontends, openNodes, reload} _ = do
+          tasks <- R.useState' []
 
-      pure $ H.div {className: "tree"}
-        [ toHtml { frontends, mCurrentRoute, openNodes, reload, session, tasks, tree } ]
+          pure $ H.div {className: "tree"}
+            [ toHtml { frontends, mCurrentRoute, openNodes, reload, session, tasks, tree } ]
 
 ------------------------------------------------------------------------
-
 type ToHtmlProps =
   (
     tasks :: R.State (Array GT.AsyncTaskWithType)
@@ -90,7 +98,8 @@ toHtml p@{ frontends
          , reload: reload@(_ /\ setReload)
          , session
          , tasks: tasks@(asyncTasks /\ setAsyncTasks)
-         , tree: tree@(NTree (LNode {id, name, nodeType}) ary) } = R.createElement el {} []
+         , tree: tree@(NTree (LNode {id, name, nodeType}) ary)
+         } = R.createElement el {} []
   where
     el          = R.hooksComponent "NodeView" cpt
     commonProps = RecordE.pick p :: Record CommonProps
@@ -132,12 +141,10 @@ toHtml p@{ frontends
 
 
 type ChildNodesProps =
-  (
-      children :: Array FTree
-    , folderOpen :: R.State Boolean
-    | CommonProps
+  ( children   :: Array FTree
+  , folderOpen :: R.State Boolean
+  | CommonProps
   )
-
 
 childNodes :: Record ChildNodesProps -> Array R.Element
 childNodes { children: [] } = []
@@ -178,9 +185,17 @@ performAction p@{ openNodes: (_ /\ setOpenNodes)
 performAction { reload: (_ /\ setReload)
               , session
               , tasks: (_ /\ setAsyncTasks)
-              , tree: (NTree (LNode {id}) _) } (SearchQuery task) = do
+              , tree: (NTree (LNode {id}) _) 
+              } (SearchQuery task) = do
   liftEffect $ setAsyncTasks $ A.cons task
   liftEffect $ log2 "[performAction] SearchQuery task:" task
+
+performAction { reload: (_ /\ setReload)
+              , session
+              , tasks: (_ /\ setAsyncTasks)
+              , tree: (NTree (LNode {id}) _) } (UpdateNode task) = do
+  liftEffect $ setAsyncTasks $ A.cons task
+  liftEffect $ log2 "[performAction] UpdateNode task:" task
 
 performAction p@{ reload: (_ /\ setReload)
                 , session
