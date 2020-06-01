@@ -1,23 +1,33 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
-import Gargantext.Prelude
-
+import Data.Array as A
+import Data.Map as Map
+import Data.Maybe (Maybe(..), maybe)
+import Data.Nullable (Nullable, null)
+import Data.Tuple (fst, Tuple(..))
+import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Event
 import DOM.Simple.EventListener
 import DOM.Simple.Types
 import DOM.Simple.Window
-import Data.Maybe (Maybe(..))
-import Data.Nullable (Nullable, null)
-import Data.Tuple (fst, Tuple(..))
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console
 import Effect.Uncurried (mkEffectFn1)
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import URI.Extra.QueryPairs as NQP
+import URI.Query as Query
+import Web.File.FileReader.Aff (readAsText)
+
+import Gargantext.Prelude
+
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, Reload, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
@@ -38,14 +48,26 @@ import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import URI.Extra.QueryPairs as NQP
-import URI.Query as Query
-import Web.File.FileReader.Aff (readAsText)
 
 type Dispatch = Action -> Aff Unit
+
+type Tasks =
+  (
+    onTaskAdd :: GT.AsyncTaskWithType -> Effect Unit
+  , onTaskFinish :: GT.AsyncTaskWithType -> Effect Unit
+  , tasks :: Array GT.AsyncTaskWithType
+  )
+
+tasksStruct :: Int -> R.State GAT.Storage -> R.State Reload -> Record Tasks
+tasksStruct id (asyncTasks /\ setAsyncTasks) (_ /\ setReload) = { onTaskAdd, onTaskFinish, tasks }
+  where
+    tasks = maybe [] identity $ Map.lookup id asyncTasks
+    onTaskAdd t = do
+      setReload (_ + 1)
+      setAsyncTasks $ Map.alter (maybe (Just [t]) $ (\ts -> Just $ A.cons t ts)) id
+    onTaskFinish t = do
+      setReload (_ + 1)
+      setAsyncTasks $ Map.alter (maybe Nothing $ (\ts -> Just $ GAT.removeTaskFromList ts t)) id
 
 type CommonProps =
   ( dispatch :: Dispatch
@@ -55,13 +77,12 @@ type CommonProps =
 -- Main Node
 type NodeMainSpanProps =
   ( id                :: ID
-  , asyncTasks        :: Array GT.AsyncTaskWithType
   , folderOpen        :: R.State Boolean
   , frontends         :: Frontends
   , mCurrentRoute     :: Maybe Routes.AppRoute
   , name              :: Name
   , nodeType          :: GT.NodeType
-  , onAsyncTaskFinish :: GT.AsyncTaskWithType -> Effect Unit
+  , tasks             :: Record Tasks
   | CommonProps
   )
 
@@ -70,7 +91,7 @@ nodeMainSpan :: Record NodeMainSpanProps
 nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el p []
   where
     el = R.hooksComponent "G.C.F.T.N.B.NodeMainSpan" cpt
-    cpt props@{id, asyncTasks, mCurrentRoute, name, nodeType, onAsyncTaskFinish} _ = do
+    cpt props@{id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks }} _ = do
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
@@ -102,8 +123,8 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                 , barType: Pie
                                                 , corpusId: id
-                                                , onFinish: const $ onAsyncTaskFinish t
-                                                , session }) asyncTasks)
+                                                , onFinish: const $ onTaskFinish t
+                                                , session }) tasks)
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType

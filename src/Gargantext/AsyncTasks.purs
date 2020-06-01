@@ -2,6 +2,7 @@ module Gargantext.AsyncTasks where
 
 import Data.Argonaut (decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:))
 import Data.Argonaut.Parser (jsonParser)
+import Data.Array as A
 import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
@@ -17,10 +18,12 @@ import Gargantext.Utils.Reactix as R2
 localStorageKey :: String
 localStorageKey = "garg-async-tasks"
 
-empty :: Map.Map Int (Array GT.AsyncTaskWithType)
+type Storage = Map.Map Int (Array GT.AsyncTaskWithType)
+
+empty :: Storage
 empty = Map.empty
 
-getAsyncTasks :: Effect (Map.Map Int (Array GT.AsyncTaskWithType))
+getAsyncTasks :: Effect Storage
 getAsyncTasks = R2.getls >>= WSS.getItem localStorageKey >>= handleMaybe
   where
     handleMaybe (Just val) = handleEither (parse val >>= decode)
@@ -37,3 +40,7 @@ mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
 mapLeft f (Left  l) = Left (f l)
 mapLeft _ (Right r) = Right r
 
+
+removeTaskFromList :: Array GT.AsyncTaskWithType -> GT.AsyncTaskWithType -> Array GT.AsyncTaskWithType
+removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) =
+  A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
