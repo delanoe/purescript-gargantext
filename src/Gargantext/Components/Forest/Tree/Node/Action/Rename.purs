@@ -12,14 +12,25 @@ import Gargantext.Types (NodeType)
 import Gargantext.Utils.Reactix as R2
 
 
-type Dispatch = Action -> Aff Unit
+renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
+renameNode session renameNodeId =
+  put session $ NodeAPI GT.Node (Just renameNodeId) "rename"
+
+newtype RenameValue = RenameValue
+  { name :: Name }
+
+instance encodeJsonRenameValue :: EncodeJson RenameValue where
+  encodeJson (RenameValue {name})
+     = "r_name" := name
+    ~> jsonEmptyObject
+
 
 -- | START Rename Box
 type RenameBoxProps =
-  ( id :: ID
-  , dispatch :: Dispatch
-  , name :: Name
-  , nodeType :: NodeType
+  ( id            :: ID
+  , dispatch      :: Action -> Aff Unit
+  , name          :: Name
+  , nodeType      :: NodeType
   , renameBoxOpen :: R.State Boolean
   )
 
@@ -64,6 +75,4 @@ renameBox p@{ renameBoxOpen: (false /\ _) } = R.createElement el p []
     cpt {name} _ = pure $ H.div {} []
 
 -- END Rename Box
-
-
 

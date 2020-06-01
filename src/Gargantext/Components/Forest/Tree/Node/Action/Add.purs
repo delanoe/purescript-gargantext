@@ -18,8 +18,7 @@ import Prelude (Unit, bind, const, discard, map, pure, show, ($), (<>), (>), (<<
 import Reactix as R
 import Reactix.DOM.HTML as H
 
--- START Create Node
-
+----------------------------------------------------------------------
 addNode :: Session -> ID -> AddNodeValue -> Aff (Array ID)
 addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 
@@ -34,6 +33,7 @@ addNodeAsync session parentId q = do
     p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
 
 ----------------------------------------------------------------------
+-- TODO AddNodeParams
 newtype AddNodeValue = AddNodeValue
   { name     :: Name
   , nodeType :: GT.NodeType
@@ -46,15 +46,13 @@ instance encodeJsonAddNodeValue :: EncodeJson AddNodeValue where
     ~> jsonEmptyObject
 
 ----------------------------------------------------------------------
-
-type Dispatch = Action -> Aff Unit
 data NodePopup = CreatePopup | NodePopup
 
 type CreateNodeProps =
-  ( id       :: ID
-  , dispatch :: Action -> Aff Unit
-  , name     :: Name
-  , nodeType :: NodeType
+  ( id        :: ID
+  , dispatch  :: Action -> Aff Unit
+  , name      :: Name
+  , nodeType  :: NodeType
   , nodeTypes :: Array NodeType
   )
 

@@ -19,7 +19,8 @@ import Web.File.FileReader.Aff (readAsText)
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, map, pure, show, unit, void, ($), (&&), (/=), (<>))
 
 import Gargantext.Components.Lang (readLang, Lang(..))
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FTree, FileType(..), ID, LNode(..), NTree(..), UploadFile, UploadFileContents(..), readFileType)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.FTree (FTree, ID, LNode(..), NTree(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), postWwwUrlencoded, get)
@@ -27,15 +28,45 @@ import Gargantext.Types as GT
 import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 
-type Dispatch = Action -> Aff Unit
+-- UploadFile Action
+-- file upload types
+data FileType = CSV | CSV_HAL | WOS | PresseRIS
+
+derive instance genericFileType :: Generic FileType _
+
+instance eqFileType :: Eq FileType where
+    eq = genericEq
+
+instance showFileType :: Show FileType where
+    show = genericShow
+
+readFileType :: String -> Maybe FileType
+readFileType "CSV"       = Just CSV
+readFileType "CSV_HAL"   = Just CSV_HAL
+readFileType "PresseRIS" = Just PresseRIS
+readFileType "WOS"       = Just WOS
+readFileType _           = Nothing
+
+data DroppedFile =
+  DroppedFile { contents :: UploadFileContents
+              , fileType :: Maybe FileType
+              , lang     :: Maybe Lang
+              }
+
+type FileHash = String
+
+newtype UploadFileContents = UploadFileContents String
+type UploadFile = 
+  { contents :: UploadFileContents
+  , name     :: String
+  }
 
 type Props =
-  ( dispatch :: Dispatch
+  ( dispatch :: Action -> Aff Unit
   , id       :: Int
   , nodeType :: GT.NodeType
   , session  :: Session
   )
-
 
 uploadFileView :: Record Props -> R.Element
 uploadFileView props = R.createElement uploadFileViewCpt props []
@@ -44,7 +75,7 @@ uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
-      mFile :: R.State (Maybe UploadFile) <- R.useState' Nothing
+      mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       fileType :: R.State FileType     <- R.useState' CSV
       lang     :: R.State (Maybe Lang) <- R.useState' (Just EN)
 
@@ -112,9 +143,9 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
 type UploadButtonProps =
   ( dispatch :: Dispatch
   , fileType :: R.State FileType
-  , id :: Int
-  , lang :: R.State (Maybe Lang)
-  , mFile :: R.State (Maybe UploadFile)
+  , id       :: GT.ID
+  , lang     :: R.State (Maybe Lang)
+  , mFile    :: R.State (Maybe UploadFile)
   , nodeType :: GT.NodeType
   )
 
@@ -310,69 +341,3 @@ uploadTermButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadTermButton" cpt
             liftEffect $ do
               setMFile $ const $ Nothing
 
-copyFromCorpusView :: Record Props -> R.Element
-copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []
-
-copyFromCorpusViewCpt :: R.Component Props
-copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
-  where
-    cpt {dispatch, id, nodeType, session} _ = do
-      useLoader session loadCorporaTree $
-        \tree ->
-          copyFromCorpusViewLoaded {dispatch, id, nodeType, session, tree}
-
-type CorpusTreeProps =
-  ( tree :: FTree
-  | Props
-  )
-
-copyFromCorpusViewLoaded :: Record CorpusTreeProps -> R.Element
-copyFromCorpusViewLoaded props = R.createElement copyFromCorpusViewLoadedCpt props []
-
-copyFromCorpusViewLoadedCpt :: R.Component CorpusTreeProps
-copyFromCorpusViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusViewLoadedCpt" cpt
-  where
-    cpt p@{dispatch, id, nodeType, session, tree} _ = do
-      pure $ H.div { className: "copy-from-corpus" } [
-        H.div { className: "tree" } [copyFromCorpusTreeView p]
-      ]
-
-copyFromCorpusTreeView :: Record CorpusTreeProps -> R.Element
-copyFromCorpusTreeView props = R.createElement copyFromCorpusTreeViewCpt props []
-
-copyFromCorpusTreeViewCpt :: R.Component CorpusTreeProps
-copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeViewCpt" cpt
-  where
-    cpt p@{id, tree: NTree (LNode { id: sourceId, name, nodeType }) ary} _ = do
-      pure $ {- H.div {} [ H.h5 { className: GT.fldr nodeType true} []
-      , -} H.div { className: "node" } ([ H.span { className: "name " <> clickable
-                                                              , on: { click: onClick }
-                                                              } [ H.text name ]
-
-                                                     ] <> children)
-                      -- ]
-      where
-        children = map (\c -> copyFromCorpusTreeView (p { tree = c })) ary
-        validNodeType = (A.elem nodeType [GT.NodeList]) && (id /= sourceId)
-        clickable = if validNodeType then "clickable" else ""
-        onClick _ = case validNodeType of
-          false -> pure unit
-          true  -> do
-            log2 "[copyFromCorpusTreeViewCpt] issue copy into" id
-            log2 "[copyFromCorpusTreeViewCpt] issue copy from" sourceId
-
-loadCorporaTree :: Session -> Aff FTree
-loadCorporaTree session = getCorporaTree session treeId
-  where
-    Session { treeId } = session
-
-getCorporaTree :: Session -> Int -> Aff FTree
-getCorporaTree session treeId = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
-  where
-    nodeTypes = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" [ GT.FolderPrivate
-                                                             , GT.FolderShared
-                                                             , GT.Team
-                                                             , GT.FolderPublic
-                                                             , GT.Folder
-                                                             , GT.Corpus
-                                                             , GT.NodeList]

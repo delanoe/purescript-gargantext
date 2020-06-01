@@ -30,6 +30,7 @@ import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, Reload, UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
+import Gargantext.Components.Forest.Tree.Node.Action.Update
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.GraphExplorer.API as GraphAPI
