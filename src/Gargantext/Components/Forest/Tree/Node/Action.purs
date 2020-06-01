@@ -28,3 +28,25 @@ data Action = CreateSubmit String GT.NodeType
 deleteNode :: Session -> GT.ID -> Aff GT.ID
 deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 -----------------------------------------------------------------------
+
+type Props =
+  ( dispatch :: Action -> Aff Unit
+  , id       :: Int
+  , nodeType :: GT.NodeType
+  , session  :: Session
+  )
+
+-- TODO remove these types from here
+
+data FileType = CSV | CSV_HAL | WOS | PresseRIS
+
+derive instance genericFileType :: Generic FileType _
+
+instance eqFileType :: Eq FileType where
+    eq = genericEq
+
+instance showFileType :: Show FileType where
+    show = genericShow
+
+
+newtype UploadFileContents = UploadFileContents String

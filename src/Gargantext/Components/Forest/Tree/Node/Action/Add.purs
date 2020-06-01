@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), ID, Name)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
 import Gargantext.Types (NodeType(..), readNodeType)
 import Gargantext.Utils.Reactix as R2
@@ -19,11 +19,11 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 ----------------------------------------------------------------------
-addNode :: Session -> ID -> AddNodeValue -> Aff (Array ID)
+addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Array GT.ID)
 addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 
 addNodeAsync :: Session
-                -> ID
+                -> GT.ID
                 -> AddNodeValue
                 -> Aff GT.AsyncTaskWithType
 addNodeAsync session parentId q = do
@@ -35,7 +35,7 @@ addNodeAsync session parentId q = do
 ----------------------------------------------------------------------
 -- TODO AddNodeParams
 newtype AddNodeValue = AddNodeValue
-  { name     :: Name
+  { name     :: GT.Name
   , nodeType :: GT.NodeType
   }
 
@@ -49,9 +49,9 @@ instance encodeJsonAddNodeValue :: EncodeJson AddNodeValue where
 data NodePopup = CreatePopup | NodePopup
 
 type CreateNodeProps =
-  ( id        :: ID
+  ( id        :: GT.ID
   , dispatch  :: Action -> Aff Unit
-  , name      :: Name
+  , name      :: GT.Name
   , nodeType  :: NodeType
   , nodeTypes :: Array NodeType
   )

@@ -19,7 +19,7 @@ import Web.File.FileReader.Aff (readAsText)
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, map, pure, show, unit, void, ($), (&&), (/=), (<>))
 
 import Gargantext.Components.Lang (readLang, Lang(..))
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props, FileType(..), UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.FTree (FTree, ID, LNode(..), NTree(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
@@ -30,23 +30,6 @@ import Gargantext.Utils.Reactix as R2
 
 -- UploadFile Action
 -- file upload types
-data FileType = CSV | CSV_HAL | WOS | PresseRIS
-
-derive instance genericFileType :: Generic FileType _
-
-instance eqFileType :: Eq FileType where
-    eq = genericEq
-
-instance showFileType :: Show FileType where
-    show = genericShow
-
-readFileType :: String -> Maybe FileType
-readFileType "CSV"       = Just CSV
-readFileType "CSV_HAL"   = Just CSV_HAL
-readFileType "PresseRIS" = Just PresseRIS
-readFileType "WOS"       = Just WOS
-readFileType _           = Nothing
-
 data DroppedFile =
   DroppedFile { contents :: UploadFileContents
               , fileType :: Maybe FileType
@@ -55,18 +38,12 @@ data DroppedFile =
 
 type FileHash = String
 
-newtype UploadFileContents = UploadFileContents String
+
 type UploadFile = 
   { contents :: UploadFileContents
   , name     :: String
   }
 
-type Props =
-  ( dispatch :: Action -> Aff Unit
-  , id       :: Int
-  , nodeType :: GT.NodeType
-  , session  :: Session
-  )
 
 uploadFileView :: Record Props -> R.Element
 uploadFileView props = R.createElement uploadFileViewCpt props []
@@ -141,7 +118,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
 
 
 type UploadButtonProps =
-  ( dispatch :: Dispatch
+  ( dispatch :: Action -> Aff Unit
   , fileType :: R.State FileType
   , id       :: GT.ID
   , lang     :: R.State (Maybe Lang)
@@ -173,7 +150,7 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
 
 -- START File Type View
 type FileTypeProps =
-  ( dispatch    :: Dispatch
+  ( dispatch    :: Action -> Aff Unit
   , droppedFile :: R.State (Maybe DroppedFile)
   , id          :: ID
   , isDragOver  :: R.State Boolean
@@ -315,7 +292,7 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
 
 
 type UploadTermButtonProps =
-  ( dispatch :: Dispatch
+  ( dispatch :: Action -> Aff Unit
   , id       :: Int
   , mFile    :: R.State (Maybe UploadFile)
   , nodeType :: GT.NodeType
@@ -340,4 +317,15 @@ uploadTermButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadTermButton" cpt
             _ <- dispatch $ UploadFile nodeType CSV (Just name) contents
             liftEffect $ do
               setMFile $ const $ Nothing
+
+
+-- | UTils
+readFileType :: String -> Maybe FileType
+readFileType "CSV"       = Just CSV
+readFileType "CSV_HAL"   = Just CSV_HAL
+readFileType "PresseRIS" = Just PresseRIS
+readFileType "WOS"       = Just WOS
+readFileType _           = Nothing
+
+
 

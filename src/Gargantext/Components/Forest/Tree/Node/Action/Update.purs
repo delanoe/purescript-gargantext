@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), ID, Name)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
 import Gargantext.Types (NodeType(..), readNodeType)
 import Gargantext.Utils.Reactix as R2
@@ -41,9 +41,9 @@ instance encodeJsonUpdateNodeParams :: EncodeJson UpdateNodeParams
 ----------------------------------------------------------------------
 
 type UpdateNodeProps =
-  ( id       :: ID
+  ( id       :: GT.ID
   , dispatch :: Action -> Aff Unit
-  , name     :: Name
+  , name     :: GT.Name
   , nodeType :: NodeType
   , params   :: UpdateNodeParams
   )

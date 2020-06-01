@@ -16,16 +16,20 @@ import Record as Record
 import Record.Extra as RecordE
 
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, deleteNode, loadNode, renameNode)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..),deleteNode)
+import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (loadNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), renameNode)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan, Tasks, tasksStruct)
+import Gargantext.Components.Forest.Tree.Node.FTree (FTree, LNode(..), NTree(..), Tree)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, map, pure, void, ($), (+), (/=), (<>), identity)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
 import Gargantext.Types as GT
+import Gargantext.Types (ID, Reload)
 
 ------------------------------------------------------------------------
 

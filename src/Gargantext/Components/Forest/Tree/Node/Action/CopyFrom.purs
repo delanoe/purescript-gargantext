@@ -19,7 +19,7 @@ import Web.File.FileReader.Aff (readAsText)
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, map, pure, show, unit, void, ($), (&&), (/=), (<>))
 
 import Gargantext.Components.Lang (readLang, Lang(..))
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
 import Gargantext.Components.Forest.Tree.Node.FTree (FTree, ID, LNode(..), NTree(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
@@ -30,7 +30,7 @@ import Gargantext.Utils.Reactix as R2
 
 
 loadNode :: Session -> GT.ID -> Aff FTree
-loadNode session nodeId = get session $ NodeAPI GT.Tree (Just nodeId) ""
+loadNode session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 
 copyFromCorpusView :: Record Props -> R.Element
 copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []

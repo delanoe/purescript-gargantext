@@ -15,8 +15,9 @@ import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import URI.Query (Query)
 
-type ID   = Int
-type Name = String
+type ID     = Int
+type Name   = String
+type Reload = Int
 
 newtype SessionId = SessionId String
 type NodeID = Int

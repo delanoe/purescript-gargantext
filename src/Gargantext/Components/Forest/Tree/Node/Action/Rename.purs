@@ -1,5 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Rename where
 
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
@@ -8,13 +10,16 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Types (NodeType)
+import Gargantext.Types as GT
+import Gargantext.Types (NodeType, ID, Name)
+import Gargantext.Routes as GR
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Sessions (Session, get, put, post, delete)
 
 
 renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
 renameNode session renameNodeId =
-  put session $ NodeAPI GT.Node (Just renameNodeId) "rename"
+  put session $ GR.NodeAPI GT.Node (Just renameNodeId) "rename"
 
 newtype RenameValue = RenameValue
   { name :: Name }

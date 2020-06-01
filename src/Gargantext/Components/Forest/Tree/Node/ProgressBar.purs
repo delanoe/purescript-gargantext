@@ -9,7 +9,6 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (clearInterval, setInterval)
-import Gargantext.Components.Forest.Tree.Node.Action (ID)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types as GT
@@ -26,7 +25,7 @@ type Props =
   (
     asyncTask :: GT.AsyncTaskWithType
   , barType   :: BarType
-  , corpusId  :: ID
+  , corpusId  :: GT.ID
   , onFinish  :: Unit -> Effect Unit
   , session   :: Session
   )
