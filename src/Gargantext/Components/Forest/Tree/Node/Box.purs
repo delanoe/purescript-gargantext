@@ -23,16 +23,14 @@ import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
 import Web.File.FileReader.Aff (readAsText)
 
-import Gargantext.Prelude
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
+import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Update
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), uploadFileView, fileTypeView, uploadTermListView)
-import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (allLangs, Lang(EN))
@@ -43,6 +41,7 @@ import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex_
 import Gargantext.Components.Search.Types (DataField(..))
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post)
 import Gargantext.Types (NodeType(..), ID, Name, Reload)
@@ -51,13 +50,11 @@ import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 
-type Dispatch = Action -> Aff Unit
 
 type Tasks =
-  (
-    onTaskAdd :: GT.AsyncTaskWithType -> Effect Unit
+  ( onTaskAdd    :: GT.AsyncTaskWithType -> Effect Unit
   , onTaskFinish :: GT.AsyncTaskWithType -> Effect Unit
-  , tasks :: Array GT.AsyncTaskWithType
+  , tasks        :: Array GT.AsyncTaskWithType
   )
 
 tasksStruct :: Int -> R.State GAT.Storage -> R.State Reload -> Record Tasks
@@ -72,7 +69,7 @@ tasksStruct id (asyncTasks /\ setAsyncTasks) (_ /\ setReload) = { onTaskAdd, onT
       setAsyncTasks $ Map.alter (maybe Nothing $ (\ts -> Just $ GAT.removeTaskFromList ts t)) id
 
 type CommonProps =
-  ( dispatch :: Dispatch
+  ( dispatch :: Action -> Aff Unit
   , session :: Session
   )
 
@@ -545,7 +542,7 @@ type NodeProps =
 type PanelActionProps =
   ( id       :: ID
   , action   :: NodeAction
-  , dispatch :: Dispatch
+  , dispatch :: Action -> Aff Unit
   , name     :: Name
   , nodePopup :: Maybe NodePopup
   , nodeType :: GT.NodeType
@@ -632,7 +629,7 @@ actionDelete _ dispatch = do
     , reallyDelete dispatch
     ]
   where
-    reallyDelete :: Dispatch -> R.Element
+    reallyDelete :: (Action -> Aff Unit) -> R.Element
     reallyDelete d = H.div {className: "panel-footer"}
                 [ H.a { type: "button"
                       , className: "btn glyphicon glyphicon-trash"
@@ -646,7 +643,7 @@ actionDelete _ dispatch = do
 
 
 -- | Action : Upload
-actionUpload :: NodeType -> ID -> Session -> Dispatch -> R.Hooks R.Element
+actionUpload :: NodeType -> ID -> Session -> (Action -> Aff Unit) -> R.Hooks R.Element
 actionUpload NodeList id session dispatch =
   pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
 
