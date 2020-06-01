@@ -564,6 +564,12 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
       pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
 
+    cpt {action: Refresh , dispatch, id, nodeType, session} _ = do
+      pure $ fragmentPT $ "Update " <> show nodeType
+
+    cpt {action: Config , dispatch, id, nodeType, session} _ = do
+      pure $ fragmentPT $ "Config " <> show nodeType
+
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}
 
