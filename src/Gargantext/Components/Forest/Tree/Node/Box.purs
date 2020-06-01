@@ -3,38 +3,38 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Gargantext.Prelude
 
 import DOM.Simple as DOM
+import DOM.Simple.Event
+import DOM.Simple.EventListener
+import DOM.Simple.Types
+import DOM.Simple.Window
 import Data.Maybe (Maybe(..))
-import Data.Nullable (null)
+import Data.Nullable (Nullable, null)
 import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Data.Nullable (Nullable, null)
-import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
+import Effect.Console
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, UploadFileContents(..))
-
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.GraphExplorer.API as GraphAPI
+import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.NgramsTable.API as NTAPI
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.Search.SearchBar (searchBar)
 import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex_Advanced)
 import Gargantext.Components.Search.Types (DataField(..))
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
-import Gargantext.Routes as GR
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
@@ -45,12 +45,6 @@ import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
 import Web.File.FileReader.Aff (readAsText)
 
-import DOM.Simple.Types
-import DOM.Simple.Window
-import DOM.Simple.EventListener
-import DOM.Simple.Event
-import Effect.Console
-
 type Dispatch = Action -> Aff Unit
 
 type CommonProps =
@@ -58,14 +52,13 @@ type CommonProps =
   , session :: Session
   )
 
-
 -- Main Node
 type NodeMainSpanProps =
   ( id                :: ID
   , asyncTasks        :: Array GT.AsyncTaskWithType
   , folderOpen        :: R.State Boolean
   , frontends         :: Frontends
-  , mCurrentRoute     :: Maybe AppRoute
+  , mCurrentRoute     :: Maybe Routes.AppRoute
   , name              :: Name
   , nodeType          :: GT.NodeType
   , onAsyncTaskFinish :: GT.AsyncTaskWithType -> Effect Unit
@@ -82,7 +75,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
 
-      popoverRef <- R.useRef null
+      popoverRef    <- R.useRef null
 
       pure $ H.span (dropProps droppedFile isDragOver) $
         [ folderIcon nodeType folderOpen
@@ -305,8 +298,7 @@ nodeActionsNodeListCpt = R.hooksComponent "G.C.F.T.N.B.nodeActionsNodeList" cpt
       ]
 
 type NodeListUpdateButtonProps =
-  (
-    listId :: GT.ListId
+  ( listId :: GT.ListId
   , nodeId :: ID
   , nodeType :: GT.TabSubType GT.CTabNgramType
   , session :: Session
@@ -322,10 +314,11 @@ nodeListUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.nodeListUpdateButton" cp
     cpt { listId, nodeId, nodeType, session, triggerRefresh } _ = do
       enabled <- R.useState' true
 
-      pure $ H.div { className: "update-button " <> if (fst enabled) then "enabled" else "disabled text-muted" } [
-        H.span { className: "fa fa-refresh"
-               , on: { click: onClick enabled } } []
-      ]
+      pure $ H.div { className: "update-button " 
+                     <> if (fst enabled) then "enabled" else "disabled text-muted"
+                   } [ H.span { className: "fa fa-refresh"
+                     , on: { click: onClick enabled } } []
+                     ]
       where
         onClick (false /\ _) _ = pure unit
         onClick (true /\ setEnabled) _ = do
@@ -338,7 +331,7 @@ nodeListUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.nodeListUpdateButton" cp
 
 -- END nodeActions
 
-mAppRouteId :: Maybe AppRoute -> Maybe Int
+mAppRouteId :: Maybe Routes.AppRoute -> Maybe Int
 mAppRouteId (Just (Routes.Folder         _ id)) = Just id
 mAppRouteId (Just (Routes.FolderPrivate  _ id)) = Just id
 mAppRouteId (Just (Routes.FolderPublic   _ id)) = Just id
@@ -351,8 +344,8 @@ mAppRouteId (Just (Routes.Texts          _ id)) = Just id
 mAppRouteId (Just (Routes.Lists          _ id)) = Just id
 mAppRouteId (Just (Routes.Annuaire       _ id)) = Just id
 mAppRouteId (Just (Routes.UserPage       _ id)) = Just id
-mAppRouteId (Just (Routes.Document       _ id _ )) = Just id
-mAppRouteId (Just (Routes.ContactPage    _ id _ )) = Just id
+mAppRouteId (Just (Routes.Document       _ id _  )) = Just id
+mAppRouteId (Just (Routes.ContactPage    _ id _  )) = Just id
 mAppRouteId (Just (Routes.CorpusDocument _ id _ _)) = Just id
 mAppRouteId _ = Nothing
 
@@ -367,11 +360,10 @@ type NodePopupProps =
   )
 
 type NodePopupS =
-  (
-      action   :: Maybe NodeAction
-    , id       :: ID
-    , name     :: Name
-    , nodeType :: GT.NodeType
+  ( action   :: Maybe NodeAction
+  , id       :: ID
+  , name     :: Name
+  , nodeType :: GT.NodeType
   )
 
 iconAStyle :: { color      :: String
@@ -483,14 +475,12 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                         , session  : p.session
                         }
 
-
 type ActionState =
   ( action   :: Maybe NodeAction
   , id       :: ID
   , name     :: Name
   , nodeType :: GT.NodeType
   )
-
 
 type ButtonClickProps =
   ( action :: NodeAction
@@ -547,10 +537,10 @@ panelAction p = R.createElement panelActionCpt p []
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
   where
-    cpt {action: Documentation nodeType}          _ = actionDoc      nodeType
-    cpt {action: Download, id, nodeType, session} _ = actionDownload nodeType id session
-    cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload nodeType id session dispatch
-    cpt {action: Delete, nodeType, dispatch} _ = actionDelete nodeType dispatch
+    cpt {action: Documentation nodeType}                  _ = actionDoc      nodeType
+    cpt {action: Download, id, nodeType, session}         _ = actionDownload nodeType id session
+    cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload   nodeType id session dispatch
+    cpt {action: Delete, nodeType, dispatch}              _ = actionDelete   nodeType dispatch
 
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
       pure $ createNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
@@ -558,46 +548,43 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}
 
-    cpt {action: Link _} _ = pure $ fragmentPT "Soon, you will be able to link the corpus with your Annuaire (and reciprocally)."
+    cpt {action: Link _} _ = pure $ fragmentPT $ "Soon, you will be able "
+                                 <> "to link the corpus with your Annuaire"
+                                 <> " (and reciprocally)."
 
-
-    cpt props@{action: SearchBox, search, session} _ = do
-      pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
-                              [ H.text $ "Search and create a private corpus with the search query as corpus name." ]
-                        , searchBar {langs: allLangs, onSearch: searchOn props, search, session}
-                        ]
-        where
-          searchOn :: Record PanelActionProps -> GT.AsyncTaskWithType -> Effect Unit
-          searchOn {dispatch, nodePopup: p} task = do
-            _ <- launchAff $ dispatch (SearchQuery task)
-            -- close popup
-            -- TODO
-            --snd p $ const Nothing
-            pure unit
-
-
-{-
-    cpt {action: Refresh, nodeType: GT.Graph, id, session} _ = do
-
-      pure $ H.div {className: "panel-footer"}
-            [ H.a { type: "button"
-                  , className: "btn glyphicon glyphicon-trash"
-                  , id: "delete"
-                  , title: "Delete"
-                  , on: {click: \_ -> post session (GR.GraphAPI id $ GT.asyncTaskTypePath GT.GraphT) {}
-                        -- TODO pure $ GT.AsyncTaskWithType { task, typ: GT.GraphT }
-                        }
-                  }
-              [H.text " Yes, delete!"]
-            ]
---}
+    cpt props@{action: SearchBox, search, session, dispatch, nodePopup} _ =
+      actionSearch search session dispatch nodePopup
 
     cpt _ _ = do
       pure $ H.div {} []
 
+-- | Action : Search
+actionSearch :: R.State Search
+            -> Session
+            -> (Action -> Aff Unit)
+            -> Maybe NodePopup
+            -> R.Hooks R.Element
+actionSearch search session dispatch nodePopup =
+  pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
+                          [ H.text $ "Search and create a private "
+                                  <> "corpus with the search query as corpus name." ]
+                    , searchBar {langs: allLangs, onSearch: searchOn dispatch nodePopup, search, session}
+                    ]
+    where
+      searchOn :: (Action -> Aff Unit)
+               -> Maybe NodePopup
+               -> GT.AsyncTaskWithType
+               -> Effect Unit
+      searchOn dispatch p task = do
+        _ <- launchAff $ dispatch (SearchQuery task)
+        -- close popup
+        -- TODO
+        --snd p $ const Nothing
+        pure unit
+
 
 -- | Action : Delete
-actionDelete :: NodeType -> Dispatch -> R.Hooks R.Element
+actionDelete :: NodeType -> (Action -> Aff Unit) -> R.Hooks R.Element
 actionDelete NodeUser _ = do
   pure $ R.fragment [
     H.div {style: {margin: "10px"}} 
@@ -610,7 +597,12 @@ actionDelete NodeUser _ = do
 
 actionDelete _ dispatch = do
   pure $ R.fragment [
-    H.div {style: {margin: "10px"}} (map (\t -> H.p {} [H.text t]) ["Are your sure you want to delete it ?", "If yes, click again below."])
+    H.div {style: {margin: "10px"}} 
+          (map (\t -> H.p {} [H.text t]) 
+               [ "Are your sure you want to delete it ?"
+               , "If yes, click again below."
+               ]
+          )
     , reallyDelete dispatch
     ]
   where
@@ -717,11 +709,15 @@ docOf GT.FolderShared  = ["Soon, you will be able to build teams folders to shar
 docOf nodeType         = ["More information on " <> show nodeType]
 
 
+fragmentPT :: String -> R.Element
 fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 
 --------------------
 -- | Iframes
-
+searchIframes :: Record NodePopupProps
+              -> R.State Search
+              -> R.Ref (Nullable DOM.Element)
+              -> R.Element
 searchIframes {nodeType} search@(search' /\ _) iframeRef =
   if isIsTex_Advanced search'.datafield then
     H.div { className: "istex-search panel panel-default" }
@@ -737,6 +733,10 @@ searchIframes {nodeType} search@(search' /\ _) iframeRef =
     else
       H.div {} []
 
+iframeWith :: String
+           -> R.State Search
+           -> R.Ref (Nullable DOM.Element)
+           -> R.Element
 iframeWith url (search /\ setSearch) iframeRef =
   H.iframe { src: isTexTermUrl search.term
             ,width: "100%"
@@ -750,12 +750,13 @@ iframeWith url (search /\ setSearch) iframeRef =
            } []
   where
     changeSearchOnMessage :: String -> Callback MessageEvent
-    changeSearchOnMessage url = callback $ \m -> if R2.getMessageOrigin m == url
-                                             then do
-                                               let {url, term} = R2.getMessageData m
-                                               setSearch $ _ {url = url, term = term}
-                                             else
-                                               pure unit
+    changeSearchOnMessage url =
+      callback $ \m -> if R2.getMessageOrigin m == url
+                         then do
+                           let {url, term} = R2.getMessageData m
+                           setSearch $ _ {url = url, term = term}
+                         else
+                           pure unit
     isTexTermUrl term = url <> query
       where
         query = Query.print $ NQP.print identity identity qp
@@ -763,5 +764,4 @@ iframeWith url (search /\ setSearch) iframeRef =
         qp = NQP.QueryPairs [
           Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
           ]
-
 
