@@ -469,6 +469,16 @@ modeFromString _ = Nothing
 data AsyncTaskType = Form | GraphT | Query | CreateNode
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 
+instance decodeJsonAsyncTaskType :: DecodeJson AsyncTaskType where
+  decodeJson json = do
+    obj <- decodeJson json
+    case obj of
+      "Form"       -> pure Form
+      "GraphT"     -> pure GraphT
+      "Query"      -> pure Query
+      "CreateNode" -> pure CreateNode
+      s            -> Left ("Unknown string " <> s)
+
 asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath Form   = "add/form/async/"
 asyncTaskTypePath Query  = "query/"
@@ -506,12 +516,19 @@ instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
     obj <- decodeJson json
     id <- obj .: "id"
     status <- obj .: "status"
-    pure $ AsyncTask {id, status}
+    pure $ AsyncTask { id, status }
 
 newtype AsyncTaskWithType = AsyncTaskWithType {
     task :: AsyncTask
   , typ  :: AsyncTaskType
   }
+
+instance decodeJsonAsyncTaskWithType :: DecodeJson AsyncTaskWithType where
+  decodeJson json = do
+    obj <- decodeJson json
+    task <- obj .: "task"
+    typ <- obj .: "typ"
+    pure $ AsyncTaskWithType { task, typ }
 
 newtype AsyncProgress = AsyncProgress {
     id :: AsyncTaskID
