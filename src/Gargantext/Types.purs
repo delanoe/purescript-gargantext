@@ -439,14 +439,11 @@ type AffTableResult a = Aff (TableResult a)
 data Mode = Authors | Sources | Institutes | Terms
 
 derive instance genericMode :: Generic Mode _
-
 instance showMode :: Show Mode where
   show = genericShow
-
 derive instance eqMode :: Eq Mode
 instance ordMode :: Ord Mode where
   compare = genericCompare
-
 instance encodeMode :: EncodeJson Mode where
   encodeJson x = encodeJson $ show x
 
@@ -457,41 +454,51 @@ modeTabType Institutes = CTabInstitutes
 modeTabType Terms      = CTabTerms
 
 modeFromString :: String -> Maybe Mode
-modeFromString "Authors"    = Just Authors
-modeFromString "Sources"    = Just Sources
+modeFromString "Authors" = Just Authors
+modeFromString "Sources" = Just Sources
 modeFromString "Institutes" = Just Institutes
-modeFromString "Terms"      = Just Terms
-modeFromString _            = Nothing
+modeFromString "Terms" = Just Terms
+modeFromString _ = Nothing
 
--- | Async tasks
+-- Async tasks
 
 -- corresponds to /add/form/async or /add/query/async
 data AsyncTaskType = Form
                    | GraphT
                    | Query
                    | AddNode
-                   | UpdateNode
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
+instance eqAsyncTaskType :: Eq AsyncTaskType where
+  eq = genericEq
+instance showAsyncTaskType :: Show AsyncTaskType where
+  show = genericShow
+instance encodeJsonAsyncTaskType :: EncodeJson AsyncTaskType where
+  encodeJson t     = encodeJson $ show t
+instance decodeJsonAsyncTaskType :: DecodeJson AsyncTaskType where
+  decodeJson json = do
+    obj <- decodeJson json
+    case obj of
+      "Form"       -> pure Form
+      "GraphT"     -> pure GraphT
+      "Query"      -> pure Query
+      "AddNode"    -> pure AddNode
+      s            -> Left ("Unknown string " <> s)
 
 asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath Form   = "add/form/async/"
 asyncTaskTypePath Query  = "query/"
 asyncTaskTypePath GraphT = "async/"
 asyncTaskTypePath AddNode = "async/nobody/"
-asyncTaskTypePath UpdateNode = "async/"
 
 type AsyncTaskID = String
 
-data AsyncTaskStatus = Running
-                     | Pending
-                     | Received
-                     | Started
-                     | Failed
-                     | Finished
-                     | Killed
-
+data AsyncTaskStatus = Running | Pending | Received | Started | Failed | Finished | Killed
 derive instance genericAsyncTaskStatus :: Generic AsyncTaskStatus _
+instance showAsyncTaskStatus :: Show AsyncTaskStatus where
+  show = genericShow
 derive instance eqAsyncTaskStatus :: Eq AsyncTaskStatus
+instance encodeJsonAsyncTaskStatus :: EncodeJson AsyncTaskStatus where
+  encodeJson s = encodeJson $ show s
 instance decodeJsonAsyncTaskStatus :: DecodeJson AsyncTaskStatus where
   decodeJson json = do
     obj <- decodeJson json
@@ -507,46 +514,64 @@ readAsyncTaskStatus "IsRunning"  = Running
 readAsyncTaskStatus "IsStarted"  = Started
 readAsyncTaskStatus _ = Running
 
-newtype AsyncTask =
-  AsyncTask { id     :: AsyncTaskID
-            , status :: AsyncTaskStatus
-            }
+newtype AsyncTask = AsyncTask {
+    id     :: AsyncTaskID
+  , status :: AsyncTaskStatus
+  }
 derive instance genericAsyncTask :: Generic AsyncTask _
-
+instance eqAsyncTask :: Eq AsyncTask where
+  eq = genericEq
+instance encodeJsonAsyncTask :: EncodeJson AsyncTask where
+  encodeJson (AsyncTask { id, status }) =
+        "id"       := id
+     ~> "status"   := status
+     ~> jsonEmptyObject
 instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
   decodeJson json = do
     obj <- decodeJson json
-    id  <- obj .: "id"
+    id <- obj .: "id"
     status <- obj .: "status"
-    pure $ AsyncTask {id, status}
+    pure $ AsyncTask { id, status }
 
-newtype AsyncTaskWithType =
-  AsyncTaskWithType { task :: AsyncTask
-                    , typ  :: AsyncTaskType
-                    }
+newtype AsyncTaskWithType = AsyncTaskWithType {
+    task :: AsyncTask
+  , typ  :: AsyncTaskType
+  }
+derive instance genericAsyncTaskWithType :: Generic AsyncTaskWithType _
+instance eqAsyncTaskWithType :: Eq AsyncTaskWithType where
+  eq = genericEq
+instance encodeJsonAsyncTaskWithType :: EncodeJson AsyncTaskWithType where
+  encodeJson (AsyncTaskWithType { task, typ }) =
+        "task"       := task
+     ~> "typ"        := typ
+     ~> jsonEmptyObject
+instance decodeJsonAsyncTaskWithType :: DecodeJson AsyncTaskWithType where
+  decodeJson json = do
+    obj <- decodeJson json
+    task <- obj .: "task"
+    typ <- obj .: "typ"
+    pure $ AsyncTaskWithType { task, typ }
 
-newtype AsyncProgress =
-  AsyncProgress { id :: AsyncTaskID
-                , log :: Array AsyncTaskLog
-                , status :: AsyncTaskStatus
-                }
-
+newtype AsyncProgress = AsyncProgress {
+    id :: AsyncTaskID
+  , log :: Array AsyncTaskLog
+  , status :: AsyncTaskStatus
+  }
 derive instance genericAsyncProgress :: Generic AsyncProgress _
 instance decodeJsonAsyncProgress :: DecodeJson AsyncProgress where
   decodeJson json = do
     obj <- decodeJson json
-    id  <- obj .: "id"
+    id <- obj .: "id"
     log <- obj .: "log"
     status <- obj .: "status"
     pure $ AsyncProgress {id, log, status}
 
-newtype AsyncTaskLog =
-  AsyncTaskLog { events :: Array String
-               , failed :: Int
-               , remaining :: Int
-               , succeeded :: Int
-               }
-
+newtype AsyncTaskLog = AsyncTaskLog {
+    events :: Array String
+  , failed :: Int
+  , remaining :: Int
+  , succeeded :: Int
+  }
 derive instance genericAsyncTaskLog :: Generic AsyncTaskLog _
 instance decodeJsonAsyncTaskLog :: DecodeJson AsyncTaskLog where
   decodeJson json = do

@@ -1,11 +1,13 @@
 module Gargantext.Components.Forest.Tree where
 
-import DOM.Simple.Console (log2)
 import Data.Array as A
-import Data.Maybe (Maybe)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), maybe)
 import Data.Set as Set
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R
@@ -13,13 +15,14 @@ import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RecordE
 
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, deleteNode, loadNode, renameNode)
-import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode) 
+import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
-import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan)
+import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan, Tasks, tasksStruct)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, map, pure, void, ($), (+), (/=), (<>))
+import Gargantext.Prelude (Unit, bind, const, discard, map, pure, void, ($), (+), (/=), (<>), identity)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
 import Gargantext.Types as GT
@@ -36,6 +39,7 @@ type CommonProps =
 
 ------------------------------------------------------------------------
 type Props = ( root          :: ID
+             , asyncTasks    :: R.State GAT.Storage
              | CommonProps
              )
 
@@ -55,20 +59,23 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
     treeLoadViewCpt :: R.Component Props
     treeLoadViewCpt = R.hooksComponent "TreeLoadView" cpt
       where
-        cpt {root, mCurrentRoute, session, frontends, openNodes, reload} _ = do
+        cpt { root, asyncTasks, mCurrentRoute, session, frontends, openNodes, reload } _children = do
           let fetch _ = loadNode session root
-          let paint loaded = loadedTreeView { tree: loaded
-                                            , mCurrentRoute
-                                            , session
+          let paint loaded = loadedTreeView {
+                                              asyncTasks
                                             , frontends
-                                            , openNodes, reload
+                                            , mCurrentRoute
+                                            , openNodes
+                                            , reload
+                                            , session
+                                            , tasks: tasksStruct root asyncTasks reload
+                                            , tree: loaded
                                             }
-          useLoader { root
-                    , counter: fst reload
-                    } 
-                    fetch paint
+          useLoader { root, counter: fst reload } fetch paint
 
-type TreeViewProps = ( tree          :: FTree
+type TreeViewProps = ( asyncTasks    :: R.State GAT.Storage
+                     , tree          :: FTree
+                     , tasks         :: Record Tasks
                      | CommonProps
                      )
 
@@ -78,29 +85,28 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
     loadedTreeViewCpt :: R.Component TreeViewProps
     loadedTreeViewCpt = R.hooksComponent "LoadedTreeView" cpt
       where
-        cpt {tree, mCurrentRoute, session, frontends, openNodes, reload} _ = do
-          tasks <- R.useState' []
-
+        cpt { asyncTasks, frontends, mCurrentRoute, openNodes, reload, tasks, tree, session } _ = do
           pure $ H.div {className: "tree"}
-            [ toHtml { frontends, mCurrentRoute, openNodes, reload, session, tasks, tree } ]
+            [ toHtml { asyncTasks, frontends, mCurrentRoute, openNodes, reload, session, tasks, tree } ]
 
 ------------------------------------------------------------------------
 type ToHtmlProps =
   (
-    tasks :: R.State (Array GT.AsyncTaskWithType)
+    asyncTasks :: R.State GAT.Storage
+  , tasks :: Record Tasks
   , tree :: FTree
   | CommonProps
   )
 
 toHtml :: Record ToHtmlProps -> R.Element
-toHtml p@{ frontends
+toHtml p@{ asyncTasks
+         , frontends
          , mCurrentRoute
          , openNodes
          , reload: reload@(_ /\ setReload)
          , session
-         , tasks: tasks@(asyncTasks /\ setAsyncTasks)
-         , tree: tree@(NTree (LNode {id, name, nodeType}) ary)
-         } = R.createElement el {} []
+         , tasks: tasks@{ onTaskAdd, onTaskFinish, tasks: tasks' }
+         , tree: tree@(NTree (LNode {id, name, nodeType}) ary) } = R.createElement el {} []
   where
     el          = R.hooksComponent "NodeView" cpt
     commonProps = RecordE.pick p :: Record CommonProps
@@ -118,31 +124,26 @@ toHtml p@{ frontends
       pure $ H.ul {}
         [ H.li {}
           ( [ nodeMainSpan { id
-                           , asyncTasks
                            , dispatch: pAction
                            , folderOpen
                            , frontends
                            , mCurrentRoute
                            , name
                            , nodeType
-                           , onAsyncTaskFinish
                            , session
+                           , tasks
                            } ]
             <> childNodes (Record.merge commonProps
-                                        { children: ary
+                                        { asyncTasks
+                                        , children: ary
                                         , folderOpen })
           )
         ]
 
-    onAsyncTaskFinish (GT.AsyncTaskWithType {task: GT.AsyncTask {id: id'}}) = do
-      setAsyncTasks $ const newAsyncTasks
-      setReload (_ + 1)
-      where
-        newAsyncTasks = A.filter (\(GT.AsyncTaskWithType {task: GT.AsyncTask {id: id''}}) -> id' /= id'') asyncTasks
-
 
 type ChildNodesProps =
-  ( children   :: Array FTree
+  ( asyncTasks :: R.State GAT.Storage
+  , children :: Array FTree
   , folderOpen :: R.State Boolean
   | CommonProps
   )
@@ -150,24 +151,23 @@ type ChildNodesProps =
 childNodes :: Record ChildNodesProps -> Array R.Element
 childNodes { children: [] } = []
 childNodes { folderOpen: (false /\ _) } = []
-childNodes props@{ children } =
-  map (\ctree -> childNode {tree: ctree, asyncTasks: []}) $ sorted children
-    where
-      commonProps = RecordE.pick props :: Record CommonProps
-      sorted :: Array FTree -> Array FTree
-      sorted = A.sortWith (\(NTree (LNode {id}) _) -> id)
-      childNode :: Tree -> R.Element
-      childNode props = R.createElement el props []
-      el = R.hooksComponent "ChildNodeView" cpt
-      cpt {tree, asyncTasks} _ = do
-        tasks <- R.useState' asyncTasks
-        pure $ toHtml (Record.merge commonProps { tasks, tree })
+childNodes props@{ asyncTasks, children, reload } =
+  map (\ctree@(NTree (LNode {id}) _) ->
+        toHtml (Record.merge commonProps {
+                     asyncTasks
+                   , tasks: tasksStruct id asyncTasks reload
+                   , tree: ctree
+                   })) $ sorted children
+  where
+    commonProps = RecordE.pick props :: Record CommonProps
+    sorted :: Array FTree -> Array FTree
+    sorted = A.sortWith (\(NTree (LNode {id}) _) -> id)
 
 type PerformActionProps =
   ( openNodes :: R.State OpenNodes
   , reload    :: R.State Reload
   , session   :: Session
-  , tasks     :: R.State (Array GT.AsyncTaskWithType)
+  , tasks     :: Record Tasks
   , tree      :: FTree
   )
 
@@ -185,10 +185,9 @@ performAction p@{ openNodes: (_ /\ setOpenNodes)
 
 performAction { reload: (_ /\ setReload)
               , session
-              , tasks: (_ /\ setAsyncTasks)
-              , tree: (NTree (LNode {id}) _) 
-              } (SearchQuery task) = do
-  liftEffect $ setAsyncTasks $ A.cons task
+              , tasks: { onTaskAdd }
+              , tree: (NTree (LNode {id}) _) } (SearchQuery task) = do
+  liftEffect $ onTaskAdd task
   liftEffect $ log2 "[performAction] SearchQuery task:" task
 
 performAction { reload: (_ /\ setReload)
@@ -206,21 +205,18 @@ performAction p@{ reload: (_ /\ setReload)
 
 performAction p@{ openNodes: (_ /\ setOpenNodes)
                 , reload:    (_ /\ setReload)
-                , tasks:     (_ /\ setAsyncTasks)
                 , session
                 , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
-  -- task <- createNodeAsync session id $ CreateValue {name, nodeType}
   task <- addNode session id $ AddNodeValue {name, nodeType}
-  -- liftEffect $ setAsyncTasks $ A.cons task
   liftEffect do
     setOpenNodes (Set.insert (mkNodeId session id))
   performAction p RefreshTree
 
 performAction { session
-              , tasks: (_ /\ setAsyncTasks)
+              , tasks: { onTaskAdd }
               , tree: (NTree (LNode {id}) _) } (UploadFile nodeType fileType mName contents) = do
   task <- uploadFile session nodeType id fileType {mName, contents}
-  liftEffect $ setAsyncTasks $ A.cons task
+  liftEffect $ onTaskAdd task
   liftEffect $ log2 "uploaded, task:" task
 
 performAction { reload: (_ /\ setReload) } RefreshTree = do
