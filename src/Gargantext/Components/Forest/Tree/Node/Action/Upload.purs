@@ -31,9 +31,9 @@ type Dispatch = Action -> Aff Unit
 
 type Props =
   ( dispatch :: Dispatch
-  , id :: Int
+  , id       :: Int
   , nodeType :: GT.NodeType
-  , session :: Session
+  , session  :: Session
   )
 
 
@@ -110,8 +110,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
 
 
 type UploadButtonProps =
-  (
-    dispatch :: Dispatch
+  ( dispatch :: Dispatch
   , fileType :: R.State FileType
   , id :: Int
   , lang :: R.State (Maybe Lang)
@@ -285,8 +284,7 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
 
 
 type UploadTermButtonProps =
-  (
-    dispatch :: Dispatch
+  ( dispatch :: Dispatch
   , id       :: Int
   , mFile    :: R.State (Maybe UploadFile)
   , nodeType :: GT.NodeType
@@ -324,9 +322,8 @@ copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
           copyFromCorpusViewLoaded {dispatch, id, nodeType, session, tree}
 
 type CorpusTreeProps =
-  (
-    tree :: FTree
-    | Props
+  ( tree :: FTree
+  | Props
   )
 
 copyFromCorpusViewLoaded :: Record CorpusTreeProps -> R.Element

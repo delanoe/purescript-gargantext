@@ -49,9 +49,9 @@ treeView props = R.createElement treeViewCpt props []
     treeViewCpt :: R.Component Props
     treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
       where
-        cpt { root, mCurrentRoute, session, frontends, openNodes, reload } _children = do
+        cpt { root, mCurrentRoute, session, frontends, openNodes, reload, asyncTasks} _children = do
           pure $ treeLoadView
-            { root, mCurrentRoute, session, frontends, openNodes, reload }
+            { root, mCurrentRoute, session, frontends, openNodes, reload, asyncTasks}
 
 treeLoadView :: Record Props -> R.Element
 treeLoadView p = R.createElement treeLoadViewCpt p []
@@ -192,10 +192,11 @@ performAction { reload: (_ /\ setReload)
 
 performAction { reload: (_ /\ setReload)
               , session
-              , tasks: (_ /\ setAsyncTasks)
+              , tasks: {onTaskAdd}
               , tree: (NTree (LNode {id}) _) } (UpdateNode task) = do
-  liftEffect $ setAsyncTasks $ A.cons task
+  liftEffect $ onTaskAdd task
   liftEffect $ log2 "[performAction] UpdateNode task:" task
+
 
 performAction p@{ reload: (_ /\ setReload)
                 , session
