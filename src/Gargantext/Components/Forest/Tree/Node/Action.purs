@@ -17,8 +17,9 @@ import Gargantext.Types  as GT
 
 data Action = CreateSubmit String GT.NodeType
             | DeleteNode
+            | UpdateNode  GT.AsyncTaskWithType
             | SearchQuery GT.AsyncTaskWithType
-            | Submit       String
+            | Submit      String
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | RefreshTree
 
@@ -42,11 +43,12 @@ readFileType "PresseRIS" = Just PresseRIS
 readFileType "WOS"       = Just WOS
 readFileType _           = Nothing
 
-data DroppedFile = DroppedFile {
-    contents :: UploadFileContents
-  , fileType :: Maybe FileType
-  , lang     :: Maybe Lang
-    }
+data DroppedFile =
+  DroppedFile { contents :: UploadFileContents
+              , fileType :: Maybe FileType
+              , lang     :: Maybe Lang
+              }
+
 type FileHash = String
 
 type Name = String
@@ -54,23 +56,12 @@ type ID   = Int
 type Reload = Int
 
 newtype UploadFileContents = UploadFileContents String
-type UploadFile = {
-    contents :: UploadFileContents
+type UploadFile = 
+  { contents :: UploadFileContents
   , name     :: String
   }
 
-createNode :: Session -> ID -> CreateValue -> Aff (Array ID)
-createNode session parentId = post session $ NodeAPI GT.Node (Just parentId) ""
 
-createNodeAsync :: Session
-                -> ID
-                -> CreateValue
-                -> Aff GT.AsyncTaskWithType
-createNodeAsync session parentId q = do
-  task <- post session p q
-  pure $ GT.AsyncTaskWithType {task, typ: GT.CreateNode}
-  where
-    p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.CreateNode)
 
 renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
 renameNode session renameNodeId = put session $ NodeAPI GT.Node (Just renameNodeId) "rename"
@@ -81,32 +72,47 @@ deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 loadNode :: Session -> ID -> Aff FTree
 loadNode session nodeId = get session $ NodeAPI GT.Tree (Just nodeId) ""
 
+{-
+updateNode :: Session -> ID -> Aff ID
+updateNode session nodeId = post session 
+-}
 
+-----------------------------------------------------------------------
 newtype RenameValue = RenameValue
-  {
-    name :: Name
-  }
+  { name :: Name }
 
 instance encodeJsonRenameValue :: EncodeJson RenameValue where
   encodeJson (RenameValue {name})
      = "r_name" := name
     ~> jsonEmptyObject
 
-newtype CreateValue = CreateValue
-  {
-    name :: Name
-  , nodeType :: GT.NodeType
-  }
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+data UpdateNodeParams = UpdateNodeParamsList { method :: Int }
+                      | UpdateNodeParamsGraph { method :: String }
+                      | UpdateNodeParamsTexts { method :: Int }
 
-instance encodeJsonCreateValue :: EncodeJson CreateValue where
-  encodeJson (CreateValue {name, nodeType})
-     = "pn_name"     := name
-    ~> "pn_typename" := nodeType
-    ~> jsonEmptyObject
+instance encodeJsonUpdateNodeParams :: EncodeJson UpdateNodeParams
+  where
+    encodeJson (UpdateNodeParamsList { method })
+      = "method" := method
+      ~> jsonEmptyObject
+    encodeJson (UpdateNodeParamsGraph { method })
+      = "method" := method
+      ~> jsonEmptyObject
+    encodeJson (UpdateNodeParamsTexts { method })
+      = "method" := method
+      ~> jsonEmptyObject
+
+
+-----------------------------------------------------------------------
+
 
 data NTree a = NTree a (Array (NTree a))
 type FTree = NTree LNode
-type Tree = { tree :: FTree, asyncTasks :: Array GT.AsyncTaskWithType }
+type Tree = { tree       :: FTree
+            , asyncTasks :: Array GT.AsyncTaskWithType
+            }
 
 instance ntreeFunctor :: Functor NTree where
   map f (NTree x ary) = NTree (f x) (map (map f) ary)
@@ -126,7 +132,8 @@ instance decodeJsonLNode :: DecodeJson LNode where
     nodeType <- obj .: "type"
     pure $ LNode { id : id_
                  , name
-                 , nodeType}
+                 , nodeType
+                 }
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
   decodeJson json = do

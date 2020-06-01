@@ -463,7 +463,10 @@ modeFromString _ = Nothing
 -- Async tasks
 
 -- corresponds to /add/form/async or /add/query/async
-data AsyncTaskType = Form | GraphT | Query | CreateNode
+data AsyncTaskType = Form
+                   | GraphT
+                   | Query
+                   | AddNode
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 instance eqAsyncTaskType :: Eq AsyncTaskType where
   eq = genericEq
@@ -478,14 +481,14 @@ instance decodeJsonAsyncTaskType :: DecodeJson AsyncTaskType where
       "Form"       -> pure Form
       "GraphT"     -> pure GraphT
       "Query"      -> pure Query
-      "CreateNode" -> pure CreateNode
+      "AddNode"    -> pure AddNode
       s            -> Left ("Unknown string " <> s)
 
 asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath Form   = "add/form/async/"
 asyncTaskTypePath Query  = "query/"
 asyncTaskTypePath GraphT = "async/"
-asyncTaskTypePath CreateNode = "async/nobody/"
+asyncTaskTypePath AddNode = "async/nobody/"
 
 type AsyncTaskID = String
 

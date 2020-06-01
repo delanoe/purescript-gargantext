@@ -28,7 +28,7 @@ import Gargantext.Prelude
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, Reload, UploadFileContents(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), createNodeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
@@ -539,7 +539,6 @@ type NodeProps =
   , nodeType :: GT.NodeType
   )
 
-type Open = Boolean
 
 type PanelActionProps =
   ( id       :: ID
@@ -564,7 +563,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Delete, nodeType, dispatch}              _ = actionDelete   nodeType dispatch
 
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
-      pure $ createNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
+      pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
 
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}
@@ -589,7 +588,11 @@ actionSearch search session dispatch nodePopup =
   pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
                           [ H.text $ "Search and create a private "
                                   <> "corpus with the search query as corpus name." ]
-                    , searchBar {langs: allLangs, onSearch: searchOn dispatch nodePopup, search, session}
+                    , searchBar { langs: allLangs
+                                , onSearch: searchOn dispatch nodePopup
+                                , search
+                                , session
+                                }
                     ]
     where
       searchOn :: (Action -> Aff Unit)

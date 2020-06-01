@@ -288,7 +288,7 @@ versionCpt = R.hooksComponent "G.C.A.version" cpt
     showVersions frontendVer backendVer =
       H.div { className: "row" }
             [ H.h5 {} [ H.text $ "Frontend version: " <> frontendVer ]
-            , H.h5 {} [ H.text $ "backend version: "  <> backendVer ]
+            , H.h5 {} [ H.text $ "Backend  version: "  <> backendVer ]
             ]
 
 footer :: Record VersionProps -> R.Element
