@@ -64,12 +64,20 @@ ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
         path = {corpusId, listId, tabType, limit: (Just 1000)}
 
         charts CTabTerms (chartType /\ setChartType) = [
-          getChartFunction chartType $ { session, path }
-        , R2.select { on: { change: \e -> setChartType $ const $ fromMaybe Scatter $ chartTypeFromString $ R2.unsafeEventValue e }
-                    , defaultValue: show chartType } [
-            H.option { value: show Scatter } [ H.text $ show Scatter ]
-          , H.option { value: show ChartTree } [ H.text $ show ChartTree ]
+          H.div { className: "row" } [
+            H.div { className: "col-md-3" } [
+
+              R2.select { className: "form-control"
+                        ,  on: { change: \e -> setChartType $ const $ fromMaybe Scatter $ chartTypeFromString $ R2.unsafeEventValue e }
+                        , defaultValue: show chartType } [
+                H.option { value: show Histo } [ H.text $ show Histo ]
+              , H.option { value: show Scatter } [ H.text $ show Scatter ]
+              , H.option { value: show ChartBar } [ H.text $ show ChartBar ]
+              , H.option { value: show ChartTree } [ H.text $ show ChartTree ]
+              ]
+            ]
           ]
+        , getChartFunction chartType $ { session, path }
         ]
         charts _ _ = [ chart mode ]
 
