@@ -7,7 +7,7 @@ import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, (:=), (~>)
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Gargantext.Routes as R
 import Gargantext.Types (ApiVersion, Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType')
 import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==))
@@ -116,7 +116,7 @@ staticUrl (Frontends {static}) = frontendUrl static
 sessionPath :: R.SessionRoute -> String
 sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType' t))
 sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
-sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ maybe 0 identity pId) <> p
+sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ fromMaybe 0 pId) <> p
 sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.GraphAPI gId p)      = "graph/" <> (show gId) <> "/" <> p
 sessionPath (R.GetNgrams opts i)    =
@@ -145,7 +145,7 @@ sessionPath (R.GetNgramsTableAll opts i) =
     <> foldMap (\x -> "&list=" <> show x) opts.listIds
     <> limitUrl 100000
 sessionPath (R.ListDocument lId dId) =
-  sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ maybe 0 identity dId))
+  sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ fromMaybe 0 dId))
 sessionPath (R.ListsRoute lId) = "lists/" <> show lId
 sessionPath (R.PutNgrams t listId termList i) =
   sessionPath $ R.NodeAPI Node i
@@ -180,11 +180,16 @@ sessionPath (R.CorpusMetrics {tabType, listId, limit} i) =
     <> "&ngramsType=" <> showTabType' tabType
     <> maybe "" limitUrl limit
 -- TODO fix this url path
-sessionPath (R.Chart {chartType, tabType} i) =
+sessionPath (R.Chart {chartType, listId, limit, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ show chartType
     <> "?ngramsType=" <> showTabType' tabType
     <> "&listType=GraphTerm" -- <> show listId
+    <> "&listId=" <> show listId
+    where
+      limitPath = case limit of
+        Just li -> "&limit=" <> show li
+        Nothing -> ""
     -- <> maybe "" limitUrl limit
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 

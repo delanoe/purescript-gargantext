@@ -78,7 +78,7 @@ import Data.Lens.Record (prop)
 import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
 import Data.Set as Set
@@ -582,7 +582,7 @@ reParent :: Maybe RootParent -> ReParent NgramsTerm
 reParent mrp child = do
   at child <<< _Just <<< _NgramsElement %= ((_parent .~ (view _parent <$> mrp)) <<<
                                             (_root   .~ (view _root   <$> mrp)))
-  reRootChildren (maybe child identity (mrp ^? _Just <<< _root)) child
+  reRootChildren (fromMaybe child (mrp ^? _Just <<< _root)) child
 
 -- reParentNgramsPatch :: NgramsTerm -> ReParent NgramsPatch
 -- ^ GHC would have accepted this type. Here reParentNgramsPatch checks but
@@ -594,7 +594,7 @@ reParentNgramsPatch parent (NgramsPatch {patch_children: PatchSet {rem, add}}) =
   -- ^ TODO this does not type checks, we do the following two lines instead:
   s <- use (at parent)
   let root_of_parent = s ^? (_Just <<< _NgramsElement <<< _root <<< _Just)
-  let rp = { root: maybe parent identity root_of_parent, parent }
+  let rp = { root: fromMaybe parent root_of_parent, parent }
   traverse_ (reParent Nothing) rem
   traverse_ (reParent $ Just rp) add
 

@@ -11,8 +11,8 @@ import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Charts.Options.Color (grey)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
-import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
@@ -49,28 +49,21 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
                  map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count'] }
 
 getMetrics :: Session -> Record Path -> Aff HistoMetrics
-getMetrics session {corpusId, tabType} = do
+getMetrics session {corpusId, limit, listId, tabType} = do
   ChartMetrics ms <- get session chart
   pure ms."data"
-  where chart = Chart {chartType: Histo, tabType: tabType} (Just corpusId)
+  where
+    chart = Chart {chartType: Histo, listId, tabType, limit} (Just corpusId)
 
-histo :: Record (Props Path) -> R.Element
+histo :: Record Props -> R.Element
 histo props = R.createElement histoCpt props []
 
-histoCpt :: R.Component (Props Path)
-histoCpt = R.hooksComponent "LoadedMetricsHisto" cpt
+histoCpt :: R.Component Props
+histoCpt = R.hooksComponent "G.C.N.C.C.H.histo" cpt
   where
-    cpt {session,path} _ = do
-      setReload <- R.useState' 0
-      pure $ metricsLoadView session setReload path
+    cpt {path, session} _ = do
+      reload <- R.useState' 0
+      pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
 
-metricsLoadView :: Session -> R.State Int -> Record Path -> R.Element
-metricsLoadView s setReload p = R.createElement el {session: s, path: p} []
-  where
-    el = R.hooksComponent "MetricsLoadedHistoView" cpt
-    cpt {path,session} _ = do
-      useLoader path (getMetrics session) $ \loaded ->
-        loadedMetricsView setReload loaded
-
-loadedMetricsView :: R.State Int -> HistoMetrics -> R.Element
-loadedMetricsView setReload loaded = U.reloadButtonWrap setReload $ chart $ chartOptions loaded
+loaded :: R.State Int -> HistoMetrics -> R.Element
+loaded setReload loaded = U.reloadButtonWrap setReload $ chart $ chartOptions loaded

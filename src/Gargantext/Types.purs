@@ -329,9 +329,9 @@ type CorpusMetricOpts =
 
 type ChartOpts =
   { chartType :: ChartType
+  , listId  :: ListId
+  , limit   :: Maybe Limit
   , tabType   :: TabType
-  -- , listId  :: ListId
-  -- , limit   :: Maybe Limit
   }
 
 data NodePath = NodePath SessionId NodeType (Maybe Id)

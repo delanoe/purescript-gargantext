@@ -5,7 +5,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Reactix as R
 import Gargantext.Prelude
 
@@ -63,14 +63,18 @@ type Params =
 
 
 render :: PredefinedChart -> Record Params -> R.Element
-render CDocsHistogram { corpusId, session } = histo { path, session }
+render CDocsHistogram { corpusId, listId, session } = histo { path, session }
   where
     path = { corpusId
+           , listId: fromMaybe 0 listId
+           , limit: Nothing
            , tabType: TabCorpus TabDocs
            }
-render CAuthorsPie { corpusId, session } = pie { path, session }
+render CAuthorsPie { corpusId, listId, session } = pie { path, session }
   where
     path = { corpusId
+           , listId: fromMaybe 0 listId
+           , limit: Nothing
            , tabType: TabCorpus (TabNgramType $ modeTabType Authors)
            }
 render CInstitutesTree { corpusId, limit, listId, session } = tree { path, session }

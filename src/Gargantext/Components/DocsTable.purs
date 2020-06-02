@@ -13,7 +13,7 @@ import Data.Lens.Record (prop)
 import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
@@ -409,7 +409,7 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source"]
         wrapColElts = const identity
-        getCategory (localCategories /\ _) {_id, category} = maybe category identity (localCategories ^. at _id)
+        getCategory (localCategories /\ _) {_id, category} = fromMaybe category (localCategories ^. at _id)
         rows localCategories = row <$> documents
           where
             row (DocumentsView r) =

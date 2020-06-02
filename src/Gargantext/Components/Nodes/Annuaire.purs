@@ -4,7 +4,7 @@ import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array as A
 import Data.List as L
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
@@ -152,7 +152,7 @@ contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
       pure $ T.makeRow [
         H.text ""
         , H.span {} [ H.text "name" ]
-        --, H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
+        --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
         , H.text "No ContactWhere"
         , H.text "No ContactWhereDept"
         , H.div {className: "nooverflow"}
@@ -165,8 +165,8 @@ contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
         , session } _ =
         pure $ T.makeRow [
           H.text ""
-          , H.a { href } [ H.text $ maybe "name" identity contact.title ]
-            --, H.a { href, target: "blank" } [ H.text $ maybe "name" identity contact.title ]
+          , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
+            --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
           , H.text $ maybe "No ContactWhere" contactWhereOrg  (A.head $ ou)
           , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
           , H.div {className: "nooverflow"} [
@@ -180,10 +180,10 @@ contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
 
             contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
             contactWhereOrg (CT.ContactWhere { organization: orga }) =
-              maybe "No orga (list)" identity (A.head orga)
+              fromMaybe "No orga (list)" (A.head orga)
             contactWhereDept (CT.ContactWhere { labTeamDepts : [] }) = "Empty Dept"
             contactWhereDept (CT.ContactWhere { labTeamDepts : dept }) =
-              maybe "No Dept (list)" identity (A.head dept)
+              fromMaybe "No Dept (list)" (A.head dept)
             contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
             contactWhereRole (CT.ContactWhere { role: Just role }) = role
 

@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -13,7 +13,7 @@ import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
-import Gargantext.Components.Nodes.Corpus.Chart (getChartFunctionWithList)
+import Gargantext.Components.Nodes.Corpus.Chart (getChartFunction)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
 import Gargantext.Utils.Reactix as R2
@@ -61,12 +61,11 @@ ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
         tabNgramType = modeTabType mode
         tabType = TabCorpus (TabNgramType tabNgramType)
         listId = 0 -- TODO!
-        path = {corpusId, tabType}
-        path2 = {corpusId, listId, tabType, limit: (Just 1000)} -- todo
+        path = {corpusId, listId, tabType, limit: (Just 1000)}
 
         charts CTabTerms (chartType /\ setChartType) = [
-          maybe metrics identity (getChartFunctionWithList chartType) $ { session, path: path2 }
-        , R2.select { on: { change: \e -> setChartType $ const $ maybe Scatter identity $ chartTypeFromString $ R2.unsafeEventValue e }
+          getChartFunction chartType $ { session, path }
+        , R2.select { on: { change: \e -> setChartType $ const $ fromMaybe Scatter $ chartTypeFromString $ R2.unsafeEventValue e }
                     , defaultValue: show chartType } [
             H.option { value: show Scatter } [ H.text $ show Scatter ]
           , H.option { value: show ChartTree } [ H.text $ show ChartTree ]
@@ -74,7 +73,7 @@ ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
         ]
         charts _ _ = [ chart mode ]
 
-        chart Authors = pie {session, path}
-        chart Sources = bar {session, path}
-        chart Institutes = tree {session, path: path2}
-        chart Terms      = metrics {session, path: path2}
+        chart Authors = pie { session, path }
+        chart Sources = bar { session, path }
+        chart Institutes = tree { session, path }
+        chart Terms      = metrics { session, path }

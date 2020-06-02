@@ -4,7 +4,7 @@ import Prelude (class Show, bind, identity, mempty, pure, ($), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Effect.Aff (Aff)
 import React (ReactClass, Children)
 import React.DOM (div, h4, li, p, span, text, ul)
@@ -352,7 +352,7 @@ docViewSpec = simpleSpec performAction render
           setTermList ngram (Just oldList) newList = dispatch $ SetTermListItem ngram (replace oldList newList)
           annotate text = R2.scuff $ AnnotatedField.annotatedField { ngrams: ngramsTable, setTermList, text }
           li' = li [className "list-group-item justify-content-between"]
-          text' x = text $ maybe "Nothing" identity x
+          text' x = text $ fromMaybe "Nothing" x
           badge s = span [className "badge badge-default badge-pill"] [text s]
           NodePoly {hyperdata : Document doc} = document
 
