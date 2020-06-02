@@ -15,20 +15,12 @@ import Gargantext.Components.Charts.Options.Series (Series, seriesScatterD2)
 import Gargantext.Components.Charts.Options.Color (green, grey, red)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (ListPath, Props)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (TabType, TermList(..))
-
-type Path =
-  { corpusId :: Int
-  , listId   :: Int
-  , tabType  :: TabType
-  , limit    :: Maybe Int
-  }
-
-type Props = ( path :: Path, session :: Session )
 
 newtype Metric = Metric
   { label :: String
@@ -92,23 +84,23 @@ scatterOptions metrics' = Options
                         }
     --}
 
-getMetrics :: Session -> Path -> Aff Loaded
+getMetrics :: Session -> Record ListPath -> Aff Loaded
 getMetrics session {corpusId, listId, limit, tabType} = do
   Metrics ms <- get session metrics'
   pure ms."data"
   where metrics' = CorpusMetrics {listId, tabType, limit} (Just corpusId)
 
-metrics :: Record Props -> R.Element
+metrics :: Record (Props ListPath) -> R.Element
 metrics props = R.createElement metricsCpt props []
 
-metricsCpt :: R.Component Props
+metricsCpt :: R.Component (Props ListPath)
 metricsCpt = R.hooksComponent "LoadedMetrics" cpt
   where
     cpt {path, session} _ = do
       setReload <- R.useState' 0
       pure $ metricsLoadView session setReload path
 
-metricsLoadView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadView :: Session -> R.State Int -> Record ListPath -> R.Element
 metricsLoadView s setReload p = R.createElement el {session: s, path: p} []
   where
     el = R.hooksComponent "MetricsLoadedView" cpt

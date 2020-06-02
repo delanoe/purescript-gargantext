@@ -10,19 +10,12 @@ import Reactix.DOM.HTML as H
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (TreeNode, Trees(..), mkTree)
 import Gargantext.Components.Charts.Options.Font (mkTooltip, templateFormatter)
-import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
+import Gargantext.Components.Nodes.Corpus.Chart.Types (ListPath, Props)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType)
-
-type Path =
-  { corpusId :: Int
-  , listId   :: Int
-  , tabType  :: TabType
-  , limit    :: Maybe Int
-  }
-type Props = ( path :: Path, session :: Session )
 
 newtype Metrics = Metrics
   { "data" :: Array TreeNode
@@ -50,24 +43,24 @@ scatterOptions nodes = Options
 
   }
 
-getMetrics :: Session -> Path -> Aff Loaded
+getMetrics :: Session -> Record ListPath -> Aff Loaded
 getMetrics session {corpusId, listId, limit, tabType} = do
   Metrics ms <- get session chart
   pure ms."data"
   where
     chart = Chart {chartType : ChartTree, tabType: tabType} (Just corpusId)
 
-tree :: Record Props -> R.Element
+tree :: Record (Props ListPath) -> R.Element
 tree props = R.createElement treeCpt props []
 
-treeCpt :: R.Component Props
+treeCpt :: R.Component (Props ListPath)
 treeCpt = R.hooksComponent "LoadedMetrics" cpt
   where
     cpt {path, session} _ = do
       setReload <- R.useState' 0
       pure $ metricsLoadView session setReload path
 
-metricsLoadView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadView :: Session -> R.State Int -> Record ListPath -> R.Element
 metricsLoadView session setReload path = R.createElement el path []
   where
     el = R.hooksComponent "MetricsLoadView" cpt

@@ -340,14 +340,23 @@ nodePath :: NodePath -> String
 nodePath (NodePath s t i) = nodeTypePath t <> "/" <> show s <> id
   where id = maybe "" (\j -> "/" <> show j) i
 
-data ChartType = Histo | Scatter | ChartPie | ChartTree
+data ChartType = Histo | Scatter | ChartPie | ChartBar | ChartTree
 
 instance showChartType :: Show ChartType
   where
     show Histo    = "chart"
     show Scatter  = "scatter"
+    show ChartBar = "bar"
     show ChartPie = "pie"
     show ChartTree = "tree"
+
+chartTypeFromString :: String -> Maybe ChartType
+chartTypeFromString "bar"     = Just ChartBar
+chartTypeFromString "chart"   = Just Histo
+chartTypeFromString "pie"     = Just ChartPie
+chartTypeFromString "scatter" = Just Scatter
+chartTypeFromString "tree"    = Just ChartTree
+chartTypeFromString _         = Nothing
 
 type Id  = Int
 type Limit  = Int

@@ -11,15 +11,12 @@ import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Charts.Options.Color (grey)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType)
-
-type Path = { corpusId :: Int, tabType  :: TabType }
-
-type Props = ( path :: Path, session :: Session )
 
 newtype ChartMetrics = ChartMetrics { "data" :: HistoMetrics }
 
@@ -51,23 +48,23 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , series    : [seriesBarD1 {name: "Number of publication / year"} $
                  map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count'] }
 
-getMetrics :: Session -> Path -> Aff HistoMetrics
+getMetrics :: Session -> Record Path -> Aff HistoMetrics
 getMetrics session {corpusId, tabType} = do
   ChartMetrics ms <- get session chart
   pure ms."data"
   where chart = Chart {chartType: Histo, tabType: tabType} (Just corpusId)
 
-histo :: Record Props -> R.Element
+histo :: Record (Props Path) -> R.Element
 histo props = R.createElement histoCpt props []
 
-histoCpt :: R.Component Props
+histoCpt :: R.Component (Props Path)
 histoCpt = R.hooksComponent "LoadedMetricsHisto" cpt
   where
     cpt {session,path} _ = do
       setReload <- R.useState' 0
       pure $ metricsLoadView session setReload path
 
-metricsLoadView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadView :: Session -> R.State Int -> Record Path -> R.Element
 metricsLoadView s setReload p = R.createElement el {session: s, path: p} []
   where
     el = R.hooksComponent "MetricsLoadedHistoView" cpt

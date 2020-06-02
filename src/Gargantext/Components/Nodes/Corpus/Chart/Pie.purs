@@ -15,18 +15,12 @@ import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
 import Gargantext.Components.Charts.Options.Color (blue)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType)
-
-type Path =
-  { corpusId :: Int
-  , tabType  :: TabType
-  }
-
-type Props = ( session :: Session, path :: Path )
 
 newtype ChartMetrics = ChartMetrics
   { "data" :: HistoMetrics
@@ -76,23 +70,23 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   }
 
 
-getMetrics :: Session -> Path -> Aff HistoMetrics
+getMetrics :: Session -> Record Path -> Aff HistoMetrics
 getMetrics session {corpusId, tabType:tabType} = do
   ChartMetrics ms <- get session chart
   pure ms."data"
   where chart = Chart {chartType: ChartPie, tabType: tabType} (Just corpusId)
 
-pie :: Record Props -> R.Element
+pie :: Record (Props Path) -> R.Element
 pie props = R.createElement pieCpt props []
 
-pieCpt :: R.Component Props
+pieCpt :: R.Component (Props Path)
 pieCpt = R.hooksComponent "LoadedMetricsPie" cpt
   where
     cpt {path,session} _ = do
       setReload <- R.useState' 0
       pure $ metricsLoadPieView session setReload path
 
-metricsLoadPieView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadPieView :: Session -> R.State Int -> Record Path -> R.Element
 metricsLoadPieView s setReload p = R.createElement el {session: s,path: p} []
   where
     el = R.hooksComponent "MetricsLoadedPieView" cpt
@@ -104,10 +98,10 @@ loadedMetricsPieView :: R.State Int -> HistoMetrics -> R.Element
 loadedMetricsPieView setReload loaded = U.reloadButtonWrap setReload $ chart $ chartOptionsPie loaded
 
 
-bar :: Record Props -> R.Element
+bar :: Record (Props Path) -> R.Element
 bar props = R.createElement barCpt props []
 
-barCpt :: R.Component Props
+barCpt :: R.Component (Props Path)
 barCpt = R.hooksComponent "LoadedMetricsBar" cpt
   where
     cpt {path, session} _ = do
@@ -115,7 +109,7 @@ barCpt = R.hooksComponent "LoadedMetricsBar" cpt
       pure $ metricsLoadBarView session setReload path
 
 
-metricsLoadBarView :: Session -> R.State Int -> Path -> R.Element
+metricsLoadBarView :: Session -> R.State Int -> Record Path -> R.Element
 metricsLoadBarView s setReload p = R.createElement el {path: p, session: s} []
   where
     el = R.hooksComponent "MetricsLoadedBarView" cpt
