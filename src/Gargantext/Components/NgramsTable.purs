@@ -226,19 +226,27 @@ tableContainerCpt { dispatch
 
     editor = H.div {} $ maybe [] f ngramsParent
       where
-        f ngrams = [
-            H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
-          , NTC.renderNgramsTree { ngramsTable, ngrams, ngramsStyle: [], ngramsClick, ngramsEdit }
-          , H.button {className: "btn btn-primary", on: {click: (const $ dispatch AddTermChildren)}} [H.text "Save"]
-          , H.button {className: "btn btn-secondary", on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}} [H.text "Cancel"]
-          ]
+        f ngrams = [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
+                   , NTC.renderNgramsTree { ngramsTable
+                                          , ngrams
+                                          , ngramsStyle: []
+                                          , ngramsClick
+                                          , ngramsEdit
+                                          }
+                   , H.button { className: "btn btn-primary"
+                              , on: {click: (const $ dispatch AddTermChildren)}
+                              } [H.text "Save"]
+                   , H.button { className: "btn btn-secondary"
+                              , on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}
+                              } [H.text "Cancel"]
+                   ]
           where
             ngramsTable = ngramsTableCache # at ngrams
                           <<< _Just
                           <<< _NgramsElement
                           <<< _children
                           %~ applyPatchSet (patchSetFromMap ngramsChildren)
-            ngramsClick {depth: 1, ngrams: child} = Just $ dispatch $ ToggleChild true child
+            ngramsClick {depth: 1, ngrams: child} = Just $ dispatch $ ToggleChild false child
             ngramsClick _ = Nothing
             ngramsEdit  _ = Nothing
 
