@@ -125,7 +125,7 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                      , onClick: mkEffectFn1 $ \_ -> do
                          -- TODO
                          --setPopupOpen $ const Nothing
-                         launchAff    $ dispatch $ CreateSubmit name' nt
+                         launchAff    $ dispatch $ AddNode name' nt
                      } [H.text "Add"]
           ]
 

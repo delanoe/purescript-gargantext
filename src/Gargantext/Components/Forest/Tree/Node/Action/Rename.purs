@@ -65,7 +65,7 @@ renameBox p@{ dispatch, renameBoxOpen: (true /\ setRenameBoxOpen) } = R.createEl
               , type: "button"
               , onClick: mkEffectFn1 $ \_ -> do
                     setRenameBoxOpen $ const false
-                    launchAff $ dispatch $ Submit newName
+                    launchAff $ dispatch $ RenameNode newName
               , title: "Rename"
               } []
         cancelBtn =

@@ -15,11 +15,11 @@ import Gargantext.Sessions (Session, get, put, post, delete)
 import Gargantext.Routes as GR
 import Gargantext.Types  as GT
 
-data Action = CreateSubmit String GT.NodeType
+data Action = AddNode String GT.NodeType
             | DeleteNode
             | UpdateNode  GT.AsyncTaskWithType
+            | RenameNode  String
             | SearchQuery GT.AsyncTaskWithType
-            | Submit      String
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | RefreshTree
 

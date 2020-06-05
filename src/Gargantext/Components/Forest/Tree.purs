@@ -204,14 +204,14 @@ performAction { reload: (_ /\ setReload)
 
 performAction p@{ reload: (_ /\ setReload)
                 , session
-                , tree: (NTree (LNode {id}) _) } (Submit name)  = do
+                , tree: (NTree (LNode {id}) _) } (RenameNode name)  = do
   void $ renameNode session id $ RenameValue {name}
   performAction p RefreshTree
 
 performAction p@{ openNodes: (_ /\ setOpenNodes)
                 , reload:    (_ /\ setReload)
                 , session
-                , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
+                , tree: (NTree (LNode {id}) _) } (AddNode name nodeType) = do
   task <- addNode session id $ AddNodeValue {name, nodeType}
   liftEffect do
     setOpenNodes (Set.insert (mkNodeId session id))
