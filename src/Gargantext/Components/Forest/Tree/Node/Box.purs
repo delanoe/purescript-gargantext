@@ -28,7 +28,7 @@ import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
-import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (textInputBox, renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Update
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), uploadFileView, fileTypeView, uploadTermListView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
@@ -402,9 +402,13 @@ nodePopupCpt :: R.Component NodePopupProps
 nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
   where
     cpt p _ = do
-      renameBoxOpen <- R.useState' false
-      iframeRef <- R.useRef null
-      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {action: Nothing, id: p.id, name: p.name, nodeType: p.nodeType}
+      isOpen    <- R.useState' false
+      iframeRef <- R.useRef    null
+      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' { action: Nothing
+                                                                , id: p.id
+                                                                , name: p.name
+                                                                , nodeType: p.nodeType
+                                                                }
       search        <- R.useState' $ defaultSearch { node_id = Just p.id }
       pure $ H.div tooltipProps $
         [ H.div { className: "popup-container" }
@@ -416,7 +420,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                 , H.p {className: "text-primary center"} [H.text p.name]
                 ]
               ]
-            , panelHeading renameBoxOpen p
+            , panelHeading isOpen         p
             , panelBody    nodePopupState p
             , mPanelAction nodePopupState p search
             ]
@@ -435,14 +439,14 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                          --, style: { top: y - 65.0, left: x + 10.0 }
                        }
 
-        panelHeading renameBoxOpen@(open /\ _) {dispatch, id, name, nodeType} =
+        panelHeading isOpen@(open /\ _) {dispatch, id, name, nodeType} =
           H.div {className: "panel-heading"}
                 [ R2.row
                         [ H.div {className: "col-md-8"}
-                                [ renameBox { dispatch, id, name, renameBoxOpen } ]
+                                [ textInputBox { textAction: renameAction, boxName: "Rename", dispatch, id, text:name, isOpen } ]
 
                         , H.div {className: "flex-end"}
-                                [ if edit then editIcon renameBoxOpen else H.div {} []
+                                [ if edit then editIcon isOpen else H.div {} []
                                 , H.div {className: "col-md-1"}
                                         [ H.a { "type"   : "button"
                                               , className: glyphicon "remove-circle"
@@ -456,12 +460,12 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
             SettingsBox {edit, doc, buttons} = settingsBox nodeType
 
             editIcon :: R.State Boolean -> R.Element
-            editIcon (false /\ setRenameBoxOpen) =
+            editIcon (false /\ setIsOpen) =
               H.div {className : "col-md-1"}
               [ H.a { className: glyphicon "pencil"
                     , id       : "rename1"
                     , title    : "Rename"
-                    , on: { click: \_ -> setRenameBoxOpen $ const true }
+                    , on: { click: \_ -> setIsOpen $ const true }
                     }
                 []
               ]

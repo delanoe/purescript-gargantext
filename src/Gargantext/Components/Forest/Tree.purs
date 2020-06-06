@@ -205,7 +205,7 @@ performAction { reload: (_ /\ setReload)
 performAction p@{ reload: (_ /\ setReload)
                 , session
                 , tree: (NTree (LNode {id}) _) } (RenameNode name)  = do
-  void $ renameNode session id $ RenameValue {name}
+  void $ renameNode session id $ RenameValue {text:name}
   performAction p RefreshTree
 
 performAction p@{ openNodes: (_ /\ setOpenNodes)
