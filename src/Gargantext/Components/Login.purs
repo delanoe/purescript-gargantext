@@ -63,7 +63,7 @@ modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
             [ H.h2 {className: "text-primary center m-a-2"}
         [
           -- H.i {className: "material-icons md-36"} [ H.text "control_point" ]
-          H.span {className: "icon-text"} [ H.text "Gargantext" ] ] ]
+          H.span {className: "icon-text"} [ H.text "GarganText" ] ] ]
 
       closing = H.button { "type": "button", className: "close"
                            , "data": { dismiss: "modal" } }

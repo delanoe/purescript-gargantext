@@ -53,7 +53,7 @@ _unit :: forall s. Lens' s Unit
 _unit = lens (\_ -> unit) (\s _ -> s)
 
 glyphicon :: String -> String
-glyphicon t = "btn glyphitem glyphicon glyphicon-" <> t
+glyphicon t = "btn glyphitem fa fa-" <> t
 
 glyphiconActive :: String -> Boolean -> String
 glyphiconActive icon b = glyphicon icon <> if b then " active" else ""

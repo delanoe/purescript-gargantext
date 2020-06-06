@@ -61,16 +61,17 @@ instance showNodeAction :: Show NodeAction where
 
 
 glyphiconNodeAction :: NodeAction -> String
-glyphiconNodeAction (Documentation _) = "question-sign"
+glyphiconNodeAction (Documentation _) = "question-circle"
 glyphiconNodeAction Delete            = "trash"
 glyphiconNodeAction (Add _)           = "plus"
 glyphiconNodeAction SearchBox         = "search"
 glyphiconNodeAction Upload            = "upload"
-glyphiconNodeAction (Link _)          = "transfer"
+glyphiconNodeAction (Link _)          = "arrows-h"
 glyphiconNodeAction Download          = "download"
 glyphiconNodeAction CopyFromCorpus    = "random"
 glyphiconNodeAction Refresh           = "refresh"
 glyphiconNodeAction Config            = "wrench"
+glyphiconNodeAction Share             = "user-plus"
 glyphiconNodeAction _                 = ""
 
 
@@ -110,6 +111,7 @@ settingsBox Team = SettingsBox {
                     , Folder
                     , Annuaire
                     ]
+              , Share
               , Delete]
   }
 
@@ -155,7 +157,6 @@ settingsBox Corpus =
                                 ]
                           , Upload
                           , Download
-                            --, Share
                             --, Move
                             --, Clone
                           , Link Annuaire

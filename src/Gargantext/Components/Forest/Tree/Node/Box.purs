@@ -443,13 +443,13 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
           H.div {className: "panel-heading"}
                 [ R2.row
                         [ H.div {className: "col-md-8"}
-                                [ textInputBox { textAction: renameAction, boxName: "Rename", dispatch, id, text:name, isOpen } ]
+                                [ textInputBox { boxAction: renameAction, boxName: "Rename", dispatch, id, text:name, isOpen } ]
 
                         , H.div {className: "flex-end"}
                                 [ if edit then editIcon isOpen else H.div {} []
                                 , H.div {className: "col-md-1"}
                                         [ H.a { "type"   : "button"
-                                              , className: glyphicon "remove-circle"
+                                              , className: glyphicon "window-close"
                                               , on: { click: \e -> p.onPopoverClose $ R2.unsafeEventTarget e }
                                               , title    : "Close"} []
                                         ]

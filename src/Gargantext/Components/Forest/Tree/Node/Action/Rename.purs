@@ -17,10 +17,15 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Sessions (Session, get, put, post, delete)
 
 
-renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
-renameNode session renameNodeId =
+------------------------------------------------------------------------
+rename :: Session -> ID -> RenameValue -> Aff (Array ID)
+rename session renameNodeId =
   put session $ GR.NodeAPI GT.Node (Just renameNodeId) "rename"
 
+renameAction :: String -> Action
+renameAction newName = RenameNode newName
+
+------------------------------------------------------------------------
 newtype RenameValue = RenameValue
   { text :: String }
 
@@ -29,7 +34,7 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
      = "r_name" := text
     ~> jsonEmptyObject
 
-
+------------------------------------------------------------------------
 -- | START Rename Box
 type TextInputBoxProps =
   ( id       :: ID
@@ -37,14 +42,11 @@ type TextInputBoxProps =
   , text     :: String
   , isOpen   :: R.State Boolean
   , boxName  :: String
-  , textAction :: String -> Action
+  , boxAction :: String -> Action
   )
 
-renameAction :: String -> Action
-renameAction newName = RenameNode newName
-
 textInputBox :: Record TextInputBoxProps -> R.Element
-textInputBox p@{ boxName, textAction, dispatch, isOpen: (true /\ setIsOpen) } = R.createElement el p []
+textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R.createElement el p []
   where
     el = R.hooksComponent (boxName <> "Box") cpt
     cpt {id, text} _ = do
@@ -71,7 +73,7 @@ textInputBox p@{ boxName, textAction, dispatch, isOpen: (true /\ setIsOpen) } = 
               , type: "button"
               , onClick: mkEffectFn1 $ \_ -> do
                     setIsOpen $ const false
-                    launchAff $ dispatch ( textAction newName )
+                    launchAff $ dispatch ( boxAction newName )
               , title: "Submit"
               } []
         cancelBtn =
@@ -85,5 +87,5 @@ textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
     el = R.hooksComponent (boxName <> "Box") cpt
     cpt {text} _ = pure $ H.div {} []
 
--- END Rename Box
+-- | END Rename Box
 
