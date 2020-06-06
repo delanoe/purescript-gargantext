@@ -1,35 +1,31 @@
 module Gargantext.Components.Forest.Tree where
 
+import DOM.Simple.Console (log2)
 import Data.Array as A
-import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe)
 import Data.Set as Set
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
-import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..),deleteNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
+import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (loadNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
+import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan, Tasks, tasksStruct)
+import Gargantext.Components.Forest.Tree.Node.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Ends (Frontends)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
+import Gargantext.Routes (AppRoute)
+import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
+import Gargantext.Types (ID, Reload)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RecordE
-
-import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..),deleteNode)
-import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (loadNode)
-import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
-import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
-import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan, Tasks, tasksStruct)
-import Gargantext.Components.Forest.Tree.Node.FTree (FTree, LNode(..), NTree(..), Tree)
-import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, map, pure, void, ($), (+), (/=), (<>), identity)
-import Gargantext.Routes (AppRoute)
-import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
-import Gargantext.Types as GT
-import Gargantext.Types (ID, Reload)
 
 ------------------------------------------------------------------------
 
