@@ -7,9 +7,9 @@ import Data.Set as Set
 import Data.Set (Set)
 import Data.String as S
 
--- | Astonishingly, not in the prelude
-id :: forall a. a -> a
-id a = a
+-- | TODO (hard coded)
+csrfMiddlewareToken :: String
+csrfMiddlewareToken = "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP0j4WcEM"
 
 setterv :: forall nt record field.
            Newtype nt record
@@ -44,9 +44,6 @@ invertOrdering :: Ordering -> Ordering
 invertOrdering LT = GT
 invertOrdering GT = LT
 invertOrdering EQ = EQ
-
-csrfMiddlewareToken :: String
-csrfMiddlewareToken = "Wy52D2nor8kC1r1Y4GrsrSIxQ2eqW8UwkdiQQshMoRwobzU4uldknRUhP0j4WcEM"
 
 -- A lens that always returns unit
 _unit :: forall s. Lens' s Unit

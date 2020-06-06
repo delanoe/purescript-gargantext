@@ -208,8 +208,10 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
 
 csrfTokenInput :: {} -> R.Element
 csrfTokenInput _ =
-  H.input { type: "hidden", name: "csrfmiddlewaretoken"
-          , value: csrfMiddlewareToken }-- TODO hard-coded CSRF token
+  H.input { type: "hidden"
+          , name: "csrfmiddlewaretoken"
+          , value: csrfMiddlewareToken
+          } -- TODO hard-coded CSRF token
 
 termsCheckbox :: R.State Boolean -> R.Element
 termsCheckbox setCheckBox =

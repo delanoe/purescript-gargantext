@@ -16,7 +16,7 @@ import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsText)
 
-import Gargantext.Prelude (class Show, Unit, bind, const, discard, map, pure, show, unit, void, ($), (&&), (/=), (<>))
+import Gargantext.Prelude (class Show, Unit, bind, const, discard, map, pure, show, unit, void, ($), (&&), (/=), (<>), id)
 
 import Gargantext.Components.Lang (readLang, Lang(..))
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props, FileType(..), UploadFileContents(..))
@@ -25,7 +25,6 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), postWwwUrlencoded, get)
 import Gargantext.Types as GT
-import Gargantext.Utils (id)
 import Gargantext.Utils.Reactix as R2
 
 -- UploadFile Action
