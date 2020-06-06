@@ -35,7 +35,6 @@ type RenameBoxProps =
   ( id            :: ID
   , dispatch      :: Action -> Aff Unit
   , name          :: Name
-  , nodeType      :: NodeType
   , renameBoxOpen :: R.State Boolean
   )
 
@@ -43,7 +42,7 @@ renameBox :: Record RenameBoxProps -> R.Element
 renameBox p@{ dispatch, renameBoxOpen: (true /\ setRenameBoxOpen) } = R.createElement el p []
   where
     el = R.hooksComponent "RenameBox" cpt
-    cpt {id, name, nodeType} _ = do
+    cpt {id, name} _ = do
       renameNodeName <- R.useState' name
       pure $ H.div {className: "from-group row-no-padding"}
         [ renameInput renameNodeName

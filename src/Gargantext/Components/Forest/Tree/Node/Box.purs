@@ -439,7 +439,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
           H.div {className: "panel-heading"}
                 [ R2.row
                         [ H.div {className: "col-md-8"}
-                                [ renameBox { dispatch, id, name, nodeType, renameBoxOpen } ]
+                                [ renameBox { dispatch, id, name, renameBoxOpen } ]
 
                         , H.div {className: "flex-end"}
                                 [ if edit then editIcon renameBoxOpen else H.div {} []
