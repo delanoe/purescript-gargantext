@@ -417,7 +417,6 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
             [ H.div {className: ""}
             [ H.div { className : "col-md-10 flex-between"}
                 [ H.h3 { className: GT.fldr p.nodeType true} [H.text $ show p.nodeType]
-               -- , H.div { className : "col-md-1" } []
                 , H.p {className: "text-primary center"} [H.text p.name]
                 ]
               ]

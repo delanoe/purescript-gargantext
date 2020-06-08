@@ -9,13 +9,13 @@ import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Types as GT
 import Gargantext.Types (ID)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, put)
+import Gargantext.Sessions (Session, post)
 import Gargantext.Components.Forest.Tree.Node.Tools.TextInputBox as Tools
 
 ------------------------------------------------------------------------
 share :: Session -> ID -> ShareValue -> Aff (Array ID)
 share session nodeId =
-  put session $ GR.NodeAPI GT.Node (Just nodeId) "share"
+  post session $ GR.NodeAPI GT.Node (Just nodeId) "share"
 
 shareAction :: String -> Action
 shareAction username = ShareNode username
