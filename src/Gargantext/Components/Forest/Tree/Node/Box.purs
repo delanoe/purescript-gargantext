@@ -477,7 +477,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                   -> R.Element
         panelBody nodePopupState {dispatch: d, nodeType} =
           H.div {className: "panel-body flex-space-between"}
-                [ H.div {className: "flex-center"} [buttonClick {action: doc, state: nodePopupState}]
+                [ H.p { "style": {"margin":"10px"}} []
+                , H.div { className: "flex-center"} 
+                        [buttonClick {action: doc, state: nodePopupState}]
                 , H.div {className: "flex-center"}
                         $ map (\t -> buttonClick {action: t, state: nodePopupState}) buttons
                 ]
@@ -520,17 +522,17 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
   where
     cpt {action: todo, state: (node@{action} /\ setNodePopup)} _ = do
       pure $ H.div {className: "col-md-1"}
-        [ H.a { style: iconAStyle
-              , className: glyphiconActive (glyphiconNodeAction todo)
-                                            (action == (Just todo)   )
-              , id: show todo
-              , title: show todo
-              , onClick : mkEffectFn1
-                        $ \_ -> setNodePopup
-                        $ const (node { action = action' })
-            }
-          []
-        ]
+                   [ H.a { style: iconAStyle
+                         , className: glyphiconActive (glyphiconNodeAction todo)
+                                                       (action == (Just todo)   )
+                         , id: show todo
+                         , title: show todo
+                         , onClick : mkEffectFn1
+                                   $ \_ -> setNodePopup
+                                   $ const (node { action = action' })
+                       }
+                     []
+                   ]
       where
         action' = if action == (Just todo)
                       then Nothing
