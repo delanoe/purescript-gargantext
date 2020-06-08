@@ -55,32 +55,46 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
       fileType :: R.State FileType     <- R.useState' CSV
       lang     :: R.State (Maybe Lang) <- R.useState' (Just EN)
 
-      pure $ H.div {} [
-              H.div {} [ H.input { type: "file"
-                                 , placeholder: "Choose file"
-                                 , on: {change: onChangeContents mFile}
-                                 }
-                       ]
+      pure $
+        H.div {className:""}
+              [ H.div {className:"row"}
+                      [ H.div {className:"col-md-6 flex-space-around"}
+                              [ H.input { type: "file"
+                                        , placeholder: "Choose file"
+                                        , on: {change: onChangeContents mFile}
+                                        }
+                              ]
+                      , H.div {className:"col-md-3 flex-space-around"}
+                              [ R2.select {className: "form-control"
+                                          , on: {change: onChangeFileType fileType}
+                                          }
+                                          ( map renderOptionFT [ CSV
+                                                               , CSV_HAL
+                                                               , WOS
+                                                               , PresseRIS
+                                                               ]
+                                          )
+                              ]
+                      , H.div {className:"col-md-3 flex-space-around"}
+                              [ R2.select { className: "form-control"
+                                          , on: {change: onChangeLang lang}
+                                          } (map renderOptionLang [EN, FR])
+                              ]
+                      ]
 
-            , H.div {} [ R2.select {className: "col-md-12 form-control"
-                                   , on: {change: onChangeFileType fileType}
-                                   }
-                          ( map renderOptionFT [ CSV
-                                               , CSV_HAL
-                                               , WOS
-                                               , PresseRIS
-                                               ]
-                           )
-                       ]
-
-
-            , H.div {} [ R2.select {className: "col-md-12 form-control"
-                       , on: {change: onChangeLang lang}
-                       } (map renderOptionLang [EN, FR])
-                       ]
-
-            , H.div {} [ uploadButton {dispatch, fileType, lang, id, mFile, nodeType } ]
-            ]
+              , H.div { className : "panel-footer" }
+                      [ H.div {} []
+                      , H.div {className:"flex-center"} 
+                              [ uploadButton { dispatch
+                                             , fileType
+                                             , lang
+                                             , id
+                                             , mFile
+                                             , nodeType
+                                             } 
+                              ]
+                      ]
+              ]
 
     renderOptionFT :: FileType -> R.Element
     renderOptionFT opt = H.option {} [ H.text $ show opt ]
@@ -132,7 +146,12 @@ uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
   where
     cpt {dispatch, fileType: (fileType /\ setFileType), id, lang: (lang /\ setLang), mFile: (mFile /\ setMFile), nodeType} _ = do
-        pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
+        pure $ H.button { className: "btn btn-primary"
+                        , "type" : "button"
+                        , disabled
+                        , style    : { width: "100%" }
+                        , on: {click: onClick}
+                        } [ H.text "Upload" ]
       where
         disabled = case mFile of
           Nothing -> "1"

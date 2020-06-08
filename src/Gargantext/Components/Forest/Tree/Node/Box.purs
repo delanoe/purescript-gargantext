@@ -693,7 +693,7 @@ actionDownload GT.Corpus id session = downloadButton href label info
     where
       href  = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
       label = "Download Corpus"
-      info  = "TODO: fix the backend route"
+      info  = "Download as JSON"
 
 actionDownload GT.Texts id session = downloadButton href label info
     where
