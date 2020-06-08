@@ -13,6 +13,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action(..),deleteNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (loadNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
+import Gargantext.Components.Forest.Tree.Node.Action.Share (ShareValue(..), share)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan, Tasks, tasksStruct)
 import Gargantext.Components.Forest.Tree.Node.FTree (FTree, LNode(..), NTree(..))
@@ -203,6 +204,11 @@ performAction p@{ reload: (_ /\ setReload)
                 , tree: (NTree (LNode {id}) _) } (RenameNode name)  = do
   void $ rename session id $ RenameValue {text:name}
   performAction p RefreshTree
+
+performAction p@{ reload: (_ /\ setReload)
+                , session
+                , tree: (NTree (LNode {id}) _) } (ShareNode username)  = do
+  void $ share session id $ ShareValue {text:username}
 
 performAction p@{ openNodes: (_ /\ setOpenNodes)
                 , reload:    (_ /\ setReload)

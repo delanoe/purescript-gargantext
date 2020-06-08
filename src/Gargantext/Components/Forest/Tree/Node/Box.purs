@@ -29,6 +29,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), 
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (textInputBox, renameAction)
+import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), uploadFileView, fileTypeView, uploadTermListView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
@@ -581,6 +582,15 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
                                  <> "to link the corpus with your Annuaire"
                                  <> " (and reciprocally)."
 
+    cpt {action : Share, dispatch, id, name } _ = do
+      isOpen <- R.useState' true
+      pure $ H.div {} [ textInputBox { boxAction: Share.shareAction
+                                   , boxName: "Share"
+                                   , dispatch
+                                   , id
+                                   , text: "username"
+                                   , isOpen
+                                   } ]
     cpt props@{action: SearchBox, search, session, dispatch, nodePopup} _ =
       actionSearch search session dispatch nodePopup
 

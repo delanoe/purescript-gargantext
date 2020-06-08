@@ -22,6 +22,7 @@ data Action = AddNode String GT.NodeType
             | SearchQuery GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | RefreshTree
+            | ShareNode   String
 
 -----------------------------------------------------
 -- TODO Delete with asyncTaskWithType
