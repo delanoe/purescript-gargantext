@@ -26,14 +26,14 @@ data Action = AddNode String GT.NodeType
 
 
 instance showShow :: Show Action where
-  show DeleteNode     = "DeleteNode"
+  show DeleteNode       = "DeleteNode"
+  show RefreshTree      = "RefreshTree"
+  show (ShareNode   _)  = "ShareNode"
+  show (UpdateNode  _)  = "UpdateNode"
+  show (RenameNode  _)  = "RenameNode"
+  show (SearchQuery _)  = "SearchQuery"
   show (AddNode   _ _)  = "AddNode"
-  show (UpdateNode  _) = "UpdateNode"
-  show (RenameNode  _) = "RenameNode"
-  show (SearchQuery _) = "SearchQuery"
   show (UploadFile  _ _ _ _)= "UploadFile"
-  show RefreshTree = "RefreshTree"
-  show (ShareNode _)  = "ShareNode"
 
 -----------------------------------------------------
 -- TODO Delete with asyncTaskWithType

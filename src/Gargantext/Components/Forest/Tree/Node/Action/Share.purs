@@ -10,7 +10,7 @@ import Gargantext.Types as GT
 import Gargantext.Types (ID)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
-import Gargantext.Components.Forest.Tree.Node.Tools.TextInputBox as Tools
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 
 ------------------------------------------------------------------------
 share :: Session -> ID -> ShareValue -> Aff (Array ID)

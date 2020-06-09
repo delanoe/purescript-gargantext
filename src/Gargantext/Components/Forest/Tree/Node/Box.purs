@@ -31,6 +31,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Rename (textInputBox, renam
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), uploadFileView, fileTypeView, uploadTermListView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
+import Gargantext.Components.Forest.Tree.Node.Tools
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.NgramsTable.API as NTAPI
@@ -651,43 +652,8 @@ actionDelete _ dispatch = do
                , "If yes, click again below."
                ]
           )
-    , submitButton DeleteNode dispatch -- buttonDelete dispatch
+    , submitButton DeleteNode dispatch
     ]
-  where
-    buttonDelete :: (Action -> Aff Unit) -> R.Element
-    buttonDelete d =
-      H.div {className: "panel-footer"}
-            [ H.div {} []
-            , H.div { className: "center"}
-                    [ H.button { className : "btn btn-primary glyphicon glyphicon-trash"
-                               , type: "button"
-                               , style : { width: "50%" }
-                               , id: "delete"
-                               , title: "Delete"
-                               , on: {click: \_ -> launchAff $ d $ DeleteNode}
-                               }
-                               [ H.text "Delete!"]
-                     ]
-            ]
-
-type ButtonTitle = String
-type ButtonIcon  = String
-
-submitButton :: Action -> (Action -> Aff Unit) -> R.Element
-submitButton action dispatch =
-  H.div {className: "panel-footer"}
-            [ H.div {} []
-            , H.div { className: "center"}
-                    [ H.button { className : "btn btn-primary fa fa-" <> icon action
-                               , type: "button"
-                               , style : { width: "50%" }
-                               , id: S.toLower $ show action
-                               , title: show action
-                               , on: {click: \_ -> launchAff $ dispatch action}
-                               }
-                               [ H.text $ " " <> text action]
-                     ]
-            ]
 
 
 -- | Action : Upload

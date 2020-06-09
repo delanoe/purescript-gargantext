@@ -9,6 +9,7 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Tools (submitButton)
 import Gargantext.Types (NodeType(..), readNodeType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Sessions (Session, post)
@@ -62,11 +63,11 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
   where
     el = R.hooksComponent "AddNodeView" cpt
     cpt {id, name} _ = do
-      nodeName <- R.useState' "Name"
-      nodeType' <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
+      nodeName@(name' /\ _) <- R.useState' "Name"
+      nodeType'@(nt /\ _)  <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
       pure $ H.div {}
           [ panelBody   readNodeType nodeName nodeType'
-          , panelFooter nodeName nodeType'
+          , submitButton (AddNode name' nt) dispatch -- panelFooter nodeName nodeType'
           ]
       where
         panelBody :: (String -> NodeType)
@@ -115,23 +116,6 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                                            } []
                                ]
 
-
-
-        panelFooter :: R.State String  -> R.State NodeType -> R.Element
-        panelFooter (name' /\ _) (nt /\ _) =
-          H.div { className: "panel-footer"}
-                [ H.div {} []
-                , H.div {className: "center"} 
-                        [ H.button {className: "btn btn-primary"
-                           , type  : "button"
-                           , style : { width: "50%" }
-                           , onClick: mkEffectFn1 $ \_ -> do
-                               -- TODO
-                               --setPopupOpen $ const Nothing
-                               launchAff  $ dispatch $ AddNode name' nt
-                           } [H.text "Add"]
-                         ]
-                ]
 
 -- END Create Node
 

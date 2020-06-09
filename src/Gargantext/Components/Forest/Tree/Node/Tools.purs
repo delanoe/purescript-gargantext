@@ -1,12 +1,13 @@
-module Gargantext.Components.Forest.Tree.Node.Tools.TextInputBox where
+module Gargantext.Components.Forest.Tree.Node.Tools where
 
+import Data.String as S
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Types (ID)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, pure, ($), (<<<), (<>))
+import Gargantext.Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (+), (<>), (==), (<<<))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -64,4 +65,23 @@ textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
     cpt {text} _ = pure $ H.div {} []
 
 -- | END Rename Box
+
+
+submitButton :: Action -> (Action -> Aff Unit) -> R.Element
+submitButton action dispatch =
+  H.div {className: "panel-footer"}
+            [ H.div {} []
+            , H.div { className: "center"}
+                    [ H.button { className : "btn btn-primary fa fa-" <> icon action
+                               , type: "button"
+                               , style : { width: "50%" }
+                               , id: S.toLower $ show action
+                               , title: show action
+                               , on: {click: \_ -> launchAff $ dispatch action}
+                               }
+                               [ H.text $ " " <> text action]
+                     ]
+            ]
+
+
 
