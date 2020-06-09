@@ -24,10 +24,10 @@ import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..), icon, text)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
-import Gargantext.Components.Forest.Tree.Node.Action.Rename (textInputBox, renameAction)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), uploadFileView, fileTypeView, uploadTermListView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
@@ -36,9 +36,9 @@ import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.NgramsTable.API as NTAPI
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Components.Search.SearchBar (searchBar)
-import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex_Advanced)
-import Gargantext.Components.Search.Types (DataField(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (Search, defaultSearch, isIsTex_Advanced)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..))
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (+), (<>), (==))

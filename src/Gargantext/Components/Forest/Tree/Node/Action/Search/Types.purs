@@ -1,4 +1,4 @@
-module Gargantext.Components.Search.Types where
+module Gargantext.Components.Forest.Tree.Node.Action.Search.Types where
 
 import Data.Array (concat)
 import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))

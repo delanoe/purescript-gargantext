@@ -10,7 +10,6 @@ import Gargantext.Types as GT
 import Gargantext.Types (ID)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, put)
-import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 
 ------------------------------------------------------------------------
 rename :: Session -> ID -> RenameValue -> Aff (Array ID)
@@ -30,6 +29,3 @@ instance encodeJsonRenameValue :: EncodeJson RenameValue where
     ~> jsonEmptyObject
 
 ------------------------------------------------------------------------
-textInputBox :: Record Tools.TextInputBoxProps -> R.Element
-textInputBox  = Tools.textInputBox
-

@@ -198,7 +198,6 @@ performAction { reload: (_ /\ setReload)
   liftEffect $ onTaskAdd task
   liftEffect $ log2 "[performAction] UpdateNode task:" task
 
-
 performAction p@{ reload: (_ /\ setReload)
                 , session
                 , tree: (NTree (LNode {id}) _) } (RenameNode name)  = do
