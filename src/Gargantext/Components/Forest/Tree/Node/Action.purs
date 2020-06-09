@@ -24,11 +24,39 @@ data Action = AddNode String GT.NodeType
             | RefreshTree
             | ShareNode   String
 
+
+instance showShow :: Show Action where
+  show DeleteNode     = "DeleteNode"
+  show (AddNode   _ _)  = "AddNode"
+  show (UpdateNode  _) = "UpdateNode"
+  show (RenameNode  _) = "RenameNode"
+  show (SearchQuery _) = "SearchQuery"
+  show (UploadFile  _ _ _ _)= "UploadFile"
+  show RefreshTree = "RefreshTree"
+  show (ShareNode _)  = "ShareNode"
+
 -----------------------------------------------------
 -- TODO Delete with asyncTaskWithType
 deleteNode :: Session -> GT.ID -> Aff GT.ID
 deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 -----------------------------------------------------------------------
+
+icon :: Action -> String
+icon DeleteNode = "trash"
+icon (AddNode _ _)    = "plus"
+icon _ = "hand-o-right"
+
+text :: Action -> String
+text DeleteNode     = "Delete !"
+text (AddNode   _ _)  = "Add !"
+text (UpdateNode  _) = "Update !"
+text (RenameNode  _) = "Rename !"
+text (SearchQuery _) = "Launch search !"
+text (UploadFile  _ _ _ _)= "Upload File !"
+text RefreshTree = "Refresh Tree !"
+text (ShareNode _)  = "Share !"
+-----------------------------------------------------------------------
+
 
 type Props =
   ( dispatch :: Action -> Aff Unit
@@ -48,6 +76,7 @@ instance eqFileType :: Eq FileType where
 
 instance showFileType :: Show FileType where
     show = genericShow
+
 
 
 newtype UploadFileContents = UploadFileContents String

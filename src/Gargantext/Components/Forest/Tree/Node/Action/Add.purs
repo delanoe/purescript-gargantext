@@ -106,7 +106,7 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                                          -- , showConfig nt
                                     ]
                                 else
-                                H.button { className : "btn btn-primary flex-center"
+                                H.button { className : "btn btn-primary center"
                                            , type : "button"
                                            , onClick : mkEffectFn1 $ \_ -> setNodeType ( const
                                                                                        $ fromMaybe nt 
@@ -121,14 +121,14 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
         panelFooter (name' /\ _) (nt /\ _) =
           H.div { className: "panel-footer"}
                 [ H.div {} []
-                , H.div {className: "flex-center"} 
+                , H.div {className: "center"} 
                         [ H.button {className: "btn btn-primary"
-                           , type: "button"
-                           , style    : { width: "100%" }
+                           , type  : "button"
+                           , style : { width: "50%" }
                            , onClick: mkEffectFn1 $ \_ -> do
                                -- TODO
                                --setPopupOpen $ const Nothing
-                               launchAff    $ dispatch $ AddNode name' nt
+                               launchAff  $ dispatch $ AddNode name' nt
                            } [H.text "Add"]
                          ]
                 ]

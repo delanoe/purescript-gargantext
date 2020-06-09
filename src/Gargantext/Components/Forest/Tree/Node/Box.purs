@@ -7,14 +7,13 @@ import Data.Nullable (Nullable, null)
 import Data.Tuple (fst, Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
-import DOM.Simple.Event
-import DOM.Simple.EventListener
-import DOM.Simple.Types
-import DOM.Simple.Window
+import DOM.Simple.Event (MessageEvent)
+import DOM.Simple.EventListener (Callback, addEventListener, callback)
+import DOM.Simple.Window (window)
+import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
-import Effect.Console
 import Effect.Uncurried (mkEffectFn1)
 import React.SyntheticEvent as E
 import Reactix as R
@@ -25,12 +24,11 @@ import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..), icon, text)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (textInputBox, renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
-import Gargantext.Components.Forest.Tree.Node.Action.Update
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), uploadFileView, fileTypeView, uploadTermListView)
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.GraphExplorer.API as GraphAPI
@@ -42,9 +40,9 @@ import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex_
 import Gargantext.Components.Search.Types (DataField(..))
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
+import Gargantext.Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (+), (<>), (==))
 import Gargantext.Routes as Routes
-import Gargantext.Sessions (Session, sessionId, post)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeType(..), ID, Name, Reload)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
@@ -219,10 +217,10 @@ nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
 -- START nodeActions
 
 type NodeActionsProps =
-  ( id :: ID
-  , nodeType :: GT.NodeType
+  ( id          :: ID
+  , nodeType    :: GT.NodeType
   , refreshTree :: Unit -> Aff Unit
-  , session :: Session
+  , session     :: Session
   )
 
 nodeActions :: Record NodeActionsProps -> R.Element
@@ -416,7 +414,11 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
           [ H.div { className: "panel panel-default" }
             [ H.div {className: ""}
             [ H.div { className : "col-md-10 flex-between"}
-                [ H.h3 { className: GT.fldr p.nodeType true} [H.text $ show p.nodeType]
+                [ H.h3 { className: GT.fldr p.nodeType true} []
+                -- TODO fix names
+                , H.text $ S.replace (S.Pattern "Node")   (S.Replacement " ") 
+                         $ S.replace (S.Pattern "Folder") (S.Replacement " ")
+                         $ show p.nodeType
                 , H.p {className: "text-primary center"} [H.text p.name]
                 ]
               ]
@@ -442,8 +444,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
         panelHeading isOpen@(open /\ _) {dispatch, id, name, nodeType} =
           H.div {className: "panel-heading"}
                 [ R2.row
-                        [ H.div {className: "col-md-8"}
-                                [ textInputBox { boxAction: renameAction, boxName: "Rename", dispatch, id, text:name, isOpen } ]
+                        [ H.div {className: "col-md-8 flex-end"}
+                                [ textInputBox { boxAction: renameAction
+                                               , boxName: "Rename", dispatch, id, text:name, isOpen } ]
 
                         , H.div {className: "flex-end"}
                                 [ if edit then editIcon isOpen else H.div {} []
@@ -451,7 +454,8 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                                         [ H.a { "type"   : "button"
                                               , className: glyphicon "window-close"
                                               , on: { click: \e -> p.onPopoverClose $ R2.unsafeEventTarget e }
-                                              , title    : "Close"} []
+                                              , title    : "Close"
+                                              } []
                                         ]
                                  ]
                         ]
@@ -647,20 +651,43 @@ actionDelete _ dispatch = do
                , "If yes, click again below."
                ]
           )
-    , reallyDelete dispatch
+    , submitButton DeleteNode dispatch -- buttonDelete dispatch
     ]
   where
-    reallyDelete :: (Action -> Aff Unit) -> R.Element
-    reallyDelete d = H.div {className: "panel-footer"}
-                [ H.a { type: "button"
-                      , className: "btn glyphicon glyphicon-trash"
-                      , id: "delete"
-                      , title: "Delete"
-                      , on: {click: \_ -> launchAff $ d $ DeleteNode}
-                      }
-                  [H.text " Yes, delete!"]
-                ]
+    buttonDelete :: (Action -> Aff Unit) -> R.Element
+    buttonDelete d =
+      H.div {className: "panel-footer"}
+            [ H.div {} []
+            , H.div { className: "center"}
+                    [ H.button { className : "btn btn-primary glyphicon glyphicon-trash"
+                               , type: "button"
+                               , style : { width: "50%" }
+                               , id: "delete"
+                               , title: "Delete"
+                               , on: {click: \_ -> launchAff $ d $ DeleteNode}
+                               }
+                               [ H.text "Delete!"]
+                     ]
+            ]
 
+type ButtonTitle = String
+type ButtonIcon  = String
+
+submitButton :: Action -> (Action -> Aff Unit) -> R.Element
+submitButton action dispatch =
+  H.div {className: "panel-footer"}
+            [ H.div {} []
+            , H.div { className: "center"}
+                    [ H.button { className : "btn btn-primary fa fa-" <> icon action
+                               , type: "button"
+                               , style : { width: "50%" }
+                               , id: S.toLower $ show action
+                               , title: show action
+                               , on: {click: \_ -> launchAff $ dispatch action}
+                               }
+                               [ H.text $ " " <> text action]
+                     ]
+            ]
 
 
 -- | Action : Upload
@@ -718,7 +745,8 @@ downloadButton href label info = do
                              [ H.div { className: "panel-footer"}
                                [ H.div { className: "col-md-3"} []
                                        , H.div { className: "col-md-3 flex-center"}
-                                               [ H.a { className: "btn btn-default"
+                                               [ H.a { className: "btn btn-primary"
+                                                     , style : { width: "50%" }
                                                      , href
                                                      , target: "_blank" }
                                                      [ H.text label ]
