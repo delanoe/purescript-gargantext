@@ -187,9 +187,9 @@ performAction p@{ openNodes: (_ /\ setOpenNodes)
 performAction { reload: (_ /\ setReload)
               , session
               , tasks: { onTaskAdd }
-              , tree: (NTree (LNode {id}) _) } (SearchQuery task) = do
+              , tree: (NTree (LNode {id}) _) } (DoSearch task) = do
   liftEffect $ onTaskAdd task
-  liftEffect $ log2 "[performAction] SearchQuery task:" task
+  liftEffect $ log2 "[performAction] DoSearch task:" task
 
 performAction { reload: (_ /\ setReload)
               , session

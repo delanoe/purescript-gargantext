@@ -19,7 +19,7 @@ data Action = AddNode String GT.NodeType
             | DeleteNode
             | UpdateNode  GT.AsyncTaskWithType
             | RenameNode  String
-            | SearchQuery GT.AsyncTaskWithType
+            | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | RefreshTree
             | ShareNode   String
@@ -31,7 +31,7 @@ instance showShow :: Show Action where
   show (ShareNode   _)  = "ShareNode"
   show (UpdateNode  _)  = "UpdateNode"
   show (RenameNode  _)  = "RenameNode"
-  show (SearchQuery _)  = "SearchQuery"
+  show (DoSearch    _)  = "SearchQuery"
   show (AddNode   _ _)  = "AddNode"
   show (UploadFile  _ _ _ _)= "UploadFile"
 
@@ -51,7 +51,7 @@ text DeleteNode     = "Delete !"
 text (AddNode   _ _)  = "Add !"
 text (UpdateNode  _) = "Update !"
 text (RenameNode  _) = "Rename !"
-text (SearchQuery _) = "Launch search !"
+text (DoSearch  _) = "Launch search !"
 text (UploadFile  _ _ _ _)= "Upload File !"
 text RefreshTree = "Refresh Tree !"
 text (ShareNode _)  = "Share !"

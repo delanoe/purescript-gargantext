@@ -625,7 +625,7 @@ actionSearch search session dispatch nodePopup =
                -> GT.AsyncTaskWithType
                -> Effect Unit
       searchOn dispatch p task = do
-        _ <- launchAff $ dispatch (SearchQuery task)
+        _ <- launchAff $ dispatch (DoSearch task)
         -- close popup
         -- TODO
         --snd p $ const Nothing
