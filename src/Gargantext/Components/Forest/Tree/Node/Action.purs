@@ -31,8 +31,8 @@ data Action = AddNode String GT.NodeType
             | ShareNode   String
 
 instance showShow :: Show Action where
-  show DeleteNode       = "DeleteNode"
-  show RefreshTree      = "RefreshTree"
+  show  DeleteNode      = "DeleteNode"
+  show  RefreshTree     = "RefreshTree"
   show (ShareNode   _)  = "ShareNode"
   show (UpdateNode  _)  = "UpdateNode"
   show (RenameNode  _)  = "RenameNode"
@@ -42,9 +42,9 @@ instance showShow :: Show Action where
 
 -----------------------------------------------------------------------
 icon :: Action -> String
-icon DeleteNode = "trash"
-icon (AddNode _ _)    = "plus"
-icon _ = "hand-o-right"
+icon DeleteNode    = "trash"
+icon (AddNode _ _) = "plus"
+icon _             = "hand-o-right"
 
 text :: Action -> String
 text DeleteNode     = "Delete !"
@@ -58,10 +58,6 @@ text (ShareNode _)  = "Share !"
 -----------------------------------------------------------------------
 
 -- TODO move code below elsewhere
-
--- TODO Delete with asyncTaskWithType
-deleteNode :: Session -> GT.ID -> Aff GT.ID
-deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 
 data FileType = CSV | CSV_HAL | WOS | PresseRIS
 
