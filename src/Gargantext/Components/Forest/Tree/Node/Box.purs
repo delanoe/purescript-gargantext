@@ -3,42 +3,33 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Data.Array as A
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
-import Data.Nullable (Nullable, null)
-import Data.Tuple (fst, Tuple(..))
-import Data.Tuple.Nested ((/\))
-import DOM.Simple as DOM
-import DOM.Simple.Event (MessageEvent)
-import DOM.Simple.EventListener (Callback, addEventListener, callback)
-import DOM.Simple.Window (window)
+import Data.Nullable (null)
 import Data.String as S
+import Data.Tuple (fst)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import URI.Extra.QueryPairs as NQP
-import URI.Query as Query
-import Web.File.FileReader.Aff (readAsText)
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
+import Gargantext.Components.Forest.Tree.Node.Action.Doc (actionDoc)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (Search, defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), uploadFileView, fileTypeView, uploadTermListView)
+import Gargantext.Components.Forest.Tree.Node.Box.Types
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
-import Gargantext.Components.Forest.Tree.Node.Tools
+import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, textInputBox)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.NgramsTable.API as NTAPI
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (Search, defaultSearch, isIsTex_Advanced)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..))
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (+), (<>), (==))
@@ -49,6 +40,10 @@ import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Web.File.FileReader.Aff (readAsText)
 
 
 type Tasks =
@@ -67,11 +62,6 @@ tasksStruct id (asyncTasks /\ setAsyncTasks) (_ /\ setReload) = { onTaskAdd, onT
     onTaskFinish t = do
       setReload (_ + 1)
       setAsyncTasks $ Map.alter (maybe Nothing $ (\ts -> Just $ GAT.removeTaskFromList ts t)) id
-
-type CommonProps =
-  ( dispatch :: Action -> Aff Unit
-  , session :: Session
-  )
 
 -- Main Node
 type NodeMainSpanProps =
@@ -371,20 +361,6 @@ mAppRouteId _ = Nothing
 
 
 -- | START Popup View
-type NodePopupProps =
-  ( id             :: ID
-  , name           :: Name
-  , nodeType       :: GT.NodeType
-  , onPopoverClose :: DOM.Element -> Effect Unit
-  | CommonProps
-  )
-
-type NodePopupS =
-  ( action   :: Maybe NodeAction
-  , id       :: ID
-  , name     :: Name
-  , nodeType :: GT.NodeType
-  )
 
 iconAStyle :: { color      :: String
               , paddingTop :: String
@@ -495,15 +471,15 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                      -> R.State Search
                      -> R.Element
         mPanelAction ({action: Nothing} /\ _) _ _ = H.div {} []
-        mPanelAction ({action: Just action} /\ _) p search =
+        mPanelAction ({action: Just action} /\ _) props search =
             panelAction { action
-                        , dispatch : p.dispatch
-                        , id       : p.id
-                        , name     : p.name
+                        , dispatch : props.dispatch
+                        , id       : props.id
+                        , name     : props.name
                         , nodePopup: Just NodePopup
-                        , nodeType : p.nodeType
+                        , nodeType : props.nodeType
                         , search
-                        , session  : p.session
+                        , session  : props.session
                         }
 
 type ActionState =
@@ -624,8 +600,8 @@ actionSearch search session dispatch nodePopup =
                -> Maybe NodePopup
                -> GT.AsyncTaskWithType
                -> Effect Unit
-      searchOn dispatch p task = do
-        _ <- launchAff $ dispatch (DoSearch task)
+      searchOn dispatch' p task = do
+        _ <- launchAff $ dispatch' (DoSearch task)
         -- close popup
         -- TODO
         --snd p $ const Nothing
@@ -722,84 +698,6 @@ downloadButton href label info = do
                     ]
 
 
--- | Action: Show Documentation
-actionDoc :: NodeType -> R.Hooks R.Element
-actionDoc nodeType =
-  pure $ R.fragment [ H.div { style: {margin: "10px"} }
-                            $ [ infoTitle nodeType ]
-                            <> (map (\info -> H.p {} [H.text info]) $ docOf nodeType)
-                    ]
-  where
-    infoTitle :: NodeType -> R.Element
-    infoTitle nt = H.div { style: {margin: "10px"}}
-                         [ H.h3 {} [H.text "Documentation about " ]
-                         , H.h3 {className: GT.fldr nt true} [ H.text $ show nt ]
-                         ]
-
--- | TODO add documentation of all NodeType
-docOf :: NodeType -> Array String
-docOf GT.NodeUser = [ "This account is personal"
-                    , "See the instances terms of uses."
-                    ]
-docOf GT.FolderPrivate = ["This folder and its children are private only."]
-docOf GT.FolderPublic  = ["Soon, you will be able to build public folders to share your work with the world!"]
-docOf GT.FolderShared  = ["Soon, you will be able to build teams folders to share your work"]
-docOf nodeType         = ["More information on " <> show nodeType]
-
-
 fragmentPT :: String -> R.Element
 fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
-
---------------------
--- | Iframes
-searchIframes :: Record NodePopupProps
-              -> R.State Search
-              -> R.Ref (Nullable DOM.Element)
-              -> R.Element
-searchIframes {nodeType} search@(search' /\ _) iframeRef =
-  if isIsTex_Advanced search'.datafield then
-    H.div { className: "istex-search panel panel-default" }
-          [ H.h3 { className: GT.fldr nodeType true} []
-          , iframeWith "https://istex.gargantext.org" search iframeRef
-          ]
-  else
-    if Just Web == search'.datafield then
-      H.div { className: "istex-search panel panel-default" }
-            [ H.h3 { className: GT.fldr nodeType true} []
-            , iframeWith "https://searx.gargantext.org" search iframeRef
-            ]
-    else
-      H.div {} []
-
-iframeWith :: String
-           -> R.State Search
-           -> R.Ref (Nullable DOM.Element)
-           -> R.Element
-iframeWith url (search /\ setSearch) iframeRef =
-  H.iframe { src: isTexTermUrl search.term
-            ,width: "100%"
-            ,height: "100%"
-            ,ref: iframeRef
-            ,on: {
-              load: \_ -> do
-                 addEventListener window "message" (changeSearchOnMessage url)
-                 R2.postMessage iframeRef search.term
-                 }
-           } []
-  where
-    changeSearchOnMessage :: String -> Callback MessageEvent
-    changeSearchOnMessage url =
-      callback $ \m -> if R2.getMessageOrigin m == url
-                         then do
-                           let {url, term} = R2.getMessageData m
-                           setSearch $ _ {url = url, term = term}
-                         else
-                           pure unit
-    isTexTermUrl term = url <> query
-      where
-        query = Query.print $ NQP.print identity identity qp
-
-        qp = NQP.QueryPairs [
-          Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
-          ]
 
