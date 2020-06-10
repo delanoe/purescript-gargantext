@@ -1,31 +1,26 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Data.Array as A
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
+import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Effect (Effect)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props, FileType(..), UploadFileContents(..))
+import Gargantext.Components.Lang (readLang, Lang(..))
+import Gargantext.Prelude (class Show, Unit, discard, bind, const, id, map, pure, show, unit, void, ($))
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Types as GT
+import Gargantext.Types (ID)
+import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsText)
-
-import Gargantext.Prelude (class Show, Unit, bind, const, discard, map, pure, show, unit, void, ($), (&&), (/=), (<>), id)
-
-import Gargantext.Components.Lang (readLang, Lang(..))
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props, FileType(..), UploadFileContents(..))
-import Gargantext.Components.Forest.Tree.Node.FTree (FTree, ID, LNode(..), NTree(..))
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes as GR
-import Gargantext.Sessions (Session(..), postWwwUrlencoded, get)
-import Gargantext.Types as GT
-import Gargantext.Utils.Reactix as R2
 
 -- UploadFile Action
 -- file upload types

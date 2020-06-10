@@ -7,13 +7,19 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
-import Prelude hiding (div)
-
+import Gargantext.Prelude
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, get, put, post, delete)
 import Gargantext.Routes as GR
+import Gargantext.Sessions (Session, get, put, post, delete)
 import Gargantext.Types  as GT
+
+type Props =
+  ( dispatch :: Action -> Aff Unit
+  , id       :: Int
+  , nodeType :: GT.NodeType
+  , session  :: Session
+  )
 
 data Action = AddNode String GT.NodeType
             | DeleteNode
@@ -23,7 +29,6 @@ data Action = AddNode String GT.NodeType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | RefreshTree
             | ShareNode   String
-
 
 instance showShow :: Show Action where
   show DeleteNode       = "DeleteNode"
@@ -35,12 +40,7 @@ instance showShow :: Show Action where
   show (AddNode   _ _)  = "AddNode"
   show (UploadFile  _ _ _ _)= "UploadFile"
 
------------------------------------------------------
--- TODO Delete with asyncTaskWithType
-deleteNode :: Session -> GT.ID -> Aff GT.ID
-deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 -----------------------------------------------------------------------
-
 icon :: Action -> String
 icon DeleteNode = "trash"
 icon (AddNode _ _)    = "plus"
@@ -57,15 +57,11 @@ text RefreshTree = "Refresh Tree !"
 text (ShareNode _)  = "Share !"
 -----------------------------------------------------------------------
 
+-- TODO move code below elsewhere
 
-type Props =
-  ( dispatch :: Action -> Aff Unit
-  , id       :: Int
-  , nodeType :: GT.NodeType
-  , session  :: Session
-  )
-
--- TODO remove these types from here
+-- TODO Delete with asyncTaskWithType
+deleteNode :: Session -> GT.ID -> Aff GT.ID
+deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 
 data FileType = CSV | CSV_HAL | WOS | PresseRIS
 
@@ -76,7 +72,5 @@ instance eqFileType :: Eq FileType where
 
 instance showFileType :: Show FileType where
     show = genericShow
-
-
 
 newtype UploadFileContents = UploadFileContents String
