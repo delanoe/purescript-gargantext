@@ -4,7 +4,7 @@ import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array (length, head)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff)
+import Effect.Aff (Aff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
@@ -14,7 +14,7 @@ import Gargantext.Sessions (Session, post)
 import Gargantext.Types  as GT
 import Gargantext.Types (NodeType(..), readNodeType)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, map, pure, show, ($), (<>), (>), (<<<))
+import Prelude (Unit, bind, const, map, pure, show, ($), (<>), (>), (<<<))
 import Reactix as R
 import Reactix.DOM.HTML as H
 

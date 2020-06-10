@@ -58,7 +58,6 @@ text (ShareNode _)  = "Share !"
 -----------------------------------------------------------------------
 
 -- TODO move code below elsewhere
-
 data FileType = CSV | CSV_HAL | WOS | PresseRIS
 
 derive instance genericFileType :: Generic FileType _

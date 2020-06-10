@@ -1,4 +1,4 @@
-module Gargantext.Components.Forest.Tree.Node.Action.Doc where
+module Gargantext.Components.Forest.Tree.Node.Action.Documentation where
 
 import Gargantext.Prelude (map, pure, show, ($), (<>))
 import Gargantext.Types (NodeType)

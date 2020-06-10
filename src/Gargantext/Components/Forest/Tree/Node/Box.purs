@@ -16,7 +16,7 @@ import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
-import Gargantext.Components.Forest.Tree.Node.Action.Doc (actionDoc)
+import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
