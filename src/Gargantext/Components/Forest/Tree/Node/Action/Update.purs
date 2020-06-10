@@ -1,22 +1,12 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Update where
 
-import Data.Array (length, head)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Maybe (Maybe(..), fromMaybe)
--- import Data.Newtype (class Newtype)
-import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff)
-import Effect.Uncurried (mkEffectFn1)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
-import Gargantext.Types (NodeType(..), readNodeType)
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Sessions (Session, post)
-import Gargantext.Routes as GR
+
+import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
+import Effect.Aff (Aff)
+import Gargantext.Components.Forest.Tree.Node.Action (Action)
+import Gargantext.Types (NodeType)
 import Gargantext.Types  as GT
-import Prelude (Unit, bind, const, discard, map, pure, show, ($), (<>), (>), (<<<))
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Prelude (Unit)
 
 {-
 updateNode :: Session -> ID -> UpdateNodeParams -> Aff (Array ID)

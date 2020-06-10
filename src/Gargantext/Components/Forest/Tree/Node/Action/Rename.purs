@@ -4,7 +4,6 @@ import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Prelude (($))
-import Reactix as R
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Types as GT
 import Gargantext.Types (ID)

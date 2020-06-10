@@ -7,7 +7,7 @@ import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Types (ID)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (+), (<>), (==), (<<<))
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -82,6 +82,4 @@ submitButton action dispatch =
                                [ H.text $ " " <> text action]
                      ]
             ]
-
-
 

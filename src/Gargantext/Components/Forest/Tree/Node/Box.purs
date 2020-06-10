@@ -180,7 +180,7 @@ fldr nt open = if open
                    color FolderPublic = ""
                    color FolderShared = " text-warning"
                    color _            = " text-danger"
-                   -}
+-}
 
 
 -- START node text

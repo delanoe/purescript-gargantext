@@ -13,6 +13,7 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, put, post, delete)
 import Gargantext.Types  as GT
+import Gargantext.Components.Forest.Tree.Node (NodeAction(..), glyphiconNodeAction)
 
 type Props =
   ( dispatch :: Action -> Aff Unit
@@ -21,7 +22,7 @@ type Props =
   , session  :: Session
   )
 
-data Action = AddNode String GT.NodeType
+data Action = AddNode     String GT.NodeType
             | DeleteNode
             | UpdateNode  GT.AsyncTaskWithType
             | RenameNode  String
@@ -29,6 +30,7 @@ data Action = AddNode String GT.NodeType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | RefreshTree
             | ShareNode   String
+
 
 instance showShow :: Show Action where
   show  DeleteNode      = "DeleteNode"
@@ -42,19 +44,27 @@ instance showShow :: Show Action where
 
 -----------------------------------------------------------------------
 icon :: Action -> String
-icon DeleteNode    = "trash"
-icon (AddNode _ _) = "plus"
-icon _             = "hand-o-right"
+icon (AddNode _ _)        = glyphiconNodeAction (Add [])
+icon DeleteNode           = glyphiconNodeAction Delete
+icon (UpdateNode _)       = glyphiconNodeAction Refresh
+icon (RenameNode _)       = glyphiconNodeAction Config
+icon (DoSearch   _)       = glyphiconNodeAction SearchBox
+icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
+icon RefreshTree          = glyphiconNodeAction Refresh
+icon (ShareNode _)        = glyphiconNodeAction Share
+-- icon _             = "hand-o-right"
+
+
 
 text :: Action -> String
-text DeleteNode     = "Delete !"
-text (AddNode   _ _)  = "Add !"
-text (UpdateNode  _) = "Update !"
-text (RenameNode  _) = "Rename !"
-text (DoSearch  _) = "Launch search !"
+text  DeleteNode          = "Delete !"
+text  RefreshTree         = "Refresh Tree !"
+text (AddNode     _ _    )= "Add !"
+text (UpdateNode  _      )= "Update !"
+text (RenameNode  _      )= "Rename !"
+text (DoSearch    _      )= "Launch search !"
+text (ShareNode   _      )= "Share !"
 text (UploadFile  _ _ _ _)= "Upload File !"
-text RefreshTree = "Refresh Tree !"
-text (ShareNode _)  = "Share !"
 -----------------------------------------------------------------------
 
 -- TODO move code below elsewhere
