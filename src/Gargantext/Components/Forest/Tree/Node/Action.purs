@@ -1,17 +1,12 @@
 module Gargantext.Components.Forest.Tree.Node.Action where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype)
+import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
 import Gargantext.Prelude
-import Gargantext.Components.Lang (Lang)
-import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, get, put, post, delete)
+import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), glyphiconNodeAction)
 
@@ -33,13 +28,13 @@ data Action = AddNode     String GT.NodeType
 
 
 instance showShow :: Show Action where
-  show  DeleteNode      = "DeleteNode"
-  show  RefreshTree     = "RefreshTree"
-  show (ShareNode   _)  = "ShareNode"
-  show (UpdateNode  _)  = "UpdateNode"
-  show (RenameNode  _)  = "RenameNode"
-  show (DoSearch    _)  = "SearchQuery"
-  show (AddNode   _ _)  = "AddNode"
+  show  DeleteNode          = "DeleteNode"
+  show  RefreshTree         = "RefreshTree"
+  show (ShareNode   _      )= "ShareNode"
+  show (UpdateNode  _      )= "UpdateNode"
+  show (RenameNode  _      )= "RenameNode"
+  show (DoSearch    _      )= "SearchQuery"
+  show (AddNode     _ _    )= "AddNode"
   show (UploadFile  _ _ _ _)= "UploadFile"
 
 -----------------------------------------------------------------------

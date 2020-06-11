@@ -2,17 +2,13 @@ module Gargantext.Components.Forest.Tree.Node where
 
 import Prelude (class Eq, class Show, show, (&&), (<>), (==))
 import Data.Array (foldl)
-import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
-
 import Gargantext.Types
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 {-
--- | TODO
-filterWithRights (show action if user can only)
-
+-- | RIGHT Management
+if user has access to node then he can do all his related actions
 -}
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
@@ -38,8 +34,8 @@ instance eqNodeAction :: Eq NodeAction where
   eq Clone Clone       = true
   eq Delete Delete     = true
   eq Share Share       = true
-  eq (Link x) (Link y) = true && (x == y)
-  eq (Add  x) (Add  y) = true && (x == y)
+  eq (Link x) (Link y) = (x == y)
+  eq (Add  x) (Add  y) = (x == y)
   eq CopyFromCorpus CopyFromCorpus = true
   eq Config Config     = true
   eq _ _               = false
