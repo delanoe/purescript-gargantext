@@ -83,3 +83,8 @@ submitButton action dispatch =
                      ]
             ]
 
+-- | Sugar Text style
+fragmentPT :: String -> R.Element
+fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
+
+

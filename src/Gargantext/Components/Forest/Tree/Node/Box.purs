@@ -18,14 +18,16 @@ import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNode
 import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
+import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (Search, defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), uploadFileView, fileTypeView, uploadTermListView)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload, DroppedFile(..), fileTypeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, textInputBox)
+import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.NgramsTable.API as NTAPI
@@ -35,7 +37,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (+), (<>), (==))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (NodeType(..), ID, Name, Reload)
+import Gargantext.Types (ID, Name, Reload)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Popover as Popover
@@ -101,9 +103,9 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
           else H.div {} []
         , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
               }
-          [ nodeText { isSelected: mAppRouteId mCurrentRoute == Just id
-                     , name: name' props 
-                     } ]
+              [ nodeText { isSelected: mAppRouteId mCurrentRoute == Just id
+                         , name: name' props
+                         } ]
         , nodeActions { id
                       , nodeType
                       , refreshTree: const $ dispatch RefreshTree
@@ -117,15 +119,17 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType
-            onPopoverClose popoverRef _ = do
-              Popover.setOpen popoverRef false
+            onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
-    name' {name, nodeType} = if nodeType == GT.NodeUser then show session else name
+    name' {name, nodeType} = if nodeType == GT.NodeUser
+                                then show session
+                                else name
 
     folderIcon nodeType folderOpen'@(open /\ _) =
       H.a { className: "folder-icon"
-          , onClick: R2.effToggler folderOpen' }
-      [ H.i {className: GT.fldr nodeType open} [] ]
+          , onClick: R2.effToggler folderOpen'
+          }
+          [ H.i {className: GT.fldr nodeType open} [] ]
 
     popOverIcon =
       H.a { className: "settings fa fa-cog" } []
@@ -186,7 +190,7 @@ fldr nt open = if open
 -- START node text
 type NodeTextProps =
   ( isSelected :: Boolean
-  , name :: Name
+  , name       :: Name
   )
 
 nodeText :: Record NodeTextProps -> R.Element
@@ -237,6 +241,10 @@ nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
     graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
     triggerRefresh refreshTree = refreshTree
 
+
+
+
+-- | Sync Node (Graph)
 type NodeActionsGraphProps =
   ( id             :: ID
   , graphVersions  :: Record GraphAPI.GraphVersions
@@ -273,10 +281,13 @@ graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
     cpt { id, session, triggerRefresh } _ = do
       enabled <- R.useState' true
 
-      pure $ H.div { className: "update-button " <> if (fst enabled) then "enabled" else "disabled text-muted" } [
-        H.span { className: "fa fa-refresh"
-               , on: { click: onClick enabled } } []
-      ]
+      pure $ H.div { className: "update-button "
+                   <> if (fst enabled)
+                         then "enabled"
+                         else "disabled text-muted"
+                   } [ H.span { className: "fa fa-refresh"
+                     , on: { click: onClick enabled } } []
+                     ]
       where
         onClick (false /\ _) _ = pure unit
         onClick (true /\ setEnabled) _ = do
@@ -287,6 +298,7 @@ graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
             triggerRefresh unit
           pure unit
 
+-- | Sync Node (List)
 type NodeActionsNodeListProps =
   (
     listId :: GT.ListId
@@ -606,98 +618,4 @@ actionSearch search session dispatch nodePopup =
         -- TODO
         --snd p $ const Nothing
         pure unit
-
-
--- | Action : Delete
-actionDelete :: NodeType -> (Action -> Aff Unit) -> R.Hooks R.Element
-actionDelete NodeUser _ = do
-  pure $ R.fragment [
-    H.div {style: {margin: "10px"}} 
-          [H.text $ "Yes, we are RGPD compliant!"
-                 <> " But you can not delete User Node yet."
-                 <> " We are still on development."
-                 <> " Thanks for your comprehensin."
-          ]
-  ]
-
-actionDelete _ dispatch = do
-  pure $ R.fragment [
-    H.div {style: {margin: "10px"}} 
-          (map (\t -> H.p {} [H.text t]) 
-               [ "Are your sure you want to delete it ?"
-               , "If yes, click again below."
-               ]
-          )
-    , submitButton DeleteNode dispatch
-    ]
-
-
--- | Action : Upload
-actionUpload :: NodeType -> ID -> Session -> (Action -> Aff Unit) -> R.Hooks R.Element
-actionUpload NodeList id session dispatch =
-  pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
-
-actionUpload Corpus id session dispatch =
-  pure $ uploadFileView {dispatch, id, nodeType: Corpus, session}
-
-actionUpload _ _ _ _ =
-  pure $ fragmentPT $ "Soon, upload for this NodeType."
-
-
--- | Action : Download
-actionDownload :: NodeType -> ID -> Session -> R.Hooks R.Element
-actionDownload NodeList id session = downloadButton href label info
-    where
-      href  = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
-      label = "Download List"
-      info  = "Info about the List as JSON format"
-
-actionDownload GT.Graph id session = downloadButton href label info
-    where
-      href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
-      label = "Download Graph"
-      info  = "Info about the Graph as GEXF format"
-
-actionDownload GT.Corpus id session = downloadButton href label info
-    where
-      href  = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
-      label = "Download Corpus"
-      info  = "Download as JSON"
-
-actionDownload GT.Texts id session = downloadButton href label info
-    where
-      href  = url session $ Routes.NodeAPI GT.Texts (Just id) ""
-      label = "Download texts"
-      info  = "TODO: fix the backend route. What is the expected result ?"
-
-actionDownload _ _ _ = pure $ fragmentPT $ "Soon, you will be able to dowload your file here "
-
-
-type Href  = String
-type Label = String
-type Info  = String
-downloadButton :: Href -> Label -> Info -> R.Hooks R.Element
-downloadButton href label info = do
-  pure $ R.fragment [ H.div { className: "row"}
-                            [ H.div { className: "col-md-2"} []
-                            , H.div { className: "col-md-7 flex-center"}
-                                    [ H.p {} [H.text info] ]
-                            ]
-                    , H.span { className: "row" }
-                             [ H.div { className: "panel-footer"}
-                               [ H.div { className: "col-md-3"} []
-                                       , H.div { className: "col-md-3 flex-center"}
-                                               [ H.a { className: "btn btn-primary"
-                                                     , style : { width: "50%" }
-                                                     , href
-                                                     , target: "_blank" }
-                                                     [ H.text label ]
-                                               ]
-                                       ]
-                               ]
-                    ]
-
-
-fragmentPT :: String -> R.Element
-fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 

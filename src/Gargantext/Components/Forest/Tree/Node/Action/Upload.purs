@@ -8,6 +8,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props, FileType(..), UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT)
 import Gargantext.Components.Lang (readLang, Lang(..))
 import Gargantext.Prelude (class Show, Unit, discard, bind, const, id, map, pure, show, unit, void, ($))
 import Gargantext.Routes as GR
@@ -15,6 +16,7 @@ import Gargantext.Sessions (Session, postWwwUrlencoded)
 import Gargantext.Types as GT
 import Gargantext.Types (ID)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Types (NodeType(..), ID, Name, Reload)
 import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as E
 import Reactix as R
@@ -23,6 +25,20 @@ import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsText)
 
 -- UploadFile Action
+
+-- | Action : Upload
+actionUpload :: NodeType -> ID -> Session -> (Action -> Aff Unit) -> R.Hooks R.Element
+actionUpload NodeList id session dispatch =
+  pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
+
+actionUpload Corpus id session dispatch =
+  pure $ uploadFileView {dispatch, id, nodeType: Corpus, session}
+
+actionUpload _ _ _ _ =
+  pure $ fragmentPT $ "Soon, upload for this NodeType."
+
+
+
 -- file upload types
 data DroppedFile =
   DroppedFile { contents :: UploadFileContents
