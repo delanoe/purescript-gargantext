@@ -1,4 +1,4 @@
-module Gargantext.Components.Search.SearchField
+module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField
   ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex, isIsTex_Advanced) where
 
 import Data.Maybe (Maybe(..), maybe, fromMaybe, isJust)
@@ -20,7 +20,7 @@ import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, ($), (&&
 
 import Gargantext.Data.Array (catMaybes)
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Components.Search.Types (DataOriginApi(..), DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, readDatabase, readOrg, datafield2database)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataOriginApi(..), DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, readDatabase, readOrg, datafield2database)
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2

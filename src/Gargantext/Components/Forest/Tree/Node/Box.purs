@@ -3,59 +3,55 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Data.Array as A
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
-import Data.Nullable (Nullable, null)
-import Data.Tuple (fst, Tuple(..))
+import Data.Nullable (null)
+import Data.String as S
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple as DOM
-import DOM.Simple.Event
-import DOM.Simple.EventListener
-import DOM.Simple.Types
-import DOM.Simple.Window
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
-import Effect.Console
 import Effect.Uncurried (mkEffectFn1)
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import URI.Extra.QueryPairs as NQP
-import URI.Query as Query
-import Web.File.FileReader.Aff (readAsText)
-
-import Gargantext.Prelude
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), DroppedFile(..), FileType(..), ID, Name, Reload, UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
-import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameBox)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFileView, fileTypeView, uploadTermListView, copyFromCorpusView)
+import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
+import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
+import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (Search, defaultSearch)
+import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload, DroppedFile(..), fileTypeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
+import Gargantext.Components.Forest.Tree.Node.Box.Types
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
+import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (allLangs, Lang(EN))
 import Gargantext.Components.NgramsTable.API as NTAPI
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Components.Search.SearchBar (searchBar)
-import Gargantext.Components.Search.SearchField (Search, defaultSearch, isIsTex_Advanced)
-import Gargantext.Components.Search.Types (DataField(..))
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (+), (<>), (==))
 import Gargantext.Routes as Routes
-import Gargantext.Sessions (Session, sessionId, post)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Types (ID, Name, Reload)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Web.File.FileReader.Aff (readAsText)
 
-type Dispatch = Action -> Aff Unit
 
 type Tasks =
-  (
-    onTaskAdd :: GT.AsyncTaskWithType -> Effect Unit
+  ( onTaskAdd    :: GT.AsyncTaskWithType -> Effect Unit
   , onTaskFinish :: GT.AsyncTaskWithType -> Effect Unit
-  , tasks :: Array GT.AsyncTaskWithType
+  , tasks        :: Array GT.AsyncTaskWithType
   )
 
 tasksStruct :: Int -> R.State GAT.Storage -> R.State Reload -> Record Tasks
@@ -68,11 +64,6 @@ tasksStruct id (asyncTasks /\ setAsyncTasks) (_ /\ setReload) = { onTaskAdd, onT
     onTaskFinish t = do
       setReload (_ + 1)
       setAsyncTasks $ Map.alter (maybe Nothing $ (\ts -> Just $ GAT.removeTaskFromList ts t)) id
-
-type CommonProps =
-  ( dispatch :: Dispatch
-  , session :: Session
-  )
 
 -- Main Node
 type NodeMainSpanProps =
@@ -112,9 +103,9 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
           else H.div {} []
         , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
               }
-          [ nodeText { isSelected: mAppRouteId mCurrentRoute == Just id
-                     , name: name' props 
-                     } ]
+              [ nodeText { isSelected: mAppRouteId mCurrentRoute == Just id
+                         , name: name' props
+                         } ]
         , nodeActions { id
                       , nodeType
                       , refreshTree: const $ dispatch RefreshTree
@@ -128,15 +119,17 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType
-            onPopoverClose popoverRef _ = do
-              Popover.setOpen popoverRef false
+            onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
-    name' {name, nodeType} = if nodeType == GT.NodeUser then show session else name
+    name' {name, nodeType} = if nodeType == GT.NodeUser
+                                then show session
+                                else name
 
     folderIcon nodeType folderOpen'@(open /\ _) =
       H.a { className: "folder-icon"
-          , onClick: R2.effToggler folderOpen' }
-      [ H.i {className: GT.fldr nodeType open} [] ]
+          , onClick: R2.effToggler folderOpen'
+          }
+          [ H.i {className: GT.fldr nodeType open} [] ]
 
     popOverIcon =
       H.a { className: "settings fa fa-cog" } []
@@ -191,13 +184,13 @@ fldr nt open = if open
                    color FolderPublic = ""
                    color FolderShared = " text-warning"
                    color _            = " text-danger"
-                   -}
+-}
 
 
 -- START node text
 type NodeTextProps =
   ( isSelected :: Boolean
-  , name :: Name
+  , name       :: Name
   )
 
 nodeText :: Record NodeTextProps -> R.Element
@@ -219,10 +212,10 @@ nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
 -- START nodeActions
 
 type NodeActionsProps =
-  ( id :: ID
-  , nodeType :: GT.NodeType
+  ( id          :: ID
+  , nodeType    :: GT.NodeType
   , refreshTree :: Unit -> Aff Unit
-  , session :: Session
+  , session     :: Session
   )
 
 nodeActions :: Record NodeActionsProps -> R.Element
@@ -248,6 +241,10 @@ nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
     graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
     triggerRefresh refreshTree = refreshTree
 
+
+
+
+-- | Sync Node (Graph)
 type NodeActionsGraphProps =
   ( id             :: ID
   , graphVersions  :: Record GraphAPI.GraphVersions
@@ -284,10 +281,13 @@ graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
     cpt { id, session, triggerRefresh } _ = do
       enabled <- R.useState' true
 
-      pure $ H.div { className: "update-button " <> if (fst enabled) then "enabled" else "disabled text-muted" } [
-        H.span { className: "fa fa-refresh"
-               , on: { click: onClick enabled } } []
-      ]
+      pure $ H.div { className: "update-button "
+                   <> if (fst enabled)
+                         then "enabled"
+                         else "disabled text-muted"
+                   } [ H.span { className: "fa fa-refresh"
+                     , on: { click: onClick enabled } } []
+                     ]
       where
         onClick (false /\ _) _ = pure unit
         onClick (true /\ setEnabled) _ = do
@@ -298,6 +298,7 @@ graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
             triggerRefresh unit
           pure unit
 
+-- | Sync Node (List)
 type NodeActionsNodeListProps =
   (
     listId :: GT.ListId
@@ -372,20 +373,6 @@ mAppRouteId _ = Nothing
 
 
 -- | START Popup View
-type NodePopupProps =
-  ( id             :: ID
-  , name           :: Name
-  , nodeType       :: GT.NodeType
-  , onPopoverClose :: DOM.Element -> Effect Unit
-  | CommonProps
-  )
-
-type NodePopupS =
-  ( action   :: Maybe NodeAction
-  , id       :: ID
-  , name     :: Name
-  , nodeType :: GT.NodeType
-  )
 
 iconAStyle :: { color      :: String
               , paddingTop :: String
@@ -403,21 +390,28 @@ nodePopupCpt :: R.Component NodePopupProps
 nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
   where
     cpt p _ = do
-      renameBoxOpen <- R.useState' false
-      iframeRef <- R.useRef null
-      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' {action: Nothing, id: p.id, name: p.name, nodeType: p.nodeType}
+      isOpen    <- R.useState' false
+      iframeRef <- R.useRef    null
+      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' { action: Nothing
+                                                                , id: p.id
+                                                                , name: p.name
+                                                                , nodeType: p.nodeType
+                                                                }
       search        <- R.useState' $ defaultSearch { node_id = Just p.id }
       pure $ H.div tooltipProps $
         [ H.div { className: "popup-container" }
           [ H.div { className: "panel panel-default" }
             [ H.div {className: ""}
             [ H.div { className : "col-md-10 flex-between"}
-                [ H.h3 { className: GT.fldr p.nodeType true} [H.text $ show p.nodeType]
-               -- , H.div { className : "col-md-1" } []
+                [ H.h3 { className: GT.fldr p.nodeType true} []
+                -- TODO fix names
+                , H.text $ S.replace (S.Pattern "Node")   (S.Replacement " ") 
+                         $ S.replace (S.Pattern "Folder") (S.Replacement " ")
+                         $ show p.nodeType
                 , H.p {className: "text-primary center"} [H.text p.name]
                 ]
               ]
-            , panelHeading renameBoxOpen p
+            , panelHeading isOpen         p
             , panelBody    nodePopupState p
             , mPanelAction nodePopupState p search
             ]
@@ -436,19 +430,21 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                          --, style: { top: y - 65.0, left: x + 10.0 }
                        }
 
-        panelHeading renameBoxOpen@(open /\ _) {dispatch, id, name, nodeType} =
+        panelHeading isOpen@(open /\ _) {dispatch, id, name, nodeType} =
           H.div {className: "panel-heading"}
                 [ R2.row
-                        [ H.div {className: "col-md-8"}
-                                [ renameBox { dispatch, id, name, nodeType, renameBoxOpen } ]
+                        [ H.div {className: "col-md-8 flex-end"}
+                                [ textInputBox { boxAction: renameAction
+                                               , boxName: "Rename", dispatch, id, text:name, isOpen } ]
 
                         , H.div {className: "flex-end"}
-                                [ if edit then editIcon renameBoxOpen else H.div {} []
+                                [ if edit then editIcon isOpen else H.div {} []
                                 , H.div {className: "col-md-1"}
                                         [ H.a { "type"   : "button"
-                                              , className: glyphicon "remove-circle"
+                                              , className: glyphicon "window-close"
                                               , on: { click: \e -> p.onPopoverClose $ R2.unsafeEventTarget e }
-                                              , title    : "Close"} []
+                                              , title    : "Close"
+                                              } []
                                         ]
                                  ]
                         ]
@@ -457,12 +453,12 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
             SettingsBox {edit, doc, buttons} = settingsBox nodeType
 
             editIcon :: R.State Boolean -> R.Element
-            editIcon (false /\ setRenameBoxOpen) =
+            editIcon (false /\ setIsOpen) =
               H.div {className : "col-md-1"}
               [ H.a { className: glyphicon "pencil"
                     , id       : "rename1"
                     , title    : "Rename"
-                    , on: { click: \_ -> setRenameBoxOpen $ const true }
+                    , on: { click: \_ -> setIsOpen $ const true }
                     }
                 []
               ]
@@ -473,7 +469,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                   -> R.Element
         panelBody nodePopupState {dispatch: d, nodeType} =
           H.div {className: "panel-body flex-space-between"}
-                [ H.div {className: "flex-center"} [buttonClick {action: doc, state: nodePopupState}]
+                [ H.p { "style": {"margin":"10px"}} []
+                , H.div { className: "flex-center"} 
+                        [buttonClick {action: doc, state: nodePopupState}]
                 , H.div {className: "flex-center"}
                         $ map (\t -> buttonClick {action: t, state: nodePopupState}) buttons
                 ]
@@ -485,15 +483,15 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                      -> R.State Search
                      -> R.Element
         mPanelAction ({action: Nothing} /\ _) _ _ = H.div {} []
-        mPanelAction ({action: Just action} /\ _) p search =
+        mPanelAction ({action: Just action} /\ _) props search =
             panelAction { action
-                        , dispatch : p.dispatch
-                        , id       : p.id
-                        , name     : p.name
+                        , dispatch : props.dispatch
+                        , id       : props.id
+                        , name     : props.name
                         , nodePopup: Just NodePopup
-                        , nodeType : p.nodeType
+                        , nodeType : props.nodeType
                         , search
-                        , session  : p.session
+                        , session  : props.session
                         }
 
 type ActionState =
@@ -516,17 +514,17 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
   where
     cpt {action: todo, state: (node@{action} /\ setNodePopup)} _ = do
       pure $ H.div {className: "col-md-1"}
-        [ H.a { style: iconAStyle
-              , className: glyphiconActive (glyphiconNodeAction todo)
-                                            (action == (Just todo)   )
-              , id: show todo
-              , title: show todo
-              , onClick : mkEffectFn1
-                        $ \_ -> setNodePopup
-                        $ const (node { action = action' })
-            }
-          []
-        ]
+                   [ H.a { style: iconAStyle
+                         , className: glyphiconActive (glyphiconNodeAction todo)
+                                                       (action == (Just todo)   )
+                         , id: show todo
+                         , title: show todo
+                         , onClick : mkEffectFn1
+                                   $ \_ -> setNodePopup
+                                   $ const (node { action = action' })
+                       }
+                     []
+                   ]
       where
         action' = if action == (Just todo)
                       then Nothing
@@ -543,7 +541,7 @@ type NodeProps =
 type PanelActionProps =
   ( id       :: ID
   , action   :: NodeAction
-  , dispatch :: Dispatch
+  , dispatch :: Action -> Aff Unit
   , name     :: Name
   , nodePopup :: Maybe NodePopup
   , nodeType :: GT.NodeType
@@ -565,6 +563,12 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
       pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
 
+    cpt {action: Refresh , dispatch, id, nodeType, session} _ = do
+      pure $ fragmentPT $ "Update " <> show nodeType
+
+    cpt {action: Config , dispatch, id, nodeType, session} _ = do
+      pure $ fragmentPT $ "Config " <> show nodeType
+
     cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session}
 
@@ -572,6 +576,15 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
                                  <> "to link the corpus with your Annuaire"
                                  <> " (and reciprocally)."
 
+    cpt {action : Share, dispatch, id, name } _ = do
+      isOpen <- R.useState' true
+      pure $ H.div {} [ textInputBox { boxAction: Share.shareAction
+                                   , boxName: "Share"
+                                   , dispatch
+                                   , id
+                                   , text: "username"
+                                   , isOpen
+                                   } ]
     cpt props@{action: SearchBox, search, session, dispatch, nodePopup} _ =
       actionSearch search session dispatch nodePopup
 
@@ -599,193 +612,10 @@ actionSearch search session dispatch nodePopup =
                -> Maybe NodePopup
                -> GT.AsyncTaskWithType
                -> Effect Unit
-      searchOn dispatch p task = do
-        _ <- launchAff $ dispatch (SearchQuery task)
+      searchOn dispatch' p task = do
+        _ <- launchAff $ dispatch' (DoSearch task)
         -- close popup
         -- TODO
         --snd p $ const Nothing
         pure unit
-
-
--- | Action : Delete
-actionDelete :: NodeType -> (Action -> Aff Unit) -> R.Hooks R.Element
-actionDelete NodeUser _ = do
-  pure $ R.fragment [
-    H.div {style: {margin: "10px"}} 
-          [H.text $ "Yes, we are RGPD compliant!"
-                 <> " But you can not delete User Node yet."
-                 <> " We are still on development."
-                 <> " Thanks for your comprehensin."
-          ]
-  ]
-
-actionDelete _ dispatch = do
-  pure $ R.fragment [
-    H.div {style: {margin: "10px"}} 
-          (map (\t -> H.p {} [H.text t]) 
-               [ "Are your sure you want to delete it ?"
-               , "If yes, click again below."
-               ]
-          )
-    , reallyDelete dispatch
-    ]
-  where
-    reallyDelete :: Dispatch -> R.Element
-    reallyDelete d = H.div {className: "panel-footer"}
-                [ H.a { type: "button"
-                      , className: "btn glyphicon glyphicon-trash"
-                      , id: "delete"
-                      , title: "Delete"
-                      , on: {click: \_ -> launchAff $ d $ DeleteNode}
-                      }
-                  [H.text " Yes, delete!"]
-                ]
-
-
-
--- | Action : Upload
-actionUpload :: NodeType -> ID -> Session -> Dispatch -> R.Hooks R.Element
-actionUpload NodeList id session dispatch =
-  pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
-
-actionUpload Corpus id session dispatch =
-  pure $ uploadFileView {dispatch, id, nodeType: Corpus, session}
-
-actionUpload _ _ _ _ =
-  pure $ fragmentPT $ "Soon, upload for this NodeType."
-
-
--- | Action : Download
-actionDownload :: NodeType -> ID -> Session -> R.Hooks R.Element
-actionDownload NodeList id session = downloadButton href label info
-    where
-      href  = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
-      label = "Download List"
-      info  = "Info about the List as JSON format"
-
-actionDownload GT.Graph id session = downloadButton href label info
-    where
-      href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
-      label = "Download Graph"
-      info  = "Info about the Graph as GEXF format"
-
-actionDownload GT.Corpus id session = downloadButton href label info
-    where
-      href  = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
-      label = "Download Corpus"
-      info  = "TODO: fix the backend route"
-
-actionDownload GT.Texts id session = downloadButton href label info
-    where
-      href  = url session $ Routes.NodeAPI GT.Texts (Just id) ""
-      label = "Download texts"
-      info  = "TODO: fix the backend route. What is the expected result ?"
-
-actionDownload _ _ _ = pure $ fragmentPT $ "Soon, you will be able to dowload your file here "
-
-
-type Href  = String
-type Label = String
-type Info  = String
-downloadButton :: Href -> Label -> Info -> R.Hooks R.Element
-downloadButton href label info = do
-  pure $ R.fragment [ H.div { className: "row"}
-                            [ H.div { className: "col-md-2"} []
-                            , H.div { className: "col-md-7 flex-center"}
-                                    [ H.p {} [H.text info] ]
-                            ]
-                    , H.span { className: "row" }
-                             [ H.div { className: "panel-footer"}
-                               [ H.div { className: "col-md-3"} []
-                                       , H.div { className: "col-md-3 flex-center"}
-                                               [ H.a { className: "btn btn-default"
-                                                     , href
-                                                     , target: "_blank" }
-                                                     [ H.text label ]
-                                               ]
-                                       ]
-                               ]
-                    ]
-
-
--- | Action: Show Documentation
-actionDoc :: NodeType -> R.Hooks R.Element
-actionDoc nodeType =
-  pure $ R.fragment [ H.div { style: {margin: "10px"} }
-                            $ [ infoTitle nodeType ]
-                            <> (map (\info -> H.p {} [H.text info]) $ docOf nodeType)
-                    ]
-  where
-    infoTitle :: NodeType -> R.Element
-    infoTitle nt = H.div { style: {margin: "10px"}}
-                         [ H.h3 {} [H.text "Documentation about " ]
-                         , H.h3 {className: GT.fldr nt true} [ H.text $ show nt ]
-                         ]
-
--- | TODO add documentation of all NodeType
-docOf :: NodeType -> Array String
-docOf GT.NodeUser = [ "This account is personal"
-                    , "See the instances terms of uses."
-                    ]
-docOf GT.FolderPrivate = ["This folder and its children are private only."]
-docOf GT.FolderPublic  = ["Soon, you will be able to build public folders to share your work with the world!"]
-docOf GT.FolderShared  = ["Soon, you will be able to build teams folders to share your work"]
-docOf nodeType         = ["More information on " <> show nodeType]
-
-
-fragmentPT :: String -> R.Element
-fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
-
---------------------
--- | Iframes
-searchIframes :: Record NodePopupProps
-              -> R.State Search
-              -> R.Ref (Nullable DOM.Element)
-              -> R.Element
-searchIframes {nodeType} search@(search' /\ _) iframeRef =
-  if isIsTex_Advanced search'.datafield then
-    H.div { className: "istex-search panel panel-default" }
-          [ H.h3 { className: GT.fldr nodeType true} []
-          , iframeWith "https://istex.gargantext.org" search iframeRef
-          ]
-  else
-    if Just Web == search'.datafield then
-      H.div { className: "istex-search panel panel-default" }
-            [ H.h3 { className: GT.fldr nodeType true} []
-            , iframeWith "https://searx.gargantext.org" search iframeRef
-            ]
-    else
-      H.div {} []
-
-iframeWith :: String
-           -> R.State Search
-           -> R.Ref (Nullable DOM.Element)
-           -> R.Element
-iframeWith url (search /\ setSearch) iframeRef =
-  H.iframe { src: isTexTermUrl search.term
-            ,width: "100%"
-            ,height: "100%"
-            ,ref: iframeRef
-            ,on: {
-              load: \_ -> do
-                 addEventListener window "message" (changeSearchOnMessage url)
-                 R2.postMessage iframeRef search.term
-                 }
-           } []
-  where
-    changeSearchOnMessage :: String -> Callback MessageEvent
-    changeSearchOnMessage url =
-      callback $ \m -> if R2.getMessageOrigin m == url
-                         then do
-                           let {url, term} = R2.getMessageData m
-                           setSearch $ _ {url = url, term = term}
-                         else
-                           pure unit
-    isTexTermUrl term = url <> query
-      where
-        query = Query.print $ NQP.print identity identity qp
-
-        qp = NQP.QueryPairs [
-          Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
-          ]
 

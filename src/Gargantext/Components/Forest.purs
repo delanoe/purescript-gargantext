@@ -3,21 +3,19 @@ module Gargantext.Components.Forest where
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree (treeView)
-import Gargantext.Components.Forest.Tree.Node.Action (Reload)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
+import Gargantext.Types (Reload)
 import Gargantext.Utils.Reactix as R2
 
 type Props =

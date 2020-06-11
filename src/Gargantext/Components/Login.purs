@@ -63,7 +63,7 @@ modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
             [ H.h2 {className: "text-primary center m-a-2"}
         [
           -- H.i {className: "material-icons md-36"} [ H.text "control_point" ]
-          H.span {className: "icon-text"} [ H.text "Gargantext" ] ] ]
+          H.span {className: "icon-text"} [ H.text "GarganText" ] ] ]
 
       closing = H.button { "type": "button", className: "close"
                            , "data": { dismiss: "modal" } }
@@ -208,8 +208,10 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
 
 csrfTokenInput :: {} -> R.Element
 csrfTokenInput _ =
-  H.input { type: "hidden", name: "csrfmiddlewaretoken"
-          , value: csrfMiddlewareToken }-- TODO hard-coded CSRF token
+  H.input { type: "hidden"
+          , name: "csrfmiddlewaretoken"
+          , value: csrfMiddlewareToken
+          } -- TODO hard-coded CSRF token
 
 termsCheckbox :: R.State Boolean -> R.Element
 termsCheckbox setCheckBox =

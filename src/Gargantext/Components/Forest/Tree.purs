@@ -1,31 +1,33 @@
 module Gargantext.Components.Forest.Tree where
 
+import DOM.Simple.Console (log2)
 import Data.Array as A
-import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe)
 import Data.Set as Set
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
-import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
+import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (loadNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
+import Gargantext.Components.Forest.Tree.Node.Action.Share (ShareValue(..), share)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
+import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan, Tasks, tasksStruct)
+import Gargantext.Components.Forest.Tree.Node.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Ends (Frontends)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
+import Gargantext.Routes (AppRoute)
+import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
+import Gargantext.Types (ID, Reload)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RecordE
-
-import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FTree, ID, LNode(..), NTree(..), Reload, RenameValue(..), Tree, deleteNode, loadNode, renameNode)
-import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
-import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan, Tasks, tasksStruct)
-import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, map, pure, void, ($), (+), (/=), (<>), identity)
-import Gargantext.Routes (AppRoute)
-import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
-import Gargantext.Types as GT
 
 ------------------------------------------------------------------------
 
@@ -186,9 +188,9 @@ performAction p@{ openNodes: (_ /\ setOpenNodes)
 performAction { reload: (_ /\ setReload)
               , session
               , tasks: { onTaskAdd }
-              , tree: (NTree (LNode {id}) _) } (SearchQuery task) = do
+              , tree: (NTree (LNode {id}) _) } (DoSearch task) = do
   liftEffect $ onTaskAdd task
-  liftEffect $ log2 "[performAction] SearchQuery task:" task
+  liftEffect $ log2 "[performAction] DoSearch task:" task
 
 performAction { reload: (_ /\ setReload)
               , session
@@ -197,17 +199,21 @@ performAction { reload: (_ /\ setReload)
   liftEffect $ onTaskAdd task
   liftEffect $ log2 "[performAction] UpdateNode task:" task
 
+performAction p@{ reload: (_ /\ setReload)
+                , session
+                , tree: (NTree (LNode {id}) _) } (RenameNode name)  = do
+  void $ rename session id $ RenameValue {text:name}
+  performAction p RefreshTree
 
 performAction p@{ reload: (_ /\ setReload)
                 , session
-                , tree: (NTree (LNode {id}) _) } (Submit name)  = do
-  void $ renameNode session id $ RenameValue {name}
-  performAction p RefreshTree
+                , tree: (NTree (LNode {id}) _) } (ShareNode username)  = do
+  void $ share session id $ ShareValue {text:username}
 
 performAction p@{ openNodes: (_ /\ setOpenNodes)
                 , reload:    (_ /\ setReload)
                 , session
-                , tree: (NTree (LNode {id}) _) } (CreateSubmit name nodeType) = do
+                , tree: (NTree (LNode {id}) _) } (AddNode name nodeType) = do
   task <- addNode session id $ AddNodeValue {name, nodeType}
   liftEffect do
     setOpenNodes (Set.insert (mkNodeId session id))

@@ -1,4 +1,4 @@
-module Gargantext.Components.Search.Types where
+module Gargantext.Components.Forest.Tree.Node.Action.Search.Types where
 
 import Data.Array (concat)
 import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
@@ -12,14 +12,13 @@ import Effect.Aff (Aff)
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 
-import Gargantext.Prelude (class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>))
+import Gargantext.Prelude (id, class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>))
 
 import Gargantext.Components.Lang
 import Gargantext.Ends (class ToUrl, backendUrl)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), post)
 import Gargantext.Types as GT
-import Gargantext.Utils (id)
 
 ------------------------------------------------------------------------
 class Doc a where

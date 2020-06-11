@@ -1,30 +1,29 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
+import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array (length, head)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Maybe (Maybe(..), fromMaybe)
--- import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff)
+import Effect.Aff (Aff)
 import Effect.Uncurried (mkEffectFn1)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), ID, Name)
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Tools (submitButton)
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session, post)
+import Gargantext.Types  as GT
 import Gargantext.Types (NodeType(..), readNodeType)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Sessions (Session, post)
-import Gargantext.Routes as GR
-import Gargantext.Types  as GT
-import Prelude (Unit, bind, const, discard, map, pure, show, ($), (<>), (>), (<<<))
+import Prelude (Unit, bind, const, map, pure, show, ($), (<>), (>), (<<<))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
--- START Create Node
-
-addNode :: Session -> ID -> AddNodeValue -> Aff (Array ID)
+----------------------------------------------------------------------
+addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Array GT.ID)
 addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 
 addNodeAsync :: Session
-                -> ID
+                -> GT.ID
                 -> AddNodeValue
                 -> Aff GT.AsyncTaskWithType
 addNodeAsync session parentId q = do
@@ -34,8 +33,9 @@ addNodeAsync session parentId q = do
     p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
 
 ----------------------------------------------------------------------
+-- TODO AddNodeParams
 newtype AddNodeValue = AddNodeValue
-  { name     :: Name
+  { name     :: GT.Name
   , nodeType :: GT.NodeType
   }
 
@@ -46,15 +46,13 @@ instance encodeJsonAddNodeValue :: EncodeJson AddNodeValue where
     ~> jsonEmptyObject
 
 ----------------------------------------------------------------------
-
-type Dispatch = Action -> Aff Unit
 data NodePopup = CreatePopup | NodePopup
 
 type CreateNodeProps =
-  ( id       :: ID
-  , dispatch :: Action -> Aff Unit
-  , name     :: Name
-  , nodeType :: NodeType
+  ( id        :: GT.ID
+  , dispatch  :: Action -> Aff Unit
+  , name      :: GT.Name
+  , nodeType  :: NodeType
   , nodeTypes :: Array NodeType
   )
 
@@ -64,11 +62,11 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
   where
     el = R.hooksComponent "AddNodeView" cpt
     cpt {id, name} _ = do
-      nodeName <- R.useState' "Name"
-      nodeType' <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
+      nodeName@(name' /\ _) <- R.useState' "Name"
+      nodeType'@(nt /\ _)  <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
       pure $ H.div {}
           [ panelBody   readNodeType nodeName nodeType'
-          , panelFooter nodeName nodeType'
+          , submitButton (AddNode name' nt) dispatch -- panelFooter nodeName nodeType'
           ]
       where
         panelBody :: (String -> NodeType)
@@ -108,7 +106,7 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                                          -- , showConfig nt
                                     ]
                                 else
-                                H.button { className : "btn btn-primary"
+                                H.button { className : "btn btn-primary center"
                                            , type : "button"
                                            , onClick : mkEffectFn1 $ \_ -> setNodeType ( const
                                                                                        $ fromMaybe nt 
@@ -117,19 +115,6 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                                            } []
                                ]
 
-
-
-        panelFooter :: R.State String  -> R.State NodeType -> R.Element
-        panelFooter (name' /\ _) (nt /\ _) =
-          H.div {className: "panel-footer"}
-          [ H.button {className: "btn btn-primary text-center"
-                     , type: "button"
-                     , onClick: mkEffectFn1 $ \_ -> do
-                         -- TODO
-                         --setPopupOpen $ const Nothing
-                         launchAff    $ dispatch $ CreateSubmit name' nt
-                     } [H.text "Add"]
-          ]
 
 -- END Create Node
 

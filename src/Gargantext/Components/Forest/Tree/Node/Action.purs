@@ -1,31 +1,68 @@
 module Gargantext.Components.Forest.Tree.Node.Action where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype)
+import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
-import Prelude hiding (div)
-
-import Gargantext.Components.Lang (Lang)
-import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, get, put, post, delete)
-import Gargantext.Routes as GR
+import Gargantext.Prelude
+import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
+import Gargantext.Components.Forest.Tree.Node (NodeAction(..), glyphiconNodeAction)
 
-data Action = CreateSubmit String GT.NodeType
+type Props =
+  ( dispatch :: Action -> Aff Unit
+  , id       :: Int
+  , nodeType :: GT.NodeType
+  , session  :: Session
+  )
+
+data Action = AddNode     String GT.NodeType
             | DeleteNode
             | UpdateNode  GT.AsyncTaskWithType
-            | SearchQuery GT.AsyncTaskWithType
-            | Submit      String
+            | RenameNode  String
+            | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | RefreshTree
+            | ShareNode   String
 
------------------------------------------------------
--- UploadFile Action
--- file upload types
+
+instance showShow :: Show Action where
+  show  DeleteNode          = "DeleteNode"
+  show  RefreshTree         = "RefreshTree"
+  show (ShareNode   _      )= "ShareNode"
+  show (UpdateNode  _      )= "UpdateNode"
+  show (RenameNode  _      )= "RenameNode"
+  show (DoSearch    _      )= "SearchQuery"
+  show (AddNode     _ _    )= "AddNode"
+  show (UploadFile  _ _ _ _)= "UploadFile"
+
+-----------------------------------------------------------------------
+icon :: Action -> String
+icon (AddNode _ _)        = glyphiconNodeAction (Add [])
+icon DeleteNode           = glyphiconNodeAction Delete
+icon (UpdateNode _)       = glyphiconNodeAction Refresh
+icon (RenameNode _)       = glyphiconNodeAction Config
+icon (DoSearch   _)       = glyphiconNodeAction SearchBox
+icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
+icon RefreshTree          = glyphiconNodeAction Refresh
+icon (ShareNode _)        = glyphiconNodeAction Share
+-- icon _             = "hand-o-right"
+
+
+
+text :: Action -> String
+text  DeleteNode          = "Delete !"
+text  RefreshTree         = "Refresh Tree !"
+text (AddNode     _ _    )= "Add !"
+text (UpdateNode  _      )= "Update !"
+text (RenameNode  _      )= "Rename !"
+text (DoSearch    _      )= "Launch search !"
+text (ShareNode   _      )= "Share !"
+text (UploadFile  _ _ _ _)= "Upload File !"
+-----------------------------------------------------------------------
+
+-- TODO move code below elsewhere
 data FileType = CSV | CSV_HAL | WOS | PresseRIS
 
 derive instance genericFileType :: Generic FileType _
@@ -36,111 +73,4 @@ instance eqFileType :: Eq FileType where
 instance showFileType :: Show FileType where
     show = genericShow
 
-readFileType :: String -> Maybe FileType
-readFileType "CSV"       = Just CSV
-readFileType "CSV_HAL"   = Just CSV_HAL
-readFileType "PresseRIS" = Just PresseRIS
-readFileType "WOS"       = Just WOS
-readFileType _           = Nothing
-
-data DroppedFile =
-  DroppedFile { contents :: UploadFileContents
-              , fileType :: Maybe FileType
-              , lang     :: Maybe Lang
-              }
-
-type FileHash = String
-
-type Name = String
-type ID   = Int
-type Reload = Int
-
 newtype UploadFileContents = UploadFileContents String
-type UploadFile = 
-  { contents :: UploadFileContents
-  , name     :: String
-  }
-
-
-
-renameNode :: Session -> ID -> RenameValue -> Aff (Array ID)
-renameNode session renameNodeId = put session $ NodeAPI GT.Node (Just renameNodeId) "rename"
-
-deleteNode :: Session -> ID -> Aff ID
-deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
-
-loadNode :: Session -> ID -> Aff FTree
-loadNode session nodeId = get session $ NodeAPI GT.Tree (Just nodeId) ""
-
-{-
-updateNode :: Session -> ID -> Aff ID
-updateNode session nodeId = post session 
--}
-
------------------------------------------------------------------------
-newtype RenameValue = RenameValue
-  { name :: Name }
-
-instance encodeJsonRenameValue :: EncodeJson RenameValue where
-  encodeJson (RenameValue {name})
-     = "r_name" := name
-    ~> jsonEmptyObject
-
------------------------------------------------------------------------
------------------------------------------------------------------------
-data UpdateNodeParams = UpdateNodeParamsList { method :: Int }
-                      | UpdateNodeParamsGraph { method :: String }
-                      | UpdateNodeParamsTexts { method :: Int }
-
-instance encodeJsonUpdateNodeParams :: EncodeJson UpdateNodeParams
-  where
-    encodeJson (UpdateNodeParamsList { method })
-      = "method" := method
-      ~> jsonEmptyObject
-    encodeJson (UpdateNodeParamsGraph { method })
-      = "method" := method
-      ~> jsonEmptyObject
-    encodeJson (UpdateNodeParamsTexts { method })
-      = "method" := method
-      ~> jsonEmptyObject
-
-
------------------------------------------------------------------------
-
-
-data NTree a = NTree a (Array (NTree a))
-type FTree = NTree LNode
-type Tree = { tree       :: FTree
-            , asyncTasks :: Array GT.AsyncTaskWithType
-            }
-
-instance ntreeFunctor :: Functor NTree where
-  map f (NTree x ary) = NTree (f x) (map (map f) ary)
-
-newtype LNode = LNode { id :: ID
-                      , name :: Name
-                      , nodeType :: GT.NodeType
-                      }
-
-derive instance newtypeLNode :: Newtype LNode _
-
-instance decodeJsonLNode :: DecodeJson LNode where
-  decodeJson json = do
-    obj  <- decodeJson json
-    id_  <- obj .: "id"
-    name <- obj .: "name"
-    nodeType <- obj .: "type"
-    pure $ LNode { id : id_
-                 , name
-                 , nodeType
-                 }
-
-instance decodeJsonFTree :: DecodeJson (NTree LNode) where
-  decodeJson json = do
-    obj    <- decodeJson json
-    node   <- obj .: "node"
-    nodes  <- obj .: "children"
-    node'  <- decodeJson node
-    nodes' <- decodeJson nodes
-    pure $ NTree node' nodes'
-
