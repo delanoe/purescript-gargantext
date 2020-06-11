@@ -19,9 +19,9 @@ import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusVie
 import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
+import Gargantext.Components.Forest.Tree.Node.Action.Search (actionSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (Search, defaultSearch)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload, DroppedFile(..), fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
@@ -29,7 +29,7 @@ import Gargantext.Components.Forest.Tree.Node.Box.Types
 import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Components.Lang (allLangs, Lang(EN))
+import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.NgramsTable.API as NTAPI
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Ends (Frontends, url)
@@ -54,26 +54,33 @@ type Tasks =
   , tasks        :: Array GT.AsyncTaskWithType
   )
 
-tasksStruct :: Int -> R.State GAT.Storage -> R.State Reload -> Record Tasks
-tasksStruct id (asyncTasks /\ setAsyncTasks) (_ /\ setReload) = { onTaskAdd, onTaskFinish, tasks }
-  where
-    tasks = maybe [] identity $ Map.lookup id asyncTasks
-    onTaskAdd t = do
-      setReload (_ + 1)
-      setAsyncTasks $ Map.alter (maybe (Just [t]) $ (\ts -> Just $ A.cons t ts)) id
-    onTaskFinish t = do
-      setReload (_ + 1)
-      setAsyncTasks $ Map.alter (maybe Nothing $ (\ts -> Just $ GAT.removeTaskFromList ts t)) id
+tasksStruct :: Int
+            -> R.State GAT.Storage
+            -> R.State Reload
+            -> Record Tasks
+tasksStruct id (asyncTasks /\ setAsyncTasks) (_ /\ setReload) =
+  { onTaskAdd, onTaskFinish, tasks }
+    where
+      tasks = maybe [] identity $ Map.lookup id asyncTasks
+
+      onTaskAdd t = do
+        setReload (_ + 1)
+        setAsyncTasks $ Map.alter (maybe (Just [t])
+                      $ (\ts -> Just $ A.cons t ts)) id
+
+      onTaskFinish t = do
+        setReload (_ + 1)
+        setAsyncTasks $ Map.alter (maybe Nothing $ (\ts -> Just $ GAT.removeTaskFromList ts t)) id
 
 -- Main Node
 type NodeMainSpanProps =
-  ( id                :: ID
-  , folderOpen        :: R.State Boolean
-  , frontends         :: Frontends
-  , mCurrentRoute     :: Maybe Routes.AppRoute
-  , name              :: Name
-  , nodeType          :: GT.NodeType
-  , tasks             :: Record Tasks
+  ( id            :: ID
+  , folderOpen    :: R.State Boolean
+  , frontends     :: Frontends
+  , mCurrentRoute :: Maybe Routes.AppRoute
+  , name          :: Name
+  , nodeType      :: GT.NodeType
+  , tasks         :: Record Tasks
   | CommonProps
   )
 
@@ -413,7 +420,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
               ]
             , panelHeading isOpen         p
             , panelBody    nodePopupState p
-            , mPanelAction nodePopupState p search
+            , mPanelAction nodePopupState p
             ]
           , if nodePopup.action == Just SearchBox then
               H.div {} [ searchIframes p search iframeRef ]
@@ -435,14 +442,22 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                 [ R2.row
                         [ H.div {className: "col-md-8 flex-end"}
                                 [ textInputBox { boxAction: renameAction
-                                               , boxName: "Rename", dispatch, id, text:name, isOpen } ]
+                                               , boxName: "Rename"
+                                               , dispatch
+                                               , id
+                                               , text:name
+                                               , isOpen
+                                               }
+                                ]
 
                         , H.div {className: "flex-end"}
                                 [ if edit then editIcon isOpen else H.div {} []
                                 , H.div {className: "col-md-1"}
                                         [ H.a { "type"   : "button"
                                               , className: glyphicon "window-close"
-                                              , on: { click: \e -> p.onPopoverClose $ R2.unsafeEventTarget e }
+                                              , on: { click: \e -> p.onPopoverClose
+                                                                 $ R2.unsafeEventTarget e
+                                                    }
                                               , title    : "Close"
                                               } []
                                         ]
@@ -480,17 +495,15 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
 
         mPanelAction :: R.State (Record NodePopupS)
                      -> Record NodePopupProps
-                     -> R.State Search
                      -> R.Element
-        mPanelAction ({action: Nothing} /\ _) _ _ = H.div {} []
-        mPanelAction ({action: Just action} /\ _) props search =
+        mPanelAction ({action: Nothing} /\ _) _ = H.div {} []
+        mPanelAction ({action: Just action} /\ _) props =
             panelAction { action
                         , dispatch : props.dispatch
                         , id       : props.id
                         , name     : props.name
                         , nodePopup: Just NodePopup
                         , nodeType : props.nodeType
-                        , search
                         , session  : props.session
                         }
 
@@ -546,7 +559,6 @@ type PanelActionProps =
   , nodePopup :: Maybe NodePopup
   , nodeType :: GT.NodeType
   , session  :: Session
-  , search   :: R.State Search
   )
 
 panelAction :: Record PanelActionProps -> R.Element
@@ -585,37 +597,10 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
                                    , text: "username"
                                    , isOpen
                                    } ]
-    cpt props@{action: SearchBox, search, session, dispatch, nodePopup} _ =
-      actionSearch search session dispatch nodePopup
+    cpt props@{action: SearchBox, id, session, dispatch, nodePopup} _ =
+      actionSearch session (Just id) dispatch nodePopup
 
     cpt _ _ = do
       pure $ H.div {} []
 
--- | Action : Search
-actionSearch :: R.State Search
-            -> Session
-            -> (Action -> Aff Unit)
-            -> Maybe NodePopup
-            -> R.Hooks R.Element
-actionSearch search session dispatch nodePopup =
-  pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
-                          [ H.text $ "Search and create a private "
-                                  <> "corpus with the search query as corpus name." ]
-                    , searchBar { langs: allLangs
-                                , onSearch: searchOn dispatch nodePopup
-                                , search
-                                , session
-                                }
-                    ]
-    where
-      searchOn :: (Action -> Aff Unit)
-               -> Maybe NodePopup
-               -> GT.AsyncTaskWithType
-               -> Effect Unit
-      searchOn dispatch' p task = do
-        _ <- launchAff $ dispatch' (DoSearch task)
-        -- close popup
-        -- TODO
-        --snd p $ const Nothing
-        pure unit
 
