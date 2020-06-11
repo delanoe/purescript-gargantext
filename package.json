@@ -1,20 +1,24 @@
 {
     "name": "Gargantext",
-    "version": "0.0.1.5",
+    "version": "4.0.0-dev",
     "scripts": {
         "rebase-set": "spago package-set-upgrade && spago psc-package-insdhall",
         "rebuild-set": "spago psc-package-insdhall",
         "install-ps": "psc-package install",
         "compile": "pulp --psc-package build",
         "build": "pulp --psc-package browserify --no-check-main -t dist/bundle.js",
-        "sass": "sass dist/styles/",
+        "css": "sass dist/styles/",
         "docs": "pulp docs -- --format html",
         "repl": "pulp --psc-package repl",
         "clean": "rm -Rf output node_modules",
         "clean-js": "rm -Rf node_modules",
         "clean-ps": "rm -Rf output",
         "test": "pulp test",
-        "server": "serve dist"
+        "server": "serve dist",
+        "hot": "concurrently --kill-others \"npm:hot-*\"",
+        "hot-purescript": "pulp --psc-package --watch build --no-check-main -t ./output/hot.js",
+        "hot-server": "parcel index.html -o hot.js",
+        "hot-css": "sass --watch dist/styles"
     },
     "dependencies": {
         "create-react-class": "^15.6.3",
@@ -28,6 +32,10 @@
         "sigma": "git://github.com/poorscript/sigma.js#garg"
     },
     "devDependencies": {
+        "@babel/core": "^7.10.2",
+        "@babel/preset-react": "^7.10.1",
+        "concurrently": "^5.2.0",
+        "parcel-bundler": "^1.12.4",
         "psc-package": "^4.0.1",
         "pulp": "^14.0.0",
         "purescript": "^0.13.8",

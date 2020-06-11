@@ -8,6 +8,7 @@
 /.purs*
 /.psa*
 /.spago
+/.cache
 bundle.js
 # tempfiles
 .#*

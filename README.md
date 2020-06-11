@@ -124,7 +124,7 @@ yarn clean # clean both purescript and javascript
 If you edit the SASS, you'll need to rebuild the CSS:
 
 ```shell
-yarn sass
+yarn css
 ```
 
 <!-- A `purs ide` connection will be available on port 9002 while the -->
