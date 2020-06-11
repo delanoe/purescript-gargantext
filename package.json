@@ -14,7 +14,7 @@
         "clean-js": "rm -Rf node_modules",
         "clean-ps": "rm -Rf output",
         "test": "pulp test",
-        "start": "serve dist"
+        "server": "serve dist"
     },
     "dependencies": {
         "create-react-class": "^15.6.3",

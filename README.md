@@ -14,15 +14,14 @@ granted access to a [backend](https://gitlab.iscpif.fr/gargantext/haskell-gargan
 This software is free software, developed by the CNRS Complex Systems
 Institute of Paris Île-de-France (ISC-PIF) and its partners.
 
-## Development
+## Dependencies
 
-### System Dependencies
+The build requires the following system dependencies preinstalled:
 
 * NodeJS (11+)
 * Yarn (Recent)
-* A webserver (anything that can serve a static directory will do)
 
-#### NodeJS Installation
+### NodeJS
 
 On debian testing, debian unstable or ubuntu:
 
@@ -37,32 +36,28 @@ curl -sL https://deb.nodesource.com/setup_11.x | sudo bash -
 sudo apt update && sudo apt install nodejs
 ```
 
-(For Ubuntu)
-```shell
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt update && sudo apt install yarn
-```
+<!-- TODO: wtf is all this sudo? -->
+<!-- To upgrade to latest version (and not current stable) version, you can -->
+<!-- use the `n` module from npm to upgrade node: -->
 
-To upgrade to latest version (and not current stable) version, you can use
-(Use n module from npm in order to upgrade node)
+<!-- ```shell -->
+<!-- sudo npm cache clean -f -->
+<!-- sudo npm install -g n -->
+<!-- sudo n stable -->
+<!-- sudo n latest -->
+<!-- ``` -->
 
-```shell
-sudo npm cache clean -f
-sudo npm install -g n
-sudo n stable
-sudo n latest
-```
+On Mac OS X with homebrew:
 
-
-### OSX
 ```shell
 brew install node
 ```
 
-#### Yarn installation
+For other platforms, please refer to [the nodejs website](https://nodejs.org/en/download/).
 
-On ubuntu:
+### Yarn (javascript package manager)
+
+On debian or ubuntu:
 
 ```shell
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
@@ -70,113 +65,77 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 sudo apt update && sudo apt install yarn
 ```
 
-On Mac OS (with Homebrew):
+On Mac OS X with homebrew:
 
 ```shell
 brew install yarn
 ```
 
-#### Webservers
+For other platforms, please refer to [the yarn website](https://www.yarnpkg.com/).
 
-Some options:
-
-* The `python3` builtin webserver 
-* Caddy
-
-### Purescript and Javascript dependencies
+## Development
 
 Once you have node and yarn installed, you may install deps with:
 
 ```shell
-yarn install && yarn add psc-package && yarn install-ps && yarn build
-```
-You need to copy index.html:
-```shell
-cp src/index.html dist/
+yarn install -D && yarn install-ps
 ```
 
-(Be careful, to update or upgrade your install, maybe you need to remove
-old files in node_modules).
-
-### Development
-
-You can compile the purescript code with:
+You will likely want to check your work in a browser. We provide a
+local development webserver that serves on port 5000 for this purpose:
 
 ```shell
-yarn compile
+yarn server
 ```
 
-Or run a repl:
-
-```shell
-yarn repl
-```
-
-```shell
-yarn install && yarn ps-deps
-```
-
-### Running a dev server
-
-```shell
-yarn dev
-```
-
-This will launch a hot-reloading development server with
-webpack-dev-server.  Visit [localhost:9000](http://localhost:9000/) to
-see the result when the output shows a line like this:
-
-```
-ℹ ｢wdm｣: Compiled successfully.
-```
-
-#### Purescript IDE integration
-
-A `purs ide` connection will be available on port 9002 while the
-development server is running.
-
-A guide to getting set up with the IDE integration is beyond the scope
-of this document.
-
-#### Source maps
-
-Currently broken. Someone please fix them.
-
-### Getting a purescript repl
-
-```shell
-yarn repl
-```
-
-### Compiling styles
-
-We use the `sass` compiler for some of the style files. To convert them to CSS do:
-
-```shell
-yarn sass
-```
-
-### Building for production
+To generate a new browser bundle to test:
 
 ```shell
 yarn build
 ```
 
-It is *not* necessary to `yarn compile` before running `yarn build`.
+If you are rapidly iterating and just want to type check your code:
 
-You can then serve the `dist` directory with your favourite webserver.
+```shell
+yarn compile
+```
 
-Examples:
+You may access a purescript repl if you want to explore:
 
-* `python3 -m http.server --directory dist` (requires Python 3.7+)
+```shell
+yarn repl
+```
 
-<!-- To get a live-reloading development server -->
+If you need to reinstall dependencies such as after a git pull or branch switch:
 
-<!-- ```shell -->
-<!-- yarn live -->
-<!-- ``` -->
+```shell
+yarn install -D && yarn install-ps # both javascript and purescript
+```
 
-Note that a production build takes a little while.
+If something goes wrong building after a deps update, you may clean
+build artifacts and try again:
+
+```shell
+yarn clean-js # clean javascript, very useful
+yarn clean-ps # clean purescript, should never be required, possible purescript bug
+yarn clean # clean both purescript and javascript
+```
+
+If you edit the SASS, you'll need to rebuild the CSS:
+
+```shell
+yarn sass
+```
+
+<!-- A `purs ide` connection will be available on port 9002 while the -->
+<!-- development server is running. -->
+
+A guide to getting set up with the IDE integration is coming soon, I hope.
+of this document.
+
+### Note to contributors
+
+Please follow CONTRIBUTING.md
 
 ### How do I?
 
@@ -193,12 +152,6 @@ endConfig' :: ApiVersion -> EndConfig
 endConfig' v = { front : frontRelative
                , back  : backDemo v  }
 ```
-
-## Note to the contributors
-
-Please follow CONTRIBUTING.md
-
-### How do I?
 
 #### Add a javascript dependency?
 
@@ -288,10 +241,9 @@ bigram/2-gram
 : A two-word n-gram, e.g. `coffee cup`
 trigram/3-gram
 : A three-word n-gram, e.g. `coffee cup holder`
-<!-- skip-grams are not yet supported -->
-<!-- skip-gram -->
-<!-- : An n-gram where the words are not all adjacent -->
-<!-- k-skip-n-gram -->
-<!-- : An n-gram where the words are at most distance k from each other -->
+skip-gram
+: An n-gram where the words are not all adjacent. Not yet supported.
+k-skip-n-gram
+: An n-gram where the words are at most distance k from each other.
 
 
