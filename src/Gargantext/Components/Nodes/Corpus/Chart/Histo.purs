@@ -5,6 +5,7 @@ import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Reactix as R
+import Reactix.DOM.HTML as H
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (seriesBarD1)
@@ -65,5 +66,10 @@ histoCpt = R.hooksComponent "G.C.N.C.C.H.histo" cpt
       reload <- R.useState' 0
       pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
 
-loaded :: R.State Int -> HistoMetrics -> R.Element
-loaded setReload loaded = U.reloadButtonWrap setReload $ chart $ chartOptions loaded
+loaded :: Session -> Record Path -> R.State Int -> HistoMetrics -> R.Element
+loaded session path reload loaded =
+  H.div {} [
+    U.reloadButton reload
+  , U.chartUpdateButton { chartType: Histo, path, reload, session }
+  , chart $ chartOptions loaded
+  ]

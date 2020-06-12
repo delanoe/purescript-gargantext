@@ -101,5 +101,6 @@ metricsCpt = R.hooksComponent "G.C.N.C.C.M.metrics" cpt
       reload <- R.useState' 0
       pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
 
-loaded :: R.State Int -> Loaded -> R.Element
-loaded setReload loaded = U.reloadButtonWrap setReload $ chart $ scatterOptions loaded
+loaded :: Session -> Record Path -> R.State Int -> Loaded -> R.Element
+loaded _session _path setReload loaded =
+  U.reloadButtonWrap setReload $ chart $ scatterOptions loaded

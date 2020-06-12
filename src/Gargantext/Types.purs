@@ -1,4 +1,4 @@
-module Gargantext.Types where
+msession path reload = H.div {} []odule Gargantext.Types where
 
 import Prelude
 

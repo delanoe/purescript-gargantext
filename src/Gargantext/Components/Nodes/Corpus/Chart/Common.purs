@@ -11,7 +11,7 @@ import Gargantext.Sessions (Session)
 
 type MetricsLoadViewProps a = (
     getMetrics :: Session -> Record Path -> Aff a
-  , loaded :: R.State Int -> a -> R.Element
+  , loaded :: Session -> Record Path -> R.State Int -> a -> R.Element
   | MetricsProps
   )
 
@@ -23,4 +23,4 @@ metricsLoadViewCpt = R.hooksComponent "G.C.N.C.C.metricsLoadView" cpt
   where
     cpt {getMetrics, loaded, path, reload, session} _ = do
       useLoader path (getMetrics session) $ \l ->
-        loaded reload l
+        loaded session path reload l
