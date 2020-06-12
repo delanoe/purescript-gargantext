@@ -81,54 +81,54 @@ data SettingsBox =
 ------------------------------------------------------------------------
 
 settingsBox :: NodeType -> SettingsBox
-settingsBox NodeUser = SettingsBox {
-    show : true
-  , edit : false
-  , doc  : Documentation NodeUser
-  , buttons : [ Delete ]
-  }
+settingsBox NodeUser =
+  SettingsBox { show : true
+              , edit : false
+              , doc  : Documentation NodeUser
+              , buttons : [ Delete ]
+              }
 
-settingsBox FolderPrivate = SettingsBox {
-    show : true
-  , edit : false
-  , doc  : Documentation FolderPrivate
-  , buttons : [ Add [ Corpus
-                    , Folder
-                    , Annuaire
-                    ]
-              ]
-  }
+settingsBox FolderPrivate =
+  SettingsBox { show : true
+              , edit : false
+              , doc  : Documentation FolderPrivate
+              , buttons : [ Add [ Corpus
+                                , Folder
+                                , Annuaire
+                                ]
+                          ]
+              }
 
-settingsBox Team = SettingsBox {
-    show : true
-  , edit : true
-  , doc  : Documentation Team
-  , buttons : [ Add [ Corpus
-                    , Folder
-                    , Annuaire
-                    ]
-              , Share
-              , Delete]
-  }
+settingsBox Team =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation Team
+              , buttons : [ Add [ Corpus
+                                , Folder
+                                , Annuaire
+                                ]
+                          , Share
+                          , Delete]
+              }
 
-settingsBox FolderShared = SettingsBox {
-    show : true
-  , edit : true
-  , doc  : Documentation FolderShared
-  , buttons : [ Add [Team, FolderShared]
-              -- , Delete
-              ]
-  }
+settingsBox FolderShared =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation FolderShared
+              , buttons : [ Add [Team, FolderShared]
+                          -- , Delete
+                          ]
+              }
 
-settingsBox FolderPublic = SettingsBox {
-    show : true
-  , edit : false
-  , doc  : Documentation FolderPublic
-  , buttons : [ Add [ Corpus
-                    , Folder
-                    ]
-    ]
-  }
+settingsBox FolderPublic =
+  SettingsBox { show : true
+              , edit : false
+              , doc  : Documentation FolderPublic
+              , buttons : [ Add [ Corpus
+                                , Folder
+                                ]
+                ]
+              }
 
 settingsBox Folder =
   SettingsBox { show : true
