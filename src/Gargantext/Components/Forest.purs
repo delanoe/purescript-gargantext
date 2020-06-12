@@ -33,27 +33,45 @@ forestCpt :: R.Component Props
 forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
   cpt { frontends, reload: extReload, route, sessions, showLogin } _ = do
     -- NOTE: this is a hack to reload the tree view on demand
-    reload <- R.useState' (0 :: Reload)
-    openNodes <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
+    reload     <- R.useState' (0 :: Reload)
+    openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
     asyncTasks <- R2.useLocalStorageState GAT.localStorageKey GAT.empty
     R2.useCache
-      (frontends /\ route /\ sessions /\ fst openNodes /\ fst extReload /\ fst reload /\ fst asyncTasks)
+      (  frontends
+      /\ route
+      /\ sessions
+      /\ fst openNodes
+      /\ fst extReload
+      /\ fst reload
+      /\ fst asyncTasks
+      )
       (cpt' openNodes asyncTasks reload showLogin)
   cpt' openNodes asyncTasks reload showLogin (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _) = do
     pure $ R.fragment $ A.cons (plus showLogin) trees
     where
       trees = tree <$> unSessions sessions
       tree s@(Session {treeId}) =
-        treeView { root: treeId, asyncTasks, frontends, mCurrentRoute: Just route, session: s, openNodes, reload }
+        treeView { root: treeId
+                 , asyncTasks
+                 , frontends
+                 , mCurrentRoute: Just route
+                 , session: s
+                 , openNodes
+                 , reload
+                 }
 
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin =
-  H.button {on: {click}, className: "btn btn-primary"}
-  [ H.div { "type": "", className: "fa fa-universal-access fa-lg"} [H.text " Log "]
-  , H.div {} [H.text "    "]
+  H.button { on: {click}
+           , className: "btn btn-primary"
+           }
+          [ H.div { "type": ""
+                  , className: "fa fa-universal-access fa-lg"
+                  } [H.text " Log "]
+          , H.div {} [H.text "    "]
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
   --, H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
-  ]
+          ]
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
   where

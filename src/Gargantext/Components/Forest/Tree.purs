@@ -30,7 +30,6 @@ import Record as Record
 import Record.Extra as RecordE
 
 ------------------------------------------------------------------------
-
 type CommonProps =
   ( frontends     :: Frontends
   , mCurrentRoute :: Maybe AppRoute
@@ -63,8 +62,7 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
       where
         cpt { root, asyncTasks, mCurrentRoute, session, frontends, openNodes, reload } _children = do
           let fetch _ = loadNode session root
-          let paint loaded = loadedTreeView {
-                                              asyncTasks
+          let paint loaded = loadedTreeView { asyncTasks
                                             , frontends
                                             , mCurrentRoute
                                             , openNodes
@@ -112,7 +110,7 @@ toHtml p@{ asyncTasks
   where
     el          = R.hooksComponent "NodeView" cpt
     commonProps = RecordE.pick p :: Record CommonProps
-    pAction     = performAction (RecordE.pick p :: Record PerformActionProps)
+    pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
 
     cpt _ _ = do
       let nodeId               = mkNodeId session id
@@ -173,58 +171,73 @@ type PerformActionProps =
   , tree      :: FTree
   )
 
-performAction :: Record PerformActionProps
-              -> Action
+performAction :: Action
+              -> Record PerformActionProps
               -> Aff Unit
-performAction p@{ openNodes: (_ /\ setOpenNodes)
-                , reload: (_ /\ setReload)
-                , session
-                , tree: (NTree (LNode {id}) _) } DeleteNode = do
-  void $ deleteNode session id
-  liftEffect do
-    setOpenNodes (Set.delete (mkNodeId session id))
-  performAction p RefreshTree
+performAction DeleteNode p@{ openNodes: (_ /\ setOpenNodes)
+                           , reload: (_ /\ setReload)
+                           , session
+                           , tree: (NTree (LNode {id}) _)
+                           } =
+  do
+    void $ deleteNode session id
+    liftEffect do
+      setOpenNodes (Set.delete (mkNodeId session id))
+    performAction RefreshTree p
 
-performAction { reload: (_ /\ setReload)
-              , session
-              , tasks: { onTaskAdd }
-              , tree: (NTree (LNode {id}) _) } (DoSearch task) = do
-  liftEffect $ onTaskAdd task
-  liftEffect $ log2 "[performAction] DoSearch task:" task
+performAction (DoSearch task) { reload: (_ /\ setReload)
+                              , session
+                              , tasks: { onTaskAdd }
+                              , tree: (NTree (LNode {id}) _)
+                              }  =
+  do
+    liftEffect $ onTaskAdd task
+    liftEffect $ log2 "[performAction] DoSearch task:" task
 
-performAction { reload: (_ /\ setReload)
-              , session
-              , tasks: {onTaskAdd}
-              , tree: (NTree (LNode {id}) _) } (UpdateNode task) = do
-  liftEffect $ onTaskAdd task
-  liftEffect $ log2 "[performAction] UpdateNode task:" task
+performAction (UpdateNode task) { reload: (_ /\ setReload)
+                                , session
+                                , tasks: {onTaskAdd}
+                                , tree: (NTree (LNode {id}) _)
+                                } =
+  do
+    liftEffect $ onTaskAdd task
+    liftEffect $ log2 "[performAction] UpdateNode task:" task
 
-performAction p@{ reload: (_ /\ setReload)
-                , session
-                , tree: (NTree (LNode {id}) _) } (RenameNode name)  = do
-  void $ rename session id $ RenameValue {text:name}
-  performAction p RefreshTree
+performAction (RenameNode name) p@{ reload: (_ /\ setReload)
+                                , session
+                                , tree: (NTree (LNode {id}) _)
+                                } 
+               =
+  do
+    void $ rename session id $ RenameValue {text:name}
+    performAction RefreshTree p
 
-performAction p@{ reload: (_ /\ setReload)
-                , session
-                , tree: (NTree (LNode {id}) _) } (ShareNode username)  = do
-  void $ share session id $ ShareValue {text:username}
+performAction (ShareNode username) p@{ reload: (_ /\ setReload)
+                                     , session
+                                     , tree: (NTree (LNode {id}) _)
+                                     } =
+  do
+    void $ share session id $ ShareValue {text:username}
 
-performAction p@{ openNodes: (_ /\ setOpenNodes)
-                , reload:    (_ /\ setReload)
-                , session
-                , tree: (NTree (LNode {id}) _) } (AddNode name nodeType) = do
-  task <- addNode session id $ AddNodeValue {name, nodeType}
-  liftEffect do
-    setOpenNodes (Set.insert (mkNodeId session id))
-  performAction p RefreshTree
+performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
+                                        , reload:    (_ /\ setReload)
+                                        , session
+                                        , tree: (NTree (LNode {id}) _)
+                                        } =
+  do
+    task <- addNode session id $ AddNodeValue {name, nodeType}
+    liftEffect do
+      setOpenNodes (Set.insert (mkNodeId session id))
+    performAction RefreshTree p
 
-performAction { session
-              , tasks: { onTaskAdd }
-              , tree: (NTree (LNode {id}) _) } (UploadFile nodeType fileType mName contents) = do
-  task <- uploadFile session nodeType id fileType {mName, contents}
-  liftEffect $ onTaskAdd task
-  liftEffect $ log2 "uploaded, task:" task
+performAction (UploadFile nodeType fileType mName contents) { session
+                                                            , tasks: { onTaskAdd }
+                                                            , tree: (NTree (LNode {id}) _)
+                                                            } =
+  do
+    task <- uploadFile session nodeType id fileType {mName, contents}
+    liftEffect $ onTaskAdd task
+    liftEffect $ log2 "uploaded, task:" task
 
-performAction { reload: (_ /\ setReload) } RefreshTree = do
+performAction RefreshTree { reload: (_ /\ setReload) } = do
   liftEffect $ setReload (_ + 1)
