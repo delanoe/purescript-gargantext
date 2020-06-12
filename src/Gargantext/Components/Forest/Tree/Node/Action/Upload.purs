@@ -13,10 +13,9 @@ import Gargantext.Components.Lang (readLang, Lang(..))
 import Gargantext.Prelude (class Show, Unit, discard, bind, const, id, map, pure, show, unit, void, ($))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types as GT
-import Gargantext.Types (ID)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Types (NodeType(..), ID, Name, Reload)
 import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as E
 import Reactix as R

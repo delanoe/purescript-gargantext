@@ -17,7 +17,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), re
 import Gargantext.Components.Forest.Tree.Node.Action.Share (ShareValue(..), share)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodeMainSpan, Tasks, tasksStruct)
-import Gargantext.Components.Forest.Tree.Node.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))

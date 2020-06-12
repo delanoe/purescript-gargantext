@@ -1,27 +1,5 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.Frame where
 
-{-
-import Data.Array as A
-import Data.Map as Map
-import Data.String as S
-import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
-import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
-import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
-import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), uploadFileView, fileTypeView, uploadTermListView)
-import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
-import Gargantext.Components.Forest.Tree.Node.Tools
-import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Components.Lang (allLangs, Lang(EN))
-import Gargantext.Components.NgramsTable.API as NTAPI
-import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Ends (Frontends, url)
--}
-
 import DOM.Simple as DOM
 import DOM.Simple.Event (MessageEvent)
 import DOM.Simple.EventListener (Callback, addEventListener, callback)

@@ -5,7 +5,7 @@ import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Props)
-import Gargantext.Components.Forest.Tree.Node.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (discard, map, pure, show, unit, ($), (&&), (/=), (<>))
 import Gargantext.Routes as GR

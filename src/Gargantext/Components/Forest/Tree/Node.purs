@@ -12,7 +12,6 @@ if user has access to node then he can do all his related actions
 -}
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
-
 data Status a = IsBeta a | IsProd a
 
 data NodeAction = Documentation NodeType

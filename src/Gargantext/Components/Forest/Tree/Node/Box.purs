@@ -26,7 +26,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload, DroppedFile(..), fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types
-import Gargantext.Components.Forest.Tree.Node.ProgressBar (asyncProgressBar, BarType(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))

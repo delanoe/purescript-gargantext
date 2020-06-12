@@ -1,19 +1,10 @@
-module Gargantext.Components.Forest.Tree.Node.FTree where
+module Gargantext.Components.Forest.Tree.Node.Tools.FTree where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Newtype (class Newtype)
-import Effect.Aff (Aff)
-import Prelude hiding (div)
-
-import Gargantext.Components.Lang (Lang)
-import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put, post, delete)
-import Gargantext.Routes as GR
 import Gargantext.Types  as GT
+import Prelude hiding (div)
 
 -----------------------------------------------------------------------
 type ID   = Int

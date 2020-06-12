@@ -1,4 +1,4 @@
-module Gargantext.Components.Forest.Tree.Node.ProgressBar where
+module Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar where
 
 import Gargantext.Prelude
 
