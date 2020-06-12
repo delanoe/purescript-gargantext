@@ -231,18 +231,19 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
               [ H.a {className: "btn glyphitem glyphicon glyphicon-remove-circle"
                     , on: {click: \_ -> do
                               setDroppedFile $ const Nothing
-                              setIsDragOver $ const false
+                              setIsDragOver  $ const false
                           }
                     , title: "Close"} []
               ]
             ]
           ]
+
         panelBody =
           H.div {className: "panel-body"}
           [ R2.select {className: "col-md-12 form-control"
                       , on: {change: onChange}
                       }
-            (map renderOption [CSV, CSV_HAL, WOS])
+                      (map renderOption [CSV, CSV_HAL, WOS])
           ]
           where
             onChange e l =
@@ -250,7 +251,8 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
                                                             , fileType: read $ R2.unsafeEventValue e
                                                             , lang    : read $ R2.unsafeEventValue l
                                                             }
-        renderOption opt = H.option {} [ H.text $ show opt ]
+            renderOption opt = H.option {} [ H.text $ show opt ]
+
         panelFooter =
           H.div {className: "panel-footer"}
           [

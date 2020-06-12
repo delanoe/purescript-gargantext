@@ -259,9 +259,11 @@ langNav ({lang} /\ setSearch) langs =
 ------------------------------------------------------------------------
 dataFieldNav :: R.State Search -> Array DataField -> R.Element
 dataFieldNav ({datafield} /\ setSearch) datafields =
-  R.fragment [ H.div {className: "text-primary center"} [H.text "with DataField"]
-  , H.div {className: "nav nav-tabs"} (liItem <$> dataFields)
-             , H.div {className: "center"} [ H.text $ maybe "" doc datafield ]
+  R.fragment [ H.div { className: "text-primary center"} [H.text "with DataField"]
+                     , H.div {className: "nav nav-tabs"} (liItem <$> dataFields)
+                     , H.div {className: "center"} [ H.text
+                                                   $ maybe "TODO: add Doc Instance" doc datafield 
+                                                   ]
              ]
     where
       liItem :: DataField -> R.Element
@@ -271,9 +273,9 @@ dataFieldNav ({datafield} /\ setSearch) datafields =
                                then " active"
                                else ""
             , on: { click: \_ -> setSearch $ _ { datafield = Just df'
-                  , databases = datafield2database df'
+                                               , databases = datafield2database df'
                                                }
-                    }
+                  }
             -- just one database query for now
             -- a list a selected database needs more ergonomy
             } [ H.text (show df') ]
@@ -387,8 +389,8 @@ searchInputComponent = R.hooksComponent "G.C.S.SearchInput" cpt
 
 type SubmitButtonProps =
   ( onSearch :: GT.AsyncTaskWithType -> Effect Unit
-  , search :: R.State Search
-  , session :: Session
+  , search   :: R.State Search
+  , session  :: Session
   )
 
 submitButton :: Record SubmitButtonProps -> R.Element
