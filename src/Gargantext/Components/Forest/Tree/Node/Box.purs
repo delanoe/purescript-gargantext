@@ -1,17 +1,13 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
-import Data.Array as A
-import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.String as S
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
-import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), FileType(..), UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
@@ -28,16 +24,17 @@ import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types
 import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
+import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.NgramsTable.API as NTAPI
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, identity, map, pure, show, unit, void, ($), (+), (<>), (==))
+import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, unit, void, ($), (<>), (==))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (ID, Name, Reload)
+import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Popover as Popover
@@ -47,30 +44,6 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Web.File.FileReader.Aff (readAsText)
 
-
-type Tasks =
-  ( onTaskAdd    :: GT.AsyncTaskWithType -> Effect Unit
-  , onTaskFinish :: GT.AsyncTaskWithType -> Effect Unit
-  , tasks        :: Array GT.AsyncTaskWithType
-  )
-
-tasksStruct :: Int
-            -> R.State GAT.Storage
-            -> R.State Reload
-            -> Record Tasks
-tasksStruct id (asyncTasks /\ setAsyncTasks) (_ /\ setReload) =
-  { onTaskAdd, onTaskFinish, tasks }
-    where
-      tasks = maybe [] identity $ Map.lookup id asyncTasks
-
-      onTaskAdd t = do
-        setReload (_ + 1)
-        setAsyncTasks $ Map.alter (maybe (Just [t])
-                      $ (\ts -> Just $ A.cons t ts)) id
-
-      onTaskFinish t = do
-        setReload (_ + 1)
-        setAsyncTasks $ Map.alter (maybe Nothing $ (\ts -> Just $ GAT.removeTaskFromList ts t)) id
 
 -- Main Node
 type NodeMainSpanProps =
@@ -156,10 +129,10 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
             , dragOver: onDragOverHandler isDragOver
             , dragLeave: onDragLeave isDragOver } }
       where
-        dropClass (Just _ /\ _)  _           = "file-dropped"
-        dropClass _              (true /\ _) = "file-dropped"
-        dropClass (Nothing /\ _) _           = ""
-        dropHandler (_ /\ setDroppedFile) e = do
+        dropClass    (Just _ /\ _)        _          = "file-dropped"
+        dropClass    _                   (true /\ _) = "file-dropped"
+        dropClass   (Nothing /\ _)        _          = ""
+        dropHandler (_ /\ setDroppedFile) e          = do
           -- prevent redirection when file is dropped
           E.preventDefault e
           E.stopPropagation e
@@ -231,10 +204,24 @@ nodeActions p = R.createElement nodeActionsCpt p []
 nodeActionsCpt :: R.Component NodeActionsProps
 nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
   where
-    cpt { id, nodeType: GT.Graph, refreshTree, session } _ = do
+    cpt { id
+        , nodeType: GT.Graph
+        , refreshTree
+        , session
+        } _ = do
+
       useLoader id (graphVersions session) $ \gv ->
-        nodeActionsGraph { id, graphVersions: gv, session, triggerRefresh: triggerRefresh refreshTree }
-    cpt { id, nodeType: GT.NodeList, refreshTree, session } _ = do
+        nodeActionsGraph { id
+                         , graphVersions: gv
+                         , session
+                         , triggerRefresh: triggerRefresh refreshTree
+                         }
+
+    cpt { id
+        , nodeType: GT.NodeList
+        , refreshTree
+        , session
+        } _ = do
       useLoader { nodeId: id, session } loadCorpusWithChild $
         \{ corpusId } ->
           nodeActionsNodeList { listId: id
