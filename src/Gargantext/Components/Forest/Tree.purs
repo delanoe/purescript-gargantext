@@ -50,9 +50,23 @@ treeView props = R.createElement treeViewCpt props []
     treeViewCpt :: R.Component Props
     treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
       where
-        cpt { root, mCurrentRoute, session, frontends, openNodes, reload, asyncTasks} _children = do
-          pure $ treeLoadView
-            { root, mCurrentRoute, session, frontends, openNodes, reload, asyncTasks}
+        cpt { root
+            , mCurrentRoute
+            , session
+            , frontends
+            , openNodes
+            , reload
+            , asyncTasks
+            } _children = do
+
+          pure $ treeLoadView { root
+                              , mCurrentRoute
+                              , session
+                              , frontends
+                              , openNodes
+                              , reload
+                              , asyncTasks
+                              }
 
 treeLoadView :: Record Props -> R.Element
 treeLoadView p = R.createElement treeLoadViewCpt p []
@@ -60,7 +74,14 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
     treeLoadViewCpt :: R.Component Props
     treeLoadViewCpt = R.hooksComponent "TreeLoadView" cpt
       where
-        cpt { root, asyncTasks, mCurrentRoute, session, frontends, openNodes, reload } _children = do
+        cpt { root
+            , asyncTasks
+            , mCurrentRoute
+            , session
+            , frontends
+            , openNodes
+            , reload
+            } _children = do
           let fetch _ = loadNode session root
           let paint loaded = loadedTreeView { asyncTasks
                                             , frontends
@@ -85,9 +106,25 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
     loadedTreeViewCpt :: R.Component TreeViewProps
     loadedTreeViewCpt = R.hooksComponent "LoadedTreeView" cpt
       where
-        cpt { asyncTasks, frontends, mCurrentRoute, openNodes, reload, tasks, tree, session } _ = do
-          pure $ H.div {className: "tree"}
-            [ toHtml { asyncTasks, frontends, mCurrentRoute, openNodes, reload, session, tasks, tree } ]
+        cpt { asyncTasks
+            , frontends
+            , mCurrentRoute
+            , openNodes
+            , reload
+            , tasks
+            , tree
+            , session
+          } _ = pure $ H.div { className: "tree"}
+                             [ toHtml { asyncTasks
+                                      , frontends
+                                      , mCurrentRoute
+                                      , openNodes
+                                      , reload
+                                      , session
+                                      , tasks
+                                      , tree
+                                      }
+                             ]
 
 ------------------------------------------------------------------------
 type ToHtmlProps =
@@ -105,40 +142,50 @@ toHtml p@{ asyncTasks
          , openNodes
          , reload: reload@(_ /\ setReload)
          , session
-         , tasks: tasks@{ onTaskAdd, onTaskFinish, tasks: tasks' }
-         , tree: tree@(NTree (LNode {id, name, nodeType}) ary) } = R.createElement el {} []
-  where
-    el          = R.hooksComponent "NodeView" cpt
-    commonProps = RecordE.pick p :: Record CommonProps
-    pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
+         , tasks: tasks@{ onTaskAdd
+                        , onTaskFinish
+                        , tasks: tasks'
+                        }
+         , tree: tree@(NTree (LNode { id
+                                    , name
+                                    , nodeType
+                                    }
+                              ) ary
+                      ) 
+         } =
+  R.createElement el {} []
+    where
+      el          = R.hooksComponent "NodeView" cpt
+      commonProps = RecordE.pick p :: Record CommonProps
+      pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
 
-    cpt _ _ = do
-      let nodeId               = mkNodeId session id
-      let folderIsOpen         = Set.member nodeId (fst openNodes)
-      let setFn                = if folderIsOpen then Set.delete else Set.insert
-      let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
-      let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
+      cpt _ _ = do
+        let nodeId               = mkNodeId session id
+        let folderIsOpen         = Set.member nodeId (fst openNodes)
+        let setFn                = if folderIsOpen then Set.delete else Set.insert
+        let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
+        let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
 
-      let withId (NTree (LNode {id: id'}) _) = id'
+        let withId (NTree (LNode {id: id'}) _) = id'
 
-      pure $ H.ul {}
-        [ H.li {}
-          ( [ nodeMainSpan { id
-                           , dispatch: pAction
-                           , folderOpen
-                           , frontends
-                           , mCurrentRoute
-                           , name
-                           , nodeType
-                           , session
-                           , tasks
-                           } ]
-            <> childNodes (Record.merge commonProps
-                                        { asyncTasks
-                                        , children: ary
-                                        , folderOpen })
-          )
-        ]
+        pure $ H.ul {}
+          [ H.li {}
+            ( [ nodeMainSpan { id
+                             , dispatch: pAction
+                             , folderOpen
+                             , frontends
+                             , mCurrentRoute
+                             , name
+                             , nodeType
+                             , session
+                             , tasks
+                             } ]
+              <> childNodes (Record.merge commonProps
+                                          { asyncTasks
+                                          , children: ary
+                                          , folderOpen })
+            )
+          ]
 
 
 type ChildNodesProps =
@@ -153,11 +200,12 @@ childNodes { children: [] } = []
 childNodes { folderOpen: (false /\ _) } = []
 childNodes props@{ asyncTasks, children, reload } =
   map (\ctree@(NTree (LNode {id}) _) ->
-        toHtml (Record.merge commonProps {
-                     asyncTasks
-                   , tasks: tasksStruct id asyncTasks reload
-                   , tree: ctree
-                   })) $ sorted children
+        toHtml (Record.merge commonProps { asyncTasks
+                                         , tasks: tasksStruct id asyncTasks reload
+                                         , tree: ctree
+                                         }
+               )
+      ) $ sorted children
   where
     commonProps = RecordE.pick props :: Record CommonProps
     sorted :: Array FTree -> Array FTree
@@ -171,6 +219,7 @@ type PerformActionProps =
   , tree      :: FTree
   )
 
+-------
 performAction :: Action
               -> Record PerformActionProps
               -> Aff Unit
@@ -185,6 +234,8 @@ performAction DeleteNode p@{ openNodes: (_ /\ setOpenNodes)
       setOpenNodes (Set.delete (mkNodeId session id))
     performAction RefreshTree p
 
+
+-------
 performAction (DoSearch task) { reload: (_ /\ setReload)
                               , session
                               , tasks: { onTaskAdd }
@@ -194,6 +245,8 @@ performAction (DoSearch task) { reload: (_ /\ setReload)
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "[performAction] DoSearch task:" task
 
+
+-------
 performAction (UpdateNode task) { reload: (_ /\ setReload)
                                 , session
                                 , tasks: {onTaskAdd}
@@ -203,6 +256,8 @@ performAction (UpdateNode task) { reload: (_ /\ setReload)
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "[performAction] UpdateNode task:" task
 
+
+-------
 performAction (RenameNode name) p@{ reload: (_ /\ setReload)
                                 , session
                                 , tree: (NTree (LNode {id}) _)
@@ -211,6 +266,8 @@ performAction (RenameNode name) p@{ reload: (_ /\ setReload)
     void $ rename session id $ RenameValue {text:name}
     performAction RefreshTree p
 
+
+-------
 performAction (ShareNode username) p@{ reload: (_ /\ setReload)
                                      , session
                                      , tree: (NTree (LNode {id}) _)
@@ -218,6 +275,8 @@ performAction (ShareNode username) p@{ reload: (_ /\ setReload)
   do
     void $ share session id $ ShareValue {text:username}
 
+
+-------
 performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
                                         , reload:    (_ /\ setReload)
                                         , session
@@ -229,6 +288,7 @@ performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
       setOpenNodes (Set.insert (mkNodeId session id))
     performAction RefreshTree p
 
+-------
 performAction (UploadFile nodeType fileType mName contents) { session
                                                             , tasks: { onTaskAdd }
                                                             , tree: (NTree (LNode {id}) _)
@@ -238,5 +298,7 @@ performAction (UploadFile nodeType fileType mName contents) { session
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "uploaded, task:" task
 
+-------
 performAction RefreshTree { reload: (_ /\ setReload) } = do
   liftEffect $ setReload (_ + 1)
+-------
