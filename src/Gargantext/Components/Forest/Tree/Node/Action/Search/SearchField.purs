@@ -1,29 +1,24 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField
   ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex, isIsTex_Advanced) where
 
-import Data.Maybe (Maybe(..), maybe, fromMaybe, isJust)
+import DOM.Simple.Console (log, log2)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (over)
-import Data.String (length)
 import Data.Set as Set
+import Data.String (length)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Data.Nullable (Nullable, toMaybe)
-import Effect.Console (logShow)
-import DOM.Simple.Console (log, log2)
-import Effect.Aff (Aff, launchAff_)
-import Effect.Class (liftEffect)
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, ($), (&&), (<), (<$>), (<<<), (<>), (==))
-
-import Gargantext.Data.Array (catMaybes)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, readOrg, datafield2database)
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataOriginApi(..), DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, readDatabase, readOrg, datafield2database)
+import Gargantext.Prelude (Unit, bind, discard, map, pure, show, ($), (&&), (<), (<$>), (<>), (==), read)
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 select :: forall props.
           R.IsComponent String props (Array R.Element)
@@ -326,7 +321,7 @@ databaseInput (search /\ setSearch) dbs =
       liItem  db' = H.option {className : "text-primary center"} [ H.text (show db') ]
 
       onChange e = do
-        let value = readDatabase $ R2.unsafeEventValue e
+        let value = read $ R2.unsafeEventValue e
         setSearch $ _ { datafield = Just $ External value
                       , databases = fromMaybe Empty value
                       }

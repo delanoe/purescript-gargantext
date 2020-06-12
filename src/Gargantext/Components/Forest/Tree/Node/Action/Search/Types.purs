@@ -1,7 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.Types where
 
-import Data.Array (concat)
 import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
+import Data.Array (concat)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
@@ -9,16 +9,14 @@ import Data.Set as Set
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import URI.Extra.QueryPairs as QP
-import URI.Query as Q
-
-import Gargantext.Prelude (id, class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>))
-
 import Gargantext.Components.Lang
 import Gargantext.Ends (class ToUrl, backendUrl)
+import Gargantext.Prelude (id, class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>), class Read)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), post)
 import Gargantext.Types as GT
+import URI.Extra.QueryPairs as QP
+import URI.Query as Q
 
 ------------------------------------------------------------------------
 class Doc a where
@@ -129,17 +127,18 @@ instance docDatabase :: Doc Database where
 --  doc News        = "Web filtered by News"
 --  doc SocialNetworks = "Web filtered by MicroBlogs"
 
-readDatabase :: String -> Maybe Database
-readDatabase "All Databases" = Just All_Databases
-readDatabase "PubMed" = Just PubMed
-readDatabase "HAL"    = Just $ HAL Nothing
-readDatabase "Isidore"= Just Isidore
-readDatabase "IsTex"  = Just IsTex
-readDatabase "IsTex_Advanced" = Just IsTex_Advanced
--- readDatabase "Web"    = Just Web
--- readDatabase "News"   = Just News
--- readDatabase "Social Networks" = Just SocialNetworks
-readDatabase _        = Nothing
+instance readDatabase :: Read Database where
+  read :: String -> Maybe Database
+  read "All Databases" = Just All_Databases
+  read "PubMed" = Just PubMed
+  read "HAL"    = Just $ HAL Nothing
+  read "Isidore"= Just Isidore
+  read "IsTex"  = Just IsTex
+  read "IsTex_Advanced" = Just IsTex_Advanced
+  -- read "Web"    = Just Web
+  -- read "News"   = Just News
+  -- read "Social Networks" = Just SocialNetworks
+  read _        = Nothing
 
 derive instance eqDatabase :: Eq Database
 

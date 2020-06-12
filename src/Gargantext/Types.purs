@@ -1,7 +1,6 @@
 module Gargantext.Types where
 
 import Prelude
-
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array as A
 import Data.Either (Either(..))
@@ -39,9 +38,6 @@ derive instance eqTermSize :: Eq TermSize
 -- | Converts a data structure to a query string
 class ToQuery a where
   toQuery :: a -> Query
-
-class Read a where
-  read :: String -> a
 
 instance showTermSize :: Show TermSize where
   show MonoTerm  = "MonoTerm"

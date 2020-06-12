@@ -9,8 +9,8 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props, FileType(..), UploadFileContents(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT)
-import Gargantext.Components.Lang (readLang, Lang(..))
-import Gargantext.Prelude (class Show, Unit, discard, bind, const, id, map, pure, show, unit, void, ($))
+import Gargantext.Components.Lang (Lang(..))
+import Gargantext.Prelude (class Show, Unit, discard, bind, const, id, map, pure, show, unit, void, ($), read)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded)
 import Gargantext.Types (NodeType(..), ID)
@@ -132,7 +132,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
       setFileType $ const
                   $ unsafePartial
                   $ fromJust
-                  $ readFileType 
+                  $ read
                   $ R2.unsafeEventValue e
 
     onChangeLang :: forall e
@@ -142,7 +142,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
     onChangeLang (lang /\ setLang) e = do
       setLang $ const
               $ unsafePartial
-              $ readLang
+              $ read
               $ R2.unsafeEventValue e
 
 
@@ -247,8 +247,8 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
           where
             onChange e l =
               setDroppedFile $ const $ Just $ DroppedFile $ { contents
-                                                            , fileType: readFileType $ R2.unsafeEventValue e
-                                                            , lang    : readLang     $ R2.unsafeEventValue l
+                                                            , fileType: read $ R2.unsafeEventValue e
+                                                            , lang    : read $ R2.unsafeEventValue l
                                                             }
         renderOption opt = H.option {} [ H.text $ show opt ]
         panelFooter =
@@ -271,14 +271,6 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
 
     cpt {droppedFile: (Nothing /\ _)} _ = do
       pure $ H.div {} []
-
--- | UTils
-readFileType :: String -> Maybe FileType
-readFileType "CSV"       = Just CSV
-readFileType "CSV_HAL"   = Just CSV_HAL
-readFileType "PresseRIS" = Just PresseRIS
-readFileType "WOS"       = Just WOS
-readFileType _           = Nothing
 
 
 newtype FileUploadQuery = FileUploadQuery {
