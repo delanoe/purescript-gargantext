@@ -40,6 +40,9 @@ derive instance eqTermSize :: Eq TermSize
 class ToQuery a where
   toQuery :: a -> Query
 
+class Read a where
+  read :: String -> a
+
 instance showTermSize :: Show TermSize where
   show MonoTerm  = "MonoTerm"
   show MultiTerm = "MultiTerm"

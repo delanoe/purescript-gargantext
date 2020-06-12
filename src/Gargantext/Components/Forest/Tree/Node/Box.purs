@@ -113,8 +113,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
           }
           [ H.i {className: GT.fldr nodeType open} [] ]
 
-    popOverIcon =
-      H.a { className: "settings fa fa-cog" } []
+    popOverIcon = H.a { className: "settings fa fa-cog" } []
 
     mNodePopupView props@{id, nodeType} onPopoverClose =
       nodePopupView { id
@@ -313,8 +312,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
         tooltipProps = { className : ""
                        , id        : "node-popup-tooltip"
                        , title     : "Node settings"
-                       , data: { toggle: "tooltip"
-                               , placement: "right"}
+                       , data: { toggle   : "tooltip"
+                               , placement: "right"
+                               }
                          --, style: { top: y - 65.0, left: x + 10.0 }
                        }
 
@@ -336,9 +336,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                                 , H.div {className: "col-md-1"}
                                         [ H.a { "type"   : "button"
                                               , className: glyphicon "window-close"
-                                              , on: { click: \e -> p.onPopoverClose
-                                                                 $ R2.unsafeEventTarget e
-                                                    }
+                                              , on       : { click: \e -> p.onPopoverClose
+                                                                        $ R2.unsafeEventTarget e
+                                                           }
                                               , title    : "Close"
                                               } []
                                         ]
@@ -439,13 +439,13 @@ type NodeProps =
 
 
 type PanelActionProps =
-  ( id       :: ID
-  , action   :: NodeAction
-  , dispatch :: Action -> Aff Unit
-  , name     :: Name
+  ( id        :: ID
+  , action    :: NodeAction
+  , dispatch  :: Action -> Aff Unit
+  , name      :: Name
   , nodePopup :: Maybe NodePopup
-  , nodeType :: GT.NodeType
-  , session  :: Session
+  , nodeType  :: GT.NodeType
+  , session   :: Session
   )
 
 panelAction :: Record PanelActionProps -> R.Element

@@ -124,7 +124,10 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
           liftEffect $ do
             setMFile $ const $ Just $ {contents: UploadFileContents contents, name}
 
-    onChangeFileType :: forall e. R.State FileType -> e -> Effect Unit
+    onChangeFileType :: forall e
+                     .  R.State FileType
+                     -> e
+                     -> Effect Unit
     onChangeFileType (fileType /\ setFileType) e = do
       setFileType $ const
                   $ unsafePartial
@@ -132,7 +135,10 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
                   $ readFileType 
                   $ R2.unsafeEventValue e
 
-    onChangeLang :: forall e. R.State (Maybe Lang) -> e -> Effect Unit
+    onChangeLang :: forall e
+                 . R.State (Maybe Lang)
+                 -> e
+                 -> Effect Unit
     onChangeLang (lang /\ setLang) e = do
       setLang $ const
               $ unsafePartial
@@ -155,13 +161,19 @@ uploadButton props = R.createElement uploadButtonCpt props []
 uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
   where
-    cpt {dispatch, fileType: (fileType /\ setFileType), id, lang: (lang /\ setLang), mFile: (mFile /\ setMFile), nodeType} _ = do
-        pure $ H.button { className: "btn btn-primary"
-                        , "type" : "button"
-                        , disabled
-                        , style    : { width: "100%" }
-                        , on: {click: onClick}
-                        } [ H.text "Upload" ]
+    cpt { dispatch
+        , fileType: (fileType /\ setFileType)
+        , id
+        , lang: (lang /\ setLang)
+        , mFile: (mFile /\ setMFile)
+        , nodeType
+        } _ = pure
+            $ H.button { className: "btn btn-primary"
+                       , "type" : "button"
+                       , disabled
+                       , style    : { width: "100%" }
+                       , on: {click: onClick}
+                       } [ H.text "Upload" ]
       where
         disabled = case mFile of
           Nothing -> "1"
@@ -191,19 +203,24 @@ fileTypeView p = R.createElement fileTypeViewCpt p []
 fileTypeViewCpt :: R.Component FileTypeProps
 fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
   where
-    cpt {dispatch, droppedFile: (Just (DroppedFile {contents, fileType}) /\ setDroppedFile), isDragOver: (_ /\ setIsDragOver), nodeType} _ = do
-      pure $ H.div tooltipProps $
-        [ H.div {className: "panel panel-default"}
-          [ panelHeading
-          , panelBody
-          , panelFooter
-          ]
-        ]
+    cpt { dispatch
+        , droppedFile: Just (DroppedFile {contents, fileType}) /\ setDroppedFile
+        , isDragOver: (_ /\ setIsDragOver)
+        , nodeType
+        } _ = pure
+            $ H.div tooltipProps [ H.div { className: "panel panel-default"}
+                                         [ panelHeading
+                                         , panelBody
+                                         , panelFooter
+                                         ]
+                                 ]
       where
         tooltipProps = { className: ""
-                       , id: "file-type-tooltip"
-                       , title: "Choose file type"
-                       , data: {toggle: "tooltip", placement: "right"}
+                       , id       : "file-type-tooltip"
+                       , title    : "Choose file type"
+                       , data     : { toggle: "tooltip"
+                                    , placement: "right"
+                                    }
                        }
         panelHeading =
           H.div {className: "panel-heading"}
@@ -255,6 +272,14 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
     cpt {droppedFile: (Nothing /\ _)} _ = do
       pure $ H.div {} []
 
+-- | UTils
+readFileType :: String -> Maybe FileType
+readFileType "CSV"       = Just CSV
+readFileType "CSV_HAL"   = Just CSV_HAL
+readFileType "PresseRIS" = Just PresseRIS
+readFileType "WOS"       = Just WOS
+readFileType _           = Nothing
+
 
 newtype FileUploadQuery = FileUploadQuery {
     fileType :: FileType
@@ -287,6 +312,8 @@ uploadFile session nodeType id fileType {mName, contents: UploadFileContents con
       , Tuple "_wf_name"      mName
       ]
 
+------------------------------------------------------------------------
+
 uploadTermListView :: Record Props -> R.Element
 uploadTermListView props = R.createElement uploadTermListViewCpt props []
 
@@ -306,7 +333,9 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
       , H.div {} [ uploadTermButton { dispatch, id, mFile, nodeType } ]
       ]
 
-    onChangeContents :: forall e. R.State (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
+    onChangeContents :: forall e. R.State (Maybe UploadFile)
+                     -> E.SyntheticEvent_ e
+                     -> Effect Unit
     onChangeContents (mFile /\ setMFile) e = do
       let mF = R2.inputFileNameWithBlob 0 e
       E.preventDefault  e
@@ -316,7 +345,9 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
         Just {blob, name} -> void $ launchAff do
           contents <- readAsText blob
           liftEffect $ do
-            setMFile $ const $ Just $ {contents: UploadFileContents contents, name}
+            setMFile $ const $ Just $ { contents: UploadFileContents contents
+                                      , name
+                                      }
 
 
 type UploadTermButtonProps =
@@ -337,7 +368,7 @@ uploadTermButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadTermButton" cpt
       where
         disabled = case mFile of
           Nothing -> "1"
-          Just _ -> ""
+          Just _  -> ""
 
         onClick e = do
           let {name, contents} = unsafePartial $ fromJust mFile
@@ -345,15 +376,6 @@ uploadTermButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadTermButton" cpt
             _ <- dispatch $ UploadFile nodeType CSV (Just name) contents
             liftEffect $ do
               setMFile $ const $ Nothing
-
-
--- | UTils
-readFileType :: String -> Maybe FileType
-readFileType "CSV"       = Just CSV
-readFileType "CSV_HAL"   = Just CSV_HAL
-readFileType "PresseRIS" = Just PresseRIS
-readFileType "WOS"       = Just WOS
-readFileType _           = Nothing
 
 
 

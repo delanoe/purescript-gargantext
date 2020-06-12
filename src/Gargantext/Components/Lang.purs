@@ -23,6 +23,8 @@ instance showLang :: Show Lang where
 
 derive instance eqLang :: Eq Lang
 
+-- instance readLang :: Read Lang where
+
 readLang :: String -> Maybe Lang
 readLang "FR"  = Just FR
 readLang "EN"  = Just EN

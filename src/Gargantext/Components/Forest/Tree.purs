@@ -40,8 +40,8 @@ type CommonProps =
   )
 
 ------------------------------------------------------------------------
-type Props = ( root        :: ID
-             , asyncTasks  :: R.State GAT.Storage
+type Props = ( root       :: ID
+             , asyncTasks :: R.State GAT.Storage
              | CommonProps
              )
 
@@ -58,16 +58,15 @@ treeView props = R.createElement treeViewCpt props []
             , openNodes
             , reload
             , asyncTasks
-            } _children = do
-
-          pure $ treeLoadView { root
-                              , mCurrentRoute
-                              , session
-                              , frontends
-                              , openNodes
-                              , reload
-                              , asyncTasks
-                              }
+            } _children = pure
+                        $ treeLoadView { root
+                                       , mCurrentRoute
+                                       , session
+                                       , frontends
+                                       , openNodes
+                                       , reload
+                                       , asyncTasks
+                                       }
 
 treeLoadView :: Record Props -> R.Element
 treeLoadView p = R.createElement treeLoadViewCpt p []
@@ -95,9 +94,9 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
                                             }
           useLoader { root, counter: fst reload } fetch paint
 
-type TreeViewProps = ( asyncTasks    :: R.State GAT.Storage
-                     , tree          :: FTree
-                     , tasks         :: Record Tasks
+type TreeViewProps = ( asyncTasks :: R.State GAT.Storage
+                     , tree       :: FTree
+                     , tasks      :: Record Tasks
                      | CommonProps
                      )
 
@@ -130,8 +129,8 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
 ------------------------------------------------------------------------
 type ToHtmlProps =
   ( asyncTasks :: R.State GAT.Storage
-  , tasks :: Record Tasks
-  , tree :: FTree
+  , tasks      :: Record Tasks
+  , tree       :: FTree
   | CommonProps
   )
 
@@ -183,7 +182,9 @@ toHtml p@{ asyncTasks
               <> childNodes (Record.merge commonProps
                                           { asyncTasks
                                           , children: ary
-                                          , folderOpen })
+                                          , folderOpen
+                                          }
+                            )
             )
           ]
 

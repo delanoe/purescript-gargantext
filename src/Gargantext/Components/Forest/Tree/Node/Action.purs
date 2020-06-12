@@ -49,8 +49,6 @@ icon RefreshTree          = glyphiconNodeAction Refresh
 icon (ShareNode _)        = glyphiconNodeAction Share
 -- icon _             = "hand-o-right"
 
-
-
 text :: Action -> String
 text  DeleteNode          = "Delete !"
 text  RefreshTree         = "Refresh Tree !"

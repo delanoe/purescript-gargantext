@@ -2,8 +2,6 @@ module Gargantext.Components.GraphExplorer.Sidebar
   (Props, sidebar)
   where
 
-import Prelude
-
 import Control.Parallel (parTraverse)
 import Data.Array (head, last)
 import Data.Int (fromString)
@@ -16,22 +14,20 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Data.Array (mapMaybe)
-import Gargantext.Ends (Frontends, url)
+import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
-import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
-import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Partial.Unsafe (unsafePartial)
+import Gargantext.Prelude
+import Reactix as R
+import Reactix.DOM.HTML as RH
 
 type Props =
   ( frontends :: Frontends
