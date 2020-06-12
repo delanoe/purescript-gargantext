@@ -94,7 +94,10 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
                                                 , barType: Pie
                                                 , corpusId: id
                                                 , onFinish: const $ onTaskFinish t
-                                                , session }) tasks)
+                                                , session 
+                                                }
+                        ) tasks
+                   )
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType
@@ -143,7 +146,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
                        $ Just
                        $ DroppedFile { contents: (UploadFileContents contents)
                                      , fileType: Just CSV
-                                     , lang: Just EN
+                                     , lang    : Just EN
                                      }
     onDragOverHandler (_ /\ setIsDragOver) e = do
       -- prevent redirection when file is dropped
@@ -227,12 +230,13 @@ nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
                               , nodeId: corpusId
                               , nodeType: GT.TabNgramType GT.CTabTerms
                               , session
-                              , triggerRefresh: triggerRefresh refreshTree }
+                              , triggerRefresh: triggerRefresh refreshTree
+                              }
     cpt _ _ = do
       pure $ H.div {} []
 
     graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
-    triggerRefresh refreshTree = refreshTree
+    triggerRefresh refreshTree    = refreshTree
 
 
 -- END nodeActions
@@ -363,9 +367,15 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
           H.div {className: "panel-body flex-space-between"}
                 [ H.p { "style": {"margin":"10px"}} []
                 , H.div { className: "flex-center"} 
-                        [buttonClick {action: doc, state: nodePopupState}]
+                        [ buttonClick { action: doc
+                                      , state: nodePopupState
+                                      }
+                        ]
                 , H.div {className: "flex-center"}
-                        $ map (\t -> buttonClick {action: t, state: nodePopupState}) buttons
+                        $ map (\t -> buttonClick { action: t
+                                                 , state : nodePopupState
+                                                 }
+                              ) buttons
                 ]
           where
             SettingsBox {edit, doc, buttons} = settingsBox nodeType

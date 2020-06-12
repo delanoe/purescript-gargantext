@@ -40,8 +40,8 @@ type CommonProps =
   )
 
 ------------------------------------------------------------------------
-type Props = ( root          :: ID
-             , asyncTasks    :: R.State GAT.Storage
+type Props = ( root        :: ID
+             , asyncTasks  :: R.State GAT.Storage
              | CommonProps
              )
 
@@ -129,8 +129,7 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
 
 ------------------------------------------------------------------------
 type ToHtmlProps =
-  (
-    asyncTasks :: R.State GAT.Storage
+  ( asyncTasks :: R.State GAT.Storage
   , tasks :: Record Tasks
   , tree :: FTree
   | CommonProps
@@ -191,14 +190,14 @@ toHtml p@{ asyncTasks
 
 type ChildNodesProps =
   ( asyncTasks :: R.State GAT.Storage
-  , children :: Array FTree
+  , children   :: Array FTree
   , folderOpen :: R.State Boolean
   | CommonProps
   )
 
 childNodes :: Record ChildNodesProps -> Array R.Element
-childNodes { children: [] } = []
-childNodes { folderOpen: (false /\ _) } = []
+childNodes { children: []                       } = []
+childNodes { folderOpen: (false /\ _)           } = []
 childNodes props@{ asyncTasks, children, reload } =
   map (\ctree@(NTree (LNode {id}) _) ->
         toHtml (Record.merge commonProps { asyncTasks
@@ -230,11 +229,9 @@ performAction DeleteNode p@{ openNodes: (_ /\ setOpenNodes)
                            , tree: (NTree (LNode {id}) _)
                            } =
   do
-    void $ deleteNode session id
-    liftEffect do
-      setOpenNodes (Set.delete (mkNodeId session id))
+    void       $ deleteNode session id
+    liftEffect $ setOpenNodes (Set.delete (mkNodeId session id))
     performAction RefreshTree p
-
 
 -------
 performAction (DoSearch task) { reload: (_ /\ setReload)
@@ -260,9 +257,9 @@ performAction (UpdateNode task) { reload: (_ /\ setReload)
 
 -------
 performAction (RenameNode name) p@{ reload: (_ /\ setReload)
-                                , session
-                                , tree: (NTree (LNode {id}) _)
-                                } =
+                                  , session
+                                  , tree: (NTree (LNode {id}) _)
+                                  } =
   do
     void $ rename session id $ RenameValue {text:name}
     performAction RefreshTree p
@@ -285,8 +282,7 @@ performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
                                         } =
   do
     task <- addNode session id $ AddNodeValue {name, nodeType}
-    liftEffect do
-      setOpenNodes (Set.insert (mkNodeId session id))
+    liftEffect $ setOpenNodes (Set.insert (mkNodeId session id))
     performAction RefreshTree p
 
 -------
