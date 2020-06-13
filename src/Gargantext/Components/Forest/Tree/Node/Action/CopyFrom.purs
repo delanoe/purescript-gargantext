@@ -15,8 +15,9 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 
-loadNode :: Session -> GT.ID -> Aff FTree
-loadNode session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
+------------------------------------------------------------------------
+getNodeTree :: Session -> GT.ID -> Aff FTree
+getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 
 copyFromCorpusView :: Record Props -> R.Element
 copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []
@@ -24,10 +25,22 @@ copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []
 copyFromCorpusViewCpt :: R.Component Props
 copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
   where
-    cpt {dispatch, id, nodeType, session} _ = do
-      useLoader session loadCorporaTree $
-        \tree ->
-          copyFromCorpusViewLoaded {dispatch, id, nodeType, session, tree}
+    cpt { dispatch
+        , id
+        , nodeType
+        , session
+        } _ =
+      do
+        useLoader session loadCorporaTree $
+          \tree ->
+            copyFromCorpusViewLoaded { dispatch
+                                     , id
+                                     , nodeType
+                                     , session
+                                     , tree
+                                     }
+
+------------------------------------------------------------------------
 
 type CorpusTreeProps =
   ( tree :: FTree
@@ -41,9 +54,10 @@ copyFromCorpusViewLoadedCpt :: R.Component CorpusTreeProps
 copyFromCorpusViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusViewLoadedCpt" cpt
   where
     cpt p@{dispatch, id, nodeType, session, tree} _ = do
-      pure $ H.div { className: "copy-from-corpus" } [
-        H.div { className: "tree" } [copyFromCorpusTreeView p]
-      ]
+      pure $ H.div { className: "copy-from-corpus" }
+                   [ H.div { className: "tree" }
+                           [copyFromCorpusTreeView p]
+                   ]
 
 copyFromCorpusTreeView :: Record CorpusTreeProps -> R.Element
 copyFromCorpusTreeView props = R.createElement copyFromCorpusTreeViewCpt props []
@@ -53,11 +67,13 @@ copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeVi
   where
     cpt p@{id, tree: NTree (LNode { id: sourceId, name, nodeType }) ary} _ = do
       pure $ {- H.div {} [ H.h5 { className: GT.fldr nodeType true} []
-      , -} H.div { className: "node" } ([ H.span { className: "name " <> clickable
-                                                              , on: { click: onClick }
-                                                              } [ H.text name ]
+      , -} H.div { className: "node" } 
+                 ( [ H.span { className: "name " <> clickable
+                            , on: { click: onClick }
+                            } [ H.text name ]
 
-                                                     ] <> children)
+                   ] <> children
+                 )
                       -- ]
       where
         children = map (\c -> copyFromCorpusTreeView (p { tree = c })) ary
@@ -77,10 +93,12 @@ loadCorporaTree session = getCorporaTree session treeId
 getCorporaTree :: Session -> Int -> Aff FTree
 getCorporaTree session treeId = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
   where
-    nodeTypes = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" [ GT.FolderPrivate
-                                                             , GT.FolderShared
-                                                             , GT.Team
-                                                             , GT.FolderPublic
-                                                             , GT.Folder
-                                                             , GT.Corpus
-                                                             , GT.NodeList]
+    nodeTypes     = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" typesList
+    typesList = [ GT.FolderPrivate
+                , GT.FolderShared
+                , GT.Team
+                , GT.FolderPublic
+                , GT.Folder
+                , GT.Corpus
+                , GT.NodeList
+                ]

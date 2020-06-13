@@ -9,8 +9,7 @@ import Gargantext.Prelude (class Eq, class Show, class Read, Unit)
 import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), glyphiconNodeAction)
-
-import Data.Maybe (Maybe(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileContents)
 
 type Props =
   ( dispatch :: Action -> Aff Unit
@@ -21,65 +20,43 @@ type Props =
 
 data Action = AddNode     String GT.NodeType
             | DeleteNode
-            | UpdateNode  GT.AsyncTaskWithType
             | RenameNode  String
+            | UpdateNode  GT.AsyncTaskWithType
+            | ShareNode   String
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | RefreshTree
-            | ShareNode   String
 
 
 instance showShow :: Show Action where
-  show  DeleteNode          = "DeleteNode"
-  show  RefreshTree         = "RefreshTree"
-  show (ShareNode   _      )= "ShareNode"
-  show (UpdateNode  _      )= "UpdateNode"
-  show (RenameNode  _      )= "RenameNode"
-  show (DoSearch    _      )= "SearchQuery"
   show (AddNode     _ _    )= "AddNode"
+  show  DeleteNode          = "DeleteNode"
+  show (RenameNode  _      )= "RenameNode"
+  show (UpdateNode  _      )= "UpdateNode"
+  show (ShareNode   _      )= "ShareNode"
+  show (DoSearch    _      )= "SearchQuery"
   show (UploadFile  _ _ _ _)= "UploadFile"
+  show  RefreshTree         = "RefreshTree"
 
 -----------------------------------------------------------------------
 icon :: Action -> String
 icon (AddNode _ _)        = glyphiconNodeAction (Add [])
-icon DeleteNode           = glyphiconNodeAction Delete
-icon (UpdateNode _)       = glyphiconNodeAction Refresh
+icon  DeleteNode          = glyphiconNodeAction Delete
 icon (RenameNode _)       = glyphiconNodeAction Config
+icon (UpdateNode _)       = glyphiconNodeAction Refresh
+icon (ShareNode _)        = glyphiconNodeAction Share
 icon (DoSearch   _)       = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
-icon RefreshTree          = glyphiconNodeAction Refresh
-icon (ShareNode _)        = glyphiconNodeAction Share
+icon  RefreshTree         = glyphiconNodeAction Refresh
 -- icon _             = "hand-o-right"
 
 text :: Action -> String
-text  DeleteNode          = "Delete !"
-text  RefreshTree         = "Refresh Tree !"
 text (AddNode     _ _    )= "Add !"
-text (UpdateNode  _      )= "Update !"
+text  DeleteNode          = "Delete !"
 text (RenameNode  _      )= "Rename !"
-text (DoSearch    _      )= "Launch search !"
+text (UpdateNode  _      )= "Update !"
 text (ShareNode   _      )= "Share !"
+text (DoSearch    _      )= "Launch search !"
 text (UploadFile  _ _ _ _)= "Upload File !"
+text  RefreshTree         = "Refresh Tree !"
 -----------------------------------------------------------------------
-
--- TODO move code below elsewhere
-data FileType = CSV | CSV_HAL | WOS | PresseRIS
-
-derive instance genericFileType :: Generic FileType _
-
-instance eqFileType :: Eq FileType where
-  eq = genericEq
-
-instance showFileType :: Show FileType where
-  show = genericShow
-
-instance readFileType :: Read FileType where
-  read :: String -> Maybe FileType
-  read "CSV"       = Just CSV
-  read "CSV_HAL"   = Just CSV_HAL
-  read "PresseRIS" = Just PresseRIS
-  read "WOS"       = Just WOS
-  read _           = Nothing
-
-
-newtype UploadFileContents = UploadFileContents String

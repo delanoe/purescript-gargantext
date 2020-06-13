@@ -11,7 +11,7 @@ import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
-import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (loadNode)
+import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (getNodeTree)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Forest.Tree.Node.Action.Share (ShareValue(..), share)
@@ -82,7 +82,7 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
             , openNodes
             , reload
             } _children = do
-          let fetch _ = loadNode session root
+          let fetch _ = getNodeTree session root
           let paint loaded = loadedTreeView { asyncTasks
                                             , frontends
                                             , mCurrentRoute

@@ -23,7 +23,7 @@ actionSearch :: Session
             -> Maybe NodePopup
             -> R.Hooks R.Element
 actionSearch session id dispatch nodePopup = do
-  search        <- R.useState' $ defaultSearch { node_id = id }
+  search <- R.useState' $ defaultSearch { node_id = id }
   pure $ R.fragment [ H.p {"style": {"margin" :"10px"}}
                           [ H.text $ "Search and create a private "
                                   <> "corpus with the search query as corpus name." ]
