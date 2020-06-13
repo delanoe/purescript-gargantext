@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Tools.FTree where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Newtype (class Newtype)
-import Gargantext.Sessions (Session, get, put, post, delete)
 import Gargantext.Types  as GT
 import Prelude hiding (div)
 

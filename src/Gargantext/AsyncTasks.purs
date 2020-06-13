@@ -1,6 +1,6 @@
 module Gargantext.AsyncTasks where
 
-import Data.Argonaut (decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:))
+import Data.Argonaut (decodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))

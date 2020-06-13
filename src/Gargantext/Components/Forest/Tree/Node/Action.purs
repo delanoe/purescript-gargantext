@@ -1,11 +1,8 @@
 module Gargantext.Components.Forest.Tree.Node.Action where
 
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
-import Gargantext.Prelude (class Eq, class Show, class Read, Unit)
+import Gargantext.Prelude (class Show, Unit)
 import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
 import Gargantext.Components.Forest.Tree.Node (NodeAction(..), glyphiconNodeAction)

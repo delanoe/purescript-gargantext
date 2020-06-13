@@ -34,7 +34,7 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, post, delete, put)
-import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..), AffTableResult, NodeID)
+import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..), AffTableResult)
 ------------------------------------------------------------------------
 
 data Category = Trash | UnRead | Checked | Topic | Favorite

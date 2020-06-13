@@ -1,6 +1,5 @@
 module Gargantext.Types where
 
-import Prelude
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array as A
 import Data.Either (Either(..))
@@ -11,9 +10,10 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Effect.Aff (Aff)
+import Gargantext.Prelude (class Read, read)
+import Prelude
 import Prim.Row (class Union)
 import URI.Query (Query)
-import Gargantext.Prelude (class Read, read)
 
 type ID     = Int
 type Name   = String
@@ -508,25 +508,28 @@ data AsyncTaskStatus = Running
                      | Finished
                      | Killed
 derive instance genericAsyncTaskStatus :: Generic AsyncTaskStatus _
+
 instance showAsyncTaskStatus :: Show AsyncTaskStatus where
   show = genericShow
 derive instance eqAsyncTaskStatus :: Eq AsyncTaskStatus
+
 instance encodeJsonAsyncTaskStatus :: EncodeJson AsyncTaskStatus where
   encodeJson s = encodeJson $ show s
+
 instance decodeJsonAsyncTaskStatus :: DecodeJson AsyncTaskStatus where
   decodeJson json = do
     obj <- decodeJson json
-    pure $ readAsyncTaskStatus obj
+    pure $ fromMaybe Running $ read obj
 
-readAsyncTaskStatus :: String -> AsyncTaskStatus
-readAsyncTaskStatus "IsFailure"  = Failed
-readAsyncTaskStatus "IsFinished" = Finished
-readAsyncTaskStatus "IsKilled"   = Killed
-readAsyncTaskStatus "IsPending"  = Pending
-readAsyncTaskStatus "IsReceived" = Received
-readAsyncTaskStatus "IsRunning"  = Running
-readAsyncTaskStatus "IsStarted"  = Started
-readAsyncTaskStatus _ = Running
+instance readAsyncTaskStatus :: Read AsyncTaskStatus where
+  read "IsFailure"  = Just Failed
+  read "IsFinished" = Just Finished
+  read "IsKilled"   = Just Killed
+  read "IsPending"  = Just Pending
+  read "IsReceived" = Just Received
+  read "IsRunning"  = Just Running
+  read "IsStarted"  = Just Started
+  read _            = Nothing
 
 newtype AsyncTask =
   AsyncTask { id     :: AsyncTaskID
