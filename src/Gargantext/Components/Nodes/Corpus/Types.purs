@@ -1,19 +1,14 @@
 module Gargantext.Components.Nodes.Corpus.Types where
 
-import Data.Maybe (Maybe(..))
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (:=), (~>), jsonEmptyObject)
+import Data.List as List
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
-import Data.List ((:))
-import Data.List as List
-import Data.Maybe (Maybe)
-
-import Gargantext.Prelude
-
+import Data.Maybe (Maybe(..))
 import Gargantext.Components.Node (NodePoly)
-import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
+import Gargantext.Prelude
 
 type Author = String
 type Description = String
@@ -25,47 +20,47 @@ type MarkdownText = String
 type Hash = String
 
 newtype Hyperdata =
-  Hyperdata
-  {
-    fields :: List.List FTField
-  }
+  Hyperdata { fields :: List.List FTField }
+
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj <- decodeJson json
     fields <- obj .: "fields"
     pure $ Hyperdata {fields}
+
 instance encodeHyperdata :: EncodeJson Hyperdata where
   encodeJson (Hyperdata {fields}) = do
        "fields"  := fields
     ~> jsonEmptyObject
 
-newtype Field a = Field {
-    name :: String
-  , typ  :: a
-  }
+newtype Field a =
+  Field { name :: String
+        , typ  :: a
+        }
+
 type FTField = Field FieldType
+
 derive instance genericFTField :: Generic (Field FieldType) _
+
 instance eqFTField :: Eq (Field FieldType) where
   eq = genericEq
+
 instance showFTField :: Show (Field FieldType) where
   show = genericShow
 
 data FieldType =
-    Haskell {
-    haskell          :: HaskellCode
-  , tag              :: Tag
-  }
-  | JSON {
-    authors        :: Author
-  , desc           :: Description
-  , query          :: Query
-  , tag            :: Tag
-  , title          :: Title
-  }
-  | Markdown {
-    tag              :: Tag
-  , text             :: MarkdownText
-  }
+    Haskell { haskell :: HaskellCode
+            , tag     :: Tag
+            }
+  | JSON { authors :: Author
+         , desc    :: Description
+         , query   :: Query
+         , tag     :: Tag
+         , title   :: Title
+         }
+  | Markdown { tag  :: Tag
+             , text :: MarkdownText
+             }
 
 
 isJSON :: FTField -> Boolean
@@ -90,10 +85,13 @@ getCorpusInfo as = case List.head (List.filter isJSON as) of
                                                  }
 
 derive instance genericFieldType :: Generic FieldType _
+
 instance eqFieldType :: Eq FieldType where
   eq = genericEq
+
 instance showFieldType :: Show FieldType where
   show = genericShow
+
 instance decodeFTField :: DecodeJson (Field FieldType) where
   decodeJson json = do
     obj <- decodeJson json
@@ -118,6 +116,7 @@ instance decodeFTField :: DecodeJson (Field FieldType) where
         pure $ Markdown {tag, text}
       _ -> Left $ "Unsupported 'type' " <> type_
     pure $ Field {name, typ}
+
 instance encodeFTField :: EncodeJson (Field FieldType) where
   encodeJson (Field {name, typ}) =
        "data"  := typ
@@ -128,6 +127,7 @@ instance encodeFTField :: EncodeJson (Field FieldType) where
       typ' (Haskell _)  = "Haskell"
       typ' (JSON _)     = "JSON"
       typ' (Markdown _) = "Markdown"
+
 instance encodeFieldType :: EncodeJson FieldType where
   encodeJson (Haskell {haskell}) =
        "haskell" := haskell
@@ -146,42 +146,51 @@ instance encodeFieldType :: EncodeJson FieldType where
     ~> jsonEmptyObject
 
 defaultHaskell :: FieldType
-defaultHaskell = Haskell defaultHaskell'
-defaultHaskell' = {
-    haskell: ""
-  , tag: "HaskellField"
-  }
+defaultHaskell  = Haskell defaultHaskell'
+
+defaultHaskell' :: { haskell :: String, tag :: String }
+defaultHaskell' = { haskell: ""
+                  , tag    : "HaskellField"
+                  }
 
 defaultJSON :: FieldType
 defaultJSON = JSON defaultJSON'
-defaultJSON' = {
-    authors: ""
-  , desc: ""
-  , query: ""
-  , tag: "JSONField"
-  , title: ""
-}
+
+
+defaultJSON' :: { authors :: String
+                , desc :: String
+                , query :: String
+                , tag :: String
+                , title :: String
+                }
+defaultJSON' = { authors: ""
+               , desc: ""
+               , query: ""
+               , tag: "JSONField"
+               , title: ""
+               }
 
 defaultMarkdown :: FieldType
 defaultMarkdown = Markdown defaultMarkdown'
-defaultMarkdown' = {
-    tag: "MarkdownField"
-  , text: "# New file"
-  }
+defaultMarkdown' :: { tag  :: String
+                    , text :: String
+                    }
+defaultMarkdown' = { tag: "MarkdownField"
+                   , text: "# New file"
+                   }
 
 defaultField :: FTField
-defaultField = Field {
-    name: "New file"
-  , typ: defaultMarkdown
-  }
+defaultField = Field { name: "New file"
+                    , typ: defaultMarkdown
+                    }
 
 newtype CorpusInfo =
-  CorpusInfo
-  { title        :: String
-  , authors      :: String
-  , desc         :: String
-  , query        :: String
-  , totalRecords :: Int }
+  CorpusInfo { title        :: String
+             , authors      :: String
+             , desc         :: String
+             , query        :: String
+             , totalRecords :: Int
+             }
 
 instance decodeCorpusInfo :: DecodeJson CorpusInfo where
   decodeJson json = do

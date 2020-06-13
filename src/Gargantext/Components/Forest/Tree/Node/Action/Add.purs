@@ -9,12 +9,12 @@ import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton)
+import Gargantext.Prelude (Unit, bind, const, map, pure, show, ($), (<>), (>), (<<<), read)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types  as GT
-import Gargantext.Types (NodeType(..), readNodeType)
+import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, map, pure, show, ($), (<>), (>), (<<<))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -65,15 +65,14 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
       nodeName@(name' /\ _) <- R.useState' "Name"
       nodeType'@(nt /\ _)  <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
       pure $ H.div {}
-          [ panelBody   readNodeType nodeName nodeType'
+          [ panelBody nodeName nodeType'
           , submitButton (AddNode name' nt) dispatch -- panelFooter nodeName nodeType'
           ]
       where
-        panelBody :: (String -> NodeType)
-                  -> R.State String
+        panelBody :: R.State String
                   -> R.State NodeType
                   -> R.Element
-        panelBody readIt (_ /\ setNodeName) (nt /\ setNodeType) =
+        panelBody (_ /\ setNodeName) (nt /\ setNodeType) =
           H.div {className: "panel-body"}
           [ H.div {className: "row"}
             [ H.div {className: "col-md-10"}
@@ -84,11 +83,14 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                 SettingsBox {edit} = settingsBox nt
                 maybeEdit = [ if edit then
                                 H.div {className: "form-group"}
-                                   [ H.input { type: "text"
-                                             , placeholder: "Node name"
+                                   [ H.input { type        : "text"
+                                             , placeholder : "Node name"
                                              , defaultValue: "Write Name here"
-                                             , className: "form-control"
-                                             , onInput: mkEffectFn1 $ setNodeName <<< const <<< R2.unsafeEventValue
+                                             , className   : "form-control"
+                                             , onInput     : mkEffectFn1
+                                                           $ setNodeName
+                                                           <<< const
+                                                           <<< R2.unsafeEventValue
                                             }
                                    ]
                               else
@@ -99,7 +101,12 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                                   R.fragment [
                                     H.div {className: "form-group"} $ [
                                        R2.select { className: "form-control"
-                                                 , onChange: mkEffectFn1 $ setNodeType <<< const <<< readIt <<< R2.unsafeEventValue
+                                                 , onChange : mkEffectFn1
+                                                            $ setNodeType
+                                                            <<< const
+                                                            <<< fromMaybe Error
+                                                            <<< read
+                                                            <<< R2.unsafeEventValue
                                                  }
                                        (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
                                          ]

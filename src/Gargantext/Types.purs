@@ -9,11 +9,11 @@ import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import URI.Query (Query)
-import Gargantext.Prelude (class Read)
+import Gargantext.Prelude (class Read, read)
 
 type ID     = Int
 type Name   = String
@@ -178,30 +178,28 @@ instance showNodeType :: Show NodeType where
   show NodeList      = "NodeList"
   show Texts         = "NodeTexts"
 
-readNodeType :: String -> NodeType
-readNodeType "NodeUser"      = NodeUser
-
-readNodeType "NodeFolder"    = Folder
-readNodeType "NodeFolderPrivate" = FolderPrivate
-readNodeType "NodeFolderShared"  = FolderShared
-readNodeType "NodeFolderPublic"  = FolderPublic
-
-readNodeType "NodeAnnuaire"  = Annuaire
-readNodeType "NodeDashboard" = Dashboard
-readNodeType "Document"      = Url_Document
-readNodeType "NodeGraph"     = Graph
-readNodeType "NodePhylo"     = Phylo
-readNodeType "Individu"      = Individu
-readNodeType "Node"          = Node
-readNodeType "Nodes"         = Nodes
-readNodeType "NodeCorpus"    = Corpus
-readNodeType "NodeContact"   = NodeContact
-readNodeType "Tree"          = Tree
-readNodeType "NodeTeam"      = Team
-readNodeType "NodeList"      = NodeList
-readNodeType "NodeTexts"     = Texts
-readNodeType "Annuaire"      = Annuaire
-readNodeType _               = Error
+instance readNodeType :: Read NodeType where
+  read "NodeUser"          = Just NodeUser
+  read "NodeFolder"        = Just Folder
+  read "NodeFolderPrivate" = Just FolderPrivate
+  read "NodeFolderShared"  = Just FolderShared
+  read "NodeFolderPublic"  = Just FolderPublic
+  read "NodeAnnuaire"  = Just Annuaire
+  read "NodeDashboard" = Just Dashboard
+  read "Document"      = Just Url_Document
+  read "NodeGraph"     = Just Graph
+  read "NodePhylo"     = Just Phylo
+  read "Individu"      = Just Individu
+  read "Node"          = Just Node
+  read "Nodes"         = Just Nodes
+  read "NodeCorpus"    = Just Corpus
+  read "NodeContact"   = Just NodeContact
+  read "Tree"          = Just Tree
+  read "NodeTeam"      = Just Team
+  read "NodeList"      = Just NodeList
+  read "NodeTexts"     = Just Texts
+  read "Annuaire"      = Just Annuaire
+  read _               = Nothing
 
 
 fldr :: NodeType -> Boolean -> String
@@ -256,7 +254,7 @@ instance eqNodeType :: Eq NodeType where
 instance decodeJsonNodeType :: DecodeJson NodeType where
   decodeJson json = do
     obj <- decodeJson json
-    pure $ readNodeType obj
+    pure $ fromMaybe Error $ read obj
 
 instance encodeJsonNodeType :: EncodeJson NodeType where
   encodeJson nodeType = encodeJson $ show nodeType

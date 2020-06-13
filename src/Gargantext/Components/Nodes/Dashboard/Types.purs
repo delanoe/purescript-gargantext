@@ -1,13 +1,10 @@
 module Gargantext.Components.Nodes.Dashboard.Types where
 
-import Data.Maybe (Maybe(..))
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-
-import Gargantext.Prelude
-
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (NodeType(..))
