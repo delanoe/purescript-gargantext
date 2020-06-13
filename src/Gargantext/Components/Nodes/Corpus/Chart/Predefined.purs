@@ -2,19 +2,17 @@ module Gargantext.Components.Nodes.Corpus.Chart.Predefined where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe, fromMaybe)
-import Reactix as R
-import Gargantext.Prelude
-
+import Data.Maybe (Maybe(..), fromMaybe)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
+import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID, Mode(..), TabSubType(..), TabType(..), modeTabType)
+import Reactix as R
 
 
 data PredefinedChart =
@@ -23,24 +21,29 @@ data PredefinedChart =
   | CInstitutesTree
   | CTermsMetrics
 derive instance genericPredefinedChart :: Generic PredefinedChart _
+
 instance showPredefinedChart :: Show PredefinedChart where
   show = genericShow
+
 derive instance eqPredefinedChart :: Eq PredefinedChart
+
 instance ordPredefinedChart :: Ord PredefinedChart where
   compare = genericCompare
+
 instance decodePredefinedChart :: DecodeJson PredefinedChart where
   decodeJson json = do
     obj <- decodeJson json
-    pure $ readChart' obj
+    pure $ fromMaybe CDocsHistogram $ read obj
+
 instance encodePredefinedChart :: EncodeJson PredefinedChart where
   encodeJson c = encodeJson $ show c
 
-readChart' :: String -> PredefinedChart
-readChart' "CDocsHistogram" = CDocsHistogram
-readChart' "CAuthorsPie" = CAuthorsPie
-readChart' "CInstitutesTree" = CInstitutesTree
-readChart' "CTermsMetrics" = CTermsMetrics
-readChart' _ = CDocsHistogram
+instance readPredefinedChart :: Read PredefinedChart where
+  read "CDocsHistogram"  = Just CDocsHistogram
+  read "CAuthorsPie"     = Just CAuthorsPie
+  read "CInstitutesTree" = Just CInstitutesTree
+  read "CTermsMetrics"   = Just CTermsMetrics
+  read _                 = Nothing
 
 
 allPredefinedCharts :: Array PredefinedChart

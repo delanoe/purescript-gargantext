@@ -122,7 +122,7 @@ renderChartCpt = R.hooksComponent "G.C.N.C.D.renderChart" cpt
       where
         option pc =
           H.option { value: show pc } [ H.text $ show pc ]
-        onSelectChange e = onChange $ P.readChart' value
+        onSelectChange e = onChange $ fromMaybe P.CDocsHistogram $ read value
           where
             value = R2.unsafeEventValue e
         onRemoveClick _ = onRemove unit

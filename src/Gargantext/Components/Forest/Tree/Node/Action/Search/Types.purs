@@ -167,12 +167,12 @@ instance showOrg :: Show Org where
   show (IMT  _)   = "IMT"
   show (Others _) = "Others"
 
-readOrg :: String -> Maybe Org
-readOrg "All_Orgs" = Just $ All_Orgs
-readOrg "CNRS"     = Just $ CNRS   $ Set.fromFoldable []
-readOrg "IMT"      = Just $ IMT    $ Set.fromFoldable []
-readOrg "Others"   = Just $ Others $ Set.fromFoldable []
-readOrg _          = Nothing
+instance readOrg :: Read Org where
+  read "All_Orgs" = Just $ All_Orgs
+  read "CNRS"     = Just $ CNRS   $ Set.fromFoldable []
+  read "IMT"      = Just $ IMT    $ Set.fromFoldable []
+  read "Others"   = Just $ Others $ Set.fromFoldable []
+  read _          = Nothing
 
 derive instance eqOrg :: Eq Org
 
@@ -246,26 +246,26 @@ instance showIMT_org :: Show IMT_org where
   show Telecom_ParisTech   = "Telecom_ParisTech"
   show Telecom_SudParis    = "Telecom_SudParis"
 
-readIMT_org :: String -> Maybe IMT_org
-readIMT_org "All_IMT"             = Just All_IMT
-readIMT_org "ARMINES"             = Just ARMINES
-readIMT_org "Eurecom"             = Just Eurecom
-readIMT_org "IMT_Atlantique"      = Just IMT_Atlantique
-readIMT_org "IMT_Business_School" = Just IMT_Business_School
-readIMT_org "IMT_Lille_Douai"     = Just IMT_Lille_Douai
-readIMT_org "IMT_Mines_ALES"      = Just IMT_Mines_ALES
-readIMT_org "IMT_Mines_Albi"      = Just IMT_Mines_Albi
-readIMT_org "Institut_MinesTelecom_Paris" = Just Institut_MinesTelecom_Paris
-readIMT_org "MINES_ParisTech"     = Just MINES_ParisTech
-readIMT_org "Mines_Douai"         = Just Mines_Douai
-readIMT_org "Mines_Nantes"        = Just Mines_Nantes
-readIMT_org "Mines_SaintEtienne"  = Just Mines_SaintEtienne
-readIMT_org "Telecom_Bretagne"    = Just Telecom_Bretagne
-readIMT_org "Telecom_Ecole_de_Management" = Just Telecom_Ecole_de_Management
-readIMT_org "Telecom_Lille"       = Just Telecom_Lille
-readIMT_org "Telecom_ParisTech"   = Just Telecom_ParisTech
-readIMT_org "Telecom_SudParis"    = Just Telecom_SudParis
-readIMT_org _                     = Nothing
+instance readIMT_org :: Read IMT_org where
+  read "All_IMT"             = Just All_IMT
+  read "ARMINES"             = Just ARMINES
+  read "Eurecom"             = Just Eurecom
+  read "IMT_Atlantique"      = Just IMT_Atlantique
+  read "IMT_Business_School" = Just IMT_Business_School
+  read "IMT_Lille_Douai"     = Just IMT_Lille_Douai
+  read "IMT_Mines_ALES"      = Just IMT_Mines_ALES
+  read "IMT_Mines_Albi"      = Just IMT_Mines_Albi
+  read "Institut_MinesTelecom_Paris" = Just Institut_MinesTelecom_Paris
+  read "MINES_ParisTech"     = Just MINES_ParisTech
+  read "Mines_Douai"         = Just Mines_Douai
+  read "Mines_Nantes"        = Just Mines_Nantes
+  read "Mines_SaintEtienne"  = Just Mines_SaintEtienne
+  read "Telecom_Bretagne"    = Just Telecom_Bretagne
+  read "Telecom_Ecole_de_Management" = Just Telecom_Ecole_de_Management
+  read "Telecom_Lille"       = Just Telecom_Lille
+  read "Telecom_ParisTech"   = Just Telecom_ParisTech
+  read "Telecom_SudParis"    = Just Telecom_SudParis
+  read _                     = Nothing
 
 imtStructId :: IMT_org -> Array StructId
 imtStructId All_IMT           = concat $ map imtStructId allIMTSubOrgs

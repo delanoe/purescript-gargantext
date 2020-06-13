@@ -11,7 +11,7 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, readOrg, datafield2database)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database)
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Prelude (Unit, bind, discard, map, pure, show, ($), (&&), (<), (<$>), (<>), (==), read)
 import Gargantext.Sessions (Session)
@@ -342,7 +342,7 @@ orgInput ({datafield} /\ setSearch) orgs =
       liItem  org = H.option {className : "text-primary center"} [ H.text (show org) ]
       onChange e = do
         let value = R2.unsafeEventValue e
-        setSearch $ _ { datafield = Just $ External $ Just $ HAL $ readOrg value }
+        setSearch $ _ { datafield = Just $ External $ Just $ HAL $ read value }
 
 {-
 filterInput :: R.State String -> R.Element
