@@ -1,14 +1,8 @@
 module Gargantext.Components.NgramsTable.API where
 
-import Gargantext.Prelude
-
-import Data.Maybe (Maybe)
-import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
-
-import Gargantext.Components.NgramsTable.Core as NTC
+import Effect.Aff (Aff)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, get, post)
+import Gargantext.Sessions (Session, post)
 import Gargantext.Types as GT
 
 type UpdateNodeListParams =

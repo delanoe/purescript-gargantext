@@ -23,22 +23,21 @@ import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Unsafe.Coerce (unsafeCoerce)
-
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (Action(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, filterTermSize, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
 import Gargantext.Components.NgramsTable.Components as NTC
+import Gargantext.Components.NgramsTable.Core (Action(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, filterTermSize, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
 import Gargantext.Components.Table as T
+import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, readTermList, readTermSize, termLists, termSizes)
+import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet)
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Unsafe.Coerce (unsafeCoerce)
 
 type State' =
   CoreState
@@ -159,7 +158,7 @@ tableContainerCpt { dispatch
                   [ R2.select { id: "picklistmenu"
                               , className: "form-control custom-select"
                               , defaultValue: (maybe "" show termListFilter)
-                              , on: {change: setTermListFilter <<< readTermList <<< R2.unsafeEventValue}}
+                              , on: {change: setTermListFilter <<< read <<< R2.unsafeEventValue}}
                     (map optps1 termLists)]
                 ]
               , H.div {className: "col-md-2", style: {marginTop : "6px"}}
@@ -167,7 +166,7 @@ tableContainerCpt { dispatch
                   [ R2.select {id: "picktermtype"
                               , className: "form-control custom-select"
                               , defaultValue: (maybe "" show termSizeFilter)
-                              , on: {change: setTermSizeFilter <<< readTermSize <<< R2.unsafeEventValue}}
+                              , on: {change: setTermSizeFilter <<< read <<< R2.unsafeEventValue}}
                     (map optps1 termSizes)]
                 ]
               , H.div { className: "col-md-2", style: { marginTop: "6px" } } [

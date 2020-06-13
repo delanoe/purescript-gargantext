@@ -13,6 +13,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import URI.Query (Query)
+import Gargantext.Prelude (class Read)
 
 type ID     = Int
 type Name   = String
@@ -43,10 +44,11 @@ instance showTermSize :: Show TermSize where
   show MonoTerm  = "MonoTerm"
   show MultiTerm = "MultiTerm"
 
-readTermSize :: String -> Maybe TermSize
-readTermSize "MonoTerm"  = Just MonoTerm
-readTermSize "MultiTerm" = Just MultiTerm
-readTermSize _           = Nothing
+instance readTermSize :: Read TermSize where
+  read :: String -> Maybe TermSize
+  read "MonoTerm"  = Just MonoTerm
+  read "MultiTerm" = Just MultiTerm
+  read _           = Nothing
 
 termSizes :: Array { desc :: String, mval :: Maybe TermSize }
 termSizes = [ { desc: "All types",        mval: Nothing        }
@@ -92,11 +94,12 @@ termListName GraphTerm = "Map List"
 termListName StopTerm = "Stop List"
 termListName CandidateTerm = "Candidate List"
 
-readTermList :: String -> Maybe TermList
-readTermList "GraphTerm"     = Just GraphTerm
-readTermList "StopTerm"      = Just StopTerm
-readTermList "CandidateTerm" = Just CandidateTerm
-readTermList _               = Nothing
+instance readTermList :: Read TermList where
+  read :: String -> Maybe TermList
+  read "GraphTerm"     = Just GraphTerm
+  read "StopTerm"      = Just StopTerm
+  read "CandidateTerm" = Just CandidateTerm
+  read _               = Nothing
 
 termLists :: Array { desc :: String, mval :: Maybe TermList }
 termLists = [ { desc: "All terms",   mval: Nothing      }
