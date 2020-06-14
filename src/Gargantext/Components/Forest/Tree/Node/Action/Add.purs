@@ -1,20 +1,18 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
 import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
-import Data.Array (length, head)
+import Data.Array (head)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, formEdit)
-import Gargantext.Prelude (Unit, bind, const, map, pure, show, ($), (<>), (>), (<<<), read)
+import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, formEdit, formChoiceSafe)
+import Gargantext.Prelude (Unit, bind, pure, show, ($), (<>))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types  as GT
 import Gargantext.Types (NodeType(..))
-import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -80,36 +78,14 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
               ]
             ]
               where
+                maybeChoose = [ formChoiceSafe nodeTypes Error setNodeType ]
+
                 SettingsBox {edit} = settingsBox nt
                 maybeEdit = [ if edit
                                 then formEdit "Node Name" setNodeName
                                 else H.div {} []
                             ]
 
-                maybeChoose = [ if length nodeTypes > 1 then
-                                  R.fragment [
-                                    H.div {className: "form-group"} $ [
-                                       R2.select { className: "form-control"
-                                                 , onChange : mkEffectFn1
-                                                            $ setNodeType
-                                                            <<< const
-                                                            <<< fromMaybe Error
-                                                            <<< read
-                                                            <<< R2.unsafeEventValue
-                                                 }
-                                       (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
-                                         ]
-                                         -- , showConfig nt
-                                    ]
-                                else
-                                H.button { className : "btn btn-primary center"
-                                           , type : "button"
-                                           , onClick : mkEffectFn1 $ \_ -> setNodeType ( const
-                                                                                       $ fromMaybe nt 
-                                                                                       $ head nodeTypes
-                                                                                       )
-                                           } []
-                               ]
 
 
 -- END Create Node

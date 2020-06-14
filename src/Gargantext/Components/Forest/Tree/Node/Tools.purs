@@ -1,5 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Tools where
 
+import Data.Maybe (fromMaybe)
 import Data.String as S
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -8,7 +9,7 @@ import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Types (ID)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>))
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -89,12 +90,7 @@ fragmentPT :: String -> R.Element
 fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
 
 
--- | Edit input
-
-
--- form :: 
--- formEdit :: forall a. String -> R.State a -> R.Element
-
+-- | Form Edit input
 type DefaultText = String
 
 formEdit :: forall previous next
@@ -115,9 +111,54 @@ formEdit defaultValue setter =
               }
      ]
 
--- | Form
+-- | Form Choice input
+
+formChoiceSafe :: forall a b c
+               .  Read  a
+               => Show  a
+               => Array a
+               -> a
+               -> ((b -> a) -> Effect c)
+               -> R.Element
+formChoiceSafe [] _ _ = H.div {} []
+
+formChoiceSafe [n] _defaultNodeType setNodeType =
+  formButton n setNodeType
+
+formChoiceSafe nodeTypes defaultNodeType setNodeType =
+  formChoice nodeTypes defaultNodeType setNodeType
 
 
+formChoice :: forall a b c d
+           .  Read b
+           => Show d
+           => Array d
+           -> b
+           -> ((c -> b) -> Effect a)
+           -> R.Element
+formChoice nodeTypes defaultNodeType setNodeType = 
+  H.div { className: "form-group"}
+        [ R2.select { className: "form-control"
+                    , onChange : mkEffectFn1
+                               $ setNodeType
+                               <<< const
+                               <<< fromMaybe defaultNodeType
+                               <<< read
+                               <<< R2.unsafeEventValue
+                    }
+          (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
+         ]
 
+
+formButton :: forall a b c
+           .    a 
+           -> ((b -> a) -> Effect c)
+           -> R.Element
+formButton nodeType setNodeType =
+ H.button { className : "btn btn-primary center"
+          , type : "button"
+          , onClick : mkEffectFn1 
+                    $ \_ -> setNodeType ( const nodeType)
+          } []
 
 
