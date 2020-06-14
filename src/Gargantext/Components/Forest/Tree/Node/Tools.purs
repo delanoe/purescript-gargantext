@@ -2,6 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Tools where
 
 import Data.String as S
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action
@@ -86,5 +87,37 @@ submitButton action dispatch =
 -- | Sugar Text style
 fragmentPT :: String -> R.Element
 fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
+
+
+-- | Edit input
+
+
+-- form :: 
+-- formEdit :: forall a. String -> R.State a -> R.Element
+
+type DefaultText = String
+
+formEdit :: forall previous next
+         .  DefaultText
+         -> ((previous -> String)
+         -> Effect next)
+         -> R.Element
+formEdit defaultValue setter = 
+  H.div {className: "form-group"}
+     [ H.input { type        : "text"
+               , placeholder : defaultValue
+               , defaultValue: "Write" <> defaultValue
+               , className   : "form-control"
+               , onInput     : mkEffectFn1
+                             $ setter
+                             <<< const
+                             <<< R2.unsafeEventValue
+              }
+     ]
+
+-- | Form
+
+
+
 
 

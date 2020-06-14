@@ -8,7 +8,7 @@ import Effect.Aff (Aff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton)
+import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, formEdit)
 import Gargantext.Prelude (Unit, bind, const, map, pure, show, ($), (<>), (>), (<<<), read)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
@@ -81,21 +81,10 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
             ]
               where
                 SettingsBox {edit} = settingsBox nt
-                maybeEdit = [ if edit then
-                                H.div {className: "form-group"}
-                                   [ H.input { type        : "text"
-                                             , placeholder : "Node name"
-                                             , defaultValue: "Write Name here"
-                                             , className   : "form-control"
-                                             , onInput     : mkEffectFn1
-                                                           $ setNodeName
-                                                           <<< const
-                                                           <<< R2.unsafeEventValue
-                                            }
-                                   ]
-                              else
-                                H.div {} []
-                             ]
+                maybeEdit = [ if edit
+                                then formEdit "Node Name" setNodeName
+                                else H.div {} []
+                            ]
 
                 maybeChoose = [ if length nodeTypes > 1 then
                                   R.fragment [
