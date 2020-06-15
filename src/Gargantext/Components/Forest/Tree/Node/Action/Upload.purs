@@ -38,7 +38,6 @@ actionUpload _ _ _ _ =
   pure $ fragmentPT $ "Soon, upload for this NodeType."
 
 
-
 -- file upload types
 data DroppedFile =
   DroppedFile { contents :: UploadFileContents

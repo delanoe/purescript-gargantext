@@ -4,45 +4,32 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.String as S
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff)
-import Effect.Class (liftEffect)
+import Effect.Aff (Aff)
 import Effect.Uncurried (mkEffectFn1)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
-import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
-import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
+import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
+import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Search (actionSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload, DroppedFile(..), fileTypeView)
-import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
-import Gargantext.Components.Forest.Tree.Node.Box.Types (CommonProps, NodePopupProps, NodePopupS)
+import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
+import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
-import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks)
-import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
-import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Components.Lang (Lang(EN))
-import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, unit, void, ($), (<>), (==))
-import Gargantext.Routes as Routes
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Prelude (Unit, bind, const, map, pure, show, ($), (<>), (==))
+import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
-import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
-import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Web.File.FileReader.Aff (readAsText)
 
 
 -- | START Popup View
@@ -248,8 +235,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
       pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
 
-    cpt {action: Refresh , dispatch, id, nodeType, session} _ = do
-      pure $ fragmentPT $ "Update " <> show nodeType
+    cpt {action: Refresh , dispatch, id, nodeType, session} _ = update nodeType
 
     cpt {action: Config , dispatch, id, nodeType, session} _ = do
       pure $ fragmentPT $ "Config " <> show nodeType
