@@ -5,7 +5,7 @@ import Effect.Aff (Aff)
 import Gargantext.Prelude (class Show, Unit)
 import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
-import Gargantext.Components.Forest.Tree.Node (NodeAction(..), glyphiconNodeAction)
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileContents)
 
 type Props =

@@ -4,7 +4,7 @@ import DOM.Simple as DOM
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Gargantext.Components.Forest.Tree.Node (NodeAction)
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction)
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Prelude (Unit)
 import Gargantext.Sessions (Session)
