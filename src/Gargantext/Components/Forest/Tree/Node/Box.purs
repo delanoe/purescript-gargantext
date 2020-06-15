@@ -146,7 +146,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
                        $ Just
                        $ DroppedFile { contents: (UploadFileContents contents)
                                      , fileType: Just CSV
-                                     , lang    : Just EN
+                                     , lang    : EN
                                      }
     onDragOverHandler (_ /\ setIsDragOver) e = do
       -- prevent redirection when file is dropped

@@ -1,6 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
@@ -9,7 +9,7 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileContents(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT)
+import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Prelude (class Show, Unit, discard, bind, const, id, map, pure, show, unit, void, ($), read)
 import Gargantext.Routes as GR
@@ -43,7 +43,7 @@ actionUpload _ _ _ _ =
 data DroppedFile =
   DroppedFile { contents :: UploadFileContents
               , fileType :: Maybe FileType
-              , lang     :: Maybe Lang
+              , lang     :: Lang
               }
 
 type FileHash = String
@@ -63,8 +63,8 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
       mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
-      fileType :: R.State FileType     <- R.useState' CSV
-      lang     :: R.State (Maybe Lang) <- R.useState' (Just EN)
+      fileType@(_ /\ setFileType)   <- R.useState'  CSV
+      lang@( _chosenLang /\ setLang) <- R.useState' EN
 
       pure $
         H.div {className:""}
@@ -76,21 +76,15 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
                                         }
                               ]
                       , H.div {className:"col-md-3 flex-space-around"}
-                              [ R2.select {className: "form-control"
-                                          , on: {change: onChangeFileType fileType}
-                                          }
-                                          ( map renderOptionFT [ CSV
-                                                               , CSV_HAL
-                                                               , WOS
-                                                               , PresseRIS
-                                                               ]
-                                          )
+                              [ formChoiceSafe [ CSV
+                                               , CSV_HAL
+                                               , WOS
+                                               , PresseRIS
+                                               ] CSV setFileType
                               ]
+
                       , H.div {className:"col-md-3 flex-space-around"}
-                              [ R2.select { className: "form-control"
-                                          , on: {change: onChangeLang lang}
-                                          } (map renderOptionLang [EN, FR])
-                              ]
+                              [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang ]
                       ]
 
               , H.div { className : "panel-footer" }
@@ -102,7 +96,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
                                              , id
                                              , mFile
                                              , nodeType
-                                             } 
+                                             }
                               ]
                       ]
               ]
@@ -136,22 +130,12 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
                   $ read
                   $ R2.unsafeEventValue e
 
-    onChangeLang :: forall e
-                 . R.State (Maybe Lang)
-                 -> e
-                 -> Effect Unit
-    onChangeLang (lang /\ setLang) e = do
-      setLang $ const
-              $ unsafePartial
-              $ read
-              $ R2.unsafeEventValue e
-
 
 type UploadButtonProps =
   ( dispatch :: Action -> Aff Unit
   , fileType :: R.State FileType
   , id       :: GT.ID
-  , lang     :: R.State (Maybe Lang)
+  , lang     :: R.State Lang
   , mFile    :: R.State (Maybe UploadFile)
   , nodeType :: GT.NodeType
   )
@@ -187,7 +171,7 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
             liftEffect $ do
               setMFile     $ const $ Nothing
               setFileType  $ const $ CSV
-              setLang      $ const $ Just EN
+              setLang      $ const $ EN
 
 -- START File Type View
 type FileTypeProps =
@@ -250,7 +234,7 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
             onChange e l =
               setDroppedFile $ const $ Just $ DroppedFile $ { contents
                                                             , fileType: read $ R2.unsafeEventValue e
-                                                            , lang    : read $ R2.unsafeEventValue l
+                                                            , lang    : fromMaybe EN $ read $ R2.unsafeEventValue l
                                                             }
             renderOption opt = H.option {} [ H.text $ show opt ]
 

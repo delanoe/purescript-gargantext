@@ -87,7 +87,6 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                             ]
 
 
-
 -- END Create Node
 
 showConfig :: NodeType -> R.Element

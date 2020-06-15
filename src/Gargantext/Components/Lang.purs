@@ -15,9 +15,9 @@ allLangs = [ EN
 data Lang = FR | EN | Universal | No_extraction
 
 instance showLang :: Show Lang where
-  show FR = "FR"
-  show EN = "EN"
-  show Universal = "All"
+  show FR            = "FR"
+  show EN            = "EN"
+  show Universal     = "All"
   show No_extraction = "Nothing"
 
 derive instance eqLang :: Eq Lang
@@ -32,7 +32,6 @@ instance readLang :: Read Lang where
 
 instance encodeJsonLang :: EncodeJson Lang where
   encodeJson a = encodeJson (show a)
-
 
 -- Language used for the landing page
 data LandingLang = LL_EN | LL_FR
