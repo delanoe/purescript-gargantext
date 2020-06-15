@@ -1,5 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
+import Data.Array (length)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.String as S
@@ -22,7 +23,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
-import Gargantext.Prelude (Unit, bind, const, map, pure, show, ($), (<>), (==))
+import Gargantext.Prelude (Unit, bind, const, map, pure, show, ($), (<>), (==), (<))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
@@ -138,18 +139,22 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                   -> R.Element
         panelBody nodePopupState {dispatch: d, nodeType} =
           H.div {className: "panel-body flex-space-between"}
-                [ H.p { "style": {"margin":"10px"}} []
-                , H.div { className: "flex-center"} 
-                        [ buttonClick { action: doc
-                                      , state: nodePopupState
-                                      }
-                        ]
-                , H.div {className: "flex-center"}
-                        $ map (\t -> buttonClick { action: t
-                                                 , state : nodePopupState
-                                                 }
-                              ) buttons
-                ]
+                $ [ H.p { "style": {"margin":"10px"}} []
+                  , H.div { className: "flex-center"} 
+                          [ buttonClick { action: doc
+                                        , state: nodePopupState
+                                        }
+                          ]
+                  , H.div {className: "flex-center"}
+                          $ map (\t -> buttonClick { action: t
+                                                   , state : nodePopupState
+                                                   }
+                                ) buttons
+                  ]
+                -- FIXME trick to increase the size of the box
+                <> if length buttons < 2
+                        then [H.div {className: "col-md-4"} []]
+                        else []
           where
             SettingsBox {edit, doc, buttons} = settingsBox nodeType
 

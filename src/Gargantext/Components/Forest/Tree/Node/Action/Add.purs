@@ -72,7 +72,7 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                   -> R.Element
         panelBody (_ /\ setNodeName) (nt /\ setNodeType) =
           H.div {className: "panel-body"}
-          [ H.div {className: "row"}
+          [ H.div {className: "row", style: {"margin":"10px"}}
             [ H.div {className: "col-md-10"}
               [ H.form {className: "form-horizontal"} $ maybeChoose <> maybeEdit ]
               ]
