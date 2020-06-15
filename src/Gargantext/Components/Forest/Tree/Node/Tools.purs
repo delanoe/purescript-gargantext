@@ -7,14 +7,40 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show)
 import Gargantext.Types (ID)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 ------------------------------------------------------------------------
--- | START Rename Box
+
+type Body    = Array R.Element
+type Footer  = R.Element
+
+panel :: Body -> Footer -> R.Element
+panel bodies submit =
+  H.div {} [ panelBody bodies, footer submit ]
+    where
+      panelBody bs =
+          H.div {className: "panel-body"}
+          [ H.div { className: "row"
+                  , style: {"margin":"10px"}
+                  }
+                  [ H.div { className: "col-md-10" }
+                          [ H.form {className: "form-horizontal"} bs
+                          ]
+                  ]
+            ]
+      footer sb = 
+        H.div {className: "panel-footer"}
+            [ H.div {} []
+            , H.div { className: "center"} [ sb ]
+            ]
+
+
+------------------------------------------------------------------------
+-- | START Text input
 type TextInputBoxProps =
   ( id       :: ID
   , dispatch :: Action -> Aff Unit
@@ -68,22 +94,6 @@ textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
 
 -- | END Rename Box
 
-
-submitButton :: Action -> (Action -> Aff Unit) -> R.Element
-submitButton action dispatch =
-  H.div {className: "panel-footer"}
-            [ H.div {} []
-            , H.div { className: "center"}
-                    [ H.button { className : "btn btn-primary fa fa-" <> icon action
-                               , type: "button"
-                               , style : { width: "50%" }
-                               , id: S.toLower $ show action
-                               , title: show action
-                               , on: {click: \_ -> launchAff $ dispatch action}
-                               }
-                               [ H.text $ " " <> text action]
-                     ]
-            ]
 
 -- | Sugar Text style
 fragmentPT :: String -> R.Element
@@ -149,6 +159,7 @@ formChoice nodeTypes defaultNodeType setNodeType =
           (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
          ]
 
+-- Buttons
 
 formButton :: forall a b c
            .    a 
@@ -157,8 +168,20 @@ formButton :: forall a b c
 formButton nodeType setNodeType =
  H.button { className : "btn btn-primary center"
           , type : "button"
+          , title: "Form Button"
+          , style : { width: "50%" }
           , onClick : mkEffectFn1 
                     $ \_ -> setNodeType ( const nodeType)
-          } []
+          } [H.text $ "Go !"]
 
+submitButton :: Action -> (Action -> Aff Unit) -> R.Element
+submitButton action dispatch =
+  H.button { className : "btn btn-primary fa fa-" <> icon action
+                               , type: "button"
+                               , style : { width: "50%" }
+                               , id: S.toLower $ show action
+                               , title: show action
+                               , on: {click: \_ -> launchAff $ dispatch action}
+                               }
+                               [ H.text $ " " <> text action]
 

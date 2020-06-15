@@ -7,7 +7,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, formEdit, formChoiceSafe)
+import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, formEdit, formChoiceSafe, panel)
 import Gargantext.Prelude (Unit, bind, pure, show, ($), (<>))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
@@ -55,41 +55,23 @@ type CreateNodeProps =
   )
 
 addNodeView :: Record CreateNodeProps
-               -> R.Element
+            -> R.Element
 addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
   where
     el = R.hooksComponent "AddNodeView" cpt
     cpt {id, name} _ = do
-      nodeName@(name' /\ _) <- R.useState' "Name"
-      nodeType'@(nt /\ _)  <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
-      pure $ H.div {}
-          [ panelBody nodeName nodeType'
-          , submitButton (AddNode name' nt) dispatch -- panelFooter nodeName nodeType'
-          ]
-      where
-        panelBody :: R.State String
-                  -> R.State NodeType
-                  -> R.Element
-        panelBody (_ /\ setNodeName) (nt /\ setNodeType) =
-          H.div {className: "panel-body"}
-          [ H.div { className: "row"
-                  , style: {"margin":"10px"}
-                  }
-                  [ H.div { className: "col-md-10" }
-                          [ H.form {className: "form-horizontal"}
-                          $ maybeChoose <> maybeEdit 
-                          ]
-                  ]
-            ]
-              where
-                maybeChoose = [ formChoiceSafe nodeTypes Error setNodeType ]
+      nodeName@(name' /\ setNodeName) <- R.useState' "Name"
+      nodeType'@(nt /\ setNodeType)  <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
 
-                SettingsBox {edit} = settingsBox nt
-                maybeEdit = [ if edit
-                                then formEdit "Node Name" setNodeName
-                                else H.div {} []
-                            ]
+      let 
+          SettingsBox {edit} = settingsBox nt
+          maybeChoose = [ formChoiceSafe nodeTypes Error setNodeType ]
+          maybeEdit   = [ if edit
+                          then formEdit "Node Name" setNodeName
+                          else H.div {} []
+                        ]
 
+      pure $ panel (maybeChoose <> maybeEdit) (submitButton (AddNode name' nt) dispatch)
 
 -- END Create Node
 

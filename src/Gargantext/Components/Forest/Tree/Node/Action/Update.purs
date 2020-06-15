@@ -5,7 +5,7 @@ import Data.Maybe (Maybe(..))
 import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, formButton)
+import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, formButton, panel)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types  as GT
 import Gargantext.Prelude (Unit, class Show, class Read, show, bind, ($), pure)
@@ -63,9 +63,11 @@ update :: NodeType -> R.Hooks R.Element
 update NodeList = do
   method  @( _ /\ setMethod  ) <- R.useState' Basic
   nodeType@( _ /\ setNodeType) <- R.useState' NodeList
-  pure $ H.div {} [ formChoiceSafe [Basic, Advanced, WithModel] Basic setMethod
-                  , formButton NodeList setNodeType
-                  ]
+  pure $ panel [ -- H.text "Update with"
+                formChoiceSafe [Basic, Advanced, WithModel] Basic setMethod
+               ]
+               (formButton NodeList setNodeType)
+
 update Graph    = pure $ H.div {} []
 update Texts    = pure $ H.div {} []
 update _        = pure $ H.div {} []
