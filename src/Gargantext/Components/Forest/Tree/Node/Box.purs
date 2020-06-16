@@ -240,7 +240,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
       pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
 
-    cpt {action: Refresh , dispatch, id, nodeType, session} _ = update nodeType
+    cpt {action: Refresh , dispatch, id, nodeType, session} _ = update nodeType dispatch
 
     cpt {action: Config , dispatch, id, nodeType, session} _ = do
       pure $ fragmentPT $ "Config " <> show nodeType

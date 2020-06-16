@@ -16,6 +16,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (getNodeTree)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Forest.Tree.Node.Action.Share (ShareValue(..), share)
+import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks, tasksStruct)
@@ -244,14 +245,14 @@ performAction (DoSearch task) { reload: (_ /\ setReload)
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "[performAction] DoSearch task:" task
 
-
 -------
-performAction (UpdateNode task) { reload: (_ /\ setReload)
+performAction (UpdateNode params) { reload: (_ /\ setReload)
                                 , session
                                 , tasks: {onTaskAdd}
                                 , tree: (NTree (LNode {id}) _)
                                 } =
   do
+    task <- updateRequest params session id
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "[performAction] UpdateNode task:" task
 
@@ -264,7 +265,6 @@ performAction (RenameNode name) p@{ reload: (_ /\ setReload)
   do
     void $ rename session id $ RenameValue {text:name}
     performAction RefreshTree p
-
 
 -------
 performAction (ShareNode username) p@{ reload: (_ /\ setReload)
@@ -294,7 +294,7 @@ performAction (UploadFile nodeType fileType mName contents) { session
   do
     task <- uploadFile session nodeType id fileType {mName, contents}
     liftEffect $ onTaskAdd task
-    liftEffect $ log2 "uploaded, task:" task
+    liftEffect $ log2 "Uploaded, task:" task
 
 -------
 performAction RefreshTree { reload: (_ /\ setReload) } = do

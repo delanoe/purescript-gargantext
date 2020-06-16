@@ -4,72 +4,51 @@ import Data.Tuple.Nested ((/\))
 import Data.Maybe (Maybe(..))
 import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Effect.Aff (Aff)
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, formButton, panel)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types
+import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, submitButton, panel)
+import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types  as GT
 import Gargantext.Prelude (Unit, class Show, class Read, show, bind, ($), pure)
+import Gargantext.Sessions (Session, put)
+import Gargantext.Routes as GR
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-{-
-updateNode :: Session -> ID -> UpdateNodeParams -> Aff (Array ID)
-updateNode session nodeId params = post session $ GR.NodeAPI GT.Node (Just nodeId) ""
--}
 
-data UpdateNodeParams = UpdateNodeParamsList { method :: Method }
-                      | UpdateNodeParamsGraph { method :: String }
-                      | UpdateNodeParamsTexts { method :: Int }
+updateRequest :: UpdateNodeParams -> Session -> ID -> Aff GT.AsyncTaskWithType
+updateRequest (UpdateNodeParamsList meth) session nodeId = do
+  task <- put session p meth
+  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
+    where
+      p = GR.NodeAPI GT.Node (Just nodeId) (GT.asyncTaskTypePath GT.UpdateNode)
 
-instance encodeJsonUpdateNodeParams :: EncodeJson UpdateNodeParams
-  where
-    encodeJson (UpdateNodeParamsList { method })
-      = "method" := show method
-      ~> jsonEmptyObject
-    encodeJson (UpdateNodeParamsGraph { method })
-      = "method" := method
-      ~> jsonEmptyObject
-    encodeJson (UpdateNodeParamsTexts { method })
-      = "method" := method
-      ~> jsonEmptyObject
-----------------------------------------------------------------------
+updateRequest (UpdateNodeParamsGraph meth) session nodeId = do
+  task <- put session p meth
+  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
+    where
+      p = GR.NodeAPI GT.Node (Just nodeId) (GT.asyncTaskTypePath GT.UpdateNode)
 
-type UpdateNodeProps =
-  ( id       :: GT.ID
-  , dispatch :: Action -> Aff Unit
-  , name     :: GT.Name
-  , nodeType :: NodeType
-  , params   :: UpdateNodeParams
-  )
+updateRequest (UpdateNodeParamsTexts meth) session nodeId = do
+  task <- put session p meth
+  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
+    where
+      p = GR.NodeAPI GT.Node (Just nodeId) (GT.asyncTaskTypePath GT.UpdateNode)
 
 ----------------------------------------------------------------------
 
-data Method = Basic | Advanced | WithModel
-
-instance readMethod :: Read Method where
-  read "Basic"    = Just Basic
-  read "Advanced" = Just Advanced
-  read "WithModel" = Just WithModel
-  read _           = Nothing
-
-instance showMethod :: Show Method where
-  show Basic     = "Basic"
-  show Advanced  = "Advanced"
-  show WithModel = "WithModel"
-
-----------------------------------------------------------------------
-
-update :: NodeType -> R.Hooks R.Element
-update NodeList = do
+update ::  NodeType
+       -> (Action -> Aff Unit)
+       ->  R.Hooks R.Element
+update NodeList dispatch = do
   method  @( _ /\ setMethod  ) <- R.useState' Basic
-  nodeType@( _ /\ setNodeType) <- R.useState' NodeList
   pure $ panel [ -- H.text "Update with"
                 formChoiceSafe [Basic, Advanced, WithModel] Basic setMethod
                ]
-               (formButton NodeList setNodeType)
+               (submitButton (UpdateNode $ UpdateNodeParamsList method) dispatch)
 
-update Graph    = pure $ H.div {} []
-update Texts    = pure $ H.div {} []
-update _        = pure $ H.div {} []
+update Graph _   = pure $ H.div {} []
+update Texts _  = pure $ H.div {} []
+update _     _  = pure $ H.div {} []
 
 -- fragmentPT $ "Update " <> show nodeType

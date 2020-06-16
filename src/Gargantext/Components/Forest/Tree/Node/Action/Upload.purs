@@ -12,16 +12,16 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..),
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Prelude (class Show, Unit, discard, bind, const, id, map, pure, show, unit, void, ($), read)
-import Gargantext.Routes as GR
+import Gargantext.Routes       as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded)
 import Gargantext.Types (NodeType(..), ID)
-import Gargantext.Types as GT
+import Gargantext.Types         as GT
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import URI.Extra.QueryPairs as QP
+import React.SyntheticEvent     as E
+import Reactix                  as R
+import Reactix.DOM.HTML         as H
+import URI.Extra.QueryPairs     as QP
 import Web.File.FileReader.Aff (readAsText)
 
 -- UploadFile Action
@@ -284,11 +284,10 @@ uploadFile session nodeType id fileType {mName, contents: UploadFileContents con
     q = FileUploadQuery { fileType: fileType }
     --p = NodeAPI GT.Corpus (Just id) $ "add/file/async/nobody" <> Q.print (toQuery q)
     p = GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
-    bodyParams = [
-        Tuple "_wf_data"     (Just contents)
-      , Tuple "_wf_filetype" (Just $ show fileType)
-      , Tuple "_wf_name"      mName
-      ]
+    bodyParams = [ Tuple "_wf_data"     (Just contents)
+                 , Tuple "_wf_filetype" (Just $ show fileType)
+                 , Tuple "_wf_name"      mName
+                 ]
 
 ------------------------------------------------------------------------
 

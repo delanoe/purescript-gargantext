@@ -474,6 +474,7 @@ data AsyncTaskType = Form
                    | GraphT
                    | Query
                    | AddNode
+                   | UpdateNode
 
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 instance eqAsyncTaskType :: Eq AsyncTaskType where
@@ -497,6 +498,9 @@ asyncTaskTypePath Form   = "add/form/async/"
 asyncTaskTypePath Query  = "query/"
 asyncTaskTypePath GraphT = "async/"
 asyncTaskTypePath AddNode = "async/nobody/"
+asyncTaskTypePath UpdateNode = "async/nobody/"
+
+
 
 type AsyncTaskID = String
 

@@ -1,4 +1,5 @@
-module Gargantext.Components.Forest.Tree.Node.Tools where
+module Gargantext.Components.Forest.Tree.Node.Tools 
+  where
 
 import Data.Maybe (fromMaybe)
 import Data.String as S
@@ -28,6 +29,7 @@ panel bodies submit =
                   , style: {"margin":"10px"}
                   }
                   [ H.div { className: "col-md-10" }
+                          -- TODO add type for text or form here
                           [ H.form {className: "form-horizontal"} bs
                           ]
                   ]
@@ -122,7 +124,7 @@ formEdit defaultValue setter =
      ]
 
 -- | Form Choice input
-
+-- if the list of options is not big enough, a button is used instead
 formChoiceSafe :: forall a b c
                .  Read  a
                => Show  a
@@ -138,7 +140,7 @@ formChoiceSafe [n] _defaultNodeType setNodeType =
 formChoiceSafe nodeTypes defaultNodeType setNodeType =
   formChoice nodeTypes defaultNodeType setNodeType
 
-
+-- | List Form
 formChoice :: forall a b c d
            .  Read b
            => Show d
@@ -159,10 +161,9 @@ formChoice nodeTypes defaultNodeType setNodeType =
           (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
          ]
 
--- Buttons
-
+-- | Button Form
 formButton :: forall a b c
-           .    a 
+           .    a
            -> ((b -> a) -> Effect c)
            -> R.Element
 formButton nodeType setNodeType =
@@ -170,9 +171,12 @@ formButton nodeType setNodeType =
           , type : "button"
           , title: "Form Button"
           , style : { width: "50%" }
-          , onClick : mkEffectFn1 
-                    $ \_ -> setNodeType ( const nodeType)
+          , onClick : mkEffectFn1
+                    $ \_ -> setNodeType ( const nodeType )
           } [H.text $ "Go !"]
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
 
 submitButton :: Action -> (Action -> Aff Unit) -> R.Element
 submitButton action dispatch =

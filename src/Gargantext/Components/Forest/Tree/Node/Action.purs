@@ -7,18 +7,23 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileContents)
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 
-type Props =
-  ( dispatch :: Action -> Aff Unit
-  , id       :: Int
-  , nodeType :: GT.NodeType
-  , session  :: Session
+{-
+type UpdateNodeProps =
+  ( id       :: GT.ID
+  , dispatch :: Action -> Aff Unit
+  , name     :: GT.Name
+  , nodeType :: NodeType
+  , params   :: UpdateNodeParams
   )
+  -}
+
 
 data Action = AddNode     String GT.NodeType
             | DeleteNode
             | RenameNode  String
-            | UpdateNode  GT.AsyncTaskWithType
+            | UpdateNode  UpdateNodeParams
             | ShareNode   String
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
@@ -35,13 +40,19 @@ instance showShow :: Show Action where
   show (UploadFile  _ _ _ _)= "UploadFile"
   show  RefreshTree         = "RefreshTree"
 
+type Props =
+  ( dispatch :: Action -> Aff Unit
+  , id       :: Int
+  , nodeType :: GT.NodeType
+  , session  :: Session
+  )
 -----------------------------------------------------------------------
 icon :: Action -> String
-icon (AddNode _ _)        = glyphiconNodeAction (Add [])
+icon (AddNode    _ _)     = glyphiconNodeAction (Add [])
 icon  DeleteNode          = glyphiconNodeAction Delete
 icon (RenameNode _)       = glyphiconNodeAction Config
 icon (UpdateNode _)       = glyphiconNodeAction Refresh
-icon (ShareNode _)        = glyphiconNodeAction Share
+icon (ShareNode  _)       = glyphiconNodeAction Share
 icon (DoSearch   _)       = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
 icon  RefreshTree         = glyphiconNodeAction Refresh

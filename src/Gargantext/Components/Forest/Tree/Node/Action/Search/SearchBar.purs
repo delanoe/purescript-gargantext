@@ -28,10 +28,10 @@ searchBarCpt = R.hooksComponent "G.C.Node.SearchBar.searchBar" cpt
     cpt {langs, onSearch, search: search@(s /\ _), session} _ = do
       --onSearchChange session s
       pure $ H.div {"style": {"margin" :"10px"}}
-        [ searchField { databases:allDatabases
-                      , langs
-                      , onSearch
-                      , search
-                      , session
-                      }
-        ]
+                   [ searchField { databases:allDatabases
+                                 , langs
+                                 , onSearch
+                                 , search
+                                 , session
+                                 }
+                   ]

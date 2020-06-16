@@ -21,9 +21,9 @@ addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Array GT.ID)
 addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 
 addNodeAsync :: Session
-                -> GT.ID
-                -> AddNodeValue
-                -> Aff GT.AsyncTaskWithType
+             -> GT.ID
+             -> AddNodeValue
+             -> Aff GT.AsyncTaskWithType
 addNodeAsync session parentId q = do
   task <- post session p q
   pure $ GT.AsyncTaskWithType {task, typ: GT.AddNode}
