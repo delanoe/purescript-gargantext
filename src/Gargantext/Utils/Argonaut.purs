@@ -56,6 +56,11 @@ instance genericSumDecodeJsonRepConstructor ::
     argument <- genericSumDecodeJsonRep inner
     pure $ GR.Constructor argument
 
+instance genericSumDecodeJsonRepNoArguments ::
+  GenericSumDecodeJsonRep (GR.NoArguments) where
+  genericSumDecodeJsonRep _ = do
+    pure GR.NoArguments
+
 instance genericSumDecodeJsonRepArgument ::
   ( Argonaut.DecodeJson a
   ) => GenericSumDecodeJsonRep (GR.Argument a) where
@@ -78,6 +83,10 @@ instance genericSumEncodeJsonRepConstructor ::
     let name = reflectSymbol (SProxy :: _ name)
     let argument = genericSumEncodeJsonRep inner
     Argonaut.jsonSingletonObject name argument
+
+instance genericSumEncodeJsonRepNoArguments ::
+  GenericSumEncodeJsonRep GR.NoArguments where
+  genericSumEncodeJsonRep GR.NoArguments = Argonaut.jsonNull
 
 instance genericSumEncodeJsonRepArgument ::
   ( Argonaut.EncodeJson a
