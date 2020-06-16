@@ -2,14 +2,13 @@ module Gargantext.Components.Forest.Tree.Node.Action.Update where
 
 import Data.Tuple.Nested ((/\))
 import Data.Maybe (Maybe(..))
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, submitButton, panel)
 import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types  as GT
-import Gargantext.Prelude (Unit, class Show, class Read, show, bind, ($), pure)
+import Gargantext.Prelude (Unit, bind, ($), pure)
 import Gargantext.Sessions (Session, put)
 import Gargantext.Routes as GR
 import Reactix as R
@@ -41,11 +40,11 @@ update ::  NodeType
        -> (Action -> Aff Unit)
        ->  R.Hooks R.Element
 update NodeList dispatch = do
-  method  @( _ /\ setMethod  ) <- R.useState' Basic
+  meth @( method /\ setMethod  ) <- R.useState' Basic
   pure $ panel [ -- H.text "Update with"
                 formChoiceSafe [Basic, Advanced, WithModel] Basic setMethod
                ]
-               (submitButton (UpdateNode $ UpdateNodeParamsList method) dispatch)
+               (submitButton (UpdateNode $ UpdateNodeParamsList {method}) dispatch)
 
 update Graph _   = pure $ H.div {} []
 update Texts _  = pure $ H.div {} []

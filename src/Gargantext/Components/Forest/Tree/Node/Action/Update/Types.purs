@@ -3,16 +3,9 @@ module Gargantext.Components.Forest.Tree.Node.Action.Update.Types where
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Tuple.Nested ((/\))
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Data.Maybe (Maybe(..))
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
-import Effect.Aff (Aff)
-import Gargantext.Types (NodeType(..))
-import Gargantext.Types  as GT
-import Gargantext.Prelude (Unit, class Eq, class Show, class Read, class Read, show, bind, ($), pure)
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Prelude (class Eq, class Read, class Show)
 
 
 data UpdateNodeParams = UpdateNodeParamsList { method :: Method }
@@ -32,21 +25,6 @@ instance decodeJsonUpdateNodeParams :: Argonaut.DecodeJson UpdateNodeParams wher
 
 instance encodeJsonUpdateNodeParams :: Argonaut.EncodeJson UpdateNodeParams where
   encodeJson = genericSumEncodeJson
-
-{-
-instance encodeJsonUpdateNodeParams :: EncodeJson UpdateNodeParams
-  where
-    encodeJson (UpdateNodeParamsList { method })
-      = "method" := show method
-      ~> jsonEmptyObject
-    encodeJson (UpdateNodeParamsGraph { method })
-      = "method" := method
-      ~> jsonEmptyObject
-    encodeJson (UpdateNodeParamsTexts { method })
-      = "method" := method
-      ~> jsonEmptyObject
--}
-----------------------------------------------------------------------
 
 ----------------------------------------------------------------------
 data Method = Basic | Advanced | WithModel
