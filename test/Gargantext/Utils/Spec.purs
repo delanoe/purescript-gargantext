@@ -17,6 +17,7 @@ data Fruit
   = Boat { hi :: Int }
   | Gravy String
   | Pork Int
+  | Chicken
 
 derive instance eqFruit :: Eq Fruit
 derive instance genericFruit :: Generic Fruit _
@@ -76,3 +77,9 @@ spec =
       let result2' = Argonaut.decodeJson result2
       Argonaut.stringify result2 `shouldEqual` """{"Gravy":"hi"}"""
       result2' `shouldEqual` Right input2
+
+      let input3 = Chicken
+      let result3 = Argonaut.encodeJson input3
+      let result3' = Argonaut.decodeJson result3
+      Argonaut.stringify result3 `shouldEqual` """{"Chicken":null}"""
+      result3' `shouldEqual` Right input3
