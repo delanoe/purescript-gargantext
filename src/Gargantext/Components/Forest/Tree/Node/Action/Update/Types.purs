@@ -8,10 +8,10 @@ import Data.Maybe (Maybe(..))
 import Gargantext.Prelude (class Eq, class Read, class Show)
 
 
-data UpdateNodeParams = UpdateNodeParamsList  { methodList  :: Method }
-                      | UpdateNodeParamsGraph { methodGraph :: Metric }
+data UpdateNodeParams = UpdateNodeParamsList  { methodList  :: Method      }
+                      | UpdateNodeParamsGraph { methodGraph :: GraphMetric }
                       | UpdateNodeParamsTexts { methodTexts :: Granularity }
-                      | UpdateNodeParamsBoard { methodBoard :: Charts }
+                      | UpdateNodeParamsBoard { methodBoard :: Charts      }
 
 derive instance eqUpdateNodeParams :: Eq UpdateNodeParams
 
@@ -49,24 +49,24 @@ instance encodeJsonMethod :: Argonaut.EncodeJson Method where
   encodeJson = genericEnumEncodeJson
 
 ----------------------------------------------------------------------
-data Metric = Order1 | Order2
+data GraphMetric = Order1 | Order2
 
-derive instance genericMetric :: Generic Metric _
+derive instance genericGraphMetric :: Generic GraphMetric _
 
-derive instance eqMetric :: Eq Metric
+derive instance eqGraphMetric :: Eq GraphMetric
 
-instance showMetric :: Show Metric where
+instance showGraphMetric :: Show GraphMetric where
   show = genericShow
 
-instance readMetric :: Read Metric where
+instance readGraphMetric :: Read GraphMetric where
   read "Order1"    = Just Order1
   read "Order2"    = Just Order2
   read _           = Nothing
 
-instance decodeJsonMetric :: Argonaut.DecodeJson Metric where
+instance decodeJsonGraphMetric :: Argonaut.DecodeJson GraphMetric where
   decodeJson = genericEnumDecodeJson
 
-instance encodeJsonMetric :: Argonaut.EncodeJson Metric where
+instance encodeJsonGraphMetric :: Argonaut.EncodeJson GraphMetric where
   encodeJson = genericEnumEncodeJson
 
 ----------------------------------------------------------------------
