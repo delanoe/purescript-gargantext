@@ -8,10 +8,10 @@ import Data.Maybe (Maybe(..))
 import Gargantext.Prelude (class Eq, class Read, class Show)
 
 
-data UpdateNodeParams = UpdateNodeParamsList  { method :: Method }
-                      | UpdateNodeParamsGraph { method :: Metric }
-                      | UpdateNodeParamsTexts { method :: Granularity }
-                      | UpdateNodeParamsBoard { method :: Charts }
+data UpdateNodeParams = UpdateNodeParamsList  { methodList  :: Method }
+                      | UpdateNodeParamsGraph { methodGraph :: Metric }
+                      | UpdateNodeParamsTexts { methodTexts :: Granularity }
+                      | UpdateNodeParamsBoard { methodBoard :: Charts }
 
 derive instance eqUpdateNodeParams :: Eq UpdateNodeParams
 

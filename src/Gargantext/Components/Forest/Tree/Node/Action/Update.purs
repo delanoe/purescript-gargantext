@@ -46,32 +46,32 @@ update ::  NodeType
        -> (Action -> Aff Unit)
        ->  R.Hooks R.Element
 update NodeList dispatch = do
-  meth @( method /\ setMethod  ) <- R.useState' Basic
+  meth @( methodList /\ setMethod  ) <- R.useState' Basic
   pure $ panel [ -- H.text "Update with"
                 formChoiceSafe [Basic, Advanced, WithModel] Basic setMethod
                ]
-               (submitButton (UpdateNode $ UpdateNodeParamsList {method}) dispatch)
+               (submitButton (UpdateNode $ UpdateNodeParamsList {methodList}) dispatch)
 
 update Graph dispatch = do
-  meth @( method /\ setMethod  ) <- R.useState' Order1
+  meth @( methodGraph /\ setMethod  ) <- R.useState' Order1
   pure $ panel [ -- H.text "Update with"
                 formChoiceSafe [Order1, Order2] Order1 setMethod
                ]
-               (submitButton (UpdateNode $ UpdateNodeParamsGraph {method}) dispatch)
+               (submitButton (UpdateNode $ UpdateNodeParamsGraph {methodGraph}) dispatch)
 
 update Texts dispatch  = do
-  meth @( method /\ setMethod  ) <- R.useState' NewNgrams
+  meth @( methodTexts /\ setMethod  ) <- R.useState' NewNgrams
   pure $ panel [ -- H.text "Update with"
                 formChoiceSafe [NewNgrams, NewTexts, Both] NewNgrams setMethod
                ]
-               (submitButton (UpdateNode $ UpdateNodeParamsTexts {method}) dispatch)
+               (submitButton (UpdateNode $ UpdateNodeParamsTexts {methodTexts}) dispatch)
 
 update Dashboard dispatch  = do
-  meth @( method /\ setMethod  ) <- R.useState' All
+  meth @( methodBoard /\ setMethod  ) <- R.useState' All
   pure $ panel [ -- H.text "Update with"
                 formChoiceSafe [All, Sources, Authors, Institutes, Ngrams] All setMethod
                ]
-               (submitButton (UpdateNode $ UpdateNodeParamsBoard {method}) dispatch)
+               (submitButton (UpdateNode $ UpdateNodeParamsBoard {methodBoard}) dispatch)
 
 update _     _  = pure $ H.div {} []
 
