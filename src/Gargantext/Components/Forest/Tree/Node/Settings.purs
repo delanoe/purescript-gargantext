@@ -198,7 +198,9 @@ settingsBox Dashboard =
   SettingsBox { show : true
               , edit : false
               , doc  : Documentation Dashboard
-              , buttons : []
+              , buttons : [ Refresh
+                          , Delete
+                          ]
               }
 
 settingsBox Annuaire =

@@ -11,7 +11,7 @@ import Gargantext.Prelude (class Eq, class Read, class Show)
 data UpdateNodeParams = UpdateNodeParamsList  { method :: Method }
                       | UpdateNodeParamsGraph { method :: Metric }
                       | UpdateNodeParamsTexts { method :: Granularity }
-
+                      | UpdateNodeParamsBoard { method :: Charts }
 
 derive instance eqUpdateNodeParams :: Eq UpdateNodeParams
 
@@ -90,6 +90,27 @@ instance decodeJsonGranularity :: Argonaut.DecodeJson Granularity where
   decodeJson = genericSumDecodeJson
 
 instance encodeJsonGranularity :: Argonaut.EncodeJson Granularity where
+  encodeJson = genericSumEncodeJson
+
+
+----------------------------------------------------------------------
+data Charts = AllCharts
+
+derive instance genericChart :: Generic Charts _
+
+derive instance eqChart :: Eq Charts
+
+instance showChart :: Show Charts where
+  show = genericShow
+
+instance readChart :: Read Charts where
+  read "AllCharts"  = Just AllCharts
+  read _           = Nothing
+
+instance decodeJsonChart :: Argonaut.DecodeJson Charts where
+  decodeJson = genericSumDecodeJson
+
+instance encodeJsonChart :: Argonaut.EncodeJson Charts where
   encodeJson = genericSumEncodeJson
 
 

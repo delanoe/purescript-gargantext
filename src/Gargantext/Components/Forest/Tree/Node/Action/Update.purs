@@ -34,6 +34,12 @@ updateRequest (UpdateNodeParamsTexts meth) session nodeId = do
     where
       p = GR.NodeAPI GT.Node (Just nodeId) (GT.asyncTaskTypePath GT.UpdateNode)
 
+updateRequest (UpdateNodeParamsBoard meth) session nodeId = do
+  task <- put session p meth
+  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
+    where
+      p = GR.NodeAPI GT.Node (Just nodeId) (GT.asyncTaskTypePath GT.UpdateNode)
+
 ----------------------------------------------------------------------
 
 update ::  NodeType
@@ -59,6 +65,13 @@ update Texts dispatch  = do
                 formChoiceSafe [NewNgrams, NewTexts, Both] NewNgrams setMethod
                ]
                (submitButton (UpdateNode $ UpdateNodeParamsTexts {method}) dispatch)
+
+update Dashboard dispatch  = do
+  meth @( method /\ setMethod  ) <- R.useState' AllCharts
+  pure $ panel [ -- H.text "Update with"
+                formChoiceSafe [AllCharts] AllCharts setMethod
+               ]
+               (submitButton (UpdateNode $ UpdateNodeParamsBoard {method}) dispatch)
 
 update _     _  = pure $ H.div {} []
 
