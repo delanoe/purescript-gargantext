@@ -3,7 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Update.Types where
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
+import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
 import Data.Maybe (Maybe(..))
 import Gargantext.Prelude (class Eq, class Read, class Show)
 
@@ -43,10 +43,10 @@ instance readMethod :: Read Method where
   read _           = Nothing
 
 instance decodeJsonMethod :: Argonaut.DecodeJson Method where
-  decodeJson = genericSumDecodeJson
+  decodeJson = genericEnumDecodeJson
 
 instance encodeJsonMethod :: Argonaut.EncodeJson Method where
-  encodeJson = genericSumEncodeJson
+  encodeJson = genericEnumEncodeJson
 
 ----------------------------------------------------------------------
 data Metric = Order1 | Order2
@@ -64,10 +64,10 @@ instance readMetric :: Read Metric where
   read _           = Nothing
 
 instance decodeJsonMetric :: Argonaut.DecodeJson Metric where
-  decodeJson = genericSumDecodeJson
+  decodeJson = genericEnumDecodeJson
 
 instance encodeJsonMetric :: Argonaut.EncodeJson Metric where
-  encodeJson = genericSumEncodeJson
+  encodeJson = genericEnumEncodeJson
 
 ----------------------------------------------------------------------
 
@@ -87,10 +87,10 @@ instance readGranularity :: Read Granularity where
   read _           = Nothing
 
 instance decodeJsonGranularity :: Argonaut.DecodeJson Granularity where
-  decodeJson = genericSumDecodeJson
+  decodeJson = genericEnumDecodeJson
 
 instance encodeJsonGranularity :: Argonaut.EncodeJson Granularity where
-  encodeJson = genericSumEncodeJson
+  encodeJson = genericEnumEncodeJson
 
 
 ----------------------------------------------------------------------
@@ -112,9 +112,9 @@ instance readChart :: Read Charts where
   read _            = Nothing
 
 instance decodeJsonChart :: Argonaut.DecodeJson Charts where
-  decodeJson = genericSumDecodeJson
+  decodeJson = genericEnumDecodeJson
 
 instance encodeJsonChart :: Argonaut.EncodeJson Charts where
-  encodeJson = genericSumEncodeJson
+  encodeJson = genericEnumEncodeJson
 
 
