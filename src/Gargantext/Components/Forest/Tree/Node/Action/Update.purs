@@ -67,9 +67,9 @@ update Texts dispatch  = do
                (submitButton (UpdateNode $ UpdateNodeParamsTexts {method}) dispatch)
 
 update Dashboard dispatch  = do
-  meth @( method /\ setMethod  ) <- R.useState' AllCharts
+  meth @( method /\ setMethod  ) <- R.useState' All
   pure $ panel [ -- H.text "Update with"
-                formChoiceSafe [AllCharts] AllCharts setMethod
+                formChoiceSafe [All, Sources, Authors, Institutes, Ngrams] All setMethod
                ]
                (submitButton (UpdateNode $ UpdateNodeParamsBoard {method}) dispatch)
 

@@ -94,7 +94,7 @@ instance encodeJsonGranularity :: Argonaut.EncodeJson Granularity where
 
 
 ----------------------------------------------------------------------
-data Charts = AllCharts
+data Charts = Sources | Authors | Institutes | Ngrams | All
 
 derive instance genericChart :: Generic Charts _
 
@@ -104,8 +104,12 @@ instance showChart :: Show Charts where
   show = genericShow
 
 instance readChart :: Read Charts where
-  read "AllCharts"  = Just AllCharts
-  read _           = Nothing
+  read "Sources "   = Just Sources
+  read "Authors"    = Just Authors
+  read "Institutes" = Just Institutes
+  read "Ngrams"     = Just Ngrams
+  read "AllCharts"  = Just All
+  read _            = Nothing
 
 instance decodeJsonChart :: Argonaut.DecodeJson Charts where
   decodeJson = genericSumDecodeJson
