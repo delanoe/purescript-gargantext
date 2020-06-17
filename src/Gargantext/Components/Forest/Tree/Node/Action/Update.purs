@@ -46,7 +46,13 @@ update NodeList dispatch = do
                ]
                (submitButton (UpdateNode $ UpdateNodeParamsList {method}) dispatch)
 
-update Graph _   = pure $ H.div {} []
+update Graph dispatch = do
+  meth @( method /\ setMethod  ) <- R.useState' Order1
+  pure $ panel [ -- H.text "Update with"
+                formChoiceSafe [Order1, Order2] Order1 setMethod
+               ]
+               (submitButton (UpdateNode $ UpdateNodeParamsGraph {method}) dispatch)
+
 update Texts _  = pure $ H.div {} []
 update _     _  = pure $ H.div {} []
 

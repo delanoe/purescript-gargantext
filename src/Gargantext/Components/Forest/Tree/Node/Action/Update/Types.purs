@@ -8,8 +8,8 @@ import Data.Maybe (Maybe(..))
 import Gargantext.Prelude (class Eq, class Read, class Show)
 
 
-data UpdateNodeParams = UpdateNodeParamsList { method :: Method }
-                      | UpdateNodeParamsGraph { method :: String }
+data UpdateNodeParams = UpdateNodeParamsList  { method :: Method }
+                      | UpdateNodeParamsGraph { method :: Metric }
                       | UpdateNodeParamsTexts { method :: Int }
 
 
@@ -46,6 +46,49 @@ instance decodeJsonMethod :: Argonaut.DecodeJson Method where
   decodeJson = genericSumDecodeJson
 
 instance encodeJsonMethod :: Argonaut.EncodeJson Method where
+  encodeJson = genericSumEncodeJson
+
+----------------------------------------------------------------------
+data Metric = Order1 | Order2
+
+derive instance genericMetric :: Generic Metric _
+
+derive instance eqMetric :: Eq Metric
+
+instance showMetric :: Show Metric where
+  show = genericShow
+
+instance readMetric :: Read Metric where
+  read "Order1"    = Just Order1
+  read "Order2"    = Just Order2
+  read _           = Nothing
+
+instance decodeJsonMetric :: Argonaut.DecodeJson Metric where
+  decodeJson = genericSumDecodeJson
+
+instance encodeJsonMetric :: Argonaut.EncodeJson Metric where
+  encodeJson = genericSumEncodeJson
+
+----------------------------------------------------------------------
+
+data Metric = Order1 | Order2
+
+derive instance genericMetric :: Generic Metric _
+
+derive instance eqMetric :: Eq Metric
+
+instance showMetric :: Show Metric where
+  show = genericShow
+
+instance readMetric :: Read Metric where
+  read "Order1"    = Just Order1
+  read "Order2"    = Just Order2
+  read _           = Nothing
+
+instance decodeJsonMetric :: Argonaut.DecodeJson Metric where
+  decodeJson = genericSumDecodeJson
+
+instance encodeJsonMetric :: Argonaut.EncodeJson Metric where
   encodeJson = genericSumEncodeJson
 
 
