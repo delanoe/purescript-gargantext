@@ -498,8 +498,7 @@ asyncTaskTypePath Form   = "add/form/async/"
 asyncTaskTypePath Query  = "query/"
 asyncTaskTypePath GraphT = "async/"
 asyncTaskTypePath AddNode = "async/nobody/"
-asyncTaskTypePath UpdateNode = "async/nobody/"
-
+asyncTaskTypePath UpdateNode = "update/"
 
 
 type AsyncTaskID = String

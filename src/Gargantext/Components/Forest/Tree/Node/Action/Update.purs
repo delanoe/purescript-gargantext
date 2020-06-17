@@ -9,7 +9,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, submitButto
 import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types  as GT
 import Gargantext.Prelude (Unit, bind, ($), pure)
-import Gargantext.Sessions (Session, put)
+import Gargantext.Sessions (Session, post)
 import Gargantext.Routes as GR
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -17,28 +17,28 @@ import Reactix.DOM.HTML as H
 
 updateRequest :: UpdateNodeParams -> Session -> ID -> Aff GT.AsyncTaskWithType
 updateRequest (UpdateNodeParamsList meth) session nodeId = do
-  task <- put session p meth
+  task <- post session p meth
   pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
     where
-      p = GR.NodeAPI GT.Node (Just nodeId) (GT.asyncTaskTypePath GT.UpdateNode)
+      p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
 
 updateRequest (UpdateNodeParamsGraph meth) session nodeId = do
-  task <- put session p meth
+  task <- post session p meth
   pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
     where
-      p = GR.NodeAPI GT.Node (Just nodeId) (GT.asyncTaskTypePath GT.UpdateNode)
+      p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
 
 updateRequest (UpdateNodeParamsTexts meth) session nodeId = do
-  task <- put session p meth
+  task <- post session p meth
   pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
     where
-      p = GR.NodeAPI GT.Node (Just nodeId) (GT.asyncTaskTypePath GT.UpdateNode)
+      p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
 
 updateRequest (UpdateNodeParamsBoard meth) session nodeId = do
-  task <- put session p meth
+  task <- post session p meth
   pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
     where
-      p = GR.NodeAPI GT.Node (Just nodeId) (GT.asyncTaskTypePath GT.UpdateNode)
+      p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
 
 ----------------------------------------------------------------------
 
