@@ -10,7 +10,7 @@ import Gargantext.Prelude (class Eq, class Read, class Show)
 
 data UpdateNodeParams = UpdateNodeParamsList  { method :: Method }
                       | UpdateNodeParamsGraph { method :: Metric }
-                      | UpdateNodeParamsTexts { method :: Int }
+                      | UpdateNodeParamsTexts { method :: Granularity }
 
 
 derive instance eqUpdateNodeParams :: Eq UpdateNodeParams
@@ -71,24 +71,25 @@ instance encodeJsonMetric :: Argonaut.EncodeJson Metric where
 
 ----------------------------------------------------------------------
 
-data Metric = Order1 | Order2
+data Granularity = NewNgrams | NewTexts | Both
 
-derive instance genericMetric :: Generic Metric _
+derive instance genericGranularity :: Generic Granularity _
 
-derive instance eqMetric :: Eq Metric
+derive instance eqGranularity :: Eq Granularity
 
-instance showMetric :: Show Metric where
+instance showGranularity :: Show Granularity where
   show = genericShow
 
-instance readMetric :: Read Metric where
-  read "Order1"    = Just Order1
-  read "Order2"    = Just Order2
+instance readGranularity :: Read Granularity where
+  read "NewNgrams" = Just NewNgrams
+  read "NewTexts"  = Just NewTexts
+  read "Both"      = Just Both
   read _           = Nothing
 
-instance decodeJsonMetric :: Argonaut.DecodeJson Metric where
+instance decodeJsonGranularity :: Argonaut.DecodeJson Granularity where
   decodeJson = genericSumDecodeJson
 
-instance encodeJsonMetric :: Argonaut.EncodeJson Metric where
+instance encodeJsonGranularity :: Argonaut.EncodeJson Granularity where
   encodeJson = genericSumEncodeJson
 
 

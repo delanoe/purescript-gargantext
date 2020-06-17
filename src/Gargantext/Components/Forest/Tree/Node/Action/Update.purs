@@ -53,7 +53,13 @@ update Graph dispatch = do
                ]
                (submitButton (UpdateNode $ UpdateNodeParamsGraph {method}) dispatch)
 
-update Texts _  = pure $ H.div {} []
+update Texts dispatch  = do
+  meth @( method /\ setMethod  ) <- R.useState' NewNgrams
+  pure $ panel [ -- H.text "Update with"
+                formChoiceSafe [NewNgrams, NewTexts, Both] NewNgrams setMethod
+               ]
+               (submitButton (UpdateNode $ UpdateNodeParamsTexts {method}) dispatch)
+
 update _     _  = pure $ H.div {} []
 
 -- fragmentPT $ "Update " <> show nodeType
