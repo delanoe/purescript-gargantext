@@ -5,7 +5,7 @@ import Prelude
 import Control.Alt ((<|>))
 import Data.Argonaut (Json)
 import Data.Argonaut as Argonaut
-import Data.Either (Either)
+import Data.Either (Either(..))
 import Data.Generic.Rep as GR
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
 
@@ -83,3 +83,58 @@ instance genericSumEncodeJsonRepArgument ::
   ( Argonaut.EncodeJson a
   ) => GenericSumEncodeJsonRep (GR.Argument a) where
   genericSumEncodeJsonRep (GR.Argument f) = Argonaut.encodeJson f
+
+genericEnumDecodeJson :: forall a rep
+   . GR.Generic a rep
+  => GenericEnumDecodeJson rep
+  => Json
+  -> Either String a
+genericEnumDecodeJson f =
+  GR.to <$> genericEnumDecodeJsonRep f
+
+-- | Generic Enum Sum Representations, with constructor names as strings
+class GenericEnumDecodeJson rep where
+  genericEnumDecodeJsonRep :: Json -> Either String rep
+
+instance sumEnumDecodeJsonRep ::
+  ( GenericEnumDecodeJson a
+  , GenericEnumDecodeJson b
+  ) => GenericEnumDecodeJson (GR.Sum a b) where
+  genericEnumDecodeJsonRep f
+      = GR.Inl <$> genericEnumDecodeJsonRep f
+    <|> GR.Inr <$> genericEnumDecodeJsonRep f
+
+instance constructorEnumSumRep ::
+  ( IsSymbol name
+  ) => GenericEnumDecodeJson (GR.Constructor name GR.NoArguments) where
+  genericEnumDecodeJsonRep f = do
+    s <- Argonaut.decodeJson f
+    if s == name
+       then pure $ GR.Constructor GR.NoArguments
+       else Left $ "Enum string " <> s <> " did not match expected string " <> name
+    where
+      name = reflectSymbol (SProxy :: SProxy name)
+
+genericEnumEncodeJson :: forall a rep
+   . GR.Generic a rep
+  => GenericEnumEncodeJson rep
+  => a
+  -> Json
+genericEnumEncodeJson f =
+  genericEnumEncodeJsonRep $ GR.from f
+
+-- | Generic Enum Sum Representations, with constructor names as strings
+class GenericEnumEncodeJson rep where
+  genericEnumEncodeJsonRep :: rep -> Json
+
+instance sumGenericEnumEncodeJson ::
+  ( GenericEnumEncodeJson a
+  , GenericEnumEncodeJson b
+  ) => GenericEnumEncodeJson (GR.Sum a b) where
+  genericEnumEncodeJsonRep (GR.Inl x) = genericEnumEncodeJsonRep x
+  genericEnumEncodeJsonRep (GR.Inr x) = genericEnumEncodeJsonRep x
+
+instance constructorGenericEnumEncodeJson ::
+  ( IsSymbol name
+  ) => GenericEnumEncodeJson (GR.Constructor name GR.NoArguments) where
+  genericEnumEncodeJsonRep _ = Argonaut.encodeJson $ reflectSymbol (SProxy :: SProxy name)
