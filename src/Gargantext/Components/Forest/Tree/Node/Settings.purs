@@ -67,6 +67,7 @@ glyphiconNodeAction CopyFromCorpus    = "random"
 glyphiconNodeAction Refresh           = "refresh"
 glyphiconNodeAction Config            = "wrench"
 glyphiconNodeAction Share             = "user-plus"
+glyphiconNodeAction Move              = "share-square-o"
 glyphiconNodeAction _                 = ""
 
 
@@ -137,6 +138,7 @@ settingsBox Folder =
                                 , Folder
                                 , Annuaire
                                 ]
+                          , Move
                           , Delete
                           ]
               }
@@ -152,7 +154,7 @@ settingsBox Corpus =
                                 ]
                           , Upload
                           , Download
-                            --, Move
+                          , Move
                             --, Clone
                           , Link Annuaire
                           , Delete
@@ -208,6 +210,7 @@ settingsBox Annuaire =
               , edit : false
               , doc  : Documentation Annuaire
               , buttons : [ Upload
+                          , Move
                           , Delete
                           ]
               }
