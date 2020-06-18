@@ -1,6 +1,6 @@
 module Gargantext.Components.Forest.Tree where
 
-import DOM.Simple.Console (log2)
+import DOM.Simple.Console (log, log2)
 import Data.Array as A
 import Data.Maybe (Maybe)
 import Data.Set as Set
@@ -296,6 +296,9 @@ performAction (UploadFile nodeType fileType mName contents) { session
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "Uploaded, task:" task
 
+-------
+performAction DownloadNode _ = do
+    liftEffect $ log "[performAction] DownloadNode"
 -------
 performAction RefreshTree { reload: (_ /\ setReload) } = do
   liftEffect $ setReload (_ + 1)

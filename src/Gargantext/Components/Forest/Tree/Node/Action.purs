@@ -27,6 +27,7 @@ data Action = AddNode     String GT.NodeType
             | ShareNode   String
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
+            | DownloadNode
             | RefreshTree
 
 
@@ -39,6 +40,7 @@ instance showShow :: Show Action where
   show (DoSearch    _      )= "SearchQuery"
   show (UploadFile  _ _ _ _)= "UploadFile"
   show  RefreshTree         = "RefreshTree"
+  show  DownloadNode        = "Download"
 
 type Props =
   ( dispatch :: Action -> Aff Unit
@@ -56,6 +58,7 @@ icon (ShareNode  _)       = glyphiconNodeAction Share
 icon (DoSearch   _)       = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
 icon  RefreshTree         = glyphiconNodeAction Refresh
+icon  DownloadNode        = glyphiconNodeAction Download
 -- icon _             = "hand-o-right"
 
 text :: Action -> String
@@ -67,4 +70,5 @@ text (ShareNode   _      )= "Share !"
 text (DoSearch    _      )= "Launch search !"
 text (UploadFile  _ _ _ _)= "Upload File !"
 text  RefreshTree         = "Refresh Tree !"
+text DownloadNode         = "Download !"
 -----------------------------------------------------------------------

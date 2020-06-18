@@ -60,7 +60,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
       renameNodeName <- R.useState' text
       pure $ H.div {className: "from-group row-no-padding"}
         [ textInput renameNodeName
-        , submitBtn   renameNodeName
+        , submitBtn renameNodeName
         , cancelBtn
         ]
       where
@@ -162,6 +162,7 @@ formChoice nodeTypes defaultNodeType setNodeType =
          ]
 
 -- | Button Form
+-- FIXME: currently needs a click from the user (by default, we could avoid such click)
 formButton :: forall a b c
            .    a
            -> ((b -> a) -> Effect c)
@@ -178,6 +179,8 @@ formButton nodeType setNodeType =
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
+
+
 submitButton :: Action -> (Action -> Aff Unit) -> R.Element
 submitButton action dispatch =
   H.button { className : "btn btn-primary fa fa-" <> icon action
@@ -188,4 +191,19 @@ submitButton action dispatch =
                                , on: {click: \_ -> launchAff $ dispatch action}
                                }
                                [ H.text $ " " <> text action]
+
+type Href  = String
+
+submitButtonHref :: Action -> Href -> R.Element
+submitButtonHref action href =
+  H.a { className : "btn btn-primary fa fa-" <> icon action
+      , style : { width: "50%" }
+      , href
+      , target: "_blank"
+      }
+      [ H.text $ " " <> text action]
+
+
+
+
 
