@@ -5,14 +5,15 @@ import Gargantext.Types (NodeType)
 import Gargantext.Types as GT
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Gargantext.Components.Forest.Tree.Node.Tools (panel)
 
 -- | Action: Show Documentation
 actionDoc :: NodeType -> R.Hooks R.Element
 actionDoc nodeType =
-  pure $ R.fragment [ H.div { style: {margin: "10px"} }
-                            $ [ infoTitle nodeType ]
-                            <> (map (\info -> H.p {} [H.text info]) $ docOf nodeType)
-                    ]
+  pure $ panel ( [ infoTitle nodeType ]
+                 <> (map (\info -> H.p {} [H.text info]) $ docOf nodeType)
+               )
+               ( H.div {} [])
   where
     infoTitle :: NodeType -> R.Element
     infoTitle nt = H.div { style: {margin: "10px"}}

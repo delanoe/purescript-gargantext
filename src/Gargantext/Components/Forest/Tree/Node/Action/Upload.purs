@@ -9,7 +9,7 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileContents(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe)
+import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Prelude (class Show, Unit, discard, bind, const, id, map, pure, show, unit, void, ($), read)
 import Gargantext.Routes       as GR
@@ -65,40 +65,33 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
       fileType@(_ /\ setFileType)   <- R.useState'  CSV
       lang@( _chosenLang /\ setLang) <- R.useState' EN
 
-      pure $
-        H.div {className:""}
-              [ H.div {className:"row"}
-                      [ H.div {className:"col-md-6 flex-space-around"}
-                              [ H.input { type: "file"
+      let    bodies = [ H.div { className:"col-md-6 flex-space-around"}
+                           [ H.input { type: "file"
                                         , placeholder: "Choose file"
                                         , on: {change: onChangeContents mFile}
                                         }
                               ]
-                      , H.div {className:"col-md-3 flex-space-around"}
-                              [ formChoiceSafe [ CSV
-                                               , CSV_HAL
-                                               , WOS
-                                               , PresseRIS
-                                               ] CSV setFileType
-                              ]
+                   , H.div {className:"col-md-3 flex-space-around"}
+                           [ formChoiceSafe [ CSV
+                                            , CSV_HAL
+                                            , WOS
+                                            , PresseRIS
+                                            ] CSV setFileType
+                           ]
 
-                      , H.div {className:"col-md-3 flex-space-around"}
-                              [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang ]
-                      ]
+                   , H.div {className:"col-md-3 flex-space-around"}
+                           [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang ]
+                   ]
 
-              , H.div { className : "panel-footer" }
-                      [ H.div {} []
-                      , H.div {className:"flex-center"} 
-                              [ uploadButton { dispatch
-                                             , fileType
-                                             , lang
-                                             , id
-                                             , mFile
-                                             , nodeType
-                                             }
-                              ]
-                      ]
-              ]
+      let footer = H.div {} [ uploadButton { dispatch
+                                           , fileType
+                                           , lang
+                                           , id
+                                           , mFile
+                                           , nodeType
+                                           }
+                            ]
+      pure $ panel bodies footer
 
     renderOptionFT :: FileType -> R.Element
     renderOptionFT opt = H.option {} [ H.text $ show opt ]
@@ -299,16 +292,19 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
       mFile :: R.State (Maybe UploadFile) <- R.useState' Nothing
-
-      pure $ H.div {} [
-        H.div {} [ H.input { type: "file"
+      let body = H.input { type: "file"
                             , placeholder: "Choose file"
                             , on: {change: onChangeContents mFile}
                             }
-                  ]
 
-      , H.div {} [ uploadTermButton { dispatch, id, mFile, nodeType } ]
-      ]
+      let footer = H.div {} [ uploadTermButton { dispatch
+                                               , id
+                                               , mFile
+                                               , nodeType
+                                               } 
+                            ]
+
+      pure $ panel [body] footer
 
     onChangeContents :: forall e. R.State (Maybe UploadFile)
                      -> E.SyntheticEvent_ e

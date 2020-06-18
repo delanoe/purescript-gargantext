@@ -64,6 +64,3 @@ downloadButton href label info = do
                                ]
                     ]
 
-
-
-
