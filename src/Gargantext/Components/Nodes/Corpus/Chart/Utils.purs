@@ -40,7 +40,7 @@ chartUpdateButton p = R.createElement chartUpdateButtonCpt p []
 chartUpdateButtonCpt :: R.Component ChartUpdateButtonProps
 chartUpdateButtonCpt = R.hooksComponent "G.C.N.C.C.U.chartUpdateButton" cpt
   where
-    cpt { path: { chartType, corpusId, listId, tabType }, reload: (_ /\ setReload), session } _ = do
+    cpt { chartType, path: { corpusId, listId, tabType }, reload: (_ /\ setReload), session } _ = do
       R.useEffect' $ do
         log2 "[chartUpdateButton] tabType" tabType
 

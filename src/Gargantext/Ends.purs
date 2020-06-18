@@ -9,7 +9,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Gargantext.Routes as R
-import Gargantext.Types (ApiVersion, Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType')
+import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType')
 import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==))
 
 -- | A means of generating a url to visit, a destination
