@@ -3,11 +3,14 @@ module Gargantext.Components.Nodes.Corpus.Chart.Utils where
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
+import Gargantext.Components.Nodes.Corpus.Chart.API (recomputeChart)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (Path)
 import Gargantext.Sessions (Session)
 import Gargantext.Types as T
@@ -29,6 +32,7 @@ reloadButton (_ /\ setReload) = H.a { className
 
 type ChartUpdateButtonProps = (
     chartType :: T.ChartType
+  , ngramsType :: T.CTabNgramType
   , path :: Record Path
   , reload :: R.State Int
   , session :: Session
@@ -40,7 +44,10 @@ chartUpdateButton p = R.createElement chartUpdateButtonCpt p []
 chartUpdateButtonCpt :: R.Component ChartUpdateButtonProps
 chartUpdateButtonCpt = R.hooksComponent "G.C.N.C.C.U.chartUpdateButton" cpt
   where
-    cpt { chartType, path: { corpusId, listId, tabType }, reload: (_ /\ setReload), session } _ = do
+    cpt { chartType
+        , ngramsType
+        , path: { corpusId, listId, tabType }
+        , reload: (_ /\ setReload), session } _ = do
       R.useEffect' $ do
         log2 "[chartUpdateButton] tabType" tabType
 
@@ -50,4 +57,6 @@ chartUpdateButtonCpt = R.hooksComponent "G.C.N.C.C.U.chartUpdateButton" cpt
       where
         onClick :: forall a. a -> Effect Unit
         onClick _ = do
-          setReload $ (_ + 1)
+          launchAff_ $ do
+            _ <- recomputeChart session chartType ngramsType corpusId listId
+            liftEffect $ setReload $ (_ + 1)

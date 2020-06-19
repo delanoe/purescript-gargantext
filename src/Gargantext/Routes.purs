@@ -37,7 +37,7 @@ data SessionRoute
   | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
   -- ^ This name is not good. In particular this URL is used both in PUT and POST.
   | RecomputeNgrams (TabSubType CTabNgramType) Id ListId
-  | RecomputeListChart ChartType Id ListId
+  | RecomputeListChart ChartType CTabNgramType Id ListId
   | NodeAPI NodeType (Maybe Id) String
   | GraphAPI Id String
   | ListsRoute ListId

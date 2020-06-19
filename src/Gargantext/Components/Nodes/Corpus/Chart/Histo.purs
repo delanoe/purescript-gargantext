@@ -17,7 +17,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (ChartType(..), TabType)
+import Gargantext.Types (ChartType(..), CTabNgramType(..), TabType(..))
 
 newtype ChartMetrics = ChartMetrics { "data" :: HistoMetrics }
 
@@ -70,6 +70,7 @@ loaded :: Session -> Record Path -> R.State Int -> HistoMetrics -> R.Element
 loaded session path reload loaded =
   H.div {} [
     U.reloadButton reload
-  , U.chartUpdateButton { chartType: Histo, path, reload, session }
+  , U.chartUpdateButton { chartType: Histo, ngramsType: CTabTerms, path, reload, session }
   , chart $ chartOptions loaded
   ]
+  -- TODO: parametrize ngramsType above

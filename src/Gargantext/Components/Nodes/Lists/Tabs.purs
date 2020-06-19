@@ -2,6 +2,7 @@ module Gargantext.Components.Nodes.Lists.Tabs where
 
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -47,8 +48,15 @@ ngramsView props = R.createElement ngramsViewCpt props []
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
   where
-    cpt {mode, session, corpusId, corpusData: {defaultListId}} _ = do
-      chartType <- R.useState' Scatter
+    cpt { corpusData: {defaultListId}
+        , corpusId
+        , mode
+        , session } _ = do
+      R.useEffect' $ do
+        log2 "[ngramsViewCpt] corpusId" corpusId
+        log2 "[ngramsViewCpt] defaultListId" defaultListId
+
+      chartType <- R.useState' Histo
 
       pure $ R.fragment
         ( charts tabNgramType chartType
@@ -60,15 +68,15 @@ ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
       where
         tabNgramType = modeTabType mode
         tabType = TabCorpus (TabNgramType tabNgramType)
-        listId = 0 -- TODO!
+        listId = defaultListId
         path = {corpusId, listId, tabType, limit: (Just 1000)}
 
         charts CTabTerms (chartType /\ setChartType) = [
-          H.div { className: "row" } [
+          H.div { className: "row chart-type-selector" } [
             H.div { className: "col-md-3" } [
 
               R2.select { className: "form-control"
-                        ,  on: { change: \e -> setChartType $ const $ fromMaybe Scatter $ chartTypeFromString $ R2.unsafeEventValue e }
+                        ,  on: { change: \e -> setChartType $ const $ fromMaybe Histo $ chartTypeFromString $ R2.unsafeEventValue e }
                         , defaultValue: show chartType } [
                 H.option { value: show Histo } [ H.text $ show Histo ]
               , H.option { value: show Scatter } [ H.text $ show Scatter ]
