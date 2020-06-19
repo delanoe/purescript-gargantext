@@ -8,9 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (Search, isIsTex_Advanced)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..))
-import Gargantext.Components.Forest.Tree.Node.Box.Types
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Search, isIsTex_Advanced)
 import Gargantext.Prelude (discard, identity, pure, unit, ($), (<>), (==))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -20,11 +18,10 @@ import URI.Query as Query
 
 --------------------
 -- | Iframes
-searchIframes :: Record NodePopupProps
-              -> R.State Search
+searchIframes :: R.State Search
               -> R.Ref (Nullable DOM.Element)
               -> R.Element
-searchIframes {nodeType} search@(search' /\ _) iframeRef =
+searchIframes search@(search' /\ _) iframeRef =
   if isIsTex_Advanced search'.datafield then
     H.div { className: "istex-search panel panel-default" }
           [ iframeWith "https://istex.gargantext.org" search iframeRef ]
@@ -41,15 +38,14 @@ iframeWith :: String
            -> R.Element
 iframeWith url (search /\ setSearch) iframeRef =
   H.iframe { src: isTexTermUrl search.term
-            ,width: "100%"
-            ,height: "100%"
-            ,ref: iframeRef
-            ,on: {
-              load: \_ -> do
-                 addEventListener window "message" (changeSearchOnMessage url)
-                 R2.postMessage iframeRef search.term
+           , width: "100%"
+           , height: "100%"
+           , ref: iframeRef
+           , on: { load: \_ -> do
+                   addEventListener window "message" (changeSearchOnMessage url)
+                   R2.postMessage iframeRef search.term
                  }
-           } []
+          } []
   where
     changeSearchOnMessage :: String -> Callback MessageEvent
     changeSearchOnMessage url' =
@@ -63,7 +59,7 @@ iframeWith url (search /\ setSearch) iframeRef =
       where
         query = Query.print $ NQP.print identity identity qp
 
-        qp = NQP.QueryPairs [
-          Tuple (NQP.keyFromString "query") (Just (NQP.valueFromString term))
-          ]
+        qp = NQP.QueryPairs [ Tuple (NQP.keyFromString "query")
+                                    (Just (NQP.valueFromString term))
+                            ]
 

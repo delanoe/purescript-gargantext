@@ -18,6 +18,25 @@ import Gargantext.Types as GT
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 
+
+type Search = { databases :: Database
+              , datafield :: Maybe DataField
+              , url       :: String
+              , lang      :: Maybe Lang
+              , node_id   :: Maybe Int
+              , term      :: String
+              }
+
+isIsTex_Advanced :: Maybe DataField -> Boolean
+isIsTex_Advanced ( Just
+          ( External
+            ( Just ( IsTex_Advanced)
+            )
+          )
+        ) = true
+isIsTex_Advanced _ = false
+
+
 ------------------------------------------------------------------------
 class Doc a where
   doc :: a -> String

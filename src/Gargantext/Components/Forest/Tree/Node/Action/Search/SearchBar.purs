@@ -4,7 +4,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar
 
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (Search, searchField)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (searchField)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Prelude (Unit, pure, ($))

@@ -1,8 +1,9 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField
-  ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex, isIsTex_Advanced) where
+    where
 
 import DOM.Simple.Console (log, log2)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Nullable (null)
 import Data.Newtype (over)
 import Data.Set as Set
 import Data.String (length)
@@ -11,10 +12,11 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Prelude (Unit, bind, discard, map, pure, show, ($), (&&), (<), (<$>), (<>), (==), read)
 import Gargantext.Sessions (Session)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -26,14 +28,6 @@ select :: forall props.
           -> Array R.Element
           -> R.Element
 select = R.createElement "select"
-
-type Search = { databases :: Database
-              , datafield :: Maybe DataField
-              , url       :: String
-              , lang      :: Maybe Lang
-              , node_id   :: Maybe Int
-              , term      :: String
-              }
 
 eqSearch :: Search -> Search -> Boolean
 eqSearch s s' =    (s.databases == s'.databases)
@@ -70,6 +64,7 @@ searchFieldComponent :: R.Component Props
 searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
   where
     cpt props@{onSearch, search: search@(s /\ _)} _ = do
+      iframeRef <- R.useRef    null
       pure $
         H.div { className: "search-field-group", style: { width: "100%" } }
           [
@@ -82,6 +77,7 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
                     H.div {}[]
                   else
                     H.div {} [ dataFieldNav search dataFields
+
                              , if isExternal s.datafield
                                  then databaseInput search props.databases
                                  else H.div {} []
@@ -97,7 +93,11 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
                              , if isCNRS s.datafield
                                  then componentCNRS search
                                  else H.div {} []
+ 
+                             , H.div {} [ searchIframes search iframeRef ]
+
                              ]
+
                 ]
               ]
           , H.div { className : "panel-footer" }
@@ -159,16 +159,6 @@ isIsTex ( Just
           )
         ) = true
 isIsTex _ = false
-
-isIsTex_Advanced :: Maybe DataField -> Boolean
-isIsTex_Advanced ( Just
-          ( External
-            ( Just ( IsTex_Advanced)
-            )
-          )
-        ) = true
-isIsTex_Advanced _ = false
-
 
 
 isIMT :: Maybe DataField -> Boolean

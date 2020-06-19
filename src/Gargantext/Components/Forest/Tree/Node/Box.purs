@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 
 import Data.Array (length)
 import Data.Maybe (Maybe(..))
-import Data.Nullable (null)
 import Data.String as S
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
@@ -15,7 +14,6 @@ import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
 import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Search (actionSearch)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
@@ -52,10 +50,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
   where
     cpt p _ = do
       isOpen    <- R.useState' false
-      iframeRef <- R.useRef    null
-      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' { action: Nothing
-                                                                , id: p.id
-                                                                , name: p.name
+      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' { action  : Nothing
+                                                                , id      : p.id
+                                                                , name    : p.name
                                                                 , nodeType: p.nodeType
                                                                 }
       search        <- R.useState' $ defaultSearch { node_id = Just p.id }
@@ -76,10 +73,6 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
             , panelBody    nodePopupState p
             , mPanelAction nodePopupState p
             ]
-          , if nodePopup.action == Just SearchBox then
-              H.div {} [ searchIframes p search iframeRef ]
-            else
-              H.div {} []
           ]
         ]
       where
@@ -161,7 +154,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
         mPanelAction :: R.State (Record NodePopupS)
                      -> Record NodePopupProps
                      -> R.Element
-        mPanelAction ({action: Nothing} /\ _) _ = H.div {} []
+        mPanelAction ({action: Nothing    } /\ _) _     = H.div {} []
         mPanelAction ({action: Just action} /\ _) props =
             panelAction { action
                         , dispatch : props.dispatch

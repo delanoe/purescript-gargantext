@@ -18,25 +18,25 @@ import Reactix.DOM.HTML as H
 updateRequest :: UpdateNodeParams -> Session -> ID -> Aff GT.AsyncTaskWithType
 updateRequest (UpdateNodeParamsList meth) session nodeId = do
   task <- post session p meth
-  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
+  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
     where
       p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
 
 updateRequest (UpdateNodeParamsGraph meth) session nodeId = do
   task <- post session p meth
-  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
+  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
     where
       p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
 
 updateRequest (UpdateNodeParamsTexts meth) session nodeId = do
   task <- post session p meth
-  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
+  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
     where
       p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
 
 updateRequest (UpdateNodeParamsBoard meth) session nodeId = do
   task <- post session p meth
-  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode } -- TODO add NodeType
+  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
     where
       p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
 
