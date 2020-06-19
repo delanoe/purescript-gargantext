@@ -1,11 +1,14 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Histo where
 
-import Prelude (bind, map, pure, ($))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (seriesBarD1)
@@ -13,7 +16,7 @@ import Gargantext.Components.Charts.Options.Color (grey)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView)
-import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
+import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
@@ -49,8 +52,8 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , series    : [seriesBarD1 {name: "Number of publication / year"} $
                  map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count'] }
 
-getMetrics :: Session -> Record Path -> Aff HistoMetrics
-getMetrics session {corpusId, limit, listId, tabType} = do
+getMetrics :: Session -> Tuple Reload (Record Path) -> Aff HistoMetrics
+getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
   ChartMetrics ms <- get session chart
   pure ms."data"
   where
@@ -66,7 +69,7 @@ histoCpt = R.hooksComponent "G.C.N.C.C.H.histo" cpt
       reload <- R.useState' 0
       pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
 
-loaded :: Session -> Record Path -> R.State Int -> HistoMetrics -> R.Element
+loaded :: Session -> Record Path -> R.State Reload -> HistoMetrics -> R.Element
 loaded session path reload loaded =
   H.div {} [
     U.reloadButton reload

@@ -6,6 +6,7 @@ import Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -17,7 +18,7 @@ import Gargantext.Components.Charts.Options.Color (green, grey, red)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView)
-import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
+import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
@@ -85,8 +86,8 @@ scatterOptions metrics' = Options
                         }
     --}
 
-getMetrics :: Session -> Record Path -> Aff Loaded
-getMetrics session {corpusId, limit, listId, tabType} = do
+getMetrics :: Session -> Tuple Reload (Record Path) -> Aff Loaded
+getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
   Metrics ms <- get session metrics'
   pure ms."data"
   where
@@ -102,7 +103,7 @@ metricsCpt = R.hooksComponent "G.C.N.C.C.M.metrics" cpt
       reload <- R.useState' 0
       pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
 
-loaded :: Session -> Record Path -> R.State Int -> Loaded -> R.Element
+loaded :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
 loaded session path reload loaded =
   H.div {} [
     U.reloadButton reload

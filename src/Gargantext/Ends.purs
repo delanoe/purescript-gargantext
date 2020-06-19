@@ -179,7 +179,7 @@ sessionPath (R.Search {listId, limit, offset, orderBy} (Just corpusId)) =
 --     <> offsetUrl offset
 --     <> limitUrl limit
 --     <> orderUrl orderBy
-sessionPath (R.CorpusMetrics {tabType, listId, limit} i) =
+sessionPath (R.CorpusMetrics { listId, limit, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ "metrics"
     <> "?ngrams=" <> show listId

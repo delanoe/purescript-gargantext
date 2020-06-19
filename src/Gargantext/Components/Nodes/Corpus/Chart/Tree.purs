@@ -2,6 +2,8 @@ module Gargantext.Components.Nodes.Corpus.Chart.Tree where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -13,7 +15,7 @@ import Gargantext.Components.Charts.Options.Series (TreeNode, Trees(..), mkTree)
 import Gargantext.Components.Charts.Options.Font (mkTooltip, templateFormatter)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView)
-import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
+import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType)
@@ -44,8 +46,8 @@ scatterOptions nodes = Options
 
   }
 
-getMetrics :: Session -> Record Path -> Aff Loaded
-getMetrics session {corpusId, limit, listId, tabType} = do
+getMetrics :: Session -> Tuple Reload (Record Path) -> Aff Loaded
+getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
   Metrics ms <- get session chart
   pure ms."data"
   where
@@ -61,7 +63,7 @@ treeCpt = R.hooksComponent "G.C.N.C.C.T.tree" cpt
       reload <- R.useState' 0
       pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
 
-loaded :: Session -> Record Path -> R.State Int -> Loaded -> R.Element
+loaded :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
 loaded session path reload loaded =
   H.div {} [
     U.reloadButton reload

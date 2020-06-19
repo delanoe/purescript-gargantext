@@ -2,7 +2,6 @@ module Gargantext.Components.Nodes.Lists.Tabs where
 
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -52,10 +51,6 @@ ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
         , corpusId
         , mode
         , session } _ = do
-      R.useEffect' $ do
-        log2 "[ngramsViewCpt] corpusId" corpusId
-        log2 "[ngramsViewCpt] defaultListId" defaultListId
-
       chartType <- R.useState' Histo
 
       pure $ R.fragment

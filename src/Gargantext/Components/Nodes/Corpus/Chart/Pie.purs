@@ -7,6 +7,7 @@ import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -17,7 +18,7 @@ import Gargantext.Components.Charts.Options.Color (blue)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView)
-import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
+import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
@@ -71,8 +72,8 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   }
 
 
-getMetrics :: Session -> Record Path -> Aff HistoMetrics
-getMetrics session {corpusId, limit, listId, tabType} = do
+getMetrics :: Session -> Tuple Reload (Record Path) -> Aff HistoMetrics
+getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
   ChartMetrics ms <- get session chart
   pure ms."data"
   where chart = Chart {chartType: ChartPie, limit, listId, tabType} (Just corpusId)
@@ -87,7 +88,7 @@ pieCpt = R.hooksComponent "G.C.N.C.C.P.pie" cpt
       reload <- R.useState' 0
       pure $ metricsLoadView {getMetrics, loaded: loadedPie, path, reload, session}
 
-loadedPie :: Session -> Record Path -> R.State Int -> HistoMetrics -> R.Element
+loadedPie :: Session -> Record Path -> R.State Reload -> HistoMetrics -> R.Element
 loadedPie session path reload loaded =
   H.div {} [
     U.reloadButton reload
@@ -106,7 +107,7 @@ barCpt = R.hooksComponent "LoadedMetricsBar" cpt
       reload <- R.useState' 0
       pure $ metricsLoadView {getMetrics, loaded: loadedBar, path, reload, session}
 
-loadedBar :: Session -> Record Path -> R.State Int -> Loaded -> R.Element
+loadedBar :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
 loadedBar session path reload loaded =
   H.div {} [
     U.reloadButton reload

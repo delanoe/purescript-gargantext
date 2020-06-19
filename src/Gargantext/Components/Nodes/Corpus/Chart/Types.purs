@@ -6,6 +6,8 @@ import Reactix as R
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType)
 
+type Reload = Int
+
 type Path = (
     corpusId :: Int
   , limit    :: Maybe Int

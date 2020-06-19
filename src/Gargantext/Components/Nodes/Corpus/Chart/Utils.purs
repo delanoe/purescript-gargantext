@@ -2,7 +2,6 @@ module Gargantext.Components.Nodes.Corpus.Chart.Utils where
 
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -47,8 +46,6 @@ chartUpdateButtonCpt = R.hooksComponent "G.C.N.C.C.U.chartUpdateButton" cpt
     cpt { chartType
         , path: { corpusId, listId, tabType }
         , reload: (_ /\ setReload), session } _ = do
-      R.useEffect' $ do
-        log2 "[chartUpdateButton] tabType" tabType
 
       pure $ H.a { className: "chart-update-button fa fa-database"
                  , on: { click: onClick }
