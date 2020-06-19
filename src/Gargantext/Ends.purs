@@ -118,7 +118,11 @@ sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType
 sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
 sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ fromMaybe 0 pId) <> p
 sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeListChart ChartBar nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeListChart ChartPie nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeListChart ChartTree nt nId lId)      = "node/" <> (show nId) <> "/tree?list=" <> (show lId) <> "&ngramsType=" <> (show nt) <> "&listType=GraphTerm"
 sessionPath (R.RecomputeListChart Histo nt nId lId)      = "node/" <> (show nId) <> "/chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeListChart Scatter nt nId lId)      = "node/" <> (show nId) <> "/metrics?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart _ nt nId lId)      = "node/" <> (show nId) <> "/recompute-chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.GraphAPI gId p)      = "graph/" <> (show gId) <> "/" <> p
 sessionPath (R.GetNgrams opts i)    =

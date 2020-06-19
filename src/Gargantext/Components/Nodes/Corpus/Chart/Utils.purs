@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Utils where
 
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -32,7 +33,6 @@ reloadButton (_ /\ setReload) = H.a { className
 
 type ChartUpdateButtonProps = (
     chartType :: T.ChartType
-  , ngramsType :: T.CTabNgramType
   , path :: Record Path
   , reload :: R.State Int
   , session :: Session
@@ -45,7 +45,6 @@ chartUpdateButtonCpt :: R.Component ChartUpdateButtonProps
 chartUpdateButtonCpt = R.hooksComponent "G.C.N.C.C.U.chartUpdateButton" cpt
   where
     cpt { chartType
-        , ngramsType
         , path: { corpusId, listId, tabType }
         , reload: (_ /\ setReload), session } _ = do
       R.useEffect' $ do
@@ -58,5 +57,15 @@ chartUpdateButtonCpt = R.hooksComponent "G.C.N.C.C.U.chartUpdateButton" cpt
         onClick :: forall a. a -> Effect Unit
         onClick _ = do
           launchAff_ $ do
-            _ <- recomputeChart session chartType ngramsType corpusId listId
-            liftEffect $ setReload $ (_ + 1)
+            case mNgramsType of
+              Just ngramsType -> do
+                _ <- recomputeChart session chartType ngramsType corpusId listId
+                liftEffect $ setReload $ (_ + 1)
+              Nothing -> pure unit
+
+        mNgramsType = case tabType of
+            T.TabCorpus (T.TabNgramType ngramType)   -> Just ngramType
+            T.TabCorpus _                            -> Nothing
+            T.TabDocument (T.TabNgramType ngramType) -> Just ngramType
+            T.TabDocument _                          -> Nothing
+            T.TabPairing _                           -> Nothing

@@ -8,6 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Reactix as R
+import Reactix.DOM.HTML as H
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
 import Gargantext.Components.Charts.Options.Type (xAxis)
@@ -20,7 +21,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (TabType, TermList(..))
+import Gargantext.Types (ChartType(..), TabType, TermList(..))
 
 newtype Metric = Metric
   { label :: String
@@ -102,5 +103,9 @@ metricsCpt = R.hooksComponent "G.C.N.C.C.M.metrics" cpt
       pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
 
 loaded :: Session -> Record Path -> R.State Int -> Loaded -> R.Element
-loaded _session _path setReload loaded =
-  U.reloadButtonWrap setReload $ chart $ scatterOptions loaded
+loaded session path reload loaded =
+  H.div {} [
+    U.reloadButton reload
+  , U.chartUpdateButton { chartType: Scatter, path, reload, session }
+  , chart $ scatterOptions loaded
+  ]

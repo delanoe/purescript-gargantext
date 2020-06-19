@@ -9,6 +9,7 @@ import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Reactix as R
+import Reactix.DOM.HTML as H
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
@@ -87,8 +88,12 @@ pieCpt = R.hooksComponent "G.C.N.C.C.P.pie" cpt
       pure $ metricsLoadView {getMetrics, loaded: loadedPie, path, reload, session}
 
 loadedPie :: Session -> Record Path -> R.State Int -> HistoMetrics -> R.Element
-loadedPie _session _path setReload loaded =
-  U.reloadButtonWrap setReload $ chart $ chartOptionsPie loaded
+loadedPie session path reload loaded =
+  H.div {} [
+    U.reloadButton reload
+  , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
+  , chart $ chartOptionsPie loaded
+  ]
 
 
 bar :: Record Props -> R.Element
@@ -102,5 +107,9 @@ barCpt = R.hooksComponent "LoadedMetricsBar" cpt
       pure $ metricsLoadView {getMetrics, loaded: loadedBar, path, reload, session}
 
 loadedBar :: Session -> Record Path -> R.State Int -> Loaded -> R.Element
-loadedBar _session _path setReload loaded =
-  U.reloadButtonWrap setReload $ chart $ chartOptionsBar loaded
+loadedBar session path reload loaded =
+  H.div {} [
+    U.reloadButton reload
+  , U.chartUpdateButton { chartType: ChartBar, path, reload, session }
+  , chart $ chartOptionsBar loaded
+  ]

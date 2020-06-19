@@ -2,7 +2,7 @@ module Gargantext.Components.Node
   where
 
 import Gargantext.Prelude
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?), (.!=))
 
 newtype NodePoly a =
   NodePoly { id :: Int
@@ -29,7 +29,7 @@ instance decodeNodePoly :: (DecodeJson a)
     hyperdata  <- obj .: "hyperdata"
     hyperdata' <- decodeJson hyperdata
 
-    pure $ NodePoly  { id : id
+    pure $ NodePoly { id : id
                  , typename : typename
                  , userId   : userId
                  , parentId : parentId
@@ -38,11 +38,10 @@ instance decodeNodePoly :: (DecodeJson a)
                  , hyperdata: hyperdata'
                  }
 
-newtype HyperdataList = HyperdataList { preferences :: String}
+newtype HyperdataList = HyperdataList { preferences :: String }
 
 instance decodeHyperdataList :: DecodeJson HyperdataList where
   decodeJson json = do
     obj <- decodeJson json
-    pref <- obj .: "preferences"
-    pure $ HyperdataList { preferences : pref}
-
+    pref <- obj .:? "preferences" .!= ""
+    pure $ HyperdataList { preferences : pref }

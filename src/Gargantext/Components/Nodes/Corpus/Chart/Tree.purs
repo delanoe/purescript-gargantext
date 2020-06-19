@@ -62,8 +62,9 @@ treeCpt = R.hooksComponent "G.C.N.C.C.T.tree" cpt
       pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
 
 loaded :: Session -> Record Path -> R.State Int -> Loaded -> R.Element
-loaded _session _path reload loaded =
+loaded session path reload loaded =
   H.div {} [
     U.reloadButton reload
+  , U.chartUpdateButton { chartType: ChartTree, path, reload, session }
   , chart (scatterOptions loaded)
   ]
