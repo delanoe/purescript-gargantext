@@ -179,18 +179,16 @@ formButton nodeType setNodeType =
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-
-
 submitButton :: Action -> (Action -> Aff Unit) -> R.Element
 submitButton action dispatch =
   H.button { className : "btn btn-primary fa fa-" <> icon action
-                               , type: "button"
-                               , style : { width: "50%" }
-                               , id: S.toLower $ show action
-                               , title: show action
-                               , on: {click: \_ -> launchAff $ dispatch action}
-                               }
-                               [ H.text $ " " <> text action]
+           , type: "button"
+           , style : { width: "50%" }
+           , id: S.toLower $ show action
+           , title: show action
+           , on: {click: \_ -> launchAff $ dispatch action}
+           }
+           [ H.text $ " " <> text action]
 
 type Href  = String
 

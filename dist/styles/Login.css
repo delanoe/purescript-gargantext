@@ -78,9 +78,10 @@ li#rename #rename-a {
   background-color: white;
   border: none;
 }
-#node-popup-tooltip .popup-container .istex-search.panel {
+#node-popup-tooltip .popup-container .frame-search.panel {
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  height: 600px;
   width: 1300px;
 }
 

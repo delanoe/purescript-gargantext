@@ -83,8 +83,7 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
                              ]
 
                 ]
-      let footer =  H.div {className: "flex-center"}
-                          [submitButton {onSearch, search, session: props.session}]
+      let footer =  submitButton {onSearch, search, session: props.session}
 
       pure $ panel body footer
 

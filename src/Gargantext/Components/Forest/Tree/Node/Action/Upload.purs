@@ -154,7 +154,7 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
       where
         disabled = case mFile of
           Nothing -> "1"
-          Just _ -> ""
+          Just _  -> ""
 
         onClick e = do
           let {name, contents} = unsafePartial $ fromJust mFile

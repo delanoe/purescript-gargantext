@@ -23,12 +23,12 @@ searchIframes :: R.State Search
               -> R.Element
 searchIframes search@(search' /\ _) iframeRef =
   if isIsTex_Advanced search'.datafield then
-    H.div { className: "istex-search panel panel-default" }
-          [ iframeWith "https://istex.gargantext.org" search iframeRef ]
+    H.div { className: "frame-search panel panel-default" }
+          [ iframeWith "https://istex.frame.gargantext.org" search iframeRef ]
   else
     if Just Web == search'.datafield then
-      H.div { className: "istex-search panel panel-default" }
-            [ iframeWith "https://searx.gargantext.org" search iframeRef ]
+      H.div { className: "frame-search panel panel-default" }
+            [ iframeWith "https://searx.frame.gargantext.org" search iframeRef ]
     else
       H.div {} []
 
