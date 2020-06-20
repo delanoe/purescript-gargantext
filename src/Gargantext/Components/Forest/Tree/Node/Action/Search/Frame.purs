@@ -4,12 +4,15 @@ import DOM.Simple as DOM
 import DOM.Simple.Event (MessageEvent)
 import DOM.Simple.EventListener (Callback, addEventListener, callback)
 import DOM.Simple.Window (window)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
+import Data.String (toLower)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Search, isIsTex_Advanced)
-import Gargantext.Prelude (discard, identity, pure, unit, ($), (<>), (==))
+import Gargantext.Prelude (discard, identity, pure, unit, ($), (<>), (==), class Show, show)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -17,20 +20,40 @@ import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
 
 --------------------
+
+data FrameSource = Istex | Searx
+
+derive instance genericFrameSource :: Generic FrameSource _
+
+instance showFrameSource :: Show FrameSource where
+  show = genericShow
+
+--------------------
 -- | Iframes
 searchIframes :: R.State Search
               -> R.Ref (Nullable DOM.Element)
               -> R.Element
 searchIframes search@(search' /\ _) iframeRef =
-  if isIsTex_Advanced search'.datafield then
-    H.div { className: "istex-search panel panel-default" }
-          [ iframeWith "https://istex.gargantext.org" search iframeRef ]
+  if isIsTex_Advanced search'.datafield
+     then divIframe Istex search iframeRef
   else
-    if Just Web == search'.datafield then
-      H.div { className: "istex-search panel panel-default" }
-            [ iframeWith "https://searx.gargantext.org" search iframeRef ]
-    else
-      H.div {} []
+    if Just Web == search'.datafield
+       then divIframe Searx search iframeRef
+       else H.div {} []
+
+divIframe :: FrameSource
+          -> R.State Search
+          -> R.Ref (Nullable DOM.Element)
+          -> R.Element
+divIframe frameSource search@(search' /\ _) iframeRef =
+    H.div { className: "frame-search panel panel-default" }
+          [ iframeWith (frameUrl frameSource)search iframeRef ]
+
+frameUrl :: FrameSource -> String
+frameUrl frameSource = frameUrl' (toLower $ show frameSource)
+  where
+    frameUrl' s = "https://" <> s <> ".frame.gargantext.org"
+
 
 iframeWith :: String
            -> R.State Search
