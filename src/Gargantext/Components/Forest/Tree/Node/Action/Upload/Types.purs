@@ -1,10 +1,10 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload.Types where
 
-import Gargantext.Prelude (class Read, class Show, class Eq)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..))
+import Gargantext.Prelude (class Read, class Show, class Eq)
 
 
 data FileType = CSV | CSV_HAL | WOS | PresseRIS

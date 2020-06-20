@@ -7,34 +7,20 @@ import Data.Nullable (null)
 import Data.Newtype (over)
 import Data.Set as Set
 import Data.String (length)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.Forest.Tree.Node.Tools (panel)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Prelude (Unit, bind, discard, map, pure, show, ($), (&&), (<), (<$>), (<>), (==), read)
+import Gargantext.Prelude (Unit, bind, discard, map, pure, show, ($), (<), (<$>), (<>), (==), read)
 import Gargantext.Sessions (Session)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
-
-select :: forall props.
-          R.IsComponent String props (Array R.Element)
-          => Record props
-          -> Array R.Element
-          -> R.Element
-select = R.createElement "select"
-
-eqSearch :: Search -> Search -> Boolean
-eqSearch s s' =    (s.databases == s'.databases)
-                && (s.datafield == s'.datafield)
-                && (s.lang      == s'.lang)
-                && (s.node_id   == s'.node_id)
-                && (s.term      == s'.term)
 
 defaultSearch :: Search
 defaultSearch = { databases: Empty
@@ -65,12 +51,7 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
   where
     cpt props@{onSearch, search: search@(s /\ _)} _ = do
       iframeRef <- R.useRef    null
-      pure $
-        H.div { className: "search-field-group", style: { width: "100%" } }
-          [
-            H.div { className: "row" }
-              [
-                H.div { className: "col-md-12" }
+      let body = 
                 [ searchInput {search}
                 , if length s.term < 3  -- search with love : <3
                   then
@@ -96,46 +77,41 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
  
                              , H.div {} [ searchIframes search iframeRef ]
 
+                             , if needsLang s.datafield
+                                then langNav search props.langs
+                                else H.div {} []
                              ]
 
                 ]
-              ]
-          , H.div { className : "panel-footer" }
-                [ if needsLang s.datafield
-                    then langNav search props.langs
-                    else H.div {} []
-                , H.div {} []
-                , H.div {className: "flex-center"}
-                        [submitButton {onSearch, search, session: props.session}]
-                ]
-          ]
-    eqProps :: Record Props -> Record Props -> Boolean
-    eqProps p p' =    (p.databases  == p'.databases )
-                   && (p.langs      == p'.langs     )
-                   && (eqSearch (fst p.search) (fst p'.search))
---                   && (fst p.filters == fst p'.filters   )
-    componentIMT (search /\ setSearch) =
-      R.fragment
-      [ H.ul {} $ map liCpt allIMTorgs
-      --, filterInput fi
+      let footer =  H.div {className: "flex-center"}
+                          [submitButton {onSearch, search, session: props.session}]
+
+      pure $ panel body footer
+
+
+componentIMT (search /\ setSearch) =
+  R.fragment
+  [ H.ul {} $ map liCpt allIMTorgs
+  --, filterInput fi
+  ]
+  where
+    liCpt org =
+      H.li {}
+      [ H.input { type: "checkbox"
+                , checked: isIn org search.datafield
+                , on: { change: \_ -> ( setSearch $ _ { datafield = updateFilter org search.datafield })
+                      }
+                }
+      , if org == All_IMT
+        then H.i {} [H.text  $ " " <> show org]
+        else H.text $ " " <> show org
       ]
-      where
-        liCpt org =
-          H.li {}
-          [ H.input { type: "checkbox"
-                    , checked: isIn org search.datafield
-                    , on: { change: \_ -> ( setSearch $ _ { datafield = updateFilter org search.datafield })
-                          }
-                    }
-          , if org == All_IMT
-            then H.i {} [H.text  $ " " <> show org]
-            else H.text $ " " <> show org
-          ]
-    componentCNRS (search /\ setSearch) =
-      R.fragment [
-        H.div {} []
-      --, filterInput fi
-      ]
+
+componentCNRS (search /\ setSearch) =
+  R.fragment [
+    H.div {} []
+  --, filterInput fi
+  ]
 
 
 isExternal :: Maybe DataField -> Boolean

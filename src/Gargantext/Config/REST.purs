@@ -1,26 +1,24 @@
 module Gargantext.Config.REST where
 
 import Affjax (defaultRequest, printResponseFormatError, request)
-import Affjax.RequestBody (RequestBody(..), formData, formURLEncoded, string)
+import Affjax.RequestBody (RequestBody(..), formData, formURLEncoded)
 import Affjax.RequestHeader as ARH
 import Affjax.ResponseFormat as ResponseFormat
 import DOM.Simple.Console (log)
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson)
-import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.FormURLEncoded as FormURLEncoded
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON, multipartFormData)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple)
 import Effect.Aff (Aff, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Web.XHR.FormData as XHRFormData
-
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
+import Web.XHR.FormData as XHRFormData
 
 type Token = String
 
