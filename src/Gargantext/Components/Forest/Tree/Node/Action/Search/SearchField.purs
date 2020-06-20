@@ -51,7 +51,7 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
   where
     cpt props@{onSearch, search: search@(s /\ _)} _ = do
       iframeRef <- R.useRef    null
-      let body = 
+      let params = 
                 [ searchInput {search}
                 , if length s.term < 3  -- search with love : <3
                   then
@@ -83,9 +83,9 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
                              ]
 
                 ]
-      let footer =  submitButton {onSearch, search, session: props.session}
+      let button =  submitButton {onSearch, search, session: props.session}
 
-      pure $ panel body footer
+      pure $ panel params button
 
 
 componentIMT (search /\ setSearch) =
