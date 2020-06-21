@@ -25,8 +25,8 @@ data NodeAction = Documentation NodeType
                 | Add    (Array NodeType)
                 | Merge { subTreeParams :: SubTreeParams }
                 | Move  { subTreeParams :: SubTreeParams }
+                | Link  { subTreeParams :: SubTreeParams }
                 | Clone
-                | Link NodeType
 
 ------------------------------------------------------------------------
 -- TODO move elsewhere
@@ -174,7 +174,18 @@ settingsBox Corpus =
                           , Download
                           , Move moveParameters
                             --, Clone
-                          , Link Annuaire
+                          , Link { subTreeParams : SubTreeParams 
+                                                 { showtypes: [ FolderPrivate
+                                                              , FolderShared
+                                                              , Team
+                                                              , FolderPublic
+                                                              , Folder
+                                                              , Annuaire
+                                                              ]
+                                                 , valitypes: [ Annuaire
+                                                              ]
+                                                 }
+                                 }
                           , Delete
                           ]
               }
@@ -259,7 +270,7 @@ moveParameters = { subTreeParams : SubTreeParams
                                               ]
                                  , valitypes: [ FolderPrivate
                                               , FolderShared
-                                              , Team
+                                                , Team
                                               , FolderPublic
                                               , Folder
                                               ]
