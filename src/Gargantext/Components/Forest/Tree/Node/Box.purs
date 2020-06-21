@@ -19,7 +19,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
-import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox, SubTreeParams(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Prelude (Unit, bind, const, map, pure, show, ($), (<>), (==), (<))
 import Gargantext.Sessions (Session)
@@ -238,8 +238,8 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Config , dispatch, id, nodeType, session} _ = do
       pure $ fragmentPT $ "Config " <> show nodeType
 
-    cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
-      pure $ copyFromCorpusView {dispatch, id, nodeType, session}
+    cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session} _ = do
+      pure $ copyFromCorpusView {dispatch, id, nodeType, session, subTreeParams}
 
     cpt {action: Link _} _ = pure $ fragmentPT $ "Soon, you will be able "
                                  <> "to link the corpus with your Annuaire"

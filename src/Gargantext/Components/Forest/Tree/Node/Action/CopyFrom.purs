@@ -3,11 +3,14 @@ module Gargantext.Components.Forest.Tree.Node.Action.CopyFrom where
 import DOM.Simple.Console (log2)
 import Data.Array as A
 import Data.Maybe (Maybe(..))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Props)
+import Gargantext.Components.Forest.Tree.Node.Settings (SubTreeParams(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (discard, map, pure, show, unit, ($), (&&), (/=), (<>))
+import Gargantext.Prelude (discard, map, pure, show, unit, ($), (&&), (/=), (<>), class Eq)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
@@ -19,19 +22,30 @@ import Reactix.DOM.HTML as H
 getNodeTree :: Session -> GT.ID -> Aff FTree
 getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 
-copyFromCorpusView :: Record Props -> R.Element
+------------------------------------------------------------------------
+
+type SubTreeParamsProps =
+  ( subTreeParams :: SubTreeParams
+  | Props
+  )
+
+
+copyFromCorpusView :: Record SubTreeParamsProps -> R.Element
 copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []
 
-copyFromCorpusViewCpt :: R.Component Props
+copyFromCorpusViewCpt :: R.Component SubTreeParamsProps
 copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
   where
-    cpt { dispatch
+    cpt params@{ dispatch
         , id
         , nodeType
         , session
+        , subTreeParams
         } _ =
       do
-        useLoader session loadCorporaTree $
+        let SubTreeParams {showtypes} = subTreeParams
+
+        useLoader session (loadSubTree showtypes) $
           \tree ->
             copyFromCorpusViewLoaded { dispatch
                                      , id
@@ -85,20 +99,15 @@ copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeVi
             log2 "[copyFromCorpusTreeViewCpt] issue copy into" id
             log2 "[copyFromCorpusTreeViewCpt] issue copy from" sourceId
 
-loadCorporaTree :: Session -> Aff FTree
-loadCorporaTree session = getCorporaTree session treeId
+--------------------------------------------------------------------------------------------
+loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
+loadSubTree nodetypes session = getSubTree session treeId nodetypes
   where
     Session { treeId } = session
 
-getCorporaTree :: Session -> Int -> Aff FTree
-getCorporaTree session treeId = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
+getSubTree :: Session -> Int -> Array GT.NodeType -> Aff FTree
+getSubTree session treeId showtypes = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
   where
-    nodeTypes     = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" typesList
-    typesList = [ GT.FolderPrivate
-                , GT.FolderShared
-                , GT.Team
-                , GT.FolderPublic
-                , GT.Folder
-                , GT.Corpus
-                , GT.NodeList
-                ]
+    nodeTypes     = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" showtypes
+
+
