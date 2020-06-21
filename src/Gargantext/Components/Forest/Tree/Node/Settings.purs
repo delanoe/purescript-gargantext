@@ -24,7 +24,7 @@ data NodeAction = Documentation NodeType
                 | Share
                 | Add    (Array NodeType)
                 | Merge { subTreeParams :: SubTreeParams }
-                | Move
+                | Move  { subTreeParams :: SubTreeParams }
                 | Clone
                 | Link NodeType
 
@@ -47,7 +47,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq Download Download = true
   eq Upload Upload     = true
   eq Refresh Refresh   = true
-  eq Move Move         = true
+  eq (Move x) (Move y) = x == y
   eq Clone Clone       = true
   eq Delete Delete     = true
   eq Share Share       = true
@@ -63,7 +63,7 @@ instance showNodeAction :: Show NodeAction where
   show Download          = "Download"
   show Upload            = "Upload"
   show Refresh           = "Refresh"
-  show Move              = "Move"
+  show (Move t)          = "Move with subtree params" <> show t
   show Clone             = "Clone"
   show Delete            = "Delete"
   show Share             = "Share"
@@ -85,7 +85,7 @@ glyphiconNodeAction (Merge _)         = "random"
 glyphiconNodeAction Refresh           = "refresh"
 glyphiconNodeAction Config            = "wrench"
 glyphiconNodeAction Share             = "user-plus"
-glyphiconNodeAction Move              = "share-square-o"
+glyphiconNodeAction (Move _)          = "share-square-o"
 glyphiconNodeAction _                 = ""
 
 
@@ -156,7 +156,7 @@ settingsBox Folder =
                                 , Folder
                                 , Annuaire
                                 ]
-                          , Move
+                          , Move moveParameters
                           , Delete
                           ]
               }
@@ -172,7 +172,7 @@ settingsBox Corpus =
                           , SearchBox
                           , Upload
                           , Download
-                          , Move
+                          , Move moveParameters
                             --, Clone
                           , Link Annuaire
                           , Delete
@@ -238,7 +238,7 @@ settingsBox Annuaire =
               , edit : true
               , doc  : Documentation Annuaire
               , buttons : [ Upload
-                          , Move
+                          , Move moveParameters
                           , Delete
                           ]
               }
@@ -249,3 +249,21 @@ settingsBox _ =
               , doc  : Documentation NodeUser
               , buttons : []
               }
+
+moveParameters = { subTreeParams : SubTreeParams 
+                                 { showtypes: [ FolderPrivate
+                                              , FolderShared
+                                              , Team
+                                              , FolderPublic
+                                              , Folder
+                                              ]
+                                 , valitypes: [ FolderPrivate
+                                              , FolderShared
+                                              , Team
+                                              , FolderPublic
+                                              , Folder
+                                              ]
+                                 }
+                  }
+
+

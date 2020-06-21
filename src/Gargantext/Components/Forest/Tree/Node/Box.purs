@@ -241,6 +241,9 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session, subTreeParams}
 
+    cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session} _ = do
+      pure $ copyFromCorpusView {dispatch, id, nodeType, session, subTreeParams}
+
     cpt {action: Link _} _ = pure $ fragmentPT $ "Soon, you will be able "
                                  <> "to link the corpus with your Annuaire"
                                  <> " (and reciprocally)."
