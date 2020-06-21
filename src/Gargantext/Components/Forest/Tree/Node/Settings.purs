@@ -174,18 +174,7 @@ settingsBox Corpus =
                           , Download
                           , Move moveParameters
                             --, Clone
-                          , Link { subTreeParams : SubTreeParams 
-                                                 { showtypes: [ FolderPrivate
-                                                              , FolderShared
-                                                              , Team
-                                                              , FolderPublic
-                                                              , Folder
-                                                              , Annuaire
-                                                              ]
-                                                 , valitypes: [ Annuaire
-                                                              ]
-                                                 }
-                                 }
+                          , Link linkParams
                           , Delete
                           ]
               }
@@ -277,4 +266,16 @@ moveParameters = { subTreeParams : SubTreeParams
                                  }
                   }
 
+linkParams =  { subTreeParams : SubTreeParams 
+                                                 { showtypes: [ FolderPrivate
+                                                              , FolderShared
+                                                              , Team
+                                                              , FolderPublic
+                                                              , Folder
+                                                              , Annuaire
+                                                              ]
+                                                 , valitypes: [ Annuaire
+                                                              ]
+                                                 }
+                                 }
 
