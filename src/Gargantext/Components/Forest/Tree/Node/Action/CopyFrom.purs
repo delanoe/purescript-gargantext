@@ -52,13 +52,14 @@ copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
                                      , nodeType
                                      , session
                                      , tree
+                                     , subTreeParams
                                      }
 
 ------------------------------------------------------------------------
 
 type CorpusTreeProps =
   ( tree :: FTree
-  | Props
+  | SubTreeParamsProps
   )
 
 copyFromCorpusViewLoaded :: Record CorpusTreeProps -> R.Element
@@ -79,7 +80,7 @@ copyFromCorpusTreeView props = R.createElement copyFromCorpusTreeViewCpt props [
 copyFromCorpusTreeViewCpt :: R.Component CorpusTreeProps
 copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeViewCpt" cpt
   where
-    cpt p@{id, tree: NTree (LNode { id: sourceId, name, nodeType }) ary} _ = do
+    cpt p@{id, tree: NTree (LNode { id: sourceId, name, nodeType }) ary, subTreeParams} _ = do
       pure $ {- H.div {} [ H.h5 { className: GT.fldr nodeType true} []
       , -} H.div { className: "node" } 
                  ( [ H.span { className: "name " <> clickable
@@ -90,8 +91,9 @@ copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeVi
                  )
                       -- ]
       where
+        SubTreeParams { valitypes } = subTreeParams
         children = map (\c -> copyFromCorpusTreeView (p { tree = c })) ary
-        validNodeType = (A.elem nodeType [GT.NodeList]) && (id /= sourceId)
+        validNodeType = (A.elem nodeType valitypes) && (id /= sourceId)
         clickable = if validNodeType then "clickable" else ""
         onClick _ = case validNodeType of
           false -> pure unit
