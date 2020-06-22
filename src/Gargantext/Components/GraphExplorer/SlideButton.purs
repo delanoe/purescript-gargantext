@@ -58,6 +58,8 @@ labelSizeButton sigmaRef state =
       Sigmax.dependOnSigma sigma "[labelSizeButton] sigma: Nothing" $ \s -> do
         Sigma.setSettings s {
           defaultLabelSize: newValue
+        , drawLabels: true
+        , labelSizeRatio: newValue / 2.5
         }
       setValue $ const newValue
     }

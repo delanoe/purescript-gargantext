@@ -8,7 +8,6 @@ import Effect.Aff (Aff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
-import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (copyFromCorpusView)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
 import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
 import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
@@ -19,8 +18,9 @@ import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
-import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox, SubTreeParams(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView)
 import Gargantext.Prelude (Unit, bind, const, map, pure, show, ($), (<>), (==), (<))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
@@ -238,12 +238,16 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Config , dispatch, id, nodeType, session} _ = do
       pure $ fragmentPT $ "Config " <> show nodeType
 
-    cpt {action: CopyFromCorpus, dispatch, id, nodeType, session} _ = do
-      pure $ copyFromCorpusView {dispatch, id, nodeType, session}
+-----------
+    cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session} _ = do
+      pure $ subTreeView {dispatch, id, nodeType, session, subTreeParams}
 
-    cpt {action: Link _} _ = pure $ fragmentPT $ "Soon, you will be able "
-                                 <> "to link the corpus with your Annuaire"
-                                 <> " (and reciprocally)."
+    cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session} _ = do
+      pure $ subTreeView {dispatch, id, nodeType, session, subTreeParams}
+
+    cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session} _ = do
+      pure $ subTreeView {dispatch, id, nodeType, session, subTreeParams}
+-----------
 
     cpt {action : Share, dispatch, id, name } _ = do
       isOpen <- R.useState' true
