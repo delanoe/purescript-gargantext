@@ -1,6 +1,6 @@
 {
     "name": "Gargantext",
-    "version": "0.0.1.5.1",
+    "version": "0.0.1.5.2",
     "scripts": {
         "rebase-set": "spago package-set-upgrade && spago psc-package-insdhall",
         "rebuild-set": "spago psc-package-insdhall",
@@ -14,7 +14,7 @@
         "clean-js": "rm -Rf node_modules",
         "clean-ps": "rm -Rf output",
         "test": "pulp test",
-        "start": "serve dist"
+        "server": "serve dist"
     },
     "dependencies": {
         "create-react-class": "^15.6.3",

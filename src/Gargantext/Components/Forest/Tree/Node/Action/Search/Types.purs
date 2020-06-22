@@ -1,7 +1,7 @@
-module Gargantext.Components.Search.Types where
+module Gargantext.Components.Forest.Tree.Node.Action.Search.Types where
 
-import Data.Array (concat)
 import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
+import Data.Array (concat)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
@@ -9,17 +9,33 @@ import Data.Set as Set
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import URI.Extra.QueryPairs as QP
-import URI.Query as Q
-
-import Gargantext.Prelude (class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>))
-
 import Gargantext.Components.Lang
 import Gargantext.Ends (class ToUrl, backendUrl)
+import Gargantext.Prelude (id, class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>), class Read)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), post)
 import Gargantext.Types as GT
-import Gargantext.Utils (id)
+import URI.Extra.QueryPairs as QP
+import URI.Query as Q
+
+
+type Search = { databases :: Database
+              , datafield :: Maybe DataField
+              , url       :: String
+              , lang      :: Maybe Lang
+              , node_id   :: Maybe Int
+              , term      :: String
+              }
+
+isIsTex_Advanced :: Maybe DataField -> Boolean
+isIsTex_Advanced ( Just
+          ( External
+            ( Just ( IsTex_Advanced)
+            )
+          )
+        ) = true
+isIsTex_Advanced _ = false
+
 
 ------------------------------------------------------------------------
 class Doc a where
@@ -130,17 +146,18 @@ instance docDatabase :: Doc Database where
 --  doc News        = "Web filtered by News"
 --  doc SocialNetworks = "Web filtered by MicroBlogs"
 
-readDatabase :: String -> Maybe Database
-readDatabase "All Databases" = Just All_Databases
-readDatabase "PubMed" = Just PubMed
-readDatabase "HAL"    = Just $ HAL Nothing
-readDatabase "Isidore"= Just Isidore
-readDatabase "IsTex"  = Just IsTex
-readDatabase "IsTex_Advanced" = Just IsTex_Advanced
--- readDatabase "Web"    = Just Web
--- readDatabase "News"   = Just News
--- readDatabase "Social Networks" = Just SocialNetworks
-readDatabase _        = Nothing
+instance readDatabase :: Read Database where
+  read :: String -> Maybe Database
+  read "All Databases" = Just All_Databases
+  read "PubMed" = Just PubMed
+  read "HAL"    = Just $ HAL Nothing
+  read "Isidore"= Just Isidore
+  read "IsTex"  = Just IsTex
+  read "IsTex_Advanced" = Just IsTex_Advanced
+  -- read "Web"    = Just Web
+  -- read "News"   = Just News
+  -- read "Social Networks" = Just SocialNetworks
+  read _        = Nothing
 
 derive instance eqDatabase :: Eq Database
 
@@ -169,12 +186,12 @@ instance showOrg :: Show Org where
   show (IMT  _)   = "IMT"
   show (Others _) = "Others"
 
-readOrg :: String -> Maybe Org
-readOrg "All_Orgs" = Just $ All_Orgs
-readOrg "CNRS"     = Just $ CNRS   $ Set.fromFoldable []
-readOrg "IMT"      = Just $ IMT    $ Set.fromFoldable []
-readOrg "Others"   = Just $ Others $ Set.fromFoldable []
-readOrg _          = Nothing
+instance readOrg :: Read Org where
+  read "All_Orgs" = Just $ All_Orgs
+  read "CNRS"     = Just $ CNRS   $ Set.fromFoldable []
+  read "IMT"      = Just $ IMT    $ Set.fromFoldable []
+  read "Others"   = Just $ Others $ Set.fromFoldable []
+  read _          = Nothing
 
 derive instance eqOrg :: Eq Org
 
@@ -248,26 +265,26 @@ instance showIMT_org :: Show IMT_org where
   show Telecom_ParisTech   = "Telecom_ParisTech"
   show Telecom_SudParis    = "Telecom_SudParis"
 
-readIMT_org :: String -> Maybe IMT_org
-readIMT_org "All_IMT"             = Just All_IMT
-readIMT_org "ARMINES"             = Just ARMINES
-readIMT_org "Eurecom"             = Just Eurecom
-readIMT_org "IMT_Atlantique"      = Just IMT_Atlantique
-readIMT_org "IMT_Business_School" = Just IMT_Business_School
-readIMT_org "IMT_Lille_Douai"     = Just IMT_Lille_Douai
-readIMT_org "IMT_Mines_ALES"      = Just IMT_Mines_ALES
-readIMT_org "IMT_Mines_Albi"      = Just IMT_Mines_Albi
-readIMT_org "Institut_MinesTelecom_Paris" = Just Institut_MinesTelecom_Paris
-readIMT_org "MINES_ParisTech"     = Just MINES_ParisTech
-readIMT_org "Mines_Douai"         = Just Mines_Douai
-readIMT_org "Mines_Nantes"        = Just Mines_Nantes
-readIMT_org "Mines_SaintEtienne"  = Just Mines_SaintEtienne
-readIMT_org "Telecom_Bretagne"    = Just Telecom_Bretagne
-readIMT_org "Telecom_Ecole_de_Management" = Just Telecom_Ecole_de_Management
-readIMT_org "Telecom_Lille"       = Just Telecom_Lille
-readIMT_org "Telecom_ParisTech"   = Just Telecom_ParisTech
-readIMT_org "Telecom_SudParis"    = Just Telecom_SudParis
-readIMT_org _                     = Nothing
+instance readIMT_org :: Read IMT_org where
+  read "All_IMT"             = Just All_IMT
+  read "ARMINES"             = Just ARMINES
+  read "Eurecom"             = Just Eurecom
+  read "IMT_Atlantique"      = Just IMT_Atlantique
+  read "IMT_Business_School" = Just IMT_Business_School
+  read "IMT_Lille_Douai"     = Just IMT_Lille_Douai
+  read "IMT_Mines_ALES"      = Just IMT_Mines_ALES
+  read "IMT_Mines_Albi"      = Just IMT_Mines_Albi
+  read "Institut_MinesTelecom_Paris" = Just Institut_MinesTelecom_Paris
+  read "MINES_ParisTech"     = Just MINES_ParisTech
+  read "Mines_Douai"         = Just Mines_Douai
+  read "Mines_Nantes"        = Just Mines_Nantes
+  read "Mines_SaintEtienne"  = Just Mines_SaintEtienne
+  read "Telecom_Bretagne"    = Just Telecom_Bretagne
+  read "Telecom_Ecole_de_Management" = Just Telecom_Ecole_de_Management
+  read "Telecom_Lille"       = Just Telecom_Lille
+  read "Telecom_ParisTech"   = Just Telecom_ParisTech
+  read "Telecom_SudParis"    = Just Telecom_SudParis
+  read _                     = Nothing
 
 imtStructId :: IMT_org -> Array StructId
 imtStructId All_IMT           = concat $ map imtStructId allIMTSubOrgs

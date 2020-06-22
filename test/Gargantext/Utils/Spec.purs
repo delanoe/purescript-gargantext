@@ -7,7 +7,7 @@ import Data.Either (Either(..), isLeft)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Gargantext.Utils as GU
-import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
+import Gargantext.Utils.Argonaut (genericEnumDecodeJson, genericEnumEncodeJson, genericSumDecodeJson, genericSumEncodeJson)
 import Gargantext.Utils.Crypto as GUC
 import Gargantext.Utils.Math as GUM
 import Test.Spec (Spec, describe, it)
@@ -26,6 +26,20 @@ instance decodeJsonFruit :: Argonaut.DecodeJson Fruit where
   decodeJson = genericSumDecodeJson
 instance encodeJsonFruit :: Argonaut.EncodeJson Fruit where
   encodeJson = genericSumEncodeJson
+
+data EnumTest
+  = Member1
+  | Member2
+  | Member3
+
+derive instance eqEnumTest :: Eq EnumTest
+derive instance genericEnumTest :: Generic EnumTest _
+instance showEnumTest :: Show EnumTest where
+  show = genericShow
+instance decodeJsonEnumTest :: Argonaut.DecodeJson EnumTest where
+  decodeJson = genericEnumDecodeJson
+instance encodeJsonEnumTest :: Argonaut.EncodeJson EnumTest where
+  encodeJson = genericEnumEncodeJson
 
 spec :: Spec Unit
 spec =
@@ -75,4 +89,27 @@ spec =
       let result2 = Argonaut.encodeJson input2
       let result2' = Argonaut.decodeJson result2
       Argonaut.stringify result2 `shouldEqual` """{"Gravy":"hi"}"""
+      result2' `shouldEqual` Right input2
+
+    it "genericEnumDecodeJson works" do
+      let result1 = Argonaut.decodeJson =<< Argonaut.jsonParser "\"Member1\""
+      result1 `shouldEqual` Right Member1
+
+      let result2 = Argonaut.decodeJson =<< Argonaut.jsonParser "\"Member2\""
+      result2 `shouldEqual` Right Member2
+
+      let result3 = Argonaut.decodeJson =<< Argonaut.jsonParser "\"Failure\""
+      isLeft (result3 :: Either String EnumTest) `shouldEqual` true
+
+    it "genericSumEncodeJson works and loops back with decode" do
+      let input1 = Member1
+      let result1 = Argonaut.encodeJson input1
+      let result1' = Argonaut.decodeJson result1
+      Argonaut.stringify result1 `shouldEqual` "\"Member1\""
+      result1' `shouldEqual` Right input1
+
+      let input2 = Member2
+      let result2 = Argonaut.encodeJson input2
+      let result2' = Argonaut.decodeJson result2
+      Argonaut.stringify result2 `shouldEqual` "\"Member2\""
       result2' `shouldEqual` Right input2

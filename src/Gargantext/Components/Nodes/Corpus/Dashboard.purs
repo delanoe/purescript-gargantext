@@ -1,29 +1,25 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
+import DOM.Simple.Console (log2)
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
-
-import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Utils.Reactix as R2
+import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID)
+import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 type Props =
-  (
-    nodeId :: NodeID
+  ( nodeId :: NodeID
   , session :: Session
   )
 
@@ -49,12 +45,11 @@ dashboardLayoutCpt = R.hooksComponent "G.C.N.C.D.dashboardLayout" cpt
 
       where
         onChange :: NodeID -> R.State Int -> DT.Hyperdata -> Array P.PredefinedChart -> Effect Unit
-        onChange nodeId (_ /\ setReload) (DT.Hyperdata h) charts = do
+        onChange nodeId' (_ /\ setReload) (DT.Hyperdata h) charts = do
           launchAff_ do
-            DT.saveDashboard {
-                hyperdata: DT.Hyperdata $ h { charts = charts }
-              , nodeId
-              , session }
+            DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts }
+                             , nodeId:nodeId'
+                             , session }
             liftEffect $ setReload $ (+) 1
 
 type LoadedProps =
@@ -127,7 +122,7 @@ renderChartCpt = R.hooksComponent "G.C.N.C.D.renderChart" cpt
       where
         option pc =
           H.option { value: show pc } [ H.text $ show pc ]
-        onSelectChange e = onChange $ P.readChart' value
+        onSelectChange e = onChange $ fromMaybe P.CDocsHistogram $ read value
           where
             value = R2.unsafeEventValue e
         onRemoveClick _ = onRemove unit

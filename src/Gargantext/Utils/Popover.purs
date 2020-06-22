@@ -1,12 +1,10 @@
 module Gargantext.Utils.Popover where
 
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (maybe)
 import Data.Nullable (Nullable, toMaybe)
 import DOM.Simple as DOM
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2, runEffectFn2)
-import FFI.Simple ((..), (...))
 import Reactix as R
 
 import Gargantext.Prelude

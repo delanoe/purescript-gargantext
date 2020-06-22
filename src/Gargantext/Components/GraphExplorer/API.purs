@@ -1,14 +1,11 @@
 module Gargantext.Components.GraphExplorer.API where
 
-import Gargantext.Prelude
-
 import Data.Maybe (Maybe)
-import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
-
+import Effect.Aff (Aff)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Prelude
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, post)
 import Gargantext.Types as GT

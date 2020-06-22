@@ -1,17 +1,12 @@
-module Gargantext.Components.Search.SearchBar
+module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar
   ( Props, searchBar, searchBarCpt
   ) where
 
 import Data.Tuple.Nested ((/\))
-import Data.Nullable (Nullable)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Components.Search.Types -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Effect (Effect)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (searchField)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Components.Search.SearchField (Search, searchField)
-import Gargantext.Components.Search.Types (allDatabases) -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Gargantext.Prelude (Unit, pure, ($))
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
@@ -33,10 +28,10 @@ searchBarCpt = R.hooksComponent "G.C.Node.SearchBar.searchBar" cpt
     cpt {langs, onSearch, search: search@(s /\ _), session} _ = do
       --onSearchChange session s
       pure $ H.div {"style": {"margin" :"10px"}}
-        [ searchField { databases:allDatabases
-                      , langs
-                      , onSearch
-                      , search
-                      , session
-                      }
-        ]
+                   [ searchField { databases:allDatabases
+                                 , langs
+                                 , onSearch
+                                 , search
+                                 , session
+                                 }
+                   ]

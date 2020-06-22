@@ -1,222 +1,248 @@
 module Gargantext.Components.Forest.Tree.Node where
 
-import Prelude (class Eq, class Show, show, (&&), (<>), (==))
-import Data.Array (foldl)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
+import Data.Nullable (null)
+import Data.Tuple.Nested ((/\))
+import Effect.Aff (Aff, launchAff)
+import Effect.Class (liftEffect)
+import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
+import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
+import Gargantext.Components.Forest.Tree.Node.Box.Types (CommonProps)
+import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks)
+import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
+import Gargantext.Components.GraphExplorer.API as GraphAPI
+import Gargantext.Components.Lang (Lang(EN))
+import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
+import Gargantext.Ends (Frontends, url)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, unit, void, ($), (<>), (==))
+import Gargantext.Routes as Routes
+import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Types (Name, ID)
+import Gargantext.Types as GT
+import Gargantext.Utils.Popover as Popover
+import Gargantext.Utils.Reactix as R2
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Web.File.FileReader.Aff (readAsText)
 
-import Gargantext.Types
 
-------------------------------------------------------------------------
-------------------------------------------------------------------------
+-- Main Node
+type NodeMainSpanProps =
+  ( id            :: ID
+  , folderOpen    :: R.State Boolean
+  , frontends     :: Frontends
+  , mCurrentRoute :: Maybe Routes.AppRoute
+  , name          :: Name
+  , nodeType      :: GT.NodeType
+  , tasks         :: Record Tasks
+  | CommonProps
+  )
+
+nodeMainSpan :: Record NodeMainSpanProps
+             -> R.Element
+nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el p []
+  where
+    el = R.hooksComponent "G.C.F.T.N.B.NodeMainSpan" cpt
+    cpt props@{id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks }} _ = do
+      -- only 1 popup at a time is allowed to be opened
+      droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
+      isDragOver    <- R.useState' false
+
+      popoverRef    <- R.useRef null
+
+      pure $ H.span (dropProps droppedFile isDragOver) $
+        [ folderIcon nodeType folderOpen
+        , if showBox then
+            Popover.popover { arrow: false
+                            , open: false
+                            , onClose: \_ -> pure unit
+                            , onOpen: \_ -> pure unit
+                            , ref: popoverRef } [
+                popOverIcon
+              , mNodePopupView props (onPopoverClose popoverRef)
+            ]
+          else H.div {} []
+        , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
+              }
+              [ nodeText { isSelected: mAppRouteId mCurrentRoute == Just id
+                         , name: name' props
+                         } ]
+        , nodeActions { id
+                      , nodeType
+                      , refreshTree: const $ dispatch RefreshTree
+                      , session }
+        , fileTypeView {dispatch, droppedFile, id, isDragOver, nodeType}
+        , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
+                                                , barType: Pie
+                                                , corpusId: id
+                                                , onFinish: const $ onTaskFinish t
+                                                , session 
+                                                }
+                        ) tasks
+                   )
+        ]
+          where
+            SettingsBox {show: showBox} = settingsBox nodeType
+            onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
+
+    name' {name, nodeType} = if nodeType == GT.NodeUser
+                                then show session
+                                else name
+
+    folderIcon nodeType folderOpen'@(open /\ _) =
+      H.a { className: "folder-icon"
+          , onClick: R2.effToggler folderOpen'
+          }
+          [ H.i {className: GT.fldr nodeType open} [] ]
+
+    popOverIcon = H.a { className: "settings fa fa-cog" } []
+
+    mNodePopupView props@{id, nodeType} onPopoverClose =
+      nodePopupView { id
+                    , dispatch
+                    , name: name' props
+                    , nodeType
+                    , onPopoverClose
+                    , session
+                    }
+
+    dropProps droppedFile isDragOver =
+      { className: "leaf " <> (dropClass droppedFile isDragOver)
+      , on: { drop: dropHandler droppedFile
+            , dragOver: onDragOverHandler isDragOver
+            , dragLeave: onDragLeave isDragOver } }
+      where
+        dropClass   (Just _  /\ _)        _          = "file-dropped"
+        dropClass    _                   (true /\ _) = "file-dropped"
+        dropClass   (Nothing /\ _)        _          = ""
+        dropHandler (_ /\ setDroppedFile) e          = do
+          -- prevent redirection when file is dropped
+          E.preventDefault e
+          E.stopPropagation e
+          blob <- R2.dataTransferFileBlob e
+          void $ launchAff do
+            contents <- readAsText blob
+            liftEffect $ setDroppedFile
+                       $ const
+                       $ Just
+                       $ DroppedFile { contents: (UploadFileContents contents)
+                                     , fileType: Just CSV
+                                     , lang    : EN
+                                     }
+    onDragOverHandler (_ /\ setIsDragOver) e = do
+      -- prevent redirection when file is dropped
+      -- https://stackoverflow.com/a/6756680/941471
+      E.preventDefault e
+      E.stopPropagation e
+      setIsDragOver $ const true
+    onDragLeave (_ /\ setIsDragOver) _ = setIsDragOver $ const false
+
 {-
--- | TODO
-filterWithRights (show action if user can only)
-
+fldr nt open = if open
+               then "fa fa-globe" -- <> color nt
+               else "fa fa-folder-globe" -- <> color nt
+               --else "glyphicon glyphicon-folder-close" <> color nt
+                 where
+                   color GT.NodeUser     = ""
+                   color FolderPublic = ""
+                   color FolderShared = " text-warning"
+                   color _            = " text-danger"
 -}
-------------------------------------------------------------------------
-------------------------------------------------------------------------
-
-data Status a = IsBeta a | IsProd a
-
-data NodeAction = Documentation NodeType
-                | SearchBox
-                | Download | Upload | Refresh | Config
-                | Move     | Clone  | Delete
-                | Share    | Link NodeType
-                | Add (Array NodeType)
-                | CopyFromCorpus
 
 
-instance eqNodeAction :: Eq NodeAction where
-  eq (Documentation x) (Documentation y) = true && (x == y)
-  eq SearchBox SearchBox = true
-  eq Download Download = true
-  eq Upload Upload     = true
-  eq Refresh Refresh   = true
-  eq Move Move         = true
-  eq Clone Clone       = true
-  eq Delete Delete     = true
-  eq Share Share       = true
-  eq (Link x) (Link y) = true && (x == y)
-  eq (Add  x) (Add  y) = true && (x == y)
-  eq CopyFromCorpus CopyFromCorpus = true
-  eq Config Config     = true
-  eq _ _               = false
+-- START node text
+type NodeTextProps =
+  ( isSelected :: Boolean
+  , name       :: Name
+  )
 
-instance showNodeAction :: Show NodeAction where
-  show (Documentation x) = "Documentation of " <> show x
-  show SearchBox         = "SearchBox"
-  show Download          = "Download"
-  show Upload            = "Upload"
-  show Refresh           = "Refresh"
-  show Move              = "Move"
-  show Clone             = "Clone"
-  show Delete            = "Delete"
-  show Share             = "Share"
-  show Config            = "Config"
-  show (Link x)          = "Link to " <> show x
-  show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
-  show CopyFromCorpus    = "Copy from corpus"
+nodeText :: Record NodeTextProps -> R.Element
+nodeText p = R.createElement nodeTextCpt p []
+
+nodeTextCpt :: R.Component NodeTextProps
+nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
+  where
+    cpt { isSelected: true, name } _ = do
+      pure $ H.u {} [
+        H.b {} [
+           H.text ("| " <> name <> " |    ")
+         ]
+        ]
+    cpt {isSelected: false, name} _ = do
+      pure $ H.text (name <> "    ")
+-- END node text
+
+-- START nodeActions
+
+type NodeActionsProps =
+  ( id          :: ID
+  , nodeType    :: GT.NodeType
+  , refreshTree :: Unit -> Aff Unit
+  , session     :: Session
+  )
+
+nodeActions :: Record NodeActionsProps -> R.Element
+nodeActions p = R.createElement nodeActionsCpt p []
+
+nodeActionsCpt :: R.Component NodeActionsProps
+nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
+  where
+    cpt { id
+        , nodeType: GT.Graph
+        , refreshTree
+        , session
+        } _ = do
+
+      useLoader id (graphVersions session) $ \gv ->
+        nodeActionsGraph { id
+                         , graphVersions: gv
+                         , session
+                         , triggerRefresh: triggerRefresh refreshTree
+                         }
+
+    cpt { id
+        , nodeType: GT.NodeList
+        , refreshTree
+        , session
+        } _ = do
+      useLoader { nodeId: id, session } loadCorpusWithChild $
+        \{ corpusId } ->
+          nodeActionsNodeList { listId: id
+                              , nodeId: corpusId
+                              , nodeType: GT.TabNgramType GT.CTabTerms
+                              , session
+                              , triggerRefresh: triggerRefresh refreshTree
+                              }
+    cpt _ _ = do
+      pure $ H.div {} []
+
+    graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
+    triggerRefresh refreshTree    = refreshTree
 
 
-glyphiconNodeAction :: NodeAction -> String
-glyphiconNodeAction (Documentation _) = "question-sign"
-glyphiconNodeAction Delete            = "trash"
-glyphiconNodeAction (Add _)           = "plus"
-glyphiconNodeAction SearchBox         = "search"
-glyphiconNodeAction Upload            = "upload"
-glyphiconNodeAction (Link _)          = "transfer"
-glyphiconNodeAction Download          = "download"
-glyphiconNodeAction CopyFromCorpus    = "random"
-glyphiconNodeAction Refresh           = "refresh"
-glyphiconNodeAction Config            = "wrench"
-glyphiconNodeAction _                 = ""
+-- END nodeActions
 
+mAppRouteId :: Maybe Routes.AppRoute -> Maybe Int
+mAppRouteId (Just (Routes.Folder         _ id)) = Just id
+mAppRouteId (Just (Routes.FolderPrivate  _ id)) = Just id
+mAppRouteId (Just (Routes.FolderPublic   _ id)) = Just id
+mAppRouteId (Just (Routes.FolderShared   _ id)) = Just id
+mAppRouteId (Just (Routes.Team           _ id)) = Just id
+mAppRouteId (Just (Routes.Corpus         _ id)) = Just id
+mAppRouteId (Just (Routes.PGraphExplorer _ id)) = Just id
+mAppRouteId (Just (Routes.Dashboard      _ id)) = Just id
+mAppRouteId (Just (Routes.Texts          _ id)) = Just id
+mAppRouteId (Just (Routes.Lists          _ id)) = Just id
+mAppRouteId (Just (Routes.Annuaire       _ id)) = Just id
+mAppRouteId (Just (Routes.UserPage       _ id)) = Just id
+mAppRouteId (Just (Routes.Document       _ id _  )) = Just id
+mAppRouteId (Just (Routes.ContactPage    _ id _  )) = Just id
+mAppRouteId (Just (Routes.CorpusDocument _ id _ _)) = Just id
+mAppRouteId _ = Nothing
 
-------------------------------------------------------------------------
-data SettingsBox =
-  SettingsBox { show    :: Boolean
-              , edit    :: Boolean
-              , doc     :: NodeAction
-              , buttons :: Array NodeAction
-              }
-------------------------------------------------------------------------
-
-settingsBox :: NodeType -> SettingsBox
-settingsBox NodeUser = SettingsBox {
-    show : true
-  , edit : false
-  , doc  : Documentation NodeUser
-  , buttons : [ Delete ]
-  }
-
-settingsBox FolderPrivate = SettingsBox {
-    show : true
-  , edit : false
-  , doc  : Documentation FolderPrivate
-  , buttons : [ Add [ Corpus
-                    , Folder
-                    , Annuaire
-                    ]
-              ]
-  }
-
-settingsBox Team = SettingsBox {
-    show : true
-  , edit : true
-  , doc  : Documentation Team
-  , buttons : [ Add [ Corpus
-                    , Folder
-                    , Annuaire
-                    ]
-              , Delete]
-  }
-
-settingsBox FolderShared = SettingsBox {
-    show : true
-  , edit : true
-  , doc  : Documentation FolderShared
-  , buttons : [ Add [Team, FolderShared]
-              -- , Delete
-              ]
-  }
-
-settingsBox FolderPublic = SettingsBox {
-    show : true
-  , edit : false
-  , doc  : Documentation FolderPublic
-  , buttons : [ Add [ Corpus
-                    , Folder
-                    ]
-    ]
-  }
-
-settingsBox Folder =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Folder
-              , buttons : [ Add [ Corpus
-                                , Folder
-                                , Annuaire
-                                ]
-                          , Delete
-                          ]
-              }
-
-settingsBox Corpus =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Corpus
-              , buttons : [ SearchBox
-                          , Add [ NodeList
-                                , Graph
-                                , Dashboard
-                                ]
-                          , Upload
-                          , Download
-                            --, Share
-                            --, Move
-                            --, Clone
-                          , Link Annuaire
-                          , Delete
-                          ]
-              }
-
-settingsBox Texts =
-  SettingsBox { show : true
-              , edit : false
-              , doc  : Documentation Texts
-              , buttons : [ Refresh
-                          , Upload
-                          , Download
-                          -- , Delete
-                          ]
-              }
-
-settingsBox Graph =
-  SettingsBox { show : true
-              , edit : false
-              , doc  : Documentation Graph
-              , buttons : [ Refresh
-                          , Config
-                          , Download -- TODO as GEXF or JSON
-                          , Delete
-                          ]
-              }
-
-settingsBox NodeList =
-  SettingsBox { show : true
-              , edit : false
-              , doc  : Documentation NodeList
-              , buttons : [ Refresh
-                          , Config
-                          , Download
-                          , Upload
-                          , CopyFromCorpus
-                          , Delete
-                          ]
-              }
-
-settingsBox Dashboard =
-  SettingsBox { show : true
-              , edit : false
-              , doc  : Documentation Dashboard
-              , buttons : []
-              }
-
-settingsBox Annuaire =
-  SettingsBox { show : true
-              , edit : false
-              , doc  : Documentation Annuaire
-              , buttons : [ Upload
-                          , Delete
-                          ]
-              }
-
-settingsBox _ =
-  SettingsBox { show : false
-              , edit : false
-              , doc  : Documentation NodeUser
-              , buttons : []
-              }

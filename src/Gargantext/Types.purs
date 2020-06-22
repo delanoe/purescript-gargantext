@@ -1,7 +1,5 @@
 module Gargantext.Types where
 
-import Prelude
-
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array as A
 import Data.Either (Either(..))
@@ -10,8 +8,10 @@ import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Effect.Aff (Aff)
+import Gargantext.Prelude (class Read, read)
+import Prelude
 import Prim.Row (class Union)
 import URI.Query (Query)
 
@@ -44,10 +44,11 @@ instance showTermSize :: Show TermSize where
   show MonoTerm  = "MonoTerm"
   show MultiTerm = "MultiTerm"
 
-readTermSize :: String -> Maybe TermSize
-readTermSize "MonoTerm"  = Just MonoTerm
-readTermSize "MultiTerm" = Just MultiTerm
-readTermSize _           = Nothing
+instance readTermSize :: Read TermSize where
+  read :: String -> Maybe TermSize
+  read "MonoTerm"  = Just MonoTerm
+  read "MultiTerm" = Just MultiTerm
+  read _           = Nothing
 
 termSizes :: Array { desc :: String, mval :: Maybe TermSize }
 termSizes = [ { desc: "All types",        mval: Nothing        }
@@ -93,11 +94,12 @@ termListName GraphTerm = "Map List"
 termListName StopTerm = "Stop List"
 termListName CandidateTerm = "Candidate List"
 
-readTermList :: String -> Maybe TermList
-readTermList "GraphTerm"     = Just GraphTerm
-readTermList "StopTerm"      = Just StopTerm
-readTermList "CandidateTerm" = Just CandidateTerm
-readTermList _               = Nothing
+instance readTermList :: Read TermList where
+  read :: String -> Maybe TermList
+  read "GraphTerm"     = Just GraphTerm
+  read "StopTerm"      = Just StopTerm
+  read "CandidateTerm" = Just CandidateTerm
+  read _               = Nothing
 
 termLists :: Array { desc :: String, mval :: Maybe TermList }
 termLists = [ { desc: "All terms",   mval: Nothing      }
@@ -176,30 +178,28 @@ instance showNodeType :: Show NodeType where
   show NodeList      = "NodeList"
   show Texts         = "NodeTexts"
 
-readNodeType :: String -> NodeType
-readNodeType "NodeUser"      = NodeUser
-
-readNodeType "NodeFolder"    = Folder
-readNodeType "NodeFolderPrivate" = FolderPrivate
-readNodeType "NodeFolderShared"  = FolderShared
-readNodeType "NodeFolderPublic"  = FolderPublic
-
-readNodeType "NodeAnnuaire"  = Annuaire
-readNodeType "NodeDashboard" = Dashboard
-readNodeType "Document"      = Url_Document
-readNodeType "NodeGraph"     = Graph
-readNodeType "NodePhylo"     = Phylo
-readNodeType "Individu"      = Individu
-readNodeType "Node"          = Node
-readNodeType "Nodes"         = Nodes
-readNodeType "NodeCorpus"    = Corpus
-readNodeType "NodeContact"   = NodeContact
-readNodeType "Tree"          = Tree
-readNodeType "NodeTeam"      = Team
-readNodeType "NodeList"      = NodeList
-readNodeType "NodeTexts"     = Texts
-readNodeType "Annuaire"      = Annuaire
-readNodeType _               = Error
+instance readNodeType :: Read NodeType where
+  read "NodeUser"          = Just NodeUser
+  read "NodeFolder"        = Just Folder
+  read "NodeFolderPrivate" = Just FolderPrivate
+  read "NodeFolderShared"  = Just FolderShared
+  read "NodeFolderPublic"  = Just FolderPublic
+  read "NodeAnnuaire"  = Just Annuaire
+  read "NodeDashboard" = Just Dashboard
+  read "Document"      = Just Url_Document
+  read "NodeGraph"     = Just Graph
+  read "NodePhylo"     = Just Phylo
+  read "Individu"      = Just Individu
+  read "Node"          = Just Node
+  read "Nodes"         = Just Nodes
+  read "NodeCorpus"    = Just Corpus
+  read "NodeContact"   = Just NodeContact
+  read "Tree"          = Just Tree
+  read "NodeTeam"      = Just Team
+  read "NodeList"      = Just NodeList
+  read "NodeTexts"     = Just Texts
+  read "Annuaire"      = Just Annuaire
+  read _               = Nothing
 
 
 fldr :: NodeType -> Boolean -> String
@@ -254,7 +254,7 @@ instance eqNodeType :: Eq NodeType where
 instance decodeJsonNodeType :: DecodeJson NodeType where
   decodeJson json = do
     obj <- decodeJson json
-    pure $ readNodeType obj
+    pure $ fromMaybe Error $ read obj
 
 instance encodeJsonNodeType :: EncodeJson NodeType where
   encodeJson nodeType = encodeJson $ show nodeType
@@ -449,7 +449,10 @@ instance showTabType :: Show TabType where
 type TableResult a = {count :: Int, docs :: Array a}
 type AffTableResult a = Aff (TableResult a)
 
-data Mode = Authors | Sources | Institutes | Terms
+data Mode = Authors
+          | Sources
+          | Institutes
+          | Terms
 
 derive instance genericMode :: Generic Mode _
 instance showMode :: Show Mode where
@@ -480,6 +483,8 @@ data AsyncTaskType = Form
                    | GraphT
                    | Query
                    | AddNode
+                   | UpdateNode
+
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 instance eqAsyncTaskType :: Eq AsyncTaskType where
   eq = genericEq
@@ -502,35 +507,47 @@ asyncTaskTypePath Form   = "add/form/async/"
 asyncTaskTypePath Query  = "query/"
 asyncTaskTypePath GraphT = "async/"
 asyncTaskTypePath AddNode = "async/nobody/"
+asyncTaskTypePath UpdateNode = "update/"
+
 
 type AsyncTaskID = String
 
-data AsyncTaskStatus = Running | Pending | Received | Started | Failed | Finished | Killed
+data AsyncTaskStatus = Running
+                     | Pending
+                     | Received
+                     | Started
+                     | Failed
+                     | Finished
+                     | Killed
 derive instance genericAsyncTaskStatus :: Generic AsyncTaskStatus _
+
 instance showAsyncTaskStatus :: Show AsyncTaskStatus where
   show = genericShow
 derive instance eqAsyncTaskStatus :: Eq AsyncTaskStatus
+
 instance encodeJsonAsyncTaskStatus :: EncodeJson AsyncTaskStatus where
   encodeJson s = encodeJson $ show s
+
 instance decodeJsonAsyncTaskStatus :: DecodeJson AsyncTaskStatus where
   decodeJson json = do
     obj <- decodeJson json
-    pure $ readAsyncTaskStatus obj
+    pure $ fromMaybe Running $ read obj
 
-readAsyncTaskStatus :: String -> AsyncTaskStatus
-readAsyncTaskStatus "IsFailure"  = Failed
-readAsyncTaskStatus "IsFinished" = Finished
-readAsyncTaskStatus "IsKilled"   = Killed
-readAsyncTaskStatus "IsPending"  = Pending
-readAsyncTaskStatus "IsReceived" = Received
-readAsyncTaskStatus "IsRunning"  = Running
-readAsyncTaskStatus "IsStarted"  = Started
-readAsyncTaskStatus _ = Running
+instance readAsyncTaskStatus :: Read AsyncTaskStatus where
+  read "IsFailure"  = Just Failed
+  read "IsFinished" = Just Finished
+  read "IsKilled"   = Just Killed
+  read "IsPending"  = Just Pending
+  read "IsReceived" = Just Received
+  read "IsRunning"  = Just Running
+  read "IsStarted"  = Just Started
+  read _            = Nothing
 
-newtype AsyncTask = AsyncTask {
-    id     :: AsyncTaskID
-  , status :: AsyncTaskStatus
-  }
+newtype AsyncTask =
+  AsyncTask { id     :: AsyncTaskID
+            , status :: AsyncTaskStatus
+            }
+
 derive instance genericAsyncTask :: Generic AsyncTask _
 instance eqAsyncTask :: Eq AsyncTask where
   eq = genericEq
@@ -541,8 +558,8 @@ instance encodeJsonAsyncTask :: EncodeJson AsyncTask where
      ~> jsonEmptyObject
 instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
   decodeJson json = do
-    obj <- decodeJson json
-    id <- obj .: "id"
+    obj    <- decodeJson json
+    id     <- obj .: "id"
     status <- obj .: "status"
     pure $ AsyncTask { id, status }
 
@@ -560,9 +577,9 @@ instance encodeJsonAsyncTaskWithType :: EncodeJson AsyncTaskWithType where
      ~> jsonEmptyObject
 instance decodeJsonAsyncTaskWithType :: DecodeJson AsyncTaskWithType where
   decodeJson json = do
-    obj <- decodeJson json
+    obj  <- decodeJson json
     task <- obj .: "task"
-    typ <- obj .: "typ"
+    typ  <- obj .: "typ"
     pure $ AsyncTaskWithType { task, typ }
 
 newtype AsyncProgress = AsyncProgress {
@@ -573,9 +590,9 @@ newtype AsyncProgress = AsyncProgress {
 derive instance genericAsyncProgress :: Generic AsyncProgress _
 instance decodeJsonAsyncProgress :: DecodeJson AsyncProgress where
   decodeJson json = do
-    obj <- decodeJson json
-    id <- obj .: "id"
-    log <- obj .: "log"
+    obj    <- decodeJson json
+    id     <- obj .: "id"
+    log    <- obj .: "log"
     status <- obj .: "status"
     pure $ AsyncProgress {id, log, status}
 
@@ -588,9 +605,9 @@ newtype AsyncTaskLog = AsyncTaskLog {
 derive instance genericAsyncTaskLog :: Generic AsyncTaskLog _
 instance decodeJsonAsyncTaskLog :: DecodeJson AsyncTaskLog where
   decodeJson json = do
-    obj <- decodeJson json
-    events <- obj .: "events"
-    failed <- obj .: "failed"
+    obj       <- decodeJson json
+    events    <- obj .: "events"
+    failed    <- obj .: "failed"
     remaining <- obj .: "remaining"
     succeeded <- obj .: "succeeded"
     pure $ AsyncTaskLog {events, failed, remaining, succeeded}

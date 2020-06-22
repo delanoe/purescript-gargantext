@@ -1,4 +1,4 @@
-module Gargantext.Components.Forest.Tree.Node.ProgressBar where
+module Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar where
 
 import Gargantext.Prelude
 
@@ -20,10 +20,8 @@ import Reactix.DOM.HTML as H
 
 data BarType = Bar | Pie
 
-
 type Props =
-  (
-    asyncTask :: GT.AsyncTaskWithType
+  ( asyncTask :: GT.AsyncTaskWithType
   , barType   :: BarType
   , corpusId  :: GT.ID
   , onFinish  :: Unit -> Effect Unit
@@ -37,7 +35,11 @@ asyncProgressBar p = R.createElement asyncProgressBarCpt p []
 asyncProgressBarCpt :: R.Component Props
 asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.PB.asyncProgressBar" cpt
   where
-    cpt props@{asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}}), barType, corpusId, onFinish} _ = do
+    cpt props@{ asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}})
+              , barType
+              , corpusId
+              , onFinish
+              } _ = do
       (progress /\ setProgress) <- R.useState' 0.0
       intervalIdRef <- R.useRef Nothing
 
@@ -66,9 +68,8 @@ asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.PB.asyncProgressBar" cpt
     toInt n = unsafePartial $ fromJust $ fromNumber n
 
 type ProgressIndicatorProps =
-  (
-    barType :: BarType
-  , label :: String
+  ( barType  :: BarType
+  , label    :: String
   , progress :: Int
   )
 
@@ -97,7 +98,14 @@ progressIndicatorCpt = R.hooksComponent "G.C.F.T.N.PB.progressIndicator" cpt
         ]
 
 queryProgress :: Record Props -> Aff GT.AsyncProgress
-queryProgress {asyncTask: GT.AsyncTaskWithType {task: GT.AsyncTask {id}, typ}, corpusId, session} = get session p
+queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
+                                                , typ
+                                                }
+              , corpusId
+              , session
+              } = get session (p typ)
   where
-    p = NodeAPI GT.Corpus (Just corpusId) $ path <> id <> "/poll?limit=1"
+    -- TODO refactor path
+    p GT.UpdateNode = NodeAPI GT.Node   (Just corpusId) $ path <> id <> "/poll?limit=1"
+    p _             = NodeAPI GT.Corpus (Just corpusId) $ path <> id <> "/poll?limit=1"
     path = GT.asyncTaskTypePath typ

@@ -1,51 +1,26 @@
-module Gargantext.Components.Search.SearchField
-  ( Search, Props, defaultSearch, searchField, searchFieldComponent, isIsTex, isIsTex_Advanced) where
+module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField
+    where
 
-import Data.Maybe (Maybe(..), maybe, fromMaybe, isJust)
-import Data.Newtype (over)
-import Data.String (length)
-import Data.Set as Set
-import Data.Tuple (fst)
-import Data.Tuple.Nested ((/\))
-import Data.Nullable (Nullable, toMaybe)
-import Effect.Console (logShow)
 import DOM.Simple.Console (log, log2)
-import Effect.Aff (Aff, launchAff_)
-import Effect.Class (liftEffect)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Nullable (null)
+import Data.Newtype (over)
+import Data.Set as Set
+import Data.String (length)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, ($), (&&), (<), (<$>), (<<<), (<>), (==))
-
-import Gargantext.Data.Array (catMaybes)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
+import Gargantext.Components.Forest.Tree.Node.Tools (panel)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Components.Search.Types (DataOriginApi(..), DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, readDatabase, readOrg, datafield2database)
+import Gargantext.Prelude (Unit, bind, discard, map, pure, show, ($), (<), (<$>), (<>), (==), read)
 import Gargantext.Sessions (Session)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
-
-select :: forall props.
-          R.IsComponent String props (Array R.Element)
-          => Record props
-          -> Array R.Element
-          -> R.Element
-select = R.createElement "select"
-
-type Search = { databases :: Database
-              , datafield :: Maybe DataField
-              , url       :: String
-              , lang      :: Maybe Lang
-              , node_id   :: Maybe Int
-              , term      :: String
-              }
-
-eqSearch :: Search -> Search -> Boolean
-eqSearch s s' =    (s.databases == s'.databases)
-                && (s.datafield == s'.datafield)
-                && (s.lang      == s'.lang)
-                && (s.node_id   == s'.node_id)
-                && (s.term      == s'.term)
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 defaultSearch :: Search
 defaultSearch = { databases: Empty
@@ -75,18 +50,15 @@ searchFieldComponent :: R.Component Props
 searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
   where
     cpt props@{onSearch, search: search@(s /\ _)} _ = do
-      pure $
-        H.div { className: "search-field-group", style: { width: "100%" } }
-          [
-            H.div { className: "row" }
-              [
-                H.div { className: "col-md-12" }
+      iframeRef <- R.useRef    null
+      let params = 
                 [ searchInput {search}
                 , if length s.term < 3  -- search with love : <3
                   then
                     H.div {}[]
                   else
                     H.div {} [ dataFieldNav search dataFields
+
                              , if isExternal s.datafield
                                  then databaseInput search props.databases
                                  else H.div {} []
@@ -102,45 +74,43 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
                              , if isCNRS s.datafield
                                  then componentCNRS search
                                  else H.div {} []
+ 
+                             , H.div {} [ searchIframes search iframeRef ]
+
+                             , if needsLang s.datafield
+                                then langNav search props.langs
+                                else H.div {} []
                              ]
+
                 ]
-              ]
-          , H.div { className : "panel-footer" }
-                [ if needsLang s.datafield
-                    then langNav search props.langs
-                    else H.div {} []
-                , H.div {} []
-                , H.div {className: "flex-center"}
-                        [submitButton {onSearch, search, session: props.session}]
-                ]
-          ]
-    eqProps :: Record Props -> Record Props -> Boolean
-    eqProps p p' =    (p.databases  == p'.databases )
-                   && (p.langs      == p'.langs     )
-                   && (eqSearch (fst p.search) (fst p'.search))
---                   && (fst p.filters == fst p'.filters   )
-    componentIMT (search /\ setSearch) =
-      R.fragment
-      [ H.ul {} $ map liCpt allIMTorgs
-      --, filterInput fi
+      let button =  submitButton {onSearch, search, session: props.session}
+
+      pure $ panel params button
+
+
+componentIMT (search /\ setSearch) =
+  R.fragment
+  [ H.ul {} $ map liCpt allIMTorgs
+  --, filterInput fi
+  ]
+  where
+    liCpt org =
+      H.li {}
+      [ H.input { type: "checkbox"
+                , checked: isIn org search.datafield
+                , on: { change: \_ -> ( setSearch $ _ { datafield = updateFilter org search.datafield })
+                      }
+                }
+      , if org == All_IMT
+        then H.i {} [H.text  $ " " <> show org]
+        else H.text $ " " <> show org
       ]
-      where
-        liCpt org =
-          H.li {}
-          [ H.input { type: "checkbox"
-                    , checked: isIn org search.datafield
-                    , on: { change: \_ -> ( setSearch $ _ { datafield = updateFilter org search.datafield })
-                          }
-                    }
-          , if org == All_IMT
-            then H.i {} [H.text  $ " " <> show org]
-            else H.text $ " " <> show org
-          ]
-    componentCNRS (search /\ setSearch) =
-      R.fragment [
-        H.div {} []
-      --, filterInput fi
-      ]
+
+componentCNRS (search /\ setSearch) =
+  R.fragment [
+    H.div {} []
+  --, filterInput fi
+  ]
 
 
 isExternal :: Maybe DataField -> Boolean
@@ -164,16 +134,6 @@ isIsTex ( Just
           )
         ) = true
 isIsTex _ = false
-
-isIsTex_Advanced :: Maybe DataField -> Boolean
-isIsTex_Advanced ( Just
-          ( External
-            ( Just ( IsTex_Advanced)
-            )
-          )
-        ) = true
-isIsTex_Advanced _ = false
-
 
 
 isIMT :: Maybe DataField -> Boolean
@@ -264,9 +224,11 @@ langNav ({lang} /\ setSearch) langs =
 ------------------------------------------------------------------------
 dataFieldNav :: R.State Search -> Array DataField -> R.Element
 dataFieldNav ({datafield} /\ setSearch) datafields =
-  R.fragment [ H.div {className: "text-primary center"} [H.text "with DataField"]
-  , H.div {className: "nav nav-tabs"} (liItem <$> dataFields)
-             , H.div {className: "center"} [ H.text $ maybe "" doc datafield ]
+  R.fragment [ H.div { className: "text-primary center"} [H.text "with DataField"]
+                     , H.div {className: "nav nav-tabs"} (liItem <$> dataFields)
+                     , H.div {className: "center"} [ H.text
+                                                   $ maybe "TODO: add Doc Instance" doc datafield 
+                                                   ]
              ]
     where
       liItem :: DataField -> R.Element
@@ -276,9 +238,9 @@ dataFieldNav ({datafield} /\ setSearch) datafields =
                                then " active"
                                else ""
             , on: { click: \_ -> setSearch $ _ { datafield = Just df'
-                  , databases = datafield2database df'
+                                               , databases = datafield2database df'
                                                }
-                    }
+                  }
             -- just one database query for now
             -- a list a selected database needs more ergonomy
             } [ H.text (show df') ]
@@ -326,7 +288,7 @@ databaseInput (search /\ setSearch) dbs =
       liItem  db' = H.option {className : "text-primary center"} [ H.text (show db') ]
 
       onChange e = do
-        let value = readDatabase $ R2.unsafeEventValue e
+        let value = read $ R2.unsafeEventValue e
         setSearch $ _ { datafield = Just $ External value
                       , databases = fromMaybe Empty value
                       }
@@ -345,7 +307,7 @@ orgInput ({datafield} /\ setSearch) orgs =
       liItem  org = H.option {className : "text-primary center"} [ H.text (show org) ]
       onChange e = do
         let value = R2.unsafeEventValue e
-        setSearch $ _ { datafield = Just $ External $ Just $ HAL $ readOrg value }
+        setSearch $ _ { datafield = Just $ External $ Just $ HAL $ read value }
 
 {-
 filterInput :: R.State String -> R.Element
@@ -392,8 +354,8 @@ searchInputComponent = R.hooksComponent "G.C.S.SearchInput" cpt
 
 type SubmitButtonProps =
   ( onSearch :: GT.AsyncTaskWithType -> Effect Unit
-  , search :: R.State Search
-  , session :: Session
+  , search   :: R.State Search
+  , session  :: Session
   )
 
 submitButton :: Record SubmitButtonProps -> R.Element

@@ -1,33 +1,46 @@
 module Gargantext.Components.Forest.Tree.Node.Action where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype)
+import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
-import Prelude hiding (div)
-
-import Gargantext.Components.Lang (Lang)
-import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, get, put, post, delete)
-import Gargantext.Routes as GR
+import Gargantext.Prelude (class Show, Unit)
+import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileContents)
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 
-data Action = CreateSubmit String GT.NodeType
+{-
+type UpdateNodeProps =
+  ( id       :: GT.ID
+  , dispatch :: Action -> Aff Unit
+  , name     :: GT.Name
+  , nodeType :: NodeType
+  , params   :: UpdateNodeParams
+  )
+  -}
+
+
+data Action = AddNode     String GT.NodeType
             | DeleteNode
-            | UpdateNode  GT.AsyncTaskWithType
-            | SearchQuery GT.AsyncTaskWithType
-            | Submit      String
+            | RenameNode  String
+            | UpdateNode  UpdateNodeParams
+            | ShareNode   String
+            | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
+            | DownloadNode
             | RefreshTree
 
------------------------------------------------------
--- TODO Delete with asyncTaskWithType
-deleteNode :: Session -> GT.ID -> Aff GT.ID
-deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
------------------------------------------------------------------------
+
+instance showShow :: Show Action where
+  show (AddNode     _ _    )= "AddNode"
+  show  DeleteNode          = "DeleteNode"
+  show (RenameNode  _      )= "RenameNode"
+  show (UpdateNode  _      )= "UpdateNode"
+  show (ShareNode   _      )= "ShareNode"
+  show (DoSearch    _      )= "SearchQuery"
+  show (UploadFile  _ _ _ _)= "UploadFile"
+  show  RefreshTree         = "RefreshTree"
+  show  DownloadNode        = "Download"
 
 type Props =
   ( dispatch :: Action -> Aff Unit
@@ -35,18 +48,27 @@ type Props =
   , nodeType :: GT.NodeType
   , session  :: Session
   )
+-----------------------------------------------------------------------
+icon :: Action -> String
+icon (AddNode    _ _)     = glyphiconNodeAction (Add [])
+icon  DeleteNode          = glyphiconNodeAction Delete
+icon (RenameNode _)       = glyphiconNodeAction Config
+icon (UpdateNode _)       = glyphiconNodeAction Refresh
+icon (ShareNode  _)       = glyphiconNodeAction Share
+icon (DoSearch   _)       = glyphiconNodeAction SearchBox
+icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
+icon  RefreshTree         = glyphiconNodeAction Refresh
+icon  DownloadNode        = glyphiconNodeAction Download
+-- icon _             = "hand-o-right"
 
--- TODO remove these types from here
-
-data FileType = CSV | CSV_HAL | WOS | PresseRIS
-
-derive instance genericFileType :: Generic FileType _
-
-instance eqFileType :: Eq FileType where
-    eq = genericEq
-
-instance showFileType :: Show FileType where
-    show = genericShow
-
-
-newtype UploadFileContents = UploadFileContents String
+text :: Action -> String
+text (AddNode     _ _    )= "Add !"
+text  DeleteNode          = "Delete !"
+text (RenameNode  _      )= "Rename !"
+text (UpdateNode  _      )= "Update !"
+text (ShareNode   _      )= "Share !"
+text (DoSearch    _      )= "Launch search !"
+text (UploadFile  _ _ _ _)= "Upload File !"
+text  RefreshTree         = "Refresh Tree !"
+text DownloadNode         = "Download !"
+-----------------------------------------------------------------------
