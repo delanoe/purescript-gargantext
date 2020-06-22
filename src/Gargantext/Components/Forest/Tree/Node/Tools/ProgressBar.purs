@@ -109,3 +109,5 @@ queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
     p GT.UpdateNode = NodeAPI GT.Node   (Just corpusId) $ path <> id <> "/poll?limit=1"
     p _             = NodeAPI GT.Corpus (Just corpusId) $ path <> id <> "/poll?limit=1"
     path = GT.asyncTaskTypePath typ
+
+    -- TODO wait route: take the result if failure then message
