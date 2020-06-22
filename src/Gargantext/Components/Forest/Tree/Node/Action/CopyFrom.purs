@@ -19,16 +19,10 @@ import Reactix.DOM.HTML as H
 
 
 ------------------------------------------------------------------------
-getNodeTree :: Session -> GT.ID -> Aff FTree
-getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
-
-------------------------------------------------------------------------
-
 type SubTreeParamsProps =
   ( subTreeParams :: SubTreeParams
   | Props
   )
-
 
 copyFromCorpusView :: Record SubTreeParamsProps -> R.Element
 copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []
@@ -55,8 +49,17 @@ copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
                                      , subTreeParams
                                      }
 
-------------------------------------------------------------------------
+loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
+loadSubTree nodetypes session = getSubTree session treeId nodetypes
+  where
+    Session { treeId } = session
 
+getSubTree :: Session -> Int -> Array GT.NodeType -> Aff FTree
+getSubTree session treeId showtypes = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
+  where
+    nodeTypes     = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" showtypes
+
+------------------------------------------------------------------------
 type CorpusTreeProps =
   ( tree :: FTree
   | SubTreeParamsProps
@@ -91,10 +94,15 @@ copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeVi
                  )
                       -- ]
       where
+
         SubTreeParams { valitypes } = subTreeParams
+
         children = map (\c -> copyFromCorpusTreeView (p { tree = c })) ary
+
         validNodeType = (A.elem nodeType valitypes) && (id /= sourceId)
+
         clickable = if validNodeType then "clickable" else ""
+
         onClick _ = case validNodeType of
           false -> pure unit
           true  -> do
@@ -102,14 +110,4 @@ copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeVi
             log2 "[copyFromCorpusTreeViewCpt] issue copy from" sourceId
 
 --------------------------------------------------------------------------------------------
-loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
-loadSubTree nodetypes session = getSubTree session treeId nodetypes
-  where
-    Session { treeId } = session
-
-getSubTree :: Session -> Int -> Array GT.NodeType -> Aff FTree
-getSubTree session treeId showtypes = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
-  where
-    nodeTypes     = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" showtypes
-
 

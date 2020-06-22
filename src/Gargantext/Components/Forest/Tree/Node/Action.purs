@@ -19,7 +19,6 @@ type UpdateNodeProps =
   )
   -}
 
-
 data Action = AddNode     String GT.NodeType
             | DeleteNode
             | RenameNode  String
@@ -29,7 +28,6 @@ data Action = AddNode     String GT.NodeType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | DownloadNode
             | RefreshTree
-
 
 instance showShow :: Show Action where
   show (AddNode     _ _    )= "AddNode"

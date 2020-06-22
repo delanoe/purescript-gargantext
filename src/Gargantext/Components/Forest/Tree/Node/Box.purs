@@ -238,6 +238,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Config , dispatch, id, nodeType, session} _ = do
       pure $ fragmentPT $ "Config " <> show nodeType
 
+-----------
     cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session, subTreeParams}
 
@@ -246,6 +247,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
 
     cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session} _ = do
       pure $ copyFromCorpusView {dispatch, id, nodeType, session, subTreeParams}
+-----------
 
     cpt {action : Share, dispatch, id, name } _ = do
       isOpen <- R.useState' true

@@ -15,7 +15,8 @@ if user has access to node then he can do all his related actions
 -}
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
-data Status a = IsBeta a | IsProd a
+-- Beta Status
+data Status a = TODO a | WIP a | OnTest a | Beta a
 
 data NodeAction = Documentation NodeType
                 | SearchBox
@@ -250,6 +251,8 @@ settingsBox _ =
               , buttons : []
               }
 
+-- | SubTree Parameters
+
 moveParameters = { subTreeParams : SubTreeParams 
                                  { showtypes: [ FolderPrivate
                                               , FolderShared
@@ -267,15 +270,15 @@ moveParameters = { subTreeParams : SubTreeParams
                   }
 
 linkParams =  { subTreeParams : SubTreeParams 
-                                                 { showtypes: [ FolderPrivate
-                                                              , FolderShared
-                                                              , Team
-                                                              , FolderPublic
-                                                              , Folder
-                                                              , Annuaire
-                                                              ]
-                                                 , valitypes: [ Annuaire
-                                                              ]
-                                                 }
-                                 }
+                              { showtypes: [ FolderPrivate
+                                           , FolderShared
+                                           , Team
+                                           , FolderPublic
+                                           , Folder
+                                           , Annuaire
+                                           ]
+                              , valitypes: [ Annuaire
+                                           ]
+                              }
+               }
 
