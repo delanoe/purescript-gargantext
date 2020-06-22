@@ -57,7 +57,8 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
       popoverRef    <- R.useRef null
 
       pure $ H.span (dropProps droppedFile isDragOver) $
-        [ folderIcon nodeType folderOpen
+        [ chevronIcon nodeType folderOpen
+        , folderIcon nodeType folderOpen
         , if showBox then
             Popover.popover { arrow: false
                             , open: false
@@ -94,6 +95,15 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
     name' {name, nodeType} = if nodeType == GT.NodeUser
                                 then show session
                                 else name
+    chevronIcon nodeType folderOpen'@(open /\ _) =
+      H.a { className: "chevron-icon"
+          , onClick: R2.effToggler folderOpen'
+          }
+          [ H.i {
+               className: if open
+                          then "fa fa-chevron-down"
+                          else "fa fa-chevron-right"
+               } [] ]
 
     folderIcon nodeType folderOpen'@(open /\ _) =
       H.a { className: "folder-icon"
