@@ -115,7 +115,7 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
             , tasks
             , tree
             , session
-          } _ = pure $ H.div { className: "tree"}
+          } _ = pure $ H.ul { className: "tree"}
                              [ toHtml { asyncTasks
                                       , frontends
                                       , mCurrentRoute
@@ -168,27 +168,23 @@ toHtml p@{ asyncTasks
 
         let withId (NTree (LNode {id: id'}) _) = id'
 
-        pure $ H.ul {}
-          [ H.li {}
-            ( [ nodeMainSpan { id
-                             , dispatch: pAction
-                             , folderOpen
-                             , frontends
-                             , mCurrentRoute
-                             , name
-                             , nodeType
-                             , session
-                             , tasks
-                             } ]
-              <> childNodes (Record.merge commonProps
-                                          { asyncTasks
-                                          , children: ary
-                                          , folderOpen
-                                          }
-                            )
-            )
-          ]
-
+        pure $ H.li {} $
+          [ nodeMainSpan { id
+                         , dispatch: pAction
+                         , folderOpen
+                         , frontends
+                         , mCurrentRoute
+                         , name
+                         , nodeType
+                         , session
+                         , tasks
+                         } ]
+          <> childNodes ( Record.merge commonProps
+                          { asyncTasks
+                          , children: ary
+                          , folderOpen
+                          }
+                        )
 
 type ChildNodesProps =
   ( asyncTasks :: R.State GAT.Storage
@@ -201,12 +197,12 @@ childNodes :: Record ChildNodesProps -> Array R.Element
 childNodes { children: []                       } = []
 childNodes { folderOpen: (false /\ _)           } = []
 childNodes props@{ asyncTasks, children, reload } =
-  map (\ctree@(NTree (LNode {id}) _) ->
+  map (\ctree@(NTree (LNode {id}) _) -> H.ul {} [
         toHtml (Record.merge commonProps { asyncTasks
                                          , tasks: tasksStruct id asyncTasks reload
                                          , tree: ctree
                                          }
-               )
+               )]
       ) $ sorted children
   where
     commonProps = RecordE.pick props :: Record CommonProps
