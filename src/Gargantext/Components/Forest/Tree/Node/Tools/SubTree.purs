@@ -1,4 +1,4 @@
-module Gargantext.Components.Forest.Tree.Node.Action.CopyFrom where
+module Gargantext.Components.Forest.Tree.Node.Tools.SubTree where
 
 import DOM.Simple.Console (log2)
 import Data.Array as A
@@ -24,11 +24,11 @@ type SubTreeParamsProps =
   | Props
   )
 
-copyFromCorpusView :: Record SubTreeParamsProps -> R.Element
-copyFromCorpusView props = R.createElement copyFromCorpusViewCpt props []
+subTreeView :: Record SubTreeParamsProps -> R.Element
+subTreeView props = R.createElement subTreeViewCpt props []
 
-copyFromCorpusViewCpt :: R.Component SubTreeParamsProps
-copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
+subTreeViewCpt :: R.Component SubTreeParamsProps
+subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
   where
     cpt params@{ dispatch
         , id
@@ -41,7 +41,7 @@ copyFromCorpusViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusView" cpt
 
         useLoader session (loadSubTree showtypes) $
           \tree ->
-            copyFromCorpusViewLoaded { dispatch
+            subTreeViewLoaded { dispatch
                                      , id
                                      , nodeType
                                      , session
@@ -65,23 +65,23 @@ type CorpusTreeProps =
   | SubTreeParamsProps
   )
 
-copyFromCorpusViewLoaded :: Record CorpusTreeProps -> R.Element
-copyFromCorpusViewLoaded props = R.createElement copyFromCorpusViewLoadedCpt props []
+subTreeViewLoaded :: Record CorpusTreeProps -> R.Element
+subTreeViewLoaded props = R.createElement subTreeViewLoadedCpt props []
 
-copyFromCorpusViewLoadedCpt :: R.Component CorpusTreeProps
-copyFromCorpusViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusViewLoadedCpt" cpt
+subTreeViewLoadedCpt :: R.Component CorpusTreeProps
+subTreeViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeViewLoadedCpt" cpt
   where
     cpt p@{dispatch, id, nodeType, session, tree} _ = do
       pure $ H.div { className: "copy-from-corpus" }
                    [ H.div { className: "tree" }
-                           [copyFromCorpusTreeView p]
+                           [subTreeTreeView p]
                    ]
 
-copyFromCorpusTreeView :: Record CorpusTreeProps -> R.Element
-copyFromCorpusTreeView props = R.createElement copyFromCorpusTreeViewCpt props []
+subTreeTreeView :: Record CorpusTreeProps -> R.Element
+subTreeTreeView props = R.createElement subTreeTreeViewCpt props []
 
-copyFromCorpusTreeViewCpt :: R.Component CorpusTreeProps
-copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeViewCpt" cpt
+subTreeTreeViewCpt :: R.Component CorpusTreeProps
+subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
   where
     cpt p@{id, tree: NTree (LNode { id: sourceId, name, nodeType }) ary, subTreeParams} _ = do
       pure $ {- H.div {} [ H.h5 { className: GT.fldr nodeType true} []
@@ -97,7 +97,7 @@ copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeVi
 
         SubTreeParams { valitypes } = subTreeParams
 
-        children = map (\c -> copyFromCorpusTreeView (p { tree = c })) ary
+        children = map (\c -> subTreeTreeView (p { tree = c })) ary
 
         validNodeType = (A.elem nodeType valitypes) && (id /= sourceId)
 
@@ -106,8 +106,8 @@ copyFromCorpusTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.copyFromCorpusTreeVi
         onClick _ = case validNodeType of
           false -> pure unit
           true  -> do
-            log2 "[copyFromCorpusTreeViewCpt] issue copy into" id
-            log2 "[copyFromCorpusTreeViewCpt] issue copy from" sourceId
+            log2 "[subTreeTreeViewCpt] issue copy into" id
+            log2 "[subTreeTreeViewCpt] issue copy from" sourceId
 
 --------------------------------------------------------------------------------------------
 
