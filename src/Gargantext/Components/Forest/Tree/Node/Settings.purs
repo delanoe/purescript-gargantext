@@ -1,6 +1,9 @@
 module Gargantext.Components.Forest.Tree.Node.Settings where
 
-import Prelude (class Eq, class Show, show, (&&), (<>), (==))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
+import Data.Generic.Rep.Eq   (genericEq)
+import Gargantext.Prelude (class Eq, class Show, show, (&&), (<>), (==))
 import Data.Array (foldl)
 import Gargantext.Types
 
@@ -12,16 +15,32 @@ if user has access to node then he can do all his related actions
 -}
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
-data Status a = IsBeta a | IsProd a
+-- Beta Status
+data Status a = TODO a | WIP a | OnTest a | Beta a
 
 data NodeAction = Documentation NodeType
                 | SearchBox
                 | Download | Upload | Refresh | Config
-                | Move     | Clone  | Delete
-                | Share    | Link NodeType
-                | Add (Array NodeType)
-                | CopyFromCorpus
+                | Delete
+                | Share
+                | Add    (Array NodeType)
+                | Merge { subTreeParams :: SubTreeParams }
+                | Move  { subTreeParams :: SubTreeParams }
+                | Link  { subTreeParams :: SubTreeParams }
+                | Clone
 
+------------------------------------------------------------------------
+-- TODO move elsewhere
+data SubTreeParams = SubTreeParams { showtypes :: Array NodeType
+                                   , valitypes :: Array NodeType
+                                   }
+
+derive instance eqSubTreeParams      :: Eq SubTreeParams
+derive instance genericSubTreeParams :: Generic SubTreeParams _
+instance showSubTreeParams    :: Show SubTreeParams where
+  show = genericShow
+
+------------------------------------------------------------------------
 
 instance eqNodeAction :: Eq NodeAction where
   eq (Documentation x) (Documentation y) = true && (x == y)
@@ -29,13 +48,13 @@ instance eqNodeAction :: Eq NodeAction where
   eq Download Download = true
   eq Upload Upload     = true
   eq Refresh Refresh   = true
-  eq Move Move         = true
+  eq (Move x) (Move y) = x == y
   eq Clone Clone       = true
   eq Delete Delete     = true
   eq Share Share       = true
-  eq (Link x) (Link y) = (x == y)
-  eq (Add  x) (Add  y) = (x == y)
-  eq CopyFromCorpus CopyFromCorpus = true
+  eq (Link x) (Link y)   = x == y
+  eq (Add  x) (Add  y)   = x == y
+  eq (Merge x) (Merge y) = x == y
   eq Config Config     = true
   eq _ _               = false
 
@@ -45,14 +64,14 @@ instance showNodeAction :: Show NodeAction where
   show Download          = "Download"
   show Upload            = "Upload"
   show Refresh           = "Refresh"
-  show Move              = "Move"
+  show (Move t)          = "Move with subtree params" <> show t
   show Clone             = "Clone"
   show Delete            = "Delete"
   show Share             = "Share"
   show Config            = "Config"
   show (Link x)          = "Link to " <> show x
   show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
-  show CopyFromCorpus    = "Copy from corpus"
+  show (Merge t)         = "Merge with subtree" <> show t
 
 
 glyphiconNodeAction :: NodeAction -> String
@@ -63,11 +82,11 @@ glyphiconNodeAction SearchBox         = "search"
 glyphiconNodeAction Upload            = "upload"
 glyphiconNodeAction (Link _)          = "arrows-h"
 glyphiconNodeAction Download          = "download"
-glyphiconNodeAction CopyFromCorpus    = "random"
+glyphiconNodeAction (Merge _)         = "random"
 glyphiconNodeAction Refresh           = "refresh"
 glyphiconNodeAction Config            = "wrench"
 glyphiconNodeAction Share             = "user-plus"
-glyphiconNodeAction Move              = "share-square-o"
+glyphiconNodeAction (Move _)          = "share-square-o"
 glyphiconNodeAction _                 = ""
 
 
@@ -138,7 +157,7 @@ settingsBox Folder =
                                 , Folder
                                 , Annuaire
                                 ]
-                          , Move
+                          , Move moveParameters
                           , Delete
                           ]
               }
@@ -154,9 +173,9 @@ settingsBox Corpus =
                           , SearchBox
                           , Upload
                           , Download
-                          , Move
+                          , Move moveParameters
                             --, Clone
-                          , Link Annuaire
+                          , Link linkParams
                           , Delete
                           ]
               }
@@ -191,7 +210,17 @@ settingsBox NodeList =
                           , Config
                           , Download
                           , Upload
-                          , CopyFromCorpus
+                          , Merge {subTreeParams : SubTreeParams { showtypes: [ FolderPrivate
+                                                                , FolderShared
+                                                                , Team
+                                                                , FolderPublic
+                                                                , Folder
+                                                                , Corpus
+                                                                , NodeList
+                                                                ]
+                                                    , valitypes: [ NodeList ]
+                                                    }
+                                   }
                           , Delete
                           ]
               }
@@ -207,10 +236,10 @@ settingsBox Dashboard =
 
 settingsBox Annuaire =
   SettingsBox { show : true
-              , edit : false
+              , edit : true
               , doc  : Documentation Annuaire
               , buttons : [ Upload
-                          , Move
+                          , Move moveParameters
                           , Delete
                           ]
               }
@@ -221,3 +250,35 @@ settingsBox _ =
               , doc  : Documentation NodeUser
               , buttons : []
               }
+
+-- | SubTree Parameters
+
+moveParameters = { subTreeParams : SubTreeParams 
+                                 { showtypes: [ FolderPrivate
+                                              , FolderShared
+                                              , Team
+                                              , FolderPublic
+                                              , Folder
+                                              ]
+                                 , valitypes: [ FolderPrivate
+                                              , FolderShared
+                                                , Team
+                                              , FolderPublic
+                                              , Folder
+                                              ]
+                                 }
+                  }
+
+linkParams =  { subTreeParams : SubTreeParams 
+                              { showtypes: [ FolderPrivate
+                                           , FolderShared
+                                           , Team
+                                           , FolderPublic
+                                           , Folder
+                                           , Annuaire
+                                           ]
+                              , valitypes: [ Annuaire
+                                           ]
+                              }
+               }
+

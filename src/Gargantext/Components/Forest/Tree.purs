@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree where
 
 import DOM.Simple.Console (log, log2)
 import Data.Array as A
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
@@ -12,7 +12,6 @@ import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (nodeMainSpan)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
-import Gargantext.Components.Forest.Tree.Node.Action.CopyFrom (getNodeTree)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Forest.Tree.Node.Action.Share (ShareValue(..), share)
@@ -24,8 +23,10 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
 import Gargantext.Routes (AppRoute)
-import Gargantext.Sessions (OpenNodes, Session, mkNodeId)
+import Gargantext.Sessions (OpenNodes, Session, mkNodeId, get)
 import Gargantext.Types (ID, Reload)
+import Gargantext.Types as GT
+import Gargantext.Routes as GR
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -94,6 +95,13 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
                                             , tree: loaded
                                             }
           useLoader { root, counter: fst reload } fetch paint
+
+--------------
+getNodeTree :: Session -> GT.ID -> Aff FTree
+getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
+
+--------------
+
 
 type TreeViewProps = ( asyncTasks :: R.State GAT.Storage
                      , tree       :: FTree
