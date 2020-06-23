@@ -16,32 +16,13 @@ import Reactix.DOM.HTML as H
 
 
 updateRequest :: UpdateNodeParams -> Session -> ID -> Aff GT.AsyncTaskWithType
-updateRequest (UpdateNodeParamsList meth) session nodeId = do
-  task <- post session p meth
+updateRequest updateNodeParams session nodeId = do
+  task <- post session p updateNodeParams
   pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
     where
-      p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
-
-updateRequest (UpdateNodeParamsGraph meth) session nodeId = do
-  task <- post session p meth
-  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
-    where
-      p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
-
-updateRequest (UpdateNodeParamsTexts meth) session nodeId = do
-  task <- post session p meth
-  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
-    where
-      p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
-
-updateRequest (UpdateNodeParamsBoard meth) session nodeId = do
-  task <- post session p meth
-  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
-    where
-      p = GR.NodeAPI GT.Node (Just nodeId) "update/nobody"
+      p = GR.NodeAPI GT.Node (Just nodeId) "update"
 
 ----------------------------------------------------------------------
-
 update ::  NodeType
        -> (Action -> Aff Unit)
        ->  R.Hooks R.Element
