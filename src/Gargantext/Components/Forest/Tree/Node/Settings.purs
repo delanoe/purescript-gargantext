@@ -261,9 +261,8 @@ moveParameters = { subTreeParams : SubTreeParams
                                               , Folder
                                               ]
                                  , valitypes: [ FolderPrivate
-                                              , FolderShared
-                                                , Team
-                                              , FolderPublic
+                                              , Team
+                                              -- , FolderPublic
                                               , Folder
                                               ]
                                  }
