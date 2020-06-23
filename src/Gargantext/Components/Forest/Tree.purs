@@ -13,6 +13,7 @@ import Gargantext.Components.Forest.Tree.Node (nodeMainSpan)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Move   (moveNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Forest.Tree.Node.Action.Share (ShareValue(..), share)
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
@@ -304,6 +305,13 @@ performAction (UploadFile nodeType fileType mName contents) { session
 performAction DownloadNode _ = do
     liftEffect $ log "[performAction] DownloadNode"
 -------
+performAction (MoveNode n1 n2) p@{session} = do
+  void       $ moveNode session n1 n2
+  performAction RefreshTree p
+-------
 performAction RefreshTree { reload: (_ /\ setReload) } = do
   liftEffect $ setReload (_ + 1)
 -------
+performAction NoAction _ = do
+    liftEffect $ log "[performAction] NoAction"
+

@@ -223,6 +223,9 @@ get session@(Session {token}) p = REST.get (Just token) (toUrl session p)
 put :: forall a b p. EncodeJson a => DecodeJson b => ToUrl Session p => Session -> p -> a -> Aff b
 put session@(Session {token}) p = REST.put (Just token) (toUrl session p)
 
+put_ :: forall a b p. DecodeJson b => ToUrl Session p => Session -> p -> Aff b
+put_ session@(Session {token}) p = REST.put_ (Just token) (toUrl session p)
+
 delete :: forall a p. DecodeJson a => ToUrl Session p => Session -> p -> Aff a
 delete session@(Session {token}) p = REST.delete (Just token) (toUrl session p)
 

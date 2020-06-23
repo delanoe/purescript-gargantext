@@ -5,7 +5,7 @@ import Effect.Aff (Aff)
 import Gargantext.Prelude (class Show, Unit)
 import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
-import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction, SubTreeParams(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileContents)
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 
@@ -28,6 +28,8 @@ data Action = AddNode     String GT.NodeType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | DownloadNode
             | RefreshTree
+            | MoveNode    GT.NodeID GT.NodeID
+            | NoAction
 
 instance showShow :: Show Action where
   show (AddNode     _ _    )= "AddNode"
@@ -39,6 +41,8 @@ instance showShow :: Show Action where
   show (UploadFile  _ _ _ _)= "UploadFile"
   show  RefreshTree         = "RefreshTree"
   show  DownloadNode        = "Download"
+  show (MoveNode _ _)       = "MoveNode"
+  show NoAction             = "NoAction"
 
 type Props =
   ( dispatch :: Action -> Aff Unit
@@ -57,6 +61,9 @@ icon (DoSearch   _)       = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
 icon  RefreshTree         = glyphiconNodeAction Refresh
 icon  DownloadNode        = glyphiconNodeAction Download
+icon (MoveNode _ _)       = glyphiconNodeAction (Move { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon NoAction             = "hand-o-right"
+
 -- icon _             = "hand-o-right"
 
 text :: Action -> String
@@ -69,4 +76,6 @@ text (DoSearch    _      )= "Launch search !"
 text (UploadFile  _ _ _ _)= "Upload File !"
 text  RefreshTree         = "Refresh Tree !"
 text DownloadNode         = "Download !"
+text (MoveNode _ _ )      = "Move !"
+text NoAction             = "No Action"
 -----------------------------------------------------------------------

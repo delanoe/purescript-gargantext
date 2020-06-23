@@ -64,6 +64,9 @@ get mtoken url = send GET mtoken url noReqBody
 put :: forall a b. EncodeJson a => DecodeJson b => Maybe Token -> String -> a -> Aff b
 put mtoken url = send PUT mtoken url <<< Just
 
+put_ :: forall a. DecodeJson a => Maybe Token -> String -> Aff a
+put_ mtoken url = send PUT mtoken url noReqBody
+
 delete :: forall a. DecodeJson a => Maybe Token -> String -> Aff a
 delete mtoken url = send DELETE mtoken url noReqBody
 

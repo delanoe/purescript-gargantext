@@ -5,8 +5,9 @@ import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
-import Effect.Aff (Aff)
-import Gargantext.Components.Forest.Tree.Node.Action (Props)
+import Effect.Uncurried (mkEffectFn1)
+import Effect.Aff (Aff, launchAff)
+import Gargantext.Components.Forest.Tree.Node.Action (Props, Action(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (SubTreeParams(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Hooks.Loader (useLoader)
@@ -83,7 +84,15 @@ subTreeTreeView props = R.createElement subTreeTreeViewCpt props []
 subTreeTreeViewCpt :: R.Component CorpusTreeProps
 subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
   where
-    cpt p@{id, tree: NTree (LNode { id: sourceId, name, nodeType }) ary, subTreeParams} _ = do
+    cpt p@{ id
+          , tree: NTree (LNode { id: sourceId
+                               , name
+                               , nodeType
+                               }
+                        ) ary
+          , subTreeParams
+          , dispatch
+          } _ = do
       pure $ {- H.div {} [ H.h5 { className: GT.fldr nodeType true} []
       , -} H.div { className: "node" } 
                  ( [ H.span { className: "name " <> clickable
@@ -103,11 +112,13 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
 
         clickable = if validNodeType then "clickable" else ""
 
-        onClick _ = case validNodeType of
-          false -> pure unit
-          true  -> do
-            log2 "[subTreeTreeViewCpt] issue copy into" id
-            log2 "[subTreeTreeViewCpt] issue copy from" sourceId
+        onClick _ = mkEffectFn1
+                  $ \_ -> case validNodeType of
+                               false -> launchAff $ dispatch NoAction
+                               true  -> do
+                                 log2 "[subTreeTreeViewCpt] from" sourceId
+                                 log2 "[subTreeTreeViewCpt]   to" id
+                                 launchAff $ dispatch (MoveNode id sourceId)
 
 --------------------------------------------------------------------------------------------
 
