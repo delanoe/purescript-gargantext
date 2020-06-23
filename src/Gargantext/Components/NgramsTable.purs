@@ -23,6 +23,10 @@ import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Unsafe.Coerce (unsafeCoerce)
+
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
@@ -35,9 +39,6 @@ import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermL
 import Gargantext.Utils (queryMatchesLabel, toggleSet)
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Unsafe.Coerce (unsafeCoerce)
 
 type State' =
   CoreState
