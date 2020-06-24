@@ -37,7 +37,7 @@ data SubTreeParams = SubTreeParams { showtypes :: Array NodeType
 
 derive instance eqSubTreeParams      :: Eq SubTreeParams
 derive instance genericSubTreeParams :: Generic SubTreeParams _
-instance showSubTreeParams    :: Show SubTreeParams where
+instance showSubTreeParams           :: Show SubTreeParams where
   show = genericShow
 
 ------------------------------------------------------------------------
@@ -261,9 +261,8 @@ moveParameters = { subTreeParams : SubTreeParams
                                               , Folder
                                               ]
                                  , valitypes: [ FolderPrivate
-                                              , FolderShared
-                                                , Team
-                                              , FolderPublic
+                                              , Team
+                                              -- , FolderPublic
                                               , Folder
                                               ]
                                  }

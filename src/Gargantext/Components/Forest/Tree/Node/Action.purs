@@ -29,6 +29,8 @@ data Action = AddNode     String GT.NodeType
             | DownloadNode
             | RefreshTree
             | MoveNode    GT.NodeID GT.NodeID
+            | MergeNode    GT.NodeID GT.NodeID
+            | LinkNode    GT.NodeID GT.NodeID
             | NoAction
 
 instance showShow :: Show Action where
@@ -42,6 +44,8 @@ instance showShow :: Show Action where
   show  RefreshTree         = "RefreshTree"
   show  DownloadNode        = "Download"
   show (MoveNode _ _)       = "MoveNode"
+  show (MergeNode _ _)      = "MergeNode"
+  show (LinkNode _ _)       = "LinkNode"
   show NoAction             = "NoAction"
 
 type Props =
@@ -62,6 +66,9 @@ icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
 icon  RefreshTree         = glyphiconNodeAction Refresh
 icon  DownloadNode        = glyphiconNodeAction Download
 icon (MoveNode _ _)       = glyphiconNodeAction (Move { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (MergeNode _ _)      = glyphiconNodeAction (Merge { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (LinkNode _ _)       = glyphiconNodeAction (Link { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+
 icon NoAction             = "hand-o-right"
 
 -- icon _             = "hand-o-right"
@@ -77,5 +84,7 @@ text (UploadFile  _ _ _ _)= "Upload File !"
 text  RefreshTree         = "Refresh Tree !"
 text DownloadNode         = "Download !"
 text (MoveNode _ _ )      = "Move !"
+text (MergeNode _ _ )     = "Merge !"
+text (LinkNode _ _ )      = "Link !"
 text NoAction             = "No Action"
 -----------------------------------------------------------------------
