@@ -16,6 +16,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Reactix as R
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsProps, subTreeView)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsProps, subTreeView, SubTreeOut(..))
 import Reactix.DOM.HTML as H
 
 

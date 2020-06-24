@@ -27,7 +27,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNode)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeOut)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeOut)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
@@ -249,6 +249,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
       pure $ fragmentPT $ "Config " <> show nodeType
 
 -----------
+    -- Functions using SubTree
     cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session} _ = do
       subTreeOut :: R.State (Maybe SubTreeOut) <- R.useState' Nothing
       mergeNode {dispatch, id, nodeType, session, subTreeParams, subTreeOut}
@@ -265,12 +266,13 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action : Share, dispatch, id, name } _ = do
       isOpen <- R.useState' true
       pure $ H.div {} [ textInputBox { boxAction: Share.shareAction
-                                   , boxName: "Share"
-                                   , dispatch
-                                   , id
-                                   , text: "username"
-                                   , isOpen
-                                   } ]
+                                     , boxName: "Share"
+                                     , dispatch
+                                     , id
+                                     , text: "username"
+                                     , isOpen
+                                     } 
+                      ]
     cpt props@{action: SearchBox, id, session, dispatch, nodePopup} _ =
       actionSearch session (Just id) dispatch nodePopup
 

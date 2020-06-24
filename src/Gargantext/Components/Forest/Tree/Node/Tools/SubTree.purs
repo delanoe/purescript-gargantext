@@ -3,6 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Tools.SubTree where
 import DOM.Simple.Console (log2)
 import Data.Array as A
 import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested ((/\))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Effect.Uncurried (mkEffectFn1)
@@ -11,7 +12,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Props, Action(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (SubTreeParams(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (discard, map, pure, show, unit, ($), (&&), (/=), (<>), class Eq)
+import Gargantext.Prelude (discard, map, pure, show, unit, ($), (&&), (/=), (<>), class Eq, const)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
@@ -98,6 +99,7 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
                         ) ary
           , subTreeParams
           , dispatch
+          , subTreeOut
           } _ = do
       pure $ {- H.div {} [ H.h5 { className: GT.fldr nodeType true} []
       , -} H.div { className: "node" } 
@@ -117,14 +119,10 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
         validNodeType = (A.elem nodeType valitypes) && (id /= sourceId)
 
         clickable = if validNodeType then "clickable" else ""
-
-        onClick _ = mkEffectFn1
-                  $ \_ -> case validNodeType of
-                               false -> launchAff $ dispatch NoAction
-                               true  -> do
-                                 log2 "[subTreeTreeViewCpt] from" id
-                                 log2 "[subTreeTreeViewCpt]   to" sourceId
-                                 launchAff $ dispatch (MoveNode id sourceId)
-
+        sbto@( subTreeOutParams /\ setSubTreeOut) = subTreeOut
+        onClick _ = mkEffectFn1 $ \_ -> case validNodeType of
+                         false -> setSubTreeOut (const Nothing)
+                         true  -> setSubTreeOut (const $ Just $ SubTreeOut { in: id, out:sourceId})
+         
 --------------------------------------------------------------------------------------------
 
