@@ -2,16 +2,16 @@ module Gargantext.Components.Forest.Tree.Node.Action.Move
   where
 
 import Data.Maybe (Maybe(..))
-import Gargantext.Prelude
-import Effect.Aff (Aff)
 import Data.Tuple.Nested ((/\))
-import Gargantext.Sessions (Session, put_)
-import Gargantext.Routes (SessionRoute(..))
+import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Reactix as R
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsProps, subTreeView, SubTreeOut(..))
+import Gargantext.Prelude
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session, put_)
 import Gargantext.Types as GT
+import Reactix as R
 import Reactix.DOM.HTML as H
 
 moveNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
