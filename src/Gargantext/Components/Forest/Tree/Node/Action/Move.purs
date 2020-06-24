@@ -15,13 +15,15 @@ import Data.Generic.Rep.Show (genericShow)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Reactix as R
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsProps, subTreeView)
 import Reactix.DOM.HTML as H
 
-moveNode :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
-moveNode session fromId toId=
+-- TODO moveNodeReq
+moveNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
+moveNodeReq session fromId toId =
   put_ session $ NodeAPI GT.Node (Just fromId) ("move/" <> show toId)
 
-
-
-
+moveNode :: Record SubTreeParamsProps -> R.Hooks R.Element
+moveNode p = do
+  pure $ subTreeView p
 

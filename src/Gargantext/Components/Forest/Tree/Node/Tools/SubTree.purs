@@ -19,9 +19,13 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 
+data SubTreeOut = SubTreeOut { in  :: GT.ID
+                             , out :: GT.ID
+                             }
 ------------------------------------------------------------------------
 type SubTreeParamsProps =
   ( subTreeParams :: SubTreeParams
+  , subTreeOut    :: R.State (Maybe SubTreeOut)
   | Props
   )
 
@@ -32,23 +36,25 @@ subTreeViewCpt :: R.Component SubTreeParamsProps
 subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
   where
     cpt params@{ dispatch
-        , id
-        , nodeType
-        , session
-        , subTreeParams
-        } _ =
+               , id
+               , nodeType
+               , session
+               , subTreeParams
+               , subTreeOut
+               } _ =
       do
         let SubTreeParams {showtypes} = subTreeParams
 
         useLoader session (loadSubTree showtypes) $
           \tree ->
             subTreeViewLoaded { dispatch
-                                     , id
-                                     , nodeType
-                                     , session
-                                     , tree
-                                     , subTreeParams
-                                     }
+                              , id
+                              , nodeType
+                              , session
+                              , tree
+                              , subTreeParams
+                              , subTreeOut
+                              }
 
 loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
 loadSubTree nodetypes session = getSubTree session treeId nodetypes
@@ -116,8 +122,8 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
                   $ \_ -> case validNodeType of
                                false -> launchAff $ dispatch NoAction
                                true  -> do
-                                 log2 "[subTreeTreeViewCpt] from" sourceId
-                                 log2 "[subTreeTreeViewCpt]   to" id
+                                 log2 "[subTreeTreeViewCpt] from" id
+                                 log2 "[subTreeTreeViewCpt]   to" sourceId
                                  launchAff $ dispatch (MoveNode id sourceId)
 
 --------------------------------------------------------------------------------------------

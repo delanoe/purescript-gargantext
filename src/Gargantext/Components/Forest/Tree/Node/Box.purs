@@ -21,10 +21,11 @@ import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (default
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
+import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNode)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeOut)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
@@ -247,13 +248,16 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
 
 -----------
     cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session} _ = do
-      pure $ subTreeView {dispatch, id, nodeType, session, subTreeParams}
+      subTreeOut :: R.State (Maybe SubTreeOut) <- R.useState' Nothing
+      pure $ subTreeView {dispatch, id, nodeType, session, subTreeParams, subTreeOut}
 
     cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session} _ = do
-      pure $ subTreeView {dispatch, id, nodeType, session, subTreeParams}
+      subTreeOut :: R.State (Maybe SubTreeOut) <- R.useState' Nothing
+      moveNode {dispatch, id, nodeType, session, subTreeParams, subTreeOut}
 
     cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session} _ = do
-      pure $ subTreeView {dispatch, id, nodeType, session, subTreeParams}
+      subTreeOut :: R.State (Maybe SubTreeOut) <- R.useState' Nothing
+      pure $ subTreeView {dispatch, id, nodeType, session, subTreeParams, subTreeOut}
 -----------
 
     cpt {action : Share, dispatch, id, name } _ = do
