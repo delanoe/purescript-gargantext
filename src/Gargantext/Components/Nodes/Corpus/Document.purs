@@ -1,10 +1,10 @@
 module Gargantext.Components.Nodes.Corpus.Document where
 
-import Prelude (class Show, bind, identity, mempty, pure, ($), (<>))
+import Prelude (class Show, bind, mempty, pure, ($), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Effect.Aff (Aff)
 import React (ReactClass, Children)
 import React.DOM (div, h4, li, p, span, text, ul)
