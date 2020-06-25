@@ -3,7 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar where
 import Gargantext.Prelude
 
 import Data.Int (fromNumber)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
@@ -65,7 +65,9 @@ asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.PB.asyncProgressBar" cpt
       pure $ progressIndicator { barType, label: id, progress: toInt progress }
 
     toInt :: Number -> Int
-    toInt n = unsafePartial $ fromJust $ fromNumber n
+    toInt n = case fromNumber n of
+        Nothing -> 0
+        Just x  -> x
 
 type ProgressIndicatorProps =
   ( barType  :: BarType

@@ -281,7 +281,6 @@ performAction (ShareNode username) p@{ reload: (_ /\ setReload)
   do
     void $ share session id $ ShareValue {text:username}
 
-
 -------
 performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
                                         , reload:    (_ /\ setReload)
@@ -318,8 +317,6 @@ performAction (MergeNode n1 n2) p@{session} = do
 performAction (LinkNode n1 n2) p@{session} = do
   void $ linkNodeReq session n1 n2
   performAction RefreshTree p
-
-
 
 -------
 performAction RefreshTree { reload: (_ /\ setReload) } = do
