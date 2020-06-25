@@ -1,7 +1,8 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Pie where
 
 import Prelude (bind, map, pure, ($), (>))
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
+import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (zip, filter)
 import Data.Array as A
 import Data.Maybe (Maybe(..))
@@ -17,7 +18,7 @@ import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
 import Gargantext.Components.Charts.Options.Color (blue)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
@@ -45,6 +46,12 @@ instance decodeHistoMetrics :: DecodeJson HistoMetrics where
     d <- obj .: "dates"
     c <- obj .: "count"
     pure $ HistoMetrics { dates : d , count: c}
+
+instance encodeHistoMetrics :: EncodeJson HistoMetrics where
+  encodeJson (HistoMetrics { dates, count }) =
+       "count" := encodeJson count
+    ~> "dates"    := encodeJson dates
+    ~> jsonEmptyObject
 
 type Loaded = HistoMetrics
 
@@ -86,7 +93,8 @@ pieCpt = R.hooksComponent "G.C.N.C.C.P.pie" cpt
   where
     cpt {path,session} _ = do
       reload <- R.useState' 0
-      pure $ metricsLoadView {getMetrics, loaded: loadedPie, path, reload, session}
+      --pure $ metricsLoadView {getMetrics, loaded: loadedPie, path, reload, session}
+      pure $ metricsWithCacheLoadView {getMetrics, loaded: loadedPie, path, reload, session}
 
 loadedPie :: Session -> Record Path -> R.State Reload -> HistoMetrics -> R.Element
 loadedPie session path reload loaded =
@@ -105,7 +113,8 @@ barCpt = R.hooksComponent "LoadedMetricsBar" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0
-      pure $ metricsLoadView {getMetrics, loaded: loadedBar, path, reload, session}
+      --pure $ metricsLoadView {getMetrics, loaded: loadedBar, path, reload, session}
+      pure $ metricsWithCacheLoadView {getMetrics, loaded: loadedBar, path, reload, session}
 
 loadedBar :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
 loadedBar session path reload loaded =

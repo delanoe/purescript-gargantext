@@ -1,6 +1,7 @@
 module Gargantext.Utils where
 
 import Prelude
+import Data.Either (Either(..))
 import Data.Lens (Lens', lens)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Set as Set
@@ -68,3 +69,8 @@ queryMatchesLabel :: String -> String -> Boolean
 queryMatchesLabel q l = S.contains (S.Pattern $ normalize q) (normalize l)
   where
     normalize = S.toLower
+
+
+mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
+mapLeft f (Left  l) = Left (f l)
+mapLeft _ (Right r) = Right r
