@@ -20,14 +20,19 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 
+
+type SubTreeParamsIn =
+  ( subTreeParams :: SubTreeParams
+  | Props
+  )
+------------------------------------------------------------------------
 data SubTreeOut = SubTreeOut { in  :: GT.ID
                              , out :: GT.ID
                              }
 ------------------------------------------------------------------------
 type SubTreeParamsProps =
-  ( subTreeParams :: SubTreeParams
-  , subTreeOut    :: R.State (Maybe SubTreeOut)
-  | Props
+  ( subTreeOut    :: R.State (Maybe SubTreeOut)
+  | SubTreeParamsIn
   )
 
 subTreeView :: Record SubTreeParamsProps -> R.Element
@@ -69,7 +74,7 @@ getSubTree session treeId showtypes = get session $ GR.NodeAPI GT.Tree (Just tre
 
 ------------------------------------------------------------------------
 type CorpusTreeProps =
-  ( tree :: FTree
+  ( tree         :: FTree
   | SubTreeParamsProps
   )
 
@@ -123,6 +128,6 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
         onClick _ = mkEffectFn1 $ \_ -> case validNodeType of
                          false -> setSubTreeOut (const Nothing)
                          true  -> setSubTreeOut (const $ Just $ SubTreeOut { in: id, out:sourceId})
-         
+
 --------------------------------------------------------------------------------------------
 
