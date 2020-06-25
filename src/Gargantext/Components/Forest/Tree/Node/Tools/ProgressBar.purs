@@ -1,19 +1,16 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar where
 
-import Gargantext.Prelude
-
 import Data.Int (fromNumber)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (clearInterval, setInterval)
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types as GT
-import Partial.Unsafe (unsafePartial)
-
 import Reactix as R
 import Reactix.DOM.HTML as H
 
