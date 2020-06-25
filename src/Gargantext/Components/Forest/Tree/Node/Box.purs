@@ -59,12 +59,17 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
   where
     cpt p _ = do
       isOpen    <- R.useState' false
-      nodePopupState@(nodePopup /\ setNodePopup) <- R.useState' { action  : Nothing
-                                                                , id      : p.id
-                                                                , name    : p.name
-                                                                , nodeType: p.nodeType
-                                                                }
-      search        <- R.useState' $ defaultSearch { node_id = Just p.id }
+
+      nodePopupState@(nodePopup /\ setNodePopup)
+        <- R.useState' { action  : Nothing
+                       , id      : p.id
+                       , name    : p.name
+                       , nodeType: p.nodeType
+                       }
+
+      search  <- R.useState'
+               $ defaultSearch { node_id = Just p.id }
+
       pure $ H.div tooltipProps $
         [ H.div { className: "popup-container" }
           [ H.div { className: "panel panel-default" }
@@ -199,9 +204,7 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
                                                        (action == (Just todo)   )
                          , id: show todo
                          , title: show todo
-                         , onClick : mkEffectFn1
-                                   $ \_ -> setNodePopup
-                                   $ const (node { action = action' })
+                         , onClick : mkEffectFn1 $ \_ -> undo *> doToDo
                        }
                      []
                    ]
@@ -209,6 +212,13 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
         action' = if action == (Just todo)
                       then Nothing
                       else (Just todo)
+
+        undo = setNodePopup
+             $ const (node { action = Nothing })
+
+        doToDo = setNodePopup
+               $ const (node { action = action' })
+
 
 -- END Popup View
 type NodeProps =
