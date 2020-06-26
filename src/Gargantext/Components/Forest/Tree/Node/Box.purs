@@ -26,6 +26,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Link (linkNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNode)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
@@ -41,15 +42,6 @@ type CommonProps =
 
 
 -- | START Popup View
-
-iconAStyle :: { color      :: String
-              , paddingTop :: String
-              , paddingBottom :: String
-              }
-iconAStyle = { color         : "black"
-             , paddingTop    : "6px"
-             , paddingBottom : "6px"
-             }
 
 nodePopupView :: Record NodePopupProps -> R.Element
 nodePopupView p = R.createElement nodePopupCpt p []
@@ -150,11 +142,13 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                   , H.div { className: "flex-center"} 
                           [ buttonClick { action: doc
                                         , state: nodePopupState
+                                        , nodeType
                                         }
                           ]
                   , H.div {className: "flex-center"}
                           $ map (\t -> buttonClick { action: t
                                                    , state : nodePopupState
+                                                   , nodeType
                                                    }
                                 ) buttons
                   ]
@@ -189,6 +183,7 @@ type ActionState =
 type ButtonClickProps =
   ( action :: NodeAction
   , state  :: R.State (Record ActionState)
+  , nodeType :: GT.NodeType
   )
 
 buttonClick :: Record ButtonClickProps -> R.Element
@@ -197,9 +192,9 @@ buttonClick p = R.createElement buttonClickCpt p []
 buttonClickCpt :: R.Component ButtonClickProps
 buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
   where
-    cpt {action: todo, state: (node@{action} /\ setNodePopup)} _ = do
+    cpt {action: todo, state: (node@{action} /\ setNodePopup), nodeType} _ = do
       pure $ H.div {className: "col-md-1"}
-                   [ H.a { style: iconAStyle
+                   [ H.a { style: (iconAStyle nodeType todo)
                          , className: glyphiconActive (glyphiconNodeAction todo)
                                                        (action == (Just todo)   )
                          , id: show todo
@@ -218,6 +213,20 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
 
         doToDo = setNodePopup
                $ const (node { action = action' })
+
+        iconAStyle :: GT.NodeType -> NodeAction -> { color      :: String
+                      , paddingTop :: String
+                      , paddingBottom :: String
+                      }
+        iconAStyle n a = { color         : hasColor (hasStatus n a)
+                          , paddingTop    : "6px"
+                          , paddingBottom : "6px"
+                          }
+          where
+            hasColor :: Status -> String
+            hasColor Prod = "black"
+            hasColor Test = "orange"
+            hasColor WIP  = "red"
 
 
 -- END Popup View
