@@ -224,9 +224,9 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
                           }
           where
             hasColor :: Status -> String
-            hasColor Prod = "black"
-            hasColor Test = "orange"
-            hasColor WIP  = "red"
+            hasColor Stable = "black"
+            hasColor Test   = "orange"
+            hasColor Dev    = "red"
 
 
 -- END Popup View
