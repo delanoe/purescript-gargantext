@@ -120,7 +120,7 @@ sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ fromMaybe 
 sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart ChartBar nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart ChartPie nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart ChartTree nt nId lId)      = "node/" <> (show nId) <> "/tree?list=" <> (show lId) <> "&ngramsType=" <> (show nt) <> "&listType=GraphTerm"
+sessionPath (R.RecomputeListChart ChartTree nt nId lId)      = "node/" <> (show nId) <> "/tree?list=" <> (show lId) <> "&ngramsType=" <> (show nt) <> "&listType=MapTerm"
 sessionPath (R.RecomputeListChart Histo nt nId lId)      = "node/" <> (show nId) <> "/chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart Scatter nt nId lId)      = "node/" <> (show nId) <> "/metrics?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart _ nt nId lId)      = "node/" <> (show nId) <> "/recompute-chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
@@ -190,7 +190,7 @@ sessionPath (R.Chart {chartType, listId, limit, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ show chartType
     <> "?ngramsType=" <> showTabType' tabType
-    <> "&listType=GraphTerm" -- <> show listId
+    <> "&listType=MapTerm" -- <> show listId
     <> "&listId=" <> show listId
     where
       limitPath = case limit of

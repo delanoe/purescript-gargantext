@@ -25,7 +25,7 @@ mergeNode p@{dispatch, subTreeParams, id, nodeType, session} = do
     <- R.useState' Nothing
 
   merge   <- R.useState' false
-  options <- R.useState' (Set.singleton GT.GraphTerm)
+  options <- R.useState' (Set.singleton GT.MapTerm)
 
   let button = case subTreeOutParams of
         Nothing   -> H.div {} []
@@ -41,7 +41,7 @@ mergeNode p@{dispatch, subTreeParams, id, nodeType, session} = do
                              , session
                              }
                , H.div {} [ H.text "Merge which list?"
-                          , checkboxes [GT.GraphTerm, GT.CandidateTerm, GT.StopTerm] options
+                          , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options
                           ]
                , H.div {className: "checkbox"} [checkbox merge, H.text "Merge data?"]
                ] button

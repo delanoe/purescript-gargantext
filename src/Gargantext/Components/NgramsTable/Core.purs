@@ -133,7 +133,7 @@ initialPageParams session nodeId listIds tabType =
   , params
   , tabType
   , termSizeFilter: Nothing
-  , termListFilter: Just GraphTerm
+  , termListFilter: Just MapTerm
   , searchQuery: ""
   , scoreType: Occurrences
   , session

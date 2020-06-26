@@ -183,7 +183,7 @@ renderNgramsItemCpt = R.hooksComponent "G.C.NT.renderNgramsItem" cpt
         , ngramsTable } _ =
       pure $ Tbl.makeRow [
           selected
-        , checkbox T.GraphTerm
+        , checkbox T.MapTerm
         , checkbox T.StopTerm
         , if ngramsParent == Nothing
           then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
@@ -232,7 +232,7 @@ renderNgramsItemCpt = R.hooksComponent "G.C.NT.renderNgramsItem" cpt
 
 
 termStyle :: T.TermList -> Number -> DOM.Props
-termStyle T.GraphTerm     opacity = DOM.style { color: "green", opacity }
+termStyle T.MapTerm     opacity = DOM.style { color: "green", opacity }
 termStyle T.StopTerm      opacity = DOM.style { color: "red",   opacity
                                               , textDecoration: "line-through" }
 termStyle T.CandidateTerm opacity = DOM.style { color: "black", opacity }
@@ -250,6 +250,6 @@ tablePatchHasNgrams ngramsTablePatch ngrams =
 
 
 nextTermList :: T.TermList -> T.TermList
-nextTermList T.GraphTerm     = T.StopTerm
+nextTermList T.MapTerm     = T.StopTerm
 nextTermList T.StopTerm      = T.CandidateTerm
-nextTermList T.CandidateTerm = T.GraphTerm
+nextTermList T.CandidateTerm = T.MapTerm

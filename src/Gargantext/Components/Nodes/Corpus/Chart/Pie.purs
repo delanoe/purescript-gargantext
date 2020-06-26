@@ -58,7 +58,7 @@ type Loaded = HistoMetrics
 chartOptionsBar :: HistoMetrics -> Options
 chartOptionsBar (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Bar"
-  , subTitle  : "Count of GraphTerm"
+  , subTitle  : "Count of MapTerm"
   , xAxis     : xAxis' $ map (\t -> joinWith " " $ map (take 3) $ A.take 3 $ filter (\s -> length s > 3) $ split (Pattern " ") t) dates'
   , yAxis     : yAxis' { position: "left", show: true, min:0}
   , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", itemStyle: itemStyle {color:blue}, value: n }) count']
@@ -69,7 +69,7 @@ chartOptionsBar (HistoMetrics { dates: dates', count: count'}) = Options
 chartOptionsPie :: HistoMetrics -> Options
 chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Pie"
-  , subTitle  : "Distribution by GraphTerm"
+  , subTitle  : "Distribution by MapTerm"
   , xAxis     : xAxis' []
   , yAxis     : yAxis' { position: "", show: false, min:0}
   , series    : [seriesPieD1 {name: "Data"} $ map (\(Tuple n v) -> dataSerie {name: n, value:v}) $ zip dates' count']
