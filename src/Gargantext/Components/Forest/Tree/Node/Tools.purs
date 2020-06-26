@@ -2,14 +2,17 @@ module Gargantext.Components.Forest.Tree.Node.Tools
   where
 
 import Data.Maybe (fromMaybe)
+import Data.Set (Set)
+import Data.Set as Set
 import Data.String as S
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show, not)
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show, not, class Ord)
 import Gargantext.Types (ID)
+import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -203,7 +206,7 @@ submitButtonHref action href =
 
 ------------------------------------------------------------------------
 -- | CheckBox tools
--- checkboxes: Array of poolean values
+-- checkboxes: Array of poolean values (basic: without pending option)
 -- checkbox  : One boolean value only
 
 checkbox :: R.State Boolean -> R.Element
@@ -214,4 +217,26 @@ checkbox ( val /\ set ) =
           , className : "checkbox"
           , on: { click: \_ -> set $ const $ not val}
           }
+
+data CheckBoxes = Multiple | Uniq
+
+checkboxes :: forall a
+           .  Ord   a
+           => Show  a
+           => Array a
+           -> R.State (Set a)
+           -> R.Element
+checkboxes xs (val /\ set) =
+  H.div {} $ map (\a -> H.div {} [ H.input { type: "checkbox"
+                                           , checked: Set.member a val
+                                           , on: { click: \_ -> set
+                                                             $ const
+                                                             $ toggleSet a val
+                                                 }
+                                           }
+                                 , H.div {} [H.text $ show a]
+                                 ]
+                  ) xs
+
+
 

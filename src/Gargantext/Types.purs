@@ -10,7 +10,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Effect.Aff (Aff)
-import Gargantext.Prelude (class Read, read)
+import Gargantext.Prelude (class Read, read, class Show, show)
 import Prelude
 import Prim.Row (class Union)
 import URI.Query (Query)
