@@ -1,6 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Tree where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
+import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
@@ -14,7 +15,7 @@ import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis',
 import Gargantext.Components.Charts.Options.Series (TreeNode, Trees(..), mkTree)
 import Gargantext.Components.Charts.Options.Font (mkTooltip, templateFormatter)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
@@ -29,6 +30,11 @@ instance decodeMetrics :: DecodeJson Metrics where
     obj <- decodeJson json
     d   <- obj .: "data"
     pure $ Metrics { "data": d }
+
+instance encodeMetrics :: EncodeJson Metrics where
+  encodeJson (Metrics { "data": d }) =
+       "data" := encodeJson d
+    ~> jsonEmptyObject
 
 type Loaded  = Array TreeNode
 
@@ -61,7 +67,8 @@ treeCpt = R.hooksComponent "G.C.N.C.C.T.tree" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0
-      pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
+      --pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
+      pure $ metricsWithCacheLoadView {getMetrics, loaded, path, reload, session}
 
 loaded :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
 loaded session path reload loaded =
