@@ -9,6 +9,7 @@ data Status = Stable | Test | Dev
 
 hasStatus :: NodeType -> NodeAction -> Status
 hasStatus _ SearchBox         = Dev
+hasStatus _ Refresh           = Dev
 hasStatus _ Config            = Dev
 hasStatus _ (Link _)          = Test
 hasStatus _ (Move _)          = Test

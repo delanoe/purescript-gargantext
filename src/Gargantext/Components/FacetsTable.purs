@@ -348,7 +348,7 @@ pageCpt = R.hooksComponent "G.C.FacetsTable.Page" cpt
               ]
           , delete: true }
           where
-            markClick _ = markCategory session nodeId category [id]
+            markClick   _ = markCategory session nodeId category [id]
             toggleClick _ = togglePendingDeletion deletions id
         maybeStricken delete
           | delete = H.div { style: { textDecoration: "line-through" } }

@@ -8,7 +8,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show)
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show, not)
 import Gargantext.Types (ID)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -201,7 +201,17 @@ submitButtonHref action href =
       }
       [ H.text $ " " <> text action]
 
+------------------------------------------------------------------------
+-- | CheckBox tools
+-- checkboxes: Array of poolean values
+-- checkbox  : One boolean value only
 
-
-
+checkbox :: R.State Boolean -> R.Element
+checkbox ( val /\ set ) =
+  H.input { id: "checkbox-id"
+          , type: "checkbox"
+          , value: val
+          , className : "checkbox"
+          , on: { click: \_ -> set $ const $ not val}
+          }
 
