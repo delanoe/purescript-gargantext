@@ -30,6 +30,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Components.Table as T
 import Gargantext.Components.Loader (loader)
 import Gargantext.Ends (Frontends, url)
+import Gargantext.Hooks.Loader (useLoaderWithCache)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
@@ -372,11 +373,13 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Memo PageLayoutProps
 pageLayoutCpt = R.memo' $ R.staticComponent "G.C.DocsTable.pageLayout" cpt where
   cpt props@{frontends, session, nodeId, listId, corpusId, tabType, query, params} _ =
-    loader path (loadPage session) paint
+    --loader path (loadPage session) paint
+    useLoader path keyFunc (loadPage session) paint
     where
       path = {nodeId, listId, corpusId, tabType, query, params: fst params}
       paint (Tuple count docs) = page params (newProps count) docs
       newProps count = props { totalRecords = count }
+      keyFunc { corpusId, listId, nodeId, tabType } = "docs-table-" <> (show corpusId) <> "-" <> (show listId) <> "-" <> (show nodeId) <> "-" <> (show tabType)
 
 type PageProps =
   ( params :: R.State T.Params

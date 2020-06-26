@@ -287,9 +287,10 @@ type ListId = Int
 data ScoreType = Occurrences
 
 derive instance genericScoreType :: Generic ScoreType _
-
 instance showScoreType :: Show ScoreType where
   show = genericShow
+instance eqScoreType :: Eq ScoreType where
+  eq = genericEq
 
 type SearchQuery = String
 
@@ -425,6 +426,39 @@ data TabSubType a = TabDocs | TabNgramType a | TabTrash | TabMoreLikeFav | TabMo
 
 derive instance eqTabSubType :: Eq a => Eq (TabSubType a)
 derive instance ordTabSubType :: Ord a => Ord (TabSubType a)
+{- instance encodeTabSubType a :: EncodeJson a => EncodeJson (TabSubType a) where
+  encodeJson TabDocs =
+       "type" := "TabDocs"
+    ~> "data" := Nothing
+    ~> jsonEmptyObject
+  encodeJson (TabNgramType a) =
+       "type" := "TabNgramType"
+    ~> "data" := encodeJson a
+    ~> jsonEmptyObject
+  encodeJson TabTrash =
+       "type" := "TabTrash"
+    ~> "data" := Nothing
+    ~> jsonEmptyObject
+  encodeJson TabMoreLikeFav =
+       "type" := "TabMoreLikeFav"
+    ~> "data" := Nothing
+    ~> jsonEmptyObject
+  encodeJson TabMoreLikeTrash =
+       "type" := "TabMoreLikeTrash"
+    ~> "data" := Nothing
+    ~> jsonEmptyObject
+instance decodeTabSubType a :: DecodeJson a => DecodeJson (TabSubType a) where
+  decodeJson j = do
+    obj <- decodeJson j
+    typ <- obj .: "type"
+    dat <- obj .: "data"
+    case typ of
+      "TabDocs" -> TabDocs
+      "TabNgramType" -> TabNgramType dat
+      "TabTrash" -> TabTrash
+      "TabMoreLikeFav" -> TabMoreLikeFav
+      "TabMoreLikeTrash" -> TabMoreLikeTrash
+      _ -> Left ("Unknown type '" <> typ <> "'") -}
 
 instance showTabSubType :: Show a => Show (TabSubType a) where
   show TabDocs          = "Docs"
@@ -438,13 +472,34 @@ data TabType
   | TabPairing  (TabSubType PTabNgramType)
   | TabDocument (TabSubType CTabNgramType)    
 
+derive instance genericTabType :: Generic TabType _
 derive instance eqTabType :: Eq TabType
 derive instance ordTabType :: Ord TabType
-
-derive instance genericTabType :: Generic TabType _
-
 instance showTabType :: Show TabType where
   show = genericShow
+{- instance encodeTabType :: EncodeJson TabType where
+  encodeJson (TabCorpus d) = 
+       "type"  := "TabCorpus"
+    ~> "data"  := encodeJson d
+    ~> jsonEmptyObject
+  encodeJson (TabDocument d) = 
+       "type"  := "TabDocument"
+    ~> "data"  := encodeJson d
+    ~> jsonEmptyObject
+  encodeJson (TabPairing d) = 
+       "type"  := "TabPairing"
+    ~> "data"  := encodeJson d
+    ~> jsonEmptyObject
+instance decodeTabType :: DecodeJson TabType where
+  decodeJson j = do
+    obj <- decodeJson j
+    typ <- obj .: "type"
+    dat <- obj .: "data"
+    case typ of
+      "TabCorpus" -> TabCorpus dat
+      "TabDocument" -> TabDocument dat
+      "TabPairing" -> TabPairing dat
+      _ -> Left ("Unknown type '" <> typ <> "'") -}
 
 type TableResult a = {count :: Int, docs :: Array a}
 type AffTableResult a = Aff (TableResult a)

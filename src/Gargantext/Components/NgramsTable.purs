@@ -33,6 +33,7 @@ import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core (Action(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, filterTermSize, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
 import Gargantext.Components.Table as T
+import Gargantext.Hooks.Loader (useLoaderWithCache)
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -499,6 +500,8 @@ mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
           Just (versioned :: VersionedNgramsTable) ->
             mainNgramsTablePaint {path, tabNgramType, versioned, withAutoUpdate}
           Nothing -> loadingSpinner {}
+
+    keyFunc { listIds, nodeId, tabType } = "ngrams-table-" <> (show tabType) <> "-" <> (show nodeId) <> "-" <> (show listIds)
 
 type MainNgramsTablePaintProps =
   (
