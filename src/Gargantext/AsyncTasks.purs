@@ -12,6 +12,7 @@ import Web.Storage.Storage as WSS
 
 import Gargantext.Prelude
 import Gargantext.Types as GT
+import Gargantext.Utils as GU
 import Gargantext.Utils.Reactix as R2
 
 
@@ -33,13 +34,8 @@ getAsyncTasks = R2.getls >>= WSS.getItem localStorageKey >>= handleMaybe
     handleEither (Left err) = err *> pure empty
     handleEither (Right ss) = pure ss
 
-    parse  s = mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
-    decode j = mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
-
-mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
-mapLeft f (Left  l) = Left (f l)
-mapLeft _ (Right r) = Right r
-
+    parse  s = GU.mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
+    decode j = GU.mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
 
 removeTaskFromList :: Array GT.AsyncTaskWithType -> GT.AsyncTaskWithType -> Array GT.AsyncTaskWithType
 removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) =

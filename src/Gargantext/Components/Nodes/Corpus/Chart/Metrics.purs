@@ -1,7 +1,8 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 
 import Prelude (bind, negate, pure, ($), (<$>), (<>))
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
+import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
@@ -17,7 +18,7 @@ import Gargantext.Components.Charts.Options.Series (Series, seriesScatterD2)
 import Gargantext.Components.Charts.Options.Color (green, grey, red)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
@@ -39,6 +40,14 @@ instance decodeMetric :: DecodeJson Metric where
     y     <- obj .: "y"
     cat   <- obj .: "cat"
     pure $ Metric { label, x, y, cat }
+
+instance encodeMetric :: EncodeJson Metric where
+  encodeJson (Metric { label, x, y, cat }) =
+       "label"  := encodeJson label
+    ~> "x"      := encodeJson x
+    ~> "y"      := encodeJson y
+    ~> "cat"    := encodeJson cat
+    ~> jsonEmptyObject
 
 newtype Metrics = Metrics
   { "data" :: Array Metric
@@ -101,7 +110,9 @@ metricsCpt = R.hooksComponent "G.C.N.C.C.M.metrics" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0
-      pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
+      --pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
+      pure $ metricsWithCacheLoadView {getMetrics, loaded, path, reload, session}
+
 
 loaded :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
 loaded session path reload loaded =

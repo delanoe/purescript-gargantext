@@ -1,6 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Histo where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
+import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
@@ -15,7 +16,7 @@ import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Charts.Options.Color (grey)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Routes (SessionRoute(..))
@@ -38,6 +39,12 @@ instance decodeHistoMetrics :: DecodeJson HistoMetrics where
     d <- obj .: "dates"
     c <- obj .: "count"
     pure $ HistoMetrics { dates : d , count: c}
+
+instance encodeHistoMetrics :: EncodeJson HistoMetrics where
+  encodeJson (HistoMetrics { dates, count }) =
+       "count" := encodeJson count
+    ~> "dates"    := encodeJson dates
+    ~> jsonEmptyObject
 
 type Loaded = HistoMetrics
 
@@ -67,7 +74,8 @@ histoCpt = R.hooksComponent "G.C.N.C.C.H.histo" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0
-      pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
+      --pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
+      pure $ metricsWithCacheLoadView {getMetrics, loaded, path, reload, session}
 
 loaded :: Session -> Record Path -> R.State Reload -> HistoMetrics -> R.Element
 loaded session path reload loaded =

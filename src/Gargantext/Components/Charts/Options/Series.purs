@@ -1,11 +1,14 @@
 module Gargantext.Components.Charts.Options.Series where
 
 import Prelude (class Show, bind, map, pure, show, ($), (+), (<<<), (<>))
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
+import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (foldl)
 import Data.Maybe (Maybe(..), maybe)
 import Record.Unsafe (unsafeSet)
 import Unsafe.Coerce (unsafeCoerce)
+
 import Gargantext.Types (class Optional)
 import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
 import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
@@ -196,7 +199,12 @@ instance decodeTreeNode :: DecodeJson TreeNode where
     children <- obj .: "children"
     pure $ TreeNode {name, value, children}
 
-
+instance encodeTreeNode :: EncodeJson TreeNode where
+  encodeJson (TreeNode { children, name, value }) =
+       "children" := encodeJson children
+    ~> "name"     := encodeJson name
+    ~> "value"    := encodeJson value
+    ~> jsonEmptyObject
 
 treeNode :: String -> Int -> Array TreeNode -> TreeNode
 treeNode n v ts = TreeNode {name : n, value:v, children:ts}
