@@ -104,14 +104,13 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
           , dispatch
           , subTreeOut
           } _ = do
-            pure $  H.div {} [ -- H.h5 { className: GT.fldr nodeType true} [] 
-                         H.div { className: "node " <> GT.fldr nodeType true} 
-                                  ( [ H.span { className: "name " <> clickable
-                                             , on: { click: onClick }
-                                             } [ nodeText { isSelected: isSelected targetId subTreeOutParams
-                                                          , name
-                                                          }
-                                               ]
+            pure $ H.div {} [ H.div { className: "node " <> GT.fldr nodeType true} 
+                                    ( [ H.span { className: "name " <> clickable
+                                               , on: { click: onClick }
+                                               } [ nodeText { isSelected: isSelected targetId subTreeOutParams
+                                                            , name: " " <> name
+                                                            }
+                                                 ]
 
                                     ] <> children
                                   )
@@ -119,13 +118,14 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
       where
 
         SubTreeParams { valitypes } = subTreeParams
+        
+        sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id') ary
 
-        children = map (\c -> subTreeTreeView (p { tree = c })) ary
+        children = map (\ctree -> subTreeTreeView (p { tree = ctree })) sortedAry
 
         validNodeType = (A.elem nodeType valitypes) && (id /= targetId)
 
         clickable    = if validNodeType then "clickable" else ""
-
 
         sbto@( subTreeOutParams /\ setSubTreeOut) = subTreeOut
 
