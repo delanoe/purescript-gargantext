@@ -185,24 +185,23 @@ toJsTree maybeSurname (TreeNode x) =
     where
       name = maybe "" (\x' -> x' <> ">") maybeSurname  <> x.name
 
-data TreeNode = TreeNode { name     :: String
-                 , value    :: Int
-                 , children :: Array TreeNode
-                 }
-
+data TreeNode = TreeNode {
+    name     :: String
+  , value    :: Int
+  , children :: Array TreeNode
+  }
 
 instance decodeTreeNode :: DecodeJson TreeNode where
   decodeJson json = do
     obj <- decodeJson json
+    children <- obj .: "children"
     name <- obj .: "label"
     value <- obj .: "value"
-    children <- obj .: "children"
-    pure $ TreeNode {name, value, children}
-
+    pure $ TreeNode { children, name, value }
 instance encodeTreeNode :: EncodeJson TreeNode where
   encodeJson (TreeNode { children, name, value }) =
        "children" := encodeJson children
-    ~> "name"     := encodeJson name
+    ~> "label"    := encodeJson name
     ~> "value"    := encodeJson value
     ~> jsonEmptyObject
 

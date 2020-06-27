@@ -17,12 +17,13 @@ import Gargantext.Components.Charts.Options.Font (mkTooltip, templateFormatter)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
+import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType)
 
-newtype Metrics = Metrics
-  { "data" :: Array TreeNode
+newtype Metrics = Metrics {
+    "data" :: Array TreeNode
   }
 
 instance decodeMetrics :: DecodeJson Metrics where
@@ -30,7 +31,6 @@ instance decodeMetrics :: DecodeJson Metrics where
     obj <- decodeJson json
     d   <- obj .: "data"
     pure $ Metrics { "data": d }
-
 instance encodeMetrics :: EncodeJson Metrics where
   encodeJson (Metrics { "data": d }) =
        "data" := encodeJson d
@@ -52,12 +52,16 @@ scatterOptions nodes = Options
 
   }
 
-getMetrics :: Session -> Tuple Reload (Record Path) -> Aff Loaded
+getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse Loaded)
 getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
-  Metrics ms <- get session chart
-  pure ms."data"
+  HashedResponse { md5, value: Metrics ms } <- get session chart
+  pure $ HashedResponse { md5, value: ms."data" }
   where
     chart = Chart {chartType : ChartTree, limit, listId, tabType} (Just corpusId)
+
+getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
+  get session $ ChartMD5 { chartType: ChartTree, listId, tabType } (Just corpusId)
 
 tree :: Record Props -> R.Element
 tree props = R.createElement treeCpt props []
@@ -68,7 +72,7 @@ treeCpt = R.hooksComponent "G.C.N.C.C.T.tree" cpt
     cpt {path, session} _ = do
       reload <- R.useState' 0
       --pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
-      pure $ metricsWithCacheLoadView {getMetrics, loaded, path, reload, session}
+      pure $ metricsWithCacheLoadView { getMetrics, getMetricsMD5, keyFunc: const "tree", loaded, path, reload, session }
 
 loaded :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
 loaded session path reload loaded =

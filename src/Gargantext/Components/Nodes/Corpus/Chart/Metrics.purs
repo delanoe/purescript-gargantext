@@ -1,6 +1,5 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 
-import Prelude (bind, negate, pure, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Map as Map
@@ -8,9 +7,11 @@ import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
 import Gargantext.Components.Charts.Options.Type (xAxis)
@@ -21,6 +22,7 @@ import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
+import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType, TermList(..))
@@ -49,8 +51,8 @@ instance encodeMetric :: EncodeJson Metric where
     ~> "cat"    := encodeJson cat
     ~> jsonEmptyObject
 
-newtype Metrics = Metrics
-  { "data" :: Array Metric
+newtype Metrics = Metrics {
+     "data" :: Array Metric
   }
 
 instance decodeMetrics :: DecodeJson Metrics where
@@ -95,12 +97,16 @@ scatterOptions metrics' = Options
                         }
     --}
 
-getMetrics :: Session -> Tuple Reload (Record Path) -> Aff Loaded
+getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse Loaded)
 getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
-  Metrics ms <- get session metrics'
-  pure ms."data"
+  HashedResponse { md5, value: Metrics ms } <- get session metrics'
+  pure $ HashedResponse { md5, value: ms."data" }
   where
     metrics' = CorpusMetrics {limit, listId, tabType} (Just corpusId)
+
+getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsMD5 session (_ /\ { corpusId, listId, tabType }) =
+  get session $ CorpusMetricsMD5 { listId, tabType } (Just corpusId)
 
 metrics :: Record Props -> R.Element
 metrics props = R.createElement metricsCpt props []
@@ -111,7 +117,8 @@ metricsCpt = R.hooksComponent "G.C.N.C.C.M.metrics" cpt
     cpt {path, session} _ = do
       reload <- R.useState' 0
       --pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
-      pure $ metricsWithCacheLoadView {getMetrics, loaded, path, reload, session}
+
+      pure $ metricsWithCacheLoadView { getMetrics, getMetricsMD5, keyFunc: const "metrics", loaded, path, reload, session }
 
 
 loaded :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
