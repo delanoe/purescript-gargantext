@@ -4,7 +4,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Move
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Components.Forest.Tree.Node.Action (Props, Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsIn, subTreeView, SubTreeOut(..))
 import Gargantext.Prelude

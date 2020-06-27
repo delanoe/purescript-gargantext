@@ -1,18 +1,16 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.SubTree where
 
-import DOM.Simple.Console (log2)
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
 import Effect.Uncurried (mkEffectFn1)
-import Effect.Aff (Aff, launchAff)
-import Gargantext.Components.Forest.Tree.Node.Action (Props, Action(..))
+import Effect.Aff (Aff)
+import Gargantext.Components.Forest.Tree.Node.Action (Props)
 import Gargantext.Components.Forest.Tree.Node.Settings (SubTreeParams(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (discard, map, pure, show, unit, ($), (&&), (/=), (<>), class Eq, const)
+import Gargantext.Prelude (map, pure, show, ($), (&&), (/=), (<>), const, (==))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
@@ -97,7 +95,7 @@ subTreeTreeViewCpt :: R.Component CorpusTreeProps
 subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
   where
     cpt p@{ id
-          , tree: NTree (LNode { id: sourceId
+          , tree: NTree (LNode { id: targetId
                                , name
                                , nodeType
                                }
@@ -106,28 +104,38 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
           , dispatch
           , subTreeOut
           } _ = do
-      pure $ {- H.div {} [ H.h5 { className: GT.fldr nodeType true} []
-      , -} H.div { className: "node" } 
-                 ( [ H.span { className: "name " <> clickable
-                            , on: { click: onClick }
-                            } [ H.text name ]
+            pure $  H.div {} [ -- H.h5 { className: GT.fldr nodeType true} [] 
+                         H.div { className: "node " <> GT.fldr nodeType true} 
+                                  ( [ H.span { className: "name " <> clickable
+                                             , on: { click: onClick }
+                                             } [ nodeText { isSelected: isSelected targetId subTreeOutParams
+                                                          , name
+                                                          }
+                                               ]
 
-                   ] <> children
-                 )
-                      -- ]
+                                    ] <> children
+                                  )
+                       ]
       where
 
         SubTreeParams { valitypes } = subTreeParams
 
         children = map (\c -> subTreeTreeView (p { tree = c })) ary
 
-        validNodeType = (A.elem nodeType valitypes) && (id /= sourceId)
+        validNodeType = (A.elem nodeType valitypes) && (id /= targetId)
 
-        clickable = if validNodeType then "clickable" else ""
+        clickable    = if validNodeType then "clickable" else ""
+
+
         sbto@( subTreeOutParams /\ setSubTreeOut) = subTreeOut
+
+        isSelected n sbtop = case sbtop of
+            Nothing -> false
+            (Just (SubTreeOut {out})) -> n == out
+
         onClick _ = mkEffectFn1 $ \_ -> case validNodeType of
                          false -> setSubTreeOut (const Nothing)
-                         true  -> setSubTreeOut (const $ Just $ SubTreeOut { in: id, out:sourceId})
+                         true  -> setSubTreeOut (const $ Just $ SubTreeOut { in: id, out:targetId})
 
 --------------------------------------------------------------------------------------------
 

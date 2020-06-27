@@ -14,6 +14,7 @@ import Gargantext.Components.Forest.Tree.Node.Box.Types (CommonProps)
 import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks)
 import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
+import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
@@ -165,28 +166,6 @@ fldr nt open = if open
                    color _            = " text-danger"
 -}
 
-
--- START node text
-type NodeTextProps =
-  ( isSelected :: Boolean
-  , name       :: Name
-  )
-
-nodeText :: Record NodeTextProps -> R.Element
-nodeText p = R.createElement nodeTextCpt p []
-
-nodeTextCpt :: R.Component NodeTextProps
-nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
-  where
-    cpt { isSelected: true, name } _ = do
-      pure $ H.u {} [
-        H.b {} [
-           H.text ("| " <> name <> " |    ")
-         ]
-        ]
-    cpt {isSelected: false, name} _ = do
-      pure $ H.text (name <> "    ")
--- END node text
 
 -- START nodeActions
 
