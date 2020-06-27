@@ -12,10 +12,8 @@ import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
-import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID, Mode(..), TabSubType(..), TabType(..), modeTabType)
-import Reactix as R
 
 
 data PredefinedChart =

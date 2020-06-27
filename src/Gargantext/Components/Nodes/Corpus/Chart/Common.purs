@@ -9,7 +9,7 @@ import Reactix as R
 import Gargantext.Prelude
 
 import Gargantext.Components.Nodes.Corpus.Chart.Types
-import Gargantext.Hooks.Loader (useLoader, useLoaderWithCache)
+import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCache)
 import Gargantext.Sessions (Session)
 
 type MetricsLoadViewProps a = (
@@ -24,23 +24,27 @@ metricsLoadView p = R.createElement metricsLoadViewCpt p []
 metricsLoadViewCpt :: forall a. R.Component (MetricsLoadViewProps a)
 metricsLoadViewCpt = R.hooksComponent "G.C.N.C.C.metricsLoadView" cpt
   where
-    cpt {getMetrics, loaded, path, reload, session} _ = do
+    cpt { getMetrics, loaded, path, reload, session } _ = do
       useLoader (fst reload /\ path) (getMetrics session) $ \l ->
         loaded session path reload l
 
 type MetricsWithCacheLoadViewProps a = (
-  --keyFunc :: Record Path -> String
-  | MetricsLoadViewProps a
+    keyFunc :: Tuple Reload (Record Path) -> String
+  , getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse a)
+  , getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
+  , loaded :: Session -> Record Path -> R.State Reload -> a -> R.Element
+  | MetricsProps
   )
 
 metricsWithCacheLoadView :: forall a. DecodeJson a => EncodeJson a =>
-                            Record (MetricsLoadViewProps a) -> R.Element
+                            Record (MetricsWithCacheLoadViewProps a) -> R.Element
 metricsWithCacheLoadView p = R.createElement metricsWithCacheLoadViewCpt p []
 
-metricsWithCacheLoadViewCpt :: forall a. DecodeJson a => EncodeJson a => R.Component (MetricsLoadViewProps a)
+metricsWithCacheLoadViewCpt :: forall a. DecodeJson a => EncodeJson a => R.Component (MetricsWithCacheLoadViewProps a)
 metricsWithCacheLoadViewCpt = R.hooksComponent "G.C.N.C.C.metricsWithCacheLoadView" cpt
   where
-    cpt {getMetrics, loaded, path, reload, session} _ = do
-      useLoaderWithCache (fst reload /\ path) keyFunc (getMetrics session) $ \l ->
+    cpt { getMetrics, getMetricsMD5, keyFunc, loaded, path, reload, session } _ = do
+      useLoaderWithCache (fst reload /\ path) (metricsKeyFunc keyFunc) (getMetricsMD5 session) (getMetrics session) $ \l ->
         loaded session path reload l
-    keyFunc (_ /\ { corpusId, listId, tabType }) = "metrics-" <> (show tabType) <> "-" <> (show corpusId) <> "-" <> (show listId)
+    metricsKeyFunc keyFunc st@(_ /\ { corpusId, listId, tabType }) =
+     "metrics-" <> (show tabType) <> "-" <> (show corpusId) <> "-" <> (show listId) <> "--" <> (keyFunc st)
