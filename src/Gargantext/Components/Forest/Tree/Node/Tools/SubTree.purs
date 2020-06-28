@@ -5,12 +5,12 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Uncurried (mkEffectFn1)
 import Effect.Aff (Aff)
-import Gargantext.Components.Forest.Tree.Node.Action (Props, Action(..), subTreeOut, setTreeOut)
+import Gargantext.Components.Forest.Tree.Node.Action (Props, Action, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (map, pure, show, ($), (&&), (/=), (<>), const, (==))
+import Gargantext.Prelude (map, pure, show, ($), (&&), (/=), (<>), const, (==){-, discard, bind, void-})
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
@@ -42,7 +42,10 @@ subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
                , action
                } _ =
       do
-        let SubTreeParams {showtypes} = subTreeParams
+        let
+          SubTreeParams {showtypes} = subTreeParams
+        --  (valAction /\ setAction)  = action
+        -- _ <- pure $ setAction (const $ setTreeOut valAction Nothing)
 
         useLoader session (loadSubTree showtypes) $
           \tree ->
@@ -124,7 +127,7 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
 
         ( valAction /\ setAction) = action
 
-        isSelected n action = case (subTreeOut action) of
+        isSelected n action' = case (subTreeOut action') of
             Nothing                   -> false
             (Just (SubTreeOut {out})) -> n == out
 

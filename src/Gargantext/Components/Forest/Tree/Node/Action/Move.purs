@@ -7,7 +7,6 @@ import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, put_)
@@ -21,7 +20,7 @@ moveNodeReq session fromId toId =
 
 moveNode :: Record SubTreeParamsIn -> R.Hooks R.Element
 moveNode p@{dispatch, subTreeParams, id, nodeType, session} = do
-  action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params:Nothing})
+  action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params: Nothing})
 
   let button = case valAction of
         MoveNode {params} -> case params of

@@ -196,7 +196,7 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
       pure $ H.div {className: "col-md-1"}
                    [ H.a { style: (iconAStyle nodeType todo)
                          , className: glyphiconActive (glyphiconNodeAction todo)
-                                                       (action == (Just todo)   )
+                                                      (action == (Just todo)   )
                          , id: show todo
                          , title: show todo
                          , onClick : mkEffectFn1 $ \_ -> undo *> doToDo
