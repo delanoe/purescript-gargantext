@@ -22,24 +22,23 @@ mergeNodeReq session fromId toId =
 
 mergeNode :: Record SubTreeParamsIn -> R.Hooks R.Element
 mergeNode p@{dispatch, subTreeParams, id, nodeType, session} = do
-  subTreeOut@(subTreeOutParams /\ setSubTreeOut) :: R.State (Maybe SubTreeOut)
-    <- R.useState' Nothing
+  action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params:Nothing})
 
   merge   <- R.useState' false
   options <- R.useState' (Set.singleton GT.MapTerm)
 
-  let button = case subTreeOutParams of
-        Nothing   -> H.div {} []
-        Just sbto -> submitButton (MergeNode inId outId) dispatch
-          where
-            (SubTreeOut { in:inId, out:outId}) = sbto
+  let button = case valAction of
+        MoveNode {params} -> case params of
+          Just val -> submitButton (MoveNode {params: Just val}) dispatch
+          Nothing -> H.div {} []
+        _                   -> H.div {} []
 
-  pure $ panel [ subTreeView { subTreeOut
+  pure $ panel [ subTreeView { action
                              , dispatch
-                             , subTreeParams
                              , id
                              , nodeType
                              , session
+                             , subTreeParams
                              }
                , H.div {} [ H.text "Merge which list?"
                           , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options

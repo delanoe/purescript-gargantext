@@ -5,7 +5,7 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Uncurried (mkEffectFn1)
 import Effect.Aff (Aff)
-import Gargantext.Components.Forest.Tree.Node.Action (Props)
+import Gargantext.Components.Forest.Tree.Node.Action (Props, Action(..), subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
@@ -24,7 +24,7 @@ type SubTreeParamsIn =
 
 ------------------------------------------------------------------------
 type SubTreeParamsProps =
-  ( subTreeOut    :: R.State (Maybe SubTreeOut)
+  ( action    :: R.State Action
   | SubTreeParamsIn
   )
 
@@ -39,7 +39,7 @@ subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
                , nodeType
                , session
                , subTreeParams
-               , subTreeOut
+               , action
                } _ =
       do
         let SubTreeParams {showtypes} = subTreeParams
@@ -52,7 +52,7 @@ subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
                               , session
                               , tree
                               , subTreeParams
-                              , subTreeOut
+                              , action
                               }
 
 loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
@@ -97,12 +97,12 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
                         ) ary
           , subTreeParams
           , dispatch
-          , subTreeOut
+          , action
           } _ = do
             pure $ H.div {} [ H.div { className: "node " <> GT.fldr nodeType true} 
                                     ( [ H.span { className: "name " <> clickable
                                                , on: { click: onClick }
-                                               } [ nodeText { isSelected: isSelected targetId subTreeOutParams
+                                               } [ nodeText { isSelected: isSelected targetId valAction
                                                             , name: " " <> name
                                                             }
                                                  ]
@@ -122,15 +122,16 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
 
         clickable    = if validNodeType then "clickable" else ""
 
-        sbto@( subTreeOutParams /\ setSubTreeOut) = subTreeOut
+        ( valAction /\ setAction) = action
 
-        isSelected n sbtop = case sbtop of
-            Nothing -> false
+        isSelected n action = case (subTreeOut action) of
+            Nothing                   -> false
             (Just (SubTreeOut {out})) -> n == out
 
         onClick _ = mkEffectFn1 $ \_ -> case validNodeType of
-                         false -> setSubTreeOut (const Nothing)
-                         true  -> setSubTreeOut (const $ Just $ SubTreeOut { in: id, out:targetId})
+                         false -> setAction (const $ setTreeOut valAction Nothing)
+                         true  -> setAction (const $ setTreeOut valAction (Just $ SubTreeOut { in: id, out:targetId}))
+
 
 --------------------------------------------------------------------------------------------
 
