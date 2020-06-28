@@ -6,7 +6,8 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsIn, subTreeView, SubTreeOut(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, put_)
@@ -22,11 +23,13 @@ moveNode :: Record SubTreeParamsIn -> R.Hooks R.Element
 moveNode p@{dispatch, subTreeParams, id, nodeType, session} = do
   subTreeOut@(subTreeOutParams /\ setSubTreeOut) :: R.State (Maybe SubTreeOut)
     <- R.useState' Nothing
+
   let button = case subTreeOutParams of
         Nothing   -> H.div {} []
         Just sbto -> submitButton (MoveNode inId outId) dispatch
           where
             (SubTreeOut { in:inId, out:outId}) = sbto
+
   pure $ panel [ subTreeView { subTreeOut
                              , dispatch
                              , subTreeParams

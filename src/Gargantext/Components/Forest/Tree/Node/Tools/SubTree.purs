@@ -6,7 +6,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Uncurried (mkEffectFn1)
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Props)
-import Gargantext.Components.Forest.Tree.Node.Settings (SubTreeParams(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Hooks.Loader (useLoader)
@@ -17,16 +17,11 @@ import Gargantext.Types as GT
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-
-
 type SubTreeParamsIn =
   ( subTreeParams :: SubTreeParams
   | Props
   )
-------------------------------------------------------------------------
-data SubTreeOut = SubTreeOut { in  :: GT.ID
-                             , out :: GT.ID
-                             }
+
 ------------------------------------------------------------------------
 type SubTreeParamsProps =
   ( subTreeOut    :: R.State (Maybe SubTreeOut)

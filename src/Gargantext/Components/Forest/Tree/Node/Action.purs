@@ -5,19 +5,19 @@ import Effect.Aff (Aff)
 import Gargantext.Prelude (class Show, Unit)
 import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
-import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction, SubTreeParams(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut, SubTreeParams(..))
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileContents)
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 
-{-
-type UpdateNodeProps =
-  ( id       :: GT.ID
-  , dispatch :: Action -> Aff Unit
-  , name     :: GT.Name
-  , nodeType :: NodeType
-  , params   :: UpdateNodeParams
+
+type Props =
+  ( dispatch :: Action -> Aff Unit
+  , id       :: Int
+  , nodeType :: GT.NodeType
+  , session  :: Session
   )
-  -}
+
 
 data Action = AddNode     String GT.NodeType
             | DeleteNode
@@ -28,10 +28,16 @@ data Action = AddNode     String GT.NodeType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | DownloadNode
             | RefreshTree
-            | MoveNode    GT.NodeID GT.NodeID
-            | MergeNode    GT.NodeID GT.NodeID
-            | LinkNode    GT.NodeID GT.NodeID
+
+            | MoveNode  GT.ID GT.ID
+            | MergeNode GT.ID GT.ID
+            | LinkNode  GT.ID GT.ID
+
+--            | MoveNode    (Maybe SubTreeOut)
+--            | MergeNode   (Maybe SubTreeOut)
+--            | LinkNode    (Maybe SubTreeOut)
             | NoAction
+
 
 instance showShow :: Show Action where
   show (AddNode     _ _    )= "AddNode"
@@ -48,12 +54,6 @@ instance showShow :: Show Action where
   show (LinkNode _ _)       = "LinkNode"
   show NoAction             = "NoAction"
 
-type Props =
-  ( dispatch :: Action -> Aff Unit
-  , id       :: Int
-  , nodeType :: GT.NodeType
-  , session  :: Session
-  )
 -----------------------------------------------------------------------
 icon :: Action -> String
 icon (AddNode    _ _)     = glyphiconNodeAction (Add [])
