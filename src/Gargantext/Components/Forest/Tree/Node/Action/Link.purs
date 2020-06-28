@@ -22,11 +22,11 @@ linkNodeReq session fromId toId =
 linkNode :: Record SubTreeParamsIn -> R.Hooks R.Element
 linkNode p@{dispatch, subTreeParams, id, nodeType, session} = do
 
-  action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params:Nothing})
+  action@(valAction /\ setAction) :: R.State Action <- R.useState' (LinkNode {params:Nothing})
 
   let button = case valAction of
-        MoveNode {params} -> case params of
-          Just val -> submitButton (MoveNode {params: Just val}) dispatch
+        LinkNode {params} -> case params of
+          Just val -> submitButton (LinkNode {params: Just val}) dispatch
           Nothing -> H.div {} []
         _                   -> H.div {} []
 

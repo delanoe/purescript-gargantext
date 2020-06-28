@@ -22,14 +22,14 @@ mergeNodeReq session fromId toId =
 
 mergeNode :: Record SubTreeParamsIn -> R.Hooks R.Element
 mergeNode p@{dispatch, subTreeParams, id, nodeType, session} = do
-  action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params:Nothing})
+  action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
 
   merge   <- R.useState' false
   options <- R.useState' (Set.singleton GT.MapTerm)
 
   let button = case valAction of
-        MoveNode {params} -> case params of
-          Just val -> submitButton (MoveNode {params: Just val}) dispatch
+        MergeNode {params} -> case params of
+          Just val -> submitButton (MergeNode {params: Just val}) dispatch
           Nothing -> H.div {} []
         _                   -> H.div {} []
 

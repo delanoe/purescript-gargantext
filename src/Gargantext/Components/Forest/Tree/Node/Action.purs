@@ -43,7 +43,9 @@ subTreeOut (LinkNode  {params}) = params
 subTreeOut _                    = Nothing
 
 setTreeOut ::  Action -> Maybe SubTreeOut -> Action
-setTreeOut (MoveNode {params:_}) p = MoveNode {params: p}
+setTreeOut (MoveNode {params:_})  p = MoveNode {params: p}
+setTreeOut (MergeNode {params:_}) p = MergeNode {params: p}
+setTreeOut (LinkNode {params:_})  p = LinkNode {params: p}
 setTreeOut a   _             = a
 
 
