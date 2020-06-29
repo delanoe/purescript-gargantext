@@ -5,7 +5,7 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel, checkbox, checkboxes)
+import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel, checkbox, checkboxes, divider)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
@@ -39,9 +39,14 @@ mergeNode p@{dispatch, subTreeParams, id, nodeType, session} = do
                              , session
                              , subTreeParams
                              }
-               , H.div {} [ H.text "Merge which list?"
-                          , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options
-                          ]
-               , H.div {className: "checkbox"} [checkbox merge, H.text "Merge data?"]
+               , H.div { className:"panel panel-primary"}
+                       [ H.text "Merge which list?"
+                       , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options
+                       ]
+               , H.div { className:"panel panel-primary"}
+                       [ H.text "Title"
+                       , H.div {className: "checkbox"}
+                               [checkbox merge, H.text "Merge data?"]
+                       ]
                ] button
 

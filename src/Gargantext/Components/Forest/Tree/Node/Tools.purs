@@ -261,4 +261,8 @@ nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
       pure $ H.text (name <> "    ")
 -- END node text
 
+------------------------------------------------------------------------
+
+divider :: R.Element
+divider = H.div {className:"divider"} []
 

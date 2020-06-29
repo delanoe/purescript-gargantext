@@ -81,9 +81,11 @@ subTreeViewLoadedCpt :: R.Component CorpusTreeProps
 subTreeViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeViewLoadedCpt" cpt
   where
     cpt p@{dispatch, id, nodeType, session, tree} _ = do
-      pure $ H.div { className: "copy-from-corpus" }
-                   [ H.div { className: "tree" }
-                           [subTreeTreeView p]
+      pure $ H.div {className:"panel panel-primary"}
+                   [H.div { className: "copy-from-corpus" }
+                          [ H.div { className: "tree" }
+                                  [subTreeTreeView p]
+                          ]
                    ]
 
 subTreeTreeView :: Record CorpusTreeProps -> R.Element
