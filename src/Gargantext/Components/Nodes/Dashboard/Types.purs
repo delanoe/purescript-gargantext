@@ -13,9 +13,8 @@ type Preferences = Maybe String
 
 newtype Hyperdata =
   Hyperdata
-  {
-      charts :: Array P.PredefinedChart
-    , preferences :: Preferences
+  { charts :: Array P.PredefinedChart
+  , preferences :: Preferences
   }
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
@@ -52,8 +51,8 @@ saveDashboard {hyperdata, nodeId, session} = do
   id_ <- (put session (NodeAPI Node (Just nodeId) "") hyperdata) :: Aff Int
   pure unit
 
-type DashboardData = {
-    id :: Int
+type DashboardData =
+  { id :: Int
   , hyperdata :: Hyperdata
   , parentId :: Int
   }

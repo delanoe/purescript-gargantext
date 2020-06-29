@@ -23,6 +23,9 @@ data AppRoute
   | Annuaire SessionId Int
     | UserPage       SessionId Int
     | ContactPage    SessionId Int Int
+  | RouteFrameWrite SessionId Int
+  | RouteFrameCalc  SessionId Int
+
 
 derive instance eqAppRoute :: Eq AppRoute
 
@@ -66,6 +69,9 @@ instance showAppRoute :: Show AppRoute where
   show (Annuaire       s i)     = "Annuaire"       <> show i <> " (" <> show s <> ")"
   show (UserPage       s i)     = "User"           <> show i <> " (" <> show s <> ")"
   show (ContactPage  s a i)     = "Contact"        <> show a <> "::" <> show i <> " (" <> show s <> ")"
+  show (RouteFrameWrite s i)    = "write"          <> show i <> " (" <> show s <> ")"
+  show (RouteFrameCalc  s i)    = "calc"           <> show i <> " (" <> show s <> ")"
+
 
 appPath :: AppRoute -> String
 appPath Home                 = ""
@@ -85,3 +91,6 @@ appPath (Lists s i)          = "lists/"      <> show s <> "/" <> show i
 appPath (Annuaire s i)       = "annuaire/"   <> show s <> "/" <> show i
 appPath (UserPage s i)       = "user/"       <> show s <> "/" <> show i
 appPath (ContactPage s a i)  = "annuaire/"   <> show s <> "/" <> show a <> "/contact/" <> show i
+appPath (RouteFrameWrite s i) = "write/"      <> show s <> "/" <> show i
+appPath (RouteFrameCalc s i)  = "calc/"       <> show s <> "/" <> show i
+

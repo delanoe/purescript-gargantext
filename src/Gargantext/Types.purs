@@ -151,6 +151,9 @@ data NodeType = NodeUser
               | Tree
               | NodeList
               | Texts
+              -- TODO Optional Nodes
+              | NodeFrameWrite
+              | NodeFrameCalc
 
 derive instance eqNodeType :: Eq NodeType
 
@@ -177,6 +180,9 @@ instance showNodeType :: Show NodeType where
   show Team          = "NodeTeam"
   show NodeList      = "NodeList"
   show Texts         = "NodeTexts"
+  show NodeFrameWrite = "NodeFrameWrite"
+  show NodeFrameCalc  = "NodeFrameCalc"
+
 
 instance readNodeType :: Read NodeType where
   read "NodeUser"          = Just NodeUser
@@ -199,6 +205,8 @@ instance readNodeType :: Read NodeType where
   read "NodeList"      = Just NodeList
   read "NodeTexts"     = Just Texts
   read "Annuaire"      = Just Annuaire
+  read "NodeFrameWrite" = Just NodeFrameWrite
+  read "NodeFrameCalc"  = Just NodeFrameCalc
   read _               = Nothing
 
 
@@ -236,6 +244,12 @@ fldr Annuaire false = "fa fa-address-card"
 
 fldr NodeContact true  = "fa fa-address-card-o"
 fldr NodeContact false = "fa fa-address-card"
+
+fldr NodeFrameWrite true  = "fa fa-file-word-o"
+fldr NodeFrameWrite false = "fa fa-file-word-o"
+
+fldr NodeFrameCalc true  = "fa fa-file-excel-o"
+fldr NodeFrameCalc false = "fa fa-file-excel-o"
 
 fldr _        false  = "fa fa-folder-o"
 fldr _        true   = "fa fa-folder-open"
@@ -280,6 +294,9 @@ nodeTypePath Tree      = "tree"
 nodeTypePath NodeList  = "lists"
 nodeTypePath Texts     = "texts"
 nodeTypePath Team      = "team"
+nodeTypePath NodeFrameWrite = "write"
+nodeTypePath NodeFrameCalc  = "calc"
+
 ------------------------------------------------------------
 
 type ListId = Int
