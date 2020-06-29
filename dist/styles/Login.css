@@ -204,6 +204,7 @@ a:focus, a:hover {
 
 .copy-from-corpus .tree .node {
   padding-left: 10px;
+  margin-top: 5px;
 }
 .copy-from-corpus .tree .node .name.clickable {
   color: #337ab7;

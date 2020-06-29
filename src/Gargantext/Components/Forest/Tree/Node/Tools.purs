@@ -2,14 +2,18 @@ module Gargantext.Components.Forest.Tree.Node.Tools
   where
 
 import Data.Maybe (fromMaybe)
+import Data.Set (Set)
+import Data.Set as Set
 import Data.String as S
 import Data.Tuple.Nested ((/\))
+import Gargantext.Types (Name)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
 import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show)
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show, not, class Ord)
 import Gargantext.Types (ID)
+import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -28,10 +32,9 @@ panel bodies submit =
           [ H.div { className: "row"
                   , style: {"margin":"10px"}
                   }
-                  [ H.div { className: "col-md-10" }
+                  [ H.div { className: "col-md-12" } bs
                           -- TODO add type for text or form here
-                          [ H.form {className: "form-horizontal"} bs
-                          ]
+                          -- [ H.form {className: "form-horizontal"} bs ]
                   ]
             ]
       footer sb = 
@@ -201,7 +204,65 @@ submitButtonHref action href =
       }
       [ H.text $ " " <> text action]
 
+------------------------------------------------------------------------
+-- | CheckBox tools
+-- checkboxes: Array of poolean values (basic: without pending option)
+-- checkbox  : One boolean value only
+
+checkbox :: R.State Boolean -> R.Element
+checkbox ( val /\ set ) =
+  H.input { id: "checkbox-id"
+          , type: "checkbox"
+          , value: val
+          , className : "checkbox"
+          , on: { click: \_ -> set $ const $ not val}
+          }
+
+data CheckBoxes = Multiple | Uniq
+
+checkboxes :: forall a
+           .  Ord   a
+           => Show  a
+           => Array a
+           -> R.State (Set a)
+           -> R.Element
+checkboxes xs (val /\ set) =
+  H.fieldset {} $ map (\a -> H.div {} [ H.input { type: "checkbox"
+                                           , checked: Set.member a val
+                                           , on: { click: \_ -> set
+                                                             $ const
+                                                             $ toggleSet a val
+                                                 }
+                                           }
+                                 , H.div {} [H.text $ show a]
+                                 ]
+                  ) xs
 
 
+-- START node text
+type NodeTextProps =
+  ( isSelected :: Boolean
+  , name       :: Name
+  )
 
+nodeText :: Record NodeTextProps -> R.Element
+nodeText p = R.createElement nodeTextCpt p []
+
+nodeTextCpt :: R.Component NodeTextProps
+nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
+  where
+    cpt { isSelected: true, name } _ = do
+      pure $ H.u {} [
+        H.b {} [
+           H.text ("| " <> name <> " |    ")
+         ]
+        ]
+    cpt {isSelected: false, name} _ = do
+      pure $ H.text (name <> "    ")
+-- END node text
+
+------------------------------------------------------------------------
+
+divider :: R.Element
+divider = H.div {className:"divider"} []
 

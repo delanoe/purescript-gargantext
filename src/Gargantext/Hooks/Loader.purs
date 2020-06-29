@@ -1,7 +1,7 @@
 module Gargantext.Hooks.Loader where
 
 import Gargantext.Prelude
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
 import Data.Argonaut.Core (stringify)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either(..))
@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Web.Storage.Storage as WSS
@@ -44,48 +44,93 @@ useLoaderEffect path state@(state' /\ setState) loader = do
         liftEffect $ setState $ const $ Just l
 
 
+newtype HashedResponse a = HashedResponse {
+    md5 :: String
+  , value :: a
+  }
+
+instance decodeHashedResponse :: DecodeJson a => DecodeJson (HashedResponse a) where
+  decodeJson json = do
+    obj <- decodeJson json
+    md5 <- obj .: "md5"
+    value <- obj .: "value"
+    pure $ HashedResponse { md5, value }
+
+instance encodeHashedResponse :: EncodeJson a => EncodeJson (HashedResponse a) where
+  encodeJson (HashedResponse { md5, value }) = do
+       "md5" := encodeJson md5
+    ~> "value" := encodeJson value
+    ~> jsonEmptyObject
+
 useLoaderWithCache :: forall path st. Eq path => DecodeJson st => EncodeJson st =>
                       path
                       -> (path -> String)
-                      -> (path -> Aff st)
+                      -> (path -> Aff String)
+                      -> (path -> Aff (HashedResponse st))
                       -> (st -> R.Element) -> R.Hooks R.Element
-useLoaderWithCache path keyFunc loader render = do
+useLoaderWithCache path keyFunc md5Endpoint loader render = do
   state <- R.useState' Nothing
-  useCachedLoaderEffect path keyFunc state loader
+  useCachedLoaderEffect path keyFunc md5Endpoint state loader
   pure $ maybe (loadingSpinner {}) render (fst state)
 
 useCachedLoaderEffect :: forall path st. Eq path => DecodeJson st => EncodeJson st =>
                       path
                       -> (path -> String)
+                      -> (path -> Aff String)
                       -> R.State (Maybe st)
-                      -> (path -> Aff st)
+                      -> (path -> Aff (HashedResponse st))
                       -> R.Hooks Unit
-useCachedLoaderEffect path keyFunc state@(state' /\ setState) loader = do
+useCachedLoaderEffect path keyFunc md5Endpoint state@(state' /\ setState) loader = do
   oPath <- R.useRef path
 
   R.useEffect' $ do
     if (R.readRef oPath == path) && (isJust state') then
-      pure $ pure unit
+      pure unit
     else do
       R.setRef oPath path
 
-      let key = keyFunc path
+      let key = "loader--" <> (keyFunc path)
+      -- log2 "[useCachedLoader] key" key
+      let keyMD5 = key <> "-md5"
       localStorage <- R2.getls
       mState <- WSS.getItem key localStorage
-      case mState of
-        Nothing -> pure unit
-        Just stStr ->
-          case (parse stStr >>= decode) of
-            Left err -> pure unit
-            Right st -> setState $ const $ Just st
-
-      R2.affEffect "G.H.Loader.useCachedLoaderEffect" $ do
-        l <- loader path
-        liftEffect $ do
-          let value = stringify $ encodeJson l
-          WSS.setItem key value localStorage
-          setState $ const $ Just l
+      mMD5 <- WSS.getItem keyMD5 localStorage
+      -- log2 "[useCachedLoader] mState" mState
+      launchAff_ $ do
+        case mState of
+          Nothing -> loadRealData key keyMD5 localStorage
+          Just stStr -> do
+            let parsed = parse stStr >>= decode
+            case parsed of
+              Left err -> do
+                -- liftEffect $ log2 "[useCachedLoader] err" err
+                loadRealData key keyMD5 localStorage
+              Right (st :: st) -> do
+                md5Real <- md5Endpoint path
+                -- liftEffect $ log2 "[useCachedLoader] md5Real" md5Real
+                case mMD5 of
+                  Nothing -> do
+                    -- liftEffect $ log2 "[useCachedLoader] no stored md5" Nothing
+                    loadRealData key keyMD5 localStorage
+                  Just md5 -> do
+                    -- liftEffect $ log2 "[useCachedLoader] stored md5" md5
+                    if md5 == md5Real then
+                      -- yay! cache hit!
+                      liftEffect $ setState $ const $ Just st
+                    else
+                      loadRealData key keyMD5 localStorage
 
   where
-    parse  s = GU.mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
-    decode j = GU.mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
+    loadRealData :: String -> String -> WSS.Storage -> Aff Unit
+    loadRealData key keyMD5 localStorage = do
+      --R2.affEffect "G.H.Loader.useCachedLoaderEffect" $ do
+      HashedResponse { md5, value: l } <- loader path
+      liftEffect $ do
+        let value = stringify $ encodeJson l
+        WSS.setItem key value localStorage
+        WSS.setItem keyMD5 md5 localStorage
+        setState $ const $ Just l
+      pure unit
+
+    parse  s = GU.mapLeft (\err -> "Error parsing serialised sessions:" <> show err) (jsonParser s)
+    decode j = GU.mapLeft (\err -> "Error decoding serialised sessions:" <> show err) (decodeJson j)

@@ -1,23 +1,23 @@
 module Gargantext.Components.Forest.Tree.Node.Action where
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Prelude (class Show, Unit)
 import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
-import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction, SubTreeParams(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut, SubTreeParams(..))
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileContents)
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 
-{-
-type UpdateNodeProps =
-  ( id       :: GT.ID
-  , dispatch :: Action -> Aff Unit
-  , name     :: GT.Name
-  , nodeType :: NodeType
-  , params   :: UpdateNodeParams
+
+type Props =
+  ( dispatch :: Action -> Aff Unit
+  , id       :: Int
+  , nodeType :: GT.NodeType
+  , session  :: Session
   )
-  -}
+
 
 data Action = AddNode     String GT.NodeType
             | DeleteNode
@@ -28,10 +28,26 @@ data Action = AddNode     String GT.NodeType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | DownloadNode
             | RefreshTree
-            | MoveNode    GT.NodeID GT.NodeID
-            | MergeNode    GT.NodeID GT.NodeID
-            | LinkNode    GT.NodeID GT.NodeID
+
+            | MoveNode  {params :: Maybe SubTreeOut}
+            | MergeNode {params :: Maybe SubTreeOut}
+            | LinkNode  {params :: Maybe SubTreeOut}
+
             | NoAction
+
+
+subTreeOut :: Action -> Maybe SubTreeOut
+subTreeOut (MoveNode  {params}) = params
+subTreeOut (MergeNode {params}) = params
+subTreeOut (LinkNode  {params}) = params
+subTreeOut _                    = Nothing
+
+setTreeOut ::  Action -> Maybe SubTreeOut -> Action
+setTreeOut (MoveNode  {params:_}) p = MoveNode  {params: p}
+setTreeOut (MergeNode {params:_}) p = MergeNode {params: p}
+setTreeOut (LinkNode  {params:_}) p = LinkNode  {params: p}
+setTreeOut a   _             = a
+
 
 instance showShow :: Show Action where
   show (AddNode     _ _    )= "AddNode"
@@ -43,17 +59,11 @@ instance showShow :: Show Action where
   show (UploadFile  _ _ _ _)= "UploadFile"
   show  RefreshTree         = "RefreshTree"
   show  DownloadNode        = "Download"
-  show (MoveNode _ _)       = "MoveNode"
-  show (MergeNode _ _)      = "MergeNode"
-  show (LinkNode _ _)       = "LinkNode"
+  show (MoveNode  _ )       = "MoveNode"
+  show (MergeNode _ )      = "MergeNode"
+  show (LinkNode  _ )       = "LinkNode"
   show NoAction             = "NoAction"
 
-type Props =
-  ( dispatch :: Action -> Aff Unit
-  , id       :: Int
-  , nodeType :: GT.NodeType
-  , session  :: Session
-  )
 -----------------------------------------------------------------------
 icon :: Action -> String
 icon (AddNode    _ _)     = glyphiconNodeAction (Add [])
@@ -65,9 +75,9 @@ icon (DoSearch   _)       = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
 icon  RefreshTree         = glyphiconNodeAction Refresh
 icon  DownloadNode        = glyphiconNodeAction Download
-icon (MoveNode _ _)       = glyphiconNodeAction (Move { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
-icon (MergeNode _ _)      = glyphiconNodeAction (Merge { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
-icon (LinkNode _ _)       = glyphiconNodeAction (Link { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (MoveNode _ )        = glyphiconNodeAction (Move { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (MergeNode _ )       = glyphiconNodeAction (Merge { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (LinkNode _  )       = glyphiconNodeAction (Link { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 
 icon NoAction             = "hand-o-right"
 
@@ -83,8 +93,8 @@ text (DoSearch    _      )= "Launch search !"
 text (UploadFile  _ _ _ _)= "Upload File !"
 text  RefreshTree         = "Refresh Tree !"
 text DownloadNode         = "Download !"
-text (MoveNode _ _ )      = "Move !"
-text (MergeNode _ _ )     = "Merge !"
-text (LinkNode _ _ )      = "Link !"
+text (MoveNode  _ )      = "Move !"
+text (MergeNode _ )     = "Merge !"
+text (LinkNode  _ )      = "Link !"
 text NoAction             = "No Action"
 -----------------------------------------------------------------------

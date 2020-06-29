@@ -19,6 +19,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 ------------------------------------------------------------------------
+import Gargantext.Components.Forest.Tree.Node.Tools (checkbox)
 import Gargantext.Components.Forms (clearfix, cardBlock, cardGroup, center, formGroup)
 import Gargantext.Components.Login.Types (AuthRequest(..))
 import Gargantext.Ends (Backend(..))
@@ -178,7 +179,7 @@ formCpt = R.hooksComponent "G.C.Login.form" cpt where
             , center
                [ H.label {}
                  [ H.div {className: "checkbox"}
-                    [ termsCheckbox setBox
+                    [ checkbox setBox
                     , H.text "I hereby accept "
                     , H.a { target: "_blank"
                           , href: "http://gitlab.iscpif.fr/humanities/tofu/tree/master"
@@ -212,15 +213,6 @@ csrfTokenInput _ =
           , name: "csrfmiddlewaretoken"
           , value: csrfMiddlewareToken
           } -- TODO hard-coded CSRF token
-
-termsCheckbox :: R.State Boolean -> R.Element
-termsCheckbox setCheckBox =
-  H.input { id: "terms-accept"
-          , type: "checkbox"
-          , value: fst setCheckBox
-          , className: "checkbox"
-          , on: { click: \_ -> (snd setCheckBox) $ const $ not (fst setCheckBox)}
-          }
 
 termsLink :: {} -> R.Element
 termsLink _ =

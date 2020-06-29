@@ -10,6 +10,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (nodeMainSpan)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode)
@@ -104,8 +105,6 @@ getNodeTree :: Session -> GT.ID -> Aff FTree
 getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 
 --------------
-
-
 type TreeViewProps = ( asyncTasks :: R.State GAT.Storage
                      , tree       :: FTree
                      , tasks      :: Record Tasks
@@ -306,17 +305,26 @@ performAction (UploadFile nodeType fileType mName contents) { session
 performAction DownloadNode _ = do
     liftEffect $ log "[performAction] DownloadNode"
 -------
-performAction (MoveNode n1 n2) p@{session} = do
-  void $ moveNodeReq session n1 n2
-  performAction RefreshTree p
+performAction (MoveNode {params}) p@{session} =
+  case params of
+    Nothing -> performAction NoAction p
+    Just (SubTreeOut {in:in',out}) -> do
+      void $ moveNodeReq session in' out
+      performAction RefreshTree p
 
-performAction (MergeNode n1 n2) p@{session} = do
-  void $ mergeNodeReq session n1 n2
-  performAction RefreshTree p
+performAction (MergeNode {params}) p@{session} =
+  case params of
+    Nothing -> performAction NoAction p
+    Just (SubTreeOut {in:in',out}) -> do
+      void $ mergeNodeReq session in' out
+      performAction RefreshTree p
 
-performAction (LinkNode n1 n2) p@{session} = do
-  void $ linkNodeReq session n1 n2
-  performAction RefreshTree p
+performAction (LinkNode {params}) p@{session} =
+  case params of
+    Nothing -> performAction NoAction p
+    Just (SubTreeOut {in:in',out}) -> do
+      void $ linkNodeReq session in' out
+      performAction RefreshTree p
 
 -------
 performAction RefreshTree { reload: (_ /\ setReload) } = do

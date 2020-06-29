@@ -257,7 +257,7 @@ tableContainerCpt { dispatch
     selectButtons true =
       H.div {} [
         H.button { className: "btn btn-primary"
-                , on: { click: const $ setSelection GraphTerm }
+                , on: { click: const $ setSelection MapTerm }
                 } [ H.text "Map" ]
         , H.button { className: "btn btn-primary"
                   , on: { click: const $ setSelection StopTerm }

@@ -4,6 +4,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Generic.Rep.Eq   (genericEq)
 import Gargantext.Prelude (class Eq, class Show, show, (&&), (<>), (==))
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..))
 import Data.Array (foldl)
 import Gargantext.Types
 
@@ -14,10 +15,6 @@ import Gargantext.Types
 if user has access to node then he can do all his related actions
 -}
 ------------------------------------------------------------------------
-------------------------------------------------------------------------
--- Beta Status
-data Status a = TODO a | WIP a | OnTest a | Beta a
-
 data NodeAction = Documentation NodeType
                 | SearchBox
                 | Download | Upload | Refresh | Config
@@ -30,18 +27,6 @@ data NodeAction = Documentation NodeType
                 | Clone
 
 ------------------------------------------------------------------------
--- TODO move elsewhere
-data SubTreeParams = SubTreeParams { showtypes :: Array NodeType
-                                   , valitypes :: Array NodeType
-                                   }
-
-derive instance eqSubTreeParams      :: Eq SubTreeParams
-derive instance genericSubTreeParams :: Generic SubTreeParams _
-instance showSubTreeParams           :: Show SubTreeParams where
-  show = genericShow
-
-------------------------------------------------------------------------
-
 instance eqNodeAction :: Eq NodeAction where
   eq (Documentation x) (Documentation y) = true && (x == y)
   eq SearchBox SearchBox = true

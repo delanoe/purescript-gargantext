@@ -38,7 +38,7 @@ annotationMenuCpt :: R.Component Props
 annotationMenuCpt = R.hooksComponent "Annotation.Menu" cpt
   where
     cpt props _ = pure $ R.fragment $ children props
-    children props = A.mapMaybe (addToList props) [ GraphTerm, CandidateTerm, StopTerm ]
+    children props = A.mapMaybe (addToList props) [ MapTerm, CandidateTerm, StopTerm ]
 
 -- | Given the TermList to render the item for zand the Maybe TermList the item may belong to, possibly render the menuItem
 addToList :: Record Props -> TermList -> Maybe R.Element

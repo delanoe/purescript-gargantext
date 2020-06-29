@@ -120,7 +120,7 @@ sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ fromMaybe 
 sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart ChartBar nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart ChartPie nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart ChartTree nt nId lId)      = "node/" <> (show nId) <> "/tree?list=" <> (show lId) <> "&ngramsType=" <> (show nt) <> "&listType=GraphTerm"
+sessionPath (R.RecomputeListChart ChartTree nt nId lId)      = "node/" <> (show nId) <> "/tree?list=" <> (show lId) <> "&ngramsType=" <> (show nt) <> "&listType=MapTerm"
 sessionPath (R.RecomputeListChart Histo nt nId lId)      = "node/" <> (show nId) <> "/chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart Scatter nt nId lId)      = "node/" <> (show nId) <> "/metrics?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart _ nt nId lId)      = "node/" <> (show nId) <> "/recompute-chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
@@ -185,18 +185,29 @@ sessionPath (R.CorpusMetrics { listId, limit, tabType} i) =
     <> "?ngrams=" <> show listId
     <> "&ngramsType=" <> showTabType' tabType
     <> maybe "" limitUrl limit
+sessionPath (R.CorpusMetricsMD5 { listId, tabType} i) =
+  sessionPath $ R.NodeAPI Corpus i
+     $ "metrics/md5"
+    <> "?ngrams=" <> show listId
+    <> "&ngramsType=" <> showTabType' tabType
 -- TODO fix this url path
 sessionPath (R.Chart {chartType, listId, limit, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ show chartType
     <> "?ngramsType=" <> showTabType' tabType
-    <> "&listType=GraphTerm" -- <> show listId
+    <> "&listType=MapTerm" -- <> show listId
     <> "&listId=" <> show listId
     where
       limitPath = case limit of
         Just li -> "&limit=" <> show li
         Nothing -> ""
     -- <> maybe "" limitUrl limit
+sessionPath (R.ChartMD5 { chartType, listId, tabType } i) =
+  sessionPath $ R.NodeAPI Corpus i
+     $ show chartType
+    <> "/md5?ngramsType=" <> showTabType' tabType
+    <> "&listType=GraphTerm" -- <> show listId
+    <> "&listId=" <> show listId
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 
 ------- misc routing stuff

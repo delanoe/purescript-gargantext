@@ -1,6 +1,5 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Pie where
 
-import Prelude (bind, map, pure, ($), (>))
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (zip, filter)
@@ -13,6 +12,8 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Prelude
+
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
 import Gargantext.Components.Charts.Options.Color (blue)
@@ -21,12 +22,13 @@ import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
+import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType)
 
-newtype ChartMetrics = ChartMetrics
-  { "data" :: HistoMetrics
+newtype ChartMetrics = ChartMetrics {
+    "data" :: HistoMetrics
   }
 
 instance decodeChartMetrics :: DecodeJson ChartMetrics where
@@ -58,7 +60,7 @@ type Loaded = HistoMetrics
 chartOptionsBar :: HistoMetrics -> Options
 chartOptionsBar (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Bar"
-  , subTitle  : "Count of GraphTerm"
+  , subTitle  : "Count of MapTerm"
   , xAxis     : xAxis' $ map (\t -> joinWith " " $ map (take 3) $ A.take 3 $ filter (\s -> length s > 3) $ split (Pattern " ") t) dates'
   , yAxis     : yAxis' { position: "left", show: true, min:0}
   , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", itemStyle: itemStyle {color:blue}, value: n }) count']
@@ -69,7 +71,7 @@ chartOptionsBar (HistoMetrics { dates: dates', count: count'}) = Options
 chartOptionsPie :: HistoMetrics -> Options
 chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Pie"
-  , subTitle  : "Distribution by GraphTerm"
+  , subTitle  : "Distribution by MapTerm"
   , xAxis     : xAxis' []
   , yAxis     : yAxis' { position: "", show: false, min:0}
   , series    : [seriesPieD1 {name: "Data"} $ map (\(Tuple n v) -> dataSerie {name: n, value:v}) $ zip dates' count']
@@ -79,11 +81,15 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   }
 
 
-getMetrics :: Session -> Tuple Reload (Record Path) -> Aff HistoMetrics
+getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse HistoMetrics)
 getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
-  ChartMetrics ms <- get session chart
-  pure ms."data"
+  HashedResponse { md5, value: ChartMetrics ms } <- get session chart
+  pure $ HashedResponse { md5, value: ms."data" }
   where chart = Chart {chartType: ChartPie, limit, listId, tabType} (Just corpusId)
+
+getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
+  get session $ ChartMD5 { chartType: ChartPie, listId, tabType } (Just corpusId)
 
 pie :: Record Props -> R.Element
 pie props = R.createElement pieCpt props []
@@ -94,7 +100,7 @@ pieCpt = R.hooksComponent "G.C.N.C.C.P.pie" cpt
     cpt {path,session} _ = do
       reload <- R.useState' 0
       --pure $ metricsLoadView {getMetrics, loaded: loadedPie, path, reload, session}
-      pure $ metricsWithCacheLoadView {getMetrics, loaded: loadedPie, path, reload, session}
+      pure $ metricsWithCacheLoadView { getMetrics, getMetricsMD5, keyFunc: const "pie", loaded: loadedPie, path, reload, session }
 
 loadedPie :: Session -> Record Path -> R.State Reload -> HistoMetrics -> R.Element
 loadedPie session path reload loaded =
@@ -114,7 +120,7 @@ barCpt = R.hooksComponent "LoadedMetricsBar" cpt
     cpt {path, session} _ = do
       reload <- R.useState' 0
       --pure $ metricsLoadView {getMetrics, loaded: loadedBar, path, reload, session}
-      pure $ metricsWithCacheLoadView {getMetrics, loaded: loadedBar, path, reload, session}
+      pure $ metricsWithCacheLoadView { getMetrics, getMetricsMD5, keyFunc: const "bar", loaded: loadedBar, path, reload, session }
 
 loadedBar :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
 loadedBar session path reload loaded =

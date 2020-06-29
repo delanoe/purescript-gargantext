@@ -10,7 +10,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Effect.Aff (Aff)
-import Gargantext.Prelude (class Read, read)
+import Gargantext.Prelude (class Read, read, class Show, show)
 import Prelude
 import Prim.Row (class Union)
 import URI.Query (Query)
@@ -56,14 +56,14 @@ termSizes = [ { desc: "All types",        mval: Nothing        }
             , { desc: "Multi-word terms", mval: Just MultiTerm }
             ]
 
-data TermList = GraphTerm | StopTerm | CandidateTerm
+data TermList = MapTerm | StopTerm | CandidateTerm
 -- TODO use generic JSON instance
 
 derive instance eqTermList :: Eq TermList
 derive instance ordTermList :: Ord TermList
 
 instance encodeJsonTermList :: EncodeJson TermList where
-  encodeJson GraphTerm     = encodeJson "GraphTerm"
+  encodeJson MapTerm     = encodeJson "MapTerm"
   encodeJson StopTerm      = encodeJson "StopTerm"
   encodeJson CandidateTerm = encodeJson "CandidateTerm"
 
@@ -71,7 +71,7 @@ instance decodeJsonTermList :: DecodeJson TermList where
   decodeJson json = do
     s <- decodeJson json
     case s of
-      "GraphTerm"     -> pure GraphTerm
+      "MapTerm"     -> pure MapTerm
       "StopTerm"      -> pure StopTerm
       "CandidateTerm" -> pure CandidateTerm
       _               -> Left "Unexpected list name"
@@ -79,31 +79,31 @@ instance decodeJsonTermList :: DecodeJson TermList where
 type ListTypeId = Int
 
 listTypeId :: TermList -> ListTypeId
-listTypeId GraphTerm     = 1
+listTypeId MapTerm     = 1
 listTypeId StopTerm      = 2
 listTypeId CandidateTerm = 3
 
 instance showTermList :: Show TermList where
-  show GraphTerm     = "GraphTerm"
+  show MapTerm     = "MapTerm"
   show StopTerm      = "StopTerm"
   show CandidateTerm = "CandidateTerm"
 
 -- TODO: Can we replace the show instance above with this?
 termListName :: TermList -> String
-termListName GraphTerm = "Map List"
+termListName MapTerm = "Map List"
 termListName StopTerm = "Stop List"
 termListName CandidateTerm = "Candidate List"
 
 instance readTermList :: Read TermList where
   read :: String -> Maybe TermList
-  read "GraphTerm"     = Just GraphTerm
+  read "MapTerm"     = Just MapTerm
   read "StopTerm"      = Just StopTerm
   read "CandidateTerm" = Just CandidateTerm
   read _               = Nothing
 
 termLists :: Array { desc :: String, mval :: Maybe TermList }
 termLists = [ { desc: "All terms",   mval: Nothing      }
-            , { desc: "Map terms",   mval: Just GraphTerm   }
+            , { desc: "Map terms",   mval: Just MapTerm   }
             , { desc: "Stop terms",  mval: Just StopTerm  }
             , { desc: "Candidate terms", mval: Just CandidateTerm }
             ]
