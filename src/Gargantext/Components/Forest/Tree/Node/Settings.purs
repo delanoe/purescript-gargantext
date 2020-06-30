@@ -126,8 +126,8 @@ settingsBox FolderShared =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation FolderShared
-              , buttons : [ Add [Team, FolderShared]
-                          -- , Delete
+              , buttons : [ Add [Team, Folder]
+               --           , Delete
                           ]
               }
 
