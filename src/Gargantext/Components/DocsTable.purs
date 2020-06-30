@@ -3,7 +3,7 @@ module Gargantext.Components.DocsTable where
 
 import Prelude
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>), encodeJson)
-import Data.Array (drop, take)
+import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
@@ -14,8 +14,10 @@ import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
+import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
@@ -28,14 +30,14 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Components.Table as T
-import Gargantext.Components.Loader (loader)
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoaderWithCache)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session, sessionId, post, delete, put)
-import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..), AffTableResult)
+import Gargantext.Sessions (Session, sessionId, get, post, delete, put)
+import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..), AffTableResult, showTabType')
 ------------------------------------------------------------------------
 
 data Category = Trash | UnRead | Checked | Topic | Favorite
@@ -89,8 +91,8 @@ caroussel session nodeId setLocalCategories r cat = H.div {className:"flex"} div
                     ) (caroussel' cat)
 
     caroussel' :: Category -> Array Category
-    caroussel' Trash = take 2 categories
-    caroussel' c   = take 3 $ drop (cat2score c - 1 ) categories
+    caroussel' Trash = A.take 2 categories
+    caroussel' c   = A.take 3 $ A.drop (cat2score c - 1 ) categories
 
     onClick c = \_-> do
       setLocalCategories $ Map.insert r._id c
@@ -169,7 +171,7 @@ type PageLayoutProps =
   , query        :: Query
   , session      :: Session
   , frontends    :: Frontends
-  , params       :: R.State T.Params )
+  , params       :: T.Params )
 
 type LocalCategories = Map Int Category
 type Query = String
@@ -239,13 +241,14 @@ docViewLayoutCpt = R.hooksComponent "G.C.DocsTable.docViewLayout" cpt
   where
     cpt layout _children = do
       query <- R.useState' ""
-      params <- R.useState' T.initialParams
+      let params = T.initialParams
       pure $ docView {query, params, layout}
 
-type Props =
-  ( query :: R.State Query
-  , params :: R.State T.Params
-  , layout :: Record LayoutProps )
+type Props = (
+    layout :: Record LayoutProps
+  , params :: T.Params
+  , query :: R.State Query
+   )
 
 docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
@@ -330,21 +333,16 @@ type PageParams =
   , params :: T.Params}
 
 loadPage :: Session -> PageParams -> Aff (Tuple Int (Array DocumentsView))
-loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offset, orderBy}} = do
-  liftEffect $ log3 "loading documents page: loadPage with Offset and limit" offset limit
+loadPage session { corpusId, listId, nodeId, query, tabType } = do
+  --liftEffect $ log3 "loading documents page: loadPage with Offset and limit" offset limit
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let p = NodeAPI Node (Just nodeId) "table"
-  res <- (post session p $ TabPostQuery {
-      offset
-    , limit
-    , orderBy: convOrderBy orderBy
-    , tabType
-    , query
-    }) :: AffTableResult Response
+  let p = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType)
+  res <- (get session p) :: AffTableResult Response
   let docs = res2corpus <$> res.docs
   pure $
     if mock then
-      Tuple 0 (take limit $ drop offset sampleData)
+      --Tuple 0 (take limit $ drop offset sampleData)
+      Tuple 0 sampleData
     else
       Tuple res.count docs
   where
@@ -358,39 +356,54 @@ loadPage session {nodeId, tabType, query, listId, corpusId, params: {limit, offs
       , category : r.category
       , ngramCount : r.ngramCount
      }
-    convOrderBy (Just (T.ASC  (T.ColumnName "Date")))  = DateAsc
-    convOrderBy (Just (T.DESC (T.ColumnName "Date")))  = DateDesc
-    convOrderBy (Just (T.ASC  (T.ColumnName "Title"))) = TitleAsc
-    convOrderBy (Just (T.DESC (T.ColumnName "Title"))) = TitleDesc
-    convOrderBy (Just (T.ASC  (T.ColumnName "Source"))) = SourceAsc
-    convOrderBy (Just (T.DESC (T.ColumnName "Source"))) = SourceDesc
 
-    convOrderBy _ = DateAsc -- TODO
+
+convOrderBy (Just (T.ASC  (T.ColumnName "Date")))  = Just DateAsc
+convOrderBy (Just (T.DESC (T.ColumnName "Date")))  = Just DateDesc
+convOrderBy (Just (T.ASC  (T.ColumnName "Title"))) = Just TitleAsc
+convOrderBy (Just (T.DESC (T.ColumnName "Title"))) = Just TitleDesc
+convOrderBy (Just (T.ASC  (T.ColumnName "Source"))) = Just SourceAsc
+convOrderBy (Just (T.DESC (T.ColumnName "Source"))) = Just SourceDesc
+convOrderBy _ = Nothing
 
 pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
-pageLayoutCpt :: R.Memo PageLayoutProps
-pageLayoutCpt = R.memo' $ R.staticComponent "G.C.DocsTable.pageLayout" cpt where
+pageLayoutCpt :: R.Component PageLayoutProps
+pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
   cpt props@{frontends, session, nodeId, listId, corpusId, tabType, query, params} _ =
-    --loader path (loadPage session) paint
-    useLoader path keyFunc (loadPage session) paint
+    useLoader path (loadPage session) paint
     where
-      path = {nodeId, listId, corpusId, tabType, query, params: fst params}
+      path = { nodeId, listId, corpusId, tabType, query, params }
       paint (Tuple count docs) = page params (newProps count) docs
       newProps count = props { totalRecords = count }
-      keyFunc { corpusId, listId, nodeId, tabType } = "docs-table-" <> (show corpusId) <> "-" <> (show listId) <> "-" <> (show nodeId) <> "-" <> (show tabType)
 
-type PageProps =
-  ( params :: R.State T.Params
+type PageProps = (
+    documents :: Array DocumentsView
   , layout :: Record PageLayoutProps
-  , documents :: Array DocumentsView )
+  , params :: T.Params
+  )
 
-page ::  R.State T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
+page :: T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
 page params layout documents = R.createElement pageCpt {params, layout, documents} []
 
-pageCpt :: R.Memo PageProps
-pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
+pageCpt :: R.Component PageProps
+pageCpt = R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
+  cpt { documents, layout, params } _ = do
+    paramsS <- R.useState' params
+    pure $ pagePaint { documents, layout, params: paramsS }
+
+type PagePaintProps = (
+    documents :: Array DocumentsView
+  , layout :: Record PageLayoutProps
+  , params :: R.State T.Params
+)
+
+pagePaint :: Record PagePaintProps -> R.Element
+pagePaint props = R.createElement pagePaintCpt props []
+
+pagePaintCpt :: R.Component PagePaintProps
+pagePaintCpt = R.hooksComponent "G.C.DocsTable.pagePaintCpt" cpt where
   cpt { layout: {frontends, session, nodeId, corpusId, listId, totalRecords}, documents, params } _ = do
     localCategories <- R.useState' (mempty :: LocalCategories)
     pure $ T.table
@@ -413,7 +426,17 @@ pageCpt = R.memo' $ R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
         colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source"]
         wrapColElts = const identity
         getCategory (localCategories /\ _) {_id, category} = fromMaybe category (localCategories ^. at _id)
-        rows localCategories = row <$> documents
+        orderWith =
+          case convOrderBy (fst params).orderBy of
+            Just DateAsc    -> L.sortWith \(DocumentsView { date })   -> date
+            Just DateDesc   -> L.sortWith \(DocumentsView { date })   -> Down date
+            Just SourceAsc  -> L.sortWith \(DocumentsView { source }) -> Str.toLower source
+            Just SourceDesc -> L.sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
+            Just TitleAsc   -> L.sortWith \(DocumentsView { title })  -> Str.toLower title
+            Just TitleDesc  -> L.sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
+            _               -> identity -- the server ordering is enough here
+        filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
+        rows localCategories = row <$> filteredRows
           where
             row (DocumentsView r) =
               { row:

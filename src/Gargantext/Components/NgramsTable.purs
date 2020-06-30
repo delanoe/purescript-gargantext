@@ -501,8 +501,6 @@ mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
             mainNgramsTablePaint {path, tabNgramType, versioned, withAutoUpdate}
           Nothing -> loadingSpinner {}
 
-    keyFunc { listIds, nodeId, tabType } = "ngrams-table-" <> (show tabType) <> "-" <> (show nodeId) <> "-" <> (show listIds)
-
 type MainNgramsTablePaintProps =
   (
     path :: PageParams
