@@ -162,7 +162,14 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
         mPanelAction :: R.State (Record NodePopupS)
                      -> Record NodePopupProps
                      -> R.Element
-        mPanelAction ({action: Nothing    } /\ _) _     = H.div {} []
+        mPanelAction ({action: Nothing    } /\ _) _     =
+          H.div {className:"center fa-hand-pointer-o"}
+            [ H.h4 {} [H.text " Select available actions of this node"]
+            , H.ul {} [ H.h5 {style:{color:"black"} , className: "fa-thumbs-o-up"         } [H.text " Black: yes you can use it"    ]
+                      , H.h5 {style:{color:"orange"}, className: "fa-exclamation-triangle"} [H.text " Orange: almost useable"       ]
+                      , H.h5 {style:{color:"red"}   , className: "fa-rocket"              } [H.text " Red: development in progress" ]
+                      ]
+            ]
         mPanelAction ({action: Just action} /\ _) props =
             panelAction { action
                         , dispatch : props.dispatch
