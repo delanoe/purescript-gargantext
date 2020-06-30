@@ -88,7 +88,7 @@ scatterOptions metrics' = Options
             color =
               case k of
                 StopTerm -> red
-                GraphTerm -> green
+                MapTerm -> green
                 CandidateTerm -> grey
             toSerie color' (Metric {label,x,y}) =
               dataSerie { name: label, itemStyle: itemStyle {color: color'}

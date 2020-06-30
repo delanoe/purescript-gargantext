@@ -25,7 +25,7 @@ import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType(..))
 
 newtype ChartMetrics = ChartMetrics {
-    "data" :: HistoMetrics 
+    "data" :: HistoMetrics
    }
 
 instance decodeChartMetrics :: DecodeJson ChartMetrics where

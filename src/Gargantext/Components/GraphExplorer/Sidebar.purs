@@ -187,7 +187,7 @@ deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches 
     np :: NTC.NgramsPatches
     np = NTC.singletonPatchMap term $ NTC.NgramsPatch { patch_children: mempty, patch_list }
     patch_list :: NTC.Replace TermList
-    patch_list = NTC.Replace { new: termList, old: GraphTerm }
+    patch_list = NTC.Replace { new: termList, old: MapTerm }
 
 
 query :: Frontends -> GET.MetaData -> Session -> SigmaxT.NodesMap -> R.State SigmaxT.NodeIds -> R.Element

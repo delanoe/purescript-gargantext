@@ -20,6 +20,7 @@ import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts (annuaireUserLayout, userLayout)
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
+import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
@@ -72,20 +73,21 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
           Home  -> forested $ homeLayout LL_EN
           Login -> login { sessions, backends, visible: showLogin }
           --Folder sid _      -> withSession sid $ \_ -> forested (folder {})
-          Folder sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          Folder sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
           FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          FolderPublic sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          FolderShared sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          Team sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          Corpus sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          Texts sid nodeId  -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
-          Lists sid nodeId  -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
-          Dashboard sid nodeId  -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
-          Annuaire sid nodeId    -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
-          UserPage sid nodeId    -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
-          ContactPage sid aId nodeId -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, nodeId, session }
-          CorpusDocument sid corpusId listId nodeId ->
-            withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
+          FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { key: show nodeId, nodeId, session }
+          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { key: show nodeId, nodeId, session }
+          Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
+          Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
+          Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
+          Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
+          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
+          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, nodeId, session }
+          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
           Document sid listId nodeId ->
             withSession sid $
               \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Nothing }
@@ -102,12 +104,11 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
                                  , treeReload }
 
 type ForestLayoutProps =
-  (
-    child :: R.Element
+  ( child     :: R.Element
   , frontends :: Frontends
-  , reload :: R.State Int
-  , route :: AppRoute
-  , sessions :: Sessions
+  , reload    :: R.State Int
+  , route     :: AppRoute
+  , sessions  :: Sessions
   , showLogin :: R2.Setter Boolean
   )
 

@@ -1,37 +1,30 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.SubTree where
 
-import DOM.Simple.Console (log2)
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
 import Effect.Uncurried (mkEffectFn1)
-import Effect.Aff (Aff, launchAff)
-import Gargantext.Components.Forest.Tree.Node.Action (Props, Action(..))
-import Gargantext.Components.Forest.Tree.Node.Settings (SubTreeParams(..))
+import Effect.Aff (Aff)
+import Gargantext.Components.Forest.Tree.Node.Action (Props, Action, subTreeOut, setTreeOut)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (discard, map, pure, show, unit, ($), (&&), (/=), (<>), class Eq, const)
+import Gargantext.Prelude (map, pure, show, ($), (&&), (/=), (<>), const, (==){-, discard, bind, void-})
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-
-
 type SubTreeParamsIn =
   ( subTreeParams :: SubTreeParams
   | Props
   )
-------------------------------------------------------------------------
-data SubTreeOut = SubTreeOut { in  :: GT.ID
-                             , out :: GT.ID
-                             }
+
 ------------------------------------------------------------------------
 type SubTreeParamsProps =
-  ( subTreeOut    :: R.State (Maybe SubTreeOut)
+  ( action    :: R.State Action
   | SubTreeParamsIn
   )
 
@@ -46,10 +39,13 @@ subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
                , nodeType
                , session
                , subTreeParams
-               , subTreeOut
+               , action
                } _ =
       do
-        let SubTreeParams {showtypes} = subTreeParams
+        let
+          SubTreeParams {showtypes} = subTreeParams
+        --  (valAction /\ setAction)  = action
+        -- _ <- pure $ setAction (const $ setTreeOut valAction Nothing)
 
         useLoader session (loadSubTree showtypes) $
           \tree ->
@@ -59,7 +55,7 @@ subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
                               , session
                               , tree
                               , subTreeParams
-                              , subTreeOut
+                              , action
                               }
 
 loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
@@ -85,9 +81,11 @@ subTreeViewLoadedCpt :: R.Component CorpusTreeProps
 subTreeViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeViewLoadedCpt" cpt
   where
     cpt p@{dispatch, id, nodeType, session, tree} _ = do
-      pure $ H.div { className: "copy-from-corpus" }
-                   [ H.div { className: "tree" }
-                           [subTreeTreeView p]
+      pure $ H.div {className:"panel panel-primary"}
+                   [H.div { className: "copy-from-corpus" }
+                          [ H.div { className: "tree" }
+                                  [subTreeTreeView p]
+                          ]
                    ]
 
 subTreeTreeView :: Record CorpusTreeProps -> R.Element
@@ -97,37 +95,48 @@ subTreeTreeViewCpt :: R.Component CorpusTreeProps
 subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
   where
     cpt p@{ id
-          , tree: NTree (LNode { id: sourceId
+          , tree: NTree (LNode { id: targetId
                                , name
                                , nodeType
                                }
                         ) ary
           , subTreeParams
           , dispatch
-          , subTreeOut
+          , action
           } _ = do
-      pure $ {- H.div {} [ H.h5 { className: GT.fldr nodeType true} []
-      , -} H.div { className: "node" } 
-                 ( [ H.span { className: "name " <> clickable
-                            , on: { click: onClick }
-                            } [ H.text name ]
+            pure $ H.div {} [ H.div { className: "node " <> GT.fldr nodeType true} 
+                                    ( [ H.span { className: "name " <> clickable
+                                               , on: { click: onClick }
+                                               } [ nodeText { isSelected: isSelected targetId valAction
+                                                            , name: " " <> name
+                                                            }
+                                                 ]
 
-                   ] <> children
-                 )
-                      -- ]
+                                    ] <> children
+                                  )
+                       ]
       where
 
         SubTreeParams { valitypes } = subTreeParams
+        
+        sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id') ary
 
-        children = map (\c -> subTreeTreeView (p { tree = c })) ary
+        children = map (\ctree -> subTreeTreeView (p { tree = ctree })) sortedAry
 
-        validNodeType = (A.elem nodeType valitypes) && (id /= sourceId)
+        validNodeType = (A.elem nodeType valitypes) && (id /= targetId)
 
-        clickable = if validNodeType then "clickable" else ""
-        sbto@( subTreeOutParams /\ setSubTreeOut) = subTreeOut
+        clickable    = if validNodeType then "clickable" else ""
+
+        ( valAction /\ setAction) = action
+
+        isSelected n action' = case (subTreeOut action') of
+            Nothing                   -> false
+            (Just (SubTreeOut {out})) -> n == out
+
         onClick _ = mkEffectFn1 $ \_ -> case validNodeType of
-                         false -> setSubTreeOut (const Nothing)
-                         true  -> setSubTreeOut (const $ Just $ SubTreeOut { in: id, out:sourceId})
+                         false -> setAction (const $ setTreeOut valAction Nothing)
+                         true  -> setAction (const $ setTreeOut valAction (Just $ SubTreeOut { in: id, out:targetId}))
+
 
 --------------------------------------------------------------------------------------------
 

@@ -6,7 +6,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsIn, subTreeView, SubTreeOut(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, put_)
@@ -20,19 +20,21 @@ linkNodeReq session fromId toId =
 
 linkNode :: Record SubTreeParamsIn -> R.Hooks R.Element
 linkNode p@{dispatch, subTreeParams, id, nodeType, session} = do
-  subTreeOut@(subTreeOutParams /\ setSubTreeOut) :: R.State (Maybe SubTreeOut)
-    <- R.useState' Nothing
-  let button = case subTreeOutParams of
-        Nothing   -> H.div {} []
-        Just sbto -> submitButton (LinkNode inId outId) dispatch
-          where
-            (SubTreeOut { in:inId, out:outId}) = sbto
-  pure $ panel [ subTreeView { subTreeOut
+
+  action@(valAction /\ setAction) :: R.State Action <- R.useState' (LinkNode {params:Nothing})
+
+  let button = case valAction of
+        LinkNode {params} -> case params of
+          Just val -> submitButton (LinkNode {params: Just val}) dispatch
+          Nothing -> H.div {} []
+        _                   -> H.div {} []
+
+  pure $ panel [ subTreeView { action
                              , dispatch
-                             , subTreeParams
                              , id
                              , nodeType
                              , session
+                             , subTreeParams
                              }
                ] button
 
