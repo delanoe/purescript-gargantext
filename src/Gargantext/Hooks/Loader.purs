@@ -115,12 +115,12 @@ useCachedLoaderEffect { cacheEndpoint, keyFunc, loadRealData, path, state: state
       R.setRef oPath path
 
       let key = "loader--" <> (keyFunc path)
-      log2 "[useCachedLoader] key" key
+      -- log2 "[useCachedLoader] key" key
       let keyCache = key <> "-cache"
       localStorage <- R2.getls
       mState <- WSS.getItem key localStorage
       mCache <- WSS.getItem keyCache localStorage
-      log2 "[useCachedLoader] mState" mState
+      -- log2 "[useCachedLoader] mState" mState
       launchAff_ $ do
         case mState of
           Nothing -> loadRealData key keyCache localStorage
@@ -128,17 +128,17 @@ useCachedLoaderEffect { cacheEndpoint, keyFunc, loadRealData, path, state: state
             let parsed = parse stStr >>= decode
             case parsed of
               Left err -> do
-                liftEffect $ log2 "[useCachedLoader] err" err
+                -- liftEffect $ log2 "[useCachedLoader] err" err
                 loadRealData key keyCache localStorage
               Right (st :: st) -> do
                 cacheReal <- cacheEndpoint path
-                liftEffect $ log2 "[useCachedLoader] cacheReal" cacheReal
+                -- liftEffect $ log2 "[useCachedLoader] cacheReal" cacheReal
                 case mCache of
                   Nothing -> do
-                    liftEffect $ log2 "[useCachedLoader] no stored cache" Nothing
+                    -- liftEffect $ log2 "[useCachedLoader] no stored cache" Nothing
                     loadRealData key keyCache localStorage
                   Just cache -> do
-                    liftEffect $ log2 "[useCachedLoader] stored cache" cache
+                    -- liftEffect $ log2 "[useCachedLoader] stored cache" cache
                     if cache == cacheReal then
                       -- yay! cache hit!
                       liftEffect $ setState $ const $ Just st
