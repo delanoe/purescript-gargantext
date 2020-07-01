@@ -1,7 +1,6 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
-import Prelude
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>), encodeJson)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
@@ -29,15 +28,17 @@ import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
+import Gargantext.Prelude
+
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Loader (useLoader, useLoaderWithCache, HashedResponse(..))
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, post, delete, put)
-import Gargantext.Types (NodeType(..), OrderBy(..), TabType, TabPostQuery(..), AffTableResult, showTabType')
+import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabType, TabPostQuery(..), AffTableResult, showTabType')
 ------------------------------------------------------------------------
 
 data Category = Trash | UnRead | Checked | Topic | Favorite
@@ -50,6 +51,10 @@ instance showCategory :: Show Category where
   show = genericShow
 instance eqCategory :: Eq Category where
   eq = genericEq
+instance decodeJsonCategory :: DecodeJson Category where
+  decodeJson json = do
+    obj <- decodeJson json
+    pure $ decodeCategory obj
 instance encodeJsonCategory :: EncodeJson Category where
   encodeJson cat    = encodeJson (cat2score cat)
 
@@ -185,19 +190,39 @@ data Action
 newtype DocumentsView
   = DocumentsView
     { _id    :: Int
-    , url    :: String
-    , date   :: Int
-    , title  :: String
-    , source :: String
     , category :: Category
+    , date   :: Int
     , ngramCount :: Int
+    , source :: String
+    , title  :: String
+    , url    :: String
     }
 
 
 derive instance genericDocumentsView :: Generic DocumentsView _
-
 instance showDocumentsView :: Show DocumentsView where
   show = genericShow
+instance decodeDocumentsView :: DecodeJson DocumentsView where
+  decodeJson json = do
+    obj <- decodeJson json
+    _id <- obj .: "id"
+    category <- obj .: "category"
+    date <- obj .: "date"
+    ngramCount <- obj .: "ngramCount"
+    source <- obj .: "source"
+    title <- obj .: "title"
+    url <- obj .: "url"
+    pure $ DocumentsView { _id, category, date, ngramCount, source, title, url }
+instance encodeDocumentsView :: EncodeJson DocumentsView where
+  encodeJson (DocumentsView dv) = 
+       "id" := dv._id
+    ~> "category" := dv.category
+    ~> "date" := dv.date
+    ~> "ngramCount" := dv.ngramCount
+    ~> "source" := dv.source
+    ~> "title" := dv.title
+    ~> "url" := dv.url
+    ~> jsonEmptyObject
 
 
 newtype Response = Response
@@ -332,19 +357,19 @@ type PageParams =
   , query   :: Query
   , params :: T.Params}
 
-loadPage :: Session -> PageParams -> Aff (Tuple Int (Array DocumentsView))
+loadPage :: Session -> PageParams -> Aff (HashedResponse (Tuple Int (Array DocumentsView)))
 loadPage session { corpusId, listId, nodeId, query, tabType } = do
   --liftEffect $ log3 "loading documents page: loadPage with Offset and limit" offset limit
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let p = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType)
-  res <- (get session p) :: AffTableResult Response
+  HashedResponse { md5, value: res } <- (get session p) :: Aff (HashedResponse (TableResult Response))
   let docs = res2corpus <$> res.docs
-  pure $
-    if mock then
-      --Tuple 0 (take limit $ drop offset sampleData)
-      Tuple 0 sampleData
-    else
-      Tuple res.count docs
+  let ret = if mock then
+              --Tuple 0 (take limit $ drop offset sampleData)
+              Tuple 0 sampleData
+            else
+              Tuple res.count docs
+  pure $ HashedResponse { md5, value: ret }
   where
     res2corpus :: Response -> DocumentsView
     res2corpus (Response r) =
@@ -356,6 +381,11 @@ loadPage session { corpusId, listId, nodeId, query, tabType } = do
       , category : r.category
       , ngramCount : r.ngramCount
      }
+
+getPageMD5 :: Session -> PageParams -> Aff String
+getPageMD5 session { corpusId, listId, nodeId, query, tabType } = do
+  let p = NodeAPI Node (Just nodeId) $ "table/md5" <> "?tabType=" <> (showTabType' tabType)
+  (get session p) :: Aff String
 
 
 convOrderBy (Just (T.ASC  (T.ColumnName "Date")))  = Just DateAsc
@@ -372,11 +402,15 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
   cpt props@{frontends, session, nodeId, listId, corpusId, tabType, query, params} _ =
-    useLoader path (loadPage session) paint
+    -- useLoader path (loadPage session) paint
+    useLoaderWithCache path keyFunc (getPageMD5 session) (loadPage session) paint
     where
       path = { nodeId, listId, corpusId, tabType, query, params }
       paint (Tuple count docs) = page params (newProps count) docs
       newProps count = props { totalRecords = count }
+
+      keyFunc { corpusId, listId, nodeId, tabType } =
+       "page-" <> (show tabType) <> "-" <> (show corpusId) <> "-" <> (show nodeId) <> "-" <> (show listId)
 
 type PageProps = (
     documents :: Array DocumentsView
