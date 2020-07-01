@@ -304,22 +304,21 @@ type ListId = Int
 data ScoreType = Occurrences
 
 derive instance genericScoreType :: Generic ScoreType _
-instance showScoreType :: Show ScoreType where
-  show = genericShow
 instance eqScoreType :: Eq ScoreType where
   eq = genericEq
+instance showScoreType :: Show ScoreType where
+  show = genericShow
 
 type SearchQuery = String
 
 type NgramsGetOpts =
   { tabType        :: TabType
-  , offset         :: Offset
   , limit          :: Limit
+  , offset         :: Maybe Offset
   , orderBy        :: Maybe OrderBy
   , listIds        :: Array ListId
   , termListFilter :: Maybe TermList
   , termSizeFilter :: Maybe TermSize
-  , scoreType      :: ScoreType
   , searchQuery    :: SearchQuery
   }
 

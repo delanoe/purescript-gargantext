@@ -37,6 +37,7 @@ data SessionRoute
   | Children NodeType Offset Limit (Maybe OrderBy) (Maybe Id)
   | GetNgrams NgramsGetOpts (Maybe Id)
   | GetNgramsTableAll NgramsGetTableAllOpts (Maybe Id)
+  | GetNgramsTableVersion { listId :: ListId, tabType :: TabType } (Maybe Id)
   | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
   -- ^ This name is not good. In particular this URL is used both in PUT and POST.
   | RecomputeNgrams (TabSubType CTabNgramType) Id ListId
