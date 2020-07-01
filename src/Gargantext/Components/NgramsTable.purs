@@ -23,18 +23,21 @@ import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.Loader (loader)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Components.NgramsTable.Components as NTC
-import Gargantext.Components.NgramsTable.Core (Action(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, _NgramsElement, _NgramsTable, _children, _list, _ngrams, _occurrences, _root, addNewNgram, applyNgramsPatches, applyPatchSet, commitPatchR, convOrderBy, filterTermSize, fromNgramsPatches, initialPageParams, loadNgramsTableAll, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncPatchesR)
+import Gargantext.Components.NgramsTable.Core
+import Gargantext.Components.NgramsTable.Loader (useLoaderWithVersionCache)
 import Gargantext.Components.Table as T
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
-import Gargantext.Sessions (Session)
+import Gargantext.Routes as R
+import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet)
 import Gargantext.Utils.List (sortWith) as L
@@ -491,14 +494,28 @@ mainNgramsTable props = R.createElement mainNgramsTableCpt props []
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
   where
-    cpt {nodeId, defaultListId, tabType, session, tabNgramType, withAutoUpdate} _ = do
+    cpt props@{nodeId, defaultListId, tabType, session, tabNgramType, withAutoUpdate} _ = do
       let path = initialPageParams session nodeId [defaultListId] tabType
 
-      pure $ loader path loadNgramsTableAll \loaded -> do
-        case Map.lookup tabType loaded of
-          Just (versioned :: VersionedNgramsTable) ->
-            mainNgramsTablePaint {path, tabNgramType, versioned, withAutoUpdate}
-          Nothing -> loadingSpinner {}
+      useLoaderWithVersionCache (pathNoLimit path) (keyFunc props) (versionEndpoint props) loadNgramsTable \versioned -> do
+          mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
+      -- useLoaderWithVersionCache path (keyFunc props) (versionEndpoint props) loadNgramsTableAll \loaded -> do
+      -- useLoader path loadNgramsTableAll \loaded -> do
+      --   case Map.lookup tabType loaded of
+      --     Just (versioned :: VersionedNgramsTable) ->
+      --       mainNgramsTablePaint {path, tabNgramType, versioned, withAutoUpdate}
+      --     Nothing -> loadingSpinner {}
+
+      -- useLoader (pathNoLimit path) loadNgramsTable \versioned -> do
+      --   mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
+      
+    keyFunc { defaultListId, nodeId, tabType } _ =
+      "ngrams-table-" <> (show tabType) <> "-" <> (show nodeId) <> "-" <> (show defaultListId)
+    versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
+    versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
+
+    pathNoLimit path@{ params } = path { params = params { limit = 100000 }
+                                       , termListFilter = Nothing }
 
 type MainNgramsTablePaintProps =
   (
