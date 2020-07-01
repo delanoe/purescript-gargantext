@@ -263,6 +263,7 @@ nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
 
 ------------------------------------------------------------------------
 
-divider :: R.Element
-divider = H.div {className:"divider"} []
+
+
+
 

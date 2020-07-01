@@ -53,8 +53,7 @@ dashboardLayoutCpt = R.hooksComponent "G.C.N.C.D.dashboardLayout" cpt
             liftEffect $ setReload $ (+) 1
 
 type LoadedProps =
-  (
-    charts :: Array P.PredefinedChart
+  ( charts :: Array P.PredefinedChart
   , corpusId :: NodeID
   , defaultListId :: Int
   , key :: String
@@ -91,8 +90,7 @@ dashboardLayoutLoadedCpt = R.hooksComponent "G.C.N.C.D.dashboardLayoutLoaded" cp
             onRemove _ = onChange $ fromMaybe charts $ A.deleteAt idx charts
 
 type PredefinedChartProps =
-  (
-    chart :: P.PredefinedChart
+  ( chart :: P.PredefinedChart
   , corpusId :: NodeID
   , defaultListId :: Int
   , onChange :: P.PredefinedChart -> Effect Unit

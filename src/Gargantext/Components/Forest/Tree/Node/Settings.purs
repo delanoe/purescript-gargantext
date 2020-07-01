@@ -89,7 +89,9 @@ settingsBox NodeUser =
   SettingsBox { show : true
               , edit : false
               , doc  : Documentation NodeUser
-              , buttons : [ Delete ]
+              , buttons : [ Delete
+                          -- , Add [FolderPublic]
+                          ]
               }
 
 settingsBox FolderPrivate =
@@ -99,6 +101,8 @@ settingsBox FolderPrivate =
               , buttons : [ Add [ Corpus
                                 , Folder
                                 , Annuaire
+                                , NodeFrameWrite
+                                , NodeFrameCalc
                                 ]
                           ]
               }
@@ -110,17 +114,20 @@ settingsBox Team =
               , buttons : [ Add [ Corpus
                                 , Folder
                                 , Annuaire
+                                , NodeFrameWrite
+                                , NodeFrameCalc
                                 ]
                           , Share
-                          , Delete]
+                          , Delete
+                          ]
               }
 
 settingsBox FolderShared =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation FolderShared
-              , buttons : [ Add [Team, FolderShared]
-                          -- , Delete
+              , buttons : [ Add [Team, Folder]
+               --           , Delete
                           ]
               }
 
@@ -131,7 +138,8 @@ settingsBox FolderPublic =
               , buttons : [ Add [ Corpus
                                 , Folder
                                 ]
-                ]
+                         -- , Delete
+                          ]
               }
 
 settingsBox Folder =
@@ -141,6 +149,8 @@ settingsBox Folder =
               , buttons : [ Add [ Corpus
                                 , Folder
                                 , Annuaire
+                                , NodeFrameWrite
+                                , NodeFrameCalc
                                 ]
                           , Move moveParameters
                           , Delete
@@ -154,6 +164,8 @@ settingsBox Corpus =
               , buttons : [ Add [ NodeList
                                 , Graph
                                 , Dashboard
+                                , NodeFrameWrite
+                                , NodeFrameCalc
                                 ]
                           , SearchBox
                           , Upload
@@ -228,6 +240,29 @@ settingsBox Annuaire =
                           , Delete
                           ]
               }
+
+
+settingsBox NodeFrameWrite =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation NodeFrameWrite
+              , buttons : [ Add [ NodeFrameWrite
+                                , NodeFrameCalc
+                                ]
+                          ]
+              }
+
+
+settingsBox NodeFrameCalc =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation NodeFrameCalc
+              , buttons : [ Add [ NodeFrameCalc
+                                , NodeFrameWrite
+                                ]
+                          ]
+              }
+
 
 settingsBox _ =
   SettingsBox { show : false

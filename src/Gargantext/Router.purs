@@ -11,9 +11,9 @@ router :: Match AppRoute
 router = oneOf
   [ Login            <$   route "login"
   , Folder           <$> (route "folder"     *> sid) <*> int
-  , FolderPrivate    <$> (route "folderPrivate"     *> sid) <*> int
-  , FolderPublic     <$> (route "folderPublic"     *> sid) <*> int
-  , FolderShared     <$> (route "folderShared"     *> sid) <*> int
+    , FolderPrivate    <$> (route "folderPrivate"     *> sid) <*> int
+    , FolderPublic     <$> (route "folderPublic"     *> sid) <*> int
+    , FolderShared     <$> (route "folderShared"     *> sid) <*> int
   , Team             <$> (route "team"     *> sid) <*> int
   , CorpusDocument   <$> (route "corpus"     *> sid) <*> int
                         <*> (lit "list" *> int)
@@ -29,6 +29,9 @@ router = oneOf
                           <*> (lit "contact" *> int)
   , Annuaire          <$> (route "annuaire"  *> sid) <*> int
     , UserPage        <$> (route "user"      *> sid) <*> int
+
+  , RouteFrameWrite    <$> (route "write"     *> sid) <*> int
+  , RouteFrameCalc     <$> (route "calc"     *> sid) <*> int
   , Home              <$   lit ""
   ]
  where
