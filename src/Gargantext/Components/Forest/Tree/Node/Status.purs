@@ -8,7 +8,7 @@ import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..))
 data Status = Stable | Test | Dev
 
 hasStatus :: NodeType -> NodeAction -> Status
-hasStatus _ SearchBox         = Dev
+hasStatus _ SearchBox         = Test
 hasStatus _ Refresh           = Dev
 hasStatus _ Config            = Dev
 hasStatus _ (Link  _)         = Dev
