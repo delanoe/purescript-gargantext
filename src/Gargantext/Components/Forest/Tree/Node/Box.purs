@@ -1,7 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
 import Data.Array as A
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.String as S
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
@@ -206,20 +206,27 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
                                                       (action == (Just todo)   )
                          , id: show todo
                          , title: show todo
-                         , onClick : mkEffectFn1 $ \_ -> undo *> doToDo
+                         , onClick : mkEffectFn1 $ \_ -> {-undo *>-} doToDo
                        }
                      []
                    ]
       where
-        action' = if action == (Just todo)
+        -- FIXME
+        -- If uncommenting the code below
+        --   then mpanelAction state is not
+        --        updated and leads to some bug (state of subtree 
+        --        not updated and search value not initilized)
+        --   else current action' forces the user to click twice when
+        --        changing the action button.
+        action' = if isJust action {-== (Just todo)-}
                       then Nothing
                       else (Just todo)
-
+        {- -- This shows the Help of this button
         undo = setNodePopup
              $ const (node { action = Nothing })
+        -}
 
-        doToDo = setNodePopup
-               $ const (node { action = action' })
+        doToDo = setNodePopup $ const (node { action = action' })
 
         iconAStyle :: GT.NodeType -> NodeAction -> { color      :: String
                       , paddingTop :: String
