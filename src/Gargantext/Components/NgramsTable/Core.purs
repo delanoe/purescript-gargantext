@@ -60,7 +60,7 @@ import Prelude
 
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.State (class MonadState, execState)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (:=), (~>))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (.:?), (:=), (:=?), (~>), (~>?))
 import Data.Array (head)
 import Data.Array as A
 import Data.Bifunctor (lmap)
@@ -177,7 +177,6 @@ newtype NgramsElement = NgramsElement
   }
 
 derive instance eqNgramsElement :: Eq NgramsElement
-derive instance eqNgramsTable :: Eq NgramsTable
 
 
 _parent = prop (SProxy :: SProxy "parent")
@@ -211,11 +210,21 @@ instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
     ngrams      <- obj .:  "ngrams"
     list        <- obj .:  "list"
     occurrences <- obj .:  "occurrences"
-    parent      <- obj .:! "parent"
-    root        <- obj .:! "root"
+    parent      <- obj .:? "parent"
+    root        <- obj .:? "root"
     children'   <- obj .:  "children"
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
     pure $ NgramsElement {ngrams, list, occurrences, parent, root, children}
+
+instance encodeJsonNgramsElement :: EncodeJson NgramsElement where
+  encodeJson (NgramsElement { children, list, ngrams, occurrences, parent, root }) = 
+       "children"    := children
+    ~> "list"        := list
+    ~> "ngrams"      := ngrams
+    ~> "occurrences" := occurrences
+    ~> "parent"      :=? parent
+    ~>? "root"        :=? root
+    ~>? jsonEmptyObject
 
 -----------------------------------------------------------------------------------
 type Version = Int
@@ -243,6 +252,7 @@ instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
 newtype NgramsTable = NgramsTable (Map NgramsTerm NgramsElement)
 
 derive instance newtypeNgramsTable :: Newtype NgramsTable _
+derive instance eqNgramsTable :: Eq NgramsTable
 
 _NgramsTable :: Iso' NgramsTable (Map NgramsTerm NgramsElement)
 _NgramsTable = _Newtype
@@ -261,6 +271,9 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
          $ f <$> (elements :: Array NgramsElement)
     where
       f e@(NgramsElement e') = Tuple e'.ngrams e
+
+instance encodeJsonNgramsTable :: EncodeJson NgramsTable where
+  encodeJson (NgramsTable m) = encodeJson $ Map.values m
 -----------------------------------------------------------------------------------
 
 wordBoundaryChars :: String
@@ -715,10 +728,14 @@ loadNgramsTable
   { nodeId, listIds, termListFilter, termSizeFilter, session, scoreType
   , searchQuery, tabType, params: {offset, limit, orderBy}}
   = get session query
-  where query = GetNgrams { tabType, offset, limit, listIds
+  where query = GetNgrams { limit
+                          , offset: Just offset
+                          , listIds
                           , orderBy: convOrderBy <$> orderBy
-                          , termListFilter, termSizeFilter
-                          , searchQuery, scoreType } (Just nodeId)
+                          , searchQuery
+                          , tabType
+                          , termListFilter
+                          , termSizeFilter } (Just nodeId)
 
 type NgramsListByTabType = Map TabType VersionedNgramsTable
 

@@ -129,17 +129,18 @@ sessionPath (R.GetNgrams opts i)    =
   base opts.tabType
      $ "ngrams?ngramsType="
     <> showTabType' opts.tabType
-    <> offsetUrl opts.offset
     <> limitUrl opts.limit
+    <> offset opts.offset
     <> orderByUrl opts.orderBy
     <> foldMap (\x -> "&list=" <> show x) opts.listIds
     <> foldMap (\x -> "&listType=" <> show x) opts.termListFilter
     <> foldMap termSizeFilter opts.termSizeFilter
-    <> "&scoreType=" <> show opts.scoreType
     <> search opts.searchQuery
   where
     base (TabCorpus _) = sessionPath <<< R.NodeAPI Node i
     base _             = sessionPath <<< R.NodeAPI Url_Document i
+    offset Nothing = ""
+    offset (Just o) = offsetUrl o
     termSizeFilter MonoTerm = "&minTermSize=0&maxTermSize=1"
     termSizeFilter MultiTerm = "&minTermSize=2"
     search "" = ""
@@ -150,6 +151,11 @@ sessionPath (R.GetNgramsTableAll opts i) =
     <> showTabType' opts.tabType
     <> foldMap (\x -> "&list=" <> show x) opts.listIds
     <> limitUrl 100000
+sessionPath (R.GetNgramsTableVersion opts i) =
+  sessionPath $ R.NodeAPI Node i
+     $ "ngrams/version?ngramsType="
+    <> showTabType' opts.tabType
+    <> "&list=" <> show opts.listId
 sessionPath (R.ListDocument lId dId) =
   sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ fromMaybe 0 dId))
 sessionPath (R.ListsRoute lId) = "lists/" <> show lId
