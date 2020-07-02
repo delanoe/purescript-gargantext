@@ -16,6 +16,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..), getCorpusInfo, CorpusInfo(..))
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
+import Gargantext.Hooks.Loader (useLoaderWithCache)
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))

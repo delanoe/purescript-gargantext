@@ -6,6 +6,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R
+
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 

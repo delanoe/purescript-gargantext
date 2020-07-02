@@ -34,7 +34,7 @@ import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithVersionCache)
 import Gargantext.Components.Table as T
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Loader (useLoaderWithCache)
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
 import Gargantext.Routes as R
 import Gargantext.Sessions (Session, get)
@@ -499,16 +499,7 @@ mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
 
       useLoaderWithVersionCache (pathNoLimit path) (keyFunc props) (versionEndpoint props) loadNgramsTable \versioned -> do
           mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
-      -- useLoaderWithVersionCache path (keyFunc props) (versionEndpoint props) loadNgramsTableAll \loaded -> do
-      -- useLoader path loadNgramsTableAll \loaded -> do
-      --   case Map.lookup tabType loaded of
-      --     Just (versioned :: VersionedNgramsTable) ->
-      --       mainNgramsTablePaint {path, tabNgramType, versioned, withAutoUpdate}
-      --     Nothing -> loadingSpinner {}
 
-      -- useLoader (pathNoLimit path) loadNgramsTable \versioned -> do
-      --   mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
-      
     keyFunc { defaultListId, nodeId, tabType } _ =
       "ngrams-table-" <> (show tabType) <> "-" <> (show nodeId) <> "-" <> (show defaultListId)
     versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
