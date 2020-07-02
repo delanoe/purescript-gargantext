@@ -18,22 +18,26 @@ moveNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
 moveNodeReq session fromId toId =
   put_ session $ NodeAPI GT.Node (Just fromId) ("move/" <> show toId)
 
-moveNode :: Record SubTreeParamsIn -> R.Hooks R.Element
-moveNode p@{dispatch, subTreeParams, id, nodeType, session} = do
-  action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params: Nothing})
+moveNode :: Record SubTreeParamsIn -> R.Element
+moveNode p = R.createElement moveNodeCpt p []
 
-  let button = case valAction of
-        MoveNode {params} -> case params of
-          Just val -> submitButton (MoveNode {params: Just val}) dispatch
-          Nothing -> H.div {} []
-        _                   -> H.div {} []
+moveNodeCpt :: R.Component SubTreeParamsIn
+moveNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.moveNode" cpt
+  where
+    cpt p@{dispatch, subTreeParams, id, nodeType, session} _ = do
+      action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params: Nothing})
 
-  pure $ panel [ subTreeView { action
-                             , dispatch
-                             , id
-                             , nodeType
-                             , session
-                             , subTreeParams
-                             }
-               ] button
+      let button = case valAction of
+              MoveNode {params} -> case params of
+                Just val -> submitButton (MoveNode {params: Just val}) dispatch
+                Nothing -> H.div {} []
+              _                   -> H.div {} []
 
+      pure $ panel [ subTreeView { action
+                                 , dispatch
+                                 , id
+                                 , nodeType
+                                 , session
+                                 , subTreeParams
+                                 }
+              ] button

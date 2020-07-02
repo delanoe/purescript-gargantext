@@ -3,9 +3,10 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Data.Array as A
 import Data.Maybe (Maybe(..), isJust)
 import Data.String as S
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff)
-import Effect.Uncurried (mkEffectFn1)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -61,6 +62,9 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
 
       search  <- R.useState'
                $ defaultSearch { node_id = Just p.id }
+
+      R.useEffect' $ do
+        log2 "[nodePopup] nodePopupState" $ fst nodePopupState
 
       pure $ H.div tooltipProps $
         [ H.div { className: "popup-container" }
@@ -138,8 +142,8 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                   -> R.Element
         panelBody nodePopupState {dispatch: d, nodeType} =
           H.div {className: "panel-body flex-space-between"}
-                $ [ H.p { "style": {"margin":"10px"}} []
-                  , H.div { className: "flex-center"} 
+                $ [ H.p { "style": {"margin":"10px"} } []
+                  , H.div { className: "flex-center" }
                           [ buttonClick { action: doc
                                         , state: nodePopupState
                                         , nodeType
@@ -206,29 +210,20 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
                                                       (action == (Just todo)   )
                          , id: show todo
                          , title: show todo
-                         , onClick : mkEffectFn1 $ \_ -> {-undo *>-} doToDo
+                         , on: { click: \_ -> doToDo }
                        }
                      []
                    ]
       where
-        -- FIXME
-        -- If uncommenting the code below
-        --   then mpanelAction state is not
-        --        updated and leads to some bug (state of subtree 
-        --        not updated and search value not initilized)
-        --   else current action' forces the user to click twice when
-        --        changing the action button.
-        action' = if isJust action {-== (Just todo)-}
-                      then Nothing
-                      else (Just todo)
         {- -- This shows the Help of this button
         undo = setNodePopup
              $ const (node { action = Nothing })
         -}
 
-        doToDo = setNodePopup $ const (node { action = action' })
+        doToDo = setNodePopup $ const $ node { action = Just todo }
 
-        iconAStyle :: GT.NodeType -> NodeAction -> { color      :: String
+        iconAStyle :: GT.NodeType -> NodeAction -> {
+                        color      :: String
                       , paddingTop :: String
                       , paddingBottom :: String
                       }
@@ -272,7 +267,7 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
     cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload   nodeType id session dispatch
     cpt {action: Delete, nodeType, dispatch}              _ = actionDelete   nodeType dispatch
 
-    cpt {action: Add xs, dispatch, id, name, nodePopup: p, nodeType} _ = do
+    cpt {action: Add xs, dispatch, id, name, nodeType} _ = do
       pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
 
     cpt {action: Refresh , dispatch, id, nodeType, session} _ = update nodeType dispatch
@@ -283,13 +278,13 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
 -----------
     -- Functions using SubTree
     cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session} _ = do
-      mergeNode {dispatch, id, nodeType, session, subTreeParams}
+      pure $ mergeNode {dispatch, id, nodeType, session, subTreeParams}
 
     cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session} _ = do
-      moveNode {dispatch, id, nodeType, session, subTreeParams}
+      pure $ moveNode {dispatch, id, nodeType, session, subTreeParams}
 
     cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session} _ = do
-      linkNode {dispatch, id, nodeType, session, subTreeParams}
+      pure $ linkNode {dispatch, id, nodeType, session, subTreeParams}
 -----------
 
     cpt {action : Share, dispatch, id, name } _ = do

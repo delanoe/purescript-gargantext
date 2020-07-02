@@ -19,34 +19,39 @@ mergeNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
 mergeNodeReq session fromId toId =
   put_ session $ NodeAPI GT.Node (Just fromId) ("merge/" <> show toId)
 
-mergeNode :: Record SubTreeParamsIn -> R.Hooks R.Element
-mergeNode p@{dispatch, subTreeParams, id, nodeType, session} = do
-  action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
+mergeNode :: Record SubTreeParamsIn -> R.Element
+mergeNode p = R.createElement mergeNodeCpt p []
 
-  merge   <- R.useState' false
-  options <- R.useState' (Set.singleton GT.MapTerm)
+mergeNodeCpt :: R.Component SubTreeParamsIn
+mergeNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.mergeNode" cpt
+  where
+    cpt p@{dispatch, subTreeParams, id, nodeType, session} _ = do
+      action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
 
-  let button = case valAction of
-        MergeNode {params} -> case params of
-          Just val -> submitButton (MergeNode {params: Just val}) dispatch
-          Nothing -> H.div {} []
-        _                   -> H.div {} []
+      merge   <- R.useState' false
+      options <- R.useState' (Set.singleton GT.MapTerm)
 
-  pure $ panel [ subTreeView { action
-                             , dispatch
-                             , id
-                             , nodeType
-                             , session
-                             , subTreeParams
-                             }
-               , H.div { className:"panel panel-primary"}
-                       [ H.text "Merge which list?"
-                       , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options
-                       ]
-               , H.div { className:"panel panel-primary"}
-                       [ H.text "Title"
-                       , H.div {className: "checkbox"}
-                               [checkbox merge, H.text "Merge data?"]
-                       ]
-               ] button
+      let button = case valAction of
+            MergeNode {params} -> case params of
+              Just val -> submitButton (MergeNode {params: Just val}) dispatch
+              Nothing -> H.div {} []
+            _                   -> H.div {} []
 
+      pure $ panel [
+          subTreeView { action
+                      , dispatch
+                      , id
+                      , nodeType
+                      , session
+                      , subTreeParams
+                      }
+        , H.div { className:"panel panel-primary"}
+                [ H.text "Merge which list?"
+                , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options
+                ]
+        , H.div { className:"panel panel-primary"}
+                [ H.text "Title"
+                , H.div {className: "checkbox"}
+                        [checkbox merge, H.text "Merge data?"]
+                ]
+        ] button

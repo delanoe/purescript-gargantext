@@ -18,23 +18,28 @@ linkNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
 linkNodeReq session fromId toId =
   put_ session $ NodeAPI GT.Node (Just fromId) ("link/" <> show toId)
 
-linkNode :: Record SubTreeParamsIn -> R.Hooks R.Element
-linkNode p@{dispatch, subTreeParams, id, nodeType, session} = do
+linkNode :: Record SubTreeParamsIn -> R.Element
+linkNode p = R.createElement linkNodeCpt p []
 
-  action@(valAction /\ setAction) :: R.State Action <- R.useState' (LinkNode {params:Nothing})
+linkNodeCpt :: R.Component SubTreeParamsIn
+linkNodeCpt = R.hooksComponent "G.C.F.T.N.A.L.linkNode" cpt
+  where
+    cpt p@{dispatch, subTreeParams, id, nodeType, session} _ = do
 
-  let button = case valAction of
-        LinkNode {params} -> case params of
-          Just val -> submitButton (LinkNode {params: Just val}) dispatch
-          Nothing -> H.div {} []
-        _                   -> H.div {} []
+      action@(valAction /\ setAction) :: R.State Action <- R.useState' (LinkNode {params:Nothing})
 
-  pure $ panel [ subTreeView { action
-                             , dispatch
-                             , id
-                             , nodeType
-                             , session
-                             , subTreeParams
-                             }
-               ] button
+      let button = case valAction of
+              LinkNode {params} -> case params of
+                Just val -> submitButton (LinkNode {params: Just val}) dispatch
+                Nothing -> H.div {} []
+              _                   -> H.div {} []
 
+      pure $ panel [
+          subTreeView { action
+                      , dispatch
+                      , id
+                      , nodeType
+                      , session
+                      , subTreeParams
+                      }
+              ] button
