@@ -13,12 +13,26 @@
     ul
       display: flex
       flex-direction: row
+      margin: 0
       li
         display: flex
         max-width: 200px
 
-  .row.controls
-    height: 79px
+  #toggle-container
+    position: absolute
+    z-index: 999 // needs to appear above solid menu bar
+    right: 15px
+    top: 10px
+    width: 70%
+
+  #controls-container
+    position: absolute
+    z-index: 999 // needs to appear above graph elements
+    backdrop-filter: blur(4px)
+    background: rgba(255,255,255,75%)
+    overflow: auto
+    left: 0
+    right: 0
 
   .graph-tree
     @include sidePanelCommon
