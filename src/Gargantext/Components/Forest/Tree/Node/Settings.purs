@@ -249,6 +249,7 @@ settingsBox NodeFrameWrite =
               , buttons : [ Add [ NodeFrameWrite
                                 , NodeFrameCalc
                                 ]
+                          , Delete
                           ]
               }
 
@@ -260,6 +261,7 @@ settingsBox NodeFrameCalc =
               , buttons : [ Add [ NodeFrameCalc
                                 , NodeFrameWrite
                                 ]
+                          , Delete
                           ]
               }
 

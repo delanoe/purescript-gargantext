@@ -3,22 +3,17 @@
   -- Select a backend and log into it
 module Gargantext.Components.Login where
 
-import Prelude (Unit, bind, const, discard, pure, show, ($), (<>), (*>), (<$>), (>), map, (==), (/=), not, (&&))
+import DOM.Simple.Console (log)
 import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Sequence as DS
+import Data.String as DST
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import Data.String as DST
-import DOM.Simple.Console (log)
-import Data.Sequence as DS
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import Effect.Aff (launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-------------------------------------------------------------------------
+import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Tools (checkbox)
 import Gargantext.Components.Forms (clearfix, cardBlock, cardGroup, center, formGroup)
 import Gargantext.Components.Login.Types (AuthRequest(..))
@@ -27,6 +22,9 @@ import Gargantext.Sessions (Session, Sessions(..), postAuthRequest, unSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils (csrfMiddlewareToken)
 import Gargantext.Utils.Reactix as R2
+import Prelude (Unit, bind, const, discard, map, pure, show, ($), (&&), (*>), (/=), (<$>), (<>), (==), (>))
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 -- TODO: ask for login (modal) or account creation after 15 mn when user
 -- is not logged and has made one search at least
