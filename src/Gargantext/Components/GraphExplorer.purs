@@ -115,15 +115,14 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       pure $
         RH.div
           { id: "graph-explorer" }
-          [ R2.row
-            [ outer
-              [ inner
-                [ row1
+          [ rowToggle
                   [ col [ pullLeft [ Toggle.treeToggleButton controls.showTree ] ]
                   , col [ Toggle.controlsToggleButton controls.showControls ]
                   , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
-                  ]
-                , rowControls [ Controls.controls controls ]
+                  ], R2.row
+            [ outer
+              [ inner
+                [ rowControls [ Controls.controls controls ]
                 , R2.row [
                         tree { frontends
                              , mCurrentRoute
@@ -156,8 +155,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
 
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
-    row1  = RH.div { className: "row", style: { paddingBottom: "10px", marginTop: "-24px" } }
-    rowControls = RH.div { className: "row controls" }
+    rowToggle  = RH.div { id: "toggle-container" }
+    rowControls = RH.div { id: "controls-container" }
     col       = RH.div { className: "col-md-4" }
     pullLeft  = RH.div { className: "pull-left" }
     pullRight = RH.div { className: "pull-right" }

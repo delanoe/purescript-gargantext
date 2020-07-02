@@ -134,7 +134,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
 
       pure $ case getShowControls props of
         false -> RH.div {} []
-        true -> RH.div { className: "col-md-12", style: { paddingBottom: "10px" } }
+        true -> RH.div {}
             [ R2.menu { id: "toolbar" }
               [ RH.ul {}
                 [ -- change type button (?)

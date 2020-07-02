@@ -5,13 +5,27 @@
 #graph-explorer #toolbar ul {
   display: flex;
   flex-direction: row;
+  margin: 0;
 }
 #graph-explorer #toolbar ul li {
   display: flex;
   max-width: 200px;
 }
-#graph-explorer .row.controls {
-  height: 79px;
+#graph-explorer #toggle-container {
+  position: absolute;
+  z-index: 999;
+  right: 15px;
+  top: 10px;
+  width: 70%;
+}
+#graph-explorer #controls-container {
+  position: absolute;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.75);
+  overflow: auto;
+  left: 0;
+  right: 0;
 }
 #graph-explorer .graph-tree {
   position: absolute;
