@@ -4,6 +4,7 @@
   "source": ".psc-package/local/.set/packages.json",
   "depends": [
     "affjax",
+    "aff-promise",
     "argonaut",
     "console",
     "css",
@@ -20,6 +21,7 @@
     "markdown-smolder",
     "math",
     "maybe",
+    "milkis",
     "nonempty",
     "numbers",
     "prelude",

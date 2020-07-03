@@ -18,6 +18,9 @@ type MetricsLoadViewProps a = (
   | MetricsProps
   )
 
+cacheName :: String
+cacheName = "metrics"
+
 metricsLoadView :: forall a. Record (MetricsLoadViewProps a) -> R.Element
 metricsLoadView p = R.createElement metricsLoadViewCpt p []
 

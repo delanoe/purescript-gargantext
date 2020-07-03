@@ -1,6 +1,5 @@
 module Gargantext.Hooks.Loader where
 
-import Gargantext.Prelude
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
 import Data.Argonaut.Core (stringify)
 import Data.Argonaut.Parser (jsonParser)
@@ -13,6 +12,8 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Web.Storage.Storage as WSS
+
+import Gargantext.Prelude
 
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Utils as GU
