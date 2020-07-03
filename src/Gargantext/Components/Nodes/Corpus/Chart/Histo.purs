@@ -19,7 +19,7 @@ import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
-import Gargantext.Hooks.Loader (HashedResponse(..))
+import Gargantext.Hooks.Loader (HashedResponse(..), RequestWithLastUpdated(..), ResponseWithLastUpdated(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType(..))
@@ -61,10 +61,17 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , series    : [seriesBarD1 {name: "Number of publication / year"} $
                  map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count'] }
 
-getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse HistoMetrics)
+-- getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse HistoMetrics)
+-- getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
+--   HashedResponse { md5, value: ChartMetrics ms } <- get session chart
+--   pure $ HashedResponse { md5, value: ms."data" }
+--   where
+--     chart = Chart {chartType: Histo, listId, tabType, limit} (Just corpusId)
+
+getMetrics :: Session -> Tuple Reload (Record Path) -> Aff HistoMetrics
 getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
-  HashedResponse { md5, value: ChartMetrics ms } <- get session chart
-  pure $ HashedResponse { md5, value: ms."data" }
+  ChartMetrics ms <- get session chart
+  pure $ ms."data"
   where
     chart = Chart {chartType: Histo, listId, tabType, limit} (Just corpusId)
 
@@ -81,7 +88,7 @@ histoCpt = R.hooksComponent "G.C.N.C.C.H.histo" cpt
     cpt {path, session} _ = do
       reload <- R.useState' 0
       --pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
-      pure $ metricsWithCacheLoadView { getMetrics, getMetricsMD5, keyFunc: const "histo", loaded, path, reload, session }
+      pure $ metricsWithCacheLoadView { getMetrics, keyFunc: const "histo", loaded, path, reload, session }
 
 loaded :: Session -> Record Path -> R.State Reload -> HistoMetrics -> R.Element
 loaded session path reload loaded =

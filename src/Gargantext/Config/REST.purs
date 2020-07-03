@@ -3,8 +3,8 @@ module Gargantext.Config.REST where
 import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..), formData, formURLEncoded)
 import Affjax.RequestHeader as ARH
+import Affjax.ResponseHeader as ARsH
 import Affjax.ResponseFormat as ResponseFormat
-import DOM.Simple.Console (log)
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson)
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
@@ -12,13 +12,15 @@ import Data.FormURLEncoded as FormURLEncoded
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON, multipartFormData)
-import Data.Tuple (Tuple)
+import Data.Tuple (Tuple(..))
+import DOM.Simple.Console (log)
 import Effect.Aff (Aff, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
+import Web.XHR.FormData as XHRFormData
+
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
-import Web.XHR.FormData as XHRFormData
 
 type Token = String
 
@@ -55,11 +57,48 @@ send m mtoken url reqbody = do
         Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
         Right b -> pure b
 
+
+sendWithRequest :: forall a b. EncodeJson a => DecodeJson b =>
+        Method -> ARH.Request -> Maybe Token -> String -> Maybe a -> Aff (Tuple ARsH.Response b)
+sendWithRequest m req mtoken url reqbody = do
+  affResp <- request $ req
+         { url = url
+         , responseFormat = ResponseFormat.json
+         , method = Left m
+         , headers =  [ ARH.ContentType applicationJSON
+                      , ARH.Accept applicationJSON
+                      ]
+                      <> req.headers
+                      <> foldMap (\token ->
+                        [ARH.RequestHeader "Authorization" $  "Bearer " <> token]
+                      ) mtoken
+         , content  = (Json <<< encodeJson) <$> reqbody
+         }
+  case mtoken of
+    Nothing -> pure unit
+    Just token -> liftEffect $ do
+      let cookie = "JWT-Cookie=" <> token <> "; Path=/;" --" HttpOnly; Secure; SameSite=Lax"
+      R2.setCookie cookie
+  case affResp.body of
+    Left err -> do
+      _ <-  liftEffect $ log $ printResponseFormatError err
+      throwError $ error $ printResponseFormatError err
+    Right json -> do
+      --_ <-  liftEffect $ log json.status
+      --_ <-  liftEffect $ log json.headers
+      --_ <-  liftEffect $ log json.body
+      case decodeJson json of
+        Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
+        Right b -> pure $ Tuple affResp b
+
 noReqBody :: Maybe Unit
 noReqBody = Nothing
 
 get :: forall a. DecodeJson a => Maybe Token -> String -> Aff a
 get mtoken url = send GET mtoken url noReqBody
+
+getH :: forall a. DecodeJson a => Maybe Token -> ARH.RequestHeader -> String -> Aff (Tuple ARsH.Response a)
+getH mtoken headers url = sendWithRequest GET mtoken (ARH.defaultRequest { headers: headers }) url noReqBody
 
 put :: forall a b. EncodeJson a => DecodeJson b => Maybe Token -> String -> a -> Aff b
 put mtoken url = send PUT mtoken url <<< Just

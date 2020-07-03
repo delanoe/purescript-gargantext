@@ -1,7 +1,8 @@
 -- | A module for authenticating to create sessions and handling them
 module Gargantext.Sessions where
 
-import DOM.Simple.Console (log2)
+import Affjax.RequestHeader as ARH
+import Affjax.ResponseHeader as ARsH
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:))
 import Data.Argonaut.Core (Json, fromArray, jsonEmptyObject, stringify)
 import Data.Argonaut.Parser (jsonParser)
@@ -14,8 +15,14 @@ import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Traversable (traverse)
+import Data.Tuple (Tuple(..))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<), bind)
+import Reactix as R
+import Web.Storage.Storage (getItem, removeItem, setItem)
+
 import Gargantext.Components.Login.Types (AuthData(..), AuthInvalid(..), AuthRequest(..), AuthResponse(..), TreeId)
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend(..), backendUrl, sessionPath, toUrl)
@@ -23,9 +30,6 @@ import Gargantext.Routes (SessionRoute)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
 import Gargantext.Utils.Reactix (getls)
 import Gargantext.Utils.Reactix as R2
-import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<), bind)
-import Reactix as R
-import Web.Storage.Storage (getItem, removeItem, setItem)
 
 
 -- | A Session represents an authenticated session for a user at a
@@ -219,6 +223,9 @@ postAuthRequest backend ar@(AuthRequest {username}) =
 
 get :: forall a p. DecodeJson a => ToUrl Session p => Session -> p -> Aff a
 get session@(Session {token}) p = REST.get (Just token) (toUrl session p)
+
+getH :: forall a p. DecodeJson a => ToUrl Session p => Session -> Array ARH.RequestHeader -> p -> Aff (Tuple ARsH.Response a)
+getH session@(Session {token}) headers p = REST.getH (Just token) headers (toUrl session p)
 
 put :: forall a b p. EncodeJson a => DecodeJson b => ToUrl Session p => Session -> p -> a -> Aff b
 put session@(Session {token}) p = REST.put (Just token) (toUrl session p)
