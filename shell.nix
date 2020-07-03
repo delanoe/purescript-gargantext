@@ -16,7 +16,7 @@ let
     set -e
 
     echo "Compiling"
-    build-purs-from-store
+    build-purs
     echo "Bundling"
     yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
   '';
