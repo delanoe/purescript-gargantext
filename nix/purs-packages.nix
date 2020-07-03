@@ -10,6 +10,15 @@
       sha256 = "19v5psd6jz13gr5yqyx8286b5bpfq1dax51w906y0mqgnfz92yzr";
     };
   };
+  "aff-promise" = {
+    name = "aff-promise";
+    version = "v2.1.0";
+    src = pkgs.fetchgit {
+      url = "https://github.com/nwolverson/purescript-aff-promise.git";
+      rev = "v2.1.0";
+      sha256 = "0khm53lvxgvc7fbsvcr2h2wlhcgay8vq45755f0w8vpk1441dvww";
+    };
+  };
   "affjax" = {
     name = "affjax";
     version = "v9.0.0";
@@ -512,6 +521,15 @@
       url = "https://github.com/purescript-contrib/purescript-media-types.git";
       rev = "v4.0.1";
       sha256 = "0ykwmxrhmwfy6c5mxjxa43xdf5xqakrqyvr5fn986yad50gjqj75";
+    };
+  };
+  "milkis" = {
+    name = "milkis";
+    version = "v7.2.0";
+    src = pkgs.fetchgit {
+      url = "https://github.com/justinwoo/purescript-milkis.git";
+      rev = "v7.2.0";
+      sha256 = "1i6l8k4clrnq4wxbdzzq08kagk591yr24xip86z1j7xap98y02xg";
     };
   };
   "mmorph" = {
