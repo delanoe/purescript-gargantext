@@ -119,7 +119,8 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
 
         SubTreeParams { valitypes } = subTreeParams
         
-        sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id') ary
+        sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id')
+                  $ A.filter (\(NTree (LNode {id:id'}) _) -> id'/= id) ary
 
         children = map (\ctree -> subTreeTreeView (p { tree = ctree })) sortedAry
 
