@@ -249,6 +249,7 @@ settingsBox NodeFrameWrite =
               , buttons : [ Add [ NodeFrameWrite
                                 , NodeFrameCalc
                                 ]
+                          , Move moveFrameParameters
                           , Delete
                           ]
               }
@@ -261,6 +262,7 @@ settingsBox NodeFrameCalc =
               , buttons : [ Add [ NodeFrameCalc
                                 , NodeFrameWrite
                                 ]
+                          , Move moveFrameParameters
                           , Delete
                           ]
               }
@@ -289,6 +291,30 @@ moveParameters = { subTreeParams : SubTreeParams
                                               ]
                                  }
                   }
+
+
+moveFrameParameters = { subTreeParams : SubTreeParams 
+                                 { showtypes: [ FolderPrivate
+                                              , FolderShared
+                                              , Team
+                                              , FolderPublic
+                                              , Folder
+                                              , Corpus
+                                              , NodeFrameWrite
+                                              , NodeFrameCalc
+                                              ]
+                                 , valitypes: [ FolderPrivate
+                                              , Team
+                                              -- , FolderPublic
+                                              , Folder
+                                              , Corpus
+                                              , NodeFrameWrite
+                                              , NodeFrameCalc
+                                              ]
+                                 }
+                  }
+
+
 
 linkParams =  { subTreeParams : SubTreeParams 
                               { showtypes: [ FolderPrivate
