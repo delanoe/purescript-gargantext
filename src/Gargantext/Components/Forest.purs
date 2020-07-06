@@ -63,7 +63,7 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
 plus :: R2.Setter Boolean -> R.Element
 plus showLogin =
   H.button { on: {click}
-           , className: "btn btn-primary"
+           , className: "btn btn-default"
            }
           [ H.div { "type": ""
                   , className: "fa fa-universal-access fa-lg"
