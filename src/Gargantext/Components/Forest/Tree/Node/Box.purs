@@ -215,12 +215,12 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
                      []
                    ]
       where
-        {- -- This shows the Help of this button
-        undo = setNodePopup
-             $ const (node { action = Nothing })
-        -}
-
-        doToDo = setNodePopup $ const $ node { action = Just todo }
+        -- | Open the help indications if selected already
+        doToDo = setNodePopup $ const $ node { action = todo' }
+          where
+            todo' = case action == Just todo of
+              true  -> Nothing
+              false -> Just todo 
 
         iconAStyle :: GT.NodeType -> NodeAction -> {
                         color      :: String
