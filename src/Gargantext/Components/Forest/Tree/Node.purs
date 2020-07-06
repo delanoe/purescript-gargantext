@@ -22,6 +22,7 @@ import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, unit, void, ($), (<>), (==))
 import Gargantext.Routes as Routes
+import Gargantext.Version as GV
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
@@ -88,6 +89,9 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
                                                 }
                         ) tasks
                    )
+        , if nodeType == GT.NodeUser
+             then GV.versionView {session}
+             else H.div {} []
         ]
           where
             SettingsBox {show: showBox} = settingsBox nodeType
@@ -96,6 +100,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
     name' {name, nodeType} = if nodeType == GT.NodeUser
                                 then show session
                                 else name
+
     chevronIcon nodeType folderOpen'@(open /\ _) =
       H.a { className: "chevron-icon"
           , onClick: R2.effToggler folderOpen'
