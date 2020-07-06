@@ -245,11 +245,11 @@ fldr Annuaire false = "fa fa-address-card"
 fldr NodeContact true  = "fa fa-address-card-o"
 fldr NodeContact false = "fa fa-address-card"
 
-fldr NodeFrameWrite true  = "fa fa-file-word-o"
-fldr NodeFrameWrite false = "fa fa-file-word-o"
+fldr NodeFrameWrite true  = "fa fa-file-text-o"
+fldr NodeFrameWrite false = "fa fa-file-text-o"
 
-fldr NodeFrameCalc true  = "fa fa-file-excel-o"
-fldr NodeFrameCalc false = "fa fa-file-excel-o"
+fldr NodeFrameCalc true  = "fa fa-calculator"
+fldr NodeFrameCalc false = "fa fa-calculator"
 
 fldr _        false  = "fa fa-folder-o"
 fldr _        true   = "fa fa-folder-open"

@@ -79,15 +79,8 @@ data FrameType = Calc | Write
 type Base = String
 type FrameId = String
 
-hframe :: FrameType -> String
-hframe ft = "https://" <> hframe' ft <> ".frame.gargantext.org/test"
-  where
-    hframe' Calc  = "calc"
-    hframe' Write = "write"
-
 hframeUrl :: Base -> FrameId -> String
 hframeUrl base frame_id = base <> "/" <> frame_id <> "?both"
-
 
 frameLayoutView :: Record ViewProps -> R.Element
 frameLayoutView props = R.createElement frameLayoutViewCpt props []
@@ -96,11 +89,10 @@ frameLayoutViewCpt :: R.Component ViewProps
 frameLayoutViewCpt = R.hooksComponent "G.C.N.C.frameLayoutView" cpt
   where
     cpt {frame: (NodePoly {hyperdata: Hyperdata {base, frame_id}}), nodeId, reload, session} _ = do
-      pure $ H.div { className : "istex-search" }
+      pure $ H.div { className : "frame" }
                    [ H.iframe { src: hframeUrl base frame_id
                               , width: "100%"
                               , height: "100%"
-                      -- , ref: "https://write.frame.gargantext.org/test"
                               } []
                    ]
 

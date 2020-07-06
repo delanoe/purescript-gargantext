@@ -40,13 +40,20 @@ versionCpt = R.hooksComponent "G.C.A.version" cpt
           liftEffect $ setVer $ const v
 
       pure $ case version == versionBack of
-        true  -> H.div {} []
+        true  -> H.a { className: "fa fa-check-circle-o"
+                     , "text-decoration": "none"
+                     , title: "Versions match: frontend ("
+                            <> version
+                            <> "), backend ("
+                            <> versionBack
+                            <> ")"
+                      } []
         false -> H.a { className: "fa fa-exclamation-triangle"
+                     , "text-decoration": "none"
                      , title: "Versions mismatch: frontend ("
                             <> version
                             <> "), backend ("
                             <> versionBack
                             <> ")"
-                     }
-                   []
+                     } []
 

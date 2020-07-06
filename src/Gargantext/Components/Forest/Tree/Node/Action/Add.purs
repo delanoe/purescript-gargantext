@@ -61,7 +61,7 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
     el = R.hooksComponent "AddNodeView" cpt
     cpt {id, name} _ = do
       nodeName@(name' /\ setNodeName) <- R.useState' "Name"
-      nodeType'@(nt /\ setNodeType)  <- R.useState' $ fromMaybe NodeUser $ head nodeTypes
+      nodeType'@(nt /\ setNodeType)   <- R.useState' $ fromMaybe NodeFolder $ head nodeTypes
 
       let 
           SettingsBox {edit} = settingsBox nt
