@@ -90,10 +90,14 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
 
 getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
 getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
-  get session $ ChartMD5 { chartType: ChartPie, listId, tabType } (Just corpusId)
+  get session $ ChartMD5 { chartType: ChartPie, listId: mListId, tabType } (Just corpusId)
+  where
+    mListId = if listId == 0 then Nothing else (Just listId)
 
 chartUrl :: Record Path -> SessionRoute
-chartUrl { corpusId, limit, listId, tabType } = Chart {chartType: ChartPie, limit, listId, tabType} (Just corpusId)
+chartUrl { corpusId, limit, listId, tabType } = Chart {chartType: ChartPie, limit, listId: mListId, tabType} (Just corpusId)
+  where
+    mListId = if listId == 0 then Nothing else (Just listId)
 
 handleResponse :: HashedResponse ChartMetrics -> HistoMetrics
 handleResponse (HashedResponse { value: ChartMetrics ms }) = ms."data"

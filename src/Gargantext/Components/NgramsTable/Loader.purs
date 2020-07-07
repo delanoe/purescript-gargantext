@@ -1,7 +1,6 @@
 module Gargantext.Components.NgramsTable.Loader where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
-import Data.Argonaut.Core (stringify)
+import Data.Argonaut (class DecodeJson)
 import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
@@ -9,8 +8,7 @@ import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Reactix as R
-import Web.Storage.Storage as WSS
-  
+
 import Gargantext.Prelude
 
 import Gargantext.Components.LoadingSpinner (loadingSpinner)

@@ -32,13 +32,14 @@ import Gargantext.Prelude
 
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoader, useLoaderWithCache, HashedResponse(..))
+import Gargantext.Hooks.Loader (useLoader, useLoaderWithCache, useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, post, delete, put)
 import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabType, TabPostQuery(..), AffTableResult, showTabType')
+import Gargantext.Utils.CacheAPI as GUC
 ------------------------------------------------------------------------
 
 data Category = Trash | UnRead | Checked | Topic | Favorite
@@ -370,17 +371,6 @@ loadPage session { corpusId, listId, nodeId, query, tabType } = do
             else
               Tuple res.count docs
   pure $ HashedResponse { md5, value: ret }
-  where
-    res2corpus :: Response -> DocumentsView
-    res2corpus (Response r) =
-      DocumentsView { _id : r.cid
-      , url    : ""
-      , date   : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
-      , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
-      , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
-      , category : r.category
-      , ngramCount : r.ngramCount
-     }
 
 getPageMD5 :: Session -> PageParams -> Aff String
 getPageMD5 session { corpusId, listId, nodeId, query, tabType } = do
@@ -396,6 +386,17 @@ convOrderBy (Just (T.ASC  (T.ColumnName "Source"))) = Just SourceAsc
 convOrderBy (Just (T.DESC (T.ColumnName "Source"))) = Just SourceDesc
 convOrderBy _ = Nothing
 
+res2corpus :: Response -> DocumentsView
+res2corpus (Response r) =
+  DocumentsView { _id : r.cid
+  , url    : ""
+  , date   : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
+  , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
+  , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
+  , category : r.category
+  , ngramCount : r.ngramCount
+}
+
 pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
@@ -403,14 +404,34 @@ pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
   cpt props@{frontends, session, nodeId, listId, corpusId, tabType, query, params} _ =
     -- useLoader path (loadPage session) paint
-    useLoaderWithCache path keyFunc (getPageMD5 session) (loadPage session) paint
+    --useLoaderWithCache path keyFunc (getPageMD5 session) (loadPage session) paint
+    useLoaderWithCacheAPI {
+        cacheEndpoint: getPageMD5 session
+      , handleResponse
+      , mkRequest
+      , path
+      , renderer: paint
+      }
     where
-      path = { nodeId, listId, corpusId, tabType, query, params }
+      path = { corpusId, listId, nodeId, params, query, tabType }
       paint (Tuple count docs) = page params (newProps count) docs
       newProps count = props { totalRecords = count }
 
-      keyFunc { corpusId, listId, nodeId, tabType } =
-       "page-" <> (show tabType) <> "-" <> (show corpusId) <> "-" <> (show nodeId) <> "-" <> (show listId)
+      -- keyFunc { corpusId, listId, nodeId, tabType } =
+      --  "page-" <> (show tabType) <> "-" <> (show corpusId) <> "-" <> (show nodeId) <> "-" <> (show listId)
+
+      mkRequest :: PageParams -> GUC.Request
+      mkRequest p@{ listId, nodeId, tabType } =
+        GUC.makeGetRequest session $ NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId)
+      handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
+      handleResponse (HashedResponse { md5, value: res }) = ret
+        where
+          docs = res2corpus <$> res.docs
+          ret = if mock then
+                    --Tuple 0 (take limit $ drop offset sampleData)
+                    Tuple 0 sampleData
+                  else
+                    Tuple res.count docs
 
 type PageProps = (
     documents :: Array DocumentsView

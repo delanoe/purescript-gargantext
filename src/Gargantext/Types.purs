@@ -346,8 +346,8 @@ type CorpusMetricOpts =
 
 type ChartOpts =
   { chartType :: ChartType
-  , listId    :: ListId
   , limit     :: Maybe Limit
+  , listId    :: Maybe ListId
   , tabType   :: TabType
   }
 

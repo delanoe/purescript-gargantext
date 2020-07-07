@@ -72,7 +72,8 @@ tabsCpt = R.hooksComponent "G.C.Nodes.Texts.tabs" cpt
         docView' tabType = docView { frontends, session, corpusId, corpusData, tabType }
         docs = R.fragment [ docsHisto, docView' TabDocs ]
         docsHisto = histo { path, session }
-          where path = { corpusId, listId: 0, limit: Nothing, tabType: TabCorpus TabDocs }
+          where
+            path = { corpusId, listId: 0, limit: Nothing, tabType: TabCorpus TabDocs }
         moreLikeFav = docView' TabMoreLikeFav
         moreLikeTrash = docView' TabMoreLikeTrash
         trash = docView' TabTrash

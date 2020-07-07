@@ -29,7 +29,6 @@ import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
@@ -505,11 +504,6 @@ mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
         , renderer: \versioned -> mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
         }
 
-    --   useLoaderWithVersionCache (pathNoLimit path) (keyFunc props) (versionEndpoint props) loadNgramsTable \versioned -> do
-    --       mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
-
-    -- keyFunc { defaultListId, nodeId, tabType } _ =
-    --   "ngrams-table-" <> (show tabType) <> "-" <> (show nodeId) <> "-" <> (show defaultListId)
     versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
     versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
 

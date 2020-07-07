@@ -62,10 +62,14 @@ scatterOptions nodes = Options
 
 getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
 getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
-  get session $ ChartMD5 { chartType: ChartTree, listId, tabType } (Just corpusId)
+  get session $ ChartMD5 { chartType: ChartTree, listId: mListId, tabType } (Just corpusId)
+  where
+    mListId = if listId == 0 then Nothing else (Just listId)
 
 chartUrl :: Record Path -> SessionRoute
-chartUrl { corpusId, limit, listId, tabType } = Chart {chartType: ChartTree, limit, listId, tabType} (Just corpusId)
+chartUrl { corpusId, limit, listId, tabType } = Chart {chartType: ChartTree, limit, listId: mListId, tabType} (Just corpusId)
+  where
+    mListId = if listId == 0 then Nothing else (Just listId)
 
 handleResponse :: HashedResponse Metrics -> Loaded
 handleResponse (HashedResponse { value: Metrics ms }) = ms."data"
