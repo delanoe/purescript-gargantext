@@ -8,15 +8,19 @@ import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
+import Effect.Exception (error)
+import Milkis as M
 import Reactix as R
 import Web.Storage.Storage as WSS
 
 import Gargantext.Prelude
 
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
+import Gargantext.Ends (class ToUrl, toUrl)
 import Gargantext.Utils as GU
+import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
 
@@ -49,8 +53,11 @@ useLoaderEffect path state@(state' /\ setState) loader = do
         liftEffect $ setState $ const $ Just l
 
 
+type MD5 = String
+
+
 newtype HashedResponse a = HashedResponse {
-    md5 :: String
+    md5 :: MD5
   , value :: a
   }
 
@@ -149,3 +156,70 @@ useCachedLoaderEffect { cacheEndpoint, keyFunc, loadRealData, path, state: state
   where
     parse  s = GU.mapLeft (\err -> "Error parsing serialised sessions:" <> show err) (jsonParser s)
     decode j = GU.mapLeft (\err -> "Error decoding serialised sessions:" <> show err) (decodeJson j)
+
+
+type LoaderWithCacheAPIProps path res ret = (
+    cacheEndpoint :: path -> Aff MD5
+  , handleResponse :: HashedResponse res -> ret
+  , mkRequest :: path -> GUC.Request
+  , path :: path
+  , renderer :: ret -> R.Element
+  )
+
+
+useLoaderWithCacheAPI :: forall path res ret. Eq path => Show path => DecodeJson res =>
+                         Record (LoaderWithCacheAPIProps path res ret)
+                      -> R.Hooks R.Element
+useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
+  state <- R.useState' Nothing
+  useCachedAPILoaderEffect { cacheEndpoint
+                           , handleResponse
+                           , mkRequest
+                           , path
+                           , state }
+  pure $ maybe (loadingSpinner {}) renderer (fst state)
+
+type LoaderWithCacheAPIEffectProps path res ret = (
+    cacheEndpoint :: path -> Aff MD5
+  , handleResponse :: HashedResponse res -> ret
+  , mkRequest :: path -> GUC.Request
+  , path :: path
+  , state :: R.State (Maybe ret)
+  )
+
+useCachedAPILoaderEffect :: forall path res ret. Eq path => Show path => DecodeJson res =>
+                            Record (LoaderWithCacheAPIEffectProps path res ret)
+                         -> R.Hooks Unit
+useCachedAPILoaderEffect { cacheEndpoint
+                         , handleResponse
+                         , mkRequest
+                         , path
+                         , state: state@(state' /\ setState) } = do
+  oPath <- R.useRef path
+
+  R.useEffect' $ do
+    if (R.readRef oPath == path) && (isJust state') then
+      pure unit
+    else do
+      R.setRef oPath path
+
+      let cacheName = "cache-api-loader"
+      let req = mkRequest path
+      let keyCache = "cached-api-md5-" <> (show path)
+      -- log2 "[useCachedLoader] mState" mState
+      launchAff_ $ do
+        cache <- GUC.openCache $ GUC.CacheName cacheName
+        -- TODO Parallelize?
+        hr@(HashedResponse { md5, value }) <- GUC.cachedJson cache req
+        cacheReal <- cacheEndpoint path
+        val <- if md5 == cacheReal then
+          pure hr
+        else do
+          _ <- GUC.delete cache req
+          hr@(HashedResponse { md5, value }) <- GUC.cachedJson cache req
+          if md5 == cacheReal then
+            pure hr
+          else
+            throwError $ error $ "Fetched clean cache but hashes don't match"
+        liftEffect $ do
+          setState $ const $ Just $ handleResponse hr

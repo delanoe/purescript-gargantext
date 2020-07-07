@@ -26,6 +26,7 @@ import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType, TermList(..))
+import Gargantext.Utils.CacheAPI as GUC
 
 newtype Metric = Metric
   { label :: String
@@ -97,16 +98,25 @@ scatterOptions metrics' = Options
                         }
     --}
 
-getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse Loaded)
-getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
-  HashedResponse { md5, value: Metrics ms } <- get session metrics'
-  pure $ HashedResponse { md5, value: ms."data" }
-  where
-    metrics' = CorpusMetrics {limit, listId, tabType} (Just corpusId)
+-- getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse Loaded)
+-- getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
+--   HashedResponse { md5, value: Metrics ms } <- get session metrics'
+--   pure $ HashedResponse { md5, value: ms."data" }
+--   where
+--     metrics' = CorpusMetrics {limit, listId, tabType} (Just corpusId)
 
 getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
 getMetricsMD5 session (_ /\ { corpusId, listId, tabType }) =
   get session $ CorpusMetricsMD5 { listId, tabType } (Just corpusId)
+
+chartUrl :: Record Path -> SessionRoute
+chartUrl { corpusId, limit, listId, tabType } = CorpusMetrics { limit, listId, tabType } (Just corpusId)
+
+handleResponse :: HashedResponse Metrics -> Loaded
+handleResponse (HashedResponse { value: Metrics ms }) = ms."data"
+
+mkRequest :: Session -> ReloadPath -> GUC.Request
+mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
 
 metrics :: Record Props -> R.Element
 metrics props = R.createElement metricsCpt props []
@@ -116,13 +126,19 @@ metricsCpt = R.hooksComponent "G.C.N.C.C.M.metrics" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0
-      --pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
+      pure $ metricsWithCacheLoadView {
+          getMetricsMD5
+        , handleResponse
+        , loaded
+        , mkRequest: mkRequest session
+        , path
+        , reload
+        , session
+        }
 
-      pure $ metricsWithCacheLoadView { getMetrics, getMetricsMD5, keyFunc: const "metrics", loaded, path, reload, session }
 
-
-loaded :: Session -> Record Path -> R.State Reload -> Loaded -> R.Element
-loaded session path reload loaded =
+loaded :: Record MetricsProps -> Loaded -> R.Element
+loaded { path, reload, session } loaded =
   H.div {} [
     U.reloadButton reload
   , U.chartUpdateButton { chartType: Scatter, path, reload, session }

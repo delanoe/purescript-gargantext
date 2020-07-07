@@ -22,7 +22,6 @@ import Unsafe.Coerce (unsafeCoerce)
 import Web.XHR.FormData as XHRFormData
 
 import Gargantext.Prelude
-import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
 type Token = String
@@ -43,14 +42,6 @@ send m mtoken url reqbody = do
                       ) mtoken
          , content  = (Json <<< encodeJson) <$> reqbody
          }
-
-  cache <- GUC.openCache $ GUC.CacheName "test"
-  let method = unsafeCoerce (show m) :: Milkis.Method
-  let options = { method, headers: Milkis.makeHeaders {"content-type": "application/json"} }
-  let req' = GUC.makeRequest (Milkis.URL url) options
-  res <- GUC.cached cache req'
-  liftEffect $ log2 "[send] cache res" res
-  liftEffect $ log2 "[send] res json" $ Milkis.json res
 
   affResp <- request req
   case mtoken of
@@ -148,3 +139,4 @@ postMultipartFormData mtoken url body = do
       case decodeJson json of
         Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
         Right b -> pure b
+

@@ -23,6 +23,7 @@ import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType(..))
+import Gargantext.Utils.CacheAPI as GUC
 
 newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
@@ -61,16 +62,25 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , series    : [seriesBarD1 {name: "Number of publication / year"} $
                  map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count'] }
 
-getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse HistoMetrics)
-getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
-  HashedResponse { md5, value: ChartMetrics ms } <- get session chart
-  pure $ HashedResponse { md5, value: ms."data" }
-  where
-    chart = Chart {chartType: Histo, listId, tabType, limit} (Just corpusId)
+-- getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse HistoMetrics)
+-- getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
+--   HashedResponse { md5, value: ChartMetrics ms } <- get session chart
+--   pure $ HashedResponse { md5, value: ms."data" }
+--   where
+--     chart = Chart {chartType: Histo, listId, tabType, limit} (Just corpusId)
 
 getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
 getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
   get session $ ChartMD5 { chartType: Histo, listId, tabType } (Just corpusId)
+
+chartUrl :: Record Path -> SessionRoute
+chartUrl { corpusId, limit, listId, tabType } = Chart {chartType: Histo, limit, listId, tabType} (Just corpusId)
+
+handleResponse :: HashedResponse ChartMetrics -> HistoMetrics
+handleResponse (HashedResponse { value: ChartMetrics ms }) = ms."data"
+
+mkRequest :: Session -> ReloadPath -> GUC.Request
+mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
 
 histo :: Record Props -> R.Element
 histo props = R.createElement histoCpt props []
@@ -78,13 +88,20 @@ histo props = R.createElement histoCpt props []
 histoCpt :: R.Component Props
 histoCpt = R.hooksComponent "G.C.N.C.C.H.histo" cpt
   where
-    cpt {path, session} _ = do
+    cpt { path, session } _ = do
       reload <- R.useState' 0
-      --pure $ metricsLoadView {getMetrics, loaded, path, reload, session}
-      pure $ metricsWithCacheLoadView { getMetrics, getMetricsMD5, keyFunc: const "histo", loaded, path, reload, session }
+      pure $ metricsWithCacheLoadView {
+          getMetricsMD5
+        , handleResponse
+        , loaded
+        , mkRequest: mkRequest session
+        , path
+        , reload
+        , session
+        }
 
-loaded :: Session -> Record Path -> R.State Reload -> HistoMetrics -> R.Element
-loaded session path reload loaded =
+loaded :: Record MetricsProps -> HistoMetrics -> R.Element
+loaded { path, reload, session } loaded =
   H.div {} [
     U.reloadButton reload
   , U.chartUpdateButton { chartType: Histo, path, reload, session }
