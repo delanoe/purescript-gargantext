@@ -1,6 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Types where
 
 import Data.Maybe (Maybe)
+import Data.Tuple (Tuple)
 import Reactix as R
 
 import Gargantext.Sessions (Session)
@@ -24,3 +25,5 @@ type MetricsProps = (
     reload  :: R.State Int
   | Props
 )
+
+type ReloadPath = Tuple Reload (Record Path)

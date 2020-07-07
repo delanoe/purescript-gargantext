@@ -202,7 +202,7 @@ sessionPath (R.Chart {chartType, listId, limit, tabType} i) =
      $ show chartType
     <> "?ngramsType=" <> showTabType' tabType
     <> "&listType=MapTerm" -- <> show listId
-    <> "&listId=" <> show listId
+    <> "&list=" <> show listId
     where
       limitPath = case limit of
         Just li -> "&limit=" <> show li
@@ -213,7 +213,7 @@ sessionPath (R.ChartMD5 { chartType, listId, tabType } i) =
      $ show chartType
     <> "/md5?ngramsType=" <> showTabType' tabType
     <> "&listType=GraphTerm" -- <> show listId
-    <> "&listId=" <> show listId
+    <> "&list=" <> show listId
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 
 ------- misc routing stuff

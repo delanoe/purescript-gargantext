@@ -8,6 +8,11 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as RecordE
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (nodeMainSpan)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
@@ -31,10 +36,6 @@ import Gargantext.Sessions (OpenNodes, Session, mkNodeId, get)
 import Gargantext.Types (ID, Reload)
 import Gargantext.Types as GT
 import Gargantext.Routes as GR
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as RecordE
 
 ------------------------------------------------------------------------
 type CommonProps =

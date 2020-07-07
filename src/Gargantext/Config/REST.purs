@@ -4,7 +4,7 @@ import Affjax (defaultRequest, printResponseFormatError, request)
 import Affjax.RequestBody (RequestBody(..), formData, formURLEncoded)
 import Affjax.RequestHeader as ARH
 import Affjax.ResponseFormat as ResponseFormat
-import DOM.Simple.Console (log)
+import DOM.Simple.Console (log, log2)
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson)
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
@@ -12,13 +12,17 @@ import Data.FormURLEncoded as FormURLEncoded
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON, multipartFormData)
-import Data.Tuple (Tuple)
+import Data.Tuple (Tuple(..))
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
+import Milkis as Milkis
+import Unsafe.Coerce (unsafeCoerce)
+import Web.XHR.FormData as XHRFormData
+
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
-import Web.XHR.FormData as XHRFormData
 
 type Token = String
 
@@ -26,7 +30,7 @@ type Token = String
 send :: forall a b. EncodeJson a => DecodeJson b =>
         Method -> Maybe Token -> String -> Maybe a -> Aff b
 send m mtoken url reqbody = do
-  affResp <- request $ defaultRequest
+  let req = defaultRequest
          { url = url
          , responseFormat = ResponseFormat.json
          , method = Left m
@@ -38,6 +42,8 @@ send m mtoken url reqbody = do
                       ) mtoken
          , content  = (Json <<< encodeJson) <$> reqbody
          }
+
+  affResp <- request req
   case mtoken of
     Nothing -> pure unit
     Just token -> liftEffect $ do
@@ -133,3 +139,4 @@ postMultipartFormData mtoken url body = do
       case decodeJson json of
         Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
         Right b -> pure b
+
