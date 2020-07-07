@@ -2036,7 +2036,7 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-node-fetch@^1.0.1:
+node-fetch@^1.0.1, node-fetch@^1.7.1:
   version "1.7.3"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-1.7.3.tgz#980f6f72d85211a5347c6b2bc18c5b84c3eb47ef"
   integrity sha512-NhZ4CsKx7cYm2vSrBAr2PvFOe6sWDf0UYLRqA6svUYg7+/TSfVAu49jYC4BvQ4Sms9SZgdqGBgroqfDhJdTyKQ==
@@ -2481,6 +2481,13 @@ purescript-language-server@^0.12.9:
     vscode-languageserver "^5.2.1"
     vscode-uri "^2.1.1"
     which "^2.0.2"
+
+purescript-milkis@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/purescript-milkis/-/purescript-milkis-1.0.0.tgz#ec52931a8234a4cdffa40ac2928c10e41d51429f"
+  integrity sha512-tSU06h3QMCZMhMlOIQ9O8r9HFADguz1tWv69kh4b+5cD1xHgZk+Aee7pBWPdD18g64jUf3+6dsbBzO8ldkyntg==
+  dependencies:
+    node-fetch "^1.7.1"
 
 purescript@^0.12.5:
   version "0.12.5"

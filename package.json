@@ -22,6 +22,7 @@
         "echarts-for-react": "^2.0.14",
         "highlightjs": "^9.16.2",
         "prop-types": "15.6.2",
+        "purescript-milkis": "^1.0.0",
         "react": "^16.10",
         "react-awesome-popover": "^6.1.1",
         "react-dom": "^16.10",
