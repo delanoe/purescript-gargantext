@@ -23,7 +23,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Move   (moveNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Merge  (mergeNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Link   (linkNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
-import Gargantext.Components.Forest.Tree.Node.Action.Share (ShareValue(..), share)
+import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
@@ -274,12 +274,12 @@ performAction (RenameNode name) p@{ reload: (_ /\ setReload)
     performAction RefreshTree p
 
 -------
-performAction (ShareNode username) p@{ reload: (_ /\ setReload)
+performAction (ShareTeam username) p@{ reload: (_ /\ setReload)
                                      , session
                                      , tree: (NTree (LNode {id}) _)
                                      } =
   do
-    void $ share session id $ ShareValue {text:username}
+    void $ Share.share session id $ Share.ShareTeam {username}
 
 -------
 performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
