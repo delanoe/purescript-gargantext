@@ -32,14 +32,14 @@ import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core
-import Gargantext.Components.NgramsTable.Loader (useLoaderWithVersionCache)
+import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Table as T
-import Gargantext.Hooks.Loader (useLoaderWithCache)
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
 import Gargantext.Routes as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet)
+import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
 
@@ -497,14 +497,46 @@ mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
     cpt props@{nodeId, defaultListId, tabType, session, tabNgramType, withAutoUpdate} _ = do
       let path = initialPageParams session nodeId [defaultListId] tabType
 
-      useLoaderWithVersionCache (pathNoLimit path) (keyFunc props) (versionEndpoint props) loadNgramsTable \versioned -> do
-          mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
+      useLoaderWithCacheAPI {
+          cacheEndpoint: versionEndpoint props
+        , handleResponse
+        , mkRequest
+        , path
+        , renderer: \versioned -> mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
+        }
 
-    keyFunc { defaultListId, nodeId, tabType } _ =
-      "ngrams-table-" <> (show tabType) <> "-" <> (show nodeId) <> "-" <> (show defaultListId)
+    --   useLoaderWithVersionCache (pathNoLimit path) (keyFunc props) (versionEndpoint props) loadNgramsTable \versioned -> do
+    --       mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
+
+    -- keyFunc { defaultListId, nodeId, tabType } _ =
+    --   "ngrams-table-" <> (show tabType) <> "-" <> (show nodeId) <> "-" <> (show defaultListId)
     versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
     versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
 
+    mkRequest :: PageParams -> GUC.Request
+    mkRequest path@{ session } = GUC.makeGetRequest session $ url path
+      where
+        url { listIds
+            , nodeId
+            , params: { limit, offset, orderBy }
+            , searchQuery
+            , scoreType
+            , tabType
+            , termListFilter
+            , termSizeFilter
+            } = R.GetNgrams { limit
+                            , listIds
+                            , offset: Just offset
+                            , orderBy: convOrderBy <$> orderBy
+                            , searchQuery
+                            , tabType
+                            , termListFilter
+                            , termSizeFilter } (Just nodeId)
+
+    handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
+    handleResponse v = v
+
+    pathNoLimit :: PageParams -> PageParams
     pathNoLimit path@{ params } = path { params = params { limit = 100000 }
                                        , termListFilter = Nothing }
 

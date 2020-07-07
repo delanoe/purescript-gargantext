@@ -167,7 +167,7 @@ type LoaderWithCacheAPIProps path res ret = (
   )
 
 
-useLoaderWithCacheAPI :: forall path res ret. Eq path => Show path => DecodeJson res =>
+useLoaderWithCacheAPI :: forall path res ret. Eq path => DecodeJson res =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
 useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
@@ -187,7 +187,7 @@ type LoaderWithCacheAPIEffectProps path res ret = (
   , state :: R.State (Maybe ret)
   )
 
-useCachedAPILoaderEffect :: forall path res ret. Eq path => Show path => DecodeJson res =>
+useCachedAPILoaderEffect :: forall path res ret. Eq path => DecodeJson res =>
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
 useCachedAPILoaderEffect { cacheEndpoint
@@ -205,7 +205,6 @@ useCachedAPILoaderEffect { cacheEndpoint
 
       let cacheName = "cache-api-loader"
       let req = mkRequest path
-      let keyCache = "cached-api-md5-" <> (show path)
       -- log2 "[useCachedLoader] mState" mState
       launchAff_ $ do
         cache <- GUC.openCache $ GUC.CacheName cacheName
@@ -222,4 +221,4 @@ useCachedAPILoaderEffect { cacheEndpoint
           else
             throwError $ error $ "Fetched clean cache but hashes don't match"
         liftEffect $ do
-          setState $ const $ Just $ handleResponse hr
+          setState $ const $ Just $ handleResponse val
