@@ -20,7 +20,7 @@ type Props =
 
 
 data Action = AddNode     String GT.NodeType
-            | DeleteNode
+            | DeleteNode  GT.NodeType
             | RenameNode  String
             | UpdateNode  UpdateNodeParams
             | ShareTeam   String
@@ -52,7 +52,7 @@ setTreeOut a   _             = a
 
 instance showShow :: Show Action where
   show (AddNode     _ _    )= "AddNode"
-  show  DeleteNode          = "DeleteNode"
+  show (DeleteNode  _      )= "DeleteNode"
   show (RenameNode  _      )= "RenameNode"
   show (UpdateNode  _      )= "UpdateNode"
   show (ShareTeam   _      )= "ShareTeam"
@@ -69,7 +69,7 @@ instance showShow :: Show Action where
 -----------------------------------------------------------------------
 icon :: Action -> String
 icon (AddNode    _ _)     = glyphiconNodeAction (Add [])
-icon  DeleteNode          = glyphiconNodeAction Delete
+icon (DeleteNode _)       = glyphiconNodeAction Delete
 icon (RenameNode _)       = glyphiconNodeAction Config
 icon (UpdateNode _)       = glyphiconNodeAction Refresh
 icon (ShareTeam  _)       = glyphiconNodeAction Share
@@ -88,7 +88,7 @@ icon NoAction             = "hand-o-right"
 
 text :: Action -> String
 text (AddNode     _ _    )= "Add !"
-text  DeleteNode          = "Delete !"
+text (DeleteNode _       )= "Delete !"
 text (RenameNode  _      )= "Rename !"
 text (UpdateNode  _      )= "Update !"
 text (ShareTeam   _      )= "Share with team !"

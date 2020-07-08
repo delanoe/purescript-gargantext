@@ -33,7 +33,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (OpenNodes, Session, mkNodeId, get)
-import Gargantext.Types (ID, Reload)
+import Gargantext.Types (ID, Reload, isPublic, publicize)
 import Gargantext.Types as GT
 import Gargantext.Routes as GR
 
@@ -192,7 +192,10 @@ toHtml p@{ asyncTasks
                          } ]
           <> childNodes ( Record.merge commonProps
                           { asyncTasks
-                          , children: ary
+                          , children: if isPublic nodeType
+                                         then map (\t -> map (\(LNode {id:id',name:name',nodeType:nt})
+                                                     -> (LNode {id:id',name:name',nodeType: publicize nt})) t) ary
+                                         else ary
                           , folderOpen
                           }
                         )
@@ -232,13 +235,13 @@ type PerformActionProps =
 performAction :: Action
               -> Record PerformActionProps
               -> Aff Unit
-performAction DeleteNode p@{ openNodes: (_ /\ setOpenNodes)
+performAction (DeleteNode nt) p@{ openNodes: (_ /\ setOpenNodes)
                            , reload: (_ /\ setReload)
                            , session
                            , tree: (NTree (LNode {id}) _)
                            } =
   do
-    void       $ deleteNode session id
+    void       $ deleteNode session nt id
     liftEffect $ setOpenNodes (Set.delete (mkNodeId session id))
     performAction RefreshTree p
 

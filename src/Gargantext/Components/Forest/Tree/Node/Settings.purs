@@ -192,7 +192,7 @@ settingsBox Texts =
 
 settingsBox Graph =
   SettingsBox { show : true
-              , edit : false
+              , edit : true
               , doc  : Documentation Graph
               , buttons : [ Refresh
                           , Config
@@ -201,6 +201,17 @@ settingsBox Graph =
                           , Delete
                           ]
               }
+
+settingsBox (NodePublic Graph) =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation Graph
+              , buttons : [ Download -- TODO as GEXF or JSON
+                          , Delete
+                          ]
+              }
+
+
 
 settingsBox NodeList =
   SettingsBox { show : true

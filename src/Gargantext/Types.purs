@@ -154,6 +154,8 @@ data NodeType = NodeUser
               -- TODO Optional Nodes
               | NodeFrameWrite
               | NodeFrameCalc
+              | NodePublic NodeType
+
 
 derive instance eqNodeType :: Eq NodeType
 
@@ -182,6 +184,7 @@ instance showNodeType :: Show NodeType where
   show Texts         = "NodeTexts"
   show NodeFrameWrite = "NodeFrameWrite"
   show NodeFrameCalc  = "NodeFrameCalc"
+  show (NodePublic nt) = "NodePublic" <> show nt
 
 
 instance readNodeType :: Read NodeType where
@@ -207,6 +210,7 @@ instance readNodeType :: Read NodeType where
   read "Annuaire"      = Just Annuaire
   read "NodeFrameWrite" = Just NodeFrameWrite
   read "NodeFrameCalc"  = Just NodeFrameCalc
+  -- TODO NodePublic read ?
   read _               = Nothing
 
 
@@ -251,9 +255,20 @@ fldr NodeFrameWrite false = "fa fa-file-text"
 fldr NodeFrameCalc true  = "fa fa-calculator"
 fldr NodeFrameCalc false = "fa fa-calculator"
 
+fldr (NodePublic nt) b   = fldr nt b
+
 fldr _        true   = "fa fa-folder-open"
 fldr _        false  = "fa fa-folder-o"
 
+
+publicize :: NodeType -> NodeType
+publicize (NodePublic nt) = NodePublic nt
+publicize nt              = NodePublic nt
+
+isPublic :: NodeType -> Boolean
+isPublic (NodePublic _) = true
+isPublic FolderPublic   = true
+isPublic _              = false
 
 {-
 ------------------------------------------------------------
@@ -295,6 +310,7 @@ nodeTypePath Texts     = "texts"
 nodeTypePath Team      = "team"
 nodeTypePath NodeFrameWrite = "write"
 nodeTypePath NodeFrameCalc  = "calc"
+nodeTypePath (NodePublic nt) = nodeTypePath nt
 
 ------------------------------------------------------------
 

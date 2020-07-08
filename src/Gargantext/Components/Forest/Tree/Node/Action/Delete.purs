@@ -5,7 +5,7 @@ import Data.Maybe (Maybe(..))
 import Gargantext.Prelude
 import Effect.Aff (Aff)
 import Gargantext.Types  as GT
-import Gargantext.Sessions (Session, delete)
+import Gargantext.Sessions (Session, delete, put_)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Types (NodeType(..))
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
@@ -14,8 +14,11 @@ import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Reactix.DOM.HTML as H
 
 -- TODO Delete with asyncTaskWithType
-deleteNode :: Session -> GT.ID -> Aff GT.ID
-deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
+deleteNode :: Session -> NodeType -> GT.ID -> Aff GT.ID
+deleteNode session nt nodeId = 
+  case nt of
+    NodePublic _ -> put_ session $ NodeAPI GT.Node (Just nodeId) "unpublish"
+    _            -> delete session $ NodeAPI GT.Node (Just nodeId) ""
 
 -- | Action : Delete
 actionDelete :: NodeType -> (Action -> Aff Unit) -> R.Hooks R.Element
@@ -29,7 +32,7 @@ actionDelete NodeUser _ = do
                ]
                (H.div {} [])
 
-actionDelete _ dispatch = do
+actionDelete nt dispatch = do
   pure $ panel [ H.div {style: {margin: "10px"}} 
                 (map (\t -> H.p {} [H.text t]) 
                      [ "Are your sure you want to delete it ?"
@@ -37,7 +40,7 @@ actionDelete _ dispatch = do
                      ]
                 )
                ]
-               (submitButton DeleteNode dispatch)
+               (submitButton (DeleteNode nt) dispatch)
 
 
 
