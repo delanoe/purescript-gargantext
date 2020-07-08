@@ -63,7 +63,7 @@ derive instance eqTermList :: Eq TermList
 derive instance ordTermList :: Ord TermList
 
 instance encodeJsonTermList :: EncodeJson TermList where
-  encodeJson MapTerm     = encodeJson "MapTerm"
+  encodeJson MapTerm       = encodeJson "MapTerm"
   encodeJson StopTerm      = encodeJson "StopTerm"
   encodeJson CandidateTerm = encodeJson "CandidateTerm"
 
@@ -71,7 +71,7 @@ instance decodeJsonTermList :: DecodeJson TermList where
   decodeJson json = do
     s <- decodeJson json
     case s of
-      "MapTerm"     -> pure MapTerm
+      "MapTerm"       -> pure MapTerm
       "StopTerm"      -> pure StopTerm
       "CandidateTerm" -> pure CandidateTerm
       _               -> Left "Unexpected list name"
@@ -84,7 +84,7 @@ listTypeId StopTerm      = 2
 listTypeId CandidateTerm = 3
 
 instance showTermList :: Show TermList where
-  show MapTerm     = "MapTerm"
+  show MapTerm       = "MapTerm"
   show StopTerm      = "StopTerm"
   show CandidateTerm = "CandidateTerm"
 

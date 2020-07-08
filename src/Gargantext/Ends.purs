@@ -9,7 +9,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Gargantext.Routes as R
-import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType')
+import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType', TermList(MapTerm))
 import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==))
 
 -- | A means of generating a url to visit, a destination
@@ -120,7 +120,7 @@ sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ fromMaybe 
 sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart ChartBar nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart ChartPie nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart ChartTree nt nId lId)      = "node/" <> (show nId) <> "/tree?list=" <> (show lId) <> "&ngramsType=" <> (show nt) <> "&listType=MapTerm"
+sessionPath (R.RecomputeListChart ChartTree nt nId lId)      = "node/" <> (show nId) <> "/tree?list=" <> (show lId) <> "&ngramsType=" <> (show nt) <> "&listType=" <> show MapTerm
 sessionPath (R.RecomputeListChart Histo nt nId lId)      = "node/" <> (show nId) <> "/chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart Scatter nt nId lId)      = "node/" <> (show nId) <> "/metrics?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart _ nt nId lId)      = "node/" <> (show nId) <> "/recompute-chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
@@ -201,7 +201,7 @@ sessionPath (R.Chart {chartType, listId, limit, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ show chartType
     <> "?ngramsType=" <> showTabType' tabType
-    <> "&listType=MapTerm" -- <> show listId
+    <> "&listType=" <> show MapTerm -- listId
     <> "&list=" <> show listId
     where
       limitPath = case limit of
@@ -212,7 +212,7 @@ sessionPath (R.ChartMD5 { chartType, listId, tabType } i) =
   sessionPath $ R.NodeAPI Corpus i
      $ show chartType
     <> "/md5?ngramsType=" <> showTabType' tabType
-    <> "&listType=GraphTerm" -- <> show listId
+    <> "&listType=" <> show MapTerm-- <> show listId
     <> "&list=" <> show listId
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 
