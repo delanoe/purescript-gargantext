@@ -281,6 +281,13 @@ performAction (ShareTeam username) p@{ reload: (_ /\ setReload)
   do
     void $ Share.share session id $ Share.ShareTeam {username}
 
+performAction SharePublic p@{ reload: (_ /\ setReload)
+                                     , session
+                                     , tree: (NTree (LNode {id}) _)
+                                     } =
+  do
+    void $ Share.share session id $ Share.SharePublic {rights:"public"}
+
 -------
 performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
                                         , reload:    (_ /\ setReload)

@@ -24,6 +24,7 @@ data Action = AddNode     String GT.NodeType
             | RenameNode  String
             | UpdateNode  UpdateNodeParams
             | ShareTeam   String
+            | SharePublic
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | DownloadNode
@@ -55,6 +56,7 @@ instance showShow :: Show Action where
   show (RenameNode  _      )= "RenameNode"
   show (UpdateNode  _      )= "UpdateNode"
   show (ShareTeam   _      )= "ShareTeam"
+  show (SharePublic        )= "SharePublic"
   show (DoSearch    _      )= "SearchQuery"
   show (UploadFile  _ _ _ _)= "UploadFile"
   show  RefreshTree         = "RefreshTree"
@@ -71,6 +73,7 @@ icon  DeleteNode          = glyphiconNodeAction Delete
 icon (RenameNode _)       = glyphiconNodeAction Config
 icon (UpdateNode _)       = glyphiconNodeAction Refresh
 icon (ShareTeam  _)       = glyphiconNodeAction Share
+icon (SharePublic )       = glyphiconNodeAction Publish
 icon (DoSearch   _)       = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
 icon  RefreshTree         = glyphiconNodeAction Refresh
@@ -88,13 +91,14 @@ text (AddNode     _ _    )= "Add !"
 text  DeleteNode          = "Delete !"
 text (RenameNode  _      )= "Rename !"
 text (UpdateNode  _      )= "Update !"
-text (ShareTeam   _      )= "Share !"
+text (ShareTeam   _      )= "Share with team !"
+text (SharePublic        )= "Publish !"
 text (DoSearch    _      )= "Launch search !"
 text (UploadFile  _ _ _ _)= "Upload File !"
 text  RefreshTree         = "Refresh Tree !"
 text DownloadNode         = "Download !"
-text (MoveNode  _ )      = "Move !"
-text (MergeNode _ )     = "Merge !"
-text (LinkNode  _ )      = "Link !"
+text (MoveNode  _ )       = "Move !"
+text (MergeNode _ )       = "Merge !"
+text (LinkNode  _ )       = "Link !"
 text NoAction             = "No Action"
 -----------------------------------------------------------------------

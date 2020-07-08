@@ -20,6 +20,7 @@ data NodeAction = Documentation NodeType
                 | Download | Upload | Refresh | Config
                 | Delete
                 | Share
+                | Publish
                 | Add    (Array NodeType)
                 | Merge { subTreeParams :: SubTreeParams }
                 | Move  { subTreeParams :: SubTreeParams }
@@ -41,6 +42,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq (Add  x) (Add  y)   = x == y
   eq (Merge x) (Merge y) = x == y
   eq Config Config     = true
+  eq Publish Publish   = true
   eq _ _               = false
 
 instance showNodeAction :: Show NodeAction where
@@ -57,7 +59,7 @@ instance showNodeAction :: Show NodeAction where
   show (Link x)          = "Link to " <> show x
   show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
   show (Merge t)         = "Merge with subtree" <> show t
-
+  show Publish           = "Publish"
 
 glyphiconNodeAction :: NodeAction -> String
 glyphiconNodeAction (Documentation _) = "question-circle"
@@ -72,8 +74,8 @@ glyphiconNodeAction Refresh           = "refresh"
 glyphiconNodeAction Config            = "wrench"
 glyphiconNodeAction Share             = "user-plus"
 glyphiconNodeAction (Move _)          = "share-square-o"
+glyphiconNodeAction Publish           = fldr FolderPublic true
 glyphiconNodeAction _                 = ""
-
 
 ------------------------------------------------------------------------
 data SettingsBox =
@@ -195,6 +197,7 @@ settingsBox Graph =
               , buttons : [ Refresh
                           , Config
                           , Download -- TODO as GEXF or JSON
+                          , Publish
                           , Delete
                           ]
               }
