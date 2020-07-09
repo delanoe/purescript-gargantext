@@ -23,30 +23,32 @@ data Action = AddNode     String GT.NodeType
             | DeleteNode  GT.NodeType
             | RenameNode  String
             | UpdateNode  UpdateNodeParams
-            | ShareTeam   String
-            | SharePublic
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | DownloadNode
             | RefreshTree
 
-            | MoveNode  {params :: Maybe SubTreeOut}
-            | MergeNode {params :: Maybe SubTreeOut}
-            | LinkNode  {params :: Maybe SubTreeOut}
+            | ShareTeam   String
+            | SharePublic {params :: Maybe SubTreeOut}
+            | MoveNode    {params :: Maybe SubTreeOut}
+            | MergeNode   {params :: Maybe SubTreeOut}
+            | LinkNode    {params :: Maybe SubTreeOut}
 
             | NoAction
 
 
 subTreeOut :: Action -> Maybe SubTreeOut
-subTreeOut (MoveNode  {params}) = params
-subTreeOut (MergeNode {params}) = params
-subTreeOut (LinkNode  {params}) = params
+subTreeOut (MoveNode    {params}) = params
+subTreeOut (MergeNode   {params}) = params
+subTreeOut (LinkNode    {params}) = params
+subTreeOut (SharePublic {params}) = params
 subTreeOut _                    = Nothing
 
 setTreeOut ::  Action -> Maybe SubTreeOut -> Action
 setTreeOut (MoveNode  {params:_}) p = MoveNode  {params: p}
 setTreeOut (MergeNode {params:_}) p = MergeNode {params: p}
 setTreeOut (LinkNode  {params:_}) p = LinkNode  {params: p}
+setTreeOut (SharePublic {params:_}) p = SharePublic  {params: p}
 setTreeOut a   _             = a
 
 
@@ -56,7 +58,7 @@ instance showShow :: Show Action where
   show (RenameNode  _      )= "RenameNode"
   show (UpdateNode  _      )= "UpdateNode"
   show (ShareTeam   _      )= "ShareTeam"
-  show (SharePublic        )= "SharePublic"
+  show (SharePublic _      )= "SharePublic"
   show (DoSearch    _      )= "SearchQuery"
   show (UploadFile  _ _ _ _)= "UploadFile"
   show  RefreshTree         = "RefreshTree"
@@ -73,7 +75,7 @@ icon (DeleteNode _)       = glyphiconNodeAction Delete
 icon (RenameNode _)       = glyphiconNodeAction Config
 icon (UpdateNode _)       = glyphiconNodeAction Refresh
 icon (ShareTeam  _)       = glyphiconNodeAction Share
-icon (SharePublic )       = glyphiconNodeAction Publish
+icon (SharePublic _ )     = glyphiconNodeAction (Publish { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 icon (DoSearch   _)       = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
 icon  RefreshTree         = glyphiconNodeAction Refresh
@@ -92,7 +94,7 @@ text (DeleteNode _       )= "Delete !"
 text (RenameNode  _      )= "Rename !"
 text (UpdateNode  _      )= "Update !"
 text (ShareTeam   _      )= "Share with team !"
-text (SharePublic        )= "Publish !"
+text (SharePublic _      )= "Publish !"
 text (DoSearch    _      )= "Launch search !"
 text (UploadFile  _ _ _ _)= "Upload File !"
 text  RefreshTree         = "Refresh Tree !"

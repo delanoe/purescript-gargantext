@@ -282,14 +282,14 @@ performAction (ShareTeam username) p@{ reload: (_ /\ setReload)
                                      , tree: (NTree (LNode {id}) _)
                                      } =
   do
-    void $ Share.share session id $ Share.ShareTeam {username}
+    void $ Share.shareReq session id $ Share.ShareTeamParams {username}
 
-performAction SharePublic p@{ reload: (_ /\ setReload)
-                                     , session
-                                     , tree: (NTree (LNode {id}) _)
-                                     } =
-  do
-    void $ Share.share session id $ Share.SharePublic {rights:"public"}
+performAction (SharePublic {params}) p@{session} =
+  case params of
+    Nothing -> performAction NoAction p
+    Just (SubTreeOut {in:inId,out}) -> do
+      void $ Share.shareReq session inId $ Share.SharePublicParams {node_id:out}
+      performAction RefreshTree p
 
 -------
 performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)

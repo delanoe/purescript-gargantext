@@ -17,6 +17,7 @@ import Reactix.DOM.HTML as H
 deleteNode :: Session -> NodeType -> GT.ID -> Aff GT.ID
 deleteNode session nt nodeId = 
   case nt of
+    NodePublic FolderPublic -> delete session $ NodeAPI GT.Node (Just nodeId) ""
     NodePublic _ -> put_ session $ NodeAPI GT.Node (Just nodeId) "unpublish"
     _            -> delete session $ NodeAPI GT.Node (Just nodeId) ""
 

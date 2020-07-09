@@ -295,11 +295,11 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
                                      , id
                                      , text: "username"
                                      , isOpen
-                                     } 
+                                     }
                       ]
 
-    cpt {action : Publish, dispatch } _ = do
-      pure $ H.div {className:"center"} [ submitButton SharePublic dispatch ]
+    cpt {action : Publish {subTreeParams}, dispatch, id, nodeType, session } _ = do
+      pure $ Share.shareNode {dispatch, id, nodeType, session, subTreeParams}
 
 
     cpt props@{action: SearchBox, id, session, dispatch, nodePopup} _ =

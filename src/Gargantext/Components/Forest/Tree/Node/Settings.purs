@@ -20,7 +20,7 @@ data NodeAction = Documentation NodeType
                 | Download | Upload | Refresh | Config
                 | Delete
                 | Share
-                | Publish
+                | Publish { subTreeParams :: SubTreeParams }
                 | Add    (Array NodeType)
                 | Merge { subTreeParams :: SubTreeParams }
                 | Move  { subTreeParams :: SubTreeParams }
@@ -42,7 +42,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq (Add  x) (Add  y)   = x == y
   eq (Merge x) (Merge y) = x == y
   eq Config Config     = true
-  eq Publish Publish   = true
+  eq (Publish x) (Publish y) = x == y
   eq _ _               = false
 
 instance showNodeAction :: Show NodeAction where
@@ -59,7 +59,7 @@ instance showNodeAction :: Show NodeAction where
   show (Link x)          = "Link to " <> show x
   show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
   show (Merge t)         = "Merge with subtree" <> show t
-  show Publish           = "Publish"
+  show (Publish x)       = "Publish" <> show x
 
 glyphiconNodeAction :: NodeAction -> String
 glyphiconNodeAction (Documentation _) = "question-circle"
@@ -74,7 +74,7 @@ glyphiconNodeAction Refresh           = "refresh"
 glyphiconNodeAction Config            = "wrench"
 glyphiconNodeAction Share             = "user-plus"
 glyphiconNodeAction (Move _)          = "share-square-o"
-glyphiconNodeAction Publish           = fldr FolderPublic true
+glyphiconNodeAction (Publish _)       = fldr FolderPublic true
 glyphiconNodeAction _                 = ""
 
 ------------------------------------------------------------------------
@@ -135,11 +135,9 @@ settingsBox FolderShared =
 
 settingsBox FolderPublic =
   SettingsBox { show : true
-              , edit : false
+              , edit : true
               , doc  : Documentation FolderPublic
-              , buttons : [ Add [ Corpus
-                                , Folder
-                                ]
+              , buttons : [ Add [ FolderPublic ]
                          -- , Delete
                           ]
               }
@@ -197,7 +195,7 @@ settingsBox Graph =
               , buttons : [ Refresh
                           , Config
                           , Download -- TODO as GEXF or JSON
-                          , Publish
+                          , Publish publishParams
                           , Delete
                           ]
               }
@@ -211,6 +209,22 @@ settingsBox (NodePublic Graph) =
                           ]
               }
 
+settingsBox (NodePublic Dashboard) =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation Dashboard
+              , buttons : [ Delete
+                          ]
+              }
+
+settingsBox (NodePublic FolderPublic) =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation FolderPublic
+              , buttons : [ Delete
+                          , Add [FolderPublic]
+                          ]
+              }
 
 
 settingsBox NodeList =
@@ -241,6 +255,7 @@ settingsBox Dashboard =
               , edit : false
               , doc  : Documentation Dashboard
               , buttons : [ Refresh
+                          , Publish publishParams
                           , Delete
                           ]
               }
@@ -342,4 +357,14 @@ linkParams =  { subTreeParams : SubTreeParams
                                            ]
                               }
                }
+
+
+publishParams =  { subTreeParams : SubTreeParams
+                              { showtypes: [ FolderPublic
+                                           ]
+                              , valitypes: [ FolderPublic
+                                           ]
+                              }
+               }
+
 
