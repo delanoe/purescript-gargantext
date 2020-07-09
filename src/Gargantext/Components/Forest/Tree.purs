@@ -296,7 +296,7 @@ performAction (SharePublic {params}) p@{ session
     Nothing -> performAction NoAction p
     Just (SubTreeOut {in:inId,out}) -> do
       void $ Share.shareReq session inId $ Share.SharePublicParams {node_id:out}
-      liftEffect $ setOpenNodes (Set.insert (mkNodeId session inId))
+      liftEffect $ setOpenNodes (Set.insert (mkNodeId session out))
       performAction RefreshTree p
 
 -------
