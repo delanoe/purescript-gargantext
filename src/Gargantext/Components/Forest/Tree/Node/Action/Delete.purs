@@ -15,11 +15,19 @@ import Reactix.DOM.HTML as H
 
 -- TODO Delete with asyncTaskWithType
 deleteNode :: Session -> NodeType -> GT.ID -> Aff GT.ID
-deleteNode session nt nodeId = 
+deleteNode session nt nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
+
+{-
   case nt of
     NodePublic FolderPublic -> delete session $ NodeAPI GT.Node (Just nodeId) ""
-    NodePublic _ -> put_ session $ NodeAPI GT.Node (Just nodeId) "unpublish"
+    NodePublic _ -> put_   session $ NodeAPI GT.Node (Just nodeId) "unpublish"
     _            -> delete session $ NodeAPI GT.Node (Just nodeId) ""
+    -}
+
+type ParentID = GT.ID
+unpublishNode :: Session -> Maybe ParentID -> GT.ID -> Aff GT.ID
+unpublishNode s p n = put_ s $ NodeAPI GT.Node p ("unpublish/" <> show n)
+
 
 -- | Action : Delete
 actionDelete :: NodeType -> (Action -> Aff Unit) -> R.Hooks R.Element

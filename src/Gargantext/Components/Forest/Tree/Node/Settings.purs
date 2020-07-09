@@ -221,8 +221,8 @@ settingsBox (NodePublic FolderPublic) =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation FolderPublic
-              , buttons : [ Delete
-                          , Add [FolderPublic]
+              , buttons : [ Add [FolderPublic]
+                          , Delete
                           ]
               }
 

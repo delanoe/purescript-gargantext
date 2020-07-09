@@ -18,7 +18,7 @@ import Gargantext.Components.Forest.Tree.Node (nodeMainSpan)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
-import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Move   (moveNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Merge  (mergeNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Link   (linkNodeReq)
@@ -193,8 +193,9 @@ toHtml p@{ asyncTasks
           <> childNodes ( Record.merge commonProps
                           { asyncTasks
                           , children: if isPublic nodeType
-                                         then map (\t -> map (\(LNode {id:id',name:name',nodeType:nt})
-                                                     -> (LNode {id:id',name:name',nodeType: publicize nt})) t) ary
+                                         then map (\t -> map (\(LNode n@{ nodeType:nt } )
+                                                               -> (LNode (n { nodeType= publicize nt }))
+                                                            ) t) ary
                                          else ary
                           , folderOpen
                           }
@@ -238,10 +239,14 @@ performAction :: Action
 performAction (DeleteNode nt) p@{ openNodes: (_ /\ setOpenNodes)
                            , reload: (_ /\ setReload)
                            , session
-                           , tree: (NTree (LNode {id}) _)
+                           , tree: (NTree (LNode {id, parent_id}) _)
                            } =
   do
-    void       $ deleteNode session nt id
+    case nt of
+         GT.NodePublic GT.FolderPublic -> void $ deleteNode session nt id
+         GT.NodePublic _               -> void $ unpublishNode session parent_id id
+         _                             -> void $ deleteNode session nt id
+
     liftEffect $ setOpenNodes (Set.delete (mkNodeId session id))
     performAction RefreshTree p
 
