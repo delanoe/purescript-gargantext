@@ -289,11 +289,14 @@ performAction (ShareTeam username) p@{ reload: (_ /\ setReload)
   do
     void $ Share.shareReq session id $ Share.ShareTeamParams {username}
 
-performAction (SharePublic {params}) p@{session} =
+performAction (SharePublic {params}) p@{ session
+                                       , openNodes: (_ /\ setOpenNodes)
+                                       } =
   case params of
     Nothing -> performAction NoAction p
     Just (SubTreeOut {in:inId,out}) -> do
       void $ Share.shareReq session inId $ Share.SharePublicParams {node_id:out}
+      liftEffect $ setOpenNodes (Set.insert (mkNodeId session inId))
       performAction RefreshTree p
 
 -------
