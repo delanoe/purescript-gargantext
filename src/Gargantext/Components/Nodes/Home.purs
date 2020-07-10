@@ -1,16 +1,14 @@
 module Gargantext.Components.Nodes.Home where
 
-import Data.Array (replicate)
-import Data.Foldable (foldl)
 import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
-import Gargantext.Components.Nodes.Home.Public (PublicData(..), publicLayout)
+import Gargantext.Components.Nodes.Home.Public (renderPublic)
 import Gargantext.License (license)
-import Gargantext.Prelude (Unit, bind, map, pure, unit, void, ($), (<>))
+import Gargantext.Prelude (Unit, map, pure, unit, void, ($), (<>))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
@@ -53,22 +51,11 @@ homeLayoutCpt :: R.Component ( landingData :: LandingData )
 homeLayoutCpt = R.hooksComponent "LayoutLanding" cpt
   where
     cpt {landingData} _ = do
-      pds <- R.useState' ( replicate 6 (PublicData { title: "Title"
-                                                    , abstract : foldl (<>) "" $ replicate 100 "abstract "
-                                                    , img: "images/Gargantextuel-212x300.jpg"
-                                                    , url : "https://.."
-                                                    , date: "YY/MM/DD"
-                                                    , database: "database"
-                                                    , author  : "Author"
-                                                    }
-                                        )
-                          )
-
       pure $ H.span {}
            [ H.div { className: "container1" } [ jumboTitle landingData false ]
            , H.div { className: "container1" } [] -- TODO put research form
            , H.div { className: "container1" } [ blocksRandomText' landingData ]
-           , H.div { className: "container1" } [ publicLayout {publicDatas:pds} ]
+           , H.div { className: "container1" } [ renderPublic ]
            , license
            ]
 

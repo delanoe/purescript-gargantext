@@ -24,11 +24,11 @@ import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
 
-useLoader :: forall path st. Eq path =>
-                path
-             -> (path -> Aff st)
-             -> (st -> R.Element)
-             -> R.Hooks R.Element
+useLoader :: forall path st. Eq path
+          => path
+          -> (path -> Aff st)
+          -> (st -> R.Element)
+          -> R.Hooks R.Element
 useLoader path loader render = do
   state <- R.useState' Nothing
   useLoaderEffect path state loader

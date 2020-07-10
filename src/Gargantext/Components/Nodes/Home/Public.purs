@@ -1,17 +1,28 @@
 module Gargantext.Components.Nodes.Home.Public where
 
+import Data.Tuple (fst)
+import Data.Argonaut as Argonaut
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
+import Data.Maybe (Maybe(..))
+import Data.NonEmpty (head)
 import Data.String (take)
+import Effect.Aff (Aff)
+import Gargantext.Config (defaultBackends)
+import Gargantext.Config.REST (get)
+import Gargantext.Ends (backendUrl)
 import Gargantext.Prelude
-import Data.Tuple.Nested ((/\))
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 
-type PublicProps = (publicDatas :: R.State (Array PublicData)
+type PublicProps = (publicDatas :: (Array PublicData)
                    -- , session :: Session
                    )
 
-newtype PublicData = PublicData
+data PublicData = PublicData
   { title    :: String
   , abstract  :: String
   , img      :: String
@@ -19,22 +30,70 @@ newtype PublicData = PublicData
   , date     :: String
   , database :: String
   , author   :: String
-  }
+  } | NoData { nodata :: String }
+
+derive instance eqPublicData :: Eq PublicData
+
+derive instance genericPublicData :: Generic PublicData _
+
+instance showPublicData :: Show PublicData where
+  show = genericShow
+
+instance decodeJsonPublicData :: Argonaut.DecodeJson PublicData where
+  decodeJson = genericSumDecodeJson
+
+instance encodeJsonPublicData :: Argonaut.EncodeJson PublicData where
+  encodeJson = genericSumEncodeJson
+
+------------------------------------------------------------------------
+
+type LoadData  = ()
+type LoadProps = (reload :: Int)
+
+loadPublicData :: Record LoadProps -> Aff (Array PublicData)
+loadPublicData _l = get Nothing (backendUrl backend "public")
+  where
+    backend = head defaultBackends
+
+renderPublic :: R.Element
+renderPublic = R.createElement renderPublicCpt {} []
+
+renderPublicCpt :: R.Component LoadData
+renderPublicCpt = R.hooksComponent "G.C.N.Home.Public.renderPublic" cpt
+  where
+    cpt {} _ = do
+      reload <- R.useState' 0
+{-
+      (pds /\ setPds) :: R.State PublicProps <- R.useState' ( replicate 6 (PublicData { title: "Title"
+                                                    , abstract : foldl (<>) "" $ replicate 100 "abstract "
+                                                    , img: "images/Gargantextuel-212x300.jpg"
+                                                    , url : "https://.."
+                                                    , date: "YY/MM/DD"
+                                                    , database: "database"
+                                                    , author  : "Author"
+                                                    }
+                                        )
+                          )
+                          -}
+      useLoader { reload: fst reload } loadPublicData (\pd -> publicLayout {publicDatas: pd})
 
 
+------------------------------------------------------------------------
 publicLayout :: Record PublicProps -> R.Element
 publicLayout props = R.createElement publicLayoutCpt props []
 
 publicLayoutCpt :: R.Component PublicProps
-publicLayoutCpt = R.staticComponent "[G.C.N.H.Public.publicLayout" cpt
+publicLayoutCpt = R.hooksComponent "[G.C.N.H.Public.publicLayout" cpt
   where
-    cpt {publicDatas} _ =
-      H.span {}
+    cpt {publicDatas} _ = do
+      pure $ H.span {}
              [ H.div { className: "text-center" }
                      [ H.div { className:"container1" }
                              [ H.h2 {} [H.text "Public Maps"]
-                             , H.p {className: "lead text-muted"} [H.text "Discover maps made with "
-                                   , H.div {className: "fa fa-heart"} []]
+                             , H.p { className: "lead text-muted"}
+                                   [ H.text "Discover maps made with "
+                                   , H.div {className: "fa fa-heart"} []
+                                   ]
                              , H.p { className:"flex-space-around" }
                                    [ H.a { className: "btn btn-primary my-2"
                                          , href :"https://gargantext.org"
@@ -44,30 +103,19 @@ publicLayoutCpt = R.staticComponent "[G.C.N.H.Public.publicLayout" cpt
                      ]
              -- | TODO browse maps
              -- | TODO random maps
-             , album pds
+             , album publicDatas
              ]
-        where
-          (pds /\ _setPublicData) = publicDatas
 
-{-
-   <section class="jumbotron text-center">
-      <div class="container" >
-        <h1 class="jumbotron-heading">Gargantext Maps</h1>
-        <p class="lead text-muted">Discover maps made with love</p>
-        <p>
-          <a href="http://gargantext.org" target="blank" class="btn btn-primary my-2">More about Gargantext</a>
-          <a href="http://iscpif.fr" target="blank"  class="btn btn-secondary my-2">CNRS/ISC-PIF</a>
-        </p>
-      </div>
-    </section>
-    -}
 album :: Array PublicData -> R.Element
-album pd = H.div {className: "album py-5 bg-light"}
-                 [ H.div { className: "container" }
-                         [ H.div { className : "row" }
-                                 (map (\tab -> H.div {className : "col-md-6 content"} [tableau tab]) pd )
-                         ]
-                 ]
+album pds = H.div {className: "album py-5 bg-light"}
+                  [ H.div { className: "container" }
+                          [ H.div { className : "row" }
+                                  (map (\tab -> H.div {className : "col-md-6 content"}
+                                                      [tableau tab]
+                                       ) pds
+                                  )
+                          ]
+                  ]
 
 
 tableau :: PublicData -> R.Element
@@ -102,3 +150,4 @@ tableau (PublicData {title, abstract, img, url, date, database, author}) =
                         ]
                  ]
           ]
+tableau (NoData {nodata}) = H.div {className : "center"} [H.h2 {} [H.text "Create a corpus and publicize it"]]
