@@ -24,7 +24,8 @@ newtype Backend = Backend
   { name    :: String
   , baseUrl :: String
   , prePath :: String
-  , version :: ApiVersion }
+  , version :: ApiVersion
+  }
 
 backend :: ApiVersion -> String -> String -> String -> Backend
 backend version prePath baseUrl name = Backend { name, version, prePath, baseUrl }

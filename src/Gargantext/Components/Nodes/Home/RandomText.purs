@@ -50,10 +50,12 @@ randomChars word = case (length (toCharArray word)) >= 5 of
 
 -------------------------------------------------------------------
 words :: String -> Array String
-words sentence = filter ((/=) "") $ split (Pattern " ") sentence
+words sentence = filter ((/=) "")
+               $ split (Pattern " ") sentence
 
 sentences :: String -> Array String
-sentences paragraph = filter ((/=) "") $ split (Pattern ".") paragraph
+sentences paragraph = filter ((/=) "")
+                    $ split (Pattern ".") paragraph
 -------------------------------------------------------------------
 
 
@@ -63,7 +65,8 @@ data RandomWheel a = RandomWheel { before :: Array a
                                  }
 
 randomPart :: forall b. Array b -> Effect (Array b)
-randomPart array = randomArrayPoly middle >>= \(middle') -> pure ( start <> middle' <> end)
+randomPart array = randomArrayPoly middle
+                 >>= \(middle') -> pure ( start <> middle' <> end)
         where
             start   = take    2          array
             middle  = dropEnd 2 $ drop 2 array
@@ -93,7 +96,7 @@ randomArray array = unsafePartial $ do
 
     case maybeDuring of
          Nothing    ->
-            crash "[ERROR] It should never happen."
+            crash "[G.C.N.H.R.RandomText ERROR] It should never happen."
          Just during  ->
             pure $ RandomWheel { before : remove n array
                                , during : during
