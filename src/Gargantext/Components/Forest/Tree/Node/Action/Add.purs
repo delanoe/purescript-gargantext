@@ -1,14 +1,14 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
 import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
-import Data.Array (head)
+import Data.Array (head, length)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, formEdit, formChoiceSafe, panel)
-import Gargantext.Prelude (Unit, bind, pure, show, ($), (<>))
+import Gargantext.Prelude (Unit, bind, pure, show, ($), (<>), (>))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types  as GT
@@ -65,13 +65,22 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
 
       let 
           SettingsBox {edit} = settingsBox nt
-          maybeChoose = [ formChoiceSafe nodeTypes Error setNodeType ]
+          (maybeChoose /\ nt') = if length nodeTypes > 1
+                           then ([ formChoiceSafe nodeTypes Error setNodeType ] /\ nt)
+                           else ([H.div {} [H.text $ "Creating a node of type "
+                                                  <> show defaultNt
+                                                  <> " with name:"
+                                           ]
+                                  ] /\ defaultNt 
+                                 )
+                              where
+                                defaultNt = (fromMaybe Error $ head nodeTypes)
           maybeEdit   = [ if edit
                           then formEdit "Node Name" setNodeName
                           else H.div {} []
                         ]
 
-      pure $ panel (maybeChoose <> maybeEdit) (submitButton (AddNode name' nt) dispatch)
+      pure $ panel (maybeChoose <> maybeEdit) (submitButton (AddNode name' nt') dispatch)
 
 -- END Create Node
 

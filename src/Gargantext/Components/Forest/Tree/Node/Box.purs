@@ -11,7 +11,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
 import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
@@ -28,7 +28,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNode)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
-import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, submitButton)
+import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
