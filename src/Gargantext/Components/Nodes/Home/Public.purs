@@ -12,7 +12,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Config (publicBackend)
 import Gargantext.Config.REST (get)
-import Gargantext.Ends (toUrl)
+import Gargantext.Ends (backendUrl)
 import Gargantext.Prelude
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
@@ -56,7 +56,7 @@ loadPublicData :: Record LoadProps -> Aff (Array PublicData)
 loadPublicData _l = do
   backend <- liftEffect publicBackend
   _ <- liftEffect (log backend)
-  get Nothing (toUrl backend "public")
+  get Nothing (backendUrl backend "public")
 
 renderPublic :: R.Element
 renderPublic = R.createElement renderPublicCpt {} []
