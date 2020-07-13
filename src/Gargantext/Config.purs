@@ -1,8 +1,13 @@
 module Gargantext.Config where
 
+import Data.String as S
+import Web.HTML.Location (Location(..))
+import Effect (Effect)
 import Data.NonEmpty (NonEmpty, (:|), head)
 import Gargantext.Ends
 import Gargantext.Types (ApiVersion(..))
+import Gargantext.Utils (location)
+import Gargantext.Prelude (bind, pure, ($))
 
 defaultBackends :: NonEmpty Array Backend
 defaultBackends = local :| [prod, partner, demo, dev]
@@ -37,4 +42,19 @@ defaultStatic = head defaultStatics
 
 defaultFrontends :: Frontends
 defaultFrontends = Frontends { app: defaultApp, static: defaultStatic }
+
+-- | public Backend
+-- When user is not logged, use the location of the window
+publicBackend :: Effect Backend
+publicBackend = do
+  url <- location
+  pure $ Backend { name  : "Public Backend"
+                 , baseUrl : url
+                 , prePath : "api/"
+                 , version : V10
+                 }
+
+changePort :: String -> String
+changePort = S.replace (S.Pattern "http://localhost:8000/") (S.Replacement "http://localhost:8008/")
+
 
