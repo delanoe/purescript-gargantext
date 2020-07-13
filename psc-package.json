@@ -43,6 +43,7 @@
     "uint",
     "uri",
     "versions",
-    "web-html"
+    "web-html",
+    "milkis"
   ]
 }
