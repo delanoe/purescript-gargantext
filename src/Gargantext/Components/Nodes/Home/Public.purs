@@ -1,5 +1,10 @@
 module Gargantext.Components.Nodes.Home.Public where
 
+import DOM.Simple.Console (log)
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import DOM.Simple.Window (window)
+import FFI.Simple.Functions ((...), delay)
 import Data.Tuple (fst)
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
@@ -51,9 +56,16 @@ type LoadData  = ()
 type LoadProps = (reload :: Int)
 
 loadPublicData :: Record LoadProps -> Aff (Array PublicData)
-loadPublicData _l = get Nothing (backendUrl backend "public")
-  where
-    backend = head defaultBackends
+--loadPublicData _l = get Nothing (backendUrl backend "public")
+loadPublicData _l = do
+  -- let backend = head defaultBackends
+  let windowLocation = "localhost:8008/"
+  windowLocation' <- liftEffect (location {})
+  _ <- liftEffect $ log windowLocation'
+  get Nothing (windowLocation <>  "public")
+
+location :: forall a. a -> Effect String
+location _ = window ... "location" $ []
 
 renderPublic :: R.Element
 renderPublic = R.createElement renderPublicCpt {} []
