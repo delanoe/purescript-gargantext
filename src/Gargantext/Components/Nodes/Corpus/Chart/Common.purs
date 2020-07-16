@@ -9,7 +9,7 @@ import Reactix as R
 import Gargantext.Prelude
 
 import Gargantext.Components.Nodes.Corpus.Chart.Types (Reload, Path, Props, MetricsProps, ReloadPath)
-import Gargantext.Hooks.Loader (MD5, HashedResponse, useLoader, useLoaderWithCache, useLoaderWithCacheAPI)
+import Gargantext.Hooks.Loader (Hash, HashedResponse, useLoader, useLoaderWithCache, useLoaderWithCacheAPI)
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.CacheAPI as GUC
 
@@ -33,7 +33,7 @@ metricsLoadViewCpt = R.hooksComponent "G.C.N.C.C.metricsLoadView" cpt
         loaded { path, reload, session } l
 
 type MetricsWithCacheLoadViewProps res ret = (
-    getMetricsMD5 :: Session -> ReloadPath -> Aff MD5
+    getMetricsHash :: Session -> ReloadPath -> Aff Hash
   , handleResponse :: HashedResponse res -> ret
   , loaded :: Record MetricsProps -> ret -> R.Element
   , mkRequest :: ReloadPath -> GUC.Request
@@ -48,13 +48,13 @@ metricsWithCacheLoadViewCpt :: forall res ret. DecodeJson res =>
                                R.Component (MetricsWithCacheLoadViewProps res ret)
 metricsWithCacheLoadViewCpt = R.hooksComponent "G.C.N.C.C.metricsWithCacheLoadView" cpt
   where
-    cpt { getMetricsMD5, handleResponse, loaded, mkRequest, path, reload, session } _ = do
-    --   useLoaderWithCache (fst reload /\ path) (metricsKeyFunc keyFunc) (getMetricsMD5 session) (getMetrics session) $ \l ->
+    cpt { getMetricsHash, handleResponse, loaded, mkRequest, path, reload, session } _ = do
+    --   useLoaderWithCache (fst reload /\ path) (metricsKeyFunc keyFunc) (getMetricsHash session) (getMetrics session) $ \l ->
     --     loaded session path reload l
     -- metricsKeyFunc keyFunc st@(_ /\ { corpusId, listId, tabType }) =
     --  "metrics-" <> (show tabType) <> "-" <> (show corpusId) <> "-" <> (show listId) <> "--" <> (keyFunc st)
 
-      useLoaderWithCacheAPI { cacheEndpoint: (getMetricsMD5 session)
+      useLoaderWithCacheAPI { cacheEndpoint: (getMetricsHash session)
                             , handleResponse
                             , mkRequest
                             , path: (fst reload /\ path)

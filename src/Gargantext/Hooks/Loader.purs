@@ -1,5 +1,6 @@
 module Gargantext.Hooks.Loader where
 
+import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
 import Data.Argonaut.Core (stringify)
 import Data.Argonaut.Parser (jsonParser)
@@ -7,21 +8,18 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Milkis as M
-import Reactix as R
-import Web.Storage.Storage as WSS
-
-import Gargantext.Prelude
-
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Ends (class ToUrl, toUrl)
+import Gargantext.Prelude
 import Gargantext.Utils as GU
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
+import Milkis as M
+import Reactix as R
+import Web.Storage.Storage as WSS
 
 
 useLoader :: forall path st. Eq path
@@ -53,24 +51,24 @@ useLoaderEffect path state@(state' /\ setState) loader = do
         liftEffect $ setState $ const $ Just l
 
 
-type MD5 = String
+type Hash = String
 
 
 newtype HashedResponse a = HashedResponse {
-    md5 :: MD5
+    hash  :: Hash
   , value :: a
   }
 
 instance decodeHashedResponse :: DecodeJson a => DecodeJson (HashedResponse a) where
   decodeJson json = do
-    obj <- decodeJson json
-    md5 <- obj .: "md5"
+    obj   <- decodeJson json
+    hash  <- obj .: "hash"
     value <- obj .: "value"
-    pure $ HashedResponse { md5, value }
+    pure $ HashedResponse { hash, value }
 
 instance encodeHashedResponse :: EncodeJson a => EncodeJson (HashedResponse a) where
-  encodeJson (HashedResponse { md5, value }) = do
-       "md5" := encodeJson md5
+  encodeJson (HashedResponse { hash, value }) = do
+       "hash" := encodeJson hash
     ~> "value" := encodeJson value
     ~> jsonEmptyObject
 
@@ -81,9 +79,9 @@ useLoaderWithCache :: forall path st. Eq path => DecodeJson st => EncodeJson st 
                       -> (path -> Aff (HashedResponse st))
                       -> (st -> R.Element)
                       -> R.Hooks R.Element
-useLoaderWithCache path keyFunc md5Endpoint loader render = do
+useLoaderWithCache path keyFunc hashEndpoint loader render = do
   state <- R.useState' Nothing
-  useCachedLoaderEffect { cacheEndpoint: md5Endpoint
+  useCachedLoaderEffect { cacheEndpoint: hashEndpoint
                         , keyFunc
                         , loadRealData: loadRealData state
                         , path
@@ -93,11 +91,11 @@ useLoaderWithCache path keyFunc md5Endpoint loader render = do
     loadRealData :: R.State (Maybe st) -> String -> String -> WSS.Storage -> Aff Unit
     loadRealData (_ /\ setState) key keyCache localStorage = do
       --R2.affEffect "G.H.Loader.useCachedLoaderEffect" $ do
-      HashedResponse { md5, value: l } <- loader path
+      HashedResponse { hash, value: l } <- loader path
       liftEffect $ do
         let value = stringify $ encodeJson l
         WSS.setItem key value localStorage
-        WSS.setItem keyCache md5 localStorage
+        WSS.setItem keyCache hash localStorage
         setState $ const $ Just l
       pure unit
 
@@ -159,7 +157,7 @@ useCachedLoaderEffect { cacheEndpoint, keyFunc, loadRealData, path, state: state
 
 
 type LoaderWithCacheAPIProps path res ret = (
-    cacheEndpoint :: path -> Aff MD5
+    cacheEndpoint :: path -> Aff Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest :: path -> GUC.Request
   , path :: path
@@ -180,7 +178,7 @@ useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer
   pure $ maybe (loadingSpinner {}) renderer (fst state)
 
 type LoaderWithCacheAPIEffectProps path res ret = (
-    cacheEndpoint :: path -> Aff MD5
+    cacheEndpoint :: path -> Aff Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest :: path -> GUC.Request
   , path :: path
@@ -205,19 +203,19 @@ useCachedAPILoaderEffect { cacheEndpoint
 
       let cacheName = "cache-api-loader"
       let req = mkRequest path
-      let keyCache = "cached-api-md5-" <> (show path)
+      let keyCache = "cached-api-hash-" <> (show path)
       -- log2 "[useCachedLoader] mState" mState
       launchAff_ $ do
         cache <- GUC.openCache $ GUC.CacheName cacheName
         -- TODO Parallelize?
-        hr@(HashedResponse { md5, value }) <- GUC.cachedJson cache req
+        hr@(HashedResponse { hash, value }) <- GUC.cachedJson cache req
         cacheReal <- cacheEndpoint path
-        val <- if md5 == cacheReal then
+        val <- if hash == cacheReal then
           pure hr
         else do
           _ <- GUC.delete cache req
-          hr@(HashedResponse { md5, value }) <- GUC.cachedJson cache req
-          if md5 == cacheReal then
+          hr@(HashedResponse { hash, value }) <- GUC.cachedJson cache req
+          if hash == cacheReal then
             pure hr
           else
             throwError $ error $ "Fetched clean cache but hashes don't match"

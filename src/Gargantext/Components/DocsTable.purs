@@ -362,14 +362,14 @@ loadPage session { corpusId, listId, nodeId, query, tabType } = do
   --liftEffect $ log3 "loading documents page: loadPage with Offset and limit" offset limit
   -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
   let p = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType)
-  HashedResponse { md5, value: res } <- (get session p) :: Aff (HashedResponse (TableResult Response))
+  HashedResponse { hash, value: res } <- (get session p) :: Aff (HashedResponse (TableResult Response))
   let docs = res2corpus <$> res.docs
   let ret = if mock then
               --Tuple 0 (take limit $ drop offset sampleData)
               Tuple 0 sampleData
             else
               Tuple res.count docs
-  pure $ HashedResponse { md5, value: ret }
+  pure $ HashedResponse { hash, value: ret }
   where
     res2corpus :: Response -> DocumentsView
     res2corpus (Response r) =
@@ -382,9 +382,9 @@ loadPage session { corpusId, listId, nodeId, query, tabType } = do
       , ngramCount : r.ngramCount
      }
 
-getPageMD5 :: Session -> PageParams -> Aff String
-getPageMD5 session { corpusId, listId, nodeId, query, tabType } = do
-  let p = NodeAPI Node (Just nodeId) $ "table/md5" <> "?tabType=" <> (showTabType' tabType)
+getPageHash :: Session -> PageParams -> Aff String
+getPageHash session { corpusId, listId, nodeId, query, tabType } = do
+  let p = NodeAPI Node (Just nodeId) $ "table/hash" <> "?tabType=" <> (showTabType' tabType)
   (get session p) :: Aff String
 
 
@@ -403,7 +403,7 @@ pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
   cpt props@{frontends, session, nodeId, listId, corpusId, tabType, query, params} _ =
     -- useLoader path (loadPage session) paint
-    useLoaderWithCache path keyFunc (getPageMD5 session) (loadPage session) paint
+    useLoaderWithCache path keyFunc (getPageHash session) (loadPage session) paint
     where
       path = { nodeId, listId, corpusId, tabType, query, params }
       paint (Tuple count docs) = page params (newProps count) docs

@@ -55,14 +55,14 @@ scatterOptions nodes = Options
 
 -- getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse Loaded)
 -- getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
---   HashedResponse { md5, value: Metrics ms } <- GUC.get session chart
---   pure $ HashedResponse { md5, value: ms."data" }
+--   HashedResponse { hash, value: Metrics ms } <- GUC.get session chart
+--   pure $ HashedResponse { hash, value: ms."data" }
 --   where
 --     chart = Chart {chartType : ChartTree, limit, listId, tabType} (Just corpusId)
 
-getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
-getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
-  get session $ ChartMD5 { chartType: ChartTree, listId, tabType } (Just corpusId)
+getMetricsHash :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
+  get session $ ChartHash { chartType: ChartTree, listId, tabType } (Just corpusId)
 
 chartUrl :: Record Path -> SessionRoute
 chartUrl { corpusId, limit, listId, tabType } = Chart {chartType: ChartTree, limit, listId, tabType} (Just corpusId)
@@ -82,7 +82,7 @@ treeCpt = R.hooksComponent "G.C.N.C.C.T.tree" cpt
     cpt {path, session} _ = do
       reload <- R.useState' 0
       pure $ metricsWithCacheLoadView {
-          getMetricsMD5
+          getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session

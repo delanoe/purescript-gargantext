@@ -100,14 +100,14 @@ scatterOptions metrics' = Options
 
 -- getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse Loaded)
 -- getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
---   HashedResponse { md5, value: Metrics ms } <- get session metrics'
---   pure $ HashedResponse { md5, value: ms."data" }
+--   HashedResponse { hash, value: Metrics ms } <- get session metrics'
+--   pure $ HashedResponse { hash, value: ms."data" }
 --   where
 --     metrics' = CorpusMetrics {limit, listId, tabType} (Just corpusId)
 
-getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
-getMetricsMD5 session (_ /\ { corpusId, listId, tabType }) =
-  get session $ CorpusMetricsMD5 { listId, tabType } (Just corpusId)
+getMetricsHash :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsHash session (_ /\ { corpusId, listId, tabType }) =
+  get session $ CorpusMetricsHash { listId, tabType } (Just corpusId)
 
 chartUrl :: Record Path -> SessionRoute
 chartUrl { corpusId, limit, listId, tabType } = CorpusMetrics { limit, listId, tabType } (Just corpusId)
@@ -127,7 +127,7 @@ metricsCpt = R.hooksComponent "G.C.N.C.C.M.metrics" cpt
     cpt {path, session} _ = do
       reload <- R.useState' 0
       pure $ metricsWithCacheLoadView {
-          getMetricsMD5
+          getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session
