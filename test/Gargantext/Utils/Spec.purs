@@ -63,10 +63,11 @@ spec =
       GU.zeroPad 3 1000 `shouldEqual` "1000"
     it "log10 10" do
       GUM.log10 10.0 `shouldEqual` 1.0
-    it "md5 works" do
-      let text = "The quick brown fox jumps over the lazy dog"
-      let textMd5 = "9e107d9d372bb6826bd81d3542a419d6"
-      GUC.md5 text `shouldEqual` textMd5
+    it "Hash works with backend" do
+      let text = "To hash with backend"
+      let hashed = "8a69a94d164279af2b7d1443ce08da6184b3d7e815406076e148159c284b53c3"
+                   -- ^ hash from backend with text above
+      GUC.hash text `shouldEqual` hashed
 
     it "genericSumDecodeJson works" do
       let result1 = Argonaut.decodeJson =<< Argonaut.jsonParser """{"Boat":{"hi":1}}"""

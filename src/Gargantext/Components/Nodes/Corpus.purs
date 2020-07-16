@@ -26,7 +26,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (NodeType(..), AffTableResult)
-import Gargantext.Utils.Crypto as GUC
+import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 
 type Props =
@@ -183,7 +183,7 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
     recomputeIndices = List.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
 
 hash :: FTFieldWithIndex -> Hash
-hash (Tuple idx f) = GUC.md5 $ "--idx--" <> (show idx) <> "--field--" <> (show f)
+hash (Tuple idx f) = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show f)
 
 type FieldCodeEditorProps =
   (

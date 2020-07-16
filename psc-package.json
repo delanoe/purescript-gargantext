@@ -3,8 +3,8 @@
   "set": "local",
   "source": ".psc-package/local/.set/packages.json",
   "depends": [
-    "affjax",
     "aff-promise",
+    "affjax",
     "argonaut",
     "console",
     "css",
@@ -12,8 +12,8 @@
     "dom-filereader",
     "dom-simple",
     "effect",
-    "foreign-object",
     "foreign-generic",
+    "foreign-object",
     "generics-rep",
     "globals",
     "integers",
@@ -32,6 +32,7 @@
     "record-extra",
     "routing",
     "sequences",
+    "simplecrypto",
     "smolder",
     "spec-discovery",
     "spec-quickcheck",
@@ -43,8 +44,6 @@
     "uint",
     "uri",
     "versions",
-    "web-html",
-    "milkis",
-    "simplecrypto"
+    "web-html"
   ]
 }
