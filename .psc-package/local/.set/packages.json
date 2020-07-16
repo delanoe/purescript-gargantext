@@ -2675,6 +2675,15 @@
     "repo": "https://github.com/reactormonk/purescript-simple-timestamp.git",
     "version": "v1.3.0"
   },
+  "simplecrypto": {
+    "dependencies": [
+      "prelude",
+      "maybe",
+      "node-buffer"
+    ],
+    "repo": "https://github.com/alpacaaa/purescript-simplecrypto",
+    "version": "v1.0.1"
+  },
   "sized-vectors": {
     "dependencies": [
       "arrays",

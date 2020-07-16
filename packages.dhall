@@ -140,6 +140,11 @@ let additions =
             [ "prelude" ]
             "https://github.com/hdgarrood/purescript-versions.git"
             "v5.0.1"
+      , simplecrypto =
+          mkPackage
+            [ "prelude", "maybe", "node-buffer"]
+            "https://github.com/alpacaaa/purescript-simplecrypto"
+            "v1.0.1"
       }
 
 in  upstream ⫽ overrides ⫽ additions

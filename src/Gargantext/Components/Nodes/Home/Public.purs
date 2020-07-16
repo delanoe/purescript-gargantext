@@ -6,7 +6,6 @@ import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
-import Data.NonEmpty (head)
 import Data.String (take)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)

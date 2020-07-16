@@ -44,6 +44,7 @@
     "uri",
     "versions",
     "web-html",
-    "milkis"
+    "milkis",
+    "simplecrypto"
   ]
 }
