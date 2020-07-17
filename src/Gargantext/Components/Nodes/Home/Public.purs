@@ -11,7 +11,7 @@ import Data.String (take)
 import Data.Tuple (fst)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Gargantext.Config (defaultBackends)
+import Gargantext.Config (publicBackend)
 import Gargantext.Config.REST (get)
 import Gargantext.Ends (backendUrl, Backend(..))
 import Gargantext.Hooks.Loader (useLoader)
@@ -52,13 +52,18 @@ instance encodeJsonPublicData :: Argonaut.EncodeJson PublicData where
 type LoadData  = ()
 type LoadProps = (reload :: Int)
 
+-- | WIP still finding the right way to chose the default public backend
 loadPublicData :: Record LoadProps -> Aff (Array PublicData)
 loadPublicData _l = do
+  -- This solution is error prone (url needs to be cleaned)
   --backend <- liftEffect publicBackend
-  let backend = head defaultBackends
+
+  -- This solution for development only, with local backend
+  -- let backend = head defaultBackends
+  let backend = publicBackend
   get Nothing (backendUrl backend "public")
 
-{-
+{- | Another solution: get all data
   let
     ok = ["local.cnrs", "devel.inshs.cnrs"]
     backends = Array.filter (\(Backend {name}) -> Array.elem name ok) (toArray defaultBackends)
