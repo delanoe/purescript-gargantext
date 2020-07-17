@@ -44,10 +44,14 @@ instance isHashableString :: IsHashable String
 ------------------------------------------------------------------------
 instance isHashableArrayHashDone :: IsHashable (Array HashDone)
   where
-    hash'' x = hash'' $ Set.fromFoldable x
+    hash'' x = if Array.null x 
+                  then hash'' $ (Set.fromFoldable Set.empty :: Set HashDone)
+                  else hash'' $ Set.fromFoldable x
 else instance isHashableArray :: (Crypto.Hashable a, IsHashable a) => IsHashable (Array a)
   where
-    hash'' x = hash'' $ map hash x
+    hash'' x = if Array.null x
+                  then hash'' $ (Set.fromFoldable Set.empty :: Set HashDone)
+                  else hash'' $ map hash x
 
 ------------------------------------------------------------------------
 instance isHashableSetHashDone :: IsHashable (Set HashDone) where
