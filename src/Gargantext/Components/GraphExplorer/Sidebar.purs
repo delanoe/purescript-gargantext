@@ -39,7 +39,7 @@ type Props =
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
-  , showSidePanel   :: GET.SidePanelState
+  , showSidePanel   :: R.State GET.SidePanelState
   , treeReload      :: R.State Int
   )
 
@@ -49,43 +49,47 @@ sidebar props = R.createElement sidebarCpt props []
 sidebarCpt :: R.Component Props
 sidebarCpt = R.hooksComponent "Sidebar" cpt
   where
-    cpt {showSidePanel: GET.Closed} _children = do
+    cpt {showSidePanel: (GET.Closed /\ _)} _children = do
       pure $ RH.div {} []
-    cpt {showSidePanel: GET.InitialClosed} _children = do
+    cpt {showSidePanel: (GET.InitialClosed /\ _)} _children = do
       pure $ RH.div {} []
-    cpt props@{metaData} _children = do
+    cpt props@{metaData, showSidePanel} _children = do
+      let (sidePanel /\ setSidePanel) = showSidePanel
       let nodesMap = SigmaxT.nodesGraphMap props.graph
       pure $
         RH.div { id: "sp-container" }
         [ RH.div {}
           [ R2.row
-            [ R2.col12
+            [ R2.col 12
               [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
                 [ RH.div { className: "tab-content" }
                   [ RH.div { className: "", role: "tabpanel" }
-                    (Seq.toUnfoldable $ (Seq.map (badge props.selectedNodeIds) (badges props.graph props.selectedNodeIds)))
+                           ( Seq.toUnfoldable
+                           $ ( Seq.map (badge              props.selectedNodeIds)
+                                       (badges props.graph props.selectedNodeIds)
+                             )
+                           )
                   ]
                 , RH.div { className: "tab-content" }
-                  [
-                    removeButton "Remove candidate" CandidateTerm props nodesMap
-                  , removeButton "Remove stop" StopTerm props nodesMap
-                  ]
+                         [ removeButton "Remove candidate" CandidateTerm props nodesMap
+                         , removeButton "Remove stop"      StopTerm      props nodesMap
+                         ]
 
                 , RH.li { className: "nav-item" }
                         [ RH.a { id: "home-tab"
-                        , className: "nav-link active"
-                        , data: {toggle: "tab"}
-                        , href: "#legend"
-                        , role: "tab"
-                        , aria: {controls: "legend", selected: "true"}
-                        }
+                               , className: "nav-link active"
+                               , data: {toggle: "tab"}
+                               , href: "#legend"
+                               , role: "tab"
+                               , aria: {controls: "legend", selected: "true"}
+                               }
                     [ RH.text "Legend" ]
                  , let (GET.MetaData {legend}) = metaData
                     in Legend.legend { items: Seq.fromFoldable legend}
                   ]
                 , RH.li { className: "nav-item" }
                   [ RH.a { id: "home-tab"
-                         , className: "nav-link active"
+                         , className: "nav-link"
                          , data: {toggle: "tab"}
                          , href: "#nodes"
                          , role: "tab"
@@ -131,7 +135,8 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
         [ RH.text text ]
 
     onClickRemove rType props nodesMap e = do
-      let nodes = mapMaybe (\id -> Map.lookup id nodesMap) $ Set.toUnfoldable $ fst props.selectedNodeIds
+      let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
+                           $ Set.toUnfoldable $ fst props.selectedNodeIds
       deleteNodes { graphId: props.graphId
                   , metaData: props.metaData
                   , nodes
@@ -145,8 +150,8 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
 badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
 badge (_ /\ setNodeIds) {id, label} =
   RH.a { className: "badge badge-light"
-        , on: { click: onClick }
-        } [ RH.text label ]
+       , on: { click: onClick }
+       } [ RH.text label ]
   where
     onClick e = do
       setNodeIds $ const $ Set.singleton id

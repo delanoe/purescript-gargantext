@@ -89,8 +89,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     cpt props@{frontends, graph, graphId, graphVersion, mCurrentRoute, mMetaData, session, sessions, showLogin, treeReload } _ = do
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
-      graphVersionRef <- R.useRef (fst graphVersion)
-      controls <- Controls.useGraphControls graph
+      graphVersionRef       <- R.useRef (fst graphVersion)
+      controls              <- Controls.useGraphControls graph
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -105,12 +105,12 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
           R.setRef dataRef graph
           R.setRef graphVersionRef (fst graphVersion)
           -- Reinitialize bunch of state as well.
-          snd controls.removedNodeIds $ const SigmaxT.emptyNodeIds
+          snd controls.removedNodeIds  $ const SigmaxT.emptyNodeIds
           snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
-          snd controls.showEdges $ const SigmaxT.EShow
+          snd controls.showEdges       $ const SigmaxT.EShow
           snd controls.forceAtlasState $ const SigmaxT.InitialRunning
-          snd controls.graphStage $ const Graph.Init
-          snd controls.showSidePanel $ const GET.InitialClosed
+          snd controls.graphStage      $ const Graph.Init
+          snd controls.showSidePanel   $ const GET.InitialClosed
 
       pure $
         RH.div
@@ -141,10 +141,10 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                                            , graph
                                            , graphId
                                            , graphVersion
-                                           , removedNodeIds: controls.removedNodeIds
+                                           , removedNodeIds : controls.removedNodeIds
                                            , session
                                            , selectedNodeIds: controls.selectedNodeIds
-                                           , showSidePanel: fst controls.showSidePanel
+                                           , showSidePanel  :   controls.showSidePanel
                                            , treeReload
                                            }
                       ]
@@ -171,7 +171,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     mSidebar :: Maybe GET.MetaData
              -> Record MSidebarProps
              -> R.Element
-    mSidebar Nothing _ = RH.div {} []
+    mSidebar  Nothing            _ = RH.div {} []
     mSidebar (Just metaData) props =
       Sidebar.sidebar (Record.merge props { metaData })
 
@@ -186,15 +186,15 @@ type TreeProps =
   )
 
 type MSidebarProps =
-  ( frontends :: Frontends
-  , graph :: SigmaxT.SGraph
-  , graphId :: GraphId
-  , graphVersion :: R.State Int
-  , removedNodeIds :: R.State SigmaxT.NodeIds
-  , showSidePanel :: GET.SidePanelState
+  ( frontends       :: Frontends
+  , graph           :: SigmaxT.SGraph
+  , graphId         :: GraphId
+  , graphVersion    :: R.State Int
+  , removedNodeIds  :: R.State SigmaxT.NodeIds
+  , showSidePanel   :: R.State GET.SidePanelState
   , selectedNodeIds :: R.State SigmaxT.NodeIds
-  , session :: Session
-  , treeReload :: R.State Int
+  , session         :: Session
+  , treeReload      :: R.State Int
   )
 
 type GraphProps = (

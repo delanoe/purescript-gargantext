@@ -189,6 +189,10 @@ intColor :: Int -> String
 intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
 
 
-data SidePanelState = InitialClosed | Opened | Closed
+data SidePanelState = InitialClosed | Opened SideTab | Closed
+
+data SideTab = SideTab1 | SideTab2 | SideTab3
+
+derive instance eqSideTab :: Eq SideTab
 
 derive instance eqSidePanelState :: Eq SidePanelState
