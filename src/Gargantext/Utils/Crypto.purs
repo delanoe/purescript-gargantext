@@ -1,37 +1,68 @@
 module Gargantext.Utils.Crypto where
 
+import Data.Ord
+import Data.Eq
+import Data.Functor
+import Data.Semigroup
 import Data.Set (Set)
 import Data.Set   as Set
 import Data.Array as Array
 import Gargantext.Prelude
 import Crypto.Simple as Crypto
 
--- | TODO use newtype to disambiguate Set String and Set Hash
--- Set String needs Set.map hash
--- Set Hash   does not need Set.map hash (just concat)
 type Hash = String
 
-hash' :: forall a. Crypto.Hashable a => a -> String
-hash' = Crypto.toString <<< Crypto.hash Crypto.SHA256
+-- | Main exposed api
+hash :: forall a. IsHashable a => a -> String
+hash = toString <<< hash''
+
+-- | Newtype HashDone is needed to disambiguate Set String and Set HashDone
+-- Set String   needs Set.map hash
+-- Set HashDone does not need Set.map hash (just concat)
+newtype HashDone = HashDone Hash
+
+toString :: HashDone -> Hash
+toString (HashDone x) = x
+
+instance ordHashDone :: Ord HashDone where
+  compare (HashDone a) (HashDone b) = compare a b
+
+instance eqHashDone :: Eq HashDone where
+  eq (HashDone a) (HashDone b) = eq a b
+
+------------------------------------------------------------------------
+hash' :: forall a. Crypto.Hashable a => a -> HashDone
+hash' = HashDone <<< Crypto.toString <<< Crypto.hash Crypto.SHA256
 
 class IsHashable a where
-  hash :: a -> Hash
+  hash'' :: a -> HashDone
 
 instance isHashableString :: IsHashable String
   where
-    hash = hash'
+    hash'' = hash'
 
-instance isHashableArray :: (Crypto.Hashable a, IsHashable a) => IsHashable (Array a)
+------------------------------------------------------------------------
+instance isHashableArrayHashDone :: IsHashable (Array HashDone)
   where
-    hash = hash <<< Set.fromFoldable <<< map hash
+    hash'' = hash'' <<< Set.fromFoldable
+else instance isHashableArray :: (Crypto.Hashable a, IsHashable a) => IsHashable (Array a)
+  where
+    hash'' = hash'' <<< map hash
 
-instance isHashableSet :: IsHashable (Set String) where
-  hash = hash <<< concat <<< toArray
+------------------------------------------------------------------------
+instance isHashableSetHashDone :: IsHashable (Set HashDone) where
+  hash'' = hash'' <<< concat <<< map toString <<< toArray
     where
       toArray :: forall a. Set a -> Array a
       toArray = Set.toUnfoldable
 
       concat :: Array Hash -> String
       concat = Array.foldl (<>) ""
+else instance isHashableSet :: (Crypto.Hashable a, IsHashable a) => IsHashable (Set a)
+  where
+    hash'' = hash'' <<< Set.map hash''
+
+
+
 
 
