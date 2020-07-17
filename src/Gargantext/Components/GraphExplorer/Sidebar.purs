@@ -14,7 +14,8 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.GraphExplorer.Types  as GET
+import Gargantext.Components.GraphExplorer.Legend as Legend
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
 import Gargantext.Components.RandomText (words)
@@ -30,16 +31,16 @@ import Reactix as R
 import Reactix.DOM.HTML as RH
 
 type Props =
-  ( frontends :: Frontends
-  , graph :: SigmaxT.SGraph
-  , graphId :: Int
-  , graphVersion :: R.State Int
-  , metaData :: GET.MetaData
-  , removedNodeIds :: R.State SigmaxT.NodeIds
+  ( frontends       :: Frontends
+  , graph           :: SigmaxT.SGraph
+  , graphId         :: Int
+  , graphVersion    :: R.State Int
+  , metaData        :: GET.MetaData
+  , removedNodeIds  :: R.State SigmaxT.NodeIds
   , selectedNodeIds :: R.State SigmaxT.NodeIds
-  , session :: Session
-  , showSidePanel :: GET.SidePanelState
-  , treeReload :: R.State Int
+  , session         :: Session
+  , showSidePanel   :: GET.SidePanelState
+  , treeReload      :: R.State Int
   )
 
 sidebar :: Record Props -> R.Element
@@ -52,9 +53,8 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
       pure $ RH.div {} []
     cpt {showSidePanel: GET.InitialClosed} _children = do
       pure $ RH.div {} []
-    cpt props _children = do
+    cpt props@{metaData} _children = do
       let nodesMap = SigmaxT.nodesGraphMap props.graph
-
       pure $
         RH.div { id: "sp-container" }
         [ RH.div {}
@@ -70,15 +70,31 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                     removeButton "Remove candidate" CandidateTerm props nodesMap
                   , removeButton "Remove stop" StopTerm props nodesMap
                   ]
+
+                , RH.li { className: "nav-item" }
+                        [ RH.a { id: "home-tab"
+                        , className: "nav-link active"
+                        , data: {toggle: "tab"}
+                        , href: "#legend"
+                        , role: "tab"
+                        , aria: {controls: "legend", selected: "true"}
+                        }
+                    [ RH.text "Legend" ]
+                 , let (GET.MetaData {legend}) = metaData
+                    in Legend.legend { items: Seq.fromFoldable legend}
+                  ]
                 , RH.li { className: "nav-item" }
                   [ RH.a { id: "home-tab"
                          , className: "nav-link active"
                          , data: {toggle: "tab"}
-                         , href: "#home"
+                         , href: "#nodes"
                          , role: "tab"
-                         , aria: {controls: "home", selected: "true"}
+                         , aria: {controls: "nodes", selected: "false"}
                          }
-                    [ RH.text "Neighbours" ]
+                    [ RH.text "Nodes" ]
+
+                , RH.div { className: "col-md-12", id: "query" }
+                  [ query props.frontends props.metaData props.session nodesMap props.selectedNodeIds]
                   ]
                 ]
               , RH.div { className: "tab-content", id: "myTabContent" }
@@ -95,10 +111,6 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                 ]
               ]
               -}
-            , RH.div { className: "col-md-12", id: "query" }
-              [
-                query props.frontends props.metaData props.session nodesMap props.selectedNodeIds
-              ]
             ]
           ]
         ]
@@ -126,7 +138,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                   , session: props.session
                   , termList: rType
                   , treeReload: props.treeReload }
-      snd props.removedNodeIds $ const $ fst props.selectedNodeIds
+      snd props.removedNodeIds  $ const $ fst props.selectedNodeIds
       snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
 
 
@@ -148,8 +160,7 @@ neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selected
     selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 type DeleteNodes =
-  (
-    graphId :: Int
+  ( graphId :: Int
   , metaData :: GET.MetaData
   , nodes :: Array (Record SigmaxT.Node)
   , session :: Session

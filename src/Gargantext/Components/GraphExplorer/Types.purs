@@ -58,14 +58,12 @@ derive instance newtypeGraphData :: Newtype GraphData _
 
 
 newtype MetaData = MetaData
-  {
-    title :: String
-  , legend :: Array Legend
+  { title    :: String
+  , legend   :: Array Legend
   , corpusId :: Array Int
-  , list :: {
-      listId   :: ListId
-    , version  :: Version
-    }
+  , list :: { listId   :: ListId
+            , version  :: Version
+            }
   }
 
 getLegend :: GraphData -> Maybe (Array Legend)
