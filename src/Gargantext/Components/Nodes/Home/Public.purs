@@ -1,23 +1,25 @@
 module Gargantext.Components.Nodes.Home.Public where
 
-import DOM.Simple.Console (log)
-import Data.Tuple (fst)
+import Data.Array.NonEmpty (toArray)
+import Data.Array as Array
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
+import Data.NonEmpty (head)
 import Data.String (take)
+import Data.Tuple (fst)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Gargantext.Config (publicBackend)
+import Gargantext.Config (defaultBackends)
 import Gargantext.Config.REST (get)
-import Gargantext.Ends (backendUrl)
-import Gargantext.Prelude
+import Gargantext.Ends (backendUrl, Backend(..))
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Reactix as R
 import Reactix.DOM.HTML as H
-
+import Data.Traversable (traverse)
 
 type PublicProps = (publicDatas :: (Array PublicData)
                    -- , session :: Session
@@ -47,15 +49,22 @@ instance encodeJsonPublicData :: Argonaut.EncodeJson PublicData where
   encodeJson = genericSumEncodeJson
 
 ------------------------------------------------------------------------
-
 type LoadData  = ()
 type LoadProps = (reload :: Int)
 
 loadPublicData :: Record LoadProps -> Aff (Array PublicData)
 loadPublicData _l = do
-  backend <- liftEffect publicBackend
-  _ <- liftEffect (log backend)
+  --backend <- liftEffect publicBackend
+  let backend = head defaultBackends
   get Nothing (backendUrl backend "public")
+
+{-
+  let
+    ok = ["local.cnrs", "devel.inshs.cnrs"]
+    backends = Array.filter (\(Backend {name}) -> Array.elem name ok) (toArray defaultBackends)
+
+  Array.concat <$> traverse (\backend -> get Nothing (backendUrl backend "public")) backends
+-}
 
 renderPublic :: R.Element
 renderPublic = R.createElement renderPublicCpt {} []
@@ -65,18 +74,6 @@ renderPublicCpt = R.hooksComponent "G.C.N.Home.Public.renderPublic" cpt
   where
     cpt {} _ = do
       reload <- R.useState' 0
-{-
-      (pds /\ setPds) :: R.State PublicProps <- R.useState' ( replicate 6 (PublicData { title: "Title"
-                                                    , abstract : foldl (<>) "" $ replicate 100 "abstract "
-                                                    , img: "images/Gargantextuel-212x300.jpg"
-                                                    , url : "https://.."
-                                                    , date: "YY/MM/DD"
-                                                    , database: "database"
-                                                    , author  : "Author"
-                                                    }
-                                        )
-                          )
-                          -}
       useLoader { reload: fst reload } loadPublicData (\pd -> publicLayout {publicDatas: pd})
 
 
