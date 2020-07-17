@@ -14,6 +14,7 @@ import Effect.Exception (error)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Ends (class ToUrl, toUrl)
 import Gargantext.Prelude
+import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Utils as GU
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
@@ -51,13 +52,10 @@ useLoaderEffect path state@(state' /\ setState) loader = do
         liftEffect $ setState $ const $ Just l
 
 
-type Hash = String
-
-
-newtype HashedResponse a = HashedResponse {
-    hash  :: Hash
-  , value :: a
-  }
+newtype HashedResponse a =
+  HashedResponse { hash  :: Hash
+                 , value :: a
+                 }
 
 instance decodeHashedResponse :: DecodeJson a => DecodeJson (HashedResponse a) where
   decodeJson json = do
@@ -156,8 +154,8 @@ useCachedLoaderEffect { cacheEndpoint, keyFunc, loadRealData, path, state: state
     decode j = GU.mapLeft (\err -> "Error decoding serialised sessions:" <> show err) (decodeJson j)
 
 
-type LoaderWithCacheAPIProps path res ret = (
-    cacheEndpoint :: path -> Aff Hash
+type LoaderWithCacheAPIProps path res ret =
+  ( cacheEndpoint :: path -> Aff Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest :: path -> GUC.Request
   , path :: path
@@ -177,16 +175,17 @@ useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer
                            , state }
   pure $ maybe (loadingSpinner {}) renderer (fst state)
 
-type LoaderWithCacheAPIEffectProps path res ret = (
-    cacheEndpoint :: path -> Aff Hash
+type LoaderWithCacheAPIEffectProps path res ret =
+  ( cacheEndpoint :: path -> Aff Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest :: path -> GUC.Request
   , path :: path
   , state :: R.State (Maybe ret)
   )
 
-useCachedAPILoaderEffect :: forall path res ret. Eq path => Show path => DecodeJson res =>
-                            Record (LoaderWithCacheAPIEffectProps path res ret)
+useCachedAPILoaderEffect :: forall path res ret
+                         . Eq path => Show path => DecodeJson res
+                         => Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
 useCachedAPILoaderEffect { cacheEndpoint
                          , handleResponse

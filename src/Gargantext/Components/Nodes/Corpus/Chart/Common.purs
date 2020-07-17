@@ -9,7 +9,8 @@ import Reactix as R
 import Gargantext.Prelude
 
 import Gargantext.Components.Nodes.Corpus.Chart.Types (Reload, Path, Props, MetricsProps, ReloadPath)
-import Gargantext.Hooks.Loader (Hash, HashedResponse, useLoader, useLoaderWithCache, useLoaderWithCacheAPI)
+import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCache, useLoaderWithCacheAPI)
+import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.CacheAPI as GUC
 

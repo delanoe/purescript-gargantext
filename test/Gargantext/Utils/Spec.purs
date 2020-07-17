@@ -8,7 +8,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Gargantext.Utils as GU
 import Gargantext.Utils.Argonaut (genericEnumDecodeJson, genericEnumEncodeJson, genericSumDecodeJson, genericSumEncodeJson)
-import Gargantext.Utils.Crypto as GUC
+import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Math as GUM
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -63,11 +63,6 @@ spec =
       GU.zeroPad 3 1000 `shouldEqual` "1000"
     it "log10 10" do
       GUM.log10 10.0 `shouldEqual` 1.0
-    it "Hash works with backend" do
-      let text = "To hash with backend"
-      let hashed = "8a69a94d164279af2b7d1443ce08da6184b3d7e815406076e148159c284b53c3"
-                   -- ^ hash from backend with text above
-      GUC.hash text `shouldEqual` hashed
 
     it "genericSumDecodeJson works" do
       let result1 = Argonaut.decodeJson =<< Argonaut.jsonParser """{"Boat":{"hi":1}}"""
@@ -114,3 +109,28 @@ spec =
       let result2' = Argonaut.decodeJson result2
       Argonaut.stringify result2 `shouldEqual` "\"Member2\""
       result2' `shouldEqual` Right input2
+
+------------------------------------------------------------------------
+-- | Crypto Hash tests
+    it "Hash String with backend works" do
+      let text = "To hash with backend"
+      let hashed = "8a69a94d164279af2b7d1443ce08da6184b3d7e815406076e148159c284b53c3"
+                   -- ^ hash from backend with text above
+      Crypto.hash text `shouldEqual` hashed
+
+    it "Hash List with backend works" do
+      let list = ["a","b"]
+      let hashed = "ab19ec537f09499b26f0f62eed7aefad46ab9f498e06a7328ce8e8ef90da6d86"
+                   -- ^ hash from backend with text above
+      Crypto.hash list `shouldEqual` hashed
+
+------------------------------------------------------------------------
+-- | TODO property based tests
+    it "Hash works with any order of list" do
+      let hash1 = Crypto.hash ["a","b"]
+      let hash2 = Crypto.hash ["b","a"]
+      hash1 `shouldEqual` hash2
+
+
+
+
