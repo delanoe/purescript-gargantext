@@ -14,7 +14,7 @@ type Hash = String
 
 -- | Main exposed api
 hash :: forall a. IsHashable a => a -> String
-hash = toString <<< hash''
+hash x = toString (hash'' x)
 
 -- | Newtype HashDone is needed to disambiguate Set String and Set HashDone
 -- Set String   needs Set.map hash
@@ -32,7 +32,7 @@ instance eqHashDone :: Eq HashDone where
 
 ------------------------------------------------------------------------
 hash' :: forall a. Crypto.Hashable a => a -> HashDone
-hash' = HashDone <<< Crypto.toString <<< Crypto.hash Crypto.SHA256
+hash' x = HashDone $ Crypto.toString $ Crypto.hash Crypto.SHA256 x
 
 class IsHashable a where
   hash'' :: a -> HashDone
@@ -44,14 +44,14 @@ instance isHashableString :: IsHashable String
 ------------------------------------------------------------------------
 instance isHashableArrayHashDone :: IsHashable (Array HashDone)
   where
-    hash'' = hash'' <<< Set.fromFoldable
+    hash'' x = hash'' $ Set.fromFoldable x
 else instance isHashableArray :: (Crypto.Hashable a, IsHashable a) => IsHashable (Array a)
   where
-    hash'' = hash'' <<< map hash
+    hash'' x = hash'' $ map hash x
 
 ------------------------------------------------------------------------
 instance isHashableSetHashDone :: IsHashable (Set HashDone) where
-  hash'' = hash'' <<< concat <<< map toString <<< toArray
+  hash'' x = hash'' $ concat $ map toString $ toArray x
     where
       toArray :: forall a. Set a -> Array a
       toArray = Set.toUnfoldable
@@ -60,9 +60,6 @@ instance isHashableSetHashDone :: IsHashable (Set HashDone) where
       concat = Array.foldl (<>) ""
 else instance isHashableSet :: (Crypto.Hashable a, IsHashable a) => IsHashable (Set a)
   where
-    hash'' = hash'' <<< Set.map hash''
-
-
-
+    hash'' x = hash'' $ Set.map hash'' x
 
 
