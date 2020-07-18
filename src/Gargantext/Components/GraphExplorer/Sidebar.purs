@@ -122,25 +122,25 @@ sideTab (Opened SideTabSelection) props =
                    , checked: true
                    , title: "Mark as completed" } ]
 
-      removeButton text rType props nodesMap =
-        if Set.isEmpty $ fst props.selectedNodeIds then
+      removeButton text rType props' nodesMap' =
+        if Set.isEmpty $ fst props'.selectedNodeIds then
           RH.div {} []
         else
           RH.button { className: "btn btn-danger"
-                    , on: { click: onClickRemove rType props nodesMap }}
+                    , on: { click: onClickRemove rType props' nodesMap' }}
           [ RH.text text ]
 
-      onClickRemove rType props nodesMap e = do
-        let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
-                             $ Set.toUnfoldable $ fst props.selectedNodeIds
-        deleteNodes { graphId: props.graphId
-                    , metaData: props.metaData
+      onClickRemove rType props' nodesMap' e = do
+        let nodes = mapMaybe (\id -> Map.lookup id nodesMap')
+                             $ Set.toUnfoldable $ fst props'.selectedNodeIds
+        deleteNodes { graphId: props'.graphId
+                    , metaData: props'.metaData
                     , nodes
-                    , session: props.session
+                    , session: props'.session
                     , termList: rType
-                    , treeReload: props.treeReload }
-        snd props.removedNodeIds  $ const $ fst props.selectedNodeIds
-        snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
+                    , treeReload: props'.treeReload }
+        snd props'.removedNodeIds  $ const $ fst props'.selectedNodeIds
+        snd props'.selectedNodeIds $ const SigmaxT.emptyNodeIds
 
 
 
