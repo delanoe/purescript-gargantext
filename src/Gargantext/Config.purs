@@ -35,7 +35,7 @@ backend_local   = backend V10 "/api/" "http://localhost:8008"        "local.cnrs
 -- | public Backend
 -- When user is not logged, use the location of the window
 publicBackend :: Backend
-publicBackend = backend_dev
+publicBackend = backend_local
 
 
 publicBackend' :: Effect Backend

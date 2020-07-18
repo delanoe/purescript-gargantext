@@ -15,6 +15,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.GraphExplorer.Types  as GET
+import Gargantext.Components.GraphExplorer.Types  (SidePanelState(..), SideTab(..))
 import Gargantext.Components.GraphExplorer.Legend as Legend
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
@@ -29,6 +30,7 @@ import Partial.Unsafe (unsafePartial)
 import Gargantext.Prelude
 import Reactix as R
 import Reactix.DOM.HTML as RH
+import Reactix.DOM.HTML as H
 
 type Props =
   ( frontends       :: Frontends
@@ -54,13 +56,35 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
     cpt {showSidePanel: (GET.InitialClosed /\ _)} _children = do
       pure $ RH.div {} []
     cpt props@{metaData, showSidePanel} _children = do
-      let (sidePanel /\ setSidePanel) = showSidePanel
-      let nodesMap = SigmaxT.nodesGraphMap props.graph
-      pure $
-        RH.div { id: "sp-container" }
-        [ RH.div {}
-          [ R2.row
-            [ R2.col 12
+      pure $ RH.div { id: "sp-container" }
+        [ sideTabNav showSidePanel [SideTabLegend, SideTabSelection, SideTabPairing]
+        , sideTab (fst showSidePanel) props
+        ]
+
+sideTabNav :: R.State SidePanelState -> Array SideTab -> R.Element
+sideTabNav (sidePanel /\ setSidePanel) sideTabs =
+  R.fragment [ H.div { className: "text-primary center"} [H.text "SideTab"]
+                     , H.div {className: "nav nav-tabs"} (liItem <$> sideTabs)
+                     -- , H.div {className: "center"} [ H.text "Doc sideTabs"]
+             ]
+    where
+      liItem :: SideTab -> R.Element
+      liItem  tab =
+        H.div { className : "nav-item nav-link"
+                          <> if (Opened tab) == sidePanel
+                               then " active"
+                               else ""
+            , on: { click: \_ -> setSidePanel $ const (Opened tab)
+                  }
+            } [ H.text $ show tab ]
+
+sideTab :: SidePanelState -> Record Props -> R.Element
+sideTab (Opened SideTabLegend) props@{metaData} =
+  let (GET.MetaData {legend}) = metaData
+                    in Legend.legend { items: Seq.fromFoldable legend}
+
+sideTab (Opened SideTabSelection) props =
+  RH.div {} [ R2.row [ R2.col 12
               [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
                 [ RH.div { className: "tab-content" }
                   [ RH.div { className: "", role: "tabpanel" }
@@ -75,27 +99,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                          , removeButton "Remove stop"      StopTerm      props nodesMap
                          ]
 
-                , RH.li { className: "nav-item" }
-                        [ RH.a { id: "home-tab"
-                               , className: "nav-link active"
-                               , data: {toggle: "tab"}
-                               , href: "#legend"
-                               , role: "tab"
-                               , aria: {controls: "legend", selected: "true"}
-                               }
-                    [ RH.text "Legend" ]
-                 , let (GET.MetaData {legend}) = metaData
-                    in Legend.legend { items: Seq.fromFoldable legend}
                   ]
-                , RH.li { className: "nav-item" }
-                  [ RH.a { id: "home-tab"
-                         , className: "nav-link"
-                         , data: {toggle: "tab"}
-                         , href: "#nodes"
-                         , role: "tab"
-                         , aria: {controls: "nodes", selected: "false"}
-                         }
-                    [ RH.text "Nodes" ]
 
                 , RH.div { className: "col-md-12", id: "query" }
                   [ query props.frontends props.metaData props.session nodesMap props.selectedNodeIds]
@@ -106,47 +110,45 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
                   (Seq.toUnfoldable $ (Seq.map (badge props.selectedNodeIds) (neighbourBadges props.graph props.selectedNodeIds)))
                 ]
               ]
-            {-, RH.div { className: "col-md-12", id: "horizontal-checkbox" }
-              [ RH.ul {}
-                [ checkbox "Pubs"
-                , checkbox "Projects"
-                , checkbox "Patents"
-                , checkbox "Others"
-                ]
-              ]
-              -}
-            ]
-          ]
-        ]
-    checkbox text =
-      RH.li {}
-      [ RH.span {} [ RH.text text ]
-      , RH.input { type: "checkbox"
-                 , className: "checkbox"
-                 , checked: true
-                 , title: "Mark as completed" } ]
+    where
 
-    removeButton text rType props nodesMap =
-      if Set.isEmpty $ fst props.selectedNodeIds then
-        RH.div {} []
-      else
-        RH.button { className: "btn btn-danger"
-                  , on: { click: onClickRemove rType props nodesMap }}
-        [ RH.text text ]
+      nodesMap = SigmaxT.nodesGraphMap props.graph
 
-    onClickRemove rType props nodesMap e = do
-      let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
-                           $ Set.toUnfoldable $ fst props.selectedNodeIds
-      deleteNodes { graphId: props.graphId
-                  , metaData: props.metaData
-                  , nodes
-                  , session: props.session
-                  , termList: rType
-                  , treeReload: props.treeReload }
-      snd props.removedNodeIds  $ const $ fst props.selectedNodeIds
-      snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
+      checkbox text =
+        RH.li {}
+        [ RH.span {} [ RH.text text ]
+        , RH.input { type: "checkbox"
+                   , className: "checkbox"
+                   , checked: true
+                   , title: "Mark as completed" } ]
+
+      removeButton text rType props nodesMap =
+        if Set.isEmpty $ fst props.selectedNodeIds then
+          RH.div {} []
+        else
+          RH.button { className: "btn btn-danger"
+                    , on: { click: onClickRemove rType props nodesMap }}
+          [ RH.text text ]
+
+      onClickRemove rType props nodesMap e = do
+        let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
+                             $ Set.toUnfoldable $ fst props.selectedNodeIds
+        deleteNodes { graphId: props.graphId
+                    , metaData: props.metaData
+                    , nodes
+                    , session: props.session
+                    , termList: rType
+                    , treeReload: props.treeReload }
+        snd props.removedNodeIds  $ const $ fst props.selectedNodeIds
+        snd props.selectedNodeIds $ const SigmaxT.emptyNodeIds
 
 
+
+sideTab _ _  = H.div {} []
+
+
+
+-------------------------------------------
 badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
 badge (_ /\ setNodeIds) {id, label} =
   RH.a { className: "badge badge-light"
@@ -163,6 +165,7 @@ neighbourBadges :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Seq.Seq (Record 
 neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selectedNodes
   where
     selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
+
 
 type DeleteNodes =
   ( graphId :: Int
@@ -188,23 +191,30 @@ deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches 
   where
     nodeId :: Int
     nodeId = unsafePartial $ fromJust $ fromString node.id
+
     versioned :: NTC.VersionedNgramsPatches
     versioned = NTC.Versioned {version: metaData.list.version, data: np}
+
     coreParams :: NTC.CoreParams ()
     coreParams = {session, nodeId, listIds: [metaData.list.listId], tabType}
+
     tabNgramType :: CTabNgramType
     tabNgramType = modeTabType node.gargType
+
     tabType :: TabType
     tabType = TabCorpus (TabNgramType tabNgramType)
+
     term :: NTC.NgramsTerm
     term = NTC.normNgram tabNgramType node.label
+
     pt :: NTC.NgramsTablePatch
     pt = NTC.fromNgramsPatches np
+
     np :: NTC.NgramsPatches
     np = NTC.singletonPatchMap term $ NTC.NgramsPatch { patch_children: mempty, patch_list }
+
     patch_list :: NTC.Replace TermList
     patch_list = NTC.Replace { new: termList, old: MapTerm }
-
 
 query :: Frontends -> GET.MetaData -> Session -> SigmaxT.NodesMap -> R.State SigmaxT.NodeIds -> R.Element
 query _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
@@ -222,3 +232,18 @@ query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) 
         , listId: metaData.list.listId
         , corpusLabel: metaData.title
         }
+
+------------------------------------------------------------------------
+
+            {-, RH.div { className: "col-md-12", id: "horizontal-checkbox" }
+              [ RH.ul {}
+                [ checkbox "Pubs"
+                , checkbox "Projects"
+                , checkbox "Patents"
+                , checkbox "Others"
+                ]
+              ]
+              -}
+
+
+

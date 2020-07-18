@@ -1,6 +1,6 @@
 module Gargantext.Components.GraphExplorer.Types where
 
-import Prelude
+import Gargantext.Prelude
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Array ((!!), length)
 import Data.Maybe (Maybe(..), fromJust)
@@ -190,9 +190,19 @@ intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaul
 
 
 data SidePanelState = InitialClosed | Opened SideTab | Closed
+derive instance eqSidePanelState :: Eq SidePanelState
 
-data SideTab = SideTab1 | SideTab2 | SideTab3
+data SideTab = SideTabLegend | SideTabSelection | SideTabPairing
 
 derive instance eqSideTab :: Eq SideTab
+instance showSideTab :: Show SideTab where
+  show SideTabLegend    = "Legend"
+  show SideTabSelection = "Navigation"
+  show SideTabPairing   = "Pairing"
 
-derive instance eqSidePanelState :: Eq SidePanelState
+
+
+
+
+
+

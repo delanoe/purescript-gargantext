@@ -150,6 +150,6 @@ sidebarToggleButton (state /\ setState) = R.createElement el {} []
 
     onClick = \_ -> do
       setState $ \s -> case s of
-        GET.InitialClosed -> GET.Opened GET.SideTab1
-        GET.Closed        -> GET.Opened GET.SideTab1
+        GET.InitialClosed -> GET.Opened GET.SideTabLegend
+        GET.Closed        -> GET.Opened GET.SideTabLegend
         (GET.Opened _)    -> GET.Closed
