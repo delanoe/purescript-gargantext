@@ -94,15 +94,20 @@ sideTab (Opened SideTabSelection) props =
                              )
                            )
                   ]
-                , RH.div { className: "tab-content" }
-                         [ removeButton "Remove candidate" CandidateTerm props nodesMap
-                         , removeButton "Remove stop"      StopTerm      props nodesMap
+                , RH.div { className: "tab-content flex-space-between" }
+                         [ removeButton "Move as candidate" CandidateTerm props nodesMap
+                         , removeButton "Move as stop"      StopTerm      props nodesMap
                          ]
 
                   ]
 
                 , RH.div { className: "col-md-12", id: "query" }
-                  [ query props.frontends props.metaData props.session nodesMap props.selectedNodeIds]
+                         [ query props.frontends
+                                 props.metaData
+                                 props.session
+                                 nodesMap
+                                 props.selectedNodeIds
+                         ]
                   ]
                 ]
               , RH.div { className: "tab-content", id: "myTabContent" }
@@ -126,9 +131,10 @@ sideTab (Opened SideTabSelection) props =
         if Set.isEmpty $ fst props'.selectedNodeIds then
           RH.div {} []
         else
-          RH.button { className: "btn btn-danger"
-                    , on: { click: onClickRemove rType props' nodesMap' }}
-          [ RH.text text ]
+          RH.button { className: "btn btn-info"
+                    , on: { click: onClickRemove rType props' nodesMap' }
+                    }
+                    [ RH.text text ]
 
       onClickRemove rType props' nodesMap' e = do
         let nodes = mapMaybe (\id -> Map.lookup id nodesMap')
@@ -221,17 +227,21 @@ query _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} [
 query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
   query' (head metaData.corpusId)
   where
-    query' Nothing = RH.div {} []
-    query' (Just corpusId) =
-      CGT.tabs {frontends, session, query: q <$> Set.toUnfoldable selectedNodeIds, sides: [side corpusId]}
-    q id = case Map.lookup id nodesMap of
+    query' Nothing         = RH.div {} []
+    query' (Just corpusId) = CGT.tabs { frontends
+                                      , session
+                                      , query: toQuery <$> Set.toUnfoldable selectedNodeIds
+                                      , sides: [side corpusId]
+                                      }
+
+    toQuery id = case Map.lookup id nodesMap of
       Nothing -> []
       Just n -> words n.label
-    side corpusId = GET.GraphSideCorpus {
-          corpusId
-        , listId: metaData.list.listId
-        , corpusLabel: metaData.title
-        }
+
+    side corpusId = GET.GraphSideCorpus { corpusId
+                                        , listId     : metaData.list.listId
+                                        , corpusLabel: metaData.title
+                                        }
 
 ------------------------------------------------------------------------
 
