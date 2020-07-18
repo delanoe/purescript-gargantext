@@ -57,7 +57,7 @@ sidebarCpt = R.hooksComponent "Sidebar" cpt
       pure $ RH.div {} []
     cpt props@{metaData, showSidePanel} _children = do
       pure $ RH.div { id: "sp-container" }
-        [ sideTabNav showSidePanel [SideTabLegend, SideTabSelection, SideTabPairing]
+        [ sideTabNav showSidePanel [SideTabLegend, SideTabData, SideTabCommunity]
         , sideTab (fst showSidePanel) props
         ]
 
@@ -83,7 +83,7 @@ sideTab (Opened SideTabLegend) props@{metaData} =
   let (GET.MetaData {legend}) = metaData
                     in Legend.legend { items: Seq.fromFoldable legend}
 
-sideTab (Opened SideTabSelection) props =
+sideTab (Opened SideTabData) props =
   RH.div {} [ R2.row [ R2.col 12
               [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
                 [ RH.div { className: "tab-content" }
@@ -99,7 +99,7 @@ sideTab (Opened SideTabSelection) props =
                          , removeButton "Move as stop"      StopTerm      props nodesMap
                          ]
 
-                  ]
+                ]
 
                 , RH.div { className: "col-md-12", id: "query" }
                          [ query props.frontends

@@ -116,9 +116,9 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
         RH.div
           { id: "graph-explorer" }
           [ rowToggle
-                  [ col [ pullLeft [ Toggle.treeToggleButton controls.showTree ] ]
-                  , col [ Toggle.controlsToggleButton controls.showControls ]
-                  , col [ pullRight [ Toggle.sidebarToggleButton controls.showSidePanel ] ]
+                  [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
+                  , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
+                  , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
                   ], R2.row
             [ outer
               [ inner
@@ -158,8 +158,10 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     rowToggle  = RH.div { id: "toggle-container" }
     rowControls = RH.div { id: "controls-container" }
     col       = RH.div { className: "col-md-4" }
-    pullLeft  = RH.div { className: "pull-left" }
+    pullLeft  = RH.div { className: "pull-left"  }
     pullRight = RH.div { className: "pull-right" }
+    spaces    = RH.div { className: "flex-space-between" }
+
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []

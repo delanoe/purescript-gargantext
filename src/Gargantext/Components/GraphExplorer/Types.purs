@@ -192,13 +192,13 @@ intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaul
 data SidePanelState = InitialClosed | Opened SideTab | Closed
 derive instance eqSidePanelState :: Eq SidePanelState
 
-data SideTab = SideTabLegend | SideTabSelection | SideTabPairing
+data SideTab = SideTabLegend | SideTabData | SideTabCommunity
 
 derive instance eqSideTab :: Eq SideTab
 instance showSideTab :: Show SideTab where
   show SideTabLegend    = "Legend"
-  show SideTabSelection = "Navigation"
-  show SideTabPairing   = "Pairing"
+  show SideTabData      = "Data"
+  show SideTabCommunity = "Community"
 
 
 
