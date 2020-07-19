@@ -6,6 +6,8 @@ import Data.Array as Array
 import Gargantext.Prelude
 import Crypto.Simple as Crypto
 
+foreign import md5 :: String -> String
+
 -- | TODO use newtype to disambiguate Set String and Set Hash
 -- Set String needs Set.map hash
 -- Set Hash   does not need Set.map hash (just concat)
