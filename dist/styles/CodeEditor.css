@@ -109,6 +109,10 @@
   font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
   white-space: pre;
 }
+.code-editor .editor .html.language-python {
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  white-space: pre;
+}
 .code-editor .editor .html.language-json {
   font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
   white-space: pre;
