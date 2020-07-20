@@ -1,6 +1,6 @@
 {
     "name": "Gargantext",
-    "version": "0.0.1.6.6",
+    "version": "0.0.1.7.1",
     "scripts": {
         "rebase-set": "spago package-set-upgrade && spago psc-package-insdhall",
         "rebuild-set": "spago psc-package-insdhall",
@@ -13,10 +13,12 @@
         "clean": "rm -Rf output node_modules",
         "clean-js": "rm -Rf node_modules",
         "clean-ps": "rm -Rf output",
-        "test": "pulp test",
+        "test": "pulp test --no-check-main",
         "server": "serve dist"
     },
     "dependencies": {
+        "aes-js": "^3.1.1",
+        "base-x": "^3.0.2",
         "create-react-class": "^15.6.3",
         "echarts": "^4.1.0",
         "echarts-for-react": "^2.0.14",
@@ -25,6 +27,7 @@
         "react": "^16.10",
         "react-awesome-popover": "^6.1.1",
         "react-dom": "^16.10",
+        "secp256k1": "^3.3.0",
         "sigma": "git://github.com/poorscript/sigma.js#garg"
     },
     "devDependencies": {

@@ -13,7 +13,6 @@ hasStatus _ Refresh           = Dev
 hasStatus _ Config            = Dev
 hasStatus _ (Link  _)         = Dev
 hasStatus _ (Merge _)         = Dev
-hasStatus _ (Move  _)         = Test
 hasStatus _ (Documentation _) = Dev
 hasStatus Annuaire Upload     = Dev
 hasStatus Texts    Upload     = Dev

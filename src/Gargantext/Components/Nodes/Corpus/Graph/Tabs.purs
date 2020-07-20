@@ -11,8 +11,8 @@ import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 
-type Props = (
-    frontends :: Frontends
+type Props =
+  ( frontends :: Frontends
   , query :: TextQuery
   , session :: Session
   , sides :: Array GraphSideCorpus
@@ -35,7 +35,7 @@ tab :: Frontends -> Session -> TextQuery -> GraphSideCorpus -> Tuple String R.El
 tab frontends session query (GraphSideCorpus {corpusId: nodeId, corpusLabel, listId}) =
   Tuple corpusLabel (docView dvProps)
   where
-    dvProps = {frontends, session, nodeId, listId, query, chart, totalRecords: 0, container}
-    chart = mempty
+    dvProps   = {frontends, session, nodeId, listId, query, chart, totalRecords: 0, container}
+    chart     = mempty
     container = T.graphContainer {title: corpusLabel}
 

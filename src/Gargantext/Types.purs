@@ -63,7 +63,7 @@ derive instance eqTermList :: Eq TermList
 derive instance ordTermList :: Ord TermList
 
 instance encodeJsonTermList :: EncodeJson TermList where
-  encodeJson MapTerm     = encodeJson "MapTerm"
+  encodeJson MapTerm       = encodeJson "MapTerm"
   encodeJson StopTerm      = encodeJson "StopTerm"
   encodeJson CandidateTerm = encodeJson "CandidateTerm"
 
@@ -71,7 +71,7 @@ instance decodeJsonTermList :: DecodeJson TermList where
   decodeJson json = do
     s <- decodeJson json
     case s of
-      "MapTerm"     -> pure MapTerm
+      "MapTerm"       -> pure MapTerm
       "StopTerm"      -> pure StopTerm
       "CandidateTerm" -> pure CandidateTerm
       _               -> Left "Unexpected list name"
@@ -84,7 +84,7 @@ listTypeId StopTerm      = 2
 listTypeId CandidateTerm = 3
 
 instance showTermList :: Show TermList where
-  show MapTerm     = "MapTerm"
+  show MapTerm       = "MapTerm"
   show StopTerm      = "StopTerm"
   show CandidateTerm = "CandidateTerm"
 
@@ -154,6 +154,8 @@ data NodeType = NodeUser
               -- TODO Optional Nodes
               | NodeFrameWrite
               | NodeFrameCalc
+              | NodePublic NodeType
+
 
 derive instance eqNodeType :: Eq NodeType
 
@@ -182,6 +184,7 @@ instance showNodeType :: Show NodeType where
   show Texts         = "NodeTexts"
   show NodeFrameWrite = "NodeFrameWrite"
   show NodeFrameCalc  = "NodeFrameCalc"
+  show (NodePublic nt) = "NodePublic" <> show nt
 
 
 instance readNodeType :: Read NodeType where
@@ -207,6 +210,7 @@ instance readNodeType :: Read NodeType where
   read "Annuaire"      = Just Annuaire
   read "NodeFrameWrite" = Just NodeFrameWrite
   read "NodeFrameCalc"  = Just NodeFrameCalc
+  -- TODO NodePublic read ?
   read _               = Nothing
 
 
@@ -245,16 +249,26 @@ fldr Annuaire false = "fa fa-address-card"
 fldr NodeContact true  = "fa fa-address-card-o"
 fldr NodeContact false = "fa fa-address-card"
 
-fldr NodeFrameWrite true  = "fa fa-file-word-o"
-fldr NodeFrameWrite false = "fa fa-file-word-o"
+fldr NodeFrameWrite true  = "fa fa-file-text-o"
+fldr NodeFrameWrite false = "fa fa-file-text"
 
-fldr NodeFrameCalc true  = "fa fa-file-excel-o"
-fldr NodeFrameCalc false = "fa fa-file-excel-o"
+fldr NodeFrameCalc true  = "fa fa-calculator"
+fldr NodeFrameCalc false = "fa fa-calculator"
 
-fldr _        false  = "fa fa-folder-o"
+fldr (NodePublic nt) b   = fldr nt b
+
 fldr _        true   = "fa fa-folder-open"
+fldr _        false  = "fa fa-folder-o"
 
 
+publicize :: NodeType -> NodeType
+publicize (NodePublic nt) = NodePublic nt
+publicize nt              = NodePublic nt
+
+isPublic :: NodeType -> Boolean
+isPublic (NodePublic _) = true
+isPublic FolderPublic   = true
+isPublic _              = false
 
 {-
 ------------------------------------------------------------
@@ -296,6 +310,7 @@ nodeTypePath Texts     = "texts"
 nodeTypePath Team      = "team"
 nodeTypePath NodeFrameWrite = "write"
 nodeTypePath NodeFrameCalc  = "calc"
+nodeTypePath (NodePublic nt) = nodeTypePath nt
 
 ------------------------------------------------------------
 

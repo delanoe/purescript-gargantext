@@ -1,5 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.FTree where
 
+import Data.Maybe (Maybe(..))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Newtype (class Newtype)
 import Gargantext.Types  as GT
@@ -21,6 +22,7 @@ instance ntreeFunctor :: Functor NTree where
 newtype LNode = LNode { id :: ID
                       , name :: Name
                       , nodeType :: GT.NodeType
+                      , parent_id :: Maybe ID
                       }
 
 derive instance newtypeLNode :: Newtype LNode _
@@ -34,6 +36,7 @@ instance decodeJsonLNode :: DecodeJson LNode where
     pure $ LNode { id : id_
                  , name
                  , nodeType
+                 , parent_id : Nothing
                  }
 
 instance decodeJsonFTree :: DecodeJson (NTree LNode) where
@@ -43,5 +46,10 @@ instance decodeJsonFTree :: DecodeJson (NTree LNode) where
     nodes  <- obj .: "children"
     node'  <- decodeJson node
     nodes' <- decodeJson nodes
-    pure $ NTree node' nodes'
+    let (LNode {id}) = node'
+    pure $ NTree node' (map (addParent id) nodes')
 
+addParent :: ID -> NTree LNode -> NTree LNode
+addParent id (NTree (LNode p@{id:id'}) ary)=
+  NTree (LNode (p {parent_id=Just id}))
+        (map (addParent id') ary)

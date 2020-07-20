@@ -215,12 +215,12 @@ buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
                      []
                    ]
       where
-        {- -- This shows the Help of this button
-        undo = setNodePopup
-             $ const (node { action = Nothing })
-        -}
-
-        doToDo = setNodePopup $ const $ node { action = Just todo }
+        -- | Open the help indications if selected already
+        doToDo = setNodePopup $ const $ node { action = todo' }
+          where
+            todo' = case action == Just todo of
+              true  -> Nothing
+              false -> Just todo 
 
         iconAStyle :: GT.NodeType -> NodeAction -> {
                         color      :: String
@@ -295,8 +295,13 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
                                      , id
                                      , text: "username"
                                      , isOpen
-                                     } 
+                                     }
                       ]
+
+    cpt {action : Publish {subTreeParams}, dispatch, id, nodeType, session } _ = do
+      pure $ Share.shareNode {dispatch, id, nodeType, session, subTreeParams}
+
+
     cpt props@{action: SearchBox, id, session, dispatch, nodePopup} _ =
       actionSearch session (Just id) dispatch nodePopup
 

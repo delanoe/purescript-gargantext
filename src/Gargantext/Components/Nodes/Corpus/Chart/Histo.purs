@@ -6,24 +6,22 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
-
-import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
-import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Charts.Options.Color (grey)
-import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
+import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
+import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
+import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
 import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Hooks.Loader (HashedResponse(..))
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType(..))
 import Gargantext.Utils.CacheAPI as GUC
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
@@ -62,9 +60,9 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , series    : [seriesBarD1 {name: "Number of publication / year"} $
                  map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count'] }
 
-getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
-getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
-  get session $ ChartMD5 { chartType: Histo, listId: mListId, tabType } (Just corpusId)
+getMetricsHash :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
+  get session $ ChartHash { chartType: Histo, listId: mListId, tabType } (Just corpusId)
   where
     mListId = if listId == 0 then Nothing else (Just listId)
 
@@ -88,7 +86,7 @@ histoCpt = R.hooksComponent "G.C.N.C.C.H.histo" cpt
     cpt { path, session } _ = do
       reload <- R.useState' 0
       pure $ metricsWithCacheLoadView {
-          getMetricsMD5
+          getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session

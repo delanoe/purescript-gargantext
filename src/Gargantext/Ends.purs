@@ -9,8 +9,8 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Gargantext.Routes as R
-import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType')
-import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==))
+import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType', TermList(MapTerm))
+import Gargantext.Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==), (/=))
 
 -- | A means of generating a url to visit, a destination
 class ToUrl conf p where
@@ -24,7 +24,8 @@ newtype Backend = Backend
   { name    :: String
   , baseUrl :: String
   , prePath :: String
-  , version :: ApiVersion }
+  , version :: ApiVersion
+  }
 
 backend :: ApiVersion -> String -> String -> String -> Backend
 backend version prePath baseUrl name = Backend { name, version, prePath, baseUrl }
@@ -117,13 +118,13 @@ sessionPath :: R.SessionRoute -> String
 sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType' t))
 sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
 sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ fromMaybe 0 pId) <> p
-sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart ChartBar nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart ChartPie nt nId lId)      = "node/" <> (show nId) <> "/pie?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart ChartTree nt nId lId)      = "node/" <> (show nId) <> "/tree?list=" <> (show lId) <> "&ngramsType=" <> (show nt) <> "&listType=MapTerm"
-sessionPath (R.RecomputeListChart Histo nt nId lId)      = "node/" <> (show nId) <> "/chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart Scatter nt nId lId)      = "node/" <> (show nId) <> "/metrics?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart _ nt nId lId)      = "node/" <> (show nId) <> "/recompute-chart?list=" <> (show lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeListChart ChartBar nt nId lId)   = "node/" <> (show nId) <> "/pie?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeListChart ChartPie nt nId lId)   = "node/" <> (show nId) <> "/pie?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeListChart ChartTree nt nId lId)  = "node/" <> (show nId) <> "/tree?" <> (defaultList lId) <> "&ngramsType=" <> (show nt) <> "&listType=" <> show MapTerm
+sessionPath (R.RecomputeListChart Histo nt nId lId)      = "node/" <> (show nId) <> "/chart?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeListChart Scatter nt nId lId)    = "node/" <> (show nId) <> "/metrics?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.RecomputeListChart _ nt nId lId)          = "node/" <> (show nId) <> "/recompute-chart?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.GraphAPI gId p)      = "graph/" <> (show gId) <> "/" <> p
 sessionPath (R.GetNgrams opts i)    =
   base opts.tabType
@@ -132,7 +133,7 @@ sessionPath (R.GetNgrams opts i)    =
     <> limitUrl opts.limit
     <> offset opts.offset
     <> orderByUrl opts.orderBy
-    <> foldMap (\x -> "&list=" <> show x) opts.listIds
+    <> foldMap (\x -> if x /= 0 then "&list=" <> show x else "") opts.listIds
     <> foldMap (\x -> "&listType=" <> show x) opts.termListFilter
     <> foldMap termSizeFilter opts.termSizeFilter
     <> search opts.searchQuery
@@ -191,9 +192,9 @@ sessionPath (R.CorpusMetrics { listId, limit, tabType} i) =
     <> "?ngrams=" <> show listId
     <> "&ngramsType=" <> showTabType' tabType
     <> maybe "" limitUrl limit
-sessionPath (R.CorpusMetricsMD5 { listId, tabType} i) =
+sessionPath (R.CorpusMetricsHash { listId, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i
-     $ "metrics/md5"
+     $ "metrics/hash"
     <> "?ngrams=" <> show listId
     <> "&ngramsType=" <> showTabType' tabType
 -- TODO fix this url path
@@ -201,29 +202,34 @@ sessionPath (R.Chart {chartType, limit, listId, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i
      $ show chartType
     <> "?ngramsType=" <> showTabType' tabType
-    <> "&listType=MapTerm" -- <> show listId
-    <> listPath
+    <> "&listType=" <> show MapTerm  -- listId
+    <> defaultListAddMaybe listId
     where
-      listPath = case listId of
-        Just li -> "&list=" <> show li
-        Nothing -> ""
       limitPath = case limit of
         Just li -> "&limit=" <> show li
         Nothing -> ""
     -- <> maybe "" limitUrl limit
-sessionPath (R.ChartMD5 { chartType, listId, tabType } i) =
+sessionPath (R.ChartHash { chartType, listId, tabType } i) =
   sessionPath $ R.NodeAPI Corpus i
      $ show chartType
-    <> "/md5?ngramsType=" <> showTabType' tabType
-    <> "&listType=GraphTerm" -- <> show listId
-    <> listPath
-    where
-      listPath = case listId of
-        Just li -> "&list=" <> show li
-        Nothing -> ""
+    <> "/hash?ngramsType=" <> showTabType' tabType
+    <> "&listType=" <> show MapTerm -- listId
+    <> defaultListAddMaybe listId
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 
 ------- misc routing stuff
+
+defaultList :: Int -> String
+defaultList n = if n == 0 then "" else ("list=" <> show n)
+
+defaultListAdd :: Int -> String
+defaultListAdd n = "&" <> defaultList n
+
+defaultListAddMaybe :: Maybe Int -> String
+defaultListAddMaybe Nothing = ""
+defaultListAddMaybe (Just l) = "&list=" <> show l
+
+
 
 limitUrl :: Limit -> String
 limitUrl l = "&limit=" <> show l

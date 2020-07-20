@@ -1,40 +1,34 @@
 module Gargantext.Components.App where
 
-import Prelude
-
 import Data.Array (fromFoldable)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
-import Effect.Aff (launchAff_)
-import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.License (license)
-import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
+import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts (annuaireUserLayout, userLayout)
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
-import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentLayout)
+import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists (listsLayout)
 import Gargantext.Components.Nodes.Texts (textsLayout)
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Router (useHashRouter)
+import Gargantext.License (license)
 import Gargantext.Router (router)
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Sessions (Sessions, useSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Version as GV
+import Prelude
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 -- TODO (what does this mean?)
 -- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
@@ -251,59 +245,21 @@ liNav (LiNav { title : title'
                   ]
 
 ---------------------------------------------------------------------------
--- | TODO put Version in the Tree/Root node
-
-type VersionProps =
+type FooterProps =
   (
     session :: Sessions.Session
   )
 
-version :: Record VersionProps -> R.Element
-version props = R.createElement versionCpt props []
-
-versionCpt :: R.Component VersionProps
-versionCpt = R.hooksComponent "G.C.A.version" cpt
-  where
-    cpt { session } _ = do
-      (ver /\ setVer) <- R.useState' "No Backend Version"
-
-      R.useEffect' $ do
-        launchAff_ $ do
-          v <- GV.getBackendVersion session
-          liftEffect $ setVer $ const v
-
-      pure $ H.div { className: "row" }
-                   [ H.div { className: versionCheck GV.version ver}
-                           [ H.h4 {} [H.text $ versionMessage GV.version ver]
-                           , H.div { className: "container" } [showVersions GV.version ver]
-                           ]
-                   ]
-          where
-            versionCheck v1 v2 = case v1 == v2 of
-                false -> "col alert alert-danger"
-                true  -> "col alert alert-success"
-            versionMessage v1 v2 = case v1 == v2 of
-                false -> "Versions do not match"
-                true  -> "Versions are up to date"
-
-    showVersions frontendVer backendVer =
-      H.div { className: "row" }
-            [ H.h5 {} [ H.text $ "Frontend version: " <> frontendVer ]
-            , H.h5 {} [ H.text $ "Backend  version: "  <> backendVer ]
-            ]
-
-footer :: Record VersionProps -> R.Element
+footer :: Record FooterProps -> R.Element
 footer props = R.createElement footerCpt props []
 
-footerCpt :: R.Component VersionProps
+footerCpt :: R.Component FooterProps
 footerCpt = R.hooksComponent "G.C.A.footer" cpt
   where
     cpt { session } _ = do
       pure $ H.div 
               { className: "container" }
               [ H.hr {}
-              , H.footer {} [ version { session }
-                            , license
-                            ]
+              , H.footer {} [ license ]
               ]
 

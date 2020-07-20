@@ -144,12 +144,12 @@ sidebarToggleButton (state /\ setState) = R.createElement el {} []
           ]
     onMessage = "Hide Sidebar"
     offMessage = "Show Sidebar"
-    text on _off GET.Opened = on
+    text on _off (GET.Opened _)    = on
     text _on off GET.InitialClosed = off
-    text _on off GET.Closed = off
+    text _on off GET.Closed        = off
 
     onClick = \_ -> do
       setState $ \s -> case s of
-        GET.InitialClosed -> GET.Opened
-        GET.Closed -> GET.Opened
-        GET.Opened -> GET.Closed
+        GET.InitialClosed -> GET.Opened GET.SideTabLegend
+        GET.Closed        -> GET.Opened GET.SideTabLegend
+        (GET.Opened _)    -> GET.Closed

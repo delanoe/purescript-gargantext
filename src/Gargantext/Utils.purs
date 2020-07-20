@@ -1,12 +1,17 @@
 module Gargantext.Utils where
 
-import Prelude
+import DOM.Simple.Window (window)
 import Data.Either (Either(..))
 import Data.Lens (Lens', lens)
 import Data.Newtype (class Newtype, unwrap, wrap)
-import Data.Set as Set
 import Data.Set (Set)
+import Data.Set as Set
 import Data.String as S
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import FFI.Simple ((..))
+import FFI.Simple.Functions (delay)
+import Prelude
 
 -- | TODO (hard coded)
 csrfMiddlewareToken :: String
@@ -74,3 +79,10 @@ queryMatchesLabel q l = S.contains (S.Pattern $ normalize q) (normalize l)
 mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
 mapLeft f (Left  l) = Left (f l)
 mapLeft _ (Right r) = Right r
+
+-- | Get current Window Location
+location :: Effect String
+location = delay unit $ \_ -> pure $ window .. "location"
+
+
+

@@ -20,41 +20,45 @@ type Props =
 
 
 data Action = AddNode     String GT.NodeType
-            | DeleteNode
+            | DeleteNode  GT.NodeType
             | RenameNode  String
             | UpdateNode  UpdateNodeParams
-            | ShareNode   String
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
             | DownloadNode
             | RefreshTree
 
-            | MoveNode  {params :: Maybe SubTreeOut}
-            | MergeNode {params :: Maybe SubTreeOut}
-            | LinkNode  {params :: Maybe SubTreeOut}
+            | ShareTeam   String
+            | SharePublic {params :: Maybe SubTreeOut}
+            | MoveNode    {params :: Maybe SubTreeOut}
+            | MergeNode   {params :: Maybe SubTreeOut}
+            | LinkNode    {params :: Maybe SubTreeOut}
 
             | NoAction
 
 
 subTreeOut :: Action -> Maybe SubTreeOut
-subTreeOut (MoveNode  {params}) = params
-subTreeOut (MergeNode {params}) = params
-subTreeOut (LinkNode  {params}) = params
+subTreeOut (MoveNode    {params}) = params
+subTreeOut (MergeNode   {params}) = params
+subTreeOut (LinkNode    {params}) = params
+subTreeOut (SharePublic {params}) = params
 subTreeOut _                    = Nothing
 
 setTreeOut ::  Action -> Maybe SubTreeOut -> Action
 setTreeOut (MoveNode  {params:_}) p = MoveNode  {params: p}
 setTreeOut (MergeNode {params:_}) p = MergeNode {params: p}
 setTreeOut (LinkNode  {params:_}) p = LinkNode  {params: p}
+setTreeOut (SharePublic {params:_}) p = SharePublic  {params: p}
 setTreeOut a   _             = a
 
 
 instance showShow :: Show Action where
   show (AddNode     _ _    )= "AddNode"
-  show  DeleteNode          = "DeleteNode"
+  show (DeleteNode  _      )= "DeleteNode"
   show (RenameNode  _      )= "RenameNode"
   show (UpdateNode  _      )= "UpdateNode"
-  show (ShareNode   _      )= "ShareNode"
+  show (ShareTeam   _      )= "ShareTeam"
+  show (SharePublic _      )= "SharePublic"
   show (DoSearch    _      )= "SearchQuery"
   show (UploadFile  _ _ _ _)= "UploadFile"
   show  RefreshTree         = "RefreshTree"
@@ -67,10 +71,11 @@ instance showShow :: Show Action where
 -----------------------------------------------------------------------
 icon :: Action -> String
 icon (AddNode    _ _)     = glyphiconNodeAction (Add [])
-icon  DeleteNode          = glyphiconNodeAction Delete
+icon (DeleteNode _)       = glyphiconNodeAction Delete
 icon (RenameNode _)       = glyphiconNodeAction Config
 icon (UpdateNode _)       = glyphiconNodeAction Refresh
-icon (ShareNode  _)       = glyphiconNodeAction Share
+icon (ShareTeam  _)       = glyphiconNodeAction Share
+icon (SharePublic _ )     = glyphiconNodeAction (Publish { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 icon (DoSearch   _)       = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
 icon  RefreshTree         = glyphiconNodeAction Refresh
@@ -85,16 +90,17 @@ icon NoAction             = "hand-o-right"
 
 text :: Action -> String
 text (AddNode     _ _    )= "Add !"
-text  DeleteNode          = "Delete !"
+text (DeleteNode _       )= "Delete !"
 text (RenameNode  _      )= "Rename !"
 text (UpdateNode  _      )= "Update !"
-text (ShareNode   _      )= "Share !"
+text (ShareTeam   _      )= "Share with team !"
+text (SharePublic _      )= "Publish !"
 text (DoSearch    _      )= "Launch search !"
 text (UploadFile  _ _ _ _)= "Upload File !"
 text  RefreshTree         = "Refresh Tree !"
 text DownloadNode         = "Download !"
-text (MoveNode  _ )      = "Move !"
-text (MergeNode _ )     = "Merge !"
-text (LinkNode  _ )      = "Link !"
+text (MoveNode  _ )       = "Move !"
+text (MergeNode _ )       = "Merge !"
+text (LinkNode  _ )       = "Link !"
 text NoAction             = "No Action"
 -----------------------------------------------------------------------

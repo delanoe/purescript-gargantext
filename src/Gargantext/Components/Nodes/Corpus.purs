@@ -26,20 +26,19 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (NodeType(..), AffTableResult)
-import Gargantext.Utils.Crypto as GUC
+import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 
-type Props = (
-    nodeId  :: Int
+type Props =
+  ( nodeId  :: Int
   , session :: Session
   )
 
 type Reload = R.State Int
 
 type KeyProps =
-  (
-    key :: String
-    | Props
+  ( key :: String
+  | Props
   )
 
 corpusLayout :: Record KeyProps -> R.Element
@@ -54,8 +53,8 @@ corpusLayoutCpt = R.hooksComponent "G.C.N.C.corpusLayout" cpt
       useLoader {nodeId, reload: fst reload, session} loadCorpusWithReload $
         \corpus -> corpusLayoutView {corpus, nodeId, reload, session}
 
-type ViewProps = (
-    corpus  :: NodePoly Hyperdata
+type ViewProps =
+  ( corpus  :: NodePoly Hyperdata
   , reload  :: Reload
   | Props
   )
@@ -184,7 +183,7 @@ fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
     recomputeIndices = List.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
 
 hash :: FTFieldWithIndex -> Hash
-hash (Tuple idx f) = GUC.md5 $ "--idx--" <> (show idx) <> "--field--" <> (show f)
+hash (Tuple idx f) = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show f)
 
 type FieldCodeEditorProps =
   (
@@ -345,8 +344,8 @@ changeCode onc (Markdown md) CE.Haskell c = onc $ Haskell $ defaultHaskell' { ha
 changeCode onc (Markdown md) CE.JSON c = onc $ Markdown $ defaultMarkdown' { text = c }
 changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md { text = c }
 
-type LoadProps = (
-    nodeId  :: Int
+type LoadProps =
+  ( nodeId  :: Int
   , session :: Session
   )
 

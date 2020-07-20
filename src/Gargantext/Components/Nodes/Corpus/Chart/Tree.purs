@@ -53,9 +53,9 @@ scatterOptions nodes = Options
 
   }
 
-getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
-getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
-  get session $ ChartMD5 { chartType: ChartTree, listId: mListId, tabType } (Just corpusId)
+getMetricsHash :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
+  get session $ ChartHash { chartType: ChartTree, listId: mListId, tabType } (Just corpusId)
   where
     mListId = if listId == 0 then Nothing else (Just listId)
 
@@ -79,7 +79,7 @@ treeCpt = R.hooksComponent "G.C.N.C.C.T.tree" cpt
     cpt {path, session} _ = do
       reload <- R.useState' 0
       pure $ metricsWithCacheLoadView {
-          getMetricsMD5
+          getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session

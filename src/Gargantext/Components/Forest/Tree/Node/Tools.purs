@@ -167,17 +167,22 @@ formChoice nodeTypes defaultNodeType setNodeType =
 -- | Button Form
 -- FIXME: currently needs a click from the user (by default, we could avoid such click)
 formButton :: forall a b c
-           .    a
+           . Show a
+           =>   a
            -> ((b -> a) -> Effect c)
            -> R.Element
 formButton nodeType setNodeType =
- H.button { className : "btn btn-primary center"
-          , type : "button"
-          , title: "Form Button"
-          , style : { width: "50%" }
-          , onClick : mkEffectFn1
-                    $ \_ -> setNodeType ( const nodeType )
-          } [H.text $ "Go !"]
+  H.div {} [ H.text $ "Confirm the selection of: " <> show nodeType
+           , bouton
+           ]
+    where
+      bouton = H.button { className : "cold-md-5 btn btn-primary center"
+                        , type : "button"
+                        , title: "Form Button"
+                        , style : { width: "100%" }
+                        , onClick : mkEffectFn1
+                                  $ \_ -> setNodeType ( const nodeType )
+                        } [H.text $ "Confirmation"]
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
@@ -262,8 +267,4 @@ nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
 -- END node text
 
 ------------------------------------------------------------------------
-
-
-
-
 

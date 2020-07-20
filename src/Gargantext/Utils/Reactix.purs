@@ -252,8 +252,8 @@ blur el = el ... "blur" $ []
 row :: Array R.Element -> R.Element
 row children = H.div { className: "row" } children
 
-col12 :: Array R.Element -> R.Element
-col12 children = H.div { className: "col-md-12" } children
+col :: Int -> Array R.Element -> R.Element
+col n children = H.div { className : "col-md" <> show n } children
 
 innerText :: DOM.Element -> String
 innerText e = e .. "innerText"

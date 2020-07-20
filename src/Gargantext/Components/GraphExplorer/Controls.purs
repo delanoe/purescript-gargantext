@@ -94,7 +94,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
       -- Automatic opening of sidebar when a node is selected (but only first time).
       R.useEffect' $ do
         if fst props.showSidePanel == GET.InitialClosed && (not Set.isEmpty $ fst props.selectedNodeIds) then
-          snd props.showSidePanel $ \_ -> GET.Opened
+          snd props.showSidePanel $ \_ -> GET.Opened GET.SideTabSelection
         else
           pure unit
 

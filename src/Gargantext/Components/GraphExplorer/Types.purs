@@ -1,6 +1,6 @@
 module Gargantext.Components.GraphExplorer.Types where
 
-import Prelude
+import Gargantext.Prelude
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Array ((!!), length)
 import Data.Maybe (Maybe(..), fromJust)
@@ -58,14 +58,12 @@ derive instance newtypeGraphData :: Newtype GraphData _
 
 
 newtype MetaData = MetaData
-  {
-    title :: String
-  , legend :: Array Legend
+  { title    :: String
+  , legend   :: Array Legend
   , corpusId :: Array Int
-  , list :: {
-      listId   :: ListId
-    , version  :: Version
-    }
+  , list :: { listId   :: ListId
+            , version  :: Version
+            }
   }
 
 getLegend :: GraphData -> Maybe (Array Legend)
@@ -191,6 +189,20 @@ intColor :: Int -> String
 intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
 
 
-data SidePanelState = InitialClosed | Opened | Closed
-
+data SidePanelState = InitialClosed | Opened SideTab | Closed
 derive instance eqSidePanelState :: Eq SidePanelState
+
+data SideTab = SideTabLegend | SideTabSelection | SideTabPairing
+
+derive instance eqSideTab :: Eq SideTab
+instance showSideTab :: Show SideTab where
+  show SideTabLegend    = "Legend"
+  show SideTabSelection = "Navigation"
+  show SideTabPairing   = "Pairing"
+
+
+
+
+
+
+

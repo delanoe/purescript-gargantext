@@ -838,6 +838,15 @@
       sha256 = "10fkkmmb7qh4p5gmgb6xpxh9g8hy06ddy8cyfrs3py8a5b8h46hw";
     };
   };
+  "simplecrypto" = {
+    name = "simplecrypto";
+    version = "v1.0.1";
+    src = pkgs.fetchgit {
+      url = "https://github.com/alpacaaa/purescript-simplecrypto";
+      rev = "v1.0.1";
+      sha256 = "0rzjzwn4s7pb8f9hm9wkl1gza9y2y9qn1116s6x5lizv81q48cyw";
+    };
+  };
   "smolder" = {
     name = "smolder";
     version = "v12.0.0";

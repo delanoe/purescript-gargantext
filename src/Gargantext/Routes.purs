@@ -48,9 +48,9 @@ data SessionRoute
   | ListDocument (Maybe ListId) (Maybe Id)
   | Search SearchOpts (Maybe Id)
   | CorpusMetrics CorpusMetricOpts  (Maybe Id)
-  | CorpusMetricsMD5 { listId :: ListId, tabType :: TabType }  (Maybe Id)
+  | CorpusMetricsHash { listId :: ListId, tabType :: TabType }  (Maybe Id)
   | Chart ChartOpts (Maybe Id)
-  | ChartMD5 { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
+  | ChartHash { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
 
 instance showAppRoute :: Show AppRoute where
   show Home                     = "Home"

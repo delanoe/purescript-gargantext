@@ -98,9 +98,9 @@ scatterOptions metrics' = Options
                         }
     --}
 
-getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
-getMetricsMD5 session (_ /\ { corpusId, listId, tabType }) =
-  get session $ CorpusMetricsMD5 { listId, tabType } (Just corpusId)
+getMetricsHash :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsHash session (_ /\ { corpusId, listId, tabType }) =
+  get session $ CorpusMetricsHash { listId, tabType } (Just corpusId)
 
 chartUrl :: Record Path -> SessionRoute
 chartUrl { corpusId, limit, listId, tabType } = CorpusMetrics { limit, listId, tabType } (Just corpusId)
@@ -120,7 +120,7 @@ metricsCpt = R.hooksComponent "G.C.N.C.C.M.metrics" cpt
     cpt {path, session} _ = do
       reload <- R.useState' 0
       pure $ metricsWithCacheLoadView {
-          getMetricsMD5
+          getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session

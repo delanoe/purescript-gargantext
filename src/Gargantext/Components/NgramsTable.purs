@@ -24,23 +24,22 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Unsafe.Coerce (unsafeCoerce)
-
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Table as T
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
-import Gargantext.Routes as R
+import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
+import Reactix (Component, Element, State, createElement, fragment, hooksComponent, useState') as R
+import Reactix.DOM.HTML as H
+import Unsafe.Coerce (unsafeCoerce)
 
 type State' =
   CoreState

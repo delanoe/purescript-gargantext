@@ -23,6 +23,11 @@ legendCpt = R.hooksComponent "Legend" cpt
 entry :: Legend -> R.Element
 entry (Legend {id_, label}) =
   RH.p {}
-  [ RH.span { style: { width: 10, height: 10, backgroundColor: intColor id_, display: "inline-block" } } []
+  [ RH.span { style: { width : 10
+                     , height: 10
+                     , backgroundColor: intColor id_
+                     , display: "inline-block"
+                     } 
+            } []
   , RH.text $ " " <> label
   ]

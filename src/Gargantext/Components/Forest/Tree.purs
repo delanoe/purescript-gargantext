@@ -18,12 +18,12 @@ import Gargantext.Components.Forest.Tree.Node (nodeMainSpan)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
-import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Move   (moveNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Merge  (mergeNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Link   (linkNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
-import Gargantext.Components.Forest.Tree.Node.Action.Share (ShareValue(..), share)
+import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
@@ -33,7 +33,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (OpenNodes, Session, mkNodeId, get)
-import Gargantext.Types (ID, Reload)
+import Gargantext.Types (ID, Reload, isPublic, publicize)
 import Gargantext.Types as GT
 import Gargantext.Routes as GR
 
@@ -192,7 +192,11 @@ toHtml p@{ asyncTasks
                          } ]
           <> childNodes ( Record.merge commonProps
                           { asyncTasks
-                          , children: ary
+                          , children: if isPublic nodeType
+                                         then map (\t -> map (\(LNode n@{ nodeType:nt } )
+                                                               -> (LNode (n { nodeType= publicize nt }))
+                                                            ) t) ary
+                                         else ary
                           , folderOpen
                           }
                         )
@@ -232,13 +236,17 @@ type PerformActionProps =
 performAction :: Action
               -> Record PerformActionProps
               -> Aff Unit
-performAction DeleteNode p@{ openNodes: (_ /\ setOpenNodes)
+performAction (DeleteNode nt) p@{ openNodes: (_ /\ setOpenNodes)
                            , reload: (_ /\ setReload)
                            , session
-                           , tree: (NTree (LNode {id}) _)
+                           , tree: (NTree (LNode {id, parent_id}) _)
                            } =
   do
-    void       $ deleteNode session id
+    case nt of
+         GT.NodePublic GT.FolderPublic -> void $ deleteNode session nt id
+         GT.NodePublic _               -> void $ unpublishNode session parent_id id
+         _                             -> void $ deleteNode session nt id
+
     liftEffect $ setOpenNodes (Set.delete (mkNodeId session id))
     performAction RefreshTree p
 
@@ -274,12 +282,22 @@ performAction (RenameNode name) p@{ reload: (_ /\ setReload)
     performAction RefreshTree p
 
 -------
-performAction (ShareNode username) p@{ reload: (_ /\ setReload)
+performAction (ShareTeam username) p@{ reload: (_ /\ setReload)
                                      , session
                                      , tree: (NTree (LNode {id}) _)
                                      } =
   do
-    void $ share session id $ ShareValue {text:username}
+    void $ Share.shareReq session id $ Share.ShareTeamParams {username}
+
+performAction (SharePublic {params}) p@{ session
+                                       , openNodes: (_ /\ setOpenNodes)
+                                       } =
+  case params of
+    Nothing -> performAction NoAction p
+    Just (SubTreeOut {in:inId,out}) -> do
+      void $ Share.shareReq session inId $ Share.SharePublicParams {node_id:out}
+      liftEffect $ setOpenNodes (Set.insert (mkNodeId session out))
+      performAction RefreshTree p
 
 -------
 performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
