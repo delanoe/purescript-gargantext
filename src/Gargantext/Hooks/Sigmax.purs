@@ -68,7 +68,7 @@ cleanupSigma sigma context = traverse_ kill (readSigma sigma)
     emptyOut = writeSigma sigma Nothing *> R.setRef sigma.cleanup Seq.empty
     report = either (log2 errorMsg) (\_ -> log successMsg)
     prefix = "[" <> context <> "] "
-    errorMsg = prefix <> "Error killing sigma:"
+    errorMsg   = prefix <> "Error killing sigma:"
     successMsg = prefix <> "Killed sigma"
 
 refreshData :: forall n e. Sigma.Sigma -> Sigma.Graph n e -> Effect Unit
@@ -80,11 +80,11 @@ refreshData sigma graph
   >>= either (log2 errorMsg) refresh
   where
     sigmaGraph = Sigma.graph sigma
-    refresh _ = log refreshingMsg *> Sigma.refresh sigma
-    clearingMsg = "[refreshData] Clearing existing graph data"
-    readingMsg = "[refreshData] Reading graph data"
+    refresh     _ = log refreshingMsg *> Sigma.refresh sigma
+    clearingMsg   = "[refreshData] Clearing existing graph data"
+    readingMsg    = "[refreshData] Reading graph data"
     refreshingMsg = "[refreshData] Refreshing graph"
-    errorMsg = "[refreshData] Error reading graph data:"
+    errorMsg      = "[refreshData] Error reading graph data:"
 
 sigmafy :: forall n e. ST.Graph n e -> Sigma.Graph n e
 sigmafy (ST.Graph g) = {nodes,edges}

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2013 Graham Breach
+ * Copyright (C) 2010-2015 Graham Breach
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /**
- * TagCanvas 2.2
+ * TagCanvas 2.9
  * For more information, please contact <graham@goat1000.com>
  */
 (function(){
@@ -27,8 +27,8 @@ var i, j, abs = Math.abs, sin = Math.sin, cos = Math.cos, max = Math.max,
   6:"102,", 7:"119,", 8:"136,", 9:"153,", a:"170,", A:"170,",
   b:"187,", B:"187,", c:"204,", C:"204,", d:"221,", D:"221,",
   e:"238,", E:"238,", f:"255,", F:"255,"  
-  }, Oproto, Tproto, TCproto, Mproto, Vproto, TSproto, doc = document, ocanvas, 
-  handlers = {};
+  }, Oproto, Tproto, TCproto, Mproto, Vproto, TSproto, TCVproto,
+  doc = document, ocanvas, handlers = {};
 for(i = 0; i < 256; ++i) {
   j = i.toString(16);
   if(i < 16)
@@ -81,8 +81,8 @@ Vproto.dot = function(v) {
 };
 Vproto.cross = function(v) {
   var x = this.y * v.z - this.z * v.y,
-      y = this.z * v.x - this.x * v.z,
-      z = this.x * v.y - this.y * v.x;
+    y = this.z * v.x - this.x * v.z,
+    z = this.x * v.y - this.y * v.x;
   return new Vector(x, y, z);
 };
 Vproto.angle = function(v) {
@@ -143,8 +143,9 @@ Mproto.xform = function(p) {
   a.z = x * this[1][3] + y * this[2][3] + z * this[3][3];
   return a;
 };
-function PointsOnSphere(n,xr,yr,zr) {
-  var i, y, r, phi, pts = [], inc = Math.PI * (3-sqrt(5)), off = 2/n;
+function PointsOnSphere(n,xr,yr,zr,magic) {
+  var i, y, r, phi, pts = [], off = 2/n, inc;
+  inc = Math.PI * (3 - sqrt(5) + (parseFloat(magic) ? parseFloat(magic) : 0));
   for(i = 0; i < n; ++i) {
     y = i * off - 1 + (off / 2);
     r = sqrt(1 - y*y);
@@ -153,8 +154,9 @@ function PointsOnSphere(n,xr,yr,zr) {
   }
   return pts;
 }
-function Cylinder(n,o,xr,yr,zr) {
-  var phi, pts = [], inc = Math.PI * (3-sqrt(5)), off = 2/n, i, j, k, l;
+function Cylinder(n,o,xr,yr,zr,magic) {
+  var phi, pts = [], off = 2/n, inc, i, j, k, l;
+  inc = Math.PI * (3 - sqrt(5) + (parseFloat(magic) ? parseFloat(magic) : 0));
   for(i = 0; i < n; ++i) {
     j = i * off - 1 + (off / 2);
     phi = i * inc;
@@ -174,8 +176,8 @@ function Ring(o, n, xr, yr, zr, j) {
   }
   return pts;
 }
-function PointsOnCylinderV(n,xr,yr,zr) { return Cylinder(n, 0, xr, yr, zr) }
-function PointsOnCylinderH(n,xr,yr,zr) { return Cylinder(n, 1, xr, yr, zr) }
+function PointsOnCylinderV(n,xr,yr,zr,m) { return Cylinder(n, 0, xr, yr, zr, m) }
+function PointsOnCylinderH(n,xr,yr,zr,m) { return Cylinder(n, 1, xr, yr, zr, m) }
 function PointsOnRingV(n, xr, yr, zr, offset) {
   offset = isNaN(offset) ? 0 : offset * 1;
   return Ring(0, n, xr, yr, zr, offset);
@@ -183,6 +185,18 @@ function PointsOnRingV(n, xr, yr, zr, offset) {
 function PointsOnRingH(n, xr, yr, zr, offset) {
   offset = isNaN(offset) ? 0 : offset * 1;
   return Ring(1, n, xr, yr, zr, offset);
+}
+function CentreImage(t) {
+  var i = new Image;
+  i.onload = function() {
+    var dx = i.width / 2, dy = i.height / 2;
+    t.centreFunc = function(c, w, h, cx, cy) {
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.globalAlpha = 1;
+      c.drawImage(i, cx - dx, cy - dy);
+    };
+  };
+  i.src = t.centreImage;
 }
 function SetAlpha(c,a) {
   var d = c, p1, p2, ae = (a*1).toPrecision(3) + ')';
@@ -227,63 +241,298 @@ function ShadowAlphaBroken() {
   cv = null;
   return (i.data[0] > 0);
 }
-function FindGradientColour(t,p) {
-  var l = 1024, g = t.weightGradient, cv, c, i, gd, d;
-  if(t.gCanvas) {
-    c = t.gCanvas.getContext('2d');
+function SetGradient(c, l, o, g) {
+  var gd = c.createLinearGradient(0, 0, l, 0), i;
+  for(i in g)
+    gd.addColorStop(1 - i, g[i]);
+  c.fillStyle = gd;
+  c.fillRect(0, o, l, 1);
+}
+function FindGradientColour(tc, p, r) {
+  var l = 1024, h = 1, gl = tc.weightGradient, cv, c, i, d;
+  if(tc.gCanvas) {
+    c = tc.gCanvas.getContext('2d');
+    h = tc.gCanvas.height;
   } else {
-    t.gCanvas = cv = NewCanvas(l,1);
+    if(IsObject(gl[0]))
+      h = gl.length;
+    else
+      gl = [gl];
+    tc.gCanvas = cv = NewCanvas(l, h);
     if(!cv)
       return null;
     c = cv.getContext('2d');
-    gd = c.createLinearGradient(0,0,l,0);
-    for(i in g)
-      gd.addColorStop(1-i, g[i]);
-    c.fillStyle = gd;
-    c.fillRect(0,0,l,1);
+    for(i = 0; i < h; ++i)
+      SetGradient(c, l, i, gl[i]);
   }
-  d = c.getImageData(~~((l-1)*p),0,1,1).data;
+  r = max(min(r || 0, h - 1), 0);
+  d = c.getImageData(~~((l - 1) * p), r, 1, 1).data;
   return 'rgba(' + d[0] + ',' + d[1] + ',' + d[2] + ',' + (d[3]/255) + ')';
 }
-function TextSet(c,f,l,s,sc,sb,so,wm,wl) {
-  var xo = (sb || 0) + (so && so[0] < 0 ? abs(so[0]) : 0),
-    yo = (sb || 0) + (so && so[1] < 0 ? abs(so[1]) : 0), i, xc;
-  c.font = f;
-  c.textBaseline = 'top';
-  c.fillStyle = l;
-  sc && (c.shadowColor = sc);
-  sb && (c.shadowBlur = sb);
-  so && (c.shadowOffsetX = so[0], c.shadowOffsetY = so[1]);
-  for(i = 0; i < s.length; ++i) {
-    xc = wl ? (wm - wl[i]) / 2 : 0;
-    c.fillText(s[i], xo + xc, yo);
-    yo += parseInt(f);
+function TextSet(ctxt, font, colour, strings, padx, pady, shadowColour,
+  shadowBlur, shadowOffsets, maxWidth, widths, align) {
+  var xo = padx + (shadowBlur || 0) + 
+    (shadowOffsets.length && shadowOffsets[0] < 0 ? abs(shadowOffsets[0]) : 0),
+    yo = pady + (shadowBlur || 0) + 
+    (shadowOffsets.length && shadowOffsets[1] < 0 ? abs(shadowOffsets[1]) : 0), i, xc;
+  ctxt.font = font;
+  ctxt.textBaseline = 'top';
+  ctxt.fillStyle = colour;
+  shadowColour && (ctxt.shadowColor = shadowColour);
+  shadowBlur && (ctxt.shadowBlur = shadowBlur);
+  shadowOffsets.length && (ctxt.shadowOffsetX = shadowOffsets[0],
+    ctxt.shadowOffsetY = shadowOffsets[1]);
+  for(i = 0; i < strings.length; ++i) {
+    xc = 0;
+    if(widths) {
+      if('right' == align) {
+        xc = maxWidth - widths[i];
+      } else if('centre' == align) {
+        xc = (maxWidth - widths[i]) / 2;
+      }
+    }
+    ctxt.fillText(strings[i], xo + xc, yo);
+    yo += parseInt(font);
   }
 }
-function TextToCanvas(s,f,ht,w,h,l,sc,sb,so,padx,pady,wmax,wlist) {
-  var cw = w + abs(so[0]) + sb + sb, ch = h + abs(so[1]) + sb + sb, cv, c;
-  cv = NewCanvas(cw+padx,ch+pady);
+function RRect(c, x, y, w, h, r, s) {
+  if(r) {
+    c.beginPath();
+    c.moveTo(x, y + h - r);
+    c.arcTo(x, y, x + r, y, r);
+    c.arcTo(x + w, y, x + w, y + r, r);
+    c.arcTo(x + w, y + h, x + w - r, y + h, r);
+    c.arcTo(x, y + h, x, y + h - r, r);
+    c.closePath();
+    c[s ? 'stroke' : 'fill']();
+  } else {
+    c[s ? 'strokeRect' : 'fillRect'](x, y, w, h);
+  }
+}
+function TextCanvas(strings, font, w, h, maxWidth, stringWidths, align, valign,
+  scale) {
+  this.strings = strings;
+  this.font = font;
+  this.width = w;
+  this.height = h;
+  this.maxWidth = maxWidth;
+  this.stringWidths = stringWidths;
+  this.align = align;
+  this.valign = valign;
+  this.scale = scale;
+}
+TCVproto = TextCanvas.prototype;
+TCVproto.SetImage = function(image, w, h, position, padding, align, valign,
+  scale) {
+  this.image = image;
+  this.iwidth = w * this.scale;
+  this.iheight = h * this.scale;
+  this.ipos = position;
+  this.ipad = padding * this.scale;
+  this.iscale = scale;
+  this.ialign = align;
+  this.ivalign = valign;
+};
+TCVproto.Align = function(size, space, a) {
+  var pos = 0;
+  if(a == 'right' || a == 'bottom')
+    pos = space - size;
+  else if(a != 'left' && a != 'top')
+    pos = (space - size) / 2;
+  return pos;
+};
+TCVproto.Create = function(colour, bgColour, bgOutline, bgOutlineThickness,
+  shadowColour, shadowBlur, shadowOffsets, padding, radius) {
+  var cv, cw, ch, c, x1, x2, y1, y2, offx, offy, ix, iy, iw, ih, rr,
+    sox = abs(shadowOffsets[0]), soy = abs(shadowOffsets[1]), shadowcv, shadowc;
+  padding = max(padding, sox + shadowBlur, soy + shadowBlur);
+  x1 = 2 * (padding + bgOutlineThickness);
+  y1 = 2 * (padding + bgOutlineThickness);
+  cw = this.width + x1;
+  ch = this.height + y1;
+  offx = offy = padding + bgOutlineThickness;
+
+  if(this.image) {
+    ix = iy = padding + bgOutlineThickness;
+    iw = this.iwidth;
+    ih = this.iheight;
+    if(this.ipos == 'top' || this.ipos == 'bottom') {
+      if(iw < this.width)
+        ix += this.Align(iw, this.width, this.ialign);
+      else
+        offx += this.Align(this.width, iw, this.align);
+      if(this.ipos == 'top')
+        offy += ih + this.ipad;
+      else
+        iy += this.height + this.ipad;
+      cw = max(cw, iw + x1);
+      ch += ih + this.ipad;
+    } else {
+      if(ih < this.height)
+        iy += this.Align(ih, this.height, this.ivalign);
+      else
+        offy += this.Align(this.height, ih, this.valign);
+      if(this.ipos == 'right')
+        ix += this.width + this.ipad;
+      else
+        offx += iw + this.ipad;
+      cw += iw + this.ipad;
+      ch = max(ch, ih + y1);
+    }
+  }
+
+  cv = NewCanvas(cw, ch);
+  if(!cv)
+    return null;
+  x1 = y1 = bgOutlineThickness / 2;
+  x2 = cw - bgOutlineThickness;
+  y2 = ch - bgOutlineThickness;
+  rr = min(radius, x2 / 2, y2 / 2);
+  c = cv.getContext('2d');
+  if(bgColour) {
+    c.fillStyle = bgColour;
+    RRect(c, x1, y1, x2, y2, rr);
+  }
+  if(bgOutlineThickness) {
+    c.strokeStyle = bgOutline;
+    c.lineWidth = bgOutlineThickness;
+    RRect(c, x1, y1, x2, y2, rr, true);
+  }
+  if(shadowBlur || sox || soy) {
+    // use a transparent canvas to draw on
+    shadowcv = NewCanvas(cw, ch);
+    if(shadowcv) {
+      shadowc = c;
+      c = shadowcv.getContext('2d');
+    }
+  }
+
+  // don't use TextSet shadow support because it adds space for shadow
+  TextSet(c, this.font, colour, this.strings, offx, offy, 0, 0, [],
+    this.maxWidth, this.stringWidths, this.align);
+      
+  if(this.image)
+    c.drawImage(this.image, ix, iy, iw, ih);
+
+  if(shadowc) {
+    // draw the text and image with the added shadow
+    c = shadowc;
+    shadowColour && (c.shadowColor = shadowColour);
+    shadowBlur && (c.shadowBlur = shadowBlur);
+    c.shadowOffsetX = shadowOffsets[0];
+    c.shadowOffsetY = shadowOffsets[1];
+    c.drawImage(shadowcv, 0, 0);
+  }
+  return cv;
+};
+function ExpandImage(i, w, h) {
+  var cv = NewCanvas(w, h), c;
   if(!cv)
     return null;
   c = cv.getContext('2d');
-  TextSet(c,f,l,s,sc,sb,so,wmax,wlist);
+  c.drawImage(i, (w - i.width) / 2, (h - i.height) / 2);
   return cv;
 }
-function AddShadowToImage(i,sc,sb,so) {
-  var sw = abs(so[0]), sh = abs(so[1]),
-    cw = i.width + (sw > sb ? sw + sb : sb * 2),
-    ch = i.height + (sh > sb ? sh + sb : sb * 2),
-    xo = (sb || 0) + (so[0] < 0 ? sw : 0),
-    yo = (sb || 0) + (so[1] < 0 ? sh : 0), cv, c;
+function ScaleImage(i, w, h) {
+  var cv = NewCanvas(w, h), c;
+  if(!cv)
+    return null;
+  c = cv.getContext('2d');
+  c.drawImage(i, 0, 0, w, h);
+  return cv;
+}
+function AddBackgroundToImage(i, w, h, scale, colour, othickness, ocolour,
+  padding, radius, ofill) {
+  var cw = w + ((2 * padding) + othickness) * scale,
+    ch = h + ((2 * padding) + othickness) * scale,
+    cv = NewCanvas(cw, ch), c, x1, y1, x2, y2, ocanvas, cc, rr;
+  if(!cv)
+    return null;
+  othickness *= scale;
+  radius *= scale;
+  x1 = y1 = othickness / 2;
+  x2 = cw - othickness;
+  y2 = ch - othickness;
+  padding = (padding * scale) + x1; // add space for outline
+  c = cv.getContext('2d');
+  rr = min(radius, x2 / 2, y2 / 2);
+  if(colour) {
+    c.fillStyle = colour;
+    RRect(c, x1, y1, x2, y2, rr);
+  }
+  if(othickness) {
+    c.strokeStyle = ocolour;
+    c.lineWidth = othickness;
+    RRect(c, x1, y1, x2, y2, rr, true);
+  }
+  
+  if(ofill) {
+    // use compositing to colour in the image and border
+    ocanvas = NewCanvas(cw, ch);
+    cc = ocanvas.getContext('2d');
+    cc.drawImage(i, padding, padding, w, h);
+    cc.globalCompositeOperation = 'source-in';
+    cc.fillStyle = ocolour;
+    cc.fillRect(0, 0, cw, ch);
+    cc.globalCompositeOperation = 'destination-over';
+    cc.drawImage(cv, 0, 0);
+    cc.globalCompositeOperation = 'source-over';
+    c.drawImage(ocanvas, 0, 0);
+  } else {
+    c.drawImage(i, padding, padding, i.width, i.height);
+  }
+  return {image: cv, width: cw / scale, height: ch / scale};
+}
+/**
+ * Rounds off the corners of an image
+ */
+function RoundImage(i, r, iw, ih, s) {
+  var cv, c, r1 = parseFloat(r), l = max(iw, ih);
+  cv = NewCanvas(iw, ih);
+  if(!cv)
+    return null;
+  if(r.indexOf('%') > 0)
+    r1 = l * r1 / 100;
+  else
+    r1 = r1 * s;
+  c = cv.getContext('2d');
+  c.globalCompositeOperation = 'source-over';
+  c.fillStyle = '#fff';
+  if(r1 >= l/2) {
+    r1 = min(iw,ih) / 2;
+    c.beginPath();
+    c.moveTo(iw/2,ih/2);
+    c.arc(iw/2,ih/2,r1,0,2*Math.PI,false);
+    c.fill();
+    c.closePath();
+  } else {
+    r1 = min(iw/2,ih/2,r1);
+    RRect(c, 0, 0, iw, ih, r1, true);
+    c.fill();
+  }
+  c.globalCompositeOperation = 'source-in';
+  c.drawImage(i, 0, 0, iw, ih);
+  return cv;
+}
+/**
+ * Creates a new canvas containing the image and its shadow
+ * Returns an object containing the image and its dimensions at z=0
+ */
+function AddShadowToImage(i, w, h, scale, sc, sb, so) {
+  var sw = abs(so[0]), sh = abs(so[1]), 
+    cw = w + (sw > sb ? sw + sb : sb * 2) * scale,
+    ch = h + (sh > sb ? sh + sb : sb * 2) * scale,
+    xo = scale * ((sb || 0) + (so[0] < 0 ? sw : 0)),
+    yo = scale * ((sb || 0) + (so[1] < 0 ? sh : 0)), cv, c;
   cv = NewCanvas(cw, ch);
   if(!cv)
     return null;
   c = cv.getContext('2d');
   sc && (c.shadowColor = sc);
-  sb && (c.shadowBlur = sb);
-  so && (c.shadowOffsetX = so[0], c.shadowOffsetY = so[1]);
-  c.drawImage(i, xo, yo, i.width, i.height);
-  return cv;
+  sb && (c.shadowBlur = sb * scale);
+  so && (c.shadowOffsetX = so[0] * scale, c.shadowOffsetY = so[1] * scale);
+  c.drawImage(i, xo, yo, w, h);
+  return {image: cv, width: cw / scale, height: ch / scale};
 }
 function FindTextBoundingBox(s,f,ht) {
   var w = parseInt(s.toString().length * ht), h = parseInt(ht * 2 * s.length),
@@ -293,7 +542,7 @@ function FindTextBoundingBox(s,f,ht) {
   c = cv.getContext('2d');
   c.fillStyle = '#000';
   c.fillRect(0,0,w,h);
-  TextSet(c,ht + 'px ' + f,'#fff',s,0,0,[])
+  TextSet(c,ht + 'px ' + f,'#fff',s,0,0,0,0,[],'centre')
 
   idata = c.getImageData(0,0,w,h);
   w1 = idata.width; h1 = idata.height;
@@ -335,8 +584,15 @@ function AddHandler(h,f,e) {
   else
     e.attachEvent('on' + h, f);
 }
+function RemoveHandler(h,f,e) {
+  e = e || doc;
+  if(e.removeEventListener)
+    e.removeEventListener(h, f);
+  else
+    e.detachEvent('on' + h, f);
+}
 function AddImage(i, o, t, tc) {
-  var s = tc.imageScale, ic;
+  var s = tc.imageScale, mscale, ic, bc, oc, iw, ih;
   // image not loaded, wait for image onload
   if(!o.complete)
     return AddHandler('load',function() { AddImage(i,o,t,tc); }, o);
@@ -354,32 +610,90 @@ function AddImage(i, o, t, tc) {
     i.width = o.width * s;
     i.height = o.height * s;
   }
-  t.w = i.width;
-  t.h = i.height;
-  if(tc.txtOpt && tc.shadow) {
-    ic = AddShadowToImage(i, tc.shadow, tc.shadowBlur, tc.shadowOffset);
-    if(ic) {
-      t.image = ic;
-      t.w = ic.width;
-      t.h = ic.height;
+  // the standard width of the image, with imageScale applied
+  t.iw = i.width;
+  t.ih = i.height;
+  if(tc.txtOpt) {
+    ic = i;
+    mscale = tc.zoomMax * tc.txtScale;
+    iw = t.iw * mscale;
+    ih = t.ih * mscale;
+    if(iw < o.naturalWidth || ih < o.naturalHeight) {
+      ic = ScaleImage(i, iw, ih);
+      if(ic)
+        t.fimage = ic;
+    } else {
+      iw = t.iw;
+      ih = t.ih;
+      mscale = 1;
+    }
+    if(parseFloat(tc.imageRadius))
+      t.image = t.fimage = i = RoundImage(t.image, tc.imageRadius, iw, ih, mscale);
+    if(!t.HasText()) {
+      if(tc.shadow) {
+        ic = AddShadowToImage(t.image, iw, ih, mscale, tc.shadow, tc.shadowBlur,
+          tc.shadowOffset);
+        if(ic) {
+          t.fimage = ic.image;
+          t.w = ic.width;
+          t.h = ic.height;
+        }
+      }
+      if(tc.bgColour || tc.bgOutlineThickness) {
+        bc = tc.bgColour == 'tag' ? GetProperty(t.a, 'background-color') :
+          tc.bgColour;
+        oc = tc.bgOutline == 'tag' ? GetProperty(t.a, 'color') : 
+          (tc.bgOutline || tc.textColour);
+        iw = t.fimage.width;
+        ih = t.fimage.height;
+        if(tc.outlineMethod == 'colour') {
+          // create the outline version first, using the current image state
+          ic = AddBackgroundToImage(t.fimage, iw, ih, mscale, bc,
+            tc.bgOutlineThickness, t.outline.colour, tc.padding, tc.bgRadius, 1);
+          if(ic)
+            t.oimage = ic.image;
+        }
+        ic = AddBackgroundToImage(t.fimage, iw, ih, mscale, bc, 
+          tc.bgOutlineThickness, oc, tc.padding, tc.bgRadius);
+        if(ic) {
+          t.fimage = ic.image;
+          t.w = ic.width;
+          t.h = ic.height;
+        }
+      }
+      if(tc.outlineMethod == 'size') {
+        if(tc.outlineIncrease > 0) {
+          t.iw += 2 * tc.outlineIncrease;
+          t.ih += 2 * tc.outlineIncrease;
+          iw = mscale * t.iw;
+          ih = mscale * t.ih;
+          ic = ScaleImage(t.fimage, iw, ih);
+          t.oimage = ic;
+          t.fimage = ExpandImage(t.fimage, t.oimage.width, t.oimage.height);
+        } else {
+          iw = mscale * (t.iw + (2 * tc.outlineIncrease));
+          ih = mscale * (t.ih + (2 * tc.outlineIncrease));
+          ic = ScaleImage(t.fimage, iw, ih);
+          t.oimage = ExpandImage(ic, t.fimage.width, t.fimage.height);
+        }
+      }
     }
   }
+  t.Init();
 }
 function GetProperty(e,p) {
   var dv = doc.defaultView, pc = p.replace(/\-([a-z])/g,function(a){return a.charAt(1).toUpperCase()});
   return (dv && dv.getComputedStyle && dv.getComputedStyle(e,null).getPropertyValue(p)) ||
     (e.currentStyle && e.currentStyle[pc]);
 }
-function FindWeight(t,a) {
+function FindWeight(a, wFrom, tHeight) {
   var w = 1, p;
-  if(t.weightFrom) {
-    w = 1 * (a.getAttribute(t.weightFrom) || t.textHeight);
+  if(wFrom) {
+    w = 1 * (a.getAttribute(wFrom) || tHeight);
   } else if(p = GetProperty(a,'font-size')) {
     w = (p.indexOf('px') > -1 && p.replace('px','') * 1) ||
       (p.indexOf('pt') > -1 && p.replace('pt','') * 1.25) ||
       p * 3.3;
-  } else {
-    t.weight = false;
   }
   return w;
 }
@@ -445,25 +759,47 @@ function MouseUp(e) {
   if(tg && e.button == cb && t.tc[tg]) {
     tc = t.tc[tg];
     MouseMove(e);
-    if(!tc.EndDrag() && !tc.touched)
+    if(!tc.EndDrag() && !tc.touchState)
       tc.Clicked(e);
   }
 }
 function TouchDown(e) {
-  var t = TagCanvas, tg = EventToCanvasId(e);
-  if(tg && e.changedTouches && t.tc[tg]) {
-    t.tc[tg].touched = 1;
-    t.tc[tg].BeginDrag(e);
+  var tg = EventToCanvasId(e), tc = (tg && TagCanvas.tc[tg]), p;
+  if(tc && e.changedTouches) {
+    if(e.touches.length == 1 && tc.touchState == 0) {
+      tc.touchState = 1;
+      tc.BeginDrag(e);
+      if(p = EventXY(e, tc.canvas)) {
+        tc.mx = p.x;
+        tc.my = p.y;
+        tc.drawn = 0;
+      }
+    } else if(e.targetTouches.length == 2 && tc.pinchZoom) {
+      tc.touchState = 3;
+      tc.EndDrag();
+      tc.BeginPinch(e);
+    } else {
+      tc.EndDrag();
+      tc.EndPinch();
+      tc.touchState = 0;
+    }
   }
 }
 function TouchUp(e) {
-  var t = TagCanvas, tg = EventToCanvasId(e);
-  if(tg && e.changedTouches && t.tc[tg]) {
-    TouchMove(e);
-    if(!t.tc[tg].EndDrag()){
-      t.tc[tg].Draw();
-      t.tc[tg].Clicked(e);
+  var tg = EventToCanvasId(e), tc = (tg && TagCanvas.tc[tg]);
+  if(tc && e.changedTouches) {
+    switch(tc.touchState) {
+    case 1:
+      tc.Draw();
+      tc.Clicked();
+      break;
+    case 2:
+      tc.EndDrag();
+      break;
+    case 3:
+      tc.EndPinch();
     }
+    tc.touchState = 0;
   }
 }
 function TouchMove(e) {
@@ -475,12 +811,20 @@ function TouchMove(e) {
       tc.tttimer = null;
     }
   }
-  if(tg && t.tc[tg] && e.changedTouches) {
-    tc = t.tc[tg];
-    if(p = EventXY(e, tc.canvas)) {
-      tc.mx = p.x;
-      tc.my = p.y;
-      tc.Drag(e, p);
+  tc = (tg && t.tc[tg]);
+  if(tc && e.changedTouches && tc.touchState) {
+    switch(tc.touchState) {
+    case 1:
+    case 2:
+      if(p = EventXY(e, tc.canvas)) {
+        tc.mx = p.x;
+        tc.my = p.y;
+        if(tc.Drag(e, p))
+          tc.touchState = 2;
+      }
+      break;
+    case 3:
+      tc.Pinch(e);
     }
     tc.drawn = 0;
   }
@@ -494,14 +838,28 @@ function MouseWheel(e) {
     t.tc[tg].Wheel((e.wheelDelta || e.detail) > 0);
   }
 }
-function DrawCanvas(t) {
-  var tc = TagCanvas.tc, i, interval;
-  t = t || TimeNow();
-  for(i in tc) {
-    interval = tc[i].interval;
-    tc[i].Draw(t);
+function Scroll(e) {
+  var i, t = TagCanvas;
+  clearTimeout(t.scrollTimer);
+  for(i in t.tc) {
+    t.tc[i].Pause();
   }
-  TagCanvas.NextFrame(interval);
+  t.scrollTimer = setTimeout(function() {
+    var i, t = TagCanvas;
+    for(i in t.tc) {
+      t.tc[i].Resume();
+    }
+  }, t.scrollPause);
+}
+function DrawCanvas() {
+  DrawCanvasRAF(TimeNow());
+}
+function DrawCanvasRAF(t) {
+  var tc = TagCanvas.tc, i;
+  TagCanvas.NextFrame(TagCanvas.interval);
+  t = t || TimeNow();
+  for(i in tc)
+    tc[i].Draw(t);
 }
 function AbsPos(id) {
   var e = doc.getElementById(id), r = e.getBoundingClientRect(),
@@ -533,6 +891,12 @@ function TextSplitter(e) {
   this.original = e.innerText || e.textContent;
 }
 TSproto = TextSplitter.prototype;
+TSproto.Empty = function() {
+  for(var i = 0; i < this.text.length; ++i)
+    if(this.text[i].length)
+      return false;
+  return true;
+};
 TSproto.Lines = function(e) {
   var r = e ? 1 : 0, cn, cl, i;
   e = e || this.e;
@@ -556,7 +920,7 @@ TSproto.Lines = function(e) {
   }
   r || this.br || this.text.push(this.line.join(' '));
   return this.text;
-}
+};
 TSproto.SplitWidth = function(w, c, f, h) {
   var i, j, words, text = [];
   c.font = h + 'px ' + f;
@@ -574,16 +938,28 @@ TSproto.SplitWidth = function(w, c, f, h) {
     text.push(this.line.join(' '));
   }
   return this.text = text;
-}
+};
 /**
  * @constructor
  */
-function Outline(tc) {
-  this.ts = TimeNow();
+function Outline(tc,t) {
+  this.ts = null;
   this.tc = tc;
+  this.tag = t;
   this.x = this.y = this.w = this.h = this.sc = 1;
   this.z = 0;
-  this.Draw = tc.pulsateTo < 1 && tc.outlineMethod != 'colour' ? this.DrawPulsate : this.DrawSimple;
+  this.pulse = 1;
+  this.pulsate = tc.pulsateTo < 1;
+  this.colour = tc.outlineColour;
+  this.adash = ~~tc.outlineDash;
+  this.agap = ~~tc.outlineDashSpace || this.adash;
+  this.aspeed = tc.outlineDashSpeed * 1;
+  if(this.colour == 'tag')
+    this.colour = GetProperty(t.a, 'color');
+  else if(this.colour == 'tagbg')
+    this.colour = GetProperty(t.a, 'background-color');
+  this.Draw = this.pulsate ? this.DrawPulsate : this.DrawSimple;
+  this.radius = tc.outlineRadius | 0;
   this.SetMethod(tc.outlineMethod);
 }
 Oproto = Outline.prototype;
@@ -593,6 +969,7 @@ Oproto.SetMethod = function(om) {
     colour: ['PreDraw','DrawColour'],
     outline: ['PostDraw','DrawOutline'],
     classic: ['LastDraw','DrawOutline'],
+    size: ['PreDraw','DrawSize'],
     none: ['LastDraw']
   }, funcs = methods[om] || methods.outline;
   if(om == 'none') {
@@ -611,11 +988,69 @@ Oproto.Update = function(x,y,w,h,sc,z,xo,yo) {
   this.sc = sc; // used to determine frontmost
   this.z = z;
 };
+Oproto.Ants = function(c) {
+  if(!this.adash)
+    return;
+  var l = this.adash, g = this.agap, s = this.aspeed, length = l + g,
+    l1 = 0, l2 = l, g1 = g, g2 = 0, seq = 0, ants;
+  if(s) {
+    seq = abs(s) * (TimeNow() - this.ts) / 50;
+    if(s < 0)
+      seq = 8.64e6 - seq;
+    s = ~~seq % length;
+  }
+  if(s) {
+    if(l >= s) {
+      l1 = l - s;
+      l2 = s;
+    } else {
+      g1 = length - s;
+      g2 = g - g1;
+    }
+    ants = [l1, g1, l2, g2];
+  } else {
+    ants = [l,g];
+  }
+  c.setLineDash(ants);
+}
 Oproto.DrawOutline = function(c,x,y,w,h,colour) {
+  var r = min(this.radius, h/2, w/2);
   c.strokeStyle = colour;
-  c.strokeRect(x,y,w,h);
+  this.Ants(c);
+  RRect(c, x, y, w, h, r, true);
+};
+Oproto.DrawSize = function(c,x,y,w,h,colour,tag,x1,y1) {
+  var tw = tag.w, th = tag.h, m, i, sc;
+  if(this.pulsate) {
+    if(tag.image)
+      sc = (tag.image.height + this.tc.outlineIncrease) / tag.image.height;
+    else
+      sc = tag.oscale;
+    i = tag.fimage || tag.image;
+    m = 1 + ((sc - 1) * (1-this.pulse));
+    tag.h *= m;
+    tag.w *= m;
+  } else {
+    i = tag.oimage;
+  }
+  tag.alpha = 1;
+  tag.Draw(c, x1, y1, i);
+  tag.h = th;
+  tag.w = tw;
+  return 1;
 };
 Oproto.DrawColour = function(c,x,y,w,h,colour,tag,x1,y1) {
+  if(tag.oimage) {
+    if(this.pulse < 1) {
+      tag.alpha = 1 - pow(this.pulse, 2);
+      tag.Draw(c, x1, y1, tag.fimage);
+      tag.alpha = this.pulse;
+    } else {
+      tag.alpha = 1;
+    }
+    tag.Draw(c, x1, y1, tag.oimage);
+    return 1;
+  }
   return this[tag.image ? 'DrawColourImage' : 'DrawColourText'](c,x,y,w,h,colour,tag,x1,y1);
 };
 Oproto.DrawColourText = function(c,x,y,w,h,colour,tag,x1,y1) {
@@ -639,7 +1074,11 @@ Oproto.DrawColourImage = function(c,x,y,w,h,colour,tag,x1,y1) {
 
   cc.drawImage(ccanvas,fx,fy,fw,fh,0,0,fw,fh);
   c.clearRect(fx,fy,fw,fh);
-  tag.alpha = 1;
+  if(this.pulsate) {
+    tag.alpha = 1 - pow(this.pulse, 2);
+  } else {
+    tag.alpha = 1;
+  }
   tag.Draw(c,x1,y1);
   c.setTransform(1,0,0,1,0,0);
   c.save();
@@ -650,47 +1089,52 @@ Oproto.DrawColourImage = function(c,x,y,w,h,colour,tag,x1,y1) {
   c.fillStyle = colour;
   c.fillRect(fx,fy,fw,fh);
   c.restore();
+  c.globalAlpha = 1;
   c.globalCompositeOperation = 'destination-over';
   c.drawImage(ocanvas,0,0,fw,fh,fx,fy,fw,fh);
   c.globalCompositeOperation = 'source-over';
   return 1;
 };
 Oproto.DrawBlock = function(c,x,y,w,h,colour) {
+  var r = min(this.radius, h/2, w/2);
   c.fillStyle = colour;
-  c.fillRect(x,y,w,h);
+  RRect(c, x, y, w, h, r);
 };
-Oproto.DrawSimple = function(c, tag, x1, y1) {
+Oproto.DrawSimple = function(c, tag, x1, y1, ga, useGa) {
   var t = this.tc;
   c.setTransform(1,0,0,1,0,0);
-  c.strokeStyle = t.outlineColour;
+  c.strokeStyle = this.colour;
   c.lineWidth = t.outlineThickness;
   c.shadowBlur = c.shadowOffsetX = c.shadowOffsetY = 0;
-  c.globalAlpha = 1;
-  return this.drawFunc(c,this.x,this.y,this.w,this.h,t.outlineColour,tag,x1,y1);
+  c.globalAlpha = useGa ? ga : 1;
+  return this.drawFunc(c,this.x,this.y,this.w,this.h,this.colour,tag,x1,y1);
 };
 Oproto.DrawPulsate = function(c, tag, x1, y1) {
-  var diff = TimeNow() - this.ts, t = this.tc;
-  c.setTransform(1,0,0,1,0,0);
-  c.strokeStyle = t.outlineColour;
-  c.lineWidth = t.outlineThickness;
-  c.shadowBlur = c.shadowOffsetX = c.shadowOffsetY = 0;
-  c.globalAlpha = t.pulsateTo + ((1 - t.pulsateTo) * 
+  var diff = TimeNow() - this.ts, t = this.tc,
+    ga = t.pulsateTo + ((1 - t.pulsateTo) * 
     (0.5 + (cos(2 * Math.PI * diff / (1000 * t.pulsateTime)) / 2)));
-  return this.drawFunc(c,this.x,this.y,this.w,this.h,t.outlineColour,tag,x1,y1);
+  this.pulse = ga = TagCanvas.Smooth(1,ga);
+  return this.DrawSimple(c, tag, x1, y1, ga, 1);
 };
 Oproto.Active = function(c,x,y) {
-  return (x >= this.x && y >= this.y &&
+  var a = (x >= this.x && y >= this.y &&
     x <= this.x + this.w && y <= this.y + this.h);
+  if(a) {
+    this.ts = this.ts || TimeNow();
+  } else {
+    this.ts = null;
+  }
+  return a;
 };
 Oproto.PreDraw = Oproto.PostDraw = Oproto.LastDraw = Nop;
 /**
  * @constructor
  */
-function Tag(tc,text,a,v,w,h,col,font,original) {
-  var c = tc.ctxt;
+function Tag(tc, text, a, v, w, h, col, bcol, bradius, boutline, bothickness,
+  font, padding, original) {
   this.tc = tc;
-  this.image = text.src ? text : null;
-  this.text = text.src ? [] : text;
+  this.image = null;
+  this.text = text;
   this.text_original = original;
   this.line_widths = [];
   this.title = a.title || null;
@@ -700,19 +1144,34 @@ function Tag(tc,text,a,v,w,h,col,font,original) {
   this.w = w;
   this.h = h;
   this.colour = col || tc.textColour;
+  this.bgColour = bcol || tc.bgColour;
+  this.bgRadius = bradius | 0;
+  this.bgOutline = boutline || this.colour;
+  this.bgOutlineThickness = bothickness | 0;
   this.textFont = font || tc.textFont;
-  this.weight = this.sc = this.alpha = 1;
+  this.padding = padding | 0;
+  this.sc = this.alpha = 1;
   this.weighted = !tc.weight;
-  this.outline = new Outline(tc);
-  if(!this.image) {
-    this.textHeight = tc.textHeight;
-    this.extents = FindTextBoundingBox(this.text, this.textFont, this.textHeight);
-    this.Measure(c,tc);
-  }
-  this.SetShadowColour = tc.shadowAlpha ? this.SetShadowColourAlpha : this.SetShadowColourFixed;
-  this.SetDraw(tc);
+  this.outline = new Outline(tc,this);
 }
 Tproto = Tag.prototype;
+Tproto.Init = function(e) {
+  var tc = this.tc;
+  this.textHeight = tc.textHeight;
+  if(this.HasText()) {
+    this.Measure(tc.ctxt,tc);
+  } else {
+    this.w = this.iw;
+    this.h = this.ih;
+  }
+
+  this.SetShadowColour = tc.shadowAlpha ? this.SetShadowColourAlpha : this.SetShadowColourFixed;
+  this.SetDraw(tc);
+};
+Tproto.Draw = Nop;
+Tproto.HasText = function() {
+  return this.text && this.text[0].length > 0;
+};
 Tproto.EqualTo = function(e) {
   var i = e.getElementsByTagName('img');
   if(this.a.href != e.href)
@@ -721,8 +1180,11 @@ Tproto.EqualTo = function(e) {
     return this.image.src == i[0].src;
   return (e.innerText || e.textContent) == this.text_original;
 };
+Tproto.SetImage = function(i) {
+  this.image = this.fimage = i;
+};
 Tproto.SetDraw = function(t) {
-  this.Draw = this.image ? (t.ie > 7 ? this.DrawImageIE : this.DrawImage) : this.DrawText;
+  this.Draw = this.fimage ? (t.ie > 7 ? this.DrawImageIE : this.DrawImage) : this.DrawText;
   t.noSelect && (this.CheckActive = Nop);
 };
 Tproto.MeasureText = function(c) {
@@ -734,52 +1196,117 @@ Tproto.MeasureText = function(c) {
   return w;
 };
 Tproto.Measure = function(c,t) {
-  this.h = this.extents ? this.extents.max.y + this.extents.min.y : this.textHeight;
+  var extents = FindTextBoundingBox(this.text, this.textFont, this.textHeight),
+    s, th, f, soff, cw, twidth, theight, img, tcv;
+  // add the gap at the top to the height to make equal gap at bottom
+  theight = extents ? extents.max.y + extents.min.y : this.textHeight;
   c.font = this.font = this.textHeight + 'px ' + this.textFont;
-  this.w = this.MeasureText(c);
+  twidth = this.MeasureText(c);
   if(t.txtOpt) {
-    var s = t.txtScale, th = s * this.textHeight, f = th + 'px ' + this.textFont,
-      soff = [s*t.shadowOffset[0],s*t.shadowOffset[1]], cw;
+    s = t.txtScale;
+    th = s * this.textHeight;
+    f = th + 'px ' + this.textFont;
+    soff = [s * t.shadowOffset[0], s * t.shadowOffset[1]];
     c.font = f;
     cw = this.MeasureText(c);
-    this.image = TextToCanvas(this.text, f, th, cw, s * this.h, this.colour,
-      t.shadow, s * t.shadowBlur, soff, s, s, cw, this.line_widths);
-    if(this.image) {
-      this.w = this.image.width / s;
-      this.h = this.image.height / s;
+    tcv = new TextCanvas(this.text, f, cw + s, (s * theight) + s, cw,
+      this.line_widths, t.textAlign, t.textVAlign, s);
+
+    if(this.image)
+      tcv.SetImage(this.image, this.iw, this.ih, t.imagePosition, t.imagePadding,
+        t.imageAlign, t.imageVAlign, t.imageScale);
+
+    img = tcv.Create(this.colour, this.bgColour, this.bgOutline,
+      s * this.bgOutlineThickness, t.shadow, s * t.shadowBlur, soff,
+      s * this.padding, s * this.bgRadius);
+
+    // add outline image using highlight colour
+    if(t.outlineMethod == 'colour') {
+      this.oimage = tcv.Create(this.outline.colour, this.bgColour, this.outline.colour,
+        s * this.bgOutlineThickness, t.shadow, s * t.shadowBlur, soff,
+        s * this.padding, s * this.bgRadius);
+
+    } else if(t.outlineMethod == 'size') {
+      extents = FindTextBoundingBox(this.text, this.textFont,
+        this.textHeight + t.outlineIncrease);
+      th = extents.max.y + extents.min.y;
+      f = (s * (this.textHeight + t.outlineIncrease)) + 'px ' + this.textFont;
+      c.font = f;
+      cw = this.MeasureText(c);
+
+      tcv = new TextCanvas(this.text, f, cw + s, (s * th) + s, cw,
+        this.line_widths, t.textAlign, t.textVAlign, s);
+      if(this.image)
+        tcv.SetImage(this.image, this.iw + t.outlineIncrease,
+          this.ih + t.outlineIncrease, t.imagePosition, t.imagePadding,
+          t.imageAlign, t.imageVAlign, t.imageScale);
+          
+      this.oimage = tcv.Create(this.colour, this.bgColour, this.bgOutline,
+        s * this.bgOutlineThickness, t.shadow, s * t.shadowBlur, soff,
+        s * this.padding, s * this.bgRadius);
+
+      this.oscale = this.oimage.width / img.width;
+      if(t.outlineIncrease > 0)
+        img = ExpandImage(img, this.oimage.width, this.oimage.height);
+      else
+        this.oimage = ExpandImage(this.oimage, img.width, img.height);
+    }
+    if(img) {
+      this.fimage = img;
+      twidth = this.fimage.width / s;
+      theight = this.fimage.height / s;
     }
     this.SetDraw(t);
-    t.txtOpt = !!this.image;
+    t.txtOpt = !!this.fimage;
   }
+  this.h = theight;
+  this.w = twidth;
 };
-Tproto.SetFont = function(f, c) {
+Tproto.SetFont = function(f, c, bc, boc) {
   this.textFont = f;
   this.colour = c;
-  this.extents = FindTextBoundingBox(this.text, this.textFont, this.textHeight);
+  this.bgColour = bc;
+  this.bgOutline = boc;
   this.Measure(this.tc.ctxt, this.tc);
 };
 Tproto.SetWeight = function(w) {
-  if(!this.text.length)
+  var tc = this.tc, modes = tc.weightMode.split(/[, ]/), m, s, wl = w.length;
+  if(!this.HasText())
     return;
-  this.weight = w;
-  this.Weight(this.tc.ctxt, this.tc);
-  this.Measure(this.tc.ctxt, this.tc);
-};
-Tproto.Weight = function(c,t) {
-  var w = this.weight, m = t.weightMode;
   this.weighted = true;
-  if(m == 'colour' || m == 'both')
-    this.colour = FindGradientColour(t, (w - t.min_weight) / (t.max_weight-t.min_weight));
-  if(m == 'size' || m == 'both') {
-    if(t.weightSizeMin > 0 && t.weightSizeMax > t.weightSizeMin) {
-      this.textHeight = t.weightSize * 
-        (t.weightSizeMin + (t.weightSizeMax - t.weightSizeMin) *
-         (w - t.min_weight) / (t.max_weight - t.min_weight));
+  for(s = 0; s < wl; ++s) {
+    m = modes[s] || 'size';
+    if('both' == m) {
+      this.Weight(w[s], tc.ctxt, tc, 'size', tc.min_weight[s], 
+        tc.max_weight[s], s);
+      this.Weight(w[s], tc.ctxt, tc, 'colour', tc.min_weight[s],
+        tc.max_weight[s], s);
     } else {
-      this.textHeight = w * t.weightSize;
+      this.Weight(w[s], tc.ctxt, tc, m, tc.min_weight[s], tc.max_weight[s], s);
     }
   }
-  this.extents = FindTextBoundingBox(this.text, this.textFont, this.textHeight);
+  this.Measure(tc.ctxt, tc);
+};
+Tproto.Weight = function(w, c, t, m, wmin, wmax, wnum) {
+  w = isNaN(w) ? 1 : w;
+  var nweight = (w - wmin) / (wmax - wmin);
+  if('colour' == m)
+    this.colour = FindGradientColour(t, nweight, wnum);
+  else if('bgcolour' == m)
+    this.bgColour = FindGradientColour(t, nweight, wnum);
+  else if('bgoutline' == m)
+    this.bgOutline = FindGradientColour(t, nweight, wnum);
+  else if('outline' == m)
+    this.outline.colour = FindGradientColour(t, nweight, wnum);
+  else if('size' == m) {
+    if(t.weightSizeMin > 0 && t.weightSizeMax > t.weightSizeMin) {
+      this.textHeight = t.weightSize * 
+        (t.weightSizeMin + (t.weightSizeMax - t.weightSizeMin) * nweight);
+    } else {
+      // min textHeight of 1
+      this.textHeight = max(1, w * t.weightSize);
+    }
+  }
 };
 Tproto.SetShadowColourFixed = function(c,s,a) {
   c.shadowColor = s;
@@ -796,15 +1323,22 @@ Tproto.DrawText = function(c,xoff,yoff) {
   x += xoff / s;
   y += (yoff / s) - (this.h / 2);
   for(i = 0; i < this.text.length; ++i) {
-    xl = x - (this.line_widths[i] / 2);
+    xl = x;
+    if('right' == t.textAlign) {
+      xl += this.w / 2 - this.line_widths[i];
+    } else if('centre' == t.textAlign) {
+      xl -= this.line_widths[i] / 2;
+    } else {
+      xl -= this.w / 2;
+    }
     c.setTransform(s, 0, 0, s, s * xl, s * y);
     c.fillText(this.text[i], 0, 0);
     y += this.textHeight;
   }
 };
-Tproto.DrawImage = function(c,xoff,yoff) {
+Tproto.DrawImage = function(c,xoff,yoff,im) {
   var x = this.x, y = this.y, s = this.sc,
-    i = this.image, w = this.w, h = this.h, a = this.alpha,
+    i = im || this.fimage, w = this.w, h = this.h, a = this.alpha,
     shadow = this.shadow;
   c.globalAlpha = a;
   shadow && this.SetShadowColour(c,shadow,a);
@@ -814,7 +1348,7 @@ Tproto.DrawImage = function(c,xoff,yoff) {
   c.drawImage(i, 0, 0, w, h);
 };
 Tproto.DrawImageIE = function(c,xoff,yoff) {
-  var i = this.image, s = this.sc,
+  var i = this.fimage, s = this.sc,
     w = i.width = this.w*s, h = i.height = this.h * s,
     x = (this.x*s) + xoff - (w/2), y = (this.y*s) + yoff - (h/2);
   c.setTransform(1,0,0,1,0,0);
@@ -832,12 +1366,16 @@ Tproto.Calc = function(m,a) {
   this.z = pp.z;
   this.sc = pp.w;
   this.alpha = a * Clamp(mnb + (mxb - mnb) * (r - this.z) / (2 * r), 0, 1);
+  return this.xformed;
 };
-Tproto.CheckActive = function(c,xoff,yoff) {
-  var t = this.tc, o = this.outline,
-    w = this.w, h = this.h,
+Tproto.UpdateActive = function(c, xoff, yoff) {
+  var o = this.outline, w = this.w, h = this.h,
     x = this.x - w/2, y = this.y - h/2;
   o.Update(x, y, w, h, this.sc, this.z, xoff, yoff);
+  return o;
+};
+Tproto.CheckActive = function(c,xoff,yoff) {
+  var t = this.tc, o = this.UpdateActive(c, xoff, yoff);
   return o.Active(c, t.mx, t.my) ? o : null;
 };
 Tproto.Clicked = function(e) {
@@ -873,7 +1411,7 @@ Tproto.Clicked = function(e) {
  * @constructor
  */
 function TagCanvas(cid,lctr,opt) {
-  var i, p, c = doc.getElementById(cid), cp = ['id','class','innerHTML'];
+  var i, p, c = doc.getElementById(cid), cp = ['id','class','innerHTML'], raf;
 
   if(!c) throw 0;
   if(Defined(window.G_vmlCanvasManager)) {
@@ -894,24 +1432,36 @@ function TagCanvas(cid,lctr,opt) {
 
   this.canvas = c;
   this.ctxt = c.getContext('2d');
-  this.z1 = 250 / this.depth;
+  this.z1 = 250 / max(this.depth, 0.001);
   this.z2 = this.z1 / this.zoom;
   this.radius = min(c.height, c.width) * 0.0075; // fits radius of 100 in canvas
-  this.max_weight = 0;
-  this.min_weight = 200;
+  this.max_radius = 100;
+  this.max_weight = [];
+  this.min_weight = [];
   this.textFont = this.textFont && FixFont(this.textFont);
   this.textHeight *= 1;
+  this.imageRadius = this.imageRadius.toString();
   this.pulsateTo = Clamp(this.pulsateTo, 0, 1);
   this.minBrightness = Clamp(this.minBrightness, 0, 1);
   this.maxBrightness = Clamp(this.maxBrightness, this.minBrightness, 1);
   this.ctxt.textBaseline = 'top';
   this.lx = (this.lock + '').indexOf('x') + 1;
   this.ly = (this.lock + '').indexOf('y') + 1;
-  this.frozen = this.dx = this.dy = this.fixedAnim = this.touched = 0;
+  this.frozen = this.dx = this.dy = this.fixedAnim = this.touchState = 0;
   this.fixedAlpha = 1;
   this.source = lctr || cid;
+  this.repeatTags = min(64, ~~this.repeatTags);
+  this.minTags = min(200, ~~this.minTags);
+  if(~~this.scrollPause > 0)
+    TagCanvas.scrollPause = ~~this.scrollPause;
+  else
+    this.scrollPause = 0;
+  if(this.minTags > 0 && this.repeatTags < 1 && (i = this.GetTags().length))
+    this.repeatTags = ceil(this.minTags / i) - 1;
   this.transform = Matrix.Identity();
   this.startTime = this.time = TimeNow();
+  this.mx = this.my = -1;
+  this.centreImage && CentreImage(this);
   this.Animate = this.dragControl ? this.AnimateDrag : this.AnimatePosition;
   this.animTiming = (typeof TagCanvas[this.animTiming] == 'function' ?
     TagCanvas[this.animTiming] : TagCanvas.Smooth);
@@ -936,6 +1486,8 @@ function TagCanvas(cid,lctr,opt) {
   this.yaw = this.initial ? this.initial[0] * this.maxSpeed : 0;
   this.pitch = this.initial ? this.initial[1] * this.maxSpeed : 0;
   if(this.tooltip) {
+    this.ctitle = c.title;
+    c.title = '';
     if(this.tooltip == 'native') {
       this.Tooltip = this.TooltipNative;
     } else {
@@ -953,24 +1505,41 @@ function TagCanvas(cid,lctr,opt) {
     this.Tooltip = this.TooltipNone;
   }
   if(!this.noMouse && !handlers[cid]) {
-    AddHandler('mousemove', MouseMove, c);
-    AddHandler('mouseout', MouseOut, c);
-    AddHandler('mouseup', MouseUp, c);
-    AddHandler('touchstart', TouchDown, c);
-    AddHandler('touchend', TouchUp, c);
-    AddHandler('touchcancel', TouchUp, c);
-    AddHandler('touchmove', TouchMove, c);
+    handlers[cid] = [
+      ['mousemove', MouseMove],
+      ['mouseout', MouseOut],
+      ['mouseup', MouseUp],
+      ['touchstart', TouchDown],
+      ['touchend', TouchUp],
+      ['touchcancel', TouchUp],
+      ['touchmove', TouchMove]
+    ];
     if(this.dragControl) {
-      AddHandler('mousedown', MouseDown, c);
-      AddHandler('selectstart', Nop, c);
+      handlers[cid].push(['mousedown', MouseDown]);
+      handlers[cid].push(['selectstart', Nop]);
     }
     if(this.wheelZoom) {
-      AddHandler('mousewheel', MouseWheel, c);
-      AddHandler('DOMMouseScroll', MouseWheel, c);
+      handlers[cid].push(['mousewheel', MouseWheel]);
+      handlers[cid].push(['DOMMouseScroll', MouseWheel]);
     }
-    handlers[cid] = 1;
+    if(this.scrollPause) {
+      handlers[cid].push(['scroll', Scroll, window]);
+    }
+    for(i = 0; i < handlers[cid].length; ++i) {
+      p = handlers[cid][i];
+      AddHandler(p[0], p[1], p[2] ? p[2] : c);
+    }
   }
-  TagCanvas.started || (TagCanvas.started = setTimeout(DrawCanvas, this.interval));
+  if(!TagCanvas.started) {
+    raf = window.requestAnimationFrame = window.requestAnimationFrame ||
+      window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
+      window.msRequestAnimationFrame;
+    TagCanvas.NextFrame = raf ? TagCanvas.NextFrameRAF :
+      TagCanvas.NextFrameTimeout;
+    TagCanvas.interval = this.interval;
+    TagCanvas.NextFrame(this.interval);
+    TagCanvas.started = 1;
+  }
 }
 TCproto = TagCanvas.prototype;
 TCproto.SourceElements = function() {
@@ -984,57 +1553,119 @@ TCproto.HideTags = function() {
     el[i].style.display = 'none';
 };
 TCproto.GetTags = function() {
-  var el = this.SourceElements(), etl, tl = [], i, j;
-  for(i = 0; i < el.length; ++i) {
-    etl = el[i].getElementsByTagName('a');
-    for(j = 0; j < etl.length; ++j) {
-      tl.push(etl[j]);
+  var el = this.SourceElements(), etl, tl = [], i, j, k;
+  for(k = 0; k <= this.repeatTags; ++k) {
+    for(i = 0; i < el.length; ++i) {
+      etl = el[i].getElementsByTagName('a');
+      for(j = 0; j < etl.length; ++j) {
+        tl.push(etl[j]);
+      }
     }
   }
   return tl;
 };
-TCproto.CreateTag = function(e, p) {
-  var im = e.getElementsByTagName('img'), i, t, ts, font;
-  p = p || [0, 0, 0];
-  if(im.length) {
-    i = new Image;
-    i.src = im[0].src;
-    t = new Tag(this, i, e, p, 0, 0);
-    AddImage(i, im[0], t, this);
+TCproto.Message = function(text) {
+  var tl = [], i, p, tc = text.split(''), a, t, x, z;
+  for(i = 0; i < tc.length; ++i) {
+    if(tc[i] != ' ') {
+      p = i - tc.length / 2;
+      a = doc.createElement('A');
+      a.href = '#';
+      a.innerText = tc[i];
+      x = 100 * sin(p / 9);
+      z = -100 * cos(p / 9);
+      t = new Tag(this, tc[i], a, [x,0,z], 2, 18, '#000', '#fff', 0, 0, 0,
+        'monospace', 2, tc[i]);
+      t.Init();
+      tl.push(t);
+    }
+  }
+  return tl;
+};
+TCproto.CreateTag = function(e) {
+  var im, i, t, txt, ts, font, bc, boc, p = [0, 0, 0];
+  if('text' != this.imageMode) {
+    im = e.getElementsByTagName('img');
+    if(im.length) {
+      i = new Image;
+      i.src = im[0].src;
+
+      if(!this.imageMode) {
+        t = new Tag(this, "", e, p, 0, 0);
+        t.SetImage(i);
+        //t.Init();
+        AddImage(i, im[0], t, this);
+        return t;
+      }
+    }
+  }
+  if('image' != this.imageMode) {
+    ts = new TextSplitter(e);
+    txt = ts.Lines();
+    if(!ts.Empty()) {
+      font = this.textFont || FixFont(GetProperty(e,'font-family'));
+      if(this.splitWidth)
+        txt = ts.SplitWidth(this.splitWidth, this.ctxt, font, this.textHeight);
+
+      bc = this.bgColour == 'tag' ? GetProperty(e, 'background-color') :
+        this.bgColour;
+      boc = this.bgOutline == 'tag' ? GetProperty(e, 'color') : this.bgOutline;
+    } else {
+      ts = null;
+    }
+  }
+  if(ts || i) {
+    t = new Tag(this, txt, e, p, 2, this.textHeight + 2,
+      this.textColour || GetProperty(e,'color'), bc, this.bgRadius,
+      boc, this.bgOutlineThickness, font, this.padding, ts && ts.original);
+    if(i) {
+      t.SetImage(i);
+      AddImage(i, im[0], t, this);
+    } else {
+      t.Init();
+    }
     return t;
   }
-  ts = new TextSplitter(e);
-  t = ts.Lines();
-  font = this.textFont || FixFont(GetProperty(e,'font-family'));
-  if(this.splitWidth)
-    t = ts.SplitWidth(this.splitWidth, this.ctxt, font, this.textHeight);
-
-  return new Tag(this, t, e, p, 2, this.textHeight + 2,
-    this.textColour || GetProperty(e,'color'), font, ts.original);
 };
 TCproto.UpdateTag = function(t, a) {
   var colour = this.textColour || GetProperty(a, 'color'),
-    font = this.textFont || FixFont(GetProperty(a, 'font-family'));
+    font = this.textFont || FixFont(GetProperty(a, 'font-family')),
+    bc = this.bgColour == 'tag' ? GetProperty(a, 'background-color') :
+      this.bgColour, boc = this.bgOutline == 'tag' ? GetProperty(a, 'color') :
+      this.bgOutline;
+  t.a = a;
   t.title = a.title;
-  if(t.colour != colour || t.textFont != font)
-    t.SetFont(font, colour);
+  if(t.colour != colour || t.textFont != font || t.bgColour != bc ||
+    t.bgOutline != boc)
+    t.SetFont(font, colour, bc, boc);
 };
 TCproto.Weight = function(tl) {
-  var l = tl.length, w, i, weights = [];
-  for(i = 0; i < l; ++i) {
-    w = FindWeight(this, tl[i].a);
-    if(w > this.max_weight) this.max_weight = w;
-    if(w < this.min_weight) this.min_weight = w;
-    weights.push(w);
+  var ll = tl.length, w, i, s, weights = [], valid,
+    wfrom = this.weightFrom ? this.weightFrom.split(/[, ]/) : [null],
+    wl = wfrom.length;
+  for(i = 0; i < ll; ++i) {
+    weights[i] = [];
+    for(s = 0; s < wl; ++s) {
+      w = FindWeight(tl[i].a, wfrom[s], this.textHeight);
+      if(!this.max_weight[s] || w > this.max_weight[s])
+        this.max_weight[s] = w;
+      if(!this.min_weight[s] || w < this.min_weight[s])
+        this.min_weight[s] = w;
+      weights[i][s] = w;
+    }
   }
-  if(this.max_weight > this.min_weight) {
-    for(i = 0; i < l; ++i) {
+  for(s = 0; s < wl; ++s) {
+    if(this.max_weight[s] > this.min_weight[s])
+      valid = 1;
+  }
+  if(valid) {
+    for(i = 0; i < ll; ++i) {
       tl[i].SetWeight(weights[i]);
     }
   }
 };
 TCproto.Load = function() {
-  var tl = this.GetTags(), taglist = [], shape,
+  var tl = this.GetTags(), taglist = [], shape, t,
     shapeArgs, rx, ry, rz, vl, i, tagmap = [], pfuncs = {
       sphere: PointsOnSphere,
       vcylinder: PointsOnCylinderV,
@@ -1053,20 +1684,32 @@ TCproto.Load = function() {
     rz = 100 * this.radiusZ;
     this.max_radius = max(rx, max(ry, rz));
 
+    for(i = 0; i < tl.length; ++i) {
+      t = this.CreateTag(tl[tagmap[i]]);
+      if(t)
+        taglist.push(t);
+    }
+    this.weight && this.Weight(taglist, true);
+  
     if(this.shapeArgs) {
-      this.shapeArgs[0] = tl.length;
+      this.shapeArgs[0] = taglist.length;
     } else {
       shapeArgs = this.shape.toString().split(/[(),]/);
       shape = shapeArgs.shift();
-      this.shape = pfuncs[shape] || pfuncs.sphere;
-      this.shapeArgs = [tl.length, rx, ry, rz].concat(shapeArgs);
+      if(typeof window[shape] === 'function')
+        this.shape = window[shape];
+      else
+        this.shape = pfuncs[shape] || pfuncs.sphere;
+      this.shapeArgs = [taglist.length, rx, ry, rz].concat(shapeArgs);
     }
     vl = this.shape.apply(this, this.shapeArgs);
-    this.listLength = tl.length;
-    for(i = 0; i < tl.length; ++i) {
-      taglist.push(this.CreateTag(tl[tagmap[i]], vl[i]));
-    }
-    this.weight && this.Weight(taglist, true);
+    this.listLength = taglist.length;
+    for(i = 0; i < taglist.length; ++i)
+      taglist[i].position = new Vector(vl[i][0], vl[i][1], vl[i][2]);
+  }
+  if(this.noTagsMessage && !taglist.length) {
+    i = (this.imageMode && this.imageMode != 'both' ? this.imageMode + ' ': '');
+    taglist = this.Message('No ' + i + 'tags');
   }
   this.taglist = taglist;
 };
@@ -1151,7 +1794,7 @@ TCproto.Draw = function(t) {
   if(this.paused)
     return;
   var cv = this.canvas, cw = cv.width, ch = cv.height, max_sc = 0,
-    tdelta = (t - this.time) * this.interval / 1000,
+    tdelta = (t - this.time) * TagCanvas.interval / 1000,
     x = cw / 2 + this.offsetX, y = ch / 2 + this.offsetY, c = this.ctxt,
     active, a, i, aindex = -1, tl = this.taglist, l = tl.length,
     frontsel = this.frontSelect, centreDrawn = (this.centreFunc == Nop), fixed;
@@ -1160,21 +1803,25 @@ TCproto.Draw = function(t) {
     return this.Animate(cw,ch,tdelta);
   fixed = this.AnimateFixed();
   c.setTransform(1,0,0,1,0,0);
-  this.active = null;
   for(i = 0; i < l; ++i)
     tl[i].Calc(this.transform, this.fixedAlpha);
   tl = SortList(tl, function(a,b) {return b.z-a.z});
   
-  for(i = 0; i < l; ++i) {
-    a = this.mx >= 0 && this.my >= 0 && this.taglist[i].CheckActive(c, x, y);
-    if(a && a.sc > max_sc && (!frontsel || a.z <= 0)) {
-      active = a;
-      aindex = i;
-      active.tag = this.taglist[i];
-      max_sc = a.sc;
+  if(fixed && this.fixedAnim.active) {
+    active = this.fixedAnim.tag.UpdateActive(c, x, y);
+  } else {
+    this.active = null;
+    for(i = 0; i < l; ++i) {
+      a = this.mx >= 0 && this.my >= 0 && this.taglist[i].CheckActive(c, x, y);
+      if(a && a.sc > max_sc && (!frontsel || a.z <= 0)) {
+        active = a;
+        aindex = i;
+        active.tag = this.taglist[i];
+        max_sc = a.sc;
+      }
     }
+    this.active = active;
   }
-  this.active = active;
 
   this.txtOpt || (this.shadow && this.SetShadow(c));
   c.clearRect(0,0,cw,ch);
@@ -1211,26 +1858,34 @@ TCproto.Draw = function(t) {
 };
 TCproto.TooltipNone = function() { };
 TCproto.TooltipNative = function(active,tag) {
-  this.canvas.title = active && tag.title ? tag.title : '';
+  if(active)
+    this.canvas.title = tag && tag.title ? tag.title : '';
+  else
+    this.canvas.title = this.ctitle;
+};
+TCproto.SetTTDiv = function(title, tag) {
+  var tc = this, s = tc.ttdiv.style;
+  if(title != tc.ttdiv.innerHTML)
+    s.display = 'none';
+  tc.ttdiv.innerHTML = title;
+  tag && (tag.title = tc.ttdiv.innerHTML);
+  if(s.display == 'none' && ! tc.tttimer) {
+    tc.tttimer = setTimeout(function() {
+      var p = AbsPos(tc.canvas.id);
+      s.display = 'block';
+      s.left = p.x + tc.mx + 'px';
+      s.top = p.y + tc.my + 24 + 'px';
+      tc.tttimer = null;
+    }, tc.tooltipDelay);
+  }
 };
 TCproto.TooltipDiv = function(active,tag) {
-  var tc = this, s = tc.ttdiv.style, cid = tc.canvas.id, none = 'none';
-  if(active && tag.title) {
-    if(tag.title != tc.ttdiv.innerHTML)
-      s.display = none;
-    tc.ttdiv.innerHTML = tag.title;
-    tag.title = tc.ttdiv.innerHTML;
-    if(s.display == none && ! tc.tttimer) {
-      tc.tttimer = setTimeout(function() {
-        var p = AbsPos(cid);
-        s.display = 'block';
-        s.left = p.x + tc.mx + 'px';
-        s.top = p.y + tc.my + 24 + 'px';
-        tc.tttimer = null;
-      }, tc.tooltipDelay);
-    }
+  if(active && tag && tag.title) {
+    this.SetTTDiv(tag.title, tag);
+  } else if(!active && this.mx != -1 && this.my != -1 && this.ctitle.length) {
+    this.SetTTDiv(this.ctitle);
   } else {
-    s.display = none;
+    this.ttdiv.style.display = 'none';
   }
 };
 TCproto.Transform = function(tc, p, y) {
@@ -1275,8 +1930,8 @@ TCproto.AnimatePosition = function(w, h, t) {
   var tc = this, x = tc.mx, y = tc.my, s, r;
   if(!tc.frozen && x >= 0 && y >= 0 && x < w && y < h) {
     s = tc.maxSpeed, r = tc.reverse ? -1 : 1;
-    tc.lx || (tc.yaw = r * t * ((s * 2 * x / w) - s));
-    tc.ly || (tc.pitch = r * t * -((s * 2 * y / h) - s));
+    tc.lx || (tc.yaw = ((x * 2 * s / w) - s) * r * t);
+    tc.ly || (tc.pitch = ((y * 2 * s / h) - s) * -r * t);
     tc.initial = null;
   } else if(!tc.initial) {
     if(tc.frozen && !tc.freezeDecel)
@@ -1330,7 +1985,9 @@ TCproto.Clicked = function(e) {
       if(this.clickToFront === false || this.clickToFront === null)
         a.tag.Clicked(e);
       else
-        this.TagToFront(a.tag, this.clickToFront, function() { a.tag.Clicked(e); });
+        this.TagToFront(a.tag, this.clickToFront, function() {
+          a.tag.Clicked(e);
+        }, true);
   } catch(ex) {
   }
 };
@@ -1356,14 +2013,40 @@ TCproto.Drag = function(e, p) {
       this.down = p;
     }
   }
+  return this.dragging;
 };
 TCproto.EndDrag = function() {
   var res = this.dragging;
   this.dragging = this.down = null;
   return res;
 };
+function PinchDistance(e) {
+  var t1 = e.targetTouches[0], t2 = e.targetTouches[1];
+  return sqrt(pow(t2.pageX - t1.pageX, 2) + pow(t2.pageY - t1.pageY, 2));
+}
+TCproto.BeginPinch = function(e) {
+  this.pinched = [PinchDistance(e), this.zoom];
+  e.preventDefault && e.preventDefault();
+};
+TCproto.Pinch = function(e) {
+  var z, d, p = this.pinched;
+  if(!p)
+    return;
+  d = PinchDistance(e);
+  z = p[1] * d / p[0];
+  this.zoom = min(this.zoomMax,max(this.zoomMin,z));
+  this.Zoom(this.zoom);
+};
+TCproto.EndPinch = function(e) {
+  this.pinched = null;
+};
 TCproto.Pause = function() { this.paused = true; };
 TCproto.Resume = function() { this.paused = false; };
+TCproto.SetSpeed = function(i) {
+  this.initial = i;
+  this.yaw = i[0] * this.maxSpeed;
+  this.pitch = i[1] * this.maxSpeed;
+};
 TCproto.FindTag = function(t) {
   if(!Defined(t))
     return null;
@@ -1380,20 +2063,29 @@ TCproto.FindTag = function(t) {
     if(this.taglist[i].a[srch] == tgt)
       return this.taglist[i];
 };
-TCproto.RotateTag = function(tag, lt, lg, time, callback) {
-  var t = tag.xformed, v1 = new Vector(t.x, t.y, t.z),
+TCproto.RotateTag = function(tag, lt, lg, time, callback, active) {
+  var t = tag.Calc(this.transform, 1), v1 = new Vector(t.x, t.y, t.z),
     v2 = MakeVector(lg, lt), angle = v1.angle(v2), u = v1.cross(v2).unit();
   if(angle == 0) {
     this.fixedCallbackTag = tag;
     this.fixedCallback = callback;
   } else {
-    this.fixedAnim = {angle: -angle, axis: u, t: time, t0: TimeNow(), cb: callback, tag: tag};
+    this.fixedAnim = {
+      angle: -angle,
+      axis: u,
+      t: time,
+      t0: TimeNow(),
+      cb: callback,
+      tag: tag,
+      active: active
+    };
   }
 };
-TCproto.TagToFront = function(tag, time, callback) {
-  this.RotateTag(tag, 0, 0, time, callback);
+TCproto.TagToFront = function(tag, time, callback, active) {
+  this.RotateTag(tag, 0, 0, time, callback, active);
 };
 TagCanvas.Start = function(id,l,o) {
+  TagCanvas.Delete(id);
   TagCanvas.tc[id] = new TagCanvas(id,l,o);
 };
 function tccall(f,id) {
@@ -1405,6 +2097,14 @@ TagCanvas.Pause = function(id) { tccall('Pause',id); };
 TagCanvas.Resume = function(id) { tccall('Resume',id); };
 TagCanvas.Reload = function(id) { tccall('Load',id); };
 TagCanvas.Update = function(id) { tccall('Update',id); };
+TagCanvas.SetSpeed = function(id, speed) {
+  if(IsObject(speed) && TagCanvas.tc[id] &&
+    !isNaN(speed[0]) && !isNaN(speed[1])) {
+    TagCanvas.tc[id].SetSpeed(speed);
+    return true;
+  }
+  return false;
+};
 TagCanvas.TagToFront = function(id, options) {
   if(!IsObject(options))
     return false;
@@ -1412,29 +2112,32 @@ TagCanvas.TagToFront = function(id, options) {
   return TagCanvas.RotateTag(id, options);
 };
 TagCanvas.RotateTag = function(id, options) {
-  if(!IsObject(options))
-    return false;
-  if(TagCanvas.tc[id]) {
-    if(isNaN(options['time']))
+  if(IsObject(options) && TagCanvas.tc[id]) {
+    if(isNaN(options.time))
       options.time = 500;
     var tt = TagCanvas.tc[id].FindTag(options);
     if(tt) {
-      TagCanvas.tc[id].RotateTag(tt, options['lat'], options['lng'], 
-        options['time'], options['callback']);
+      TagCanvas.tc[id].RotateTag(tt, options.lat, options.lng,
+        options.time, options.callback, options.active);
       return true;
     }
   }
   return false;
 };
-TagCanvas.NextFrame = function(iv) {
-  var raf = window.requestAnimationFrame = window.requestAnimationFrame ||
-    window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
-    window.msRequestAnimationFrame;
-  TagCanvas.NextFrame = raf ? TagCanvas.NextFrameRAF : TagCanvas.NextFrameTimeout;
-  TagCanvas.NextFrame(iv);
+TagCanvas.Delete = function(id) {
+  var i, c;
+  if(handlers[id]) {
+    c = doc.getElementById(id);
+    if(c) {
+      for(i = 0; i < handlers[id].length; ++i)
+        RemoveHandler(handlers[id][i][0], handlers[id][i][1], c);
+    }
+  }
+  delete handlers[id];
+  delete TagCanvas.tc[id];
 };
 TagCanvas.NextFrameRAF = function() {
-  requestAnimationFrame(DrawCanvas);
+  requestAnimationFrame(DrawCanvasRAF);
 };
 TagCanvas.NextFrameTimeout = function(iv) {
   setTimeout(DrawCanvas, iv);
@@ -1461,6 +2164,7 @@ outlineColour: '#ffff99',
 outlineThickness: 2,
 outlineOffset: 5,
 outlineMethod: 'outline',
+outlineRadius: 0,
 textColour: '#ff99ff',
 textHeight: 15,
 textFont: 'Helvetica, Arial, sans-serif',
@@ -1507,7 +2211,30 @@ centreFunc: Nop,
 splitWidth: 0,
 animTiming: 'Smooth',
 clickToFront: false,
-fadeIn: 0
+fadeIn: 0,
+padding: 0,
+bgColour: null,
+bgRadius: 0,
+bgOutline: null,
+bgOutlineThickness: 0,
+outlineIncrease: 4,
+textAlign: 'centre',
+textVAlign: 'middle',
+imageMode: null,
+imagePosition: null,
+imagePadding: 2,
+imageAlign: 'centre',
+imageVAlign: 'middle',
+noTagsMessage: true,
+centreImage: null,
+pinchZoom: false,
+repeatTags: 0,
+minTags: 0,
+imageRadius: 0,
+scrollPause: false,
+outlineDash: 0,
+outlineDashSpace: 0,
+outlineDashSpeed: 1
 };
 for(i in TagCanvas.options) TagCanvas[i] = TagCanvas.options[i];
 window.TagCanvas = TagCanvas;
