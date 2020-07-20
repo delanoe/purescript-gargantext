@@ -53,13 +53,6 @@ scatterOptions nodes = Options
 
   }
 
--- getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse Loaded)
--- getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
---   HashedResponse { md5, value: Metrics ms } <- GUC.get session chart
---   pure $ HashedResponse { md5, value: ms."data" }
---   where
---     chart = Chart {chartType : ChartTree, limit, listId, tabType} (Just corpusId)
-
 getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
 getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
   get session $ ChartMD5 { chartType: ChartTree, listId: mListId, tabType } (Just corpusId)

@@ -62,13 +62,6 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , series    : [seriesBarD1 {name: "Number of publication / year"} $
                  map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count'] }
 
--- getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse HistoMetrics)
--- getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
---   HashedResponse { md5, value: ChartMetrics ms } <- get session chart
---   pure $ HashedResponse { md5, value: ms."data" }
---   where
---     chart = Chart {chartType: Histo, listId, tabType, limit} (Just corpusId)
-
 getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
 getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
   get session $ ChartMD5 { chartType: Histo, listId: mListId, tabType } (Just corpusId)

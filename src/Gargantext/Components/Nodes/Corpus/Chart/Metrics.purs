@@ -98,13 +98,6 @@ scatterOptions metrics' = Options
                         }
     --}
 
--- getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse Loaded)
--- getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
---   HashedResponse { md5, value: Metrics ms } <- get session metrics'
---   pure $ HashedResponse { md5, value: ms."data" }
---   where
---     metrics' = CorpusMetrics {limit, listId, tabType} (Just corpusId)
-
 getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
 getMetricsMD5 session (_ /\ { corpusId, listId, tabType }) =
   get session $ CorpusMetricsMD5 { listId, tabType } (Just corpusId)

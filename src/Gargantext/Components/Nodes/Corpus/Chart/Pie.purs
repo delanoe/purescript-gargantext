@@ -81,13 +81,6 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
   }
 
-
--- getMetrics :: Session -> Tuple Reload (Record Path) -> Aff (HashedResponse HistoMetrics)
--- getMetrics session (_ /\ { corpusId, limit, listId, tabType }) = do
---   HashedResponse { md5, value: ChartMetrics ms } <- GUC.get session chart --get session chart
---   pure $ HashedResponse { md5, value: ms."data" }
---   where chart = Chart {chartType: ChartPie, limit, listId, tabType} (Just corpusId)
-
 getMetricsMD5 :: Session -> Tuple Reload (Record Path) -> Aff String
 getMetricsMD5 session (_ /\ { corpusId, limit, listId, tabType }) = do
   get session $ ChartMD5 { chartType: ChartPie, listId: mListId, tabType } (Just corpusId)
