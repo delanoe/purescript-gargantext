@@ -60,7 +60,7 @@ let additions =
             , "unsafe-coerce"
             ]
             "https://github.com/irresponsible/purescript-ffi-simple"
-            "v0.2.4"
+            "v0.2.10"
       , dom-simple =
           mkPackage
             [ "arrays"
@@ -73,7 +73,7 @@ let additions =
             , "unsafe-coerce"
             ]
             "https://github.com/irresponsible/purescript-dom-simple"
-            "v0.2.6"
+            "v0.2.7"
       , dom-filereader =
           mkPackage
             [ "aff", "arraybuffer-types", "web-file", "web-html" ]
@@ -106,7 +106,7 @@ let additions =
             , "unsafe-coerce"
             ]
             "https://github.com/irresponsible/purescript-reactix"
-            "v0.4.3"
+            "v0.4.5"
       , tuples-native =
           mkPackage
             [ "generics-rep", "prelude", "typelevel", "unsafe-coerce" ]

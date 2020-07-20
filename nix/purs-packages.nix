@@ -219,11 +219,11 @@
   };
   "dom-simple" = {
     name = "dom-simple";
-    version = "v0.2.6";
+    version = "v0.2.7";
     src = pkgs.fetchgit {
       url = "https://github.com/irresponsible/purescript-dom-simple";
-      rev = "v0.2.6";
-      sha256 = "0mdm4pz8ksjxpzj4s8gi979yrhyd4sj08zljp98s2qrsgd6a3rz7";
+      rev = "v0.2.7";
+      sha256 = "02f1vsjk5frva3p3xpbrnj2zg4rg01l07dnvc3i6axvc5k30i282";
     };
   };
   "effect" = {
@@ -273,11 +273,11 @@
   };
   "ffi-simple" = {
     name = "ffi-simple";
-    version = "v0.2.4";
+    version = "v0.2.10";
     src = pkgs.fetchgit {
       url = "https://github.com/irresponsible/purescript-ffi-simple";
-      rev = "v0.2.4";
-      sha256 = "1zrwrwqr71v0jb1m81hz9qxa33jkk0knry6f9qn8brjfjbs69lhy";
+      rev = "v0.2.10";
+      sha256 = "14slcccmy96ml7r8rzhhqnw486qj1b385i9095fdymms78g5gnj5";
     };
   };
   "foldable-traversable" = {
@@ -768,11 +768,11 @@
   };
   "reactix" = {
     name = "reactix";
-    version = "v0.4.3";
+    version = "v0.4.5";
     src = pkgs.fetchgit {
       url = "https://github.com/irresponsible/purescript-reactix";
-      rev = "v0.4.3";
-      sha256 = "0sg80qs7siswqvwfcsggjqvn9viqhxpkr452alyyslx5c3p2xamw";
+      rev = "v0.4.5";
+      sha256 = "0nzings4ygsrl4ak8x87sns7lgv6fljzhw69l0gk1iihhhazkhan";
     };
   };
   "read" = {

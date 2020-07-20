@@ -637,7 +637,7 @@
       "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-dom-simple",
-    "version": "v0.2.6"
+    "version": "v0.2.7"
   },
   "dotenv": {
     "dependencies": [
@@ -777,7 +777,7 @@
       "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-ffi-simple",
-    "version": "v0.2.4"
+    "version": "v0.2.10"
   },
   "filterable": {
     "dependencies": [
@@ -2370,7 +2370,7 @@
       "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-reactix",
-    "version": "v0.4.3"
+    "version": "v0.4.5"
   },
   "read": {
     "dependencies": [
