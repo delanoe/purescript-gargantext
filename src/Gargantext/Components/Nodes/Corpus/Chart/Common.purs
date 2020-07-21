@@ -9,7 +9,7 @@ import Reactix as R
 import Gargantext.Prelude
 
 import Gargantext.Components.Nodes.Corpus.Chart.Types (Reload, Path, Props, MetricsProps, ReloadPath)
-import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCache, useLoaderWithCacheAPI)
+import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCacheAPI)
 import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.CacheAPI as GUC
@@ -50,11 +50,6 @@ metricsWithCacheLoadViewCpt :: forall res ret. DecodeJson res =>
 metricsWithCacheLoadViewCpt = R.hooksComponent "G.C.N.C.C.metricsWithCacheLoadView" cpt
   where
     cpt { getMetricsHash, handleResponse, loaded, mkRequest, path, reload, session } _ = do
-    --   useLoaderWithCache (fst reload /\ path) (metricsKeyFunc keyFunc) (getMetricsHash session) (getMetrics session) $ \l ->
-    --     loaded session path reload l
-    -- metricsKeyFunc keyFunc st@(_ /\ { corpusId, listId, tabType }) =
-    --  "metrics-" <> (show tabType) <> "-" <> (show corpusId) <> "-" <> (show listId) <> "--" <> (keyFunc st)
-
       useLoaderWithCacheAPI { cacheEndpoint: (getMetricsHash session)
                             , handleResponse
                             , mkRequest

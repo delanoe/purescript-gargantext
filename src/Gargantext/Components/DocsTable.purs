@@ -32,7 +32,7 @@ import Gargantext.Prelude
 
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoader, useLoaderWithCache, useLoaderWithCacheAPI, HashedResponse(..))
+import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
@@ -403,8 +403,6 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
   cpt props@{frontends, session, nodeId, listId, corpusId, tabType, query, params} _ =
-    -- useLoader path (loadPage session) paint
-    -- useLoaderWithCache path keyFunc (getPageHash session) (loadPage session) paint
     useLoaderWithCacheAPI {
         cacheEndpoint: getPageHash session
       , handleResponse
@@ -416,9 +414,6 @@ pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
       path = { corpusId, listId, nodeId, params, query, tabType }
       paint (Tuple count docs) = page params (newProps count) docs
       newProps count = props { totalRecords = count }
-
-      -- keyFunc { corpusId, listId, nodeId, tabType } =
-      --  "page-" <> (show tabType) <> "-" <> (show corpusId) <> "-" <> (show nodeId) <> "-" <> (show listId)
 
       mkRequest :: PageParams -> GUC.Request
       mkRequest p@{ listId, nodeId, tabType } =

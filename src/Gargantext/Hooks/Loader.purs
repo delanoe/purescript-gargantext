@@ -70,92 +70,9 @@ instance encodeHashedResponse :: EncodeJson a => EncodeJson (HashedResponse a) w
     ~> "value" := encodeJson value
     ~> jsonEmptyObject
 
-useLoaderWithCache :: forall path st. Eq path => DecodeJson st => EncodeJson st =>
-                      path
-                      -> (path -> String)
-                      -> (path -> Aff String)
-                      -> (path -> Aff (HashedResponse st))
-                      -> (st -> R.Element)
-                      -> R.Hooks R.Element
-useLoaderWithCache path keyFunc hashEndpoint loader render = do
-  state <- R.useState' Nothing
-  useCachedLoaderEffect { cacheEndpoint: hashEndpoint
-                        , keyFunc
-                        , loadRealData: loadRealData state
-                        , path
-                        , state }
-  pure $ maybe (loadingSpinner {}) render (fst state)
-  where
-    loadRealData :: R.State (Maybe st) -> String -> String -> WSS.Storage -> Aff Unit
-    loadRealData (_ /\ setState) key keyCache localStorage = do
-      --R2.affEffect "G.H.Loader.useCachedLoaderEffect" $ do
-      HashedResponse { hash, value: l } <- loader path
-      liftEffect $ do
-        let value = stringify $ encodeJson l
-        WSS.setItem key value localStorage
-        WSS.setItem keyCache hash localStorage
-        setState $ const $ Just l
-      pure unit
 
-
-type CachedLoaderEffectProps cacheKey path st = (
-    cacheEndpoint :: path -> Aff cacheKey
-  , keyFunc :: path -> String
-  , loadRealData :: String -> String -> WSS.Storage -> Aff Unit
-  , path :: path
-  , state :: R.State (Maybe st)
-)
-
-useCachedLoaderEffect :: forall path st. Eq path => DecodeJson st => EncodeJson st =>
-                         Record (CachedLoaderEffectProps String path st)
-                         -> R.Hooks Unit
-useCachedLoaderEffect { cacheEndpoint, keyFunc, loadRealData, path, state: state@(state' /\ setState) } = do
-  oPath <- R.useRef path
-
-  R.useEffect' $ do
-    if (R.readRef oPath == path) && (isJust state') then
-      pure unit
-    else do
-      R.setRef oPath path
-
-      let key = "loader--" <> (keyFunc path)
-      -- log2 "[useCachedLoader] key" key
-      let keyCache = key <> "-cache"
-      localStorage <- R2.getls
-      mState <- WSS.getItem key localStorage
-      mCache <- WSS.getItem keyCache localStorage
-      -- log2 "[useCachedLoader] mState" mState
-      launchAff_ $ do
-        case mState of
-          Nothing -> loadRealData key keyCache localStorage
-          Just stStr -> do
-            let parsed = parse stStr >>= decode
-            case parsed of
-              Left err -> do
-                -- liftEffect $ log2 "[useCachedLoader] err" err
-                loadRealData key keyCache localStorage
-              Right (st :: st) -> do
-                cacheReal <- cacheEndpoint path
-                -- liftEffect $ log2 "[useCachedLoader] cacheReal" cacheReal
-                case mCache of
-                  Nothing -> do
-                    -- liftEffect $ log2 "[useCachedLoader] no stored cache" Nothing
-                    loadRealData key keyCache localStorage
-                  Just cache -> do
-                    -- liftEffect $ log2 "[useCachedLoader] stored cache" cache
-                    if cache == cacheReal then
-                      -- yay! cache hit!
-                      liftEffect $ setState $ const $ Just st
-                    else
-                      loadRealData key keyCache localStorage
-
-  where
-    parse  s = GU.mapLeft (\err -> "Error parsing serialised sessions:" <> show err) (jsonParser s)
-    decode j = GU.mapLeft (\err -> "Error decoding serialised sessions:" <> show err) (decodeJson j)
-
-
-type LoaderWithCacheAPIProps path res ret =
-  ( cacheEndpoint :: path -> Aff Hash
+type LoaderWithCacheAPIProps path res ret = (
+    cacheEndpoint :: path -> Aff Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest :: path -> GUC.Request
   , path :: path
@@ -163,7 +80,8 @@ type LoaderWithCacheAPIProps path res ret =
   )
 
 
-useLoaderWithCacheAPI :: forall path res ret. Eq path => DecodeJson res =>
+useLoaderWithCacheAPI :: forall path res ret.
+                         Eq path => DecodeJson res =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
 useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
@@ -175,8 +93,8 @@ useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer
                            , state }
   pure $ maybe (loadingSpinner {}) renderer (fst state)
 
-type LoaderWithCacheAPIEffectProps path res ret =
-  ( cacheEndpoint :: path -> Aff Hash
+type LoaderWithCacheAPIEffectProps path res ret = (
+    cacheEndpoint :: path -> Aff Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest :: path -> GUC.Request
   , path :: path
