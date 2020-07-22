@@ -78,10 +78,10 @@ cached cache req = do
   mRes <- match cache req
   case mRes of
     Just res -> do
-      liftEffect $ log2 "[cached] cache hit" req
+      -- liftEffect $ log2 "[cached] cache hit" req
       pure res
     Nothing -> do
-      liftEffect $ log2 "[cached] cache miss" req
+      -- liftEffect $ log2 "[cached] cache miss" req
       _ <- add cache req
       mResFresh <- match cache req
       case mResFresh of
@@ -91,8 +91,8 @@ cached cache req = do
 cachedJson :: forall a. DecodeJson a => Cache -> Request -> Aff a
 cachedJson cache req = do
   res <- cached cache req
-  liftEffect $ do
-    log2 "[cachedJson] res" res
+  -- liftEffect $ do
+  --   log2 "[cachedJson] res" res
   j <- M.json res
 
   case decodeJson (F.unsafeFromForeign j) of
