@@ -12,7 +12,7 @@ import Data.Lens.Record (prop)
 import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -20,7 +20,6 @@ import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log3)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
@@ -32,13 +31,13 @@ import Gargantext.Prelude
 
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
+import Gargantext.Hooks.Loader (useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session, sessionId, get, post, delete, put)
-import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabType, TabPostQuery(..), AffTableResult, showTabType')
+import Gargantext.Sessions (Session, sessionId, get, delete, put)
+import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabType, showTabType')
 import Gargantext.Utils.CacheAPI as GUC
 ------------------------------------------------------------------------
 
@@ -274,7 +273,7 @@ type Props = (
     layout :: Record LayoutProps
   , params :: T.Params
   , query :: R.State Query
-   )
+  )
 
 docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
@@ -289,7 +288,16 @@ docViewCpt = R.hooksComponent "G.C.DocsTable.docView" cpt where
         [ chart
         , if showSearch then searchBar query else H.div {} []
         , H.div {className: "col-md-12"}
-          [ pageLayout {frontends, session, nodeId, totalRecords, tabType, listId, corpusId, query: fst query, params} ] ] ]
+          [ pageLayout { corpusId
+                       , frontends
+                       , listId
+                       , nodeId
+                       , params
+                       , query: fst query
+                       , session
+                       , tabType
+                       , totalRecords
+                       } ] ] ]
     -- onClickTrashAll nodeId _ = do
     --   launchAff $ deleteAllDocuments p.session nodeId
           
@@ -358,20 +366,6 @@ type PageParams =
   , query   :: Query
   , params :: T.Params}
 
-loadPage :: Session -> PageParams -> Aff (HashedResponse (Tuple Int (Array DocumentsView)))
-loadPage session { corpusId, listId, nodeId, query, tabType } = do
-  --liftEffect $ log3 "loading documents page: loadPage with Offset and limit" offset limit
-  -- res <- get $ toUrl endConfigStateful Back (Tab tabType offset limit (convOrderBy <$> orderBy)) (Just nodeId)
-  let p = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType)
-  HashedResponse { hash, value: res } <- (get session p) :: Aff (HashedResponse (TableResult Response))
-  let docs = res2corpus <$> res.docs
-  let ret = if mock then
-              --Tuple 0 (take limit $ drop offset sampleData)
-              Tuple 0 sampleData
-            else
-              Tuple res.count docs
-  pure $ HashedResponse { hash, value: ret }
-
 getPageHash :: Session -> PageParams -> Aff String
 getPageHash session { corpusId, listId, nodeId, query, tabType } = do
   let p = NodeAPI Node (Just nodeId) $ "table/hash" <> "?tabType=" <> (showTabType' tabType)
@@ -397,12 +391,19 @@ res2corpus (Response r) =
   , ngramCount : r.ngramCount
 }
 
+filterDocs :: Query -> Array Response -> Array Response
+filterDocs query docs = A.filter filterFunc docs
+  where
+    filterFunc :: Response -> Boolean
+    filterFunc (Response { hyperdata: Hyperdata { title } }) =
+      isJust $ Str.indexOf (Str.Pattern $ Str.toLower query) $ Str.toLower title
+
 pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
-  cpt props@{frontends, session, nodeId, listId, corpusId, tabType, query, params} _ =
+  cpt props@{ corpusId, frontends, listId, nodeId, params, query, session, tabType } _ =
     useLoaderWithCacheAPI {
         cacheEndpoint: getPageHash session
       , handleResponse
@@ -421,12 +422,12 @@ pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
       handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
       handleResponse (HashedResponse { hash, value: res }) = ret
         where
-          docs = res2corpus <$> res.docs
+          docs = res2corpus <$> filterDocs query res.docs
           ret = if mock then
                     --Tuple 0 (take limit $ drop offset sampleData)
                     Tuple 0 sampleData
                   else
-                    Tuple res.count docs
+                    Tuple (A.length docs) docs
 
 type PageProps = (
     documents :: Array DocumentsView
