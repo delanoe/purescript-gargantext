@@ -368,8 +368,7 @@ type PageParams =
 
 getPageHash :: Session -> PageParams -> Aff String
 getPageHash session { corpusId, listId, nodeId, query, tabType } = do
-  let p = NodeAPI Node (Just nodeId) $ "table/hash" <> "?tabType=" <> (showTabType' tabType)
-  (get session p) :: Aff String
+  (get session $ tableHashRoute nodeId tabType) :: Aff String
 
 
 convOrderBy (Just (T.ASC  (T.ColumnName "Date")))  = Just DateAsc
@@ -417,7 +416,7 @@ pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
 
       mkRequest :: PageParams -> GUC.Request
       mkRequest p@{ listId, nodeId, tabType } =
-        GUC.makeGetRequest session $ NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId)
+        GUC.makeGetRequest session $ tableRoute nodeId tabType listId
       handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
       handleResponse (HashedResponse { hash, value: res }) = ret
         where
@@ -543,12 +542,14 @@ instance encodeJsonSQuery :: EncodeJson SearchQuery where
     ~> jsonEmptyObject
 
 
-
-searchResults :: SearchQuery -> Aff Int
-searchResults squery = pure 42 -- TODO post "http://localhost:8008/count" unit
-
 documentsRoute :: Int -> SessionRoute
 documentsRoute nodeId = NodeAPI Node (Just nodeId) "documents"
+
+tableRoute :: Int -> TabType -> Int -> SessionRoute
+tableRoute nodeId tabType listId = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId)
+
+tableHashRoute :: Int -> TabType -> SessionRoute
+tableHashRoute nodeId tabType = NodeAPI Node (Just nodeId) $ "table/hash" <> "?tabType=" <> (showTabType' tabType)
 
 deleteAllDocuments :: Session -> Int -> Aff (Array Int)
 deleteAllDocuments session = delete session <<< documentsRoute
