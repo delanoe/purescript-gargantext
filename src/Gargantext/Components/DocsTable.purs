@@ -413,8 +413,7 @@ pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
       }
     where
       path = { corpusId, listId, nodeId, params, query, tabType }
-      paint (Tuple count docs) = page params (newProps count) docs
-      newProps count = props { totalRecords = count }
+      paint (Tuple count docs) = page params (props { totalRecords = count }) docs
 
       mkRequest :: PageParams -> GUC.Request
       mkRequest p@{ listId, nodeId, tabType } =
@@ -436,7 +435,7 @@ type PageProps = (
   )
 
 page :: T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
-page params layout documents = R.createElement pageCpt {params, layout, documents} []
+page params layout documents = R.createElement pageCpt { documents, layout, params } []
 
 pageCpt :: R.Component PageProps
 pageCpt = R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
@@ -455,7 +454,7 @@ pagePaint props = R.createElement pagePaintCpt props []
 
 pagePaintCpt :: R.Component PagePaintProps
 pagePaintCpt = R.hooksComponent "G.C.DocsTable.pagePaintCpt" cpt where
-  cpt { layout: {frontends, session, nodeId, corpusId, listId, totalRecords}, documents, params } _ = do
+  cpt { layout: { corpusId, frontends, listId, nodeId, session, totalRecords }, documents, params } _ = do
     localCategories <- R.useState' (mempty :: LocalCategories)
     pure $ T.table
       { colNames
