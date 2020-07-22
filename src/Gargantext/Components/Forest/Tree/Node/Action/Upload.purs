@@ -34,6 +34,11 @@ actionUpload NodeList id session dispatch =
 actionUpload Corpus id session dispatch =
   pure $ uploadFileView {dispatch, id, nodeType: Corpus, session}
 
+{-
+actionUpload Annuaire id session dispatch =
+  pure $ uploadFileView {dispatch, id, nodeType: Annuaire, session}
+  -}
+
 actionUpload _ _ _ _ =
   pure $ fragmentPT $ "Soon, upload for this NodeType."
 
@@ -276,7 +281,11 @@ uploadFile session nodeType id fileType {mName, contents: UploadFileContents con
   where
     q = FileUploadQuery { fileType: fileType }
     --p = NodeAPI GT.Corpus (Just id) $ "add/file/async/nobody" <> Q.print (toQuery q)
-    p = GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
+    p = case nodeType of
+      Corpus   -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
+      Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
+      _        -> GR.NodeAPI nodeType (Just id) ""
+      
     bodyParams = [ Tuple "_wf_data"     (Just contents)
                  , Tuple "_wf_filetype" (Just $ show fileType)
                  , Tuple "_wf_name"      mName
