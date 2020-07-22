@@ -28,7 +28,8 @@ type Code = String
 type Html = String
 type Error = String
 
-data CodeType = Haskell | JSON | Markdown
+data CodeType = Haskell | JSON | Markdown | Python
+
 derive instance genericCodeType :: Generic CodeType _
 instance eqCodeType :: Eq CodeType where
   eq = genericEq
@@ -56,6 +57,7 @@ codeNlFix _ c = if endsWith "\n" c then (c <> " ") else c
 
 render :: CodeType -> Code -> Either Error Html
 render Haskell code = Right $ renderHaskell $ codeNlFix Haskell code
+render Python  code = Right $ renderPython  $ codeNlFix Python code
 render JSON code = result
   where
     parsedE = jsonParser code
@@ -67,8 +69,13 @@ render Markdown code = Right $ renderMd $ codeNlFix Markdown code
 previewPostProcess :: CodeType -> Element -> Effect Unit
 previewPostProcess Haskell htmlEl = do
   HLJS.highlightBlock htmlEl
+
+previewPostProcess Python htmlEl = do
+  HLJS.highlightBlock htmlEl
+
 previewPostProcess JSON htmlEl = do
   HLJS.highlightBlock htmlEl
+
 previewPostProcess Markdown _ = pure unit
 
 -- TODO Replace with markdown-it?
@@ -83,6 +90,10 @@ renderMd = renderMd' MD.defaultToMarkupOptions
 
 renderHaskell :: String -> String
 renderHaskell s = s
+
+renderPython :: String -> String
+renderPython s = s
+
 
 codeEditor :: Record Props -> R.Element
 codeEditor p = R.createElement codeEditorCpt p []
@@ -144,6 +155,7 @@ codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
     langClass Haskell  = " language-haskell"
     langClass JSON     = " language-json"
     langClass Markdown = " language-md"
+    langClass Python = " language-python"
 
     previewHidden :: ViewType -> String
     previewHidden Preview = ""
@@ -244,7 +256,7 @@ codeTypeSelectorCpt = R.hooksComponent "G.C.CE.CodeTypeSelector" cpt
                        , on: { change: onSelectChange codeType onChange }
                        , style: { width: "150px" }
                        }
-        (option <$> [Haskell, JSON, Markdown])
+        (option <$> [JSON, Markdown, Haskell, Python])
 
     option :: CodeType -> R.Element
     option value = H.option { value: show value } [ H.text $ show value ]
@@ -255,6 +267,7 @@ codeTypeSelectorCpt = R.hooksComponent "G.C.CE.CodeTypeSelector" cpt
             "Haskell"  -> Haskell
             "JSON"     -> JSON
             "Markdown" -> Markdown
+            "Python"   -> Python
             _          -> Markdown
       setCodeType $ const codeType
       onChange codeType

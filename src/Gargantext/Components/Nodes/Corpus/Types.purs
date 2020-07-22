@@ -52,6 +52,10 @@ data FieldType =
     Haskell { haskell :: HaskellCode
             , tag     :: Tag
             }
+  | Python { python :: HaskellCode
+           , tag     :: Tag
+           }
+
   | JSON { authors :: Author
          , desc    :: Description
          , query   :: Query
@@ -103,6 +107,12 @@ instance decodeFTField :: DecodeJson (Field FieldType) where
         haskell <- data_ .: "haskell"
         tag <- data_ .: "tag"
         pure $ Haskell {haskell, tag}
+
+      "Python" -> do
+        python <- data_ .: "python"
+        tag    <- data_ .: "tag"
+        pure $ Python {python, tag}
+
       "JSON" -> do
         authors <- data_ .: "authors"
         desc <- data_ .: "desc"
@@ -124,8 +134,9 @@ instance encodeFTField :: EncodeJson (Field FieldType) where
     ~> "type"   := typ' typ
     ~> jsonEmptyObject
     where
-      typ' (Haskell _)  = "Haskell"
-      typ' (JSON _)     = "JSON"
+      typ' (Haskell  _) = "Haskell"
+      typ' (Python   _) = "Python"
+      typ' (JSON     _) = "JSON"
       typ' (Markdown _) = "Markdown"
 
 instance encodeFieldType :: EncodeJson FieldType where
@@ -133,6 +144,12 @@ instance encodeFieldType :: EncodeJson FieldType where
        "haskell" := haskell
     ~> "tag"  := "HaskellField"
     ~> jsonEmptyObject
+
+  encodeJson (Python {python}) =
+       "python" := python
+    ~> "tag"  := "PythonField"
+    ~> jsonEmptyObject
+
   encodeJson (JSON {authors, desc, query, tag, title}) =
        "authors" := authors
     ~> "desc"    := desc
@@ -144,6 +161,14 @@ instance encodeFieldType :: EncodeJson FieldType where
        "tag"  := "MarkdownField"
     ~> "text" := text
     ~> jsonEmptyObject
+
+defaultPython :: FieldType
+defaultPython  = Python defaultPython'
+
+defaultPython' :: { python :: String, tag :: String }
+defaultPython' = { python: "import Foo"
+                  , tag    : "PythonField"
+                  }
 
 defaultHaskell :: FieldType
 defaultHaskell  = Haskell defaultHaskell'

@@ -20,7 +20,7 @@ import Gargantext.Prelude
 
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, FTField, Field(..), FieldType(..), Hash, Hyperdata(..), defaultField, defaultHaskell', defaultJSON', defaultMarkdown')
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, FTField, Field(..), FieldType(..), Hash, Hyperdata(..), defaultField, defaultHaskell', defaultPython', defaultJSON', defaultMarkdown')
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
@@ -312,25 +312,45 @@ fieldCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorCpt" cpt
   where
     cpt {field: Field {typ: typ@(Haskell {haskell})}, onChange} _ = do
       pure $ CE.codeEditor {code: haskell, defaultCodeType: CE.Haskell, onChange: changeCode onChange typ}
+
+    cpt {field: Field {typ: typ@(Python {python})}, onChange} _ = do
+      pure $ CE.codeEditor {code: python, defaultCodeType: CE.Python, onChange: changeCode onChange typ}
+
     cpt {field: Field {typ: typ@(JSON j)}, onChange} _ = do
       pure $ CE.codeEditor {code, defaultCodeType: CE.JSON, onChange: changeCode onChange typ}
       where
         code = R2.stringify (encodeJson j) 2
+
     cpt {field: Field {typ: typ@(Markdown {text})}, onChange} _ = do
       pure $ CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange: changeCode onChange typ}
 
--- Perofrms the matrix of code type changes
+-- Performs the matrix of code type changes
 -- (FieldType -> Effect Unit) is the callback function for fields array
 -- FieldType is the current element that we will modify
 -- CE.CodeType is the editor code type (might have been the cause of the trigger)
 -- CE.Code is the editor code (might have been the cause of the trigger)
 changeCode :: (FieldType -> Effect Unit) -> FieldType -> CE.CodeType -> CE.Code -> Effect Unit
-changeCode onc (Haskell hs) CE.Haskell c = onc $ Haskell $ hs { haskell = c }
-changeCode onc (Haskell {haskell}) CE.JSON c = onc $ JSON $ defaultJSON' { desc = haskell }
+changeCode onc (Haskell hs)        CE.Haskell  c = onc $ Haskell $ hs { haskell = c }
+changeCode onc (Haskell hs)        CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
+changeCode onc (Haskell {haskell}) CE.JSON     c = onc $ JSON     $ defaultJSON'     { desc = haskell }
 changeCode onc (Haskell {haskell}) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = haskell }
+
+changeCode onc (Python hs)       CE.Python   c = onc $ Python  $ hs { python  = c }
+changeCode onc (Python hs)       CE.Haskell  c = onc $ Haskell $ defaultHaskell' { haskell = c }
+changeCode onc (Python {python}) CE.JSON     c = onc $ JSON     $ defaultJSON' { desc = python }
+changeCode onc (Python {python}) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = python }
+
+changeCode onc (Markdown md) CE.Haskell  c = onc $ Haskell  $ defaultHaskell'  { haskell = c }
+changeCode onc (Markdown md) CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
+changeCode onc (Markdown md) CE.JSON     c = onc $ Markdown $ defaultMarkdown' { text    = c }
+changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md               { text    = c }
+
 changeCode onc (JSON j@{desc}) CE.Haskell c = onc $ Haskell $ defaultHaskell' { haskell = haskell }
   where
     haskell = R2.stringify (encodeJson j) 2
+changeCode onc (JSON j@{desc}) CE.Python c = onc $ Python $ defaultPython' { python = toCode }
+  where
+    toCode = R2.stringify (encodeJson j) 2
 changeCode onc (JSON j) CE.JSON c = do
   case jsonParser c of
     Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
@@ -340,9 +360,9 @@ changeCode onc (JSON j) CE.JSON c = do
 changeCode onc (JSON j) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = text }
   where
     text = R2.stringify (encodeJson j) 2
-changeCode onc (Markdown md) CE.Haskell c = onc $ Haskell $ defaultHaskell' { haskell = c }
-changeCode onc (Markdown md) CE.JSON c = onc $ Markdown $ defaultMarkdown' { text = c }
-changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md { text = c }
+
+
+
 
 type LoadProps =
   ( nodeId  :: Int
