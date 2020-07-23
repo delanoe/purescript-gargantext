@@ -9,7 +9,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut, S
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileContents)
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
-
+import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams)
 
 type Props =
   ( dispatch :: Action -> Aff Unit
@@ -29,6 +29,7 @@ data Action = AddNode     String GT.NodeType
             | RefreshTree
 
             | ShareTeam   String
+            | AddContact  AddContactParams
             | SharePublic {params :: Maybe SubTreeOut}
             | MoveNode    {params :: Maybe SubTreeOut}
             | MergeNode   {params :: Maybe SubTreeOut}
@@ -58,6 +59,7 @@ instance showShow :: Show Action where
   show (RenameNode  _      )= "RenameNode"
   show (UpdateNode  _      )= "UpdateNode"
   show (ShareTeam   _      )= "ShareTeam"
+  show (AddContact  _      )= "AddContact"
   show (SharePublic _      )= "SharePublic"
   show (DoSearch    _      )= "SearchQuery"
   show (UploadFile  _ _ _ _)= "UploadFile"
@@ -74,15 +76,16 @@ icon (AddNode    _ _)     = glyphiconNodeAction (Add [])
 icon (DeleteNode _)       = glyphiconNodeAction Delete
 icon (RenameNode _)       = glyphiconNodeAction Config
 icon (UpdateNode _)       = glyphiconNodeAction Refresh
-icon (ShareTeam  _)       = glyphiconNodeAction Share
+icon (ShareTeam   _)      = glyphiconNodeAction Share
+icon (AddContact  _)      = glyphiconNodeAction Share
 icon (SharePublic _ )     = glyphiconNodeAction (Publish { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 icon (DoSearch   _)       = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _) = glyphiconNodeAction Upload
 icon  RefreshTree         = glyphiconNodeAction Refresh
 icon  DownloadNode        = glyphiconNodeAction Download
-icon (MoveNode _ )        = glyphiconNodeAction (Move { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (MoveNode _ )        = glyphiconNodeAction (Move  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 icon (MergeNode _ )       = glyphiconNodeAction (Merge { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
-icon (LinkNode _  )       = glyphiconNodeAction (Link { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (LinkNode _  )       = glyphiconNodeAction (Link  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 
 icon NoAction             = "hand-o-right"
 
@@ -94,6 +97,7 @@ text (DeleteNode _       )= "Delete !"
 text (RenameNode  _      )= "Rename !"
 text (UpdateNode  _      )= "Update !"
 text (ShareTeam   _      )= "Share with team !"
+text (AddContact  _      )= "Add contact !"
 text (SharePublic _      )= "Publish !"
 text (DoSearch    _      )= "Launch search !"
 text (UploadFile  _ _ _ _)= "Upload File !"

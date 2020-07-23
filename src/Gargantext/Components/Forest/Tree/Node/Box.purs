@@ -11,7 +11,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
 import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
@@ -19,7 +19,8 @@ import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Search (actionSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
-import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Share   as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNode)
@@ -297,6 +298,18 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
                                      , isOpen
                                      }
                       ]
+
+    cpt {action : AddingContact, dispatch, id, name } _ = do
+      isOpen <- R.useState' true
+      pure $ Contact.textInputBox { id
+                           , dispatch
+                           , isOpen
+                           , boxName:"addContact"
+                           , params : {firstname:"First Name", lastname: "Last Name"}
+                           , boxAction: \p -> AddContact p
+                           }
+
+
 
     cpt {action : Publish {subTreeParams}, dispatch, id, nodeType, session } _ = do
       pure $ Share.shareNode {dispatch, id, nodeType, session, subTreeParams}
