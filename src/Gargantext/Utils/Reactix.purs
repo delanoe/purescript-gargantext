@@ -253,7 +253,7 @@ row :: Array R.Element -> R.Element
 row children = H.div { className: "row" } children
 
 col :: Int -> Array R.Element -> R.Element
-col n children = H.div { className : "col-md" <> show n } children
+col n children = H.div { className : "col-md-" <> show n } children
 
 innerText :: DOM.Element -> String
 innerText e = e .. "innerText"
