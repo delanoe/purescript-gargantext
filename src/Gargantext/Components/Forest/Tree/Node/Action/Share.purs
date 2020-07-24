@@ -1,38 +1,24 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Share where
 
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
-import Data.Maybe (Maybe(..))
-import Effect.Aff (Aff)
-import Prelude (($))
-import Reactix as R
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
-import Gargantext.Components.Forest.Tree.Node.Action as Action
-import Gargantext.Types as GT
-import Gargantext.Types (ID)
-import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, post)
-import Gargantext.Components.Forest.Tree.Node.Tools as Tools
-
+import Data.Argonaut as Argonaut
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action as Action
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
-import Gargantext.Prelude
-import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, put_)
+import Gargantext.Prelude (class Eq, class Show, bind, pure)
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session, post)
+import Gargantext.Types (ID)
 import Gargantext.Types as GT
+import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
+import Prelude (($))
 import Reactix as R
 import Reactix.DOM.HTML as H
-
-import Data.Argonaut as Argonaut
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
-import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
-import Data.Maybe (Maybe(..))
-import Gargantext.Prelude (class Eq, class Read, class Show)
 
 ------------------------------------------------------------------------
 shareReq :: Session -> ID -> ShareNodeParams -> Aff ID
@@ -76,11 +62,11 @@ shareNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.shareNode" cpt
 
       let button = case valAction of
               Action.SharePublic {params} -> case params of
-                Just val -> submitButton (Action.SharePublic {params: Just val}) dispatch
+                Just val -> Tools.submitButton (Action.SharePublic {params: Just val}) dispatch
                 Nothing -> H.div {} []
               _   -> H.div {} []
 
-      pure $ panel [ subTreeView { action
+      pure $ Tools.panel [ subTreeView { action
                                  , dispatch
                                  , id
                                  , nodeType

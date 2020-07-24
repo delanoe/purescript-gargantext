@@ -53,7 +53,8 @@ newtype ContactWho =
   , firstName :: Maybe String
   , lastName  :: Maybe String
   , keywords  :: (Array String)
-  , freetags  :: (Array String) }
+  , freetags  :: (Array String)
+  }
 
 derive instance newtypeContactWho :: Newtype ContactWho _
 

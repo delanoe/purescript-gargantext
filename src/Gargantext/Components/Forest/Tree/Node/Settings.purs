@@ -188,7 +188,7 @@ settingsBox Texts =
               , buttons : [ Refresh
                           , Upload
                           , Download
-                          -- , Delete
+                          , Delete
                           ]
               }
 

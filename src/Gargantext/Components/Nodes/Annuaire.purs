@@ -149,25 +149,30 @@ contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
         , contact: (CT.Contact { id, hyperdata: (CT.HyperdataUser {shared: Nothing}) })
         , frontends
         , session } _ =
-      pure $ T.makeRow [
-        H.text ""
-        , H.span {} [ H.text "name" ]
-        --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
-        , H.text "No ContactWhere"
-        , H.text "No ContactWhereDept"
-        , H.div {className: "nooverflow"}
-          [ H.text "No ContactWhereRole" ]
-        ]
+      pure $ T.makeRow [ H.text ""
+                       , H.span {} [ H.text "name" ]
+                       --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
+                       , H.text "No ContactWhere"
+                       , H.text "No ContactWhereDept"
+                       , H.div { className: "nooverflow"}
+                               [ H.text "No ContactWhereRole" ]
+                       ]
     cpt { annuaireId
         , contact: (CT.Contact { id
                                , hyperdata: (CT.HyperdataUser {shared: Just (CT.HyperdataContact contact@{who, ou})}) })
         , frontends
-        , session } _ =
+        , session } _ = do
+
+        let 
+          contactWho = fromMaybe CT.defaultContactWho who
+          CT.ContactWho {firstName} = contactWho
+
         pure $ T.makeRow [
           H.text ""
-          , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
+          , H.text $ fromMaybe "First Name" firstName
+          -- , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
             --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
-          , H.text $ maybe "No ContactWhere" contactWhereOrg  (A.head $ ou)
+          --, H.text $ maybe "No ContactWhere" contactWhereOrg  (A.head $ ou)
           , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
           , H.div {className: "nooverflow"} [
               H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
