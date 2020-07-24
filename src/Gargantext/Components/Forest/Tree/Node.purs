@@ -5,6 +5,11 @@ import Data.Nullable (null)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Web.File.FileReader.Aff (readAsText)
+
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileContents(..))
@@ -28,10 +33,6 @@ import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Web.File.FileReader.Aff (readAsText)
 
 
 -- Main Node
@@ -50,7 +51,7 @@ nodeMainSpan :: Record NodeMainSpanProps
              -> R.Element
 nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el p []
   where
-    el = R.hooksComponent "G.C.F.T.N.B.NodeMainSpan" cpt
+    el = R.hooksComponent "G.C.F.T.N.NodeMainSpan" cpt
     cpt props@{id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks }} _ = do
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
@@ -71,16 +72,15 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
               , mNodePopupView props (onPopoverClose popoverRef)
             ]
           else H.div {} []
-        , H.a { href: (url frontends (GT.NodePath (sessionId session) nodeType (Just id)))
-              }
-              [ nodeText { isSelected: mAppRouteId mCurrentRoute == Just id
+        , H.a { href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
+              [ nodeText { isSelected: mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
                          , name: name' props
                          } ]
         , nodeActions { id
                       , nodeType
                       , refreshTree: const $ dispatch RefreshTree
                       , session }
-        , fileTypeView {dispatch, droppedFile, id, isDragOver, nodeType}
+        , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
         , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                 , barType: Pie
                                                 , corpusId: id
@@ -221,24 +221,3 @@ nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
 
 
 -- END nodeActions
-
-mAppRouteId :: Maybe Routes.AppRoute -> Maybe Int
-mAppRouteId (Just (Routes.Folder         _ id)) = Just id
-mAppRouteId (Just (Routes.FolderPrivate  _ id)) = Just id
-mAppRouteId (Just (Routes.FolderPublic   _ id)) = Just id
-mAppRouteId (Just (Routes.FolderShared   _ id)) = Just id
-mAppRouteId (Just (Routes.Team           _ id)) = Just id
-mAppRouteId (Just (Routes.Corpus         _ id)) = Just id
-mAppRouteId (Just (Routes.PGraphExplorer _ id)) = Just id
-mAppRouteId (Just (Routes.Dashboard      _ id)) = Just id
-mAppRouteId (Just (Routes.Texts          _ id)) = Just id
-mAppRouteId (Just (Routes.Lists          _ id)) = Just id
-mAppRouteId (Just (Routes.Annuaire       _ id)) = Just id
-mAppRouteId (Just (Routes.UserPage       _ id)) = Just id
-mAppRouteId (Just (Routes.RouteFrameWrite _ id)) = Just id
-mAppRouteId (Just (Routes.RouteFrameCalc  _ id)) = Just id
-mAppRouteId (Just (Routes.Document       _ id _  )) = Just id
-mAppRouteId (Just (Routes.ContactPage    _ id _  )) = Just id
-mAppRouteId (Just (Routes.CorpusDocument _ id _ _)) = Just id
-mAppRouteId _ = Nothing
-

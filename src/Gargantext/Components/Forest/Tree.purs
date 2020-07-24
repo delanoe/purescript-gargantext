@@ -59,20 +59,20 @@ treeView props = R.createElement treeViewCpt props []
     treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
       where
         cpt { root
-            , mCurrentRoute
-            , session
+            , asyncTasks
             , frontends
+            , mCurrentRoute
             , openNodes
             , reload
-            , asyncTasks
+            , session
             } _children = pure
                         $ treeLoadView { root
-                                       , mCurrentRoute
-                                       , session
+                                       , asyncTasks
                                        , frontends
+                                       , mCurrentRoute
                                        , openNodes
                                        , reload
-                                       , asyncTasks
+                                       , session
                                        }
 
 treeLoadView :: Record Props -> R.Element
@@ -83,11 +83,11 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
       where
         cpt { root
             , asyncTasks
-            , mCurrentRoute
-            , session
             , frontends
+            , mCurrentRoute
             , openNodes
             , reload
+            , session
             } _children = do
           let fetch _ = getNodeTree session root
           let paint loaded = loadedTreeView { asyncTasks
@@ -123,9 +123,9 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
             , mCurrentRoute
             , openNodes
             , reload
+            , session
             , tasks
             , tree
-            , session
           } _ = pure $ H.ul { className: "tree"}
                              [ toHtml { asyncTasks
                                       , frontends
