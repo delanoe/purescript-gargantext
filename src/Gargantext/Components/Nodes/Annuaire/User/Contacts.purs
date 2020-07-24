@@ -4,26 +4,25 @@ module Gargantext.Components.Nodes.Annuaire.User.Contacts
   , userLayout )
   where
 
+import DOM.Simple.Console (log2)
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import Effect.Aff (Aff, launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
+import Effect.Class (liftEffect)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes as Routes
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Ends (Frontends)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
+import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 display :: String -> Array R.Element -> R.Element
 display title elems =
@@ -68,8 +67,7 @@ contactInfoItems =
 type HyperdataUserLens = L.ALens' HyperdataUser String
 
 type ContactInfoItemProps =
-  (
-    hyperdata :: HyperdataUser
+  ( hyperdata :: HyperdataUser
   , label :: String
   , lens :: HyperdataUserLens
   , onUpdateHyperdata :: HyperdataUser -> Effect Unit

@@ -1,18 +1,50 @@
 module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types where
 
-import Prelude
-
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (.:!), (.:?), (:=), (~>), jsonEmptyObject)
+import Prelude (bind, pure, ($))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:!), (.:?), (:=), (~>), jsonEmptyObject)
 import Data.Array as A
 import Data.Lens
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Map (Map)
 import Data.String as S
-import Data.Tuple (Tuple(..))
 import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Newtype (class Newtype)
 
 -- TODO: should it be a NodePoly HyperdataContact ?
+newtype NodeContact =
+  NodeContact
+  { id        :: Int
+  , date      :: Maybe String
+  , hyperdata :: HyperdataContact
+  , name      :: Maybe String
+  , parentId  :: Maybe Int
+  , typename  :: Maybe Int
+  , userId    :: Maybe Int
+  }
+
+instance decodeNodeContact :: DecodeJson NodeContact where
+  decodeJson json = do
+    obj <- decodeJson json
+    date <- obj .?| "date"
+    hyperdata <- obj .: "hyperdata"
+    id <- obj .: "id"
+    name <- obj .:! "name"
+    parentId <- obj .?| "parentId"
+    typename <- obj .?| "typename"
+    userId <- obj .:! "userId"
+
+    pure $ NodeContact { id
+                   , date
+                   , hyperdata
+                   , name
+                   , parentId
+                   , typename
+                   , userId
+                   }
+
+derive instance newtypeNodeContact :: Newtype NodeContact _
+
+
+
 newtype Contact =
   Contact
   { id :: Int
@@ -23,6 +55,8 @@ newtype Contact =
   , typename :: Maybe Int
   , userId :: Maybe Int
   }
+
+
 
 instance decodeUser :: DecodeJson Contact where
   decodeJson json = do
@@ -35,15 +69,14 @@ instance decodeUser :: DecodeJson Contact where
     typename <- obj .?| "typename"
     userId <- obj .:! "userId"
 
-    pure $ Contact {
-        id
-      , date
-      , hyperdata
-      , name
-      , parentId
-      , typename
-      , userId
-      }
+    pure $ Contact { id
+                   , date
+                   , hyperdata
+                   , name
+                   , parentId
+                   , typename
+                   , userId
+                   }
 
 derive instance newtypeContact :: Newtype Contact _
 
@@ -215,7 +248,7 @@ instance decodeHyperdataContact :: DecodeJson HyperdataContact
       title          <- obj .:? "title"
       uniqId         <- obj .:? "uniqId"
       uniqIdBdd      <- obj .:? "uniqIdBdd"
-      who            <- obj .:? "who"
+      who            <- obj .:! "who"
       
       let ou' = fromMaybe [] ou
 
@@ -236,17 +269,15 @@ instance encodeHyperdataContact :: EncodeJson HyperdataContact
 
 defaultHyperdataContact :: HyperdataContact
 defaultHyperdataContact =
-  HyperdataContact {
-      bdd: Nothing
-    , who: Nothing
-    , ou: []
-    , title: Nothing
-    , source: Nothing
-    , lastValidation: Nothing
-    , uniqId: Nothing
-    , uniqIdBdd: Nothing
-    }
-
+  HyperdataContact { bdd: Nothing
+                   , who: Nothing
+                   , ou: []
+                   , title: Nothing
+                   , source: Nothing
+                   , lastValidation: Nothing
+                   , uniqId: Nothing
+                   , uniqIdBdd: Nothing
+                   }
 
 newtype HyperdataUser =
   HyperdataUser {
@@ -257,8 +288,8 @@ derive instance newtypeHyperdataUser :: Newtype HyperdataUser _
 instance decodeHyperdataUser :: DecodeJson HyperdataUser
   where
     decodeJson json = do
-      obj <- decodeJson json
-      shared            <- obj .:? "shared"
+      obj    <- decodeJson json
+      shared <- obj .:? "shared"
       pure $ HyperdataUser { shared }
 
 instance encodeHyperdataUser :: EncodeJson HyperdataUser

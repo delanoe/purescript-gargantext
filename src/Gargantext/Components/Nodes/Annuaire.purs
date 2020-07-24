@@ -1,6 +1,5 @@
 module Gargantext.Components.Nodes.Annuaire where
 
-import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array as A
 import Data.List as L
@@ -8,17 +7,17 @@ import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get)
 import Gargantext.Types (NodeType(..), AffTableResult, TableResult)
-import Gargantext.Hooks.Loader (useLoader)
+import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 newtype IndividuView =
   CorpusView
@@ -102,7 +101,7 @@ type PageProps =
   , frontends :: Frontends
   , pagePath :: R.State PagePath
   -- , info :: AnnuaireInfo
-  , table :: TableResult CT.Contact
+  , table :: TableResult CT.NodeContact
   )
 
 page :: Record PageProps -> R.Element
@@ -123,7 +122,7 @@ pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
                                      , session }
                    , delete: false }) <$> L.fromFoldable docs
         container = T.defaultContainer { title: "Annuaire" } -- TODO
-        colNames = T.ColumnName <$> [ "", "Name", "Company", "Service", "Role"]
+        colNames = T.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Lab", "Role"]
         wrapColElts = const identity
         setParams f = snd pagePath $ \pp@{params: ps} ->
           pp {params = f ps}
@@ -132,9 +131,8 @@ pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
 type AnnuaireId = Int
 
 type ContactCellsProps =
-  (
-    annuaireId :: AnnuaireId
-  , contact    :: CT.Contact
+  ( annuaireId :: AnnuaireId
+  , contact    :: CT.NodeContact
   , frontends  :: Frontends
   , session   :: Session
   )
@@ -146,11 +144,11 @@ contactCellsCpt :: R.Component ContactCellsProps
 contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
   where
     cpt { annuaireId
-        , contact: (CT.Contact { id, hyperdata: (CT.HyperdataUser {shared: Nothing}) })
+        , contact: (CT.NodeContact { id, hyperdata: (CT.HyperdataContact {who : Nothing}) })
         , frontends
         , session } _ =
       pure $ T.makeRow [ H.text ""
-                       , H.span {} [ H.text "name" ]
+                       , H.span {} [ H.text "Name" ]
                        --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
                        , H.text "No ContactWhere"
                        , H.text "No ContactWhereDept"
@@ -158,26 +156,30 @@ contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
                                [ H.text "No ContactWhereRole" ]
                        ]
     cpt { annuaireId
-        , contact: (CT.Contact { id
-                               , hyperdata: (CT.HyperdataUser {shared: Just (CT.HyperdataContact contact@{who, ou})}) })
+        , contact: (CT.NodeContact { id
+                               , hyperdata: ( CT.HyperdataContact { who : Just (CT.ContactWho { firstName
+                                                                                              , lastName
+                                                                                              }
+                                                                               )
+                                                                  }
+                                            )
+                               }
+                   )
         , frontends
         , session } _ = do
-
-        let 
-          contactWho = fromMaybe CT.defaultContactWho who
-          CT.ContactWho {firstName} = contactWho
 
         pure $ T.makeRow [
           H.text ""
           , H.text $ fromMaybe "First Name" firstName
+          , H.text $ fromMaybe "First Name" lastName
+          , H.text  "CNRS"
           -- , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
             --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
           --, H.text $ maybe "No ContactWhere" contactWhereOrg  (A.head $ ou)
-          , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
-          , H.div {className: "nooverflow"} [
-              H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
+         -- , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
+         -- , H.div {className: "nooverflow"} [
+         --     H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
             ]
-          ]
           where
             --nodepath = NodePath (sessionId session) NodeContact (Just id)
             nodepath = Routes.ContactPage (sessionId session) annuaireId id
@@ -243,7 +245,7 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
 
 ------------------------------------------------------------------------
 
-loadPage :: Session -> PagePath -> AffTableResult CT.Contact
+loadPage :: Session -> PagePath -> AffTableResult CT.NodeContact
 loadPage session {nodeId, params: { offset, limit, orderBy }} =
     get session children
  -- TODO orderBy
