@@ -58,7 +58,6 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
                                          , sessions: fst sessions
                                          , showLogin: snd showLogin }
     let mCurrentRoute     = fst route
-    let mkKey sid nodeId  = show sid <> "-" <> show nodeId
     let withSession sid f =
           maybe' (const $ forested $ homeLayout LL_EN) (ff f) $ Sessions.lookup sid (fst sessions)
 
@@ -68,20 +67,20 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
         case fst route of
           Home  -> forested $ homeLayout LL_EN
           Login -> login { backends, sessions, visible: showLogin }
-          Folder sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
-          FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
-          FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
-          FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
-          Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
-          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { key: mkKey sid nodeId, nodeId, session }
-          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { key: mkKey sid nodeId, nodeId, session }
-          Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
+          Folder sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
+          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
+          Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
           Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
           Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
           Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
-          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { frontends, key: mkKey sid nodeId, nodeId, session }
-          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, key: mkKey sid nodeId, nodeId, session }
+          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
+          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, nodeId, session }
           CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
           Document sid listId nodeId ->
             withSession sid $

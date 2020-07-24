@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Corpus.Document where
 
-import Prelude (class Show, bind, mempty, pure, ($), (<>))
+import Prelude (class Show, bind, mempty, pure, show, ($), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -21,7 +21,7 @@ import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, get)
+import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), TermList, ScoreType(..))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
@@ -362,20 +362,45 @@ docViewClass :: ReactClass { children :: Children
                            }
 docViewClass = createClass "DocumentView" docViewSpec initialState
 
-type LayoutProps = ( session :: Session, nodeId :: Int, listId :: Int, corpusId :: Maybe Int )
+type LayoutProps = (
+    corpusId :: Maybe Int
+  , listId :: Int
+  , nodeId :: Int
+  , session :: Session
+  )
 
 documentLayout :: Record LayoutProps -> R.Element
 documentLayout props = R.createElement documentLayoutCpt props []
 
 documentLayoutCpt :: R.Component LayoutProps
-documentLayoutCpt = R.hooksComponent "G.P.Corpus.Document.documentLayout" cpt
+documentLayoutCpt = R.hooksComponent "G.C.N.C.D.documentLayout" cpt
   where
-    cpt {session, nodeId, listId, corpusId} _ = do
+    cpt { corpusId, listId, nodeId, session } _ = do
+      let sid = sessionId session
+
+      pure $ documentLayoutWithKey { corpusId
+                                   , key: show sid <> "-" <> show nodeId
+                                   , listId
+                                   , nodeId
+                                   , session }
+
+type KeyLayoutProps = (
+  key :: String
+  | LayoutProps
+  )
+
+documentLayoutWithKey :: Record KeyLayoutProps -> R.Element
+documentLayoutWithKey props = R.createElement documentLayoutWithKeyCpt props []
+
+documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
+documentLayoutWithKeyCpt = R.hooksComponent "G.C.N.C.D.documentLayoutWithKey" cpt
+  where
+    cpt { corpusId, listId, nodeId, session } _ = do
       useLoader path loadData $ \loaded ->
         R2.createElement' docViewClass {path, loaded} []
       where
         tabType = TabDocument (TabNgramType CTabTerms)
-        path = {session, nodeId, listIds: [listId], corpusId, tabType}
+        path = { corpusId, listIds: [listId], nodeId, session, tabType }
 
 ------------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Annuaire where
 
-import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
+import Prelude (bind, const, identity, pure, show, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array as A
 import Data.List as L
@@ -32,18 +32,38 @@ newtype IndividuView =
 
 -- | Top level layout component. Loads an annuaire by id and renders
 -- | the annuaire using the result
-type LayoutProps = ( nodeId :: Int, session :: Session, frontends :: Frontends )
+type LayoutProps = (
+    frontends :: Frontends
+  , nodeId :: Int
+  , session :: Session
+  )
 
 annuaireLayout :: Record LayoutProps -> R.Element
 annuaireLayout props = R.createElement annuaireLayoutCpt props []
 
 annuaireLayoutCpt :: R.Component LayoutProps
-annuaireLayoutCpt = R.hooksComponent "G.P.Annuaire.annuaireLayout" cpt
+annuaireLayoutCpt = R.hooksComponent "G.C.N.A.annuaireLayout" cpt
   where
-    cpt {nodeId, session, frontends} _ = do
+    cpt { frontends, nodeId, session } _ = do
+      let sid = sessionId session
+
+      pure $ annuaireLayoutWithKey { frontends, key: show sid <> "-" <> show nodeId, nodeId, session }
+
+type KeyLayoutProps = (
+  key :: String
+  | LayoutProps
+  )
+
+annuaireLayoutWithKey :: Record KeyLayoutProps -> R.Element
+annuaireLayoutWithKey props = R.createElement annuaireLayoutWithKeyCpt props []
+
+annuaireLayoutWithKeyCpt :: R.Component KeyLayoutProps
+annuaireLayoutWithKeyCpt = R.hooksComponent "G.C.N.A.annuaireLayoutWithKey" cpt
+  where
+    cpt { frontends, nodeId, session } _ = do
       path <- R.useState' nodeId
       useLoader (fst path) (getAnnuaireInfo session) $
-        \info -> annuaire {session, path, info, frontends}
+        \info -> annuaire { frontends, info, path, session }
 
 type AnnuaireProps =
   ( session   :: Session
