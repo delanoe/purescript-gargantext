@@ -135,7 +135,12 @@ infoRender (Tuple title content) =
   [ H.span { className: "badge badge-default badge-pill"} [ H.text title ]
   , H.span {} [H.text content] ]
 
-type LayoutProps = ( frontends :: Frontends, nodeId :: Int, session :: Session )
+type LayoutProps = (
+    frontends :: Frontends
+  , key :: String
+  , nodeId :: Int
+  , session :: Session
+  )
 
 userLayout :: Record LayoutProps -> R.Element
 userLayout props = R.createElement userLayoutCpt props []

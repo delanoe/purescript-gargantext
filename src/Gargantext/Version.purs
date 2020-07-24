@@ -41,7 +41,7 @@ versionCpt = R.hooksComponent "G.C.A.version" cpt
 
       pure $ case version == versionBack of
         true  -> H.a { className: "fa fa-check-circle-o"
-                     , "text-decoration": "none"
+                     , textDecoration: "none"
                      , title: "Versions match: frontend ("
                             <> version
                             <> "), backend ("
@@ -49,7 +49,7 @@ versionCpt = R.hooksComponent "G.C.A.version" cpt
                             <> ")"
                       } []
         false -> H.a { className: "fa fa-exclamation-triangle"
-                     , "text-decoration": "none"
+                     , textDecoration: "none"
                      , title: "Versions mismatch: frontend ("
                             <> version
                             <> "), backend ("

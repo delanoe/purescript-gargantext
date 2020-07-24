@@ -4,6 +4,10 @@ import Data.Array (fromFoldable)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
+import Prelude
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Lang (LandingLang(..))
@@ -26,9 +30,6 @@ import Gargantext.Routes (AppRoute(..))
 import Gargantext.Sessions (Sessions, useSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
-import Prelude
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 -- TODO (what does this mean?)
 -- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
@@ -48,39 +49,39 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
 
     treeReload <- R.useState' 0
 
-    let forested child = forestLayout { child
-                                      , frontends
-                                      , reload: treeReload
-                                      , route:  fst route
-                                      , sessions: fst sessions
-                                      , showLogin: snd showLogin }
-    let mCurrentRoute = fst route
-    let backends      = fromFoldable defaultBackends
-    let ff f session = R.fragment [ f session, footer { session } ]
+    let backends          = fromFoldable defaultBackends
+    let ff f session      = R.fragment [ f session, footer { session } ]
+    let forested child    = forestLayout { child
+                                         , frontends
+                                         , reload: treeReload
+                                         , route:  fst route
+                                         , sessions: fst sessions
+                                         , showLogin: snd showLogin }
+    let mCurrentRoute     = fst route
+    let mkKey sid nodeId  = show sid <> "-" <> show nodeId
     let withSession sid f =
           maybe' (const $ forested $ homeLayout LL_EN) (ff f) $ Sessions.lookup sid (fst sessions)
 
     pure $ case fst showLogin of
-      true -> forested $ login { sessions, backends, visible: showLogin }
+      true -> forested $ login { backends, sessions, visible: showLogin }
       false ->
         case fst route of
           Home  -> forested $ homeLayout LL_EN
-          Login -> login { sessions, backends, visible: showLogin }
-          --Folder sid _      -> withSession sid $ \_ -> forested (folder {})
-          Folder sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
-          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { key: show nodeId, nodeId, session }
-          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { key: show nodeId, nodeId, session }
-          Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { key: show nodeId, nodeId, session }
+          Login -> login { backends, sessions, visible: showLogin }
+          Folder sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
+          FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
+          FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
+          FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
+          Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
+          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { key: mkKey sid nodeId, nodeId, session }
+          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { key: mkKey sid nodeId, nodeId, session }
+          Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { key: mkKey sid nodeId, nodeId, session }
           Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
           Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
           Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
           Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
-          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
-          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, nodeId, session }
+          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { frontends, key: mkKey sid nodeId, nodeId, session }
+          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, key: mkKey sid nodeId, nodeId, session }
           CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
           Document sid listId nodeId ->
             withSession sid $
@@ -107,13 +108,24 @@ type ForestLayoutProps =
   )
 
 forestLayout :: Record ForestLayoutProps -> R.Element
-forestLayout { child, frontends, reload, route, sessions, showLogin } = do
-  R.fragment [ topBar {}, R2.row [main] ]
+forestLayout props = R.createElement forestLayoutCpt props []
+
+forestLayoutCpt :: R.Component ForestLayoutProps
+forestLayoutCpt = R.hooksComponent "G.C.A.forestLayout" cpt
   where
-    main =
-      R.fragment
-      [ H.div {className: "col-md-2", style: {paddingTop: "60px"}}
-              [ forest { frontends, reload, route, sessions, showLogin } ]
+    cpt props _ = do
+      pure $ R.fragment [ topBar {}, forestLayoutMain props ]
+
+forestLayoutMain :: Record ForestLayoutProps -> R.Element
+forestLayoutMain props = R.createElement forestLayoutMainCpt props []
+
+forestLayoutMainCpt :: R.Component ForestLayoutProps
+forestLayoutMainCpt = R.hooksComponent "G.C.A.forestLayoutMain" cpt
+  where
+    cpt { child, frontends, reload, route, sessions, showLogin } _ = do
+      pure $ R2.row [
+        H.div { className: "col-md-2", style: { paddingTop: "60px" } }
+            [ forest { frontends, reload, route, sessions, showLogin } ]
       , mainPage child
       ]
 
