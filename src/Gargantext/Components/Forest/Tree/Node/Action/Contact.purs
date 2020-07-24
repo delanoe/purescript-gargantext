@@ -1,38 +1,19 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Contact where
 
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
-import Data.Argonaut as Argonaut
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..))
-import Data.Maybe (Maybe(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
-import Effect.Aff (Aff)
-import Effect.Uncurried (mkEffectFn1)
-import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams(..))
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
-import Gargantext.Components.Forest.Tree.Node.Action as Action
-import Gargantext.Components.Forest.Tree.Node.Action as Action
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
-import Gargantext.Components.Forest.Tree.Node.Tools as Tools
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Effect.Aff (Aff, launchAff)
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Prelude
-import Gargantext.Prelude (class Eq, class Read, class Show)
-import Gargantext.Routes (SessionRoute(..))
+import Effect.Uncurried (mkEffectFn1)
+import Gargantext.Components.Forest.Tree.Node.Action (Action)
+import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams(..))
+-- import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
+import Gargantext.Prelude (Unit, bind, const, discard, pure, (<<<), (<>))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
-import Gargantext.Sessions (Session, put_)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
-import Gargantext.Types as GT
-import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
+import Gargantext.Utils.Reactix as R2
 import Prelude (($))
-import Reactix as R
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -58,8 +39,8 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), para
   where
     {firstname, lastname} = params
     el = R.hooksComponent (boxName <> "Box") cpt
-    cpt {id, params} _ = do
-      let {firstname, lastname} = params
+    cpt {id, params:params'} _ = do
+      let {firstname, lastname} = params'
       stateFirstname <- R.useState' firstname
       stateLastname  <- R.useState'  lastname
       pure $ H.div {className: "from-group row-no-padding"}
