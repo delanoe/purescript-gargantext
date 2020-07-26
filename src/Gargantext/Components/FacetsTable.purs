@@ -72,7 +72,10 @@ type Deletions = { pending :: Set Int, deleted :: Set Int }
 initialDeletions :: Deletions
 initialDeletions = { pending: mempty, deleted: mempty }
 
-newtype Pair = Pair { id :: Int, label :: String }
+newtype Pair =
+  Pair { id    :: Int
+       , label :: String
+       }
 
 derive instance genericPair :: Generic Pair _
 
@@ -119,9 +122,9 @@ newtype Hyperdata = Hyperdata
   { authors :: String
   , title   :: String
   , source  :: String
-  , publication_year :: Int
+  , publication_year  :: Int
   , publication_month :: Int
-  , publication_day :: Int
+  , publication_day   :: Int
   }
 
 --instance decodeHyperdata :: DecodeJson Hyperdata where
@@ -249,9 +252,19 @@ docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
               , H.button { style: buttonStyle, on: { click: performClick } }
                 [ H.i { className: "glyphitem glyphicon glyphicon-trash"
                       , style: { marginRight : "9px" } } []
-                , H.text "Delete document!" ] ] ] ] ]
+                , H.text "Delete document!" 
+                ]
+              ]
+            ]
+          ]
+        ]
 
-type PagePath = {nodeId :: Int, listId :: Int, query :: TextQuery, params :: T.Params, session :: Session}
+type PagePath = { nodeId :: Int
+                , listId :: Int
+                , query :: TextQuery
+                , params :: T.Params
+                , session :: Session
+                }
 
 initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: TextQuery} -> PagePath
 initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
@@ -287,12 +300,12 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
     convOrderBy _ = DateAsc -- TODO
 
 type PageLayoutProps =
-  ( frontends :: Frontends
+  ( frontends    :: Frontends
   , totalRecords :: Int
-  , deletions :: R.State Deletions
-  , container :: Record T.TableContainerProps -> R.Element
-  , session :: Session
-  , path :: R.State PagePath
+  , deletions    :: R.State Deletions
+  , container    :: Record T.TableContainerProps -> R.Element
+  , session      :: Session
+  , path         :: R.State PagePath
   )
 
 type PageProps = ( documents :: Array DocumentsView | PageLayoutProps )

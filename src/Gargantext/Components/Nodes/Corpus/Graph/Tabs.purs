@@ -13,9 +13,9 @@ import Gargantext.Sessions (Session)
 
 type Props =
   ( frontends :: Frontends
-  , query :: TextQuery
-  , session :: Session
-  , sides :: Array GraphSideCorpus
+  , query     :: TextQuery
+  , session   :: Session
+  , sides     :: Array GraphSideCorpus
   )
 
 tabs :: Record Props -> R.Element

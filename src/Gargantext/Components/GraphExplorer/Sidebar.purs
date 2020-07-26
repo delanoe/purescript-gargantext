@@ -149,9 +149,16 @@ sideTab (Opened SideTabData) props =
         snd props'.selectedNodeIds $ const SigmaxT.emptyNodeIds
 
 
+sideTab (Opened SideTabCommunity) props  =
+  RH.div { className: "col-md-12", id: "query" }
+                         [ query props.frontends
+                                 props.metaData
+                                 props.session
+                                 (SigmaxT.nodesGraphMap props.graph)
+                                 props.selectedNodeIds
+                         ]
 
 sideTab _ _  = H.div {} []
-
 
 
 -------------------------------------------
@@ -192,7 +199,11 @@ deleteNodes { graphId, metaData, nodes, session, termList, treeReload } = do
       Just (NTC.Versioned patch) -> do
         liftEffect $ snd treeReload $ (+) 1
 
-deleteNode :: TermList -> Session -> GET.MetaData -> Record SigmaxT.Node -> Aff NTC.VersionedNgramsPatches
+deleteNode :: TermList
+           -> Session
+           -> GET.MetaData
+           -> Record SigmaxT.Node
+           -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches coreParams versioned
   where
     nodeId :: Int
@@ -222,7 +233,12 @@ deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches 
     patch_list :: NTC.Replace TermList
     patch_list = NTC.Replace { new: termList, old: MapTerm }
 
-query :: Frontends -> GET.MetaData -> Session -> SigmaxT.NodesMap -> R.State SigmaxT.NodeIds -> R.Element
+query :: Frontends
+      -> GET.MetaData
+      -> Session
+      -> SigmaxT.NodesMap
+      -> R.State SigmaxT.NodeIds
+      -> R.Element
 query _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
 query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
   query' (head metaData.corpusId)
@@ -254,6 +270,4 @@ query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) 
                 ]
               ]
               -}
-
-
 

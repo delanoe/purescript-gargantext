@@ -24,7 +24,7 @@ newtype RenameValue = RenameValue
 
 instance encodeJsonRenameValue :: EncodeJson RenameValue where
   encodeJson (RenameValue {text})
-     = "r_name" := text
+     = "name" := text
     ~> jsonEmptyObject
 
 ------------------------------------------------------------------------
