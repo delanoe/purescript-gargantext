@@ -9,7 +9,7 @@ exports._makeRequest = function() {
 
 exports._openCache = function(cacheName) {
     return function() {
-        return caches.open(cacheName);
+        return window.caches.open(cacheName);
     }
 }
 
