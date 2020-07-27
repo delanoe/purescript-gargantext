@@ -23,6 +23,7 @@ import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.DocsTable (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 import Gargantext.Components.Table as T
+import Gargantext.Components.Search
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
@@ -31,29 +32,6 @@ import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
 ------------------------------------------------------------------------
-
-type TotalRecords = Int
-
--- Example:
---   [["machine","learning"],["artificial","intelligence"]]
--- This searches for documents with "machine learning" or "artificial intelligence"
-type TextQuery = Array (Array String)
-
-newtype SearchQuery = SearchQuery { query :: TextQuery }
-
-instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query})
-     -- = "query"     := query !! 0 -- TODO anoe
-    = "query" := concat query
-    ~> jsonEmptyObject
-
-newtype SearchResults = SearchResults { results :: Array Response }
-
-instance decodeSearchResults :: DecodeJson SearchResults where
-  decodeJson json = do
-    obj     <- decodeJson json
-    results <- obj .: "results"
-    pure $ SearchResults {results}
 
 type Props =
   ( chart :: R.Element
@@ -107,26 +85,6 @@ derive instance genericDocumentsView :: Generic DocumentsView _
 instance showDocumentsView :: Show DocumentsView where
   show = genericShow
 
-newtype Response = Response
-  { id         :: Int
-  , created    :: String
-  , hyperdata  :: Hyperdata
-  , category   :: Category
-  , ngramCount :: Int
--- , date      :: String
--- , score     :: Int
--- , pairs     :: Array Pair
-  }
-
-newtype Hyperdata = Hyperdata
-  { authors :: String
-  , title   :: String
-  , source  :: String
-  , publication_year  :: Int
-  , publication_month :: Int
-  , publication_day   :: Int
-  }
-
 --instance decodeHyperdata :: DecodeJson Hyperdata where
 --  decodeJson json = do
 --    obj    <- decodeJson json
@@ -152,29 +110,6 @@ instance decodeHyperdata :: DecodeJson Hyperdata where
     publication_day <- obj .: "publication_day"
     pure $ Hyperdata { authors, title, source, publication_year, publication_month, publication_day }
 
-{-
-instance decodeResponse :: DecodeJson Response where
-  decodeJson json = do
-    obj       <- decodeJson json
-    id        <- obj .: "id"
-    -- date      <- obj .: "date" -- TODO
-    date      <- pure "2018"
-    score     <- obj .: "score"
-    hyperdata <- obj .: "hyperdata"
-    pairs     <- obj .: "pairs"
-    pure $ Response { id, date, score, hyperdata, pairs }
--}
-
-instance decodeResponse :: DecodeJson Response where
-  decodeJson json = do
-    obj        <- decodeJson json
-    id         <- obj .: "id"
-    created    <- obj .: "created"
-    hyperdata  <- obj .: "hyperdata"
-    favorite   <- obj .: "favorite"
-    --ngramCount <- obj .: "ngramCount"
-    let ngramCount = 1
-    pure $ Response { id, created, hyperdata, category: decodeCategory favorite, ngramCount}
 
 -- | Main layout of the Documents Tab of a Corpus
 docView :: Record Props -> R.Element
@@ -261,8 +196,8 @@ docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
 
 type PagePath = { nodeId :: Int
                 , listId :: Int
-                , query :: TextQuery
-                , params :: T.Params
+                , query   :: TextQuery
+                , params  :: T.Params
                 , session :: Session
                 }
 
@@ -270,34 +205,54 @@ initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: T
 initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
 
 loadPage :: PagePath -> Aff (Array DocumentsView)
-loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
+loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searchType}} = do
   let p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
-  SearchResults res <- post session p $ SearchQuery {query}
-  pure $ res2corpus <$> res.results
-  where
-    res2corpus :: Response -> DocumentsView
-    res2corpus (Response { id, created: date, ngramCount: score, category
-                         , hyperdata: Hyperdata {authors, title, source, publication_year, publication_month, publication_day} }) =
-      DocumentsView { id
-                    , date
-                    , title
-                    , source
-                    , score
-                    , authors
-                    , category
-                    , pairs: []
-                    , delete: false
-                    , publication_year
-                    , publication_month
-                    , publication_day
-                    }
-    convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
-    convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
-    convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
-    convOrderBy (T.DESC (T.ColumnName "Title")) = TitleDesc
-    convOrderBy (T.ASC  (T.ColumnName "Source")) = SourceAsc
-    convOrderBy (T.DESC (T.ColumnName "Source")) = SourceDesc
-    convOrderBy _ = DateAsc -- TODO
+  res <- post session p $ SearchQuery {query, expected:searchType}
+  pure $ res2corpus res
+    where
+      convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
+      convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
+      convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
+      convOrderBy (T.DESC (T.ColumnName "Title")) = TitleDesc
+      convOrderBy (T.ASC  (T.ColumnName "Source")) = SourceAsc
+      convOrderBy (T.DESC (T.ColumnName "Source")) = SourceDesc
+      convOrderBy _ = DateAsc -- TODO
+
+
+res2corpus :: SearchResult -> Array DocumentsView
+
+res2corpus :: Document -> DocumentsView
+res2corpus (Document { id
+                     , created: date
+                     , score
+                     , category
+                     , hyperdata: HyperdataDocument { authors
+                                                    , title
+                                                    , source
+                                                    , publication_year
+                                                    , publication_month
+                                                    , publication_day
+                                                    }
+                      }
+            ) =
+  DocumentsView { id
+                , date
+                , title
+                , source
+                , score
+                , authors
+                , category
+                , pairs: []
+                , delete: false
+                , publication_year
+                , publication_month
+                , publication_day
+                }
+
+   -- TODO Contact 2 view
+
+
+
 
 type PageLayoutProps =
   ( frontends    :: Frontends
