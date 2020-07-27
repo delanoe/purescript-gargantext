@@ -2,8 +2,10 @@ module Gargantext.Routes where
 
 import Prelude
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
+
 import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, Id, Limit, ListId, NgramsGetOpts, NodeType, Offset, OrderBy, SearchOpts, SessionId, TabSubType, TabType, TermList, NgramsGetTableAllOpts)
+import Gargantext.Types as GT
 
 data AppRoute
   = Home
@@ -95,3 +97,16 @@ appPath (ContactPage s a i)  = "annuaire/"   <> show s <> "/" <> show a <> "/con
 appPath (RouteFrameWrite s i) = "write/"      <> show s <> "/" <> show i
 appPath (RouteFrameCalc s i)  = "calc/"       <> show s <> "/" <> show i
 
+nodeTypeAppRoute :: NodeType -> SessionId -> Int -> Maybe AppRoute
+nodeTypeAppRoute GT.Annuaire s i      = Just $ Annuaire s i
+nodeTypeAppRoute GT.NodeContact s i   = Just $ Annuaire s i
+nodeTypeAppRoute GT.Corpus s i        = Just $ Corpus s i
+nodeTypeAppRoute GT.Dashboard s i     = Just $ Dashboard s i
+nodeTypeAppRoute GT.Graph s i         = Just $ PGraphExplorer s i
+nodeTypeAppRoute GT.NodeList s i      = Just $ Lists s i
+nodeTypeAppRoute GT.FolderPrivate s i = Just $ FolderPrivate s i
+nodeTypeAppRoute GT.FolderPublic s i  = Just $ FolderPublic s i
+nodeTypeAppRoute GT.FolderShared s i  = Just $ FolderShared s i
+nodeTypeAppRoute GT.NodeUser s i      = Just $ UserPage s i
+nodeTypeAppRoute GT.Texts s i         = Just $ Texts s i
+nodeTypeAppRoute _ _ _                = Nothing

@@ -55,9 +55,9 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
                  , asyncTasks
                  , frontends
                  , mCurrentRoute: Just route
-                 , session: s
                  , openNodes
                  , reload
+                 , session: s
                  }
 
 plus :: R2.Setter Boolean -> R.Element

@@ -4,6 +4,7 @@ import Prelude
 import Data.Foldable (oneOf)
 import Data.Int (floor)
 import Routing.Match (Match, lit, num, str)
+
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Types (SessionId(..))
 
