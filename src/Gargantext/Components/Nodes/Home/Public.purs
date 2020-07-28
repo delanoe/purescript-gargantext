@@ -96,7 +96,7 @@ publicLayoutCpt = R.hooksComponent "[G.C.N.H.Public.publicLayout" cpt
                              [ H.h2 {} [H.text "Public Maps"]
                              , H.p { className: "lead text-muted"}
                                    [ H.text "Discover maps made with "
-                                   , H.div {className: "fa fa-heart"} []
+                                   , H.span {className: "fa fa-heart"} []
                                    ]
                              , H.p { className:"flex-space-around" }
                                    [ H.a { className: "btn btn-primary my-2"

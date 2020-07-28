@@ -36,3 +36,9 @@ exports._match = function(cache) {
         }
     }
 }
+
+exports._fetch = function(req) {
+    return function() {
+        return fetch(req);
+    }
+}
