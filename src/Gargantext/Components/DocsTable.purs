@@ -87,10 +87,16 @@ newtype DocumentsView
     , url    :: String
     }
 
-
+{-
 derive instance genericDocumentsView :: Generic DocumentsView _
 instance showDocumentsView :: Show DocumentsView where
   show = genericShow
+instance decodeJsonSearchType :: Argonaut.DecodeJson SearchType where
+  decodeJson = genericSumDecodeJson
+instance encodeJsonSearchType :: Argonaut.EncodeJson SearchType where
+  encodeJson = genericSumEncodeJson
+  -}
+
 instance decodeDocumentsView :: DecodeJson DocumentsView where
   decodeJson json = do
     obj <- decodeJson json
@@ -119,6 +125,7 @@ newtype Response = Response
   , hyperdata  :: Hyperdata
   , category   :: Category
   , ngramCount :: Int
+  , title      :: String
   }
 
 
@@ -141,10 +148,11 @@ instance decodeResponse :: DecodeJson Response where
   decodeJson json = do
     obj        <- decodeJson json
     cid        <- obj .: "id"
-    favorite   <- obj .: "favorite"
+    category   <- obj .: "category"
     ngramCount <- obj .: "id"
+    title  <- obj .: "title"
     hyperdata  <- obj .: "hyperdata"
-    pure $ Response { cid, category: decodeCategory favorite, ngramCount, hyperdata }
+    pure $ Response { cid, title, category: decodeCategory category, ngramCount, hyperdata }
 
 
 docViewLayout :: Record LayoutProps -> R.Element
