@@ -5,6 +5,7 @@ import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
+import Gargantext.Components.Category (Category)
 import Data.Maybe (Maybe(..))
 import Gargantext.Prelude (class Eq, class Read, class Show)
 
@@ -27,7 +28,7 @@ instance encodeJsonSearchType :: Argonaut.EncodeJson SearchType where
 ------------------------------------------------------------------------
 
 data SearchQuery =
-  SearchQuery { query    :: String
+  SearchQuery { query    :: Array String
               , expected :: SearchType
               }
 
@@ -43,7 +44,7 @@ instance encodeJsonSearchQuery :: Argonaut.EncodeJson SearchQuery where
 ------------------------------------------------------------------------
 data SearchResult = SearchResultDoc     { docs     :: Array Document}
                   | SearchResultContact { contacts :: Array Contact }
-                  | SearchNoResult      { message  :: String }
+                  -- | SearchNoResult      { message  :: String }
 
 derive instance eqSearchResult :: Eq SearchResult
 derive instance genericSearchResult :: Generic SearchResult _
@@ -56,13 +57,13 @@ instance encodeJsonSearchResult :: Argonaut.EncodeJson SearchResult where
 
 ------------------------------------------------------------------------
 
-data Document = 
+data Document =
   Document { id         :: Int
            , created    :: String
            , title      :: String
            , hyperdata  :: HyperdataDocument
-           , favorite   :: Int
-           , score      :: Number
+           , category   :: Int
+           , score      :: Int
            }
 
 derive instance eqDocument :: Eq Document
@@ -113,7 +114,7 @@ data Contact =
   Contact  { id         :: Int
            , created    :: String
            , hyperdata  :: HyperdataContact
-           , score      :: Number
+           , score      :: Int
            }
 
 derive instance eqContact :: Eq Contact

@@ -3,27 +3,25 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-import Prelude
+------------------------------------------------------------------------
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array (concat, filter)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List as L
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set (Set)
+import Data.String as String
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-------------------------------------------------------------------------
+import Gargantext.Components.Category (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
+import Gargantext.Components.Search
+import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Components.DocsTable (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
-import Gargantext.Components.Table as T
-import Gargantext.Components.Search
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
@@ -31,6 +29,9 @@ import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..), NodeID)
 import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
+import Prelude
+import Reactix as R
+import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 
 type Props =
@@ -85,32 +86,6 @@ derive instance genericDocumentsView :: Generic DocumentsView _
 instance showDocumentsView :: Show DocumentsView where
   show = genericShow
 
---instance decodeHyperdata :: DecodeJson Hyperdata where
---  decodeJson json = do
---    obj    <- decodeJson json
---    title  <- obj .: "title"
---    source <- obj .: "source"
---    pure $ Hyperdata { title,source }
-
-instance decodePair :: DecodeJson Pair where
-  decodeJson json = do
-    obj   <- decodeJson json
-    id    <- obj .: "id"
-    label <- obj .: "label"
-    pure $ Pair { id, label }
-
-instance decodeHyperdata :: DecodeJson Hyperdata where
-  decodeJson json = do
-    obj    <- decodeJson json
-    authors <- obj .| "authors"
-    title  <- obj .| "title"
-    source <- obj .| "source"
-    publication_year <- obj .: "publication_year"
-    publication_month <- obj .: "publication_month"
-    publication_day <- obj .: "publication_day"
-    pure $ Hyperdata { authors, title, source, publication_year, publication_month, publication_day }
-
-
 -- | Main layout of the Documents Tab of a Corpus
 docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
@@ -155,7 +130,7 @@ performDeletions session nodeId (deletions /\ setDeletions) =
 
 markCategory :: Session -> NodeID -> Category -> Array NodeID -> Effect Unit
 markCategory session nodeId category nids =
-  void $ launchAff_ $putCategories session nodeId (CategoryQuery q)
+  void $ launchAff_ $ putCategories session nodeId (CategoryQuery q)
   where -- TODO add array of delete rows here
     q = {nodeIds: nids, category: favCategory category}
 
@@ -207,8 +182,8 @@ initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, que
 loadPage :: PagePath -> Aff (Array DocumentsView)
 loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searchType}} = do
   let p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
-  res <- post session p $ SearchQuery {query, expected:searchType}
-  pure $ res2corpus res
+  searchResult <- post session p $ SearchQuery {query: concat query, expected:searchType}
+  pure $ res2view searchResult
     where
       convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
       convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
@@ -219,13 +194,12 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searc
       convOrderBy _ = DateAsc -- TODO
 
 
-res2corpus :: SearchResult -> Array DocumentsView
-
-res2corpus :: Document -> DocumentsView
-res2corpus (Document { id
+res2view :: SearchResult -> Array DocumentsView
+res2view (SearchResultDoc {docs}) = map toView docs
+  where
+    toView :: Document -> DocumentsView
+    toView (Document { id
                      , created: date
-                     , score
-                     , category
                      , hyperdata: HyperdataDocument { authors
                                                     , title
                                                     , source
@@ -233,24 +207,48 @@ res2corpus (Document { id
                                                     , publication_month
                                                     , publication_day
                                                     }
-                      }
-            ) =
-  DocumentsView { id
-                , date
-                , title
-                , source
-                , score
-                , authors
-                , category
-                , pairs: []
-                , delete: false
-                , publication_year
-                , publication_month
-                , publication_day
-                }
+                     , category
+                     , score
+                     }
+            ) = DocumentsView { id
+                              , date
+                              , title: fromMaybe "Title" title
+                              , source: fromMaybe "Source" source
+                              , score
+                              , authors: fromMaybe "Authors" authors
+                              , category: decodeCategory category
+                              , pairs: []
+                              , delete: false
+                              , publication_year : fromMaybe 2020 publication_year
+                              , publication_month: fromMaybe    1 publication_month
+                              , publication_day  : fromMaybe    1 publication_day
+                              }
+res2view (SearchResultContact {contacts}) = map toView contacts
+  where
+    toView :: Contact -> DocumentsView
+    toView (Contact { id
+                     , created: date
+                     , hyperdata: HyperdataContact { who
+                                                   , title
+                                                   , "where": contactWhere
+                                                   }
+                     , score
+                     }
+            ) = DocumentsView { id
+                              , date
+                              , title : fromMaybe "Title" title
+                              , source: fromMaybe "Source" title
+                              , score: 1
+                              , authors: fromMaybe "Authors" title
+                              , category: decodeCategory 1
+                              , pairs: []
+                              , delete: false
+                              , publication_year: 2020
+                              , publication_month: 10
+                              , publication_day: 1
+                              }
 
-   -- TODO Contact 2 view
-
+-- res2view (SearchNoResult {message}) = map toView contacts
 
 
 

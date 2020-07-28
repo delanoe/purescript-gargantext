@@ -5,7 +5,8 @@ import Data.Array (fromFoldable)
 import Data.Tuple (Tuple(..), fst)
 import Reactix as R
 import Gargantext.Components.GraphExplorer.Types (GraphSideCorpus(..))
-import Gargantext.Components.FacetsTable (TextQuery, docView)
+import Gargantext.Components.FacetsTable (docView)
+import Gargantext.Components.Search (TextQuery)
 import Gargantext.Components.Table as T
 import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
