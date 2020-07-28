@@ -42,9 +42,8 @@ instance encodeJsonSearchQuery :: Argonaut.EncodeJson SearchQuery where
   encodeJson = genericSumEncodeJson
 
 ------------------------------------------------------------------------
-data SearchResult = SearchResultDoc     { docs     :: Array Document}
-                  | SearchResultContact { contacts :: Array Contact }
-                  -- | SearchNoResult      { message  :: String }
+
+data SearchResult = SearchResult { result :: SearchResultTypes }
 
 derive instance eqSearchResult :: Eq SearchResult
 derive instance genericSearchResult :: Generic SearchResult _
@@ -55,13 +54,31 @@ instance decodeJsonSearchResult :: Argonaut.DecodeJson SearchResult where
 instance encodeJsonSearchResult :: Argonaut.EncodeJson SearchResult where
   encodeJson = genericSumEncodeJson
 
+
+
+data SearchResultTypes =
+                   SearchResultContact { contacts :: Array Contact }
+                  | SearchNoResult     { message  :: String }
+                  | SearchResultDoc     { docs     :: Array Document}
+
+derive instance eqSearchResultTypes :: Eq SearchResultTypes
+derive instance genericSearchResultTypes :: Generic SearchResultTypes _
+instance showSearchResultTypes :: Show SearchResultTypes where
+  show = genericShow
+instance decodeJsonSearchResultTypes :: Argonaut.DecodeJson SearchResultTypes where
+  decodeJson = genericSumDecodeJson
+instance encodeJsonSearchResultTypes :: Argonaut.EncodeJson SearchResultTypes where
+  encodeJson = genericSumEncodeJson
+
+
+
 ------------------------------------------------------------------------
 
 data Document =
   Document { id         :: Int
            , created    :: String
            , title      :: String
-           , hyperdata  :: HyperdataDocument
+           , hyperdata  :: HyperdataRowDocument
            , category   :: Int
            , score      :: Int
            }
@@ -75,41 +92,43 @@ instance decodeJsonDocument :: Argonaut.DecodeJson Document where
 instance encodeJsonDocument :: Argonaut.EncodeJson Document where
   encodeJson = genericSumEncodeJson
 
+-----------
 ------------------------------------------------------------------------
-data HyperdataDocument =
-  HyperdataDocument { bdd                :: Maybe String
-                    , doi                :: Maybe String
-                    , url                :: Maybe String
-                    , uniqId             :: Maybe String
-                    , uniqIdBdd          :: Maybe String
-                    , page               :: Maybe Int
-                    , title              :: Maybe String
-                    , authors            :: Maybe String
-                    , institutes         :: Maybe String
-                    , source             :: Maybe String
-                    , abstract           :: Maybe String
-                    , publication_date   :: Maybe String
-                    , publication_year   :: Maybe Int
-                    , publication_month  :: Maybe Int
-                    , publication_day    :: Maybe Int
-                    , publication_hour   :: Maybe Int
-                    , publication_minute :: Maybe Int
-                    , publication_second :: Maybe Int
-                    , language_iso2      :: Maybe String
-                    }
+newtype HyperdataRowDocument =
+  HyperdataRowDocument { bdd                :: Maybe String
+                       , doi                :: Maybe String
+                       , url                :: Maybe String
+                       , uniqId             :: Maybe String
+                       , uniqIdBdd          :: Maybe String
+                       , page               :: Maybe Int
+                       , title              :: Maybe String
+                       , authors            :: Maybe String
+                       , institutes         :: Maybe String
+                       , source             :: Maybe String
+                       , abstract           :: Maybe String
+                       , publication_date   :: Maybe String
+                       , publication_year   :: Maybe Int
+                       , publication_month  :: Maybe Int
+                       , publication_day    :: Maybe Int
+                       , publication_hour   :: Maybe Int
+                       , publication_minute :: Maybe Int
+                       , publication_second :: Maybe Int
+                       , language_iso2      :: Maybe String
+                       }
 
-derive instance eqHyperdataDocument :: Eq HyperdataDocument
-derive instance genericHyperdataDocument :: Generic HyperdataDocument _
-instance showHyperdataDocument :: Show HyperdataDocument where
+derive instance eqHyperdataRowDocument :: Eq HyperdataRowDocument
+derive instance genericHyperdataRowDocument :: Generic HyperdataRowDocument _
+instance showHyperdataRowDocument :: Show HyperdataRowDocument where
   show = genericShow
-instance decodeJsonHyperdataDocument :: Argonaut.DecodeJson HyperdataDocument where
+instance decodeJsonHyperdataRowDocument :: Argonaut.DecodeJson HyperdataRowDocument where
   decodeJson = genericSumDecodeJson
-instance encodeJsonHyperdataDocument :: Argonaut.EncodeJson HyperdataDocument where
+instance encodeJsonHyperdataRowDocument :: Argonaut.EncodeJson HyperdataRowDocument where
   encodeJson = genericSumEncodeJson
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
+
 data Contact =
   Contact  { id         :: Int
            , created    :: String

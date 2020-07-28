@@ -181,26 +181,30 @@ initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, que
 
 loadPage :: PagePath -> Aff (Array DocumentsView)
 loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searchType}} = do
-  let p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
-  searchResult <- post session p $ SearchQuery {query: concat query, expected:searchType}
-  pure $ res2view searchResult
-    where
-      convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
-      convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
-      convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
-      convOrderBy (T.DESC (T.ColumnName "Title")) = TitleDesc
-      convOrderBy (T.ASC  (T.ColumnName "Source")) = SourceAsc
-      convOrderBy (T.DESC (T.ColumnName "Source")) = SourceDesc
-      convOrderBy _ = DateAsc -- TODO
+  let
+    convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
+    convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
+    convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
+    convOrderBy (T.DESC (T.ColumnName "Title")) = TitleDesc
+    convOrderBy (T.ASC  (T.ColumnName "Source")) = SourceAsc
+    convOrderBy (T.DESC (T.ColumnName "Source")) = SourceDesc
+    convOrderBy _ = DateAsc -- TODO
 
+    p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
 
-res2view :: SearchResult -> Array DocumentsView
-res2view (SearchResultDoc {docs}) = map toView docs
+  SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:searchType}
+  pure $ case result of
+              SearchResultDoc     {docs}     -> docs2view docs
+              SearchResultContact {contacts} -> contacts2view contacts
+              errMessage                     -> err2view errMessage
+
+docs2view :: Array Document -> Array DocumentsView
+docs2view docs = map toView docs
   where
     toView :: Document -> DocumentsView
-    toView (Document { id
+    toView ( Document { id
                      , created: date
-                     , hyperdata: HyperdataDocument { authors
+                     , hyperdata:  HyperdataRowDocument { authors
                                                     , title
                                                     , source
                                                     , publication_year
@@ -223,7 +227,7 @@ res2view (SearchResultDoc {docs}) = map toView docs
                               , publication_month: fromMaybe    1 publication_month
                               , publication_day  : fromMaybe    1 publication_day
                               }
-res2view (SearchResultContact {contacts}) = map toView contacts
+contacts2view contacts = map toView contacts
   where
     toView :: Contact -> DocumentsView
     toView (Contact { id
@@ -248,7 +252,22 @@ res2view (SearchResultContact {contacts}) = map toView contacts
                               , publication_day: 1
                               }
 
--- res2view (SearchNoResult {message}) = map toView contacts
+err2view message =
+  [DocumentsView { id: 1
+                 , date: "2020-01-01"
+                 , title : "SearchNoResult"
+                 , source: "Source"
+                 , score: 1
+                 , authors: "Authors"
+                 , category: decodeCategory 1
+                 , pairs: []
+                 , delete: false
+                 , publication_year: 2020
+                 , publication_month: 10
+                 , publication_day: 1
+                 }
+   ]
+
 
 
 
