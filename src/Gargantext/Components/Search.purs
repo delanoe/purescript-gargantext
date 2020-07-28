@@ -22,9 +22,9 @@ derive instance genericSearchType :: Generic SearchType _
 instance showSearchType :: Show SearchType where
   show = genericShow
 instance decodeJsonSearchType :: Argonaut.DecodeJson SearchType where
-  decodeJson = genericSumDecodeJson
+  decodeJson = genericEnumDecodeJson
 instance encodeJsonSearchType :: Argonaut.EncodeJson SearchType where
-  encodeJson = genericSumEncodeJson
+  encodeJson = genericEnumEncodeJson
 ------------------------------------------------------------------------
 
 data SearchQuery =
