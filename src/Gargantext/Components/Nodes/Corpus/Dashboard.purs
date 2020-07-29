@@ -8,15 +8,16 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 type Props =
   ( nodeId :: NodeID
@@ -29,7 +30,23 @@ dashboardLayout props = R.createElement dashboardLayoutCpt props []
 dashboardLayoutCpt :: R.Component Props
 dashboardLayoutCpt = R.hooksComponent "G.C.N.C.D.dashboardLayout" cpt
   where
-    cpt params@{nodeId, session} _ = do
+    cpt { nodeId, session } _ = do
+      let sid = sessionId session
+
+      pure $ dashboardLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
+
+type KeyProps = (
+  key :: String
+  | Props
+  )
+
+dashboardLayoutWithKey :: Record KeyProps -> R.Element
+dashboardLayoutWithKey props = R.createElement dashboardLayoutWithKeyCpt props []
+
+dashboardLayoutWithKeyCpt :: R.Component KeyProps
+dashboardLayoutWithKeyCpt = R.hooksComponent "G.C.N.C.D.dashboardLayoutWithKey" cpt
+  where
+    cpt { nodeId, session } _ = do
       reload <- R.useState' 0
 
       useLoader {nodeId, reload: fst reload, session} DT.loadDashboardWithReload $

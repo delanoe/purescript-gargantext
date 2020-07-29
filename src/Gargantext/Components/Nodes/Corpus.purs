@@ -24,7 +24,7 @@ import Gargantext.Components.Nodes.Corpus.Types (CorpusData, FTField, Field(..),
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
-import Gargantext.Sessions (Session, get, put)
+import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
@@ -41,13 +41,25 @@ type KeyProps =
   | Props
   )
 
-corpusLayout :: Record KeyProps -> R.Element
+corpusLayout :: Record Props -> R.Element
 corpusLayout props = R.createElement corpusLayoutCpt props []
 
-corpusLayoutCpt :: R.Component KeyProps
+corpusLayoutCpt :: R.Component Props
 corpusLayoutCpt = R.hooksComponent "G.C.N.C.corpusLayout" cpt
   where
-    cpt {nodeId, session} _ = do
+    cpt { nodeId, session } _ = do
+      let sid = sessionId session
+
+      pure $ corpusLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
+
+
+corpusLayoutWithKey :: Record KeyProps -> R.Element
+corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
+
+corpusLayoutWithKeyCpt :: R.Component KeyProps
+corpusLayoutWithKeyCpt = R.hooksComponent "G.C.N.C.corpusLayoutWithKey" cpt
+  where
+    cpt { nodeId, session } _ = do
       reload <- R.useState' 0
 
       useLoader {nodeId, reload: fst reload, session} loadCorpusWithReload $

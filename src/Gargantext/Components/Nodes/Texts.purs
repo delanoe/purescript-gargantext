@@ -17,29 +17,48 @@ import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..), getC
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
 --------------------------------------------------------
 
-type Props = ( frontends :: Frontends, session :: Session, nodeId :: Int )
+type Props = (
+    frontends :: Frontends
+  , nodeId :: Int
+  , session :: Session
+  )
 
 textsLayout :: Record Props -> R.Element
 textsLayout props = R.createElement textsLayoutCpt props []
 
 ------------------------------------------------------------------------
 textsLayoutCpt :: R.Component Props
-textsLayoutCpt = R.hooksComponent "G.C.Nodes.Texts.textsLayout" cpt where
-  cpt {session,nodeId,frontends} _ = do
-    pure $ loader {session, nodeId} loadCorpusWithChild paint
-    where
-      paint corpusData@{corpusId, corpusNode, defaultListId} =
-        R.fragment [ Table.tableHeaderLayout headerProps, tabs' ]
-        where
-          NodePoly { name, date, hyperdata: Hyperdata h } = corpusNode
-          CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
-          tabs' = tabs {session, corpusId, corpusData, frontends}
-          title = "Corpus " <> name
-          headerProps = { title, desc, query, date, user:authors }
+textsLayoutCpt = R.hooksComponent "G.C.N.T.textsLayout" cpt where
+  cpt { frontends, nodeId, session } _ = do
+    let sid = sessionId session
+
+    pure $ textsLayoutWithKey { frontends, key: show sid <> "-" <> show nodeId, nodeId, session }
+
+type KeyProps = (
+  key :: String
+  | Props
+  )
+
+textsLayoutWithKey :: Record KeyProps -> R.Element
+textsLayoutWithKey props = R.createElement textsLayoutWithKeyCpt props []
+
+textsLayoutWithKeyCpt = R.hooksComponent "G.C.N.T.textsLayoutWithKey" cpt
+  where
+    cpt { frontends, nodeId, session } _ = do
+      pure $ loader {session, nodeId} loadCorpusWithChild paint
+      where
+        paint corpusData@{corpusId, corpusNode, defaultListId} =
+          R.fragment [ Table.tableHeaderLayout headerProps, tabs' ]
+          where
+            NodePoly { name, date, hyperdata: Hyperdata h } = corpusNode
+            CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
+            tabs' = tabs {session, corpusId, corpusData, frontends}
+            title = "Corpus " <> name
+            headerProps = { title, desc, query, date, user:authors }
 
 data Mode = MoreLikeFav | MoreLikeTrash
 
