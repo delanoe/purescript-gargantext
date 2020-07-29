@@ -40,7 +40,7 @@ type Props =
   , frontends :: Frontends
   , listId :: Int
   , nodeId :: Int
-  , query :: TextQuery
+  , query :: SearchQuery
   , session :: Session
   , totalRecords :: Int
   )
@@ -171,12 +171,12 @@ docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
 
 type PagePath = { nodeId :: Int
                 , listId :: Int
-                , query   :: TextQuery
+                , query   :: SearchQuery
                 , params  :: T.Params
                 , session :: Session
                 }
 
-initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: TextQuery} -> PagePath
+initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: SearchQuery} -> PagePath
 initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
 
 loadPage :: PagePath -> Aff (Array DocumentsView)
@@ -193,7 +193,8 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searc
     p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
 
   --SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:searchType}
-  SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:SearchContact}
+  SearchResult {result} <- post session p query
+  -- $ SearchQuery {query: concat query, expected: SearchDoc}
   pure $ case result of
               SearchResultDoc     {docs}     -> docs2view docs
               SearchResultContact {contacts} -> contacts2view contacts

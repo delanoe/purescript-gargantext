@@ -3,7 +3,7 @@ module Gargantext.Components.GraphExplorer.Sidebar
   where
 
 import Control.Parallel (parTraverse)
-import Data.Array (head, last)
+import Data.Array (head, last, concat)
 import Data.Int (fromString)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
@@ -14,6 +14,7 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
 import Gargantext.Components.GraphExplorer.Types  as GET
 import Gargantext.Components.GraphExplorer.Types  (SidePanelState(..), SideTab(..))
 import Gargantext.Components.GraphExplorer.Legend as Legend
@@ -102,7 +103,8 @@ sideTab (Opened SideTabData) props =
                 ]
 
                 , RH.div { className: "col-md-12", id: "query" }
-                         [ query props.frontends
+                         [ query SearchDoc
+                                 props.frontends
                                  props.metaData
                                  props.session
                                  nodesMap
@@ -151,7 +153,8 @@ sideTab (Opened SideTabData) props =
 
 sideTab (Opened SideTabCommunity) props  =
   RH.div { className: "col-md-12", id: "query" }
-                         [ query props.frontends
+                         [ query SearchContact
+                                 props.frontends
                                  props.metaData
                                  props.session
                                  (SigmaxT.nodesGraphMap props.graph)
@@ -233,22 +236,26 @@ deleteNode termList session (GET.MetaData metaData) node = NTC.putNgramsPatches 
     patch_list :: NTC.Replace TermList
     patch_list = NTC.Replace { new: termList, old: MapTerm }
 
-query :: Frontends
+query :: SearchType
+      -> Frontends
       -> GET.MetaData
       -> Session
       -> SigmaxT.NodesMap
       -> R.State SigmaxT.NodeIds
       -> R.Element
-query _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
-query frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
+query _ _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
+query searchType frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
   query' (head metaData.corpusId)
   where
     query' Nothing         = RH.div {} []
-    query' (Just corpusId) = CGT.tabs { frontends
-                                      , session
-                                      , query: toQuery <$> Set.toUnfoldable selectedNodeIds
-                                      , sides: [side corpusId]
-                                      }
+    query' (Just corpusId) =
+      CGT.tabs { frontends
+               , session
+               , query: SearchQuery { query : concat $ toQuery <$> Set.toUnfoldable selectedNodeIds
+                                    , expected: searchType
+                                    }
+               , sides: [side corpusId]
+               }
 
     toQuery id = case Map.lookup id nodesMap of
       Nothing -> []

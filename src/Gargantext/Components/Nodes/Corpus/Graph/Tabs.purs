@@ -6,7 +6,7 @@ import Data.Tuple (Tuple(..), fst)
 import Reactix as R
 import Gargantext.Components.GraphExplorer.Types (GraphSideCorpus(..))
 import Gargantext.Components.FacetsTable (docView)
-import Gargantext.Components.Search (TextQuery)
+import Gargantext.Components.Search (SearchQuery)
 import Gargantext.Components.Table as T
 import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
@@ -14,7 +14,7 @@ import Gargantext.Sessions (Session)
 
 type Props =
   ( frontends :: Frontends
-  , query     :: TextQuery
+  , query     :: SearchQuery
   , session   :: Session
   , sides     :: Array GraphSideCorpus
   )
@@ -32,7 +32,7 @@ tabsCpt = R.hooksComponent "G.P.Corpus.Graph.Tabs.tabs" cpt
       where
         tabs' = fromFoldable $ tab frontends session query <$> sides
 
-tab :: Frontends -> Session -> TextQuery -> GraphSideCorpus -> Tuple String R.Element
+tab :: Frontends -> Session -> SearchQuery -> GraphSideCorpus -> Tuple String R.Element
 tab frontends session query (GraphSideCorpus {corpusId: nodeId, corpusLabel, listId}) =
   Tuple corpusLabel (docView dvProps)
   where
