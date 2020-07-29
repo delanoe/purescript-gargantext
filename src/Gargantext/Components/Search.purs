@@ -42,7 +42,7 @@ instance encodeJsonSearchQuery :: Argonaut.EncodeJson SearchQuery where
   encodeJson = genericSumEncodeJson
 
 ------------------------------------------------------------------------
-
+------------------------------------------------------------------------
 data SearchResult = SearchResult { result :: SearchResultTypes }
 
 derive instance eqSearchResult :: Eq SearchResult
@@ -55,11 +55,11 @@ instance encodeJsonSearchResult :: Argonaut.EncodeJson SearchResult where
   encodeJson = genericSumEncodeJson
 
 
-
-data SearchResultTypes =
-                   SearchResultContact { contacts :: Array Contact }
-                  | SearchNoResult     { message  :: String }
-                  | SearchResultDoc     { docs     :: Array Document}
+------------------------------------------------------------------------
+data SearchResultTypes = 
+                        SearchResultDoc     { docs     :: Array Document}
+                       | SearchNoResult      { message  :: String }
+                       | SearchResultContact { contacts :: Array Contact }
 
 derive instance eqSearchResultTypes :: Eq SearchResultTypes
 derive instance genericSearchResultTypes :: Generic SearchResultTypes _
@@ -71,9 +71,7 @@ instance encodeJsonSearchResultTypes :: Argonaut.EncodeJson SearchResultTypes wh
   encodeJson = genericSumEncodeJson
 
 
-
 ------------------------------------------------------------------------
-
 data Document =
   Document { id         :: Int
            , created    :: String
@@ -92,7 +90,6 @@ instance decodeJsonDocument :: Argonaut.DecodeJson Document where
 instance encodeJsonDocument :: Argonaut.EncodeJson Document where
   encodeJson = genericSumEncodeJson
 
------------
 ------------------------------------------------------------------------
 newtype HyperdataRowDocument =
   HyperdataRowDocument { bdd                :: Maybe String
@@ -128,12 +125,11 @@ instance encodeJsonHyperdataRowDocument :: Argonaut.EncodeJson HyperdataRowDocum
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
-
 data Contact =
-  Contact  { id         :: Int
-           , created    :: String
-           , hyperdata  :: HyperdataContact
-           , score      :: Int
+  Contact  { c_id         :: Int
+           , c_created    :: String
+           , c_hyperdata  :: HyperdataRowContact
+           , c_score      :: Int
            }
 
 derive instance eqContact :: Eq Contact
@@ -144,6 +140,23 @@ instance decodeJsonContact :: Argonaut.DecodeJson Contact where
   decodeJson = genericSumDecodeJson
 instance encodeJsonContact :: Argonaut.EncodeJson Contact where
   encodeJson = genericSumEncodeJson
+
+
+data HyperdataRowContact =
+     HyperdataRowContact { firstname    :: String
+                         , lastname   :: String
+                         , labs       :: String
+                         }
+derive instance eqHyperdataRowContact :: Eq HyperdataRowContact
+derive instance genericHyperdataRowContact :: Generic HyperdataRowContact _
+instance showHyperdataRowContact :: Show HyperdataRowContact where
+  show = genericShow
+instance decodeJsonHyperdataRowContact :: Argonaut.DecodeJson HyperdataRowContact where
+  decodeJson = genericSumDecodeJson
+instance encodeJsonHyperdataRowContact :: Argonaut.EncodeJson HyperdataRowContact where
+  encodeJson = genericSumEncodeJson
+
+
 
 
 data HyperdataContact =
@@ -166,7 +179,6 @@ instance encodeJsonHyperdataContact :: Argonaut.EncodeJson HyperdataContact wher
   encodeJson = genericSumEncodeJson
 
 -------
-
 data ContactWho =
      ContactWho { id          :: Maybe String
                 , firstName   :: Maybe String
@@ -182,7 +194,6 @@ instance decodeJsonContactWho :: Argonaut.DecodeJson ContactWho where
   decodeJson = genericSumDecodeJson
 instance encodeJsonContactWho :: Argonaut.EncodeJson ContactWho where
   encodeJson = genericSumEncodeJson
-
 
 
 data ContactWhere =
@@ -223,5 +234,4 @@ instance decodeJsonContactTouch :: Argonaut.DecodeJson ContactTouch where
   decodeJson = genericSumDecodeJson
 instance encodeJsonContactTouch :: Argonaut.EncodeJson ContactTouch where
   encodeJson = genericSumEncodeJson
-
 

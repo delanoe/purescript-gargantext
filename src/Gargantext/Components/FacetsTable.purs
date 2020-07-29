@@ -192,7 +192,8 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searc
 
     p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
 
-  SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:searchType}
+  --SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:searchType}
+  SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:SearchContact}
   pure $ case result of
               SearchResultDoc     {docs}     -> docs2view docs
               SearchResultContact {contacts} -> contacts2view contacts
@@ -230,20 +231,20 @@ docs2view docs = map toView docs
 contacts2view contacts = map toView contacts
   where
     toView :: Contact -> DocumentsView
-    toView (Contact { id
-                     , created: date
-                     , hyperdata: HyperdataContact { who
-                                                   , title
-                                                   , "where": contactWhere
+    toView (Contact { c_id
+                     , c_created: date
+                     , c_hyperdata: HyperdataRowContact { firstname
+                                                   , lastname
+                                                   , labs
                                                    }
-                     , score
+                     , c_score
                      }
-            ) = DocumentsView { id
+            ) = DocumentsView { id: c_id
                               , date
-                              , title : fromMaybe "Title" title
-                              , source: fromMaybe "Source" title
-                              , score: 1
-                              , authors: fromMaybe "Authors" title
+                              , title : firstname <> lastname
+                              , source: labs
+                              , score: c_score
+                              , authors: labs
                               , category: decodeCategory 1
                               , pairs: []
                               , delete: false
