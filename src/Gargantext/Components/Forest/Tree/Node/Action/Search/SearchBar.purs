@@ -23,7 +23,7 @@ searchBar :: Record Props -> R.Element
 searchBar props = R.createElement searchBarCpt props []
 
 searchBarCpt :: R.Component Props
-searchBarCpt = R.hooksComponent "G.C.Node.SearchBar.searchBar" cpt
+searchBarCpt = R.hooksComponent "G.C.F.T.N.A.S.SB.searchBar" cpt
   where
     cpt {langs, onSearch, search: search@(s /\ _), session} _ = do
       --onSearchChange session s

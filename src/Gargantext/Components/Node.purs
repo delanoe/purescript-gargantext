@@ -29,14 +29,14 @@ instance decodeNodePoly :: (DecodeJson a)
     hyperdata  <- obj .: "hyperdata"
     hyperdata' <- decodeJson hyperdata
 
-    pure $ NodePoly { id : id
-                 , typename : typename
-                 , userId   : userId
-                 , parentId : parentId
-                 , name     : name
-                 , date     : date
-                 , hyperdata: hyperdata'
-                 }
+    pure $ NodePoly { id
+                    , date
+                    , hyperdata: hyperdata'
+                    , name
+                    , parentId
+                    , typename
+                    , userId
+                    }
 
 newtype HyperdataList = HyperdataList { preferences :: String }
 

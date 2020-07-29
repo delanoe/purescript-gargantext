@@ -69,6 +69,7 @@ add cache req = toAffE $ _add cache req
 match :: Cache -> Request -> Aff (Maybe M.Response)
 match cache req = do
   res <- toAffE $ _match cache req
+  -- _match returns a null/undefined value when cache entity not found
   case runExcept $ F.readNullOrUndefined res of
     Left err -> throwError $ error $ show err
     Right v -> pure $ F.unsafeFromForeign <$> v
@@ -96,11 +97,28 @@ cachedJson cache req = do
   j <- M.json res
 
   case decodeJson (F.unsafeFromForeign j) of
-    Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
+    Left err -> throwError $ error $ "[cachedJson] decodeJson affResp.body: " <> err
     Right b -> pure b
 
 delete :: Cache -> Request -> Aff Unit
 delete cache req = toAffE $ _delete cache req
+
+
+-- No cache: raw API calls
+
+fetch :: Request -> Aff M.Response
+fetch req = do
+  res <- toAffE $ _fetch req
+  pure $ F.unsafeFromForeign res
+
+pureJson :: forall a. DecodeJson a => Request -> Aff a
+pureJson req = do
+  res <- fetch req
+  j <- M.json res
+  case decodeJson (F.unsafeFromForeign j) of
+    Left err -> throwError $ error $ "[pureJson] decodeJson affResp.body: " <> err
+    Right b -> pure b
+
 
 foreign import _makeRequest :: forall options trash. Union options trash M.Options =>
                                M.URL -> { method :: M.Method, headers :: M.Headers | options } -> Request
@@ -108,3 +126,4 @@ foreign import _openCache :: String -> Effect (Promise Cache)
 foreign import _delete :: Cache -> Request -> Effect (Promise Unit)
 foreign import _add :: Cache -> Request -> Effect (Promise Unit)
 foreign import _match :: Cache -> Request -> Effect (Promise F.Foreign)
+foreign import _fetch :: Request -> Effect (Promise F.Foreign)
