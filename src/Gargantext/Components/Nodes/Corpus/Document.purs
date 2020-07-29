@@ -13,6 +13,7 @@ import Reactix as R
 import Thermite (PerformAction, Render, Spec, simpleSpec, createClass)
 
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
+import Gargantext.Components.Search (SearchType(..))
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable.Core
   ( CoreState, NgramsPatch(..), NgramsTerm, Replace, Versioned(..)
@@ -389,7 +390,7 @@ loadData {session, nodeId, listIds, tabType} = do
     { session
     , nodeId
     , listIds
-    , params: { offset : 0, limit : 100, orderBy: Nothing}
+    , params: { offset : 0, limit : 100, orderBy: Nothing, searchType: SearchDoc}
     , tabType
     , searchQuery: ""
     , termListFilter: Nothing

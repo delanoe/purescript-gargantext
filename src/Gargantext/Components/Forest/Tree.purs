@@ -23,7 +23,8 @@ import Gargantext.Components.Forest.Tree.Node.Action.Move   (moveNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Merge  (mergeNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Link   (linkNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
-import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Share   as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
@@ -289,6 +290,7 @@ performAction (ShareTeam username) p@{ reload: (_ /\ setReload)
   do
     void $ Share.shareReq session id $ Share.ShareTeamParams {username}
 
+
 performAction (SharePublic {params}) p@{ session
                                        , openNodes: (_ /\ setOpenNodes)
                                        } =
@@ -298,6 +300,15 @@ performAction (SharePublic {params}) p@{ session
       void $ Share.shareReq session inId $ Share.SharePublicParams {node_id:out}
       liftEffect $ setOpenNodes (Set.insert (mkNodeId session out))
       performAction RefreshTree p
+
+
+performAction (AddContact params) p@{ reload: (_ /\ setReload)
+                                     , session
+                                     , tree: (NTree (LNode {id}) _)
+                                     } =
+    void $ Contact.contactReq session id params
+
+
 
 -------
 performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)

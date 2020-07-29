@@ -26,6 +26,7 @@ data NodeAction = Documentation NodeType
                 | Move  { subTreeParams :: SubTreeParams }
                 | Link  { subTreeParams :: SubTreeParams }
                 | Clone
+                | AddingContact
 
 ------------------------------------------------------------------------
 instance eqNodeAction :: Eq NodeAction where
@@ -43,6 +44,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq (Merge x) (Merge y) = x == y
   eq Config Config     = true
   eq (Publish x) (Publish y) = x == y
+  eq AddingContact AddingContact = true
   eq _ _               = false
 
 instance showNodeAction :: Show NodeAction where
@@ -60,6 +62,7 @@ instance showNodeAction :: Show NodeAction where
   show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
   show (Merge t)         = "Merge with subtree" <> show t
   show (Publish x)       = "Publish" <> show x
+  show AddingContact     = "AddingContact"
 
 glyphiconNodeAction :: NodeAction -> String
 glyphiconNodeAction (Documentation _) = "question-circle"
@@ -73,6 +76,7 @@ glyphiconNodeAction (Merge _)         = "random"
 glyphiconNodeAction Refresh           = "refresh"
 glyphiconNodeAction Config            = "wrench"
 glyphiconNodeAction Share             = "user-plus"
+glyphiconNodeAction AddingContact     = "user-plus"
 glyphiconNodeAction (Move _)          = "share-square-o"
 glyphiconNodeAction (Publish _)       = fldr FolderPublic true
 glyphiconNodeAction _                 = ""
@@ -184,7 +188,7 @@ settingsBox Texts =
               , buttons : [ Refresh
                           , Upload
                           , Download
-                          -- , Delete
+                          , Delete
                           ]
               }
 
@@ -265,6 +269,7 @@ settingsBox Annuaire =
               , edit : true
               , doc  : Documentation Annuaire
               , buttons : [ Upload
+                          , AddingContact
                           , Move moveParameters
                           , Delete
                           ]

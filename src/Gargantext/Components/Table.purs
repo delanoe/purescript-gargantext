@@ -13,6 +13,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix (effectLink)
+import Gargantext.Components.Search
 
 type TableContainerProps =
   ( pageSizeControl     :: R.Element
@@ -27,7 +28,11 @@ type Rows = L.List Row
 
 type OrderBy = Maybe (OrderByDirection ColumnName)
 
-type Params = { offset :: Int, limit :: Int, orderBy :: OrderBy }
+type Params = { offset :: Int
+              , limit  :: Int
+              , orderBy :: OrderBy
+              , searchType :: SearchType
+              }
 
 newtype ColumnName = ColumnName String
 
@@ -64,16 +69,17 @@ type State =
   { page     :: Int
   , pageSize :: PageSizes
   , orderBy  :: OrderBy
+  , searchType :: SearchType
   }
 
 paramsState :: Params -> State
-paramsState {offset, limit, orderBy} = {pageSize, page, orderBy}
+paramsState {offset, limit, orderBy, searchType} = {pageSize, page, orderBy, searchType}
   where
     pageSize = int2PageSizes limit
     page = offset / limit + 1
 
 stateParams :: State -> Params
-stateParams {pageSize, page, orderBy} = {offset, limit, orderBy}
+stateParams {pageSize, page, orderBy, searchType} = {offset, limit, orderBy, searchType}
   where
     limit = pageSizes2Int pageSize
     offset = limit * (page - 1)
@@ -87,7 +93,7 @@ type TableHeaderLayoutProps =
   )
 
 initialParams :: Params
-initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing}
+initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing, searchType: SearchDoc}
 -- TODO: Not sure this is the right place for this
 
 tableHeaderLayout :: Record TableHeaderLayoutProps -> R.Element

@@ -16,7 +16,7 @@ import Reactix.DOM.HTML as H
 
 linkNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
 linkNodeReq session fromId toId =
-  put_ session $ NodeAPI GT.Node (Just fromId) ("link/" <> show toId)
+  put_ session $ NodeAPI GT.Node (Just fromId) ("pairWith/" <> show toId)
 
 linkNode :: Record SubTreeParamsIn -> R.Element
 linkNode p = R.createElement linkNodeCpt p []

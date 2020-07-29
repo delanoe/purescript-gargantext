@@ -3,26 +3,25 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-import Prelude
+------------------------------------------------------------------------
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array (concat, filter)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List as L
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set (Set)
+import Data.String as String
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-------------------------------------------------------------------------
+import Gargantext.Components.Category (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
+import Gargantext.Components.Search
+import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Components.DocsTable (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
-import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
@@ -30,30 +29,10 @@ import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..), NodeID)
 import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
+import Prelude
+import Reactix as R
+import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
-
-type TotalRecords = Int
-
--- Example:
---   [["machine","learning"],["artificial","intelligence"]]
--- This searches for documents with "machine learning" or "artificial intelligence"
-type TextQuery = Array (Array String)
-
-newtype SearchQuery = SearchQuery { query :: TextQuery }
-
-instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query})
-     -- = "query"     := query !! 0 -- TODO anoe
-    = "query" := concat query
-    ~> jsonEmptyObject
-
-newtype SearchResults = SearchResults { results :: Array Response }
-
-instance decodeSearchResults :: DecodeJson SearchResults where
-  decodeJson json = do
-    obj     <- decodeJson json
-    results <- obj .: "results"
-    pure $ SearchResults {results}
 
 type Props =
   ( chart :: R.Element
@@ -61,7 +40,7 @@ type Props =
   , frontends :: Frontends
   , listId :: Int
   , nodeId :: Int
-  , query :: TextQuery
+  , query :: SearchQuery
   , session :: Session
   , totalRecords :: Int
   )
@@ -72,7 +51,10 @@ type Deletions = { pending :: Set Int, deleted :: Set Int }
 initialDeletions :: Deletions
 initialDeletions = { pending: mempty, deleted: mempty }
 
-newtype Pair = Pair { id :: Int, label :: String }
+newtype Pair =
+  Pair { id    :: Int
+       , label :: String
+       }
 
 derive instance genericPair :: Generic Pair _
 
@@ -103,75 +85,6 @@ derive instance genericDocumentsView :: Generic DocumentsView _
 
 instance showDocumentsView :: Show DocumentsView where
   show = genericShow
-
-newtype Response = Response
-  { id         :: Int
-  , created    :: String
-  , hyperdata  :: Hyperdata
-  , category   :: Category
-  , ngramCount :: Int
--- , date      :: String
--- , score     :: Int
--- , pairs     :: Array Pair
-  }
-
-newtype Hyperdata = Hyperdata
-  { authors :: String
-  , title   :: String
-  , source  :: String
-  , publication_year :: Int
-  , publication_month :: Int
-  , publication_day :: Int
-  }
-
---instance decodeHyperdata :: DecodeJson Hyperdata where
---  decodeJson json = do
---    obj    <- decodeJson json
---    title  <- obj .: "title"
---    source <- obj .: "source"
---    pure $ Hyperdata { title,source }
-
-instance decodePair :: DecodeJson Pair where
-  decodeJson json = do
-    obj   <- decodeJson json
-    id    <- obj .: "id"
-    label <- obj .: "label"
-    pure $ Pair { id, label }
-
-instance decodeHyperdata :: DecodeJson Hyperdata where
-  decodeJson json = do
-    obj    <- decodeJson json
-    authors <- obj .| "authors"
-    title  <- obj .| "title"
-    source <- obj .| "source"
-    publication_year <- obj .: "publication_year"
-    publication_month <- obj .: "publication_month"
-    publication_day <- obj .: "publication_day"
-    pure $ Hyperdata { authors, title, source, publication_year, publication_month, publication_day }
-
-{-
-instance decodeResponse :: DecodeJson Response where
-  decodeJson json = do
-    obj       <- decodeJson json
-    id        <- obj .: "id"
-    -- date      <- obj .: "date" -- TODO
-    date      <- pure "2018"
-    score     <- obj .: "score"
-    hyperdata <- obj .: "hyperdata"
-    pairs     <- obj .: "pairs"
-    pure $ Response { id, date, score, hyperdata, pairs }
--}
-
-instance decodeResponse :: DecodeJson Response where
-  decodeJson json = do
-    obj        <- decodeJson json
-    id         <- obj .: "id"
-    created    <- obj .: "created"
-    hyperdata  <- obj .: "hyperdata"
-    favorite   <- obj .: "favorite"
-    --ngramCount <- obj .: "ngramCount"
-    let ngramCount = 1
-    pure $ Response { id, created, hyperdata, category: decodeCategory favorite, ngramCount}
 
 -- | Main layout of the Documents Tab of a Corpus
 docView :: Record Props -> R.Element
@@ -217,7 +130,7 @@ performDeletions session nodeId (deletions /\ setDeletions) =
 
 markCategory :: Session -> NodeID -> Category -> Array NodeID -> Effect Unit
 markCategory session nodeId category nids =
-  void $ launchAff_ $putCategories session nodeId (CategoryQuery q)
+  void $ launchAff_ $ putCategories session nodeId (CategoryQuery q)
   where -- TODO add array of delete rows here
     q = {nodeIds: nids, category: favCategory category}
 
@@ -249,35 +162,26 @@ docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
               , H.button { style: buttonStyle, on: { click: performClick } }
                 [ H.i { className: "glyphitem glyphicon glyphicon-trash"
                       , style: { marginRight : "9px" } } []
-                , H.text "Delete document!" ] ] ] ] ]
+                , H.text "Delete document!" 
+                ]
+              ]
+            ]
+          ]
+        ]
 
-type PagePath = {nodeId :: Int, listId :: Int, query :: TextQuery, params :: T.Params, session :: Session}
+type PagePath = { nodeId :: Int
+                , listId :: Int
+                , query   :: SearchQuery
+                , params  :: T.Params
+                , session :: Session
+                }
 
-initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: TextQuery} -> PagePath
+initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: SearchQuery} -> PagePath
 initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
 
 loadPage :: PagePath -> Aff (Array DocumentsView)
-loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
-  let p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
-  SearchResults res <- post session p $ SearchQuery {query}
-  pure $ res2corpus <$> res.results
-  where
-    res2corpus :: Response -> DocumentsView
-    res2corpus (Response { id, created: date, ngramCount: score, category
-                         , hyperdata: Hyperdata {authors, title, source, publication_year, publication_month, publication_day} }) =
-      DocumentsView { id
-                    , date
-                    , title
-                    , source
-                    , score
-                    , authors
-                    , category
-                    , pairs: []
-                    , delete: false
-                    , publication_year
-                    , publication_month
-                    , publication_day
-                    }
+loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searchType}} = do
+  let
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
     convOrderBy (T.ASC  (T.ColumnName "Title")) = TitleAsc
@@ -286,13 +190,96 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy}} = do
     convOrderBy (T.DESC (T.ColumnName "Source")) = SourceDesc
     convOrderBy _ = DateAsc -- TODO
 
+    p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
+
+  --SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:searchType}
+  SearchResult {result} <- post session p query
+  -- $ SearchQuery {query: concat query, expected: SearchDoc}
+  pure $ case result of
+              SearchResultDoc     {docs}     -> docs2view docs
+              SearchResultContact {contacts} -> contacts2view contacts
+              errMessage                     -> err2view errMessage
+
+docs2view :: Array Document -> Array DocumentsView
+docs2view docs = map toView docs
+  where
+    toView :: Document -> DocumentsView
+    toView ( Document { id
+                     , created: date
+                     , hyperdata:  HyperdataRowDocument { authors
+                                                    , title
+                                                    , source
+                                                    , publication_year
+                                                    , publication_month
+                                                    , publication_day
+                                                    }
+                     , category
+                     , score
+                     }
+            ) = DocumentsView { id
+                              , date
+                              , title: fromMaybe "Title" title
+                              , source: fromMaybe "Source" source
+                              , score
+                              , authors: fromMaybe "Authors" authors
+                              , category: decodeCategory category
+                              , pairs: []
+                              , delete: false
+                              , publication_year : fromMaybe 2020 publication_year
+                              , publication_month: fromMaybe    1 publication_month
+                              , publication_day  : fromMaybe    1 publication_day
+                              }
+contacts2view contacts = map toView contacts
+  where
+    toView :: Contact -> DocumentsView
+    toView (Contact { c_id
+                     , c_created: date
+                     , c_hyperdata: HyperdataRowContact { firstname
+                                                   , lastname
+                                                   , labs
+                                                   }
+                     , c_score
+                     }
+            ) = DocumentsView { id: c_id
+                              , date
+                              , title : firstname <> lastname
+                              , source: labs
+                              , score: c_score
+                              , authors: labs
+                              , category: decodeCategory 1
+                              , pairs: []
+                              , delete: false
+                              , publication_year: 2020
+                              , publication_month: 10
+                              , publication_day: 1
+                              }
+
+err2view message =
+  [DocumentsView { id: 1
+                 , date: "2020-01-01"
+                 , title : "SearchNoResult"
+                 , source: "Source"
+                 , score: 1
+                 , authors: "Authors"
+                 , category: decodeCategory 1
+                 , pairs: []
+                 , delete: false
+                 , publication_year: 2020
+                 , publication_month: 10
+                 , publication_day: 1
+                 }
+   ]
+
+
+
+
 type PageLayoutProps =
-  ( frontends :: Frontends
+  ( frontends    :: Frontends
   , totalRecords :: Int
-  , deletions :: R.State Deletions
-  , container :: Record T.TableContainerProps -> R.Element
-  , session :: Session
-  , path :: R.State PagePath
+  , deletions    :: R.State Deletions
+  , container    :: Record T.TableContainerProps -> R.Element
+  , session      :: Session
+  , path         :: R.State PagePath
   )
 
 type PageProps = ( documents :: Array DocumentsView | PageLayoutProps )

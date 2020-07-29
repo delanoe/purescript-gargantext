@@ -42,13 +42,13 @@ data SessionRoute
   | GetNgramsTableVersion { listId :: ListId, tabType :: TabType } (Maybe Id)
   | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
   -- ^ This name is not good. In particular this URL is used both in PUT and POST.
-  | RecomputeNgrams (TabSubType CTabNgramType) Id ListId
-  | RecomputeListChart ChartType CTabNgramType Id ListId
-  | NodeAPI NodeType (Maybe Id) String
-  | GraphAPI Id String
-  | ListsRoute ListId
+  | RecomputeNgrams   (TabSubType CTabNgramType) Id ListId
+  | RecomputeListChart ChartType  CTabNgramType  Id ListId
+  | NodeAPI       NodeType (Maybe Id) String
+  | GraphAPI      Id String
+  | ListsRoute    ListId
   | ListDocument (Maybe ListId) (Maybe Id)
-  | Search SearchOpts (Maybe Id)
+  | Search        SearchOpts (Maybe Id)
   | CorpusMetrics CorpusMetricOpts  (Maybe Id)
   | CorpusMetricsHash { listId :: ListId, tabType :: TabType }  (Maybe Id)
   | Chart ChartOpts (Maybe Id)
