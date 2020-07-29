@@ -176,7 +176,7 @@ settingsBox Corpus =
                           , Download
                           , Move moveParameters
                             --, Clone
-                          , Link linkParams
+                          , Link (linkParams Annuaire)
                           , Delete
                           ]
               }
@@ -271,6 +271,7 @@ settingsBox Annuaire =
               , buttons : [ Upload
                           , AddingContact
                           , Move moveParameters
+                          , Link (linkParams Corpus)
                           , Delete
                           ]
               }
@@ -349,19 +350,20 @@ moveFrameParameters = { subTreeParams : SubTreeParams
                   }
 
 
-
-linkParams =  { subTreeParams : SubTreeParams 
+linkParams :: NodeType -> {subTreeParams :: SubTreeParams}
+linkParams nodeType =  { subTreeParams : SubTreeParams 
                               { showtypes: [ FolderPrivate
                                            , FolderShared
                                            , Team
                                            , FolderPublic
                                            , Folder
-                                           , Annuaire
+                                           , nodeType
                                            ]
-                              , valitypes: [ Annuaire
+                              , valitypes: [ nodeType
                                            ]
                               }
-               }
+                      }
+
 
 
 publishParams =  { subTreeParams : SubTreeParams
