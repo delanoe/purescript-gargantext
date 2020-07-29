@@ -18,7 +18,8 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes as Routes
-import Gargantext.Sessions (Session, get, put)
+import Gargantext.Ends (Frontends)
+import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -133,15 +134,35 @@ infoRender (Tuple title content) =
   [ H.span { className: "badge badge-default badge-pill"} [ H.text title ]
   , H.span {} [H.text content] ]
 
-type LayoutProps = ( frontends :: Frontends, nodeId :: Int, session :: Session )
+type LayoutProps = (
+    frontends :: Frontends
+  , nodeId :: Int
+  , session :: Session
+  )
+
+type KeyLayoutProps = (
+    key :: String
+  | LayoutProps
+  )
 
 userLayout :: Record LayoutProps -> R.Element
 userLayout props = R.createElement userLayoutCpt props []
 
 userLayoutCpt :: R.Component LayoutProps
-userLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.userLayout" cpt
+userLayoutCpt = R.hooksComponent "G.C.N.A.U.C.userLayout" cpt
   where
-    cpt {frontends, nodeId, session} _ = do
+    cpt { frontends, nodeId, session } _ = do
+      let sid = sessionId session
+
+      pure $ userLayoutWithKey { frontends, key: show sid <> "-" <> show nodeId, nodeId, session }
+
+userLayoutWithKey :: Record KeyLayoutProps -> R.Element
+userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
+
+userLayoutWithKeyCpt :: R.Component KeyLayoutProps
+userLayoutWithKeyCpt = R.hooksComponent "G.C.N.A.U.C.userLayoutWithKey" cpt
+  where
+    cpt { frontends, nodeId, session } _ = do
       reload <- R.useState' 0
 
       useLoader {nodeId, reload: fst reload, session} getContactWithReload $

@@ -9,22 +9,43 @@ import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session, sessionId)
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-type Props = ( session :: Session, nodeId :: Int )
+type Props = (
+    nodeId :: Int
+  , session :: Session
+  )
 
 listsLayout :: Record Props -> R.Element
 listsLayout props = R.createElement listsLayoutCpt props []
 
 listsLayoutCpt :: R.Component Props
-listsLayoutCpt = R.hooksComponent "G.P.Lists.listsLayout" cpt
+listsLayoutCpt = R.hooksComponent "G.C.N.L.listsLayout" cpt
   where
-    cpt path@{session} _ =
+    cpt path@{ nodeId, session } _ = do
+      let sid = sessionId session
+
+      pure $ listsLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
+
+type KeyProps = (
+  key :: String
+  | Props
+  )
+
+listsLayoutWithKey :: Record KeyProps -> R.Element
+listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
+
+listsLayoutWithKeyCpt :: R.Component KeyProps
+listsLayoutWithKeyCpt = R.hooksComponent "G.C.N.L.listsLayoutWithKey" cpt
+  where
+    cpt { nodeId, session } _ = do
+      let path = { nodeId, session }
+
       useLoader path loadCorpusWithChild $
-        \corpusData@{corpusId, defaultListId, corpusNode: NodePoly poly} ->
-              let { name, date, hyperdata : Hyperdata h} = poly
+        \corpusData@{ corpusId, corpusNode: NodePoly poly, defaultListId } ->
+              let { date, hyperdata : Hyperdata h, name } = poly
                   CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
            in
           R.fragment

@@ -3,20 +3,21 @@ module Gargantext.Components.Nodes.Frame where
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst)
 import Effect.Aff (Aff)
-import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
-import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session, get)
-import Gargantext.Types (NodeType(..))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 --import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
-import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 import Data.Argonaut (decodeJson, (.:))
+
+import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
+import Gargantext.Routes (SessionRoute(NodeAPI))
+import Gargantext.Sessions (Session, get, sessionId)
+import Gargantext.Types (NodeType(..))
+import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 
 data Hyperdata =
   Hyperdata { base :: String
@@ -56,13 +57,24 @@ type KeyProps =
   | Props
   )
 
-frameLayout :: Record KeyProps -> R.Element
+frameLayout :: Record Props -> R.Element
 frameLayout props = R.createElement frameLayoutCpt props []
 
-frameLayoutCpt :: R.Component KeyProps
-frameLayoutCpt = R.hooksComponent "G.C.N.C.writeLayout" cpt
+frameLayoutCpt :: R.Component Props
+frameLayoutCpt = R.hooksComponent "G.C.N.F.frameLayout" cpt
   where
     cpt {nodeId, session} _ = do
+      let sid = sessionId session
+
+      pure $ frameLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
+
+frameLayoutWithKey :: Record KeyProps -> R.Element
+frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []
+
+frameLayoutWithKeyCpt :: R.Component KeyProps
+frameLayoutWithKeyCpt = R.hooksComponent "G.C.N.F.frameLayoutWithKey" cpt
+  where
+    cpt { nodeId, session } _ = do
       reload <- R.useState' 0
 
       useLoader {nodeId, reload: fst reload, session} loadframeWithReload $
