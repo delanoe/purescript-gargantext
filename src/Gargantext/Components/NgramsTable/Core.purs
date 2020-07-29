@@ -68,6 +68,10 @@ import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
 import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Ord (genericCompare)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Lens (Iso', Lens', use, view, (%=), (.~), (?=), (^?))
 import Data.Lens.At (class At, at)
 import Data.Lens.Common (_Just)
@@ -143,8 +147,13 @@ initialPageParams session nodeId listIds tabType =
 
 newtype NgramsTerm = NormNgramsTerm String
 
-derive instance eqNgramsTerm  :: Eq  NgramsTerm
-derive instance ordNgramsTerm :: Ord NgramsTerm
+derive instance genericNgramsTerm :: Generic NgramsTerm _
+instance eqNgramsTerm  :: Eq NgramsTerm where
+  eq = genericEq
+instance ordNgramsTerm :: Ord NgramsTerm where
+  compare = genericCompare
+instance showNgramsTerm :: Show NgramsTerm where
+  show = genericShow
 
 instance encodeJsonNgramsTerm :: EncodeJson NgramsTerm where
   encodeJson (NormNgramsTerm s) = encodeJson s
@@ -692,11 +701,11 @@ syncPatches props { ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPa
         }
 
 syncPatchesR :: forall p s. CoreParams p -> R.State (CoreState s) -> Effect Unit
-syncPatchesR props ({ ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPatches}
-                   , ngramsStagePatch
-                   , ngramsValidPatch
-                   , ngramsVersion
-                   } /\ setState) = do
+syncPatchesR props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsNewElems, ngramsPatches }
+                    , ngramsStagePatch
+                    , ngramsValidPatch
+                    , ngramsVersion
+                    } /\ setState) = do
   when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
     setState $ \s ->
       s { ngramsLocalPatch = fromNgramsPatches mempty

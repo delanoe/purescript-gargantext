@@ -47,7 +47,7 @@ searchField p = R.createElement searchFieldComponent p []
 --searchFieldComponent :: R.Memo Props
 --searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
 searchFieldComponent :: R.Component Props
-searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
+searchFieldComponent = R.hooksComponent "G.C.F.T.N.A.S.SF.searchField" cpt
   where
     cpt props@{onSearch, search: search@(s /\ _)} _ = do
       iframeRef <- R.useRef    null
@@ -75,7 +75,7 @@ searchFieldComponent = R.hooksComponent "G.C.S.SearchField" cpt
                                  then componentCNRS search
                                  else H.div {} []
  
-                             , H.div {} [ searchIframes search iframeRef ]
+                             , H.div {} [ searchIframes { iframeRef, search } ]
 
                              , if needsLang s.datafield
                                 then langNav search props.langs
