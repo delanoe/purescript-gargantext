@@ -28,3 +28,8 @@ exports._getSelection = getSelection;
 exports._stringify = stringify;
 exports._postMessage = postMessage;
 exports._setCookie = setCookie;
+
+exports._keyCode = function(e) {
+  // https://www.w3schools.com/jsref/event_key_keycode.asp
+  return e.which || e.keyCode;
+}

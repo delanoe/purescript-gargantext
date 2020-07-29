@@ -19,6 +19,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 
 import Gargantext.Components.CodeEditor as CE
+import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, FTField, Field(..), FieldType(..), Hash, Hyperdata(..), defaultField, defaultHaskell', defaultPython', defaultJSON', defaultMarkdown')
 import Gargantext.Data.Array as GDA
@@ -278,7 +279,7 @@ renameableCpt = R.hooksComponent "G.C.N.C.renameableCpt" cpt
           snd state $ const text
 
       pure $ H.div { className: "renameable" } [
-        renameableText {isEditing, onRename, state}
+        renameableText { isEditing, onRename, state }
       ]
 
 type RenameableTextProps =
@@ -304,17 +305,24 @@ renameableTextCpt = R.hooksComponent "G.C.N.C.renameableTextCpt" cpt
         ]
     cpt {isEditing: (true /\ setIsEditing), onRename, state: (text /\ setText)} _ = do
       pure $ H.div {} [
-        H.input { defaultValue: text
-                , className: "form-control text"
-                , on: { change: \e -> setText $ const $ R2.unsafeEventValue e } }
+          inputWithEnter {
+               onEnter: submit
+             , onValueChanged: setText <<< const
+             , autoFocus: false
+             , className: "form-control text"
+             , defaultValue: text
+             , placeholder: ""
+             , type: "text"
+             }
         , H.span { className: "btn btn-default"
-                 , on: { click: \_ -> do
-                            setIsEditing $ const false
-                            onRename text
-                       } } [
+                 , on: { click: submit } } [
            H.span { className: "fa fa-floppy-o" } []
            ]
         ]
+      where
+        submit _ = do
+          setIsEditing $ const false
+          onRename text
 
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
