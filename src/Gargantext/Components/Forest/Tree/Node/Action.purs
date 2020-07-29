@@ -33,7 +33,7 @@ data Action = AddNode     String GT.NodeType
             | SharePublic {params :: Maybe SubTreeOut}
             | MoveNode    {params :: Maybe SubTreeOut}
             | MergeNode   {params :: Maybe SubTreeOut}
-            | LinkNode    {params :: Maybe SubTreeOut}
+            | LinkNode    {nodeType :: Maybe GT.NodeType, params :: Maybe SubTreeOut}
 
             | NoAction
 
@@ -48,7 +48,7 @@ subTreeOut _                    = Nothing
 setTreeOut ::  Action -> Maybe SubTreeOut -> Action
 setTreeOut (MoveNode  {params:_}) p = MoveNode  {params: p}
 setTreeOut (MergeNode {params:_}) p = MergeNode {params: p}
-setTreeOut (LinkNode  {params:_}) p = LinkNode  {params: p}
+setTreeOut (LinkNode  {nodeType, params:_}) p = LinkNode  {nodeType, params: p}
 setTreeOut (SharePublic {params:_}) p = SharePublic  {params: p}
 setTreeOut a   _             = a
 

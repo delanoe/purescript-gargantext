@@ -349,11 +349,11 @@ performAction (MergeNode {params}) p@{session} =
       void $ mergeNodeReq session in' out
       performAction RefreshTree p
 
-performAction (LinkNode {params}) p@{session} =
+performAction (LinkNode {nodeType, params}) p@{session} = do
   case params of
     Nothing -> performAction NoAction p
     Just (SubTreeOut {in:in',out}) -> do
-      void $ linkNodeReq session in' out
+      void $ linkNodeReq session nodeType in' out
       performAction RefreshTree p
 
 -------
