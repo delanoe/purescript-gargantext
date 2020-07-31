@@ -15,7 +15,7 @@ import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Reload)
+import Gargantext.Types (Reload, Handed(..))
 import Gargantext.Utils.Reactix as R2
 
 type Props =
@@ -58,6 +58,7 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
                  , openNodes
                  , reload
                  , session: s
+                 , handed: RightHanded -- TODO enabling user to change it and save locally
                  }
 
 plus :: R2.Setter Boolean -> R.Element

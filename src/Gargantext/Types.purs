@@ -15,6 +15,17 @@ import Prelude
 import Prim.Row (class Union)
 import URI.Query (Query)
 
+
+
+data Handed = LeftHanded | RightHanded
+
+derive instance genericHanded :: Generic Handed _
+
+instance eqHanded :: Eq Handed where
+  eq = genericEq
+
+
+-------------------------------------------------------------------------
 type ID     = Int
 type Name   = String
 type Reload = Int
