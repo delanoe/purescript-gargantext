@@ -130,7 +130,7 @@ formEdit defaultValue setter =
                , placeholder : defaultValue
                , defaultValue: "Write" <> defaultValue
                , className   : "form-control"
-               , on: { input: \_ -> setter
+               , on: { input: setter
                                 <<< const
                                 <<< R2.unsafeEventValue }
               }

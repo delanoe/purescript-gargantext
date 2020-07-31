@@ -76,7 +76,7 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                               where
                                 defaultNt = (fromMaybe Error $ head nodeTypes)
           maybeEdit   = [ if edit
-                          then formEdit "Node Name" setNodeName
+                          then formEdit name' setNodeName
                           else H.div {} []
                         ]
 
