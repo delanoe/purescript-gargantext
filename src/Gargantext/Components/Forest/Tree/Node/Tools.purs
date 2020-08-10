@@ -128,7 +128,7 @@ formEdit defaultValue setter =
   H.div {className: "form-group"}
      [ H.input { type        : "text"
                , placeholder : defaultValue
-               , defaultValue: "Write" <> defaultValue
+               , defaultValue: defaultValue
                , className   : "form-control"
                , on: { input: setter
                                 <<< const
