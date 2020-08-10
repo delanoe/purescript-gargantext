@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..))
 import Gargantext.Prelude (class Read, class Show, class Eq)
 
 
-data FileType = CSV | CSV_HAL | WOS | PresseRIS
+data FileType = CSV | CSV_HAL | WOS | PresseRIS | Arbitrary
 
 derive instance genericFileType :: Generic FileType _
 
@@ -23,6 +23,7 @@ instance readFileType :: Read FileType where
   read "CSV_HAL"   = Just CSV_HAL
   read "PresseRIS" = Just PresseRIS
   read "WOS"       = Just WOS
+  read "Arbitrary" = Just Arbitrary
   read _           = Nothing
 
 

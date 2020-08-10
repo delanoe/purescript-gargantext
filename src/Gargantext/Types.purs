@@ -566,6 +566,7 @@ modeFromString _ = Nothing
 
 -- corresponds to /add/form/async or /add/query/async
 data AsyncTaskType = Form
+                   | UploadFile
                    | GraphT
                    | Query
                    | AddNode
@@ -583,16 +584,18 @@ instance decodeJsonAsyncTaskType :: DecodeJson AsyncTaskType where
     obj <- decodeJson json
     case obj of
       "Form"       -> pure Form
+      "UploadFile" -> pure UploadFile
       "GraphT"     -> pure GraphT
       "Query"      -> pure Query
       "AddNode"    -> pure AddNode
       s            -> Left ("Unknown string " <> s)
 
 asyncTaskTypePath :: AsyncTaskType -> String
-asyncTaskTypePath Form   = "add/form/async/"
-asyncTaskTypePath Query  = "query/"
-asyncTaskTypePath GraphT = "async/"
-asyncTaskTypePath AddNode = "async/nobody/"
+asyncTaskTypePath Form       = "add/form/async/"
+asyncTaskTypePath UploadFile = "add/file/async/"
+asyncTaskTypePath Query      = "query/"
+asyncTaskTypePath GraphT     = "async/"
+asyncTaskTypePath AddNode    = "async/nobody/"
 asyncTaskTypePath UpdateNode = "update/"
 
 

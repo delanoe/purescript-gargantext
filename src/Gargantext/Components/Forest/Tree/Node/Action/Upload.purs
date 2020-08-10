@@ -5,24 +5,27 @@ import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff)
+import Effect.Aff (Aff, launchAff, throwError)
 import Effect.Class (liftEffect)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileContents(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
-import Gargantext.Components.Lang (Lang(..))
-import Gargantext.Prelude (class Show, Unit, discard, bind, const, id, map, pure, show, unit, void, ($), read)
-import Gargantext.Routes       as GR
-import Gargantext.Sessions (Session, postWwwUrlencoded)
-import Gargantext.Types (NodeType(..), ID)
-import Gargantext.Types         as GT
-import Gargantext.Utils.Reactix as R2
+import Effect.Exception (error)
 import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent     as E
 import Reactix                  as R
 import Reactix.DOM.HTML         as H
 import URI.Extra.QueryPairs     as QP
 import Web.File.FileReader.Aff (readAsText)
+
+import Gargantext.Prelude
+
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
+import Gargantext.Components.Lang (Lang(..))
+import Gargantext.Routes       as GR
+import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Types (NodeType(..), ID)
+import Gargantext.Types         as GT
+import Gargantext.Utils.Reactix as R2
 
 -- UploadFile Action
 
@@ -81,6 +84,7 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
                                             , CSV_HAL
                                             , WOS
                                             , PresseRIS
+                                            , Arbitrary
                                             ] CSV setFileType
                            ]
 
@@ -162,9 +166,13 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
           Just _  -> ""
 
         onClick e = do
-          let {name, contents} = unsafePartial $ fromJust mFile
+          let { contents, name } = unsafePartial $ fromJust mFile
           void $ launchAff do
-            _ <- dispatch $ UploadFile nodeType fileType (Just name) contents
+            case fileType of
+              Arbitrary ->
+                dispatch $ UploadArbitraryFile nodeType (Just name) contents
+              _ ->
+                dispatch $ UploadFile nodeType fileType (Just name) contents
             liftEffect $ do
               setMFile     $ const $ Nothing
               setFileType  $ const $ CSV
@@ -279,8 +287,6 @@ uploadFile session nodeType id fileType {mName, contents: UploadFileContents con
     pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
     --postMultipartFormData session p fileContents
   where
-    q = FileUploadQuery { fileType: fileType }
-    --p = NodeAPI GT.Corpus (Just id) $ "add/file/async/nobody" <> Q.print (toQuery q)
     p = case nodeType of
       Corpus   -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
       Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
@@ -289,6 +295,27 @@ uploadFile session nodeType id fileType {mName, contents: UploadFileContents con
     bodyParams = [ Tuple "_wf_data"     (Just contents)
                  , Tuple "_wf_filetype" (Just $ show fileType)
                  , Tuple "_wf_name"      mName
+                 ]
+
+
+uploadArbitraryFile :: Session
+                    -> GT.NodeType
+                    -> ID
+                    -> {contents :: UploadFileContents, mName :: Maybe String}
+                    -> Aff GT.AsyncTaskWithType
+uploadArbitraryFile session nodeType id {mName, contents: UploadFileContents contents} = do
+    if nodeType == Corpus then
+      pure unit
+    else
+      throwError $ error $ "[uploadArbitraryFile] NodeType " <> (show nodeType) <> " not supported"
+
+    task <- postWwwUrlencoded session p bodyParams
+    pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
+  where
+    p = GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.UploadFile
+
+    bodyParams = [ Tuple "_wfi_data"     (Just contents)
+                 , Tuple "_wfi_name"      mName
                  ]
 
 ------------------------------------------------------------------------
