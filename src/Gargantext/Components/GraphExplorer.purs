@@ -42,6 +42,7 @@ type GraphId = Int
 type LayoutProps =
   ( frontends :: Frontends
   , graphId :: GraphId
+  , handed :: Types.Handed
   , mCurrentRoute :: AppRoute
   , session :: Session
   , sessions :: Sessions
@@ -86,7 +87,17 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
-    cpt props@{frontends, graph, graphId, graphVersion, mCurrentRoute, mMetaData, session, sessions, showLogin, treeReload } _ = do
+    cpt props@{ frontends
+              , graph
+              , graphId
+              , graphVersion
+              , handed
+              , mCurrentRoute
+              , mMetaData
+              , session
+              , sessions
+              , showLogin
+              , treeReload } _ = do
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
@@ -125,6 +136,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                 [ rowControls [ Controls.controls controls ]
                 , R2.row [
                         tree { frontends
+                             , handed
                              , mCurrentRoute
                              , reload: props.treeReload
                              , sessions
@@ -165,9 +177,9 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { frontends, mCurrentRoute: route, reload, sessions, showLogin } =
+    tree { frontends, handed, mCurrentRoute: route, reload, sessions, showLogin } =
       RH.div {className: "col-md-2 graph-tree"} [
-        forest { frontends, reload, route, sessions, showLogin }
+        forest { frontends, handed, reload, route, sessions, showLogin }
       ]
 
     mSidebar :: Maybe GET.MetaData
@@ -180,6 +192,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
 type TreeProps =
   (
     frontends :: Frontends
+  , handed :: Types.Handed
   , mCurrentRoute :: AppRoute
   , reload :: R.State Int
   , sessions :: Sessions

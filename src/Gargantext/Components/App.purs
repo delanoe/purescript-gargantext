@@ -1,12 +1,14 @@
 module Gargantext.Components.App where
 
-import Data.Array (fromFoldable)
+import Data.Array (fromFoldable, reverse)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
-import Prelude
+import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
@@ -29,6 +31,7 @@ import Gargantext.Router (router)
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Sessions (Sessions, useSessions)
 import Gargantext.Sessions as Sessions
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
 -- TODO (what does this mean?)
@@ -49,10 +52,13 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
 
     treeReload <- R.useState' 0
 
+    handed <- R.useState' GT.RightHanded
+
     let backends          = fromFoldable defaultBackends
     let ff f session      = R.fragment [ f session, footer { session } ]
     let forested child    = forestLayout { child
                                          , frontends
+                                         , handed
                                          , reload: treeReload
                                          , route:  fst route
                                          , sessions: fst sessions
@@ -88,9 +94,10 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
           PGraphExplorer sid graphId ->
             withSession sid $
               \session ->
-                simpleLayout $
+                simpleLayout handed $
                   explorerLayout { frontends
                                  , graphId
+                                 , handed: fst handed
                                  , mCurrentRoute
                                  , session
                                  , sessions: (fst sessions)
@@ -100,6 +107,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
 type ForestLayoutProps =
   ( child     :: R.Element
   , frontends :: Frontends
+  , handed    :: R.State GT.Handed
   , reload    :: R.State Int
   , route     :: AppRoute
   , sessions  :: Sessions
@@ -112,8 +120,8 @@ forestLayout props = R.createElement forestLayoutCpt props []
 forestLayoutCpt :: R.Component ForestLayoutProps
 forestLayoutCpt = R.hooksComponent "G.C.A.forestLayout" cpt
   where
-    cpt props _ = do
-      pure $ R.fragment [ topBar {}, forestLayoutMain props ]
+    cpt props@{ handed } _ = do
+      pure $ R.fragment [ topBar { handed }, forestLayoutMain props ]
 
 forestLayoutMain :: Record ForestLayoutProps -> R.Element
 forestLayoutMain props = R.createElement forestLayoutMainCpt props []
@@ -121,16 +129,21 @@ forestLayoutMain props = R.createElement forestLayoutMainCpt props []
 forestLayoutMainCpt :: R.Component ForestLayoutProps
 forestLayoutMainCpt = R.hooksComponent "G.C.A.forestLayoutMain" cpt
   where
-    cpt { child, frontends, reload, route, sessions, showLogin } _ = do
-      pure $ R2.row [
+    cpt { child, frontends, handed, reload, route, sessions, showLogin } _ = do
+      let ordering =
+            case fst handed of
+              GT.LeftHanded  -> reverse
+              GT.RightHanded -> identity
+
+      pure $ R2.row $ ordering [
         H.div { className: "col-md-2", style: { paddingTop: "60px" } }
-            [ forest { frontends, reload, route, sessions, showLogin } ]
+            [ forest { frontends, handed: fst handed, reload, route, sessions, showLogin } ]
       , mainPage child
       ]
 
 -- Simple layout does not accommodate the tree
-simpleLayout :: R.Element -> R.Element
-simpleLayout child = R.fragment [ topBar {}, child, license]
+simpleLayout :: R.State GT.Handed -> R.Element -> R.Element
+simpleLayout handed child = R.fragment [ topBar { handed }, child, license]
 
 mainPage :: R.Element -> R.Element
 mainPage child =
@@ -138,16 +151,58 @@ mainPage child =
   [ H.div {id: "page-wrapper"}
     [ H.div {className: "container-fluid"} [ child ] ] ]
 
-topBar :: {} -> R.Element
-topBar _ =
-  H.div { id: "dafixedtop", role: "navigation"
-        , className: "navbar navbar-inverse navbar-fixed-top" }
-  [ H.div { className: "container-fluid" }
-    [ H.div { className: "navbar-inner" }
-      [ logo
-      , H.div { className: "collapse navbar-collapse" }
-        [ divDropdownLeft ] ] ] ]
-      -- SB.searchBar {session, databases: allDatabases}
+type TopBarProps = (
+  handed :: R.State GT.Handed
+  )
+
+topBar :: Record TopBarProps -> R.Element
+topBar props = R.createElement topBarCpt props []
+
+topBarCpt :: R.Component TopBarProps
+topBarCpt = R.hooksComponent "G.C.A.topBar" cpt
+  where
+    cpt { handed } _ = do
+      pure $ H.div { id: "dafixedtop"
+                   , role: "navigation"
+                   , className: "navbar navbar-inverse navbar-fixed-top" }
+        [ H.div { className: "container-fluid" }
+          [ H.div { className: "navbar-inner" }
+            [ logo
+            , H.div { className: "collapse navbar-collapse" } [
+                H.ul { className: "nav navbar-nav" } [
+                  divDropdownLeft
+                , handedChooser { handed }
+                ]
+              ]
+            ]
+          ]
+        ]
+            -- SB.searchBar {session, databases: allDatabases}
+
+type HandedChooserProps = (
+  handed :: R.State GT.Handed
+  )
+
+handedChooser :: Record HandedChooserProps -> R.Element
+handedChooser props = R.createElement handedChooserCpt props []
+
+handedChooserCpt :: R.Component HandedChooserProps
+handedChooserCpt = R.hooksComponent "G.C.A.handedChooser" cpt
+  where
+    cpt { handed } _ = do
+      pure $ H.li {} [
+        H.a {} [
+          H.span { className: handedClass handed
+                 , on: { click: onClick handed } } []
+          ]
+        ]
+
+    handedClass (GT.LeftHanded /\ _) = "fa fa-hand-o-left"
+    handedClass (GT.RightHanded /\ _) = "fa fa-hand-o-right"
+
+    onClick (_ /\ setHanded) = setHanded $ \h -> case h of
+      GT.LeftHanded  -> GT.RightHanded
+      GT.RightHanded -> GT.LeftHanded
 
 logo :: R.Element
 logo =
@@ -163,14 +218,12 @@ divDropdownLeft =
   divDropdownLeft' $
     LiNav { title : "About Gargantext"
           , href  : "#"
-          , icon  : "glyphicon glyphicon-info-sign"
+          , icon  : "fa fa-info-circle"
           , text  : "Info" }
 
 divDropdownLeft' :: LiNav -> R.Element
 divDropdownLeft' mb =
-  H.ul {className: "nav navbar-nav"}
-  [ H.ul {className: "nav navbar-nav pull-left"}
-    [ H.li {className: "dropdown"} [ menuButton mb, menuElements' ] ] ]
+  H.li {className: "dropdown"} [ menuButton mb, menuElements' ]
 
 menuButton :: LiNav -> R.Element
 menuButton (LiNav { title, href, icon, text } ) =

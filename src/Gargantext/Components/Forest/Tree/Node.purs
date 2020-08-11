@@ -51,7 +51,7 @@ type NodeMainSpanProps =
 
 nodeMainSpan :: Record NodeMainSpanProps
              -> R.Element
-nodeMainSpan p@{ dispatch, folderOpen, frontends, session, handed} = R.createElement el p []
+nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createElement el p []
   where
     el = R.hooksComponent "G.C.F.T.N.NodeMainSpan" cpt
     cpt props@{id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks }} _ = do
@@ -61,11 +61,13 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session, handed} = R.createEle
 
       popoverRef    <- R.useRef null
 
+      let ordering =
+            case handed of
+              GT.LeftHanded  -> reverse
+              GT.RightHanded -> identity
+
       pure $ H.span (dropProps droppedFile isDragOver)
-           $ (if handed == GT.LeftHanded
-                then reverse
-                else identity)
-           $
+           $ ordering
         [ chevronIcon nodeType folderOpen
         , folderIcon nodeType folderOpen
         , if showBox then

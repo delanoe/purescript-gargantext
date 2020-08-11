@@ -15,12 +15,13 @@ import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Reload, Handed(..))
+import Gargantext.Types (Reload, Handed)
 import Gargantext.Utils.Reactix as R2
 
 type Props =
   ( frontends :: Frontends
-  , reload :: R.State Int
+  , handed    :: Handed
+  , reload    :: R.State Int
   , route     :: AppRoute
   , sessions  :: Sessions
   , showLogin :: R2.Setter Boolean
@@ -31,7 +32,7 @@ forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
 forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
-  cpt { frontends, reload: extReload, route, sessions, showLogin } _ = do
+  cpt { frontends, handed, reload: extReload, route, sessions, showLogin } _ = do
     -- NOTE: this is a hack to reload the tree view on demand
     reload     <- R.useState' (0 :: Reload)
     openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
@@ -44,9 +45,10 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
       /\ fst extReload
       /\ fst reload
       /\ fst asyncTasks
+      /\ handed
       )
       (cpt' openNodes asyncTasks reload showLogin)
-  cpt' openNodes asyncTasks reload showLogin (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _) = do
+  cpt' openNodes asyncTasks reload showLogin (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
     pure $ R.fragment $ A.cons (plus showLogin) trees
     where
       trees = tree <$> unSessions sessions
@@ -54,11 +56,11 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
         treeView { root: treeId
                  , asyncTasks
                  , frontends
+                 , handed
                  , mCurrentRoute: Just route
                  , openNodes
                  , reload
                  , session: s
-                 , handed: RightHanded -- TODO enabling user to change it and save locally
                  }
 
 plus :: R2.Setter Boolean -> R.Element

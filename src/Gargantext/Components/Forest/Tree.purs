@@ -63,20 +63,20 @@ treeView props = R.createElement treeViewCpt props []
         cpt { root
             , asyncTasks
             , frontends
+            , handed
             , mCurrentRoute
             , openNodes
             , reload
             , session
-            , handed
             } _children = pure
                         $ treeLoadView { root
                                        , asyncTasks
                                        , frontends
+                                       , handed
                                        , mCurrentRoute
                                        , openNodes
                                        , reload
                                        , session
-                                       , handed
                                        }
 
 treeLoadView :: Record Props -> R.Element
@@ -88,22 +88,22 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
         cpt { root
             , asyncTasks
             , frontends
+            , handed
             , mCurrentRoute
             , openNodes
             , reload
             , session
-            , handed
             } _children = do
           let fetch _ = getNodeTree session root
           let paint loaded = loadedTreeView { asyncTasks
                                             , frontends
+                                            , handed
                                             , mCurrentRoute
                                             , openNodes
                                             , reload
                                             , session
                                             , tasks: tasksStruct root asyncTasks reload
                                             , tree: loaded
-                                            , handed
                                             }
           useLoader { root, counter: fst reload } fetch paint
 
@@ -126,26 +126,26 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
       where
         cpt { asyncTasks
             , frontends
+            , handed
             , mCurrentRoute
             , openNodes
             , reload
             , session
             , tasks
             , tree
-            , handed
           } _ = pure $ H.ul { className: "tree " <> if handed == GT.RightHanded
                                                       then "flex-start"
                                                       else "flex-end"
                                                     }
                              [ toHtml { asyncTasks
                                       , frontends
+                                      , handed
                                       , mCurrentRoute
                                       , openNodes
                                       , reload
                                       , session
                                       , tasks
                                       , tree
-                                      , handed: GT.RightHanded -- TODO enabling user to change it
                                       }
                              ]
 
@@ -198,12 +198,12 @@ toHtml p@{ asyncTasks
                          , dispatch: pAction
                          , folderOpen
                          , frontends
+                         , handed
                          , mCurrentRoute
                          , name
                          , nodeType
                          , session
                          , tasks
-                         , handed
                          } ]
           <> childNodes ( Record.merge commonProps
                           { asyncTasks
@@ -230,9 +230,9 @@ childNodes { folderOpen: (false /\ _)           } = []
 childNodes props@{ asyncTasks, children, reload, handed } =
   map (\ctree@(NTree (LNode {id}) _) -> H.ul {} [
         toHtml (Record.merge commonProps { asyncTasks
+                                         , handed
                                          , tasks: tasksStruct id asyncTasks reload
                                          , tree: ctree
-                                         , handed
                                          }
                )]
       ) $ sorted children
