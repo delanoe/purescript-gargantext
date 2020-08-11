@@ -4,6 +4,7 @@ import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, throwError)
 import Effect.Class (liftEffect)
@@ -120,17 +121,6 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
           liftEffect $ do
             setMFile $ const $ Just $ {contents: UploadFileContents contents, name}
 
-    onChangeFileType :: forall e
-                     .  R.State FileType
-                     -> e
-                     -> Effect Unit
-    onChangeFileType (fileType /\ setFileType) e = do
-      setFileType $ const
-                  $ unsafePartial
-                  $ fromJust
-                  $ read
-                  $ R2.unsafeEventValue e
-
 
 type UploadButtonProps =
   ( dispatch :: Action -> Aff Unit
@@ -167,6 +157,7 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
 
         onClick e = do
           let { contents, name } = unsafePartial $ fromJust mFile
+          log2 "[uploadButton] fileType" fileType
           void $ launchAff do
             case fileType of
               Arbitrary ->

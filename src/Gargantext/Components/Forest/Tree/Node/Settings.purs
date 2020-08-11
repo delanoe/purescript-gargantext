@@ -303,6 +303,14 @@ settingsBox NodeFrameCalc =
               }
 
 
+settingsBox NodeFile =
+  SettingsBox { show: true
+              , edit: true
+              , doc: Documentation NodeFile
+              , buttons: [ Delete ]
+              }
+
+
 settingsBox _ =
   SettingsBox { show : false
               , edit : false

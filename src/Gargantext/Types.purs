@@ -166,36 +166,38 @@ data NodeType = NodeUser
               | NodeFrameWrite
               | NodeFrameCalc
               | NodePublic NodeType
+              | NodeFile
 
 
 derive instance eqNodeType :: Eq NodeType
 
 instance showNodeType :: Show NodeType where
-  show NodeUser      = "NodeUser"
+  show NodeUser        = "NodeUser"
 
-  show Folder        = "NodeFolder"
-  show FolderPrivate = "NodeFolderPrivate"  -- Node Private Worktop
-  show FolderShared  = "NodeFolderShared"   -- Node Share Worktop
-  show FolderPublic  = "NodeFolderPublic"   -- Node Public Worktop
+  show Folder          = "NodeFolder"
+  show FolderPrivate   = "NodeFolderPrivate"  -- Node Private Worktop
+  show FolderShared    = "NodeFolderShared"   -- Node Share Worktop
+  show FolderPublic    = "NodeFolderPublic"   -- Node Public Worktop
 
-  show Annuaire      = "NodeAnnuaire"
-  show NodeContact   = "NodeContact"
-  show Corpus        = "NodeCorpus"
-  show Dashboard     = "NodeDashboard"
-  show Url_Document  = "NodeDocument"
-  show Error         = "NodeError"
-  show Graph         = "NodeGraph"
-  show Phylo         = "NodePhylo"
-  show Individu      = "NodeIndividu"
-  show Node          = "Node"
-  show Nodes         = "Nodes"
-  show Tree          = "NodeTree"
-  show Team          = "NodeTeam"
-  show NodeList      = "NodeList"
-  show Texts         = "NodeTexts"
-  show NodeFrameWrite = "NodeFrameWrite"
-  show NodeFrameCalc  = "NodeFrameCalc"
+  show Annuaire        = "NodeAnnuaire"
+  show NodeContact     = "NodeContact"
+  show Corpus          = "NodeCorpus"
+  show Dashboard       = "NodeDashboard"
+  show Url_Document    = "NodeDocument"
+  show Error           = "NodeError"
+  show Graph           = "NodeGraph"
+  show Phylo           = "NodePhylo"
+  show Individu        = "NodeIndividu"
+  show Node            = "Node"
+  show Nodes           = "Nodes"
+  show Tree            = "NodeTree"
+  show Team            = "NodeTeam"
+  show NodeList        = "NodeList"
+  show Texts           = "NodeTexts"
+  show NodeFrameWrite  = "NodeFrameWrite"
+  show NodeFrameCalc   = "NodeFrameCalc"
   show (NodePublic nt) = "NodePublic" <> show nt
+  show NodeFile        = "NodeFile"
 
 
 instance readNodeType :: Read NodeType where
@@ -204,25 +206,26 @@ instance readNodeType :: Read NodeType where
   read "NodeFolderPrivate" = Just FolderPrivate
   read "NodeFolderShared"  = Just FolderShared
   read "NodeFolderPublic"  = Just FolderPublic
-  read "NodeAnnuaire"  = Just Annuaire
-  read "NodeDashboard" = Just Dashboard
-  read "Document"      = Just Url_Document
-  read "NodeGraph"     = Just Graph
-  read "NodePhylo"     = Just Phylo
-  read "Individu"      = Just Individu
-  read "Node"          = Just Node
-  read "Nodes"         = Just Nodes
-  read "NodeCorpus"    = Just Corpus
-  read "NodeContact"   = Just NodeContact
-  read "Tree"          = Just Tree
-  read "NodeTeam"      = Just Team
-  read "NodeList"      = Just NodeList
-  read "NodeTexts"     = Just Texts
-  read "Annuaire"      = Just Annuaire
-  read "NodeFrameWrite" = Just NodeFrameWrite
-  read "NodeFrameCalc"  = Just NodeFrameCalc
+  read "NodeAnnuaire"      = Just Annuaire
+  read "NodeDashboard"     = Just Dashboard
+  read "Document"          = Just Url_Document
+  read "NodeGraph"         = Just Graph
+  read "NodePhylo"         = Just Phylo
+  read "Individu"          = Just Individu
+  read "Node"              = Just Node
+  read "Nodes"             = Just Nodes
+  read "NodeCorpus"        = Just Corpus
+  read "NodeContact"       = Just NodeContact
+  read "Tree"              = Just Tree
+  read "NodeTeam"          = Just Team
+  read "NodeList"          = Just NodeList
+  read "NodeTexts"         = Just Texts
+  read "Annuaire"          = Just Annuaire
+  read "NodeFrameWrite"    = Just NodeFrameWrite
+  read "NodeFrameCalc"     = Just NodeFrameCalc
+  read "NodeFile"          = Just NodeFile
   -- TODO NodePublic read ?
-  read _               = Nothing
+  read _                   = Nothing
 
 
 fldr :: NodeType -> Boolean -> String
@@ -253,6 +256,7 @@ fldr Graph _ = "fa fa-hubzilla"
 fldr Texts _ = "fa fa-newspaper-o"
 fldr Dashboard _ = "fa fa-signal"
 fldr NodeList _ = "fa fa-list"
+fldr NodeFile _ = "fa fa-file"  -- TODO depending on mime type we can use fa-file-image etc
 
 fldr Annuaire true  = "fa fa-address-card-o"
 fldr Annuaire false = "fa fa-address-card"
@@ -299,29 +303,30 @@ instance encodeJsonNodeType :: EncodeJson NodeType where
   encodeJson nodeType = encodeJson $ show nodeType
 
 nodeTypePath :: NodeType -> String
-nodeTypePath Folder    = "folder"
-nodeTypePath FolderPrivate = "folderPrivate"
-nodeTypePath FolderShared  = "folderShared"
-nodeTypePath FolderPublic  = "folderPublic"
-nodeTypePath Annuaire  = "annuaire"
-nodeTypePath Corpus    = "corpus"
-nodeTypePath Dashboard = "dashboard"
-nodeTypePath Url_Document  = "document"
-nodeTypePath Error     = "ErrorNodeType"
-nodeTypePath Graph     = "graph"
-nodeTypePath Phylo     = "phylo"
-nodeTypePath Individu  = "individu"
-nodeTypePath Node      = "node"
-nodeTypePath Nodes     = "nodes"
-nodeTypePath NodeUser  = "user"
-nodeTypePath NodeContact = "contact"
-nodeTypePath Tree      = "tree"
-nodeTypePath NodeList  = "lists"
-nodeTypePath Texts     = "texts"
-nodeTypePath Team      = "team"
-nodeTypePath NodeFrameWrite = "write"
-nodeTypePath NodeFrameCalc  = "calc"
+nodeTypePath Folder          = "folder"
+nodeTypePath FolderPrivate   = "folderPrivate"
+nodeTypePath FolderShared    = "folderShared"
+nodeTypePath FolderPublic    = "folderPublic"
+nodeTypePath Annuaire        = "annuaire"
+nodeTypePath Corpus          = "corpus"
+nodeTypePath Dashboard       = "dashboard"
+nodeTypePath Url_Document    = "document"
+nodeTypePath Error           = "ErrorNodeType"
+nodeTypePath Graph           = "graph"
+nodeTypePath Phylo           = "phylo"
+nodeTypePath Individu        = "individu"
+nodeTypePath Node            = "node"
+nodeTypePath Nodes           = "nodes"
+nodeTypePath NodeUser        = "user"
+nodeTypePath NodeContact     = "contact"
+nodeTypePath Tree            = "tree"
+nodeTypePath NodeList        = "lists"
+nodeTypePath Texts           = "texts"
+nodeTypePath Team            = "team"
+nodeTypePath NodeFrameWrite  = "write"
+nodeTypePath NodeFrameCalc   = "calc"
 nodeTypePath (NodePublic nt) = nodeTypePath nt
+nodeTypePath NodeFile        = "file"
 
 ------------------------------------------------------------
 

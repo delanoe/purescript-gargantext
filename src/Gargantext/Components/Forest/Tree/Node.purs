@@ -120,8 +120,9 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session, handed} = R.createEle
     folderIcon nodeType folderOpen'@(open /\ _) =
       H.a { className: "folder-icon"
           , onClick: R2.effToggler folderOpen'
-          }
-          [ H.i {className: GT.fldr nodeType open} [] ]
+          } [
+        H.i {className: GT.fldr nodeType open} []
+        ]
 
     popOverIcon = H.a { className: "settings fa fa-cog" } []
 

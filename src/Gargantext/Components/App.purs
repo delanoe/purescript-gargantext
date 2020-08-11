@@ -4,9 +4,10 @@ import Data.Array (fromFoldable)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
-import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
