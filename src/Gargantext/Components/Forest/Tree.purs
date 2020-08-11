@@ -31,7 +31,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTr
 import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks, tasksStruct)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>))
+import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>), (==))
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (OpenNodes, Session, mkNodeId, get)
 import Gargantext.Types (ID, Reload, isPublic, publicize)
@@ -45,6 +45,7 @@ type CommonProps =
   , openNodes     :: R.State OpenNodes
   , reload        :: R.State Reload
   , session       :: Session
+  , handed        :: GT.Handed
   )
 
 ------------------------------------------------------------------------
@@ -66,6 +67,7 @@ treeView props = R.createElement treeViewCpt props []
             , openNodes
             , reload
             , session
+            , handed
             } _children = pure
                         $ treeLoadView { root
                                        , asyncTasks
@@ -74,6 +76,7 @@ treeView props = R.createElement treeViewCpt props []
                                        , openNodes
                                        , reload
                                        , session
+                                       , handed
                                        }
 
 treeLoadView :: Record Props -> R.Element
@@ -89,6 +92,7 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
             , openNodes
             , reload
             , session
+            , handed
             } _children = do
           let fetch _ = getNodeTree session root
           let paint loaded = loadedTreeView { asyncTasks
@@ -99,6 +103,7 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
                                             , session
                                             , tasks: tasksStruct root asyncTasks reload
                                             , tree: loaded
+                                            , handed
                                             }
           useLoader { root, counter: fst reload } fetch paint
 
@@ -127,7 +132,11 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
             , session
             , tasks
             , tree
-          } _ = pure $ H.ul { className: "tree"}
+            , handed
+          } _ = pure $ H.ul { className: "tree " <> if handed == GT.RightHanded
+                                                      then "flex-start"
+                                                      else "flex-end"
+                                                    }
                              [ toHtml { asyncTasks
                                       , frontends
                                       , mCurrentRoute
@@ -136,10 +145,13 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
                                       , session
                                       , tasks
                                       , tree
+                                      , handed: GT.RightHanded -- TODO enabling user to change it
                                       }
                              ]
 
 ------------------------------------------------------------------------
+
+
 type ToHtmlProps =
   ( asyncTasks :: R.State GAT.Storage
   , tasks      :: Record Tasks
@@ -163,7 +175,8 @@ toHtml p@{ asyncTasks
                                     , nodeType
                                     }
                               ) ary
-                      ) 
+                      )
+         , handed
          } =
   R.createElement el {} []
     where
@@ -190,6 +203,7 @@ toHtml p@{ asyncTasks
                          , nodeType
                          , session
                          , tasks
+                         , handed
                          } ]
           <> childNodes ( Record.merge commonProps
                           { asyncTasks
@@ -199,6 +213,7 @@ toHtml p@{ asyncTasks
                                                             ) t) ary
                                          else ary
                           , folderOpen
+                          , handed
                           }
                         )
 
@@ -212,11 +227,12 @@ type ChildNodesProps =
 childNodes :: Record ChildNodesProps -> Array R.Element
 childNodes { children: []                       } = []
 childNodes { folderOpen: (false /\ _)           } = []
-childNodes props@{ asyncTasks, children, reload } =
+childNodes props@{ asyncTasks, children, reload, handed } =
   map (\ctree@(NTree (LNode {id}) _) -> H.ul {} [
         toHtml (Record.merge commonProps { asyncTasks
                                          , tasks: tasksStruct id asyncTasks reload
                                          , tree: ctree
+                                         , handed
                                          }
                )]
       ) $ sorted children

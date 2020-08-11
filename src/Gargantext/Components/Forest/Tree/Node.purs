@@ -1,5 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node where
 
+import Data.Array (reverse)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.Tuple.Nested ((/\))
@@ -25,7 +26,7 @@ import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, unit, void, ($), (<>), (==))
+import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, unit, void, ($), (<>), (==), identity)
 import Gargantext.Routes as Routes
 import Gargantext.Version as GV
 import Gargantext.Sessions (Session, sessionId)
@@ -44,12 +45,13 @@ type NodeMainSpanProps =
   , name          :: Name
   , nodeType      :: GT.NodeType
   , tasks         :: Record Tasks
+  , handed        :: GT.Handed
   | CommonProps
   )
 
 nodeMainSpan :: Record NodeMainSpanProps
              -> R.Element
-nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el p []
+nodeMainSpan p@{ dispatch, folderOpen, frontends, session, handed} = R.createElement el p []
   where
     el = R.hooksComponent "G.C.F.T.N.NodeMainSpan" cpt
     cpt props@{id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks }} _ = do
@@ -59,7 +61,11 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, session } = R.createElement el
 
       popoverRef    <- R.useRef null
 
-      pure $ H.span (dropProps droppedFile isDragOver) $
+      pure $ H.span (dropProps droppedFile isDragOver)
+           $ (if handed == GT.LeftHanded
+                then reverse
+                else identity)
+           $
         [ chevronIcon nodeType folderOpen
         , folderIcon nodeType folderOpen
         , if showBox then

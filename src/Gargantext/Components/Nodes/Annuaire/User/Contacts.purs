@@ -12,18 +12,19 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
+import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes as Routes
-import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 display :: String -> Array R.Element -> R.Element
 display title elems =
@@ -54,16 +55,17 @@ contactInfos h onUpdateHyperdata = item <$> contactInfoItems
 
 contactInfoItems :: Array {label:: String, defaultVal:: String, lens:: HyperdataUserLens}
 contactInfoItems =
-  [ {label: "Last Name", defaultVal: "Empty Last Name", lens: _shared <<< _who <<< _lastName}
-  , {label: "First Name", defaultVal: "Empty First Name", lens: _shared <<< _who <<< _firstName}
-  , {label: "Organisation", defaultVal: "Empty Organisation", lens: _shared <<< _ouFirst <<< _organizationJoinComma}
+  [ {label: "Last Name"    , defaultVal: "Empty Last Name"    , lens: _shared <<< _who     <<< _lastName             }
+  , {label: "First Name"   , defaultVal: "Empty First Name"   , lens: _shared <<< _who     <<< _firstName            }
+  , {label: "Organisation" , defaultVal: "Empty Organisation" , lens: _shared <<< _ouFirst <<< _organizationJoinComma}
   , {label: "Lab/Team/Dept", defaultVal: "Empty Lab/Team/Dept", lens: _shared <<< _ouFirst <<< _labTeamDeptsJoinComma}
-  , {label: "Office", defaultVal: "Empty Office", lens: _shared <<< _ouFirst <<< _office}
-  , {label: "City", defaultVal: "Empty City", lens: _shared <<< _ouFirst <<< _city}
-  , {label: "Country", defaultVal: "Empty Country", lens: _shared <<< _ouFirst <<< _country}
-  , {label: "Role", defaultVal: "Empty Role", lens: _shared <<< _ouFirst <<< _role}
-  , {label: "Phone", defaultVal: "Empty Phone", lens: _shared <<< _ouFirst <<< _touch <<< _phone}
-  , {label: "Mail", defaultVal: "Empty Mail", lens: _shared <<< _ouFirst <<< _touch <<< _mail} ]
+  , {label: "Office"       , defaultVal: "Empty Office"       , lens: _shared <<< _ouFirst <<< _office               }
+  , {label: "City"         , defaultVal: "Empty City"         , lens: _shared <<< _ouFirst <<< _city                 }
+  , {label: "Country"      , defaultVal: "Empty Country"      , lens: _shared <<< _ouFirst <<< _country              }
+  , {label: "Role"         , defaultVal: "Empty Role"         , lens: _shared <<< _ouFirst <<< _role                 }
+  , {label: "Phone"        , defaultVal: "Empty Phone"        , lens: _shared <<< _ouFirst <<< _touch <<< _phone     }
+  , {label: "Mail"         , defaultVal: "Empty Mail"         , lens: _shared <<< _ouFirst <<< _touch <<< _mail      }
+  ]
 
 type HyperdataUserLens = L.ALens' HyperdataUser String
 
@@ -109,11 +111,15 @@ contactInfoItemCpt = R.hooksComponent "G.C.N.A.U.C.contactInfoItem" cpt
             onClick _ = setIsEditing $ const true
         item (true /\ setIsEditing) valueRef =
           H.span {} [
-              H.input { autoFocus: true
-                      , className: "form-control"
-                      , defaultValue: R.readRef valueRef
-                      , on: {change: \e -> R.setRef valueRef $ R2.unsafeEventValue e}
-                      , placeholder }
+              inputWithEnter {
+                  onEnter: onClick
+                , onValueChanged: R.setRef valueRef
+                , autoFocus: true
+                , className: "form-control"
+                , defaultValue: R.readRef valueRef
+                , placeholder
+                , type: "text"
+                }
             , H.span { className: "fa fa-floppy-o"
                      , on: {click: onClick} } []
           ]

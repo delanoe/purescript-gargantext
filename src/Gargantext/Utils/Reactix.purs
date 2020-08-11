@@ -112,10 +112,16 @@ menu :: ElemFactory
 menu = createDOM "menu"
 
 effToggler :: forall e. R.State Boolean -> EffectFn1 e Unit
-effToggler (value /\ setValue) = mkEffectFn1 $ \e -> setValue $ const $ not value
+effToggler (value /\ setValue) = mkEffectFn1 $ \_ -> setValue $ const $ not value
 
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
+
+keyCode :: forall event. event -> Effect Int
+keyCode = runEffectFn1 _keyCode
+
+foreign import _keyCode
+  :: forall e. EffectFn1 e Int
 
 nullRef :: forall t. R.Hooks (R.Ref (Nullable t))
 nullRef = R.useRef null
