@@ -27,6 +27,7 @@ data AppRoute
     | ContactPage    SessionId Int Int
   | RouteFrameWrite SessionId Int
   | RouteFrameCalc  SessionId Int
+  | RouteFile       SessionId Int
 
 
 derive instance eqAppRoute :: Eq AppRoute
@@ -74,6 +75,7 @@ instance showAppRoute :: Show AppRoute where
   show (ContactPage  s a i)     = "Contact"        <> show a <> "::" <> show i <> " (" <> show s <> ")"
   show (RouteFrameWrite s i)    = "write"          <> show i <> " (" <> show s <> ")"
   show (RouteFrameCalc  s i)    = "calc"           <> show i <> " (" <> show s <> ")"
+  show (RouteFile       s i)    = "file"           <> show i <> " (" <> show s <> ")"
 
 
 appPath :: AppRoute -> String
@@ -94,8 +96,9 @@ appPath (Lists s i)          = "lists/"      <> show s <> "/" <> show i
 appPath (Annuaire s i)       = "annuaire/"   <> show s <> "/" <> show i
 appPath (UserPage s i)       = "user/"       <> show s <> "/" <> show i
 appPath (ContactPage s a i)  = "annuaire/"   <> show s <> "/" <> show a <> "/contact/" <> show i
-appPath (RouteFrameWrite s i) = "write/"      <> show s <> "/" <> show i
-appPath (RouteFrameCalc s i)  = "calc/"       <> show s <> "/" <> show i
+appPath (RouteFrameWrite s i) = "write/"     <> show s <> "/" <> show i
+appPath (RouteFrameCalc s i)  = "calc/"      <> show s <> "/" <> show i
+appPath (RouteFile s i)       = "file/"      <> show s <> "/" <> show i
 
 nodeTypeAppRoute :: NodeType -> SessionId -> Int -> Maybe AppRoute
 nodeTypeAppRoute GT.Annuaire s i      = Just $ Annuaire s i

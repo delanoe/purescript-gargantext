@@ -18,6 +18,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts (annuaireUserLayout, u
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentLayout)
+import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists (listsLayout)
@@ -75,6 +76,7 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
           Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
           RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
+          RouteFile sid nodeId -> withSession sid $ \session -> forested $ fileLayout { nodeId, session }
           Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
           Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }

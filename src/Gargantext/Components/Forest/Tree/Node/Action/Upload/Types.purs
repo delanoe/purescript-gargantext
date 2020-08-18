@@ -4,6 +4,8 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
+import Web.File.Blob (Blob)
+
 import Gargantext.Prelude (class Read, class Show, class Eq)
 
 
@@ -27,6 +29,4 @@ instance readFileType :: Read FileType where
   read _           = Nothing
 
 
-newtype UploadFileContents = UploadFileContents String
-
-
+newtype UploadFileBlob = UploadFileBlob Blob

@@ -7,7 +7,7 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut, SubTreeParams(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileContents)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileBlob)
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams)
 
@@ -24,8 +24,8 @@ data Action = AddNode     String GT.NodeType
             | RenameNode  String
             | UpdateNode  UpdateNodeParams
             | DoSearch    GT.AsyncTaskWithType
-            | UploadFile  GT.NodeType FileType (Maybe String) UploadFileContents
-            | UploadArbitraryFile  GT.NodeType (Maybe String) UploadFileContents
+            | UploadFile  GT.NodeType FileType (Maybe String) UploadFileBlob
+            | UploadArbitraryFile  GT.NodeType (Maybe String) UploadFileBlob
             | DownloadNode
             | RefreshTree
 

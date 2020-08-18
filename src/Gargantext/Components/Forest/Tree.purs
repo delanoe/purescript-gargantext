@@ -338,21 +338,21 @@ performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
     performAction RefreshTree p
 
 -------
-performAction (UploadFile nodeType fileType mName contents) { session
-                                                            , tasks: { onTaskAdd }
-                                                            , tree: (NTree (LNode {id}) _)
-                                                            } =
+performAction (UploadFile nodeType fileType mName blob) { session
+                                                        , tasks: { onTaskAdd }
+                                                        , tree: (NTree (LNode {id}) _)
+                                                        } =
   do
-    task <- uploadFile session nodeType id fileType {mName, contents}
+    task <- uploadFile session nodeType id fileType {mName, blob}
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "Uploaded, task:" task
 
-performAction (UploadArbitraryFile nodeType mName contents) { session
-                                                            , tasks: { onTaskAdd }
-                                                            , tree: (NTree (LNode {id}) _)
-                                                            } =
+performAction (UploadArbitraryFile nodeType mName blob) { session
+                                                        , tasks: { onTaskAdd }
+                                                        , tree: (NTree (LNode {id}) _)
+                                                        } =
   do
-    task <- uploadArbitraryFile session nodeType id { contents, mName }
+    task <- uploadArbitraryFile session nodeType id { blob, mName }
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "Uploaded, task:" task
 

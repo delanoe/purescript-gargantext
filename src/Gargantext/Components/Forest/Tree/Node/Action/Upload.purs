@@ -1,7 +1,10 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
+import Data.Either (fromRight)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
+import Data.String.Regex as DSR
+import Data.String.Regex.Flags as DSRF
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
@@ -14,12 +17,13 @@ import React.SyntheticEvent     as E
 import Reactix                  as R
 import Reactix.DOM.HTML         as H
 import URI.Extra.QueryPairs     as QP
-import Web.File.FileReader.Aff (readAsText)
+import Web.File.Blob (Blob)
+import Web.File.FileReader.Aff (readAsDataURL, readAsText)
 
 import Gargantext.Prelude
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Routes       as GR
@@ -27,6 +31,7 @@ import Gargantext.Sessions (Session, postWwwUrlencoded)
 import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types         as GT
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.String as GUS
 
 -- UploadFile Action
 
@@ -49,7 +54,7 @@ actionUpload _ _ _ _ =
 
 -- file upload types
 data DroppedFile =
-  DroppedFile { contents :: UploadFileContents
+  DroppedFile { blob :: UploadFileBlob
               , fileType :: Maybe FileType
               , lang     :: Lang
               }
@@ -58,7 +63,7 @@ type FileHash = String
 
 
 type UploadFile = 
-  { contents :: UploadFileContents
+  { blob :: UploadFileBlob
   , name     :: String
   }
 
@@ -117,9 +122,10 @@ uploadFileViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadFileView" cpt
       case mF of
         Nothing -> pure unit
         Just {blob, name} -> void $ launchAff do
-          contents <- readAsText blob
+          --contents <- readAsText blob
+          --contents <- readAsDataURL blob
           liftEffect $ do
-            setMFile $ const $ Just $ {contents: UploadFileContents contents, name}
+            setMFile $ const $ Just $ {blob: UploadFileBlob blob, name}
 
 
 type UploadButtonProps =
@@ -156,14 +162,14 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
           Just _  -> ""
 
         onClick e = do
-          let { contents, name } = unsafePartial $ fromJust mFile
+          let { blob, name } = unsafePartial $ fromJust mFile
           log2 "[uploadButton] fileType" fileType
           void $ launchAff do
             case fileType of
               Arbitrary ->
-                dispatch $ UploadArbitraryFile nodeType (Just name) contents
+                dispatch $ UploadArbitraryFile nodeType (Just name) blob
               _ ->
-                dispatch $ UploadFile nodeType fileType (Just name) contents
+                dispatch $ UploadFile nodeType fileType (Just name) blob
             liftEffect $ do
               setMFile     $ const $ Nothing
               setFileType  $ const $ CSV
@@ -185,7 +191,7 @@ fileTypeViewCpt :: R.Component FileTypeProps
 fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
   where
     cpt { dispatch
-        , droppedFile: Just (DroppedFile {contents, fileType}) /\ setDroppedFile
+        , droppedFile: Just (DroppedFile {blob, fileType}) /\ setDroppedFile
         , isDragOver: (_ /\ setIsDragOver)
         , nodeType
         } _ = pure
@@ -228,7 +234,7 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
           ]
           where
             onChange e l =
-              setDroppedFile $ const $ Just $ DroppedFile $ { contents
+              setDroppedFile $ const $ Just $ DroppedFile $ { blob
                                                             , fileType: read $ R2.unsafeEventValue e
                                                             , lang    : fromMaybe EN $ read $ R2.unsafeEventValue l
                                                             }
@@ -243,7 +249,7 @@ fileTypeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.fileTypeView" cpt
                          , type: "button"
                          , on: {click: \_ -> do
                                    setDroppedFile $ const Nothing
-                                   launchAff $ dispatch $ UploadFile nodeType ft Nothing contents
+                                   launchAff $ dispatch $ UploadFile nodeType ft Nothing blob
                                }
                          } [H.text "Upload"]
               Nothing ->
@@ -271,11 +277,12 @@ uploadFile :: Session
            -> GT.NodeType
            -> ID
            -> FileType
-           -> {contents :: UploadFileContents, mName :: Maybe String}
+           -> {blob :: UploadFileBlob, mName :: Maybe String}
            -> Aff GT.AsyncTaskWithType
-uploadFile session nodeType id fileType {mName, contents: UploadFileContents contents} = do
-    task <- postWwwUrlencoded session p bodyParams
-    pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
+uploadFile session nodeType id fileType {mName, blob: UploadFileBlob blob} = do
+  contents <- readAsText blob
+  task <- postWwwUrlencoded session p (bodyParams contents)
+  pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
     --postMultipartFormData session p fileContents
   where
     p = case nodeType of
@@ -283,31 +290,34 @@ uploadFile session nodeType id fileType {mName, contents: UploadFileContents con
       Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
       _        -> GR.NodeAPI nodeType (Just id) ""
       
-    bodyParams = [ Tuple "_wf_data"     (Just contents)
-                 , Tuple "_wf_filetype" (Just $ show fileType)
-                 , Tuple "_wf_name"      mName
-                 ]
+    bodyParams c = [ Tuple "_wf_data"     (Just c)
+                   , Tuple "_wf_filetype" (Just $ show fileType)
+                   , Tuple "_wf_name"      mName
+                   ]
 
 
 uploadArbitraryFile :: Session
                     -> GT.NodeType
                     -> ID
-                    -> {contents :: UploadFileContents, mName :: Maybe String}
+                    -> {blob :: UploadFileBlob, mName :: Maybe String}
                     -> Aff GT.AsyncTaskWithType
-uploadArbitraryFile session nodeType id {mName, contents: UploadFileContents contents} = do
+uploadArbitraryFile session nodeType id {mName, blob: UploadFileBlob blob} = do
     if nodeType == Corpus then
       pure unit
     else
       throwError $ error $ "[uploadArbitraryFile] NodeType " <> (show nodeType) <> " not supported"
 
-    task <- postWwwUrlencoded session p bodyParams
+    contents' <- readAsDataURL blob
+    let re = unsafePartial $ fromRight $ DSR.regex "data:.*;base64," DSRF.noFlags
+        contents = DSR.replace re "" contents'
+    task <- postWwwUrlencoded session p (bodyParams contents)
     pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
   where
     p = GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.UploadFile
 
-    bodyParams = [ Tuple "_wfi_data"     (Just contents)
-                 , Tuple "_wfi_name"      mName
-                 ]
+    bodyParams c = [ Tuple "_wfi_b64_data"  (Just c)
+                   , Tuple "_wfi_name"      mName
+                   ]
 
 ------------------------------------------------------------------------
 
@@ -343,9 +353,9 @@ uploadTermListViewCpt = R.hooksComponent "G.C.F.T.N.A.U.UploadTermListView" cpt
       case mF of
         Nothing -> pure unit
         Just {blob, name} -> void $ launchAff do
-          contents <- readAsText blob
+          --contents <- readAsText blob
           liftEffect $ do
-            setMFile $ const $ Just $ { contents: UploadFileContents contents
+            setMFile $ const $ Just $ { blob: UploadFileBlob blob
                                       , name
                                       }
 
@@ -371,9 +381,9 @@ uploadTermButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadTermButton" cpt
           Just _  -> ""
 
         onClick e = do
-          let {name, contents} = unsafePartial $ fromJust mFile
+          let {name, blob} = unsafePartial $ fromJust mFile
           void $ launchAff do
-            _ <- dispatch $ UploadFile nodeType CSV (Just name) contents
+            _ <- dispatch $ UploadFile nodeType CSV (Just name) blob
             liftEffect $ do
               setMFile $ const $ Nothing
 

@@ -33,6 +33,7 @@ router = oneOf
 
   , RouteFrameWrite    <$> (route "write"     *> sid) <*> int
   , RouteFrameCalc     <$> (route "calc"     *> sid) <*> int
+  , RouteFile          <$> (route "file"   *> sid) <*> int
   , Home              <$   lit ""
   ]
  where
