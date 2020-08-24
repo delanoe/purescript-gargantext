@@ -145,7 +145,7 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
                                       , session
                                       , tasks
                                       , tree
-                                      , handed: GT.RightHanded -- TODO enabling user to change it
+                                      , handed
                                       }
                              ]
 
