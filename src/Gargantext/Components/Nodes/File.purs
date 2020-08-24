@@ -3,12 +3,12 @@ module Gargantext.Components.Nodes.File where
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Maybe (Maybe(..))
 import DOM.Simple.Console (log2)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
-
+import Gargantext.Ends (toUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
@@ -101,7 +101,8 @@ fileLayoutLoadedCpt = R.hooksComponent "G.C.N.F.fileLayoutLoaded" cpt
           ]
         , H.div { className: "row" } [
             H.div { className: "btn btn-default" } [
-               H.a { href: "/api/v1.0/node/" <> show nodeId <> "/file/download"
+               H.a { -- href: "/api/v1.0/node/" <> show nodeId <> "/file/download"
+                    href: toUrl session ("node/" <> show nodeId <> "/file/download")
                    , target: "_blank"
                    } [ H.text "Download" ]
                ]
