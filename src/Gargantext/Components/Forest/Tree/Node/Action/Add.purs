@@ -4,17 +4,20 @@ import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array (head, length)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
+
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, formEdit, formChoiceSafe, panel)
-import Gargantext.Prelude (Unit, bind, pure, show, ($), (<>), (>))
+import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, formChoiceSafe, panel)
+import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types  as GT
 import Gargantext.Types (NodeType(..))
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 ----------------------------------------------------------------------
 addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Array GT.ID)
@@ -76,7 +79,15 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                               where
                                 defaultNt = (fromMaybe Error $ head nodeTypes)
           maybeEdit   = [ if edit
-                          then formEdit name' setNodeName
+                          then inputWithEnter {
+                              onEnter: \_ -> launchAff_ $ dispatch (AddNode name' nt')
+                            , onValueChanged: \val -> setNodeName $ const val
+                            , autoFocus: true
+                            , className: "form-control"
+                            , defaultValue: name'
+                            , placeholder: name'
+                            , type: "text"
+                            }
                           else H.div {} []
                         ]
 
