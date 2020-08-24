@@ -164,7 +164,7 @@ formChoice :: forall a b c d
 formChoice nodeTypes defaultNodeType setNodeType = 
   H.div { className: "form-group"}
         [ R2.select { className: "form-control"
-                    , on: { change: \_ -> setNodeType
+                    , on: { change: setNodeType
                                       <<< const
                                       <<< fromMaybe defaultNodeType
                                       <<< read

@@ -13,7 +13,7 @@ import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileContents(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (CommonProps)
@@ -122,8 +122,9 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
     folderIcon nodeType folderOpen'@(open /\ _) =
       H.a { className: "folder-icon"
           , onClick: R2.effToggler folderOpen'
-          }
-          [ H.i {className: GT.fldr nodeType open} [] ]
+          } [
+        H.i {className: GT.fldr nodeType open} []
+        ]
 
     popOverIcon = H.a { className: "settings fa fa-cog" } []
 
@@ -151,11 +152,11 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
           E.stopPropagation e
           blob <- R2.dataTransferFileBlob e
           void $ launchAff do
-            contents <- readAsText blob
+            --contents <- readAsText blob
             liftEffect $ setDroppedFile
                        $ const
                        $ Just
-                       $ DroppedFile { contents: (UploadFileContents contents)
+                       $ DroppedFile { blob: (UploadFileBlob blob)
                                      , fileType: Just CSV
                                      , lang    : EN
                                      }

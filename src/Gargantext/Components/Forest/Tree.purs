@@ -26,7 +26,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), re
 import Gargantext.Components.Forest.Tree.Node.Action.Share   as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks, tasksStruct)
 import Gargantext.Ends (Frontends)
@@ -338,12 +338,21 @@ performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
     performAction RefreshTree p
 
 -------
-performAction (UploadFile nodeType fileType mName contents) { session
-                                                            , tasks: { onTaskAdd }
-                                                            , tree: (NTree (LNode {id}) _)
-                                                            } =
+performAction (UploadFile nodeType fileType mName blob) { session
+                                                        , tasks: { onTaskAdd }
+                                                        , tree: (NTree (LNode {id}) _)
+                                                        } =
   do
-    task <- uploadFile session nodeType id fileType {mName, contents}
+    task <- uploadFile session nodeType id fileType {mName, blob}
+    liftEffect $ onTaskAdd task
+    liftEffect $ log2 "Uploaded, task:" task
+
+performAction (UploadArbitraryFile nodeType mName blob) { session
+                                                        , tasks: { onTaskAdd }
+                                                        , tree: (NTree (LNode {id}) _)
+                                                        } =
+  do
+    task <- uploadArbitraryFile session nodeType id { blob, mName }
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "Uploaded, task:" task
 
