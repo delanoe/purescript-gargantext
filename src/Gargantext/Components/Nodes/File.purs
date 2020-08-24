@@ -101,8 +101,7 @@ fileLayoutLoadedCpt = R.hooksComponent "G.C.N.F.fileLayoutLoaded" cpt
           ]
         , H.div { className: "row" } [
             H.div { className: "btn btn-default" } [
-               H.a { -- href: "/api/v1.0/node/" <> show nodeId <> "/file/download"
-                    href: toUrl session ("node/" <> show nodeId <> "/file/download")
+               H.a { href: toUrl session ("node/" <> show nodeId <> "/file/download")
                    , target: "_blank"
                    } [ H.text "Download" ]
                ]
