@@ -68,42 +68,43 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
 
       pure $ H.span (dropProps droppedFile isDragOver)
            $ ordering
-        [ chevronIcon nodeType folderOpen
-        , folderIcon nodeType folderOpen
-        , if showBox then
-            Popover.popover { arrow: false
-                            , open: false
-                            , onClose: \_ -> pure unit
-                            , onOpen: \_ -> pure unit
-                            , ref: popoverRef } [
-                popOverIcon
-              , mNodePopupView props (onPopoverClose popoverRef)
-            ]
-          else H.div {} []
-        , H.a { href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
-              [ nodeText { isSelected: mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
-                         , name: name' props
-                         } ]
-        , nodeActions { id
-                      , nodeType
-                      , refreshTree: const $ dispatch RefreshTree
-                      , session }
-        , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
-        , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
-                                                , barType: Pie
-                                                , corpusId: id
-                                                , onFinish: const $ onTaskFinish t
-                                                , session 
-                                                }
-                        ) tasks
-                   )
-        , if nodeType == GT.NodeUser
-             then GV.versionView {session}
-             else H.div {} []
-        ]
-          where
-            SettingsBox {show: showBox} = settingsBox nodeType
-            onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
+             [ chevronIcon nodeType folderOpen
+             , folderIcon nodeType folderOpen
+             , if showBox then
+                 Popover.popover { arrow: false
+                                 , open: false
+                                 , onClose: \_ -> pure unit
+                                 , onOpen:  \_ -> pure unit
+                                 , ref: popoverRef } [
+                     popOverIcon
+                   , mNodePopupView props (onPopoverClose popoverRef)
+                 ]
+               else H.div {} []
+             , H.a { href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
+                   [ nodeText { isSelected: mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
+                              , name: name' props
+                              } ]
+             , nodeActions { id
+                           , nodeType
+                           , refreshTree: const $ dispatch RefreshTree
+                           , session
+                           }
+             , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
+             , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
+                                                     , barType: Pie
+                                                     , corpusId: id
+                                                     , onFinish: const $ onTaskFinish t
+                                                     , session
+                                                     }
+                             ) tasks
+                        )
+             , if nodeType == GT.NodeUser
+                  then GV.versionView {session}
+                  else H.div {} []
+             ]
+               where
+                 SettingsBox {show: showBox} = settingsBox nodeType
+                 onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
     name' {name, nodeType} = if nodeType == GT.NodeUser
                                 then show session
