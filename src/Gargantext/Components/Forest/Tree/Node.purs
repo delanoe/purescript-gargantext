@@ -69,28 +69,13 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
            $ ordering
              [ chevronIcon nodeType folderOpen
              , folderIcon  nodeType folderOpen
-             , if showBox then
-                 Popover.popover { arrow: false
-                                 , open: false
-                                 , onClose: \_ -> pure unit
-                                 , onOpen:  \_ -> pure unit
-                                 , ref: popoverRef } [
-                     popOverIcon
-                   , mNodePopupView props (onPopoverClose popoverRef)
-                 ]
-               else H.div {} []
-
              , nodeLink { frontends
                      , id
                      , isSelected: mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
                      , name: name' props
                      , nodeType
                      , session }
-             , nodeActions { id
-                           , nodeType
-                           , refreshTree: const $ dispatch RefreshTree
-                           , session
-                           }
+
              , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
              , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                      , barType: Pie
@@ -103,6 +88,26 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
              , if nodeType == GT.NodeUser
                   then GV.versionView {session}
                   else H.div {} []
+
+             , if showBox then
+                 Popover.popover { arrow: false
+                                 , open: false
+                                 , onClose: \_ -> pure unit
+                                 , onOpen:  \_ -> pure unit
+                                 , ref: popoverRef } [
+                     popOverIcon
+                   , mNodePopupView props (onPopoverClose popoverRef)
+                 ]
+               else H.div {} []
+
+
+             , nodeActions { id
+                           , nodeType
+                           , refreshTree: const $ dispatch RefreshTree
+                           , session
+                           }
+
+
              ]
                where
                  SettingsBox {show: showBox} = settingsBox nodeType
