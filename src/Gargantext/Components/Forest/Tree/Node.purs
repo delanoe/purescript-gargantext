@@ -67,14 +67,17 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
 
       pure $ H.span (dropProps droppedFile isDragOver)
            $ ordering
-             [ chevronIcon nodeType folderOpen
-             , folderIcon  nodeType folderOpen
+             [ folderIcon  nodeType folderOpen
+             , chevronIcon handed nodeType folderOpen
              , nodeLink { frontends
-                     , id
-                     , isSelected: mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
-                     , name: name' props
-                     , nodeType
-                     , session }
+                        , id
+                        , isSelected: mCurrentRoute
+                                    == Routes.nodeTypeAppRoute
+                                        nodeType 
+                                        (sessionId session) id
+                        , name: name' props
+                        , nodeType
+                        , session }
 
              , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
              , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
@@ -117,14 +120,16 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
                                 then show session
                                 else name
 
-    chevronIcon nodeType folderOpen'@(open /\ _) =
+    chevronIcon handed' nodeType folderOpen'@(open /\ _) =
       H.a { className: "chevron-icon"
           , onClick: R2.effToggler folderOpen'
           }
           [ H.i {
                className: if open
                           then "fa fa-chevron-down"
-                          else "fa fa-chevron-right"
+                          else if handed' == GT.RightHanded
+                                 then "fa fa-chevron-right"
+                                 else "fa fa-chevron-left"
                } [] ]
 
     folderIcon nodeType folderOpen'@(open /\ _) =

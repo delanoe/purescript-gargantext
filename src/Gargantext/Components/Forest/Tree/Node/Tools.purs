@@ -323,7 +323,7 @@ nodeTextCpt = R.hooksComponent "G.C.F.T.N.T.nodeText" cpt
          ]
         ]
     cpt {isSelected: false, name} _ = do
-      pure $ H.text (name15 name <> "    ")
+      pure $ H.text (name15 name)
 
     name len n = if S.length n < len then
                  n
