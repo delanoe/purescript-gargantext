@@ -142,7 +142,8 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
       { className: "leaf " <> (dropClass droppedFile isDragOver)
       , on: { drop: dropHandler droppedFile
             , dragOver: onDragOverHandler isDragOver
-            , dragLeave: onDragLeave isDragOver } }
+            , dragLeave: onDragLeave isDragOver }
+      }
       where
         dropClass   (Just _  /\ _)        _          = "file-dropped"
         dropClass    _                   (true /\ _) = "file-dropped"

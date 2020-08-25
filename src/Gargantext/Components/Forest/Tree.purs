@@ -133,7 +133,8 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
             , session
             , tasks
             , tree
-          } _ = pure $ H.ul { className: "tree"}
+          } _ = pure $ H.ul { className: "tree"
+                            }
                              [ H.div { className: if handed == GT.RightHanded
                                                     then "righthanded"
                                                     else "lefthanded"
