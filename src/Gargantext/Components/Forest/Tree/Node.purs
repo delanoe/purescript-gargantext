@@ -20,7 +20,7 @@ import Gargantext.Components.Forest.Tree.Node.Box.Types (CommonProps)
 import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks)
 import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
-import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
+import Gargantext.Components.Forest.Tree.Node.Tools (nodeLink)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
@@ -80,10 +80,12 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
               , mNodePopupView props (onPopoverClose popoverRef)
             ]
           else H.div {} []
-        , H.a { href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
-              [ nodeText { isSelected: mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
-                         , name: name' props
-                         } ]
+        , nodeLink { frontends
+                   , id
+                   , isSelected: mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
+                   , name: name' props
+                   , nodeType
+                   , session }
         , nodeActions { id
                       , nodeType
                       , refreshTree: const $ dispatch RefreshTree

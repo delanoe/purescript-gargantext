@@ -27,6 +27,7 @@
         "react": "^16.10",
         "react-awesome-popover": "^6.1.1",
         "react-dom": "^16.10",
+        "react-tooltip": "^4.2.8",
         "secp256k1": "^3.3.0",
         "sigma": "git://github.com/poorscript/sigma.js#garg"
     },

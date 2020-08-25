@@ -29,7 +29,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNode)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
-import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
+import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, prettyNodeType)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
@@ -74,9 +74,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
             [ H.div { className : "col-md-10 flex-between"}
                 [ H.h3 { className: GT.fldr p.nodeType true} []
                 -- TODO fix names
-                , H.text $ S.replace (S.Pattern "Node")   (S.Replacement " ") 
-                         $ S.replace (S.Pattern "Folder") (S.Replacement " ")
-                         $ show p.nodeType
+                , H.text $ prettyNodeType p.nodeType
                 , H.p {className: "text-primary center"} [H.text p.name]
                 ]
               ]
