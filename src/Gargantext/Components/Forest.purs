@@ -66,7 +66,7 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
 
 plus :: Handed -> R2.Setter Boolean -> R.Element
 plus handed showLogin = H.div {className: if handed == RightHanded
-                                             then "flex-start"
+                                             then "flex-start"  -- TODO we should use lefthanded SASS class here
                                              else "flex-end"
                               } [
   H.button { on: {click}
