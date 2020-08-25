@@ -25,7 +25,7 @@ mergeNode p = R.createElement mergeNodeCpt p []
 mergeNodeCpt :: R.Component SubTreeParamsIn
 mergeNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.mergeNode" cpt
   where
-    cpt p@{dispatch, subTreeParams, id, nodeType, session} _ = do
+    cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
 
       merge   <- R.useState' false
@@ -44,6 +44,7 @@ mergeNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.mergeNode" cpt
                       , nodeType
                       , session
                       , subTreeParams
+                      , handed
                       }
         , H.div { className:"panel panel-primary"}
                 [ H.text "Merge which list?"

@@ -273,6 +273,7 @@ type NodeLinkProps = (
   , name :: Name
   , nodeType :: GT.NodeType
   , session :: Session
+  , handed :: GT.Handed
   )
 
 nodeLink :: Record NodeLinkProps -> R.Element
@@ -281,7 +282,7 @@ nodeLink p = R.createElement nodeLinkCpt p []
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = R.hooksComponent "G.C.F.T.N.T.nodeLink" cpt
   where
-    cpt { frontends, id, isSelected, name, nodeType, session } _ = do
+    cpt { frontends, id, isSelected, name, nodeType, session, handed} _ = do
       popoverRef <- R.useRef null
 
       pure $
@@ -289,6 +290,7 @@ nodeLinkCpt = R.hooksComponent "G.C.F.T.N.T.nodeLink" cpt
                  , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
                                        [ nodeText { isSelected
                                                   , name
+                                                  , handed
                                                   }
                                        ]
                  , ReactTooltip.reactTooltip { id: tooltipId }
@@ -308,6 +310,7 @@ nodeLinkCpt = R.hooksComponent "G.C.F.T.N.T.nodeLink" cpt
 type NodeTextProps =
   ( isSelected :: Boolean
   , name       :: Name
+  , handed     :: GT.Handed
   )
 
 nodeText :: Record NodeTextProps -> R.Element
@@ -322,8 +325,10 @@ nodeTextCpt = R.hooksComponent "G.C.F.T.N.T.nodeText" cpt
            H.text ("| " <> name15 name <> " |    ")
          ]
         ]
-    cpt {isSelected: false, name} _ = do
-      pure $ H.text (name15 name)
+    cpt {isSelected: false, name, handed} _ = do
+      pure $ if handed == GT.RightHanded
+                then H.text "..." <> H.text (name15 name)
+                else H.text (name15 name) <> H.text "..."
 
     name len n = if S.length n < len then
                  n

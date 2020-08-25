@@ -10,7 +10,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (map, pure, show, ($), (&&), (/=), (<>), const, (==){-, discard, bind, void-})
+import Gargantext.Prelude (map, pure, show, ($), (&&), (/=), (<>), const, (==), identity{-, discard, bind, void-})
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
@@ -19,6 +19,7 @@ import Reactix.DOM.HTML as H
 
 type SubTreeParamsIn =
   ( subTreeParams :: SubTreeParams
+  , handed    :: GT.Handed
   | Props
   )
 
@@ -40,6 +41,7 @@ subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
                , session
                , subTreeParams
                , action
+               , handed
                } _ =
       do
         let
@@ -56,6 +58,7 @@ subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
                               , tree
                               , subTreeParams
                               , action
+                              , handed
                               }
 
 loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
@@ -82,9 +85,9 @@ subTreeViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeViewLoadedCpt" cpt
   where
     cpt p@{dispatch, id, nodeType, session, tree} _ = do
       pure $ H.div {className:"panel panel-primary"}
-                   [H.div { className: "copy-from-corpus" }
-                          [ H.div { className: "tree" }
-                                  [subTreeTreeView p]
+                   [H.div { className: "tree" }
+                          [ H.div { className: "" }
+                                  [ subTreeTreeView p ]
                           ]
                    ]
 
@@ -103,18 +106,30 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
           , subTreeParams
           , dispatch
           , action
+          , handed
           } _ = do
-            pure $ H.div {} [ H.div { className: "node " <> GT.fldr nodeType true} 
-                                    ( [ H.span { className: "name " <> clickable
-                                               , on: { click: onClick }
-                                               } [ nodeText { isSelected: isSelected targetId valAction
-                                                            , name: " " <> name
-                                                            }
-                                                 ]
+            let ordering =
+                  case handed of
+                    GT.LeftHanded  -> A.reverse
+                    GT.RightHanded -> identity
 
-                                    ] <> children
-                                  )
-                       ]
+            pure $ H.div { className: if handed == GT.RightHanded
+                                                         then "righthanded"
+                                                         else "lefthanded"
+                         } $ (ordering [ H.div { className: "node " <> GT.fldr nodeType true} []
+                                               , H.span { style : if validNodeType 
+                                                                    then { color : "blue", "text-decoration": "underline"}
+                                                                    else { color : "" , "text-decoration": "none"}
+                                                        , on: { click: onClick }
+                                                        }
+                                                        [ nodeText { isSelected: isSelected targetId valAction
+                                                                               , name: " " <> name
+                                                                               , handed
+                                                                               }
+                                                        ]
+                                       ]
+                            )
+                            <> children
       where
 
         SubTreeParams { valitypes } = subTreeParams

@@ -9,6 +9,15 @@
         cursor: pointer
       &.disabled
         cursor: wait
+  .node
+    padding-left: 10px
+    margin-top: 1px
+    .name
+      &.clickable
+        color: #337ab7
+        cursor: pointer
+        &:hover
+          text-decoration: underline
   .lefthanded
     ul
       margin-right : 19px
@@ -20,7 +29,6 @@
     li
       .leaf
         justify-content : flex-start
-
 
 // based on https://codeburst.io/how-to-pure-css-pie-charts-w-css-variables-38287aea161e
 .progress-pie

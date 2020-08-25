@@ -58,7 +58,7 @@ linkNode p = R.createElement linkNodeCpt p []
 linkNodeCpt :: R.Component SubTreeParamsIn
 linkNodeCpt = R.hooksComponent "G.C.F.T.N.A.L.linkNode" cpt
   where
-    cpt p@{dispatch, subTreeParams, id, nodeType, session} _ = do
+    cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
 
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (LinkNode {nodeType:Nothing,params:Nothing})
 
@@ -75,5 +75,6 @@ linkNodeCpt = R.hooksComponent "G.C.F.T.N.A.L.linkNode" cpt
                       , nodeType
                       , session
                       , subTreeParams
+                      , handed
                       }
               ] button

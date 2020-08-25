@@ -57,7 +57,7 @@ shareNode p = R.createElement shareNodeCpt p []
 shareNodeCpt :: R.Component SubTreeParamsIn
 shareNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.shareNode" cpt
   where
-    cpt p@{dispatch, subTreeParams, id, nodeType, session} _ = do
+    cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (Action.SharePublic {params: Nothing})
 
       let button = case valAction of
@@ -67,11 +67,12 @@ shareNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.shareNode" cpt
               _   -> H.div {} []
 
       pure $ Tools.panel [ subTreeView { action
-                                 , dispatch
-                                 , id
-                                 , nodeType
-                                 , session
-                                 , subTreeParams
-                                 }
+                                       , dispatch
+                                       , id
+                                       , nodeType
+                                       , session
+                                       , subTreeParams
+                                       , handed
+                                       }
               ] button
 

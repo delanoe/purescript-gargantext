@@ -44,7 +44,6 @@ type NodeMainSpanProps =
   , name          :: Name
   , nodeType      :: GT.NodeType
   , tasks         :: Record Tasks
-  , handed        :: GT.Handed
   | CommonProps
   )
 
@@ -77,7 +76,9 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
                                         (sessionId session) id
                         , name: name' props
                         , nodeType
-                        , session }
+                        , session
+                        , handed 
+                        }
 
              , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
              , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
@@ -148,6 +149,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
                     , nodeType
                     , onPopoverClose
                     , session
+                    , handed : props.handed
                     }
 
     dropProps droppedFile isDragOver =
