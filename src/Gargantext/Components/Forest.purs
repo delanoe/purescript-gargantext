@@ -15,7 +15,7 @@ import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Ends (Frontends)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Reload, Handed)
+import Gargantext.Types (Reload, Handed(..))
 import Gargantext.Utils.Reactix as R2
 
 type Props =
@@ -49,7 +49,8 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
       )
       (cpt' openNodes asyncTasks reload showLogin)
   cpt' openNodes asyncTasks reload showLogin (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
-    pure $ R.fragment $ A.cons (plus showLogin) trees
+    --pure $ R.fragment $ A.cons (plus showLogin) trees
+    pure $ R2.row $ [plus handed showLogin] <> trees
     where
       trees = tree <$> unSessions sessions
       tree s@(Session {treeId}) =
@@ -63,8 +64,11 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
                  , session: s
                  }
 
-plus :: R2.Setter Boolean -> R.Element
-plus showLogin =
+plus :: Handed -> R2.Setter Boolean -> R.Element
+plus handed showLogin = H.div {className: if handed == RightHanded
+                                             then "flex-start"  -- TODO we should use lefthanded SASS class here
+                                             else "flex-end"
+                              } [
   H.button { on: {click}
            , className: "btn btn-default"
            }
@@ -74,6 +78,7 @@ plus showLogin =
           , H.div {} [H.text "    "]
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
   --, H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
+          ]
           ]
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]

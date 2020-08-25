@@ -13,6 +13,15 @@
 .tree .node-actions .update-button.disabled {
   cursor: wait;
 }
+.tree .lefthanded ul {
+  margin-right: 19px;
+}
+.tree .lefthanded li .leaf {
+  justify-content: flex-end;
+}
+.tree .righthanded li .leaf {
+  justify-content: flex-start;
+}
 
 .progress-pie {
   background: rgba(51, 122, 183, 0.1);
