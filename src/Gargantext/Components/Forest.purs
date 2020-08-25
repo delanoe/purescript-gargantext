@@ -2,7 +2,6 @@ module Gargantext.Components.Forest where
 
 import Gargantext.Prelude
 
-import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Tuple (fst)

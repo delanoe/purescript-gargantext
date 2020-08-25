@@ -9,7 +9,6 @@ import Effect.Class (liftEffect)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
@@ -24,7 +23,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools (nodeLink)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Ends (Frontends, url)
+import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, unit, void, ($), (<>), (==), identity)
 import Gargantext.Routes as Routes
@@ -69,7 +68,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
       pure $ H.span (dropProps droppedFile isDragOver)
            $ ordering
              [ chevronIcon nodeType folderOpen
-             , folderIcon nodeType folderOpen
+             , folderIcon  nodeType folderOpen
              , if showBox then
                  Popover.popover { arrow: false
                                  , open: false

@@ -285,21 +285,19 @@ nodeLinkCpt = R.hooksComponent "G.C.F.T.N.T.nodeLink" cpt
       popoverRef <- R.useRef null
 
       pure $
-        H.div {} [
-          H.a { data: { for: tooltipId, tip: true }
-              , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
-            [ nodeText { isSelected
-                       , name
-                       } ]
-        , ReactTooltip.reactTooltip { id: tooltipId } [
-            R2.row [
-               H.h4 {} [ H.text $ prettyNodeType nodeType ]
-            ]
-          , R2.row [
-              H.span {} [ H.text $ name ]
-            ]
-          ]
-        ]
+        H.div {} [ H.a { data: { for: tooltipId, tip: true }
+                 , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
+                                       [ nodeText { isSelected
+                                                  , name
+                                                  }
+                                       ]
+                 , ReactTooltip.reactTooltip { id: tooltipId }
+                                             [ R2.row [ H.h4 {className: GT.fldr nodeType true}
+                                                             [ H.text $ prettyNodeType nodeType ]
+                                                      ]
+                                             , R2.row [ H.span {} [ H.text $ name ]]
+                                             ]
+                 ]
 
       where
         tooltipId = "node-link-" <> show id

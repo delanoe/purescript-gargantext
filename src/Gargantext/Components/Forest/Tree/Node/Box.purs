@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Data.String as S
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
