@@ -307,7 +307,16 @@ uploadArbitraryFile session nodeType id {mName, blob: UploadFileBlob blob} = do
     else
       throwError $ error $ "[uploadArbitraryFile] NodeType " <> (show nodeType) <> " not supported"
 
-    contents' <- readAsDataURL blob
+    contents <- readAsDataURL blob
+    uploadArbitraryDataURL session nodeType id mName contents
+
+uploadArbitraryDataURL :: Session
+                       -> GT.NodeType
+                       -> ID
+                       -> Maybe String
+                       -> String
+                       -> Aff GT.AsyncTaskWithType
+uploadArbitraryDataURL session nodeType id mName contents' = do
     let re = unsafePartial $ fromRight $ DSR.regex "data:.*;base64," DSRF.noFlags
         contents = DSR.replace re "" contents'
     task <- postWwwUrlencoded session p (bodyParams contents)

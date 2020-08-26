@@ -21,7 +21,7 @@ import Reactix as R
 import Reactix.DOM.HTML as RH
 
 import Gargantext.Components.Graph as Graph
-import Gargantext.Components.GraphExplorer.Button (centerButton)
+import Gargantext.Components.GraphExplorer.Button (centerButton, cameraButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSelectorSizeButton)
@@ -29,6 +29,7 @@ import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButto
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Sessions (Session)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
@@ -37,11 +38,13 @@ type Controls =
   , edgeWeight :: R.State Range.NumberRange
   , forceAtlasState :: R.State SigmaxT.ForceAtlasState
   , graph           :: SigmaxT.SGraph
+  , graphId         :: GET.GraphId
   , graphStage      :: R.State Graph.Stage
   , multiSelectEnabled :: R.State Boolean
   , nodeSize        :: R.State Range.NumberRange
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , selectedNodeIds :: R.State SigmaxT.NodeIds
+  , session         :: Session
   , showControls    :: R.State Boolean
   , showEdges       :: R.State SigmaxT.ShowEdgesState
   , showLouvain     :: R.State Boolean
@@ -158,12 +161,13 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                                                , multiSelectEnabled: props.multiSelectEnabled
                                                , selectedNodeIds: props.selectedNodeIds } ]
                 , RH.li {} [ mouseSelectorSizeButton props.sigmaRef localControls.mouseSelectorSize ]
+                , RH.li {} [ cameraButton props.session props.graphId props.sigmaRef ]
                 ]
               ]
             ]
 
-useGraphControls :: SigmaxT.SGraph -> R.Hooks (Record Controls)
-useGraphControls graph = do
+useGraphControls :: SigmaxT.SGraph -> GET.GraphId -> Session -> R.Hooks (Record Controls)
+useGraphControls graph graphId session = do
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed {
       min: 0.0
@@ -187,11 +191,13 @@ useGraphControls graph = do
        , edgeWeight
        , forceAtlasState
        , graph
+       , graphId
        , graphStage
        , multiSelectEnabled
        , nodeSize
        , removedNodeIds
        , selectedNodeIds
+       , session
        , showControls
        , showEdges
        , showLouvain

@@ -37,11 +37,9 @@ import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
-type GraphId = Int
-
 type LayoutProps =
   ( frontends :: Frontends
-  , graphId :: GraphId
+  , graphId :: GET.GraphId
   , handed :: Types.Handed
   , mCurrentRoute :: AppRoute
   , session :: Session
@@ -101,7 +99,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
-      controls              <- Controls.useGraphControls graph
+      controls              <- Controls.useGraphControls graph graphId session
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -203,7 +201,7 @@ type TreeProps =
 type MSidebarProps =
   ( frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
-  , graphId         :: GraphId
+  , graphId         :: GET.GraphId
   , graphVersion    :: R.State Int
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , showSidePanel   :: R.State GET.SidePanelState
@@ -215,7 +213,7 @@ type MSidebarProps =
 type GraphProps = (
     controls :: Record Controls.Controls
   , elRef :: R.Ref (Nullable Element)
-  , graphId :: GraphId
+  , graphId :: GET.GraphId
   , graph :: SigmaxT.SGraph
   , multiSelectEnabledRef :: R.Ref Boolean
 )
@@ -305,7 +303,7 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> R.State Int -> GraphId -> Aff GET.GraphData
+getNodes :: Session -> R.State Int -> GET.GraphId -> Aff GET.GraphData
 getNodes session (graphVersion /\ _) graphId = get session $ NodeAPI Types.Graph (Just graphId) ("?version=" <> show graphVersion)
 
 

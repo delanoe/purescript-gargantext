@@ -7,6 +7,8 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Partial.Unsafe (unsafePartial)
 
+type GraphId = Int
+
 newtype Node = Node
   { id_ :: String
   , size :: Int

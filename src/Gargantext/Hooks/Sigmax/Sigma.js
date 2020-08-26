@@ -190,7 +190,12 @@ function bindMouseSelectorPlugin(left, right, sig) {
 }
 function bind(sigma, event, handler) { sigma.bind(event, handler); }
 
+function takeScreenshot(sigma) {
+  return sigma.renderers[0].container.lastChild.toDataURL();
+}
+
 exports._sigma = _sigma;
 exports._addRenderer = addRenderer;
 exports._bindMouseSelectorPlugin = bindMouseSelectorPlugin;
 exports._bind = bind;
+exports._takeScreenshot = takeScreenshot;
