@@ -83,12 +83,13 @@ subTreeViewLoaded props = R.createElement subTreeViewLoadedCpt props []
 subTreeViewLoadedCpt :: R.Component CorpusTreeProps
 subTreeViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeViewLoadedCpt" cpt
   where
-    cpt p@{dispatch, id, nodeType, session, tree} _ = do
-      pure $ H.div {className:"panel panel-primary"}
-                   [H.div { className: "tree" }
-                          [ H.div { className: "" }
-                                  [ subTreeTreeView p ]
-                          ]
+    cpt p@{dispatch, id, nodeType, session, tree, handed} _ = do
+      pure $ H.div {className:"tree"}
+                   [H.div { className: if handed == GT.RightHanded
+                                         then "righthanded"
+                                         else "lefthanded"
+                          }
+                          [ subTreeTreeView p ]
                    ]
 
 subTreeTreeView :: Record CorpusTreeProps -> R.Element
@@ -113,13 +114,14 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
                     GT.LeftHanded  -> A.reverse
                     GT.RightHanded -> identity
 
-            pure $ H.div { className: if handed == GT.RightHanded
-                                                         then "righthanded"
-                                                         else "lefthanded"
-                         } $ (ordering [ H.div { className: "node " <> GT.fldr nodeType true} []
-                                               , H.span { style : if validNodeType 
-                                                                    then { color : "blue", "text-decoration": "underline"}
-                                                                    else { color : "" , "text-decoration": "none"}
+            pure $ H.div {} $ (ordering [ H.div { className: "node " <> GT.fldr nodeType true} []
+                                        , H.span { style : if validNodeType
+                                                                    then { color : "blue"
+                                                                         , "text-decoration": "underline"
+                                                                         }
+                                                                    else { color : ""
+                                                                         , "text-decoration": "none"
+                                                                         }
                                                         , on: { click: onClick }
                                                         }
                                                         [ nodeText { isSelected: isSelected targetId valAction
@@ -133,7 +135,7 @@ subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
       where
 
         SubTreeParams { valitypes } = subTreeParams
-        
+
         sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id')
                   $ A.filter (\(NTree (LNode {id:id'}) _) -> id'/= id) ary
 

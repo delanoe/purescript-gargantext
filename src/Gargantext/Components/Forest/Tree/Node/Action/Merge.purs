@@ -37,8 +37,7 @@ mergeNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.mergeNode" cpt
               Nothing -> H.div {} []
             _                   -> H.div {} []
 
-      pure $ panel [
-          subTreeView { action
+      pure $ panel [ subTreeView { action
                       , dispatch
                       , id
                       , nodeType
@@ -46,13 +45,13 @@ mergeNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.mergeNode" cpt
                       , subTreeParams
                       , handed
                       }
-        , H.div { className:"panel panel-primary"}
-                [ H.text "Merge which list?"
-                , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options
-                ]
-        , H.div { className:"panel panel-primary"}
-                [ H.text "Title"
-                , H.div {className: "checkbox"}
-                        [checkbox merge, H.text "Merge data?"]
-                ]
-        ] button
+                  , H.div { className:"panel panel-primary"}
+                          [ H.text "Merge which list?"
+                          , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options
+                          ]
+                  , H.div { className:"panel panel-primary"}
+                          [ H.text "Title"
+                          , H.div {className: "checkbox"}
+                                  [checkbox merge, H.text "Merge data?"]
+                          ]
+                  ] button
