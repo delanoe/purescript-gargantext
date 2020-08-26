@@ -172,7 +172,18 @@ topBarCpt = R.hooksComponent "G.C.A.topBar" cpt
             [ logo
             , H.div { className: "collapse navbar-collapse" }
                     [ H.ul { className: "nav navbar-nav" } [divDropdownLeft]
-                    , H.ul { title: "If you are Left Handed you can change the interface by clicking on me. Click again to come back to previous state.", className: "nav navbar-nav" } [handedChooser { handed }]
+                    , H.ul { title: "If you are Left Handed you can change "
+                                  <> "the interface by clicking on me. Click "
+                                  <> "again to come back to previous state."
+                           , className: "nav navbar-nav"
+                           } [handedChooser { handed }]
+                    {-, H.ul { title: "Dark Mode soon here"
+                           , className : "nav navbar-nav"
+                           } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+                                                ]
+                                       ]
+                             ]
+                    -}
                     ]
             ]
           ]
