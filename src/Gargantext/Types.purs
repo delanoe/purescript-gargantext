@@ -608,7 +608,7 @@ instance decodeJsonAsyncTaskType :: DecodeJson AsyncTaskType where
 
 asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath Form       = "add/form/async/"
-asyncTaskTypePath UploadFile = "add/file/async/"
+asyncTaskTypePath UploadFile = "async/file/add/"
 asyncTaskTypePath Query      = "query/"
 asyncTaskTypePath GraphT     = "async/"
 asyncTaskTypePath AddNode    = "async/nobody/"

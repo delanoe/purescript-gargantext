@@ -350,12 +350,12 @@ performAction (UploadFile nodeType fileType mName blob) { session
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "Uploaded, task:" task
 
-performAction (UploadArbitraryFile nodeType mName blob) { session
-                                                        , tasks: { onTaskAdd }
-                                                        , tree: (NTree (LNode {id}) _)
-                                                        } =
+performAction (UploadArbitraryFile mName blob) { session
+                                               , tasks: { onTaskAdd }
+                                               , tree: (NTree (LNode {id}) _)
+                                               } =
   do
-    task <- uploadArbitraryFile session nodeType id { blob, mName }
+    task <- uploadArbitraryFile session id { blob, mName }
     liftEffect $ onTaskAdd task
     liftEffect $ log2 "Uploaded, task:" task
 

@@ -18,7 +18,6 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryData
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Sessions (Session)
-import Gargantext.Types as GT
 
 type Props = (
     onClick :: forall e. e -> Effect Unit
@@ -58,6 +57,6 @@ cameraButton session id sigmaRef = simpleButton {
         screen <- Sigma.takeScreenshot s
         log2 "[cameraButton] screenshot" screen
         launchAff_ $ do
-          uploadArbitraryDataURL session GT.Graph id (Just "screenshot.png") screen
+          uploadArbitraryDataURL session id (Just "screenshot.png") screen
   , text: "Screenshot"
   }
