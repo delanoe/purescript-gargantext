@@ -55,7 +55,6 @@ cameraButton session id sigmaRef = simpleButton {
       let sigma = R.readRef sigmaRef
       Sigmax.dependOnSigma sigma "[cameraButton] sigma: Nothing" $ \s -> do
         screen <- Sigma.takeScreenshot s
-        log2 "[cameraButton] screenshot" screen
         launchAff_ $ do
           uploadArbitraryDataURL session id (Just "screenshot.png") screen
   , text: "Screenshot"

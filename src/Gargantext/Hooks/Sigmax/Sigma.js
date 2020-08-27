@@ -191,7 +191,13 @@ function bindMouseSelectorPlugin(left, right, sig) {
 function bind(sigma, event, handler) { sigma.bind(event, handler); }
 
 function takeScreenshot(sigma) {
-  return sigma.renderers[0].container.lastChild.toDataURL();
+  let c = sigma.renderers[0].container;
+  let edges = c.getElementsByClassName('sigma-edges')[0];
+  let scene = c.getElementsByClassName('sigma-scene')[0];
+  let sceneCtx = scene.getContext('2d');
+  sceneCtx.globalAlpha = 1;
+  sceneCtx.drawImage(edges, 0, 0);
+  return scene.toDataURL('image/png');
 }
 
 exports._sigma = _sigma;
