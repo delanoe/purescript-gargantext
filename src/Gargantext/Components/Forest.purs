@@ -2,7 +2,6 @@ module Gargantext.Components.Forest where
 
 import Gargantext.Prelude
 
-import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Tuple (fst)
@@ -69,7 +68,8 @@ plus handed showLogin = H.div {className: if handed == RightHanded
                                              then "flex-start"  -- TODO we should use lefthanded SASS class here
                                              else "flex-end"
                               } [
-  H.button { on: {click}
+  H.button { title: "Add or remove connections to the server(s)."
+           , on: {click}
            , className: "btn btn-default"
            }
           [ H.div { "type": ""

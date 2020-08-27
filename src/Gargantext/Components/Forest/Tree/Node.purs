@@ -9,7 +9,6 @@ import Effect.Class (liftEffect)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
@@ -20,11 +19,11 @@ import Gargantext.Components.Forest.Tree.Node.Box.Types (CommonProps)
 import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks)
 import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
-import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
+import Gargantext.Components.Forest.Tree.Node.Tools (nodeLink)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Ends (Frontends, url)
+import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, map, pure, show, unit, void, ($), (<>), (==), identity)
 import Gargantext.Routes as Routes
@@ -45,7 +44,6 @@ type NodeMainSpanProps =
   , name          :: Name
   , nodeType      :: GT.NodeType
   , tasks         :: Record Tasks
-  , handed        :: GT.Handed
   | CommonProps
   )
 
@@ -68,27 +66,20 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
 
       pure $ H.span (dropProps droppedFile isDragOver)
            $ ordering
-             [ chevronIcon nodeType folderOpen
-             , folderIcon nodeType folderOpen
-             , if showBox then
-                 Popover.popover { arrow: false
-                                 , open: false
-                                 , onClose: \_ -> pure unit
-                                 , onOpen:  \_ -> pure unit
-                                 , ref: popoverRef } [
-                     popOverIcon
-                   , mNodePopupView props (onPopoverClose popoverRef)
-                 ]
-               else H.div {} []
-             , H.a { href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
-                   [ nodeText { isSelected: mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
-                              , name: name' props
-                              } ]
-             , nodeActions { id
-                           , nodeType
-                           , refreshTree: const $ dispatch RefreshTree
-                           , session
-                           }
+             [ folderIcon  nodeType folderOpen
+             , chevronIcon handed nodeType folderOpen
+             , nodeLink { frontends
+                        , id
+                        , isSelected: mCurrentRoute
+                                    == Routes.nodeTypeAppRoute
+                                        nodeType 
+                                        (sessionId session) id
+                        , name: name' props
+                        , nodeType
+                        , session
+                        , handed 
+                        }
+
              , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
              , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                      , barType: Pie
@@ -101,6 +92,26 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
              , if nodeType == GT.NodeUser
                   then GV.versionView {session}
                   else H.div {} []
+
+             , if showBox then
+                 Popover.popover { arrow: false
+                                 , open: false
+                                 , onClose: \_ -> pure unit
+                                 , onOpen:  \_ -> pure unit
+                                 , ref: popoverRef } [
+                     popOverIcon
+                   , mNodePopupView props (onPopoverClose popoverRef)
+                 ]
+               else H.div {} []
+
+
+             , nodeActions { id
+                           , nodeType
+                           , refreshTree: const $ dispatch RefreshTree
+                           , session
+                           }
+
+
              ]
                where
                  SettingsBox {show: showBox} = settingsBox nodeType
@@ -110,14 +121,16 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
                                 then show session
                                 else name
 
-    chevronIcon nodeType folderOpen'@(open /\ _) =
+    chevronIcon handed' nodeType folderOpen'@(open /\ _) =
       H.a { className: "chevron-icon"
           , onClick: R2.effToggler folderOpen'
           }
           [ H.i {
                className: if open
                           then "fa fa-chevron-down"
-                          else "fa fa-chevron-right"
+                          else if handed' == GT.RightHanded
+                                 then "fa fa-chevron-right"
+                                 else "fa fa-chevron-left"
                } [] ]
 
     folderIcon nodeType folderOpen'@(open /\ _) =
@@ -136,6 +149,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
                     , nodeType
                     , onPopoverClose
                     , session
+                    , handed : props.handed
                     }
 
     dropProps droppedFile isDragOver =

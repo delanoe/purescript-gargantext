@@ -170,12 +170,21 @@ topBarCpt = R.hooksComponent "G.C.A.topBar" cpt
         [ H.div { className: "container-fluid" }
           [ H.div { className: "navbar-inner" }
             [ logo
-            , H.div { className: "collapse navbar-collapse" } [
-                H.ul { className: "nav navbar-nav" } [
-                  divDropdownLeft
-                , handedChooser { handed }
-                ]
-              ]
+            , H.div { className: "collapse navbar-collapse" }
+                    [ H.ul { className: "nav navbar-nav" } [divDropdownLeft]
+                    , H.ul { title: "If you are Left Handed you can change "
+                                  <> "the interface by clicking on me. Click "
+                                  <> "again to come back to previous state."
+                           , className: "nav navbar-nav"
+                           } [handedChooser { handed }]
+                    {-, H.ul { title: "Dark Mode soon here"
+                           , className : "nav navbar-nav"
+                           } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+                                                ]
+                                       ]
+                             ]
+                    -}
+                    ]
             ]
           ]
         ]
@@ -199,7 +208,7 @@ handedChooserCpt = R.hooksComponent "G.C.A.handedChooser" cpt
           ]
         ]
 
-    handedClass (GT.LeftHanded /\ _) = "fa fa-hand-o-left"
+    handedClass (GT.LeftHanded  /\ _) = "fa fa-hand-o-left"
     handedClass (GT.RightHanded /\ _) = "fa fa-hand-o-right"
 
     onClick (_ /\ setHanded) = setHanded $ \h -> case h of
@@ -209,11 +218,12 @@ handedChooserCpt = R.hooksComponent "G.C.A.handedChooser" cpt
 logo :: R.Element
 logo =
   H.a { className, href: "#/" }
-  [ H.img { src, title, width: "30", height: "28" } ]
+  [ H.img { src, title, width: "30", height: "28" }
+  ]
   where
     className = "navbar-brand logoSmall"
-    src = "images/logoSmall.png"
-    title = "Back to home."
+    src       = "images/logoSmall.png"
+    title     = "Back to home."
 
 divDropdownLeft :: R.Element
 divDropdownLeft =

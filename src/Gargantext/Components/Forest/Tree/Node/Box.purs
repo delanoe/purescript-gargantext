@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Data.String as S
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
@@ -29,7 +28,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNode)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
-import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
+import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, prettyNodeType)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
@@ -74,9 +73,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
             [ H.div { className : "col-md-10 flex-between"}
                 [ H.h3 { className: GT.fldr p.nodeType true} []
                 -- TODO fix names
-                , H.text $ S.replace (S.Pattern "Node")   (S.Replacement " ") 
-                         $ S.replace (S.Pattern "Folder") (S.Replacement " ")
-                         $ show p.nodeType
+                , H.text $ prettyNodeType p.nodeType
                 , H.p {className: "text-primary center"} [H.text p.name]
                 ]
               ]
@@ -183,6 +180,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                         , nodePopup: Just NodePopup
                         , nodeType : props.nodeType
                         , session  : props.session
+                        , handed   : props.handed
                         }
 
 type ActionState =
@@ -255,6 +253,7 @@ type PanelActionProps =
   , nodePopup :: Maybe NodePopup
   , nodeType  :: GT.NodeType
   , session   :: Session
+  , handed    :: GT.Handed
   )
 
 panelAction :: Record PanelActionProps -> R.Element
@@ -278,14 +277,14 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
 
 -----------
     -- Functions using SubTree
-    cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session} _ = do
-      pure $ mergeNode {dispatch, id, nodeType, session, subTreeParams}
+    cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
+      pure $ mergeNode {dispatch, id, nodeType, session, subTreeParams, handed}
 
-    cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session} _ = do
-      pure $ moveNode {dispatch, id, nodeType, session, subTreeParams}
+    cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
+      pure $ moveNode {dispatch, id, nodeType, session, subTreeParams, handed}
 
-    cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session} _ = do
-      pure $ linkNode {dispatch, id, nodeType, session, subTreeParams}
+    cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
+      pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed}
 -----------
 
     cpt {action : Share, dispatch, id, name } _ = do
@@ -311,8 +310,8 @@ panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
 
 
 
-    cpt {action : Publish {subTreeParams}, dispatch, id, nodeType, session } _ = do
-      pure $ Share.shareNode {dispatch, id, nodeType, session, subTreeParams}
+    cpt {action : Publish {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
+      pure $ Share.shareNode {dispatch, id, nodeType, session, subTreeParams, handed}
 
 
     cpt props@{action: SearchBox, id, session, dispatch, nodePopup} _ =

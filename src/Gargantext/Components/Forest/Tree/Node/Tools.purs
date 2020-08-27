@@ -1,22 +1,29 @@
 module Gargantext.Components.Forest.Tree.Node.Tools 
   where
 
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, Maybe(..))
+import Data.Nullable (null)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
+import Data.String.CodeUnits as DSCU
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Prelude
+
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<<<), (<>), read, map, class Read, class Show, not, class Ord)
+import Gargantext.Ends (Frontends, url)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (ID, Name)
+import Gargantext.Types as GT
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.ReactTooltip as ReactTooltip
 
 ------------------------------------------------------------------------
 
@@ -252,26 +259,84 @@ checkboxes xs (val /\ set) =
                   ) xs
 
 
+prettyNodeType :: GT.NodeType -> String
+prettyNodeType nt = S.replace (S.Pattern "Node")   (S.Replacement " ")
+                  $ S.replace (S.Pattern "Folder") (S.Replacement " ")
+                  $ show nt
+
+
+-- START node link
+type NodeLinkProps = (
+    frontends :: Frontends
+  , id :: Int
+  , isSelected :: Boolean
+  , name :: Name
+  , nodeType :: GT.NodeType
+  , session :: Session
+  , handed :: GT.Handed
+  )
+
+nodeLink :: Record NodeLinkProps -> R.Element
+nodeLink p = R.createElement nodeLinkCpt p []
+
+nodeLinkCpt :: R.Component NodeLinkProps
+nodeLinkCpt = R.hooksComponent "G.C.F.T.N.T.nodeLink" cpt
+  where
+    cpt { frontends, id, isSelected, name, nodeType, session, handed} _ = do
+      popoverRef <- R.useRef null
+
+      pure $
+        H.div {} [ H.a { data: { for: tooltipId, tip: true }
+                 , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
+                                       [ nodeText { isSelected
+                                                  , name
+                                                  , handed
+                                                  }
+                                       ]
+                 , ReactTooltip.reactTooltip { id: tooltipId }
+                                             [ R2.row [ H.h4 {className: GT.fldr nodeType true}
+                                                             [ H.text $ prettyNodeType nodeType ]
+                                                      ]
+                                             , R2.row [ H.span {} [ H.text $ name ]]
+                                             ]
+                 ]
+
+      where
+        tooltipId = "node-link-" <> show id
+-- END node link
+
+
 -- START node text
 type NodeTextProps =
   ( isSelected :: Boolean
   , name       :: Name
+  , handed     :: GT.Handed
   )
 
 nodeText :: Record NodeTextProps -> R.Element
 nodeText p = R.createElement nodeTextCpt p []
 
 nodeTextCpt :: R.Component NodeTextProps
-nodeTextCpt = R.hooksComponent "G.C.F.T.N.B.nodeText" cpt
+nodeTextCpt = R.hooksComponent "G.C.F.T.N.T.nodeText" cpt
   where
     cpt { isSelected: true, name } _ = do
       pure $ H.u {} [
         H.b {} [
-           H.text ("| " <> name <> " |    ")
+           H.text ("| " <> name15 name <> " |    ")
          ]
         ]
-    cpt {isSelected: false, name} _ = do
-      pure $ H.text (name <> "    ")
+    cpt {isSelected: false, name, handed} _ = do
+      pure $ if handed == GT.RightHanded
+                then H.text "..." <> H.text (name15 name)
+                else H.text (name15 name) <> H.text "..."
+
+    name len n = if S.length n < len then
+                 n
+               else
+                 case (DSCU.slice 0 len n) of
+                   Nothing -> "???"
+                   Just s  -> s <> "..."
+    name15 = name 15
 -- END node text
 
 ------------------------------------------------------------------------

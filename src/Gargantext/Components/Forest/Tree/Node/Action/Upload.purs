@@ -17,7 +17,7 @@ import React.SyntheticEvent     as E
 import Reactix                  as R
 import Reactix.DOM.HTML         as H
 import URI.Extra.QueryPairs     as QP
-import Web.File.Blob (Blob)
+-- import Web.File.Blob (Blob)
 import Web.File.FileReader.Aff (readAsDataURL, readAsText)
 
 import Gargantext.Prelude
@@ -31,7 +31,6 @@ import Gargantext.Sessions (Session, postWwwUrlencoded)
 import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types         as GT
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.String as GUS
 
 -- UploadFile Action
 

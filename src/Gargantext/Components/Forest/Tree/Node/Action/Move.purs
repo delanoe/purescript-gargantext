@@ -24,7 +24,7 @@ moveNode p = R.createElement moveNodeCpt p []
 moveNodeCpt :: R.Component SubTreeParamsIn
 moveNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.moveNode" cpt
   where
-    cpt p@{dispatch, subTreeParams, id, nodeType, session} _ = do
+    cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params: Nothing})
 
       let button = case valAction of
@@ -39,5 +39,6 @@ moveNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.moveNode" cpt
                                  , nodeType
                                  , session
                                  , subTreeParams
+                                 , handed
                                  }
               ] button

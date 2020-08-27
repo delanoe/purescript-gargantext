@@ -202,16 +202,4 @@ a:focus, a:hover {
   cursor: pointer;
 }
 
-.copy-from-corpus .tree .node {
-  padding-left: 10px;
-  margin-top: 5px;
-}
-.copy-from-corpus .tree .node .name.clickable {
-  color: #337ab7;
-  cursor: pointer;
-}
-.copy-from-corpus .tree .node .name.clickable:hover {
-  text-decoration: underline;
-}
-
 /*# sourceMappingURL=Login.css.map */
