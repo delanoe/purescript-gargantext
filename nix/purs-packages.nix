@@ -3,11 +3,11 @@
 {
   "aff" = {
     name = "aff";
-    version = "v5.1.1";
+    version = "v5.1.2";
     src = pkgs.fetchgit {
       url = "https://github.com/slamdata/purescript-aff.git";
-      rev = "v5.1.1";
-      sha256 = "19v5psd6jz13gr5yqyx8286b5bpfq1dax51w906y0mqgnfz92yzr";
+      rev = "v5.1.2";
+      sha256 = "1ygjxbm2bqw82sm17szhzz4jihvbg9mszx1ii0n3sj72bnz02avz";
     };
   };
   "aff-promise" = {
@@ -21,11 +21,11 @@
   };
   "affjax" = {
     name = "affjax";
-    version = "v9.0.0";
+    version = "v10.1.0";
     src = pkgs.fetchgit {
       url = "https://github.com/slamdata/purescript-affjax.git";
-      rev = "v9.0.0";
-      sha256 = "04xij3q4802z58mzaaz661ifv1rd673fq2mjqj553dw326zplpvs";
+      rev = "v10.1.0";
+      sha256 = "129g7x9icaqj158snzl0ilbd0dipl4bmk49is8dh8jvh0z97k700";
     };
   };
   "ansi" = {
@@ -39,38 +39,38 @@
   };
   "argonaut" = {
     name = "argonaut";
-    version = "v6.0.0";
+    version = "v7.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-argonaut.git";
-      rev = "v6.0.0";
-      sha256 = "0b2jy5sf2lnn1r4kxnnm2vsr5iqkfas0jqp9yrrjmg7qngkd6qkw";
+      rev = "v7.0.0";
+      sha256 = "0bv0jx55ccq1r5h8yrz6gkkpw06zk8zwqdahndqgiy2pz5ybbzna";
     };
   };
   "argonaut-codecs" = {
     name = "argonaut-codecs";
-    version = "v6.0.2";
+    version = "v7.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-argonaut-codecs.git";
-      rev = "v6.0.2";
-      sha256 = "1i8dm95kbcl7k92jqnylhng1rjcqx5z12yhf6mwvp0z0bmsz250b";
+      rev = "v7.0.0";
+      sha256 = "1ibd4zy3qwjc8kvp7mb9chfa25mcflzib3yplng39cr06ixs1mm4";
     };
   };
   "argonaut-core" = {
     name = "argonaut-core";
-    version = "v5.0.0";
+    version = "v5.0.2";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-argonaut-core.git";
-      rev = "v5.0.0";
-      sha256 = "1d3jgyap3vwc7mc01ji6brmd2n8lr9mmgx0fl88yalrm2j89jrcc";
+      rev = "v5.0.2";
+      sha256 = "1rfd1brvzp9akx6hypxql2qv9bhlcqks1xwqfqqf31dqvcl7vvhc";
     };
   };
   "argonaut-traversals" = {
     name = "argonaut-traversals";
-    version = "v7.0.0";
+    version = "v8.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-argonaut-traversals.git";
-      rev = "v7.0.0";
-      sha256 = "0mr6c7c64c5b7ia0b68vsjyjxw06ac9908xpgxdd969kpvcwq9x3";
+      rev = "v8.0.0";
+      sha256 = "1rxnbhizqv2mdwr5jil0957b9ncs53aq6r1a8z6drynwhdlkvfxz";
     };
   };
   "arraybuffer-types" = {
@@ -84,11 +84,11 @@
   };
   "arrays" = {
     name = "arrays";
-    version = "v5.3.0";
+    version = "v5.3.1";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-arrays.git";
-      rev = "v5.3.0";
-      sha256 = "0r991qcx69xj07iagjaxkm0ab9qi2pw8cs3qwyybhis7asd6bnz6";
+      rev = "v5.3.1";
+      sha256 = "1z8i4mr30mjsvmw743g0m1yxfgqa9rhbgq7jq3955mg7j80j5r7w";
     };
   };
   "avar" = {
@@ -118,6 +118,24 @@
       sha256 = "0mbpb8xr9a7a4bvawhki7js5cbv7c0lv0vdwb6r8nmv6b61gzg27";
     };
   };
+  "codec" = {
+    name = "codec";
+    version = "v3.0.0";
+    src = pkgs.fetchgit {
+      url = "https://github.com/garyb/purescript-codec.git";
+      rev = "v3.0.0";
+      sha256 = "0jk0j4yss3d6scyb715p926ld8rmsfnv1h85zxpywv85xdingw9w";
+    };
+  };
+  "codec-argonaut" = {
+    name = "codec-argonaut";
+    version = "v7.1.0";
+    src = pkgs.fetchgit {
+      url = "https://github.com/garyb/purescript-codec-argonaut.git";
+      rev = "v7.1.0";
+      sha256 = "13aqci36xgxbahgpcxf2hsq9nsp0ljjd7nkzvpwxhhvy4n8yk1kk";
+    };
+  };
   "colors" = {
     name = "colors";
     version = "v5.0.0";
@@ -129,11 +147,11 @@
   };
   "console" = {
     name = "console";
-    version = "v4.2.0";
+    version = "v4.4.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-console.git";
-      rev = "v4.2.0";
-      sha256 = "1b2nykdq1dzaqyra5pi8cvvz4dsbbkg57a2c88yi931ynm19nnw6";
+      rev = "v4.4.0";
+      sha256 = "1w9k2g242lvyv4npb5rqfbdq1ngh7s7v12zarxn8yxgq15palh3m";
     };
   };
   "const" = {
@@ -156,20 +174,20 @@
   };
   "control" = {
     name = "control";
-    version = "v4.1.0";
+    version = "v4.2.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-control.git";
-      rev = "v4.1.0";
-      sha256 = "10703zvsnjm5fc74k6wzjsvpsfyc3jci3jxhm7rxf7ymya9z1z53";
+      rev = "v4.2.0";
+      sha256 = "1nm45khn2dvlyv059nzpz1w7d3nfsvq45hnb2qllrbzyv7rlxmi8";
     };
   };
   "coroutines" = {
     name = "coroutines";
-    version = "v5.0.0";
+    version = "v5.0.1";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-coroutines.git";
-      rev = "v5.0.0";
-      sha256 = "1jax7by8kn9fjg00avhziy3n18i3510iwzs3d73ziplanbw4qw4k";
+      rev = "v5.0.1";
+      sha256 = "1is83blf44sflhwsaixpd1irlm33fsd1p919gbcn79mmmwi4bxdl";
     };
   };
   "css" = {
@@ -327,11 +345,11 @@
   };
   "form-urlencoded" = {
     name = "form-urlencoded";
-    version = "v4.0.1";
+    version = "v5.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-form-urlencoded.git";
-      rev = "v4.0.1";
-      sha256 = "14nb7mslmbms4wn4j6a7nrz8xmnach3qgcf8i1hgql1c8j7zkqz8";
+      rev = "v5.0.0";
+      sha256 = "1kl937qxnbn9m1bn0ijpnfiizgpcvcrnzqcc1scwq2kxvxh8kqap";
     };
   };
   "free" = {
@@ -345,11 +363,11 @@
   };
   "freet" = {
     name = "freet";
-    version = "v4.0.0";
+    version = "v5.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-freet.git";
-      rev = "v4.0.0";
-      sha256 = "1kpgggwimxjvdvhn6s7z4lzg3yw1rqg5f7pyamx9gh232s4va40i";
+      rev = "v5.0.0";
+      sha256 = "0j8y47x672z8h809hxl1n502yj0y3yv8zsln8bk17rcz06x8frv9";
     };
   };
   "functions" = {
@@ -525,18 +543,18 @@
   };
   "milkis" = {
     name = "milkis";
-    version = "v7.2.0";
+    version = "v7.4.0";
     src = pkgs.fetchgit {
       url = "https://github.com/justinwoo/purescript-milkis.git";
-      rev = "v7.2.0";
-      sha256 = "1i6l8k4clrnq4wxbdzzq08kagk591yr24xip86z1j7xap98y02xg";
+      rev = "v7.4.0";
+      sha256 = "10ahz4idcb3qwys7x15k3za5gkw9zbk15cdmcqsi8lfh6fg2w2db";
     };
   };
   "mmorph" = {
     name = "mmorph";
     version = "v5.1.0";
     src = pkgs.fetchgit {
-      url = "https://github.com/Thimoteus/purescript-mmorph.git";
+      url = "https://github.com/thimoteus/purescript-mmorph.git";
       rev = "v5.1.0";
       sha256 = "1lvdclqi9wzs4j8xj8ygnj2b87hhpbnl0c6m28zac05rz87s09mg";
     };
@@ -552,11 +570,11 @@
   };
   "node-buffer" = {
     name = "node-buffer";
-    version = "v5.0.0";
+    version = "v6.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-node/purescript-node-buffer.git";
-      rev = "v5.0.0";
-      sha256 = "0ih2y29srdxgn526fw2v1y95hpivjil44vkl93w6nrqsymki36y0";
+      rev = "v6.0.0";
+      sha256 = "0pgl8r1rwzmbvwgbibk24jpgf6m7xcw3y7zfn6psgzca44c4hgsv";
     };
   };
   "node-fs" = {
@@ -696,20 +714,20 @@
   };
   "profunctor" = {
     name = "profunctor";
-    version = "v4.0.0";
+    version = "v4.1.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-profunctor.git";
-      rev = "v4.0.0";
-      sha256 = "1v4kvmhmiwznd4lswp9339h64pgv5zvd3vm1q7gzj70767a3941i";
+      rev = "v4.1.0";
+      sha256 = "1zwbxgimpknmashmq2rb773kbwbksr4ahcdkpnvvcapasxhds0a7";
     };
   };
   "profunctor-lenses" = {
     name = "profunctor-lenses";
-    version = "v6.2.0";
+    version = "v6.3.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-profunctor-lenses.git";
-      rev = "v6.2.0";
-      sha256 = "0bb8ib00in8d65kvympdlfncb7bp1qqsjvvpw9zfwiwf67ix4v57";
+      rev = "v6.3.0";
+      sha256 = "07py52ngnhab0pc0ca42pnypbwk1lcm7mhz29kp4ap0qhi2z4n2y";
     };
   };
   "proxy" = {
@@ -750,11 +768,11 @@
   };
   "react" = {
     name = "react";
-    version = "v7.0.1";
+    version = "v8.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-react.git";
-      rev = "v7.0.1";
-      sha256 = "0kym675db8i4wzd0rh1f17k4mcfbf4pwnhpf7zhzkm9zaj7wc2cg";
+      rev = "v8.0.0";
+      sha256 = "1agpsxwz1i8pavcrpgnir5sk9vwrwk406psykjxmyahxby1dhwqi";
     };
   };
   "react-dom" = {
@@ -786,20 +804,20 @@
   };
   "record" = {
     name = "record";
-    version = "v2.0.1";
+    version = "v2.0.2";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-record.git";
-      rev = "v2.0.1";
-      sha256 = "1l7ixb0gc2man36181g3hdf46sjp7xh0kv8bgrvalxfisjmd12v0";
+      rev = "v2.0.2";
+      sha256 = "0ap1mc7bi8a20c5g11lxif6q68s2sc31khirfabngr1jpsm3r4lw";
     };
   };
   "record-extra" = {
     name = "record-extra";
-    version = "v3.0.0";
+    version = "v3.0.1";
     src = pkgs.fetchgit {
       url = "https://github.com/justinwoo/purescript-record-extra.git";
-      rev = "v3.0.0";
-      sha256 = "1zhsgafd02h7161xldnf4z3sfjacp2if8py157igiszkjxaipvdd";
+      rev = "v3.0.1";
+      sha256 = "0n1zj2mngizl3bi999yrsv7z6bvb5caxxwrgpyykx29m63w0ghnb";
     };
   };
   "refs" = {
@@ -813,11 +831,11 @@
   };
   "routing" = {
     name = "routing";
-    version = "v9.0.0";
+    version = "v9.0.1";
     src = pkgs.fetchgit {
       url = "https://github.com/slamdata/purescript-routing.git";
-      rev = "v9.0.0";
-      sha256 = "1q05k1nrwpmlwy35fwa6kp1drk1ywnf5srmm1rzpliprvpli3is7";
+      rev = "v9.0.1";
+      sha256 = "1d8zxb3q91gv11bbg2wpvi5qnrlwfac0np2lqqylyqzlzwnz7gs1";
     };
   };
   "semirings" = {
@@ -849,20 +867,20 @@
   };
   "smolder" = {
     name = "smolder";
-    version = "v12.0.0";
+    version = "v12.3.0";
     src = pkgs.fetchgit {
       url = "https://github.com/bodil/purescript-smolder.git";
-      rev = "v12.0.0";
-      sha256 = "1v8707hgm9g4k30afc30cxzfcz627bmxf7cn9wk3l3mh9ppl8kwd";
+      rev = "v12.3.0";
+      sha256 = "06galacn3346ghf4w56qwj5d4z06zmlf9prd24vrvnaiwhpf42d7";
     };
   };
   "spec" = {
     name = "spec";
-    version = "v4.0.0";
+    version = "v4.0.1";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-spec/purescript-spec.git";
-      rev = "v4.0.0";
-      sha256 = "1b1hw3231ha5fq61948dfz28a0lm2mcn2pksszf7yw3137ysp5bn";
+      rev = "v4.0.1";
+      sha256 = "0svz079yvykx4dj89qgaqi0zwy7d3l1yhkrcll2m81y3idhr1c2p";
     };
   };
   "spec-discovery" = {
@@ -885,47 +903,47 @@
   };
   "st" = {
     name = "st";
-    version = "v4.0.0";
+    version = "v4.1.1";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-st.git";
-      rev = "v4.0.0";
-      sha256 = "0m2jkb9dmpbr8s1c20l7sm2q11y5rx8gqfiyspnyhq5apzkknjr0";
+      rev = "v4.1.1";
+      sha256 = "1jpz8rpk2ac6kshflri8pdw4s1hf8g4alz5bw69x23sj9sccxgs0";
     };
   };
   "string-parsers" = {
     name = "string-parsers";
-    version = "v5.0.0";
+    version = "v5.0.1";
     src = pkgs.fetchgit {
       url = "https://github.com/paf31/purescript-string-parsers.git";
-      rev = "v5.0.0";
-      sha256 = "1lykswyd3icv9lx4r096lxfd244i0pzj2f4fpm604czzlfw6bspv";
+      rev = "v5.0.1";
+      sha256 = "0qz9zry17hwvbhsbx25lj3g15yki22pdfz4slbqpv64mh6clb1iz";
     };
   };
   "strings" = {
     name = "strings";
-    version = "v4.0.1";
+    version = "v4.0.2";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-strings.git";
-      rev = "v4.0.1";
-      sha256 = "147l3l3fzn7liparhm2y3p8j4ck1lblra5j493p2hy5yy5ndznc8";
+      rev = "v4.0.2";
+      sha256 = "164mx0j9pv47m2hzckq51aa1rpb5wijcrh4bi78xn3s8n0fb6dq1";
     };
   };
   "stringutils" = {
     name = "stringutils";
-    version = "v0.0.9";
+    version = "v0.0.10";
     src = pkgs.fetchgit {
       url = "https://github.com/menelaos/purescript-stringutils.git";
-      rev = "v0.0.9";
-      sha256 = "00c679d5lk37gbfby2kasyq45rla6a0shg64zhyd2r4xrj0a74r4";
+      rev = "v0.0.10";
+      sha256 = "1l6ljz55l8pl2lmnzq1f881rsiz8il12k4xgir41qfm1c0hch235";
     };
   };
   "tailrec" = {
     name = "tailrec";
-    version = "v4.0.0";
+    version = "v4.1.1";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-tailrec.git";
-      rev = "v4.0.0";
-      sha256 = "0z7k80nl8dgv8mc2w8xsl2n0637bd1l8ppxak8kaifgjjwa81hx3";
+      rev = "v4.1.1";
+      sha256 = "0n0sxr44d1lwlrgv8b48ml6vg0r5abfvyywn50jb0i1agnm53i4n";
     };
   };
   "thermite" = {
@@ -984,20 +1002,20 @@
   };
   "typelevel" = {
     name = "typelevel";
-    version = "v5.0.0";
+    version = "v6.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/bodil/purescript-typelevel.git";
-      rev = "v5.0.0";
-      sha256 = "1s0fdffmn386hahv670fc5vvj0x0cqk64i4jj95rfavffch4x7va";
+      rev = "v6.0.0";
+      sha256 = "0gxj926ppx6d8inir589x0a30iv29hqc2y6vsa1n1c2vlcqv2zgd";
     };
   };
   "typelevel-prelude" = {
     name = "typelevel-prelude";
-    version = "v5.0.0";
+    version = "v5.0.2";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-typelevel-prelude.git";
-      rev = "v5.0.0";
-      sha256 = "01ki39xj87kwf8j8divlzwrvfyjcgxpmzhhmxzjylqx6jarcwyg6";
+      rev = "v5.0.2";
+      sha256 = "1kp1b35y8wzin9m5lfyp239nclq703xz2b4373x3075xfp6qdcwf";
     };
   };
   "uint" = {
@@ -1011,11 +1029,11 @@
   };
   "unfoldable" = {
     name = "unfoldable";
-    version = "v4.0.2";
+    version = "v4.1.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-unfoldable.git";
-      rev = "v4.0.2";
-      sha256 = "0lzhx030c5933maxcjwk6kzlvbxky1kiwrymqf1dp5wbrar3jyv4";
+      rev = "v4.1.0";
+      sha256 = "03g2zz26ai8a44z07jhdj0yvv8q6nq6ifcrzc7qjmdkjywg2cj9v";
     };
   };
   "unicode" = {
@@ -1054,6 +1072,15 @@
       sha256 = "03irk6n7jgsimhp9ckrg2ns7qbc8d383ls3sslxgir5mr8xdc44g";
     };
   };
+  "variant" = {
+    name = "variant";
+    version = "v6.0.1";
+    src = pkgs.fetchgit {
+      url = "https://github.com/natefaubion/purescript-variant.git";
+      rev = "v6.0.1";
+      sha256 = "0cn227q57zbqm6r1aw5kvnp1x8zkc1x7wx28yyz311lmy7k1mkql";
+    };
+  };
   "versions" = {
     name = "versions";
     version = "v5.0.1";
@@ -1065,11 +1092,11 @@
   };
   "web-dom" = {
     name = "web-dom";
-    version = "v3.0.0";
+    version = "v4.1.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-web/purescript-web-dom.git";
-      rev = "v3.0.0";
-      sha256 = "14mssfhg81diy82wbv3ja8zk9a92267c6svq4bgfag91hydw4p42";
+      rev = "v4.1.0";
+      sha256 = "14s8wcy30dpjq7fzkm55ksnl7b48b1lyhbdny3c93hnf01xaq2ml";
     };
   };
   "web-events" = {
@@ -1083,20 +1110,20 @@
   };
   "web-file" = {
     name = "web-file";
-    version = "v2.1.1";
+    version = "v2.3.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-web/purescript-web-file.git";
-      rev = "v2.1.1";
-      sha256 = "08k0xv9zpg040v32k3wk66bhzx16c2nn9v35f01gq96anhm713s1";
+      rev = "v2.3.0";
+      sha256 = "1pn3cp8kkvxlg0vx3m53i83n8c92agpxd7dj96ma3bnyskd17fxv";
     };
   };
   "web-html" = {
     name = "web-html";
-    version = "v2.2.1";
+    version = "v2.3.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-web/purescript-web-html.git";
-      rev = "v2.2.1";
-      sha256 = "026y4kkrc2z4zmxlc4z21znq8knaqqjazf1ny811gm1507b1ykc6";
+      rev = "v2.3.0";
+      sha256 = "1gz2wkph49rkwd7cm6j0mx9sv6a3nzxcidv50mrxydhl3h8153gy";
     };
   };
   "web-storage" = {
@@ -1110,11 +1137,11 @@
   };
   "web-xhr" = {
     name = "web-xhr";
-    version = "v3.0.1";
+    version = "v3.0.2";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-web/purescript-web-xhr.git";
-      rev = "v3.0.1";
-      sha256 = "1217lmvla3rqd9kzvvjxpngj7nxjn2ianm9xhlc0iydzsd0agihi";
+      rev = "v3.0.2";
+      sha256 = "1g35z2j9i5lqfms4yi8hgbgc85x6dy9lr3ygbr2f5fgkz86x3hqj";
     };
   };
 }

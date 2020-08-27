@@ -1,6 +1,6 @@
 module Gargantext.Config.REST where
 
-import Affjax (defaultRequest, printResponseFormatError, request)
+import Affjax (defaultRequest, printError, request)
 import Affjax.RequestBody (RequestBody(..), formData, formURLEncoded)
 import Affjax.RequestHeader as ARH
 import Affjax.ResponseFormat as ResponseFormat
@@ -49,16 +49,16 @@ send m mtoken url reqbody = do
     Just token -> liftEffect $ do
       let cookie = "JWT-Cookie=" <> token <> "; Path=/;" --" HttpOnly; Secure; SameSite=Lax"
       R2.setCookie cookie
-  case affResp.body of
+  case affResp of
     Left err -> do
-      _ <-  liftEffect $ log $ printResponseFormatError err
-      throwError $ error $ printResponseFormatError err
-    Right json -> do
+      _ <-  liftEffect $ log $ printError err
+      throwError $ error $ printError err
+    Right resp -> do
       --_ <-  liftEffect $ log json.status
       --_ <-  liftEffect $ log json.headers
       --_ <-  liftEffect $ log json.body
-      case decodeJson json of
-        Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
+      case decodeJson resp.body of
+        Left err -> throwError $ error $ "decodeJson affResp.body: " <> show err
         Right b -> pure b
 
 noReqBody :: Maybe Unit
@@ -101,16 +101,16 @@ postWwwUrlencoded mtoken url bodyParams = do
                           ) mtoken
              , content  = Just $ formURLEncoded urlEncodedBody
              }
-  case affResp.body of
+  case affResp of
     Left err -> do
-      _ <-  liftEffect $ log $ printResponseFormatError err
-      throwError $ error $ printResponseFormatError err
-    Right json -> do
+      _ <-  liftEffect $ log $ printError err
+      throwError $ error $ printError err
+    Right resp -> do
       --_ <- liftEffect $ log json.status
       --_ <- liftEffect $ log json.headers
       --_ <- liftEffect $ log json.body
-      case decodeJson json of
-        Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
+      case decodeJson resp.body of
+        Left err -> throwError $ error $ "decodeJson affResp.body: " <> show err
         Right b -> pure b
   where
     urlEncodedBody = FormURLEncoded.fromArray bodyParams
@@ -131,12 +131,12 @@ postMultipartFormData mtoken url body = do
                          ) mtoken
              , content = Just $ formData fd
              }
-  case affResp.body of
+  case affResp of
     Left err -> do
-      _ <-  liftEffect $ log $ printResponseFormatError err
-      throwError $ error $ printResponseFormatError err
-    Right json -> do
-      case decodeJson json of
-        Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
+      _ <-  liftEffect $ log $ printError err
+      throwError $ error $ printError err
+    Right resp -> do
+      case decodeJson resp.body of
+        Left err -> throwError $ error $ "decodeJson affResp.body: " <> show err
         Right b -> pure b
 

@@ -4,6 +4,7 @@ module Gargantext.Sessions where
 import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:))
 import Data.Argonaut.Core (Json, fromArray, jsonEmptyObject, stringify)
+import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
@@ -94,7 +95,7 @@ instance decodeJsonSessions :: DecodeJson Sessions where
     pure (Sessions {sessions:Seq.fromFoldable ss})
 
     where
-      decodeSessions :: Json -> Either String (Array Session)
+      decodeSessions :: Json -> Either JsonDecodeError (Array Session)
       decodeSessions json2 = decodeJson json2
                           >>= \obj -> obj .: "sessions"
                           >>= traverse decodeJson

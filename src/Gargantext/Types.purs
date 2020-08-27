@@ -1,6 +1,7 @@
 module Gargantext.Types where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
+import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -85,7 +86,7 @@ instance decodeJsonTermList :: DecodeJson TermList where
       "MapTerm"       -> pure MapTerm
       "StopTerm"      -> pure StopTerm
       "CandidateTerm" -> pure CandidateTerm
-      _               -> Left "Unexpected list name"
+      s               -> Left $ AtKey s $ TypeMismatch "Unexpected list name"
 
 type ListTypeId = Int
 
@@ -604,7 +605,7 @@ instance decodeJsonAsyncTaskType :: DecodeJson AsyncTaskType where
       "GraphT"     -> pure GraphT
       "Query"      -> pure Query
       "AddNode"    -> pure AddNode
-      s            -> Left ("Unknown string " <> s)
+      s            -> Left $ AtKey s $ TypeMismatch "Unknown string"
 
 asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath Form       = "add/form/async/"

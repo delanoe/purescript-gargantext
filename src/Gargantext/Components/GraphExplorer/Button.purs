@@ -7,10 +7,14 @@ module Gargantext.Components.GraphExplorer.Button
 
 import Prelude
 
+import Data.Enum (fromEnum)
 import Data.Maybe (Maybe(..))
-import DOM.Simple.Console (log2)
+import Data.DateTime as DDT
+import Data.DateTime.Instant as DDI
+import Data.String as DS
 import Effect (Effect)
 import Effect.Aff (launchAff_)
+import Effect.Now as EN
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -55,7 +59,17 @@ cameraButton session id sigmaRef = simpleButton {
       let sigma = R.readRef sigmaRef
       Sigmax.dependOnSigma sigma "[cameraButton] sigma: Nothing" $ \s -> do
         screen <- Sigma.takeScreenshot s
+        now <- EN.now
+        let nowdt = DDI.toDateTime now
+            nowd = DDT.date nowdt
+            nowt = DDT.time nowdt
+            nowStr = DS.joinWith "-" [ show $ fromEnum $ DDT.year nowd
+                                     , show $ fromEnum $ DDT.month nowd
+                                     , show $ fromEnum $ DDT.day nowd
+                                     , show $ fromEnum $ DDT.hour nowt
+                                     , show $ fromEnum $ DDT.minute nowt
+                                     , show $ fromEnum $ DDT.second nowt ]
         launchAff_ $ do
-          uploadArbitraryDataURL session id (Just "screenshot.png") screen
+          uploadArbitraryDataURL session id (Just $ nowStr <> "-" <> "screenshot.png") screen
   , text: "Screenshot"
   }
