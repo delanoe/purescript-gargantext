@@ -168,26 +168,31 @@ topBarCpt = R.hooksComponent "G.C.A.topBar" cpt
                    , role: "navigation"
                    , className: "navbar navbar-inverse navbar-fixed-top" }
         [ H.div { className: "container-fluid" }
-          [ H.div { className: "navbar-inner" }
-            [ logo
-            , H.div { className: "collapse navbar-collapse" }
-                    [ H.ul { className: "nav navbar-nav" } [divDropdownLeft]
-                    , H.ul { title: "If you are Left Handed you can change "
-                                  <> "the interface by clicking on me. Click "
-                                  <> "again to come back to previous state."
-                           , className: "nav navbar-nav"
-                           } [handedChooser { handed }]
-                    {-, H.ul { title: "Dark Mode soon here"
-                           , className : "nav navbar-nav"
-                           } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
-                                                ]
-                                       ]
-                             ]
-                    -}
-                    ]
+            [ H.div { className: "navbar-inner" }
+              [ logo (fst handed)
+              , H.div { className: "collapse navbar-collapse"  <> navHanded}
+                      $ sortHanded
+                      [ H.ul { className: "nav navbar-nav" <> navHanded} [divDropdownLeft]
+                      , H.ul { title: "If you are Left Handed you can change "
+                                    <> "the interface by clicking on me. Click "
+                                    <> "again to come back to previous state."
+                             , className: "nav navbar-nav" <> navHanded
+                             } [handedChooser { handed }]
+                      , H.ul { className: "nav navbar-nav" <> navHanded} []
+                      {-, H.ul { title: "Dark Mode soon here"
+                             , className : "nav navbar-nav"
+                             } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+                                                  ]
+                                         ]
+                               ]
+                      -}
+                      ]
+              ]
             ]
-          ]
         ]
+          where
+            navHanded  = if fst handed == GT.LeftHanded then " navbar-right" else ""
+            sortHanded = if fst handed == GT.LeftHanded then reverse else reverse -- identity
             -- SB.searchBar {session, databases: allDatabases}
 
 type HandedChooserProps = (
@@ -215,15 +220,16 @@ handedChooserCpt = R.hooksComponent "G.C.A.handedChooser" cpt
       GT.LeftHanded  -> GT.RightHanded
       GT.RightHanded -> GT.LeftHanded
 
-logo :: R.Element
-logo =
+logo :: GT.Handed -> R.Element
+logo handed =
   H.a { className, href: "#/" }
   [ H.img { src, title, width: "30", height: "28" }
   ]
   where
-    className = "navbar-brand logoSmall"
+    className = "navbar-brand logoSmall" <> navHanded
     src       = "images/logoSmall.png"
     title     = "Back to home."
+    navHanded = if handed == GT.LeftHanded then " navbar-right" else ""
 
 divDropdownLeft :: R.Element
 divDropdownLeft =
