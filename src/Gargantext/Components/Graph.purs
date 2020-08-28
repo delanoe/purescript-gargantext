@@ -34,6 +34,7 @@ type Props sigma forceatlas2 =
   , sigmaRef :: R.Ref Sigmax.Sigma
   , sigmaSettings :: sigma
   , stage :: R.State Stage
+  , startForceAtlas :: Boolean
   , transformedGraph :: SigmaxTypes.SGraph
   )
 
@@ -82,7 +83,12 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
                   pure unit
 
                 Sigmax.setEdges sig false
-                Sigma.startForceAtlas2 sig props.forceAtlas2Settings
+
+                log2 "[graph] startForceAtlas" props.startForceAtlas
+                if props.startForceAtlas then
+                  Sigma.startForceAtlas2 sig props.forceAtlas2Settings
+                else
+                  Sigma.stopForceAtlas2 sig
 
                 pure unit
           Just sig -> do

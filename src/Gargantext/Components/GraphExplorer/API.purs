@@ -21,11 +21,11 @@ type GraphAsyncUpdateParams =
   )
 
 graphAsyncUpdate :: Record GraphAsyncUpdateParams -> Aff GT.AsyncTaskWithType
-graphAsyncUpdate {graphId, listId, nodes, session, termList, version} = do
+graphAsyncUpdate { graphId, listId, nodes, session, termList, version } = do
   task <- post session p q
-  pure $ GT.AsyncTaskWithType { task, typ: GT.GraphT }
+  pure $ GT.AsyncTaskWithType { task, typ: GT.GraphRecompute }
   where
-    p = GR.GraphAPI graphId $ GT.asyncTaskTypePath GT.GraphT
+    p = GR.GraphAPI graphId $ GT.asyncTaskTypePath GT.GraphRecompute
     q = { listId
         , nodes
         , termList
@@ -41,9 +41,9 @@ type GraphAsyncRecomputeParams =
 graphAsyncRecompute :: Record GraphAsyncRecomputeParams -> Aff GT.AsyncTaskWithType
 graphAsyncRecompute { graphId, session } = do
   task <- post session p q
-  pure $ GT.AsyncTaskWithType { task, typ: GT.GraphT }
+  pure $ GT.AsyncTaskWithType { task, typ: GT.GraphRecompute }
   where
-    p = GR.GraphAPI graphId $ GT.asyncTaskTypePath GT.GraphT
+    p = GR.GraphAPI graphId $ GT.asyncTaskTypePath GT.GraphRecompute
     q = {}
 
 type QueryProgressParams =

@@ -584,7 +584,7 @@ modeFromString _ = Nothing
 -- corresponds to /add/form/async or /add/query/async
 data AsyncTaskType = Form
                    | UploadFile
-                   | GraphT
+                   | GraphRecompute
                    | Query
                    | AddNode
                    | UpdateNode
@@ -600,20 +600,20 @@ instance decodeJsonAsyncTaskType :: DecodeJson AsyncTaskType where
   decodeJson json = do
     obj <- decodeJson json
     case obj of
-      "Form"       -> pure Form
-      "UploadFile" -> pure UploadFile
-      "GraphT"     -> pure GraphT
-      "Query"      -> pure Query
-      "AddNode"    -> pure AddNode
-      s            -> Left $ AtKey s $ TypeMismatch "Unknown string"
+      "Form"           -> pure Form
+      "UploadFile"     -> pure UploadFile
+      "GraphRecompute" -> pure GraphRecompute
+      "Query"          -> pure Query
+      "AddNode"        -> pure AddNode
+      s                -> Left $ AtKey s $ TypeMismatch "Unknown string"
 
 asyncTaskTypePath :: AsyncTaskType -> String
-asyncTaskTypePath Form       = "add/form/async/"
-asyncTaskTypePath UploadFile = "async/file/add/"
-asyncTaskTypePath Query      = "query/"
-asyncTaskTypePath GraphT     = "async/"
-asyncTaskTypePath AddNode    = "async/nobody/"
-asyncTaskTypePath UpdateNode = "update/"
+asyncTaskTypePath Form           = "add/form/async/"
+asyncTaskTypePath UploadFile     = "async/file/add/"
+asyncTaskTypePath Query          = "query/"
+asyncTaskTypePath GraphRecompute = "async/recompute/"
+asyncTaskTypePath AddNode        = "async/nobody/"
+asyncTaskTypePath UpdateNode     = "update/"
 
 
 type AsyncTaskID = String

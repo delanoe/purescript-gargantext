@@ -60,12 +60,13 @@ derive instance newtypeGraphData :: Newtype GraphData _
 
 
 newtype MetaData = MetaData
-  { title    :: String
+  { corpusId :: Array Int
   , legend   :: Array Legend
-  , corpusId :: Array Int
   , list :: { listId   :: ListId
-            , version  :: Version
-            }
+           , version  :: Version
+           }
+  , startForceAtlas :: Boolean
+  , title    :: String
   }
 
 getLegend :: GraphData -> Maybe (Array Legend)
@@ -100,7 +101,13 @@ initialGraphData = GraphData {
     nodes: []
   , edges: []
   , sides: []
-  , metaData : Just $ MetaData {title : "", legend : [], corpusId : [], list: {listId : 0, version : 0}}
+  , metaData : Just $ MetaData {
+       corpusId : []
+     , legend : []
+     , list: { listId : 0, version : 0 }
+     , startForceAtlas: true
+     , title : ""
+     }
   }
 
 instance decodeJsonGraphData :: DecodeJson GraphData where
@@ -134,13 +141,20 @@ instance decodeJsonNode :: DecodeJson Node where
 instance decodeJsonMetaData :: DecodeJson MetaData where
   decodeJson json = do
     obj <- decodeJson json
-    title <- obj .: "title"
     legend <- obj .: "legend"
     corpusId <- obj .: "corpusId"
     list <- obj .: "list"
     listId <- list .: "listId"
+    startForceAtlas <- obj .: "startForceAtlas"
+    title <- obj .: "title"
     version <- list .: "version"
-    pure $ MetaData { title, legend, corpusId, list: {listId, version}}
+    pure $ MetaData {
+        corpusId
+      , legend
+      , list: {listId, version}
+      , startForceAtlas
+      , title
+    }
 
 
 instance decodeJsonLegend :: DecodeJson Legend where

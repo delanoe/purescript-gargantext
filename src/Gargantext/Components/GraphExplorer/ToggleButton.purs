@@ -116,6 +116,7 @@ pauseForceAtlasButtonCpt = R.hooksComponent "ForceAtlasToggleButton" cpt
               [ H.text (text state) ]
           ]
     text SigmaxTypes.InitialRunning = "Pause Force Atlas"
+    text SigmaxTypes.InitialStopped = "Start Force Atlas"
     text SigmaxTypes.Running = "Pause Force Atlas"
     text SigmaxTypes.Paused = "Start Force Atlas"
 

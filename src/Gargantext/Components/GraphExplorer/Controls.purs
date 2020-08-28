@@ -166,14 +166,14 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
               ]
             ]
 
-useGraphControls :: SigmaxT.SGraph -> GET.GraphId -> Session -> R.Hooks (Record Controls)
-useGraphControls graph graphId session = do
+useGraphControls :: SigmaxT.SGraph -> GET.GraphId -> Session -> SigmaxT.ForceAtlasState -> R.Hooks (Record Controls)
+useGraphControls graph graphId session forceAtlasS = do
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed {
       min: 0.0
     , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
     }
-  forceAtlasState <- R.useState' SigmaxT.InitialRunning
+  forceAtlasState <- R.useState' forceAtlasS
   graphStage      <- R.useState' Graph.Init
   multiSelectEnabled <- R.useState' false
   nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }

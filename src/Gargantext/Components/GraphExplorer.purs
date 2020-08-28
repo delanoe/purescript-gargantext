@@ -7,7 +7,7 @@ import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..), fromJust, maybe)
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
@@ -96,10 +96,14 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
               , sessions
               , showLogin
               , treeReload } _ = do
+
+      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
+      let forceAtlasS = if startForceAtlas then SigmaxT.InitialRunning else SigmaxT.InitialStopped
+
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
-      controls              <- Controls.useGraphControls graph graphId session
+      controls              <- Controls.useGraphControls graph graphId session forceAtlasS
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -117,7 +121,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
           snd controls.removedNodeIds  $ const SigmaxT.emptyNodeIds
           snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
           snd controls.showEdges       $ const SigmaxT.EShow
-          snd controls.forceAtlasState $ const SigmaxT.InitialRunning
+          snd controls.forceAtlasState $ const forceAtlasS
           snd controls.graphStage      $ const Graph.Init
           snd controls.showSidePanel   $ const GET.InitialClosed
 
@@ -145,6 +149,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                                   , elRef: graphRef
                                   , graphId
                                   , graph
+                                  , mMetaData
                                   , multiSelectEnabledRef
                                   }
                       , mSidebar mMetaData { frontends
@@ -215,6 +220,7 @@ type GraphProps = (
   , elRef :: R.Ref (Nullable Element)
   , graphId :: GET.GraphId
   , graph :: SigmaxT.SGraph
+  , mMetaData :: Maybe GET.MetaData
   , multiSelectEnabledRef :: R.Ref Boolean
 )
 
@@ -225,7 +231,7 @@ graphView props = R.createElement graphViewCpt props []
 graphViewCpt :: R.Component GraphProps
 graphViewCpt = R.hooksComponent "GraphView" cpt
   where
-    cpt {controls, elRef, graphId, graph, multiSelectEnabledRef} _children = do
+    cpt {controls, elRef, graphId, graph, mMetaData, multiSelectEnabledRef} _children = do
       -- TODO Cache this?
       let louvainGraph =
             if (fst controls.showLouvain) then
@@ -235,6 +241,7 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
             else
               graph
       let transformedGraph = transformGraph controls louvainGraph
+      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
 
       R.useEffect1' (fst controls.multiSelectEnabled) $ do
         R.setRef multiSelectEnabledRef $ fst controls.multiSelectEnabled
@@ -249,6 +256,7 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
         , sigmaRef: controls.sigmaRef
         , sigmaSettings: Graph.sigmaSettings
         , stage: controls.graphStage
+        , startForceAtlas
         , transformedGraph
         }
 
