@@ -140,7 +140,10 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
         H.i {className: GT.fldr nodeType open} []
         ]
 
-    popOverIcon = H.a { className: "settings fa fa-cog" } []
+    popOverIcon = H.a { className: "settings fa fa-cog" 
+                      , title : "Each node of the Tree can perform some actions.\n"
+                             <> "Click here to execute one of them."
+                      } []
 
     mNodePopupView props@{id, nodeType} onPopoverClose =
       nodePopupView { id
