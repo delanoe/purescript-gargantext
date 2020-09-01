@@ -21,7 +21,6 @@ import URI.Query (Query)
 data Handed = LeftHanded | RightHanded
 
 derive instance genericHanded :: Generic Handed _
-
 instance eqHanded :: Eq Handed where
   eq = genericEq
 

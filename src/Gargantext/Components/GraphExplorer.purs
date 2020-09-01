@@ -50,6 +50,7 @@ type LayoutProps =
 
 type Props = (
     graph :: SigmaxT.SGraph
+  , graphData :: GET.GraphData
   , graphVersion :: R.State Int
   , mMetaData :: Maybe GET.MetaData
   | LayoutProps
@@ -75,7 +76,7 @@ explorerLayoutView graphVersion p = R.createElement el p []
       useLoader graphId (getNodes session graphVersion) handler
       where
         handler loaded =
-          explorer (Record.merge props { graph, graphVersion, mMetaData })
+          explorer (Record.merge props { graph, graphData: loaded, graphVersion, mMetaData })
           where (Tuple mMetaData graph) = convert loaded
 
 --------------------------------------------------------------
@@ -87,6 +88,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
     cpt props@{ frontends
               , graph
+              , graphData
               , graphId
               , graphVersion
               , handed
@@ -103,7 +105,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
-      controls              <- Controls.useGraphControls graph graphId session forceAtlasS
+      controls              <- Controls.useGraphControls graph graphData graphId session forceAtlasS
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -264,9 +266,9 @@ convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
   where
     nodes = foldMapWithIndex nodeFn r.nodes
-    nodeFn _i (GET.Node n) =
-      Seq.singleton
-        { borderColor: color
+    nodeFn _i nn@(GET.Node n) =
+      Seq.singleton {
+          borderColor: color
         , color : color
         , equilateral: { numPoints: 3 }
         , gargType
@@ -277,6 +279,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)
+        , _original: nn
         }
       where
         cDef (GET.Cluster {clustDefault}) = clustDefault
@@ -284,7 +287,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         gargType =  unsafePartial $ fromJust $ Types.modeFromString n.type_
     nodesMap = SigmaxT.nodesMap nodes
     edges = foldMapWithIndex edgeFn $ A.sortWith (\(GET.Edge {weight}) -> weight) r.edges
-    edgeFn i (GET.Edge e) =
+    edgeFn i ee@(GET.Edge e) =
       Seq.singleton
         { id : e.id_
         , color
@@ -297,6 +300,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , targetNode
         , weight : e.weight
         , weightIdx: i
+        , _original: ee
         }
       where
         sourceNode = unsafePartial $ fromJust $ Map.lookup e.source nodesMap

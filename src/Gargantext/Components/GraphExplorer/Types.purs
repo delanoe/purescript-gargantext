@@ -1,39 +1,56 @@
 module Gargantext.Components.GraphExplorer.Types where
 
-import Gargantext.Prelude
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), jsonEmptyObject, (~>), (:=))
 import Data.Array ((!!), length)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
+import Data.Ord
 import Partial.Unsafe (unsafePartial)
+
+import Gargantext.Prelude
 
 type GraphId = Int
 
-newtype Node = Node
-  { id_ :: String
+newtype Node = Node {
+    attributes :: Cluster
+  , id_ :: String
+  , label :: String
   , size :: Int
   , type_ :: String
-  , label :: String
   , x :: Number
   , y :: Number
-  , attributes :: Cluster
   }
 
+derive instance genericNode :: Generic Node _
 derive instance newtypeNode :: Newtype Node _
+instance eqNode :: Eq Node where
+  eq = genericEq
+instance ordNode :: Ord Node where
+  compare (Node n1) (Node n2) = compare n1.id_ n2.id_
 
 newtype Cluster = Cluster { clustDefault :: Int }
 
+derive instance genericCluster :: Generic Cluster _
 derive instance newtypeCluster :: Newtype Cluster _
+instance eqCluster :: Eq Cluster where
+  eq = genericEq
 
-newtype Edge = Edge
-  { confluence :: Number
+newtype Edge = Edge {
+    confluence :: Number
   , id_ :: String
   , source :: String
   , target :: String
   , weight :: Number
   }
 
+derive instance genericEdge :: Generic Edge _
 derive instance newtypeEdge :: Newtype Edge _
+instance eqEdge :: Eq Edge where
+  eq = genericEq
+instance ordEdge :: Ord Edge where
+  compare (Edge e1) (Edge e2) = compare e1.id_ e2.id_
 
 -- | A 'fully closed interval' in CS parlance
 type InclusiveRange t = { min :: t, max :: t }
@@ -65,6 +82,7 @@ newtype MetaData = MetaData
   , list :: { listId   :: ListId
            , version  :: Version
            }
+  , metric :: String  -- dummy value
   , startForceAtlas :: Boolean
   , title    :: String
   }
@@ -105,6 +123,7 @@ initialGraphData = GraphData {
        corpusId : []
      , legend : []
      , list: { listId : 0, version : 0 }
+     , metric: "Order1"
      , startForceAtlas: true
      , title : ""
      }
@@ -125,6 +144,13 @@ instance decodeJsonGraphData :: DecodeJson GraphData where
     let sides = side <$> corpusIds
     pure $ GraphData { nodes, edges, sides, metaData }
 
+instance encodeJsonGraphData :: EncodeJson GraphData where
+  encodeJson (GraphData gd) =
+       "nodes"    := gd.nodes
+     ~> "edges"    := gd.edges
+     ~> "metadata" := gd.metaData
+     ~> jsonEmptyObject
+
 instance decodeJsonNode :: DecodeJson Node where
   decodeJson json = do
     obj <- decodeJson json
@@ -137,6 +163,17 @@ instance decodeJsonNode :: DecodeJson Node where
     y <- obj .: "y_coord"
     pure $ Node { id_, type_, size, label, attributes, x, y }
 
+instance encodeJsonNode :: EncodeJson Node where
+  encodeJson (Node nd) =
+       "id"         := nd.id_
+     ~> "attributes" := nd.attributes
+     ~> "label"      := nd.label
+     ~> "size"       := nd.size
+     ~> "type"       := nd.type_
+     ~> "x_coord"    := nd.x
+     ~> "y_coord"    := nd.y
+     ~> jsonEmptyObject
+
 
 instance decodeJsonMetaData :: DecodeJson MetaData where
   decodeJson json = do
@@ -145,6 +182,7 @@ instance decodeJsonMetaData :: DecodeJson MetaData where
     corpusId <- obj .: "corpusId"
     list <- obj .: "list"
     listId <- list .: "listId"
+    metric <- obj .: "metric"
     startForceAtlas <- obj .: "startForceAtlas"
     title <- obj .: "title"
     version <- list .: "version"
@@ -152,10 +190,20 @@ instance decodeJsonMetaData :: DecodeJson MetaData where
         corpusId
       , legend
       , list: {listId, version}
+      , metric
       , startForceAtlas
       , title
     }
 
+instance encodeJsonMetaData :: EncodeJson MetaData where
+  encodeJson (MetaData md) =
+       "corpusId"        := md.corpusId
+     ~> "legend"          := md.legend
+     ~> "list"            := md.list
+     ~> "metric"          := md.metric
+     ~> "startForceAtlas" := md.startForceAtlas
+     ~> "title"           := md.title
+     ~> jsonEmptyObject
 
 instance decodeJsonLegend :: DecodeJson Legend where
   decodeJson json = do
@@ -165,12 +213,24 @@ instance decodeJsonLegend :: DecodeJson Legend where
     label <- obj .: "label"
     pure $ Legend { id_, color, label }
 
+instance encodeJsonLegend :: EncodeJson Legend where
+  encodeJson (Legend lg) =
+       "id"    := lg.id_
+     ~> "color" := lg.color
+     ~> "label" := lg.label
+     ~> jsonEmptyObject
+
 
 instance decodeJsonCluster :: DecodeJson Cluster where
   decodeJson json = do
     obj <- decodeJson json
     clustDefault <- obj .: "clust_default"
     pure $ Cluster { clustDefault }
+
+instance encodeJsonCluster :: EncodeJson Cluster where
+  encodeJson (Cluster cl) =
+       "clust_default" := cl.clustDefault
+     ~> jsonEmptyObject
 
 instance decodeJsonEdge :: DecodeJson Edge where
   decodeJson json = do
@@ -181,6 +241,15 @@ instance decodeJsonEdge :: DecodeJson Edge where
     weight <- obj .: "weight"
     confluence <- obj .: "confluence"
     pure $ Edge { id_, source, target, weight, confluence }
+
+instance jsonEncodeEdge :: EncodeJson Edge where
+  encodeJson (Edge ed) =
+       "id"         := ed.id_
+     ~> "confluence" := ed.confluence
+     ~> "source"     := ed.source
+     ~> "target"     := ed.target
+     ~> "weight"     := ed.weight
+     ~> jsonEmptyObject
 
 newtype Legend = Legend  {id_ ::Int , color :: String, label :: String}
 

@@ -38,6 +38,7 @@ type Controls =
   , edgeWeight :: R.State Range.NumberRange
   , forceAtlasState :: R.State SigmaxT.ForceAtlasState
   , graph           :: SigmaxT.SGraph
+  , graphData       :: GET.GraphData
   , graphId         :: GET.GraphId
   , graphStage      :: R.State Graph.Stage
   , multiSelectEnabled :: R.State Boolean
@@ -161,13 +162,21 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                                                , multiSelectEnabled: props.multiSelectEnabled
                                                , selectedNodeIds: props.selectedNodeIds } ]
                 , RH.li {} [ mouseSelectorSizeButton props.sigmaRef localControls.mouseSelectorSize ]
-                , RH.li {} [ cameraButton props.session props.graphId props.sigmaRef ]
+                , RH.li {} [ cameraButton { id: props.graphId
+                                          , graphData: props.graphData
+                                          , session: props.session
+                                          , sigmaRef: props.sigmaRef } ]
                 ]
               ]
             ]
 
-useGraphControls :: SigmaxT.SGraph -> GET.GraphId -> Session -> SigmaxT.ForceAtlasState -> R.Hooks (Record Controls)
-useGraphControls graph graphId session forceAtlasS = do
+useGraphControls :: SigmaxT.SGraph
+                 -> GET.GraphData
+                 -> GET.GraphId
+                 -> Session
+                 -> SigmaxT.ForceAtlasState
+                 -> R.Hooks (Record Controls)
+useGraphControls graph graphData graphId session forceAtlasS = do
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed {
       min: 0.0
@@ -191,6 +200,7 @@ useGraphControls graph graphId session forceAtlasS = do
        , edgeWeight
        , forceAtlasState
        , graph
+       , graphData
        , graphId
        , graphStage
        , multiSelectEnabled

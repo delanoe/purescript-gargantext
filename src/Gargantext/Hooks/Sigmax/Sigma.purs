@@ -16,8 +16,9 @@ import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn1, runEffectFn3, runEffectFn4)
 import FFI.Simple ((..), (...), (.=))
 import Foreign.Object as Object
-import Gargantext.Hooks.Sigmax.Types as Types
 import Type.Row (class Union)
+
+import Gargantext.Hooks.Sigmax.Types as Types
 
 -- | Type representing a sigmajs instance
 foreign import data Sigma :: Type
@@ -294,6 +295,12 @@ goToAllCameras s props = traverse_ (goTo props) $ cameras s
 takeScreenshot :: Sigma -> Effect String
 takeScreenshot = runEffectFn1 _takeScreenshot
 
+getEdges :: Sigma -> Effect (Array (Record Types.Edge))
+getEdges = runEffectFn1 _getEdges
+
+getNodes :: Sigma -> Effect (Array (Record Types.Node))
+getNodes = runEffectFn1 _getNodes
+
 -- | FFI
 foreign import _sigma ::
   forall a b opts err.
@@ -316,3 +323,5 @@ foreign import _bindMouseSelectorPlugin
             (Either err Unit)
 foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 foreign import _takeScreenshot :: EffectFn1 Sigma String
+foreign import _getEdges :: EffectFn1 Sigma (Array (Record Types.Edge))
+foreign import _getNodes :: EffectFn1 Sigma (Array (Record Types.Node))

@@ -2,6 +2,7 @@ module Gargantext.Components.GraphExplorer.API where
 
 import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
+
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -80,3 +81,13 @@ type UpdateGraphVersionsParams =
 
 updateGraphVersions :: Record UpdateGraphVersionsParams -> Aff GET.GraphData
 updateGraphVersions { graphId, session } = post session (GR.GraphAPI graphId $ "versions") {}
+
+type CloneGraphParams =
+  (
+    graphData :: GET.GraphData
+  , id :: Int
+  , session :: Session
+  )
+
+cloneGraph :: Record CloneGraphParams -> Aff Int
+cloneGraph { graphData, id, session } = post session (GR.GraphAPI id $ "clone") graphData

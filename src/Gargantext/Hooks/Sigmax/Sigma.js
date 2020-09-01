@@ -42,7 +42,7 @@ sigma.canvas.nodes.selected = (node, context, settings) => {
   node.type = 'def';
   sigma.canvas.hovers.def(node, context, settings);
   node.type = 'selected';
-  console.log('hovers, settings:', settings);
+  //console.log('hovers, settings:', settings);
 };
 
 CustomShapes.init();
@@ -200,8 +200,18 @@ function takeScreenshot(sigma) {
   return scene.toDataURL('image/png');
 }
 
+function getEdges(sigma) {
+  return sigma.graph.edges();
+}
+
+function getNodes(sigma) {
+  return sigma.graph.nodes();
+}
+
 exports._sigma = _sigma;
 exports._addRenderer = addRenderer;
 exports._bindMouseSelectorPlugin = bindMouseSelectorPlugin;
 exports._bind = bind;
 exports._takeScreenshot = takeScreenshot;
+exports._getEdges = getEdges;
+exports._getNodes = getNodes;

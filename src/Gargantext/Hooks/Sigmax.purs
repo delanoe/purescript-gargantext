@@ -21,10 +21,11 @@ import Effect (Effect)
 import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple ((.=))
+import Reactix as R
+
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
 
 type Sigma =
   { sigma :: R.Ref (Maybe Sigma.Sigma)
@@ -259,3 +260,9 @@ markSelectedNodes sigma selectedNodeIds graphNodes = do
         _ <- pure $ (n .= "color") newColor
         pure unit
   Sigma.refresh sigma
+
+getEdges :: Sigma.Sigma -> Effect (Array (Record ST.Edge))
+getEdges sigma = Sigma.getEdges sigma
+
+getNodes :: Sigma.Sigma -> Effect (Array (Record ST.Node))
+getNodes sigma = Sigma.getNodes sigma
