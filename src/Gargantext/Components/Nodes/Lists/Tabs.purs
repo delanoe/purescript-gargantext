@@ -54,37 +54,44 @@ ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
       chartType <- R.useState' Histo
 
       pure $ R.fragment
-        ( charts tabNgramType chartType
-        <> [
-          NT.mainNgramsTable
-            {session, defaultListId, nodeId: corpusId, tabType, tabNgramType, withAutoUpdate: false}
-        ]
-        )
+           $ charts tabNgramType chartType
+          <> [ NT.mainNgramsTable { session
+                                  , defaultListId
+                                  , nodeId: corpusId
+                                  , tabType
+                                  , tabNgramType
+                                  , withAutoUpdate: false
+                                  }
+             ]
       where
         tabNgramType = modeTabType mode
-        tabType = TabCorpus (TabNgramType tabNgramType)
-        listId = defaultListId
-        path = {corpusId, listId, tabType, limit: (Just 1000)}
+        tabType      = TabCorpus (TabNgramType tabNgramType)
+        listId       = defaultListId
+        path         = {corpusId, listId, tabType, limit: (Just 1000)}
 
         charts CTabTerms (chartType /\ setChartType) = [
           H.div { className: "row chart-type-selector" } [
             H.div { className: "col-md-3" } [
 
               R2.select { className: "form-control"
-                        ,  on: { change: \e -> setChartType $ const $ fromMaybe Histo $ chartTypeFromString $ R2.unsafeEventValue e }
+                        ,  on: { change: \e -> setChartType
+                                             $ const
+                                             $ fromMaybe Histo
+                                             $ chartTypeFromString
+                                             $ R2.unsafeEventValue e
+                               }
                         , defaultValue: show chartType } [
-                H.option { value: show Histo } [ H.text $ show Histo ]
-              , H.option { value: show Scatter } [ H.text $ show Scatter ]
-              , H.option { value: show ChartBar } [ H.text $ show ChartBar ]
+                H.option { value: show Histo     } [ H.text $ show Histo     ]
+              , H.option { value: show Scatter   } [ H.text $ show Scatter   ]
+              , H.option { value: show ChartBar  } [ H.text $ show ChartBar  ]
               , H.option { value: show ChartTree } [ H.text $ show ChartTree ]
               ]
             ]
           ]
         , getChartFunction chartType $ { session, path }
         ]
-        charts _ _ = [ chart mode ]
-
-        chart Authors = pie { session, path }
-        chart Sources = bar { session, path }
-        chart Institutes = tree { session, path }
+        charts _ _       = [ chart mode ]
+        chart Authors    = pie     { session, path }
+        chart Sources    = bar     { session, path }
+        chart Institutes = tree    { session, path }
         chart Terms      = metrics { session, path }

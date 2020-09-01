@@ -21,7 +21,9 @@ tabsCpt = R.hooksComponent "G.C.Tab.tabs" cpt
       pure $
         H.div {}
         [ H.nav {}
-          [ H.div { className: "nav nav-tabs" }
+          [ H.div { className: "nav nav-tabs"
+                  , title    : "Tab for ngrams"
+                  }
             (mapWithIndex (button setActiveTab activeTab) props.tabs) ]
         , H.div { className: "tab-content" } $ mapWithIndex (item activeTab) props.tabs ]
     button setActiveTab selected index (name /\ _) =

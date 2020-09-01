@@ -46,6 +46,7 @@ type KeyProps = (
 textsLayoutWithKey :: Record KeyProps -> R.Element
 textsLayoutWithKey props = R.createElement textsLayoutWithKeyCpt props []
 
+textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = R.hooksComponent "G.C.N.T.textsLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, session } _ = do
