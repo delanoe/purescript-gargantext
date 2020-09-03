@@ -95,11 +95,11 @@ settingsBox NodeUser =
   SettingsBox { show : true
               , edit : false
               , doc  : Documentation NodeUser
-              , buttons : [ Delete
-                          , Add [ FolderPrivate
+              , buttons : [ Add [ FolderPrivate
                                 , FolderShared
                                 , FolderPublic
                                 ]
+                          , Delete
                           ]
               }
 
