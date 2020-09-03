@@ -8,10 +8,10 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Reactix as R
 
 import Gargantext.Prelude
-import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
+import Gargantext.Components.Nodes.Corpus.Chart.Histo   (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
-import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
-import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
+import Gargantext.Components.Nodes.Corpus.Chart.Pie     (pie)
+import Gargantext.Components.Nodes.Corpus.Chart.Tree    (tree)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID, Mode(..), TabSubType(..), TabType(..), modeTabType)
 
@@ -19,8 +19,10 @@ import Gargantext.Types (NodeID, Mode(..), TabSubType(..), TabType(..), modeTabT
 data PredefinedChart =
     CDocsHistogram
   | CAuthorsPie
+  | CSourcesBar
   | CInstitutesTree
   | CTermsMetrics
+
 derive instance genericPredefinedChart :: Generic PredefinedChart _
 
 instance showPredefinedChart :: Show PredefinedChart where
@@ -42,29 +44,29 @@ instance encodePredefinedChart :: EncodeJson PredefinedChart where
 instance readPredefinedChart :: Read PredefinedChart where
   read "CDocsHistogram"  = Just CDocsHistogram
   read "CAuthorsPie"     = Just CAuthorsPie
+  read "CSourcesBar"     = Just CSourcesBar
   read "CInstitutesTree" = Just CInstitutesTree
   read "CTermsMetrics"   = Just CTermsMetrics
   read _                 = Nothing
 
 
 allPredefinedCharts :: Array PredefinedChart
-allPredefinedCharts = [
-    CDocsHistogram
+allPredefinedCharts =
+  [ CDocsHistogram
   , CAuthorsPie
   , CTermsMetrics
   , CInstitutesTree
+  , CSourcesBar
   ]
 
 
 type Params =
-  (
-    corpusId :: NodeID
-  , session :: Session
+  ( corpusId :: NodeID
+  , session  :: Session
   -- optinal params
-  , limit :: Maybe Int
-  , listId :: Maybe Int
+  , limit    :: Maybe Int
+  , listId   :: Maybe Int
   )
-
 
 render :: PredefinedChart -> Record Params -> R.Element
 render CDocsHistogram { corpusId, listId, session } = histo { path, session }
@@ -93,5 +95,16 @@ render CTermsMetrics { corpusId, limit, listId, session } = metrics { path, sess
     path = { corpusId
            , limit
            , listId: fromMaybe 0 listId
-           , tabType: TabCorpus (TabNgramType $ modeTabType Authors)
+           , tabType: TabCorpus (TabNgramType $ modeTabType Terms)
            }
+render CSourcesBar { corpusId, limit, listId, session } = metrics { path, session }
+  where
+    path = { corpusId
+           , limit
+           , listId: fromMaybe 0 listId
+           , tabType: TabCorpus (TabNgramType $ modeTabType Sources)
+           }
+
+
+
+

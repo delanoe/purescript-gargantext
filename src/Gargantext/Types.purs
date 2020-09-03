@@ -16,8 +16,6 @@ import Prelude
 import Prim.Row (class Union)
 import URI.Query (Query)
 
-
-
 data Handed = LeftHanded | RightHanded
 
 derive instance genericHanded :: Generic Handed _
@@ -393,10 +391,10 @@ data ChartType = Histo | Scatter | ChartPie | ChartBar | ChartTree
 
 instance showChartType :: Show ChartType
   where
-    show Histo    = "chart"
-    show Scatter  = "scatter"
-    show ChartBar = "bar"
-    show ChartPie = "pie"
+    show Histo     = "chart"
+    show Scatter   = "scatter"
+    show ChartBar  = "bar"
+    show ChartPie  = "pie"
     show ChartTree = "tree"
 
 chartTypeFromString :: String -> Maybe ChartType
@@ -518,7 +516,7 @@ instance showTabSubType :: Show a => Show (TabSubType a) where
 data TabType
   = TabCorpus   (TabSubType CTabNgramType)
   | TabPairing  (TabSubType PTabNgramType)
-  | TabDocument (TabSubType CTabNgramType)    
+  | TabDocument (TabSubType CTabNgramType)
 
 derive instance genericTabType :: Generic TabType _
 derive instance eqTabType :: Eq TabType
@@ -573,11 +571,11 @@ modeTabType Institutes = CTabInstitutes
 modeTabType Terms      = CTabTerms
 
 modeFromString :: String -> Maybe Mode
-modeFromString "Authors" = Just Authors
-modeFromString "Sources" = Just Sources
+modeFromString "Authors"    = Just Authors
+modeFromString "Sources"    = Just Sources
 modeFromString "Institutes" = Just Institutes
-modeFromString "Terms" = Just Terms
-modeFromString _ = Nothing
+modeFromString "Terms"      = Just Terms
+modeFromString _            = Nothing
 
 -- Async tasks
 
