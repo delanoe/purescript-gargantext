@@ -38,9 +38,9 @@ type Controls =
   , edgeWeight :: R.State Range.NumberRange
   , forceAtlasState :: R.State SigmaxT.ForceAtlasState
   , graph           :: SigmaxT.SGraph
-  , graphData       :: GET.GraphData
   , graphId         :: GET.GraphId
   , graphStage      :: R.State Graph.Stage
+  , hyperdataGraph  :: GET.HyperdataGraph
   , multiSelectEnabled :: R.State Boolean
   , nodeSize        :: R.State Range.NumberRange
   , removedNodeIds  :: R.State SigmaxT.NodeIds
@@ -163,7 +163,7 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                                                , selectedNodeIds: props.selectedNodeIds } ]
                 , RH.li {} [ mouseSelectorSizeButton props.sigmaRef localControls.mouseSelectorSize ]
                 , RH.li {} [ cameraButton { id: props.graphId
-                                          , graphData: props.graphData
+                                          , hyperdataGraph: props.hyperdataGraph
                                           , session: props.session
                                           , sigmaRef: props.sigmaRef } ]
                 ]
@@ -171,12 +171,12 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
             ]
 
 useGraphControls :: SigmaxT.SGraph
-                 -> GET.GraphData
                  -> GET.GraphId
+                 -> GET.HyperdataGraph
                  -> Session
                  -> SigmaxT.ForceAtlasState
                  -> R.Hooks (Record Controls)
-useGraphControls graph graphData graphId session forceAtlasS = do
+useGraphControls graph graphId hyperdataGraph session forceAtlasS = do
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed {
       min: 0.0
@@ -200,9 +200,9 @@ useGraphControls graph graphData graphId session forceAtlasS = do
        , edgeWeight
        , forceAtlasState
        , graph
-       , graphData
        , graphId
        , graphStage
+       , hyperdataGraph
        , multiSelectEnabled
        , nodeSize
        , removedNodeIds

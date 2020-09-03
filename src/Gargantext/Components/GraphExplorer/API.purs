@@ -1,6 +1,6 @@
 module Gargantext.Components.GraphExplorer.API where
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -84,10 +84,10 @@ updateGraphVersions { graphId, session } = post session (GR.GraphAPI graphId $ "
 
 type CloneGraphParams =
   (
-    graphData :: GET.GraphData
+    hyperdataGraph :: GET.HyperdataGraph
   , id :: Int
   , session :: Session
   )
 
 cloneGraph :: Record CloneGraphParams -> Aff Int
-cloneGraph { graphData, id, session } = post session (GR.GraphAPI id $ "clone") graphData
+cloneGraph { hyperdataGraph, id, session } = post session (GR.GraphAPI id $ "clone") hyperdataGraph

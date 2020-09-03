@@ -286,6 +286,22 @@ cameras s = Object.values cs
     -- For some reason, `sigma.cameras` is an object with integer keys.
     cs = s .. "cameras" :: Object.Object CameraInstance
 
+toCamera :: CameraInstance -> Record CameraProps
+toCamera c = { angle, ratio, x, y }
+  where
+    angle = c .. "angle" :: Number
+    ratio = c .. "ratio" :: Number
+    x = c .. "x" :: Number
+    y = c .. "y" :: Number
+
+updateCamera :: Sigma -> { ratio :: Number, x :: Number, y :: Number } -> Effect Unit
+updateCamera sig { ratio, x, y } = do
+  let camera = sig .. "camera"
+  _ <- pure $ (camera .= "ratio") ratio
+  _ <- pure $ (camera .= "x") x
+  _ <- pure $ (camera .= "y") y
+  pure unit
+
 goTo :: Record CameraProps -> CameraInstance -> Effect Unit
 goTo props cam = pure $ cam ... "goTo" $ [props]
 

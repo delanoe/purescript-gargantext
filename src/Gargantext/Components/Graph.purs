@@ -16,6 +16,7 @@ import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
@@ -24,10 +25,11 @@ type OnProps  = ()
 
 data Stage = Init | Ready | Cleanup
 
-type Props sigma forceatlas2 =
-  ( elRef :: R.Ref (Nullable Element)
+type Props sigma forceatlas2 = (
+    elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
   , graph :: SigmaxTypes.SGraph
+  , mCamera :: Maybe GET.Camera
   , multiSelectEnabledRef :: R.Ref Boolean
   , selectedNodeIds :: R.State SigmaxTypes.NodeIds
   , showEdges :: R.State SigmaxTypes.ShowEdgesState
@@ -84,11 +86,16 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
 
                 Sigmax.setEdges sig false
 
-                log2 "[graph] startForceAtlas" props.startForceAtlas
+                -- log2 "[graph] startForceAtlas" props.startForceAtlas
                 if props.startForceAtlas then
                   Sigma.startForceAtlas2 sig props.forceAtlas2Settings
                 else
                   Sigma.stopForceAtlas2 sig
+
+                case props.mCamera of
+                  Nothing -> pure unit
+                  Just (GET.Camera { ratio, x, y }) -> do
+                    Sigma.updateCamera sig { ratio, x, y }
 
                 pure unit
           Just sig -> do

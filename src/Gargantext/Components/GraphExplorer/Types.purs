@@ -1,6 +1,6 @@
 module Gargantext.Components.GraphExplorer.Types where
 
-import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), jsonEmptyObject, (~>), (:=))
+import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), (.:?), jsonEmptyObject, (~>), (:=))
 import Data.Array ((!!), length)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
@@ -286,8 +286,42 @@ instance showSideTab :: Show SideTab where
   show SideTabCommunity = "Community"
 
 
+newtype Camera = Camera {
+    ratio :: Number
+  , x     :: Number
+  , y     :: Number
+  }
+
+instance decodeCamera :: DecodeJson Camera where
+  decodeJson json = do
+    obj   <- decodeJson json
+    ratio <- obj .: "ratio"
+    x     <- obj .: "x"
+    y     <- obj .: "y"
+    pure $ Camera { ratio, x, y }
+
+instance jsonEncodeCamera :: EncodeJson Camera where
+  encodeJson (Camera c) =
+       "ratio" := c.ratio
+     ~> "x"     := c.x
+     ~> "y"     := c.y
+     ~> jsonEmptyObject
 
 
+newtype HyperdataGraph = HyperdataGraph {
+    graph   :: GraphData
+  , mCamera :: Maybe Camera
+  }
 
+instance decodeHyperdataGraph :: DecodeJson HyperdataGraph where
+  decodeJson json = do
+    obj             <- decodeJson json
+    graph   <- obj .: "graph"
+    mCamera <- obj .:? "camera"
+    pure $ HyperdataGraph { graph, mCamera }
 
-
+instance jsonEncodeHyperdataGraph :: EncodeJson HyperdataGraph where
+  encodeJson (HyperdataGraph c) =
+      "camera"  := c.mCamera
+     ~> "graph"  := c.graph
+     ~> jsonEmptyObject

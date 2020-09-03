@@ -50,8 +50,8 @@ type LayoutProps =
 
 type Props = (
     graph :: SigmaxT.SGraph
-  , graphData :: GET.GraphData
   , graphVersion :: R.State Int
+  , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData :: Maybe GET.MetaData
   | LayoutProps
   )
@@ -76,8 +76,10 @@ explorerLayoutView graphVersion p = R.createElement el p []
       useLoader graphId (getNodes session graphVersion) handler
       where
         handler loaded =
-          explorer (Record.merge props { graph, graphData: loaded, graphVersion, mMetaData })
-          where (Tuple mMetaData graph) = convert loaded
+          explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
+          where
+            GET.HyperdataGraph { graph: hyperdataGraph } = loaded
+            (Tuple mMetaData graph) = convert hyperdataGraph
 
 --------------------------------------------------------------
 explorer :: Record Props -> R.Element
@@ -88,10 +90,10 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
   where
     cpt props@{ frontends
               , graph
-              , graphData
               , graphId
               , graphVersion
               , handed
+              , hyperdataGraph
               , mCurrentRoute
               , mMetaData
               , session
@@ -105,7 +107,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
-      controls              <- Controls.useGraphControls graph graphData graphId session forceAtlasS
+      controls              <- Controls.useGraphControls graph graphId hyperdataGraph session forceAtlasS
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -151,6 +153,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                                   , elRef: graphRef
                                   , graphId
                                   , graph
+                                  , hyperdataGraph
                                   , mMetaData
                                   , multiSelectEnabledRef
                                   }
@@ -218,11 +221,12 @@ type MSidebarProps =
   )
 
 type GraphProps = (
-    controls :: Record Controls.Controls
-  , elRef :: R.Ref (Nullable Element)
-  , graphId :: GET.GraphId
-  , graph :: SigmaxT.SGraph
-  , mMetaData :: Maybe GET.MetaData
+    controls              :: Record Controls.Controls
+  , elRef                 :: R.Ref (Nullable Element)
+  , graphId               :: GET.GraphId
+  , graph                 :: SigmaxT.SGraph
+  , hyperdataGraph        :: GET.HyperdataGraph
+  , mMetaData             :: Maybe GET.MetaData
   , multiSelectEnabledRef :: R.Ref Boolean
 )
 
@@ -233,7 +237,13 @@ graphView props = R.createElement graphViewCpt props []
 graphViewCpt :: R.Component GraphProps
 graphViewCpt = R.hooksComponent "GraphView" cpt
   where
-    cpt {controls, elRef, graphId, graph, mMetaData, multiSelectEnabledRef} _children = do
+    cpt { controls
+        , elRef
+        , graphId
+        , graph
+        , hyperdataGraph: GET.HyperdataGraph { mCamera }
+        , mMetaData
+        , multiSelectEnabledRef } _children = do
       -- TODO Cache this?
       let louvainGraph =
             if (fst controls.showLouvain) then
@@ -252,6 +262,7 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
           elRef
         , forceAtlas2Settings: Graph.forceAtlas2Settings
         , graph
+        , mCamera
         , multiSelectEnabledRef
         , selectedNodeIds: controls.selectedNodeIds
         , showEdges: controls.showEdges
@@ -315,7 +326,7 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> R.State Int -> GET.GraphId -> Aff GET.GraphData
+getNodes :: Session -> R.State Int -> GET.GraphId -> Aff GET.HyperdataGraph
 getNodes session (graphVersion /\ _) graphId = get session $ NodeAPI Types.Graph (Just graphId) ("?version=" <> show graphVersion)
 
 

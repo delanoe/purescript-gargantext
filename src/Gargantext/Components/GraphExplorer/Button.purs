@@ -59,7 +59,7 @@ centerButton sigmaRef = simpleButton {
 
 type CameraButtonProps = (
     id :: Int
-  , graphData :: GET.GraphData
+  , hyperdataGraph :: GET.HyperdataGraph
   , session :: Session
   , sigmaRef :: R.Ref Sigmax.Sigma
   )
@@ -67,7 +67,7 @@ type CameraButtonProps = (
 
 cameraButton :: Record CameraButtonProps -> R.Element
 cameraButton { id
-             , graphData: GET.GraphData graphData'
+             , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData hyperdataGraph }
              , session
              , sigmaRef } = simpleButton {
     onClick: \_ -> do
@@ -86,10 +86,20 @@ cameraButton { id
                                      , show $ fromEnum $ DDT.second nowt ]
         edges <- Sigmax.getEdges s
         nodes <- Sigmax.getNodes s
-        let graphData = GET.GraphData $ graphData' { edges = map GEU.stEdgeToGET edges
-                                                   , nodes = map GEU.stNodeToGET nodes }
+        let graphData = GET.GraphData $ hyperdataGraph { edges = map GEU.stEdgeToGET edges
+                                                       , nodes = map GEU.stNodeToGET nodes }
+        let cameras = map Sigma.toCamera $ Sigma.cameras s
+        let camera = case cameras of
+              [c] -> GET.Camera { ratio: c.ratio
+                                , x: c.x
+                                , y: c.y }
+              _   -> GET.Camera { ratio: 1.0
+                               , x: 0.0
+                               , y: 0.0 }
+        let hyperdataGraph = GET.HyperdataGraph { graph: graphData
+                                                , mCamera: Just camera }
         launchAff_ $ do
-          _ <- cloneGraph { id, graphData, session }
-          uploadArbitraryDataURL session id (Just $ nowStr <> "-" <> "screenshot.png") screen
+          clonedGraphId <- cloneGraph { id, hyperdataGraph, session }
+          uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
   , text: "Screenshot"
   }
