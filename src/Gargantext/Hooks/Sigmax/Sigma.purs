@@ -13,7 +13,7 @@ import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Exception as EEx
 import Effect.Timer (setTimeout)
-import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn3, runEffectFn4)
+import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn1, runEffectFn3, runEffectFn4)
 import FFI.Simple ((..), (...), (.=))
 import Foreign.Object as Object
 import Gargantext.Hooks.Sigmax.Types as Types
@@ -291,6 +291,9 @@ goTo props cam = pure $ cam ... "goTo" $ [props]
 goToAllCameras :: Sigma -> Record CameraProps -> Effect Unit
 goToAllCameras s props = traverse_ (goTo props) $ cameras s
 
+takeScreenshot :: Sigma -> Effect String
+takeScreenshot = runEffectFn1 _takeScreenshot
+
 -- | FFI
 foreign import _sigma ::
   forall a b opts err.
@@ -312,3 +315,4 @@ foreign import _bindMouseSelectorPlugin
             Sigma
             (Either err Unit)
 foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
+foreign import _takeScreenshot :: EffectFn1 Sigma String

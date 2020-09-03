@@ -166,7 +166,7 @@ uploadButtonCpt = R.hooksComponent "G.C.F.T.N.A.U.uploadButton" cpt
           void $ launchAff do
             case fileType of
               Arbitrary ->
-                dispatch $ UploadArbitraryFile nodeType (Just name) blob
+                dispatch $ UploadArbitraryFile (Just name) blob
               _ ->
                 dispatch $ UploadFile nodeType fileType (Just name) blob
             liftEffect $ do
@@ -296,23 +296,25 @@ uploadFile session nodeType id fileType {mName, blob: UploadFileBlob blob} = do
 
 
 uploadArbitraryFile :: Session
-                    -> GT.NodeType
                     -> ID
                     -> {blob :: UploadFileBlob, mName :: Maybe String}
                     -> Aff GT.AsyncTaskWithType
-uploadArbitraryFile session nodeType id {mName, blob: UploadFileBlob blob} = do
-    if nodeType == Corpus then
-      pure unit
-    else
-      throwError $ error $ "[uploadArbitraryFile] NodeType " <> (show nodeType) <> " not supported"
+uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} = do
+    contents <- readAsDataURL blob
+    uploadArbitraryDataURL session id mName contents
 
-    contents' <- readAsDataURL blob
+uploadArbitraryDataURL :: Session
+                       -> ID
+                       -> Maybe String
+                       -> String
+                       -> Aff GT.AsyncTaskWithType
+uploadArbitraryDataURL session id mName contents' = do
     let re = unsafePartial $ fromRight $ DSR.regex "data:.*;base64," DSRF.noFlags
         contents = DSR.replace re "" contents'
     task <- postWwwUrlencoded session p (bodyParams contents)
     pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
   where
-    p = GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.UploadFile
+    p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFile
 
     bodyParams c = [ Tuple "_wfi_b64_data"  (Just c)
                    , Tuple "_wfi_name"      mName

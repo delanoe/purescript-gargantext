@@ -5,7 +5,8 @@ import Prelude
 import Data.Nullable (Nullable)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, runEffectFn1)
-import React (ReactRef, SyntheticEventHandler)
+import React (SyntheticEventHandler)
+import React.Ref as RR
 import Record.Unsafe (unsafeGet)
 import Unsafe.Coerce (unsafeCoerce)
 import Gargantext.Types (class Optional)
@@ -109,7 +110,7 @@ type SigmaProps =
   , settings :: SigmaSettings
   , style :: SigmaStyle
   , graph :: SigmaGraphData
-  , ref :: SyntheticEventHandler (Nullable ReactRef)
+  , ref :: RR.RefHandler RR.ReactInstance
   , onClickNode :: SigmaNodeEvent -> Unit
   , onOverNode :: SigmaNodeEvent -> Unit
   , onOutNode :: SigmaNodeEvent -> Effect Unit

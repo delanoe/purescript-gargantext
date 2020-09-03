@@ -5,6 +5,7 @@ import Prelude
 import Control.Alt ((<|>))
 import Data.Argonaut (Json)
 import Data.Argonaut as Argonaut
+import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Either (Either(..))
 import Data.Generic.Rep as GR
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
@@ -15,7 +16,7 @@ genericSumDecodeJson
    . GR.Generic a rep
   => GenericSumDecodeJsonRep rep
   => Json
-  -> Either String a
+  -> Either JsonDecodeError a
 genericSumDecodeJson f =
   GR.to <$> genericSumDecodeJsonRep f
 
@@ -30,7 +31,7 @@ genericSumEncodeJson f =
   genericSumEncodeJsonRep $ GR.from f
 
 class GenericSumDecodeJsonRep rep where
-  genericSumDecodeJsonRep :: Json -> Either String rep
+  genericSumDecodeJsonRep :: Json -> Either JsonDecodeError rep
 
 class GenericSumEncodeJsonRep rep where
   genericSumEncodeJsonRep :: rep -> Json
@@ -97,13 +98,13 @@ genericEnumDecodeJson :: forall a rep
    . GR.Generic a rep
   => GenericEnumDecodeJson rep
   => Json
-  -> Either String a
+  -> Either JsonDecodeError a
 genericEnumDecodeJson f =
   GR.to <$> genericEnumDecodeJsonRep f
 
 -- | Generic Enum Sum Representations, with constructor names as strings
 class GenericEnumDecodeJson rep where
-  genericEnumDecodeJsonRep :: Json -> Either String rep
+  genericEnumDecodeJsonRep :: Json -> Either JsonDecodeError rep
 
 instance sumEnumDecodeJsonRep ::
   ( GenericEnumDecodeJson a
@@ -120,7 +121,7 @@ instance constructorEnumSumRep ::
     s <- Argonaut.decodeJson f
     if s == name
        then pure $ GR.Constructor GR.NoArguments
-       else Left $ "Enum string " <> s <> " did not match expected string " <> name
+       else Left $ Named s $ TypeMismatch $ "Enum did not match expected string " <> name
     where
       name = reflectSymbol (SProxy :: SProxy name)
 

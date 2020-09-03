@@ -25,7 +25,7 @@ data Action = AddNode     String GT.NodeType
             | UpdateNode  UpdateNodeParams
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) UploadFileBlob
-            | UploadArbitraryFile  GT.NodeType (Maybe String) UploadFileBlob
+            | UploadArbitraryFile  (Maybe String) UploadFileBlob
             | DownloadNode
             | RefreshTree
 
@@ -64,7 +64,7 @@ instance showShow :: Show Action where
   show (SharePublic _      )        = "SharePublic"
   show (DoSearch    _      )        = "SearchQuery"
   show (UploadFile  _ _ _ _)        = "UploadFile"
-  show (UploadArbitraryFile  _ _ _) = "UploadArbitraryFile"
+  show (UploadArbitraryFile  _ _) = "UploadArbitraryFile"
   show  RefreshTree                 = "RefreshTree"
   show  DownloadNode                = "Download"
   show (MoveNode  _ )               = "MoveNode"
@@ -83,7 +83,7 @@ icon (AddContact  _)              = glyphiconNodeAction Share
 icon (SharePublic _ )             = glyphiconNodeAction (Publish { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 icon (DoSearch   _)               = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _)         = glyphiconNodeAction Upload
-icon (UploadArbitraryFile _ _ _ ) = glyphiconNodeAction Upload
+icon (UploadArbitraryFile _ _ ) = glyphiconNodeAction Upload
 icon  RefreshTree                 = glyphiconNodeAction Refresh
 icon  DownloadNode                = glyphiconNodeAction Download
 icon (MoveNode _ )                = glyphiconNodeAction (Move  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
@@ -104,7 +104,7 @@ text (AddContact  _      )        = "Add contact !"
 text (SharePublic _      )        = "Publish !"
 text (DoSearch    _      )        = "Launch search !"
 text (UploadFile  _ _ _ _)        = "Upload File !"
-text (UploadArbitraryFile  _ _ _) = "Upload arbitrary file !"
+text (UploadArbitraryFile  _ _) = "Upload arbitrary file !"
 text  RefreshTree                 = "Refresh Tree !"
 text DownloadNode                 = "Download !"
 text (MoveNode  _ )               = "Move !"

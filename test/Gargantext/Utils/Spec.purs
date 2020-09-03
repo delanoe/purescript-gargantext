@@ -3,6 +3,7 @@ module Gargantext.Utils.Spec where
 import Prelude
 
 import Data.Argonaut as Argonaut
+import Data.Argonaut.Decode.Error (JsonDecodeError)
 import Data.Either (Either(..), isLeft)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -65,14 +66,14 @@ spec =
       GUM.log10 10.0 `shouldEqual` 1.0
 
     it "genericSumDecodeJson works" do
-      let result1 = Argonaut.decodeJson =<< Argonaut.jsonParser """{"Boat":{"hi":1}}"""
+      let result1 = Argonaut.decodeJson =<< Argonaut.parseJson """{"Boat":{"hi":1}}"""
       result1 `shouldEqual` Right (Boat { hi: 1 })
 
-      let result2 = Argonaut.decodeJson =<< Argonaut.jsonParser """{"Gravy":"hi"}"""
+      let result2 = Argonaut.decodeJson =<< Argonaut.parseJson """{"Gravy":"hi"}"""
       result2 `shouldEqual` Right (Gravy "hi")
 
-      let result3 = Argonaut.decodeJson =<< Argonaut.jsonParser """{"Boat":123}"""
-      isLeft (result3 :: Either String Fruit) `shouldEqual` true
+      let result3 = Argonaut.decodeJson =<< Argonaut.parseJson """{"Boat":123}"""
+      isLeft (result3 :: Either JsonDecodeError Fruit) `shouldEqual` true
 
     it "genericSumEncodeJson works and loops back with decode" do
       let input1 = Boat { hi: 1 }
@@ -88,14 +89,14 @@ spec =
       result2' `shouldEqual` Right input2
 
     it "genericEnumDecodeJson works" do
-      let result1 = Argonaut.decodeJson =<< Argonaut.jsonParser "\"Member1\""
+      let result1 = Argonaut.decodeJson =<< Argonaut.parseJson "\"Member1\""
       result1 `shouldEqual` Right Member1
 
-      let result2 = Argonaut.decodeJson =<< Argonaut.jsonParser "\"Member2\""
+      let result2 = Argonaut.decodeJson =<< Argonaut.parseJson "\"Member2\""
       result2 `shouldEqual` Right Member2
 
-      let result3 = Argonaut.decodeJson =<< Argonaut.jsonParser "\"Failure\""
-      isLeft (result3 :: Either String EnumTest) `shouldEqual` true
+      let result3 = Argonaut.decodeJson =<< Argonaut.parseJson "\"Failure\""
+      isLeft (result3 :: Either JsonDecodeError EnumTest) `shouldEqual` true
 
     it "genericSumEncodeJson works and loops back with decode" do
       let input1 = Member1

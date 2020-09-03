@@ -61,6 +61,7 @@ import Prelude
 import Control.Monad.Cont.Trans (lift)
 import Control.Monad.State (class MonadState, execState)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (.:?), (:=), (:=?), (~>), (~>?))
+import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Array (head)
 import Data.Array as A
 import Data.Bifunctor (lmap)
@@ -409,7 +410,7 @@ instance decodeJsonReplace :: (DecodeJson a, Eq a) => DecodeJson (Replace a) whe
     case Tuple mold mnew of
       Tuple (Just old) (Just new) -> pure $ replace old new
       Tuple Nothing Nothing       -> pure Keep
-      _                           -> Left "decodeJsonReplace"
+      _                           -> Left $ TypeMismatch "decodeJsonReplace"
 
 -- Representing a PatchSet as `Map a Boolean` would have the advantage
 -- of enforcing rem and add to be disjoint.

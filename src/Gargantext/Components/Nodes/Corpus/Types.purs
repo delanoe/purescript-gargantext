@@ -1,6 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Types where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (:=), (~>), jsonEmptyObject)
+import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.List as List
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -124,7 +125,7 @@ instance decodeFTField :: DecodeJson (Field FieldType) where
         tag <- data_ .: "tag"
         text <- data_ .: "text"
         pure $ Markdown {tag, text}
-      _ -> Left $ "Unsupported 'type' " <> type_
+      _ -> Left $ TypeMismatch $ "Unsupported 'type' " <> type_
     pure $ Field {name, typ}
 
 instance encodeFTField :: EncodeJson (Field FieldType) where

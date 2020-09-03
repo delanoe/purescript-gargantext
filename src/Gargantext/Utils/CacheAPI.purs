@@ -31,7 +31,7 @@ get cache session p = do
   j <- M.json res
 
   case decodeJson (F.unsafeFromForeign j) of
-    Left err -> throwError $ error $ "decodeJson affResp.body: " <> err
+    Left err -> throwError $ error $ "decodeJson affResp.body: " <> show err
     Right b -> pure b
 
 foreign import data Cache :: Type
@@ -97,7 +97,7 @@ cachedJson cache req = do
   j <- M.json res
 
   case decodeJson (F.unsafeFromForeign j) of
-    Left err -> throwError $ error $ "[cachedJson] decodeJson affResp.body: " <> err
+    Left err -> throwError $ error $ "[cachedJson] decodeJson affResp.body: " <> show err
     Right b -> pure b
 
 delete :: Cache -> Request -> Aff Unit
@@ -116,7 +116,7 @@ pureJson req = do
   res <- fetch req
   j <- M.json res
   case decodeJson (F.unsafeFromForeign j) of
-    Left err -> throwError $ error $ "[pureJson] decodeJson affResp.body: " <> err
+    Left err -> throwError $ error $ "[pureJson] decodeJson affResp.body: " <> show err
     Right b -> pure b
 
 
