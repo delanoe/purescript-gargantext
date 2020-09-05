@@ -4,13 +4,14 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Prelude
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (toUrl)
 import Gargantext.Sessions (Session(..))
 import Gargantext.Sessions as Sessions
-import Prelude
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 type Version = String
 

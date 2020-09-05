@@ -15,6 +15,7 @@ import Data.String as DS
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import Effect.Now as EN
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -62,6 +63,7 @@ type CameraButtonProps = (
   , hyperdataGraph :: GET.HyperdataGraph
   , session :: Session
   , sigmaRef :: R.Ref Sigmax.Sigma
+  , treeReload :: Unit -> Effect Unit
   )
 
 
@@ -69,7 +71,8 @@ cameraButton :: Record CameraButtonProps -> R.Element
 cameraButton { id
              , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData hyperdataGraph }
              , session
-             , sigmaRef } = simpleButton {
+             , sigmaRef
+             , treeReload } = simpleButton {
     onClick: \_ -> do
       let sigma = R.readRef sigmaRef
       Sigmax.dependOnSigma sigma "[cameraButton] sigma: Nothing" $ \s -> do
@@ -100,6 +103,8 @@ cameraButton { id
                                                 , mCamera: Just camera }
         launchAff_ $ do
           clonedGraphId <- cloneGraph { id, hyperdataGraph, session }
-          uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
+          ret <- uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
+          liftEffect $ treeReload unit
+          pure ret
   , text: "Screenshot"
   }

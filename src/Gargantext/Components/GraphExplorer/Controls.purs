@@ -52,6 +52,7 @@ type Controls =
   , showSidePanel   :: R.State GET.SidePanelState
   , showTree        :: R.State Boolean
   , sigmaRef        :: R.Ref Sigmax.Sigma
+  , treeReload      :: Unit -> Effect Unit
   )
 
 type LocalControls =
@@ -165,18 +166,25 @@ controlsCpt = R.hooksComponent "GraphControls" cpt
                 , RH.li {} [ cameraButton { id: props.graphId
                                           , hyperdataGraph: props.hyperdataGraph
                                           , session: props.session
-                                          , sigmaRef: props.sigmaRef } ]
+                                          , sigmaRef: props.sigmaRef
+                                          , treeReload: props.treeReload } ]
                 ]
               ]
             ]
 
-useGraphControls :: SigmaxT.SGraph
-                 -> GET.GraphId
-                 -> GET.HyperdataGraph
-                 -> Session
-                 -> SigmaxT.ForceAtlasState
+useGraphControls :: { forceAtlasS :: SigmaxT.ForceAtlasState
+                   , graph :: SigmaxT.SGraph
+                   , graphId :: GET.GraphId
+                   , hyperdataGraph :: GET.HyperdataGraph
+                   , session :: Session
+                   , treeReload :: Unit -> Effect Unit }
                  -> R.Hooks (Record Controls)
-useGraphControls graph graphId hyperdataGraph session forceAtlasS = do
+useGraphControls { forceAtlasS
+                 , graph
+                 , graphId
+                 , hyperdataGraph
+                 , session
+                 , treeReload } = do
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed {
       min: 0.0
@@ -214,6 +222,7 @@ useGraphControls graph graphId hyperdataGraph session forceAtlasS = do
        , showSidePanel
        , showTree
        , sigmaRef
+       , treeReload
        }
 
 getShowControls :: Record Controls -> Boolean

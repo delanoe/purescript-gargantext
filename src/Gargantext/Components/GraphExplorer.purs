@@ -45,7 +45,7 @@ type LayoutProps =
   , session :: Session
   , sessions :: Sessions
   , showLogin :: R.State Boolean
-  , treeReload :: R.State Int
+  --, treeReload :: R.State Int
   )
 
 type Props = (
@@ -99,7 +99,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
               , session
               , sessions
               , showLogin
-              , treeReload } _ = do
+              --, treeReload
+              } _ = do
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
       let forceAtlasS = if startForceAtlas then SigmaxT.InitialRunning else SigmaxT.InitialStopped
@@ -107,7 +108,14 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
-      controls              <- Controls.useGraphControls graph graphId hyperdataGraph session forceAtlasS
+      treeReload <- R.useState' 0
+      controls              <- Controls.useGraphControls { forceAtlasS
+                                                        , graph
+                                                        , graphId
+                                                        , hyperdataGraph
+                                                        , session
+                                                        , treeReload: \_ -> (snd treeReload) $ (+) 1
+                                                        }
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -144,7 +152,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                         tree { frontends
                              , handed
                              , mCurrentRoute
-                             , reload: props.treeReload
+                             , reload: treeReload
                              , sessions
                              , show: fst controls.showTree
                              , showLogin: snd showLogin }
