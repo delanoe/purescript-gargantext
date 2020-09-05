@@ -29,15 +29,15 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component Props
 tabsCpt = R.hooksComponent "G.C.N.L.T.tabs" cpt
   where
-    cpt {session, corpusId, corpusData: corpusData@{defaultListId}} _ = do
+    cpt { corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do
       (selected /\ setSelected) <- R.useState' 0
-      pure $ Tab.tabs { tabs: tabs', selected }
+      pure $ Tab.tabs { selected, tabs: tabs' }
       where
-        tabs' = [ "Sources"    /\ view Sources
-                , "Authors"    /\ view Authors
+        tabs' = [ "Authors"    /\ view Authors
                 , "Institutes" /\ view Institutes
+                , "Sources"    /\ view Sources
                 , "Terms"      /\ view Terms ]
-        view mode = ngramsView {mode, session, corpusId, corpusData}
+        view mode = ngramsView { corpusData, corpusId, mode, session }
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
@@ -47,7 +47,7 @@ ngramsView props = R.createElement ngramsViewCpt props []
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
   where
-    cpt { corpusData: {defaultListId}
+    cpt { corpusData: { defaultListId }
         , corpusId
         , mode
         , session } _ = do
@@ -55,11 +55,11 @@ ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
 
       pure $ R.fragment
         ( charts tabNgramType chartType
-        <> [ NT.mainNgramsTable { session
-                                , defaultListId
+        <> [ NT.mainNgramsTable { defaultListId
                                 , nodeId: corpusId
-                                , tabType
+                                , session
                                 , tabNgramType
+                                , tabType
                                 , withAutoUpdate: false
                                 }
            ]
@@ -69,9 +69,9 @@ ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
         tabType      = TabCorpus (TabNgramType tabNgramType)
         listId       = defaultListId
         path         = { corpusId
+                       , limit: Just 1000
                        , listId
                        , tabType
-                       , limit: Just 1000
                        }
 
         charts CTabTerms (chartType /\ setChartType) = [

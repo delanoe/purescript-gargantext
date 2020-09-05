@@ -16,7 +16,7 @@ exports._openCache = function(cacheName) {
 exports._delete = function(cache) {
     return function(req) {
         return function() {
-            cache.delete(req);
+            return cache.delete(req);
         }
     }
 }

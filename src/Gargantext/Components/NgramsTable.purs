@@ -22,8 +22,13 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Unsafe.Coerce (unsafeCoerce)
+
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core
@@ -37,9 +42,6 @@ import Gargantext.Utils (queryMatchesLabel, toggleSet)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
-import Reactix (Component, Element, State, createElement, fragment, hooksComponent, useState') as R
-import Reactix.DOM.HTML as H
-import Unsafe.Coerce (unsafeCoerce)
 
 type State' =
   CoreState
@@ -492,7 +494,7 @@ mainNgramsTable props = R.createElement mainNgramsTableCpt props []
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
   where
-    cpt props@{nodeId, defaultListId, tabType, session, tabNgramType, withAutoUpdate} _ = do
+    cpt props@{nodeId, defaultListId, session, tabNgramType, tabType, withAutoUpdate} _ = do
       let path = initialPageParams session nodeId [defaultListId] tabType
 
       useLoaderWithCacheAPI {
@@ -517,14 +519,16 @@ mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
             , tabType
             , termListFilter
             , termSizeFilter
-            } = R.GetNgrams { limit
-                            , listIds
-                            , offset: Just offset
-                            , orderBy: convOrderBy <$> orderBy
-                            , searchQuery
-                            , tabType
-                            , termListFilter
-                            , termSizeFilter } (Just nodeId)
+            } = R.GetNgramsTableAll { listIds
+                                    , tabType } (Just nodeId)
+            -- } = R.GetNgrams { limit
+            --                 , listIds
+            --                 , offset: Just offset
+            --                 , orderBy: convOrderBy <$> orderBy
+            --                 , searchQuery
+            --                 , tabType
+            --                 , termListFilter
+            --                 , termSizeFilter } (Just nodeId)
 
     handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
     handleResponse v = v
@@ -548,8 +552,13 @@ mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = R.hooksComponent "G.C.NT.mainNgramsTablePaint" cpt
   where
     cpt {path, tabNgramType, versioned, withAutoUpdate} _ = do
+      R.useEffect' $ do
+        let (Versioned v) = versioned
+        log2 "[mainNgramsTablePaint] versioned values" $ show v.data
+
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
+
       pure $ loadedNgramsTable {
         path: pathS
       , state
