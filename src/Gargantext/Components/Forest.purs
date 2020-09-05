@@ -48,7 +48,6 @@ forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
       )
       (cpt' openNodes asyncTasks reload showLogin)
   cpt' openNodes asyncTasks reload showLogin (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
-    --pure $ R.fragment $ A.cons (plus showLogin) trees
     pure $ R2.row $ [plus handed showLogin] <> trees
     where
       trees = tree <$> unSessions sessions
