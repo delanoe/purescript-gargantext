@@ -45,7 +45,6 @@ type LayoutProps =
   , session :: Session
   , sessions :: Sessions
   , showLogin :: R.State Boolean
-  --, treeReload :: R.State Int
   )
 
 type Props = (
@@ -72,7 +71,7 @@ explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
     el = R.hooksComponent "G.C.GE.explorerLayoutView" cpt
-    cpt props@{graphId, session} _ = do
+    cpt props@{ graphId, session } _ = do
       useLoader graphId (getNodes session graphVersion) handler
       where
         handler loaded =
@@ -99,7 +98,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
               , session
               , sessions
               , showLogin
-              --, treeReload
               } _ = do
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
@@ -146,13 +144,13 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
                   ], R2.row
             [ outer
-              [ inner
+              [ inner handed
                 [ rowControls [ Controls.controls controls ]
                 , R2.row $ mainLayout handed $
                     tree { frontends
                           , handed
                           , mCurrentRoute
-                          , reload: props.treeReload
+                          , reload: treeReload
                           , sessions
                           , show: fst controls.showTree
                           , showLogin: snd showLogin }
@@ -187,7 +185,11 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
     mainLayout Types.LeftHanded (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']
 
     outer = RH.div { className: "col-md-12" }
-    inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
+    inner h = RH.div { className: "container-fluid " <> hClass, style: { paddingTop: "90px" } }
+      where
+        hClass = case h of
+          Types.LeftHanded -> "lefthanded"
+          Types.RightHanded -> "righthanded"
     rowToggle  = RH.div { id: "toggle-container" }
     rowControls = RH.div { id: "controls-container" }
     col       = RH.div { className: "col-md-4" }

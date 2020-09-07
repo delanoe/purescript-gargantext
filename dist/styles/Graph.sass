@@ -38,6 +38,10 @@
     @include sidePanelCommon
     background-color: #fff
     z-index: 1
+  .lefthanded .graph-tree
+    left: 80%
+  .righthanded .graph-tree
+    left: 0%
 
   #graph-view
     height: 95%
@@ -46,7 +50,6 @@
     @include sidePanelCommon
     border: 1px white solid
     background-color: white
-    left: 70%
     width: 28%
 
     #myTab
@@ -61,6 +64,10 @@
       ul
         display: inline
         float : left
+  .lefthanded #sp-container
+    left: 0%
+  .righthanded #sp-container
+    left: 70%
 
   #tree
     position: absolute
