@@ -46,6 +46,10 @@ type SigmaOpts s = { settings :: s }
 sigma :: forall opts err. SigmaOpts opts -> Effect (Either err Sigma)
 sigma = runEffectFn3 _sigma Left Right
 
+-- | Kill a sigmajs instance.
+kill :: Sigma -> Effect Unit
+kill sigma = pure $ sigma ... "kill" $ []
+
 -- | Call the `refresh()` method on a sigmajs instance.
 refresh :: Sigma -> Effect Unit
 refresh s = pure $ s ... "refresh" $ []

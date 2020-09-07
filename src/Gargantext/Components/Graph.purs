@@ -49,6 +49,15 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
     cpt props _ = do
       stageHooks props
 
+      R.useEffectOnce $ do
+        pure $ do
+          log "[graphCpt (Cleanup)]"
+          Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
+            Sigma.stopForceAtlas2 sigma
+            log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
+            Sigma.kill sigma
+            log "[graphCpt (Cleanup)] sigma killed"
+
       -- NOTE: This div is not empty after sigma initializes.
       -- When we change state, we make it empty though.
       --pure $ RH.div { ref: props.elRef, style: {height: "95%"} } []
@@ -57,7 +66,7 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
         Just el -> R.createPortal [] el
 
     stageHooks props@{multiSelectEnabledRef, selectedNodeIds, sigmaRef, stage: (Init /\ setStage)} = do
-      R.useEffectOnce $ do
+      R.useEffectOnce' $ do
         let rSigma = R.readRef props.sigmaRef
 
         case Sigmax.readSigma rSigma of
@@ -103,11 +112,7 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
 
         setStage $ const Ready
 
-        delay unit $ \_ -> do
-          log "[graphCpt] cleanup"
-          pure $ pure unit
-
-    stageHooks props@{showEdges: (showEdges /\ _), sigmaRef, stage: (Ready /\ setStage), transformedGraph} = do
+    stageHooks props@{ showEdges: (showEdges /\ _), sigmaRef, stage: (Ready /\ setStage), transformedGraph } = do
       let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
       let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
 
