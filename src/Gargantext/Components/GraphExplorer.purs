@@ -132,36 +132,41 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
             [ outer
               [ inner
                 [ rowControls [ Controls.controls controls ]
-                , R2.row [
-                        tree { frontends
-                             , handed
-                             , mCurrentRoute
-                             , reload: props.treeReload
-                             , sessions
-                             , show: fst controls.showTree
-                             , showLogin: snd showLogin }
-                      , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []  -- graph container
-                      , graphView { controls
-                                  , elRef: graphRef
-                                  , graphId
-                                  , graph
-                                  , multiSelectEnabledRef
-                                  }
-                      , mSidebar mMetaData { frontends
-                                           , graph
-                                           , graphId
-                                           , graphVersion
-                                           , removedNodeIds : controls.removedNodeIds
-                                           , session
-                                           , selectedNodeIds: controls.selectedNodeIds
-                                           , showSidePanel  :   controls.showSidePanel
-                                           , treeReload
-                                           }
-                      ]
+                , R2.row $ mainLayout handed $
+                    tree { frontends
+                          , handed
+                          , mCurrentRoute
+                          , reload: props.treeReload
+                          , sessions
+                          , show: fst controls.showTree
+                          , showLogin: snd showLogin }
+                    /\
+                    RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
+                    /\
+                    graphView { controls
+                              , elRef: graphRef
+                              , graphId
+                              , graph
+                              , multiSelectEnabledRef
+                              }
+                    /\
+                    mSidebar mMetaData { frontends
+                                        , graph
+                                        , graphId
+                                        , graphVersion
+                                        , removedNodeIds : controls.removedNodeIds
+                                        , session
+                                        , selectedNodeIds: controls.selectedNodeIds
+                                        , showSidePanel  :   controls.showSidePanel
+                                        , treeReload
+                                        }
                 ]
               ]
             ]
           ]
+
+    mainLayout Types.RightHanded (tree' /\ gc /\ gv /\ sdb) = [tree', gc, gv, sdb]
+    mainLayout Types.LeftHanded (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']
 
     outer = RH.div { className: "col-md-12" }
     inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
