@@ -206,6 +206,7 @@ deleteNodes { graphId, metaData, nodes, session, termList, treeReload } = do
       Just (NTC.Versioned patch) -> do
         liftEffect $ snd treeReload $ (+) 1
 
+-- Why is this called delete node?
 deleteNode :: TermList
            -> Session
            -> GET.MetaData

@@ -17,7 +17,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
-import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsElement, NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, Replace, _NgramsElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, singletonNgramsTablePatch)
+import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsElement, NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, Replace, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, singletonNgramsTablePatch)
 import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
@@ -153,7 +153,7 @@ treeCpt = R2.hooksComponent thisModule "tree" cpt
         className = "glyphicon glyphicon-chevron-" <> if open then "down" else "right"
         style = if leaf then {color: "#adb5bd"} else {color: ""}
         open = not leaf || false {- TODO -}
-        cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsElement <<< _children <<< folded
+        cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsRepoElement <<< _children <<< folded
 
         forest =
           let depth = ngramsDepth.depth + 1 in

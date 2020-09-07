@@ -3,6 +3,9 @@ module Gargantext.Components.NgramsTable.Core
   , CoreParams
   , NgramsElement(..)
   , _NgramsElement
+  , NgramsRepoElement(..)
+  , _NgramsRepoElement
+  , ngramsRepoElementToNgramsElement
   , NgramsPatch(..)
   , NgramsTable(..)
   , NgramsTablePatch
@@ -43,10 +46,8 @@ module Gargantext.Components.NgramsTable.Core
   , _ngrams
   , _parent
   , _root
-  , commitPatch
   , commitPatchR
   , putNgramsPatches
-  , syncPatches
   , syncPatchesR
   , addNewNgram
   , Action(..)
@@ -58,7 +59,6 @@ module Gargantext.Components.NgramsTable.Core
 
 import Prelude
 
-import Control.Monad.Cont.Trans (lift)
 import Control.Monad.State (class MonadState, execState)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (.:?), (:=), (:=?), (~>), (~>?))
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
@@ -68,12 +68,12 @@ import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
-import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
+--import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Lens (Iso', Lens', use, view, (%=), (.~), (?=), (^?))
+import Data.Lens (Iso', Lens', use, view, (%=), (%~), (.~), (?=), (^?), (^.))
 import Data.Lens.At (class At, at)
 import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded, traverseOf_)
@@ -83,7 +83,7 @@ import Data.Lens.Record (prop)
 import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
 import Data.Set as Set
@@ -93,8 +93,9 @@ import Data.String.Regex (Regex, regex, replace) as R
 import Data.String.Regex.Flags (global, multiline) as R
 import Data.String.Utils as SU
 import Data.Symbol (SProxy(..))
-import Data.Traversable (class Traversable, for, sequence, traverse, traverse_)
-import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
+import Data.These (These(..))
+import Data.Traversable (for, traverse_)
+import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
@@ -105,13 +106,15 @@ import Foreign.Object as FO
 import Reactix (State) as R
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
-import Thermite (StateCoTransformer, modifyState_)
 
+import Gargantext.Prelude
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, get, put, post)
+import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (CTabNgramType(..), OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
+
+type Endo a = a -> a
 
 type CoreParams s =
   { nodeId  :: Int
@@ -178,19 +181,25 @@ normNgram tabType = NormNgramsTerm <<< normNgramInternal tabType
 
 -----------------------------------------------------------------------------------
 newtype NgramsElement = NgramsElement
-  { ngrams      :: NgramsTerm
-  , list        :: TermList
-  , occurrences :: Int
-  , parent      :: Maybe NgramsTerm
-  , root        :: Maybe NgramsTerm
-  , children    :: Set NgramsTerm
+  { ngrams      :: NgramsTerm -- HERE
+  , size        :: Int -- MISSING
+  , list        :: TermList -- ok
+  , root        :: Maybe NgramsTerm -- ok
+  , parent      :: Maybe NgramsTerm -- ok
+  , children    :: Set NgramsTerm -- ok
+  , occurrences :: Int -- HERE
   }
 
 derive instance eqNgramsElement :: Eq NgramsElement
 
 
+_parent :: forall parent row. Lens' { parent :: parent | row } parent
 _parent = prop (SProxy :: SProxy "parent")
+
+_root :: forall root row. Lens' { root :: root | row } root
 _root   = prop (SProxy :: SProxy "root")
+
+_ngrams :: forall row. Lens' { ngrams :: NgramsTerm | row } NgramsTerm
 _ngrams = prop (SProxy :: SProxy "ngrams")
 
 _children :: forall row. Lens' { children :: Set NgramsTerm | row } (Set NgramsTerm)
@@ -209,6 +218,7 @@ instance showNgramsElement :: Show NgramsElement where
 
 _NgramsElement  :: Iso' NgramsElement {
     children    :: Set NgramsTerm
+  , size        :: Int
   , list        :: TermList
   , ngrams      :: NgramsTerm
   , occurrences :: Int
@@ -221,13 +231,14 @@ instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
   decodeJson json = do
     obj         <- decodeJson json
     ngrams      <- obj .:  "ngrams"
+    size        <- obj .:  "size"
     list        <- obj .:  "list"
     occurrences <- obj .:  "occurrences"
     parent      <- obj .:? "parent"
     root        <- obj .:? "root"
     children'   <- obj .:  "children"
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
-    pure $ NgramsElement {ngrams, list, occurrences, parent, root, children}
+    pure $ NgramsElement {ngrams, size, list, occurrences, parent, root, children}
 
 instance encodeJsonNgramsElement :: EncodeJson NgramsElement where
   encodeJson (NgramsElement { children, list, ngrams, occurrences, parent, root }) = 
@@ -238,6 +249,65 @@ instance encodeJsonNgramsElement :: EncodeJson NgramsElement where
     ~> "parent"      :=? parent
     ~>? "root"        :=? root
     ~>? jsonEmptyObject
+
+newtype NgramsRepoElement = NgramsRepoElement
+  { size     :: Int
+  , list     :: TermList
+  , root     :: Maybe NgramsTerm
+  , parent   :: Maybe NgramsTerm
+  , children :: Set NgramsTerm
+--  , occurrences :: Int -- TODO
+  }
+
+derive instance eqNgramsRepoElement  :: Eq NgramsRepoElement
+
+instance decodeJsonNgramsRepoElement :: DecodeJson NgramsRepoElement where
+  decodeJson json = do
+    obj         <- decodeJson json
+    size        <- obj .:  "size"
+    list        <- obj .:  "list"
+    parent      <- obj .:? "parent"
+    root        <- obj .:? "root"
+    children'   <- obj .:  "children"
+    let children = Set.fromFoldable (children' :: Array NgramsTerm)
+    pure $ NgramsRepoElement {size, list, parent, root, children}
+
+instance encodeJsonNgramsRepoElement :: EncodeJson NgramsRepoElement where
+  encodeJson (NgramsRepoElement { size, list, root, parent, children {-occurrences-} })
+     =  "size"       :=  size
+    ~>  "list"       :=  list
+    ~>  "root"       :=? root
+    ~>? "parent"     :=? parent
+    ~>? "children"   :=  children
+--    ~>  "occurrences" := occurrences
+    ~>  jsonEmptyObject
+
+derive instance newtypeNgramsRepoElement :: Newtype NgramsRepoElement _
+derive instance genericNgramsRepoElement :: Generic NgramsRepoElement _
+instance showNgramsRepoElement :: Show NgramsRepoElement where
+  show = genericShow
+
+_NgramsRepoElement  :: Iso' NgramsRepoElement {
+    children    :: Set NgramsTerm
+  , size        :: Int
+  , list        :: TermList
+  , parent      :: Maybe NgramsTerm
+  , root        :: Maybe NgramsTerm
+--  , occurrences :: Int
+  }
+_NgramsRepoElement = _Newtype
+
+ngramsRepoElementToNgramsElement :: NgramsTerm -> NgramsRepoElement -> NgramsElement
+ngramsRepoElementToNgramsElement ngrams (NgramsRepoElement { size, list, root, parent, children }) =
+  NgramsElement
+  { ngrams
+  , size -- TODO should we assert that size(ngrams) == size?
+  , list
+  , root
+  , parent
+  , children
+  , occurrences: 0 -- TODO fake here
+  }
 
 -----------------------------------------------------------------------------------
 type Version = Int
@@ -262,7 +332,7 @@ instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
 
 -- type NgramsTable = Array (NTree NgramsElement)
 -- type NgramsTable = Array NgramsElement
-newtype NgramsTable = NgramsTable (Map NgramsTerm NgramsElement)
+newtype NgramsTable = NgramsTable (Map NgramsTerm NgramsRepoElement)
 
 derive instance newtypeNgramsTable :: Newtype NgramsTable _
 derive instance genericNgramsTable :: Generic NgramsTable _
@@ -271,13 +341,13 @@ instance eqNgramsTable  :: Eq NgramsTable where
 instance showNgramsTable :: Show NgramsTable where
   show = genericShow
 
-_NgramsTable :: Iso' NgramsTable (Map NgramsTerm NgramsElement)
+_NgramsTable :: Iso' NgramsTable (Map NgramsTerm NgramsRepoElement)
 _NgramsTable = _Newtype
 
-instance indexNgramsTable :: Index NgramsTable NgramsTerm NgramsElement where
+instance indexNgramsTable :: Index NgramsTable NgramsTerm NgramsRepoElement where
   ix k = _NgramsTable <<< ix k
 
-instance atNgramsTable :: At NgramsTable NgramsTerm NgramsElement where
+instance atNgramsTable :: At NgramsTable NgramsTerm NgramsRepoElement where
   at k = _NgramsTable <<< at k
 
 instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
@@ -287,7 +357,9 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
          $ Map.fromFoldable
          $ f <$> (elements :: Array NgramsElement)
     where
-      f e@(NgramsElement e') = Tuple e'.ngrams e
+      -- f e@(NgramsElement e') = Tuple e'.ngrams e
+      f (NgramsElement {ngrams, size, list, root, parent, children{-, occurrences-}}) =
+        Tuple ngrams (NgramsRepoElement {size, list, root, parent, children{-, occurrences-}})
 
 instance encodeJsonNgramsTable :: EncodeJson NgramsTable where
   encodeJson (NgramsTable m) = encodeJson $ Map.values m
@@ -351,7 +423,7 @@ highlightNgrams ntype (NgramsTable table) input0 =
               case Map.lookup pat table of
                 Nothing ->
                   crashWith "highlightNgrams: pattern missing from table"
-                Just (NgramsElement ne) ->
+                Just ne ->
                   let
                     s1    = S.splitAt (i - i0) s
                     s2    = S.splitAt lpat     (S.drop 1 s1.after)
@@ -363,7 +435,7 @@ highlightNgrams ntype (NgramsTable table) input0 =
                   -- `undb s2.before` and pat might differ by casing only!
                   { i0: i + lpat + 2
                   , s:  s3.after
-                  , l:  Tuple (undb s2.before) (Just ne.list) :
+                  , l:  Tuple (undb s2.before) (Just (ne ^. _NgramsRepoElement <<< _list)) :
                         consOnJustTail s3b
                         (consNonEmpty (unspB (undb s1.before)) l)
                   }
@@ -461,26 +533,46 @@ patchSetFromMap m = PatchSet { rem: Map.keys (Map.filter not m)
                              , add: Map.keys (Map.filter identity m) }
   -- TODO Map.partition would be nice here
 
-newtype NgramsPatch = NgramsPatch
-  { patch_children :: PatchSet NgramsTerm
-  , patch_list     :: Replace TermList
-  }
+data NgramsPatch
+  = NgramsReplace
+      { patch_old :: Maybe NgramsRepoElement
+      , patch_new :: Maybe NgramsRepoElement
+      }
+  | NgramsPatch
+      { patch_children :: PatchSet NgramsTerm
+      , patch_list     :: Replace TermList
+      }
+
+-- TODO shall we normalise as in replace? shall we make a type class Replaceable?
+ngramsReplace :: Maybe NgramsRepoElement -> Maybe NgramsRepoElement -> NgramsPatch
+ngramsReplace patch_old patch_new = NgramsReplace {patch_old, patch_new}
 
 derive instance eqNgramsPatch  :: Eq NgramsPatch
 derive instance eqPatchSetNgramsTerm  :: Eq (PatchSet NgramsTerm)
 
+-- TODO
+invert :: forall a. a -> a
+invert _ = unsafeThrow "invert: TODO"
+
 instance semigroupNgramsPatch :: Semigroup NgramsPatch where
-  append (NgramsPatch p) (NgramsPatch q) = NgramsPatch
+  append (NgramsReplace p) (NgramsReplace q) = ngramsReplace q.patch_old p.patch_new
+  append (NgramsPatch p)   (NgramsPatch q) = NgramsPatch
     { patch_children: p.patch_children <> q.patch_children
     , patch_list:     p.patch_list     <> q.patch_list
     }
+  append (NgramsPatch p) (NgramsReplace q) = ngramsReplace q.patch_old (q.patch_new # _Just <<< _Newtype %~ applyNgramsPatch' p)
+  append (NgramsReplace p) (NgramsPatch q) = ngramsReplace (p.patch_old # _Just <<< _Newtype %~ applyNgramsPatch' (invert q)) p.patch_new
 
 instance monoidNgramsPatch :: Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
 
 instance encodeJsonNgramsPatch :: EncodeJson NgramsPatch where
-  -- TODO only include non empty fields
+  encodeJson (NgramsReplace { patch_old, patch_new })
+     = "patch_old" := patch_old
+    ~> "patch_new" := patch_new
+    ~> jsonEmptyObject
   encodeJson (NgramsPatch { patch_children, patch_list })
+  -- TODO only include non empty fields
      = "patch_children" := patch_children
     ~> "patch_list"     := patch_list
     ~> jsonEmptyObject
@@ -489,26 +581,40 @@ instance decodeJsonNgramsPatch :: DecodeJson NgramsPatch where
   decodeJson json = do
     obj            <- decodeJson json
     -- TODO handle empty fields
-    patch_list     <- obj .: "patch_list"
-    patch_children <- obj .: "patch_children"
-    pure $ NgramsPatch { patch_list, patch_children }
+    -- TODO handle patch_new
+    patch_new <- obj .:? "patch_new"
+    patch_old <- obj .:? "patch_old"
+    if isJust patch_new || isJust patch_old then
+      pure $ NgramsReplace { patch_old, patch_new }
+    else do
+      patch_list     <- obj .: "patch_list"
+      patch_children <- obj .: "patch_children"
+      pure $ NgramsPatch { patch_list, patch_children }
 
-applyNgramsPatch :: NgramsPatch -> NgramsElement -> NgramsElement
-applyNgramsPatch (NgramsPatch p) (NgramsElement e) = NgramsElement
-  { ngrams:      e.ngrams
-  , list:        applyReplace p.patch_list e.list
-  , occurrences: e.occurrences
-  , parent:      e.parent
-  , root:        e.root
-  , children:    applyPatchSet p.patch_children e.children
-  }
+applyNgramsPatch' :: forall row.
+                          { patch_children :: PatchSet NgramsTerm
+                          , patch_list     :: Replace TermList
+                          } ->
+                     Endo { list     :: TermList
+                          , children :: Set NgramsTerm
+                          | row
+                          }
+applyNgramsPatch' p e =
+  e { list     = applyReplace p.patch_list e.list
+    , children = applyPatchSet p.patch_children e.children
+    }
+
+applyNgramsPatch :: NgramsPatch -> Maybe NgramsRepoElement -> Maybe NgramsRepoElement
+applyNgramsPatch (NgramsReplace {patch_new}) _ = patch_new
+applyNgramsPatch (NgramsPatch p)           m = m # _Just <<< _Newtype %~ applyNgramsPatch' p
 
 newtype PatchMap k p = PatchMap (Map k p)
 
+fromMap :: forall k p. Ord k => Eq p => Monoid p => Map k p -> PatchMap k p
+fromMap = PatchMap <<< Map.filter (\v -> v /= mempty)
+
 instance semigroupPatchMap :: (Ord k, Eq p, Monoid p) => Semigroup (PatchMap k p) where
-  append (PatchMap p) (PatchMap q) = PatchMap pMap
-    where
-      pMap = Map.filter (\v -> v /= mempty) $ Map.unionWith append p q
+  append (PatchMap p) (PatchMap q) = fromMap $ Map.unionWith append p q
 
 instance monoidPatchMap :: (Ord k, Eq p, Monoid p) => Monoid (PatchMap k p) where
   mempty = PatchMap Map.empty
@@ -519,11 +625,13 @@ derive instance eqPatchMap :: (Eq k, Eq p) => Eq (PatchMap k p)
 _PatchMap :: forall k p. Iso' (PatchMap k p) (Map k p)
 _PatchMap = _Newtype
 
+{-
 instance functorPatchMap :: Functor (PatchMap k) where
-  map f (PatchMap m) = PatchMap (map f m)
+  map f (PatchMap m) = PatchMap (map f m) -- NO NORM: fromMap would not typecheck
 
 instance functorWithIndexPatchMap :: FunctorWithIndex k (PatchMap k) where
-  mapWithIndex f (PatchMap m) = PatchMap (mapWithIndex f m)
+  mapWithIndex f (PatchMap m) = PatchMap (mapWithIndex f m) -- NO NORM: fromMap would not typecheck
+-}
 
 instance foldlablePatchMap :: Foldable (PatchMap k) where
   foldr f z (PatchMap m) = foldr f z m
@@ -535,12 +643,20 @@ instance foldlableWithIndexPatchMap :: FoldableWithIndex k (PatchMap k) where
   foldlWithIndex f z (PatchMap m) = foldlWithIndex f z m
   foldMapWithIndex f (PatchMap m) = foldMapWithIndex f m
 
-instance traversablePatchMap :: Traversable (PatchMap k) where
-  traverse f (PatchMap m) = PatchMap <$> traverse f m
-  sequence (PatchMap m) = PatchMap <$> sequence m
+{- fromMap is preventing these to type check:
 
-instance traversableWithIndexPatchMap :: TraversableWithIndex k (PatchMap k) where
-  traverseWithIndex f (PatchMap m) = PatchMap <$> traverseWithIndex f m
+instance traversablePatchMap :: Ord k => Traversable (PatchMap k) where
+  traverse f (PatchMap m) = fromMap <$> traverse f m
+  sequence (PatchMap m) = fromMap <$> sequence m
+
+instance traversableWithIndexPatchMap :: Ord k => TraversableWithIndex k (PatchMap k) where
+  traverseWithIndex f (PatchMap m) = fromMap <$> traverseWithIndex f m
+-}
+
+traversePatchMapWithIndex :: forall f a b k.
+                             Applicative f => Ord k => Eq b => Monoid b =>
+                             (k -> a -> f b) -> PatchMap k a -> f (PatchMap k b)
+traversePatchMapWithIndex f (PatchMap m) = fromMap <$> traverseWithIndex f m
 
 -- TODO generalize
 instance encodeJsonPatchMap :: EncodeJson p => EncodeJson (PatchMap NgramsTerm p) where
@@ -559,32 +675,35 @@ singletonPatchMap k p = PatchMap (Map.singleton k p)
 isEmptyPatchMap :: forall k p. PatchMap k p -> Boolean
 isEmptyPatchMap (PatchMap p) = Map.isEmpty p
 
-applyPatchMap :: forall k p v. Ord k => (p -> v -> v) -> PatchMap k p -> Map k v -> Map k v
-applyPatchMap applyPatchValue (PatchMap p) = mapWithIndex f
+mergeMap :: forall k a b c. Ord k => (k -> These a b -> Maybe c) -> Map k a -> Map k b -> Map k c
+mergeMap f m1 m2 = Map.mapMaybeWithKey f (Map.unionWith g (This <$> m1) (That <$> m2))
   where
-    f k v =
-      case Map.lookup k p of
-        Nothing -> v
-        Just pv -> applyPatchValue pv v
+    g (This p) (That v) = Both p v
+    g x _ = x -- impossible
+
+applyPatchMap :: forall k p v. Ord k => (p -> Maybe v -> Maybe v) -> PatchMap k p -> Map k v -> Map k v
+applyPatchMap applyPatchValue (PatchMap pm) m = mergeMap f pm m
+  where
+    f _ (This pv)   = applyPatchValue pv Nothing
+    f _ (That v)    = Just v
+    f _ (Both pv v) = applyPatchValue pv (Just v)
 
 type NgramsPatches = PatchMap NgramsTerm NgramsPatch
 type VersionedNgramsPatches = Versioned NgramsPatches
 
 type NewElems = Map NgramsTerm TermList
 
-type NgramsTablePatch =
-  { ngramsNewElems :: NewElems
-  , ngramsPatches  :: NgramsPatches
-  }
+-- TODO replace by NgramsPatches directly
+type NgramsTablePatch = { ngramsPatches :: NgramsPatches }
 
 isEmptyNgramsTablePatch :: NgramsTablePatch -> Boolean
 isEmptyNgramsTablePatch {ngramsPatches} = isEmptyPatchMap ngramsPatches
 
 fromNgramsPatches :: NgramsPatches -> NgramsTablePatch
-fromNgramsPatches ngramsPatches = {ngramsNewElems: mempty, ngramsPatches}
+fromNgramsPatches ngramsPatches = {ngramsPatches}
 
 findNgramTermList :: NgramsTable -> NgramsTerm -> Maybe TermList
-findNgramTermList (NgramsTable m) n = m ^? at n <<< _Just <<< _NgramsElement <<< _list
+findNgramTermList (NgramsTable m) n = m ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
 
 singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
 singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap n p
@@ -592,7 +711,7 @@ singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap n p
 rootsOf :: NgramsTable -> Set NgramsTerm
 rootsOf (NgramsTable m) = Map.keys $ Map.mapMaybe isRoot m
   where
-    isRoot (NgramsElement { parent }) = parent
+    isRoot (NgramsRepoElement { parent }) = parent
 -- rootsOf (NgramsTable m) = Map.keys $ Map.filter isRoot m
 --   where
 --     isRoot (NgramsElement {parent}) = isNothing parent
@@ -604,14 +723,14 @@ type ReParent a = forall m. MonadState NgramsTable m => a -> m Unit
 reRootChildren :: NgramsTerm -> ReParent NgramsTerm
 reRootChildren root ngram = do
   nre <- use (at ngram)
-  traverseOf_ (_Just <<< _NgramsElement <<< _children <<< folded) (\child -> do
-    at child <<< _Just <<< _NgramsElement <<< _root ?= root
+  traverseOf_ (_Just <<< _NgramsRepoElement <<< _children <<< folded) (\child -> do
+    at child <<< _Just <<< _NgramsRepoElement <<< _root ?= root
     reRootChildren root child) nre
 
 reParent :: Maybe RootParent -> ReParent NgramsTerm
 reParent mrp child = do
-  at child <<< _Just <<< _NgramsElement %= ((_parent .~ (view _parent <$> mrp)) <<<
-                                            (_root   .~ (view _root   <$> mrp)))
+  at child <<< _Just <<< _NgramsRepoElement %= ((_parent .~ (view _parent <$> mrp)) <<<
+                                                (_root   .~ (view _root   <$> mrp)))
   reRootChildren (fromMaybe child (mrp ^? _Just <<< _root)) child
 
 -- reParentNgramsPatch :: NgramsTerm -> ReParent NgramsPatch
@@ -619,18 +738,20 @@ reParent mrp child = do
 --   not its usage in reParentNgramsTablePatch.
 reParentNgramsPatch :: forall m. MonadState NgramsTable m
                     => NgramsTerm -> NgramsPatch -> m Unit
+reParentNgramsPatch _      (NgramsReplace _) = pure unit -- TODO
 reParentNgramsPatch parent (NgramsPatch {patch_children: PatchSet {rem, add}}) = do
   -- root_of_parent <- use (at parent <<< _Just <<< _NgramsElement <<< _root)
   -- ^ TODO this does not type checks, we do the following two lines instead:
   s <- use (at parent)
-  let root_of_parent = s ^? (_Just <<< _NgramsElement <<< _root <<< _Just)
+  let root_of_parent = s ^? (_Just <<< _NgramsRepoElement <<< _root <<< _Just)
   let rp = { root: fromMaybe parent root_of_parent, parent }
   traverse_ (reParent Nothing) rem
   traverse_ (reParent $ Just rp) add
 
 reParentNgramsTablePatch :: ReParent NgramsPatches
-reParentNgramsTablePatch = void <<< traverseWithIndex reParentNgramsPatch
+reParentNgramsTablePatch = void <<< traversePatchMapWithIndex reParentNgramsPatch
 
+{-
 newElemsTable :: NewElems -> Map NgramsTerm NgramsElement
 newElemsTable = mapWithIndex newElem
   where
@@ -643,15 +764,17 @@ newElemsTable = mapWithIndex newElem
         , root:        Nothing
         , children:    mempty
         }
+-}
 
 applyNgramsTablePatch :: NgramsTablePatch -> NgramsTable -> NgramsTable
-applyNgramsTablePatch { ngramsPatches, ngramsNewElems: n } (NgramsTable m) =
+applyNgramsTablePatch { ngramsPatches } (NgramsTable m) =
   execState (reParentNgramsTablePatch ngramsPatches) $
-  NgramsTable $ applyPatchMap applyNgramsPatch ngramsPatches (newElemsTable n <> m)
+  NgramsTable $ applyPatchMap applyNgramsPatch ngramsPatches m
 
 applyNgramsPatches :: forall s. CoreState s -> NgramsTable -> NgramsTable
 applyNgramsPatches {ngramsLocalPatch, ngramsStagePatch, ngramsValidPatch} =
   applyNgramsTablePatch (ngramsLocalPatch <> ngramsStagePatch <> ngramsValidPatch)
+  -- First the valid patch, then the stage patch, and finally the local patch.
 -----------------------------------------------------------------------------------
 
 type CoreState s =
@@ -666,6 +789,7 @@ type CoreState s =
   | s
   }
 
+{-
 postNewNgrams :: forall s. Array NgramsTerm -> Maybe TermList -> CoreParams s -> Aff Unit
 postNewNgrams newNgrams mayList {nodeId, listIds, tabType, session} =
   when (not (A.null newNgrams)) $ do
@@ -677,39 +801,34 @@ postNewElems :: forall s. NewElems -> CoreParams s -> Aff Unit
 postNewElems newElems params = void $ traverseWithIndex postNewElem newElems
   where
     postNewElem ngrams list = postNewNgrams [ngrams] (Just list) params
+-}
+
+newNgramPatch :: TermList -> NgramsPatch
+newNgramPatch list =
+  NgramsReplace
+  { patch_old: Nothing
+  , patch_new:
+      Just $ NgramsRepoElement
+      { size: 1 -- TODO
+      , list
+      , root:     Nothing
+      , parent:   Nothing
+      , children: mempty
+      -- , occurrences: 0 -- TODO
+      }
+  }
 
 addNewNgram :: NgramsTerm -> TermList -> NgramsTablePatch
 addNewNgram ngrams list =
-  { ngramsPatches: mempty
-  , ngramsNewElems: Map.singleton ngrams list }
+  { ngramsPatches: singletonPatchMap ngrams (newNgramPatch list) }
 
 putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff VersionedNgramsPatches
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
--- DEPRECATED: use the Reactix version `syncPatchesR`
-syncPatches :: forall p s. CoreParams p -> CoreState s -> StateCoTransformer (CoreState s) Unit
-syncPatches props { ngramsLocalPatch: ngramsLocalPatch@{ngramsNewElems, ngramsPatches}
-                  , ngramsStagePatch
-                  , ngramsValidPatch
-                  , ngramsVersion
-                  } = do
-  when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
-    modifyState_ $ \s ->
-      s { ngramsLocalPatch = fromNgramsPatches mempty
-        , ngramsStagePatch = ngramsLocalPatch
-        }
-    let pt = Versioned { version: ngramsVersion, data: ngramsPatches }
-    lift $ postNewElems ngramsNewElems props
-    Versioned {version: newVersion, data: newPatch} <- lift $ putNgramsPatches props pt
-    modifyState_ $ \s ->
-      s { ngramsVersion    = newVersion
-        , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
-        , ngramsStagePatch = fromNgramsPatches mempty
-        }
-
+-- TODO rename syncPatches
 syncPatchesR :: forall p s. CoreParams p -> R.State (CoreState s) -> Effect Unit
-syncPatchesR props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsNewElems, ngramsPatches }
+syncPatchesR props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
                     , ngramsStagePatch
                     , ngramsValidPatch
                     , ngramsVersion
@@ -721,24 +840,23 @@ syncPatchesR props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsNewElems, ngram
         }
     let pt = Versioned { version: ngramsVersion, data: ngramsPatches }
     launchAff_ $ do
-      _ <- postNewElems ngramsNewElems props
       Versioned {version: newVersion, data: newPatch} <- putNgramsPatches props pt
       liftEffect $ setState $ \s ->
+        -- I think that sometimes this setState does not fully go through.
+        -- This is an issue because the version number does not get updated and the subsequent calls
+        -- can mess up the patches.
         s { ngramsVersion    = newVersion
           , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
+                            -- First the already valid patch, then the local patch, then the newly received newPatch.
           , ngramsStagePatch = fromNgramsPatches mempty
           }
 
--- DEPRECATED: use `commitPatchR`
-commitPatch :: forall s. Versioned NgramsTablePatch -> StateCoTransformer (CoreState s) Unit
-commitPatch (Versioned {version, data: tablePatch}) = do
-  modifyState_ $ \s ->
-    s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
-
+-- TODO rename as commitPatch
 commitPatchR :: forall s. Versioned NgramsTablePatch -> R.State (CoreState s) -> Effect Unit
 commitPatchR (Versioned {version, data: tablePatch}) (_ /\ setState) = do
   setState $ \s ->
     s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
+    -- First we apply the patches we have locally and then the new patch (tablePatch).
 
 loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
 loadNgramsTable
@@ -811,4 +929,4 @@ isSingleNgramsTerm nt = isSingleTerm $ ngramsTermText nt
 filterTermSize :: Maybe TermSize -> NgramsTerm -> Boolean
 filterTermSize (Just MonoTerm)  nt = isSingleNgramsTerm nt
 filterTermSize (Just MultiTerm) nt = not $ isSingleNgramsTerm nt
-filterTermSize _                _ = true
+filterTermSize _                _  = true
