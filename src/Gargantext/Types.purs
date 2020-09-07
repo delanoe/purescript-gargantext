@@ -341,20 +341,19 @@ instance showScoreType :: Show ScoreType where
 type SearchQuery = String
 
 type NgramsGetOpts =
-  { tabType        :: TabType
-  , limit          :: Limit
+  { limit          :: Limit
+  , listIds        :: Array ListId
   , offset         :: Maybe Offset
   , orderBy        :: Maybe OrderBy
-  , listIds        :: Array ListId
+  , searchQuery    :: SearchQuery
+  , tabType        :: TabType
   , termListFilter :: Maybe TermList
   , termSizeFilter :: Maybe TermSize
-  , searchQuery    :: SearchQuery
   }
 
 type NgramsGetTableAllOpts =
-  { tabType        :: TabType
-  , listIds        :: Array ListId
-  , scoreType      :: ScoreType
+  { listIds        :: Array ListId
+  , tabType        :: TabType
   }
 
 type SearchOpts =
@@ -565,14 +564,14 @@ instance encodeMode :: EncodeJson Mode where
 
 modeTabType :: Mode -> CTabNgramType
 modeTabType Authors    = CTabAuthors
-modeTabType Sources    = CTabSources
 modeTabType Institutes = CTabInstitutes
+modeTabType Sources    = CTabSources
 modeTabType Terms      = CTabTerms
 
 modeFromString :: String -> Maybe Mode
 modeFromString "Authors"    = Just Authors
-modeFromString "Sources"    = Just Sources
 modeFromString "Institutes" = Just Institutes
+modeFromString "Sources"    = Just Sources
 modeFromString "Terms"      = Just Terms
 modeFromString _            = Nothing
 
