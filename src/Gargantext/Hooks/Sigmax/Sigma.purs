@@ -16,8 +16,9 @@ import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn1, runEffectFn3, runEffectFn4)
 import FFI.Simple ((..), (...), (.=))
 import Foreign.Object as Object
-import Gargantext.Hooks.Sigmax.Types as Types
 import Type.Row (class Union)
+
+import Gargantext.Hooks.Sigmax.Types as Types
 
 -- | Type representing a sigmajs instance
 foreign import data Sigma :: Type
@@ -44,6 +45,10 @@ type SigmaOpts s = { settings :: s }
 -- | Initialize sigmajs.
 sigma :: forall opts err. SigmaOpts opts -> Effect (Either err Sigma)
 sigma = runEffectFn3 _sigma Left Right
+
+-- | Kill a sigmajs instance.
+kill :: Sigma -> Effect Unit
+kill sigma = pure $ sigma ... "kill" $ []
 
 -- | Call the `refresh()` method on a sigmajs instance.
 refresh :: Sigma -> Effect Unit
@@ -285,6 +290,22 @@ cameras s = Object.values cs
     -- For some reason, `sigma.cameras` is an object with integer keys.
     cs = s .. "cameras" :: Object.Object CameraInstance
 
+toCamera :: CameraInstance -> Record CameraProps
+toCamera c = { angle, ratio, x, y }
+  where
+    angle = c .. "angle" :: Number
+    ratio = c .. "ratio" :: Number
+    x = c .. "x" :: Number
+    y = c .. "y" :: Number
+
+updateCamera :: Sigma -> { ratio :: Number, x :: Number, y :: Number } -> Effect Unit
+updateCamera sig { ratio, x, y } = do
+  let camera = sig .. "camera"
+  _ <- pure $ (camera .= "ratio") ratio
+  _ <- pure $ (camera .= "x") x
+  _ <- pure $ (camera .= "y") y
+  pure unit
+
 goTo :: Record CameraProps -> CameraInstance -> Effect Unit
 goTo props cam = pure $ cam ... "goTo" $ [props]
 
@@ -293,6 +314,12 @@ goToAllCameras s props = traverse_ (goTo props) $ cameras s
 
 takeScreenshot :: Sigma -> Effect String
 takeScreenshot = runEffectFn1 _takeScreenshot
+
+getEdges :: Sigma -> Effect (Array (Record Types.Edge))
+getEdges = runEffectFn1 _getEdges
+
+getNodes :: Sigma -> Effect (Array (Record Types.Node))
+getNodes = runEffectFn1 _getNodes
 
 -- | FFI
 foreign import _sigma ::
@@ -316,3 +343,5 @@ foreign import _bindMouseSelectorPlugin
             (Either err Unit)
 foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 foreign import _takeScreenshot :: EffectFn1 Sigma String
+foreign import _getEdges :: EffectFn1 Sigma (Array (Record Types.Edge))
+foreign import _getNodes :: EffectFn1 Sigma (Array (Record Types.Node))

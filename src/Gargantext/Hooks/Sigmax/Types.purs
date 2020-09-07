@@ -13,6 +13,7 @@ import Data.Tuple (Tuple(..))
 import Partial.Unsafe (unsafePartial)
 import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), mod, not)
 
+import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Types as GT
 
@@ -29,32 +30,34 @@ type Renderer = { "type" :: String, container :: Element }
 type NodeId = String
 type EdgeId = String
 
-type Node =
-  ( borderColor :: String
-  , color :: String
+type Node = (
+    borderColor :: String
+  , color       :: String
   , equilateral :: { numPoints :: Int }
-  , gargType :: GT.Mode
-  , hidden :: Boolean
-  , id    :: NodeId
-  , label :: String
-  , size  :: Number
-  , type  :: String  -- available types: circle, cross, def, diamond, equilateral, pacman, square, star
-  , x     :: Number
-  , y     :: Number
+  , gargType    :: GT.Mode
+  , hidden      :: Boolean
+  , id          :: NodeId
+  , label       :: String
+  , size        :: Number
+  , type        :: String  -- available types: circle, cross, def, diamond, equilateral, pacman, square, star
+  , x           :: Number
+  , y           :: Number
+  , _original   :: GET.Node
   )
 
-type Edge =
-  ( color :: String
+type Edge = (
+    color      :: String
   , confluence :: Number
-  , id :: EdgeId
-  , hidden :: Boolean
-  , size :: Number
-  , source :: NodeId
+  , id         :: EdgeId
+  , hidden     :: Boolean
+  , size       :: Number
+  , source     :: NodeId
   , sourceNode :: Record Node
-  , target :: NodeId
+  , target     :: NodeId
   , targetNode :: Record Node
-  , weight :: Number
-  , weightIdx :: Int
+  , weight     :: Number
+  , weightIdx  :: Int
+  , _original  :: GET.Edge
   )
 
 type NodeIds = Set.Set NodeId
@@ -151,7 +154,7 @@ eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n
 -- however when graph is loaded initially, forceAtlas is running for a couple of
 -- seconds and then stops (unless the user alters this by clicking the toggle
 -- button).
-data ForceAtlasState = InitialRunning | Running | Paused
+data ForceAtlasState = InitialRunning | InitialStopped | Running | Paused
 
 derive instance genericForceAtlasState :: Generic ForceAtlasState _
 instance eqForceAtlasState :: Eq ForceAtlasState where
@@ -159,6 +162,7 @@ instance eqForceAtlasState :: Eq ForceAtlasState where
 
 toggleForceAtlasState :: ForceAtlasState -> ForceAtlasState
 toggleForceAtlasState InitialRunning = Paused
+toggleForceAtlasState InitialStopped = InitialRunning
 toggleForceAtlasState Running = Paused
 toggleForceAtlasState Paused = Running
 
@@ -206,6 +210,7 @@ edgeStateStabilize s = s
 forceAtlasEdgeState :: ForceAtlasState -> ShowEdgesState -> ShowEdgesState
 forceAtlasEdgeState InitialRunning EShow = ETempHiddenThenShow
 forceAtlasEdgeState InitialRunning es = es
+forceAtlasEdgeState InitialStopped es = es
 forceAtlasEdgeState Running EShow = ETempHiddenThenShow
 forceAtlasEdgeState Running es = es
 forceAtlasEdgeState Paused ETempHiddenThenShow = EShow

@@ -128,8 +128,7 @@ sessionPath (R.RecomputeListChart _ nt nId lId)          = "node/" <> (show nId)
 sessionPath (R.GraphAPI gId p)      = "graph/" <> (show gId) <> "/" <> p
 sessionPath (R.GetNgrams opts i)    =
   base opts.tabType
-     $ "ngrams?ngramsType="
-    <> showTabType' opts.tabType
+     $ "ngrams?ngramsType=" <> showTabType' opts.tabType
     <> limitUrl opts.limit
     <> offset opts.offset
     <> orderByUrl opts.orderBy
@@ -157,6 +156,8 @@ sessionPath (R.GetNgramsTableVersion opts i) =
      $ "ngrams/version?ngramsType="
     <> showTabType' opts.tabType
     <> "&list=" <> show opts.listId
+    --  $ "ngrams/version?"
+    -- <> "list=" <> show opts.listId
 sessionPath (R.ListDocument lId dId) =
   sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ fromMaybe 0 dId))
 sessionPath (R.ListsRoute lId) = "lists/" <> show lId

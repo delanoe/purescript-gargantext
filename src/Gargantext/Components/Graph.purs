@@ -16,6 +16,7 @@ import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 
+import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
@@ -24,16 +25,18 @@ type OnProps  = ()
 
 data Stage = Init | Ready | Cleanup
 
-type Props sigma forceatlas2 =
-  ( elRef :: R.Ref (Nullable Element)
+type Props sigma forceatlas2 = (
+    elRef :: R.Ref (Nullable Element)
   , forceAtlas2Settings :: forceatlas2
   , graph :: SigmaxTypes.SGraph
+  , mCamera :: Maybe GET.Camera
   , multiSelectEnabledRef :: R.Ref Boolean
   , selectedNodeIds :: R.State SigmaxTypes.NodeIds
   , showEdges :: R.State SigmaxTypes.ShowEdgesState
   , sigmaRef :: R.Ref Sigmax.Sigma
   , sigmaSettings :: sigma
   , stage :: R.State Stage
+  , startForceAtlas :: Boolean
   , transformedGraph :: SigmaxTypes.SGraph
   )
 
@@ -46,6 +49,15 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
     cpt props _ = do
       stageHooks props
 
+      R.useEffectOnce $ do
+        pure $ do
+          log "[graphCpt (Cleanup)]"
+          Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
+            Sigma.stopForceAtlas2 sigma
+            log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
+            Sigma.kill sigma
+            log "[graphCpt (Cleanup)] sigma killed"
+
       -- NOTE: This div is not empty after sigma initializes.
       -- When we change state, we make it empty though.
       --pure $ RH.div { ref: props.elRef, style: {height: "95%"} } []
@@ -54,7 +66,7 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
         Just el -> R.createPortal [] el
 
     stageHooks props@{multiSelectEnabledRef, selectedNodeIds, sigmaRef, stage: (Init /\ setStage)} = do
-      R.useEffectOnce $ do
+      R.useEffectOnce' $ do
         let rSigma = R.readRef props.sigmaRef
 
         case Sigmax.readSigma rSigma of
@@ -82,7 +94,17 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
                   pure unit
 
                 Sigmax.setEdges sig false
-                Sigma.startForceAtlas2 sig props.forceAtlas2Settings
+
+                -- log2 "[graph] startForceAtlas" props.startForceAtlas
+                if props.startForceAtlas then
+                  Sigma.startForceAtlas2 sig props.forceAtlas2Settings
+                else
+                  Sigma.stopForceAtlas2 sig
+
+                case props.mCamera of
+                  Nothing -> pure unit
+                  Just (GET.Camera { ratio, x, y }) -> do
+                    Sigma.updateCamera sig { ratio, x, y }
 
                 pure unit
           Just sig -> do
@@ -90,11 +112,7 @@ graphCpt = R.hooksComponent "G.C.Graph" cpt
 
         setStage $ const Ready
 
-        delay unit $ \_ -> do
-          log "[graphCpt] cleanup"
-          pure $ pure unit
-
-    stageHooks props@{showEdges: (showEdges /\ _), sigmaRef, stage: (Ready /\ setStage), transformedGraph} = do
+    stageHooks props@{ showEdges: (showEdges /\ _), sigmaRef, stage: (Ready /\ setStage), transformedGraph } = do
       let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
       let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
 

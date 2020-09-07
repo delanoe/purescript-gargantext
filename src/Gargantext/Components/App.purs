@@ -104,7 +104,8 @@ appCpt = R.hooksComponent "G.C.App.app" cpt where
                                  , session
                                  , sessions: (fst sessions)
                                  , showLogin
-                                 , treeReload }
+                                 --, treeReload
+                                 }
 
 type ForestLayoutProps =
   ( child     :: R.Element

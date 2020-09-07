@@ -7,7 +7,7 @@ import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..), fromJust, maybe)
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
@@ -45,12 +45,13 @@ type LayoutProps =
   , session :: Session
   , sessions :: Sessions
   , showLogin :: R.State Boolean
-  , treeReload :: R.State Int
+  --, treeReload :: R.State Int
   )
 
 type Props = (
     graph :: SigmaxT.SGraph
   , graphVersion :: R.State Int
+  , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData :: Maybe GET.MetaData
   | LayoutProps
   )
@@ -75,8 +76,10 @@ explorerLayoutView graphVersion p = R.createElement el p []
       useLoader graphId (getNodes session graphVersion) handler
       where
         handler loaded =
-          explorer (Record.merge props { graph, graphVersion, mMetaData })
-          where (Tuple mMetaData graph) = convert loaded
+          explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
+          where
+            GET.HyperdataGraph { graph: hyperdataGraph } = loaded
+            (Tuple mMetaData graph) = convert hyperdataGraph
 
 --------------------------------------------------------------
 explorer :: Record Props -> R.Element
@@ -90,16 +93,29 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
               , graphId
               , graphVersion
               , handed
+              , hyperdataGraph
               , mCurrentRoute
               , mMetaData
               , session
               , sessions
               , showLogin
-              , treeReload } _ = do
+              --, treeReload
+              } _ = do
+
+      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
+      let forceAtlasS = if startForceAtlas then SigmaxT.InitialRunning else SigmaxT.InitialStopped
+
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
-      controls              <- Controls.useGraphControls graph graphId session
+      treeReload <- R.useState' 0
+      controls              <- Controls.useGraphControls { forceAtlasS
+                                                        , graph
+                                                        , graphId
+                                                        , hyperdataGraph
+                                                        , session
+                                                        , treeReload: \_ -> (snd treeReload) $ (+) 1
+                                                        }
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -117,7 +133,7 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
           snd controls.removedNodeIds  $ const SigmaxT.emptyNodeIds
           snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
           snd controls.showEdges       $ const SigmaxT.EShow
-          snd controls.forceAtlasState $ const SigmaxT.InitialRunning
+          snd controls.forceAtlasState $ const forceAtlasS
           snd controls.graphStage      $ const Graph.Init
           snd controls.showSidePanel   $ const GET.InitialClosed
 
@@ -147,6 +163,8 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                               , elRef: graphRef
                               , graphId
                               , graph
+                              , hyperdataGraph
+                              , mMetaData
                               , multiSelectEnabledRef
                               }
                     /\
@@ -216,10 +234,12 @@ type MSidebarProps =
   )
 
 type GraphProps = (
-    controls :: Record Controls.Controls
-  , elRef :: R.Ref (Nullable Element)
-  , graphId :: GET.GraphId
-  , graph :: SigmaxT.SGraph
+    controls              :: Record Controls.Controls
+  , elRef                 :: R.Ref (Nullable Element)
+  , graphId               :: GET.GraphId
+  , graph                 :: SigmaxT.SGraph
+  , hyperdataGraph        :: GET.HyperdataGraph
+  , mMetaData             :: Maybe GET.MetaData
   , multiSelectEnabledRef :: R.Ref Boolean
 )
 
@@ -230,7 +250,13 @@ graphView props = R.createElement graphViewCpt props []
 graphViewCpt :: R.Component GraphProps
 graphViewCpt = R.hooksComponent "GraphView" cpt
   where
-    cpt {controls, elRef, graphId, graph, multiSelectEnabledRef} _children = do
+    cpt { controls
+        , elRef
+        , graphId
+        , graph
+        , hyperdataGraph: GET.HyperdataGraph { mCamera }
+        , mMetaData
+        , multiSelectEnabledRef } _children = do
       -- TODO Cache this?
       let louvainGraph =
             if (fst controls.showLouvain) then
@@ -240,6 +266,7 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
             else
               graph
       let transformedGraph = transformGraph controls louvainGraph
+      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
 
       R.useEffect1' (fst controls.multiSelectEnabled) $ do
         R.setRef multiSelectEnabledRef $ fst controls.multiSelectEnabled
@@ -248,12 +275,14 @@ graphViewCpt = R.hooksComponent "GraphView" cpt
           elRef
         , forceAtlas2Settings: Graph.forceAtlas2Settings
         , graph
+        , mCamera
         , multiSelectEnabledRef
         , selectedNodeIds: controls.selectedNodeIds
         , showEdges: controls.showEdges
         , sigmaRef: controls.sigmaRef
         , sigmaSettings: Graph.sigmaSettings
         , stage: controls.graphStage
+        , startForceAtlas
         , transformedGraph
         }
 
@@ -261,9 +290,9 @@ convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
   where
     nodes = foldMapWithIndex nodeFn r.nodes
-    nodeFn _i (GET.Node n) =
-      Seq.singleton
-        { borderColor: color
+    nodeFn _i nn@(GET.Node n) =
+      Seq.singleton {
+          borderColor: color
         , color : color
         , equilateral: { numPoints: 3 }
         , gargType
@@ -274,6 +303,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)
+        , _original: nn
         }
       where
         cDef (GET.Cluster {clustDefault}) = clustDefault
@@ -281,7 +311,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         gargType =  unsafePartial $ fromJust $ Types.modeFromString n.type_
     nodesMap = SigmaxT.nodesMap nodes
     edges = foldMapWithIndex edgeFn $ A.sortWith (\(GET.Edge {weight}) -> weight) r.edges
-    edgeFn i (GET.Edge e) =
+    edgeFn i ee@(GET.Edge e) =
       Seq.singleton
         { id : e.id_
         , color
@@ -294,6 +324,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , targetNode
         , weight : e.weight
         , weightIdx: i
+        , _original: ee
         }
       where
         sourceNode = unsafePartial $ fromJust $ Map.lookup e.source nodesMap
@@ -308,7 +339,7 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> R.State Int -> GET.GraphId -> Aff GET.GraphData
+getNodes :: Session -> R.State Int -> GET.GraphId -> Aff GET.HyperdataGraph
 getNodes session (graphVersion /\ _) graphId = get session $ NodeAPI Types.Graph (Just graphId) ("?version=" <> show graphVersion)
 
 

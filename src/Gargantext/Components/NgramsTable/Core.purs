@@ -203,6 +203,9 @@ _list :: forall a row. Lens' { list :: a | row } a
 _list = prop (SProxy :: SProxy "list")
 
 derive instance newtypeNgramsElement :: Newtype NgramsElement _
+derive instance genericNgramsElement :: Generic NgramsElement _
+instance showNgramsElement :: Show NgramsElement where
+  show = genericShow
 
 _NgramsElement  :: Iso' NgramsElement {
     children    :: Set NgramsTerm
@@ -262,7 +265,11 @@ instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
 newtype NgramsTable = NgramsTable (Map NgramsTerm NgramsElement)
 
 derive instance newtypeNgramsTable :: Newtype NgramsTable _
-derive instance eqNgramsTable :: Eq NgramsTable
+derive instance genericNgramsTable :: Generic NgramsTable _
+instance eqNgramsTable  :: Eq NgramsTable where
+  eq = genericEq
+instance showNgramsTable :: Show NgramsTable where
+  show = genericShow
 
 _NgramsTable :: Iso' NgramsTable (Map NgramsTerm NgramsElement)
 _NgramsTable = _Newtype
@@ -738,14 +745,17 @@ loadNgramsTable
   { nodeId, listIds, termListFilter, termSizeFilter, session, scoreType
   , searchQuery, tabType, params: {offset, limit, orderBy}}
   = get session query
-  where query = GetNgrams { limit
-                          , offset: Just offset
-                          , listIds
-                          , orderBy: convOrderBy <$> orderBy
-                          , searchQuery
-                          , tabType
-                          , termListFilter
-                          , termSizeFilter } (Just nodeId)
+    where
+      query = GetNgramsTableAll { listIds
+                                , tabType } (Just nodeId)
+  -- where query = GetNgrams { limit
+  --                         , offset: Just offset
+  --                         , listIds
+  --                         , orderBy: convOrderBy <$> orderBy
+  --                         , searchQuery
+  --                         , tabType
+  --                         , termListFilter
+  --                         , termSizeFilter } (Just nodeId)
 
 type NgramsListByTabType = Map TabType VersionedNgramsTable
 
@@ -758,7 +768,7 @@ loadNgramsTableAll { nodeId, listIds, session, scoreType } = do
       , CTabAuthors
       , CTabInstitutes
       ]
-    query tabType = GetNgramsTableAll { tabType, listIds, scoreType } (Just nodeId)
+    query tabType = GetNgramsTableAll { listIds, tabType } (Just nodeId)
 
   Map.fromFoldable <$> for cTagNgramTypes \cTagNgramType -> do
     let tabType = TabCorpus $ TabNgramType cTagNgramType

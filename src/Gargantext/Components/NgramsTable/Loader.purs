@@ -4,6 +4,7 @@ import Data.Argonaut (class DecodeJson)
 import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log, log2)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
@@ -72,6 +73,10 @@ useCachedAPILoaderEffect { cacheEndpoint
         val <- if version == cacheReal then
           pure vr
         else do
+          -- liftEffect $ do
+          --   log "[useCachedAPILoaderEffect] versions dont match"
+          --   log2 "[useCachedAPILoaderEffect] cached version" version
+          --   log2 "[useCachedAPILoaderEffect] real version" cacheReal
           _ <- GUC.delete cache req
           vr@(Versioned { version, "data": d }) <- GUC.cachedJson cache req
           if version == cacheReal then

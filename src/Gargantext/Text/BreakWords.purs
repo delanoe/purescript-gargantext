@@ -10,6 +10,7 @@ import Effect (Effect)
 import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits (length, slice) -- TODO: double check i'm the right choice
 import Data.String.Regex (Regex)
+
 import Gargantext.Utils.Regex (cloneRegex, execRegex, getRegexLastIndex)
 import Gargantext.Utils.Array (push)
 
