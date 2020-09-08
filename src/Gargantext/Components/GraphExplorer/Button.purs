@@ -27,6 +27,9 @@ import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Sessions (Session)
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.GraphExplorer.Button"
 
 type Props = (
     onClick :: forall e. e -> Effect Unit
@@ -37,7 +40,7 @@ simpleButton :: Record Props -> R.Element
 simpleButton props = R.createElement simpleButtonCpt props []
 
 simpleButtonCpt :: R.Component Props
-simpleButtonCpt = R.hooksComponent "SimpleButton" cpt
+simpleButtonCpt = R2.hooksComponent thisModule "simpleButton" cpt
   where
     cpt {onClick, text} _ = do
       pure $

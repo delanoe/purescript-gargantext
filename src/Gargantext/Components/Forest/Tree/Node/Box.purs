@@ -35,6 +35,8 @@ import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.Forest.Tree.Node.Box"
+
 
 type CommonProps =
   ( dispatch :: Action -> Aff Unit
@@ -48,7 +50,7 @@ nodePopupView :: Record NodePopupProps -> R.Element
 nodePopupView p = R.createElement nodePopupCpt p []
 
 nodePopupCpt :: R.Component NodePopupProps
-nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
+nodePopupCpt = R2.hooksComponent thisModule "nodePopupView" cpt
   where
     cpt p _ = do
       isOpen    <- R.useState' false
@@ -140,7 +142,7 @@ nodePopupCpt = R.hooksComponent "G.C.F.T.N.B.nodePopupView" cpt
                   -> R.Element
         panelBody nodePopupState {dispatch: d, nodeType} =
           H.div {className: "panel-body flex-space-between"}
-                $ [ H.p { "style": {"margin":"10px"} } []
+                $ [ H.p { class: "spacer" } []
                   , H.div { className: "flex-center" }
                           [ buttonClick { action: doc
                                         , state: nodePopupState
@@ -200,7 +202,7 @@ buttonClick :: Record ButtonClickProps -> R.Element
 buttonClick p = R.createElement buttonClickCpt p []
 
 buttonClickCpt :: R.Component ButtonClickProps
-buttonClickCpt = R.hooksComponent "G.C.F.T.N.B.buttonClick" cpt
+buttonClickCpt = R2.hooksComponent thisModule "buttonClick" cpt
   where
     cpt {action: todo, state: (node@{action} /\ setNodePopup), nodeType} _ = do
       pure $ H.div {className: "col-md-1"}
@@ -260,7 +262,7 @@ panelAction :: Record PanelActionProps -> R.Element
 panelAction p = R.createElement panelActionCpt p []
 
 panelActionCpt :: R.Component PanelActionProps
-panelActionCpt = R.hooksComponent "G.C.F.T.N.B.panelAction" cpt
+panelActionCpt = R2.hooksComponent thisModule "panelAction" cpt
   where
     cpt {action: Documentation nodeType}                  _ = actionDoc      nodeType
     cpt {action: Download, id, nodeType, session}         _ = actionDownload nodeType id session

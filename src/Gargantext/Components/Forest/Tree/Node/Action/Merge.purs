@@ -1,9 +1,12 @@
-module Gargantext.Components.Forest.Tree.Node.Action.Merge
-  where
+module Gargantext.Components.Forest.Tree.Node.Action.Merge where
 
 import Data.Maybe (Maybe(..))
+import Data.Set as Set
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel, checkbox, checkboxes)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
@@ -11,9 +14,9 @@ import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, put_)
 import Gargantext.Types  as GT
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Data.Set as Set
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Merge"
 
 mergeNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
 mergeNodeReq session fromId toId =
@@ -23,7 +26,7 @@ mergeNode :: Record SubTreeParamsIn -> R.Element
 mergeNode p = R.createElement mergeNodeCpt p []
 
 mergeNodeCpt :: R.Component SubTreeParamsIn
-mergeNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.mergeNode" cpt
+mergeNodeCpt = R2.hooksComponent thisModule "mergeNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})

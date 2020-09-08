@@ -13,6 +13,8 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.InputWithAutocomplete"
+
 
 type Completions = Array String
 
@@ -28,7 +30,7 @@ inputWithAutocomplete :: Record Props -> R.Element
 inputWithAutocomplete props = R.createElement inputWithAutocompleteCpt props []
 
 inputWithAutocompleteCpt :: R.Component Props
-inputWithAutocompleteCpt = R.hooksComponent "InputWithAutocomplete" cpt
+inputWithAutocompleteCpt = R2.hooksComponent thisModule "inputWithAutocomplete" cpt
   where
     cpt props@{autocompleteSearch, onAutocompleteClick, onEnterPress, state: state@(state' /\ setState)} _ = do
       inputRef <- R.useRef null

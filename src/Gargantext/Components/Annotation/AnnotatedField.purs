@@ -28,6 +28,9 @@ import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
 import Gargantext.Utils.Selection as Sel
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Annotation.AnnotatedField"
 
 type Props =
   ( ngrams       :: NgramsTable
@@ -44,7 +47,7 @@ annotatedField :: Record Props -> R.Element
 annotatedField p = R.createElement annotatedFieldComponent p []
 
 annotatedFieldComponent :: R.Component Props
-annotatedFieldComponent = R.hooksComponent "AnnotatedField" cpt
+annotatedFieldComponent = R2.hooksComponent thisModule "annotatedField" cpt
   where
     cpt {ngrams,setTermList,text} _ = do
       mMenu@(_ /\ setMenu) <- R.useState $ const Nothing

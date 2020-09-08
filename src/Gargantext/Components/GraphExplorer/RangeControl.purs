@@ -13,6 +13,9 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Components.RangeSlider as RS
 import Gargantext.Utils.Range as Range
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.GraphExplorer.RangeControl"
 
 type Props = (
     caption :: String
@@ -23,7 +26,7 @@ rangeControl :: Record Props -> R.Element
 rangeControl props = R.createElement rangeControlCpt props []
 
 rangeControlCpt :: R.Component Props
-rangeControlCpt = R.hooksComponent "RangeButton" cpt
+rangeControlCpt = R2.hooksComponent thisModule "rangeButton" cpt
   where
     cpt {caption, sliderProps} _ = do
       pure $

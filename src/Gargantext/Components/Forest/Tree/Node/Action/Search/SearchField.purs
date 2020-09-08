@@ -1,5 +1,4 @@
-module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField
-    where
+module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField where
 
 import DOM.Simple.Console (log, log2)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
@@ -11,6 +10,9 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest.Tree.Node.Tools (panel)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
 import Gargantext.Components.Lang (Lang)
@@ -19,8 +21,8 @@ import Gargantext.Sessions (Session)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
+
+thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField"
 
 defaultSearch :: Search
 defaultSearch = { databases: Empty
@@ -45,9 +47,9 @@ searchField :: Record Props -> R.Element
 searchField p = R.createElement searchFieldComponent p []
 
 --searchFieldComponent :: R.Memo Props
---searchFieldComponent = R.memo (R.hooksComponent "SearchField" cpt) eqProps
+--searchFieldComponent = R.memo (R2.hooksComponent thisModule "searchField" cpt) eqProps
 searchFieldComponent :: R.Component Props
-searchFieldComponent = R.hooksComponent "G.C.F.T.N.A.S.SF.searchField" cpt
+searchFieldComponent = R2.hooksComponent thisModule "searchField" cpt
   where
     cpt props@{onSearch, search: search@(s /\ _)} _ = do
       iframeRef <- R.useRef    null
@@ -335,7 +337,7 @@ searchInput :: Record SearchInputProps -> R.Element
 searchInput p = R.createElement searchInputComponent p []
 
 searchInputComponent :: R.Component SearchInputProps
-searchInputComponent = R.hooksComponent "G.C.S.SearchInput" cpt
+searchInputComponent = R2.hooksComponent thisModule "searchInput" cpt
   where
     cpt {search: (search /\ setSearch)} _ = do
       pure $
@@ -362,7 +364,7 @@ submitButton :: Record SubmitButtonProps -> R.Element
 submitButton p = R.createElement submitButtonComponent p []
 
 submitButtonComponent :: R.Component SubmitButtonProps
-submitButtonComponent = R.hooksComponent "G.C.S.SubmitButton" cpt
+submitButtonComponent = R2.hooksComponent thisModule "submitButton" cpt
   where
     cpt {onSearch, search: (mySearch /\ _), session} _ =
       pure $

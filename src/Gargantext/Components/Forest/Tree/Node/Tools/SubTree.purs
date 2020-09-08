@@ -5,6 +5,9 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Uncurried (mkEffectFn1)
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest.Tree.Node.Action (Props, Action, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
@@ -14,8 +17,9 @@ import Gargantext.Prelude (map, pure, show, ($), (&&), (/=), (<>), const, (==), 
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
 
 type SubTreeParamsIn =
   ( subTreeParams :: SubTreeParams
@@ -33,15 +37,15 @@ subTreeView :: Record SubTreeParamsProps -> R.Element
 subTreeView props = R.createElement subTreeViewCpt props []
 
 subTreeViewCpt :: R.Component SubTreeParamsProps
-subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
+subTreeViewCpt = R2.hooksComponent thisModule "subTreeView" cpt
   where
-    cpt params@{ dispatch
+    cpt params@{ action
+               , dispatch
+               , handed
                , id
                , nodeType
                , session
                , subTreeParams
-               , action
-               , handed
                } _ =
       do
         let
@@ -51,14 +55,14 @@ subTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeView" cpt
 
         useLoader session (loadSubTree showtypes) $
           \tree ->
-            subTreeViewLoaded { dispatch
+            subTreeViewLoaded { action
+                              , dispatch
+                              , handed
                               , id
                               , nodeType
                               , session
-                              , tree
                               , subTreeParams
-                              , action
-                              , handed
+                              , tree
                               }
 
 loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
@@ -81,7 +85,7 @@ subTreeViewLoaded :: Record CorpusTreeProps -> R.Element
 subTreeViewLoaded props = R.createElement subTreeViewLoadedCpt props []
 
 subTreeViewLoadedCpt :: R.Component CorpusTreeProps
-subTreeViewLoadedCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeViewLoadedCpt" cpt
+subTreeViewLoadedCpt = R2.hooksComponent thisModule "subTreeViewLoadedCpt" cpt
   where
     cpt p@{dispatch, id, nodeType, session, tree, handed} _ = do
       pure $ H.div {className:"tree"}
@@ -96,7 +100,7 @@ subTreeTreeView :: Record CorpusTreeProps -> R.Element
 subTreeTreeView props = R.createElement subTreeTreeViewCpt props []
 
 subTreeTreeViewCpt :: R.Component CorpusTreeProps
-subTreeTreeViewCpt = R.hooksComponent "G.C.F.T.N.A.U.subTreeTreeViewCpt" cpt
+subTreeTreeViewCpt = R2.hooksComponent thisModule "subTreeTreeViewCpt" cpt
   where
     cpt p@{ id
           , tree: NTree (LNode { id: targetId

@@ -34,6 +34,8 @@ import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.Forest.Tree.Node"
+
 
 -- Main Node
 type NodeMainSpanProps =
@@ -51,7 +53,7 @@ nodeMainSpan :: Record NodeMainSpanProps
              -> R.Element
 nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createElement el p []
   where
-    el = R.hooksComponent "G.C.F.T.N.NodeMainSpan" cpt
+    el = R2.hooksComponent thisModule "nodeMainSpan" cpt
     cpt props@{id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks }} _ = do
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
@@ -213,7 +215,7 @@ nodeActions :: Record NodeActionsProps -> R.Element
 nodeActions p = R.createElement nodeActionsCpt p []
 
 nodeActionsCpt :: R.Component NodeActionsProps
-nodeActionsCpt = R.hooksComponent "G.C.F.T.N.B.nodeActions" cpt
+nodeActionsCpt = R2.hooksComponent thisModule "nodeActions" cpt
   where
     cpt { id
         , nodeType: GT.Graph

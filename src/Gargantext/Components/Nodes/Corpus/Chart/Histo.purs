@@ -6,6 +6,9 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Charts.Options.Color (grey)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
@@ -20,8 +23,9 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType(..))
 import Gargantext.Utils.CacheAPI as GUC
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Histo"
 
 newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
@@ -81,7 +85,7 @@ histo :: Record Props -> R.Element
 histo props = R.createElement histoCpt props []
 
 histoCpt :: R.Component Props
-histoCpt = R.hooksComponent "G.C.N.C.C.H.histo" cpt
+histoCpt = R2.hooksComponent thisModule "histo" cpt
   where
     cpt { path, session } _ = do
       reload <- R.useState' 0

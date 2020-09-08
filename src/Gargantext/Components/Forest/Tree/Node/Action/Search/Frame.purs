@@ -20,6 +20,8 @@ import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..)
 import Gargantext.Prelude (discard, identity, pure, unit, ($), (<>), (==), class Show, show)
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Search.Frame"
+
 --------------------
 
 data FrameSource = Istex | Searx
@@ -41,7 +43,7 @@ searchIframes :: Record SearchIFramesProps -> R.Element
 searchIframes props = R.createElement searchIframesCpt props []
 
 searchIframesCpt :: R.Component SearchIFramesProps
-searchIframesCpt = R.hooksComponent "G.C.F.T.N.A.S.F.searchIframes" cpt
+searchIframesCpt = R2.hooksComponent thisModule "searchIframes" cpt
   where
     cpt { iframeRef, search: search@(search' /\ _) } _ = do
       pure $ if isIsTex_Advanced search'.datafield
@@ -62,7 +64,7 @@ divIframe :: Record IFrameProps -> R.Element
 divIframe props = R.createElement divIframeCpt props []
 
 divIframeCpt :: R.Component IFrameProps
-divIframeCpt = R.hooksComponent "G.C.F.T.N.A.S.F.divIframe" cpt
+divIframeCpt = R2.hooksComponent thisModule "divIframe" cpt
   where
     cpt { frameSource, iframeRef, search: search@(search' /\ _) } _ = do
       pure $ H.div { className: "frame-search panel panel-default" }
@@ -77,7 +79,7 @@ iframeWith :: Record IFrameProps -> R.Element
 iframeWith props = R.createElement iframeWithCpt props []
 
 iframeWithCpt :: R.Component IFrameProps
-iframeWithCpt = R.hooksComponent "G.C.F.T.N.A.S.F.iframeWith" cpt
+iframeWithCpt = R2.hooksComponent thisModule "iframeWith" cpt
   where
     cpt { frameSource, iframeRef, search: (search /\ setSearch) } _ =
       pure $ H.iframe { src: src frameSource search.term

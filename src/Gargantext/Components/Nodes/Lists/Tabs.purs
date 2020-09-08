@@ -18,6 +18,8 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
+
 type Props = ( session    :: Session
              , corpusId   :: Int
              , corpusData :: CorpusData 
@@ -27,7 +29,7 @@ tabs :: Record Props -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component Props
-tabsCpt = R.hooksComponent "G.C.N.L.T.tabs" cpt
+tabsCpt = R2.hooksComponent thisModule "tabs" cpt
   where
     cpt { corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do
       (selected /\ setSelected) <- R.useState' 0
@@ -45,7 +47,7 @@ ngramsView :: Record NgramsViewProps -> R.Element
 ngramsView props = R.createElement ngramsViewCpt props []
 
 ngramsViewCpt :: R.Component NgramsViewProps
-ngramsViewCpt = R.hooksComponent "G.C.N.L.T.ngramsView" cpt
+ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
   where
     cpt { corpusData: { defaultListId }
         , corpusId

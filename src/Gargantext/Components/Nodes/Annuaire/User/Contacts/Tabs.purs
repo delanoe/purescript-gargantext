@@ -15,6 +15,9 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
 
 
 data Mode = Patents | Books | Communication
@@ -47,7 +50,7 @@ tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component TabsProps
-tabsCpt = R.hooksComponent "G.P.Annuaire.User.Contacts.Tabs.tabs" cpt
+tabsCpt = R2.hooksComponent thisModule "tabs" cpt
   where
     cpt {frontends, nodeId, contactData: {defaultListId}, session} _ = do
       active <- R.useState' 0

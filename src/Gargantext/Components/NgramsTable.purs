@@ -43,6 +43,8 @@ import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.NgramsTable"
+
 type State' =
   CoreState
   ( ngramsParent     :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
@@ -135,7 +137,7 @@ tableContainerCpt { dispatch
                   , ngramsTable: ngramsTableCache
                   , path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                   , tabNgramType
-                  } = R.hooksComponent "G.C.NT.tableContainer" cpt
+                  } = R2.hooksComponent thisModule "tableContainer" cpt
   where
     cpt props _ = do
       pure $ H.div {className: "container-fluid"} [
@@ -282,7 +284,7 @@ loadedNgramsTable :: Record Props -> R.Element
 loadedNgramsTable p = R.createElement loadedNgramsTableCpt p []
 
 loadedNgramsTableCpt :: R.Component Props
-loadedNgramsTableCpt = R.hooksComponent "G.C.NT.loadedNgramsTable" cpt
+loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
   where
     cpt { path: path@(path'@{searchQuery, scoreType, params, termListFilter, termSizeFilter} /\ setPath)
         , state: (state@{ ngramsChildren
@@ -492,7 +494,7 @@ mainNgramsTable :: Record MainNgramsTableProps -> R.Element
 mainNgramsTable props = R.createElement mainNgramsTableCpt props []
 
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
-mainNgramsTableCpt = R.hooksComponent "G.C.NT.mainNgramsTable" cpt
+mainNgramsTableCpt = R2.hooksComponent thisModule "mainNgramsTable" cpt
   where
     cpt props@{nodeId, defaultListId, session, tabNgramType, tabType, withAutoUpdate} _ = do
       let path = initialPageParams session nodeId [defaultListId] tabType
@@ -549,7 +551,7 @@ mainNgramsTablePaint :: Record MainNgramsTablePaintProps -> R.Element
 mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
 
 mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
-mainNgramsTablePaintCpt = R.hooksComponent "G.C.NT.mainNgramsTablePaint" cpt
+mainNgramsTablePaintCpt = R2.hooksComponent thisModule "mainNgramsTablePaint" cpt
   where
     cpt {path, tabNgramType, versioned, withAutoUpdate} _ = do
       R.useEffect' $ do

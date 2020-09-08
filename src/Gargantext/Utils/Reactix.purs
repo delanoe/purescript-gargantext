@@ -42,6 +42,12 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (Storage, getItem, setItem)
 
+-- TODO Reactix should export this definition
+type HooksComponent props = Record props -> Array R.Element -> R.Hooks R.Element
+
+hooksComponent :: forall props. String -> String -> HooksComponent props -> R.Component props
+hooksComponent module' name c = R.hooksComponent (module' <> "." <> name) c
+
 newtype Point = Point { x :: Number, y :: Number }
 
 -- a setter function, for useState

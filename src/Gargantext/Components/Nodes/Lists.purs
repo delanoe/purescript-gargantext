@@ -10,6 +10,9 @@ import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
@@ -22,7 +25,7 @@ listsLayout :: Record Props -> R.Element
 listsLayout props = R.createElement listsLayoutCpt props []
 
 listsLayoutCpt :: R.Component Props
-listsLayoutCpt = R.hooksComponent "G.C.N.L.listsLayout" cpt
+listsLayoutCpt = R2.hooksComponent thisModule "listsLayout" cpt
   where
     cpt path@{ nodeId, session } _ = do
       let sid = sessionId session
@@ -38,7 +41,7 @@ listsLayoutWithKey :: Record KeyProps -> R.Element
 listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 
 listsLayoutWithKeyCpt :: R.Component KeyProps
-listsLayoutWithKeyCpt = R.hooksComponent "G.C.N.L.listsLayoutWithKey" cpt
+listsLayoutWithKeyCpt = R2.hooksComponent thisModule "listsLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
       let path = { nodeId, session }

@@ -14,6 +14,9 @@ import Gargantext.Components.Nodes.Corpus.Chart.API (recomputeChart)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (Path)
 import Gargantext.Sessions (Session)
 import Gargantext.Types as T
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Utils"
 
 reloadButtonWrap :: R.State Int -> R.Element -> R.Element
 reloadButtonWrap setReload el = H.div {} [
@@ -41,7 +44,7 @@ chartUpdateButton :: Record ChartUpdateButtonProps -> R.Element
 chartUpdateButton p = R.createElement chartUpdateButtonCpt p []
 
 chartUpdateButtonCpt :: R.Component ChartUpdateButtonProps
-chartUpdateButtonCpt = R.hooksComponent "G.C.N.C.C.U.chartUpdateButton" cpt
+chartUpdateButtonCpt = R2.hooksComponent thisModule "chartUpdateButton" cpt
   where
     cpt { chartType
         , path: { corpusId, listId, tabType }

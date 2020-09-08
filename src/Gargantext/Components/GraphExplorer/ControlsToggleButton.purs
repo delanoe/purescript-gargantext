@@ -7,13 +7,17 @@ import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.GraphExplorer.ControlsToggleButton"
+
 type Props = ( state :: R.State Boolean )
 
 controlsToggleButton :: Record Props -> R.Element
 controlsToggleButton props = R.createElement controlsToggleButtonCpt props []
 
 controlsToggleButtonCpt :: R.Component Props
-controlsToggleButtonCpt = R.hooksComponent "GraphControlsToggleButton" cpt
+controlsToggleButtonCpt = R2.hooksComponent thisModule "graphControlsToggleButton" cpt
   where
     cpt {state} _ = do
       let (open /\ setOpen) = state

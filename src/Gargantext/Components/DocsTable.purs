@@ -39,6 +39,9 @@ import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete, put)
 import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabType, showTabType')
 import Gargantext.Utils.CacheAPI as GUC
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.DocsTable"
 ------------------------------------------------------------------------
 
 type TotalRecords = Int
@@ -159,7 +162,7 @@ docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
 
 docViewLayoutCpt :: R.Component LayoutProps
-docViewLayoutCpt = R.hooksComponent "G.C.DocsTable.docViewLayout" cpt
+docViewLayoutCpt = R2.hooksComponent thisModule "docViewLayout" cpt
   where
     cpt layout _children = do
       query <- R.useState' ""
@@ -176,7 +179,7 @@ docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: R.Component Props
-docViewCpt = R.hooksComponent "G.C.DocsTable.docView" cpt where
+docViewCpt = R2.hooksComponent thisModule "docView" cpt where
   cpt { query, params
       , layout: { frontends, session, nodeId, tabType, listId
                 , corpusId, totalRecords, chart, showSearch } } _ = do
@@ -213,7 +216,7 @@ docViewCpt = R.hooksComponent "G.C.DocsTable.docView" cpt where
 searchBar :: R.State Query -> R.Element
 searchBar (query /\ setQuery) = R.createElement el {} []
   where
-    el = R.hooksComponent "SearchBar" cpt
+    el = R2.hooksComponent thisModule "SearchBar" cpt
     cpt {} _children = do
       queryText <- R.useState' query
 
@@ -298,7 +301,7 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R.hooksComponent "G.C.DocsTable.pageLayout" cpt where
+pageLayoutCpt = R2.hooksComponent thisModule "pageLayout" cpt where
   cpt props@{ corpusId, frontends, listId, nodeId, params, query, session, tabType } _ =
     useLoaderWithCacheAPI {
         cacheEndpoint: getPageHash session
@@ -334,7 +337,7 @@ page :: T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
 page params layout documents = R.createElement pageCpt { documents, layout, params } []
 
 pageCpt :: R.Component PageProps
-pageCpt = R.hooksComponent "G.C.DocsTable.pageCpt" cpt where
+pageCpt = R2.hooksComponent thisModule "pageCpt" cpt where
   cpt { documents, layout, params } _ = do
     paramsS <- R.useState' params
     pure $ pagePaint { documents, layout, params: paramsS }
@@ -349,7 +352,7 @@ pagePaint :: Record PagePaintProps -> R.Element
 pagePaint props = R.createElement pagePaintCpt props []
 
 pagePaintCpt :: R.Component PagePaintProps
-pagePaintCpt = R.hooksComponent "G.C.DocsTable.pagePaintCpt" cpt where
+pagePaintCpt = R2.hooksComponent thisModule "pagePaintCpt" cpt where
   cpt { layout: { corpusId, frontends, listId, nodeId, session, totalRecords }, documents, params } _ = do
     localCategories <- R.useState' (mempty :: LocalCategories)
     pure $ T.table

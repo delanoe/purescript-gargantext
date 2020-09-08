@@ -4,6 +4,10 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Uncurried (mkEffectFn1)
+import Prelude (($))
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams(..))
 -- import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
@@ -13,9 +17,8 @@ import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
-import Prelude (($))
-import Reactix as R
-import Reactix.DOM.HTML as H
+
+thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Contact"
 
 ------------------------------------------------------------------------
 contactReq :: Session -> ID -> AddContactParams -> Aff ID
@@ -38,7 +41,7 @@ textInputBox :: Record TextInputBoxProps -> R.Element
 textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), params } = R.createElement el p []
   where
     {firstname, lastname} = params
-    el = R.hooksComponent (boxName <> "Box") cpt
+    el = R2.hooksComponent thisModule (boxName <> "Box") cpt
     cpt {id, params:params'} _ = do
       let {firstname, lastname} = params'
       stateFirstname <- R.useState' firstname
@@ -77,7 +80,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), para
               } []
 textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
   where
-    el = R.hooksComponent (boxName <> "Box") cpt
+    el = R2.hooksComponent thisModule (boxName <> "Box") cpt
     cpt {} _ = pure $ H.div {} []
 
 

@@ -15,6 +15,8 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix (effectLink)
 import Gargantext.Components.Search
 
+thisModule = "Gargantext.Components.Table"
+
 type TableContainerProps =
   ( pageSizeControl     :: R.Element
   , pageSizeDescription :: R.Element
@@ -100,7 +102,7 @@ tableHeaderLayout :: Record TableHeaderLayoutProps -> R.Element
 tableHeaderLayout props = R.createElement tableHeaderLayoutCpt props []
 
 tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
-tableHeaderLayoutCpt = R.hooksComponent "G.C.Table.tableHeaderLayout" cpt
+tableHeaderLayoutCpt = R2.hooksComponent thisModule "tableHeaderLayout" cpt
   where
     cpt {title, desc, query, date, user} _ =
       pure $ R.fragment
@@ -139,7 +141,7 @@ table :: Record Props -> R.Element
 table props = R.createElement tableCpt props []
 
 tableCpt :: R.Component Props
-tableCpt = R.hooksComponent "G.C.Table.table" cpt
+tableCpt = R2.hooksComponent thisModule "table" cpt
   where
     cpt {container, colNames, wrapColElts, totalRecords, rows, params} _ = do
       let
@@ -214,7 +216,7 @@ sizeDD :: Record SizeDDProps -> R.Element
 sizeDD p = R.createElement sizeDDCpt p []
 
 sizeDDCpt :: R.Component SizeDDProps
-sizeDDCpt = R.hooksComponent "G.C.T.sizeDD" cpt
+sizeDDCpt = R2.hooksComponent thisModule "sizeDD" cpt
   where
     cpt {params: params /\ setParams} _ = do
       pure $ H.span {} [

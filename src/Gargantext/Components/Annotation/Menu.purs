@@ -16,6 +16,8 @@ import Gargantext.Components.Annotation.Utils (termBootstrapClass)
 import Gargantext.Components.ContextMenu.ContextMenu as CM
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.Annotation.Menu"
+
 data MenuType = NewNgram | SetTermListItem
 
 type Props =
@@ -35,7 +37,7 @@ annotationMenu setMenu { x,y,list,menuType,setList } =
   ]
 
 annotationMenuCpt :: R.Component Props
-annotationMenuCpt = R.hooksComponent "Annotation.Menu" cpt
+annotationMenuCpt = R2.hooksComponent thisModule "annotationMenu" cpt
   where
     cpt props _ = pure $ R.fragment $ children props
     children props = A.mapMaybe (addToList props) [ MapTerm, CandidateTerm, StopTerm ]

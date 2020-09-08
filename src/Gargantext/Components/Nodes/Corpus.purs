@@ -30,6 +30,8 @@ import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.Nodes.Corpus"
+
 type Props =
   ( nodeId  :: Int
   , session :: Session
@@ -46,7 +48,7 @@ corpusLayout :: Record Props -> R.Element
 corpusLayout props = R.createElement corpusLayoutCpt props []
 
 corpusLayoutCpt :: R.Component Props
-corpusLayoutCpt = R.hooksComponent "G.C.N.C.corpusLayout" cpt
+corpusLayoutCpt = R2.hooksComponent thisModule "corpusLayout" cpt
   where
     cpt { nodeId, session } _ = do
       let sid = sessionId session
@@ -58,7 +60,7 @@ corpusLayoutWithKey :: Record KeyProps -> R.Element
 corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
 
 corpusLayoutWithKeyCpt :: R.Component KeyProps
-corpusLayoutWithKeyCpt = R.hooksComponent "G.C.N.C.corpusLayoutWithKey" cpt
+corpusLayoutWithKeyCpt = R2.hooksComponent thisModule "corpusLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
       reload <- R.useState' 0
@@ -82,7 +84,7 @@ corpusLayoutView :: Record ViewProps -> R.Element
 corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
 
 corpusLayoutViewCpt :: R.Component ViewProps
-corpusLayoutViewCpt = R.hooksComponent "G.C.N.C.corpusLayoutView" cpt
+corpusLayoutViewCpt = R2.hooksComponent thisModule "corpusLayoutView" cpt
   where
     cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
@@ -146,7 +148,7 @@ fieldsCodeEditor :: Record FieldsCodeEditorProps -> R.Element
 fieldsCodeEditor props = R.createElement fieldsCodeEditorCpt props []
 
 fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
-fieldsCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldsCodeEditorCpt" cpt
+fieldsCodeEditorCpt = R2.hooksComponent thisModule "fieldsCodeEditorCpt" cpt
   where
     cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
       masterKey <- R.useState' 0
@@ -215,7 +217,7 @@ fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props []
 
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
-fieldCodeEditorWrapperCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorWrapperCpt" cpt
+fieldCodeEditorWrapperCpt = R2.hooksComponent thisModule "fieldCodeEditorWrapperCpt" cpt
   where
     cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
       pure $ H.div { className: "row panel panel-default" } [
@@ -263,7 +265,7 @@ renameable :: Record RenameableProps -> R.Element
 renameable props = R.createElement renameableCpt props []
 
 renameableCpt :: R.Component RenameableProps
-renameableCpt = R.hooksComponent "G.C.N.C.renameableCpt" cpt
+renameableCpt = R2.hooksComponent thisModule "renameableCpt" cpt
   where
     cpt {onRename, text} _ = do
       isEditing <- R.useState' false
@@ -293,7 +295,7 @@ renameableText :: Record RenameableTextProps -> R.Element
 renameableText props = R.createElement renameableTextCpt props []
 
 renameableTextCpt :: R.Component RenameableTextProps
-renameableTextCpt = R.hooksComponent "G.C.N.C.renameableTextCpt" cpt
+renameableTextCpt = R2.hooksComponent thisModule "renameableTextCpt" cpt
   where
     cpt {isEditing: (false /\ setIsEditing), state: (text /\ _)} _ = do
       pure $ H.div {} [
@@ -328,7 +330,7 @@ fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
 
 fieldCodeEditorCpt :: R.Component FieldCodeEditorProps
-fieldCodeEditorCpt = R.hooksComponent "G.C.N.C.fieldCodeEditorCpt" cpt
+fieldCodeEditorCpt = R2.hooksComponent thisModule "fieldCodeEditorCpt" cpt
   where
     cpt {field: Field {typ: typ@(Haskell {haskell})}, onChange} _ = do
       pure $ CE.codeEditor {code: haskell, defaultCodeType: CE.Haskell, onChange: changeCode onChange typ}

@@ -17,6 +17,10 @@ import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
+import Prelude
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Category (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
 import Gargantext.Components.Search
 import Gargantext.Components.Table as T
@@ -29,9 +33,8 @@ import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..), NodeID)
 import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
-import Prelude
-import Reactix as R
-import Reactix.DOM.HTML as H
+
+thisModule = "Gargantext.Components.FacetsTable"
 ------------------------------------------------------------------------
 
 type Props =
@@ -91,7 +94,7 @@ docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: R.Component Props
-docViewCpt = R.hooksComponent "G.C.FacetsTable.DocView" cpt
+docViewCpt = R2.hooksComponent thisModule "docView" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
@@ -142,7 +145,7 @@ docViewGraph :: Record Props -> R.Element
 docViewGraph props = R.createElement docViewCpt props []
 
 docViewGraphCpt :: R.Component Props
-docViewGraphCpt = R.hooksComponent "FacetsDocViewGraph" cpt
+docViewGraphCpt = R2.hooksComponent thisModule "docViewGraph" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
@@ -289,7 +292,7 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R.hooksComponent "G.C.FacetsTable.PageLayout" cpt
+pageLayoutCpt = R2.hooksComponent thisModule "pageLayout" cpt
   where
     cpt {frontends, totalRecords, deletions, container, session, path} _ = do
       useLoader (fst path) loadPage $ \documents ->
@@ -299,7 +302,7 @@ page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
 
 pageCpt :: R.Component PageProps
-pageCpt = R.hooksComponent "G.C.FacetsTable.Page" cpt
+pageCpt = R2.hooksComponent thisModule "page" cpt
   where
     cpt {frontends, totalRecords, container, deletions, documents, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
       pure $ T.table { rows, container, colNames, totalRecords, params, wrapColElts }

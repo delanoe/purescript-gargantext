@@ -37,6 +37,8 @@ import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.GraphExplorer"
+
 type LayoutProps =
   ( frontends :: Frontends
   , graphId :: GET.GraphId
@@ -45,7 +47,6 @@ type LayoutProps =
   , session :: Session
   , sessions :: Sessions
   , showLogin :: R.State Boolean
-  --, treeReload :: R.State Int
   )
 
 type Props = (
@@ -61,7 +62,7 @@ explorerLayout :: Record LayoutProps -> R.Element
 explorerLayout props = R.createElement explorerLayoutCpt props []
 
 explorerLayoutCpt :: R.Component LayoutProps
-explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
+explorerLayoutCpt = R2.hooksComponent thisModule "explorerLayout" cpt
   where
     cpt props _ = do
       graphVersion <- R.useState' 0
@@ -71,8 +72,8 @@ explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
 explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
-    el = R.hooksComponent "G.C.GE.explorerLayoutView" cpt
-    cpt props@{graphId, session} _ = do
+    el = R2.hooksComponent thisModule "explorerLayoutView" cpt
+    cpt props@{ graphId, session } _ = do
       useLoader graphId (getNodes session graphVersion) handler
       where
         handler loaded =
@@ -86,7 +87,7 @@ explorer :: Record Props -> R.Element
 explorer props = R.createElement explorerCpt props []
 
 explorerCpt :: R.Component Props
-explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
+explorerCpt = R2.hooksComponent thisModule "explorer" cpt
   where
     cpt props@{ frontends
               , graph
@@ -99,7 +100,6 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
               , session
               , sessions
               , showLogin
-              --, treeReload
               } _ = do
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
@@ -146,43 +146,52 @@ explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
                   , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
                   ], R2.row
             [ outer
-              [ inner
+              [ inner handed
                 [ rowControls [ Controls.controls controls ]
-                , R2.row [
-                        tree { frontends
-                             , handed
-                             , mCurrentRoute
-                             , reload: treeReload
-                             , sessions
-                             , show: fst controls.showTree
-                             , showLogin: snd showLogin }
-                      , RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []  -- graph container
-                      , graphView { controls
-                                  , elRef: graphRef
-                                  , graphId
-                                  , graph
-                                  , hyperdataGraph
-                                  , mMetaData
-                                  , multiSelectEnabledRef
-                                  }
-                      , mSidebar mMetaData { frontends
-                                           , graph
-                                           , graphId
-                                           , graphVersion
-                                           , removedNodeIds : controls.removedNodeIds
-                                           , session
-                                           , selectedNodeIds: controls.selectedNodeIds
-                                           , showSidePanel  :   controls.showSidePanel
-                                           , treeReload
-                                           }
-                      ]
+                , R2.row $ mainLayout handed $
+                    tree { frontends
+                          , handed
+                          , mCurrentRoute
+                          , reload: treeReload
+                          , sessions
+                          , show: fst controls.showTree
+                          , showLogin: snd showLogin }
+                    /\
+                    RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
+                    /\
+                    graphView { controls
+                              , elRef: graphRef
+                              , graphId
+                              , graph
+                              , hyperdataGraph
+                              , mMetaData
+                              , multiSelectEnabledRef
+                              }
+                    /\
+                    mSidebar mMetaData { frontends
+                                        , graph
+                                        , graphId
+                                        , graphVersion
+                                        , removedNodeIds : controls.removedNodeIds
+                                        , session
+                                        , selectedNodeIds: controls.selectedNodeIds
+                                        , showSidePanel  :   controls.showSidePanel
+                                        , treeReload
+                                        }
                 ]
               ]
             ]
           ]
 
+    mainLayout Types.RightHanded (tree' /\ gc /\ gv /\ sdb) = [tree', gc, gv, sdb]
+    mainLayout Types.LeftHanded (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']
+
     outer = RH.div { className: "col-md-12" }
-    inner = RH.div { className: "container-fluid", style: { paddingTop: "90px" } }
+    inner h = RH.div { className: "container-fluid " <> hClass, style: { paddingTop: "90px" } }
+      where
+        hClass = case h of
+          Types.LeftHanded -> "lefthanded"
+          Types.RightHanded -> "righthanded"
     rowToggle  = RH.div { id: "toggle-container" }
     rowControls = RH.div { id: "controls-container" }
     col       = RH.div { className: "col-md-4" }
@@ -243,7 +252,7 @@ graphView :: Record GraphProps -> R.Element
 graphView props = R.createElement graphViewCpt props []
 
 graphViewCpt :: R.Component GraphProps
-graphViewCpt = R.hooksComponent "GraphView" cpt
+graphViewCpt = R2.hooksComponent thisModule "graphView" cpt
   where
     cpt { controls
         , elRef

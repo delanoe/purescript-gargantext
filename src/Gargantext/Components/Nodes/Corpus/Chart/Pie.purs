@@ -9,6 +9,9 @@ import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Charts.Options.Color (blue)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
@@ -23,8 +26,9 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..), TabType)
 import Gargantext.Utils.CacheAPI as GUC
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Pie"
 
 newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
@@ -100,7 +104,7 @@ pie :: Record Props -> R.Element
 pie props = R.createElement pieCpt props []
 
 pieCpt :: R.Component Props
-pieCpt = R.hooksComponent "G.C.N.C.C.P.pie" cpt
+pieCpt = R2.hooksComponent thisModule "pie" cpt
   where
     cpt { path, session } _ = do
       reload <- R.useState' 0
@@ -126,7 +130,7 @@ bar :: Record Props -> R.Element
 bar props = R.createElement barCpt props []
 
 barCpt :: R.Component Props
-barCpt = R.hooksComponent "LoadedMetricsBar" cpt
+barCpt = R2.hooksComponent thisModule "bar" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0

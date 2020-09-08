@@ -26,6 +26,8 @@ import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabTyp
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.Nodes.Corpus.Document"
+
 type DocPath =
   {
     corpusId :: Maybe Int
@@ -300,7 +302,7 @@ docViewWrapper :: Record Props -> R.Element
 docViewWrapper props = R.createElement docViewWrapperCpt props []
 
 docViewWrapperCpt :: R.Component Props
-docViewWrapperCpt = R.hooksComponent "G.C.N.C.D.docViewWrapper" cpt
+docViewWrapperCpt = R2.hooksComponent thisModule "docViewWrapper" cpt
   where
     cpt { loaded, path } _ = do
       state <- R.useState' $ initialState { loaded }
@@ -316,7 +318,7 @@ docView :: Record DocViewProps -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: R.Component DocViewProps
-docViewCpt = R.hooksComponent "G.C.N.C.D.docView" cpt
+docViewCpt = R2.hooksComponent thisModule "docView" cpt
   where
     cpt props@{ loaded: loaded@{ ngramsTable: Versioned { data: initTable }, document }, state } _ = do
       pure $ H.div {} [
@@ -386,7 +388,7 @@ documentLayout :: Record LayoutProps -> R.Element
 documentLayout props = R.createElement documentLayoutCpt props []
 
 documentLayoutCpt :: R.Component LayoutProps
-documentLayoutCpt = R.hooksComponent "G.C.N.C.D.documentLayout" cpt
+documentLayoutCpt = R2.hooksComponent thisModule "documentLayout" cpt
   where
     cpt { corpusId, listId, nodeId, session } _ = do
       let sid = sessionId session
@@ -406,7 +408,7 @@ documentLayoutWithKey :: Record KeyLayoutProps -> R.Element
 documentLayoutWithKey props = R.createElement documentLayoutWithKeyCpt props []
 
 documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
-documentLayoutWithKeyCpt = R.hooksComponent "G.C.N.C.D.documentLayoutWithKey" cpt
+documentLayoutWithKeyCpt = R2.hooksComponent thisModule "documentLayoutWithKey" cpt
   where
     cpt { corpusId, listId, nodeId, session } _ = do
       useLoader path loadData $ \loaded ->

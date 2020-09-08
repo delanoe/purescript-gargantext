@@ -14,7 +14,10 @@ import DOM.Simple.Document ( document )
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+
 import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Modal"
 
 type Props = ( setVisible :: R2.Setter Boolean )
 
@@ -22,7 +25,7 @@ modal :: Record Props -> Array R.Element -> R.Element
 modal = R.createElement modalCpt
 
 modalCpt :: R.Component Props
-modalCpt = R.hooksComponent "Modal" cpt
+modalCpt = R2.hooksComponent thisModule "modal" cpt
   where
     cpt {setVisible} children = do
       host <- R2.getPortalHost

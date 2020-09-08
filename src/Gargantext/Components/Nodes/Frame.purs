@@ -18,6 +18,9 @@ import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Argonaut (genericSumEncodeJson)
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Frame"
 
 data Hyperdata =
   Hyperdata { base :: String
@@ -61,7 +64,7 @@ frameLayout :: Record Props -> R.Element
 frameLayout props = R.createElement frameLayoutCpt props []
 
 frameLayoutCpt :: R.Component Props
-frameLayoutCpt = R.hooksComponent "G.C.N.F.frameLayout" cpt
+frameLayoutCpt = R2.hooksComponent thisModule "frameLayout" cpt
   where
     cpt {nodeId, session} _ = do
       let sid = sessionId session
@@ -72,7 +75,7 @@ frameLayoutWithKey :: Record KeyProps -> R.Element
 frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []
 
 frameLayoutWithKeyCpt :: R.Component KeyProps
-frameLayoutWithKeyCpt = R.hooksComponent "G.C.N.F.frameLayoutWithKey" cpt
+frameLayoutWithKeyCpt = R2.hooksComponent thisModule "frameLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
       reload <- R.useState' 0
@@ -98,7 +101,7 @@ frameLayoutView :: Record ViewProps -> R.Element
 frameLayoutView props = R.createElement frameLayoutViewCpt props []
 
 frameLayoutViewCpt :: R.Component ViewProps
-frameLayoutViewCpt = R.hooksComponent "G.C.N.C.frameLayoutView" cpt
+frameLayoutViewCpt = R2.hooksComponent thisModule "frameLayoutView" cpt
   where
     cpt {frame: (NodePoly {hyperdata: Hyperdata {base, frame_id}}), nodeId, reload, session} _ = do
       pure $ H.div { className : "frame" }

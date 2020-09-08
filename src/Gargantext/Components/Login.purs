@@ -14,6 +14,10 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Prelude (Unit, bind, const, discard, map, pure, show, ($), (&&), (*>), (/=), (<$>), (<>), (==), (>))
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest.Tree.Node.Tools (checkbox)
 import Gargantext.Components.Forms (clearfix, cardBlock, cardGroup, center, formGroup)
 import Gargantext.Components.Login.Types (AuthRequest(..))
@@ -22,9 +26,8 @@ import Gargantext.Sessions (Session, Sessions(..), postAuthRequest, unSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils (csrfMiddlewareToken)
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, const, discard, map, pure, show, ($), (&&), (*>), (/=), (<$>), (<>), (==), (>))
-import Reactix as R
-import Reactix.DOM.HTML as H
+
+thisModule = "Gargantext.Components.Login"
 
 -- TODO: ask for login (modal) or account creation after 15 mn when user
 -- is not logged and has made one search at least
@@ -41,7 +44,7 @@ modal :: Record ModalProps -> R.Element -> R.Element
 modal props child = R.createElement modalCpt props [ child ]
 
 modalCpt :: R.Component ModalProps
-modalCpt = R.hooksComponent "G.C.Login.modal" cpt where
+modalCpt = R2.hooksComponent thisModule "modal" cpt where
   cpt {visible} children = do
     R.createPortal elems <$> R2.getPortalHost
     where
@@ -78,7 +81,7 @@ login :: Record Props -> R.Element
 login props = R.createElement loginCpt props []
 
 loginCpt :: R.Component Props
-loginCpt = R.hooksComponent "G.C.Login.login" cpt
+loginCpt = R2.hooksComponent thisModule "login" cpt
   where
     cpt props@{backends, sessions, visible} _ = do
       backend <- R.useState' Nothing
@@ -155,7 +158,7 @@ form :: Record FormProps -> R.Element
 form props = R.createElement formCpt props []
 
 formCpt :: R.Component FormProps
-formCpt = R.hooksComponent "G.C.Login.form" cpt where
+formCpt = R2.hooksComponent thisModule "form" cpt where
   cpt :: Record FormProps -> Array R.Element -> R.Hooks R.Element
   cpt props@{backend, sessions, visible} _ = do
     error    <- R.useState' ""

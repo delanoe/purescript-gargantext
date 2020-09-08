@@ -7,12 +7,16 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (clearInterval, setInterval)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types as GT
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar"
 
 
 data BarType = Bar | Pie
@@ -30,7 +34,7 @@ asyncProgressBar :: Record Props -> R.Element
 asyncProgressBar p = R.createElement asyncProgressBarCpt p []
 
 asyncProgressBarCpt :: R.Component Props
-asyncProgressBarCpt = R.hooksComponent "G.C.F.T.N.PB.asyncProgressBar" cpt
+asyncProgressBarCpt = R2.hooksComponent thisModule "asyncProgressBar" cpt
   where
     cpt props@{ asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}})
               , barType
@@ -76,7 +80,7 @@ progressIndicator :: Record ProgressIndicatorProps -> R.Element
 progressIndicator p = R.createElement progressIndicatorCpt p []
 
 progressIndicatorCpt :: R.Component ProgressIndicatorProps
-progressIndicatorCpt = R.hooksComponent "G.C.F.T.N.PB.progressIndicator" cpt
+progressIndicatorCpt = R2.hooksComponent thisModule "progressIndicator" cpt
   where
     cpt { barType: Bar, label, progress } _ = do
       pure $
