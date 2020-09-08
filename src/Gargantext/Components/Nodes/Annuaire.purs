@@ -8,6 +8,10 @@ import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)
@@ -16,9 +20,9 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get)
 import Gargantext.Types (NodeType(..), AffTableResult, TableResult)
-import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Annuaire"
 
 newtype IndividuView =
   CorpusView
@@ -42,7 +46,7 @@ annuaireLayout :: Record LayoutProps -> R.Element
 annuaireLayout props = R.createElement annuaireLayoutCpt props []
 
 annuaireLayoutCpt :: R.Component LayoutProps
-annuaireLayoutCpt = R.hooksComponent "G.C.N.A.annuaireLayout" cpt
+annuaireLayoutCpt = R2.hooksComponent thisModule "annuaireLayout" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       let sid = sessionId session
@@ -58,7 +62,7 @@ annuaireLayoutWithKey :: Record KeyLayoutProps -> R.Element
 annuaireLayoutWithKey props = R.createElement annuaireLayoutWithKeyCpt props []
 
 annuaireLayoutWithKeyCpt :: R.Component KeyLayoutProps
-annuaireLayoutWithKeyCpt = R.hooksComponent "G.C.N.A.annuaireLayoutWithKey" cpt
+annuaireLayoutWithKeyCpt = R2.hooksComponent thisModule "annuaireLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       path <- R.useState' nodeId
@@ -78,7 +82,7 @@ annuaire props = R.createElement annuaireCpt props []
 
 -- Abuses closure to work around the Loader
 annuaireCpt :: R.Component AnnuaireProps
-annuaireCpt = R.hooksComponent "G.P.Annuaire.annuaire" cpt
+annuaireCpt = R2.hooksComponent thisModule "annuaire" cpt
   where
     cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ = do
       pagePath <- R.useState' $ initialPagePath (fst path)
@@ -111,7 +115,7 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R.hooksComponent "G.P.Annuaire.pageLayout" cpt
+pageLayoutCpt = R2.hooksComponent thisModule "pageLayout" cpt
   where
     cpt {info, frontends, pagePath, session} _ = do
       useLoader (fst pagePath) (loadPage session) $
@@ -129,7 +133,7 @@ page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
 
 pageCpt :: R.Component PageProps
-pageCpt = R.hooksComponent "LoadedAnnuairePage" cpt
+pageCpt = R2.hooksComponent thisModule "page" cpt
   where
     cpt { session, pagePath, frontends
         , table: ({count: totalRecords, docs})} _ = do
@@ -162,7 +166,7 @@ contactCells :: Record ContactCellsProps -> R.Element
 contactCells p = R.createElement contactCellsCpt p []
 
 contactCellsCpt :: R.Component ContactCellsProps
-contactCellsCpt = R.hooksComponent "G.C.N.A.contactCells" cpt
+contactCellsCpt = R2.hooksComponent thisModule "contactCells" cpt
   where
     cpt { annuaireId
         , contact: (CT.NodeContact { id, hyperdata: (CT.HyperdataContact {who : Nothing}) })

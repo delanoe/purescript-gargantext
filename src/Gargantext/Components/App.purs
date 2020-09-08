@@ -35,6 +35,8 @@ import Gargantext.Sessions as Sessions
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.App"
+
 -- TODO (what does this mean?)
 -- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
 
@@ -42,7 +44,7 @@ app :: {} -> R.Element
 app props = R.createElement appCpt props []
 
 appCpt :: R.Component ()
-appCpt = R.hooksComponent "G.C.App.app" cpt where
+appCpt = R2.hooksComponent thisModule "app" cpt where
   frontends = defaultFrontends
   cpt _ _ = do
     sessions   <- useSessions
@@ -121,7 +123,7 @@ forestLayout :: Record ForestLayoutProps -> R.Element
 forestLayout props = R.createElement forestLayoutCpt props []
 
 forestLayoutCpt :: R.Component ForestLayoutProps
-forestLayoutCpt = R.hooksComponent "G.C.A.forestLayout" cpt
+forestLayoutCpt = R2.hooksComponent thisModule "forestLayout" cpt
   where
     cpt props@{ handed } _ = do
       pure $ R.fragment [ topBar { handed }, forestLayoutMain props ]
@@ -130,7 +132,7 @@ forestLayoutMain :: Record ForestLayoutProps -> R.Element
 forestLayoutMain props = R.createElement forestLayoutMainCpt props []
 
 forestLayoutMainCpt :: R.Component ForestLayoutProps
-forestLayoutMainCpt = R.hooksComponent "G.C.A.forestLayoutMain" cpt
+forestLayoutMainCpt = R2.hooksComponent thisModule "forestLayoutMain" cpt
   where
     cpt { child, frontends, handed, reload, route, sessions, showLogin } _ = do
       let ordering =
@@ -162,7 +164,7 @@ topBar :: Record TopBarProps -> R.Element
 topBar props = R.createElement topBarCpt props []
 
 topBarCpt :: R.Component TopBarProps
-topBarCpt = R.hooksComponent "G.C.A.topBar" cpt
+topBarCpt = R2.hooksComponent thisModule "topBar" cpt
   where
     cpt { handed } _ = do
       pure $ H.div { id: "dafixedtop"
@@ -204,7 +206,7 @@ handedChooser :: Record HandedChooserProps -> R.Element
 handedChooser props = R.createElement handedChooserCpt props []
 
 handedChooserCpt :: R.Component HandedChooserProps
-handedChooserCpt = R.hooksComponent "G.C.A.handedChooser" cpt
+handedChooserCpt = R2.hooksComponent thisModule "handedChooser" cpt
   where
     cpt { handed } _ = do
       pure $ H.li {} [
@@ -337,7 +339,7 @@ footer :: Record FooterProps -> R.Element
 footer props = R.createElement footerCpt props []
 
 footerCpt :: R.Component FooterProps
-footerCpt = R.hooksComponent "G.C.A.footer" cpt
+footerCpt = R2.hooksComponent thisModule "footer" cpt
   where
     cpt { session } _ = do
       pure $ H.div 

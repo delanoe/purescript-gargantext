@@ -7,8 +7,10 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R
 
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Loader"
 
 type Props path loaded =
   ( path  :: path
@@ -23,7 +25,7 @@ loader path load paint =
   R.createElement loaderCpt {path,load,paint} []
 
 loaderCpt :: forall path loaded. R.Component (Props path loaded)
-loaderCpt = R.hooksComponent "G.C.Loader" cpt where
+loaderCpt = R2.hooksComponent thisModule "loader" cpt where
   cpt {path, load, paint} _ = do
     (loaded /\ setLoaded) <- R.useState' Nothing
     R.useEffect3 path load paint $ do

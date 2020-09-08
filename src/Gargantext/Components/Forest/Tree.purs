@@ -33,10 +33,13 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>), (==))
 import Gargantext.Routes (AppRoute)
+import Gargantext.Routes as GR
 import Gargantext.Sessions (OpenNodes, Session, mkNodeId, get)
 import Gargantext.Types (ID, Reload, isPublic, publicize)
 import Gargantext.Types as GT
-import Gargantext.Routes as GR
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Forest.Tree"
 
 ------------------------------------------------------------------------
 type CommonProps =
@@ -58,7 +61,7 @@ treeView :: Record Props -> R.Element
 treeView props = R.createElement treeViewCpt props []
   where
     treeViewCpt :: R.Component Props
-    treeViewCpt = R.hooksComponent "G.C.Tree.treeView" cpt
+    treeViewCpt = R2.hooksComponent thisModule "treeView" cpt
       where
         cpt { root
             , asyncTasks
@@ -83,7 +86,7 @@ treeLoadView :: Record Props -> R.Element
 treeLoadView p = R.createElement treeLoadViewCpt p []
   where
     treeLoadViewCpt :: R.Component Props
-    treeLoadViewCpt = R.hooksComponent "TreeLoadView" cpt
+    treeLoadViewCpt = R2.hooksComponent thisModule "treeLoadView" cpt
       where
         cpt { root
             , asyncTasks
@@ -122,7 +125,7 @@ loadedTreeView :: Record TreeViewProps -> R.Element
 loadedTreeView p = R.createElement loadedTreeViewCpt p []
   where
     loadedTreeViewCpt :: R.Component TreeViewProps
-    loadedTreeViewCpt = R.hooksComponent "LoadedTreeView" cpt
+    loadedTreeViewCpt = R2.hooksComponent thisModule "loadedTreeView" cpt
       where
         cpt { asyncTasks
             , frontends
@@ -183,7 +186,7 @@ toHtml p@{ asyncTasks
          } =
   R.createElement el {} []
     where
-      el          = R.hooksComponent "NodeView" cpt
+      el          = R2.hooksComponent thisModule "nodeView" cpt
       commonProps = RecordE.pick p :: Record CommonProps
       pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
 

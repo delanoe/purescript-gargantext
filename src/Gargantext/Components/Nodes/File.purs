@@ -13,6 +13,9 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types as T
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.File"
 
 
 newtype HyperdataFile = HyperdataFile {
@@ -67,7 +70,7 @@ fileLayout :: Record FileLayoutProps -> R.Element
 fileLayout props = R.createElement fileLayoutCpt props []
 
 fileLayoutCpt :: R.Component FileLayoutProps
-fileLayoutCpt = R.hooksComponent "G.C.N.F.fileLayout" cpt
+fileLayoutCpt = R2.hooksComponent thisModule "fileLayout" cpt
   where
     cpt { nodeId, session } _ = do
       useLoader { nodeId } (loadFile session) $ \loaded ->
@@ -89,7 +92,7 @@ fileLayoutLoaded :: Record FileLayoutLoadedProps -> R.Element
 fileLayoutLoaded props = R.createElement fileLayoutLoadedCpt props []
 
 fileLayoutLoadedCpt :: R.Component FileLayoutLoadedProps
-fileLayoutLoadedCpt = R.hooksComponent "G.C.N.F.fileLayoutLoaded" cpt
+fileLayoutLoadedCpt = R2.hooksComponent thisModule "fileLayoutLoaded" cpt
   where
     cpt { loaded: File { hyperdata: HyperdataFile hyperdata }, nodeId, session } _ = do
       R.useEffect' $ do

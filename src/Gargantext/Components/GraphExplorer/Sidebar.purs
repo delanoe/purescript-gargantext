@@ -14,6 +14,12 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as RH
+import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
+
 import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
 import Gargantext.Components.GraphExplorer.Types  as GET
 import Gargantext.Components.GraphExplorer.Types  (SidePanelState(..), SideTab(..))
@@ -28,10 +34,8 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
-import Gargantext.Prelude
-import Reactix as R
-import Reactix.DOM.HTML as RH
-import Reactix.DOM.HTML as H
+
+thisModule = "Gargantext.Components.GraphExplorer.Sidebar"
 
 type Props =
   ( frontends       :: Frontends
@@ -50,7 +54,7 @@ sidebar :: Record Props -> R.Element
 sidebar props = R.createElement sidebarCpt props []
 
 sidebarCpt :: R.Component Props
-sidebarCpt = R.hooksComponent "Sidebar" cpt
+sidebarCpt = R2.hooksComponent thisModule "sidebar" cpt
   where
     cpt {showSidePanel: (GET.Closed /\ _)} _children = do
       pure $ RH.div {} []

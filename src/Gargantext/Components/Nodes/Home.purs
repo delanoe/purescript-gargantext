@@ -2,6 +2,10 @@ module Gargantext.Components.Nodes.Home where
 
 import Data.Newtype (class Newtype)
 import Effect (Effect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Routing.Hash (setHash)
+
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
@@ -9,9 +13,9 @@ import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Nodes.Home.Public (renderPublic)
 import Gargantext.License (license)
 import Gargantext.Prelude (Unit, map, pure, unit, void, ($), (<>))
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Routing.Hash (setHash)
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Home"
 
 type Props = ()
 
@@ -48,7 +52,7 @@ homeLayout lang = R.createElement homeLayoutCpt {landingData} []
   where landingData = langLandingData lang
 
 homeLayoutCpt :: R.Component ( landingData :: LandingData )
-homeLayoutCpt = R.hooksComponent "LayoutLanding" cpt
+homeLayoutCpt = R2.hooksComponent thisModule "homeLayout" cpt
   where
     cpt {landingData} _ = do
       pure $ H.span {}

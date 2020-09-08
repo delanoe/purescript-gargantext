@@ -8,7 +8,11 @@ import Data.Sequence (Seq)
 import Data.Traversable (foldMap)
 import Reactix as R
 import Reactix.DOM.HTML as RH
+
 import Gargantext.Components.GraphExplorer.Types (Legend(..), intColor)
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.GraphExplorer.Legend"
 
 type Props = ( items :: Seq Legend )
 
@@ -16,7 +20,7 @@ legend :: Record Props -> R.Element
 legend props = R.createElement legendCpt props []
 
 legendCpt :: R.Component Props
-legendCpt = R.hooksComponent "Legend" cpt
+legendCpt = R2.hooksComponent thisModule "legend" cpt
   where
     cpt {items} _ = pure $ RH.div {} [foldMap entry items]
 

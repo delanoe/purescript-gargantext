@@ -19,6 +19,8 @@ import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.Nodes.Corpus.Dashboard"
+
 type Props =
   ( nodeId :: NodeID
   , session :: Session
@@ -28,7 +30,7 @@ dashboardLayout :: Record Props -> R.Element
 dashboardLayout props = R.createElement dashboardLayoutCpt props []
 
 dashboardLayoutCpt :: R.Component Props
-dashboardLayoutCpt = R.hooksComponent "G.C.N.C.D.dashboardLayout" cpt
+dashboardLayoutCpt = R2.hooksComponent thisModule "dashboardLayout" cpt
   where
     cpt { nodeId, session } _ = do
       let sid = sessionId session
@@ -44,7 +46,7 @@ dashboardLayoutWithKey :: Record KeyProps -> R.Element
 dashboardLayoutWithKey props = R.createElement dashboardLayoutWithKeyCpt props []
 
 dashboardLayoutWithKeyCpt :: R.Component KeyProps
-dashboardLayoutWithKeyCpt = R.hooksComponent "G.C.N.C.D.dashboardLayoutWithKey" cpt
+dashboardLayoutWithKeyCpt = R2.hooksComponent thisModule "dashboardLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
       reload <- R.useState' 0
@@ -82,7 +84,7 @@ dashboardLayoutLoaded :: Record LoadedProps -> R.Element
 dashboardLayoutLoaded props = R.createElement dashboardLayoutLoadedCpt props []
 
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
-dashboardLayoutLoadedCpt = R.hooksComponent "G.C.N.C.D.dashboardLayoutLoaded" cpt
+dashboardLayoutLoadedCpt = R2.hooksComponent thisModule "dashboardLayoutLoaded" cpt
   where
     cpt props@{ charts, corpusId, defaultListId, onChange, session } _ = do
       pure $
@@ -119,7 +121,7 @@ renderChart :: Record PredefinedChartProps -> R.Element
 renderChart props = R.createElement renderChartCpt props []
 
 renderChartCpt :: R.Component PredefinedChartProps
-renderChartCpt = R.hooksComponent "G.C.N.C.D.renderChart" cpt
+renderChartCpt = R2.hooksComponent thisModule "renderChart" cpt
   where
     cpt { chart, corpusId, defaultListId, onChange, onRemove, session } _ = do
       pure $ H.div { className: "row" } [

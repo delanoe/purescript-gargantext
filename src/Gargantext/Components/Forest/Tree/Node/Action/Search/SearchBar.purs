@@ -4,14 +4,18 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar
 
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (searchField)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Prelude (Unit, pure, ($))
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar"
 
 type Props = ( langs     :: Array Lang
              , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
@@ -23,7 +27,7 @@ searchBar :: Record Props -> R.Element
 searchBar props = R.createElement searchBarCpt props []
 
 searchBarCpt :: R.Component Props
-searchBarCpt = R.hooksComponent "G.C.F.T.N.A.S.SB.searchBar" cpt
+searchBarCpt = R2.hooksComponent thisModule "searchBar" cpt
   where
     cpt {langs, onSearch, search: search@(s /\ _), session} _ = do
       --onSearchChange session s

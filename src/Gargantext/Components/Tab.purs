@@ -7,6 +7,10 @@ import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Tab"
+
 type TabsProps = ( tabs :: Array (Tuple String R.Element), selected :: Int )
 
 tabs :: Record TabsProps -> R.Element
@@ -14,7 +18,7 @@ tabs props = R.createElement tabsCpt props []
 
 -- this is actually just the list of tabs, not the tab contents itself
 tabsCpt :: R.Component TabsProps
-tabsCpt = R.hooksComponent "G.C.Tab.tabs" cpt
+tabsCpt = R2.hooksComponent thisModule "tabs" cpt
   where
     cpt props _ = do
       (activeTab /\ setActiveTab) <- R.useState' props.selected

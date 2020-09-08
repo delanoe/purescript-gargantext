@@ -12,6 +12,9 @@ import Gargantext.Config.REST as REST
 import Gargantext.Ends (toUrl)
 import Gargantext.Sessions (Session(..))
 import Gargantext.Sessions as Sessions
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Version"
 
 type Version = String
 
@@ -30,7 +33,7 @@ versionView :: Record VersionProps -> R.Element
 versionView props = R.createElement versionCpt props []
 
 versionCpt :: R.Component VersionProps
-versionCpt = R.hooksComponent "G.C.A.version" cpt
+versionCpt = R2.hooksComponent thisModule "version" cpt
   where
     cpt { session } _ = do
       (versionBack /\ setVer) <- R.useState' "No Backend Version"

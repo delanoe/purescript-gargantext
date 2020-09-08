@@ -33,6 +33,8 @@ import Gargantext.Sessions (Session)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.GraphExplorer.Controls"
+
 type Controls =
   ( edgeConfluence :: R.State Range.NumberRange
   , edgeWeight :: R.State Range.NumberRange
@@ -74,7 +76,7 @@ controls :: Record Controls -> R.Element
 controls props = R.createElement controlsCpt props []
 
 controlsCpt :: R.Component Controls
-controlsCpt = R.hooksComponent "GraphControls" cpt
+controlsCpt = R2.hooksComponent thisModule "controls" cpt
   where
     cpt props _ = do
       localControls <- initialLocalControls

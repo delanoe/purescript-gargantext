@@ -19,6 +19,9 @@ import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Texts"
 --------------------------------------------------------
 
 type Props = (
@@ -32,7 +35,7 @@ textsLayout props = R.createElement textsLayoutCpt props []
 
 ------------------------------------------------------------------------
 textsLayoutCpt :: R.Component Props
-textsLayoutCpt = R.hooksComponent "G.C.N.T.textsLayout" cpt where
+textsLayoutCpt = R2.hooksComponent thisModule "textsLayout" cpt where
   cpt { frontends, nodeId, session } _ = do
     let sid = sessionId session
 
@@ -47,7 +50,7 @@ textsLayoutWithKey :: Record KeyProps -> R.Element
 textsLayoutWithKey props = R.createElement textsLayoutWithKeyCpt props []
 
 textsLayoutWithKeyCpt :: R.Component KeyProps
-textsLayoutWithKeyCpt = R.hooksComponent "G.C.N.T.textsLayoutWithKey" cpt
+textsLayoutWithKeyCpt = R2.hooksComponent thisModule "textsLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       pure $ loader {session, nodeId} loadCorpusWithChild paint
@@ -80,7 +83,7 @@ tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component TabsProps
-tabsCpt = R.hooksComponent "G.C.Nodes.Texts.tabs" cpt
+tabsCpt = R2.hooksComponent thisModule "tabs" cpt
   where
     cpt {frontends, session, corpusId, corpusData} _ = do
       (selected /\ setSelected) <- R.useState' 0
@@ -108,7 +111,7 @@ docView :: forall a. Record (DocViewProps a) -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: forall a. R.Component (DocViewProps a)
-docViewCpt = R.hooksComponent "G.C.Nodes.Texts.docView" cpt
+docViewCpt = R2.hooksComponent thisModule "docView" cpt
   where
     cpt {frontends, session, corpusId, corpusData: {defaultListId}, tabType} _children = do
       pure $ DT.docViewLayout $ params tabType

@@ -8,18 +8,22 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.NonEmpty (head)
 import Data.String (take)
+import Data.Traversable (traverse)
 import Data.Tuple (fst)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Config (publicBackend)
 import Gargantext.Config.REST (get)
 import Gargantext.Ends (backendUrl, Backend(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Data.Traversable (traverse)
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Home.Public"
 
 type PublicProps = (publicDatas :: (Array PublicData)
                    -- , session :: Session
@@ -75,7 +79,7 @@ renderPublic :: R.Element
 renderPublic = R.createElement renderPublicCpt {} []
 
 renderPublicCpt :: R.Component LoadData
-renderPublicCpt = R.hooksComponent "G.C.N.Home.Public.renderPublic" cpt
+renderPublicCpt = R2.hooksComponent thisModule "renderPublic" cpt
   where
     cpt {} _ = do
       reload <- R.useState' 0
@@ -87,7 +91,7 @@ publicLayout :: Record PublicProps -> R.Element
 publicLayout props = R.createElement publicLayoutCpt props []
 
 publicLayoutCpt :: R.Component PublicProps
-publicLayoutCpt = R.hooksComponent "[G.C.N.H.Public.publicLayout" cpt
+publicLayoutCpt = R2.hooksComponent thisModule "publicLayout" cpt
   where
     cpt {publicDatas} _ = do
       pure $ H.span {}

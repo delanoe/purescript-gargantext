@@ -24,6 +24,8 @@ import Gargantext.Prelude
 import Gargantext.Utils.HighlightJS as HLJS
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.CodeEditor"
+
 type Code = String
 type Html = String
 type Error = String
@@ -105,7 +107,7 @@ codeEditor p = R.createElement codeEditorCpt p []
 -- The overlay is to provide seamless syntax highlighting on top of the textarea.
 -- I took the idea from: https://github.com/satya164/react-simple-code-editor
 codeEditorCpt :: R.Component Props
-codeEditorCpt = R.hooksComponent "G.C.CE.CodeEditor" cpt
+codeEditorCpt = R2.hooksComponent thisModule "codeEditor" cpt
   where
     cpt {code, defaultCodeType, onChange} _ = do
       controls <- initControls code defaultCodeType
@@ -202,7 +204,7 @@ toolbar :: Record ToolbarProps -> R.Element
 toolbar p = R.createElement toolbarCpt p []
 
 toolbarCpt :: R.Component ToolbarProps
-toolbarCpt = R.hooksComponent "G.C.CE.toolbar" cpt
+toolbarCpt = R2.hooksComponent thisModule "toolbar" cpt
   where
     cpt props@{controls: {codeType, error, viewType}} _ = do
       pure $
@@ -231,7 +233,7 @@ errorComponent :: Record ErrorComponentProps -> R.Element
 errorComponent p = R.createElement errorComponentCpt p []
 
 errorComponentCpt :: R.Component ErrorComponentProps
-errorComponentCpt = R.hooksComponent "G.C.CE.ErrorComponent" cpt
+errorComponentCpt = R2.hooksComponent thisModule "errorComponent" cpt
   where
     cpt {error: (Nothing /\ _)} _ = pure $ H.div {} []
     cpt {error: ((Just error) /\ _)} _ = do
@@ -248,7 +250,7 @@ codeTypeSelector :: Record CodeTypeSelectorProps -> R.Element
 codeTypeSelector p = R.createElement codeTypeSelectorCpt p []
 
 codeTypeSelectorCpt :: R.Component CodeTypeSelectorProps
-codeTypeSelectorCpt = R.hooksComponent "G.C.CE.CodeTypeSelector" cpt
+codeTypeSelectorCpt = R2.hooksComponent thisModule "codeTypeSelector" cpt
   where
     cpt {codeType, onChange} _ = do
       pure $ R2.select { className: "form-control"
@@ -284,7 +286,7 @@ viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
 viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
 
 viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
-viewTypeSelectorCpt = R.hooksComponent "G.C.CE.ViewTypeSelector" cpt
+viewTypeSelectorCpt = R2.hooksComponent thisModule "viewTypeSelector" cpt
   where
     cpt {state} _ =
       pure $ H.div { className: "btn-group" } [

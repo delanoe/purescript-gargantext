@@ -24,6 +24,9 @@ import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts"
 
 display :: String -> Array R.Element -> R.Element
 display title elems =
@@ -80,7 +83,7 @@ contactInfoItem :: Record ContactInfoItemProps -> R.Element
 contactInfoItem props = R.createElement contactInfoItemCpt props []
 
 contactInfoItemCpt :: R.Component ContactInfoItemProps
-contactInfoItemCpt = R.hooksComponent "G.C.N.A.U.C.contactInfoItem" cpt
+contactInfoItemCpt = R2.hooksComponent thisModule "contactInfoItem" cpt
   where
     cpt {hyperdata, label, lens, onUpdateHyperdata, placeholder} _ = do
       isEditing <- R.useState' false
@@ -154,7 +157,7 @@ userLayout :: Record LayoutProps -> R.Element
 userLayout props = R.createElement userLayoutCpt props []
 
 userLayoutCpt :: R.Component LayoutProps
-userLayoutCpt = R.hooksComponent "G.C.N.A.U.C.userLayout" cpt
+userLayoutCpt = R2.hooksComponent thisModule "userLayout" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       let sid = sessionId session
@@ -165,7 +168,7 @@ userLayoutWithKey :: Record KeyLayoutProps -> R.Element
 userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
-userLayoutWithKeyCpt = R.hooksComponent "G.C.N.A.U.C.userLayoutWithKey" cpt
+userLayoutWithKeyCpt = R2.hooksComponent thisModule "userLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       reload <- R.useState' 0
@@ -214,7 +217,7 @@ annuaireUserLayout :: Record AnnuaireLayoutProps -> R.Element
 annuaireUserLayout props = R.createElement annuaireUserLayoutCpt props []
 
 annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
-annuaireUserLayoutCpt = R.hooksComponent "G.C.Nodes.Annuaire.User.Contacts.annuaireUserLayout" cpt
+annuaireUserLayoutCpt = R2.hooksComponent thisModule "annuaireUserLayout" cpt
   where
     cpt {annuaireId, frontends, nodeId, session} _ = do
       useLoader nodeId (getAnnuaireContact session annuaireId) $

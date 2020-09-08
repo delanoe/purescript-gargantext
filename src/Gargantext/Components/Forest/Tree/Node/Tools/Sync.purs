@@ -13,6 +13,9 @@ import Gargantext.Components.NgramsTable.API as NTAPI
 import Gargantext.Prelude (Unit, bind, const, discard, pure, unit, ($), (<>), (==))
 import Gargantext.Types as GT
 import Gargantext.Sessions (Session)
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.Sync"
 
 
 -- | Sync Node (Graph)
@@ -27,7 +30,7 @@ nodeActionsGraph :: Record NodeActionsGraphProps -> R.Element
 nodeActionsGraph p = R.createElement nodeActionsGraphCpt p []
 
 nodeActionsGraphCpt :: R.Component NodeActionsGraphProps
-nodeActionsGraphCpt = R.hooksComponent "G.C.F.T.N.B.nodeActionsGraph" cpt
+nodeActionsGraphCpt = R2.hooksComponent thisModule "nodeActionsGraph" cpt
   where
     cpt { id, graphVersions, session, triggerRefresh } _ = do
       pure $ H.div { className: "node-actions" } [
@@ -47,7 +50,7 @@ graphUpdateButton :: Record GraphUpdateButtonProps -> R.Element
 graphUpdateButton p = R.createElement graphUpdateButtonCpt p []
 
 graphUpdateButtonCpt :: R.Component GraphUpdateButtonProps
-graphUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.graphUpdateButton" cpt
+graphUpdateButtonCpt = R2.hooksComponent thisModule "graphUpdateButton" cpt
   where
     cpt { id, session, triggerRefresh } _ = do
       enabled <- R.useState' true
@@ -83,7 +86,7 @@ nodeActionsNodeList :: Record NodeActionsNodeListProps -> R.Element
 nodeActionsNodeList p = R.createElement nodeActionsNodeListCpt p []
 
 nodeActionsNodeListCpt :: R.Component NodeActionsNodeListProps
-nodeActionsNodeListCpt = R.hooksComponent "G.C.F.T.N.B.nodeActionsNodeList" cpt
+nodeActionsNodeListCpt = R2.hooksComponent thisModule "nodeActionsNodeList" cpt
   where
     cpt props _ = do
       pure $ H.div { className: "node-actions" } [
@@ -102,7 +105,7 @@ nodeListUpdateButton :: Record NodeListUpdateButtonProps -> R.Element
 nodeListUpdateButton p = R.createElement nodeListUpdateButtonCpt p []
 
 nodeListUpdateButtonCpt :: R.Component NodeListUpdateButtonProps
-nodeListUpdateButtonCpt = R.hooksComponent "G.C.F.T.N.B.nodeListUpdateButton" cpt
+nodeListUpdateButtonCpt = R2.hooksComponent thisModule "nodeListUpdateButton" cpt
   where
     cpt { listId, nodeId, nodeType, session, triggerRefresh } _ = do
       enabled <- R.useState' true

@@ -20,6 +20,9 @@ import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.Graph"
 
 type OnProps  = ()
 
@@ -44,7 +47,7 @@ graph :: forall s fa2. Record (Props s fa2) -> R.Element
 graph props = R.createElement graphCpt props []
 
 graphCpt :: forall s fa2. R.Component (Props s fa2)
-graphCpt = R.hooksComponent "G.C.Graph" cpt
+graphCpt = R2.hooksComponent thisModule "graph" cpt
   where
     cpt props _ = do
       stageHooks props

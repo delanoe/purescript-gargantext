@@ -17,6 +17,8 @@ import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
 import Gargantext.Types (Reload, Handed(..))
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.Forest"
+
 type Props =
   ( frontends :: Frontends
   , handed    :: Handed
@@ -30,7 +32,7 @@ forest :: Record Props -> R.Element
 forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
-forestCpt = R.hooksComponent "G.C.Forest.forest" cpt where
+forestCpt = R2.hooksComponent thisModule "forest" cpt where
   cpt { frontends, handed, reload: extReload, route, sessions, showLogin } _ = do
     -- NOTE: this is a hack to reload the tree view on demand
     reload     <- R.useState' (0 :: Reload)

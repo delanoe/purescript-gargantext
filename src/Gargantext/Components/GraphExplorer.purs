@@ -37,6 +37,8 @@ import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
+thisModule = "Gargantext.Components.GraphExplorer"
+
 type LayoutProps =
   ( frontends :: Frontends
   , graphId :: GET.GraphId
@@ -60,7 +62,7 @@ explorerLayout :: Record LayoutProps -> R.Element
 explorerLayout props = R.createElement explorerLayoutCpt props []
 
 explorerLayoutCpt :: R.Component LayoutProps
-explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
+explorerLayoutCpt = R2.hooksComponent thisModule "explorerLayout" cpt
   where
     cpt props _ = do
       graphVersion <- R.useState' 0
@@ -70,7 +72,7 @@ explorerLayoutCpt = R.hooksComponent "G.C.GraphExplorer.explorerLayout" cpt
 explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
-    el = R.hooksComponent "G.C.GE.explorerLayoutView" cpt
+    el = R2.hooksComponent thisModule "explorerLayoutView" cpt
     cpt props@{ graphId, session } _ = do
       useLoader graphId (getNodes session graphVersion) handler
       where
@@ -85,7 +87,7 @@ explorer :: Record Props -> R.Element
 explorer props = R.createElement explorerCpt props []
 
 explorerCpt :: R.Component Props
-explorerCpt = R.hooksComponent "G.C.GraphExplorer.explorer" cpt
+explorerCpt = R2.hooksComponent thisModule "explorer" cpt
   where
     cpt props@{ frontends
               , graph
@@ -250,7 +252,7 @@ graphView :: Record GraphProps -> R.Element
 graphView props = R.createElement graphViewCpt props []
 
 graphViewCpt :: R.Component GraphProps
-graphViewCpt = R.hooksComponent "GraphView" cpt
+graphViewCpt = R2.hooksComponent thisModule "graphView" cpt
   where
     cpt { controls
         , elRef

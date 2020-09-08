@@ -21,6 +21,9 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Utils.Reactix as R2
+
+thisModule = "Gargantext.Components.GraphExplorer.ToggleButton"
 
 type Props = (
     state :: R.State Boolean
@@ -33,7 +36,7 @@ toggleButton :: Record Props -> R.Element
 toggleButton props = R.createElement toggleButtonCpt props []
 
 toggleButtonCpt :: R.Component Props
-toggleButtonCpt = R.hooksComponent "ToggleButton" cpt
+toggleButtonCpt = R2.hooksComponent thisModule "toggleButton" cpt
   where
     cpt {state, onMessage, offMessage, onClick} _ = do
       let (toggled /\ _) = state
@@ -64,7 +67,7 @@ edgesToggleButton :: Record EdgesButtonProps -> R.Element
 edgesToggleButton props = R.createElement edgesToggleButtonCpt props []
 
 edgesToggleButtonCpt :: R.Component EdgesButtonProps
-edgesToggleButtonCpt = R.hooksComponent "EdgesToggleButton" cpt
+edgesToggleButtonCpt = R2.hooksComponent thisModule "edgesToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
       pure $
@@ -105,7 +108,7 @@ pauseForceAtlasButton :: Record ForceAtlasProps -> R.Element
 pauseForceAtlasButton props = R.createElement pauseForceAtlasButtonCpt props []
 
 pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
-pauseForceAtlasButtonCpt = R.hooksComponent "ForceAtlasToggleButton" cpt
+pauseForceAtlasButtonCpt = R2.hooksComponent thisModule "forceAtlasToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
       pure $
@@ -134,7 +137,7 @@ treeToggleButton state =
 sidebarToggleButton :: R.State GET.SidePanelState -> R.Element
 sidebarToggleButton (state /\ setState) = R.createElement el {} []
   where
-    el = R.hooksComponent "SidebarToggleButton" cpt
+    el = R2.hooksComponent thisModule "sidebarToggleButton" cpt
     cpt {} _ = do
       pure $
         H.span {}

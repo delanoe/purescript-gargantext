@@ -1,5 +1,4 @@
-module Gargantext.Components.Forest.Tree.Node.Tools 
-  where
+module Gargantext.Components.Forest.Tree.Node.Tools where
 
 import Data.Maybe (fromMaybe, Maybe(..))
 import Data.Nullable (null)
@@ -24,6 +23,8 @@ import Gargantext.Types as GT
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.ReactTooltip as ReactTooltip
+
+thisModule = "Gargantext.Components.Forest.Tree.Node.Tools"
 
 ------------------------------------------------------------------------
 
@@ -63,7 +64,7 @@ type TextInputBoxProps =
 textInputBox :: Record TextInputBoxProps -> R.Element
 textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R.createElement el p []
   where
-    el = R.hooksComponent (boxName <> "Box") cpt
+    el = R2.hooksComponent thisModule (boxName <> "Box") cpt
     cpt {id, text} _ = do
       renameNodeName <- R.useState' text
       pure $ H.div {className: "from-group row-no-padding"}
@@ -110,7 +111,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
           launchAff_ $ dispatch ( boxAction newName )
 textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
   where
-    el = R.hooksComponent (boxName <> "Box") cpt
+    el = R2.hooksComponent thisModule (boxName <> "Box") cpt
     cpt {text} _ = pure $ H.div {} []
 
 -- | END Rename Box
@@ -278,7 +279,7 @@ nodeLink :: Record NodeLinkProps -> R.Element
 nodeLink p = R.createElement nodeLinkCpt p []
 
 nodeLinkCpt :: R.Component NodeLinkProps
-nodeLinkCpt = R.hooksComponent "G.C.F.T.N.T.nodeLink" cpt
+nodeLinkCpt = R2.hooksComponent thisModule "nodeLink" cpt
   where
     cpt { frontends, id, isSelected, name, nodeType, session, handed} _ = do
       popoverRef <- R.useRef null
@@ -315,7 +316,7 @@ nodeText :: Record NodeTextProps -> R.Element
 nodeText p = R.createElement nodeTextCpt p []
 
 nodeTextCpt :: R.Component NodeTextProps
-nodeTextCpt = R.hooksComponent "G.C.F.T.N.T.nodeText" cpt
+nodeTextCpt = R2.hooksComponent thisModule "nodeText" cpt
   where
     cpt { isSelected: true, name } _ = do
       pure $ H.u {} [
