@@ -187,7 +187,7 @@ explorerCpt = R2.hooksComponent thisModule "explorer" cpt
     mainLayout Types.LeftHanded (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']
 
     outer = RH.div { className: "col-md-12" }
-    inner h = RH.div { className: "container-fluid " <> hClass, style: { paddingTop: "90px" } }
+    inner h = RH.div { className: "container-fluid " <> hClass }
       where
         hClass = case h of
           Types.LeftHanded -> "lefthanded"

@@ -14,9 +14,12 @@
 #graph-explorer #toggle-container {
   position: absolute;
   z-index: 999;
-  right: 15px;
+  right: 25%;
   top: 10px;
-  width: 70%;
+  width: 50%;
+}
+#graph-explorer #toggle-container .container-fluid {
+  padding-top: 90px;
 }
 #graph-explorer #controls-container {
   position: absolute;
@@ -50,6 +53,7 @@
   border: 1px white solid;
   background-color: white;
   width: 28%;
+  z-index: 15;
 }
 #graph-explorer #sp-container #myTab {
   marginBottom: 18px;
