@@ -118,24 +118,25 @@ subTreeTreeViewCpt = R2.hooksComponent thisModule "subTreeTreeViewCpt" cpt
                     GT.LeftHanded  -> A.reverse
                     GT.RightHanded -> identity
 
-            pure $ H.div {} $ (ordering [ H.div { className: "node " <> GT.fldr nodeType true} []
-                                        , H.span { style : if validNodeType
-                                                                    then { color : "blue"
-                                                                         , "text-decoration": "underline"
-                                                                         }
-                                                                    else { color : ""
-                                                                         , "text-decoration": "none"
-                                                                         }
-                                                        , on: { click: onClick }
-                                                        }
-                                                        [ nodeText { isSelected: isSelected targetId valAction
-                                                                               , name: " " <> name
-                                                                               , handed
-                                                                               }
-                                                        ]
-                                       ]
-                            )
-                            <> children
+            pure $ H.div {} $ ordering [
+              H.div { className: "node " <> GT.fldr nodeType true} [
+                H.span { style : if validNodeType then
+                                   { color : "blue"
+                                   , "text-decoration": "underline"
+                                   }
+                                  else { color : ""
+                                       , "text-decoration": "none"
+                                       }
+                       , on: { click: onClick }
+                       } [
+                  nodeText { isSelected: isSelected targetId valAction
+                           , name: " " <> name
+                           , handed
+                           }
+                , H.span { className: "children" } children
+                ]
+              ]
+            ]
       where
 
         SubTreeParams { valitypes } = subTreeParams

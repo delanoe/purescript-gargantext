@@ -63,4 +63,11 @@
   opacity: var(--over50, 0);
 }
 
+#node-popup-tooltip .tree .node {
+  margin-top: 5px;
+}
+#node-popup-tooltip .tree .children .node {
+  padding-left: 15px;
+}
+
 /*# sourceMappingURL=Tree.css.map */
