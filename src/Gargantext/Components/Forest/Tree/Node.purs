@@ -49,9 +49,12 @@ type NodeMainSpanProps =
   | CommonProps
   )
 
-nodeMainSpan :: Record NodeMainSpanProps
-             -> R.Element
-nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createElement el p []
+type IsLeaf = Boolean
+
+nodeMainSpan :: IsLeaf
+            -> Record NodeMainSpanProps
+            -> R.Element
+nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.createElement el p []
   where
     el = R2.hooksComponent thisModule "nodeMainSpan" cpt
     cpt props@{id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks }} _ = do
@@ -69,7 +72,7 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
       pure $ H.span (dropProps droppedFile isDragOver)
            $ ordering
              [ folderIcon  nodeType folderOpen
-             , chevronIcon handed nodeType folderOpen
+             , chevronIcon isLeaf handed nodeType folderOpen
              , nodeLink { frontends
                         , id
                         , isSelected: mCurrentRoute
@@ -123,17 +126,20 @@ nodeMainSpan p@{ dispatch, folderOpen, frontends, handed, session } = R.createEl
                                 then show session
                                 else name
 
-    chevronIcon handed' nodeType folderOpen'@(open /\ _) =
-      H.a { className: "chevron-icon"
-          , onClick: R2.effToggler folderOpen'
-          }
-          [ H.i {
-               className: if open
-                          then "fa fa-chevron-down"
-                          else if handed' == GT.RightHanded
-                                 then "fa fa-chevron-right"
-                                 else "fa fa-chevron-left"
-               } [] ]
+    chevronIcon isLeaf handed' nodeType folderOpen'@(open /\ _) =
+      if isLeaf
+         then
+           H.a { className: "chevron-icon"
+               , onClick: R2.effToggler folderOpen'
+               }
+               [ H.i {
+                    className: if open
+                               then "fa fa-chevron-down"
+                               else if handed' == GT.RightHanded
+                                      then "fa fa-chevron-right"
+                                      else "fa fa-chevron-left"
+                    } [] ]
+           else H.div {} []
 
     folderIcon nodeType folderOpen'@(open /\ _) =
       H.a { className: "folder-icon"

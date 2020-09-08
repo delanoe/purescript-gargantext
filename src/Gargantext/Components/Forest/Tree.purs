@@ -31,7 +31,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTr
 import Gargantext.Components.Forest.Tree.Node.Tools.Task (Tasks, tasksStruct)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>), (==))
+import Gargantext.Prelude (Unit, bind, discard, map, pure, void, ($), (+), (<>), (==), (<<<), not)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (OpenNodes, Session, mkNodeId, get)
@@ -200,7 +200,8 @@ toHtml p@{ asyncTasks
         let withId (NTree (LNode {id: id'}) _) = id'
 
         pure $ H.li {} $
-          [ nodeMainSpan { id
+          [ nodeMainSpan (isLeaf ary) 
+                         { id
                          , dispatch: pAction
                          , folderOpen
                          , frontends
@@ -222,6 +223,9 @@ toHtml p@{ asyncTasks
                           , handed
                           }
                         )
+
+isLeaf :: Array FTree -> Boolean
+isLeaf = not <<< A.null
 
 type ChildNodesProps =
   ( asyncTasks :: R.State GAT.Storage
