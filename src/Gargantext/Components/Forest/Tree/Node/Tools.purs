@@ -36,9 +36,7 @@ panel bodies submit =
     where
       panelBody bs =
           H.div {className: "panel-body"}
-          [ H.div { className: "row"
-                  , style: {"margin":"10px"}
-                  }
+          [ H.div { className: "row spacer" }
                   [ H.div { className: "col-md-12" } bs
                           -- TODO add type for text or form here
                           -- [ H.form {className: "form-horizontal"} bs ]

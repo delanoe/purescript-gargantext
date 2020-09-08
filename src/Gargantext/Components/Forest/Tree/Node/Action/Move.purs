@@ -4,6 +4,9 @@ module Gargantext.Components.Forest.Tree.Node.Action.Move
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
@@ -11,8 +14,6 @@ import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, put_)
 import Gargantext.Types as GT
-import Reactix as R
-import Reactix.DOM.HTML as H
 
 moveNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
 moveNodeReq session fromId toId =
@@ -35,10 +36,10 @@ moveNodeCpt = R.hooksComponent "G.C.F.T.N.A.M.moveNode" cpt
 
       pure $ panel [ subTreeView { action
                                  , dispatch
+                                 , handed
                                  , id
                                  , nodeType
                                  , session
                                  , subTreeParams
-                                 , handed
                                  }
               ] button
