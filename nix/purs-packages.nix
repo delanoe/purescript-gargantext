@@ -118,24 +118,6 @@
       sha256 = "0mbpb8xr9a7a4bvawhki7js5cbv7c0lv0vdwb6r8nmv6b61gzg27";
     };
   };
-  "codec" = {
-    name = "codec";
-    version = "v3.0.0";
-    src = pkgs.fetchgit {
-      url = "https://github.com/garyb/purescript-codec.git";
-      rev = "v3.0.0";
-      sha256 = "0jk0j4yss3d6scyb715p926ld8rmsfnv1h85zxpywv85xdingw9w";
-    };
-  };
-  "codec-argonaut" = {
-    name = "codec-argonaut";
-    version = "v7.1.0";
-    src = pkgs.fetchgit {
-      url = "https://github.com/garyb/purescript-codec-argonaut.git";
-      rev = "v7.1.0";
-      sha256 = "13aqci36xgxbahgpcxf2hsq9nsp0ljjd7nkzvpwxhhvy4n8yk1kk";
-    };
-  };
   "colors" = {
     name = "colors";
     version = "v5.0.0";
@@ -1070,15 +1052,6 @@
       url = "https://github.com/purescript/purescript-validation.git";
       rev = "v4.2.0";
       sha256 = "03irk6n7jgsimhp9ckrg2ns7qbc8d383ls3sslxgir5mr8xdc44g";
-    };
-  };
-  "variant" = {
-    name = "variant";
-    version = "v6.0.1";
-    src = pkgs.fetchgit {
-      url = "https://github.com/natefaubion/purescript-variant.git";
-      rev = "v6.0.1";
-      sha256 = "0cn227q57zbqm6r1aw5kvnp1x8zkc1x7wx28yyz311lmy7k1mkql";
     };
   };
   "versions" = {
