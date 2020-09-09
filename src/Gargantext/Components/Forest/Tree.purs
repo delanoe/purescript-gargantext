@@ -200,7 +200,7 @@ toHtml p@{ asyncTasks
         let withId (NTree (LNode {id: id'}) _) = id'
 
         pure $ H.li {} $
-          [ nodeMainSpan (isLeaf ary) 
+          [ nodeMainSpan (A.null ary) 
                          { id
                          , dispatch: pAction
                          , folderOpen
@@ -224,8 +224,6 @@ toHtml p@{ asyncTasks
                           }
                         )
 
-isLeaf :: Array FTree -> Boolean
-isLeaf = not <<< A.null
 
 type ChildNodesProps =
   ( asyncTasks :: R.State GAT.Storage

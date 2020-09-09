@@ -128,7 +128,8 @@ nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.c
 
     chevronIcon isLeaf handed' nodeType folderOpen'@(open /\ _) =
       if isLeaf
-         then
+         then H.div {} []
+         else
            H.a { className: "chevron-icon"
                , onClick: R2.effToggler folderOpen'
                }
@@ -139,7 +140,6 @@ nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.c
                                       then "fa fa-chevron-right"
                                       else "fa fa-chevron-left"
                     } [] ]
-           else H.div {} []
 
     folderIcon nodeType folderOpen'@(open /\ _) =
       H.a { className: "folder-icon"
