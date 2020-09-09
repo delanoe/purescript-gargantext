@@ -5,15 +5,17 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Uncurried (mkEffectFn1)
 import Effect.Aff (Aff)
+import React.SyntheticEvent     as E
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Forest.Tree.Node.Action (Props, Action, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (map, pure, show, ($), (&&), (/=), (<>), const, (==), identity{-, discard, bind, void-})
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
@@ -156,9 +158,11 @@ subTreeTreeViewCpt = R2.hooksComponent thisModule "subTreeTreeViewCpt" cpt
             Nothing                   -> false
             (Just (SubTreeOut {out})) -> n == out
 
-        onClick _ = mkEffectFn1 $ \_ -> case validNodeType of
-                         false -> setAction (const $ setTreeOut valAction Nothing)
-                         true  -> setAction (const $ setTreeOut valAction (Just $ SubTreeOut { in: id, out:targetId}))
+        onClick e = do
+          let action = if validNodeType then Nothing else Just $ SubTreeOut { in: id, out: targetId }
+          E.preventDefault  e
+          E.stopPropagation e
+          setAction $ const $ setTreeOut valAction action
 
 
 --------------------------------------------------------------------------------------------
