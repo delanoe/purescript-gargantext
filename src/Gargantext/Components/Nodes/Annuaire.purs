@@ -7,12 +7,13 @@ import Data.List as L
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
+import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
@@ -92,7 +93,7 @@ annuaireCpt = R2.hooksComponent thisModule "annuaire" cpt
       cacheState <- R.useState' NT.CacheOn
 
       pure $ R.fragment
-        [ T.tableHeaderLayout { afterCacheStateChange: \_ -> pure unit
+        [ T.tableHeaderLayout { afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
                               , cacheState
                               , date
                               , desc: name

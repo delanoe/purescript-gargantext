@@ -5,11 +5,13 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
+import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 --------------------------------------------------------
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Loader (loader)
+import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
@@ -64,7 +66,7 @@ textsLayoutWithKeyCpt = R2.hooksComponent thisModule "textsLayoutWithKey" cpt
               title = "Corpus " <> name
 
           R.fragment [
-              Table.tableHeaderLayout { afterCacheStateChange: \_ -> pure unit
+              Table.tableHeaderLayout { afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
                                       , cacheState
                                       , date
                                       , desc
