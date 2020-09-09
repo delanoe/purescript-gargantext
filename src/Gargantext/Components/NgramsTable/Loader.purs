@@ -17,6 +17,13 @@ import Gargantext.Components.NgramsTable.Core (Version(..), Versioned(..))
 import Gargantext.Utils.CacheAPI as GUC
 
 
+cacheName = "ngrams-cache-api-loader"
+
+
+clearCache :: Unit -> Aff Unit
+clearCache _ = GUC.delete $ GUC.CacheName cacheName
+
+
 type LoaderWithCacheAPIProps path res ret = (
     cacheEndpoint :: path -> Aff Version
   , handleResponse :: Versioned res -> ret
@@ -62,7 +69,6 @@ useCachedAPILoaderEffect { cacheEndpoint
     else do
       R.setRef oPath path
 
-      let cacheName = "ngrams-cache-api-loader"
       let req = mkRequest path
       -- log2 "[useCachedLoader] mState" mState
       launchAff_ $ do
@@ -77,7 +83,7 @@ useCachedAPILoaderEffect { cacheEndpoint
           --   log "[useCachedAPILoaderEffect] versions dont match"
           --   log2 "[useCachedAPILoaderEffect] cached version" version
           --   log2 "[useCachedAPILoaderEffect] real version" cacheReal
-          _ <- GUC.delete cache req
+          _ <- GUC.deleteReq cache req
           vr@(Versioned { version, "data": d }) <- GUC.cachedJson cache req
           if version == cacheReal then
             pure vr

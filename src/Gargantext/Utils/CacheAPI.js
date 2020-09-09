@@ -13,7 +13,13 @@ exports._openCache = function(cacheName) {
     }
 }
 
-exports._delete = function(cache) {
+exports._delete = function(cacheName) {
+    return function() {
+        return caches.delete(cacheName);
+    }
+}
+
+exports._deleteReq = function(cache) {
     return function(req) {
         return function() {
             return cache.delete(req);

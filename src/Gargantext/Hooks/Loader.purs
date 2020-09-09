@@ -130,7 +130,7 @@ useCachedAPILoaderEffect { cacheEndpoint
         val <- if hash == cacheReal then
           pure hr
         else do
-          _ <- GUC.delete cache req
+          _ <- GUC.deleteReq cache req
           hr@(HashedResponse { hash, value }) <- GUC.cachedJson cache req
           if hash == cacheReal then
             pure hr

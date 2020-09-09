@@ -63,6 +63,9 @@ makeGetRequest session@(Session { token }) p = makeTokenRequest url (Just token)
 openCache :: CacheName -> Aff Cache
 openCache (CacheName cacheName) = toAffE $ _openCache cacheName
 
+delete :: CacheName -> Aff Unit
+delete (CacheName cacheName) = toAffE $ _delete cacheName
+
 add :: Cache -> Request -> Aff Unit
 add cache req = toAffE $ _add cache req
 
@@ -100,8 +103,8 @@ cachedJson cache req = do
     Left err -> throwError $ error $ "[cachedJson] decodeJson affResp.body: " <> show err
     Right b -> pure b
 
-delete :: Cache -> Request -> Aff Unit
-delete cache req = toAffE $ _delete cache req
+deleteReq :: Cache -> Request -> Aff Unit
+deleteReq cache req = toAffE $ _deleteReq cache req
 
 
 -- No cache: raw API calls
@@ -123,7 +126,8 @@ pureJson req = do
 foreign import _makeRequest :: forall options trash. Union options trash M.Options =>
                                M.URL -> { method :: M.Method, headers :: M.Headers | options } -> Request
 foreign import _openCache :: String -> Effect (Promise Cache)
-foreign import _delete :: Cache -> Request -> Effect (Promise Unit)
+foreign import _delete :: String -> Effect (Promise Unit)
+foreign import _deleteReq :: Cache -> Request -> Effect (Promise Unit)
 foreign import _add :: Cache -> Request -> Effect (Promise Unit)
 foreign import _match :: Cache -> Request -> Effect (Promise F.Foreign)
 foreign import _fetch :: Request -> Effect (Promise F.Foreign)

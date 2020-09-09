@@ -8,11 +8,13 @@ import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Prelude (bind, const, identity, pure, ($), (<$>), (<>))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Prelude
+
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
+import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
@@ -87,15 +89,22 @@ annuaireCpt = R2.hooksComponent thisModule "annuaire" cpt
     cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ = do
       pagePath <- R.useState' $ initialPagePath (fst path)
 
+      cacheState <- R.useState' NT.CacheOn
+
       pure $ R.fragment
-        [ T.tableHeaderLayout headerProps
+        [ T.tableHeaderLayout { afterCacheStateChange: \_ -> pure unit
+                              , cacheState
+                              , date
+                              , desc: name
+                              , query: ""
+                              , title: name
+                              , user: "" }
           , H.p {} []
           , H.div {className: "col-md-3"}
             [ H.text "    Filter ", H.input { className: "form-control", style } ]
           , H.br {}
           , pageLayout { info, session, pagePath, frontends} ]
       where
-        headerProps = { title: name, desc: name, query: "", date, user: ""}
         date = "Last update: " <> date'
         style = {width: "250px", display: "inline-block"}
         initialPagePath nodeId = {nodeId, params: T.initialParams}

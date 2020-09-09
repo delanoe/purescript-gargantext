@@ -18,6 +18,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
+import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
@@ -173,12 +174,14 @@ userLayoutWithKeyCpt = R2.hooksComponent thisModule "userLayoutWithKey" cpt
     cpt { frontends, nodeId, session } _ = do
       reload <- R.useState' 0
 
+      cacheState <- R.useState' NT.CacheOn
+
       useLoader {nodeId, reload: fst reload, session} getContactWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
-          H.ul { className: "col-md-12 list-group" }
-          [ display (fromMaybe "no name" name) (contactInfos hyperdata (onUpdateHyperdata reload))
-          , Tabs.tabs {frontends, nodeId, contactData, session} ]
-
+          H.ul { className: "col-md-12 list-group" } [
+            display (fromMaybe "no name" name) (contactInfos hyperdata (onUpdateHyperdata reload))
+          , Tabs.tabs { cacheState, contactData, frontends, nodeId, session }
+          ]
       where
         onUpdateHyperdata :: R.State Int -> HyperdataUser -> Effect Unit
         onUpdateHyperdata (_ /\ setReload) hd = do
@@ -219,12 +222,14 @@ annuaireUserLayout props = R.createElement annuaireUserLayoutCpt props []
 annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
 annuaireUserLayoutCpt = R2.hooksComponent thisModule "annuaireUserLayout" cpt
   where
-    cpt {annuaireId, frontends, nodeId, session} _ = do
+    cpt { annuaireId, frontends, nodeId, session } _ = do
+      cacheState <- R.useState' NT.CacheOn
+
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
           [ display (fromMaybe "no name" name) (contactInfos hyperdata onUpdateHyperdata)
-          , Tabs.tabs {frontends, nodeId, contactData, session} ]
+          , Tabs.tabs { cacheState, contactData, frontends, nodeId, session } ]
 
       where
         onUpdateHyperdata :: HyperdataUser -> Effect Unit
