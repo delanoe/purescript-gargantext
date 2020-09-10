@@ -121,14 +121,8 @@ subTreeTreeViewCpt = R2.hooksComponent thisModule "subTreeTreeViewCpt" cpt
                     GT.RightHanded -> identity
 
             pure $ H.div {} $ ordering [
-              H.div { className: "node " <> GT.fldr nodeType true} [
-                H.span { style : if validNodeType then
-                                   { color : "blue"
-                                   , "text-decoration": "underline"
-                                   }
-                                  else { color : ""
-                                       , "text-decoration": "none"
-                                       }
+              H.div { className: nodeClass validNodeType } [
+                H.span { className: "text"
                        , on: { click: onClick }
                        } [
                   nodeText { isSelected: isSelected targetId valAction
@@ -141,6 +135,10 @@ subTreeTreeViewCpt = R2.hooksComponent thisModule "subTreeTreeViewCpt" cpt
             ]
       where
 
+        nodeClass vnt = "node " <> GT.fldr nodeType true <> " " <> validNodeTypeClass
+          where
+            validNodeTypeClass = if vnt then "node-type-valid" else ""
+
         SubTreeParams { valitypes } = subTreeParams
 
         sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id')
@@ -152,7 +150,7 @@ subTreeTreeViewCpt = R2.hooksComponent thisModule "subTreeTreeViewCpt" cpt
 
         clickable    = if validNodeType then "clickable" else ""
 
-        ( valAction /\ setAction) = action
+        (valAction /\ setAction) = action
 
         isSelected n action' = case (subTreeOut action') of
             Nothing                   -> false

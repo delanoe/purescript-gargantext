@@ -1,11 +1,14 @@
 module Gargantext.Components.Nodes.Lists where
 
+import Effect.Aff (launchAff_)
 import Reactix as R
 ------------------------------------------------------------------------
+import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
 import Gargantext.Components.Nodes.Lists.Tabs as Tabs
+import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
@@ -46,13 +49,26 @@ listsLayoutWithKeyCpt = R2.hooksComponent thisModule "listsLayoutWithKey" cpt
     cpt { nodeId, session } _ = do
       let path = { nodeId, session }
 
+      cacheState <- R.useState' NT.CacheOn
+
       useLoader path loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode: NodePoly poly, defaultListId } ->
               let { date, hyperdata : Hyperdata h, name } = poly
                   CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
            in
-          R.fragment
-          [ Table.tableHeaderLayout
-            { title: "Corpus " <> name, desc, query, user:authors, date }
-         , Tabs.tabs {session, corpusId, corpusData}]
+          R.fragment [
+            Table.tableHeaderLayout {
+                afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
+              , cacheState
+              , date
+              , desc
+              , query
+              , title: "Corpus " <> name
+              , user: authors }
+          , Tabs.tabs {
+               cacheState
+             , corpusData
+             , corpusId
+             , session }
+          ]
 ------------------------------------------------------------------------

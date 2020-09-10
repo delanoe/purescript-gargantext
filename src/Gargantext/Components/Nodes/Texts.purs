@@ -5,15 +5,18 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
+import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 --------------------------------------------------------
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Loader (loader)
+import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..), getCorpusInfo, CorpusInfo(..))
+import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
@@ -53,16 +56,25 @@ textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = R2.hooksComponent thisModule "textsLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, session } _ = do
-      pure $ loader {session, nodeId} loadCorpusWithChild paint
-      where
-        paint corpusData@{corpusId, corpusNode, defaultListId} =
-          R.fragment [ Table.tableHeaderLayout headerProps, tabs' ]
-          where
-            NodePoly { name, date, hyperdata: Hyperdata h } = corpusNode
-            CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
-            tabs' = tabs {session, corpusId, corpusData, frontends}
-            title = "Corpus " <> name
-            headerProps = { title, desc, query, date, user:authors }
+      cacheState <- R.useState' NT.CacheOn
+
+      pure $ loader {session, nodeId} loadCorpusWithChild $
+        \corpusData@{ corpusId, corpusNode, defaultListId } -> do
+          let NodePoly { name, date, hyperdata: Hyperdata h } = corpusNode
+              CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
+              tabs' = tabs { corpusData, corpusId, frontends, session }
+              title = "Corpus " <> name
+
+          R.fragment [
+              Table.tableHeaderLayout { afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
+                                      , cacheState
+                                      , date
+                                      , desc
+                                      , query
+                                      , title
+                                      , user: authors }
+            , tabs'
+          ]
 
 data Mode = MoreLikeFav | MoreLikeTrash
 

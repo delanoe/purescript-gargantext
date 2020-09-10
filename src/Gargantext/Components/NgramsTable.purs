@@ -30,9 +30,11 @@ import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
+import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
 import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
 import Gargantext.Routes (SessionRoute(..)) as R
@@ -483,6 +485,7 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ fst <$> rows
 type MainNgramsTableProps =
   ( nodeId        :: Int
     -- ^ This node can be a corpus or contact.
+  , cacheState    :: R.State NT.CacheState
   , defaultListId :: Int
   , tabType       :: TabType
   , session       :: Session
@@ -496,19 +499,29 @@ mainNgramsTable props = R.createElement mainNgramsTableCpt props []
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = R2.hooksComponent thisModule "mainNgramsTable" cpt
   where
-    cpt props@{nodeId, defaultListId, session, tabNgramType, tabType, withAutoUpdate} _ = do
+    cpt props@{ cacheState, defaultListId, nodeId, session, tabNgramType, tabType, withAutoUpdate} _ = do
       let path = initialPageParams session nodeId [defaultListId] tabType
 
-      useLoaderWithCacheAPI {
-          cacheEndpoint: versionEndpoint props
-        , handleResponse
-        , mkRequest
-        , path
-        , renderer: \versioned -> mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
-        }
+      let render versioned = mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
+
+      case cacheState of
+        (NT.CacheOn /\ _) ->
+          useLoaderWithCacheAPI {
+              cacheEndpoint: versionEndpoint props
+            , handleResponse
+            , mkRequest
+            , path
+            , renderer: render
+            }
+        (NT.CacheOff /\ _) ->
+          useLoader path loader render
 
     versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
     versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
+
+    loader :: PageParams -> Aff VersionedNgramsTable
+    loader path@{ listIds, nodeId, session, tabType } =
+      get session $ R.GetNgramsTableAll { listIds, tabType } (Just nodeId)
 
     mkRequest :: PageParams -> GUC.Request
     mkRequest path@{ session } = GUC.makeGetRequest session $ url path
@@ -523,14 +536,6 @@ mainNgramsTableCpt = R2.hooksComponent thisModule "mainNgramsTable" cpt
             , termSizeFilter
             } = R.GetNgramsTableAll { listIds
                                     , tabType } (Just nodeId)
-            -- } = R.GetNgrams { limit
-            --                 , listIds
-            --                 , offset: Just offset
-            --                 , orderBy: convOrderBy <$> orderBy
-            --                 , searchQuery
-            --                 , tabType
-            --                 , termListFilter
-            --                 , termSizeFilter } (Just nodeId)
 
     handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
     handleResponse v = v
@@ -554,10 +559,6 @@ mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = R2.hooksComponent thisModule "mainNgramsTablePaint" cpt
   where
     cpt {path, tabNgramType, versioned, withAutoUpdate} _ = do
-      R.useEffect' $ do
-        let (Versioned v) = versioned
-        log2 "[mainNgramsTablePaint] versioned values" $ show v.data
-
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
 

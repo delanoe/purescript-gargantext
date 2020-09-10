@@ -8,10 +8,12 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
+
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
+import Gargantext.Components.Nodes.Lists.Types as NTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
@@ -41,10 +43,12 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps =
-  ( nodeId :: Int
+  ( cacheState :: R.State NTypes.CacheState
   , contactData :: ContactData
   , frontends :: Frontends
-  , session :: Session )
+  , nodeId :: Int
+  , session :: Session
+  )
 
 tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
@@ -52,10 +56,10 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = R2.hooksComponent thisModule "tabs" cpt
   where
-    cpt {frontends, nodeId, contactData: {defaultListId}, session} _ = do
+    cpt { cacheState, contactData: {defaultListId}, frontends, nodeId, session} _ = do
       active <- R.useState' 0
       pure $
-        Tab.tabs { tabs: tabs', selected: fst active }
+        Tab.tabs { selected: fst active, tabs: tabs' }
       where
         tabs' =
           [ "Documents"     /\ docs
@@ -65,9 +69,9 @@ tabsCpt = R2.hooksComponent thisModule "tabs" cpt
           , "Trash"         /\ docs -- TODO pass-in trash mode
           ]
           where
-            patentsView = {session, defaultListId, nodeId, mode: Patents}
-            booksView   = {session, defaultListId, nodeId, mode: Books}
-            commView    = {session, defaultListId, nodeId, mode: Communication}
+            patentsView = { cacheState, defaultListId, mode: Patents, nodeId, session }
+            booksView   = { cacheState, defaultListId, mode: Books, nodeId, session }
+            commView    = { cacheState, defaultListId, mode: Communication, nodeId, session }
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
@@ -79,15 +83,24 @@ tabsCpt = R2.hooksComponent thisModule "tabs" cpt
 
 
 type NgramsViewTabsProps =
-  ( session :: Session
-  , mode :: Mode
+  ( cacheState :: R.State NTypes.CacheState
   , defaultListId :: Int
-  , nodeId :: Int )
+  , mode :: Mode
+  , nodeId :: Int
+  , session :: Session
+  )
 
 ngramsView :: Record NgramsViewTabsProps -> R.Element
-ngramsView {session,mode, defaultListId, nodeId} =
-  NT.mainNgramsTable
-  { nodeId, defaultListId, tabType, session, tabNgramType, withAutoUpdate: false }
+ngramsView { cacheState, defaultListId, mode, nodeId, session } =
+  NT.mainNgramsTable {
+      cacheState
+    , defaultListId
+    , nodeId
+    , tabType
+    , session
+    , tabNgramType
+    , withAutoUpdate: false
+    }
   where
     tabNgramType = modeTabType' mode
     tabType      = TabPairing $ TabNgramType $ modeTabType mode

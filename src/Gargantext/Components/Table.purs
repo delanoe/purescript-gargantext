@@ -9,11 +9,14 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
+import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Search
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix (effectLink)
-import Gargantext.Components.Search
 
 thisModule = "Gargantext.Components.Table"
 
@@ -87,10 +90,12 @@ stateParams {pageSize, page, orderBy, searchType} = {offset, limit, orderBy, sea
     offset = limit * (page - 1)
 
 type TableHeaderLayoutProps =
-  ( title :: String
+  ( afterCacheStateChange :: Unit -> Effect Unit
+  , cacheState :: R.State NT.CacheState
+  , date  :: String
   , desc  :: String
   , query :: String
-  , date  :: String
+  , title :: String
   , user  :: String
   )
 
@@ -104,7 +109,7 @@ tableHeaderLayout props = R.createElement tableHeaderLayoutCpt props []
 tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
 tableHeaderLayoutCpt = R2.hooksComponent thisModule "tableHeaderLayout" cpt
   where
-    cpt {title, desc, query, date, user} _ =
+    cpt { afterCacheStateChange, cacheState, date, desc, query, title, user } _ =
       pure $ R.fragment
       [ R2.row
         [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
@@ -115,27 +120,45 @@ tableHeaderLayoutCpt = R2.hooksComponent thisModule "tableHeaderLayout" cpt
         [ H.div {className: "jumbotron1", style: {padding: "12px 0px 20px 12px"}}
           [ H.div {className: "col-md-8 content"}
             [ H.p {}
-              [ H.i {className: "glyphicon glyphicon-globe"} []
+              [ H.i {className: "fa fa-globe"} []
               , H.text $ " " <> desc
-          ]
+              ]
             , H.p {}
-              [ H.i {className: "glyphicon glyphicon-zoom-in"} []
+              [ H.i {className: "fa fa-search-plus"} []
               , H.text $ " " <> query
+              ]
+            , H.p { className: "cache-toggle"
+                  , on: { click: cacheClick cacheState afterCacheStateChange } }
+              [ H.i {className: "fa " <> (cacheToggle cacheState)} []
+              , H.text $ cacheText cacheState
               ]
             ]
           , H.div {className: "col-md-4 content"}
             [ H.p {}
-              [ H.i {className: "glyphicon glyphicon-calendar"} []
+              [ H.i {className: "fa fa-calendar"} []
               , H.text $ " " <> date
               ]
             , H.p {}
-              [ H.i {className: "glyphicon glyphicon-user"} []
+              [ H.i {className: "fa fa-user"} []
               , H.text $ " " <> user
               ]
             ]
           ]
         ]
       ]
+
+    cacheToggle (NT.CacheOn /\ _) = "fa-toggle-on"
+    cacheToggle (NT.CacheOff /\ _) = "fa-toggle-off"
+
+    cacheText (NT.CacheOn /\ _) = "Cache On"
+    cacheText (NT.CacheOff /\ _) = "Cache Off"
+
+    cacheClick (_ /\ setCacheState) after _ = do
+      setCacheState cacheStateToggle
+      after unit
+
+    cacheStateToggle NT.CacheOn = NT.CacheOff
+    cacheStateToggle NT.CacheOff = NT.CacheOn
   
 table :: Record Props -> R.Element
 table props = R.createElement tableCpt props []

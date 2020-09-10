@@ -16,6 +16,10 @@
 .tree .node {
   margin-top: 1px;
 }
+.tree .node.node-type-valid .text {
+  color: blue;
+  text-decoration: underline;
+}
 .tree .lefthanded ul {
   margin-right: 19px;
 }

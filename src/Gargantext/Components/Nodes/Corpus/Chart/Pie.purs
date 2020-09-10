@@ -108,6 +108,7 @@ pieCpt = R2.hooksComponent thisModule "pie" cpt
   where
     cpt { path, session } _ = do
       reload <- R.useState' 0
+
       pure $ metricsWithCacheLoadView {
           getMetricsHash
         , handleResponse
@@ -120,10 +121,11 @@ pieCpt = R2.hooksComponent thisModule "pie" cpt
 
 loadedPie :: Record MetricsProps -> HistoMetrics -> R.Element
 loadedPie { path, reload, session } loaded =
-  H.div {} [ U.reloadButton reload
-           , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
-           , chart $ chartOptionsPie loaded
-           ]
+  H.div {} [
+    U.reloadButton reload
+  , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
+  , chart $ chartOptionsPie loaded
+  ]
 
 
 bar :: Record Props -> R.Element
@@ -134,16 +136,16 @@ barCpt = R2.hooksComponent thisModule "bar" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0
-      --pure $ metricsLoadView {getMetrics, loaded: loadedBar, path, reload, session}
-      pure $ metricsWithCacheLoadView
-           { getMetricsHash
-           , handleResponse
-           , loaded: loadedPie
-           , mkRequest: mkRequest session
-           , path
-           , reload
-           , session
-           }
+
+      pure $ metricsWithCacheLoadView {
+           getMetricsHash
+         , handleResponse
+         , loaded: loadedBar
+         , mkRequest: mkRequest session
+         , path
+         , reload
+         , session
+         }
 
 loadedBar :: Record MetricsProps -> Loaded -> R.Element
 loadedBar { path, reload, session } loaded =
