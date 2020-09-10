@@ -69,6 +69,7 @@ annuaireLayoutWithKeyCpt = R2.hooksComponent thisModule "annuaireLayoutWithKey" 
   where
     cpt { frontends, nodeId, session } _ = do
       path <- R.useState' nodeId
+
       useLoader (fst path) (getAnnuaireInfo session) $
         \info -> annuaire { frontends, info, path, session }
 

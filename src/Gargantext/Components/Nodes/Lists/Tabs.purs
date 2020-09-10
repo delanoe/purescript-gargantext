@@ -103,7 +103,8 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
         , getChartFunction chartType $ { session, path }
         ]
         charts _ _       = [ chart mode ]
+
         chart Authors    = pie     { session, path }
-        chart Sources    = bar     { session, path }
         chart Institutes = tree    { session, path }
+        chart Sources    = bar     { session, path }
         chart Terms      = metrics { session, path }

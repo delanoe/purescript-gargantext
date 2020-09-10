@@ -559,10 +559,6 @@ mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = R2.hooksComponent thisModule "mainNgramsTablePaint" cpt
   where
     cpt {path, tabNgramType, versioned, withAutoUpdate} _ = do
-      R.useEffect' $ do
-        let (Versioned v) = versioned
-        log2 "[mainNgramsTablePaint] versioned values" $ show v.data
-
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
 
