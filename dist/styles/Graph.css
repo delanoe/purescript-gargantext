@@ -29,6 +29,7 @@
   overflow: auto;
   left: 0;
   right: 0;
+  top: 60px;
 }
 #graph-explorer .graph-tree {
   position: absolute;
