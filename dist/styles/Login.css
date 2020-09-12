@@ -32,8 +32,15 @@
   color: white;
 }
 
+#toolbar {
+  display: inline;
+}
 #toolbar ul li {
+  display: inline;
   margin-right: 19px;
+}
+#toolbar ul li form {
+  display: inline;
 }
 
 #horizontal-checkbox ul li {
@@ -108,26 +115,6 @@ li#rename #rename-a {
 }
 #file-type-tooltip .panel-body select {
   min-width: 200px;
-}
-
-li .leaf {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-}
-li .leaf .folder-icon {
-  padding: 0 2 0 2;
-}
-li .leaf a.settings {
-  cursor: pointer;
-  display: block;
-  padding: 0 2 0 2;
-  text-decoration: none;
-  visibility: hidden;
-  z-index: 1;
-}
-li .leaf:hover a.settings {
-  visibility: visible;
 }
 
 .glyphitem {

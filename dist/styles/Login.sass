@@ -26,9 +26,13 @@
 
 
 #toolbar
+  display: inline
   ul
     li
+      display: inline
       margin-right : 19px
+      form
+        display: inline
 
 #horizontal-checkbox
   ul
@@ -100,28 +104,6 @@ li#rename
   .panel-body
     select
       min-width: 200px
-
-li
-  .leaf
-    display: flex
-    flex-direction: row
-    justify-content: flex-start
-
-    .folder-icon
-      padding: 0 2 0 2
-
-    a.settings
-      cursor: pointer
-      display: block
-      padding: 0 2 0 2
-      text-decoration: none
-      visibility: hidden
-      z-index: 1
-
-    &:hover
-      a.settings
-        visibility: visible
-
 
 .glyphitem
   top: 0
