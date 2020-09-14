@@ -199,7 +199,7 @@ toHtml p@{ asyncTasks
 
         let withId (NTree (LNode {id: id'}) _) = id'
 
-        pure $ H.li {} $
+        pure $ H.li { className: if A.null ary then "no-children" else "with-children" } $
           [ nodeMainSpan (A.null ary) 
                          { id
                          , dispatch: pAction

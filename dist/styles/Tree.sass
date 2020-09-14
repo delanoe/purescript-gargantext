@@ -48,37 +48,39 @@ li
     ul
       margin-right : 19px
       li
-        margin-right: 15px
+        margin-right: 10px
         padding-right: 5px
-        &::after
-          background-color: #000
-          right: -10px
-          width: 10px
-        &::before
-          background-color: #000
-          right: -10px
-          width: 1px
-        &:only-child::before
-          //right: 1px
+        &.with-children
+          &::after
+            background-color: #000
+            right: -10px
+            width: 5px
+          &::before
+            background-color: #000
+            right: -10px
+            width: 1px
+          &:only-child::before
+            //right: 1px
         .leaf
           justify-content : flex-end
   .righthanded
     ul
       margin-left : 19px
       li
-        margin-left: 15px
+        margin-left: 10px
         padding-left: 5px
-        &::after
-          background-color: #000
-          left: -10px
-          width: 10px
-        &::before
-          background-color: #000
-          left: -10px
-          width: 1px
-        &:only::before
-          background-color: #000
-          right: 10px
+        &.with-children
+          &::after
+            background-color: #000
+            left: -10px
+            width: 5px
+          &::before
+            background-color: #000
+            left: -10px
+            width: 1px
+          &:only::before
+            background-color: #000
+            right: 10px
         .leaf
           justify-content : flex-start
 
