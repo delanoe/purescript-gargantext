@@ -126,8 +126,8 @@ let sigmaMouseSelector = (sigma, options) => {
         return;
       }
       const size = _s.settings('mouseSelectorSize') || 3;
-      const x = e.data.clientX - _offset.left - size/2;
-      const y = e.data.clientY - _offset.top - size/2;
+      const x = e.data.clientX + document.body.scrollLeft - _offset.left - size/2;
+      const y = e.data.clientY + document.body.scrollTop - _offset.top - size/2;
       const prefix = _renderer.options.prefix;
       //console.log('[sigmaMouseSelector] clicked', e, x, y, size);
       let nodes = [];
