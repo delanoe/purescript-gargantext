@@ -5,13 +5,13 @@ module Gargantext.Components.NgramsTable
 
 import Data.Array as A
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Lens (Lens', to, (%~), (.~), (^.), (^?))
+import Data.Lens (Lens', to, (%~), (.~), (^.), (^?), view)
 import Data.Lens.At (at)
 import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
 import Data.Lens.Record (prop)
-import Data.List (List, filter, length) as L
+import Data.List (List, mapMaybe, length) as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isNothing, maybe)
@@ -20,7 +20,7 @@ import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -36,7 +36,7 @@ import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
-import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
+import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read, otherwise)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -106,17 +106,18 @@ setTermListSetA ngramsTable ns new_list =
     f :: NgramsTerm -> Unit -> NgramsPatch
     f n unit = NgramsPatch { patch_list, patch_children: mempty }
       where
-        cur_list = ngramsTable ^? at n <<< _Just <<< _NgramsElement <<< _list
+        cur_list = ngramsTable ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
         patch_list = maybe mempty (\c -> replace c new_list) cur_list
     toMap :: forall a. Set a -> Map a Unit
     toMap = unsafeCoerce
     -- TODO https://github.com/purescript/purescript-ordered-collections/pull/21
+    --      https://github.com/purescript/purescript-ordered-collections/pull/31
     -- toMap = Map.fromFoldable
 
 addNewNgramA :: NgramsTerm -> Action
 addNewNgramA ngram = CommitPatch $ addNewNgram ngram CandidateTerm
 
-type PreConversionRows = L.List (Tuple NgramsTerm NgramsElement)
+type PreConversionRows = L.List NgramsElement
 
 type TableContainerProps =
   ( dispatch         :: Dispatch
@@ -249,7 +250,7 @@ tableContainerCpt { dispatch
           where
             ngramsTable = ngramsTableCache # at ngrams
                           <<< _Just
-                          <<< _NgramsElement
+                          <<< _NgramsRepoElement
                           <<< _children
                           %~ applyPatchSet (patchSetFromMap ngramsChildren)
             ngramsClick {depth: 1, ngrams: child} = Just $ dispatch $ ToggleChild false child
@@ -299,7 +300,7 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
         , withAutoUpdate } _ = do
 
       pure $ R.fragment $
-        autoUpdate <> resetSaveButtons <> [
+        autoUpdate <> syncResetButtons <> [
           H.h4 {style: {textAlign : "center"}} [
               H.span {className: "glyphicon glyphicon-hand-down"} []
             , H.text "Extracted Terms"
@@ -322,19 +323,19 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
                                              , ngramsSelection
                                              }
                   }
-        ] <> resetSaveButtons
+        ] <> syncResetButtons
       where
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then [ R2.buff $ autoUpdateElt { duration: 5000, effect: performAction Synchronize } ] else []
-        resetButton :: R.Element
-        resetButton = H.button { className: "btn btn-primary"
-                               , on: { click: \_ -> performAction ResetPatches } } [ H.text "Reset" ]
-        saveButton :: R.Element
-        saveButton = H.button { className: "btn btn-primary"
-                              , on: { click: \_ -> performAction Synchronize }} [ H.text "Save" ]
-        resetSaveButtons :: Array R.Element
-        resetSaveButtons = if ngramsLocalPatch == mempty then [] else
-          [ H.div {} [ resetButton, saveButton ] ]
+        resetButton :: Boolean -> R.Element
+        resetButton active = H.button { className: "btn btn-primary " <> if active then "" else " disabled"
+                                      , on: { click: \_ -> performAction ResetPatches } } [ H.text "Reset" ]
+        syncButton :: R.Element
+        syncButton = H.button { className: "btn btn-primary"
+                              , on: { click: \_ -> performAction Synchronize }} [ H.text "Sync" ]
+        -- I would rather have the two buttons always here and make the reset button inactive when the patch is empty.
+        syncResetButtons :: Array R.Element
+        syncResetButtons = [ H.div {} [ resetButton (ngramsLocalPatch /= mempty), syncButton ] ]
 
         setParentResetChildren :: Maybe NgramsTerm -> State -> State
         setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
@@ -360,7 +361,7 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
         performAction (CommitPatch pt) =
           commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
         performAction ResetPatches =
-          setState $ \s -> s { ngramsLocalPatch = { ngramsNewElems: mempty, ngramsPatches: mempty } }
+          setState $ \s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }
         performAction AddTermChildren =
           case ngramsParent of
             Nothing ->
@@ -380,22 +381,18 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
         filteredRows = T.filterRows { params } rows
         rows :: PreConversionRows
         rows = orderWith (
-          addOccT <$> (
-             L.filter rowsFilterT $ Map.toUnfoldable (ngramsTable ^. _NgramsTable)
-             )
-          )
-        rowsFilter :: NgramsElement -> Boolean
-        rowsFilter = displayRow state searchQuery ngramsTable ngramsParentRoot termListFilter termSizeFilter
-        rowsFilterT = rowsFilter <<< snd
-        addOccWithFilter ne ngramsElement =
-          if rowsFilter ngramsElement then
-            Just $ addOcc ne ngramsElement
-          else
-            Nothing
-        addOcc ne ngramsElement =
+                 L.mapMaybe (\(Tuple ng nre) -> addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng nre)) $
+                   Map.toUnfoldable (ngramsTable ^. _NgramsTable)
+               )
+        rowsFilter :: NgramsElement -> Maybe NgramsElement
+        rowsFilter ne =
+           if displayRow state searchQuery ngramsTable ngramsParentRoot termListFilter termSizeFilter ne then
+             Just ne
+           else
+             Nothing
+        addOcc ngramsElement =
           let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
           ngramsElement # _NgramsElement <<< _occurrences .~ occurrences
-        addOccT (Tuple ne ngramsElement) = Tuple ne $ addOcc ne ngramsElement
 
         allNgramsSelected = allNgramsSelectedOnFirstPage ngramsSelection filteredRows
 
@@ -405,14 +402,14 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
         ngramsParentRoot =
           (\np -> ngramsTable ^? at np
                             <<< _Just
-                            <<< _NgramsElement
+                            <<< _NgramsRepoElement
                             <<< _root
                             <<< _Just
             ) =<< ngramsParent
 
-        convertRow (Tuple ngrams ngramsElement) =
+        convertRow ngramsElement =
           { row: NTC.renderNgramsItem { dispatch: performAction
-                                      , ngrams
+                                      , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
                                       , ngramsElement
                                       , ngramsLocalPatch
                                       , ngramsParent
@@ -422,10 +419,10 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
           }
         orderWith =
           case convOrderBy <$> params.orderBy of
-            Just ScoreAsc  -> L.sortWith \x -> (snd x)        ^. _NgramsElement <<< _occurrences
-            Just ScoreDesc -> L.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _occurrences
-            Just TermAsc   -> L.sortWith \x -> (snd x)        ^. _NgramsElement <<< _ngrams
-            Just TermDesc  -> L.sortWith \x -> Down $ (snd x) ^. _NgramsElement <<< _ngrams
+            Just ScoreAsc  -> L.sortWith \x -> x        ^. _NgramsElement <<< _occurrences
+            Just ScoreDesc -> L.sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
+            Just TermAsc   -> L.sortWith \x -> x        ^. _NgramsElement <<< _ngrams
+            Just TermDesc  -> L.sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
             _              -> identity -- the server ordering is enough here
 
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
@@ -479,7 +476,7 @@ allNgramsSelectedOnFirstPage :: Set NgramsTerm -> PreConversionRows -> Boolean
 allNgramsSelectedOnFirstPage selected rows = selected == (selectNgramsOnFirstPage rows)
 
 selectNgramsOnFirstPage :: PreConversionRows -> Set NgramsTerm
-selectNgramsOnFirstPage rows = Set.fromFoldable $ fst <$> rows
+selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ngrams) <$> rows
 
 
 type MainNgramsTableProps =
@@ -575,8 +572,8 @@ sumOccurrences ngramsTable (NgramsElement {occurrences, children}) =
     Additive occurrences <> children ^. folded <<< to (sumOccurrences' ngramsTable)
     where
       sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
-      sumOccurrences' nt label =
-          nt ^. ix label <<< to (sumOccurrences nt)
+      sumOccurrences' nt label = Additive 0 -- TODO
+          --nt ^. ix label <<< to (sumOccurrences nt)
 
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> R.Element
 optps1 { desc, mval } = H.option { value: value } [H.text desc]
