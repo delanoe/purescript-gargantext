@@ -103,8 +103,8 @@ let sigmaMouseSelector = (sigma, options) => {
 
     const mouseMove = (e) => {
       const size = _s.settings('mouseSelectorSize') || 3;
-      const x = e.clientX - _offset.left - size/2;
-      const y = e.clientY - _offset.top - size/2;
+      const x = e.clientX + document.body.scrollLeft - _offset.left - size/2;
+      const y = e.clientY + document.body.scrollTop - _offset.top - size/2;
       _context.clearRect(0, 0, _context.canvas.width, _context.canvas.height);
 
       _context.fillStyle = 'rgba(91, 192, 222, 0.7)';
