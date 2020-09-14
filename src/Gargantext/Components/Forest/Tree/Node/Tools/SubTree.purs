@@ -157,7 +157,7 @@ subTreeTreeViewCpt = R2.hooksComponent thisModule "subTreeTreeViewCpt" cpt
             (Just (SubTreeOut {out})) -> n == out
 
         onClick e = do
-          let action = if validNodeType then Nothing else Just $ SubTreeOut { in: id, out: targetId }
+          let action = if not validNodeType then Nothing else Just $ SubTreeOut { in: id, out: targetId }
           E.preventDefault  e
           E.stopPropagation e
           setAction $ const $ setTreeOut valAction action

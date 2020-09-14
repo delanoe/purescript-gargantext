@@ -54,15 +54,15 @@ li .leaf:hover a.settings {
   margin-right: 19px;
 }
 .tree .lefthanded ul li {
-  margin-right: 15px;
+  margin-right: 10px;
   padding-right: 5px;
 }
-.tree .lefthanded ul li::after {
+.tree .lefthanded ul li.with-children::after {
   background-color: #000;
   right: -10px;
-  width: 10px;
+  width: 5px;
 }
-.tree .lefthanded ul li::before {
+.tree .lefthanded ul li.with-children::before {
   background-color: #000;
   right: -10px;
   width: 1px;
@@ -74,20 +74,20 @@ li .leaf:hover a.settings {
   margin-left: 19px;
 }
 .tree .righthanded ul li {
-  margin-left: 15px;
+  margin-left: 10px;
   padding-left: 5px;
 }
-.tree .righthanded ul li::after {
+.tree .righthanded ul li.with-children::after {
   background-color: #000;
   left: -10px;
-  width: 10px;
+  width: 5px;
 }
-.tree .righthanded ul li::before {
+.tree .righthanded ul li.with-children::before {
   background-color: #000;
   left: -10px;
   width: 1px;
 }
-.tree .righthanded ul li:only::before {
+.tree .righthanded ul li.with-children:only::before {
   background-color: #000;
   right: 10px;
 }

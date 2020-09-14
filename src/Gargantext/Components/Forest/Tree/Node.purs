@@ -74,16 +74,16 @@ nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.c
                 [ folderIcon  nodeType folderOpen
                 , chevronIcon isLeaf handed nodeType folderOpen
                 , nodeLink { frontends
-                                , id
-                                , isSelected: mCurrentRoute
-                                        == Routes.nodeTypeAppRoute
-                                                nodeType
-                                                (sessionId session) id
-                                , name: name' props
-                                , nodeType
-                                , session
-                                , handed
-                                }
+                           , id
+                           , isSelected: mCurrentRoute
+                             == Routes.nodeTypeAppRoute
+                             nodeType
+                             (sessionId session) id
+                           , name: name' props
+                           , nodeType
+                           , session
+                           , handed
+                           }
 
                 , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
@@ -93,7 +93,7 @@ nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.c
                                                         , session
                                                         }
                                 ) tasks
-                                )
+                           )
                 , if nodeType == GT.NodeUser
                         then GV.versionView {session}
                         else H.div {} []
@@ -111,10 +111,10 @@ nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.c
 
 
                 , nodeActions { id
-                                , nodeType
-                                , refreshTree: const $ dispatch RefreshTree
-                                , session
-                                }
+                              , nodeType
+                              , refreshTree: const $ dispatch RefreshTree
+                              , session
+                              }
 
 
                 ]
