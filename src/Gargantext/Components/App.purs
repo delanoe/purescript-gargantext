@@ -345,6 +345,6 @@ footerCpt = R2.hooksComponent thisModule "footer" cpt
       pure $ H.div 
               { className: "container" }
               [ H.hr {}
-              , H.footer {} [ license ]
+              , H.footer {} []
               ]
 

@@ -90,37 +90,38 @@ sideTab (Opened SideTabLegend) props@{metaData} =
 
 sideTab (Opened SideTabData) props =
   RH.div {} [ R2.row [ R2.col 12
-              [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
-                [ RH.div { className: "tab-content" }
-                  [ RH.div { className: "", role: "tabpanel" }
-                           ( Seq.toUnfoldable
-                           $ ( Seq.map (badge              props.selectedNodeIds)
-                                       (badges props.graph props.selectedNodeIds)
-                             )
-                           )
-                  ]
-                , RH.div { className: "tab-content flex-space-between" }
-                         [ removeButton "Move as candidate" CandidateTerm props nodesMap
-                         , removeButton "Move as stop"      StopTerm      props nodesMap
+                        [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
+                          [ RH.div { className: "tab-content" }
+                            [ RH.div { className: "", role: "tabpanel" }
+                                     ( Seq.toUnfoldable
+                                     $ ( Seq.map (badge              props.selectedNodeIds)
+                                                 (badges props.graph props.selectedNodeIds)
+                                       )
+                                     )
+                            ]
+                          , RH.div { className: "tab-content flex-space-between" }
+                                   [ removeButton "Move as candidate" CandidateTerm props nodesMap
+                                   , removeButton "Move as stop"      StopTerm      props nodesMap
+                                   ]
+                          ]
                          ]
+                     ]
+            , RH.div { className: "tab-content", id: "myTabContent" }
+                     [ RH.div { className: "", id: "home", role: "tabpanel" }
+                       (Seq.toUnfoldable $ Seq.map (badge props.selectedNodeIds)
+                                         $ neighbourBadges props.graph props.selectedNodeIds
+                        )
+                     ]
 
-                ]
-
-                , RH.div { className: "col-md-12", id: "query" }
-                         [ query SearchDoc
-                                 props.frontends
-                                 props.metaData
-                                 props.session
-                                 nodesMap
-                                 props.selectedNodeIds
-                         ]
-                  ]
-                ]
-              , RH.div { className: "tab-content", id: "myTabContent" }
-                [ RH.div { className: "", id: "home", role: "tabpanel" }
-                  (Seq.toUnfoldable $ (Seq.map (badge props.selectedNodeIds) (neighbourBadges props.graph props.selectedNodeIds)))
-                ]
-              ]
+            , RH.div { className: "col-md-12", id: "query" }
+                     [ query SearchDoc
+                             props.frontends
+                             props.metaData
+                             props.session
+                             nodesMap
+                             props.selectedNodeIds
+                     ]
+           ]
     where
 
       nodesMap = SigmaxT.nodesGraphMap props.graph
