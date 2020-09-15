@@ -22,7 +22,6 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Reactix as R
@@ -36,7 +35,7 @@ import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
-import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read, otherwise)
+import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -379,10 +378,14 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
         filteredConvertedRows = convertRow <$> filteredRows
         filteredRows :: PreConversionRows
         filteredRows = T.filterRows { params } rows
+        ng_scores :: Map NgramsTerm (Additive Int)
+        ng_scores = ngramsTable ^. _NgramsTable <<< _ngrams_scores
         rows :: PreConversionRows
         rows = orderWith (
-                 L.mapMaybe (\(Tuple ng nre) -> addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng nre)) $
-                   Map.toUnfoldable (ngramsTable ^. _NgramsTable)
+                 L.mapMaybe (\(Tuple ng nre) ->
+                               let Additive s = ng_scores ^. at ng <<< _Just in
+                               addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng s nre)) $
+                   Map.toUnfoldable (ngramsTable ^. _NgramsTable <<< _ngrams_repo_elements)
                )
         rowsFilter :: NgramsElement -> Maybe NgramsElement
         rowsFilter ne =
@@ -391,7 +394,7 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
            else
              Nothing
         addOcc ngramsElement =
-          let Additive occurrences = sumOccurrences ngramsTable ngramsElement in
+          let Additive occurrences = sumOccurrences ngramsTable (ngramsElementToNgramsOcc ngramsElement) in
           ngramsElement # _NgramsElement <<< _occurrences .~ occurrences
 
         allNgramsSelected = allNgramsSelectedOnFirstPage ngramsSelection filteredRows
@@ -567,13 +570,20 @@ mainNgramsTablePaintCpt = R2.hooksComponent thisModule "mainNgramsTablePaint" cp
       , withAutoUpdate
       }
 
-sumOccurrences :: NgramsTable -> NgramsElement -> Additive Int
-sumOccurrences ngramsTable (NgramsElement {occurrences, children}) =
-    Additive occurrences <> children ^. folded <<< to (sumOccurrences' ngramsTable)
+type NgramsOcc = { occurrences :: Additive Int, children :: Set NgramsTerm }
+
+ngramsElementToNgramsOcc :: NgramsElement -> NgramsOcc
+ngramsElementToNgramsOcc (NgramsElement {occurrences, children}) = {occurrences: Additive occurrences, children}
+
+sumOccurrences :: NgramsTable -> NgramsOcc -> Additive Int
+sumOccurrences ngramsTable {occurrences, children} =
+    occurrences <> children ^. folded <<< to (sumOccurrences' ngramsTable)
     where
       sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
-      sumOccurrences' nt label = Additive 0 -- TODO
-          --nt ^. ix label <<< to (sumOccurrences nt)
+      sumOccurrences' nt label =
+        sumOccurrences nt { occurrences: nt ^. _NgramsTable <<< _ngrams_scores <<< ix label
+                          , children:    nt ^. ix label <<< _NgramsRepoElement <<< _children
+                          }
 
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> R.Element
 optps1 { desc, mval } = H.option { value: value } [H.text desc]
