@@ -40,20 +40,20 @@ import Gargantext.Utils.Reactix as R2
 thisModule = "Gargantext.Components.GraphExplorer"
 
 type LayoutProps =
-  ( frontends :: Frontends
-  , graphId :: GET.GraphId
-  , handed :: Types.Handed
+  ( frontends     :: Frontends
+  , graphId       :: GET.GraphId
+  , handed        :: Types.Handed
   , mCurrentRoute :: AppRoute
-  , session :: Session
-  , sessions :: Sessions
-  , showLogin :: R.State Boolean
+  , session       :: Session
+  , sessions      :: Sessions
+  , showLogin     :: R.State Boolean
   )
 
-type Props = (
-    graph :: SigmaxT.SGraph
-  , graphVersion :: R.State Int
+type Props =
+  ( graph          :: SigmaxT.SGraph
+  , graphVersion   :: R.State Int
   , hyperdataGraph :: GET.HyperdataGraph
-  , mMetaData :: Maybe GET.MetaData
+  , mMetaData      :: Maybe GET.MetaData
   | LayoutProps
   )
 
@@ -66,7 +66,6 @@ explorerLayoutCpt = R2.hooksComponent thisModule "explorerLayout" cpt
   where
     cpt props _ = do
       graphVersion <- R.useState' 0
-
       pure $ explorerLayoutView graphVersion props
 
 explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
@@ -103,19 +102,22 @@ explorerCpt = R2.hooksComponent thisModule "explorer" cpt
               } _ = do
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
-      let forceAtlasS = if startForceAtlas then SigmaxT.InitialRunning else SigmaxT.InitialStopped
+
+      let forceAtlasS = if startForceAtlas
+                          then SigmaxT.InitialRunning
+                          else SigmaxT.InitialStopped
 
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
       treeReload <- R.useState' 0
-      controls              <- Controls.useGraphControls { forceAtlasS
-                                                        , graph
-                                                        , graphId
-                                                        , hyperdataGraph
-                                                        , session
-                                                        , treeReload: \_ -> (snd treeReload) $ (+) 1
-                                                        }
+      controls   <- Controls.useGraphControls { forceAtlasS
+                                              , graph
+                                              , graphId
+                                              , hyperdataGraph
+                                              , session
+                                              , treeReload: \_ -> (snd treeReload) $ (+) 1
+                                              }
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -184,13 +186,13 @@ explorerCpt = R2.hooksComponent thisModule "explorer" cpt
           ]
 
     mainLayout Types.RightHanded (tree' /\ gc /\ gv /\ sdb) = [tree', gc, gv, sdb]
-    mainLayout Types.LeftHanded (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']
+    mainLayout Types.LeftHanded  (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']
 
     outer = RH.div { className: "col-md-12" }
     inner h = RH.div { className: "container-fluid " <> hClass }
       where
         hClass = case h of
-          Types.LeftHanded -> "lefthanded"
+          Types.LeftHanded  -> "lefthanded"
           Types.RightHanded -> "righthanded"
     rowToggle  = RH.div { id: "toggle-container" }
     rowControls = RH.div { id: "controls-container" }
@@ -275,20 +277,19 @@ graphViewCpt = R2.hooksComponent thisModule "graphView" cpt
       R.useEffect1' (fst controls.multiSelectEnabled) $ do
         R.setRef multiSelectEnabledRef $ fst controls.multiSelectEnabled
 
-      pure $ Graph.graph {
-          elRef
-        , forceAtlas2Settings: Graph.forceAtlas2Settings
-        , graph
-        , mCamera
-        , multiSelectEnabledRef
-        , selectedNodeIds: controls.selectedNodeIds
-        , showEdges: controls.showEdges
-        , sigmaRef: controls.sigmaRef
-        , sigmaSettings: Graph.sigmaSettings
-        , stage: controls.graphStage
-        , startForceAtlas
-        , transformedGraph
-        }
+      pure $ Graph.graph { elRef
+                         , forceAtlas2Settings: Graph.forceAtlas2Settings
+                         , graph
+                         , mCamera
+                         , multiSelectEnabledRef
+                         , selectedNodeIds: controls.selectedNodeIds
+                         , showEdges: controls.showEdges
+                         , sigmaRef: controls.sigmaRef
+                         , sigmaSettings: Graph.sigmaSettings
+                         , stage: controls.graphStage
+                         , startForceAtlas
+                         , transformedGraph
+                         }
 
 convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
@@ -344,7 +345,10 @@ modeGraphType Types.Terms = "def"
 
 
 getNodes :: Session -> R.State Int -> GET.GraphId -> Aff GET.HyperdataGraph
-getNodes session (graphVersion /\ _) graphId = get session $ NodeAPI Types.Graph (Just graphId) ("?version=" <> show graphVersion)
+getNodes session (graphVersion /\ _) graphId =
+  get session $ NodeAPI Types.Graph
+                        (Just graphId)
+                        ("?version=" <> show graphVersion)
 
 
 transformGraph :: Record Controls.Controls -> SigmaxT.SGraph -> SigmaxT.SGraph
@@ -361,8 +365,8 @@ transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
     --newNodes = Seq.map (nodeSizeFilter <<< nodeMarked) nodes
     --newEdges = Seq.map (edgeConfluenceFilter <<< edgeWeightFilter <<< edgeShowFilter <<< edgeMarked) edges
     newEdges' = Seq.filter edgeFilter $ Seq.map (edgeShowFilter <<< edgeMarked) edges
-    newNodes = Seq.filter nodeFilter $ Seq.map (nodeMarked) nodes
-    newEdges = Seq.filter (edgeInGraph $ Set.fromFoldable $ Seq.map _.id newNodes) newEdges'
+    newNodes  = Seq.filter nodeFilter $ Seq.map (nodeMarked) nodes
+    newEdges  = Seq.filter (edgeInGraph $ Set.fromFoldable $ Seq.map _.id newNodes) newEdges'
 
     edgeFilter e = edgeConfluenceFilter e &&
                    edgeWeightFilter e

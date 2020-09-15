@@ -109,7 +109,7 @@ controlsCpt = R2.hooksComponent thisModule "controls" cpt
       -- CPU, has memory leaks etc.
       R.useEffect1' (fst props.forceAtlasState) $ do
         if (fst props.forceAtlasState) == SigmaxT.InitialRunning then do
-          timeoutId <- setTimeout 2000 $ do
+          timeoutId <- setTimeout 9000 $ do
             let (toggled /\ setToggled) = props.forceAtlasState
             case toggled of
               SigmaxT.InitialRunning -> setToggled $ const SigmaxT.Paused

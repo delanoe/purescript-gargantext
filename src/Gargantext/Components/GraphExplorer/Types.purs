@@ -157,7 +157,7 @@ instance decodeJsonNode :: DecodeJson Node where
     id_ <- obj .: "id"
     type_ <- obj .: "type"
     label <- obj .: "label"
-    size <- obj .: "size"
+    size  <- obj .: "size"
     attributes <- obj .: "attributes"
     x <- obj .: "x_coord"
     y <- obj .: "y_coord"
@@ -177,14 +177,14 @@ instance encodeJsonNode :: EncodeJson Node where
 
 instance decodeJsonMetaData :: DecodeJson MetaData where
   decodeJson json = do
-    obj <- decodeJson json
-    legend <- obj .: "legend"
+    obj      <- decodeJson json
+    legend   <- obj .: "legend"
     corpusId <- obj .: "corpusId"
-    list <- obj .: "list"
-    listId <- list .: "listId"
-    metric <- obj .: "metric"
+    list     <- obj .: "list"
+    listId   <- list .: "listId"
+    metric   <- obj .: "metric"
     startForceAtlas <- obj .: "startForceAtlas"
-    title <- obj .: "title"
+    title   <- obj .: "title"
     version <- list .: "version"
     pure $ MetaData {
         corpusId
@@ -208,7 +208,7 @@ instance encodeJsonMetaData :: EncodeJson MetaData where
 instance decodeJsonLegend :: DecodeJson Legend where
   decodeJson json = do
     obj <- decodeJson json
-    id_ <- obj .: "id"
+    id_   <- obj .: "id"
     color <- obj .: "color"
     label <- obj .: "label"
     pure $ Legend { id_, color, label }
@@ -286,11 +286,11 @@ instance showSideTab :: Show SideTab where
   show SideTabCommunity = "Community"
 
 
-newtype Camera = Camera {
-    ratio :: Number
-  , x     :: Number
-  , y     :: Number
-  }
+newtype Camera =
+  Camera { ratio :: Number
+         , x     :: Number
+         , y     :: Number
+         }
 
 instance decodeCamera :: DecodeJson Camera where
   decodeJson json = do
@@ -315,7 +315,7 @@ newtype HyperdataGraph = HyperdataGraph {
 
 instance decodeHyperdataGraph :: DecodeJson HyperdataGraph where
   decodeJson json = do
-    obj             <- decodeJson json
+    obj <- decodeJson json
     graph   <- obj .: "graph"
     mCamera <- obj .:? "camera"
     pure $ HyperdataGraph { graph, mCamera }
