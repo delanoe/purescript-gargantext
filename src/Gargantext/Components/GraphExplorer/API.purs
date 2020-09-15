@@ -12,8 +12,7 @@ import Gargantext.Sessions (Session, get, post)
 import Gargantext.Types as GT
 
 type GraphAsyncUpdateParams =
-  (
-    graphId :: Int
+  ( graphId :: Int
   , listId :: Int
   , nodes :: Array (Record SigmaxT.Node)
   , session :: Session
@@ -34,8 +33,7 @@ graphAsyncUpdate { graphId, listId, nodes, session, termList, version } = do
         }
 
 type GraphAsyncRecomputeParams =
-  (
-    graphId :: Int
+  ( graphId :: Int
   , session :: Session
   )
 
@@ -48,8 +46,7 @@ graphAsyncRecompute { graphId, session } = do
     q = {}
 
 type QueryProgressParams =
-  (
-    graphId :: Int
+  ( graphId :: Int
   , session :: Session
   , taskId  :: String
   )
@@ -59,14 +56,12 @@ queryProgress { graphId, session, taskId } = do
   get session $ GR.GraphAPI graphId $ "async/" <> taskId <> "/poll"
 
 type GraphVersions =
-  (
-    gv_graph :: Maybe Int
+  ( gv_graph :: Maybe Int
   , gv_repo :: Int
   )
 
 type GraphVersionsParams =
-  (
-    graphId :: Int
+  ( graphId :: Int
   , session :: Session
   )
 
@@ -74,8 +69,7 @@ graphVersions :: Record GraphVersionsParams -> Aff (Record GraphVersions)
 graphVersions { graphId, session }  = get session $ GR.GraphAPI graphId $ "versions"
 
 type UpdateGraphVersionsParams =
-  (
-    graphId :: Int
+  ( graphId :: Int
   , session :: Session
   )
 
@@ -83,8 +77,7 @@ updateGraphVersions :: Record UpdateGraphVersionsParams -> Aff GET.GraphData
 updateGraphVersions { graphId, session } = post session (GR.GraphAPI graphId $ "versions") {}
 
 type CloneGraphParams =
-  (
-    hyperdataGraph :: GET.HyperdataGraph
+  ( hyperdataGraph :: GET.HyperdataGraph
   , id :: Int
   , session :: Session
   )
