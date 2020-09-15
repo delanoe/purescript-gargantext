@@ -1,5 +1,5 @@
 module Gargantext.Components.GraphExplorer.Sidebar
-  (Props, sidebar)
+  -- (Props, sidebar)
   where
 
 import Control.Parallel (parTraverse)
@@ -89,42 +89,18 @@ sideTab (Opened SideTabLegend) props@{metaData} =
                     in Legend.legend { items: Seq.fromFoldable legend}
 
 sideTab (Opened SideTabData) props =
-  RH.div {} [ R2.row [ R2.col 12
-                        [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
-                          [ RH.div { className: "tab-content" }
-                            [ RH.div { className: "", role: "tabpanel" }
-                                     ( Seq.toUnfoldable
-                                     $ ( Seq.map (badge              props.selectedNodeIds)
-                                                 (badges props.graph props.selectedNodeIds)
-                                       )
-                                     )
-                            ]
-                          , RH.div { className: "tab-content flex-space-between" }
-                                   [ removeButton "Move as candidate" CandidateTerm props nodesMap
-                                   , removeButton "Move as stop"      StopTerm      props nodesMap
-                                   ]
-                          ]
-                         ]
-                     ]
-            , RH.div { className: "tab-content", id: "myTabContent" }
-                     [ RH.div { className: "", id: "home", role: "tabpanel" }
-                       (Seq.toUnfoldable $ Seq.map (badge props.selectedNodeIds)
-                                         $ neighbourBadges props.graph props.selectedNodeIds
-                        )
-                     ]
-
+  RH.div {} [ selectedNodes props (SigmaxT.nodesGraphMap props.graph)
+            , neighborhood  props
             , RH.div { className: "col-md-12", id: "query" }
                      [ query SearchDoc
                              props.frontends
                              props.metaData
                              props.session
-                             nodesMap
+                             (SigmaxT.nodesGraphMap props.graph)
                              props.selectedNodeIds
                      ]
-           ]
+            ]
     where
-
-      nodesMap = SigmaxT.nodesGraphMap props.graph
 
       checkbox text =
         RH.li {}
@@ -134,31 +110,12 @@ sideTab (Opened SideTabData) props =
                    , checked: true
                    , title: "Mark as completed" } ]
 
-      removeButton text rType props' nodesMap' =
-        if Set.isEmpty $ fst props'.selectedNodeIds then
-          RH.div {} []
-        else
-          RH.button { className: "btn btn-info"
-                    , on: { click: onClickRemove rType props' nodesMap' }
-                    }
-                    [ RH.text text ]
-
-      onClickRemove rType props' nodesMap' e = do
-        let nodes = mapMaybe (\id -> Map.lookup id nodesMap')
-                             $ Set.toUnfoldable $ fst props'.selectedNodeIds
-        deleteNodes { graphId: props'.graphId
-                    , metaData: props'.metaData
-                    , nodes
-                    , session: props'.session
-                    , termList: rType
-                    , treeReload: props'.treeReload }
-        snd props'.removedNodeIds  $ const $ fst props'.selectedNodeIds
-        snd props'.selectedNodeIds $ const SigmaxT.emptyNodeIds
-
 
 sideTab (Opened SideTabCommunity) props  =
   RH.div { className: "col-md-12", id: "query" }
-                         [ query SearchContact
+                         [ selectedNodes props (SigmaxT.nodesGraphMap props.graph)
+                         , neighborhood  props
+                         , query SearchContact
                                  props.frontends
                                  props.metaData
                                  props.session
@@ -170,6 +127,56 @@ sideTab _ _  = H.div {} []
 
 
 -------------------------------------------
+-- TODO
+-- selectedNodes :: Record Props -> Map.Map String Nodes -> R.Element
+selectedNodes props nodesMap = R2.row [ R2.col 12
+                  [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
+                    [ RH.div { className: "tab-content" }
+                      [ RH.div { className: "", role: "tabpanel" }
+                               ( Seq.toUnfoldable
+                               $ ( Seq.map (badge              props.selectedNodeIds)
+                                           (badges props.graph props.selectedNodeIds)
+                                 )
+                               )
+                      ]
+                    , RH.div { className: "tab-content flex-space-between" }
+                             [ removeButton "Move as candidate" CandidateTerm props nodesMap
+                             , removeButton "Move as stop"      StopTerm      props nodesMap
+                             ]
+                    ]
+                   ]
+               ]
+neighborhood props = RH.div { className: "tab-content", id: "myTabContent" }
+                            [ RH.div { className: "", id: "home", role: "tabpanel" }
+                              (Seq.toUnfoldable $ Seq.map (badge props.selectedNodeIds)
+                                                $ neighbourBadges props.graph props.selectedNodeIds
+                               )
+                            ]
+
+
+removeButton text rType props' nodesMap' =
+  if Set.isEmpty $ fst props'.selectedNodeIds then
+    RH.div {} []
+  else
+    RH.button { className: "btn btn-info"
+              , on: { click: onClickRemove rType props' nodesMap' }
+              }
+              [ RH.text text ]
+
+onClickRemove rType props' nodesMap' e = do
+  let nodes = mapMaybe (\id -> Map.lookup id nodesMap')
+                       $ Set.toUnfoldable $ fst props'.selectedNodeIds
+  deleteNodes { graphId: props'.graphId
+              , metaData: props'.metaData
+              , nodes
+              , session: props'.session
+              , termList: rType
+              , treeReload: props'.treeReload }
+  snd props'.removedNodeIds  $ const $ fst props'.selectedNodeIds
+  snd props'.selectedNodeIds $ const SigmaxT.emptyNodeIds
+
+
+
 badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
 badge (_ /\ setNodeIds) {id, label} =
   RH.a { className: "badge badge-light"
