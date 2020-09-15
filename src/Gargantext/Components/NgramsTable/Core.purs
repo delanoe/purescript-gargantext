@@ -46,6 +46,8 @@ module Gargantext.Components.NgramsTable.Core
   , _ngrams
   , _parent
   , _root
+  , _ngrams_repo_elements
+  , _ngrams_scores
   , commitPatchR
   , putNgramsPatches
   , syncPatchesR
@@ -84,6 +86,7 @@ import Data.List ((:), List(Nil))
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
 import Data.Set as Set
@@ -211,6 +214,12 @@ _occurrences = prop (SProxy :: SProxy "occurrences")
 _list :: forall a row. Lens' { list :: a | row } a
 _list = prop (SProxy :: SProxy "list")
 
+_ngrams_repo_elements :: forall a row. Lens' { ngrams_repo_elements :: a | row } a
+_ngrams_repo_elements = prop (SProxy :: SProxy "ngrams_repo_elements")
+
+_ngrams_scores :: forall a row. Lens' { ngrams_scores :: a | row } a
+_ngrams_scores = prop (SProxy :: SProxy "ngrams_scores")
+
 derive instance newtypeNgramsElement :: Newtype NgramsElement _
 derive instance genericNgramsElement :: Generic NgramsElement _
 instance showNgramsElement :: Show NgramsElement where
@@ -297,8 +306,8 @@ _NgramsRepoElement  :: Iso' NgramsRepoElement {
   }
 _NgramsRepoElement = _Newtype
 
-ngramsRepoElementToNgramsElement :: NgramsTerm -> NgramsRepoElement -> NgramsElement
-ngramsRepoElementToNgramsElement ngrams (NgramsRepoElement { size, list, root, parent, children }) =
+ngramsRepoElementToNgramsElement :: NgramsTerm -> Int -> NgramsRepoElement -> NgramsElement
+ngramsRepoElementToNgramsElement ngrams occurrences (NgramsRepoElement { size, list, root, parent, children }) =
   NgramsElement
   { ngrams
   , size -- TODO should we assert that size(ngrams) == size?
@@ -306,7 +315,7 @@ ngramsRepoElementToNgramsElement ngrams (NgramsRepoElement { size, list, root, p
   , root
   , parent
   , children
-  , occurrences: 0 -- TODO fake here
+  , occurrences
   }
 
 -----------------------------------------------------------------------------------
@@ -330,9 +339,22 @@ instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
     data_   <- obj .: "data"
     pure $ Versioned {version, data: data_}
 
--- type NgramsTable = Array (NTree NgramsElement)
--- type NgramsTable = Array NgramsElement
-newtype NgramsTable = NgramsTable (Map NgramsTerm NgramsRepoElement)
+{-
+  NgramsRepoElement does not have the occurrences field.
+  Instead NgramsTable has a ngrams_scores map.
+
+  Pro:
+  * Does not encumber NgramsRepoElement with the score which is not part of repo.
+  * Enables for multiple scores through multiple maps.
+  Cons:
+  * Having a map on the side is equivalent to a `occurrences :: Maybe Int`, which is
+    less precise.
+  * It is a tiny bit less performant to access the score.
+-}
+newtype NgramsTable = NgramsTable
+  { ngrams_repo_elements :: Map NgramsTerm NgramsRepoElement
+  , ngrams_scores        :: Map NgramsTerm (Additive Int)
+  }
 
 derive instance newtypeNgramsTable :: Newtype NgramsTable _
 derive instance genericNgramsTable :: Generic NgramsTable _
@@ -341,28 +363,34 @@ instance eqNgramsTable  :: Eq NgramsTable where
 instance showNgramsTable :: Show NgramsTable where
   show = genericShow
 
-_NgramsTable :: Iso' NgramsTable (Map NgramsTerm NgramsRepoElement)
+_NgramsTable :: Iso' NgramsTable
+                     { ngrams_repo_elements :: Map NgramsTerm NgramsRepoElement
+                     , ngrams_scores        :: Map NgramsTerm (Additive Int)
+                     }
 _NgramsTable = _Newtype
 
 instance indexNgramsTable :: Index NgramsTable NgramsTerm NgramsRepoElement where
-  ix k = _NgramsTable <<< ix k
+  ix k = _NgramsTable <<< _ngrams_repo_elements <<< ix k
 
 instance atNgramsTable :: At NgramsTable NgramsTerm NgramsRepoElement where
-  at k = _NgramsTable <<< at k
+  at k = _NgramsTable <<< _ngrams_repo_elements <<< at k
 
 instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
   decodeJson json = do
     elements <- decodeJson json
     pure $ NgramsTable
-         $ Map.fromFoldable
-         $ f <$> (elements :: Array NgramsElement)
+      { ngrams_repo_elements: Map.fromFoldable $ f <$> (elements :: Array NgramsElement)
+      , ngrams_scores:        Map.fromFoldable $ g <$> elements
+      }
     where
-      -- f e@(NgramsElement e') = Tuple e'.ngrams e
-      f (NgramsElement {ngrams, size, list, root, parent, children{-, occurrences-}}) =
-        Tuple ngrams (NgramsRepoElement {size, list, root, parent, children{-, occurrences-}})
+      f (NgramsElement {ngrams, size, list, root, parent, children}) =
+        Tuple ngrams (NgramsRepoElement {size, list, root, parent, children})
+      g (NgramsElement e) = Tuple e.ngrams (Additive e.occurrences)
 
+{- NOT USED
 instance encodeJsonNgramsTable :: EncodeJson NgramsTable where
-  encodeJson (NgramsTable m) = encodeJson $ Map.values m
+  encodeJson (NgramsTable {ngrams_repo_elements, ngrams_scores}) = encodeJson $ Map.values ... TODO
+-}
 -----------------------------------------------------------------------------------
 
 wordBoundaryChars :: String
@@ -393,7 +421,7 @@ highlightNgrams ntype (NgramsTable table) input0 =
     undb = R.replace wordBoundaryReg2 "$1"
     init x = S.take (S.length x - 1) x
     input = spR input0
-    pats = A.fromFoldable (Map.keys table)
+    pats = A.fromFoldable (Map.keys table.ngrams_repo_elements)
     ixs = indicesOfAny (sp <<< ngramsTermText <$> pats) (normNgramInternal ntype input)
 
     consOnJustTail s xs@(Tuple _ (Just _) : _) =
@@ -420,7 +448,7 @@ highlightNgrams ntype (NgramsTable table) input0 =
               crashWith "highlightNgrams: out of bounds pattern"
             Just pat ->
               let lpat = S.length (db (ngramsTermText pat)) in
-              case Map.lookup pat table of
+              case Map.lookup pat table.ngrams_repo_elements of
                 Nothing ->
                   crashWith "highlightNgrams: pattern missing from table"
                 Just ne ->
@@ -703,18 +731,15 @@ fromNgramsPatches :: NgramsPatches -> NgramsTablePatch
 fromNgramsPatches ngramsPatches = {ngramsPatches}
 
 findNgramTermList :: NgramsTable -> NgramsTerm -> Maybe TermList
-findNgramTermList (NgramsTable m) n = m ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
+findNgramTermList (NgramsTable m) n = m.ngrams_repo_elements ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
 
 singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
 singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap n p
 
 rootsOf :: NgramsTable -> Set NgramsTerm
-rootsOf (NgramsTable m) = Map.keys $ Map.mapMaybe isRoot m
+rootsOf (NgramsTable m) = Map.keys $ Map.mapMaybe isRoot m.ngrams_repo_elements
   where
     isRoot (NgramsRepoElement { parent }) = parent
--- rootsOf (NgramsTable m) = Map.keys $ Map.filter isRoot m
---   where
---     isRoot (NgramsElement {parent}) = isNothing parent
 
 type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
 
@@ -769,7 +794,8 @@ newElemsTable = mapWithIndex newElem
 applyNgramsTablePatch :: NgramsTablePatch -> NgramsTable -> NgramsTable
 applyNgramsTablePatch { ngramsPatches } (NgramsTable m) =
   execState (reParentNgramsTablePatch ngramsPatches) $
-  NgramsTable $ applyPatchMap applyNgramsPatch ngramsPatches m
+  NgramsTable $ m { ngrams_repo_elements =
+                      applyPatchMap applyNgramsPatch ngramsPatches m.ngrams_repo_elements }
 
 applyNgramsPatches :: forall s. CoreState s -> NgramsTable -> NgramsTable
 applyNgramsPatches {ngramsLocalPatch, ngramsStagePatch, ngramsValidPatch} =
