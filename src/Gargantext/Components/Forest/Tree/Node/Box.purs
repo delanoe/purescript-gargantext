@@ -142,7 +142,7 @@ nodePopupCpt = R2.hooksComponent thisModule "nodePopupView" cpt
                   -> R.Element
         panelBody nodePopupState {dispatch: d, nodeType} =
           H.div {className: "panel-body flex-space-between"}
-                $ [ H.p { class: "spacer" } []
+                $ [ H.p { className: "spacer" } []
                   , H.div { className: "flex-center" }
                           [ buttonClick { action: doc
                                         , state: nodePopupState

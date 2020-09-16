@@ -342,12 +342,11 @@ searchInputComponent = R2.hooksComponent thisModule "searchInput" cpt
     cpt {search: (search /\ setSearch)} _ = do
       pure $
         H.div { className : "" }
-        [ H.input { defaultValue: search.term
-                  , value: search.term
-                  , className: "form-control"
-                  , type: "text"
+        [ H.input { className: "form-control"
+                  , defaultValue: search.term
                   , on: { change : onChange setSearch }
                   , placeholder: "Your Query here"
+                  , type: "text"
                   }
         ]
     onChange setSearch e = do
