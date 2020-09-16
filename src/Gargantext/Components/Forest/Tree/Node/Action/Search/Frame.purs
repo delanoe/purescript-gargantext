@@ -72,7 +72,7 @@ divIframeCpt = R2.hooksComponent thisModule "divIframe" cpt
 
 frameUrl :: FrameSource -> String
 frameUrl Istex = "https://istex.frame.gargantext.org"
-frameUrl Searx = "http://searx.frame.gargantext.org" -- 192.168.1.4:8080"
+frameUrl Searx = "https://searx.frame.gargantext.org" -- 192.168.1.4:8080"
 
 
 iframeWith :: Record IFrameProps -> R.Element
