@@ -20,6 +20,7 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
+import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
 import Gargantext.Components.GraphExplorer.Types  as GET
 import Gargantext.Components.GraphExplorer.Types  (SidePanelState(..), SideTab(..))
@@ -85,8 +86,10 @@ sideTabNav (sidePanel /\ setSidePanel) sideTabs =
 
 sideTab :: SidePanelState -> Record Props -> R.Element
 sideTab (Opened SideTabLegend) props@{metaData} =
-  let (GET.MetaData {legend}) = metaData
+  H.div {} [ let (GET.MetaData {legend}) = metaData
                     in Legend.legend { items: Seq.fromFoldable legend}
+           , documentation EN
+           ]
 
 sideTab (Opened SideTabData) props =
   RH.div {} [ selectedNodes props (SigmaxT.nodesGraphMap props.graph)
@@ -290,4 +293,41 @@ query searchType frontends (GET.MetaData metaData) session nodesMap (selectedNod
                 ]
               ]
               -}
+--------------------------------------------------------------------------
+
+
+documentation :: Lang -> R.Element
+documentation _ =
+  H.div {} [ H.h2 {} [ H.text "What is Graph ?"]
+           , ul [ "Graph is a conveniant tool to explore your documents. "
+                , "Nodes are terms selected in your Map List. "
+                <> "Node size is proportional to the number of documents with the associated term. "
+                , "Edges between nodes represent proximities of terms according to a specific distance between your documents. "
+                <> "Link strength is proportional to the strenght of terms association."
+                ]
+           , H.h3 {} [ H.text "Basic Interactions:"]
+           , ul [ "Click on a node to select/unselect and get its information. "
+                , "In case of multiple selection, the button unselect clears all selections. "
+                <> "Use your mouse scroll to zoom in and out in the graph. "
+                , "Use the node filter to create a subgraph with nodes of a given size "
+                <>"range (e.g. display only generic terms). "
+                , "Use the edge filter so create a subgraph with links in a given range (e.g. keep the strongest association)."
+                ]
+           ]
+
+  where
+    ul ts = H.ul {} $ map (\t -> H.li {} [ H.text t ]) ts
+
+{-
+TODO DOC
+  Conditional distance between the terms X and Y is the probability to have both terms X and Y in the same textual context.
+  Distributional distance between the terms X and Y is the probability to have same others terms in the same textual context as X or Y.
+
+Global/local view:
+    The 'change level' button allows to change between global view and node centered view,
+    To explore the neighborhood of a selection click on the 'change level' button.
+-}
+
+
+
 
