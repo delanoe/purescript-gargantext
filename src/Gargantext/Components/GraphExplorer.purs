@@ -37,6 +37,7 @@ import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer"
 
 type LayoutProps =
@@ -79,7 +80,7 @@ explorerLayoutView graphVersion p = R.createElement el p []
           explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
           where
             GET.HyperdataGraph { graph: hyperdataGraph } = loaded
-            (Tuple mMetaData graph) = convert hyperdataGraph
+            Tuple mMetaData graph = convert hyperdataGraph
 
 --------------------------------------------------------------
 explorer :: Record Props -> R.Element

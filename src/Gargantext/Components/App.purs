@@ -148,7 +148,11 @@ forestLayoutMainCpt = R2.hooksComponent thisModule "forestLayoutMain" cpt
 
 -- Simple layout does not accommodate the tree
 simpleLayout :: R.State GT.Handed -> R.Element -> R.Element
-simpleLayout handed child = R.fragment [ topBar { handed }, child, license]
+simpleLayout handed child = H.div { className: "simple-layout" } [
+    topBar { handed }
+  , child
+  , license
+  ]
 
 mainPage :: R.Element -> R.Element
 mainPage child =

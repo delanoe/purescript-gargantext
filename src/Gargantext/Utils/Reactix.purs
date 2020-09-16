@@ -48,6 +48,11 @@ type HooksComponent props = Record props -> Array R.Element -> R.Hooks R.Element
 hooksComponent :: forall props. String -> String -> HooksComponent props -> R.Component props
 hooksComponent module' name c = R.hooksComponent (module' <> "." <> name) c
 
+type StaticComponent props = Record props -> Array R.Element -> R.Element
+
+staticComponent :: forall props. String -> String -> StaticComponent props -> R.Component props
+staticComponent module' name c = R.staticComponent (module' <> "." <> name) c
+
 newtype Point = Point { x :: Number, y :: Number }
 
 -- a setter function, for useState
