@@ -179,8 +179,11 @@ normNgramInternal CTabSources    = identity
 normNgramInternal CTabInstitutes = identity
 normNgramInternal CTabTerms      = S.toLower <<< R.replace wordBoundaryReg " "
 
+normNgramWithTrim :: CTabNgramType -> String -> String
+normNgramWithTrim nt = DSC.trim <<< normNgramInternal nt
+
 normNgram :: CTabNgramType -> String -> NgramsTerm
-normNgram tabType = NormNgramsTerm <<< normNgramInternal tabType
+normNgram tabType = NormNgramsTerm <<< normNgramWithTrim tabType
 
 -----------------------------------------------------------------------------------
 newtype NgramsElement = NgramsElement
