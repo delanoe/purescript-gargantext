@@ -55,28 +55,29 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), para
       where
         textInput (_ /\ set) default =
           H.div {className: "col-md-8"}
-          [ H.input { type: "text"
-                    , placeholder: (boxName <> " Node")
+          [ H.input { className: "form-control"
                     , defaultValue: default
-                    , className: "form-control"
-                    , onInput: mkEffectFn1 $ set
-                                         <<< const
-                                         <<< R2.unsafeEventValue
+                    , on: { input: set
+                                   <<< const
+                                   <<< R2.unsafeEventValue }
+                    , placeholder: (boxName <> " Node")
+                    , type: "text"
                     }
           ]
         submitBtn (val1 /\ _) (val2 /\ _) =
           H.a {className: "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
               , type: "button"
-              , onClick: mkEffectFn1 $ \_ -> do
+              , on: { click: \_ -> do
                     setIsOpen $ const false
                     launchAff $ dispatch ( boxAction (AddContactParams {firstname:val1, lastname:val2} ))
+                    }
               , title: "Submit"
               } []
         cancelBtn =
           H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
-              , type: "button"
-              , onClick: mkEffectFn1 $ \_ -> setIsOpen $ const false
+              , on: { click: \_ -> setIsOpen $ const false }
               , title: "Cancel"
+              , type: "button"
               } []
 textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
   where

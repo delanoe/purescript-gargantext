@@ -27,13 +27,18 @@ type Props =
   , setList :: TermList -> Effect Unit -- not a state hook setter
   )
 
-type AnnotationMenu = { x :: Number, y :: Number | Props }
+type AnnotationMenu = {
+    x :: Number
+  , y :: Number
+  , onClose :: Unit -> Effect Unit
+  | Props
+  }
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
 annotationMenu :: R2.Setter (Maybe AnnotationMenu) -> AnnotationMenu -> R.Element
-annotationMenu setMenu { x,y,list,menuType,setList } =
-  CM.contextMenu { x,y,setMenu } [
+annotationMenu setMenu { x,y,list,menuType, onClose,setList } =
+  CM.contextMenu { x,y, onClose, setMenu } [
     R.createElement annotationMenuCpt {list,menuType,setList} []
   ]
 
