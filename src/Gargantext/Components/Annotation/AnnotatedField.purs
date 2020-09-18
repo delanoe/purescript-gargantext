@@ -18,7 +18,6 @@ import Data.Tuple.Nested ( (/\) )
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Event as DE
 import Effect ( Effect )
-import Effect.Uncurried ( mkEffectFn1 )
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
@@ -55,9 +54,9 @@ annotatedFieldComponent = R2.hooksComponent thisModule "annotatedField" cpt
 
       menuRef <- R.useRef Nothing
 
-      let wrapperProps =
-            { className: "annotated-field-wrapper" }
+      let wrapperProps = { className: "annotated-field-wrapper" }
 
+          onSelect :: String -> Maybe TermList -> MouseEvent -> Effect Unit
           onSelect text' Nothing event = do
             log2 "[onSelect] text'" text'
             maybeShowMenu setMenu menuRef setTermList ngrams event
@@ -67,10 +66,17 @@ annotatedFieldComponent = R2.hooksComponent thisModule "annotatedField" cpt
             let x = E.clientX event
                 y = E.clientY event
                 setList t = do
+                  R.setRef menuRef Nothing
                   setTermList (normNgram CTabTerms text') (Just list) t
                   --setMenu (const Nothing)
-                  R.setRef menuRef Nothing
-                menu = Just {x, y, list: Just list, menuType: SetTermListItem, setList}
+                menu = Just {
+                    x
+                  , y
+                  , list: Just list
+                  , menuType: SetTermListItem
+                  , onClose: \_ -> R.setRef menuRef Nothing
+                  , setList
+                  }
             --setMenu (const $ menu)
             R.setRef menuRef menu
 
@@ -110,6 +116,7 @@ addMenuCpt = R2.hooksComponent thisModule "addMenu" cpt
 -- forall e. IsMouseEvent e => R2.Setter (Maybe AnnotationMenu) -> R2.Setter ? -> ? -> e -> Effect Unit
 maybeShowMenu setMenu menuRef setTermList ngrams event = do
   s <- Sel.getSelection
+  log2 "[maybeShowMenu] s" s
   case s of
     Just sel -> do
       case Sel.selectionToString sel of
@@ -126,10 +133,19 @@ maybeShowMenu setMenu menuRef setTermList ngrams event = do
           E.preventDefault event
           range <- Sel.getRange sel 0
           log2 "[maybeShowMenu] selection range" $ Sel.rangeToTuple range
-          let menu = Just { x, y, list, menuType: NewNgram, setList }
+          let menu = Just {
+                x
+              , y
+              , list
+              , menuType: NewNgram
+              , onClose: \_ -> R.setRef menuRef Nothing
+              , setList
+            }
           --setMenu (const $ menu)
           R.setRef menuRef menu
     Nothing -> pure unit
+    -- Nothing -> do
+    --   R.setRef menuRef Nothing
 
 maybeAddMenu
   :: R.State (Maybe AnnotationMenu)
@@ -155,12 +171,12 @@ annotateRun p = R.createElement annotatedRunComponent p []
 annotatedRunComponent :: R.Component Run
 annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
   where
-    cpt    { text, list: Nothing, onSelect }     _ =
-      HTML.span { onMouseUp: mkEffectFn1 $ \e -> onSelect text Nothing e } [ HTML.text text ]
+    cpt    { list: Nothing, onSelect, text }     _ =
+      HTML.span { on: { mouseUp: \e -> onSelect text Nothing e } } [ HTML.text text ]
 
-    cpt    { text, list: (Just list), onSelect } _ =
+    cpt    { list: (Just list), onSelect, text } _ =
       HTML.span { className: className list
-                , onClick: mkEffectFn1 $ \e -> onSelect text (Just list) e} [ HTML.text text ]
+                , on: { click: \e -> onSelect text (Just list) e } } [ HTML.text text ]
       where
         className list' = "annotation-run bg-" <> termBootstrapClass list'
 

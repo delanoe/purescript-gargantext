@@ -167,7 +167,7 @@ renderScaleSel ref props (Range.Closed {min, max}) =
 
 renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> R2.Setter (Maybe Knob) -> Int -> R.Element
 renderKnob knob ref (Range.Closed value) bounds set precision =
-  H.div { ref, tabIndex, className, aria, onMouseDown, style } [
+  H.div { ref, tabIndex, className, aria, on: { mouseDown: onMouseDown }, style } [
       H.div { className: "button" }
         [
           H.text $ text $ toFixed precision val
@@ -181,7 +181,7 @@ renderKnob knob ref (Range.Closed value) bounds set precision =
     aria = { label: labelPrefix knob <> "value: " <> show val }
     labelPrefix MinKnob = "Minimum "
     labelPrefix MaxKnob = "Maximum "
-    onMouseDown = mkEffectFn1 $ \_ -> set $ const $ Just knob
+    onMouseDown _ = set $ const $ Just knob
     percOffset = Range.normalise bounds val
     style = { left: (show $ 100.0 * percOffset) <> "%" }
     val = case knob of
