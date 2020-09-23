@@ -75,6 +75,7 @@ nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.c
                 , chevronIcon isLeaf handed nodeType folderOpen
                 , nodeLink { frontends
                            , id
+                           , folderOpen
                            , isSelected: mCurrentRoute
                              == Routes.nodeTypeAppRoute
                              nodeType

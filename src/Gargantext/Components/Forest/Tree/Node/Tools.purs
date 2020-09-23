@@ -266,13 +266,14 @@ prettyNodeType nt = S.replace (S.Pattern "Node")   (S.Replacement " ")
 
 -- START node link
 type NodeLinkProps = (
-    frontends :: Frontends
-  , id :: Int
+    frontends  :: Frontends
+  , id         :: Int
+  , folderOpen :: R.State Boolean
   , isSelected :: Boolean
-  , name :: Name
-  , nodeType :: GT.NodeType
-  , session :: Session
-  , handed :: GT.Handed
+  , name       :: Name
+  , nodeType   :: GT.NodeType
+  , session    :: Session
+  , handed     :: GT.Handed
   )
 
 nodeLink :: Record NodeLinkProps -> R.Element
@@ -281,24 +282,27 @@ nodeLink p = R.createElement nodeLinkCpt p []
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = R2.hooksComponent thisModule "nodeLink" cpt
   where
-    cpt { frontends, id, isSelected, name, nodeType, session, handed} _ = do
+    cpt { frontends, id, isSelected, name, nodeType, session, handed, folderOpen} _ = do
       popoverRef <- R.useRef null
 
       pure $
-        H.div {} [ H.a { data: { for: tooltipId, tip: true }
-                 , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
-                                       [ nodeText { isSelected
-                                                  , name
-                                                  , handed
-                                                  }
-                                       ]
-                 , ReactTooltip.reactTooltip { id: tooltipId }
-                                             [ R2.row [ H.h4 {className: GT.fldr nodeType true}
-                                                             [ H.text $ prettyNodeType nodeType ]
-                                                      ]
-                                             , R2.row [ H.span {} [ H.text $ name ]]
-                                             ]
-                 ]
+        H.div { onClick: R2.effToggler folderOpen } 
+              [ H.a { data: { for: tooltipId
+                            , tip: true
+                            }
+                     , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
+                                           [ nodeText { isSelected
+                                                      , name
+                                                      , handed
+                                                      }
+                                           ]
+                     , ReactTooltip.reactTooltip { id: tooltipId }
+                                                 [ R2.row [ H.h4 {className: GT.fldr nodeType true}
+                                                                 [ H.text $ prettyNodeType nodeType ]
+                                                          ]
+                                                 , R2.row [ H.span {} [ H.text $ name ]]
+                                                 ]
+              ]
 
       where
         tooltipId = "node-link-" <> show id
