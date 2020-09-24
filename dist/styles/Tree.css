@@ -51,7 +51,7 @@ li .leaf:hover a.settings {
   top: 5px;
 }
 .tree .lefthanded ul {
-  margin-right: 19px;
+  margin-right: 5px;
 }
 .tree .lefthanded ul li {
   margin-right: 10px;
@@ -71,7 +71,7 @@ li .leaf:hover a.settings {
   justify-content: flex-end;
 }
 .tree .righthanded ul {
-  margin-left: 19px;
+  margin-left: 5px;
 }
 .tree .righthanded ul li {
   margin-left: 10px;
