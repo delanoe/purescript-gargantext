@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Home.Public where
 
+import DOM.Simple.Console (log)
 import Data.Array.NonEmpty (toArray)
 import Data.Array as Array
 import Data.Argonaut as Argonaut
@@ -9,12 +10,13 @@ import Data.Maybe (Maybe(..))
 import Data.NonEmpty (head)
 import Data.String (take)
 import Data.Traversable (traverse)
-import Data.Tuple (fst)
+import Data.Tuple (fst, snd)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Components.Login (login)
 import Gargantext.Config (publicBackend)
 import Gargantext.Config.REST (get)
 import Gargantext.Ends (backendUrl, Backend(..))
@@ -23,11 +25,23 @@ import Gargantext.Prelude
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 
+import Gargantext.Ends (Backend(..))
+import Gargantext.Sessions (Sessions(..))
+import Gargantext.Sessions as Sessions
+
+
 thisModule = "Gargantext.Components.Nodes.Home.Public"
 
-type PublicProps = (publicDatas :: (Array PublicData)
-                   -- , session :: Session
+type PublicProps = ( backend   :: R.State (Maybe Backend)
+                   , publicBackend :: Backend
+                   , sessions  :: R2.Reductor Sessions Sessions.Action
+                   , visible   :: R.State Boolean
                    )
+
+type PublicDataProps =
+  ( publicDatas :: (Array PublicData)
+  | PublicProps
+  )
 
 data PublicData = PublicData
   { title    :: String
@@ -75,25 +89,28 @@ loadPublicData _l = do
   Array.concat <$> traverse (\backend -> get Nothing (backendUrl backend "public")) backends
 -}
 
-renderPublic :: R.Element
-renderPublic = R.createElement renderPublicCpt {} []
+renderPublic :: Record PublicProps -> R.Element
+renderPublic props = R.createElement renderPublicCpt props []
 
-renderPublicCpt :: R.Component LoadData
+renderPublicCpt :: R.Component PublicProps
 renderPublicCpt = R2.hooksComponent thisModule "renderPublic" cpt
   where
-    cpt {} _ = do
+    cpt {backend, publicBackend, sessions, visible} _ = do
       reload <- R.useState' 0
-      useLoader { reload: fst reload } loadPublicData (\pd -> publicLayout {publicDatas: pd})
+      showLogin <- R.useState' false
+      useLoader { reload: fst reload }
+                loadPublicData
+                (\pd -> publicLayout {publicDatas: pd, backend, publicBackend, sessions, visible})
 
 
 ------------------------------------------------------------------------
-publicLayout :: Record PublicProps -> R.Element
+publicLayout :: Record PublicDataProps -> R.Element
 publicLayout props = R.createElement publicLayoutCpt props []
 
-publicLayoutCpt :: R.Component PublicProps
+publicLayoutCpt :: R.Component PublicDataProps
 publicLayoutCpt = R2.hooksComponent thisModule "publicLayout" cpt
   where
-    cpt {publicDatas} _ = do
+    cpt {publicDatas, visible, backend, publicBackend, sessions} _ = do
       pure $ H.span {}
              [ H.div { className: "text-center" }
                      [ H.div { className:"container1" }
@@ -102,10 +119,12 @@ publicLayoutCpt = R2.hooksComponent thisModule "publicLayout" cpt
                                    [ H.text "Discover maps made with "
                                    , H.span {className: "fa fa-heart"} []
                                    ]
-                             , H.p { className:"flex-space-around" }
-                                   [ H.a { className: "btn btn-primary my-2"
-                                         , href :"https://gargantext.org"
-                                         } [H.text "Join"]
+                             , H.div { className:"flex-space-around" }
+                                   [ H.button { className: "btn btn-primary my-2"
+                                              , on : { click }
+                                              , title: "Connect to the server"
+                                              } [ H.text "Join"
+                                                ]
                                    ]
                              ]
                      ]
@@ -113,6 +132,9 @@ publicLayoutCpt = R2.hooksComponent thisModule "publicLayout" cpt
              -- | TODO random maps
              , album publicDatas
              ]
+        where
+          click _ = log "click!" *> (snd backend) (const $ Just publicBackend)
+                                 *> (snd visible) (const true)
 
 album :: Array PublicData -> R.Element
 album pds = H.div {className: "album py-5 bg-light"}

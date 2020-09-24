@@ -1,10 +1,15 @@
 module Gargantext.Components.Nodes.Home where
 
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
+
+import Gargantext.Ends (Backend(..))
+import Gargantext.Sessions (Sessions(..))
+import Gargantext.Sessions as Sessions
 
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Lang (LandingLang(..))
@@ -47,19 +52,31 @@ langLandingData LL_EN = En.landingData
 
 ------------------------------------------------------------------------
 
-homeLayout :: LandingLang -> R.Element
-homeLayout lang = R.createElement homeLayoutCpt {landingData} []
-  where landingData = langLandingData lang
+type HomeProps = ( lang      :: LandingLang
+                 , publicBackend :: Backend
+                 , backend   :: R.State (Maybe Backend)
+                 , sessions  :: R2.Reductor Sessions Sessions.Action
+                 , visible  :: R.State Boolean
+                 )
 
-homeLayoutCpt :: R.Component ( landingData :: LandingData )
+homeLayout :: Record HomeProps -> R.Element
+homeLayout props = R.createElement homeLayoutCpt props []
+
+homeLayoutCpt :: R.Component HomeProps
 homeLayoutCpt = R2.hooksComponent thisModule "homeLayout" cpt
   where
-    cpt {landingData} _ = do
+    cpt {lang, backend, publicBackend, sessions, visible} _ = do
+      let landingData = langLandingData lang
       pure $ H.span {}
            [ H.div { className: "container1" } [ jumboTitle landingData false ]
            , H.div { className: "container1" } [] -- TODO put research form
            , H.div { className: "container1" } [ blocksRandomText' landingData ]
-           , H.div { className: "container1" } [ renderPublic ]
+           , H.div { className: "container1" } [ renderPublic { backend
+                                                              , publicBackend
+                                                              , sessions
+                                                              , visible
+                                                              }
+                                               ]
            , license
            ]
 

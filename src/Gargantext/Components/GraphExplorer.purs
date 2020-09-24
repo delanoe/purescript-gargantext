@@ -27,7 +27,7 @@ import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Data.Louvain as Louvain
-import Gargantext.Ends (Frontends)
+import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -48,6 +48,7 @@ type LayoutProps =
   , session       :: Session
   , sessions      :: Sessions
   , showLogin     :: R.State Boolean
+  , backend       :: R.State (Maybe Backend)
   )
 
 type Props =
@@ -100,6 +101,7 @@ explorerCpt = R2.hooksComponent thisModule "explorer" cpt
               , session
               , sessions
               , showLogin
+              , backend
               } _ = do
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
@@ -158,7 +160,8 @@ explorerCpt = R2.hooksComponent thisModule "explorer" cpt
                           , reload: treeReload
                           , sessions
                           , show: fst controls.showTree
-                          , showLogin: snd showLogin }
+                          , showLogin: snd showLogin 
+                          , backend}
                     /\
                     RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
                     /\
@@ -205,9 +208,9 @@ explorerCpt = R2.hooksComponent thisModule "explorer" cpt
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { frontends, handed, mCurrentRoute: route, reload, sessions, showLogin } =
+    tree { frontends, handed, mCurrentRoute: route, reload, sessions, showLogin, backend} =
       RH.div {className: "col-md-2 graph-tree"} [
-        forest { frontends, handed, reload, route, sessions, showLogin }
+        forest { frontends, handed, reload, route, sessions, showLogin, backend}
       ]
 
     mSidebar :: Maybe GET.MetaData
@@ -226,6 +229,7 @@ type TreeProps =
   , sessions :: Sessions
   , show :: Boolean
   , showLogin :: R2.Setter Boolean
+  , backend   :: R.State (Maybe Backend)
   )
 
 type MSidebarProps =

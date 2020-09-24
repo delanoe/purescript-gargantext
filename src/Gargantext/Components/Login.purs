@@ -29,15 +29,33 @@ import Gargantext.Utils.Reactix as R2
 
 thisModule = "Gargantext.Components.Login"
 
--- TODO: ask for login (modal) or account creation after 15 mn when user
--- is not logged and has made one search at least
+-- TODO
+-- enable anonymous login for first map
+-- and ask for login (modal) or account creation after 15 mn when user
+-- if not logged user can not save his work
 
-type Props =
+type LoginProps =
   ( backends :: Array Backend
   , sessions :: R2.Reductor Sessions Sessions.Action
   , visible  :: R.State Boolean
+  , backend  :: R.State (Maybe Backend) 
   )
 
+login :: Record LoginProps -> R.Element
+login props = R.createElement loginCpt props []
+
+loginCpt :: R.Component LoginProps
+loginCpt = R2.hooksComponent thisModule "login" cpt
+  where
+    cpt props@{backends, sessions, visible, backend} _ = do
+      pure $
+        modal {visible} $
+          case fst backend of
+            Nothing -> chooser { backends, backend, sessions, visible }
+            Just b  -> form { sessions, visible, backend: b }
+
+
+------------------------------------------------------------------------
 type ModalProps = ( visible :: R.State Boolean )
 
 modal :: Record ModalProps -> R.Element -> R.Element
@@ -76,45 +94,33 @@ modalCpt = R2.hooksComponent thisModule "modal" cpt where
                            ]
 
 
-
-login :: Record Props -> R.Element
-login props = R.createElement loginCpt props []
-
-loginCpt :: R.Component Props
-loginCpt = R2.hooksComponent thisModule "login" cpt
-  where
-    cpt props@{backends, sessions, visible} _ = do
-      backend <- R.useState' Nothing
-      pure $
-        modal {visible} $
-          case fst backend of
-            Nothing -> chooser { backends, backend, sessions, visible }
-            Just b  -> form { sessions, visible, backend: b }
-
-type ChooserProps = ( backend :: R.State (Maybe Backend) | Props )
-
-chooser :: Record ChooserProps -> R.Element
+------------------------------------------------------------------------
+chooser :: Record LoginProps -> R.Element
 chooser props = R.createElement chooserCpt props []
 
-chooserCpt :: R.Component ChooserProps
+chooserCpt :: R.Component LoginProps
 chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
-  cpt :: Record ChooserProps -> Array R.Element -> R.Element
+  cpt :: Record LoginProps -> Array R.Element -> R.Element
   cpt {backend, backends, sessions} _ =
     R.fragment $ title <> active <> new <> search
       where
         title =  [H.h2 { className: "center modal-title" } [H.text "Instances manager"]]
-        active = if DS.length ss > 0 then [ H.h3 {} [H.text "Active connection(s)"]
-                 , H.ul {} [ renderSessions sessions]
-                 ] else [] where
-                   Sessions {sessions:ss} = fst sessions
+        active = if DS.length ss > 0
+                    then [ H.h3 {} [H.text "Active connection(s)"]
+                         , H.ul {} [ renderSessions sessions]
+                         ]
+                    else []
+                      where
+                        Sessions {sessions:ss} = fst sessions
         search = [ H.input {className: "form-control", type:"text", placeholder: "Search for your institute"}]
-        new    = [ H.h3 {} [H.text "Last connection(s)"]
-                 , H.table {className : "table"}
-                 [ H.thead {className: "thead-dark"} [ H.tr {} [ H.th {} [ H.text ""]
-                                                               , H.th {} [H.text "Label of instance"]
-                                                               , H.th {} [H.text "Gargurl"]
-                                                               ]
-                                                     ]
+        new    = [ H.h3 {} [ H.text "Last connection(s)" ]
+                 , H.table { className : "table" }
+                           [ H.thead { className: "thead-dark" }
+                                     [ H.tr {} [ H.th {} [ H.text "" ]
+                                               , H.th {} [ H.text "Label of instance" ]
+                                               , H.th {} [ H.text "Gargurl" ]
+                                               ]
+                                     ]
                            , H.tbody {} (map (renderBackend backend) backends)
                            ]
                  ]
@@ -205,8 +211,8 @@ formCpt = R2.hooksComponent thisModule "form" cpt where
         Left message -> liftEffect $ (snd error) (const message)
         Right sess -> liftEffect $ do
           (snd sessions) (Sessions.Login sess)
-          (snd error) (const "")
-          (snd visible) (const false)
+          (snd error   ) (const "")
+          (snd visible ) (const false)
 
 csrfTokenInput :: {} -> R.Element
 csrfTokenInput _ =

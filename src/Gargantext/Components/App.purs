@@ -10,6 +10,7 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
+import Gargantext.Config (publicBackend)
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Lang (LandingLang(..))
@@ -25,7 +26,7 @@ import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists (listsLayout)
 import Gargantext.Components.Nodes.Texts (textsLayout)
 import Gargantext.Config (defaultFrontends, defaultBackends)
-import Gargantext.Ends (Frontends)
+import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Hooks.Router (useHashRouter)
 import Gargantext.License (license)
 import Gargantext.Router (router)
@@ -51,6 +52,8 @@ appCpt = R2.hooksComponent thisModule "app" cpt where
     route      <- useHashRouter router Home
 
     showLogin  <- R.useState' false
+    backend    <- R.useState' Nothing
+
     showCorpus <- R.useState' false
 
     treeReload <- R.useState' 0
@@ -65,18 +68,28 @@ appCpt = R2.hooksComponent thisModule "app" cpt where
                                          , reload: treeReload
                                          , route:  fst route
                                          , sessions: fst sessions
-                                         , showLogin: snd showLogin }
+                                         , showLogin: snd showLogin
+                                         , backend
+                                         }
     let mCurrentRoute     = fst route
-    let withSession sid f =
-          maybe' (const $ forested $ homeLayout LL_EN) (ff f) $ Sessions.lookup sid (fst sessions)
+    let withSession sid f = maybe' ( const $ forested
+                                           $ homeLayout { lang: LL_EN
+                                                        , backend
+                                                        , publicBackend
+                                                        , sessions
+                                                        , visible:showLogin
+                                                        }
+                                   )
+                                   (ff f)
+                                   (Sessions.lookup sid (fst sessions))
 
     pure $ case fst showLogin of
-      true -> forested $ login { backends, sessions, visible: showLogin }
+      true -> forested $ login { backend, backends, sessions, visible: showLogin }
       false ->
         case fst route of
-          Home  -> forested $ homeLayout LL_EN
-          Login -> login { backends, sessions, visible: showLogin }
-          Folder sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          Home  -> forested $ homeLayout {lang:LL_EN, backend, publicBackend, sessions, visible:showLogin}
+          Login -> login { backends, sessions, visible: showLogin, backend}
+          Folder sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
@@ -106,6 +119,7 @@ appCpt = R2.hooksComponent thisModule "app" cpt where
                                  , session
                                  , sessions: (fst sessions)
                                  , showLogin
+                                 , backend
                                  --, treeReload
                                  }
 
@@ -117,6 +131,7 @@ type ForestLayoutProps =
   , route     :: AppRoute
   , sessions  :: Sessions
   , showLogin :: R2.Setter Boolean
+  , backend   :: R.State (Maybe Backend)
   )
 
 forestLayout :: Record ForestLayoutProps -> R.Element
@@ -134,7 +149,7 @@ forestLayoutMain props = R.createElement forestLayoutMainCpt props []
 forestLayoutMainCpt :: R.Component ForestLayoutProps
 forestLayoutMainCpt = R2.hooksComponent thisModule "forestLayoutMain" cpt
   where
-    cpt { child, frontends, handed, reload, route, sessions, showLogin } _ = do
+    cpt { child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
       let ordering =
             case fst handed of
               GT.LeftHanded  -> reverse
@@ -142,7 +157,7 @@ forestLayoutMainCpt = R2.hooksComponent thisModule "forestLayoutMain" cpt
 
       pure $ R2.row $ ordering [
         H.div { className: "col-md-2", style: { paddingTop: "60px" } }
-            [ forest { frontends, handed: fst handed, reload, route, sessions, showLogin } ]
+            [ forest { frontends, handed: fst handed, reload, route, sessions, showLogin, backend} ]
       , mainPage child
       ]
 

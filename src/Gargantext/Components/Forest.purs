@@ -1,21 +1,21 @@
 module Gargantext.Components.Forest where
 
-import Gargantext.Prelude
+import DOM.Simple.Console (log)
 
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
-import Data.Tuple (fst)
+import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import Reactix as R
-import Reactix.DOM.HTML as H
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree (treeView)
-import Gargantext.Ends (Frontends)
+import Gargantext.Ends (Frontends, Backend(..))
+import Gargantext.Prelude
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
 import Gargantext.Types (Reload, Handed(..))
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 thisModule = "Gargantext.Components.Forest"
 
@@ -26,6 +26,7 @@ type Props =
   , route     :: AppRoute
   , sessions  :: Sessions
   , showLogin :: R2.Setter Boolean
+  , backend   :: R.State (Maybe Backend)
   )
 
 forest :: Record Props -> R.Element
@@ -33,7 +34,7 @@ forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
 forestCpt = R2.hooksComponent thisModule "forest" cpt where
-  cpt { frontends, handed, reload: extReload, route, sessions, showLogin } _ = do
+  cpt { frontends, handed, reload: extReload, route, sessions, showLogin, backend} _ = do
     -- NOTE: this is a hack to reload the tree view on demand
     reload     <- R.useState' (0 :: Reload)
     openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
@@ -48,9 +49,9 @@ forestCpt = R2.hooksComponent thisModule "forest" cpt where
       /\ fst asyncTasks
       /\ handed
       )
-      (cpt' openNodes asyncTasks reload showLogin)
-  cpt' openNodes asyncTasks reload showLogin (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
-    pure $ R2.row $ [plus handed showLogin] <> trees
+      (cpt' openNodes asyncTasks reload showLogin backend)
+  cpt' openNodes asyncTasks reload showLogin backend (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
+    pure $ R2.row $ [plus handed showLogin backend] <> trees
     where
       trees = tree <$> unSessions sessions
       tree s@(Session {treeId}) =
@@ -64,8 +65,8 @@ forestCpt = R2.hooksComponent thisModule "forest" cpt where
                  , session: s
                  }
 
-plus :: Handed -> R2.Setter Boolean -> R.Element
-plus handed showLogin = H.div {className: if handed == RightHanded
+plus :: Handed -> R2.Setter Boolean -> R.State (Maybe Backend) -> R.Element
+plus handed showLogin backend = H.div {className: if handed == RightHanded
                                              then "flex-start"  -- TODO we should use lefthanded SASS class here
                                              else "flex-end"
                               } [
@@ -84,5 +85,5 @@ plus handed showLogin = H.div {className: if handed == RightHanded
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
   where
-    click _ = do
-      showLogin $ const true
+    click _ = (snd backend) (const Nothing)
+            *> showLogin (const true)
