@@ -1,6 +1,6 @@
 {
     "name": "Gargantext",
-    "version": "0.0.1.9.4",
+    "version": "0.0.1.9.5",
     "scripts": {
         "rebase-set": "spago package-set-upgrade && spago psc-package-insdhall",
         "rebuild-set": "spago psc-package-insdhall",
