@@ -23,6 +23,12 @@ import Gargantext.Utils as GU
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
+cacheName :: String
+cacheName = "cache-api-loader"
+
+clearCache :: Unit -> Aff Unit
+clearCache _ = GUC.delete $ GUC.CacheName cacheName
+
 
 useLoader :: forall path st. Eq path
           => path
@@ -119,7 +125,6 @@ useCachedAPILoaderEffect { cacheEndpoint
     else do
       R.setRef oPath path
 
-      let cacheName = "cache-api-loader"
       let req = mkRequest path
       -- log2 "[useCachedLoader] mState" mState
       launchAff_ $ do

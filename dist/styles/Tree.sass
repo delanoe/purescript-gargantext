@@ -31,6 +31,7 @@ li
       &::before
         bottom: -12px
         content: " "
+        height: 7px
         position: absolute
         top: 5px
       &:not(:first-child):last-child::before
@@ -43,8 +44,15 @@ li
         position: absolute
         width: 1px
         top: 5px
+      &.with-children
+        &::after
+          background-color: #000
+        &::before
+          background-color: #000
 
   .lefthanded
+    .leaf
+      justify-content : flex-end
     ul
       margin-right : 5px
       li
@@ -52,18 +60,16 @@ li
         padding-right: 5px
         &.with-children
           &::after
-            background-color: #000
             right: -10px
             width: 5px
           &::before
-            background-color: #000
             right: -10px
             width: 1px
           &:only-child::before
             //right: 1px
-        .leaf
-          justify-content : flex-end
   .righthanded
+    .leaf
+      justify-content : flex-start
     ul
       margin-left : 5px
       li
@@ -71,18 +77,14 @@ li
         padding-left: 5px
         &.with-children
           &::after
-            background-color: #000
             left: -10px
             width: 5px
           &::before
-            background-color: #000
             left: -10px
             width: 1px
           &:only::before
             background-color: #000
             right: 10px
-        .leaf
-          justify-content : flex-start
 
   .file-dropped
     background-color: #d8dfe5

@@ -36,6 +36,7 @@ li .leaf:hover a.settings {
 .tree ul li::before {
   bottom: -12px;
   content: " ";
+  height: 7px;
   position: absolute;
   top: 5px;
 }
@@ -50,6 +51,15 @@ li .leaf:hover a.settings {
   width: 1px;
   top: 5px;
 }
+.tree ul li.with-children::after {
+  background-color: #000;
+}
+.tree ul li.with-children::before {
+  background-color: #000;
+}
+.tree .lefthanded .leaf {
+  justify-content: flex-end;
+}
 .tree .lefthanded ul {
   margin-right: 5px;
 }
@@ -58,17 +68,15 @@ li .leaf:hover a.settings {
   padding-right: 5px;
 }
 .tree .lefthanded ul li.with-children::after {
-  background-color: #000;
   right: -10px;
   width: 5px;
 }
 .tree .lefthanded ul li.with-children::before {
-  background-color: #000;
   right: -10px;
   width: 1px;
 }
-.tree .lefthanded ul li .leaf {
-  justify-content: flex-end;
+.tree .righthanded .leaf {
+  justify-content: flex-start;
 }
 .tree .righthanded ul {
   margin-left: 5px;
@@ -78,21 +86,16 @@ li .leaf:hover a.settings {
   padding-left: 5px;
 }
 .tree .righthanded ul li.with-children::after {
-  background-color: #000;
   left: -10px;
   width: 5px;
 }
 .tree .righthanded ul li.with-children::before {
-  background-color: #000;
   left: -10px;
   width: 1px;
 }
 .tree .righthanded ul li.with-children:only::before {
   background-color: #000;
   right: 10px;
-}
-.tree .righthanded ul li .leaf {
-  justify-content: flex-start;
 }
 .tree .file-dropped {
   background-color: #d8dfe5;
