@@ -301,6 +301,19 @@ menuElements' = menuElements-- title, icon, text
             }
     ]
     ,------------------------------------------------------------
+    [ LiNav { title : "Source Code Documentation"
+            , href  : "https://doc.gargantext.org"
+            , icon  : "glyphicon glyphicon-book"
+            , text  : "Source Code Documentation"
+            }
+    , LiNav { title : "API documentation"
+            , href  : "https://v4.gargantext.org/swagger-ui"
+            , icon  : "glyphicon glyphicon-book"
+            , text  : "API documentation"
+            }
+    ]
+
+    ,------------------------------------------------------------
     [ LiNav { title : "More about us (you)"
             , href  : "https://iscpif.fr"
             , icon  : "glyphicon glyphicon-question-sign"
