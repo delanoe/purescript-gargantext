@@ -17,6 +17,7 @@ import Gargantext.Components.NgramsTable.Core (Version(..), Versioned(..))
 import Gargantext.Utils.CacheAPI as GUC
 
 
+cacheName :: String
 cacheName = "ngrams-cache-api-loader"
 
 

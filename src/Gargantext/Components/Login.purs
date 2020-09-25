@@ -3,7 +3,6 @@
   -- Select a backend and log into it
 module Gargantext.Components.Login where
 
-import DOM.Simple.Console (log)
 import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -11,17 +10,21 @@ import Data.Sequence as DS
 import Data.String as DST
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Prelude (Unit, bind, const, discard, map, pure, show, ($), (&&), (*>), (/=), (<$>), (<>), (==), (>))
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Forest.Tree.Node.Tools (checkbox)
 import Gargantext.Components.Forms (clearfix, cardBlock, cardGroup, center, formGroup)
 import Gargantext.Components.Login.Types (AuthRequest(..))
+import Gargantext.Components.NgramsTable.Loader as NTL
 import Gargantext.Ends (Backend(..))
+import Gargantext.Hooks.Loader as GHL
 import Gargantext.Sessions (Session, Sessions(..), postAuthRequest, unSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils (csrfMiddlewareToken)
@@ -129,14 +132,27 @@ renderSessions :: R2.Reductor Sessions Sessions.Action -> R.Element
 renderSessions sessions = R.fragment (renderSession sessions <$> unSessions (fst sessions))
   where
     renderSession :: R2.Reductor Sessions Sessions.Action -> Session -> R.Element
-    renderSession sessions' session = H.li {} $ [ H.text $ show session ]
-                                            <> [ H.a { on : {click}
-                                                     , className: "glyphitem glyphicon glyphicon-log-out"
-                                                     , id : "log-out"
-                                                     , title: "Log out"
-                                                     } [] ]
-                                                where
-                                                  click _ = (snd sessions') (Sessions.Logout session)
+    renderSession sessions' session = H.li {} [
+      H.text $ show session
+    , H.a { className: "glyphitem fa fa-sign-out"
+          , id : "log-out"
+          , on : { click: logOutClick }
+          , title: "Log out"
+          } []
+    , H.a { className: "glyphitem fa fa-eraser"
+          , id : "log-out"
+          , on : { click: clearCacheClick }
+          , title: "Clear cache"
+          } []
+    ]
+      where
+        clearCacheClick :: forall a. a -> Effect Unit
+        clearCacheClick _ = do
+          launchAff_ $ do
+            GHL.clearCache unit
+            NTL.clearCache unit
+            liftEffect $ log "[renderSessions] cache cleared"
+        logOutClick _ = (snd sessions') (Sessions.Logout session)
 
 renderBackend :: R.State (Maybe Backend) -> Backend -> R.Element
 renderBackend state backend@(Backend {name}) =
