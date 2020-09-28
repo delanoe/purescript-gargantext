@@ -103,12 +103,14 @@ renderNgramsTreeCpt = R2.hooksComponent thisModule "renderNgramsTree" cpt
     cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit } _ =
       pure $ H.ul {} [
         H.span { className: "tree" } [
-          tree { ngramsClick
-               , ngramsDepth: {ngrams, depth: 0}
-               , ngramsEdit
-               , ngramsStyle
-               , ngramsTable
-               }
+          H.span { className: "righthanded" } [
+            tree { ngramsClick
+                 , ngramsDepth: {ngrams, depth: 0}
+                 , ngramsEdit
+                 , ngramsStyle
+                 , ngramsTable
+                 }
+          ]
         ]
       ]
 
