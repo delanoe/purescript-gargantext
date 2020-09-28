@@ -225,6 +225,16 @@ settingsBox (NodePublic Dashboard) =
                           ]
               }
 
+settingsBox (NodePublic NodeFile) =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation NodeFile
+              , buttons : [ Delete
+                          ]
+              }
+
+
+
 settingsBox (NodePublic FolderPublic) =
   SettingsBox { show : true
               , edit : true
