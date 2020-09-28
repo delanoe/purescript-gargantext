@@ -203,7 +203,7 @@ settingsBox Graph =
               , buttons : [ Refresh
                           , Config
                           , Download -- TODO as GEXF or JSON
-                          , Publish publishParams
+                          -- , Publish publishParams
                           , Delete
                           ]
               }
@@ -311,7 +311,8 @@ settingsBox NodeFile =
   SettingsBox { show: true
               , edit: true
               , doc: Documentation NodeFile
-              , buttons: [ Delete ]
+              , buttons: [ Publish publishParams
+                         , Delete ]
               }
 
 
