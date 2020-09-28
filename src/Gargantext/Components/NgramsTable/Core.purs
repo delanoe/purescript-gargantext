@@ -396,6 +396,16 @@ instance encodeJsonNgramsTable :: EncodeJson NgramsTable where
 -}
 -----------------------------------------------------------------------------------
 
+lookupRootList :: NgramsTerm -> NgramsTable -> Maybe TermList
+lookupRootList ngram (NgramsTable {ngrams_repo_elements: elts}) =
+  case Map.lookup ngram elts of
+    Nothing -> Nothing
+    Just (NgramsRepoElement {list, root: Nothing}) -> Just list
+    Just (NgramsRepoElement {root: Just root}) ->
+      case Map.lookup root elts of
+        Nothing -> Nothing
+        Just (NgramsRepoElement {list}) -> Just list -- assert root == Nothing
+
 wordBoundaryChars :: String
 wordBoundaryChars = "[ .,;:!?'\\{}()]"
 
@@ -412,7 +422,7 @@ wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
 highlightNgrams :: CTabNgramType -> NgramsTable -> String -> Array (Tuple String (Maybe TermList))
-highlightNgrams ntype (NgramsTable table) input0 =
+highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     -- trace {pats, input0, input, ixs} \_ ->
     let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
     A.reverse (A.fromFoldable (consNonEmpty (undb (init sN.s)) sN.l))
@@ -424,7 +434,7 @@ highlightNgrams ntype (NgramsTable table) input0 =
     undb = R.replace wordBoundaryReg2 "$1"
     init x = S.take (S.length x - 1) x
     input = spR input0
-    pats = A.fromFoldable (Map.keys table.ngrams_repo_elements)
+    pats = A.fromFoldable (Map.keys elts)
     ixs = indicesOfAny (sp <<< ngramsTermText <$> pats) (normNgramInternal ntype input)
 
     consOnJustTail s xs@(Tuple _ (Just _) : _) =
@@ -451,10 +461,10 @@ highlightNgrams ntype (NgramsTable table) input0 =
               crashWith "highlightNgrams: out of bounds pattern"
             Just pat ->
               let lpat = S.length (db (ngramsTermText pat)) in
-              case Map.lookup pat table.ngrams_repo_elements of
+              case lookupRootList pat table of
                 Nothing ->
                   crashWith "highlightNgrams: pattern missing from table"
-                Just ne ->
+                Just ne_list ->
                   let
                     s1    = S.splitAt (i - i0) s
                     s2    = S.splitAt lpat     (S.drop 1 s1.after)
@@ -466,7 +476,7 @@ highlightNgrams ntype (NgramsTable table) input0 =
                   -- `undb s2.before` and pat might differ by casing only!
                   { i0: i + lpat + 2
                   , s:  s3.after
-                  , l:  Tuple (undb s2.before) (Just (ne ^. _NgramsRepoElement <<< _list)) :
+                  , l:  Tuple (undb s2.before) (Just ne_list) :
                         consOnJustTail s3b
                         (consNonEmpty (unspB (undb s1.before)) l)
                   }
