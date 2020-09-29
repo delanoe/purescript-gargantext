@@ -159,7 +159,10 @@ treeCpt = R2.hooksComponent thisModule "tree" cpt
 
         forest =
           let depth = ngramsDepth.depth + 1 in
-          H.ul {} <<< map (\ngrams -> tree (params { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
+          if depth > 10 then
+            const $ H.text "ERROR DEPTH > 10"
+          else
+            H.ul {} <<< map (\ngrams -> tree (params { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
 
 
 type RenderNgramsItem =
