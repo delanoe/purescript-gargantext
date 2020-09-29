@@ -113,7 +113,9 @@ publicLayoutCpt = R2.hooksComponent thisModule "publicLayout" cpt
     cpt {publicDatas, visible, backend, publicBackend, sessions} _ = do
       pure $ H.span {}
              [ H.div { className: "text-center" }
-                     [ H.div { className:"container1" }
+                     [ H.div { className:"container1"
+                             , style: { marginBottom : "15px"}
+                             }
                              [ H.h2 {} [H.text "Public Maps"]
                              , H.p { className: "lead text-muted"}
                                    [ H.text "Discover maps made with "
