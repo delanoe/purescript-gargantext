@@ -123,7 +123,7 @@ loadedPie :: Record MetricsProps -> HistoMetrics -> R.Element
 loadedPie { path, reload, session } loaded =
   H.div {} [
     U.reloadButton reload
-  , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
+  -- , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
   , chart $ chartOptionsPie loaded
   ]
 
@@ -151,6 +151,6 @@ loadedBar :: Record MetricsProps -> Loaded -> R.Element
 loadedBar { path, reload, session } loaded =
   H.div {} [
     U.reloadButton reload
-  , U.chartUpdateButton { chartType: ChartBar, path, reload, session }
+  -- , U.chartUpdateButton { chartType: ChartBar, path, reload, session }
   , chart $ chartOptionsBar loaded
   ]
