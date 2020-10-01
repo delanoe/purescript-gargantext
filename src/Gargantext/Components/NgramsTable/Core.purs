@@ -758,18 +758,22 @@ type RootParent = { root :: NgramsTerm, parent :: NgramsTerm }
 
 type ReParent a = forall m. MonadState NgramsTable m => a -> m Unit
 
-reRootChildren :: NgramsTerm -> ReParent NgramsTerm
-reRootChildren root ngram = do
+reRootMaxDepth :: Int
+reRootMaxDepth = 100 -- TODO: this is a hack
+
+reRootChildren :: Int -> NgramsTerm -> ReParent NgramsTerm
+reRootChildren 0         _    _     = pure unit -- TODO: this is a hack
+reRootChildren max_depth root ngram = do
   nre <- use (at ngram)
   traverseOf_ (_Just <<< _NgramsRepoElement <<< _children <<< folded) (\child -> do
     at child <<< _Just <<< _NgramsRepoElement <<< _root ?= root
-    reRootChildren root child) nre
+    reRootChildren (max_depth - 1) root child) nre
 
 reParent :: Maybe RootParent -> ReParent NgramsTerm
 reParent mrp child = do
   at child <<< _Just <<< _NgramsRepoElement %= ((_parent .~ (view _parent <$> mrp)) <<<
                                                 (_root   .~ (view _root   <$> mrp)))
-  reRootChildren (fromMaybe child (mrp ^? _Just <<< _root)) child
+  reRootChildren reRootMaxDepth (fromMaybe child (mrp ^? _Just <<< _root)) child
 
 -- reParentNgramsPatch :: NgramsTerm -> ReParent NgramsPatch
 -- ^ GHC would have accepted this type. Here reParentNgramsPatch checks but
