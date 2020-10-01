@@ -35,7 +35,7 @@ import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
-import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read)
+import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, pure, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||), read, otherwise)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -576,14 +576,19 @@ ngramsElementToNgramsOcc :: NgramsElement -> NgramsOcc
 ngramsElementToNgramsOcc (NgramsElement {occurrences, children}) = {occurrences: Additive occurrences, children}
 
 sumOccurrences :: NgramsTable -> NgramsOcc -> Additive Int
-sumOccurrences ngramsTable {occurrences, children} =
-    occurrences <> children ^. folded <<< to (sumOccurrences' ngramsTable)
+sumOccurrences nt = sumOccChildren mempty
     where
-      sumOccurrences' :: NgramsTable -> NgramsTerm -> Additive Int
-      sumOccurrences' nt label =
-        sumOccurrences nt { occurrences: nt ^. _NgramsTable <<< _ngrams_scores <<< ix label
-                          , children:    nt ^. ix label <<< _NgramsRepoElement <<< _children
-                          }
+      sumOccTerm :: Set NgramsTerm -> NgramsTerm -> Additive Int
+      sumOccTerm seen label
+        | Set.member label seen = Additive 0 -- TODO: Should not happen, emit a warning/error.
+        | otherwise =
+            sumOccChildren (Set.insert label seen)
+                           { occurrences: nt ^. _NgramsTable <<< _ngrams_scores <<< ix label
+                           , children:    nt ^. ix label <<< _NgramsRepoElement <<< _children
+                           }
+      sumOccChildren :: Set NgramsTerm -> NgramsOcc -> Additive Int
+      sumOccChildren seen {occurrences, children} =
+        occurrences <> children ^. folded <<< to (sumOccTerm seen)
 
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> R.Element
 optps1 { desc, mval } = H.option { value: value } [H.text desc]
