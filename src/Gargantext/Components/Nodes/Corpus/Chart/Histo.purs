@@ -103,7 +103,7 @@ loaded :: Record MetricsProps -> HistoMetrics -> R.Element
 loaded { path, reload, session } loaded =
   H.div {} [
     U.reloadButton reload
-  -- , U.chartUpdateButton { chartType: Histo, path, reload, session }
+  , U.chartUpdateButton { chartType: Histo, path, reload, session }
   , chart $ chartOptions loaded
   ]
   -- TODO: parametrize ngramsType above

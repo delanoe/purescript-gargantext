@@ -95,6 +95,6 @@ loaded :: Record MetricsProps -> Loaded -> R.Element
 loaded { path, reload, session } loaded =
   H.div {} [
     U.reloadButton reload
-  -- , U.chartUpdateButton { chartType: ChartTree, path, reload, session }
+  , U.chartUpdateButton { chartType: ChartTree, path, reload, session }
   , chart (scatterOptions loaded)
   ]
