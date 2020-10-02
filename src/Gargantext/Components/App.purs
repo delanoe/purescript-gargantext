@@ -289,27 +289,32 @@ menuElements' = menuElements-- title, icon, text
             }
     ]
     , -----------------------------------------------------------
-    [ LiNav { title : "Interactive chat"
+    [ LiNav { title : "Chat"
             , href  : "https://chat.iscpif.fr/channel/gargantext"
             , icon  : "fa fa-rocket"
             , text  : "Chat"
             }
-    , LiNav { title : "Asynchronous discussions"
+    , LiNav { title : "Forums"
             , href  : "https://discourse.iscpif.fr/c/gargantext"
             , icon  : "fa fa-weixin"
             , text  : "Forum"
             }
     ]
     ,------------------------------------------------------------
-    [ LiNav { title : "Source Code Documentation"
+    [ LiNav { title : "Code documentation"
             , href  : "https://doc.gargantext.org"
             , icon  : "glyphicon glyphicon-book"
             , text  : "Source Code Documentation"
             }
     , LiNav { title : "API documentation"
             , href  : "https://v4.gargantext.org/swagger-ui"
-            , icon  : "fa fa-code"
+            , icon  : "fa fa-code-fork"
             , text  : "API documentation"
+            }
+    , LiNav { title : "Source code"
+            , href  : "https://gitlab.iscpif.fr/gargantext/haskell-gargantext"
+            , icon  : "fa fa-code"
+            , text  : "Source Code"
             }
     ]
 
