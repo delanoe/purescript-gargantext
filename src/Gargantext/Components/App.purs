@@ -279,8 +279,8 @@ menuElements' = menuElements-- title, icon, text
   [ -- ===========================================================
     [ LiNav { title : "Quick start, tutorials and methodology"
             , href  : "https://iscpif.fr/gargantext/your-first-map/"
-            , icon  : "glyphicon glyphicon-book"
-            , text  : "Documentation"
+            , icon  : "fa fa-lightbulb-o"
+            , text  : "Tutorials"
             }
     , LiNav { title : "Report bug here"
             , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
@@ -291,12 +291,12 @@ menuElements' = menuElements-- title, icon, text
     , -----------------------------------------------------------
     [ LiNav { title : "Interactive chat"
             , href  : "https://chat.iscpif.fr/channel/gargantext"
-            , icon  : "fab fa-rocketchat"
+            , icon  : "fa fa-rocket"
             , text  : "Chat"
             }
     , LiNav { title : "Asynchronous discussions"
             , href  : "https://discourse.iscpif.fr/c/gargantext"
-            , icon  : "fab fa-discourse"
+            , icon  : "fa fa-weixin"
             , text  : "Forum"
             }
     ]
@@ -308,7 +308,7 @@ menuElements' = menuElements-- title, icon, text
             }
     , LiNav { title : "API documentation"
             , href  : "https://v4.gargantext.org/swagger-ui"
-            , icon  : "glyphicon glyphicon-book"
+            , icon  : "fa fa-code"
             , text  : "API documentation"
             }
     ]
