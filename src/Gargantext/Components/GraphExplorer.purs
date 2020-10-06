@@ -367,49 +367,50 @@ transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
         $ SigmaxT.neighbouringEdges graph (fst controls.selectedNodeIds)
     hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
 
-    --newNodes = Seq.map (nodeSizeFilter <<< nodeMarked) nodes
-    --newEdges = Seq.map (edgeConfluenceFilter <<< edgeWeightFilter <<< edgeShowFilter <<< edgeMarked) edges
-    newEdges' = Seq.filter edgeFilter $ Seq.map (edgeShowFilter <<< edgeMarked) edges
-    newNodes  = Seq.filter nodeFilter $ Seq.map (nodeMarked) nodes
+    newEdges' = Seq.filter edgeFilter $ Seq.map (
+      edgeHideWeight <<< edgeHideConfluence <<< edgeShowFilter <<< edgeMarked
+      ) edges
+    newNodes  = Seq.filter nodeFilter $ Seq.map (nodeMarked <<< nodeHideSize) nodes
     newEdges  = Seq.filter (edgeInGraph $ Set.fromFoldable $ Seq.map _.id newNodes) newEdges'
 
-    edgeFilter e = edgeConfluenceFilter e &&
-                   edgeWeightFilter e
-                   --edgeShowFilter e
-    nodeFilter n = nodeSizeFilter n &&
-                   nodeRemovedFilter n
+    edgeFilter e = true
+    nodeFilter n = nodeRemovedFilter n
 
-    --nodeSizeFilter node@{ size } =
-    --  if Range.within (fst controls.nodeSize) size then
-    --    node
-    --  else
-    --    node { hidden = true }
+    nodeSizeFilter :: Record SigmaxT.Node -> Boolean
     nodeSizeFilter node@{ size } = Range.within (fst controls.nodeSize) size
 
     nodeRemovedFilter node@{ id } = not $ Set.member id $ fst controls.removedNodeIds
 
-    --edgeConfluenceFilter edge@{ confluence } =
-    --  if Range.within (fst controls.edgeConfluence) confluence then
-    --    edge
-    --  else
-    --    edge { hidden = true }
+    edgeConfluenceFilter :: Record SigmaxT.Edge -> Boolean
     edgeConfluenceFilter edge@{ confluence } = Range.within (fst controls.edgeConfluence) confluence
+    edgeWeightFilter :: Record SigmaxT.Edge -> Boolean
+    edgeWeightFilter edge@{ weightIdx } = Range.within (fst controls.edgeWeight) $ toNumber weightIdx
+
+    edgeHideConfluence :: Record SigmaxT.Edge -> Record SigmaxT.Edge
+    edgeHideConfluence edge@{ confluence } =
+      if Range.within (fst controls.edgeConfluence) confluence then
+        edge
+      else
+        edge { hidden = true }
+
+    edgeHideWeight :: Record SigmaxT.Edge -> Record SigmaxT.Edge
+    edgeHideWeight edge@{ weightIdx } =
+      if Range.within (fst controls.edgeWeight) $ toNumber weightIdx then
+        edge
+      else
+        edge { hidden = true }
+
+    edgeShowFilter :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeShowFilter edge =
       if (SigmaxT.edgeStateHidden $ fst controls.showEdges) then
         edge { hidden = true }
       else
         edge
-    --edgeWeightFilter edge@{ weight } =
-    --  if Range.within (fst controls.edgeWeight) weight then
-    --    edge
-    --  else
-    --    edge { hidden = true }
-    edgeWeightFilter :: Record SigmaxT.Edge -> Boolean
-    edgeWeightFilter edge@{ weightIdx } = Range.within (fst controls.edgeWeight) $ toNumber weightIdx
 
     edgeInGraph :: SigmaxT.NodeIds -> Record SigmaxT.Edge -> Boolean
     edgeInGraph nodeIds e = (Set.member e.source nodeIds) && (Set.member e.target nodeIds)
 
+    edgeMarked :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeMarked edge@{ id, sourceNode } = do
       let isSelected = Set.member id selectedEdgeIds
       case Tuple hasSelection isSelected of
@@ -417,8 +418,17 @@ transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
         Tuple true  true  -> edge { color = sourceNode.color }
         Tuple true false  -> edge { color = "rgba(221, 221, 221, 0.5)" }
         _                 -> edge
+
+    nodeMarked :: Record SigmaxT.Node -> Record SigmaxT.Node
     nodeMarked node@{ id } =
       if Set.member id (fst controls.selectedNodeIds) then
         node { borderColor = "#000", type = "selected" }
       else
         node
+
+    nodeHideSize :: Record SigmaxT.Node -> Record SigmaxT.Node
+    nodeHideSize node@{ size } =
+      if Range.within (fst controls.nodeSize) size then
+        node
+      else
+        node { hidden = true }
