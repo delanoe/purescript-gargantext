@@ -275,7 +275,8 @@ tableContainerCpt { dispatch
 
 -- NEXT
 type Props =
-  ( path         :: R.State PageParams
+  ( afterSync    :: Unit -> Effect Unit
+  , path         :: R.State PageParams
   , state        :: R.State State
   , tabNgramType :: CTabNgramType
   , versioned    :: VersionedNgramsTable
@@ -288,7 +289,8 @@ loadedNgramsTable p = R.createElement loadedNgramsTableCpt p []
 loadedNgramsTableCpt :: R.Component Props
 loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
   where
-    cpt { path: path@(path'@{searchQuery, scoreType, params, termListFilter, termSizeFilter} /\ setPath)
+    cpt { afterSync
+        , path: path@(path'@{ searchQuery, scoreType, params, termListFilter, termSizeFilter } /\ setPath)
         , state: (state@{ ngramsChildren
                         , ngramsLocalPatch
                         , ngramsParent
@@ -325,13 +327,19 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
         ] <> syncResetButtons
       where
         autoUpdate :: Array R.Element
-        autoUpdate = if withAutoUpdate then [ R2.buff $ autoUpdateElt { duration: 5000, effect: performAction Synchronize } ] else []
+        autoUpdate = if withAutoUpdate then
+                       [ R2.buff $ autoUpdateElt { duration: 5000, effect: performAction Synchronize } ]
+                     else []
         resetButton :: Boolean -> R.Element
         resetButton active = H.button { className: "btn btn-primary " <> if active then "" else " disabled"
                                       , on: { click: \_ -> performAction ResetPatches } } [ H.text "Reset" ]
         syncButton :: R.Element
         syncButton = H.button { className: "btn btn-primary"
-                              , on: { click: \_ -> performAction Synchronize }} [ H.text "Sync" ]
+                              , on: { click: \_ -> do
+                                         performAction Synchronize
+                                         afterSync unit
+                                    }
+                              } [ H.text "Sync" ]
         -- I would rather have the two buttons always here and make the reset button inactive when the patch is empty.
         syncResetButtons :: Array R.Element
         syncResetButtons = [ H.div {} [ resetButton (ngramsLocalPatch /= mempty), syncButton ] ]
@@ -483,13 +491,14 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 
 
 type MainNgramsTableProps =
-  ( nodeId        :: Int
-    -- ^ This node can be a corpus or contact.
+  ( afterSync     :: Unit -> Effect Unit
   , cacheState    :: R.State NT.CacheState
   , defaultListId :: Int
-  , tabType       :: TabType
+  , nodeId        :: Int
+    -- ^ This node can be a corpus or contact.
   , session       :: Session
   , tabNgramType  :: CTabNgramType
+  , tabType       :: TabType
   , withAutoUpdate :: Boolean
   )
 
@@ -499,10 +508,17 @@ mainNgramsTable props = R.createElement mainNgramsTableCpt props []
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = R2.hooksComponent thisModule "mainNgramsTable" cpt
   where
-    cpt props@{ cacheState, defaultListId, nodeId, session, tabNgramType, tabType, withAutoUpdate} _ = do
+    cpt props@{ afterSync
+              , cacheState
+              , defaultListId
+              , nodeId
+              , session
+              , tabNgramType
+              , tabType
+              , withAutoUpdate } _ = do
       let path = initialPageParams session nodeId [defaultListId] tabType
 
-      let render versioned = mainNgramsTablePaint { path, tabNgramType, versioned, withAutoUpdate }
+      let render versioned = mainNgramsTablePaint { afterSync, path, tabNgramType, versioned, withAutoUpdate }
 
       case cacheState of
         (NT.CacheOn /\ _) ->
@@ -545,10 +561,10 @@ mainNgramsTableCpt = R2.hooksComponent thisModule "mainNgramsTable" cpt
                                        , termListFilter = Nothing }
 
 type MainNgramsTablePaintProps =
-  (
-    path :: PageParams
-  , tabNgramType  :: CTabNgramType
-  , versioned :: VersionedNgramsTable
+  ( afterSync      :: Unit -> Effect Unit
+  , path           :: PageParams
+  , tabNgramType   :: CTabNgramType
+  , versioned      :: VersionedNgramsTable
   , withAutoUpdate :: Boolean
   )
 
@@ -558,12 +574,13 @@ mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
 mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = R2.hooksComponent thisModule "mainNgramsTablePaint" cpt
   where
-    cpt {path, tabNgramType, versioned, withAutoUpdate} _ = do
+    cpt { afterSync, path, tabNgramType, versioned, withAutoUpdate } _ = do
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
 
       pure $ loadedNgramsTable {
-        path: pathS
+        afterSync
+      , path: pathS
       , state
       , tabNgramType
       , versioned

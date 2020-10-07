@@ -19,6 +19,7 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
 
 
@@ -93,7 +94,8 @@ type NgramsViewTabsProps =
 ngramsView :: Record NgramsViewTabsProps -> R.Element
 ngramsView { cacheState, defaultListId, mode, nodeId, session } =
   NT.mainNgramsTable {
-      cacheState
+      afterSync: \_ -> pure unit
+    , cacheState
     , defaultListId
     , nodeId
     , tabType
