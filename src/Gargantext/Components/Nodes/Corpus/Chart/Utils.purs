@@ -26,11 +26,19 @@ reloadButtonWrap setReload el = H.div {} [
 
 reloadButton :: R.State Int -> R.Element
 reloadButton (_ /\ setReload) = H.a { className
-                                    , on: { click: onClick }
-                                    , title: "Reload" } []
+                                   , on: { click: onClick }
+                                   , title: "Reload" } []
   where
     className = "reload-btn fa fa-refresh"
     onClick _ = setReload $ (_ + 1)
+
+
+mNgramsTypeFromTabType :: T.TabType -> Maybe T.CTabNgramType
+mNgramsTypeFromTabType (T.TabCorpus (T.TabNgramType ngramType))   = Just ngramType
+mNgramsTypeFromTabType (T.TabCorpus _)                            = Nothing
+mNgramsTypeFromTabType (T.TabDocument (T.TabNgramType ngramType)) = Just ngramType
+mNgramsTypeFromTabType (T.TabDocument _)                          = Nothing
+mNgramsTypeFromTabType (T.TabPairing _)                           = Nothing
 
 
 type ChartUpdateButtonProps = (
@@ -57,15 +65,8 @@ chartUpdateButtonCpt = R2.hooksComponent thisModule "chartUpdateButton" cpt
         onClick :: forall a. a -> Effect Unit
         onClick _ = do
           launchAff_ $ do
-            case mNgramsType of
+            case mNgramsTypeFromTabType tabType of
               Just ngramsType -> do
                 _ <- recomputeChart session chartType ngramsType corpusId listId
                 liftEffect $ setReload $ (_ + 1)
               Nothing -> pure unit
-
-        mNgramsType = case tabType of
-            T.TabCorpus (T.TabNgramType ngramType)   -> Just ngramType
-            T.TabCorpus _                            -> Nothing
-            T.TabDocument (T.TabNgramType ngramType) -> Just ngramType
-            T.TabDocument _                          -> Nothing
-            T.TabPairing _                           -> Nothing

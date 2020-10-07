@@ -1,7 +1,11 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -9,16 +13,19 @@ import Gargantext.Prelude
 
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
+import Gargantext.Components.Nodes.Corpus.Chart.API (recomputeChart)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart (getChartFunction)
+import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Lists.Types as NTypes
 import Gargantext.Components.Tab as Tab
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = ( cacheState :: R.State NTypes.CacheState
@@ -58,10 +65,12 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
         , mode
         , session } _ = do
       chartType <- R.useState' Histo
+      chartsReload <- R.useState' 0
 
       pure $ R.fragment
-        ( charts tabNgramType chartType
-        <> [ NT.mainNgramsTable { cacheState
+        ( charts tabNgramType chartType chartsReload
+        <> [ NT.mainNgramsTable { afterSync: afterSync (fst chartType) chartsReload
+                                , cacheState
                                 , defaultListId
                                 , nodeId: corpusId
                                 , session
@@ -72,8 +81,17 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
            ]
         )
       where
+        afterSync chartType (_ /\ setChartsReload) _ = do
+          case mNgramsType of
+            Just ngramsType -> do
+              launchAff_ $ do
+                recomputeChart session chartType ngramsType corpusId listId
+              setChartsReload $ (+) 1
+            Nothing         -> pure unit
+
         tabNgramType = modeTabType mode
         tabType      = TabCorpus (TabNgramType tabNgramType)
+        mNgramsType = mNgramsTypeFromTabType tabType
         listId       = defaultListId
         path         = { corpusId
                        , limit: Just 1000
@@ -81,7 +99,7 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
                        , tabType
                        }
 
-        charts CTabTerms (chartType /\ setChartType) = [
+        charts CTabTerms (chartType /\ setChartType) _ = [
           H.div { className: "row chart-type-selector" } [
             H.div { className: "col-md-3" } [
               R2.select { className: "form-control"
@@ -102,7 +120,7 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
           ]
         , getChartFunction chartType $ { session, path }
         ]
-        charts _ _       = [ chart mode ]
+        charts _ _ _       = [ chart mode ]
 
         chart Authors    = pie     { session, path }
         chart Institutes = tree    { session, path }
