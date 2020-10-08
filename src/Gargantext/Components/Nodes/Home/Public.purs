@@ -164,11 +164,12 @@ tableau (PublicData {title, abstract, img, url, date, database, author}) =
                 , H.p   { className: "card-text"} [H.text $ (take 252 abstract) <> "..."]
                 , H.div { className: "center justify-content-between align-items-center"}
                         [ H.div { className: "btn-group" }
-                                [ H.button { className : "btn btn-default flex-between"
+                                [ 
+{- TODO
+                                H.button { className : "btn btn-default flex-between"
                                            , href : url
                                            , role : "button"
                                            } [ H.text "View the map" ]
-{- TODO
                                 , H.button { className : "btn btn-default flex-start"
                                            , href : url
                                            , role : "button"
