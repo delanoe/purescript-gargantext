@@ -48,9 +48,9 @@ module Gargantext.Components.NgramsTable.Core
   , _root
   , _ngrams_repo_elements
   , _ngrams_scores
-  , commitPatchR
+  , commitPatch
   , putNgramsPatches
-  , syncPatchesR
+  , syncPatches
   , addNewNgram
   , Action(..)
   , Dispatch
@@ -101,6 +101,7 @@ import Data.Traversable (for, traverse_)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_)
 import Effect (Effect)
 import Effect.Class (liftEffect)
@@ -869,34 +870,38 @@ putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff Vers
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
--- TODO rename syncPatches
-syncPatchesR :: forall p s. CoreParams p -> R.State (CoreState s) -> Effect Unit
-syncPatchesR props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
-                    , ngramsStagePatch
-                    , ngramsValidPatch
-                    , ngramsVersion
-                    } /\ setState) = do
+syncPatches :: forall p s. CoreParams p -> R.State (CoreState s) -> (Unit -> Aff Unit) -> Effect Unit
+syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
+                   , ngramsStagePatch
+                   , ngramsValidPatch
+                   , ngramsVersion
+                   } /\ setState) callback = do
   when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
-    setState $ \s ->
-      s { ngramsLocalPatch = fromNgramsPatches mempty
-        , ngramsStagePatch = ngramsLocalPatch
-        }
-    let pt = Versioned { version: ngramsVersion, data: ngramsPatches }
+    -- setState $ \s ->
+    --   s { ngramsLocalPatch = fromNgramsPatches mempty
+    --     , ngramsStagePatch = ngramsLocalPatch
+    --     }
+    let pt = Versioned { data: ngramsPatches, version: ngramsVersion }
     launchAff_ $ do
-      Versioned {version: newVersion, data: newPatch} <- putNgramsPatches props pt
-      liftEffect $ setState $ \s ->
-        -- I think that sometimes this setState does not fully go through.
-        -- This is an issue because the version number does not get updated and the subsequent calls
-        -- can mess up the patches.
-        s { ngramsVersion    = newVersion
-          , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
-                            -- First the already valid patch, then the local patch, then the newly received newPatch.
-          , ngramsStagePatch = fromNgramsPatches mempty
-          }
+      Versioned { data: newPatch, version: newVersion } <- putNgramsPatches props pt
+      -- callback unit
+      liftEffect $ do
+        log2 "[syncPatches] setting state, newVersion" newVersion
+        setState $ \s ->
+          -- I think that sometimes this setState does not fully go through.
+          -- This is an issue because the version number does not get updated and the subsequent calls
+          -- can mess up the patches.
+          s {
+              ngramsLocalPatch = fromNgramsPatches mempty
+            , ngramsStagePatch = fromNgramsPatches mempty
+            , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
+                              -- First the already valid patch, then the local patch, then the newly received newPatch.
+            , ngramsVersion    = newVersion
+            }
+        log2 "[syncPatches] ngramsVersion" newVersion
 
--- TODO rename as commitPatch
-commitPatchR :: forall s. Versioned NgramsTablePatch -> R.State (CoreState s) -> Effect Unit
-commitPatchR (Versioned {version, data: tablePatch}) (_ /\ setState) = do
+commitPatch :: forall s. Versioned NgramsTablePatch -> R.State (CoreState s) -> Effect Unit
+commitPatch (Versioned {version, data: tablePatch}) (_ /\ setState) = do
   setState $ \s ->
     s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
     -- First we apply the patches we have locally and then the new patch (tablePatch).
@@ -952,7 +957,7 @@ data Action
   -- If the `Boolean` is `true` it means we want to add it if it is not here,
   -- if it is `false` it is meant to be removed if not here.
   | AddTermChildren
-  | Synchronize
+  | Synchronize { afterSync :: Unit -> Aff Unit }
   | ToggleSelect NgramsTerm
   -- ^ Toggles the NgramsTerm in the `Set` `ngramsSelection`.
   | ToggleSelectAll

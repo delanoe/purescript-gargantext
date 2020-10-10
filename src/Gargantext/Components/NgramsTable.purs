@@ -275,7 +275,7 @@ tableContainerCpt { dispatch
 
 -- NEXT
 type Props =
-  ( afterSync    :: Unit -> Effect Unit
+  ( afterSync    :: Unit -> Aff Unit
   , path         :: R.State PageParams
   , state        :: R.State State
   , tabNgramType :: CTabNgramType
@@ -328,16 +328,17 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
       where
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then
-                       [ R2.buff $ autoUpdateElt { duration: 5000, effect: performAction Synchronize } ]
+                       [ R2.buff $ autoUpdateElt {
+                              duration: 5000
+                            , effect: performAction $ Synchronize { afterSync }
+                            } ]
                      else []
         resetButton :: Boolean -> R.Element
         resetButton active = H.button { className: "btn btn-primary " <> if active then "" else " disabled"
                                       , on: { click: \_ -> performAction ResetPatches } } [ H.text "Reset" ]
         syncButton :: R.Element
         syncButton = H.button { className: "btn btn-primary"
-                              , on: { click: \_ -> do
-                                         performAction Synchronize
-                                         afterSync unit
+                              , on: { click: \_ -> performAction $ Synchronize { afterSync }
                                     }
                               } [ H.text "Sync" ]
         -- I would rather have the two buttons always here and make the reset button inactive when the patch is empty.
@@ -364,9 +365,9 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
                 s { ngramsSelection = Set.empty :: Set NgramsTerm }
               else
                 s { ngramsSelection = selectNgramsOnFirstPage filteredRows }
-        performAction Synchronize = syncPatchesR path' (state /\ setState)
+        performAction (Synchronize { afterSync }) = syncPatches path' (state /\ setState) afterSync
         performAction (CommitPatch pt) =
-          commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
+          commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
         performAction ResetPatches =
           setState $ \s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }
         performAction AddTermChildren =
@@ -379,7 +380,7 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
                   pe = NgramsPatch { patch_list: mempty, patch_children: pc }
                   pt = singletonNgramsTablePatch parent pe
               setState $ setParentResetChildren Nothing
-              commitPatchR (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
+              commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
 
         totalRecords = L.length rows
         filteredConvertedRows :: T.Rows
@@ -491,7 +492,7 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 
 
 type MainNgramsTableProps =
-  ( afterSync     :: Unit -> Effect Unit
+  ( afterSync     :: Unit -> Aff Unit
   , cacheState    :: R.State NT.CacheState
   , defaultListId :: Int
   , nodeId        :: Int
@@ -561,7 +562,7 @@ mainNgramsTableCpt = R2.hooksComponent thisModule "mainNgramsTable" cpt
                                        , termListFilter = Nothing }
 
 type MainNgramsTablePaintProps =
-  ( afterSync      :: Unit -> Effect Unit
+  ( afterSync      :: Unit -> Aff Unit
   , path           :: PageParams
   , tabNgramType   :: CTabNgramType
   , versioned      :: VersionedNgramsTable

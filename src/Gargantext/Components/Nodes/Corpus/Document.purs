@@ -1,6 +1,5 @@
 module Gargantext.Components.Nodes.Corpus.Document where
 
-import Prelude (class Show, bind, mempty, pure, show, ($), (<>), Unit)
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
@@ -11,13 +10,15 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Prelude
+
 import Gargantext.Components.AutoUpdate ( autoUpdate)
 import Gargantext.Components.Search (SearchType(..))
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable.Core
   ( CoreState, NgramsPatch(..), NgramsTerm, Replace, Versioned(..)
-  , VersionedNgramsTable, addNewNgram, applyNgramsTablePatch, commitPatchR
-  , loadNgramsTable, replace, singletonNgramsTablePatch, syncPatchesR )
+  , VersionedNgramsTable, addNewNgram, applyNgramsTablePatch, commitPatch
+  , loadNgramsTable, replace, singletonNgramsTablePatch, syncPatches )
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -353,18 +354,18 @@ docViewCpt = R2.hooksComponent thisModule "docView" cpt
         where
           dispatch :: Action -> Effect Unit
           dispatch (AddNewNgram ngram termList) = do
-            commitPatchR (Versioned {version, data: pt}) state
+            commitPatch (Versioned {version, data: pt}) state
             where
               ({ ngramsVersion: version } /\ _) = state
               pt = addNewNgram ngram termList
           dispatch (SetTermListItem ngram termList) = do
-            commitPatchR (Versioned {version, data: pt}) state
+            commitPatch (Versioned {version, data: pt}) state
             where
               ({ ngramsVersion: version } /\ _) = state
               pe = NgramsPatch { patch_list: termList, patch_children: mempty }
               pt = singletonNgramsTablePatch ngram pe
           dispatch Synchronize = do
-            syncPatchesR props.path props.state
+            syncPatches props.path props.state (\_ -> pure unit)
 
           annotate state text = AnnotatedField.annotatedField { ngrams: ngramsTable state
                                                               , setTermList: setTermList state

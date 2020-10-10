@@ -84,9 +84,8 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
         afterSync chartType (_ /\ setChartsReload) _ = do
           case mNgramsType of
             Just ngramsType -> do
-              launchAff_ $ do
-                recomputeChart session chartType ngramsType corpusId listId
-              setChartsReload $ (+) 1
+              _ <- recomputeChart session chartType ngramsType corpusId listId
+              liftEffect $ setChartsReload $ (+) 1
             Nothing         -> pure unit
 
         tabNgramType = modeTabType mode
