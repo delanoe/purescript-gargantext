@@ -122,9 +122,9 @@ pieCpt = R2.hooksComponent thisModule "pie" cpt
 loadedPie :: Record MetricsProps -> HistoMetrics -> R.Element
 loadedPie { path, reload, session } loaded =
   H.div {} [
-    U.reloadButton reload
+  {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
-  , chart $ chartOptionsPie loaded
+  , -} chart $ chartOptionsPie loaded
   ]
 
 
@@ -150,7 +150,7 @@ barCpt = R2.hooksComponent thisModule "bar" cpt
 loadedBar :: Record MetricsProps -> Loaded -> R.Element
 loadedBar { path, reload, session } loaded =
   H.div {} [
-    U.reloadButton reload
+  {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartBar, path, reload, session }
-  , chart $ chartOptionsBar loaded
+  , -} chart $ chartOptionsBar loaded
   ]

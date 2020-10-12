@@ -94,7 +94,7 @@ treeCpt = R2.hooksComponent thisModule "tree" cpt
 loaded :: Record MetricsProps -> Loaded -> R.Element
 loaded { path, reload, session } loaded =
   H.div {} [
-    U.reloadButton reload
+  {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartTree, path, reload, session }
-  , chart (scatterOptions loaded)
+  , -} chart (scatterOptions loaded)
   ]

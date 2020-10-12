@@ -102,8 +102,8 @@ histoCpt = R2.hooksComponent thisModule "histo" cpt
 loaded :: Record MetricsProps -> HistoMetrics -> R.Element
 loaded { path, reload, session } loaded =
   H.div {} [
-    U.reloadButton reload
+  {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: Histo, path, reload, session }
-  , chart $ chartOptions loaded
+  , -} chart $ chartOptions loaded
   ]
   -- TODO: parametrize ngramsType above
