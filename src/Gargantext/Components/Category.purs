@@ -9,7 +9,6 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
-import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
@@ -31,7 +30,6 @@ import Gargantext.Prelude
 
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
