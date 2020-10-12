@@ -22,8 +22,11 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log)
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
@@ -301,7 +304,7 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
         , withAutoUpdate } _ = do
 
       pure $ R.fragment $
-        autoUpdate <> syncResetButtons <> [
+        autoUpdate <> [syncResetButtons { afterSync, ngramsLocalPatch, performAction }] <> [
           H.h4 {style: {textAlign : "center"}} [
               H.span {className: "glyphicon glyphicon-hand-down"} []
             , H.text "Extracted Terms"
@@ -324,7 +327,7 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
                                              , ngramsSelection
                                              }
                   }
-        ] <> syncResetButtons
+        ] <> [syncResetButtons { afterSync, ngramsLocalPatch, performAction }]
       where
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then
@@ -333,17 +336,6 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
                             , effect: performAction $ Synchronize { afterSync }
                             } ]
                      else []
-        resetButton :: Boolean -> R.Element
-        resetButton active = H.button { className: "btn btn-primary " <> if active then "" else " disabled"
-                                      , on: { click: \_ -> performAction ResetPatches } } [ H.text "Reset" ]
-        syncButton :: R.Element
-        syncButton = H.button { className: "btn btn-primary"
-                              , on: { click: \_ -> performAction $ Synchronize { afterSync }
-                                    }
-                              } [ H.text "Sync" ]
-        -- I would rather have the two buttons always here and make the reset button inactive when the patch is empty.
-        syncResetButtons :: Array R.Element
-        syncResetButtons = [ H.div {} [ resetButton (ngramsLocalPatch /= mempty), syncButton ] ]
 
         setParentResetChildren :: Maybe NgramsTerm -> State -> State
         setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
@@ -450,6 +442,41 @@ loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
                                  , searchQuery: searchQuery }
         setSearchQuery :: String -> Effect Unit
         setSearchQuery x    = setPath $ _ { searchQuery    = x }
+
+
+type SyncResetButtonsProps = (
+    afterSync :: Unit -> Aff Unit
+  , ngramsLocalPatch :: NgramsTablePatch
+  , performAction :: Action -> Effect Unit
+  )
+
+syncResetButtons :: Record SyncResetButtonsProps -> R.Element
+syncResetButtons p = R.createElement syncResetButtonsCpt p []
+
+syncResetButtonsCpt :: R.Component SyncResetButtonsProps
+syncResetButtonsCpt = R2.hooksComponent thisModule "syncResetButtons" cpt
+  where
+    cpt { afterSync, ngramsLocalPatch, performAction } _ = do
+      synchronizing@(s /\ _) <- R.useState' false
+
+      let hasChanges = ngramsLocalPatch /= mempty
+
+      pure $ H.div {} [
+        H.button { className: "btn btn-danger " <> if hasChanges then "" else " disabled"
+                 , on: { click: \_ -> performAction ResetPatches }
+                 } [ H.text "Reset" ]
+      , H.button { className: "btn btn-primary " <> (if s || (not hasChanges) then "disabled" else "")
+                 , on: { click: synchronize synchronizing }
+                 } [ H.text "Sync" ]
+        ]
+      where
+        synchronize (_ /\ setSynchronizing) _ = delay unit $ \_ -> do
+          setSynchronizing $ const true
+          performAction $ Synchronize { afterSync: newAfterSync }
+          where
+            newAfterSync x = do
+              afterSync x
+              liftEffect $ setSynchronizing $ const false
 
 
 displayRow :: State -> SearchQuery -> NgramsTable -> Maybe NgramsTerm -> Maybe TermList -> Maybe TermSize -> NgramsElement -> Boolean

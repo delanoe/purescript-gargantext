@@ -884,7 +884,7 @@ syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
     let pt = Versioned { data: ngramsPatches, version: ngramsVersion }
     launchAff_ $ do
       Versioned { data: newPatch, version: newVersion } <- putNgramsPatches props pt
-      -- callback unit
+      callback unit
       liftEffect $ do
         log2 "[syncPatches] setting state, newVersion" newVersion
         setState $ \s ->
