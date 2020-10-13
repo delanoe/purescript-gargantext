@@ -11,12 +11,12 @@ import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
 import Data.Lens.Record (prop)
-import Data.List (List, mapMaybe, length) as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
+import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
@@ -44,8 +44,8 @@ import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet)
 import Gargantext.Utils.CacheAPI as GUC
-import Gargantext.Utils.List (sortWith) as L
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Seq as Seq
 
 thisModule = "Gargantext.Components.NgramsTable"
 
@@ -119,7 +119,7 @@ setTermListSetA ngramsTable ns new_list =
 addNewNgramA :: NgramsTerm -> Action
 addNewNgramA ngram = CommitPatch $ addNewNgram ngram CandidateTerm
 
-type PreConversionRows = L.List NgramsElement
+type PreConversionRows = Seq.Seq NgramsElement
 
 type TableContainerProps =
   ( dispatch         :: Dispatch
@@ -374,7 +374,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
               setState $ setParentResetChildren Nothing
               commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
 
-        totalRecords = L.length rows
+        totalRecords = Seq.length rows
         filteredConvertedRows :: T.Rows
         filteredConvertedRows = convertRow <$> filteredRows
         filteredRows :: PreConversionRows
@@ -383,9 +383,9 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
         ng_scores = ngramsTable ^. _NgramsTable <<< _ngrams_scores
         rows :: PreConversionRows
         rows = orderWith (
-                 L.mapMaybe (\(Tuple ng nre) ->
-                               let Additive s = ng_scores ^. at ng <<< _Just in
-                               addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng s nre)) $
+                 Seq.mapMaybe (\(Tuple ng nre) ->
+                                let Additive s = ng_scores ^. at ng <<< _Just in
+                                addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng s nre)) $
                    Map.toUnfoldable (ngramsTable ^. _NgramsTable <<< _ngrams_repo_elements)
                )
         rowsFilter :: NgramsElement -> Maybe NgramsElement
@@ -423,10 +423,10 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
           }
         orderWith =
           case convOrderBy <$> params.orderBy of
-            Just ScoreAsc  -> L.sortWith \x -> x        ^. _NgramsElement <<< _occurrences
-            Just ScoreDesc -> L.sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
-            Just TermAsc   -> L.sortWith \x -> x        ^. _NgramsElement <<< _ngrams
-            Just TermDesc  -> L.sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
+            Just ScoreAsc  -> Seq.sortWith \x -> x        ^. _NgramsElement <<< _occurrences
+            Just ScoreDesc -> Seq.sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
+            Just TermAsc   -> Seq.sortWith \x -> x        ^. _NgramsElement <<< _ngrams
+            Just TermDesc  -> Seq.sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
             _              -> identity -- the server ordering is enough here
 
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
