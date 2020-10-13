@@ -4,8 +4,8 @@ import Prelude
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.List as L
 import Data.Maybe (Maybe(..))
+import Data.Sequence as Seq
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
@@ -29,7 +29,7 @@ type TableContainerProps =
   )
 
 type Row = { row :: R.Element, delete :: Boolean }
-type Rows = L.List Row
+type Rows = Seq.Seq Row
 
 type OrderBy = Maybe (OrderByDirection ColumnName)
 
@@ -199,10 +199,10 @@ type FilterRowsParams =
     params :: Params
   )
 
-filterRows :: forall a. Record FilterRowsParams -> L.List a -> L.List a
+filterRows :: forall a. Record FilterRowsParams -> Seq.Seq a -> Seq.Seq a
 filterRows { params: { limit, offset, orderBy } } rs = newRs
   where
-    newRs = L.take limit $ L.drop offset $ rs
+    newRs = Seq.take limit $ Seq.drop offset $ rs
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 defaultContainer {title} props = R.fragment

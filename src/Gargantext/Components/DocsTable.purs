@@ -9,11 +9,11 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
-import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Ord.Down (Down(..))
+import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as Str
@@ -32,7 +32,7 @@ import Gargantext.Components.Category
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Utils.List (sortWith) as L
+import Gargantext.Utils.Seq (sortWith) as Seq
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
@@ -359,7 +359,7 @@ pagePaintCpt = R2.hooksComponent thisModule "pagePaintCpt" cpt where
       { colNames
       , container: T.defaultContainer { title: "Documents" }
       , params
-      , rows: L.fromFoldable $ rows localCategories
+      , rows: Seq.fromFoldable $ rows localCategories
       , totalRecords
       , wrapColElts
       }
@@ -377,12 +377,12 @@ pagePaintCpt = R2.hooksComponent thisModule "pagePaintCpt" cpt where
         getCategory (localCategories /\ _) {_id, category} = fromMaybe category (localCategories ^. at _id)
         orderWith =
           case convOrderBy (fst params).orderBy of
-            Just DateAsc    -> L.sortWith \(DocumentsView { date })   -> date
-            Just DateDesc   -> L.sortWith \(DocumentsView { date })   -> Down date
-            Just SourceAsc  -> L.sortWith \(DocumentsView { source }) -> Str.toLower source
-            Just SourceDesc -> L.sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
-            Just TitleAsc   -> L.sortWith \(DocumentsView { title })  -> Str.toLower title
-            Just TitleDesc  -> L.sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
+            Just DateAsc    -> Seq.sortWith \(DocumentsView { date })   -> date
+            Just DateDesc   -> Seq.sortWith \(DocumentsView { date })   -> Down date
+            Just SourceAsc  -> Seq.sortWith \(DocumentsView { source }) -> Str.toLower source
+            Just SourceDesc -> Seq.sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
+            Just TitleAsc   -> Seq.sortWith \(DocumentsView { title })  -> Str.toLower title
+            Just TitleDesc  -> Seq.sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
             _               -> identity -- the server ordering is enough here
         filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
         rows localCategories = row <$> filteredRows

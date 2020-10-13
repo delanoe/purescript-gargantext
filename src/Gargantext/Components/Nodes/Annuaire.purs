@@ -3,8 +3,8 @@ module Gargantext.Components.Nodes.Annuaire where
 import Prelude (bind, const, identity, pure, show, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array as A
-import Data.List as L
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Sequence as Seq
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
@@ -156,7 +156,7 @@ pageCpt = R2.hooksComponent thisModule "page" cpt
                                      , frontends
                                      , contact: c
                                      , session }
-                   , delete: false }) <$> L.fromFoldable docs
+                   , delete: false }) <$> Seq.fromFoldable docs
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Lab", "Role"]
         wrapColElts = const identity

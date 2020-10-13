@@ -8,11 +8,11 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyO
 import Data.Array (concat, filter)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.List as L
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Sequence as Seq
 import Data.Set (Set)
-import Data.String as String
 import Data.Set as Set
+import Data.String as String
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -323,7 +323,7 @@ pageCpt = R2.hooksComponent thisModule "page" cpt
         documentUrl id =
             url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
         comma = H.span {} [ H.text ", " ]
-        rows = L.fromFoldable $ row <$> filter (not <<< isDeleted) documents
+        rows = Seq.fromFoldable $ row <$> filter (not <<< isDeleted) documents
         row dv@(DocumentsView {id, score, title, source, authors, pairs, delete, category}) =
           { row:
             T.makeRow [
