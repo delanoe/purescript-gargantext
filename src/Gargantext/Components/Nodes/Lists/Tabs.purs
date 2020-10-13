@@ -13,7 +13,6 @@ import Gargantext.Prelude
 
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
-import Gargantext.Components.Nodes.Corpus.Chart.API (recomputeChart)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
@@ -64,12 +63,13 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
         , corpusId
         , mode
         , session } _ = do
+
       chartType <- R.useState' Histo
       chartsReload <- R.useState' 0
 
       pure $ R.fragment
         ( charts tabNgramType chartType chartsReload
-        <> [ NT.mainNgramsTable { afterSync: afterSync (fst chartType) chartsReload
+        <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
                                 , cacheState
                                 , defaultListId
                                 , nodeId: corpusId
@@ -81,10 +81,13 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
            ]
         )
       where
-        afterSync chartType (_ /\ setChartsReload) _ = do
+        afterSync (_ /\ setChartsReload) _ = do
           case mNgramsType of
             Just ngramsType -> do
-              _ <- recomputeChart session chartType ngramsType corpusId listId
+              -- NOTE: No need to recompute chart, after ngrams are sync this
+              -- should be recomputed already
+              -- We just refresh it
+              -- _ <- recomputeChart session chartType ngramsType corpusId listId
               liftEffect $ setChartsReload $ (+) 1
             Nothing         -> pure unit
 
@@ -121,7 +124,7 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
         ]
         charts _ _ _       = [ chart mode ]
 
-        chart Authors    = pie     { session, path }
-        chart Institutes = tree    { session, path }
-        chart Sources    = bar     { session, path }
-        chart Terms      = metrics { session, path }
+        chart Authors    = pie     { path, session }
+        chart Institutes = tree    { path, session }
+        chart Sources    = bar     { path, session }
+        chart Terms      = metrics { path, session }

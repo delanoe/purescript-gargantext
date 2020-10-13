@@ -4,7 +4,9 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 
-import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, Id, Limit, ListId, NgramsGetOpts, NodeType, Offset, OrderBy, SearchOpts, SessionId, TabSubType, TabType, TermList, NgramsGetTableAllOpts)
+import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, Id, Limit,
+                         ListId, NgramsGetOpts, NgramsGetTableAllOpts, NodeType,
+                         Offset, OrderBy, SearchOpts, SessionId, TabSubType, TabType, TermList)
 import Gargantext.Types as GT
 
 data AppRoute
