@@ -27,7 +27,7 @@ tabs props = R.createElement tabsCpt props []
 
 -- TODO no need for Children here
 tabsCpt :: R.Component Props
-tabsCpt = R2.hooksComponent thisModule "tabs" cpt
+tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
     cpt {frontends, query, session, sides} _ = do
       active <- R.useState' 0

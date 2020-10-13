@@ -63,7 +63,7 @@ homeLayout :: Record HomeProps -> R.Element
 homeLayout props = R.createElement homeLayoutCpt props []
 
 homeLayoutCpt :: R.Component HomeProps
-homeLayoutCpt = R2.hooksComponent thisModule "homeLayout" cpt
+homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
   where
     cpt {lang, backend, publicBackend, sessions, visible} _ = do
       let landingData = langLandingData lang

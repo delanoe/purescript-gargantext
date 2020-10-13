@@ -25,7 +25,7 @@ loader path load paint =
   R.createElement loaderCpt {path,load,paint} []
 
 loaderCpt :: forall path loaded. R.Component (Props path loaded)
-loaderCpt = R2.hooksComponent thisModule "loader" cpt where
+loaderCpt = R.hooksComponentWithModule thisModule "loader" cpt where
   cpt {path, load, paint} _ = do
     (loaded /\ setLoaded) <- R.useState' Nothing
     R.useEffect3 path load paint $ do

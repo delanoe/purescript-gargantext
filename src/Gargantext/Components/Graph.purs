@@ -47,7 +47,7 @@ graph :: forall s fa2. Record (Props s fa2) -> R.Element
 graph props = R.createElement graphCpt props []
 
 graphCpt :: forall s fa2. R.Component (Props s fa2)
-graphCpt = R2.hooksComponent thisModule "graph" cpt
+graphCpt = R.hooksComponentWithModule thisModule "graph" cpt
   where
     cpt props _ = do
       stageHooks props

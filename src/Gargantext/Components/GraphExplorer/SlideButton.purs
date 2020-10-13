@@ -30,7 +30,7 @@ sizeButton :: Record Props -> R.Element
 sizeButton props = R.createElement sizeButtonCpt props []
 
 sizeButtonCpt :: R.Component Props
-sizeButtonCpt = R2.hooksComponent thisModule "sizeButton" cpt
+sizeButtonCpt = R.hooksComponentWithModule thisModule "sizeButton" cpt
   where
     cpt {state, caption, min, max, onChange} _ = do
       let (value /\ setValue) = state
@@ -55,7 +55,7 @@ labelSizeButton sigmaRef state =
     , max: 30.0
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
-      let newValue = readFloat $ R2.unsafeEventValue e
+      let newValue = readFloat $ R.unsafeEventValue e
       let (_ /\ setValue) = state
       Sigmax.dependOnSigma sigma "[labelSizeButton] sigma: Nothing" $ \s -> do
         Sigma.setSettings s {
@@ -76,7 +76,7 @@ mouseSelectorSizeButton sigmaRef state =
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
       let (_ /\ setValue) = state
-      let newValue = readFloat $ R2.unsafeEventValue e
+      let newValue = readFloat $ R.unsafeEventValue e
       Sigmax.dependOnSigma sigma "[mouseSelectorSizeButton] sigma: Nothing" $ \s -> do
         Sigma.setSettings s {
           mouseSelectorSize: newValue

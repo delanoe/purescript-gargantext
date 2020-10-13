@@ -55,7 +55,7 @@ data Knob = MinKnob | MaxKnob
 data RangeUpdate = SetMin Number | SetMax Number
 
 rangeSliderCpt :: R.Component Props
-rangeSliderCpt = R2.hooksComponent thisModule "rangeSlider" cpt
+rangeSliderCpt = R.hooksComponentWithModule thisModule "rangeSlider" cpt
   where
     cpt props _ = do
       -- rounding precision (i.e. how many decimal digits are in epsilon)
@@ -127,7 +127,7 @@ destroyEventHandler name ref = traverse_ destroy $ R.readRef ref
       EL.removeEventListener document name handler
       R.setRef ref Nothing
 
-setKnob :: Knob -> R2.Setter Range.NumberRange -> Range.NumberRange -> Number -> Effect Unit
+setKnob :: Knob -> R.Setter Range.NumberRange -> Range.NumberRange -> Number -> Effect Unit
 setKnob knob setValue r val = setValue $ const $ knobSetter knob r val
 
 knobSetter :: Knob -> Range.NumberRange -> Number -> Range.NumberRange
@@ -165,7 +165,7 @@ renderScaleSel ref props (Range.Closed {min, max}) =
     computeWidth = (show $ 100.0 * (percOffsetMax - percOffsetMin)) <> "%"
 
 
-renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> R2.Setter (Maybe Knob) -> Int -> R.Element
+renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> R.Setter (Maybe Knob) -> Int -> R.Element
 renderKnob knob ref (Range.Closed value) bounds set precision =
   H.div { ref, tabIndex, className, aria, on: { mouseDown: onMouseDown }, style } [
       H.div { className: "button" }

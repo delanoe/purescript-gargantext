@@ -25,7 +25,7 @@ type Props =
   , reload    :: R.State Int
   , route     :: AppRoute
   , sessions  :: Sessions
-  , showLogin :: R2.Setter Boolean
+  , showLogin :: R.Setter Boolean
   , backend   :: R.State (Maybe Backend)
   )
 
@@ -33,7 +33,7 @@ forest :: Record Props -> R.Element
 forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
-forestCpt = R2.hooksComponent thisModule "forest" cpt where
+forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
   cpt { frontends, handed, reload: extReload, route, sessions, showLogin, backend} _ = do
     -- NOTE: this is a hack to reload the tree view on demand
     reload     <- R.useState' (0 :: Reload)
@@ -65,7 +65,7 @@ forestCpt = R2.hooksComponent thisModule "forest" cpt where
                  , session: s
                  }
 
-plus :: Handed -> R2.Setter Boolean -> R.State (Maybe Backend) -> R.Element
+plus :: Handed -> R.Setter Boolean -> R.State (Maybe Backend) -> R.Element
 plus handed showLogin backend = H.div {className: if handed == RightHanded
                                              then "flex-start"  -- TODO we should use lefthanded SASS class here
                                              else "flex-end"

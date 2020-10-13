@@ -107,7 +107,7 @@ codeEditor p = R.createElement codeEditorCpt p []
 -- The overlay is to provide seamless syntax highlighting on top of the textarea.
 -- I took the idea from: https://github.com/satya164/react-simple-code-editor
 codeEditorCpt :: R.Component Props
-codeEditorCpt = R2.hooksComponent thisModule "codeEditor" cpt
+codeEditorCpt = R.hooksComponentWithModule thisModule "codeEditor" cpt
   where
     cpt {code, defaultCodeType, onChange} _ = do
       controls <- initControls code defaultCodeType
@@ -166,7 +166,7 @@ codeEditorCpt = R2.hooksComponent thisModule "codeEditor" cpt
 
     onEditChange :: forall e. Record Controls -> (CodeType -> Code -> Effect Unit) -> e -> Effect Unit
     onEditChange controls@{codeElRef, codeOverlayElRef, codeType: (codeType /\ _), codeS} onChange e = do
-      let code = R2.unsafeEventValue e
+      let code = R.unsafeEventValue e
       snd codeS $ const code
       onChange codeType code
 
@@ -204,7 +204,7 @@ toolbar :: Record ToolbarProps -> R.Element
 toolbar p = R.createElement toolbarCpt p []
 
 toolbarCpt :: R.Component ToolbarProps
-toolbarCpt = R2.hooksComponent thisModule "toolbar" cpt
+toolbarCpt = R.hooksComponentWithModule thisModule "toolbar" cpt
   where
     cpt props@{controls: {codeType, error, viewType}} _ = do
       pure $
@@ -233,7 +233,7 @@ errorComponent :: Record ErrorComponentProps -> R.Element
 errorComponent p = R.createElement errorComponentCpt p []
 
 errorComponentCpt :: R.Component ErrorComponentProps
-errorComponentCpt = R2.hooksComponent thisModule "errorComponent" cpt
+errorComponentCpt = R.hooksComponentWithModule thisModule "errorComponent" cpt
   where
     cpt {error: (Nothing /\ _)} _ = pure $ H.div {} []
     cpt {error: ((Just error) /\ _)} _ = do
@@ -250,7 +250,7 @@ codeTypeSelector :: Record CodeTypeSelectorProps -> R.Element
 codeTypeSelector p = R.createElement codeTypeSelectorCpt p []
 
 codeTypeSelectorCpt :: R.Component CodeTypeSelectorProps
-codeTypeSelectorCpt = R2.hooksComponent thisModule "codeTypeSelector" cpt
+codeTypeSelectorCpt = R.hooksComponentWithModule thisModule "codeTypeSelector" cpt
   where
     cpt {codeType, onChange} _ = do
       pure $ R2.select { className: "form-control"
@@ -274,7 +274,7 @@ codeTypeSelectorCpt = R2.hooksComponent thisModule "codeTypeSelector" cpt
       setCodeType $ const codeType
       onChange codeType
       where
-        value = R2.unsafeEventValue e
+        value = R.unsafeEventValue e
 
 
 type ViewTypeSelectorProps =
@@ -286,7 +286,7 @@ viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
 viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
 
 viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
-viewTypeSelectorCpt = R2.hooksComponent thisModule "viewTypeSelector" cpt
+viewTypeSelectorCpt = R.hooksComponentWithModule thisModule "viewTypeSelector" cpt
   where
     cpt {state} _ =
       pure $ H.div { className: "btn-group" } [

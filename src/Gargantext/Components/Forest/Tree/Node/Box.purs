@@ -50,7 +50,7 @@ nodePopupView :: Record NodePopupProps -> R.Element
 nodePopupView p = R.createElement nodePopupCpt p []
 
 nodePopupCpt :: R.Component NodePopupProps
-nodePopupCpt = R2.hooksComponent thisModule "nodePopupView" cpt
+nodePopupCpt = R.hooksComponentWithModule thisModule "nodePopupView" cpt
   where
     cpt p _ = do
       isOpen    <- R.useState' false
@@ -114,7 +114,7 @@ nodePopupCpt = R2.hooksComponent thisModule "nodePopupView" cpt
                                         [ H.a { "type"   : "button"
                                               , className: glyphicon "window-close"
                                               , on       : { click: \e -> p.onPopoverClose
-                                                                        $ R2.unsafeEventTarget e
+                                                                        $ R.unsafeEventTarget e
                                                            }
                                               , title    : "Close"
                                               } []
@@ -202,7 +202,7 @@ buttonClick :: Record ButtonClickProps -> R.Element
 buttonClick p = R.createElement buttonClickCpt p []
 
 buttonClickCpt :: R.Component ButtonClickProps
-buttonClickCpt = R2.hooksComponent thisModule "buttonClick" cpt
+buttonClickCpt = R.hooksComponentWithModule thisModule "buttonClick" cpt
   where
     cpt {action: todo, state: (node@{action} /\ setNodePopup), nodeType} _ = do
       pure $ H.div {className: "col-md-1"}
@@ -262,7 +262,7 @@ panelAction :: Record PanelActionProps -> R.Element
 panelAction p = R.createElement panelActionCpt p []
 
 panelActionCpt :: R.Component PanelActionProps
-panelActionCpt = R2.hooksComponent thisModule "panelAction" cpt
+panelActionCpt = R.hooksComponentWithModule thisModule "panelAction" cpt
   where
     cpt {action: Documentation nodeType}                  _ = actionDoc      nodeType
     cpt {action: Download, id, nodeType, session}         _ = actionDownload nodeType id session

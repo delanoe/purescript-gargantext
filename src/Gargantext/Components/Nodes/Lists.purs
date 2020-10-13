@@ -28,7 +28,7 @@ listsLayout :: Record Props -> R.Element
 listsLayout props = R.createElement listsLayoutCpt props []
 
 listsLayoutCpt :: R.Component Props
-listsLayoutCpt = R2.hooksComponent thisModule "listsLayout" cpt
+listsLayoutCpt = R.hooksComponentWithModule thisModule "listsLayout" cpt
   where
     cpt path@{ nodeId, session } _ = do
       let sid = sessionId session
@@ -44,7 +44,7 @@ listsLayoutWithKey :: Record KeyProps -> R.Element
 listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 
 listsLayoutWithKeyCpt :: R.Component KeyProps
-listsLayoutWithKeyCpt = R2.hooksComponent thisModule "listsLayoutWithKey" cpt
+listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
       let path = { nodeId, session }

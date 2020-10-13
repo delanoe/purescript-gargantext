@@ -104,7 +104,7 @@ pie :: Record Props -> R.Element
 pie props = R.createElement pieCpt props []
 
 pieCpt :: R.Component Props
-pieCpt = R2.hooksComponent thisModule "pie" cpt
+pieCpt = R.hooksComponentWithModule thisModule "pie" cpt
   where
     cpt { path, session } _ = do
       reload <- R.useState' 0
@@ -132,7 +132,7 @@ bar :: Record Props -> R.Element
 bar props = R.createElement barCpt props []
 
 barCpt :: R.Component Props
-barCpt = R2.hooksComponent thisModule "bar" cpt
+barCpt = R.hooksComponentWithModule thisModule "bar" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0

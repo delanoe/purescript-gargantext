@@ -42,21 +42,8 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (Storage, getItem, setItem)
 
--- TODO Reactix should export this definition
-type HooksComponent props = Record props -> Array R.Element -> R.Hooks R.Element
-
-hooksComponent :: forall props. String -> String -> HooksComponent props -> R.Component props
-hooksComponent module' name c = R.hooksComponent (module' <> "." <> name) c
-
-type StaticComponent props = Record props -> Array R.Element -> R.Element
-
-staticComponent :: forall props. String -> String -> StaticComponent props -> R.Component props
-staticComponent module' name c = R.staticComponent (module' <> "." <> name) c
-
 newtype Point = Point { x :: Number, y :: Number }
 
--- a setter function, for useState
-type Setter t = (t -> t) -> Effect Unit
 -- a reducer function living in effector, for useReductor
 type Actor s a = (a -> s -> Effect s)
 
@@ -125,9 +112,6 @@ menu = createDOM "menu"
 effToggler :: forall e. R.State Boolean -> EffectFn1 e Unit
 effToggler (value /\ setValue) = mkEffectFn1 $ \_ -> setValue $ const $ not value
 
-unsafeEventValue :: forall event. event -> String
-unsafeEventValue e = (unsafeCoerce e).target.value
-
 keyCode :: forall event. event -> Effect Int
 keyCode = runEffectFn1 _keyCode
 
@@ -159,9 +143,6 @@ readPositionRef :: R.Ref (Nullable DOM.Element) -> Maybe DOM.DOMRect
 readPositionRef el = do
   let posRef = R.readRef el
   Element.boundingRect <$> toMaybe posRef
-
-unsafeEventTarget :: forall event. event -> DOM.Element
-unsafeEventTarget e = (unsafeCoerce e).target
 
 getElementById :: String -> Effect (Maybe DOM.Element)
 getElementById = (flip delay) h

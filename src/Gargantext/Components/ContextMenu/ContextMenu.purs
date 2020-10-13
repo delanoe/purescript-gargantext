@@ -27,14 +27,14 @@ type Props t = (
     x :: Number
   , y :: Number
   , onClose :: Unit -> Effect Unit
-  , setMenu :: R2.Setter (Maybe t)
+  , setMenu :: R.Setter (Maybe t)
   )
 
 contextMenu :: forall t. Record (Props t) -> Array R.Element -> R.Element
 contextMenu = R.createElement contextMenuCpt
 
 contextMenuCpt :: forall t. R.Component (Props t)
-contextMenuCpt = R2.hooksComponent thisModule "contextMenu" cpt
+contextMenuCpt = R.hooksComponentWithModule thisModule "contextMenu" cpt
   where
     cpt menu@{ x, y, onClose, setMenu } children = do
       host <- R2.getPortalHost
@@ -70,7 +70,7 @@ contextMenuCpt = R2.hooksComponent thisModule "contextMenu" cpt
 contextMenuEffect
   :: forall t.
     (Unit -> Effect Unit)
-  -> R2.Setter (Maybe t)
+  -> R.Setter (Maybe t)
   -> R.Ref (Nullable DOM.Element)
   -> Effect (Effect Unit)
 contextMenuEffect onClose setMenu rootRef =
@@ -85,7 +85,7 @@ contextMenuEffect onClose setMenu rootRef =
         DOM.removeEventListener document "scroll" onScroll
     Nothing -> pure R.nothing
 
-documentClickHandler :: forall t. (Unit -> Effect Unit) -> R2.Setter (Maybe t) -> DOM.Element -> Callback DE.MouseEvent
+documentClickHandler :: forall t. (Unit -> Effect Unit) -> R.Setter (Maybe t) -> DOM.Element -> Callback DE.MouseEvent
 documentClickHandler onClose hide menu =
   R2.named "hideMenuOnClickOutside" $ callback $ \e ->
     if Element.contains menu (DE.target e)
@@ -94,7 +94,7 @@ documentClickHandler onClose hide menu =
         hide (const Nothing)
         onClose unit
 
-documentScrollHandler :: forall t. R2.Setter (Maybe t) -> Callback DE.MouseEvent
+documentScrollHandler :: forall t. R.Setter (Maybe t) -> Callback DE.MouseEvent
 documentScrollHandler hide =
   R2.named "hideMenuOnScroll" $ callback $ \e -> hide (const Nothing)
 
@@ -111,7 +111,7 @@ contextMenuItem :: Array R.Element -> R.Element
 contextMenuItem = R.createElement contextMenuItemCpt {}
 
 contextMenuItemCpt :: R.Component ()
-contextMenuItemCpt = R2.hooksComponent thisModule "contextMenuItem" cpt
+contextMenuItemCpt = R.hooksComponentWithModule thisModule "contextMenuItem" cpt
   where
     cpt _props children = pure $ HTML.li { className: "context-menu-item" } children
 

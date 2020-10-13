@@ -37,7 +37,7 @@ nodeSearchControl :: Record Props -> R.Element
 nodeSearchControl props = R.createElement sizeButtonCpt props []
 
 sizeButtonCpt :: R.Component Props
-sizeButtonCpt = R2.hooksComponent thisModule "nodeSearchControl" cpt
+sizeButtonCpt = R.hooksComponentWithModule thisModule "nodeSearchControl" cpt
   where
     cpt {graph, multiSelectEnabled, selectedNodeIds} _ = do
       search@(search' /\ setSearch) <- R.useState' ""

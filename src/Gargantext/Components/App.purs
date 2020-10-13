@@ -45,7 +45,7 @@ app :: {} -> R.Element
 app props = R.createElement appCpt props []
 
 appCpt :: R.Component ()
-appCpt = R2.hooksComponent thisModule "app" cpt where
+appCpt = R.hooksComponentWithModule thisModule "app" cpt where
   frontends = defaultFrontends
   cpt _ _ = do
     sessions   <- useSessions
@@ -130,7 +130,7 @@ type ForestLayoutProps =
   , reload    :: R.State Int
   , route     :: AppRoute
   , sessions  :: Sessions
-  , showLogin :: R2.Setter Boolean
+  , showLogin :: R.Setter Boolean
   , backend   :: R.State (Maybe Backend)
   )
 
@@ -138,7 +138,7 @@ forestLayout :: Record ForestLayoutProps -> R.Element
 forestLayout props = R.createElement forestLayoutCpt props []
 
 forestLayoutCpt :: R.Component ForestLayoutProps
-forestLayoutCpt = R2.hooksComponent thisModule "forestLayout" cpt
+forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
   where
     cpt props@{ handed } _ = do
       pure $ R.fragment [ topBar { handed }, forestLayoutMain props ]
@@ -147,7 +147,7 @@ forestLayoutMain :: Record ForestLayoutProps -> R.Element
 forestLayoutMain props = R.createElement forestLayoutMainCpt props []
 
 forestLayoutMainCpt :: R.Component ForestLayoutProps
-forestLayoutMainCpt = R2.hooksComponent thisModule "forestLayoutMain" cpt
+forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
   where
     cpt { child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
       let ordering =
@@ -183,7 +183,7 @@ topBar :: Record TopBarProps -> R.Element
 topBar props = R.createElement topBarCpt props []
 
 topBarCpt :: R.Component TopBarProps
-topBarCpt = R2.hooksComponent thisModule "topBar" cpt
+topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
   where
     cpt { handed } _ = do
       pure $ H.div { id: "dafixedtop"
@@ -225,7 +225,7 @@ handedChooser :: Record HandedChooserProps -> R.Element
 handedChooser props = R.createElement handedChooserCpt props []
 
 handedChooserCpt :: R.Component HandedChooserProps
-handedChooserCpt = R2.hooksComponent thisModule "handedChooser" cpt
+handedChooserCpt = R.hooksComponentWithModule thisModule "handedChooser" cpt
   where
     cpt { handed } _ = do
       pure $ H.li {} [
@@ -376,7 +376,7 @@ footer :: Record FooterProps -> R.Element
 footer props = R.createElement footerCpt props []
 
 footerCpt :: R.Component FooterProps
-footerCpt = R2.hooksComponent thisModule "footer" cpt
+footerCpt = R.hooksComponentWithModule thisModule "footer" cpt
   where
     cpt { session } _ = do
       pure $ H.div 

@@ -303,7 +303,7 @@ docViewWrapper :: Record Props -> R.Element
 docViewWrapper props = R.createElement docViewWrapperCpt props []
 
 docViewWrapperCpt :: R.Component Props
-docViewWrapperCpt = R2.hooksComponent thisModule "docViewWrapper" cpt
+docViewWrapperCpt = R.hooksComponentWithModule thisModule "docViewWrapper" cpt
   where
     cpt { loaded, path } _ = do
       state <- R.useState' $ initialState { loaded }
@@ -319,7 +319,7 @@ docView :: Record DocViewProps -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: R.Component DocViewProps
-docViewCpt = R2.hooksComponent thisModule "docView" cpt
+docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
   where
     cpt props@{ loaded: loaded@{ ngramsTable: Versioned { data: initTable }, document }, state } _ = do
       pure $ H.div {} [
@@ -389,7 +389,7 @@ documentLayout :: Record LayoutProps -> R.Element
 documentLayout props = R.createElement documentLayoutCpt props []
 
 documentLayoutCpt :: R.Component LayoutProps
-documentLayoutCpt = R2.hooksComponent thisModule "documentLayout" cpt
+documentLayoutCpt = R.hooksComponentWithModule thisModule "documentLayout" cpt
   where
     cpt { corpusId, listId, nodeId, session } _ = do
       let sid = sessionId session
@@ -409,7 +409,7 @@ documentLayoutWithKey :: Record KeyLayoutProps -> R.Element
 documentLayoutWithKey props = R.createElement documentLayoutWithKeyCpt props []
 
 documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
-documentLayoutWithKeyCpt = R2.hooksComponent thisModule "documentLayoutWithKey" cpt
+documentLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "documentLayoutWithKey" cpt
   where
     cpt { corpusId, listId, nodeId, session } _ = do
       useLoader path loadData $ \loaded ->

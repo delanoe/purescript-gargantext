@@ -52,7 +52,7 @@ chartUpdateButton :: Record ChartUpdateButtonProps -> R.Element
 chartUpdateButton p = R.createElement chartUpdateButtonCpt p []
 
 chartUpdateButtonCpt :: R.Component ChartUpdateButtonProps
-chartUpdateButtonCpt = R2.hooksComponent thisModule "chartUpdateButton" cpt
+chartUpdateButtonCpt = R.hooksComponentWithModule thisModule "chartUpdateButton" cpt
   where
     cpt { chartType
         , path: { corpusId, listId, tabType }

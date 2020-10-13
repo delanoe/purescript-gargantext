@@ -43,7 +43,7 @@ searchIframes :: Record SearchIFramesProps -> R.Element
 searchIframes props = R.createElement searchIframesCpt props []
 
 searchIframesCpt :: R.Component SearchIFramesProps
-searchIframesCpt = R2.hooksComponent thisModule "searchIframes" cpt
+searchIframesCpt = R.hooksComponentWithModule thisModule "searchIframes" cpt
   where
     cpt { iframeRef, search: search@(search' /\ _) } _ = do
       pure $ if isIsTex_Advanced search'.datafield
@@ -64,7 +64,7 @@ divIframe :: Record IFrameProps -> R.Element
 divIframe props = R.createElement divIframeCpt props []
 
 divIframeCpt :: R.Component IFrameProps
-divIframeCpt = R2.hooksComponent thisModule "divIframe" cpt
+divIframeCpt = R.hooksComponentWithModule thisModule "divIframe" cpt
   where
     cpt { frameSource, iframeRef, search: search@(search' /\ _) } _ = do
       pure $ H.div { className: "frame-search panel panel-default" }
@@ -79,7 +79,7 @@ iframeWith :: Record IFrameProps -> R.Element
 iframeWith props = R.createElement iframeWithCpt props []
 
 iframeWithCpt :: R.Component IFrameProps
-iframeWithCpt = R2.hooksComponent thisModule "iframeWith" cpt
+iframeWithCpt = R.hooksComponentWithModule thisModule "iframeWith" cpt
   where
     cpt { frameSource, iframeRef, search: (search /\ setSearch) } _ =
       pure $ H.iframe { src: src frameSource search.term

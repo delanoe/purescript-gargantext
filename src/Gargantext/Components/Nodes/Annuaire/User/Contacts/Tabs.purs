@@ -55,7 +55,7 @@ tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component TabsProps
-tabsCpt = R2.hooksComponent thisModule "tabs" cpt
+tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
     cpt { cacheState, contactData: {defaultListId}, frontends, nodeId, session} _ = do
       active <- R.useState' 0

@@ -30,7 +30,7 @@ nodeActionsGraph :: Record NodeActionsGraphProps -> R.Element
 nodeActionsGraph p = R.createElement nodeActionsGraphCpt p []
 
 nodeActionsGraphCpt :: R.Component NodeActionsGraphProps
-nodeActionsGraphCpt = R2.hooksComponent thisModule "nodeActionsGraph" cpt
+nodeActionsGraphCpt = R.hooksComponentWithModule thisModule "nodeActionsGraph" cpt
   where
     cpt { id, graphVersions, session, triggerRefresh } _ = do
       pure $ H.div { className: "node-actions" } [
@@ -50,7 +50,7 @@ graphUpdateButton :: Record GraphUpdateButtonProps -> R.Element
 graphUpdateButton p = R.createElement graphUpdateButtonCpt p []
 
 graphUpdateButtonCpt :: R.Component GraphUpdateButtonProps
-graphUpdateButtonCpt = R2.hooksComponent thisModule "graphUpdateButton" cpt
+graphUpdateButtonCpt = R.hooksComponentWithModule thisModule "graphUpdateButton" cpt
   where
     cpt { id, session, triggerRefresh } _ = do
       enabled <- R.useState' true
@@ -86,7 +86,7 @@ nodeActionsNodeList :: Record NodeActionsNodeListProps -> R.Element
 nodeActionsNodeList p = R.createElement nodeActionsNodeListCpt p []
 
 nodeActionsNodeListCpt :: R.Component NodeActionsNodeListProps
-nodeActionsNodeListCpt = R2.hooksComponent thisModule "nodeActionsNodeList" cpt
+nodeActionsNodeListCpt = R.hooksComponentWithModule thisModule "nodeActionsNodeList" cpt
   where
     cpt props _ = do
       pure $ H.div { className: "node-actions" } [
@@ -105,7 +105,7 @@ nodeListUpdateButton :: Record NodeListUpdateButtonProps -> R.Element
 nodeListUpdateButton p = R.createElement nodeListUpdateButtonCpt p []
 
 nodeListUpdateButtonCpt :: R.Component NodeListUpdateButtonProps
-nodeListUpdateButtonCpt = R2.hooksComponent thisModule "nodeListUpdateButton" cpt
+nodeListUpdateButtonCpt = R.hooksComponentWithModule thisModule "nodeListUpdateButton" cpt
   where
     cpt { listId, nodeId, nodeType, session, triggerRefresh } _ = do
       enabled <- R.useState' true

@@ -768,11 +768,11 @@
   };
   "reactix" = {
     name = "reactix";
-    version = "v0.4.5";
+    version = "v0.4.6";
     src = pkgs.fetchgit {
       url = "https://github.com/irresponsible/purescript-reactix";
-      rev = "v0.4.5";
-      sha256 = "0nzings4ygsrl4ak8x87sns7lgv6fljzhw69l0gk1iihhhazkhan";
+      rev = "v0.4.6";
+      sha256 = "0q3cq3d9385jq9dlpjhfqdc4b4nvxxlmjncs3fr4xk8vv24j3kns";
     };
   };
   "read" = {

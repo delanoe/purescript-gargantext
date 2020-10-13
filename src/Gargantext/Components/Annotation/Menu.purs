@@ -36,14 +36,14 @@ type AnnotationMenu = {
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
-annotationMenu :: R2.Setter (Maybe AnnotationMenu) -> AnnotationMenu -> R.Element
+annotationMenu :: R.Setter (Maybe AnnotationMenu) -> AnnotationMenu -> R.Element
 annotationMenu setMenu { x,y,list,menuType, onClose,setList } =
   CM.contextMenu { x,y, onClose, setMenu } [
     R.createElement annotationMenuCpt {list,menuType,setList} []
   ]
 
 annotationMenuCpt :: R.Component Props
-annotationMenuCpt = R2.hooksComponent thisModule "annotationMenu" cpt
+annotationMenuCpt = R.hooksComponentWithModule thisModule "annotationMenu" cpt
   where
     cpt props _ = pure $ R.fragment $ children props
     children props = A.mapMaybe (addToList props) [ MapTerm, CandidateTerm, StopTerm ]

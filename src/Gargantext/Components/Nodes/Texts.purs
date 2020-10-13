@@ -38,7 +38,7 @@ textsLayout props = R.createElement textsLayoutCpt props []
 
 ------------------------------------------------------------------------
 textsLayoutCpt :: R.Component Props
-textsLayoutCpt = R2.hooksComponent thisModule "textsLayout" cpt where
+textsLayoutCpt = R.hooksComponentWithModule thisModule "textsLayout" cpt where
   cpt { frontends, nodeId, session } _ = do
     let sid = sessionId session
 
@@ -53,7 +53,7 @@ textsLayoutWithKey :: Record KeyProps -> R.Element
 textsLayoutWithKey props = R.createElement textsLayoutWithKeyCpt props []
 
 textsLayoutWithKeyCpt :: R.Component KeyProps
-textsLayoutWithKeyCpt = R2.hooksComponent thisModule "textsLayoutWithKey" cpt
+textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       cacheState <- R.useState' NT.CacheOn
@@ -95,7 +95,7 @@ tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component TabsProps
-tabsCpt = R2.hooksComponent thisModule "tabs" cpt
+tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
     cpt {frontends, session, corpusId, corpusData} _ = do
       (selected /\ setSelected) <- R.useState' 0
@@ -123,7 +123,7 @@ docView :: forall a. Record (DocViewProps a) -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: forall a. R.Component (DocViewProps a)
-docViewCpt = R2.hooksComponent thisModule "docView" cpt
+docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
   where
     cpt {frontends, session, corpusId, corpusData: {defaultListId}, tabType} _children = do
       pure $ DT.docViewLayout $ params tabType

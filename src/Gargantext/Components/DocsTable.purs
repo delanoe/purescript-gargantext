@@ -162,7 +162,7 @@ docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
 
 docViewLayoutCpt :: R.Component LayoutProps
-docViewLayoutCpt = R2.hooksComponent thisModule "docViewLayout" cpt
+docViewLayoutCpt = R.hooksComponentWithModule thisModule "docViewLayout" cpt
   where
     cpt layout _children = do
       query <- R.useState' ""
@@ -179,7 +179,7 @@ docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: R.Component Props
-docViewCpt = R2.hooksComponent thisModule "docView" cpt where
+docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
   cpt { query, params
       , layout: { frontends, session, nodeId, tabType, listId
                 , corpusId, totalRecords, chart, showSearch } } _ = do
@@ -216,7 +216,7 @@ docViewCpt = R2.hooksComponent thisModule "docView" cpt where
 searchBar :: R.State Query -> R.Element
 searchBar (query /\ setQuery) = R.createElement el {} []
   where
-    el = R2.hooksComponent thisModule "SearchBar" cpt
+    el = R.hooksComponentWithModule thisModule "SearchBar" cpt
     cpt {} _children = do
       queryText <- R.useState' query
 
@@ -235,7 +235,7 @@ searchBar (query /\ setQuery) = R.createElement el {} []
 
     onSearchChange :: forall e. R.State Query -> e -> Effect Unit
     onSearchChange (_ /\ setQueryText) = \e ->
-      setQueryText $ const $ R2.unsafeEventValue e
+      setQueryText $ const $ R.unsafeEventValue e
 
     onSearchKeyup :: R.State Query -> DE.KeyboardEvent -> Effect Unit
     onSearchKeyup (queryText /\ _) = \e ->
@@ -301,7 +301,7 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R2.hooksComponent thisModule "pageLayout" cpt where
+pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
   cpt props@{ corpusId, frontends, listId, nodeId, params, query, session, tabType } _ =
     useLoaderWithCacheAPI {
         cacheEndpoint: getPageHash session
@@ -337,7 +337,7 @@ page :: T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
 page params layout documents = R.createElement pageCpt { documents, layout, params } []
 
 pageCpt :: R.Component PageProps
-pageCpt = R2.hooksComponent thisModule "pageCpt" cpt where
+pageCpt = R.hooksComponentWithModule thisModule "pageCpt" cpt where
   cpt { documents, layout, params } _ = do
     paramsS <- R.useState' params
     pure $ pagePaint { documents, layout, params: paramsS }
@@ -352,7 +352,7 @@ pagePaint :: Record PagePaintProps -> R.Element
 pagePaint props = R.createElement pagePaintCpt props []
 
 pagePaintCpt :: R.Component PagePaintProps
-pagePaintCpt = R2.hooksComponent thisModule "pagePaintCpt" cpt where
+pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt where
   cpt { layout: { corpusId, frontends, listId, nodeId, session, totalRecords }, documents, params } _ = do
     localCategories <- R.useState' (mempty :: LocalCategories)
     pure $ T.table

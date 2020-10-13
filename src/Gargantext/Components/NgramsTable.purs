@@ -142,7 +142,7 @@ tableContainerCpt { dispatch
                   , ngramsTable: ngramsTableCache
                   , path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                   , tabNgramType
-                  } = R2.hooksComponent thisModule "tableContainer" cpt
+                  } = R.hooksComponentWithModule thisModule "tableContainer" cpt
   where
     cpt props _ = do
       pure $ H.div {className: "container-fluid"} [
@@ -169,7 +169,7 @@ tableContainerCpt { dispatch
                   [ R2.select { id: "picklistmenu"
                               , className: "form-control custom-select"
                               , defaultValue: (maybe "" show termListFilter)
-                              , on: {change: setTermListFilter <<< read <<< R2.unsafeEventValue}}
+                              , on: {change: setTermListFilter <<< read <<< R.unsafeEventValue}}
                     (map optps1 termLists)]
                 ]
               , H.div {className: "col-md-2", style: {marginTop : "6px"}}
@@ -177,7 +177,7 @@ tableContainerCpt { dispatch
                   [ R2.select {id: "picktermtype"
                               , className: "form-control custom-select"
                               , defaultValue: (maybe "" show termSizeFilter)
-                              , on: {change: setTermSizeFilter <<< read <<< R2.unsafeEventValue}}
+                              , on: {change: setTermSizeFilter <<< read <<< R.unsafeEventValue}}
                     (map optps1 termSizes)]
                 ]
               , H.div { className: "col-md-2", style: { marginTop: "6px" } } [
@@ -290,7 +290,7 @@ loadedNgramsTable :: Record Props -> R.Element
 loadedNgramsTable p = R.createElement loadedNgramsTableCpt p []
 
 loadedNgramsTableCpt :: R.Component Props
-loadedNgramsTableCpt = R2.hooksComponent thisModule "loadedNgramsTable" cpt
+loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable" cpt
   where
     cpt { afterSync
         , path: path@(path'@{ searchQuery, scoreType, params, termListFilter, termSizeFilter } /\ setPath)
@@ -454,7 +454,7 @@ syncResetButtons :: Record SyncResetButtonsProps -> R.Element
 syncResetButtons p = R.createElement syncResetButtonsCpt p []
 
 syncResetButtonsCpt :: R.Component SyncResetButtonsProps
-syncResetButtonsCpt = R2.hooksComponent thisModule "syncResetButtons" cpt
+syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
   where
     cpt { afterSync, ngramsLocalPatch, performAction } _ = do
       synchronizing@(s /\ _) <- R.useState' false
@@ -534,7 +534,7 @@ mainNgramsTable :: Record MainNgramsTableProps -> R.Element
 mainNgramsTable props = R.createElement mainNgramsTableCpt props []
 
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
-mainNgramsTableCpt = R2.hooksComponent thisModule "mainNgramsTable" cpt
+mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
   where
     cpt props@{ afterSync
               , cacheState
@@ -600,7 +600,7 @@ mainNgramsTablePaint :: Record MainNgramsTablePaintProps -> R.Element
 mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
 
 mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
-mainNgramsTablePaintCpt = R2.hooksComponent thisModule "mainNgramsTablePaint" cpt
+mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
   where
     cpt { afterSync, path, tabNgramType, versioned, withAutoUpdate } _ = do
       pathS <- R.useState' path

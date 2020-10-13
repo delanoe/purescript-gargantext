@@ -47,9 +47,9 @@ searchField :: Record Props -> R.Element
 searchField p = R.createElement searchFieldComponent p []
 
 --searchFieldComponent :: R.Memo Props
---searchFieldComponent = R.memo (R2.hooksComponent thisModule "searchField" cpt) eqProps
+--searchFieldComponent = R.memo (R.hooksComponentWithModule thisModule "searchField" cpt) eqProps
 searchFieldComponent :: R.Component Props
-searchFieldComponent = R2.hooksComponent thisModule "searchField" cpt
+searchFieldComponent = R.hooksComponentWithModule thisModule "searchField" cpt
   where
     cpt props@{onSearch, search: search@(s /\ _)} _ = do
       iframeRef <- R.useRef    null
@@ -290,7 +290,7 @@ databaseInput (search /\ setSearch) dbs =
       liItem  db' = H.option {className : "text-primary center"} [ H.text (show db') ]
 
       onChange e = do
-        let value = read $ R2.unsafeEventValue e
+        let value = read $ R.unsafeEventValue e
         setSearch $ _ { datafield = Just $ External value
                       , databases = fromMaybe Empty value
                       }
@@ -308,7 +308,7 @@ orgInput ({datafield} /\ setSearch) orgs =
       liItem :: Org -> R.Element
       liItem  org = H.option {className : "text-primary center"} [ H.text (show org) ]
       onChange e = do
-        let value = R2.unsafeEventValue e
+        let value = R.unsafeEventValue e
         setSearch $ _ { datafield = Just $ External $ Just $ HAL $ read value }
 
 {-
@@ -318,7 +318,7 @@ filterInput (term /\ setTerm) =
         [ H.input { defaultValue: term
                   , className: "form-control"
                   , type: "text"
-                  , on: { change: setTerm <<< const <<< R2.unsafeEventValue }
+                  , on: { change: setTerm <<< const <<< R.unsafeEventValue }
                   , "required pattern": "[[0-9]+[ ]+]*"
                   -- TODO                          ^FIXME not sure about the regex comprehension: that should match "123 2334 44545" only (Integers separated by one space)
                   -- form validation with CSS
@@ -337,7 +337,7 @@ searchInput :: Record SearchInputProps -> R.Element
 searchInput p = R.createElement searchInputComponent p []
 
 searchInputComponent :: R.Component SearchInputProps
-searchInputComponent = R2.hooksComponent thisModule "searchInput" cpt
+searchInputComponent = R.hooksComponentWithModule thisModule "searchInput" cpt
   where
     cpt {search: (search /\ setSearch)} _ = do
       pure $
@@ -350,7 +350,7 @@ searchInputComponent = R2.hooksComponent thisModule "searchInput" cpt
                   }
         ]
     onChange setSearch e = do
-      let value = R2.unsafeEventValue e
+      let value = R.unsafeEventValue e
       setSearch $ _ { term = value }
 
 type SubmitButtonProps =
@@ -363,7 +363,7 @@ submitButton :: Record SubmitButtonProps -> R.Element
 submitButton p = R.createElement submitButtonComponent p []
 
 submitButtonComponent :: R.Component SubmitButtonProps
-submitButtonComponent = R2.hooksComponent thisModule "submitButton" cpt
+submitButtonComponent = R.hooksComponentWithModule thisModule "submitButton" cpt
   where
     cpt {onSearch, search: (mySearch /\ _), session} _ =
       pure $

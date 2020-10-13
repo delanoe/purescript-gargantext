@@ -107,7 +107,7 @@ tableHeaderLayout :: Record TableHeaderLayoutProps -> R.Element
 tableHeaderLayout props = R.createElement tableHeaderLayoutCpt props []
 
 tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
-tableHeaderLayoutCpt = R2.hooksComponent thisModule "tableHeaderLayout" cpt
+tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout" cpt
   where
     cpt { afterCacheStateChange, cacheState, date, desc, query, title, user } _ =
       pure $ R.fragment
@@ -164,7 +164,7 @@ table :: Record Props -> R.Element
 table props = R.createElement tableCpt props []
 
 tableCpt :: R.Component Props
-tableCpt = R2.hooksComponent thisModule "table" cpt
+tableCpt = R.hooksComponentWithModule thisModule "table" cpt
   where
     cpt {container, colNames, wrapColElts, totalRecords, rows, params} _ = do
       let
@@ -239,7 +239,7 @@ sizeDD :: Record SizeDDProps -> R.Element
 sizeDD p = R.createElement sizeDDCpt p []
 
 sizeDDCpt :: R.Component SizeDDProps
-sizeDDCpt = R2.hooksComponent thisModule "sizeDD" cpt
+sizeDDCpt = R.hooksComponentWithModule thisModule "sizeDD" cpt
   where
     cpt {params: params /\ setParams} _ = do
       pure $ H.span {} [
@@ -249,7 +249,7 @@ sizeDDCpt = R2.hooksComponent thisModule "sizeDD" cpt
         {pageSize} = paramsState params
         className = "form-control"
         change e = do
-          let ps = string2PageSize $ R2.unsafeEventValue e
+          let ps = string2PageSize $ R.unsafeEventValue e
           setParams $ \p -> stateParams $ (paramsState p) { pageSize = ps }
         sizes = map option pageSizes
         option size = H.option {value} [H.text value]

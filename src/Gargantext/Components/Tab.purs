@@ -18,7 +18,7 @@ tabs props = R.createElement tabsCpt props []
 
 -- this is actually just the list of tabs, not the tab contents itself
 tabsCpt :: R.Component TabsProps
-tabsCpt = R2.hooksComponent thisModule "tabs" cpt
+tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
     cpt props _ = do
       (activeTab /\ setActiveTab) <- R.useState' props.selected

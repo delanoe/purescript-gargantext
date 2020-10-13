@@ -25,7 +25,7 @@ moveNode :: Record SubTreeParamsIn -> R.Element
 moveNode p = R.createElement moveNodeCpt p []
 
 moveNodeCpt :: R.Component SubTreeParamsIn
-moveNodeCpt = R2.hooksComponent thisModule "moveNode" cpt
+moveNodeCpt = R.hooksComponentWithModule thisModule "moveNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params: Nothing})

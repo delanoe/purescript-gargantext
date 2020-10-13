@@ -20,7 +20,7 @@ legend :: Record Props -> R.Element
 legend props = R.createElement legendCpt props []
 
 legendCpt :: R.Component Props
-legendCpt = R2.hooksComponent thisModule "legend" cpt
+legendCpt = R.hooksComponentWithModule thisModule "legend" cpt
   where
     cpt {items} _ = pure $ RH.div {} [foldMap entry items]
 

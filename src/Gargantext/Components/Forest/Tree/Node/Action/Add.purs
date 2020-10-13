@@ -64,7 +64,7 @@ addNodeView :: Record CreateNodeProps
             -> R.Element
 addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
   where
-    el = R2.hooksComponent thisModule "addNodeView" cpt
+    el = R.hooksComponentWithModule thisModule "addNodeView" cpt
     cpt {id, name} _ = do
       nodeName@(name' /\ setNodeName) <- R.useState' "Name"
       nodeType'@(nt /\ setNodeType)   <- R.useState' $ fromMaybe Folder $ head nodeTypes

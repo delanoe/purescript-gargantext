@@ -118,7 +118,7 @@ metrics :: Record Props -> R.Element
 metrics props = R.createElement metricsCpt props []
 
 metricsCpt :: R.Component Props
-metricsCpt = R2.hooksComponent thisModule "etrics" cpt
+metricsCpt = R.hooksComponentWithModule thisModule "etrics" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0

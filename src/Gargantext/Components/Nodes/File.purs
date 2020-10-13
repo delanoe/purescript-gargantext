@@ -70,7 +70,7 @@ fileLayout :: Record FileLayoutProps -> R.Element
 fileLayout props = R.createElement fileLayoutCpt props []
 
 fileLayoutCpt :: R.Component FileLayoutProps
-fileLayoutCpt = R2.hooksComponent thisModule "fileLayout" cpt
+fileLayoutCpt = R.hooksComponentWithModule thisModule "fileLayout" cpt
   where
     cpt { nodeId, session } _ = do
       useLoader { nodeId } (loadFile session) $ \loaded ->
@@ -92,7 +92,7 @@ fileLayoutLoaded :: Record FileLayoutLoadedProps -> R.Element
 fileLayoutLoaded props = R.createElement fileLayoutLoadedCpt props []
 
 fileLayoutLoadedCpt :: R.Component FileLayoutLoadedProps
-fileLayoutLoadedCpt = R2.hooksComponent thisModule "fileLayoutLoaded" cpt
+fileLayoutLoadedCpt = R.hooksComponentWithModule thisModule "fileLayoutLoaded" cpt
   where
     cpt { loaded: File { hyperdata: HyperdataFile hyperdata }, nodeId, session } _ = do
       R.useEffect' $ do

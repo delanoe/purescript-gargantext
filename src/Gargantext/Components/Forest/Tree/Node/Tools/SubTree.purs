@@ -39,7 +39,7 @@ subTreeView :: Record SubTreeParamsProps -> R.Element
 subTreeView props = R.createElement subTreeViewCpt props []
 
 subTreeViewCpt :: R.Component SubTreeParamsProps
-subTreeViewCpt = R2.hooksComponent thisModule "subTreeView" cpt
+subTreeViewCpt = R.hooksComponentWithModule thisModule "subTreeView" cpt
   where
     cpt params@{ action
                , dispatch
@@ -87,7 +87,7 @@ subTreeViewLoaded :: Record CorpusTreeProps -> R.Element
 subTreeViewLoaded props = R.createElement subTreeViewLoadedCpt props []
 
 subTreeViewLoadedCpt :: R.Component CorpusTreeProps
-subTreeViewLoadedCpt = R2.hooksComponent thisModule "subTreeViewLoadedCpt" cpt
+subTreeViewLoadedCpt = R.hooksComponentWithModule thisModule "subTreeViewLoadedCpt" cpt
   where
     cpt p@{dispatch, id, nodeType, session, tree, handed} _ = do
       pure $ H.div {className:"tree"}
@@ -102,7 +102,7 @@ subTreeTreeView :: Record CorpusTreeProps -> R.Element
 subTreeTreeView props = R.createElement subTreeTreeViewCpt props []
 
 subTreeTreeViewCpt :: R.Component CorpusTreeProps
-subTreeTreeViewCpt = R2.hooksComponent thisModule "subTreeTreeViewCpt" cpt
+subTreeTreeViewCpt = R.hooksComponentWithModule thisModule "subTreeTreeViewCpt" cpt
   where
     cpt p@{ id
           , tree: NTree (LNode { id: targetId

@@ -49,7 +49,7 @@ annuaireLayout :: Record LayoutProps -> R.Element
 annuaireLayout props = R.createElement annuaireLayoutCpt props []
 
 annuaireLayoutCpt :: R.Component LayoutProps
-annuaireLayoutCpt = R2.hooksComponent thisModule "annuaireLayout" cpt
+annuaireLayoutCpt = R.hooksComponentWithModule thisModule "annuaireLayout" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       let sid = sessionId session
@@ -65,7 +65,7 @@ annuaireLayoutWithKey :: Record KeyLayoutProps -> R.Element
 annuaireLayoutWithKey props = R.createElement annuaireLayoutWithKeyCpt props []
 
 annuaireLayoutWithKeyCpt :: R.Component KeyLayoutProps
-annuaireLayoutWithKeyCpt = R2.hooksComponent thisModule "annuaireLayoutWithKey" cpt
+annuaireLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "annuaireLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       path <- R.useState' nodeId
@@ -86,7 +86,7 @@ annuaire props = R.createElement annuaireCpt props []
 
 -- Abuses closure to work around the Loader
 annuaireCpt :: R.Component AnnuaireProps
-annuaireCpt = R2.hooksComponent thisModule "annuaire" cpt
+annuaireCpt = R.hooksComponentWithModule thisModule "annuaire" cpt
   where
     cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ = do
       pagePath <- R.useState' $ initialPagePath (fst path)
@@ -126,7 +126,7 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R2.hooksComponent thisModule "pageLayout" cpt
+pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt
   where
     cpt {info, frontends, pagePath, session} _ = do
       useLoader (fst pagePath) (loadPage session) $
@@ -144,7 +144,7 @@ page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
 
 pageCpt :: R.Component PageProps
-pageCpt = R2.hooksComponent thisModule "page" cpt
+pageCpt = R.hooksComponentWithModule thisModule "page" cpt
   where
     cpt { session, pagePath, frontends
         , table: ({count: totalRecords, docs})} _ = do
@@ -177,7 +177,7 @@ contactCells :: Record ContactCellsProps -> R.Element
 contactCells p = R.createElement contactCellsCpt p []
 
 contactCellsCpt :: R.Component ContactCellsProps
-contactCellsCpt = R2.hooksComponent thisModule "contactCells" cpt
+contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
   where
     cpt { annuaireId
         , contact: (CT.NodeContact { id, hyperdata: (CT.HyperdataContact {who : Nothing}) })

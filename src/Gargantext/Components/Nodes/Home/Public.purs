@@ -93,7 +93,7 @@ renderPublic :: Record PublicProps -> R.Element
 renderPublic props = R.createElement renderPublicCpt props []
 
 renderPublicCpt :: R.Component PublicProps
-renderPublicCpt = R2.hooksComponent thisModule "renderPublic" cpt
+renderPublicCpt = R.hooksComponentWithModule thisModule "renderPublic" cpt
   where
     cpt {backend, publicBackend, sessions, visible} _ = do
       reload <- R.useState' 0
@@ -108,7 +108,7 @@ publicLayout :: Record PublicDataProps -> R.Element
 publicLayout props = R.createElement publicLayoutCpt props []
 
 publicLayoutCpt :: R.Component PublicDataProps
-publicLayoutCpt = R2.hooksComponent thisModule "publicLayout" cpt
+publicLayoutCpt = R.hooksComponentWithModule thisModule "publicLayout" cpt
   where
     cpt {publicDatas, visible, backend, publicBackend, sessions} _ = do
       pure $ H.span {}

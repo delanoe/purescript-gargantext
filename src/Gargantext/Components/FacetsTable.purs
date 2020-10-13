@@ -94,7 +94,7 @@ docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: R.Component Props
-docViewCpt = R2.hooksComponent thisModule "docView" cpt
+docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
@@ -145,7 +145,7 @@ docViewGraph :: Record Props -> R.Element
 docViewGraph props = R.createElement docViewCpt props []
 
 docViewGraphCpt :: R.Component Props
-docViewGraphCpt = R2.hooksComponent thisModule "docViewGraph" cpt
+docViewGraphCpt = R.hooksComponentWithModule thisModule "docViewGraph" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
@@ -292,7 +292,7 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R2.hooksComponent thisModule "pageLayout" cpt
+pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt
   where
     cpt {frontends, totalRecords, deletions, container, session, path} _ = do
       useLoader (fst path) loadPage $ \documents ->
@@ -302,7 +302,7 @@ page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
 
 pageCpt :: R.Component PageProps
-pageCpt = R2.hooksComponent thisModule "page" cpt
+pageCpt = R.hooksComponentWithModule thisModule "page" cpt
   where
     cpt {frontends, totalRecords, container, deletions, documents, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
       pure $ T.table { rows, container, colNames, totalRecords, params, wrapColElts }

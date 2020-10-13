@@ -36,7 +36,7 @@ toggleButton :: Record Props -> R.Element
 toggleButton props = R.createElement toggleButtonCpt props []
 
 toggleButtonCpt :: R.Component Props
-toggleButtonCpt = R2.hooksComponent thisModule "toggleButton" cpt
+toggleButtonCpt = R.hooksComponentWithModule thisModule "toggleButton" cpt
   where
     cpt {state, onMessage, offMessage, onClick} _ = do
       let (toggled /\ _) = state
@@ -67,7 +67,7 @@ edgesToggleButton :: Record EdgesButtonProps -> R.Element
 edgesToggleButton props = R.createElement edgesToggleButtonCpt props []
 
 edgesToggleButtonCpt :: R.Component EdgesButtonProps
-edgesToggleButtonCpt = R2.hooksComponent thisModule "edgesToggleButton" cpt
+edgesToggleButtonCpt = R.hooksComponentWithModule thisModule "edgesToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
       pure $
@@ -108,7 +108,7 @@ pauseForceAtlasButton :: Record ForceAtlasProps -> R.Element
 pauseForceAtlasButton props = R.createElement pauseForceAtlasButtonCpt props []
 
 pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
-pauseForceAtlasButtonCpt = R2.hooksComponent thisModule "forceAtlasToggleButton" cpt
+pauseForceAtlasButtonCpt = R.hooksComponentWithModule thisModule "forceAtlasToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
       pure $
@@ -137,7 +137,7 @@ treeToggleButton state =
 sidebarToggleButton :: R.State GET.SidePanelState -> R.Element
 sidebarToggleButton (state /\ setState) = R.createElement el {} []
   where
-    el = R2.hooksComponent thisModule "sidebarToggleButton" cpt
+    el = R.hooksComponentWithModule thisModule "sidebarToggleButton" cpt
     cpt {} _ = do
       pure $
         H.span {}

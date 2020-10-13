@@ -59,7 +59,7 @@ linkNode :: Record SubTreeParamsIn -> R.Element
 linkNode p = R.createElement linkNodeCpt p []
 
 linkNodeCpt :: R.Component SubTreeParamsIn
-linkNodeCpt = R2.hooksComponent thisModule "linkNode" cpt
+linkNodeCpt = R.hooksComponentWithModule thisModule "linkNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
 

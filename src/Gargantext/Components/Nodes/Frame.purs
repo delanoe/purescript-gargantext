@@ -64,7 +64,7 @@ frameLayout :: Record Props -> R.Element
 frameLayout props = R.createElement frameLayoutCpt props []
 
 frameLayoutCpt :: R.Component Props
-frameLayoutCpt = R2.hooksComponent thisModule "frameLayout" cpt
+frameLayoutCpt = R.hooksComponentWithModule thisModule "frameLayout" cpt
   where
     cpt {nodeId, session} _ = do
       let sid = sessionId session
@@ -75,7 +75,7 @@ frameLayoutWithKey :: Record KeyProps -> R.Element
 frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []
 
 frameLayoutWithKeyCpt :: R.Component KeyProps
-frameLayoutWithKeyCpt = R2.hooksComponent thisModule "frameLayoutWithKey" cpt
+frameLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "frameLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
       reload <- R.useState' 0
@@ -101,7 +101,7 @@ frameLayoutView :: Record ViewProps -> R.Element
 frameLayoutView props = R.createElement frameLayoutViewCpt props []
 
 frameLayoutViewCpt :: R.Component ViewProps
-frameLayoutViewCpt = R2.hooksComponent thisModule "frameLayoutView" cpt
+frameLayoutViewCpt = R.hooksComponentWithModule thisModule "frameLayoutView" cpt
   where
     cpt {frame: (NodePoly {hyperdata: Hyperdata {base, frame_id}}), nodeId, reload, session} _ = do
       pure $ H.div { className : "frame" }

@@ -55,7 +55,7 @@ sidebar :: Record Props -> R.Element
 sidebar props = R.createElement sidebarCpt props []
 
 sidebarCpt :: R.Component Props
-sidebarCpt = R2.hooksComponent thisModule "sidebar" cpt
+sidebarCpt = R.hooksComponentWithModule thisModule "sidebar" cpt
   where
     cpt {showSidePanel: (GET.Closed /\ _)} _children = do
       pure $ RH.div {} []

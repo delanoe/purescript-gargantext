@@ -17,7 +17,7 @@ controlsToggleButton :: Record Props -> R.Element
 controlsToggleButton props = R.createElement controlsToggleButtonCpt props []
 
 controlsToggleButtonCpt :: R.Component Props
-controlsToggleButtonCpt = R2.hooksComponent thisModule "graphControlsToggleButton" cpt
+controlsToggleButtonCpt = R.hooksComponentWithModule thisModule "graphControlsToggleButton" cpt
   where
     cpt {state} _ = do
       let (open /\ setOpen) = state

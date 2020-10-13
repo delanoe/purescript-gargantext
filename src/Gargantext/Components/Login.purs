@@ -48,7 +48,7 @@ login :: Record LoginProps -> R.Element
 login props = R.createElement loginCpt props []
 
 loginCpt :: R.Component LoginProps
-loginCpt = R2.hooksComponent thisModule "login" cpt
+loginCpt = R.hooksComponentWithModule thisModule "login" cpt
   where
     cpt props@{backends, sessions, visible, backend} _ = do
       pure $
@@ -65,7 +65,7 @@ modal :: Record ModalProps -> R.Element -> R.Element
 modal props child = R.createElement modalCpt props [ child ]
 
 modalCpt :: R.Component ModalProps
-modalCpt = R2.hooksComponent thisModule "modal" cpt where
+modalCpt = R.hooksComponentWithModule thisModule "modal" cpt where
   cpt {visible} children = do
     R.createPortal elems <$> R2.getPortalHost
     where
@@ -180,7 +180,7 @@ form :: Record FormProps -> R.Element
 form props = R.createElement formCpt props []
 
 formCpt :: R.Component FormProps
-formCpt = R2.hooksComponent thisModule "form" cpt where
+formCpt = R.hooksComponentWithModule thisModule "form" cpt where
   cpt :: Record FormProps -> Array R.Element -> R.Hooks R.Element
   cpt props@{backend, sessions, visible} _ = do
     error    <- R.useState' ""
@@ -256,8 +256,8 @@ usernameInput username =
           , placeholder: "username"
           , type: "text"
           , defaultValue: (fst username)
-          --, on: {input: \e -> dispatch (SetUserName $ R2.unsafeEventValue e)}
-          , on: {change: \e -> (snd username) $ const $ R2.unsafeEventValue e} }
+          --, on: {input: \e -> dispatch (SetUserName $ R.unsafeEventValue e)}
+          , on: {change: \e -> (snd username) $ const $ R.unsafeEventValue e} }
  
 passwordInput :: R.State String -> R.Element
 passwordInput password =
@@ -267,8 +267,8 @@ passwordInput password =
           , placeholder: "password"
           , type: "password"
           , defaultValue: (fst password)
-          --, on: {input: \e -> dispatch (SetPassword $ R2.unsafeEventValue e)}
-          , on: {change: \e -> (snd password) $ const $ R2.unsafeEventValue e} }
+          --, on: {input: \e -> dispatch (SetPassword $ R.unsafeEventValue e)}
+          , on: {change: \e -> (snd password) $ const $ R.unsafeEventValue e} }
 
 loginSubmit :: forall e. (e -> Effect Unit) -> R.Element
 loginSubmit click =

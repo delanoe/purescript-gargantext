@@ -26,7 +26,7 @@ rangeControl :: Record Props -> R.Element
 rangeControl props = R.createElement rangeControlCpt props []
 
 rangeControlCpt :: R.Component Props
-rangeControlCpt = R2.hooksComponent thisModule "rangeButton" cpt
+rangeControlCpt = R.hooksComponentWithModule thisModule "rangeButton" cpt
   where
     cpt {caption, sliderProps} _ = do
       pure $

@@ -47,7 +47,7 @@ annotatedField :: Record Props -> R.Element
 annotatedField p = R.createElement annotatedFieldComponent p []
 
 annotatedFieldComponent :: R.Component Props
-annotatedFieldComponent = R2.hooksComponent thisModule "annotatedField" cpt
+annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField" cpt
   where
     cpt {ngrams,setTermList,text} _ = do
       mMenu@(_ /\ setMenu) <- R.useState' Nothing
@@ -98,7 +98,7 @@ addMenu :: Record AddMenuProps -> R.Element
 addMenu p = R.createElement addMenuCpt p []
 
 addMenuCpt :: R.Component AddMenuProps
-addMenuCpt = R2.hooksComponent thisModule "addMenu" cpt
+addMenuCpt = R.hooksComponentWithModule thisModule "addMenu" cpt
   where
     cpt { menuRef } _ = do
       (mMenu /\ setmMenu) <- R.useState' (Nothing :: Maybe AnnotationMenu)
@@ -113,7 +113,7 @@ addMenuCpt = R2.hooksComponent thisModule "addMenu" cpt
         Nothing -> HTML.div {} []
         Just menu -> annotationMenu setmMenu menu
 
--- forall e. IsMouseEvent e => R2.Setter (Maybe AnnotationMenu) -> R2.Setter ? -> ? -> e -> Effect Unit
+-- forall e. IsMouseEvent e => R.Setter (Maybe AnnotationMenu) -> R.Setter ? -> ? -> e -> Effect Unit
 maybeShowMenu setMenu menuRef setTermList ngrams event = do
   s <- Sel.getSelection
   log2 "[maybeShowMenu] s" s

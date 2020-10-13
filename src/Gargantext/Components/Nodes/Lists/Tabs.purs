@@ -37,7 +37,7 @@ tabs :: Record Props -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component Props
-tabsCpt = R2.hooksComponent thisModule "tabs" cpt
+tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
     cpt { cacheState, corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do
       (selected /\ setSelected) <- R.useState' 0
@@ -56,7 +56,7 @@ ngramsView :: Record NgramsViewProps -> R.Element
 ngramsView props = R.createElement ngramsViewCpt props []
 
 ngramsViewCpt :: R.Component NgramsViewProps
-ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
+ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
   where
     cpt { cacheState
         , corpusData: { defaultListId }
@@ -109,7 +109,7 @@ ngramsViewCpt = R2.hooksComponent thisModule "ngramsView" cpt
                                              $ const
                                              $ fromMaybe Histo
                                              $ chartTypeFromString
-                                             $ R2.unsafeEventValue e
+                                             $ R.unsafeEventValue e
                                }
                         , defaultValue: show chartType } [
                 H.option { value: show Histo     } [ H.text $ show Histo     ]

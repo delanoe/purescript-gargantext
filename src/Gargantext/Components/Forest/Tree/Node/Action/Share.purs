@@ -59,7 +59,7 @@ shareNode :: Record SubTreeParamsIn -> R.Element
 shareNode p = R.createElement shareNodeCpt p []
 
 shareNodeCpt :: R.Component SubTreeParamsIn
-shareNodeCpt = R2.hooksComponent thisModule "shareNode" cpt
+shareNodeCpt = R.hooksComponentWithModule thisModule "shareNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (Action.SharePublic {params: Nothing})

@@ -73,7 +73,7 @@ uploadFileView :: Record Props -> R.Element
 uploadFileView props = R.createElement uploadFileViewCpt props []
 
 uploadFileViewCpt :: R.Component Props
-uploadFileViewCpt = R2.hooksComponent thisModule "uploadFileView" cpt
+uploadFileViewCpt = R.hooksComponentWithModule thisModule "uploadFileView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
       mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
@@ -142,7 +142,7 @@ uploadButton :: Record UploadButtonProps -> R.Element
 uploadButton props = R.createElement uploadButtonCpt props []
 
 uploadButtonCpt :: R.Component UploadButtonProps
-uploadButtonCpt = R2.hooksComponent thisModule "uploadButton" cpt
+uploadButtonCpt = R.hooksComponentWithModule thisModule "uploadButton" cpt
   where
     cpt { dispatch
         , fileType: (fileType /\ setFileType)
@@ -189,7 +189,7 @@ fileTypeView :: Record FileTypeProps -> R.Element
 fileTypeView p = R.createElement fileTypeViewCpt p []
 
 fileTypeViewCpt :: R.Component FileTypeProps
-fileTypeViewCpt = R2.hooksComponent thisModule "fileTypeView" cpt
+fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
   where
     cpt { dispatch
         , droppedFile: Just (DroppedFile {blob, fileType}) /\ setDroppedFile
@@ -236,8 +236,8 @@ fileTypeViewCpt = R2.hooksComponent thisModule "fileTypeView" cpt
           where
             onChange e l =
               setDroppedFile $ const $ Just $ DroppedFile $ { blob
-                                                            , fileType: read $ R2.unsafeEventValue e
-                                                            , lang    : fromMaybe EN $ read $ R2.unsafeEventValue l
+                                                            , fileType: read $ R.unsafeEventValue e
+                                                            , lang    : fromMaybe EN $ read $ R.unsafeEventValue l
                                                             }
             renderOption opt = H.option {} [ H.text $ show opt ]
 
@@ -328,7 +328,7 @@ uploadTermListView :: Record Props -> R.Element
 uploadTermListView props = R.createElement uploadTermListViewCpt props []
 
 uploadTermListViewCpt :: R.Component Props
-uploadTermListViewCpt = R2.hooksComponent thisModule "uploadTermListView" cpt
+uploadTermListViewCpt = R.hooksComponentWithModule thisModule "uploadTermListView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
       mFile :: R.State (Maybe UploadFile) <- R.useState' Nothing
@@ -374,7 +374,7 @@ uploadTermButton :: Record UploadTermButtonProps -> R.Element
 uploadTermButton props = R.createElement uploadTermButtonCpt props []
 
 uploadTermButtonCpt :: R.Component UploadTermButtonProps
-uploadTermButtonCpt = R2.hooksComponent thisModule "uploadTermButton" cpt
+uploadTermButtonCpt = R.hooksComponentWithModule thisModule "uploadTermButton" cpt
   where
     cpt {dispatch, id, mFile: (mFile /\ setMFile), nodeType} _ = do
         pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]

@@ -26,7 +26,7 @@ mergeNode :: Record SubTreeParamsIn -> R.Element
 mergeNode p = R.createElement mergeNodeCpt p []
 
 mergeNodeCpt :: R.Component SubTreeParamsIn
-mergeNodeCpt = R2.hooksComponent thisModule "mergeNode" cpt
+mergeNodeCpt = R.hooksComponentWithModule thisModule "mergeNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})

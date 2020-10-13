@@ -64,7 +64,7 @@ type TextInputBoxProps =
 textInputBox :: Record TextInputBoxProps -> R.Element
 textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R.createElement el p []
   where
-    el = R2.hooksComponent thisModule (boxName <> "Box") cpt
+    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
     cpt {id, text} _ = do
       renameNodeName <- R.useState' text
       pure $ H.div {className: "from-group row-no-padding"}
@@ -91,7 +91,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
           --           , className: "form-control"
           --           , on: { input: setRenameNodeName
           --                      <<< const
-          --                      <<< R2.unsafeEventValue }
+          --                      <<< R.unsafeEventValue }
           --           }
           ]
         submitBtn (newName /\ _) =
@@ -111,7 +111,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
           launchAff_ $ dispatch ( boxAction newName )
 textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
   where
-    el = R2.hooksComponent thisModule (boxName <> "Box") cpt
+    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
     cpt {text} _ = pure $ H.div {} []
 
 -- | END Rename Box
@@ -138,7 +138,7 @@ formEdit defaultValue setter =
                , className   : "form-control"
                , on: { input: setter
                                 <<< const
-                                <<< R2.unsafeEventValue }
+                                <<< R.unsafeEventValue }
               }
      ]
 
@@ -174,7 +174,7 @@ formChoice nodeTypes defaultNodeType setNodeType =
                                       <<< const
                                       <<< fromMaybe defaultNodeType
                                       <<< read
-                                      <<< R2.unsafeEventValue }
+                                      <<< R.unsafeEventValue }
                     }
           (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
          ]
@@ -280,7 +280,7 @@ nodeLink :: Record NodeLinkProps -> R.Element
 nodeLink p = R.createElement nodeLinkCpt p []
 
 nodeLinkCpt :: R.Component NodeLinkProps
-nodeLinkCpt = R2.hooksComponent thisModule "nodeLink" cpt
+nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
   where
     cpt { frontends, id, isSelected, name, nodeType, session, handed, folderOpen} _ = do
       popoverRef <- R.useRef null
@@ -320,7 +320,7 @@ nodeText :: Record NodeTextProps -> R.Element
 nodeText p = R.createElement nodeTextCpt p []
 
 nodeTextCpt :: R.Component NodeTextProps
-nodeTextCpt = R2.hooksComponent thisModule "nodeText" cpt
+nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
   where
     cpt { isSelected: true, name } _ = do
       pure $ H.u {} [

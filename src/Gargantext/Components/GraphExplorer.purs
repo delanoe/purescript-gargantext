@@ -64,7 +64,7 @@ explorerLayout :: Record LayoutProps -> R.Element
 explorerLayout props = R.createElement explorerLayoutCpt props []
 
 explorerLayoutCpt :: R.Component LayoutProps
-explorerLayoutCpt = R2.hooksComponent thisModule "explorerLayout" cpt
+explorerLayoutCpt = R.hooksComponentWithModule thisModule "explorerLayout" cpt
   where
     cpt props _ = do
       graphVersion <- R.useState' 0
@@ -73,7 +73,7 @@ explorerLayoutCpt = R2.hooksComponent thisModule "explorerLayout" cpt
 explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
-    el = R2.hooksComponent thisModule "explorerLayoutView" cpt
+    el = R.hooksComponentWithModule thisModule "explorerLayoutView" cpt
     cpt props@{ graphId, session } _ = do
       useLoader graphId (getNodes session graphVersion) handler
       where
@@ -88,7 +88,7 @@ explorer :: Record Props -> R.Element
 explorer props = R.createElement explorerCpt props []
 
 explorerCpt :: R.Component Props
-explorerCpt = R2.hooksComponent thisModule "explorer" cpt
+explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
   where
     cpt props@{ frontends
               , graph
@@ -228,7 +228,7 @@ type TreeProps =
   , reload :: R.State Int
   , sessions :: Sessions
   , show :: Boolean
-  , showLogin :: R2.Setter Boolean
+  , showLogin :: R.Setter Boolean
   , backend   :: R.State (Maybe Backend)
   )
 
@@ -259,7 +259,7 @@ graphView :: Record GraphProps -> R.Element
 graphView props = R.createElement graphViewCpt props []
 
 graphViewCpt :: R.Component GraphProps
-graphViewCpt = R2.hooksComponent thisModule "graphView" cpt
+graphViewCpt = R.hooksComponentWithModule thisModule "graphView" cpt
   where
     cpt { controls
         , elRef

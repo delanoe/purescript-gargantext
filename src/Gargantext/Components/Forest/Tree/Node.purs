@@ -56,7 +56,7 @@ nodeMainSpan :: IsLeaf
             -> R.Element
 nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.createElement el p []
   where
-    el = R2.hooksComponent thisModule "nodeMainSpan" cpt
+    el = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
     cpt props@{id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks }} _ = do
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
@@ -222,7 +222,7 @@ nodeActions :: Record NodeActionsProps -> R.Element
 nodeActions p = R.createElement nodeActionsCpt p []
 
 nodeActionsCpt :: R.Component NodeActionsProps
-nodeActionsCpt = R2.hooksComponent thisModule "nodeActions" cpt
+nodeActionsCpt = R.hooksComponentWithModule thisModule "nodeActions" cpt
   where
     cpt { id
         , nodeType: GT.Graph

@@ -41,7 +41,7 @@ textInputBox :: Record TextInputBoxProps -> R.Element
 textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), params } = R.createElement el p []
   where
     {firstname, lastname} = params
-    el = R2.hooksComponent thisModule (boxName <> "Box") cpt
+    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
     cpt {id, params:params'} _ = do
       let {firstname, lastname} = params'
       stateFirstname <- R.useState' firstname
@@ -59,7 +59,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), para
                     , defaultValue: default
                     , on: { input: set
                                    <<< const
-                                   <<< R2.unsafeEventValue }
+                                   <<< R.unsafeEventValue }
                     , placeholder: (boxName <> " Node")
                     , type: "text"
                     }
@@ -81,7 +81,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), para
               } []
 textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
   where
-    el = R2.hooksComponent thisModule (boxName <> "Box") cpt
+    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
     cpt {} _ = pure $ H.div {} []
 
 

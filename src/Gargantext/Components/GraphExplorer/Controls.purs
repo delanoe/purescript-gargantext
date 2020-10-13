@@ -76,7 +76,7 @@ controls :: Record Controls -> R.Element
 controls props = R.createElement controlsCpt props []
 
 controlsCpt :: R.Component Controls
-controlsCpt = R2.hooksComponent thisModule "controls" cpt
+controlsCpt = R.hooksComponentWithModule thisModule "controls" cpt
   where
     cpt props _ = do
       localControls <- initialLocalControls

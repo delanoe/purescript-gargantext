@@ -19,13 +19,13 @@ import Gargantext.Utils.Reactix as R2
 
 thisModule = "Gargantext.Components.Modal"
 
-type Props = ( setVisible :: R2.Setter Boolean )
+type Props = ( setVisible :: R.Setter Boolean )
 
 modal :: Record Props -> Array R.Element -> R.Element
 modal = R.createElement modalCpt
 
 modalCpt :: R.Component Props
-modalCpt = R2.hooksComponent thisModule "modal" cpt
+modalCpt = R.hooksComponentWithModule thisModule "modal" cpt
   where
     cpt {setVisible} children = do
       host <- R2.getPortalHost
@@ -40,7 +40,7 @@ modalCpt = R2.hooksComponent thisModule "modal" cpt
 
 modalEffect
   :: R.Ref (Nullable DOM.Element)
-  -> R2.Setter Boolean
+  -> R.Setter Boolean
   -> Effect (Effect Unit)
 modalEffect rootRef setVisible = maybe (pure R.nothing) withRoot (R.readNullableRef rootRef)
   where

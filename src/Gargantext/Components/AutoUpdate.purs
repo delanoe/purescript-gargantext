@@ -49,7 +49,7 @@ autoUpdate :: Record PropsRow -> R.Element
 autoUpdate props = R.createElement autoUpdateCpt props []
 
 autoUpdateCpt :: R.Component PropsRow
-autoUpdateCpt = R2.hooksComponent thisModule "autoUpdate" cpt
+autoUpdateCpt = R.hooksComponentWithModule thisModule "autoUpdate" cpt
   where
     cpt { duration, effect } _ = do
       intervalRef <- R.useRef Nothing

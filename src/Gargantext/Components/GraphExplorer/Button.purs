@@ -40,7 +40,7 @@ simpleButton :: Record Props -> R.Element
 simpleButton props = R.createElement simpleButtonCpt props []
 
 simpleButtonCpt :: R.Component Props
-simpleButtonCpt = R2.hooksComponent thisModule "simpleButton" cpt
+simpleButtonCpt = R.hooksComponentWithModule thisModule "simpleButton" cpt
   where
     cpt {onClick, text} _ = do
       pure $

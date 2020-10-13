@@ -34,7 +34,7 @@ asyncProgressBar :: Record Props -> R.Element
 asyncProgressBar p = R.createElement asyncProgressBarCpt p []
 
 asyncProgressBarCpt :: R.Component Props
-asyncProgressBarCpt = R2.hooksComponent thisModule "asyncProgressBar" cpt
+asyncProgressBarCpt = R.hooksComponentWithModule thisModule "asyncProgressBar" cpt
   where
     cpt props@{ asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}})
               , barType
@@ -80,7 +80,7 @@ progressIndicator :: Record ProgressIndicatorProps -> R.Element
 progressIndicator p = R.createElement progressIndicatorCpt p []
 
 progressIndicatorCpt :: R.Component ProgressIndicatorProps
-progressIndicatorCpt = R2.hooksComponent thisModule "progressIndicator" cpt
+progressIndicatorCpt = R.hooksComponentWithModule thisModule "progressIndicator" cpt
   where
     cpt { barType: Bar, label, progress } _ = do
       pure $

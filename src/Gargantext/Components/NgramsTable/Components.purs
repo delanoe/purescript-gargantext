@@ -36,7 +36,7 @@ searchInput :: Record SearchInputProps -> R.Element
 searchInput props = R.createElement searchInputCpt props []
 
 searchInputCpt :: R.Component SearchInputProps
-searchInputCpt = R2.hooksComponent thisModule "searchInput" cpt
+searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
   where
     cpt { onSearch, searchQuery } _ = do
       pure $ H.div { className: "input-group" } [
@@ -46,7 +46,7 @@ searchInputCpt = R2.hooksComponent thisModule "searchInput" cpt
       , H.input { className: "form-control"
                 , defaultValue: searchQuery
                 , name: "search"
-                , on: { input: onSearch <<< R2.unsafeEventValue }
+                , on: { input: onSearch <<< R.unsafeEventValue }
                 , placeholder: "Search"
                 , type: "value" }
         ]
@@ -63,7 +63,7 @@ selectionCheckbox :: Record SelectionCheckboxProps -> R.Element
 selectionCheckbox props = R.createElement selectionCheckboxCpt props []
 
 selectionCheckboxCpt :: R.Component SelectionCheckboxProps
-selectionCheckboxCpt = R2.hooksComponent thisModule "selectionCheckbox" cpt
+selectionCheckboxCpt = R.hooksComponentWithModule thisModule "selectionCheckbox" cpt
   where
     cpt { allNgramsSelected, dispatch, ngramsSelection } _ = do
       ref <- R.useRef null
@@ -98,7 +98,7 @@ renderNgramsTree :: Record RenderNgramsTree -> R.Element
 renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
 
 renderNgramsTreeCpt :: R.Component RenderNgramsTree
-renderNgramsTreeCpt = R2.hooksComponent thisModule "renderNgramsTree" cpt
+renderNgramsTreeCpt = R.hooksComponentWithModule thisModule "renderNgramsTree" cpt
   where
     cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit } _ =
       pure $ H.ul {} [
@@ -131,7 +131,7 @@ tree :: Record TreeProps -> R.Element
 tree p = R.createElement treeCpt p []
 
 treeCpt :: R.Component TreeProps
-treeCpt = R2.hooksComponent thisModule "tree" cpt
+treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
   where
     cpt params@{ ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle, ngramsTable } _ =
       pure $
@@ -179,7 +179,7 @@ renderNgramsItem :: Record RenderNgramsItem -> R.Element
 renderNgramsItem p = R.createElement renderNgramsItemCpt p []
 
 renderNgramsItemCpt :: R.Component RenderNgramsItem
-renderNgramsItemCpt = R2.hooksComponent thisModule "renderNgramsItem" cpt
+renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" cpt
   where
     cpt { dispatch
         , ngrams

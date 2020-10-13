@@ -30,7 +30,7 @@ metricsLoadView :: forall a. Record (MetricsLoadViewProps a) -> R.Element
 metricsLoadView p = R.createElement metricsLoadViewCpt p []
 
 metricsLoadViewCpt :: forall a. R.Component (MetricsLoadViewProps a)
-metricsLoadViewCpt = R2.hooksComponent thisModule "metricsLoadView" cpt
+metricsLoadViewCpt = R.hooksComponentWithModule thisModule "metricsLoadView" cpt
   where
     cpt { getMetrics, loaded, path, reload, session } _ = do
       useLoader (fst reload /\ path) (getMetrics session) $ \l ->
@@ -50,7 +50,7 @@ metricsWithCacheLoadView p = R.createElement metricsWithCacheLoadViewCpt p []
 
 metricsWithCacheLoadViewCpt :: forall res ret. DecodeJson res =>
                                R.Component (MetricsWithCacheLoadViewProps res ret)
-metricsWithCacheLoadViewCpt = R2.hooksComponent thisModule "metricsWithCacheLoadView" cpt
+metricsWithCacheLoadViewCpt = R.hooksComponentWithModule thisModule "metricsWithCacheLoadView" cpt
   where
     cpt { getMetricsHash, handleResponse, loaded, mkRequest, path, reload, session } _ = do
       useLoaderWithCacheAPI { cacheEndpoint: (getMetricsHash session)

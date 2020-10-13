@@ -77,7 +77,7 @@ tree :: Record Props -> R.Element
 tree props = R.createElement treeCpt props []
 
 treeCpt :: R.Component Props
-treeCpt = R2.hooksComponent thisModule "tree" cpt
+treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0

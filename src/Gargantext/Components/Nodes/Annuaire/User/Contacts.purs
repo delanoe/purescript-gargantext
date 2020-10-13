@@ -84,7 +84,7 @@ contactInfoItem :: Record ContactInfoItemProps -> R.Element
 contactInfoItem props = R.createElement contactInfoItemCpt props []
 
 contactInfoItemCpt :: R.Component ContactInfoItemProps
-contactInfoItemCpt = R2.hooksComponent thisModule "contactInfoItem" cpt
+contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
   where
     cpt {hyperdata, label, lens, onUpdateHyperdata, placeholder} _ = do
       isEditing <- R.useState' false
@@ -158,7 +158,7 @@ userLayout :: Record LayoutProps -> R.Element
 userLayout props = R.createElement userLayoutCpt props []
 
 userLayoutCpt :: R.Component LayoutProps
-userLayoutCpt = R2.hooksComponent thisModule "userLayout" cpt
+userLayoutCpt = R.hooksComponentWithModule thisModule "userLayout" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       let sid = sessionId session
@@ -169,7 +169,7 @@ userLayoutWithKey :: Record KeyLayoutProps -> R.Element
 userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
-userLayoutWithKeyCpt = R2.hooksComponent thisModule "userLayoutWithKey" cpt
+userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, session } _ = do
       reload <- R.useState' 0
@@ -220,7 +220,7 @@ annuaireUserLayout :: Record AnnuaireLayoutProps -> R.Element
 annuaireUserLayout props = R.createElement annuaireUserLayoutCpt props []
 
 annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
-annuaireUserLayoutCpt = R2.hooksComponent thisModule "annuaireUserLayout" cpt
+annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayout" cpt
   where
     cpt { annuaireId, frontends, nodeId, session } _ = do
       cacheState <- R.useState' NT.CacheOn

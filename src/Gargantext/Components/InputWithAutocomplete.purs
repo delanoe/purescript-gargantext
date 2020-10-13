@@ -30,7 +30,7 @@ inputWithAutocomplete :: Record Props -> R.Element
 inputWithAutocomplete props = R.createElement inputWithAutocompleteCpt props []
 
 inputWithAutocompleteCpt :: R.Component Props
-inputWithAutocompleteCpt = R2.hooksComponent thisModule "inputWithAutocomplete" cpt
+inputWithAutocompleteCpt = R.hooksComponentWithModule thisModule "inputWithAutocomplete" cpt
   where
     cpt props@{autocompleteSearch, onAutocompleteClick, onEnterPress, state: state@(state' /\ setState)} _ = do
       inputRef <- R.useRef null
@@ -65,14 +65,14 @@ inputWithAutocompleteCpt = R2.hooksComponent thisModule "inputWithAutocomplete" 
         onFocus (_ /\ setCompletions) e = setCompletions $ const $ autocompleteSearch state'
 
         onInput (_ /\ setCompletions) e = do
-          let val = R2.unsafeEventValue e
+          let val = R.unsafeEventValue e
           setState $ const val
           setCompletions $ const $ autocompleteSearch val
 
         onInputKeyUp :: R.Ref (Nullable DOM.Element) -> R.State Completions -> DE.KeyboardEvent -> Effect Unit
         onInputKeyUp inputRef (_ /\ setCompletions) e = do
           if DE.key e == "Enter" then do
-            let val = R2.unsafeEventValue e
+            let val = R.unsafeEventValue e
             let mInput = toMaybe $ R.readRef inputRef
             setState $ const val
             onEnterPress val

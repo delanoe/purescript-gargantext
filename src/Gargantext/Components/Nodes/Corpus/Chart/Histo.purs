@@ -85,7 +85,7 @@ histo :: Record Props -> R.Element
 histo props = R.createElement histoCpt props []
 
 histoCpt :: R.Component Props
-histoCpt = R2.hooksComponent thisModule "histo" cpt
+histoCpt = R.hooksComponentWithModule thisModule "histo" cpt
   where
     cpt { path, session } _ = do
       reload <- R.useState' 0
