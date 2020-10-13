@@ -19,7 +19,7 @@ mapMaybe f = go empty
   where
     go acc s =
       case uncons s of
-        Nothing           -> reverse acc
+        Nothing           -> acc
         Just (Tuple x xs) ->
           case f x of
             Nothing -> go acc xs
