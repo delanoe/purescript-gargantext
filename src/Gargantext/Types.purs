@@ -85,13 +85,6 @@ instance decodeJsonTermList :: DecodeJson TermList where
       "CandidateTerm" -> pure CandidateTerm
       s               -> Left $ AtKey s $ TypeMismatch "Unexpected list name"
 
-type ListTypeId = Int
-
-listTypeId :: TermList -> ListTypeId
-listTypeId MapTerm     = 1
-listTypeId StopTerm      = 2
-listTypeId CandidateTerm = 3
-
 instance showTermList :: Show TermList where
   show MapTerm       = "MapTerm"
   show StopTerm      = "StopTerm"
