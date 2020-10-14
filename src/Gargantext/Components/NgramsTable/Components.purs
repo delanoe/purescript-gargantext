@@ -156,6 +156,7 @@ treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
         style = if leaf then {color: "#adb5bd"} else {color: ""}
         open = not leaf || false {- TODO -}
         cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsRepoElement <<< _children <<< folded
+        -- cs has a list is ok, the length is the number of direct children of an ngram which is generally < 10.
 
         forest =
           let depth = ngramsDepth.depth + 1 in
