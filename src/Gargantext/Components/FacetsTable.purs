@@ -9,6 +9,7 @@ import Data.Array (concat, filter)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
@@ -182,7 +183,7 @@ type PagePath = { nodeId :: Int
 initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: SearchQuery} -> PagePath
 initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
 
-loadPage :: PagePath -> Aff (Array DocumentsView)
+loadPage :: PagePath -> Aff (Seq DocumentsView)
 loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searchType}} = do
   let
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
@@ -198,80 +199,75 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searc
   --SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:searchType}
   SearchResult {result} <- post session p query
   -- $ SearchQuery {query: concat query, expected: SearchDoc}
-  pure $ case result of
-              SearchResultDoc     {docs}     -> docs2view docs
-              SearchResultContact {contacts} -> contacts2view contacts
-              errMessage                     -> err2view errMessage
+  pure case result of
+          SearchResultDoc     {docs}     -> doc2view <$> Seq.fromFoldable docs
+          SearchResultContact {contacts} -> contact2view <$> Seq.fromFoldable contacts
+          errMessage                     -> pure $ err2view errMessage
 
-docs2view :: Array Document -> Array DocumentsView
-docs2view docs = map toView docs
-  where
-    toView :: Document -> DocumentsView
-    toView ( Document { id
-                     , created: date
-                     , hyperdata:  HyperdataRowDocument { authors
-                                                    , title
-                                                    , source
-                                                    , publication_year
-                                                    , publication_month
-                                                    , publication_day
+doc2view :: Document -> DocumentsView
+doc2view ( Document { id
+                    , created: date
+                    , hyperdata:  HyperdataRowDocument { authors
+                                                  , title
+                                                  , source
+                                                  , publication_year
+                                                  , publication_month
+                                                  , publication_day
+                                                  }
+                    , category
+                    , score
+                    }
+        ) = DocumentsView { id
+                          , date
+                          , title: fromMaybe "Title" title
+                          , source: fromMaybe "Source" source
+                          , score
+                          , authors: fromMaybe "Authors" authors
+                          , category: decodeCategory category
+                          , pairs: []
+                          , delete: false
+                          , publication_year : fromMaybe 2020 publication_year
+                          , publication_month: fromMaybe    1 publication_month
+                          , publication_day  : fromMaybe    1 publication_day
+                          }
+
+contact2view :: Contact -> DocumentsView
+contact2view (Contact { c_id
+                      , c_created: date
+                      , c_hyperdata: HyperdataRowContact { firstname
+                                                    , lastname
+                                                    , labs
                                                     }
-                     , category
-                     , score
-                     }
-            ) = DocumentsView { id
-                              , date
-                              , title: fromMaybe "Title" title
-                              , source: fromMaybe "Source" source
-                              , score
-                              , authors: fromMaybe "Authors" authors
-                              , category: decodeCategory category
-                              , pairs: []
-                              , delete: false
-                              , publication_year : fromMaybe 2020 publication_year
-                              , publication_month: fromMaybe    1 publication_month
-                              , publication_day  : fromMaybe    1 publication_day
-                              }
-contacts2view contacts = map toView contacts
-  where
-    toView :: Contact -> DocumentsView
-    toView (Contact { c_id
-                     , c_created: date
-                     , c_hyperdata: HyperdataRowContact { firstname
-                                                   , lastname
-                                                   , labs
-                                                   }
-                     , c_score
-                     }
-            ) = DocumentsView { id: c_id
-                              , date
-                              , title : firstname <> lastname
-                              , source: labs
-                              , score: c_score
-                              , authors: labs
-                              , category: decodeCategory 1
-                              , pairs: []
-                              , delete: false
-                              , publication_year: 2020
-                              , publication_month: 10
-                              , publication_day: 1
-                              }
+                      , c_score
+                      }
+        ) = DocumentsView { id: c_id
+                          , date
+                          , title : firstname <> lastname
+                          , source: labs
+                          , score: c_score
+                          , authors: labs
+                          , category: decodeCategory 1
+                          , pairs: []
+                          , delete: false
+                          , publication_year: 2020
+                          , publication_month: 10
+                          , publication_day: 1
+                          }
 
 err2view message =
-  [DocumentsView { id: 1
-                 , date: "2020-01-01"
-                 , title : "SearchNoResult"
-                 , source: "Source"
-                 , score: 1
-                 , authors: "Authors"
-                 , category: decodeCategory 1
-                 , pairs: []
-                 , delete: false
-                 , publication_year: 2020
-                 , publication_month: 10
-                 , publication_day: 1
-                 }
-   ]
+  DocumentsView { id: 1
+                , date: "2020-01-01"
+                , title : "SearchNoResult"
+                , source: "Source"
+                , score: 1
+                , authors: "Authors"
+                , category: decodeCategory 1
+                , pairs: []
+                , delete: false
+                , publication_year: 2020
+                , publication_month: 10
+                , publication_day: 1
+                }
 
 
 
@@ -285,7 +281,7 @@ type PageLayoutProps =
   , path         :: R.State PagePath
   )
 
-type PageProps = ( documents :: Array DocumentsView | PageLayoutProps )
+type PageProps = ( documents :: Seq DocumentsView | PageLayoutProps )
 
 -- | Loads and renders a page
 pageLayout :: Record PageLayoutProps -> R.Element
@@ -323,7 +319,7 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
         documentUrl id =
             url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
         comma = H.span {} [ H.text ", " ]
-        rows = Seq.fromFoldable $ row <$> filter (not <<< isDeleted) documents
+        rows = row <$> Seq.filter (not <<< isDeleted) documents
         row dv@(DocumentsView {id, score, title, source, authors, pairs, delete, category}) =
           { row:
             T.makeRow [
