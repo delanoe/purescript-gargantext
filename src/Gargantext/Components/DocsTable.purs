@@ -359,7 +359,7 @@ pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt where
       { colNames
       , container: T.defaultContainer { title: "Documents" }
       , params
-      , rows: Seq.fromFoldable $ rows localCategories
+      , rows: rows localCategories
       , totalRecords
       , wrapColElts
       }
