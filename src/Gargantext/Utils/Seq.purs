@@ -7,13 +7,6 @@ import Data.Tuple
 
 import Gargantext.Prelude
 
-
-reverse :: forall a. Seq a -> Seq a
-reverse s = case uncons s of
-  Nothing           -> empty
-  Just (Tuple x xs) -> snoc (reverse xs) x
-
-
 mapMaybe :: forall a b. (a -> Maybe b) -> Seq a -> Seq b
 mapMaybe f = go empty
   where
