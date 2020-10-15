@@ -56,7 +56,7 @@ textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, session } _ = do
-      cacheState <- R.useState' NT.CacheOn
+      cacheState <- R.useState' NT.CacheOff
 
       pure $ loader {session, nodeId} loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode, defaultListId } -> do

@@ -120,26 +120,26 @@ tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout"
         [ H.div {className: "jumbotron1", style: {padding: "12px 0px 20px 12px"}}
           [ H.div {className: "col-md-8 content"}
             [ H.p {}
-              [ H.i {className: "fa fa-globe"} []
+              [ H.span {className: "fa fa-globe"} []
               , H.text $ " " <> desc
               ]
             , H.p {}
-              [ H.i {className: "fa fa-search-plus"} []
+              [ H.span {className: "fa fa-search-plus"} []
               , H.text $ " " <> query
               ]
             , H.p { className: "cache-toggle"
                   , on: { click: cacheClick cacheState afterCacheStateChange } }
-              [ H.i {className: "fa " <> (cacheToggle cacheState)} []
+              [ H.span { className: "fa " <> (cacheToggle cacheState) } []
               , H.text $ cacheText cacheState
               ]
             ]
           , H.div {className: "col-md-4 content"}
             [ H.p {}
-              [ H.i {className: "fa fa-calendar"} []
+              [ H.span {className: "fa fa-calendar"} []
               , H.text $ " " <> date
               ]
             , H.p {}
-              [ H.i {className: "fa fa-user"} []
+              [ H.span {className: "fa fa-user"} []
               , H.text $ " " <> user
               ]
             ]

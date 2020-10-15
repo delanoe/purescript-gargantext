@@ -49,7 +49,7 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
     cpt { nodeId, session } _ = do
       let path = { nodeId, session }
 
-      cacheState <- R.useState' NT.CacheOn
+      cacheState <- R.useState' NT.CacheOff
 
       useLoader path loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode: NodePoly poly, defaultListId } ->
