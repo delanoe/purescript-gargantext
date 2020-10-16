@@ -18,6 +18,7 @@ import Gargantext.Components.Search
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix (effectLink)
 
+thisModule :: String
 thisModule = "Gargantext.Components.Table"
 
 type TableContainerProps =
@@ -33,9 +34,9 @@ type Rows = Seq.Seq Row
 
 type OrderBy = Maybe (OrderByDirection ColumnName)
 
-type Params = { offset :: Int
-              , limit  :: Int
-              , orderBy :: OrderBy
+type Params = { limit      :: Int
+              , offset     :: Int
+              , orderBy    :: OrderBy
               , searchType :: SearchType
               }
 
@@ -62,18 +63,18 @@ derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 
 type Props =
   ( colNames     :: Array ColumnName
-  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
-                 -- ^ Use `const identity` as a default behavior.
-  , totalRecords :: Int
+  , container    :: Record TableContainerProps -> R.Element
   , params       :: R.State Params
   , rows         :: Rows
-  , container    :: Record TableContainerProps -> R.Element
+  , totalRecords :: Int
+  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
+                 -- ^ Use `const identity` as a default behavior.
   )
 
 type State =
-  { page     :: Int
-  , pageSize :: PageSizes
-  , orderBy  :: OrderBy
+  { page       :: Int
+  , pageSize   :: PageSizes
+  , orderBy    :: OrderBy
   , searchType :: SearchType
   }
 
