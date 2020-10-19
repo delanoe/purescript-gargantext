@@ -18,6 +18,7 @@ import Gargantext.Components.Search
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix (effectLink)
 
+thisModule :: String
 thisModule = "Gargantext.Components.Table"
 
 type TableContainerProps =
@@ -33,9 +34,9 @@ type Rows = Seq.Seq Row
 
 type OrderBy = Maybe (OrderByDirection ColumnName)
 
-type Params = { offset :: Int
-              , limit  :: Int
-              , orderBy :: OrderBy
+type Params = { limit      :: Int
+              , offset     :: Int
+              , orderBy    :: OrderBy
               , searchType :: SearchType
               }
 
@@ -62,18 +63,18 @@ derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 
 type Props =
   ( colNames     :: Array ColumnName
-  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
-                 -- ^ Use `const identity` as a default behavior.
-  , totalRecords :: Int
+  , container    :: Record TableContainerProps -> R.Element
   , params       :: R.State Params
   , rows         :: Rows
-  , container    :: Record TableContainerProps -> R.Element
+  , totalRecords :: Int
+  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
+                 -- ^ Use `const identity` as a default behavior.
   )
 
 type State =
-  { page     :: Int
-  , pageSize :: PageSizes
-  , orderBy  :: OrderBy
+  { page       :: Int
+  , pageSize   :: PageSizes
+  , orderBy    :: OrderBy
   , searchType :: SearchType
   }
 
@@ -120,26 +121,26 @@ tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout"
         [ H.div {className: "jumbotron1", style: {padding: "12px 0px 20px 12px"}}
           [ H.div {className: "col-md-8 content"}
             [ H.p {}
-              [ H.i {className: "fa fa-globe"} []
+              [ H.span {className: "fa fa-globe"} []
               , H.text $ " " <> desc
               ]
             , H.p {}
-              [ H.i {className: "fa fa-search-plus"} []
+              [ H.span {className: "fa fa-search-plus"} []
               , H.text $ " " <> query
               ]
             , H.p { className: "cache-toggle"
                   , on: { click: cacheClick cacheState afterCacheStateChange } }
-              [ H.i {className: "fa " <> (cacheToggle cacheState)} []
+              [ H.span { className: "fa " <> (cacheToggle cacheState) } []
               , H.text $ cacheText cacheState
               ]
             ]
           , H.div {className: "col-md-4 content"}
             [ H.p {}
-              [ H.i {className: "fa fa-calendar"} []
+              [ H.span {className: "fa fa-calendar"} []
               , H.text $ " " <> date
               ]
             , H.p {}
-              [ H.i {className: "fa fa-user"} []
+              [ H.span {className: "fa fa-user"} []
               , H.text $ " " <> user
               ]
             ]

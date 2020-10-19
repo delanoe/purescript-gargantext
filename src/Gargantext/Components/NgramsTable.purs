@@ -20,7 +20,7 @@ import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log)
 import Effect (Effect)
@@ -544,12 +544,11 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
               , tabNgramType
               , tabType
               , withAutoUpdate } _ = do
-      let path = initialPageParams session nodeId [defaultListId] tabType
-
-      let render versioned = mainNgramsTablePaint { afterSync, path, tabNgramType, versioned, withAutoUpdate }
 
       case cacheState of
-        (NT.CacheOn /\ _) ->
+        (NT.CacheOn /\ _) -> do
+          let path = initialPageParams session nodeId [defaultListId] tabType
+          let render versioned = mainNgramsTablePaint { afterSync, path, tabNgramType, versioned, withAutoUpdate }
           useLoaderWithCacheAPI {
               cacheEndpoint: versionEndpoint props
             , handleResponse
@@ -557,16 +556,39 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
             , path
             , renderer: render
             }
-        (NT.CacheOff /\ _) ->
-          useLoader path loader render
+        (NT.CacheOff /\ _) -> do
+          path <- R.useState' $ initialPageParams session nodeId [defaultListId] tabType
+          let render versioned = mainNgramsTablePaintWithState { afterSync, path, tabNgramType, versioned, withAutoUpdate }
+
+          useLoader (fst path) loader render
 
     versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
     versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
 
+    -- NOTE With cache off
     loader :: PageParams -> Aff VersionedNgramsTable
-    loader path@{ listIds, nodeId, session, tabType } =
-      get session $ R.GetNgramsTableAll { listIds, tabType } (Just nodeId)
+    loader path@{ listIds
+                , nodeId
+                , params: { limit, offset, orderBy }
+                , searchQuery
+                , session
+                , tabType
+                , termListFilter
+                , termSizeFilter
+                } =
+      get session $ R.GetNgrams params (Just nodeId)
+      where
+        params = { limit
+                 , listIds
+                 , offset: Just offset
+                 , orderBy: Nothing  -- TODO
+                 , searchQuery
+                 , tabType
+                 , termListFilter
+                 , termSizeFilter
+                 }
 
+    -- NOTE With cache on
     mkRequest :: PageParams -> GUC.Request
     mkRequest path@{ session } = GUC.makeGetRequest session $ url path
       where
@@ -583,10 +605,6 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
 
     handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
     handleResponse v = v
-
-    pathNoLimit :: PageParams -> PageParams
-    pathNoLimit path@{ params } = path { params = params { limit = 100000 }
-                                       , termListFilter = Nothing }
 
 type MainNgramsTablePaintProps =
   ( afterSync      :: Unit -> Aff Unit
@@ -609,6 +627,32 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
       pure $ loadedNgramsTable {
         afterSync
       , path: pathS
+      , state
+      , tabNgramType
+      , versioned
+      , withAutoUpdate
+      }
+
+type MainNgramsTablePaintWithStateProps =
+  ( afterSync      :: Unit -> Aff Unit
+  , path           :: R.State PageParams
+  , tabNgramType   :: CTabNgramType
+  , versioned      :: VersionedNgramsTable
+  , withAutoUpdate :: Boolean
+  )
+
+mainNgramsTablePaintWithState :: Record MainNgramsTablePaintWithStateProps -> R.Element
+mainNgramsTablePaintWithState p = R.createElement mainNgramsTablePaintWithStateCpt p []
+
+mainNgramsTablePaintWithStateCpt :: R.Component MainNgramsTablePaintWithStateProps
+mainNgramsTablePaintWithStateCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintWithState" cpt
+  where
+    cpt { afterSync, path, tabNgramType, versioned, withAutoUpdate } _ = do
+      state <- R.useState' $ initialState versioned
+
+      pure $ loadedNgramsTable {
+        afterSync
+      , path
       , state
       , tabNgramType
       , versioned

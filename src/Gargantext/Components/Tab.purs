@@ -9,9 +9,13 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Tab"
 
-type TabsProps = ( tabs :: Array (Tuple String R.Element), selected :: Int )
+type TabsProps = (
+    selected :: Int
+  , tabs :: Array (Tuple String R.Element)
+  )
 
 tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
