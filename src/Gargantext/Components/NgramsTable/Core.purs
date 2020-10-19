@@ -501,7 +501,7 @@ derive instance eqReplace :: Eq a => Eq (Replace a)
 instance semigroupReplace :: Eq a => Semigroup (Replace a) where
   append Keep p = p
   append p Keep = p
-  append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
+  -- append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
   append (Replace { new }) (Replace { old }) = replace old new
 
 instance semigroupMonoid :: Eq a => Monoid (Replace a) where
