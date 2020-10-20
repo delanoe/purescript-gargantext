@@ -77,6 +77,7 @@ type PageLayoutProps = (
     cacheState   :: R.State NT.CacheState
   , corpusId     :: Maybe Int
   , frontends    :: Frontends
+  , key          :: String  -- NOTE Necessary to clear the component when cache state changes
   , listId       :: Int
   , nodeId       :: Int
   , params       :: T.Params
@@ -217,6 +218,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
           [ pageLayout { cacheState
                        , corpusId
                        , frontends
+                       , key: show $ fst cacheState
                        , listId
                        , nodeId
                        , params
@@ -508,7 +510,7 @@ tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchTyp
     lmt = queryParam "limit" limit
     lst = queryParam "list" listId
     ofs = queryParam "offset" offset
-    odb = maybe "" (\o -> "orderBy=" <> (T.orderByToForm o)) orderBy
+    odb = mQueryParamS "orderBy" T.orderByToForm orderBy
     st  = queryParam "searchType" searchType
     tt  = queryParamS "tabType" (showTabType' tabType)
     q   = queryParamS "query" query

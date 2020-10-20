@@ -16,7 +16,7 @@ mQueryParam :: forall a. Show a => String -> Maybe a -> String
 mQueryParam _ Nothing = ""
 mQueryParam key (Just v) = queryParam key v
 
-mQueryParamS :: String -> (String -> String) ->  Maybe String -> String
+mQueryParamS :: forall a. String -> (a -> String) ->  Maybe a -> String
 mQueryParamS _ _ Nothing = ""
 mQueryParamS key mFunc (Just v) = queryParamS key $ mFunc v
 
