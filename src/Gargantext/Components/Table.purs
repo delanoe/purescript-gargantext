@@ -99,6 +99,7 @@ type TableHeaderLayoutProps =
   , cacheState :: R.State NT.CacheState
   , date  :: String
   , desc  :: String
+  , key   :: String
   , query :: String
   , title :: String
   , user  :: String

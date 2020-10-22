@@ -218,7 +218,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
           [ pageLayout { cacheState
                        , corpusId
                        , frontends
-                       , key: show $ fst cacheState
+                       , key: "docView-" <> (show $ fst cacheState)
                        , listId
                        , nodeId
                        , params

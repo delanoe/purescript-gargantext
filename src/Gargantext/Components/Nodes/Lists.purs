@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Lists where
 
+import Data.Tuple (fst)
 import Effect.Aff (launchAff_)
 import Reactix as R
 ------------------------------------------------------------------------
@@ -63,6 +64,7 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
               , cacheState
               , date
               , desc
+              , key: "listsLayoutWithKey-header-" <> (show $ fst cacheState)
               , query
               , title: "Corpus " <> name
               , user: authors }
@@ -70,6 +72,7 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
                cacheState
              , corpusData
              , corpusId
+             , key: "listsLayoutWithKey-tabs-" <> (show $ fst cacheState)
              , session }
           ]
 ------------------------------------------------------------------------

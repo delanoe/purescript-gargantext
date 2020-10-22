@@ -33,10 +33,15 @@ type Props = ( cacheState :: R.State NTypes.CacheState
              , session    :: Session
              )
 
-tabs :: Record Props -> R.Element
+type PropsWithKey = (
+  key        :: String
+  | Props
+  )
+
+tabs :: Record PropsWithKey -> R.Element
 tabs props = R.createElement tabsCpt props []
 
-tabsCpt :: R.Component Props
+tabsCpt :: R.Component PropsWithKey
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
     cpt { cacheState, corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do
