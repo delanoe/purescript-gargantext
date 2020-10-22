@@ -248,18 +248,16 @@ checkboxes :: forall a
            -> R.State (Set a)
            -> R.Element
 checkboxes xs (val /\ set) =
-  H.fieldset {} $ map (
-    \a -> H.div {} [
-      H.input { type: "checkbox"
-              , checked: Set.member a val
-              , on: { click: \_ -> set
-                                   $ const
-                                   $ toggleSet a val
-                    }
-              }
-      , H.div {} [H.text $ show a]
-      ]
-    ) xs
+  H.fieldset {} $ map (\a -> H.div {} [ H.input { type: "checkbox"
+                                           , defaultChecked: Set.member a val
+                                           , on: { click: \_ -> set
+                                                             $ const
+                                                             $ toggleSet a val
+                                                 }
+                                           }
+                                 , H.div {} [H.text $ show a]
+                                 ]
+                  ) xs
 
 
 prettyNodeType :: GT.NodeType -> String

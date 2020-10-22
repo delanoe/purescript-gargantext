@@ -110,7 +110,7 @@ sideTab (Opened SideTabData) props =
         [ RH.span {} [ RH.text text ]
         , RH.input { type: "checkbox"
                    , className: "checkbox"
-                   , checked: true
+                   , defaultChecked: true
                    , title: "Mark as completed" } ]
 
 
