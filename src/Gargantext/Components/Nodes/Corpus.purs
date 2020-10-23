@@ -30,6 +30,7 @@ import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus"
 
 type Props =

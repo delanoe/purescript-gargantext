@@ -57,7 +57,7 @@ nodeMainSpan :: IsLeaf
 nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.createElement el p []
   where
     el = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
-    cpt props@{id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks }} _ = do
+    cpt props@{ id, mCurrentRoute, name, nodeType, tasks: { onTaskFinish, tasks } } _ = do
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
@@ -76,10 +76,7 @@ nodeMainSpan isLeaf p@{ dispatch, folderOpen, frontends, handed, session } = R.c
                 , nodeLink { frontends
                            , id
                            , folderOpen
-                           , isSelected: mCurrentRoute
-                             == Routes.nodeTypeAppRoute
-                             nodeType
-                             (sessionId session) id
+                           , isSelected: mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
                            , name: name' props
                            , nodeType
                            , session

@@ -166,63 +166,65 @@ type ToHtmlProps =
   )
 
 toHtml :: Record ToHtmlProps -> R.Element
-toHtml p@{ asyncTasks
-         , frontends
-         , mCurrentRoute
-         , openNodes
-         , reload: reload@(_ /\ setReload)
-         , session
-         , tasks: tasks@{ onTaskAdd
-                        , onTaskFinish
-                        , tasks: tasks'
-                        }
-         , tree: tree@(NTree (LNode { id
-                                    , name
-                                    , nodeType
-                                    }
+toHtml p = R.createElement toHtmlCpt p []
+
+toHtmlCpt :: R.Component ToHtmlProps
+toHtmlCpt = R.hooksComponentWithModule thisModule "toHtml" cpt
+  where
+    cpt p@{ asyncTasks
+          , frontends
+          , mCurrentRoute
+          , openNodes
+          , reload: reload@(_ /\ setReload)
+          , session
+          , tasks: tasks@{ onTaskAdd
+                         , onTaskFinish
+                         , tasks: tasks'
+                         }
+          , tree: tree@(NTree (LNode { id
+                                     , name
+                                     , nodeType
+                                     }
                               ) ary
+                       )
+          , handed
+          } _ = do
+      let nodeId               = mkNodeId session id
+      let folderIsOpen         = Set.member nodeId (fst openNodes)
+      let setFn                = if folderIsOpen then Set.delete else Set.insert
+      let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
+      let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
+
+      let withId (NTree (LNode {id: id'}) _) = id'
+
+      pure $ H.li { className: if A.null ary then "no-children" else "with-children" } $
+        [ nodeMainSpan (A.null ary)
+          { id
+          , dispatch: pAction
+          , folderOpen
+          , frontends
+          , handed
+          , mCurrentRoute
+          , name
+          , nodeType
+          , session
+          , tasks
+          } ]
+        <> childNodes ( Record.merge commonProps
+                        { asyncTasks
+                        , children: if isPublic nodeType
+                                    then map (\t -> map (\(LNode n@{ nodeType:nt } )
+                                                         -> (LNode (n { nodeType= publicize nt }))
+                                                        ) t) ary
+                                    else ary
+                        , folderOpen
+                        , handed
+                        }
                       )
-         , handed
-         } =
-  R.createElement el {} []
-    where
-      el          = R.hooksComponentWithModule thisModule "nodeView" cpt
-      commonProps = RecordE.pick p :: Record CommonProps
-      pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
+      where
+        commonProps = RecordE.pick p :: Record CommonProps
+        pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
 
-      cpt _ _ = do
-        let nodeId               = mkNodeId session id
-        let folderIsOpen         = Set.member nodeId (fst openNodes)
-        let setFn                = if folderIsOpen then Set.delete else Set.insert
-        let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
-        let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
-
-        let withId (NTree (LNode {id: id'}) _) = id'
-
-        pure $ H.li { className: if A.null ary then "no-children" else "with-children" } $
-          [ nodeMainSpan (A.null ary) 
-                         { id
-                         , dispatch: pAction
-                         , folderOpen
-                         , frontends
-                         , handed
-                         , mCurrentRoute
-                         , name
-                         , nodeType
-                         , session
-                         , tasks
-                         } ]
-          <> childNodes ( Record.merge commonProps
-                          { asyncTasks
-                          , children: if isPublic nodeType
-                                         then map (\t -> map (\(LNode n@{ nodeType:nt } )
-                                                               -> (LNode (n { nodeType= publicize nt }))
-                                                            ) t) ary
-                                         else ary
-                          , folderOpen
-                          , handed
-                          }
-                        )
 
 
 type ChildNodesProps =

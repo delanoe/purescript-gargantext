@@ -136,28 +136,31 @@ instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
      ~> "query"      := post.query
      ~> jsonEmptyObject
 
-data NodeType = NodeUser
-              | Folder | FolderPrivate | FolderShared | FolderPublic
-              | Annuaire
-              | NodeContact
+data NodeType = Annuaire
               | Corpus
-              | Team
-              | Url_Document
               | Dashboard
               | Error
+              | Folder
+              | FolderPrivate
+              | FolderPublic
+              | FolderShared
               | Graph
-              | Phylo
               | Individu
               | Node
-              | Nodes
-              | Tree
+              | NodeContact
               | NodeList
+              | NodeUser
+              | Nodes
+              | Phylo
+              | Team
               | Texts
+              | Tree
+              | Url_Document
               -- TODO Optional Nodes
-              | NodeFrameWrite
-              | NodeFrameCalc
-              | NodePublic NodeType
               | NodeFile
+              | NodeFrameCalc
+              | NodeFrameWrite
+              | NodePublic NodeType
 
 
 derive instance eqNodeType :: Eq NodeType
