@@ -14,7 +14,6 @@ import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists"

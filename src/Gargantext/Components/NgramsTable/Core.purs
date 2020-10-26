@@ -51,11 +51,20 @@ module Gargantext.Components.NgramsTable.Core
   , commitPatch
   , putNgramsPatches
   , syncPatches
-  , addNewNgram
+  , addNewNgramP
+  , addNewNgramA
+  , setTermListP
+  , setTermListA
+  , CoreAction(..)
+  , CoreDispatch
   , Action(..)
   , Dispatch
+  , coreDispatch
   , isSingleNgramsTerm
   , filterTermSize
+  , SyncResetButtonsProps
+  , syncResetButtons
+  , syncResetButtonsCpt
   )
   where
 
@@ -107,7 +116,9 @@ import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception.Unsafe (unsafeThrow)
 import Foreign.Object as FO
-import Reactix (State) as R
+import FFI.Simple.Functions (delay)
+import Reactix as R
+import Reactix.DOM.HTML as H
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 
@@ -117,6 +128,9 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (CTabNgramType(..), OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
+
+thisModule :: String
+thisModule = "Gargantext.Components.NgramsTable.Core"
 
 type Endo a = a -> a
 
@@ -864,9 +878,20 @@ newNgramPatch list =
       }
   }
 
-addNewNgram :: NgramsTerm -> TermList -> NgramsTablePatch
-addNewNgram ngrams list =
+addNewNgramP :: NgramsTerm -> TermList -> NgramsTablePatch
+addNewNgramP ngrams list =
   { ngramsPatches: singletonPatchMap ngrams (newNgramPatch list) }
+
+addNewNgramA :: NgramsTerm -> TermList -> CoreAction
+addNewNgramA ngrams list = CommitPatch $ addNewNgramP ngrams list
+
+setTermListP :: NgramsTerm -> Replace TermList -> NgramsTablePatch
+setTermListP ngram patch_list = singletonNgramsTablePatch ngram pe
+  where
+    pe = NgramsPatch { patch_list, patch_children: mempty }
+
+setTermListA :: NgramsTerm -> Replace TermList -> CoreAction
+setTermListA ngram termList = CommitPatch $ setTermListP ngram termList
 
 putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff VersionedNgramsPatches
 putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
@@ -949,9 +974,13 @@ convOrderBy (T.DESC (T.ColumnName "Score")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
 
+data CoreAction
+  = CommitPatch NgramsTablePatch
+  | Synchronize { afterSync :: Unit -> Aff Unit }
+  | ResetPatches
 
 data Action
-  = CommitPatch NgramsTablePatch
+  = CoreAction CoreAction
   | SetParentResetChildren (Maybe NgramsTerm)
   -- ^ This sets `ngramsParent` and resets `ngramsChildren`.
   | ToggleChild Boolean NgramsTerm
@@ -959,14 +988,21 @@ data Action
   -- If the `Boolean` is `true` it means we want to add it if it is not here,
   -- if it is `false` it is meant to be removed if not here.
   | AddTermChildren
-  | Synchronize { afterSync :: Unit -> Aff Unit }
   | ToggleSelect NgramsTerm
   -- ^ Toggles the NgramsTerm in the `Set` `ngramsSelection`.
   | ToggleSelectAll
-  | ResetPatches
 
 
+type CoreDispatch = CoreAction -> Effect Unit
 type Dispatch = Action -> Effect Unit
+
+coreDispatch :: forall p s. CoreParams p -> R.State (CoreState s) -> CoreDispatch
+coreDispatch path state (Synchronize { afterSync }) =
+  syncPatches path state afterSync
+coreDispatch _ state@({ngramsVersion} /\ _) (CommitPatch pt) =
+  commitPatch (Versioned {version: ngramsVersion, data: pt}) state
+coreDispatch _ (_ /\ setState) ResetPatches =
+  setState $ \s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }
 
 isSingleNgramsTerm :: NgramsTerm -> Boolean
 isSingleNgramsTerm nt = isSingleTerm $ ngramsTermText nt
@@ -980,3 +1016,38 @@ filterTermSize :: Maybe TermSize -> NgramsTerm -> Boolean
 filterTermSize (Just MonoTerm)  nt = isSingleNgramsTerm nt
 filterTermSize (Just MultiTerm) nt = not $ isSingleNgramsTerm nt
 filterTermSize _                _  = true
+
+type SyncResetButtonsProps =
+  ( afterSync :: Unit -> Aff Unit
+  , ngramsLocalPatch :: NgramsTablePatch
+  , performAction :: CoreDispatch
+  )
+
+syncResetButtons :: Record SyncResetButtonsProps -> R.Element
+syncResetButtons p = R.createElement syncResetButtonsCpt p []
+
+syncResetButtonsCpt :: R.Component SyncResetButtonsProps
+syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
+  where
+    cpt { afterSync, ngramsLocalPatch, performAction } _ = do
+      synchronizing@(s /\ setSynchronizing) <- R.useState' false
+
+      let
+        hasChanges = ngramsLocalPatch /= mempty
+
+        newAfterSync x = do
+          afterSync x
+          liftEffect $ setSynchronizing $ const false
+
+        synchronizeClick _ = delay unit $ \_ -> do
+          setSynchronizing $ const true
+          performAction $ Synchronize { afterSync: newAfterSync }
+
+      pure $ H.div {} [
+        H.button { className: "btn btn-danger " <> if hasChanges then "" else " disabled"
+                 , on: { click: \_ -> performAction ResetPatches }
+                 } [ H.text "Reset" ]
+      , H.button { className: "btn btn-primary " <> (if s || (not hasChanges) then "disabled" else "")
+                 , on: { click: synchronizeClick }
+                 } [ H.text "Sync" ]
+        ]

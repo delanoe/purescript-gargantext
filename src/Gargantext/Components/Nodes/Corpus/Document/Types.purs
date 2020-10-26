@@ -8,15 +8,12 @@ import Data.Maybe (Maybe(..))
 import Gargantext.Prelude
 
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.NgramsTable.Core
-  (CoreState, NgramsTerm, Replace, Versioned(..) , VersionedNgramsTable)
-import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
+import Gargantext.Components.NgramsTable.Core (CoreState, Versioned(..) , VersionedNgramsTable)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (TabType, TermList)
+import Gargantext.Types (TabType)
 
 type DocPath =
-  {
-    corpusId :: Maybe Int
+  { corpusId :: Maybe Int
   , listIds  :: Array Int
   , nodeId   :: Int
   , session  :: Session
@@ -49,12 +46,6 @@ initialState {loaded: {ngramsTable: Versioned {version}}} =
   , ngramsValidPatch: mempty
   , ngramsVersion:    version
   }
-
--- This is a subset of NgramsTable.Action.
-data Action
-  = SetTermListItem NgramsTerm (Replace TermList)
-  | AddNewNgram NgramsTerm TermList
-  | Synchronize
 
 newtype Status = Status { failed    :: Int
                         , succeeded :: Int

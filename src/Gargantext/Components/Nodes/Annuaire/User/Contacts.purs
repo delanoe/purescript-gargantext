@@ -26,6 +26,7 @@ import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts"
 
 display :: String -> Array R.Element -> R.Element

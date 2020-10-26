@@ -1,10 +1,7 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
-import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
