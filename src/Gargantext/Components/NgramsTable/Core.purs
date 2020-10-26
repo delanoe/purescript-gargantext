@@ -33,7 +33,7 @@ module Gargantext.Components.NgramsTable.Core
   , _PatchMap
   , patchSetFromMap
   , applyPatchSet
-  , applyNgramsTablePatch
+--, applyNgramsTablePatch -- re-export only if we have a good reason not to use applyNgramsPatches
   , applyNgramsPatches
   , rootsOf
   , singletonPatchMap
@@ -501,7 +501,7 @@ derive instance eqReplace :: Eq a => Eq (Replace a)
 instance semigroupReplace :: Eq a => Semigroup (Replace a) where
   append Keep p = p
   append p Keep = p
-  -- append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
+  append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
   append (Replace { new }) (Replace { old }) = replace old new
 
 instance semigroupMonoid :: Eq a => Monoid (Replace a) where
@@ -597,7 +597,9 @@ invert :: forall a. a -> a
 invert _ = unsafeThrow "invert: TODO"
 
 instance semigroupNgramsPatch :: Semigroup NgramsPatch where
-  append (NgramsReplace p) (NgramsReplace q) = ngramsReplace q.patch_old p.patch_new
+  append (NgramsReplace p) (NgramsReplace q)
+    | p.patch_old /= q.patch_new = unsafeThrow "append/NgramsPatch: old != new"
+    | otherwise                  = ngramsReplace q.patch_old p.patch_new
   append (NgramsPatch p)   (NgramsPatch q) = NgramsPatch
     { patch_children: p.patch_children <> q.patch_children
     , patch_list:     p.patch_list     <> q.patch_list
