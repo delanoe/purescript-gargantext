@@ -90,7 +90,7 @@ stateParams {pageSize, page, orderBy, searchType} = {offset, limit, orderBy, sea
     offset = limit * (page - 1)
 
 type TableHeaderLayoutProps =
-  ( afterCacheStateChange :: Unit -> Effect Unit
+  ( afterCacheStateChange :: NT.CacheState -> Effect Unit
   , cacheState :: R.State NT.CacheState
   , date  :: String
   , desc  :: String
@@ -153,9 +153,11 @@ tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout"
     cacheText (NT.CacheOn /\ _) = "Cache On"
     cacheText (NT.CacheOff /\ _) = "Cache Off"
 
-    cacheClick (_ /\ setCacheState) after _ = do
-      setCacheState cacheStateToggle
-      after unit
+    cacheClick (cacheState /\ setCacheState) after _ = do
+      setCacheState $ const newCacheState
+      after newCacheState
+      where
+        newCacheState = cacheStateToggle cacheState
 
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn

@@ -6,6 +6,9 @@ import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
+import Reactix as R
+import Reactix.DOM.HTML as H
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree (treeView)
 import Gargantext.Ends (Frontends, Backend(..))
@@ -14,19 +17,18 @@ import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
 import Gargantext.Types (Reload, Handed(..))
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest"
 
 type Props =
-  ( frontends :: Frontends
+  ( backend   :: R.State (Maybe Backend)
+  , frontends :: Frontends
   , handed    :: Handed
   , reload    :: R.State Int
   , route     :: AppRoute
   , sessions  :: Sessions
   , showLogin :: R.Setter Boolean
-  , backend   :: R.State (Maybe Backend)
   )
 
 forest :: Record Props -> R.Element
@@ -55,21 +57,18 @@ forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
     where
       trees = tree <$> unSessions sessions
       tree s@(Session {treeId}) =
-        treeView { root: treeId
-                 , asyncTasks
+        treeView { asyncTasks
                  , frontends
                  , handed
                  , mCurrentRoute: Just route
                  , openNodes
                  , reload
+                 , root: treeId
                  , session: s
                  }
 
 plus :: Handed -> R.Setter Boolean -> R.State (Maybe Backend) -> R.Element
-plus handed showLogin backend = H.div {className: if handed == RightHanded
-                                             then "flex-start"  -- TODO we should use lefthanded SASS class here
-                                             else "flex-end"
-                              } [
+plus handed showLogin backend = H.div { className: handedClass } [
   H.button { title: "Add or remove connections to the server(s)."
            , on: {click}
            , className: "btn btn-default"
@@ -81,9 +80,14 @@ plus handed showLogin backend = H.div {className: if handed == RightHanded
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
   --, H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
           ]
-          ]
+  ]
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
   where
+    handedClass = if handed == RightHanded then
+                        "flex-start"  -- TODO we should use lefthanded SASS class here
+                  else
+                        "flex-end"
+
     click _ = (snd backend) (const Nothing)
             *> showLogin (const true)

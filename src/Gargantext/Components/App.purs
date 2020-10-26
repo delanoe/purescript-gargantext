@@ -36,6 +36,7 @@ import Gargantext.Sessions as Sessions
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.App"
 
 -- TODO (what does this mean?)
@@ -71,67 +72,66 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                                          , showLogin: snd showLogin
                                          , backend
                                          }
+    let defaultView _ = forested $ homeLayout { backend
+                                              , lang: LL_EN
+                                              , publicBackend
+                                              , sessions
+                                              , visible: showLogin
+                                              }
     let mCurrentRoute     = fst route
-    let withSession sid f = maybe' ( const $ forested
-                                           $ homeLayout { lang: LL_EN
-                                                        , backend
-                                                        , publicBackend
-                                                        , sessions
-                                                        , visible:showLogin
-                                                        }
-                                   )
-                                   (ff f)
-                                   (Sessions.lookup sid (fst sessions))
+    let withSession sid f = maybe' defaultView (ff f) (Sessions.lookup sid (fst sessions))
+
+    let sessionUpdate s = snd sessions $ Sessions.Update s
 
     pure $ case fst showLogin of
       true -> forested $ login { backend, backends, sessions, visible: showLogin }
       false ->
         case fst route of
-          Home  -> forested $ homeLayout {lang:LL_EN, backend, publicBackend, sessions, visible:showLogin}
-          Login -> login { backends, sessions, visible: showLogin, backend}
+          Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
+          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, nodeId, session }
+          Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
+          Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
+          Document sid listId nodeId ->
+            withSession sid $
+              \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Nothing }
           Folder sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
-          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
-          RouteFile sid nodeId -> withSession sid $ \session -> forested $ fileLayout { nodeId, session }
-          Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
-          Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
-          Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
-          Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
-          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
-          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, nodeId, session }
-          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
-          Document sid listId nodeId ->
-            withSession sid $
-              \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Nothing }
+          Home  -> forested $ homeLayout { backend, lang:LL_EN, publicBackend, sessions, visible: showLogin }
+          Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { nodeId, session, sessionUpdate }
+          Login -> login { backend, backends, sessions, visible: showLogin }
           PGraphExplorer sid graphId ->
             withSession sid $
               \session ->
                 simpleLayout handed $
-                  explorerLayout { frontends
+                  explorerLayout { backend
+                                 , frontends
                                  , graphId
                                  , handed: fst handed
                                  , mCurrentRoute
                                  , session
                                  , sessions: (fst sessions)
                                  , showLogin
-                                 , backend
                                  --, treeReload
                                  }
+          RouteFile sid nodeId -> withSession sid $ \session -> forested $ fileLayout { nodeId, session }
+          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
+          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
+          Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { frontends, nodeId, session, sessionUpdate }
+          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
 
 type ForestLayoutProps =
-  ( child     :: R.Element
+  ( backend   :: R.State (Maybe Backend)
+  , child     :: R.Element
   , frontends :: Frontends
   , handed    :: R.State GT.Handed
   , reload    :: R.State Int
   , route     :: AppRoute
   , sessions  :: Sessions
   , showLogin :: R.Setter Boolean
-  , backend   :: R.State (Maybe Backend)
   )
 
 forestLayout :: Record ForestLayoutProps -> R.Element

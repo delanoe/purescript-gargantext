@@ -5,6 +5,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -20,7 +21,7 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session, Sessions, sessionId, getCacheState, setCacheState)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 
@@ -31,6 +32,7 @@ type Props = (
     frontends :: Frontends
   , nodeId :: Int
   , session :: Session
+  , sessionUpdate :: Session -> Effect Unit
   )
 
 textsLayout :: Record Props -> R.Element
@@ -39,10 +41,14 @@ textsLayout props = R.createElement textsLayoutCpt props []
 ------------------------------------------------------------------------
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = R.hooksComponentWithModule thisModule "textsLayout" cpt where
-  cpt { frontends, nodeId, session } _ = do
+  cpt { frontends, nodeId, session, sessionUpdate } _ = do
     let sid = sessionId session
 
-    pure $ textsLayoutWithKey { frontends, key: show sid <> "-" <> show nodeId, nodeId, session }
+    pure $ textsLayoutWithKey { frontends
+                              , key: show sid <> "-" <> show nodeId
+                              , nodeId
+                              , session
+                              , sessionUpdate }
 
 type KeyProps = (
   key :: String
@@ -55,10 +61,10 @@ textsLayoutWithKey props = R.createElement textsLayoutWithKeyCpt props []
 textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKey" cpt
   where
-    cpt { frontends, nodeId, session } _ = do
-      cacheState <- R.useState' NT.CacheOn
+    cpt { frontends, nodeId, session, sessionUpdate } _ = do
+      cacheState <- R.useState' $ getCacheState NT.CacheOn session nodeId
 
-      pure $ loader {session, nodeId} loadCorpusWithChild $
+      pure $ loader { nodeId, session } loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode, defaultListId } -> do
           let NodePoly { name, date, hyperdata: Hyperdata h } = corpusNode
               CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
@@ -66,7 +72,7 @@ textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKe
               title = "Corpus " <> name
 
           R.fragment [
-              Table.tableHeaderLayout { afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
+              Table.tableHeaderLayout { afterCacheStateChange
                                       , cacheState
                                       , date
                                       , desc
@@ -75,6 +81,10 @@ textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKe
                                       , user: authors }
             , tabs'
           ]
+      where
+        afterCacheStateChange cacheState = do
+          launchAff_ $ clearCache unit
+          sessionUpdate $ setCacheState session nodeId cacheState
 
 data Mode = MoreLikeFav | MoreLikeTrash
 
@@ -89,7 +99,10 @@ modeTabType :: Mode -> CTabNgramType
 modeTabType MoreLikeFav    = CTabAuthors  -- TODO
 modeTabType MoreLikeTrash  = CTabSources  -- TODO
 
-type TabsProps = ( frontends :: Frontends, session :: Session, corpusId :: Int, corpusData :: CorpusData )
+type TabsProps = ( corpusData :: CorpusData
+                 , corpusId :: Int
+                 , frontends :: Frontends
+                 , session :: Session )
 
 tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
@@ -113,10 +126,10 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
         trash = docView' TabTrash
 
 type DocViewProps a =
-  ( frontends :: Frontends
-  , session :: Session
+  ( corpusData :: CorpusData
   , corpusId :: Int
-  , corpusData :: CorpusData
+  , frontends :: Frontends
+  , session :: Session
   , tabType :: TabSubType a )
 
 docView :: forall a. Record (DocViewProps a) -> R.Element
