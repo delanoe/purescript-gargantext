@@ -1,19 +1,14 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>), encodeJson)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Array as A
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map (Map)
-import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Ord.Down (Down(..))
-import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as Str
@@ -22,25 +17,23 @@ import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Event as DE
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff)
-import Effect.Class (liftEffect)
+import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Components.Category
+import Gargantext.Components.Category (Category(..), caroussel, decodeCategory)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Utils (sortWith)
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session, sessionId, get, delete, put)
-import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabSubType(..), TabType, showTabType')
+import Gargantext.Sessions (Session, sessionId, get, delete)
+import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
-import Gargantext.Utils.QueryString
+import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
@@ -285,7 +278,7 @@ getPageHash :: Session -> PageParams -> Aff String
 getPageHash session { corpusId, listId, nodeId, query, tabType } = do
   (get session $ tableHashRoute nodeId tabType) :: Aff String
 
-
+convOrderBy :: Maybe (T.OrderByDirection T.ColumnName) -> Maybe OrderBy
 convOrderBy (Just (T.ASC  (T.ColumnName "Date")))  = Just DateAsc
 convOrderBy (Just (T.DESC (T.ColumnName "Date")))  = Just DateDesc
 convOrderBy (Just (T.ASC  (T.ColumnName "Title"))) = Just TitleAsc
@@ -332,8 +325,7 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
       (NT.CacheOn  /\ _) -> do
         let paint (Tuple count docs) = page params (props { totalRecords = count }) docs
             mkRequest :: PageParams -> GUC.Request
-            mkRequest p@{ listId, nodeId, tabType } =
-              GUC.makeGetRequest session $ tableRoute nodeId tabType listId
+            mkRequest p = GUC.makeGetRequest session $ tableRoute p
 
         useLoaderWithCacheAPI {
             cacheEndpoint: getPageHash session
@@ -345,8 +337,8 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
       (NT.CacheOff /\ _) -> do
         localCategories <- R.useState' (mempty :: LocalCategories)
         paramsS <- R.useState' params
-        let loader p@{ listId, nodeId, tabType } = do
-              res <- get session $ tableRouteWithPage { listId, nodeId, params: fst paramsS, query, tabType }
+        let loader p = do
+              res <- get session $ tableRouteWithPage (p { params = fst paramsS, query = query })
               pure $ handleResponse res
             render (Tuple count documents) = pagePaintRaw { documents
                                                           , layout: props { params = fst paramsS
@@ -493,17 +485,19 @@ instance encodeJsonSQuery :: EncodeJson SearchQuery where
 documentsRoute :: Int -> SessionRoute
 documentsRoute nodeId = NodeAPI Node (Just nodeId) "documents"
 
-tableRoute :: Int -> TabType -> Int -> SessionRoute
-tableRoute nodeId tabType listId = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId)
+tableRoute :: forall row. {nodeId :: Int, tabType :: TabType, listId :: Int | row} -> SessionRoute
+tableRoute {nodeId, tabType, listId} = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId)
 
 tableHashRoute :: Int -> TabType -> SessionRoute
 tableHashRoute nodeId tabType = NodeAPI Node (Just nodeId) $ "table/hash" <> "?tabType=" <> (showTabType' tabType)
 
-tableRouteWithPage :: { listId :: Int
-                     , nodeId :: Int
-                     , params :: T.Params
-                     , query ::  Query
-                     , tabType :: TabType } -> SessionRoute
+tableRouteWithPage :: forall row.
+                      { listId :: Int
+                      , nodeId :: Int
+                      , params :: T.Params
+                      , query ::  Query
+                      , tabType :: TabType
+                      | row } -> SessionRoute
 tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchType }, query, tabType } =
   NodeAPI Node (Just nodeId) $ "table" <> joinQueryStrings [tt, lst, lmt, odb, ofs, st, q]
   where
