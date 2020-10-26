@@ -4,6 +4,7 @@ import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -18,7 +19,7 @@ import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus.Document.Types
 import Gargantext.Components.NgramsTable.Core
   ( CoreState, NgramsPatch(..), NgramsTerm, Replace, Versioned(..)
-  , VersionedNgramsTable, addNewNgram, applyNgramsTablePatch, commitPatch
+  , VersionedNgramsTable, addNewNgram, applyNgramsPatches, commitPatch
   , loadNgramsTable, replace, singletonNgramsTablePatch, syncPatches )
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Hooks.Loader (useLoader)
@@ -59,7 +60,10 @@ docView props = R.createElement docViewCpt props []
 docViewCpt :: R.Component DocViewProps
 docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
   where
-    cpt props@{ loaded: loaded@{ ngramsTable: Versioned { data: initTable }, document }, state } _ = do
+    cpt { path
+        , loaded: loaded@{ ngramsTable: Versioned { data: initTable }, document }
+        , state: state@({ ngramsVersion: version } /\ _)
+        } _children = do
       pure $ H.div {} [
         autoUpdate { duration: 3000, effect: dispatch Synchronize }
       , H.div { className: "container1" }
@@ -67,7 +71,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
           R2.row
           [
             R2.col 8
-            [ H.h4 {} [ annotate state doc.title ]
+            [ H.h4 {} [ annotate doc.title ]
             , H.ul { className: "list-group" }
               [ li' [ H.span {} [ text' doc.source ]
                     , badge "source"
@@ -81,7 +85,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
                     ]
               ]
             , badge "abstract"
-            , annotate state doc.abstract
+            , annotate doc.abstract
             , H.div { className: "jumbotron" }
               [ H.p {} [ H.text "Empty Full Text" ]
               ]
@@ -92,29 +96,24 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
         where
           dispatch :: Action -> Effect Unit
           dispatch (AddNewNgram ngram termList) = do
-            commitPatch (Versioned {version, data: pt}) state
-            where
-              ({ ngramsVersion: version } /\ _) = state
-              pt = addNewNgram ngram termList
+            commitPatch (Versioned {version, data: addNewNgram ngram termList}) state
           dispatch (SetTermListItem ngram termList) = do
             commitPatch (Versioned {version, data: pt}) state
             where
-              ({ ngramsVersion: version } /\ _) = state
               pe = NgramsPatch { patch_list: termList, patch_children: mempty }
               pt = singletonNgramsTablePatch ngram pe
           dispatch Synchronize = do
-            syncPatches props.path props.state (\_ -> pure unit)
-
-          annotate state text = AnnotatedField.annotatedField { ngrams: ngramsTable state
-                                                              , setTermList: setTermList state
-                                                              , text }
+            syncPatches path state (\_ -> pure unit)
+          ngrams = applyNgramsPatches (fst state) initTable
+          annotate text = AnnotatedField.annotatedField { ngrams
+                                                        , setTermList
+                                                        , text }
           badge s = H.span { className: "badge badge-default badge-pill" } [ H.text s ]
           li' = H.li { className: "list-group-item justify-content-between" }
-          ngramsTable ({ ngramsLocalPatch, ngramsValidPatch } /\ _) = applyNgramsTablePatch (ngramsLocalPatch <> ngramsValidPatch) initTable
-          setTermList state ngram Nothing        newList = dispatch (AddNewNgram ngram newList)
-          setTermList state ngram (Just oldList) newList = dispatch (SetTermListItem ngram (replace oldList newList))
+          setTermList ngram Nothing        newList = dispatch (AddNewNgram ngram newList)
+          setTermList ngram (Just oldList) newList = dispatch (SetTermListItem ngram (replace oldList newList))
           text' x = H.text $ fromMaybe "Nothing" x
-          NodePoly {hyperdata : Document doc} = document
+          NodePoly {hyperdata: Document doc} = document
 
 type LayoutProps = (
     corpusId :: Maybe Int

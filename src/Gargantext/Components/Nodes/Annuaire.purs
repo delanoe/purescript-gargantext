@@ -98,6 +98,7 @@ annuaireCpt = R.hooksComponentWithModule thisModule "annuaire" cpt
                               , cacheState
                               , date
                               , desc: name
+                              , key: "annuaire-" <> (show $ fst cacheState)
                               , query: ""
                               , title: name
                               , user: "" }

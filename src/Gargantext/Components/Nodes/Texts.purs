@@ -4,6 +4,7 @@ import Prelude
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
 import Reactix as R
@@ -69,6 +70,7 @@ textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKe
                                       , cacheState
                                       , date
                                       , desc
+                                      , key: "textsLayoutWithKey-" <> (show $ fst cacheState)
                                       , query
                                       , title
                                       , user: authors }

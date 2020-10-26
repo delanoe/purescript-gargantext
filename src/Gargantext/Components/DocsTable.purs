@@ -11,7 +11,7 @@ import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord.Down (Down(..))
 import Data.Sequence as Seq
 import Data.Set (Set)
@@ -33,13 +33,14 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Utils.Seq (sortWith) as Seq
+import Gargantext.Utils (sortWith)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete, put)
 import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabSubType(..), TabType, showTabType')
 import Gargantext.Utils.CacheAPI as GUC
+import Gargantext.Utils.QueryString
 import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
@@ -76,6 +77,7 @@ type PageLayoutProps = (
     cacheState   :: R.State NT.CacheState
   , corpusId     :: Maybe Int
   , frontends    :: Frontends
+  , key          :: String  -- NOTE Necessary to clear the component when cache state changes
   , listId       :: Int
   , nodeId       :: Int
   , params       :: T.Params
@@ -216,6 +218,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
           [ pageLayout { cacheState
                        , corpusId
                        , frontends
+                       , key: "docView-" <> (show $ fst cacheState)
                        , listId
                        , nodeId
                        , params
@@ -324,7 +327,7 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
                       --Tuple 0 (take limit $ drop offset sampleData)
                       Tuple 0 sampleData
                     else
-                      Tuple (A.length docs) docs
+                      Tuple res.count docs
     case cacheState of
       (NT.CacheOn  /\ _) -> do
         let paint (Tuple count docs) = page params (props { totalRecords = count }) docs
@@ -340,13 +343,16 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
           , renderer: paint
           }
       (NT.CacheOff /\ _) -> do
+        localCategories <- R.useState' (mempty :: LocalCategories)
         paramsS <- R.useState' params
         let loader p@{ listId, nodeId, tabType } = do
-              res <- get session $ tableRouteWithPage { listId, nodeId, params: fst paramsS, tabType }
+              res <- get session $ tableRouteWithPage { listId, nodeId, params: fst paramsS, query, tabType }
               pure $ handleResponse res
-            render (Tuple count documents) = pagePaint { documents
-                                                       , layout: props { totalRecords = count }
-                                                       , params: paramsS }
+            render (Tuple count documents) = pagePaintRaw { documents
+                                                          , layout: props { params = fst paramsS
+                                                                          , totalRecords = count }
+                                                          , localCategories
+                                                          , params: paramsS }
         useLoader (path { params = fst paramsS }) loader render
 
 type PageProps = (
@@ -375,8 +381,38 @@ pagePaint props = R.createElement pagePaintCpt props []
 
 pagePaintCpt :: R.Component PagePaintProps
 pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt where
-  cpt { layout: { corpusId, frontends, listId, nodeId, session, totalRecords }, documents, params } _ = do
+  cpt { documents, layout, params } _ = do
     localCategories <- R.useState' (mempty :: LocalCategories)
+    pure $ pagePaintRaw { documents: A.fromFoldable filteredRows, layout, localCategories, params }
+      where
+        orderWith =
+          case convOrderBy (fst params).orderBy of
+            Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
+            Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
+            Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
+            Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
+            Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
+            Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
+            _               -> identity -- the server ordering is enough here
+        filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
+
+
+type PagePaintRawProps = (
+    documents :: Array DocumentsView
+  , layout :: Record PageLayoutProps
+  , localCategories :: R.State LocalCategories
+  , params :: R.State T.Params
+  )
+
+pagePaintRaw :: Record PagePaintRawProps -> R.Element
+pagePaintRaw props = R.createElement pagePaintRawCpt props []
+
+pagePaintRawCpt :: R.Component PagePaintRawProps
+pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt where
+  cpt { documents
+      , layout: { corpusId, frontends, listId, nodeId, session, totalRecords }
+      , localCategories
+      , params } _ = do
     pure $ T.table
       { colNames
       , container: T.defaultContainer { title: "Documents" }
@@ -397,17 +433,7 @@ pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt where
         colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source"]
         wrapColElts = const identity
         getCategory (localCategories /\ _) {_id, category} = fromMaybe category (localCategories ^. at _id)
-        orderWith =
-          case convOrderBy (fst params).orderBy of
-            Just DateAsc    -> Seq.sortWith \(DocumentsView { date })   -> date
-            Just DateDesc   -> Seq.sortWith \(DocumentsView { date })   -> Down date
-            Just SourceAsc  -> Seq.sortWith \(DocumentsView { source }) -> Str.toLower source
-            Just SourceDesc -> Seq.sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
-            Just TitleAsc   -> Seq.sortWith \(DocumentsView { title })  -> Str.toLower title
-            Just TitleDesc  -> Seq.sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
-            _               -> identity -- the server ordering is enough here
-        filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
-        rows localCategories = row <$> filteredRows
+        rows localCategories = row <$> A.toUnfoldable documents
           where
             row (DocumentsView r) =
               { row:
@@ -476,8 +502,18 @@ tableHashRoute nodeId tabType = NodeAPI Node (Just nodeId) $ "table/hash" <> "?t
 tableRouteWithPage :: { listId :: Int
                      , nodeId :: Int
                      , params :: T.Params
+                     , query ::  Query
                      , tabType :: TabType } -> SessionRoute
-tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchType }, tabType } = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId) <> "&limit=" <> (show limit) <> "&offset=" <> (show offset) <> "&orderBy=" <> (show orderBy) <> "&searchType=" <> (show searchType)
+tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchType }, query, tabType } =
+  NodeAPI Node (Just nodeId) $ "table" <> joinQueryStrings [tt, lst, lmt, odb, ofs, st, q]
+  where
+    lmt = queryParam "limit" limit
+    lst = queryParam "list" listId
+    ofs = queryParam "offset" offset
+    odb = mQueryParamS "orderBy" T.orderByToForm orderBy
+    st  = queryParam "searchType" searchType
+    tt  = queryParamS "tabType" (showTabType' tabType)
+    q   = queryParamS "query" query
 
 deleteAllDocuments :: Session -> Int -> Aff (Array Int)
 deleteAllDocuments session = delete session <<< documentsRoute

@@ -61,6 +61,10 @@ instance showOrderByDirection :: Show a => Show (OrderByDirection a) where
 
 derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 
+orderByToForm :: OrderByDirection ColumnName -> String
+orderByToForm (ASC (ColumnName x)) = x <> "Asc"
+orderByToForm (DESC (ColumnName x)) = x <> "Desc"
+
 type Props =
   ( colNames     :: Array ColumnName
   , container    :: Record TableContainerProps -> R.Element
@@ -95,6 +99,7 @@ type TableHeaderLayoutProps =
   , cacheState :: R.State NT.CacheState
   , date  :: String
   , desc  :: String
+  , key   :: String
   , query :: String
   , title :: String
   , user  :: String

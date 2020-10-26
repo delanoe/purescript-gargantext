@@ -42,7 +42,7 @@ import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
-import Gargantext.Utils (queryMatchesLabel, toggleSet)
+import Gargantext.Utils (queryMatchesLabel, toggleSet, sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Seq as Seq
@@ -423,10 +423,10 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
           }
         orderWith =
           case convOrderBy <$> params.orderBy of
-            Just ScoreAsc  -> Seq.sortWith \x -> x        ^. _NgramsElement <<< _occurrences
-            Just ScoreDesc -> Seq.sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
-            Just TermAsc   -> Seq.sortWith \x -> x        ^. _NgramsElement <<< _ngrams
-            Just TermDesc  -> Seq.sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
+            Just ScoreAsc  -> sortWith \x -> x        ^. _NgramsElement <<< _occurrences
+            Just ScoreDesc -> sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
+            Just TermAsc   -> sortWith \x -> x        ^. _NgramsElement <<< _ngrams
+            Just TermDesc  -> sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
             _              -> identity -- the server ordering is enough here
 
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
