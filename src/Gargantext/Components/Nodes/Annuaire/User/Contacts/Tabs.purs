@@ -76,11 +76,17 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
-              { frontends, session, nodeId, chart, totalRecords
-              , tabType: TabPairing TabDocs
-              , listId: defaultListId
+              { cacheState
+              , chart
               , corpusId: Nothing
-              , showSearch: true }
+              , frontends
+              , listId: defaultListId
+              , nodeId
+              , session
+              , showSearch: true
+              , tabType: TabPairing TabDocs
+              , totalRecords
+              }
 
 
 type NgramsViewTabsProps =

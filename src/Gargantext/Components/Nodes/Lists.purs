@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Lists where
 
+import Data.Tuple (fst)
 import Effect.Aff (launchAff_)
 import Reactix as R
 ------------------------------------------------------------------------
@@ -15,6 +16,7 @@ import Gargantext.Prelude
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
@@ -53,15 +55,16 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
 
       useLoader path loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode: NodePoly poly, defaultListId } ->
-              let { date, hyperdata : Hyperdata h, name } = poly
-                  CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
-           in
+          let { date, hyperdata : Hyperdata h, name } = poly
+              CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
+          in
           R.fragment [
             Table.tableHeaderLayout {
                 afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
               , cacheState
               , date
               , desc
+              , key: "listsLayoutWithKey-header-" <> (show $ fst cacheState)
               , query
               , title: "Corpus " <> name
               , user: authors }
@@ -69,6 +72,7 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
                cacheState
              , corpusData
              , corpusId
+             , key: "listsLayoutWithKey-tabs-" <> (show $ fst cacheState)
              , session }
           ]
 ------------------------------------------------------------------------
