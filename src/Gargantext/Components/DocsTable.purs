@@ -32,7 +32,7 @@ import Gargantext.Components.Category
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Utils.Seq (sortWith) as Seq
+import Gargantext.Utils (sortWith)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
@@ -377,12 +377,12 @@ pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt where
         getCategory (localCategories /\ _) {_id, category} = fromMaybe category (localCategories ^. at _id)
         orderWith =
           case convOrderBy (fst params).orderBy of
-            Just DateAsc    -> Seq.sortWith \(DocumentsView { date })   -> date
-            Just DateDesc   -> Seq.sortWith \(DocumentsView { date })   -> Down date
-            Just SourceAsc  -> Seq.sortWith \(DocumentsView { source }) -> Str.toLower source
-            Just SourceDesc -> Seq.sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
-            Just TitleAsc   -> Seq.sortWith \(DocumentsView { title })  -> Str.toLower title
-            Just TitleDesc  -> Seq.sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
+            Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
+            Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
+            Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
+            Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
+            Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
+            Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
             _               -> identity -- the server ordering is enough here
         filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
         rows localCategories = row <$> filteredRows
