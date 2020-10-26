@@ -184,7 +184,7 @@ instance showNodeType :: Show NodeType where
   show Tree            = "NodeTree"
   show Team            = "NodeTeam"
   show NodeList        = "NodeList"
-  show Texts           = "NodeTexts"
+  show Texts           = "NodeDocs"
   show NodeFrameWrite  = "NodeFrameWrite"
   show NodeFrameCalc   = "NodeFrameCalc"
   show (NodePublic nt) = "NodePublic" <> show nt
