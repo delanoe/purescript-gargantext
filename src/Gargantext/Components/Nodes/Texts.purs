@@ -117,8 +117,8 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
               , docView' path TabDocs
               ]
           , "Trash"           /\ docView' path TabTrash
-          , "More like fav"   /\ docView' path TabMoreLikeFav
-          , "More like trash" /\ docView' path TabMoreLikeTrash
+          -- , "More like fav"   /\ docView' path TabMoreLikeFav
+          -- , "More like trash" /\ docView' path TabMoreLikeTrash
           ]
         }
 
