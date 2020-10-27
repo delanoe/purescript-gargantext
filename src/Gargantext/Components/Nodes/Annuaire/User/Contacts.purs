@@ -25,8 +25,8 @@ import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
-import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts"
 
 display :: String -> Array R.Element -> R.Element

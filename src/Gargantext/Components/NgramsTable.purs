@@ -16,18 +16,15 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
-import Data.Sequence as Seq
+import Data.Sequence (Seq, length) as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import FFI.Simple (delay)
-import Reactix as R
+import Reactix (Component, Element, State, createElement, fragment, hooksComponentWithModule, unsafeEventValue, useState') as R
 import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -45,8 +42,9 @@ import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermL
 import Gargantext.Utils (queryMatchesLabel, toggleSet, sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Seq as Seq
+import Gargantext.Utils.Seq (mapMaybe) as Seq
 
+thisModule :: String
 thisModule = "Gargantext.Components.NgramsTable"
 
 type State' =
@@ -103,7 +101,7 @@ initialState (Versioned {version}) = {
 
 setTermListSetA :: NgramsTable -> Set NgramsTerm -> TermList -> Action
 setTermListSetA ngramsTable ns new_list =
-  CommitPatch $ fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
+  CoreAction $ CommitPatch $ fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
   where
     f :: NgramsTerm -> Unit -> NgramsPatch
     f n unit = NgramsPatch { patch_list, patch_children: mempty }
@@ -115,9 +113,6 @@ setTermListSetA ngramsTable ns new_list =
     -- TODO https://github.com/purescript/purescript-ordered-collections/pull/21
     --      https://github.com/purescript/purescript-ordered-collections/pull/31
     -- toMap = Map.fromFoldable
-
-addNewNgramA :: NgramsTerm -> Action
-addNewNgramA ngram = CommitPatch $ addNewNgram ngram CandidateTerm
 
 type PreConversionRows = Seq.Seq NgramsElement
 
@@ -157,8 +152,10 @@ tableContainerCpt { dispatch
                     H.li { className: "list-group-item" } [
                       H.button { className: "btn btn-primary"
                                 , on: { click: const $ dispatch
+                                      $ CoreAction
                                       $ addNewNgramA
-                                      $ normNgram tabNgramType searchQuery
+                                          (normNgram tabNgramType searchQuery)
+                                          CandidateTerm
                                       }
                                 }
                       [ H.text ("Add " <> searchQuery) ]
@@ -303,8 +300,12 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
         , versioned: Versioned { data: initTable }
         , withAutoUpdate } _ = do
 
+      let syncResetBtns = [syncResetButtons { afterSync, ngramsLocalPatch
+                                            , performAction: performAction <<< CoreAction
+                                            }]
+
       pure $ R.fragment $
-        autoUpdate <> [syncResetButtons { afterSync, ngramsLocalPatch, performAction }] <> [
+        autoUpdate <> syncResetBtns <> [
           H.h4 {style: {textAlign : "center"}} [
               H.span {className: "glyphicon glyphicon-hand-down"} []
             , H.text "Extracted Terms"
@@ -327,13 +328,13 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                                              , ngramsSelection
                                              }
                   }
-        ] <> [syncResetButtons { afterSync, ngramsLocalPatch, performAction }]
+        ] <> syncResetBtns
       where
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then
                        [ R2.buff $ autoUpdateElt {
                               duration: 5000
-                            , effect: performAction $ Synchronize { afterSync }
+                            , effect: performAction $ CoreAction $ Synchronize { afterSync }
                             } ]
                      else []
 
@@ -357,11 +358,6 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                 s { ngramsSelection = Set.empty :: Set NgramsTerm }
               else
                 s { ngramsSelection = selectNgramsOnFirstPage filteredRows }
-        performAction (Synchronize { afterSync }) = syncPatches path' (state /\ setState) afterSync
-        performAction (CommitPatch pt) =
-          commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
-        performAction ResetPatches =
-          setState $ \s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }
         performAction AddTermChildren =
           case ngramsParent of
             Nothing ->
@@ -373,6 +369,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                   pt = singletonNgramsTablePatch parent pe
               setState $ setParentResetChildren Nothing
               commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
+        performAction (CoreAction a) = coreDispatch path' (state /\ setState) a
 
         totalRecords = Seq.length rows
         filteredConvertedRows :: T.Rows
@@ -442,41 +439,6 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                                  , searchQuery: searchQuery }
         setSearchQuery :: String -> Effect Unit
         setSearchQuery x    = setPath $ _ { searchQuery    = x }
-
-
-type SyncResetButtonsProps = (
-    afterSync :: Unit -> Aff Unit
-  , ngramsLocalPatch :: NgramsTablePatch
-  , performAction :: Action -> Effect Unit
-  )
-
-syncResetButtons :: Record SyncResetButtonsProps -> R.Element
-syncResetButtons p = R.createElement syncResetButtonsCpt p []
-
-syncResetButtonsCpt :: R.Component SyncResetButtonsProps
-syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
-  where
-    cpt { afterSync, ngramsLocalPatch, performAction } _ = do
-      synchronizing@(s /\ _) <- R.useState' false
-
-      let hasChanges = ngramsLocalPatch /= mempty
-
-      pure $ H.div {} [
-        H.button { className: "btn btn-danger " <> if hasChanges then "" else " disabled"
-                 , on: { click: \_ -> performAction ResetPatches }
-                 } [ H.text "Reset" ]
-      , H.button { className: "btn btn-primary " <> (if s || (not hasChanges) then "disabled" else "")
-                 , on: { click: synchronize synchronizing }
-                 } [ H.text "Sync" ]
-        ]
-      where
-        synchronize (_ /\ setSynchronizing) _ = delay unit $ \_ -> do
-          setSynchronizing $ const true
-          performAction $ Synchronize { afterSync: newAfterSync }
-          where
-            newAfterSync x = do
-              afterSync x
-              liftEffect $ setSynchronizing $ const false
 
 
 displayRow :: State -> SearchQuery -> NgramsTable -> Maybe NgramsTerm -> Maybe TermList -> Maybe TermSize -> NgramsElement -> Boolean

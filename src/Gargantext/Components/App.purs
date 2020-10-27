@@ -10,7 +10,6 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
-import Gargantext.Config (publicBackend)
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Lang (LandingLang(..))
@@ -25,7 +24,7 @@ import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists (listsLayout)
 import Gargantext.Components.Nodes.Texts (textsLayout)
-import Gargantext.Config (defaultFrontends, defaultBackends)
+import Gargantext.Config (defaultFrontends, defaultBackends, publicBackend)
 import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Hooks.Router (useHashRouter)
 import Gargantext.License (license)
@@ -36,6 +35,7 @@ import Gargantext.Sessions as Sessions
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.App"
 
 -- TODO (what does this mean?)
