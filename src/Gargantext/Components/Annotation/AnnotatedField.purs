@@ -79,6 +79,7 @@ annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField"
                   }
             --setMenu (const $ menu)
             R.setRef menuRef menu
+            setMenu $ const menu
 
           mapCompile (Tuple t l) = {text: t, list: l, onSelect}
           compiled = map mapCompile $ compile ngrams text
