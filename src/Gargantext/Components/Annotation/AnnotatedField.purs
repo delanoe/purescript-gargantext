@@ -76,8 +76,8 @@ annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField"
                   , onClose: \_ -> R.setRef menuRef Nothing
                   , setList
                   }
-            setMenu $ const menu
             R.setRef menuRef menu
+            setMenu $ const menu
 
           mapCompile (Tuple t l) = {text: t, list: l, onSelect}
           compiled = map mapCompile $ compile ngrams text
@@ -127,11 +127,11 @@ maybeShowMenu setMenu menuRef setTermList ngrams event = do
               list = findNgramTermList ngrams n
               setList t = do
                 setTermList n list t
-                --setMenu (const Nothing)
                 R.setRef menuRef Nothing
+                --setMenu (const Nothing)
           E.preventDefault event
           range <- Sel.getRange sel 0
-          log2 "[maybeShowMenu] selection range" $ Sel.rangeToTuple range
+          --log2 "[maybeShowMenu] selection range" $ Sel.rangeToTuple range
           let menu = Just {
                 x
               , y
@@ -140,8 +140,8 @@ maybeShowMenu setMenu menuRef setTermList ngrams event = do
               , onClose: \_ -> R.setRef menuRef Nothing
               , setList
             }
-          setMenu $ const $ menu
           R.setRef menuRef menu
+          setMenu $ const $ menu
     Nothing -> pure unit
     -- Nothing -> do
     --   R.setRef menuRef Nothing
