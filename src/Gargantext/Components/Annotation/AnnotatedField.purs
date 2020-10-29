@@ -12,10 +12,10 @@
 module Gargantext.Components.Annotation.AnnotatedField where
 
 import Prelude
-import Data.Maybe ( Maybe(..), maybe, isJust, isNothing )
+import Data.Maybe ( Maybe(..), maybe )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
-import DOM.Simple.Console (log, log2)
+import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Effect ( Effect )
 import Reactix as R
@@ -27,7 +27,6 @@ import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
 import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
 import Gargantext.Utils.Selection as Sel
-import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Annotation.AnnotatedField"
@@ -58,11 +57,11 @@ annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField"
 
           onSelect :: String -> Maybe TermList -> MouseEvent -> Effect Unit
           onSelect text' Nothing event = do
-            log2 "[onSelect] text'" text'
+            --log2 "[onSelect] text'" text'
             maybeShowMenu setMenu menuRef setTermList ngrams event
           onSelect text' (Just list) event = do
-            log2 "[onSelect] text'" text'
-            log2 "[onSelect] list" list
+            --log2 "[onSelect] text'" text'
+            --log2 "[onSelect] list" (show list)
             let x = E.clientX event
                 y = E.clientY event
                 setList t = do
@@ -77,9 +76,8 @@ annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField"
                   , onClose: \_ -> R.setRef menuRef Nothing
                   , setList
                   }
-            --setMenu (const $ menu)
-            R.setRef menuRef menu
             setMenu $ const menu
+            R.setRef menuRef menu
 
           mapCompile (Tuple t l) = {text: t, list: l, onSelect}
           compiled = map mapCompile $ compile ngrams text
@@ -106,8 +104,8 @@ addMenuCpt = R.hooksComponentWithModule thisModule "addMenu" cpt
 
       R.useEffect' $ do
         let m = R.readRef menuRef
-        log2 "[addMenu] menuRef" m
-        log2 "[addMenu] mMenu" mMenu
+        --log2 "[addMenu] menuRef" m
+        --log2 "[addMenu] mMenu" mMenu
         setmMenu $ const m
 
       pure $ case mMenu of
@@ -117,7 +115,7 @@ addMenuCpt = R.hooksComponentWithModule thisModule "addMenu" cpt
 -- forall e. IsMouseEvent e => R.Setter (Maybe AnnotationMenu) -> R.Setter ? -> ? -> e -> Effect Unit
 maybeShowMenu setMenu menuRef setTermList ngrams event = do
   s <- Sel.getSelection
-  log2 "[maybeShowMenu] s" s
+  --log2 "[maybeShowMenu] s" s
   case s of
     Just sel -> do
       case Sel.selectionToString sel of
@@ -142,7 +140,7 @@ maybeShowMenu setMenu menuRef setTermList ngrams event = do
               , onClose: \_ -> R.setRef menuRef Nothing
               , setList
             }
-          --setMenu (const $ menu)
+          setMenu $ const $ menu
           R.setRef menuRef menu
     Nothing -> pure unit
     -- Nothing -> do
