@@ -94,8 +94,9 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
-          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session }
+          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameWrite}
+          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameCalc }
+          RouteFrameCode  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameCode }
           RouteFile sid nodeId -> withSession sid $ \session -> forested $ fileLayout { nodeId, session }
           Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }

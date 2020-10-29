@@ -156,6 +156,7 @@ data NodeType = NodeUser
               -- TODO Optional Nodes
               | NodeFrameWrite
               | NodeFrameCalc
+              | NodeFrameCode
               | NodePublic NodeType
               | NodeFile
 
@@ -187,6 +188,7 @@ instance showNodeType :: Show NodeType where
   show Texts           = "NodeDocs"
   show NodeFrameWrite  = "NodeFrameWrite"
   show NodeFrameCalc   = "NodeFrameCalc"
+  show NodeFrameCode   = "NodeFrameCode"
   show (NodePublic nt) = "NodePublic" <> show nt
   show NodeFile        = "NodeFile"
 
@@ -214,6 +216,7 @@ instance readNodeType :: Read NodeType where
   read "Annuaire"          = Just Annuaire
   read "NodeFrameWrite"    = Just NodeFrameWrite
   read "NodeFrameCalc"     = Just NodeFrameCalc
+  read "NodeFrameCode"     = Just NodeFrameCode
   read "NodeFile"          = Just NodeFile
   -- TODO NodePublic read ?
   read _                   = Nothing
@@ -260,6 +263,10 @@ fldr NodeFrameWrite false = "fa fa-file-text"
 
 fldr NodeFrameCalc true  = "fa fa-calculator"
 fldr NodeFrameCalc false = "fa fa-calculator"
+
+fldr NodeFrameCode true  = "fa fa-terminal"
+fldr NodeFrameCode false = "fa fa-terminal"
+
 
 fldr (NodePublic nt) b   = fldr nt b
 
@@ -316,6 +323,7 @@ nodeTypePath Texts           = "texts"
 nodeTypePath Team            = "team"
 nodeTypePath NodeFrameWrite  = "write"
 nodeTypePath NodeFrameCalc   = "calc"
+nodeTypePath NodeFrameCode   = "code"
 nodeTypePath (NodePublic nt) = nodeTypePath nt
 nodeTypePath NodeFile        = "file"
 
