@@ -15,6 +15,7 @@ import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
@@ -145,7 +146,8 @@ infoRender (Tuple title content) =
   , H.span {} [H.text content] ]
 
 type LayoutProps = (
-    frontends :: Frontends
+    asyncTasks    :: R.State GAT.Storage
+  , frontends :: Frontends
   , nodeId :: Int
   , session :: Session
   )
@@ -161,10 +163,10 @@ userLayout props = R.createElement userLayoutCpt props []
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = R.hooksComponentWithModule thisModule "userLayout" cpt
   where
-    cpt { frontends, nodeId, session } _ = do
+    cpt { asyncTasks, frontends, nodeId, session } _ = do
       let sid = sessionId session
 
-      pure $ userLayoutWithKey { frontends, key: show sid <> "-" <> show nodeId, nodeId, session }
+      pure $ userLayoutWithKey { asyncTasks, frontends, key: show sid <> "-" <> show nodeId, nodeId, session }
 
 userLayoutWithKey :: Record KeyLayoutProps -> R.Element
 userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
@@ -172,7 +174,7 @@ userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey" cpt
   where
-    cpt { frontends, nodeId, session } _ = do
+    cpt { asyncTasks, frontends, nodeId, session } _ = do
       reload <- R.useState' 0
 
       cacheState <- R.useState' NT.CacheOn
@@ -181,7 +183,7 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
             display (fromMaybe "no name" name) (contactInfos hyperdata (onUpdateHyperdata reload))
-          , Tabs.tabs { cacheState, contactData, frontends, nodeId, session }
+          , Tabs.tabs { asyncTasks, cacheState, contactData, frontends, nodeId, session }
           ]
       where
         onUpdateHyperdata :: R.State Int -> HyperdataUser -> Effect Unit
@@ -212,8 +214,8 @@ saveContactHyperdata session id h = do
   put session (Routes.NodeAPI Node (Just id) "") h
 
 
-type AnnuaireLayoutProps =
-  ( annuaireId :: Int
+type AnnuaireLayoutProps = (
+    annuaireId :: Int
   | LayoutProps )
 
 
@@ -223,14 +225,14 @@ annuaireUserLayout props = R.createElement annuaireUserLayoutCpt props []
 annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
 annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayout" cpt
   where
-    cpt { annuaireId, frontends, nodeId, session } _ = do
+    cpt { annuaireId, asyncTasks, frontends, nodeId, session } _ = do
       cacheState <- R.useState' NT.CacheOn
 
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
           [ display (fromMaybe "no name" name) (contactInfos hyperdata onUpdateHyperdata)
-          , Tabs.tabs { cacheState, contactData, frontends, nodeId, session } ]
+          , Tabs.tabs { asyncTasks, cacheState, contactData, frontends, nodeId, session } ]
 
       where
         onUpdateHyperdata :: HyperdataUser -> Effect Unit

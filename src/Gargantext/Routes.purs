@@ -44,6 +44,7 @@ data SessionRoute
   | GetNgramsTableAll NgramsGetTableAllOpts (Maybe Id)
   | GetNgramsTableVersion { listId :: ListId, tabType :: TabType } (Maybe Id)
   | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
+  | PostNgramsChartsAsync (Maybe Id)
   -- ^ This name is not good. In particular this URL is used both in PUT and POST.
   | RecomputeNgrams   (TabSubType CTabNgramType) Id ListId
   | RecomputeListChart ChartType  CTabNgramType  Id ListId

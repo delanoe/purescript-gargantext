@@ -44,16 +44,16 @@ thisModule = "Gargantext.Components.Forest.Tree"
 ------------------------------------------------------------------------
 type CommonProps =
   ( frontends     :: Frontends
+  , handed        :: GT.Handed
   , mCurrentRoute :: Maybe AppRoute
   , openNodes     :: R.State OpenNodes
   , reload        :: R.State Reload
   , session       :: Session
-  , handed        :: GT.Handed
   )
 
 ------------------------------------------------------------------------
-type Props = ( root       :: ID
-             , asyncTasks :: R.State GAT.Storage
+type Props = ( asyncTasks :: R.State GAT.Storage
+             , root       :: ID
              | CommonProps
              )
 
@@ -63,22 +63,22 @@ treeView props = R.createElement treeViewCpt props []
     treeViewCpt :: R.Component Props
     treeViewCpt = R.hooksComponentWithModule thisModule "treeView" cpt
       where
-        cpt { root
-            , asyncTasks
+        cpt { asyncTasks
             , frontends
             , handed
             , mCurrentRoute
             , openNodes
             , reload
+            , root
             , session
             } _children = pure
-                        $ treeLoadView { root
-                                       , asyncTasks
+                        $ treeLoadView { asyncTasks
                                        , frontends
                                        , handed
                                        , mCurrentRoute
                                        , openNodes
                                        , reload
+                                       , root
                                        , session
                                        }
 
@@ -88,13 +88,13 @@ treeLoadView p = R.createElement treeLoadViewCpt p []
     treeLoadViewCpt :: R.Component Props
     treeLoadViewCpt = R.hooksComponentWithModule thisModule "treeLoadView" cpt
       where
-        cpt { root
-            , asyncTasks
+        cpt { asyncTasks
             , frontends
             , handed
             , mCurrentRoute
             , openNodes
             , reload
+            , root
             , session
             } _children = do
           let fetch _ = getNodeTree session root
@@ -116,8 +116,8 @@ getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 
 --------------
 type TreeViewProps = ( asyncTasks :: R.State GAT.Storage
-                     , tree       :: FTree
                      , tasks      :: Record Tasks
+                     , tree       :: FTree
                      | CommonProps
                      )
 
@@ -168,6 +168,7 @@ type ToHtmlProps =
 toHtml :: Record ToHtmlProps -> R.Element
 toHtml p@{ asyncTasks
          , frontends
+         , handed
          , mCurrentRoute
          , openNodes
          , reload: reload@(_ /\ setReload)
@@ -182,7 +183,6 @@ toHtml p@{ asyncTasks
                                     }
                               ) ary
                       )
-         , handed
          } =
   R.createElement el {} []
     where
@@ -201,11 +201,11 @@ toHtml p@{ asyncTasks
 
         pure $ H.li { className: if A.null ary then "no-children" else "with-children" } $
           [ nodeMainSpan (A.null ary) 
-                         { id
-                         , dispatch: pAction
+                         { dispatch: pAction
                          , folderOpen
                          , frontends
                          , handed
+                         , id
                          , mCurrentRoute
                          , name
                          , nodeType
@@ -262,10 +262,10 @@ performAction :: Action
               -> Record PerformActionProps
               -> Aff Unit
 performAction (DeleteNode nt) p@{ openNodes: (_ /\ setOpenNodes)
-                           , reload: (_ /\ setReload)
-                           , session
-                           , tree: (NTree (LNode {id, parent_id}) _)
-                           } =
+                                , reload: (_ /\ setReload)
+                                , session
+                                , tree: (NTree (LNode {id, parent_id}) _)
+                                } =
   do
     case nt of
          GT.NodePublic GT.FolderPublic -> void $ deleteNode session nt id
@@ -287,10 +287,10 @@ performAction (DoSearch task) { reload: (_ /\ setReload)
 
 -------
 performAction (UpdateNode params) { reload: (_ /\ setReload)
-                                , session
-                                , tasks: {onTaskAdd}
-                                , tree: (NTree (LNode {id}) _)
-                                } =
+                                  , session
+                                  , tasks: {onTaskAdd}
+                                  , tree: (NTree (LNode {id}) _)
+                                  } =
   do
     task <- updateRequest params session id
     liftEffect $ onTaskAdd task

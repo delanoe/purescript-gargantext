@@ -442,31 +442,33 @@ data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
 
 derive instance eqCTabNgramType :: Eq CTabNgramType
 derive instance ordCTabNgramType :: Ord CTabNgramType
-
 instance showCTabNgramType :: Show CTabNgramType where
   show CTabTerms      = "Terms"
   show CTabSources    = "Sources"
   show CTabAuthors    = "Authors"
   show CTabInstitutes = "Institutes"
+instance encodeCTabNgramType :: EncodeJson CTabNgramType where
+  encodeJson t = encodeJson $ show t
 
 data PTabNgramType = PTabPatents | PTabBooks | PTabCommunication
 
 derive instance eqPTabNgramType :: Eq PTabNgramType
 derive instance ordPTabNgramType :: Ord PTabNgramType
-
 instance showPTabNgramType :: Show PTabNgramType where
   show PTabPatents       = "Patents"
   show PTabBooks         = "Books"
   show PTabCommunication = "Communication"
+instance encodePTabNgramType :: EncodeJson PTabNgramType where
+  encodeJson t = encodeJson $ show t
 
 data TabSubType a = TabDocs | TabNgramType a | TabTrash | TabMoreLikeFav | TabMoreLikeTrash
 
 derive instance eqTabSubType :: Eq a => Eq (TabSubType a)
 derive instance ordTabSubType :: Ord a => Ord (TabSubType a)
-{- instance encodeTabSubType a :: EncodeJson a => EncodeJson (TabSubType a) where
+instance encodeTabSubType :: EncodeJson a => EncodeJson (TabSubType a) where
   encodeJson TabDocs =
        "type" := "TabDocs"
-    ~> "data" := Nothing
+    ~> "data" := (Nothing :: Maybe String)
     ~> jsonEmptyObject
   encodeJson (TabNgramType a) =
        "type" := "TabNgramType"
@@ -474,16 +476,17 @@ derive instance ordTabSubType :: Ord a => Ord (TabSubType a)
     ~> jsonEmptyObject
   encodeJson TabTrash =
        "type" := "TabTrash"
-    ~> "data" := Nothing
+    ~> "data" := (Nothing :: Maybe String)
     ~> jsonEmptyObject
   encodeJson TabMoreLikeFav =
        "type" := "TabMoreLikeFav"
-    ~> "data" := Nothing
+    ~> "data" := (Nothing :: Maybe String)
     ~> jsonEmptyObject
   encodeJson TabMoreLikeTrash =
        "type" := "TabMoreLikeTrash"
-    ~> "data" := Nothing
+    ~> "data" := (Nothing :: Maybe String)
     ~> jsonEmptyObject
+{-
 instance decodeTabSubType a :: DecodeJson a => DecodeJson (TabSubType a) where
   decodeJson j = do
     obj <- decodeJson j
@@ -514,19 +517,26 @@ derive instance eqTabType :: Eq TabType
 derive instance ordTabType :: Ord TabType
 instance showTabType :: Show TabType where
   show = genericShow
-{- instance encodeTabType :: EncodeJson TabType where
-  encodeJson (TabCorpus d) = 
-       "type"  := "TabCorpus"
-    ~> "data"  := encodeJson d
-    ~> jsonEmptyObject
-  encodeJson (TabDocument d) = 
-       "type"  := "TabDocument"
-    ~> "data"  := encodeJson d
-    ~> jsonEmptyObject
-  encodeJson (TabPairing d) = 
-       "type"  := "TabPairing"
-    ~> "data"  := encodeJson d
-    ~> jsonEmptyObject
+instance encodeTabType :: EncodeJson TabType where
+  encodeJson (TabCorpus TabDocs)                         = encodeJson "Docs"
+  encodeJson (TabCorpus (TabNgramType CTabAuthors))      = encodeJson "Authors"
+  encodeJson (TabCorpus (TabNgramType CTabInstitutes))   = encodeJson "Institutes"
+  encodeJson (TabCorpus (TabNgramType CTabSources))      = encodeJson "Sources"
+  encodeJson (TabCorpus (TabNgramType CTabTerms))        = encodeJson "Terms"
+  encodeJson (TabCorpus TabMoreLikeFav)                  = encodeJson "MoreFav"
+  encodeJson (TabCorpus TabMoreLikeTrash)                = encodeJson "MoreTrash"
+  encodeJson (TabCorpus TabTrash)                        = encodeJson "Trash"
+  encodeJson (TabDocument TabDocs)                       = encodeJson "Docs"
+  encodeJson (TabDocument (TabNgramType CTabAuthors))    = encodeJson "Authors"
+  encodeJson (TabDocument (TabNgramType CTabInstitutes)) = encodeJson "Institutes"
+  encodeJson (TabDocument (TabNgramType CTabSources))    = encodeJson "Sources"
+  encodeJson (TabDocument (TabNgramType CTabTerms))      = encodeJson "Terms"
+  encodeJson (TabDocument TabMoreLikeFav)                = encodeJson "MoreFav"
+  encodeJson (TabDocument TabMoreLikeTrash)              = encodeJson "MoreTrash"
+  encodeJson (TabDocument TabTrash)                      = encodeJson "Trash"
+  encodeJson (TabPairing d)                              = encodeJson "TabPairing"  -- TODO
+-- ["Docs","Trash","MoreFav","MoreTrash","Terms","Sources","Authors","Institutes","Contacts"]
+{-
 instance decodeTabType :: DecodeJson TabType where
   decodeJson j = do
     obj <- decodeJson j
@@ -571,12 +581,13 @@ modeFromString _            = Nothing
 -- Async tasks
 
 -- corresponds to /add/form/async or /add/query/async
-data AsyncTaskType = Form
-                   | UploadFile
+data AsyncTaskType = AddNode
+                   | Form
                    | GraphRecompute
                    | Query
-                   | AddNode
+                   | UpdateNgramsCharts
                    | UpdateNode
+                   | UploadFile
 
 derive instance genericAsyncTaskType :: Generic AsyncTaskType _
 instance eqAsyncTaskType :: Eq AsyncTaskType where
@@ -589,20 +600,23 @@ instance decodeJsonAsyncTaskType :: DecodeJson AsyncTaskType where
   decodeJson json = do
     obj <- decodeJson json
     case obj of
-      "Form"           -> pure Form
-      "UploadFile"     -> pure UploadFile
-      "GraphRecompute" -> pure GraphRecompute
-      "Query"          -> pure Query
-      "AddNode"        -> pure AddNode
-      s                -> Left $ AtKey s $ TypeMismatch "Unknown string"
+      "AddNode"            -> pure AddNode
+      "Form"               -> pure Form
+      "GraphRecompute"     -> pure GraphRecompute
+      "Query"              -> pure Query
+      "UpdateNgramsCharts" -> pure UpdateNgramsCharts
+      "UpdateNode"         -> pure UpdateNode
+      "UploadFile"         -> pure UploadFile
+      s                    -> Left $ AtKey s $ TypeMismatch "Unknown string"
 
 asyncTaskTypePath :: AsyncTaskType -> String
-asyncTaskTypePath Form           = "add/form/async/"
-asyncTaskTypePath UploadFile     = "async/file/add/"
-asyncTaskTypePath Query          = "query/"
-asyncTaskTypePath GraphRecompute = "async/recompute/"
-asyncTaskTypePath AddNode        = "async/nobody/"
-asyncTaskTypePath UpdateNode     = "update/"
+asyncTaskTypePath AddNode            = "async/nobody/"
+asyncTaskTypePath Form               = "add/form/async/"
+asyncTaskTypePath GraphRecompute     = "async/recompute/"
+asyncTaskTypePath Query              = "query/"
+asyncTaskTypePath UpdateNgramsCharts = "async/charts/update/"
+asyncTaskTypePath UpdateNode         = "update/"
+asyncTaskTypePath UploadFile         = "async/file/add/"
 
 
 type AsyncTaskID = String

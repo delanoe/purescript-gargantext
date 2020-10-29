@@ -3,7 +3,9 @@ module Gargantext.Components.Nodes.Lists where
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Reactix as R
+import Record as Record
 ------------------------------------------------------------------------
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
@@ -22,8 +24,9 @@ thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
 
 type Props = (
-    nodeId :: Int
-  , session :: Session
+    asyncTasks    :: R.State GAT.Storage
+  , nodeId        :: Int
+  , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
   )
 
@@ -33,10 +36,10 @@ listsLayout props = R.createElement listsLayoutCpt props []
 listsLayoutCpt :: R.Component Props
 listsLayoutCpt = R.hooksComponentWithModule thisModule "listsLayout" cpt
   where
-    cpt path@{ nodeId, session, sessionUpdate } _ = do
+    cpt path@{ nodeId, session } _ = do
       let sid = sessionId session
 
-      pure $ listsLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session, sessionUpdate }
+      pure $ listsLayoutWithKey $ Record.merge path { key: show sid <> "-" <> show nodeId }
 
 type KeyProps = (
   key :: String
@@ -49,7 +52,7 @@ listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 listsLayoutWithKeyCpt :: R.Component KeyProps
 listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
   where
-    cpt { nodeId, session, sessionUpdate } _ = do
+    cpt { asyncTasks, nodeId, session, sessionUpdate } _ = do
       let path = { nodeId, session }
 
       cacheState <- R.useState' $ getCacheState NT.CacheOn session nodeId
@@ -69,7 +72,8 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
               , title: "Corpus " <> name
               , user: authors }
           , Tabs.tabs {
-               cacheState
+               asyncTasks
+             , cacheState
              , corpusData
              , corpusId
              , session }

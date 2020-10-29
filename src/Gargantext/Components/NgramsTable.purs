@@ -22,15 +22,17 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log)
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 import Unsafe.Coerce (unsafeCoerce)
 
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.NgramsTable.Components as NTC
@@ -279,6 +281,7 @@ tableContainerCpt { dispatch
 -- NEXT
 type Props =
   ( afterSync    :: Unit -> Aff Unit
+  , asyncTasks    :: R.State GAT.Storage
   , path         :: R.State PageParams
   , state        :: R.State State
   , tabNgramType :: CTabNgramType
@@ -293,6 +296,7 @@ loadedNgramsTableCpt :: R.Component Props
 loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable" cpt
   where
     cpt { afterSync
+        , asyncTasks
         , path: path@(path'@{ searchQuery, scoreType, params, termListFilter, termSizeFilter } /\ setPath)
         , state: (state@{ ngramsChildren
                         , ngramsLocalPatch
@@ -357,7 +361,12 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                 s { ngramsSelection = Set.empty :: Set NgramsTerm }
               else
                 s { ngramsSelection = selectNgramsOnFirstPage filteredRows }
-        performAction (Synchronize { afterSync }) = syncPatches path' (state /\ setState) afterSync
+        performAction (Synchronize { afterSync }) = do
+          syncPatches path' (state /\ setState) afterSync
+          launchAff_ $ do
+            task <- postNgramsChartsAsync path'
+            liftEffect $ do
+              log2 "[performAction] Synchronize task" task
         performAction (CommitPatch pt) =
           commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
         performAction ResetPatches =
@@ -518,8 +527,9 @@ selectNgramsOnFirstPage :: PreConversionRows -> Set NgramsTerm
 selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ngrams) <$> rows
 
 
-type MainNgramsTableProps =
-  ( afterSync     :: Unit -> Aff Unit
+type MainNgramsTableProps = (
+    afterSync     :: Unit -> Aff Unit
+  , asyncTasks    :: R.State GAT.Storage
   , cacheState    :: R.State NT.CacheState
   , defaultListId :: Int
   , nodeId        :: Int
@@ -537,6 +547,7 @@ mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
   where
     cpt props@{ afterSync
+              , asyncTasks
               , cacheState
               , defaultListId
               , nodeId
@@ -546,7 +557,12 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
               , withAutoUpdate } _ = do
       let path = initialPageParams session nodeId [defaultListId] tabType
 
-      let render versioned = mainNgramsTablePaint { afterSync, path, tabNgramType, versioned, withAutoUpdate }
+      let render versioned = mainNgramsTablePaint { afterSync
+                                                  , asyncTasks
+                                                  , path
+                                                  , tabNgramType
+                                                  , versioned
+                                                  , withAutoUpdate }
 
       case cacheState of
         (NT.CacheOn /\ _) ->
@@ -588,8 +604,9 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
     pathNoLimit path@{ params } = path { params = params { limit = 100000 }
                                        , termListFilter = Nothing }
 
-type MainNgramsTablePaintProps =
-  ( afterSync      :: Unit -> Aff Unit
+type MainNgramsTablePaintProps = (
+    afterSync      :: Unit -> Aff Unit
+  , asyncTasks    :: R.State GAT.Storage
   , path           :: PageParams
   , tabNgramType   :: CTabNgramType
   , versioned      :: VersionedNgramsTable
@@ -602,12 +619,13 @@ mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
 mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
   where
-    cpt { afterSync, path, tabNgramType, versioned, withAutoUpdate } _ = do
+    cpt props@{ afterSync, asyncTasks, path, tabNgramType, versioned, withAutoUpdate } _ = do
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
 
       pure $ loadedNgramsTable {
         afterSync
+      , asyncTasks
       , path: pathS
       , state
       , tabNgramType

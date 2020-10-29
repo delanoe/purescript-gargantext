@@ -22,13 +22,14 @@ thisModule :: String
 thisModule = "Gargantext.Components.Forest"
 
 type Props =
-  ( backend   :: R.State (Maybe Backend)
-  , frontends :: Frontends
-  , handed    :: Handed
-  , reload    :: R.State Int
-  , route     :: AppRoute
-  , sessions  :: Sessions
-  , showLogin :: R.Setter Boolean
+  ( asyncTasks :: R.State GAT.Storage
+  , backend    :: R.State (Maybe Backend)
+  , frontends  :: Frontends
+  , handed     :: Handed
+  , reload     :: R.State Int
+  , route      :: AppRoute
+  , sessions   :: Sessions
+  , showLogin  :: R.Setter Boolean
   )
 
 forest :: Record Props -> R.Element
@@ -36,11 +37,10 @@ forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
 forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
-  cpt { frontends, handed, reload: extReload, route, sessions, showLogin, backend} _ = do
+  cpt { asyncTasks, frontends, handed, reload: extReload, route, sessions, showLogin, backend} _ = do
     -- NOTE: this is a hack to reload the tree view on demand
     reload     <- R.useState' (0 :: Reload)
     openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
-    asyncTasks <- R2.useLocalStorageState GAT.localStorageKey GAT.empty
     R2.useCache
       (  frontends
       /\ route

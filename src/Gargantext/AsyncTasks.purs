@@ -5,9 +5,11 @@ import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
+import Data.Tuple (snd)
 import DOM.Simple.Console (log2)
 import Effect (Effect)
+import Reactix as R
 import Web.Storage.Storage as WSS
 
 import Gargantext.Prelude
@@ -19,7 +21,9 @@ import Gargantext.Utils.Reactix as R2
 localStorageKey :: String
 localStorageKey = "garg-async-tasks"
 
-type Storage = Map.Map Int (Array GT.AsyncTaskWithType)
+
+type NodeId = Int
+type Storage = Map.Map NodeId (Array GT.AsyncTaskWithType)
 
 empty :: Storage
 empty = Map.empty
@@ -40,3 +44,26 @@ getAsyncTasks = R2.getls >>= WSS.getItem localStorageKey >>= handleMaybe
 removeTaskFromList :: Array GT.AsyncTaskWithType -> GT.AsyncTaskWithType -> Array GT.AsyncTaskWithType
 removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) =
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
+
+type ReductorProps = (
+    reload  :: R.State Int
+  , storage :: Storage
+  )
+
+useTasks :: R.State Int -> R.Hooks (R2.Reductor (Record ReductorProps) Action)
+useTasks reload = R2.useReductor act (const { reload, storage: getAsyncTasks }) unit
+  where
+    act :: R2.Actor (Record ReductorProps) Action
+    act a s = action s a
+
+data Action =
+    Insert NodeId GT.AsyncTaskWithType
+  | Remove NodeId GT.AsyncTaskWithType
+
+action :: Record ReductorProps -> Action -> Effect Storage
+action { reload, storage } (Insert id t) = do
+  snd reload $ (_ + 1)
+  pure $ Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) id storage
+action { reload, storage } (Remove id t) = do
+  snd reload $ (_ + 1)
+  pure $ Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) id storage

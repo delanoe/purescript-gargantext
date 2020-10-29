@@ -11,6 +11,7 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
@@ -27,11 +28,13 @@ import Gargantext.Utils.Reactix as R2
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
 
-type Props = ( cacheState :: R.State NTypes.CacheState
-             , corpusData :: CorpusData
-             , corpusId   :: Int
-             , session    :: Session
-             )
+type Props = (
+    asyncTasks    :: R.State GAT.Storage
+  , cacheState :: R.State NTypes.CacheState
+  , corpusData :: CorpusData
+  , corpusId   :: Int
+  , session    :: Session
+  )
 
 tabs :: Record Props -> R.Element
 tabs props = R.createElement tabsCpt props []
@@ -39,7 +42,7 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component Props
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
-    cpt { cacheState, corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do
+    cpt { asyncTasks, cacheState, corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do
       (selected /\ setSelected) <- R.useState' 0
 
       pure $ Tab.tabs { selected, tabs: tabs' }
@@ -48,7 +51,7 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                 , "Institutes" /\ view Institutes
                 , "Sources"    /\ view Sources
                 , "Terms"      /\ view Terms ]
-        view mode = ngramsView { cacheState, corpusData, corpusId, mode, session }
+        view mode = ngramsView { asyncTasks, cacheState, corpusData, corpusId, mode, session }
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
@@ -58,7 +61,8 @@ ngramsView props = R.createElement ngramsViewCpt props []
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
   where
-    cpt { cacheState
+    cpt { asyncTasks
+        , cacheState
         , corpusData: { defaultListId }
         , corpusId
         , mode
@@ -70,6 +74,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
       pure $ R.fragment
         ( charts tabNgramType chartType chartsReload
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
+                                , asyncTasks
                                 , cacheState
                                 , defaultListId
                                 , nodeId: corpusId

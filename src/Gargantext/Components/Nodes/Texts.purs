@@ -25,6 +25,7 @@ import Gargantext.Sessions (Session, Sessions, sessionId, getCacheState, setCach
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Texts"
 --------------------------------------------------------
 
