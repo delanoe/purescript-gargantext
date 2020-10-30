@@ -15,6 +15,7 @@ module Gargantext.Components.NgramsTable.Core
   , NgramsTerm
   , normNgram
   , ngramsTermText
+  , findNgramRoot
   , findNgramTermList
   , Version
   , Versioned(..)
@@ -760,8 +761,14 @@ isEmptyNgramsTablePatch {ngramsPatches} = isEmptyPatchMap ngramsPatches
 fromNgramsPatches :: NgramsPatches -> NgramsTablePatch
 fromNgramsPatches ngramsPatches = {ngramsPatches}
 
+findNgramRoot :: NgramsTable -> NgramsTerm -> NgramsTerm
+findNgramRoot (NgramsTable m) n =
+  fromMaybe n (m.ngrams_repo_elements ^? at n <<< _Just <<< _NgramsRepoElement <<< _root <<< _Just)
+
 findNgramTermList :: NgramsTable -> NgramsTerm -> Maybe TermList
-findNgramTermList (NgramsTable m) n = m.ngrams_repo_elements ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
+findNgramTermList (NgramsTable m) n = m.ngrams_repo_elements ^? at r <<< _Just <<< _NgramsRepoElement <<< _list
+  where
+    r = findNgramRoot (NgramsTable m) n
 
 singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
 singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap n p
