@@ -23,8 +23,8 @@ import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
-import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Texts"
 --------------------------------------------------------
 

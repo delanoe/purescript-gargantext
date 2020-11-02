@@ -17,7 +17,6 @@ import Gargantext.Components.Nodes.Lists.Types as NTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
-import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
