@@ -16,17 +16,16 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
-import Data.Sequence as Seq
+import Data.Sequence (Seq, length) as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), snd)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -44,11 +43,12 @@ import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
-import Gargantext.Utils (queryMatchesLabel, toggleSet)
+import Gargantext.Utils (queryMatchesLabel, toggleSet, sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Seq as Seq
+import Gargantext.Utils.Seq (mapMaybe) as Seq
 
+thisModule :: String
 thisModule = "Gargantext.Components.NgramsTable"
 
 type State' =
@@ -105,7 +105,7 @@ initialState (Versioned {version}) = {
 
 setTermListSetA :: NgramsTable -> Set NgramsTerm -> TermList -> Action
 setTermListSetA ngramsTable ns new_list =
-  CommitPatch $ fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
+  CoreAction $ CommitPatch $ fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
   where
     f :: NgramsTerm -> Unit -> NgramsPatch
     f n unit = NgramsPatch { patch_list, patch_children: mempty }
@@ -117,9 +117,6 @@ setTermListSetA ngramsTable ns new_list =
     -- TODO https://github.com/purescript/purescript-ordered-collections/pull/21
     --      https://github.com/purescript/purescript-ordered-collections/pull/31
     -- toMap = Map.fromFoldable
-
-addNewNgramA :: NgramsTerm -> Action
-addNewNgramA ngram = CommitPatch $ addNewNgram ngram CandidateTerm
 
 type PreConversionRows = Seq.Seq NgramsElement
 
@@ -159,8 +156,10 @@ tableContainerCpt { dispatch
                     H.li { className: "list-group-item" } [
                       H.button { className: "btn btn-primary"
                                 , on: { click: const $ dispatch
+                                      $ CoreAction
                                       $ addNewNgramA
-                                      $ normNgram tabNgramType searchQuery
+                                          (normNgram tabNgramType searchQuery)
+                                          CandidateTerm
                                       }
                                 }
                       [ H.text ("Add " <> searchQuery) ]
@@ -307,8 +306,13 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
         , versioned: Versioned { data: initTable }
         , withAutoUpdate } _ = do
 
+      let syncResetBtns = [syncResetButtons { afterSync: chartsAfterSync
+                                            , ngramsLocalPatch
+                                            , performAction: performAction <<< CoreAction
+                                            }]
+
       pure $ R.fragment $
-        autoUpdate <> [syncResetButtons { afterSync, ngramsLocalPatch, performAction }] <> [
+        autoUpdate <> syncResetBtns <> [
           H.h4 {style: {textAlign : "center"}} [
               H.span {className: "glyphicon glyphicon-hand-down"} []
             , H.text "Extracted Terms"
@@ -331,13 +335,19 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                                              , ngramsSelection
                                              }
                   }
-        ] <> [syncResetButtons { afterSync, ngramsLocalPatch, performAction }]
+        ] <> syncResetBtns
       where
+        chartsAfterSync _ = do
+          task <- postNgramsChartsAsync path'
+          liftEffect $ do
+            log2 "[performAction] Synchronize task" task
+            snd asyncTasks $ GAT.Insert nodeId task
+
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then
                        [ R2.buff $ autoUpdateElt {
                               duration: 5000
-                            , effect: performAction $ Synchronize { afterSync }
+                            , effect: performAction $ CoreAction $ Synchronize { afterSync: chartsAfterSync }
                             } ]
                      else []
 
@@ -361,17 +371,6 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                 s { ngramsSelection = Set.empty :: Set NgramsTerm }
               else
                 s { ngramsSelection = selectNgramsOnFirstPage filteredRows }
-        performAction (Synchronize { afterSync }) = do
-          syncPatches path' (state /\ setState) afterSync
-          launchAff_ $ do
-            task <- postNgramsChartsAsync path'
-            liftEffect $ do
-              log2 "[performAction] Synchronize task" task
-              snd asyncTasks $ GAT.Insert nodeId task
-        performAction (CommitPatch pt) =
-          commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
-        performAction ResetPatches =
-          setState $ \s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }
         performAction AddTermChildren =
           case ngramsParent of
             Nothing ->
@@ -383,6 +382,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                   pt = singletonNgramsTablePatch parent pe
               setState $ setParentResetChildren Nothing
               commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
+        performAction (CoreAction a) = coreDispatch path' (state /\ setState) a
 
         totalRecords = Seq.length rows
         filteredConvertedRows :: T.Rows
@@ -433,10 +433,10 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
           }
         orderWith =
           case convOrderBy <$> params.orderBy of
-            Just ScoreAsc  -> Seq.sortWith \x -> x        ^. _NgramsElement <<< _occurrences
-            Just ScoreDesc -> Seq.sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
-            Just TermAsc   -> Seq.sortWith \x -> x        ^. _NgramsElement <<< _ngrams
-            Just TermDesc  -> Seq.sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
+            Just ScoreAsc  -> sortWith \x -> x        ^. _NgramsElement <<< _occurrences
+            Just ScoreDesc -> sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
+            Just TermAsc   -> sortWith \x -> x        ^. _NgramsElement <<< _ngrams
+            Just TermDesc  -> sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
             _              -> identity -- the server ordering is enough here
 
         colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
@@ -452,41 +452,6 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                                  , searchQuery: searchQuery }
         setSearchQuery :: String -> Effect Unit
         setSearchQuery x    = setPath $ _ { searchQuery    = x }
-
-
-type SyncResetButtonsProps = (
-    afterSync :: Unit -> Aff Unit
-  , ngramsLocalPatch :: NgramsTablePatch
-  , performAction :: Action -> Effect Unit
-  )
-
-syncResetButtons :: Record SyncResetButtonsProps -> R.Element
-syncResetButtons p = R.createElement syncResetButtonsCpt p []
-
-syncResetButtonsCpt :: R.Component SyncResetButtonsProps
-syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
-  where
-    cpt { afterSync, ngramsLocalPatch, performAction } _ = do
-      synchronizing@(s /\ _) <- R.useState' false
-
-      let hasChanges = ngramsLocalPatch /= mempty
-
-      pure $ H.div {} [
-        H.button { className: "btn btn-danger " <> if hasChanges then "" else " disabled"
-                 , on: { click: \_ -> performAction ResetPatches }
-                 } [ H.text "Reset" ]
-      , H.button { className: "btn btn-primary " <> (if s || (not hasChanges) then "disabled" else "")
-                 , on: { click: synchronize synchronizing }
-                 } [ H.text "Sync" ]
-        ]
-      where
-        synchronize (_ /\ setSynchronizing) _ = delay unit $ \_ -> do
-          setSynchronizing $ const true
-          performAction $ Synchronize { afterSync: newAfterSync }
-          where
-            newAfterSync x = do
-              afterSync x
-              liftEffect $ setSynchronizing $ const false
 
 
 displayRow :: State -> SearchQuery -> NgramsTable -> Maybe NgramsTerm -> Maybe TermList -> Maybe TermSize -> NgramsElement -> Boolean
@@ -557,7 +522,6 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
               , tabType
               , withAutoUpdate } _ = do
       let path = initialPageParams session nodeId [defaultListId] tabType
-
       let render versioned = mainNgramsTablePaint { afterSync
                                                   , asyncTasks
                                                   , path
@@ -566,7 +530,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
                                                   , withAutoUpdate }
 
       case cacheState of
-        (NT.CacheOn /\ _) ->
+        (NT.CacheOn /\ _) -> do
           useLoaderWithCacheAPI {
               cacheEndpoint: versionEndpoint props
             , handleResponse
@@ -574,16 +538,36 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
             , path
             , renderer: render
             }
-        (NT.CacheOff /\ _) ->
+        (NT.CacheOff /\ _) -> do
           useLoader path loader render
 
     versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
     versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
 
+    -- NOTE With cache off
     loader :: PageParams -> Aff VersionedNgramsTable
-    loader path@{ listIds, nodeId, session, tabType } =
-      get session $ R.GetNgramsTableAll { listIds, tabType } (Just nodeId)
+    loader path@{ listIds
+                , nodeId
+                , params: { limit, offset, orderBy }
+                , searchQuery
+                , session
+                , tabType
+                , termListFilter
+                , termSizeFilter
+                } =
+      get session $ R.GetNgrams params (Just nodeId)
+      where
+        params = { limit
+                 , listIds
+                 , offset: Just offset
+                 , orderBy: Nothing  -- TODO
+                 , searchQuery
+                 , tabType
+                 , termListFilter
+                 , termSizeFilter
+                 }
 
+    -- NOTE With cache on
     mkRequest :: PageParams -> GUC.Request
     mkRequest path@{ session } = GUC.makeGetRequest session $ url path
       where
@@ -601,13 +585,9 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
     handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
     handleResponse v = v
 
-    pathNoLimit :: PageParams -> PageParams
-    pathNoLimit path@{ params } = path { params = params { limit = 100000 }
-                                       , termListFilter = Nothing }
-
 type MainNgramsTablePaintProps = (
     afterSync      :: Unit -> Aff Unit
-  , asyncTasks    :: GAT.Reductor
+  , asyncTasks     :: GAT.Reductor
   , path           :: PageParams
   , tabNgramType   :: CTabNgramType
   , versioned      :: VersionedNgramsTable
@@ -628,6 +608,34 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
         afterSync
       , asyncTasks
       , path: pathS
+      , state
+      , tabNgramType
+      , versioned
+      , withAutoUpdate
+      }
+
+type MainNgramsTablePaintWithStateProps = (
+    afterSync      :: Unit -> Aff Unit
+  , asyncTasks     :: GAT.Reductor
+  , path           :: R.State PageParams
+  , tabNgramType   :: CTabNgramType
+  , versioned      :: VersionedNgramsTable
+  , withAutoUpdate :: Boolean
+  )
+
+mainNgramsTablePaintWithState :: Record MainNgramsTablePaintWithStateProps -> R.Element
+mainNgramsTablePaintWithState p = R.createElement mainNgramsTablePaintWithStateCpt p []
+
+mainNgramsTablePaintWithStateCpt :: R.Component MainNgramsTablePaintWithStateProps
+mainNgramsTablePaintWithStateCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintWithState" cpt
+  where
+    cpt { afterSync, asyncTasks, path, tabNgramType, versioned, withAutoUpdate } _ = do
+      state <- R.useState' $ initialState versioned
+
+      pure $ loadedNgramsTable {
+        afterSync
+      , asyncTasks
+      , path
       , state
       , tabNgramType
       , versioned

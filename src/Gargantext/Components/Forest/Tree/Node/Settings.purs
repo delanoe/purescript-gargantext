@@ -126,6 +126,7 @@ settingsBox Team =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
+                                , NodeFrameCode
                                 ]
                           , Share
                           , Delete
@@ -315,6 +316,22 @@ settingsBox NodeFrameCalc =
                           , Delete
                           ]
               }
+
+settingsBox NodeFrameCode =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation NodeFrameCode
+              , buttons : [ Add [ NodeFrameCalc
+                                , NodeFrameWrite
+                                , NodeFrameCode
+                                ]
+                          , Move moveFrameParameters
+                          , Delete
+                          ]
+              }
+
+
+
 
 
 settingsBox NodeFile =

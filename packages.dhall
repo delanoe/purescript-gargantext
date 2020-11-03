@@ -1,5 +1,5 @@
 let upstream =
-  ./packages-0.13.8-20200822.dhall
+  https://github.com/purescript/package-sets/releases/download/psc-0.13.8-20201021/packages.dhall
 
 let overrides =
       { thermite =

@@ -91,13 +91,14 @@ annuaireCpt = R.hooksComponentWithModule thisModule "annuaire" cpt
     cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ = do
       pagePath <- R.useState' $ initialPagePath (fst path)
 
-      cacheState <- R.useState' NT.CacheOn
+      cacheState <- R.useState' NT.CacheOff
 
       pure $ R.fragment
         [ T.tableHeaderLayout { afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
                               , cacheState
                               , date
                               , desc: name
+                              , key: "annuaire-" <> (show $ fst cacheState)
                               , query: ""
                               , title: name
                               , user: "" }

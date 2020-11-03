@@ -235,7 +235,7 @@ sigmaSettings =
   , defaultHoverLabelBGColor: "#fff"
   , defaultHoverLabelColor: "#000"
   , defaultLabelColor: "#000"         -- labels text color
-  , defaultLabelSize: 8.0                -- (old tina: showLabelsIfZoom)
+  , defaultLabelSize: 15.0                -- (old tina: showLabelsIfZoom)
   , defaultNodeBorderColor : "#000"   -- <- if nodeBorderColor = 'default'
   , defaultNodeColor: "#FFF"
   , doubleClickEnabled: false -- indicates whether or not the graph can be zoomed on double-click

@@ -1,10 +1,7 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
-import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -36,10 +33,15 @@ type Props = (
   , session    :: Session
   )
 
-tabs :: Record Props -> R.Element
+type PropsWithKey = (
+  key        :: String
+  | Props
+  )
+
+tabs :: Record PropsWithKey -> R.Element
 tabs props = R.createElement tabsCpt props []
 
-tabsCpt :: R.Component Props
+tabsCpt :: R.Component PropsWithKey
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
     cpt { asyncTasks, cacheState, corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do

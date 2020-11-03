@@ -23,7 +23,7 @@ import Gargantext.Utils.Reactix as R2
 thisModule = "Gargantext.Components.Nodes.Frame"
 
 data Hyperdata =
-  Hyperdata { base :: String
+  Hyperdata { base     :: String
             , frame_id :: String
             }
 
@@ -38,8 +38,8 @@ instance decodeJsonHyperdata :: Argonaut.DecodeJson Hyperdata where
 -- TODO
 --  decodeJson = genericSumDecodeJson
   decodeJson json = do
-    obj <- decodeJson json
-    base <- obj .: "base"
+    obj      <- decodeJson json
+    base     <- obj .: "base"
     frame_id <- obj .: "frame_id"
     pure $ Hyperdata {base, frame_id}
 
@@ -49,8 +49,9 @@ instance encodeJsonHyperdata :: Argonaut.EncodeJson Hyperdata where
 
 
 type Props =
-  ( nodeId  :: Int
-  , session :: Session
+  ( nodeId   :: Int
+  , session  :: Session
+  , nodeType :: NodeType
   )
 
 type Reload = R.State Int
@@ -66,10 +67,10 @@ frameLayout props = R.createElement frameLayoutCpt props []
 frameLayoutCpt :: R.Component Props
 frameLayoutCpt = R.hooksComponentWithModule thisModule "frameLayout" cpt
   where
-    cpt {nodeId, session} _ = do
+    cpt {nodeId, session, nodeType} _ = do
       let sid = sessionId session
 
-      pure $ frameLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
+      pure $ frameLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session, nodeType}
 
 frameLayoutWithKey :: Record KeyProps -> R.Element
 frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []
@@ -77,11 +78,11 @@ frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []
 frameLayoutWithKeyCpt :: R.Component KeyProps
 frameLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "frameLayoutWithKey" cpt
   where
-    cpt { nodeId, session } _ = do
+    cpt { nodeId, session, nodeType} _ = do
       reload <- R.useState' 0
 
       useLoader {nodeId, reload: fst reload, session} loadframeWithReload $
-        \frame -> frameLayoutView {frame, nodeId, reload, session}
+        \frame -> frameLayoutView {frame, nodeId, reload, session, nodeType}
 
 type ViewProps =
   ( frame  :: NodePoly Hyperdata
@@ -90,12 +91,12 @@ type ViewProps =
   )
 
 
-data FrameType = Calc | Write
 type Base = String
 type FrameId = String
 
-hframeUrl :: Base -> FrameId -> String
-hframeUrl base frame_id = base <> "/" <> frame_id <> "?both"
+hframeUrl :: NodeType -> Base -> FrameId -> String
+hframeUrl NodeFrameCode _    frame_id = frame_id  -- Temp fix : frame_id is currently the whole url created
+hframeUrl _             base frame_id = base <> "/" <> frame_id <> "?both"
 
 frameLayoutView :: Record ViewProps -> R.Element
 frameLayoutView props = R.createElement frameLayoutViewCpt props []
@@ -103,9 +104,9 @@ frameLayoutView props = R.createElement frameLayoutViewCpt props []
 frameLayoutViewCpt :: R.Component ViewProps
 frameLayoutViewCpt = R.hooksComponentWithModule thisModule "frameLayoutView" cpt
   where
-    cpt {frame: (NodePoly {hyperdata: Hyperdata {base, frame_id}}), nodeId, reload, session} _ = do
+    cpt {frame: (NodePoly {hyperdata: Hyperdata {base, frame_id}}), nodeId, reload, session, nodeType} _ = do
       pure $ H.div { className : "frame" }
-                   [ H.iframe { src: hframeUrl base frame_id
+                   [ H.iframe { src: hframeUrl nodeType base frame_id
                               , width: "100%"
                               , height: "100%"
                               } []

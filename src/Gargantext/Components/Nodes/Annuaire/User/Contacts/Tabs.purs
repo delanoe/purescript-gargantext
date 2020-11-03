@@ -18,7 +18,6 @@ import Gargantext.Components.Nodes.Lists.Types as NTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
-import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
@@ -78,11 +77,17 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
-              { frontends, session, nodeId, chart, totalRecords
-              , tabType: TabPairing TabDocs
-              , listId: defaultListId
+              { cacheState
+              , chart
               , corpusId: Nothing
-              , showSearch: true }
+              , frontends
+              , listId: defaultListId
+              , nodeId
+              , session
+              , showSearch: true
+              , tabType: TabPairing TabDocs
+              , totalRecords
+              }
 
 
 type NgramsViewTabsProps = (
