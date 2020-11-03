@@ -614,7 +614,7 @@ asyncTaskTypePath AddNode            = "async/nobody/"
 asyncTaskTypePath Form               = "add/form/async/"
 asyncTaskTypePath GraphRecompute     = "async/recompute/"
 asyncTaskTypePath Query              = "query/"
-asyncTaskTypePath UpdateNgramsCharts = "async/charts/update/"
+asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"
 asyncTaskTypePath UploadFile         = "async/file/add/"
 
