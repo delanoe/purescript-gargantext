@@ -30,16 +30,16 @@ type Props =
 type AnnotationMenu = {
     x :: Number
   , y :: Number
-  , onClose :: Unit -> Effect Unit
+  , onClose :: Effect Unit
   | Props
   }
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
-annotationMenu :: R.Setter (Maybe AnnotationMenu) -> AnnotationMenu -> R.Element
-annotationMenu setMenu { x,y,list,menuType, onClose,setList } =
-  CM.contextMenu { x,y, onClose, setMenu } [
-    R.createElement annotationMenuCpt {list,menuType,setList} []
+annotationMenu :: AnnotationMenu -> R.Element
+annotationMenu {x, y, list, menuType, onClose, setList} =
+  CM.contextMenu {x, y, onClose} [
+    R.createElement annotationMenuCpt {list, menuType, setList} []
   ]
 
 annotationMenuCpt :: R.Component Props
