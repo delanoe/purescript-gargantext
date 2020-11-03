@@ -20,7 +20,7 @@ import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log, log2)
 import Effect (Effect)
@@ -279,13 +279,13 @@ tableContainerCpt { dispatch
       ]
 
 -- NEXT
-type Props =
-  ( afterSync    :: Unit -> Aff Unit
-  , asyncTasks    :: R.State GAT.Storage
-  , path         :: R.State PageParams
-  , state        :: R.State State
-  , tabNgramType :: CTabNgramType
-  , versioned    :: VersionedNgramsTable
+type Props = (
+    afterSync      :: Unit -> Aff Unit
+  , asyncTasks     :: GAT.Reductor
+  , path           :: R.State PageParams
+  , state          :: R.State State
+  , tabNgramType   :: CTabNgramType
+  , versioned      :: VersionedNgramsTable
   , withAutoUpdate :: Boolean
   )
 
@@ -297,7 +297,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
   where
     cpt { afterSync
         , asyncTasks
-        , path: path@(path'@{ searchQuery, scoreType, params, termListFilter, termSizeFilter } /\ setPath)
+        , path: path@(path'@{ listIds, nodeId, params, searchQuery, scoreType, termListFilter, termSizeFilter } /\ setPath)
         , state: (state@{ ngramsChildren
                         , ngramsLocalPatch
                         , ngramsParent
@@ -367,6 +367,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
             task <- postNgramsChartsAsync path'
             liftEffect $ do
               log2 "[performAction] Synchronize task" task
+              snd asyncTasks $ GAT.Insert nodeId task
         performAction (CommitPatch pt) =
           commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
         performAction ResetPatches =
@@ -529,7 +530,7 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 
 type MainNgramsTableProps = (
     afterSync     :: Unit -> Aff Unit
-  , asyncTasks    :: R.State GAT.Storage
+  , asyncTasks    :: GAT.Reductor
   , cacheState    :: R.State NT.CacheState
   , defaultListId :: Int
   , nodeId        :: Int
@@ -606,7 +607,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
 
 type MainNgramsTablePaintProps = (
     afterSync      :: Unit -> Aff Unit
-  , asyncTasks    :: R.State GAT.Storage
+  , asyncTasks    :: GAT.Reductor
   , path           :: PageParams
   , tabNgramType   :: CTabNgramType
   , versioned      :: VersionedNgramsTable

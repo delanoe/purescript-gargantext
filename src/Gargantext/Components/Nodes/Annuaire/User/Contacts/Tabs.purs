@@ -45,7 +45,7 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    asyncTasks    :: R.State GAT.Storage
+    asyncTasks    :: GAT.Reductor
   , cacheState :: R.State NTypes.CacheState
   , contactData :: ContactData
   , frontends :: Frontends
@@ -86,7 +86,7 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    asyncTasks    :: R.State GAT.Storage
+    asyncTasks    :: GAT.Reductor
   , cacheState :: R.State NTypes.CacheState
   , defaultListId :: Int
   , mode :: Mode

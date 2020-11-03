@@ -55,13 +55,13 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     showLogin  <- R.useState' false
     backend    <- R.useState' Nothing
 
-    showCorpus <- R.useState' false
-
     treeReload <- R.useState' 0
 
-    handed <- R.useState' GT.RightHanded
+    asyncTasks <- GAT.useTasks treeReload
 
-    asyncTasks <- R2.useLocalStorageState GAT.localStorageKey GAT.empty
+    showCorpus <- R.useState' false
+
+    handed <- R.useState' GT.RightHanded
 
     let backends          = fromFoldable defaultBackends
     let ff f session      = R.fragment [ f session, footer { session } ]
@@ -128,7 +128,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { asyncTasks, frontends, nodeId, session }
 
 type ForestLayoutProps =
-  ( asyncTasks :: R.State GAT.Storage
+  ( asyncTasks :: GAT.Reductor
   , backend   :: R.State (Maybe Backend)
   , child     :: R.Element
   , frontends :: Frontends

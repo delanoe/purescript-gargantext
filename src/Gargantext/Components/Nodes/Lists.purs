@@ -24,7 +24,7 @@ thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
 
 type Props = (
-    asyncTasks    :: R.State GAT.Storage
+    asyncTasks    :: GAT.Reductor
   , nodeId        :: Int
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit

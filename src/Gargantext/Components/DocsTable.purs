@@ -259,9 +259,9 @@ mock :: Boolean
 mock = false
 
 type PageParams =
-  { nodeId :: Int
+  { corpusId :: Maybe Int
   , listId :: Int
-  , corpusId :: Maybe Int
+  , nodeId :: Int
   , tabType :: TabType
   , query   :: Query
   , params :: T.Params}

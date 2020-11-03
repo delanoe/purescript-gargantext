@@ -22,7 +22,7 @@ thisModule :: String
 thisModule = "Gargantext.Components.Forest"
 
 type Props =
-  ( asyncTasks :: R.State GAT.Storage
+  ( asyncTasks :: GAT.Reductor
   , backend    :: R.State (Maybe Backend)
   , frontends  :: Frontends
   , handed     :: Handed
@@ -48,7 +48,7 @@ forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
       /\ fst openNodes
       /\ fst extReload
       /\ fst reload
-      /\ fst asyncTasks
+      /\ (fst asyncTasks).storage
       /\ handed
       )
       (cpt' openNodes asyncTasks reload showLogin backend)

@@ -16,15 +16,16 @@ import Gargantext.Sessions (Session, get)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar"
 
 
 data BarType = Bar | Pie
 
-type Props =
-  ( asyncTask :: GT.AsyncTaskWithType
+type Props = (
+    asyncTask :: GT.AsyncTaskWithType
   , barType   :: BarType
-  , corpusId  :: GT.ID
+  , nodeId    :: GT.ID
   , onFinish  :: Unit -> Effect Unit
   , session   :: Session
   )
@@ -38,7 +39,7 @@ asyncProgressBarCpt = R.hooksComponentWithModule thisModule "asyncProgressBar" c
   where
     cpt props@{ asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}})
               , barType
-              , corpusId
+              , nodeId
               , onFinish
               } _ = do
       (progress /\ setProgress) <- R.useState' 0.0
@@ -104,13 +105,14 @@ queryProgress :: Record Props -> Aff GT.AsyncProgress
 queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
                                                 , typ
                                                 }
-              , corpusId
+              , nodeId
               , session
               } = get session (p typ)
   where
     -- TODO refactor path
-    p GT.UpdateNode = NodeAPI GT.Node   (Just corpusId) $ path <> id <> "/poll?limit=1"
-    p _             = NodeAPI GT.Corpus (Just corpusId) $ path <> id <> "/poll?limit=1"
+    p GT.UpdateNode         = NodeAPI GT.Node   (Just nodeId) $ path <> id <> "/poll?limit=1"
+    p GT.UpdateNgramsCharts = NodeAPI GT.Node   (Just nodeId) $ path <> id <> "/poll?limit=1"
+    p _                     = NodeAPI GT.Corpus (Just nodeId) $ path <> id <> "/poll?limit=1"
     path = GT.asyncTaskTypePath typ
 
     -- TODO wait route: take the result if failure then message

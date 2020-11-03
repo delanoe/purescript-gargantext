@@ -5,7 +5,7 @@ import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Tuple (snd)
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -41,6 +41,9 @@ getAsyncTasks = R2.getls >>= WSS.getItem localStorageKey >>= handleMaybe
     parse  s = GU.mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
     decode j = GU.mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
 
+getTasks :: Record ReductorProps -> NodeId -> Array GT.AsyncTaskWithType
+getTasks { storage } nodeId = fromMaybe [] $ Map.lookup nodeId storage
+
 removeTaskFromList :: Array GT.AsyncTaskWithType -> GT.AsyncTaskWithType -> Array GT.AsyncTaskWithType
 removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) =
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
@@ -50,20 +53,27 @@ type ReductorProps = (
   , storage :: Storage
   )
 
-useTasks :: R.State Int -> R.Hooks (R2.Reductor (Record ReductorProps) Action)
-useTasks reload = R2.useReductor act (const { reload, storage: getAsyncTasks }) unit
+type Reductor = R2.Reductor (Record ReductorProps) Action
+
+useTasks :: R.State Int -> R.Hooks Reductor
+useTasks reload = R2.useReductor act initializer unit
   where
     act :: R2.Actor (Record ReductorProps) Action
     act a s = action s a
+    initializer _ = do
+      storage <- getAsyncTasks
+      pure { reload, storage }
 
 data Action =
     Insert NodeId GT.AsyncTaskWithType
   | Remove NodeId GT.AsyncTaskWithType
 
-action :: Record ReductorProps -> Action -> Effect Storage
-action { reload, storage } (Insert id t) = do
-  snd reload $ (_ + 1)
-  pure $ Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) id storage
-action { reload, storage } (Remove id t) = do
-  snd reload $ (_ + 1)
-  pure $ Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) id storage
+action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
+action { reload, storage } (Insert nodeId t) = do
+  _ <- snd reload $ (_ + 1)
+  let newStorage = Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) nodeId storage
+  pure { reload, storage: newStorage }
+action { reload, storage } (Remove nodeId t) = do
+  _ <- snd reload $ (_ + 1)
+  let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage
+  pure { reload, storage: newStorage }

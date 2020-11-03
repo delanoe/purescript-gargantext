@@ -6,11 +6,12 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Reactix as R
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Prelude (Unit, discard, identity, ($), (+))
 import Gargantext.Types (Reload)
 import Gargantext.Types as GT
-import Reactix as R
 
 
 type Tasks =
@@ -20,19 +21,14 @@ type Tasks =
   )
 
 tasksStruct :: Int
-            -> R.State GAT.Storage
+            -> GAT.Reductor
             -> R.State Reload
             -> Record Tasks
-tasksStruct id (asyncTasks /\ setAsyncTasks) (_ /\ setReload) =
+tasksStruct id ({ storage } /\ dispatch) (_ /\ setReload) =
   { onTaskAdd, onTaskFinish, tasks }
     where
-      tasks = maybe [] identity $ Map.lookup id asyncTasks
+      tasks = maybe [] identity $ Map.lookup id storage
 
-      onTaskAdd t = do
-        setReload (_ + 1)
-        setAsyncTasks $ Map.alter (maybe (Just [t])
-                      $ (\ts -> Just $ A.cons t ts)) id
+      onTaskAdd t = dispatch $ GAT.Insert id t
 
-      onTaskFinish t = do
-        setReload (_ + 1)
-        setAsyncTasks $ Map.alter (maybe Nothing $ (\ts -> Just $ GAT.removeTaskFromList ts t)) id
+      onTaskFinish t = dispatch $ GAT.Remove id t

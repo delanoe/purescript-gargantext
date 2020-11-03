@@ -109,9 +109,6 @@ select = createDOM "select"
 menu :: ElemFactory
 menu = createDOM "menu"
 
-effToggler :: forall e. R.State Boolean -> EffectFn1 e Unit
-effToggler (value /\ setValue) = mkEffectFn1 $ \_ -> setValue $ const $ not value
-
 keyCode :: forall event. event -> Effect Int
 keyCode = runEffectFn1 _keyCode
 

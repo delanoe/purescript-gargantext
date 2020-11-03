@@ -41,8 +41,9 @@ import Gargantext.Utils.Reactix as R2
 thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer"
 
-type LayoutProps =
-  ( asyncTasks :: R.State GAT.Storage
+type LayoutProps = (
+    asyncTasks    :: GAT.Reductor
+  , backend       :: R.State (Maybe Backend)
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
   , handed        :: Types.Handed
@@ -50,7 +51,6 @@ type LayoutProps =
   , session       :: Session
   , sessions      :: Sessions
   , showLogin     :: R.State Boolean
-  , backend       :: R.State (Maybe Backend)
   )
 
 type Props =
@@ -226,7 +226,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
 type TreeProps =
   (
-    asyncTasks    :: R.State GAT.Storage
+    asyncTasks    :: GAT.Reductor
   , backend       :: R.State (Maybe Backend)
   , frontends     :: Frontends
   , handed        :: Types.Handed

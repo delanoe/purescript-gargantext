@@ -29,7 +29,7 @@ thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    asyncTasks    :: R.State GAT.Storage
+    asyncTasks    :: GAT.Reductor
   , cacheState :: R.State NTypes.CacheState
   , corpusData :: CorpusData
   , corpusId   :: Int
