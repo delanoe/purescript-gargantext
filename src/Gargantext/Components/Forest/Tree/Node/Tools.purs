@@ -282,11 +282,19 @@ nodeLink p = R.createElement nodeLinkCpt p []
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
   where
-    cpt { frontends, id, isSelected, name, nodeType, session, handed, folderOpen} _ = do
+    cpt { folderOpen: (_ /\ setFolderOpen)
+        , frontends
+        , handed
+        , id
+        , isSelected
+        , name
+        , nodeType
+        , session
+        } _ = do
       popoverRef <- R.useRef null
 
       pure $
-        H.div { onClick: R2.effToggler folderOpen } 
+        H.div { on: { click: \_ -> setFolderOpen $ not } }
               [ H.a { data: { for: tooltipId
                             , tip: true
                             }

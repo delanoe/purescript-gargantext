@@ -10,6 +10,7 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Lang (LandingLang(..))
@@ -54,15 +55,18 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     showLogin  <- R.useState' false
     backend    <- R.useState' Nothing
 
-    showCorpus <- R.useState' false
-
     treeReload <- R.useState' 0
+
+    asyncTasks <- GAT.useTasks treeReload
+
+    showCorpus <- R.useState' false
 
     handed <- R.useState' GT.RightHanded
 
     let backends          = fromFoldable defaultBackends
     let ff f session      = R.fragment [ f session, footer { session } ]
-    let forested child    = forestLayout { child
+    let forested child    = forestLayout { asyncTasks
+                                         , child
                                          , frontends
                                          , handed
                                          , reload: treeReload
@@ -71,68 +75,69 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                                          , showLogin: snd showLogin
                                          , backend
                                          }
+    let defaultView _ = forested $ homeLayout { backend
+                                              , lang: LL_EN
+                                              , publicBackend
+                                              , sessions
+                                              , visible: showLogin
+                                              }
     let mCurrentRoute     = fst route
-    let withSession sid f = maybe' ( const $ forested
-                                           $ homeLayout { lang: LL_EN
-                                                        , backend
-                                                        , publicBackend
-                                                        , sessions
-                                                        , visible:showLogin
-                                                        }
-                                   )
-                                   (ff f)
-                                   (Sessions.lookup sid (fst sessions))
+    let withSession sid f = maybe' defaultView (ff f) (Sessions.lookup sid (fst sessions))
+
+    let sessionUpdate s = snd sessions $ Sessions.Update s
 
     pure $ case fst showLogin of
       true -> forested $ login { backend, backends, sessions, visible: showLogin }
       false ->
         case fst route of
-          Home  -> forested $ homeLayout {lang:LL_EN, backend, publicBackend, sessions, visible:showLogin}
-          Login -> login { backends, sessions, visible: showLogin, backend}
+          Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
+          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, asyncTasks, frontends, nodeId, session }
+          Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
+          Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
+          Document sid listId nodeId ->
+            withSession sid $
+              \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Nothing }
           Folder sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameWrite}
-          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameCalc }
-          RouteFrameCode  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameCode }
-          RouteFile sid nodeId -> withSession sid $ \session -> forested $ fileLayout { nodeId, session }
-          Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { nodeId, session, frontends }
-          Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { nodeId, session }
-          Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
-          Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
-          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { frontends, nodeId, session }
-          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, frontends, nodeId, session }
-          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
-          Document sid listId nodeId ->
-            withSession sid $
-              \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Nothing }
+          Home  -> forested $ homeLayout { backend, lang:LL_EN, publicBackend, sessions, visible: showLogin }
+          Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { asyncTasks, nodeId, session, sessionUpdate }
+          Login -> login { backend, backends, sessions, visible: showLogin }
           PGraphExplorer sid graphId ->
             withSession sid $
               \session ->
                 simpleLayout handed $
-                  explorerLayout { frontends
+                  explorerLayout { asyncTasks
+                                 , backend
+                                 , frontends
                                  , graphId
                                  , handed: fst handed
                                  , mCurrentRoute
                                  , session
                                  , sessions: (fst sessions)
                                  , showLogin
-                                 , backend
                                  --, treeReload
                                  }
+          RouteFile sid nodeId -> withSession sid $ \session -> forested $ fileLayout { nodeId, session }
+          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameCalc }
+          RouteFrameCode  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameCode }
+          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameWrite}
+          Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
+          Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { frontends, nodeId, session, sessionUpdate }
+          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { asyncTasks, frontends, nodeId, session }
 
 type ForestLayoutProps =
-  ( child     :: R.Element
+  ( asyncTasks :: GAT.Reductor
+  , backend   :: R.State (Maybe Backend)
+  , child     :: R.Element
   , frontends :: Frontends
   , handed    :: R.State GT.Handed
   , reload    :: R.State Int
   , route     :: AppRoute
   , sessions  :: Sessions
   , showLogin :: R.Setter Boolean
-  , backend   :: R.State (Maybe Backend)
   )
 
 forestLayout :: Record ForestLayoutProps -> R.Element
@@ -150,7 +155,7 @@ forestLayoutMain props = R.createElement forestLayoutMainCpt props []
 forestLayoutMainCpt :: R.Component ForestLayoutProps
 forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
   where
-    cpt { child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
+    cpt { asyncTasks, child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
       let ordering =
             case fst handed of
               GT.LeftHanded  -> reverse
@@ -158,7 +163,7 @@ forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" c
 
       pure $ R2.row $ ordering [
         H.div { className: "col-md-2", style: { paddingTop: "60px" } }
-            [ forest { frontends, handed: fst handed, reload, route, sessions, showLogin, backend} ]
+            [ forest { asyncTasks, backend, frontends, handed: fst handed, reload, route, sessions, showLogin } ]
       , mainPage child
       ]
 

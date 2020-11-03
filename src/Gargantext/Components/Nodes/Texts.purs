@@ -6,6 +6,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -21,7 +22,7 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session, Sessions, sessionId, getCacheState, setCacheState)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
 
 thisModule :: String
@@ -32,6 +33,7 @@ type Props = (
     frontends :: Frontends
   , nodeId :: Int
   , session :: Session
+  , sessionUpdate :: Session -> Effect Unit
   )
 
 textsLayout :: Record Props -> R.Element
@@ -40,10 +42,14 @@ textsLayout props = R.createElement textsLayoutCpt props []
 ------------------------------------------------------------------------
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = R.hooksComponentWithModule thisModule "textsLayout" cpt where
-  cpt { frontends, nodeId, session } _ = do
+  cpt { frontends, nodeId, session, sessionUpdate } _ = do
     let sid = sessionId session
 
-    pure $ textsLayoutWithKey { frontends, key: show sid <> "-" <> show nodeId, nodeId, session }
+    pure $ textsLayoutWithKey { frontends
+                              , key: show sid <> "-" <> show nodeId
+                              , nodeId
+                              , session
+                              , sessionUpdate }
 
 type KeyProps = (
   key :: String
@@ -56,17 +62,17 @@ textsLayoutWithKey props = R.createElement textsLayoutWithKeyCpt props []
 textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKey" cpt
   where
-    cpt { frontends, nodeId, session } _ = do
-      cacheState <- R.useState' NT.CacheOff
+    cpt { frontends, nodeId, session, sessionUpdate } _ = do
+      cacheState <- R.useState' $ getCacheState NT.CacheOff session nodeId
 
-      pure $ loader {session, nodeId} loadCorpusWithChild $
+      pure $ loader { nodeId, session } loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode, defaultListId } -> do
           let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
               CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
               title = "Corpus " <> name
 
           R.fragment [
-              Table.tableHeaderLayout { afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
+              Table.tableHeaderLayout { afterCacheStateChange
                                       , cacheState
                                       , date
                                       , desc
@@ -76,6 +82,10 @@ textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKe
                                       , user: authors }
             , tabs { cacheState, corpusData, corpusId, frontends, session }
           ]
+      where
+        afterCacheStateChange cacheState = do
+          launchAff_ $ clearCache unit
+          sessionUpdate $ setCacheState session nodeId cacheState
 
 data Mode = MoreLikeFav | MoreLikeTrash
 
