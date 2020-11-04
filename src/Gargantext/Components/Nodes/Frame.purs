@@ -95,7 +95,7 @@ type Base = String
 type FrameId = String
 
 hframeUrl :: NodeType -> Base -> FrameId -> String
-hframeUrl NodeFrameCode _    frame_id = frame_id  -- Temp fix : frame_id is currently the whole url created
+hframeUrl NodeFrameNotebook _    frame_id = frame_id  -- Temp fix : frame_id is currently the whole url created
 hframeUrl _             base frame_id = base <> "/" <> frame_id <> "?both"
 
 frameLayoutView :: Record ViewProps -> R.Element

@@ -126,7 +126,7 @@ settingsBox Team =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
-                                , NodeFrameCode
+                                , NodeFrameNotebook
                                 ]
                           , Share
                           , Delete
@@ -317,13 +317,13 @@ settingsBox NodeFrameCalc =
                           ]
               }
 
-settingsBox NodeFrameCode =
+settingsBox NodeFrameNotebook =
   SettingsBox { show : true
               , edit : true
-              , doc  : Documentation NodeFrameCode
+              , doc  : Documentation NodeFrameNotebook
               , buttons : [ Add [ NodeFrameCalc
                                 , NodeFrameWrite
-                                , NodeFrameCode
+                                , NodeFrameNotebook
                                 ]
                           , Move moveFrameParameters
                           , Delete
