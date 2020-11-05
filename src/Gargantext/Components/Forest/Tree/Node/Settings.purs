@@ -127,6 +127,7 @@ settingsBox Team =
                                 , NodeFrameWrite
                                 , NodeFrameCalc
                                 , NodeFrameNotebook
+                                , Team
                                 ]
                           , Share
                           , Delete
