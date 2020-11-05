@@ -17,7 +17,12 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
-import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsElement, NgramsPatch(..), NgramsTable, NgramsTablePatch, NgramsTerm, Replace, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, singletonNgramsTablePatch)
+import Gargantext.Components.NgramsTable.Core ( Action(..), Dispatch, NgramsElement, NgramsPatch(..)
+                                              , NgramsTable, NgramsTablePatch, NgramsTerm, Replace
+                                              , _NgramsElement, _NgramsRepoElement, _PatchMap, _children
+                                              , _list, _ngrams, _occurrences, ngramsTermText, replace
+                                              , singletonNgramsTablePatch, setTermListA
+                                              )
 import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
@@ -207,7 +212,7 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
         ngramsStyle = [termStyle termList ngramsOpacity]
         ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
         ngramsClick
-          = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
+          = Just <<< dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams
           -- ^ This is the old behavior it is nicer to use since one can
           --   rapidly change the ngram list without waiting for confirmation.
           --   However this might expose bugs. One of them can be reproduced
@@ -226,7 +231,7 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
           in
           H.input { checked: chkd
                   , className: "checkbox"
-                  , on: { change: const $ dispatch $
+                  , on: { change: const $ dispatch $ CoreAction $
                           setTermListA ngrams (replace termList termList'') }
                   , readOnly: ngramsTransient
                   , type: "checkbox" }
@@ -244,13 +249,6 @@ termStyle T.MapTerm     opacity = DOM.style { color: "green", opacity }
 termStyle T.StopTerm      opacity = DOM.style { color: "red",   opacity
                                               , textDecoration: "line-through" }
 termStyle T.CandidateTerm opacity = DOM.style { color: "black", opacity }
-
-setTermListA :: NgramsTerm -> Replace T.TermList -> Action
-setTermListA n patch_list =
-  CommitPatch $
-    singletonNgramsTablePatch n $
-    NgramsPatch { patch_list, patch_children: mempty }
-
 
 tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
 tablePatchHasNgrams ngramsTablePatch ngrams =

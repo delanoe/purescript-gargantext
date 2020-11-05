@@ -126,6 +126,7 @@ settingsBox Team =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
+                                , NodeFrameNotebook
                                 ]
                           , Share
                           , Delete
@@ -315,6 +316,22 @@ settingsBox NodeFrameCalc =
                           , Delete
                           ]
               }
+
+settingsBox NodeFrameNotebook =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation NodeFrameNotebook
+              , buttons : [ Add [ NodeFrameCalc
+                                , NodeFrameWrite
+                                , NodeFrameNotebook
+                                ]
+                          , Move moveFrameParameters
+                          , Delete
+                          ]
+              }
+
+
+
 
 
 settingsBox NodeFile =

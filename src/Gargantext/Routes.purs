@@ -26,6 +26,7 @@ data AppRoute
   | PGraphExplorer SessionId Int
   | RouteFile       SessionId Int
   | RouteFrameCalc  SessionId Int
+  | RouteFrameCode  SessionId Int
   | RouteFrameWrite SessionId Int
   | Team SessionId Int
   | Texts          SessionId Int
@@ -44,6 +45,7 @@ data SessionRoute
   | GetNgramsTableAll NgramsGetTableAllOpts (Maybe Id)
   | GetNgramsTableVersion { listId :: ListId, tabType :: TabType } (Maybe Id)
   | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
+  | PostNgramsChartsAsync (Maybe Id)
   -- ^ This name is not good. In particular this URL is used both in PUT and POST.
   | RecomputeNgrams   (TabSubType CTabNgramType) Id ListId
   | RecomputeListChart ChartType  CTabNgramType  Id ListId
@@ -77,6 +79,7 @@ instance showAppRoute :: Show AppRoute where
   show (ContactPage  s a i)     = "Contact"        <> show a <> "::" <> show i <> " (" <> show s <> ")"
   show (RouteFrameWrite s i)    = "write"          <> show i <> " (" <> show s <> ")"
   show (RouteFrameCalc  s i)    = "calc"           <> show i <> " (" <> show s <> ")"
+  show (RouteFrameCode  s i)    = "code"           <> show i <> " (" <> show s <> ")"
   show (RouteFile       s i)    = "file"           <> show i <> " (" <> show s <> ")"
 
 
@@ -100,6 +103,7 @@ appPath (UserPage s i)       = "user/"       <> show s <> "/" <> show i
 appPath (ContactPage s a i)  = "annuaire/"   <> show s <> "/" <> show a <> "/contact/" <> show i
 appPath (RouteFrameWrite s i) = "write/"     <> show s <> "/" <> show i
 appPath (RouteFrameCalc s i)  = "calc/"      <> show s <> "/" <> show i
+appPath (RouteFrameCode s i)  = "code/"      <> show s <> "/" <> show i
 appPath (RouteFile s i)       = "file/"      <> show s <> "/" <> show i
 
 nodeTypeAppRoute :: NodeType -> SessionId -> Int -> Maybe AppRoute

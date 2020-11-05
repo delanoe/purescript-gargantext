@@ -12,10 +12,10 @@
 module Gargantext.Components.Annotation.AnnotatedField where
 
 import Prelude
-import Data.Maybe ( Maybe(..), maybe, isJust, isNothing )
-import Data.Tuple ( Tuple(..) )
+import Data.Maybe ( Maybe(..), maybe )
+import Data.Tuple ( Tuple )
 import Data.Tuple.Nested ( (/\) )
-import DOM.Simple.Console (log, log2)
+--import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Effect ( Effect )
 import Reactix as R
@@ -25,9 +25,8 @@ import Reactix.SyntheticEvent as E
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
 import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
-import Gargantext.Components.Annotation.Menu ( AnnotationMenu, annotationMenu, MenuType(..) )
+import Gargantext.Components.Annotation.Menu ( annotationMenu, MenuType(..) )
 import Gargantext.Utils.Selection as Sel
-import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Annotation.AnnotatedField"
@@ -49,110 +48,65 @@ annotatedField p = R.createElement annotatedFieldComponent p []
 annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField" cpt
   where
-    cpt {ngrams,setTermList,text} _ = do
-      mMenu@(_ /\ setMenu) <- R.useState' Nothing
+    cpt {ngrams,setTermList,text: fieldText} _ = do
+      (_ /\ setRedrawMenu) <- R.useState' false
 
       menuRef <- R.useRef Nothing
 
       let wrapperProps = { className: "annotated-field-wrapper" }
 
-          onSelect :: String -> Maybe TermList -> MouseEvent -> Effect Unit
-          onSelect text' Nothing event = do
-            log2 "[onSelect] text'" text'
-            maybeShowMenu setMenu menuRef setTermList ngrams event
-          onSelect text' (Just list) event = do
-            log2 "[onSelect] text'" text'
-            log2 "[onSelect] list" list
+          redrawMenu = setRedrawMenu not
+
+          hideMenu = do
+            R.setRef menuRef Nothing
+            redrawMenu
+
+          showMenu { event, text, getList, menuType } = do
             let x = E.clientX event
                 y = E.clientY event
+                n = normNgram CTabTerms text
+                list = getList n
                 setList t = do
-                  R.setRef menuRef Nothing
-                  setTermList (normNgram CTabTerms text') (Just list) t
-                  --setMenu (const Nothing)
-                menu = Just {
-                    x
+                  setTermList n list t
+                  hideMenu
+            E.preventDefault event
+            --range <- Sel.getRange sel 0
+            --log2 "[showMenu] selection range" $ Sel.rangeToTuple range
+            let menu = Just
+                  { x
                   , y
-                  , list: Just list
-                  , menuType: SetTermListItem
-                  , onClose: \_ -> R.setRef menuRef Nothing
+                  , list
+                  , menuType
+                  , onClose: hideMenu
                   , setList
                   }
-            --setMenu (const $ menu)
             R.setRef menuRef menu
+            redrawMenu
 
-          mapCompile (Tuple t l) = {text: t, list: l, onSelect}
-          compiled = map mapCompile $ compile ngrams text
+          onSelect :: String -> Maybe TermList -> MouseEvent -> Effect Unit
+          onSelect text mList event =
+            case mList of
+              Just list ->
+                showMenu { event, text, getList: const (Just list), menuType: SetTermListItem }
+              Nothing -> do
+                s <- Sel.getSelection
+                case s of
+                  Just sel -> do
+                    case Sel.selectionToString sel of
+                      "" -> hideMenu
+                      sel' -> do
+                        showMenu { event, text: sel', getList: findNgramTermList ngrams, menuType: NewNgram }
+                  Nothing -> hideMenu
 
-          runs =
-            HTML.div { className: "annotated-field-runs" } $ map annotateRun compiled
-      --pure $ HTML.div wrapperProps [maybeAddMenu mMenu runs]
-      pure $ HTML.div wrapperProps [ addMenu { menuRef }, runs ]
+          wrap (text /\ list) = {text, list, onSelect}
 
-
-type AddMenuProps = (
-  menuRef :: R.Ref (Maybe AnnotationMenu)
-  )
-
-
-addMenu :: Record AddMenuProps -> R.Element
-addMenu p = R.createElement addMenuCpt p []
-
-addMenuCpt :: R.Component AddMenuProps
-addMenuCpt = R.hooksComponentWithModule thisModule "addMenu" cpt
-  where
-    cpt { menuRef } _ = do
-      (mMenu /\ setmMenu) <- R.useState' (Nothing :: Maybe AnnotationMenu)
-
-      R.useEffect' $ do
-        let m = R.readRef menuRef
-        log2 "[addMenu] menuRef" m
-        log2 "[addMenu] mMenu" mMenu
-        setmMenu $ const m
-
-      pure $ case mMenu of
-        Nothing -> HTML.div {} []
-        Just menu -> annotationMenu setmMenu menu
-
--- forall e. IsMouseEvent e => R.Setter (Maybe AnnotationMenu) -> R.Setter ? -> ? -> e -> Effect Unit
-maybeShowMenu setMenu menuRef setTermList ngrams event = do
-  s <- Sel.getSelection
-  log2 "[maybeShowMenu] s" s
-  case s of
-    Just sel -> do
-      case Sel.selectionToString sel of
-        "" -> pure unit
-        sel' -> do
-          let x = E.clientX event
-              y = E.clientY event
-              n = normNgram CTabTerms sel'
-              list = findNgramTermList ngrams n
-              setList t = do
-                setTermList n list t
-                --setMenu (const Nothing)
-                R.setRef menuRef Nothing
-          E.preventDefault event
-          range <- Sel.getRange sel 0
-          log2 "[maybeShowMenu] selection range" $ Sel.rangeToTuple range
-          let menu = Just {
-                x
-              , y
-              , list
-              , menuType: NewNgram
-              , onClose: \_ -> R.setRef menuRef Nothing
-              , setList
-            }
-          --setMenu (const $ menu)
-          R.setRef menuRef menu
-    Nothing -> pure unit
-    -- Nothing -> do
-    --   R.setRef menuRef Nothing
-
-maybeAddMenu
-  :: R.State (Maybe AnnotationMenu)
-  -> R.Element
-  -> R.Element
-maybeAddMenu (Just props /\ setMenu) e = annotationMenu setMenu props <> e
-maybeAddMenu _ e = e
+      pure $ HTML.div wrapperProps
+        [ maybe (HTML.div {} []) annotationMenu $ R.readRef menuRef
+        , HTML.div { className: "annotated-field-runs" }
+             $ annotateRun
+            <$> wrap
+            <$> compile ngrams fieldText
+        ]
 
 compile :: NgramsTable -> Maybe String -> Array (Tuple String (Maybe TermList))
 compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
@@ -171,13 +125,11 @@ annotateRun p = R.createElement annotatedRunComponent p []
 annotatedRunComponent :: R.Component Run
 annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
   where
-    cpt    { list: Nothing, onSelect, text }     _ =
-      HTML.span { on: { mouseUp: \e -> onSelect text Nothing e } } [ HTML.text text ]
-
-    cpt    { list: (Just list), onSelect, text } _ =
-      HTML.span { className: className list
-                , on: { click: \e -> onSelect text (Just list) e } } [ HTML.text text ]
+    cpt { list, onSelect, text } _ = elt [ HTML.text text ]
       where
-        className list' = "annotation-run bg-" <> termBootstrapClass list'
-
-
+        cb = onSelect text list
+        elt =
+          case list of
+             Nothing -> HTML.span { on: { mouseUp: cb } }
+             Just l  -> HTML.span { className: "annotation-run bg-" <> termBootstrapClass l
+                                  , on: { click: cb } }

@@ -8,6 +8,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
+
 import Gargantext.Components.Node (NodePoly)
 import Gargantext.Prelude
 

@@ -88,9 +88,9 @@ dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayou
   where
     cpt props@{ charts, corpusId, defaultListId, onChange, session } _ = do
       pure $
-        H.div {} ([
-            H.h1 {} [ H.text "DashBoard" ]
-          ] <> chartsEls <> [addNew])
+        H.div {} ([ H.h1 {} [ H.text "Board" ]
+                  , H.p {}  [ H.text "Summary of all your charts here" ]
+                  ] <> chartsEls <> [addNew])
       where
         addNew = H.div { className: "row" } [
           H.span { className: "btn btn-default"

@@ -15,10 +15,12 @@ module Gargantext.Components.NgramsTable.Core
   , NgramsTerm
   , normNgram
   , ngramsTermText
+  , findNgramRoot
   , findNgramTermList
   , Version
   , Versioned(..)
   , VersionedNgramsPatches
+  , AsyncNgramsChartsUpdate
   , VersionedNgramsTable
   , CoreState
   , highlightNgrams
@@ -33,7 +35,7 @@ module Gargantext.Components.NgramsTable.Core
   , _PatchMap
   , patchSetFromMap
   , applyPatchSet
-  , applyNgramsTablePatch
+--, applyNgramsTablePatch -- re-export only if we have a good reason not to use applyNgramsPatches
   , applyNgramsPatches
   , rootsOf
   , singletonPatchMap
@@ -50,12 +52,22 @@ module Gargantext.Components.NgramsTable.Core
   , _ngrams_scores
   , commitPatch
   , putNgramsPatches
+  , postNgramsChartsAsync
   , syncPatches
-  , addNewNgram
+  , addNewNgramP
+  , addNewNgramA
+  , setTermListP
+  , setTermListA
+  , CoreAction(..)
+  , CoreDispatch
   , Action(..)
   , Dispatch
+  , coreDispatch
   , isSingleNgramsTerm
   , filterTermSize
+  , SyncResetButtonsProps
+  , syncResetButtons
+  , syncResetButtonsCpt
   )
   where
 
@@ -99,7 +111,7 @@ import Data.Symbol (SProxy(..))
 import Data.These (These(..))
 import Data.Traversable (for, traverse_)
 import Data.TraversableWithIndex (traverseWithIndex)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_)
@@ -107,16 +119,22 @@ import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception.Unsafe (unsafeThrow)
 import Foreign.Object as FO
-import Reactix (State) as R
+import FFI.Simple.Functions (delay)
+import Reactix as R
+import Reactix.DOM.HTML as H
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 
-import Gargantext.Prelude
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Table as T
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, get, put)
-import Gargantext.Types (CTabNgramType(..), OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
+import Gargantext.Sessions (Session, get, post, put)
+import Gargantext.Types (AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
+
+thisModule :: String
+thisModule = "Gargantext.Components.NgramsTable.Core"
 
 type Endo a = a -> a
 
@@ -430,7 +448,7 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
   where
     spR x = " " <> R.replace wordBoundaryReg "$1$1" x <> " "
     reR = R.replace wordBoundaryReg " "
-    db = S.replace (S.Pattern " ") (S.Replacement "  ")
+    db = S.replaceAll (S.Pattern " ") (S.Replacement "  ")
     sp x = " " <> db x <> " "
     undb = R.replace wordBoundaryReg2 "$1"
     init x = S.take (S.length x - 1) x
@@ -501,7 +519,7 @@ derive instance eqReplace :: Eq a => Eq (Replace a)
 instance semigroupReplace :: Eq a => Semigroup (Replace a) where
   append Keep p = p
   append p Keep = p
-  -- append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
+  append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
   append (Replace { new }) (Replace { old }) = replace old new
 
 instance semigroupMonoid :: Eq a => Monoid (Replace a) where
@@ -597,7 +615,9 @@ invert :: forall a. a -> a
 invert _ = unsafeThrow "invert: TODO"
 
 instance semigroupNgramsPatch :: Semigroup NgramsPatch where
-  append (NgramsReplace p) (NgramsReplace q) = ngramsReplace q.patch_old p.patch_new
+  append (NgramsReplace p) (NgramsReplace q)
+    | p.patch_old /= q.patch_new = unsafeThrow "append/NgramsPatch: old != new"
+    | otherwise                  = ngramsReplace q.patch_old p.patch_new
   append (NgramsPatch p)   (NgramsPatch q) = NgramsPatch
     { patch_children: p.patch_children <> q.patch_children
     , patch_list:     p.patch_list     <> q.patch_list
@@ -732,6 +752,15 @@ applyPatchMap applyPatchValue (PatchMap pm) m = mergeMap f pm m
 
 type NgramsPatches = PatchMap NgramsTerm NgramsPatch
 type VersionedNgramsPatches = Versioned NgramsPatches
+newtype AsyncNgramsChartsUpdate = AsyncNgramsChartsUpdate {
+    listId  :: Maybe ListId
+  , tabType :: TabType
+  }
+instance encodeAsyncNgramsChartsUpdate :: EncodeJson AsyncNgramsChartsUpdate where
+  encodeJson (AsyncNgramsChartsUpdate { listId, tabType }) = do
+      "list_id"  := listId
+    ~> "tab_type" := tabType
+    ~> jsonEmptyObject
 
 type NewElems = Map NgramsTerm TermList
 
@@ -744,8 +773,14 @@ isEmptyNgramsTablePatch {ngramsPatches} = isEmptyPatchMap ngramsPatches
 fromNgramsPatches :: NgramsPatches -> NgramsTablePatch
 fromNgramsPatches ngramsPatches = {ngramsPatches}
 
+findNgramRoot :: NgramsTable -> NgramsTerm -> NgramsTerm
+findNgramRoot (NgramsTable m) n =
+  fromMaybe n (m.ngrams_repo_elements ^? at n <<< _Just <<< _NgramsRepoElement <<< _root <<< _Just)
+
 findNgramTermList :: NgramsTable -> NgramsTerm -> Maybe TermList
-findNgramTermList (NgramsTable m) n = m.ngrams_repo_elements ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
+findNgramTermList (NgramsTable m) n = m.ngrams_repo_elements ^? at r <<< _Just <<< _NgramsRepoElement <<< _list
+  where
+    r = findNgramRoot (NgramsTable m) n
 
 singletonNgramsTablePatch :: NgramsTerm -> NgramsPatch -> NgramsTablePatch
 singletonNgramsTablePatch n p = fromNgramsPatches $ singletonPatchMap n p
@@ -862,13 +897,33 @@ newNgramPatch list =
       }
   }
 
-addNewNgram :: NgramsTerm -> TermList -> NgramsTablePatch
-addNewNgram ngrams list =
+addNewNgramP :: NgramsTerm -> TermList -> NgramsTablePatch
+addNewNgramP ngrams list =
   { ngramsPatches: singletonPatchMap ngrams (newNgramPatch list) }
 
+addNewNgramA :: NgramsTerm -> TermList -> CoreAction
+addNewNgramA ngrams list = CommitPatch $ addNewNgramP ngrams list
+
+setTermListP :: NgramsTerm -> Replace TermList -> NgramsTablePatch
+setTermListP ngram patch_list = singletonNgramsTablePatch ngram pe
+  where
+    pe = NgramsPatch { patch_list, patch_children: mempty }
+
+setTermListA :: NgramsTerm -> Replace TermList -> CoreAction
+setTermListA ngram termList = CommitPatch $ setTermListP ngram termList
+
 putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff VersionedNgramsPatches
-putNgramsPatches {session, nodeId, listIds, tabType} = put session putNgrams
+putNgramsPatches { listIds, nodeId, session, tabType } = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
+
+postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
+postNgramsChartsAsync { listIds, nodeId, session, tabType } = do
+    task <- post session putNgramsAsync acu
+    pure $ AsyncTaskWithType { task, typ: UpdateNgramsCharts }
+  where
+    acu = AsyncNgramsChartsUpdate { listId: head listIds
+                                  , tabType }
+    putNgramsAsync = PostNgramsChartsAsync (Just nodeId)
 
 syncPatches :: forall p s. CoreParams p -> R.State (CoreState s) -> (Unit -> Aff Unit) -> Effect Unit
 syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
@@ -885,6 +940,7 @@ syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
     launchAff_ $ do
       Versioned { data: newPatch, version: newVersion } <- putNgramsPatches props pt
       callback unit
+      -- task <- postNgramsChartsAsync props
       liftEffect $ do
         log2 "[syncPatches] setting state, newVersion" newVersion
         setState $ \s ->
@@ -899,6 +955,33 @@ syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
             , ngramsVersion    = newVersion
             }
         log2 "[syncPatches] ngramsVersion" newVersion
+    pure unit
+
+{-
+syncPatchesAsync :: forall p s. CoreParams p -> R.State (CoreState s) -> (Unit -> Aff Unit) -> Effect Unit
+syncPatchesAsync props@{ listIds, tabType }
+                 ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
+                  , ngramsStagePatch
+                  , ngramsValidPatch
+                  , ngramsVersion
+                  } /\ setState) callback = do
+  when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
+    let patch = Versioned { data: ngramsPatches, version: ngramsVersion }
+    launchAff_ $ do
+      Versioned { data: newPatch, version: newVersion } <- postNgramsPatchesAsync props patch
+      callback unit
+      liftEffect $ do
+        log2 "[syncPatches] setting state, newVersion" newVersion
+        setState $ \s ->
+          s {
+              ngramsLocalPatch = fromNgramsPatches mempty
+            , ngramsStagePatch = fromNgramsPatches mempty
+            , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
+                              -- First the already valid patch, then the local patch, then the newly received newPatch.
+            , ngramsVersion    = newVersion
+            }
+        log2 "[syncPatches] ngramsVersion" newVersion
+-}
 
 commitPatch :: forall s. Versioned NgramsTablePatch -> R.State (CoreState s) -> Effect Unit
 commitPatch (Versioned {version, data: tablePatch}) (_ /\ setState) = do
@@ -947,9 +1030,13 @@ convOrderBy (T.DESC (T.ColumnName "Score")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
 
+data CoreAction
+  = CommitPatch NgramsTablePatch
+  | Synchronize { afterSync  :: Unit -> Aff Unit }
+  | ResetPatches
 
 data Action
-  = CommitPatch NgramsTablePatch
+  = CoreAction CoreAction
   | SetParentResetChildren (Maybe NgramsTerm)
   -- ^ This sets `ngramsParent` and resets `ngramsChildren`.
   | ToggleChild Boolean NgramsTerm
@@ -957,14 +1044,21 @@ data Action
   -- If the `Boolean` is `true` it means we want to add it if it is not here,
   -- if it is `false` it is meant to be removed if not here.
   | AddTermChildren
-  | Synchronize { afterSync :: Unit -> Aff Unit }
   | ToggleSelect NgramsTerm
   -- ^ Toggles the NgramsTerm in the `Set` `ngramsSelection`.
   | ToggleSelectAll
-  | ResetPatches
 
 
+type CoreDispatch = CoreAction -> Effect Unit
 type Dispatch = Action -> Effect Unit
+
+coreDispatch :: forall p s. CoreParams p -> R.State (CoreState s) -> CoreDispatch
+coreDispatch path state (Synchronize { afterSync }) =
+  syncPatches path state afterSync
+coreDispatch _ state@({ngramsVersion} /\ _) (CommitPatch pt) =
+  commitPatch (Versioned {version: ngramsVersion, data: pt}) state
+coreDispatch _ (_ /\ setState) ResetPatches =
+  setState $ \s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }
 
 isSingleNgramsTerm :: NgramsTerm -> Boolean
 isSingleNgramsTerm nt = isSingleTerm $ ngramsTermText nt
@@ -978,3 +1072,38 @@ filterTermSize :: Maybe TermSize -> NgramsTerm -> Boolean
 filterTermSize (Just MonoTerm)  nt = isSingleNgramsTerm nt
 filterTermSize (Just MultiTerm) nt = not $ isSingleNgramsTerm nt
 filterTermSize _                _  = true
+
+type SyncResetButtonsProps =
+  ( afterSync :: Unit -> Aff Unit
+  , ngramsLocalPatch :: NgramsTablePatch
+  , performAction :: CoreDispatch
+  )
+
+syncResetButtons :: Record SyncResetButtonsProps -> R.Element
+syncResetButtons p = R.createElement syncResetButtonsCpt p []
+
+syncResetButtonsCpt :: R.Component SyncResetButtonsProps
+syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
+  where
+    cpt { afterSync, ngramsLocalPatch, performAction } _ = do
+      synchronizing@(s /\ setSynchronizing) <- R.useState' false
+
+      let
+        hasChanges = ngramsLocalPatch /= mempty
+
+        newAfterSync x = do
+          afterSync x
+          liftEffect $ setSynchronizing $ const false
+
+        synchronizeClick _ = delay unit $ \_ -> do
+          setSynchronizing $ const true
+          performAction $ Synchronize { afterSync: newAfterSync }
+
+      pure $ H.div {} [
+        H.button { className: "btn btn-danger " <> if hasChanges then "" else " disabled"
+                 , on: { click: \_ -> performAction ResetPatches }
+                 } [ H.text "Reset" ]
+      , H.button { className: "btn btn-primary " <> (if s || (not hasChanges) then "disabled" else "")
+                 , on: { click: synchronizeClick }
+                 } [ H.text "Sync" ]
+        ]

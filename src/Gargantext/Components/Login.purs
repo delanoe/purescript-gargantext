@@ -38,10 +38,10 @@ thisModule = "Gargantext.Components.Login"
 -- if not logged user can not save his work
 
 type LoginProps =
-  ( backends :: Array Backend
+  ( backend  :: R.State (Maybe Backend)
+  , backends :: Array Backend
   , sessions :: R2.Reductor Sessions Sessions.Action
   , visible  :: R.State Boolean
-  , backend  :: R.State (Maybe Backend) 
   )
 
 login :: Record LoginProps -> R.Element
@@ -104,7 +104,7 @@ chooser props = R.createElement chooserCpt props []
 chooserCpt :: R.Component LoginProps
 chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
   cpt :: Record LoginProps -> Array R.Element -> R.Element
-  cpt {backend, backends, sessions} _ =
+  cpt { backend, backends, sessions } _ =
     R.fragment $ title <> active <> new <> search
       where
         title =  [H.h2 { className: "center modal-title" } [H.text "Instances manager"]]
@@ -152,7 +152,7 @@ renderSessions sessions = R.fragment (renderSession sessions <$> unSessions (fst
             GHL.clearCache unit
             NTL.clearCache unit
             liftEffect $ log "[renderSessions] cache cleared"
-        logOutClick _ = (snd sessions') (Sessions.Logout session)
+        logOutClick _ = snd sessions' $ Sessions.Logout session
 
 renderBackend :: R.State (Maybe Backend) -> Backend -> R.Element
 renderBackend state backend@(Backend {name}) =

@@ -2,13 +2,15 @@ module Gargantext.Utils where
 
 import DOM.Simple.Window (window)
 import Data.Either (Either(..))
+import Data.Foldable (class Foldable, foldr)
 import Data.Lens (Lens', lens)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Set (Set)
 import Data.Set as Set
+import Data.Sequence.Ordered as OSeq
 import Data.String as S
+import Data.Unfoldable (class Unfoldable)
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import FFI.Simple ((..))
 import FFI.Simple.Functions (delay)
 import Prelude
@@ -84,5 +86,19 @@ mapLeft _ (Right r) = Right r
 location :: Effect String
 location = delay unit $ \_ -> pure $ window .. "location"
 
+data On a b = On a b
 
+instance eqOn :: Eq a => Eq (On a b) where
+  eq (On x _) (On y _) = eq x y
 
+instance ordOn :: Ord a => Ord (On a b) where
+  compare (On x _) (On y _) = compare x y
+
+-- same as
+-- https://github.com/purescript/purescript-arrays/blob/v5.3.1/src/Data/Array.purs#L715-L715
+sortWith :: forall a b f. Functor f =>
+                          Foldable f =>
+                          Unfoldable f =>
+                          Ord b =>
+                          (a -> b) -> f a -> f a
+sortWith f = map (\(On _ y) -> y) <<< OSeq.toUnfoldable <<< foldr (\x -> OSeq.insert (On (f x) x)) OSeq.empty

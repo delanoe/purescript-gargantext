@@ -1,8 +1,12 @@
 module Gargantext.Components.Nodes.Lists where
 
+import Data.Tuple (fst)
+import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Reactix as R
+import Record as Record
 ------------------------------------------------------------------------
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
@@ -12,16 +16,19 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session, sessionId, getCacheState, setCacheState)
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
 type Props = (
-    nodeId :: Int
-  , session :: Session
+    asyncTasks    :: GAT.Reductor
+  , nodeId        :: Int
+  , session       :: Session
+  , sessionUpdate :: Session -> Effect Unit
   )
 
 listsLayout :: Record Props -> R.Element
@@ -33,7 +40,7 @@ listsLayoutCpt = R.hooksComponentWithModule thisModule "listsLayout" cpt
     cpt path@{ nodeId, session } _ = do
       let sid = sessionId session
 
-      pure $ listsLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
+      pure $ listsLayoutWithKey $ Record.merge path { key: show sid <> "-" <> show nodeId }
 
 type KeyProps = (
   key :: String
@@ -46,29 +53,36 @@ listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 listsLayoutWithKeyCpt :: R.Component KeyProps
 listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
   where
-    cpt { nodeId, session } _ = do
+    cpt { asyncTasks, nodeId, session, sessionUpdate } _ = do
       let path = { nodeId, session }
 
-      cacheState <- R.useState' NT.CacheOn
+      cacheState <- R.useState' $ getCacheState NT.CacheOn session nodeId
 
       useLoader path loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode: NodePoly poly, defaultListId } ->
-              let { date, hyperdata : Hyperdata h, name } = poly
-                  CorpusInfo {desc,query,authors} = getCorpusInfo h.fields
-           in
+          let { date, hyperdata : Hyperdata h, name } = poly
+              CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
+          in
           R.fragment [
             Table.tableHeaderLayout {
-                afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
+                afterCacheStateChange
               , cacheState
               , date
               , desc
+              , key: "listsLayoutWithKey-header-" <> (show $ fst cacheState)
               , query
               , title: "Corpus " <> name
               , user: authors }
           , Tabs.tabs {
-               cacheState
+               asyncTasks
+             , cacheState
              , corpusData
              , corpusId
+             , key: "listsLayoutWithKey-tabs-" <> (show $ fst cacheState)
              , session }
           ]
+      where
+        afterCacheStateChange cacheState = do
+          launchAff_ $ clearCache unit
+          sessionUpdate $ setCacheState session nodeId cacheState
 ------------------------------------------------------------------------

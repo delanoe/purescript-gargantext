@@ -18,6 +18,7 @@ import Gargantext.Components.Search
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix (effectLink)
 
+thisModule :: String
 thisModule = "Gargantext.Components.Table"
 
 type TableContainerProps =
@@ -33,9 +34,9 @@ type Rows = Seq.Seq Row
 
 type OrderBy = Maybe (OrderByDirection ColumnName)
 
-type Params = { offset :: Int
-              , limit  :: Int
-              , orderBy :: OrderBy
+type Params = { limit      :: Int
+              , offset     :: Int
+              , orderBy    :: OrderBy
               , searchType :: SearchType
               }
 
@@ -60,20 +61,24 @@ instance showOrderByDirection :: Show a => Show (OrderByDirection a) where
 
 derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
 
+orderByToForm :: OrderByDirection ColumnName -> String
+orderByToForm (ASC (ColumnName x)) = x <> "Asc"
+orderByToForm (DESC (ColumnName x)) = x <> "Desc"
+
 type Props =
   ( colNames     :: Array ColumnName
-  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
-                 -- ^ Use `const identity` as a default behavior.
-  , totalRecords :: Int
+  , container    :: Record TableContainerProps -> R.Element
   , params       :: R.State Params
   , rows         :: Rows
-  , container    :: Record TableContainerProps -> R.Element
+  , totalRecords :: Int
+  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
+                 -- ^ Use `const identity` as a default behavior.
   )
 
 type State =
-  { page     :: Int
-  , pageSize :: PageSizes
-  , orderBy  :: OrderBy
+  { page       :: Int
+  , pageSize   :: PageSizes
+  , orderBy    :: OrderBy
   , searchType :: SearchType
   }
 
@@ -90,10 +95,11 @@ stateParams {pageSize, page, orderBy, searchType} = {offset, limit, orderBy, sea
     offset = limit * (page - 1)
 
 type TableHeaderLayoutProps =
-  ( afterCacheStateChange :: Unit -> Effect Unit
+  ( afterCacheStateChange :: NT.CacheState -> Effect Unit
   , cacheState :: R.State NT.CacheState
   , date  :: String
   , desc  :: String
+  , key   :: String
   , query :: String
   , title :: String
   , user  :: String
@@ -120,26 +126,26 @@ tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout"
         [ H.div {className: "jumbotron1", style: {padding: "12px 0px 20px 12px"}}
           [ H.div {className: "col-md-8 content"}
             [ H.p {}
-              [ H.i {className: "fa fa-globe"} []
+              [ H.span {className: "fa fa-globe"} []
               , H.text $ " " <> desc
               ]
             , H.p {}
-              [ H.i {className: "fa fa-search-plus"} []
+              [ H.span {className: "fa fa-search-plus"} []
               , H.text $ " " <> query
               ]
             , H.p { className: "cache-toggle"
                   , on: { click: cacheClick cacheState afterCacheStateChange } }
-              [ H.i {className: "fa " <> (cacheToggle cacheState)} []
+              [ H.span { className: "fa " <> (cacheToggle cacheState) } []
               , H.text $ cacheText cacheState
               ]
             ]
           , H.div {className: "col-md-4 content"}
             [ H.p {}
-              [ H.i {className: "fa fa-calendar"} []
+              [ H.span {className: "fa fa-calendar"} []
               , H.text $ " " <> date
               ]
             , H.p {}
-              [ H.i {className: "fa fa-user"} []
+              [ H.span {className: "fa fa-user"} []
               , H.text $ " " <> user
               ]
             ]
@@ -153,9 +159,11 @@ tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout"
     cacheText (NT.CacheOn /\ _) = "Cache On"
     cacheText (NT.CacheOff /\ _) = "Cache Off"
 
-    cacheClick (_ /\ setCacheState) after _ = do
-      setCacheState cacheStateToggle
-      after unit
+    cacheClick (cacheState /\ setCacheState) after _ = do
+      setCacheState $ const newCacheState
+      after newCacheState
+      where
+        newCacheState = cacheStateToggle cacheState
 
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn

@@ -283,7 +283,15 @@ nodeLink p = R.createElement nodeLinkCpt p []
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
   where
-    cpt { frontends, id, isSelected, name, nodeType, session, handed, folderOpen} _ = do
+    cpt { folderOpen: (_ /\ setFolderOpen)
+        , frontends
+        , handed
+        , id
+        , isSelected
+        , name
+        , nodeType
+        , session
+        } _ = do
       popoverRef <- R.useRef null
 
       pure $
