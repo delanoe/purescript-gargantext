@@ -145,10 +145,10 @@ infoRender (Tuple title content) =
   , H.span {} [H.text content] ]
 
 type LayoutProps = (
-    asyncTasks    :: GAT.Reductor
-  , frontends :: Frontends
-  , nodeId :: Int
-  , session :: Session
+    asyncTasks :: GAT.ReductorAction
+  , frontends  :: Frontends
+  , nodeId     :: Int
+  , session    :: Session
   )
 
 type KeyLayoutProps = (

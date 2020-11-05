@@ -280,7 +280,7 @@ tableContainerCpt { dispatch
 -- NEXT
 type Props = (
     afterSync      :: Unit -> Aff Unit
-  , asyncTasks     :: GAT.Reductor
+  , asyncTasks     :: GAT.ReductorAction
   , path           :: R.State PageParams
   , state          :: R.State State
   , tabNgramType   :: CTabNgramType
@@ -341,7 +341,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
           task <- postNgramsChartsAsync path'
           liftEffect $ do
             log2 "[performAction] Synchronize task" task
-            snd asyncTasks $ GAT.Insert nodeId task
+            asyncTasks $ GAT.Insert nodeId task
 
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then
@@ -495,7 +495,7 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 
 type MainNgramsTableProps = (
     afterSync     :: Unit -> Aff Unit
-  , asyncTasks    :: GAT.Reductor
+  , asyncTasks    :: GAT.ReductorAction
   , cacheState    :: R.State NT.CacheState
   , defaultListId :: Int
   , nodeId        :: Int
@@ -587,7 +587,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
 
 type MainNgramsTablePaintProps = (
     afterSync      :: Unit -> Aff Unit
-  , asyncTasks     :: GAT.Reductor
+  , asyncTasks     :: GAT.ReductorAction
   , path           :: PageParams
   , tabNgramType   :: CTabNgramType
   , versioned      :: VersionedNgramsTable
@@ -614,33 +614,33 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
       , withAutoUpdate
       }
 
-type MainNgramsTablePaintWithStateProps = (
-    afterSync      :: Unit -> Aff Unit
-  , asyncTasks     :: GAT.Reductor
-  , path           :: R.State PageParams
-  , tabNgramType   :: CTabNgramType
-  , versioned      :: VersionedNgramsTable
-  , withAutoUpdate :: Boolean
-  )
+-- type MainNgramsTablePaintWithStateProps = (
+--     afterSync      :: Unit -> Aff Unit
+--   , asyncTasks     :: GAT.Reductor
+--   , path           :: R.State PageParams
+--   , tabNgramType   :: CTabNgramType
+--   , versioned      :: VersionedNgramsTable
+--   , withAutoUpdate :: Boolean
+--   )
 
-mainNgramsTablePaintWithState :: Record MainNgramsTablePaintWithStateProps -> R.Element
-mainNgramsTablePaintWithState p = R.createElement mainNgramsTablePaintWithStateCpt p []
+-- mainNgramsTablePaintWithState :: Record MainNgramsTablePaintWithStateProps -> R.Element
+-- mainNgramsTablePaintWithState p = R.createElement mainNgramsTablePaintWithStateCpt p []
 
-mainNgramsTablePaintWithStateCpt :: R.Component MainNgramsTablePaintWithStateProps
-mainNgramsTablePaintWithStateCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintWithState" cpt
-  where
-    cpt { afterSync, asyncTasks, path, tabNgramType, versioned, withAutoUpdate } _ = do
-      state <- R.useState' $ initialState versioned
+-- mainNgramsTablePaintWithStateCpt :: R.Component MainNgramsTablePaintWithStateProps
+-- mainNgramsTablePaintWithStateCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintWithState" cpt
+--   where
+--     cpt { afterSync, asyncTasks, path, tabNgramType, versioned, withAutoUpdate } _ = do
+--       state <- R.useState' $ initialState versioned
 
-      pure $ loadedNgramsTable {
-        afterSync
-      , asyncTasks
-      , path
-      , state
-      , tabNgramType
-      , versioned
-      , withAutoUpdate
-      }
+--       pure $ loadedNgramsTable {
+--         afterSync
+--       , asyncTasks
+--       , path
+--       , state
+--       , tabNgramType
+--       , versioned
+--       , withAutoUpdate
+--       }
 
 type NgramsOcc = { occurrences :: Additive Int, children :: Set NgramsTerm }
 

@@ -44,12 +44,12 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    asyncTasks    :: GAT.Reductor
-  , cacheState :: R.State NTypes.CacheState
+    asyncTasks  :: GAT.ReductorAction
+  , cacheState  :: R.State NTypes.CacheState
   , contactData :: ContactData
-  , frontends :: Frontends
-  , nodeId :: Int
-  , session :: Session
+  , frontends   :: Frontends
+  , nodeId      :: Int
+  , session     :: Session
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -91,12 +91,12 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    asyncTasks    :: GAT.Reductor
-  , cacheState :: R.State NTypes.CacheState
+    asyncTasks    :: GAT.ReductorAction
+  , cacheState    :: R.State NTypes.CacheState
   , defaultListId :: Int
-  , mode :: Mode
-  , nodeId :: Int
-  , session :: Session
+  , mode          :: Mode
+  , nodeId        :: Int
+  , session       :: Session
   )
 
 ngramsView :: Record NgramsViewTabsProps -> R.Element

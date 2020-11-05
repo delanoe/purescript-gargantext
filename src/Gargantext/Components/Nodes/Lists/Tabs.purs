@@ -26,7 +26,7 @@ thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    asyncTasks    :: GAT.Reductor
+    asyncTasks :: GAT.ReductorAction
   , cacheState :: R.State NTypes.CacheState
   , corpusData :: CorpusData
   , corpusId   :: Int

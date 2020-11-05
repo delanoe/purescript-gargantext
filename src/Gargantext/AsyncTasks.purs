@@ -54,6 +54,7 @@ type ReductorProps = (
   )
 
 type Reductor = R2.Reductor (Record ReductorProps) Action
+type ReductorAction = Action -> Effect Unit
 
 useTasks :: R.State Int -> R.Hooks Reductor
 useTasks reload = R2.useReductor act initializer unit

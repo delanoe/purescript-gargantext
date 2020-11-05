@@ -91,7 +91,12 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
       false ->
         case fst route of
           Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
-          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, asyncTasks, frontends, nodeId, session }
+          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout {
+              annuaireId: aId
+            , asyncTasks: snd asyncTasks, frontends
+            , nodeId
+            , session
+            }
           Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
           Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
@@ -103,7 +108,12 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Home  -> forested $ homeLayout { backend, lang:LL_EN, publicBackend, sessions, visible: showLogin }
-          Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { asyncTasks, nodeId, session, sessionUpdate }
+          Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout {
+              asyncTasks: snd asyncTasks
+            , nodeId
+            , session
+            , sessionUpdate
+            }
           Login -> login { backend, backends, sessions, visible: showLogin }
           PGraphExplorer sid graphId ->
             withSession sid $
@@ -126,7 +136,12 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameWrite}
           Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { frontends, nodeId, session, sessionUpdate }
-          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { asyncTasks, frontends, nodeId, session }
+          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout {
+              asyncTasks: snd asyncTasks
+            , frontends
+            , nodeId
+            , session
+            }
 
 type ForestLayoutProps =
   ( asyncTasks :: GAT.Reductor
