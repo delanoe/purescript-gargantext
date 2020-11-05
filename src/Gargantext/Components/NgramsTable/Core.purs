@@ -448,7 +448,7 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
   where
     spR x = " " <> R.replace wordBoundaryReg "$1$1" x <> " "
     reR = R.replace wordBoundaryReg " "
-    db = S.replace (S.Pattern " ") (S.Replacement "  ")
+    db = S.replaceAll (S.Pattern " ") (S.Replacement "  ")
     sp x = " " <> db x <> " "
     undb = R.replace wordBoundaryReg2 "$1"
     init x = S.take (S.length x - 1) x
