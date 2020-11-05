@@ -52,12 +52,12 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     sessions   <- useSessions
     route      <- useHashRouter router Home
 
+    asyncTasksRef <- R.useRef Nothing
+
     showLogin  <- R.useState' false
     backend    <- R.useState' Nothing
 
     treeReload <- R.useState' 0
-
-    asyncTasks <- GAT.useTasks treeReload
 
     showCorpus <- R.useState' false
 
@@ -65,7 +65,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
 
     let backends          = fromFoldable defaultBackends
     let ff f session      = R.fragment [ f session, footer { session } ]
-    let forested child    = forestLayout { asyncTasks
+    let forested child    = forestLayout { asyncTasksRef
                                          , child
                                          , frontends
                                          , handed
@@ -93,12 +93,13 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
           ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout {
               annuaireId: aId
-            , asyncTasks: snd asyncTasks, frontends
+            , asyncTasksRef
+            , frontends
             , nodeId
             , session
             }
           Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
+          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { corpusId: Just corpusId,  nodeId, listId, session }
           Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
           Document sid listId nodeId ->
             withSession sid $
@@ -109,7 +110,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Home  -> forested $ homeLayout { backend, lang:LL_EN, publicBackend, sessions, visible: showLogin }
           Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout {
-              asyncTasks: snd asyncTasks
+              asyncTasksRef
             , nodeId
             , session
             , sessionUpdate
@@ -119,7 +120,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
             withSession sid $
               \session ->
                 simpleLayout handed $
-                  explorerLayout { asyncTasks
+                  explorerLayout { asyncTasksRef
                                  , backend
                                  , frontends
                                  , graphId
@@ -137,22 +138,22 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { frontends, nodeId, session, sessionUpdate }
           UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout {
-              asyncTasks: snd asyncTasks
+              asyncTasksRef
             , frontends
             , nodeId
             , session
             }
 
-type ForestLayoutProps =
-  ( asyncTasks :: GAT.Reductor
-  , backend   :: R.State (Maybe Backend)
-  , child     :: R.Element
-  , frontends :: Frontends
-  , handed    :: R.State GT.Handed
-  , reload    :: R.State Int
-  , route     :: AppRoute
-  , sessions  :: Sessions
-  , showLogin :: R.Setter Boolean
+type ForestLayoutProps = (
+    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  , backend       :: R.State (Maybe Backend)
+  , child         :: R.Element
+  , frontends     :: Frontends
+  , handed        :: R.State GT.Handed
+  , reload        :: R.State Int
+  , route         :: AppRoute
+  , sessions      :: Sessions
+  , showLogin     :: R.Setter Boolean
   )
 
 forestLayout :: Record ForestLayoutProps -> R.Element
@@ -170,7 +171,7 @@ forestLayoutMain props = R.createElement forestLayoutMainCpt props []
 forestLayoutMainCpt :: R.Component ForestLayoutProps
 forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
   where
-    cpt { asyncTasks, child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
+    cpt { asyncTasksRef, child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
       let ordering =
             case fst handed of
               GT.LeftHanded  -> reverse
@@ -178,7 +179,7 @@ forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" c
 
       pure $ R2.row $ ordering [
         H.div { className: "col-md-2", style: { paddingTop: "60px" } }
-            [ forest { asyncTasks, backend, frontends, handed: fst handed, reload, route, sessions, showLogin } ]
+            [ forest { asyncTasksRef, backend, frontends, handed: fst handed, reload, route, sessions, showLogin } ]
       , mainPage child
       ]
 

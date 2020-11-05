@@ -22,7 +22,7 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
@@ -280,7 +280,7 @@ tableContainerCpt { dispatch
 -- NEXT
 type Props = (
     afterSync      :: Unit -> Aff Unit
-  , asyncTasks     :: GAT.ReductorAction
+  , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
   , path           :: R.State PageParams
   , state          :: R.State State
   , tabNgramType   :: CTabNgramType
@@ -295,7 +295,7 @@ loadedNgramsTableCpt :: R.Component Props
 loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable" cpt
   where
     cpt { afterSync
-        , asyncTasks
+        , asyncTasksRef
         , path: path@(path'@{ listIds, nodeId, params, searchQuery, scoreType, termListFilter, termSizeFilter } /\ setPath)
         , state: (state@{ ngramsChildren
                         , ngramsLocalPatch
@@ -341,7 +341,9 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
           task <- postNgramsChartsAsync path'
           liftEffect $ do
             log2 "[performAction] Synchronize task" task
-            asyncTasks $ GAT.Insert nodeId task
+            case R.readRef asyncTasksRef of
+              Nothing -> log "[performAction] asyncTasksRef is Nothing"
+              Just asyncTasks -> snd asyncTasks $ GAT.Insert nodeId task
 
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then
@@ -494,15 +496,15 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 
 
 type MainNgramsTableProps = (
-    afterSync     :: Unit -> Aff Unit
-  , asyncTasks    :: GAT.ReductorAction
-  , cacheState    :: R.State NT.CacheState
-  , defaultListId :: Int
-  , nodeId        :: Int
+    afterSync      :: Unit -> Aff Unit
+  , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
+  , cacheState     :: R.State NT.CacheState
+  , defaultListId  :: Int
+  , nodeId         :: Int
     -- ^ This node can be a corpus or contact.
-  , session       :: Session
-  , tabNgramType  :: CTabNgramType
-  , tabType       :: TabType
+  , session        :: Session
+  , tabNgramType   :: CTabNgramType
+  , tabType        :: TabType
   , withAutoUpdate :: Boolean
   )
 
@@ -513,7 +515,7 @@ mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
   where
     cpt props@{ afterSync
-              , asyncTasks
+              , asyncTasksRef
               , cacheState
               , defaultListId
               , nodeId
@@ -523,7 +525,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
               , withAutoUpdate } _ = do
       let path = initialPageParams session nodeId [defaultListId] tabType
       let render versioned = mainNgramsTablePaint { afterSync
-                                                  , asyncTasks
+                                                  , asyncTasksRef
                                                   , path
                                                   , tabNgramType
                                                   , versioned
@@ -587,7 +589,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
 
 type MainNgramsTablePaintProps = (
     afterSync      :: Unit -> Aff Unit
-  , asyncTasks     :: GAT.ReductorAction
+  , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
   , path           :: PageParams
   , tabNgramType   :: CTabNgramType
   , versioned      :: VersionedNgramsTable
@@ -600,13 +602,13 @@ mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
 mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
   where
-    cpt props@{ afterSync, asyncTasks, path, tabNgramType, versioned, withAutoUpdate } _ = do
+    cpt props@{ afterSync, asyncTasksRef, path, tabNgramType, versioned, withAutoUpdate } _ = do
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
 
       pure $ loadedNgramsTable {
         afterSync
-      , asyncTasks
+      , asyncTasksRef
       , path: pathS
       , state
       , tabNgramType
@@ -616,7 +618,7 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
 
 -- type MainNgramsTablePaintWithStateProps = (
 --     afterSync      :: Unit -> Aff Unit
---   , asyncTasks     :: GAT.Reductor
+--   , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
 --   , path           :: R.State PageParams
 --   , tabNgramType   :: CTabNgramType
 --   , versioned      :: VersionedNgramsTable
@@ -629,12 +631,12 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
 -- mainNgramsTablePaintWithStateCpt :: R.Component MainNgramsTablePaintWithStateProps
 -- mainNgramsTablePaintWithStateCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintWithState" cpt
 --   where
---     cpt { afterSync, asyncTasks, path, tabNgramType, versioned, withAutoUpdate } _ = do
+--     cpt { afterSync, asyncTasksRef, path, tabNgramType, versioned, withAutoUpdate } _ = do
 --       state <- R.useState' $ initialState versioned
 
 --       pure $ loadedNgramsTable {
 --         afterSync
---       , asyncTasks
+--       , asyncTasksRef
 --       , path
 --       , state
 --       , tabNgramType

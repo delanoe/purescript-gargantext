@@ -26,11 +26,11 @@ thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    asyncTasks :: GAT.ReductorAction
-  , cacheState :: R.State NTypes.CacheState
-  , corpusData :: CorpusData
-  , corpusId   :: Int
-  , session    :: Session
+    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  , cacheState    :: R.State NTypes.CacheState
+  , corpusData    :: CorpusData
+  , corpusId      :: Int
+  , session       :: Session
   )
 
 type PropsWithKey = (
@@ -44,7 +44,7 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component PropsWithKey
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
-    cpt { asyncTasks, cacheState, corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do
+    cpt { asyncTasksRef, cacheState, corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do
       (selected /\ setSelected) <- R.useState' 0
 
       pure $ Tab.tabs { selected, tabs: tabs' }
@@ -53,7 +53,7 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                 , "Institutes" /\ view Institutes
                 , "Sources"    /\ view Sources
                 , "Terms"      /\ view Terms ]
-        view mode = ngramsView { asyncTasks, cacheState, corpusData, corpusId, mode, session }
+        view mode = ngramsView { asyncTasksRef, cacheState, corpusData, corpusId, mode, session }
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
@@ -63,7 +63,7 @@ ngramsView props = R.createElement ngramsViewCpt props []
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
   where
-    cpt { asyncTasks
+    cpt { asyncTasksRef
         , cacheState
         , corpusData: { defaultListId }
         , corpusId
@@ -76,7 +76,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
       pure $ R.fragment
         ( charts tabNgramType chartType chartsReload
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
-                                , asyncTasks
+                                , asyncTasksRef
                                 , cacheState
                                 , defaultListId
                                 , nodeId: corpusId

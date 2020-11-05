@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Lists where
 
+import Data.Maybe (Maybe(..))
 import Data.Tuple (fst)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
@@ -25,7 +26,7 @@ thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
 
 type Props = (
-    asyncTasks    :: GAT.ReductorAction
+    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , nodeId        :: Int
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
@@ -53,7 +54,7 @@ listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 listsLayoutWithKeyCpt :: R.Component KeyProps
 listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
   where
-    cpt { asyncTasks, nodeId, session, sessionUpdate } _ = do
+    cpt { asyncTasksRef, nodeId, session, sessionUpdate } _ = do
       let path = { nodeId, session }
 
       cacheState <- R.useState' $ getCacheState NT.CacheOn session nodeId
@@ -74,7 +75,7 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
               , title: "Corpus " <> name
               , user: authors }
           , Tabs.tabs {
-               asyncTasks
+               asyncTasksRef
              , cacheState
              , corpusData
              , corpusId

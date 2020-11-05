@@ -42,7 +42,7 @@ thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer"
 
 type LayoutProps = (
-    asyncTasks    :: GAT.Reductor
+    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
@@ -92,7 +92,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
   where
-    cpt props@{ asyncTasks
+    cpt props@{ asyncTasksRef
               , frontends
               , graph
               , graphId
@@ -157,7 +157,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
               [ inner handed
                 [ rowControls [ Controls.controls controls ]
                 , R2.row $ mainLayout handed $
-                    tree { asyncTasks
+                    tree { asyncTasksRef
                          , backend
                          , frontends
                          , handed
@@ -212,9 +212,9 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { asyncTasks, backend, frontends, handed, mCurrentRoute: route, reload, sessions, showLogin } =
+    tree { asyncTasksRef, backend, frontends, handed, mCurrentRoute: route, reload, sessions, showLogin } =
       RH.div {className: "col-md-2 graph-tree"} [
-        forest { asyncTasks, backend, frontends, handed, reload, route, sessions, showLogin }
+        forest { asyncTasksRef, backend, frontends, handed, reload, route, sessions, showLogin }
       ]
 
     mSidebar :: Maybe GET.MetaData
@@ -226,7 +226,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
 type TreeProps =
   (
-    asyncTasks    :: GAT.Reductor
+    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , frontends     :: Frontends
   , handed        :: Types.Handed
