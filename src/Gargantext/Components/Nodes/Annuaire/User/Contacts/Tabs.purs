@@ -44,7 +44,8 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+    appReload     :: R.State Int
+  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , cacheState    :: R.State NTypes.CacheState
   , contactData   :: ContactData
   , frontends     :: Frontends
@@ -58,7 +59,7 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
-    cpt { asyncTasksRef, cacheState, contactData: {defaultListId}, frontends, nodeId, session} _ = do
+    cpt { appReload, asyncTasksRef, cacheState, contactData: {defaultListId}, frontends, nodeId, session} _ = do
       active <- R.useState' 0
       pure $
         Tab.tabs { selected: fst active, tabs: tabs' }
@@ -71,9 +72,9 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
           , "Trash"         /\ docs -- TODO pass-in trash mode
           ]
           where
-            patentsView = { asyncTasksRef, cacheState, defaultListId, mode: Patents, nodeId, session }
-            booksView   = { asyncTasksRef, cacheState, defaultListId, mode: Books, nodeId, session }
-            commView    = { asyncTasksRef, cacheState, defaultListId, mode: Communication, nodeId, session }
+            patentsView = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Patents, nodeId, session }
+            booksView   = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Books, nodeId, session }
+            commView    = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Communication, nodeId, session }
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
@@ -91,7 +92,8 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+    appReload     :: R.State Int
+  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , cacheState    :: R.State NTypes.CacheState
   , defaultListId :: Int
   , mode          :: Mode
@@ -100,9 +102,10 @@ type NgramsViewTabsProps = (
   )
 
 ngramsView :: Record NgramsViewTabsProps -> R.Element
-ngramsView { asyncTasksRef, cacheState, defaultListId, mode, nodeId, session } =
+ngramsView { appReload, asyncTasksRef, cacheState, defaultListId, mode, nodeId, session } =
   NT.mainNgramsTable {
-      afterSync: \_ -> pure unit
+      appReload
+    , afterSync: \_ -> pure unit
     , asyncTasksRef
     , cacheState
     , defaultListId

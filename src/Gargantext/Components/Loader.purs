@@ -10,6 +10,7 @@ import Reactix as R
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Loader"
 
 type Props path loaded =

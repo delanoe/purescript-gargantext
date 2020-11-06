@@ -26,7 +26,8 @@ thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
 
 type Props = (
-    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+    appReload     :: R.State Int
+  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , nodeId        :: Int
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
@@ -54,7 +55,7 @@ listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 listsLayoutWithKeyCpt :: R.Component KeyProps
 listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
   where
-    cpt { asyncTasksRef, nodeId, session, sessionUpdate } _ = do
+    cpt { appReload, asyncTasksRef, nodeId, session, sessionUpdate } _ = do
       let path = { nodeId, session }
 
       cacheState <- R.useState' $ getCacheState NT.CacheOn session nodeId
@@ -75,7 +76,8 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
               , title: "Corpus " <> name
               , user: authors }
           , Tabs.tabs {
-               asyncTasksRef
+               appReload
+             , asyncTasksRef
              , cacheState
              , corpusData
              , corpusId

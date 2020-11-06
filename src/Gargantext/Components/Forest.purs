@@ -39,8 +39,8 @@ forestCpt :: R.Component Props
 forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
   cpt { asyncTasksRef, frontends, handed, reload: extReload, route, sessions, showLogin, backend} _ = do
     -- NOTE: this is a hack to reload the tree view on demand
-    asyncTasks <- GAT.useTasks extReload
     reload     <- R.useState' (0 :: Reload)
+    asyncTasks <- GAT.useTasks reload
     openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
 
     R.useEffect' $ do

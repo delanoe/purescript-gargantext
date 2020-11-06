@@ -55,6 +55,7 @@ type ReductorProps = (
 
 type Reductor = R2.Reductor (Record ReductorProps) Action
 type ReductorAction = Action -> Effect Unit
+type OnFinish = Effect Unit
 
 useTasks :: R.State Int -> R.Hooks Reductor
 useTasks reload = R2.useReductor act initializer unit
@@ -67,6 +68,7 @@ useTasks reload = R2.useReductor act initializer unit
 
 data Action =
     Insert NodeId GT.AsyncTaskWithType
+  | Finish NodeId GT.AsyncTaskWithType OnFinish
   | Remove NodeId GT.AsyncTaskWithType
 
 action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
@@ -74,6 +76,10 @@ action { reload, storage } (Insert nodeId t) = do
   _ <- snd reload $ (_ + 1)
   let newStorage = Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) nodeId storage
   pure { reload, storage: newStorage }
+action p@{ reload, storage } (Finish nodeId t onFinish) = do
+  ret <- action p (Remove nodeId t)
+  onFinish
+  pure ret
 action { reload, storage } (Remove nodeId t) = do
   _ <- snd reload $ (_ + 1)
   let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage

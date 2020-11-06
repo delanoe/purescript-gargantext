@@ -57,7 +57,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     showLogin  <- R.useState' false
     backend    <- R.useState' Nothing
 
-    treeReload <- R.useState' 0
+    reload     <- R.useState' 0
 
     showCorpus <- R.useState' false
 
@@ -69,7 +69,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                                          , child
                                          , frontends
                                          , handed
-                                         , reload: treeReload
+                                         , reload
                                          , route:  fst route
                                          , sessions: fst sessions
                                          , showLogin: snd showLogin
@@ -93,6 +93,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
           ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout {
               annuaireId: aId
+            , appReload: reload
             , asyncTasksRef
             , frontends
             , nodeId
@@ -110,7 +111,8 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Home  -> forested $ homeLayout { backend, lang:LL_EN, publicBackend, sessions, visible: showLogin }
           Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout {
-              asyncTasksRef
+              appReload: reload
+            , asyncTasksRef
             , nodeId
             , session
             , sessionUpdate
@@ -129,7 +131,6 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                                  , session
                                  , sessions: (fst sessions)
                                  , showLogin
-                                 --, treeReload
                                  }
           RouteFile sid nodeId -> withSession sid $ \session -> forested $ fileLayout { nodeId, session }
           RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameCalc     }
@@ -138,7 +139,8 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { frontends, nodeId, session, sessionUpdate }
           UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout {
-              asyncTasksRef
+              appReload: reload
+            , asyncTasksRef
             , frontends
             , nodeId
             , session
