@@ -49,8 +49,8 @@ removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) 
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
 
 type ReductorProps = (
-    appReload  :: R.State Int
-  , treeReload :: R.State Int
+    appReload  :: GT.ReloadS
+  , treeReload :: GT.ReloadS
   , storage    :: Storage
   )
 
@@ -58,7 +58,7 @@ type Reductor = R2.Reductor (Record ReductorProps) Action
 type ReductorAction = Action -> Effect Unit
 type OnFinish = Effect Unit
 
-useTasks :: R.State Int -> R.State Int -> R.Hooks Reductor
+useTasks :: GT.ReloadS -> GT.ReloadS -> R.Hooks Reductor
 useTasks appReload treeReload = R2.useReductor act initializer unit
   where
     act :: R2.Actor (Record ReductorProps) Action

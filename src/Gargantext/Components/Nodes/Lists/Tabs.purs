@@ -23,20 +23,20 @@ import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Lists.Types as NTypes
 import Gargantext.Components.Tab as Tab
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
+import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), ReloadS, TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
 import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    appReload     :: R.State Int
+    appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , cacheState    :: R.State NTypes.CacheState
   , corpusData    :: CorpusData
   , corpusId      :: Int
   , session       :: Session
-  , treeReloadRef :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef :: R.Ref (Maybe ReloadS)
   )
 
 type PropsWithKey = (

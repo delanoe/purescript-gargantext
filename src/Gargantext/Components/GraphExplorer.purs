@@ -55,7 +55,7 @@ type LayoutProps = (
 
 type Props =
   ( graph          :: SigmaxT.SGraph
-  , graphVersion   :: R.State Int
+  , graphVersion   :: Types.ReloadS
   , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData      :: Maybe GET.MetaData
   | LayoutProps
@@ -72,7 +72,7 @@ explorerLayoutCpt = R.hooksComponentWithModule thisModule "explorerLayout" cpt
       graphVersion <- R.useState' 0
       pure $ explorerLayoutView graphVersion props
 
-explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
+explorerLayoutView :: Types.ReloadS -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
     el = R.hooksComponentWithModule thisModule "explorerLayoutView" cpt
@@ -242,23 +242,23 @@ type TreeProps =
   , frontends     :: Frontends
   , handed        :: Types.Handed
   , mCurrentRoute :: AppRoute
-  , reload        :: R.State Int
+  , reload        :: Types.ReloadS
   , sessions      :: Sessions
   , show          :: Boolean
   , showLogin     :: R.Setter Boolean
-  , treeReloadRef :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef :: R.Ref (Maybe Types.ReloadS)
   )
 
 type MSidebarProps =
   ( frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphId         :: GET.GraphId
-  , graphVersion    :: R.State Int
+  , graphVersion    :: Types.ReloadS
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , showSidePanel   :: R.State GET.SidePanelState
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
-  , treeReload      :: R.State Int
+  , treeReload      :: Types.ReloadS
   )
 
 type GraphProps = (
@@ -366,7 +366,7 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> R.State Int -> GET.GraphId -> Aff GET.HyperdataGraph
+getNodes :: Session -> Types.ReloadS -> GET.GraphId -> Aff GET.HyperdataGraph
 getNodes session (graphVersion /\ _) graphId =
   get session $ NodeAPI Types.Graph
                         (Just graphId)

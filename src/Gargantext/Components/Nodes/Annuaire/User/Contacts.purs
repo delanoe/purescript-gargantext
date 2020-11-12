@@ -25,7 +25,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), ReloadS)
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts"
@@ -145,12 +145,12 @@ infoRender (Tuple title content) =
   , H.span {} [H.text content] ]
 
 type LayoutProps = (
-    appReload     :: R.State Int
+    appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , frontends     :: Frontends
   , nodeId        :: Int
   , session       :: Session
-  , treeReloadRef :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef :: R.Ref (Maybe ReloadS)
   )
 
 type KeyLayoutProps = (
@@ -204,7 +204,7 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
                }
           ]
       where
-        onUpdateHyperdata :: R.State Int -> HyperdataUser -> Effect Unit
+        onUpdateHyperdata :: ReloadS -> HyperdataUser -> Effect Unit
         onUpdateHyperdata (_ /\ setReload) hd = do
           log2 "[onUpdateHyperdata] hd" hd
           launchAff_ $ do

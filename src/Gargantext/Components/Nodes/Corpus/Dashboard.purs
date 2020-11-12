@@ -16,7 +16,7 @@ import Gargantext.Components.Nodes.Dashboard.Types as DT
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (NodeID)
+import Gargantext.Types (NodeID, ReloadS)
 import Gargantext.Utils.Reactix as R2
 
 thisModule = "Gargantext.Components.Nodes.Corpus.Dashboard"
@@ -63,7 +63,7 @@ dashboardLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "dashboardLayo
                                 , session }
 
       where
-        onChange :: NodeID -> R.State Int -> DT.Hyperdata -> Array P.PredefinedChart -> Effect Unit
+        onChange :: NodeID -> ReloadS -> DT.Hyperdata -> Array P.PredefinedChart -> Effect Unit
         onChange nodeId' (_ /\ setReload) (DT.Hyperdata h) charts = do
           launchAff_ do
             DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts }

@@ -16,7 +16,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, sessionId)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), ReloadS)
 import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 
@@ -54,8 +54,6 @@ type Props =
   , nodeType :: NodeType
   )
 
-type Reload = R.State Int
-
 type KeyProps =
   ( key :: String
   | Props
@@ -86,7 +84,7 @@ frameLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "frameLayoutWithKe
 
 type ViewProps =
   ( frame  :: NodePoly Hyperdata
-  , reload  :: Reload
+  , reload  :: ReloadS
   | Props
   )
 

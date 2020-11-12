@@ -17,14 +17,14 @@ import Gargantext.Ends (Frontends, Backend(..))
 import Gargantext.Prelude
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Reload, Handed(..))
+import Gargantext.Types (Reload, ReloadS, Handed(..))
 import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Forest"
 
 type Props = (
-    appReload     :: R.State Int
+    appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , frontends     :: Frontends
@@ -32,7 +32,7 @@ type Props = (
   , route         :: AppRoute
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
-  , treeReloadRef :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef :: R.Ref (Maybe ReloadS)
   )
 
 forest :: Record Props -> R.Element
@@ -115,7 +115,7 @@ plus handed showLogin backend = H.div { className: handedClass } [
 
 -------------------------
 type ForestLayoutProps = (
-    appReload     :: R.State Int
+    appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , child         :: R.Element
@@ -124,7 +124,7 @@ type ForestLayoutProps = (
   , route         :: AppRoute
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
-  , treeReloadRef :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef :: R.Ref (Maybe ReloadS)
   )
 
 forestLayout :: Record ForestLayoutProps -> R.Element

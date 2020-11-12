@@ -42,7 +42,7 @@ thisModule = "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeMainSpanProps = (
-    appReload     :: R.State Int
+    appReload     :: GT.ReloadS
   , asyncTasks    :: GAT.Reductor
   , folderOpen    :: R.State Boolean
   , frontends     :: Frontends

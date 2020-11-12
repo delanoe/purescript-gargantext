@@ -18,7 +18,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Components.Nodes.Lists.Types as NTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
+import Gargantext.Types (ReloadS, TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
@@ -45,14 +45,14 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    appReload     :: R.State Int
+    appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , cacheState    :: R.State NTypes.CacheState
   , contactData   :: ContactData
   , frontends     :: Frontends
   , nodeId        :: Int
   , session       :: Session
-  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef  :: R.Ref (Maybe ReloadS)
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -94,14 +94,14 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    appReload     :: R.State Int
+    appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , cacheState    :: R.State NTypes.CacheState
   , defaultListId :: Int
   , mode          :: Mode
   , nodeId        :: Int
   , session       :: Session
-  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef  :: R.Ref (Maybe ReloadS)
   )
 
 ngramsView :: Record NgramsViewTabsProps -> R.Element

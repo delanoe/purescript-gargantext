@@ -5,7 +5,7 @@ import Data.Tuple (Tuple)
 import Reactix as R
 
 import Gargantext.Sessions (Session)
-import Gargantext.Types (TabType)
+import Gargantext.Types (ReloadS, TabType)
 
 type Reload = Int
 
@@ -22,7 +22,7 @@ type Props = (
   )
 
 type MetricsProps = (
-    reload  :: R.State Int
+    reload  :: ReloadS
   | Props
 )
 

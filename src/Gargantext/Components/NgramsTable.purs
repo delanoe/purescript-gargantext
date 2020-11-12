@@ -43,7 +43,7 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
+import Gargantext.Types (CTabNgramType, OrderBy(..), ReloadS, SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet, sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
@@ -280,13 +280,13 @@ tableContainerCpt { dispatch
 
 -- NEXT
 type Props = (
-    appReload      :: R.State Int
+    appReload      :: ReloadS
   , afterSync      :: Unit -> Aff Unit
   , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
   , path           :: R.State PageParams
   , state          :: R.State State
   , tabNgramType   :: CTabNgramType
-  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef  :: R.Ref (Maybe ReloadS)
   , versioned      :: VersionedNgramsTable
   , withAutoUpdate :: Boolean
   )
@@ -510,7 +510,7 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 
 type MainNgramsTableProps = (
     afterSync      :: Unit -> Aff Unit
-  , appReload      :: R.State Int
+  , appReload      :: ReloadS
   , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
   , cacheState     :: R.State NT.CacheState
   , defaultListId  :: Int
@@ -520,7 +520,7 @@ type MainNgramsTableProps = (
   , session        :: Session
   , tabNgramType   :: CTabNgramType
   , tabType        :: TabType
-  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef  :: R.Ref (Maybe ReloadS)
   , withAutoUpdate :: Boolean
   )
 
@@ -620,11 +620,11 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
 
 type MainNgramsTablePaintProps = (
     afterSync      :: Unit -> Aff Unit
-  , appReload      :: R.State Int
+  , appReload      :: ReloadS
   , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
   , path           :: PageParams
   , tabNgramType   :: CTabNgramType
-  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef  :: R.Ref (Maybe ReloadS)
   , versioned      :: VersionedNgramsTable
   , withAutoUpdate :: Boolean
   )
@@ -653,11 +653,11 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
 
 type MainNgramsTablePaintNoCacheProps = (
     afterSync      :: Unit -> Aff Unit
-  , appReload      :: R.State Int
+  , appReload      :: ReloadS
   , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
   , pathS          :: R.State PageParams
   , tabNgramType   :: CTabNgramType
-  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef  :: R.Ref (Maybe ReloadS)
   , versioned      :: VersionedNgramsTable
   , withAutoUpdate :: Boolean
   )

@@ -32,7 +32,7 @@ import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types (CTabNgramType, ReloadS, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
 
@@ -42,13 +42,13 @@ type Props =
   ( frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphId         :: Int
-  , graphVersion    :: R.State Int
+  , graphVersion    :: ReloadS
   , metaData        :: GET.MetaData
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
   , showSidePanel   :: R.State GET.SidePanelState
-  , treeReload      :: R.State Int
+  , treeReload      :: ReloadS
   )
 
 sidebar :: Record Props -> R.Element
@@ -204,7 +204,7 @@ type DeleteNodes =
   , nodes :: Array (Record SigmaxT.Node)
   , session :: Session
   , termList :: TermList
-  , treeReload :: R.State Int
+  , treeReload :: ReloadS
   )
 
 deleteNodes :: Record DeleteNodes -> Effect Unit

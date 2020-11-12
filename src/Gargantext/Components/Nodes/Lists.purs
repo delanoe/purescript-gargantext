@@ -18,6 +18,7 @@ import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Sessions (Session, sessionId, getCacheState, setCacheState)
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
@@ -26,12 +27,12 @@ thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
 
 type Props = (
-    appReload     :: R.State Int
+    appReload     :: GT.ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , nodeId        :: Int
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
-  , treeReloadRef :: R.Ref (Maybe (R.State Int))
+  , treeReloadRef :: R.Ref (Maybe GT.ReloadS)
   )
 
 listsLayout :: Record Props -> R.Element
