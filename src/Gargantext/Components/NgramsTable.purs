@@ -286,6 +286,7 @@ type Props = (
   , path           :: R.State PageParams
   , state          :: R.State State
   , tabNgramType   :: CTabNgramType
+  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
   , versioned      :: VersionedNgramsTable
   , withAutoUpdate :: Boolean
   )
@@ -306,14 +307,15 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                         , ngramsSelection
                         , ngramsVersion } /\ setState)
         , tabNgramType
+        , treeReloadRef
         , versioned: Versioned { data: initTable }
         , withAutoUpdate } _ = do
 
       let syncResetBtns = [
         syncResetButtons { afterSync: chartsAfterSync
-                          , ngramsLocalPatch
-                          , performAction: performAction <<< CoreAction
-                          }
+                         , ngramsLocalPatch
+                         , performAction: performAction <<< CoreAction
+                         }
         ]
 
       pure $ R.fragment $
@@ -345,12 +347,16 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
         chartsAfterSync _ = do
           task <- postNgramsChartsAsync path'
           liftEffect $ do
-            log2 "[performAction] Synchronize task" task
+            log2 "[chartsAfterSync] Synchronize task" task
             case R.readRef asyncTasksRef of
-              Nothing -> log "[performAction] asyncTasksRef is Nothing"
+              Nothing -> log "[chartsAfterSync] asyncTasksRef is Nothing"
               Just asyncTasks -> do
                 snd asyncTasks $ GAT.Insert nodeId task
-                snd appReload $ (_ + 1)
+                case R.readRef treeReloadRef of
+                  Nothing -> log "[chartsAfterSync] can't reload tree: ref empty"
+                  Just treeReload -> do
+                    snd treeReload $ (_ + 1)
+                    -- snd appReload $ (_ + 1)
 
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then
@@ -510,9 +516,11 @@ type MainNgramsTableProps = (
   , defaultListId  :: Int
   , nodeId         :: Int
     -- ^ This node can be a corpus or contact.
+  , pathS          :: R.State PageParams
   , session        :: Session
   , tabNgramType   :: CTabNgramType
   , tabType        :: TabType
+  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
   , withAutoUpdate :: Boolean
   )
 
@@ -528,30 +536,43 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
               , cacheState
               , defaultListId
               , nodeId
+              , pathS
               , session
               , tabNgramType
               , tabType
+              , treeReloadRef
               , withAutoUpdate } _ = do
-      let path = initialPageParams session nodeId [defaultListId] tabType
-      let render versioned = mainNgramsTablePaint { afterSync
-                                                  , appReload
-                                                  , asyncTasksRef
-                                                  , path
-                                                  , tabNgramType
-                                                  , versioned
-                                                  , withAutoUpdate }
+
+      -- let path = initialPageParams session nodeId [defaultListId] tabType
 
       case cacheState of
         (NT.CacheOn /\ _) -> do
+          let render versioned = mainNgramsTablePaint { afterSync
+                                                      , appReload
+                                                      , asyncTasksRef
+                                                      , path: fst pathS
+                                                      , tabNgramType
+                                                      , treeReloadRef
+                                                      , versioned
+                                                      , withAutoUpdate }
           useLoaderWithCacheAPI {
               cacheEndpoint: versionEndpoint props
             , handleResponse
             , mkRequest
-            , path
+            , path: fst pathS
             , renderer: render
             }
         (NT.CacheOff /\ _) -> do
-          useLoader path loader render
+          -- pathS <- R.useState' path
+          let render versioned = mainNgramsTablePaintNoCache { afterSync
+                                                             , appReload
+                                                             , asyncTasksRef
+                                                             , pathS
+                                                             , tabNgramType
+                                                             , treeReloadRef
+                                                             , versioned
+                                                             , withAutoUpdate }
+          useLoader (fst pathS) loader render
 
     versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
     versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
@@ -603,6 +624,7 @@ type MainNgramsTablePaintProps = (
   , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
   , path           :: PageParams
   , tabNgramType   :: CTabNgramType
+  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
   , versioned      :: VersionedNgramsTable
   , withAutoUpdate :: Boolean
   )
@@ -613,7 +635,7 @@ mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
 mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
   where
-    cpt props@{ afterSync, appReload, asyncTasksRef, path, tabNgramType, versioned, withAutoUpdate } _ = do
+    cpt props@{ afterSync, appReload, asyncTasksRef, path, tabNgramType, treeReloadRef, versioned, withAutoUpdate } _ = do
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
 
@@ -624,6 +646,39 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
       , path: pathS
       , state
       , tabNgramType
+      , treeReloadRef
+      , versioned
+      , withAutoUpdate
+      }
+
+type MainNgramsTablePaintNoCacheProps = (
+    afterSync      :: Unit -> Aff Unit
+  , appReload      :: R.State Int
+  , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
+  , pathS          :: R.State PageParams
+  , tabNgramType   :: CTabNgramType
+  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
+  , versioned      :: VersionedNgramsTable
+  , withAutoUpdate :: Boolean
+  )
+
+mainNgramsTablePaintNoCache :: Record MainNgramsTablePaintNoCacheProps -> R.Element
+mainNgramsTablePaintNoCache p = R.createElement mainNgramsTablePaintNoCacheCpt p []
+
+mainNgramsTablePaintNoCacheCpt :: R.Component MainNgramsTablePaintNoCacheProps
+mainNgramsTablePaintNoCacheCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintNoCache" cpt
+  where
+    cpt props@{ afterSync, appReload, asyncTasksRef, pathS, tabNgramType, treeReloadRef, versioned, withAutoUpdate } _ = do
+      state <- R.useState' $ initialState versioned
+
+      pure $ loadedNgramsTable {
+        afterSync
+      , appReload
+      , asyncTasksRef
+      , path: pathS
+      , state
+      , tabNgramType
+      , treeReloadRef
       , versioned
       , withAutoUpdate
       }

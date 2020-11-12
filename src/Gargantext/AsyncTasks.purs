@@ -49,38 +49,37 @@ removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) 
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
 
 type ReductorProps = (
-    reload  :: R.State Int
-  , storage :: Storage
+    appReload  :: R.State Int
+  , treeReload :: R.State Int
+  , storage    :: Storage
   )
 
 type Reductor = R2.Reductor (Record ReductorProps) Action
 type ReductorAction = Action -> Effect Unit
 type OnFinish = Effect Unit
 
-useTasks :: R.State Int -> R.Hooks Reductor
-useTasks reload = R2.useReductor act initializer unit
+useTasks :: R.State Int -> R.State Int -> R.Hooks Reductor
+useTasks appReload treeReload = R2.useReductor act initializer unit
   where
     act :: R2.Actor (Record ReductorProps) Action
     act a s = action s a
     initializer _ = do
       storage <- getAsyncTasks
-      pure { reload, storage }
+      pure { appReload, treeReload, storage }
 
 data Action =
     Insert NodeId GT.AsyncTaskWithType
-  | Finish NodeId GT.AsyncTaskWithType OnFinish
+  | Finish NodeId GT.AsyncTaskWithType
   | Remove NodeId GT.AsyncTaskWithType
 
 action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
-action { reload, storage } (Insert nodeId t) = do
-  _ <- snd reload $ (_ + 1)
+action p@{ treeReload, storage } (Insert nodeId t) = do
+  _ <- snd treeReload $ (_ + 1)
   let newStorage = Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) nodeId storage
-  pure { reload, storage: newStorage }
-action p@{ reload, storage } (Finish nodeId t onFinish) = do
-  ret <- action p (Remove nodeId t)
-  onFinish
-  pure ret
-action { reload, storage } (Remove nodeId t) = do
-  _ <- snd reload $ (_ + 1)
+  pure $ p { storage = newStorage }
+action p (Finish nodeId t) = do
+  action p (Remove nodeId t)
+action p@{ appReload, storage } (Remove nodeId t) = do
+  _ <- snd appReload $ (_ + 1)
   let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage
-  pure { reload, storage: newStorage }
+  pure $ p { storage = newStorage }

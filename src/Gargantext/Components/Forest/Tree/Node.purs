@@ -127,7 +127,6 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
                         ]
                 else H.div {} []
 
-
                 , nodeActions { id
                               , nodeType
                               , refreshTree: const $ dispatch RefreshTree
@@ -138,7 +137,8 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
                 ]
         where
           onTaskFinish id t _ = do
-            dispatchAsyncTasks $ GAT.Finish id t (snd appReload $ (_ + 1))
+            dispatchAsyncTasks $ GAT.Finish id t
+            snd appReload $ (_ + 1)
 
           SettingsBox {show: showBox} = settingsBox nodeType
           onPopoverClose popoverRef _ = Popover.setOpen popoverRef false

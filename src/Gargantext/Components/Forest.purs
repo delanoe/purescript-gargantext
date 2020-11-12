@@ -22,14 +22,15 @@ thisModule :: String
 thisModule = "Gargantext.Components.Forest"
 
 type Props = (
-    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+    appReload     :: R.State Int
+  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , frontends     :: Frontends
   , handed        :: Handed
-  , reload        :: R.State Int
   , route         :: AppRoute
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
+  , treeReloadRef :: R.Ref (Maybe (R.State Int))
   )
 
 forest :: Record Props -> R.Element
@@ -37,21 +38,33 @@ forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
 forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
-  cpt { asyncTasksRef, frontends, handed, reload: extReload, route, sessions, showLogin, backend} _ = do
+  cpt { appReload
+      , asyncTasksRef
+      , backend
+      , frontends
+      , handed
+      , route
+      , sessions
+      , showLogin
+      , treeReloadRef } _ = do
     -- NOTE: this is a hack to reload the tree view on demand
     reload     <- R.useState' (0 :: Reload)
-    asyncTasks <- GAT.useTasks reload
+    asyncTasks <- GAT.useTasks appReload reload
     openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
 
+    -- TODO If `treeReloadRef` is set, `reload` state should be updated
     R.useEffect' $ do
       R.setRef asyncTasksRef $ Just asyncTasks
+      case R.readRef treeReloadRef of
+        Nothing -> R.setRef treeReloadRef $ Just reload
+        Just _  -> pure unit
 
     R2.useCache (
         frontends
       /\ route
       /\ sessions
       /\ fst openNodes
-      /\ fst extReload
+      /\ fst appReload
       /\ fst reload
       /\ (fst asyncTasks).storage
       /\ handed

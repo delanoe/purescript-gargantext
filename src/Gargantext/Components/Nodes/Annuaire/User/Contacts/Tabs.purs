@@ -12,6 +12,7 @@ import Reactix as R
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
+import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Components.Nodes.Lists.Types as NTypes
@@ -51,6 +52,7 @@ type TabsProps = (
   , frontends     :: Frontends
   , nodeId        :: Int
   , session       :: Session
+  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -59,7 +61,7 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
-    cpt { appReload, asyncTasksRef, cacheState, contactData: {defaultListId}, frontends, nodeId, session} _ = do
+    cpt { appReload, asyncTasksRef, cacheState, contactData: {defaultListId}, frontends, nodeId, session, treeReloadRef } _ = do
       active <- R.useState' 0
       pure $
         Tab.tabs { selected: fst active, tabs: tabs' }
@@ -72,9 +74,9 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
           , "Trash"         /\ docs -- TODO pass-in trash mode
           ]
           where
-            patentsView = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Patents, nodeId, session }
-            booksView   = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Books, nodeId, session }
-            commView    = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Communication, nodeId, session }
+            patentsView = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Patents, nodeId, session, treeReloadRef }
+            booksView   = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Books, nodeId, session, treeReloadRef }
+            commView    = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Communication, nodeId, session, treeReloadRef }
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
@@ -99,22 +101,32 @@ type NgramsViewTabsProps = (
   , mode          :: Mode
   , nodeId        :: Int
   , session       :: Session
+  , treeReloadRef  :: R.Ref (Maybe (R.State Int))
   )
 
 ngramsView :: Record NgramsViewTabsProps -> R.Element
-ngramsView { appReload, asyncTasksRef, cacheState, defaultListId, mode, nodeId, session } =
-  NT.mainNgramsTable {
-      appReload
-    , afterSync: \_ -> pure unit
-    , asyncTasksRef
-    , cacheState
-    , defaultListId
-    , nodeId
-    , tabType
-    , session
-    , tabNgramType
-    , withAutoUpdate: false
-    }
+ngramsView props = R.createElement ngramsViewCpt props []
+
+ngramsViewCpt :: R.Component NgramsViewTabsProps
+ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
   where
-    tabNgramType = modeTabType' mode
-    tabType      = TabPairing $ TabNgramType $ modeTabType mode
+    cpt { appReload, asyncTasksRef, cacheState, defaultListId, mode, nodeId, session, treeReloadRef } _ = do
+      pathS <- R.useState' $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
+
+      pure $ NT.mainNgramsTable {
+          appReload
+        , afterSync: \_ -> pure unit
+        , asyncTasksRef
+        , cacheState
+        , defaultListId
+        , nodeId
+        , pathS
+        , tabType
+        , session
+        , tabNgramType
+        , treeReloadRef
+        , withAutoUpdate: false
+        }
+      where
+        tabNgramType = modeTabType' mode
+        tabType      = TabPairing $ TabNgramType $ modeTabType mode

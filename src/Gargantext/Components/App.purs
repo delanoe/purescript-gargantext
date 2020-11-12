@@ -53,6 +53,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     route      <- useHashRouter router Home
 
     asyncTasksRef <- R.useRef Nothing
+    treeReloadRef <- R.useRef Nothing
 
     showLogin  <- R.useState' false
     backend    <- R.useState' Nothing
@@ -65,15 +66,16 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
 
     let backends          = fromFoldable defaultBackends
     let ff f session      = R.fragment [ f session, footer { session } ]
-    let forested child    = forestLayout { asyncTasksRef
+    let forested child    = forestLayout { appReload: reload
+                                         , asyncTasksRef
+                                         , backend
                                          , child
                                          , frontends
                                          , handed
-                                         , reload
                                          , route:  fst route
                                          , sessions: fst sessions
                                          , showLogin: snd showLogin
-                                         , backend
+                                         , treeReloadRef
                                          }
     let defaultView _ = forested $ homeLayout { backend
                                               , lang: LL_EN
@@ -98,6 +100,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
             , frontends
             , nodeId
             , session
+            , treeReloadRef
             }
           Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { corpusId: Just corpusId,  nodeId, listId, session }
@@ -116,6 +119,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
             , nodeId
             , session
             , sessionUpdate
+            , treeReloadRef
             }
           Login -> login { backend, backends, sessions, visible: showLogin }
           PGraphExplorer sid graphId ->
@@ -144,18 +148,20 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
             , frontends
             , nodeId
             , session
+            , treeReloadRef
             }
 
 type ForestLayoutProps = (
-    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+    appReload     :: R.State Int
+  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , child         :: R.Element
   , frontends     :: Frontends
   , handed        :: R.State GT.Handed
-  , reload        :: R.State Int
   , route         :: AppRoute
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
+  , treeReloadRef :: R.Ref (Maybe (R.State Int))
   )
 
 forestLayout :: Record ForestLayoutProps -> R.Element
@@ -173,7 +179,16 @@ forestLayoutMain props = R.createElement forestLayoutMainCpt props []
 forestLayoutMainCpt :: R.Component ForestLayoutProps
 forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
   where
-    cpt { asyncTasksRef, child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
+    cpt { appReload
+        , asyncTasksRef
+        , backend
+        , child
+        , frontends
+        , handed
+        , route
+        , sessions
+        , showLogin
+        , treeReloadRef } _ = do
       let ordering =
             case fst handed of
               GT.LeftHanded  -> reverse
@@ -181,7 +196,15 @@ forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" c
 
       pure $ R2.row $ ordering [
         H.div { className: "col-md-2", style: { paddingTop: "60px" } }
-            [ forest { asyncTasksRef, backend, frontends, handed: fst handed, reload, route, sessions, showLogin } ]
+            [ forest { appReload
+                     , asyncTasksRef
+                     , backend
+                     , frontends
+                     , handed: fst handed
+                     , route
+                     , sessions
+                     , showLogin
+                     , treeReloadRef } ]
       , mainPage child
       ]
 

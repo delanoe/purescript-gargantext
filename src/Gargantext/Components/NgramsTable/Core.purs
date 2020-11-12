@@ -158,8 +158,8 @@ type PageParams =
 
 initialPageParams :: Session -> Int -> Array Int -> TabType -> PageParams
 initialPageParams session nodeId listIds tabType =
-  { nodeId
-  , listIds
+  { listIds
+  , nodeId
   , params
   , tabType
   , termSizeFilter: Nothing

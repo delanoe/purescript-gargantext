@@ -31,6 +31,7 @@ type Props = (
   , nodeId        :: Int
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
+  , treeReloadRef :: R.Ref (Maybe (R.State Int))
   )
 
 listsLayout :: Record Props -> R.Element
@@ -55,7 +56,7 @@ listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 listsLayoutWithKeyCpt :: R.Component KeyProps
 listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
   where
-    cpt { appReload, asyncTasksRef, nodeId, session, sessionUpdate } _ = do
+    cpt { appReload, asyncTasksRef, nodeId, session, sessionUpdate, treeReloadRef } _ = do
       let path = { nodeId, session }
 
       cacheState <- R.useState' $ getCacheState NT.CacheOn session nodeId
@@ -82,7 +83,9 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
              , corpusData
              , corpusId
              , key: "listsLayoutWithKey-tabs-" <> (show $ fst cacheState)
-             , session }
+             , session
+             , treeReloadRef
+             }
           ]
       where
         afterCacheStateChange cacheState = do
