@@ -11,7 +11,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Forest (forest)
+import Gargantext.Components.Forest (forest, forestLayout)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Login (login)
@@ -25,6 +25,7 @@ import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists (listsLayout)
 import Gargantext.Components.Nodes.Texts (textsLayout)
+import Gargantext.Components.TopBar (topBar)
 import Gargantext.Config (defaultFrontends, defaultBackends, publicBackend)
 import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Hooks.Router (useHashRouter)
@@ -93,16 +94,16 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
           ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, asyncTasks, frontends, nodeId, session }
           Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Just corpusId }
+          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { corpusId: Just corpusId, nodeId, listId, session }
           Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
           Document sid listId nodeId ->
             withSession sid $
-              \session -> forested $ documentLayout { nodeId, listId, session, corpusId: Nothing }
+              \session -> forested $ documentLayout { corpusId: Nothing, nodeId, listId, session }
           Folder sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderPrivate sid nodeId -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          Home  -> forested $ homeLayout { backend, lang:LL_EN, publicBackend, sessions, visible: showLogin }
+          Home  -> forested $ homeLayout { backend, lang: LL_EN, publicBackend, sessions, visible: showLogin }
           Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { asyncTasks, nodeId, session, sessionUpdate }
           Login -> login { backend, backends, sessions, visible: showLogin }
           PGraphExplorer sid graphId ->
@@ -121,51 +122,12 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                                  --, treeReload
                                  }
           RouteFile sid nodeId -> withSession sid $ \session -> forested $ fileLayout { nodeId, session }
-          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameCalc     }
-          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameWrite    }
-          RouteFrameCode  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, session, nodeType: GT.NodeFrameNotebook }
+          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, nodeType: GT.NodeFrameCalc, session     }
+          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, nodeType: GT.NodeFrameWrite, session    }
+          RouteFrameCode  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, nodeType: GT.NodeFrameNotebook, session }
           Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { frontends, nodeId, session, sessionUpdate }
           UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { asyncTasks, frontends, nodeId, session }
-
-type ForestLayoutProps =
-  ( asyncTasks :: GAT.Reductor
-  , backend   :: R.State (Maybe Backend)
-  , child     :: R.Element
-  , frontends :: Frontends
-  , handed    :: R.State GT.Handed
-  , reload    :: R.State Int
-  , route     :: AppRoute
-  , sessions  :: Sessions
-  , showLogin :: R.Setter Boolean
-  )
-
-forestLayout :: Record ForestLayoutProps -> R.Element
-forestLayout props = R.createElement forestLayoutCpt props []
-
-forestLayoutCpt :: R.Component ForestLayoutProps
-forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
-  where
-    cpt props@{ handed } _ = do
-      pure $ R.fragment [ topBar { handed }, forestLayoutMain props ]
-
-forestLayoutMain :: Record ForestLayoutProps -> R.Element
-forestLayoutMain props = R.createElement forestLayoutMainCpt props []
-
-forestLayoutMainCpt :: R.Component ForestLayoutProps
-forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
-  where
-    cpt { asyncTasks, child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
-      let ordering =
-            case fst handed of
-              GT.LeftHanded  -> reverse
-              GT.RightHanded -> identity
-
-      pure $ R2.row $ ordering [
-        H.div { className: "col-md-2", style: { paddingTop: "60px" } }
-            [ forest { asyncTasks, backend, frontends, handed: fst handed, reload, route, sessions, showLogin } ]
-      , mainPage child
-      ]
 
 -- Simple layout does not accommodate the tree
 simpleLayout :: R.State GT.Handed -> R.Element -> R.Element
@@ -174,203 +136,6 @@ simpleLayout handed child = H.div { className: "simple-layout" } [
   , child
   , license
   ]
-
-mainPage :: R.Element -> R.Element
-mainPage child =
-  H.div {className: "col-md-10"}
-  [ H.div {id: "page-wrapper"}
-    [ H.div {className: "container-fluid"} [ child ] ] ]
-
-type TopBarProps = (
-  handed :: R.State GT.Handed
-  )
-
-topBar :: Record TopBarProps -> R.Element
-topBar props = R.createElement topBarCpt props []
-
-topBarCpt :: R.Component TopBarProps
-topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
-  where
-    cpt { handed } _ = do
-      pure $ H.div { id: "dafixedtop"
-                   , role: "navigation"
-                   , className: "navbar navbar-inverse navbar-fixed-top" }
-        [ H.div { className: "container-fluid" }
-            [ H.div { className: "navbar-inner" }
-              [ logo (fst handed)
-              , H.div { className: "collapse navbar-collapse"  <> navHanded}
-                      $ sortHanded
-                      [ H.ul { className: "nav navbar-nav" <> navHanded} [divDropdownLeft]
-                      , H.ul { title: "If you are Left Handed you can change "
-                                    <> "the interface by clicking on me. Click "
-                                    <> "again to come back to previous state."
-                             , className: "nav navbar-nav" <> navHanded
-                             } [handedChooser { handed }]
-                      , H.ul { className: "nav navbar-nav" <> navHanded} []
-                      {-, H.ul { title: "Dark Mode soon here"
-                             , className : "nav navbar-nav"
-                             } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
-                                                  ]
-                                         ]
-                               ]
-                      -}
-                      ]
-              ]
-            ]
-        ]
-          where
-            navHanded  = if fst handed == GT.LeftHanded then " navbar-right" else ""
-            sortHanded = if fst handed == GT.LeftHanded then reverse else reverse -- identity
-            -- SB.searchBar {session, databases: allDatabases}
-
-type HandedChooserProps = (
-  handed :: R.State GT.Handed
-  )
-
-handedChooser :: Record HandedChooserProps -> R.Element
-handedChooser props = R.createElement handedChooserCpt props []
-
-handedChooserCpt :: R.Component HandedChooserProps
-handedChooserCpt = R.hooksComponentWithModule thisModule "handedChooser" cpt
-  where
-    cpt { handed } _ = do
-      pure $ H.li {} [
-        H.a {} [
-          H.span { className: handedClass handed
-                 , on: { click: onClick handed } } []
-          ]
-        ]
-
-    handedClass (GT.LeftHanded  /\ _) = "fa fa-hand-o-left"
-    handedClass (GT.RightHanded /\ _) = "fa fa-hand-o-right"
-
-    onClick (_ /\ setHanded) = setHanded $ \h -> case h of
-      GT.LeftHanded  -> GT.RightHanded
-      GT.RightHanded -> GT.LeftHanded
-
-logo :: GT.Handed -> R.Element
-logo handed =
-  H.a { className, href: "#/" }
-  [ H.img { src, title, width: "30", height: "28" }
-  ]
-  where
-    className = "navbar-brand logoSmall" <> navHanded
-    src       = "images/logoSmall.png"
-    title     = "Back to home."
-    navHanded = if handed == GT.LeftHanded then " navbar-right" else ""
-
-divDropdownLeft :: R.Element
-divDropdownLeft =
-  divDropdownLeft' $
-    LiNav { title : "About Gargantext"
-          , href  : "#"
-          , icon  : "fa fa-info-circle"
-          , text  : "Info" }
-
-divDropdownLeft' :: LiNav -> R.Element
-divDropdownLeft' mb =
-  H.li {className: "dropdown"} [ menuButton mb, menuElements' ]
-
-menuButton :: LiNav -> R.Element
-menuButton (LiNav { title, href, icon, text } ) =
-  H.a { className: "dropdown-toggle navbar-text"
-      , data: {toggle: "dropdown"}
-      , href, title
-      , role: "button" }
-  [ H.span { aria: {hidden : true}, className: icon } []
-  , H.text (" " <> text) ]
-
-menuElements' :: R.Element
-menuElements' = menuElements-- title, icon, text
-  [ -- ===========================================================
-    [ LiNav { title : "Quick start, tutorials and methodology"
-            , href  : "https://iscpif.fr/gargantext/your-first-map/"
-            , icon  : "fa fa-lightbulb-o"
-            , text  : "Tutorials"
-            }
-    , LiNav { title : "Report bug here"
-            , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
-            , icon  : "glyphicon glyphicon-bullhorn"
-            , text  : "Feedback"
-            }
-    ]
-    , -----------------------------------------------------------
-    [ LiNav { title : "Chat"
-            , href  : "https://chat.iscpif.fr/channel/gargantext"
-            , icon  : "fa fa-rocket"
-            , text  : "Chat"
-            }
-    , LiNav { title : "Forums"
-            , href  : "https://discourse.iscpif.fr/c/gargantext"
-            , icon  : "fa fa-weixin"
-            , text  : "Forum"
-            }
-    ]
-    ,------------------------------------------------------------
-    [ LiNav { title : "Code documentation"
-            , href  : "https://doc.gargantext.org"
-            , icon  : "glyphicon glyphicon-book"
-            , text  : "Source Code Documentation"
-            }
-    , LiNav { title : "API documentation"
-            , href  : "https://v4.gargantext.org/swagger-ui"
-            , icon  : "fa fa-code-fork"
-            , text  : "API documentation"
-            }
-    , LiNav { title : "Source code"
-            , href  : "https://gitlab.iscpif.fr/gargantext/haskell-gargantext"
-            , icon  : "fa fa-code"
-            , text  : "Source Code"
-            }
-    ]
-
-    ,------------------------------------------------------------
-    [ LiNav { title : "More about us (you)"
-            , href  : "https://iscpif.fr"
-            , icon  : "glyphicon glyphicon-question-sign"
-            , text  : "About"
-            }
-    ]
-  ] -- ===========================================================
-
--- | Menu in the sidebar, syntactic sugar
-menuElements :: Array (Array LiNav) -> R.Element
-menuElements ns = dropDown $ intercalate divider $ map (map liNav) ns
-  where
-    dropDown :: Array R.Element -> R.Element
-    dropDown = H.ul {className: "dropdown-menu"}
-
-    divider :: Array R.Element
-    divider = [H.li {className: "divider"} []]
-
--- | surgar for target : "blank"
---data LiNav_ = LiNav_ { title  :: String
---                     , href   :: String
---                     , icon   :: String
---                     , text   :: String
---                     , target :: String
---                     }
-
-data LiNav = LiNav { title :: String
-                   , href  :: String
-                   , icon  :: String
-                   , text  :: String
-                   }
-
-liNav :: LiNav -> R.Element
-liNav (LiNav { title : title'
-             , href  : href'
-             , icon  : icon'
-             , text  : text'
-             }
-      ) = H.li {} [ H.a { tabIndex: (-1)
-                        , target: "blank"
-                        , title: title'
-                        , href: href'
-                        } [ H.span { className: icon' } []
-                          , H.text $ " " <> text'
-                          ]
-                  ]
 
 ---------------------------------------------------------------------------
 type FooterProps =

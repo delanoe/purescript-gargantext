@@ -11,10 +11,11 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Effect.Aff (Aff)
-import Gargantext.Prelude (class Read, read, class Show, show)
-import Prelude
 import Prim.Row (class Union)
+import Reactix as R
 import URI.Query (Query)
+
+import Gargantext.Prelude
 
 data Handed = LeftHanded | RightHanded
 
@@ -24,9 +25,10 @@ instance eqHanded :: Eq Handed where
 
 
 -------------------------------------------------------------------------
-type ID     = Int
-type Name   = String
-type Reload = Int
+type ID      = Int
+type Name    = String
+type Reload  = Int
+type ReloadS = R.State Reload
 
 newtype SessionId = SessionId String
 type NodeID = Int

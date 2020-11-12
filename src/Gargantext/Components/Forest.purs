@@ -1,16 +1,18 @@
 module Gargantext.Components.Forest where
 
-import DOM.Simple.Console (log)
-
+import Data.Array (reverse)
+import Data.Tuple (fst)
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree (treeView)
+import Gargantext.Components.TopBar (topBar)
 import Gargantext.Ends (Frontends, Backend(..))
 import Gargantext.Prelude
 import Gargantext.Routes (AppRoute)
@@ -91,3 +93,51 @@ plus handed showLogin backend = H.div { className: handedClass } [
 
     click _ = (snd backend) (const Nothing)
             *> showLogin (const true)
+
+
+-------------------------
+type ForestLayoutProps =
+  ( asyncTasks :: GAT.Reductor
+  , backend   :: R.State (Maybe Backend)
+  , child     :: R.Element
+  , frontends :: Frontends
+  , handed    :: R.State Handed
+  , reload    :: R.State Int
+  , route     :: AppRoute
+  , sessions  :: Sessions
+  , showLogin :: R.Setter Boolean
+  )
+
+forestLayout :: Record ForestLayoutProps -> R.Element
+forestLayout props = R.createElement forestLayoutCpt props []
+
+forestLayoutCpt :: R.Component ForestLayoutProps
+forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
+  where
+    cpt props@{ handed } _ = do
+      pure $ R.fragment [ topBar { handed }, forestLayoutMain props ]
+
+forestLayoutMain :: Record ForestLayoutProps -> R.Element
+forestLayoutMain props = R.createElement forestLayoutMainCpt props []
+
+forestLayoutMainCpt :: R.Component ForestLayoutProps
+forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
+  where
+    cpt { asyncTasks, child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
+      let ordering =
+            case fst handed of
+              LeftHanded  -> reverse
+              RightHanded -> identity
+
+      pure $ R2.row $ ordering [
+        H.div { className: "col-md-2", style: { paddingTop: "60px" } }
+            [ forest { asyncTasks, backend, frontends, handed: fst handed, reload, route, sessions, showLogin } ]
+      , mainPage child
+      ]
+
+
+mainPage :: R.Element -> R.Element
+mainPage child =
+  H.div {className: "col-md-10"}
+  [ H.div {id: "page-wrapper"}
+    [ H.div {className: "container-fluid"} [ child ] ] ]
