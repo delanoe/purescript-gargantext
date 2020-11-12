@@ -1,17 +1,14 @@
 module Gargantext.Components.App where
 
-import Data.Array (fromFoldable, reverse)
-import Data.Foldable (intercalate)
+import Data.Array (fromFoldable)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
 import Reactix as R
-import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
-import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Forest (forest, forestLayout)
+import Gargantext.Components.Footer (footer)
+import Gargantext.Components.Forest (forestLayout)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Login (login)
@@ -25,14 +22,12 @@ import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists (listsLayout)
 import Gargantext.Components.Nodes.Texts (textsLayout)
-import Gargantext.Components.TopBar (topBar)
+import Gargantext.Components.SimpleLayout (simpleLayout)
 import Gargantext.Config (defaultFrontends, defaultBackends, publicBackend)
-import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Hooks.Router (useHashRouter)
-import Gargantext.License (license)
 import Gargantext.Router (router)
 import Gargantext.Routes (AppRoute(..))
-import Gargantext.Sessions (Sessions, useSessions)
+import Gargantext.Sessions (useSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types as GT
 
@@ -142,7 +137,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           PGraphExplorer sid graphId ->
             withSession sid $
               \session ->
-                simpleLayout handed $
+                simpleLayout { handed } [
                   explorerLayout { asyncTasksRef
                                  , backend
                                  , frontends
@@ -153,6 +148,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                                  , sessions: (fst sessions)
                                  , showLogin
                                  }
+                ]
           RouteFile sid nodeId -> withSession sid $ \session -> forested [ fileLayout { nodeId, session } ]
           RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested [
             frameLayout { nodeId, nodeType: GT.NodeFrameCalc, session     }
@@ -179,31 +175,3 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
               , treeReloadRef
               }
           ]
-
--- Simple layout does not accommodate the tree
-simpleLayout :: R.State GT.Handed -> R.Element -> R.Element
-simpleLayout handed child = H.div { className: "simple-layout" } [
-    topBar { handed }
-  , child
-  , license
-  ]
-
----------------------------------------------------------------------------
-type FooterProps =
-  (
-    session :: Sessions.Session
-  )
-
-footer :: Record FooterProps -> R.Element
-footer props = R.createElement footerCpt props []
-
-footerCpt :: R.Component FooterProps
-footerCpt = R.hooksComponentWithModule thisModule "footer" cpt
-  where
-    cpt { session } _ = do
-      pure $ H.div 
-              { className: "container" }
-              [ H.hr {}
-              , H.footer {} []
-              ]
-
