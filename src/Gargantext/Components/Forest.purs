@@ -23,15 +23,16 @@ import Gargantext.Utils.Reactix as R2
 thisModule :: String
 thisModule = "Gargantext.Components.Forest"
 
-type Props =
-  ( asyncTasks :: GAT.Reductor
-  , backend    :: R.State (Maybe Backend)
-  , frontends  :: Frontends
-  , handed     :: Handed
-  , reload     :: R.State Int
-  , route      :: AppRoute
-  , sessions   :: Sessions
-  , showLogin  :: R.Setter Boolean
+type Props = (
+    appReload     :: R.State Int
+  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  , backend       :: R.State (Maybe Backend)
+  , frontends     :: Frontends
+  , handed        :: Handed
+  , route         :: AppRoute
+  , sessions      :: Sessions
+  , showLogin     :: R.Setter Boolean
+  , treeReloadRef :: R.Ref (Maybe (R.State Int))
   )
 
 forest :: Record Props -> R.Element
@@ -39,16 +40,33 @@ forest props = R.createElement forestCpt props []
 
 forestCpt :: R.Component Props
 forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
-  cpt { asyncTasks, frontends, handed, reload: extReload, route, sessions, showLogin, backend} _ = do
+  cpt { appReload
+      , asyncTasksRef
+      , backend
+      , frontends
+      , handed
+      , route
+      , sessions
+      , showLogin
+      , treeReloadRef } _ = do
     -- NOTE: this is a hack to reload the tree view on demand
     reload     <- R.useState' (0 :: Reload)
+    asyncTasks <- GAT.useTasks appReload reload
     openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
-    R2.useCache
-      (  frontends
+
+    -- TODO If `treeReloadRef` is set, `reload` state should be updated
+    R.useEffect' $ do
+      R.setRef asyncTasksRef $ Just asyncTasks
+      case R.readRef treeReloadRef of
+        Nothing -> R.setRef treeReloadRef $ Just reload
+        Just _  -> pure unit
+
+    R2.useCache (
+        frontends
       /\ route
       /\ sessions
       /\ fst openNodes
-      /\ fst extReload
+      /\ fst appReload
       /\ fst reload
       /\ (fst asyncTasks).storage
       /\ handed
@@ -96,16 +114,17 @@ plus handed showLogin backend = H.div { className: handedClass } [
 
 
 -------------------------
-type ForestLayoutProps =
-  ( asyncTasks :: GAT.Reductor
-  , backend   :: R.State (Maybe Backend)
-  , child     :: R.Element
-  , frontends :: Frontends
-  , handed    :: R.State Handed
-  , reload    :: R.State Int
-  , route     :: AppRoute
-  , sessions  :: Sessions
-  , showLogin :: R.Setter Boolean
+type ForestLayoutProps = (
+    appReload     :: R.State Int
+  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  , backend       :: R.State (Maybe Backend)
+  , child         :: R.Element
+  , frontends     :: Frontends
+  , handed        :: R.State Handed
+  , route         :: AppRoute
+  , sessions      :: Sessions
+  , showLogin     :: R.Setter Boolean
+  , treeReloadRef :: R.Ref (Maybe (R.State Int))
   )
 
 forestLayout :: Record ForestLayoutProps -> R.Element
@@ -123,7 +142,16 @@ forestLayoutMain props = R.createElement forestLayoutMainCpt props []
 forestLayoutMainCpt :: R.Component ForestLayoutProps
 forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
   where
-    cpt { asyncTasks, child, frontends, handed, reload, route, sessions, showLogin, backend} _ = do
+    cpt { appReload
+        , asyncTasksRef
+        , backend
+        , child
+        , frontends
+        , handed
+        , route
+        , sessions
+        , showLogin
+        , treeReloadRef } _ = do
       let ordering =
             case fst handed of
               LeftHanded  -> reverse
@@ -131,7 +159,15 @@ forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" c
 
       pure $ R2.row $ ordering [
         H.div { className: "col-md-2", style: { paddingTop: "60px" } }
-            [ forest { asyncTasks, backend, frontends, handed: fst handed, reload, route, sessions, showLogin } ]
+            [ forest { appReload
+                     , asyncTasksRef
+                     , backend
+                     , frontends
+                     , handed: fst handed
+                     , route
+                     , sessions
+                     , showLogin
+                     , treeReloadRef } ]
       , mainPage child
       ]
 

@@ -176,10 +176,6 @@ toHtmlCpt = R.hooksComponentWithModule thisModule "nodeView" cpt
             , openNodes
             , reload: reload@(_ /\ setReload)
             , session
-              -- , tasks: tasks@{ onTaskAdd
-              --                , onTaskFinish
-              --                , tasks: tasks'
-              --                }
             , tree: tree@(NTree (LNode { id
                                        , name
                                        , nodeType
@@ -199,7 +195,8 @@ toHtmlCpt = R.hooksComponentWithModule thisModule "nodeView" cpt
         let withId (NTree (LNode {id: id'}) _) = id'
 
         pure $ H.li { className: if A.null ary then "no-children" else "with-children" } $
-          [ nodeMainSpan { asyncTasks
+          [ nodeMainSpan { appReload: reload
+                         , asyncTasks
                          , dispatch: pAction
                          , folderOpen
                          , frontends
@@ -288,7 +285,6 @@ performAction (DoSearch task) { asyncTasks: (_ /\ dispatch)
 -------
 performAction (UpdateNode params) { asyncTasks: (_ /\ dispatch)
                                   , session
-                                  -- , tasks: {onTaskAdd}
                                   , tree: (NTree (LNode {id}) _)
                                   } =
   do

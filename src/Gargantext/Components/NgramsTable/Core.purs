@@ -158,8 +158,8 @@ type PageParams =
 
 initialPageParams :: Session -> Int -> Array Int -> TabType -> PageParams
 initialPageParams session nodeId listIds tabType =
-  { nodeId
-  , listIds
+  { listIds
+  , nodeId
   , params
   , tabType
   , termSizeFilter: Nothing
@@ -932,15 +932,10 @@ syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
                    , ngramsVersion
                    } /\ setState) callback = do
   when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
-    -- setState $ \s ->
-    --   s { ngramsLocalPatch = fromNgramsPatches mempty
-    --     , ngramsStagePatch = ngramsLocalPatch
-    --     }
     let pt = Versioned { data: ngramsPatches, version: ngramsVersion }
     launchAff_ $ do
       Versioned { data: newPatch, version: newVersion } <- putNgramsPatches props pt
       callback unit
-      -- task <- postNgramsChartsAsync props
       liftEffect $ do
         log2 "[syncPatches] setting state, newVersion" newVersion
         setState $ \s ->
@@ -1090,20 +1085,24 @@ syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" c
 
       let
         hasChanges = ngramsLocalPatch /= mempty
+        hasChangesClass = if hasChanges then "" else " disabled"
 
-        newAfterSync x = do
-          afterSync x
-          liftEffect $ setSynchronizing $ const false
+        resetClick _ = do
+          performAction ResetPatches
 
         synchronizeClick _ = delay unit $ \_ -> do
           setSynchronizing $ const true
           performAction $ Synchronize { afterSync: newAfterSync }
 
+        newAfterSync x = do
+          afterSync x
+          liftEffect $ setSynchronizing $ const false
+
       pure $ H.div {} [
-        H.button { className: "btn btn-danger " <> if hasChanges then "" else " disabled"
-                 , on: { click: \_ -> performAction ResetPatches }
+        H.button { className: "btn btn-danger " <> hasChangesClass
+                 , on: { click: resetClick }
                  } [ H.text "Reset" ]
-      , H.button { className: "btn btn-primary " <> (if s || (not hasChanges) then "disabled" else "")
+      , H.button { className: "btn btn-primary " <> hasChangesClass
                  , on: { click: synchronizeClick }
                  } [ H.text "Sync" ]
         ]

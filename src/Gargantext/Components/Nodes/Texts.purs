@@ -11,6 +11,7 @@ import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 --------------------------------------------------------
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Loader (loader)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
@@ -163,58 +164,68 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
 
 -- docViewLayoutRec :: forall a. DocViewProps a -> Record DT.LayoutProps
 docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType: TabDocs } =
-  { nodeId: corpusId
-    -- ^ TODO merge nodeId and corpusId in DT
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
+  , corpusId: Just corpusId
+  , frontends
+  , listId: defaultListId
+  , nodeId: corpusId
+    -- ^ TODO merge nodeId and corpusId in DT
+  , session
+  , showSearch: true
   , tabType: TabCorpus TabDocs
   , totalRecords: 4737
-  , listId: defaultListId
-  , corpusId: Just corpusId
-  , showSearch: true
-  , frontends, session }
+  }
 docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType: TabMoreLikeFav } =
-  { nodeId: corpusId
-    -- ^ TODO merge nodeId and corpusId in DT
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
+  , corpusId: Just corpusId
+  , frontends
+  , listId: defaultListId
+  , nodeId: corpusId
+    -- ^ TODO merge nodeId and corpusId in DT
+  , session
+  , showSearch: false
   , tabType: TabCorpus TabMoreLikeFav
   , totalRecords: 4737
-  , listId: defaultListId
-  , corpusId: Just corpusId
-  , showSearch: false
-  , frontends, session }
+  }
 docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType: TabMoreLikeTrash } =
-  { nodeId: corpusId
-    -- ^ TODO merge nodeId and corpusId in DT
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
+  , corpusId: Just corpusId
+  , frontends
+  , listId: defaultListId
+  , nodeId: corpusId
+  -- ^ TODO merge nodeId and corpusId in DT
+  , session
+  , showSearch: false
   , tabType: TabCorpus TabMoreLikeTrash
   , totalRecords: 4737
-  , listId: defaultListId
-  , corpusId: Just corpusId
-  , showSearch: false
-  , frontends, session }
+  }
 docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType: TabTrash } =
-  { nodeId: corpusId
-    -- ^ TODO merge nodeId and corpusId in DT
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
+  , corpusId: Nothing
+  , frontends
+  , listId: defaultListId
+  , nodeId: corpusId
+  -- ^ TODO merge nodeId and corpusId in DT
+  , session
+  , showSearch: true
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
-  , listId: defaultListId
-  , corpusId: Nothing
-  , showSearch: true
-  , frontends, session }
+  }
 -- DUMMY
 docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType } =
-  { nodeId: corpusId
-    -- ^ TODO merge nodeId and corpusId in DT
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
+  , corpusId: Nothing
+  , frontends
+  , listId: defaultListId
+  , nodeId: corpusId
+  -- ^ TODO merge nodeId and corpusId in DT
+  , session
+  , showSearch: true
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
-  , listId: defaultListId
-  , corpusId: Nothing
-  , showSearch: true
-  , frontends, session }
+  }

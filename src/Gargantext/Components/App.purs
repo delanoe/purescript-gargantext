@@ -53,12 +53,13 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     sessions   <- useSessions
     route      <- useHashRouter router Home
 
+    asyncTasksRef <- R.useRef Nothing
+    treeReloadRef <- R.useRef Nothing
+
     showLogin  <- R.useState' false
     backend    <- R.useState' Nothing
 
-    treeReload <- R.useState' 0
-
-    asyncTasks <- GAT.useTasks treeReload
+    reload     <- R.useState' 0
 
     showCorpus <- R.useState' false
 
@@ -66,15 +67,16 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
 
     let backends          = fromFoldable defaultBackends
     let ff f session      = R.fragment [ f session, footer { session } ]
-    let forested child    = forestLayout { asyncTasks
+    let forested child    = forestLayout { appReload: reload
+                                         , asyncTasksRef
+                                         , backend
                                          , child
                                          , frontends
                                          , handed
-                                         , reload: treeReload
                                          , route:  fst route
                                          , sessions: fst sessions
                                          , showLogin: snd showLogin
-                                         , backend
+                                         , treeReloadRef
                                          }
     let defaultView _ = forested $ homeLayout { backend
                                               , lang: LL_EN
@@ -92,9 +94,17 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
       false ->
         case fst route of
           Annuaire sid nodeId        -> withSession sid $ \session -> forested $ annuaireLayout { frontends, nodeId, session }
-          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout { annuaireId: aId, asyncTasks, frontends, nodeId, session }
+          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested $ annuaireUserLayout {
+              annuaireId: aId
+            , appReload: reload
+            , asyncTasksRef
+            , frontends
+            , nodeId
+            , session
+            , treeReloadRef
+            }
           Corpus sid nodeId        -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
-          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { corpusId: Just corpusId, nodeId, listId, session }
+          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested $ documentLayout { corpusId: Just corpusId,  nodeId, listId, session }
           Dashboard sid nodeId       -> withSession sid $ \session -> forested $ dashboardLayout { nodeId, session }
           Document sid listId nodeId ->
             withSession sid $
@@ -104,13 +114,20 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           FolderPublic sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           FolderShared sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Home  -> forested $ homeLayout { backend, lang: LL_EN, publicBackend, sessions, visible: showLogin }
-          Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout { asyncTasks, nodeId, session, sessionUpdate }
+          Lists sid nodeId         -> withSession sid $ \session -> forested $ listsLayout {
+              appReload: reload
+            , asyncTasksRef
+            , nodeId
+            , session
+            , sessionUpdate
+            , treeReloadRef
+            }
           Login -> login { backend, backends, sessions, visible: showLogin }
           PGraphExplorer sid graphId ->
             withSession sid $
               \session ->
                 simpleLayout handed $
-                  explorerLayout { asyncTasks
+                  explorerLayout { asyncTasksRef
                                  , backend
                                  , frontends
                                  , graphId
@@ -119,7 +136,6 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                                  , session
                                  , sessions: (fst sessions)
                                  , showLogin
-                                 --, treeReload
                                  }
           RouteFile sid nodeId -> withSession sid $ \session -> forested $ fileLayout { nodeId, session }
           RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, nodeType: GT.NodeFrameCalc, session     }
@@ -127,7 +143,14 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           RouteFrameCode  sid nodeId -> withSession sid $ \session -> forested $ frameLayout { nodeId, nodeType: GT.NodeFrameNotebook, session }
           Team sid nodeId  -> withSession sid $ \session -> forested $ corpusLayout { nodeId, session }
           Texts sid nodeId         -> withSession sid $ \session -> forested $ textsLayout { frontends, nodeId, session, sessionUpdate }
-          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout { asyncTasks, frontends, nodeId, session }
+          UserPage sid nodeId        -> withSession sid $ \session -> forested $ userLayout {
+              appReload: reload
+            , asyncTasksRef
+            , frontends
+            , nodeId
+            , session
+            , treeReloadRef
+            }
 
 -- Simple layout does not accommodate the tree
 simpleLayout :: R.State GT.Handed -> R.Element -> R.Element
