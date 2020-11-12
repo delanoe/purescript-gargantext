@@ -118,7 +118,6 @@ type ForestLayoutProps = (
     appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
-  , child         :: R.Element
   , frontends     :: Frontends
   , handed        :: R.State Handed
   , route         :: AppRoute
@@ -127,8 +126,8 @@ type ForestLayoutProps = (
   , treeReloadRef :: R.Ref (Maybe ReloadS)
   )
 
-forestLayout :: Record ForestLayoutProps -> R.Element
-forestLayout props = R.createElement forestLayoutCpt props []
+forestLayout :: Record ForestLayoutProps -> Array R.Element -> R.Element
+forestLayout props = R.createElement forestLayoutCpt props
 
 forestLayoutCpt :: R.Component ForestLayoutProps
 forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
@@ -145,13 +144,12 @@ forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" c
     cpt { appReload
         , asyncTasksRef
         , backend
-        , child
         , frontends
         , handed
         , route
         , sessions
         , showLogin
-        , treeReloadRef } _ = do
+        , treeReloadRef } children = do
       let ordering =
             case fst handed of
               LeftHanded  -> reverse
@@ -159,21 +157,27 @@ forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" c
 
       pure $ R2.row $ ordering [
         H.div { className: "col-md-2", style: { paddingTop: "60px" } }
-            [ forest { appReload
-                     , asyncTasksRef
-                     , backend
-                     , frontends
-                     , handed: fst handed
-                     , route
-                     , sessions
-                     , showLogin
-                     , treeReloadRef } ]
-      , mainPage child
+          [ forest { appReload
+                   , asyncTasksRef
+                   , backend
+                   , frontends
+                   , handed: fst handed
+                   , route
+                   , sessions
+                   , showLogin
+                   , treeReloadRef } ]
+      , mainPage children
       ]
 
+mainPage :: Array R.Element -> R.Element
+mainPage = R.createElement mainPageCpt {}
 
-mainPage :: R.Element -> R.Element
-mainPage child =
-  H.div {className: "col-md-10"}
-  [ H.div {id: "page-wrapper"}
-    [ H.div {className: "container-fluid"} [ child ] ] ]
+mainPageCpt :: R.Component ()
+mainPageCpt = R.hooksComponentWithModule thisModule "mainPage" cpt
+  where
+    cpt {} children = do
+      pure $ H.div {className: "col-md-10"} [
+        H.div {id: "page-wrapper"} [
+          H.div {className: "container-fluid"} children
+          ]
+        ]
