@@ -42,6 +42,8 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (Storage, getItem, setItem)
 
+type Component p = Record p -> Array R.Element -> R.Element
+
 newtype Point = Point { x :: Number, y :: Number }
 
 -- a reducer function living in effector, for useReductor

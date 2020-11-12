@@ -35,6 +35,20 @@ type Props = (
   , treeReloadRef :: R.Ref (Maybe GT.ReloadS)
   )
 
+type WithTreeProps = (
+    handed :: GT.Handed
+  | Props
+  )
+
+listsLayoutWithTree :: R2.Component WithTreeProps
+listsLayoutWithTree props = R.createElement listsLayoutWithTreeCpt props
+
+listsLayoutWithTreeCpt :: R.Component WithTreeProps
+listsLayoutWithTreeCpt = R.hooksComponentWithModule thisModule "listsLayoutWithTree" cpt
+  where
+    cpt { appReload, asyncTasksRef, handed, nodeId, session, sessionUpdate, treeReloadRef } _ = do
+      pure $ listsLayout { appReload, asyncTasksRef, nodeId, session, sessionUpdate, treeReloadRef }
+
 listsLayout :: Record Props -> R.Element
 listsLayout props = R.createElement listsLayoutCpt props []
 

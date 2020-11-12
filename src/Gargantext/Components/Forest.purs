@@ -126,17 +126,17 @@ type ForestLayoutProps = (
   , treeReloadRef :: R.Ref (Maybe ReloadS)
   )
 
-forestLayout :: Record ForestLayoutProps -> Array R.Element -> R.Element
+forestLayout :: R2.Component ForestLayoutProps
 forestLayout props = R.createElement forestLayoutCpt props
 
 forestLayoutCpt :: R.Component ForestLayoutProps
 forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
   where
-    cpt props@{ handed } _ = do
-      pure $ R.fragment [ topBar { handed }, forestLayoutMain props ]
+    cpt props@{ handed } children = do
+      pure $ R.fragment [ topBar { handed }, forestLayoutMain props children ]
 
-forestLayoutMain :: Record ForestLayoutProps -> R.Element
-forestLayoutMain props = R.createElement forestLayoutMainCpt props []
+forestLayoutMain :: R2.Component ForestLayoutProps
+forestLayoutMain props = R.createElement forestLayoutMainCpt props
 
 forestLayoutMainCpt :: R.Component ForestLayoutProps
 forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
@@ -166,11 +166,11 @@ forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" c
                    , sessions
                    , showLogin
                    , treeReloadRef } ]
-      , mainPage children
+      , mainPage {} children
       ]
 
-mainPage :: Array R.Element -> R.Element
-mainPage = R.createElement mainPageCpt {}
+mainPage :: R2.Component ()
+mainPage = R.createElement mainPageCpt
 
 mainPageCpt :: R.Component ()
 mainPageCpt = R.hooksComponentWithModule thisModule "mainPage" cpt

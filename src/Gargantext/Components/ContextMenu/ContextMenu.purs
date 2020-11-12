@@ -29,7 +29,7 @@ type Props t = (
   , onClose :: Effect Unit
   )
 
-contextMenu :: forall t. Record (Props t) -> Array R.Element -> R.Element
+contextMenu :: forall t. R2.Component (Props t)
 contextMenu = R.createElement contextMenuCpt
 
 contextMenuCpt :: forall t. R.Component (Props t)

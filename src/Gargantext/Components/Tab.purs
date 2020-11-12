@@ -45,7 +45,7 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
 -- TODO: document what these are (selection, item indices)
 type TabProps = ( selected :: Int, index :: Int )
 
-tab :: Record TabProps -> Array R.Element -> R.Element
+tab :: R2.Component TabProps
 tab = R.createElement tabCpt
 
 -- | A tab only shows its contents if it is currently selected

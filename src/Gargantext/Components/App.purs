@@ -157,11 +157,11 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested [
             frameLayout { nodeId, nodeType: GT.NodeFrameCalc, session     }
           ]
-          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested [
-            frameLayout { nodeId, nodeType: GT.NodeFrameWrite, session    }
-          ]
           RouteFrameCode  sid nodeId -> withSession sid $ \session -> forested [
             frameLayout { nodeId, nodeType: GT.NodeFrameNotebook, session }
+          ]
+          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested [
+            frameLayout { nodeId, nodeType: GT.NodeFrameWrite, session    }
           ]
           Team sid nodeId  -> withSession sid $ \session -> forested [
             corpusLayout { nodeId, session }

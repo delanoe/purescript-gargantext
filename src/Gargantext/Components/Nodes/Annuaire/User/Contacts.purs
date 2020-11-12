@@ -26,25 +26,35 @@ import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..), ReloadS)
+import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts"
 
-display :: String -> Array R.Element -> R.Element
-display title elems =
-  H.div { className: "container-fluid" }
-  [ H.div { className: "row", id: "contact-page-header" }
-    [ H.div { className: "col-md-6"} [ H.h3 {} [ H.text title ] ]
-    , H.div { className: "col-md-8"} []
-    , H.div { className: "col-md-2"} [ H.span {} [ H.text "" ] ]
-    ]
-  , H.div { className: "row", id: "contact-page-info" }
-    [ H.div { className: "col-md-12" }
-      [ H.div { className: "row" }
-        [ H.div { className: "col-md-2" } [ H.img { src: "/images/Gargantextuel-212x300.jpg"} ]
-        , H.div { className: "col-md-1"} []
-        , H.div { className: "col-md-8"} elems
-        ]]]]
+type DisplayProps = (
+  title :: String
+  )
+
+display :: R2.Component DisplayProps
+display = R.createElement displayCpt
+
+displayCpt :: R.Component DisplayProps
+displayCpt = R.hooksComponentWithModule thisModule "display" cpt
+  where
+    cpt { title } children = do
+      pure $ H.div { className: "container-fluid" }
+        [ H.div { className: "row", id: "contact-page-header" }
+          [ H.div { className: "col-md-6"} [ H.h3 {} [ H.text title ] ]
+          , H.div { className: "col-md-8"} []
+          , H.div { className: "col-md-2"} [ H.span {} [ H.text "" ] ]
+          ]
+        , H.div { className: "row", id: "contact-page-info" }
+          [ H.div { className: "col-md-12" }
+            [ H.div { className: "row" }
+              [ H.div { className: "col-md-2" } [ H.img { src: "/images/Gargantextuel-212x300.jpg"} ]
+              , H.div { className: "col-md-1"} []
+              , H.div { className: "col-md-8"} children
+              ]]]]
 
 -- | TODO format data in better design (UI) shape
 contactInfos :: HyperdataUser -> (HyperdataUser -> Effect Unit) -> Array R.Element
@@ -191,7 +201,7 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
       useLoader {nodeId, reload: fst reload, session} getContactWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
-            display (fromMaybe "no name" name) (contactInfos hyperdata (onUpdateHyperdata reload))
+            display { title: fromMaybe "no name" name } (contactInfos hyperdata (onUpdateHyperdata reload))
           , Tabs.tabs {
                  appReload
                , asyncTasksRef
@@ -249,7 +259,7 @@ annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayou
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
-            display (fromMaybe "no name" name) (contactInfos hyperdata onUpdateHyperdata)
+            display { title: fromMaybe "no name" name } (contactInfos hyperdata onUpdateHyperdata)
           , Tabs.tabs {
                  appReload
                , asyncTasksRef
