@@ -24,7 +24,6 @@ import Gargantext.Utils.Reactix as R2
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
-------------------------------------------------------------------------
 
 type Props = (
     appReload     :: GT.ReloadS

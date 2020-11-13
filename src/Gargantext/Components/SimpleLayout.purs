@@ -26,5 +26,5 @@ simpleLayoutCpt = R.hooksComponentWithModule thisModule "simpleLayout" cpt
   where
     cpt { handed } children = do
       pure $ H.div { className: "simple-layout" } (
-        [ topBar { handed } ] <> children <> [ license ]
+        [ topBar { handed } [] ] <> children <> [ license ]
         )

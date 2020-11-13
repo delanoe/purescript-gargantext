@@ -10,6 +10,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 
 import Gargantext.Types (Handed(..))
+import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.TopBar"
@@ -18,42 +19,42 @@ type TopBarProps = (
   handed :: R.State Handed
   )
 
-topBar :: Record TopBarProps -> R.Element
-topBar props = R.createElement topBarCpt props []
+topBar :: R2.Component TopBarProps
+topBar = R.createElement topBarCpt
 
 topBarCpt :: R.Component TopBarProps
 topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
   where
-    cpt { handed } _ = do
+    cpt { handed } children = do
       pure $ H.div { id: "dafixedtop"
                    , role: "navigation"
                    , className: "navbar navbar-inverse navbar-fixed-top" }
         [ H.div { className: "container-fluid" }
             [ H.div { className: "navbar-inner" }
               [ logo (fst handed)
-              , H.div { className: "collapse navbar-collapse"  <> navHanded}
-                      $ sortHanded
-                      [ H.ul { className: "nav navbar-nav" <> navHanded} [divDropdownLeft]
-                      , H.ul { title: "If you are Left Handed you can change "
-                                    <> "the interface by clicking on me. Click "
-                                    <> "again to come back to previous state."
-                             , className: "nav navbar-nav" <> navHanded
-                             } [handedChooser { handed }]
-                      , H.ul { className: "nav navbar-nav" <> navHanded} []
-                      {-, H.ul { title: "Dark Mode soon here"
-                             , className : "nav navbar-nav"
-                             } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+              , H.div { className: "collapse navbar-collapse"  <> navHanded} (
+                [
+                  H.ul { className: "nav navbar-nav" <> navHanded} []
+                , H.ul { title: "If you are Left Handed you can change "
+                             <> "the interface by clicking on me. Click "
+                             <> "again to come back to previous state."
+                       , className: "nav navbar-nav" <> navHanded
+                       } [handedChooser { handed }]
+                , H.ul { className: "nav navbar-nav" <> navHanded} [divDropdownLeft]
+                {-, H.ul { title: "Dark Mode soon here"
+                        , className : "nav navbar-nav"
+                         } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
                                                   ]
                                          ]
                                ]
                       -}
-                      ]
+                ] <> children)
               ]
             ]
         ]
           where
             navHanded  = if fst handed == LeftHanded then " navbar-right" else ""
-            sortHanded = if fst handed == LeftHanded then reverse else reverse -- identity
+            -- sortHanded = if fst handed == LeftHanded then reverse else reverse -- identity
             -- SB.searchBar {session, databases: allDatabases}
 
 

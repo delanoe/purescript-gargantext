@@ -1,8 +1,8 @@
 module Gargantext.Components.Forest where
 
-import Data.Array (reverse)
+import Data.Array as A
 import Data.Tuple (fst)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
@@ -133,7 +133,20 @@ forestLayoutCpt :: R.Component ForestLayoutProps
 forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
   where
     cpt props@{ handed } children = do
-      pure $ R.fragment [ topBar { handed }, forestLayoutMain props children ]
+      pure $ R.fragment [ topBar { handed } [], forestLayoutMain props children ]
+
+-- a component, for which first child element is placed inside the top bar
+-- while the remaining ones are put into the main view
+forestLayoutWithTopBar :: R2.Component ForestLayoutProps
+forestLayoutWithTopBar props = R.createElement forestLayoutWithTopBarCpt props
+
+forestLayoutWithTopBarCpt :: R.Component ForestLayoutProps
+forestLayoutWithTopBarCpt = R.hooksComponentWithModule thisModule "forestLayoutWithTopBar" cpt
+  where
+    cpt props@{ handed } children = do
+      let { head: topBarChild, tail: mainChildren } =
+            fromMaybe { head: H.div {} [], tail: [] } $ A.uncons children
+      pure $ R.fragment [ topBar { handed } [ topBarChild ], forestLayoutMain props mainChildren ]
 
 forestLayoutMain :: R2.Component ForestLayoutProps
 forestLayoutMain props = R.createElement forestLayoutMainCpt props
@@ -152,22 +165,22 @@ forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" c
         , treeReloadRef } children = do
       let ordering =
             case fst handed of
-              LeftHanded  -> reverse
+              LeftHanded  -> A.reverse
               RightHanded -> identity
 
       pure $ R2.row $ ordering [
-        H.div { className: "col-md-2", style: { paddingTop: "60px" } }
-          [ forest { appReload
-                   , asyncTasksRef
-                   , backend
-                   , frontends
-                   , handed: fst handed
-                   , route
-                   , sessions
-                   , showLogin
-                   , treeReloadRef } ]
-      , mainPage {} children
-      ]
+        H.div { className: "col-md-2", style: { paddingTop: "60px" } } [
+          forest { appReload
+                 , asyncTasksRef
+                 , backend
+                 , frontends
+                 , handed: fst handed
+                 , route
+                 , sessions
+                 , showLogin
+                 , treeReloadRef } ]
+        , mainPage {} children
+        ]
 
 mainPage :: R2.Component ()
 mainPage = R.createElement mainPageCpt

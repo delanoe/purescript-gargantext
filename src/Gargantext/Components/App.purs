@@ -3,12 +3,14 @@ module Gargantext.Components.App where
 import Data.Array (fromFoldable)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
+import Data.Tuple.Nested ((/\))
 import Reactix as R
+import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
 import Gargantext.Components.Footer (footer)
-import Gargantext.Components.Forest (forestLayout)
+import Gargantext.Components.Forest (forestLayout, forestLayoutWithTopBar)
 import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Login (login)
@@ -21,7 +23,7 @@ import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists (listsLayout)
-import Gargantext.Components.Nodes.Texts (textsLayout)
+import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.SimpleLayout (simpleLayout)
 import Gargantext.Config (defaultFrontends, defaultBackends, publicBackend)
 import Gargantext.Hooks.Router (useHashRouter)
@@ -30,6 +32,7 @@ import Gargantext.Routes (AppRoute(..))
 import Gargantext.Sessions (useSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types as GT
+import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.App"
@@ -53,7 +56,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     showLogin  <- R.useState' false
     backend    <- R.useState' Nothing
 
-    reload     <- R.useState' 0
+    appReload  <- R.useState' 0
 
     showCorpus <- R.useState' false
 
@@ -61,16 +64,26 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
 
     let backends          = fromFoldable defaultBackends
     let ff f session      = R.fragment [ f session, footer { session } ]
-    let forested = forestLayout { appReload: reload
+    let forested = forestLayout { appReload
                                 , asyncTasksRef
                                 , backend
                                 , frontends
                                 , handed
-                                , route:  fst route
+                                , route: fst route
                                 , sessions: fst sessions
                                 , showLogin: snd showLogin
                                 , treeReloadRef
                                 }
+    let forestedTB = forestLayoutWithTopBar { appReload
+                                            , asyncTasksRef
+                                            , backend
+                                            , frontends
+                                            , handed
+                                            , route: fst route
+                                            , sessions: fst sessions
+                                            , showLogin: snd showLogin
+                                            , treeReloadRef
+                                            }
     let defaultView _ = forested [
           homeLayout { backend
                      , lang: LL_EN
@@ -94,7 +107,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           ContactPage sid aId nodeId                -> withSession sid $ \session -> forested [
             annuaireUserLayout {
                 annuaireId: aId
-              , appReload: reload
+              , appReload
               , asyncTasksRef
               , frontends
               , nodeId
@@ -123,16 +136,17 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Home  -> forested [
             homeLayout { backend, lang: LL_EN, publicBackend, sessions, visible: showLogin }
           ]
-          Lists sid nodeId         -> withSession sid $ \session -> forested [
-            listsLayout {
-                appReload: reload
-              , asyncTasksRef
-              , nodeId
-              , session
-              , sessionUpdate
-              , treeReloadRef
-              }
-          ]
+          Lists sid nodeId         -> withSession sid $
+            \session -> forested [
+              listsLayout {
+                  appReload
+                , asyncTasksRef
+                , nodeId
+                , session
+                , sessionUpdate
+                , treeReloadRef
+                }
+            ]
           Login -> login { backend, backends, sessions, visible: showLogin }
           PGraphExplorer sid graphId ->
             withSession sid $
@@ -162,12 +176,29 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Team sid nodeId  -> withSession sid $ \session -> forested [
             corpusLayout { nodeId, session }
           ]
-          Texts sid nodeId         -> withSession sid $ \session -> forested [
-            textsLayout { frontends, nodeId, session, sessionUpdate }
-          ]
+          Texts sid nodeId         -> withSession sid $
+            \session -> Texts.textsWithForest {
+                  forestProps: {
+                      appReload
+                    , asyncTasksRef
+                    , backend
+                    , frontends
+                    , handed
+                    , route: fst route
+                    , sessions: fst sessions
+                    , showLogin: snd showLogin
+                    , treeReloadRef
+                  }
+                , textsProps: {
+                      frontends
+                    , nodeId
+                    , session
+                    , sessionUpdate
+                }
+              } []
           UserPage sid nodeId        -> withSession sid $ \session -> forested [
             userLayout {
-                appReload: reload
+                appReload
               , asyncTasksRef
               , frontends
               , nodeId

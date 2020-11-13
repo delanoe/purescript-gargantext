@@ -38,11 +38,12 @@ import Gargantext.Types (ID, Reload, isPublic, publicize)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree"
 
 ------------------------------------------------------------------------
-type CommonProps =
-  ( frontends     :: Frontends
+type CommonProps = (
+    frontends     :: Frontends
   , handed        :: GT.Handed
   , mCurrentRoute :: Maybe AppRoute
   , openNodes     :: R.State OpenNodes
@@ -51,10 +52,11 @@ type CommonProps =
   )
 
 ------------------------------------------------------------------------
-type Props = ( asyncTasks :: GAT.Reductor
-             , root       :: ID
-             | CommonProps
-             )
+type Props = (
+    asyncTasks :: GAT.Reductor
+  , root       :: ID
+  | CommonProps
+  )
 
 treeView :: Record Props -> R.Element
 treeView props = R.createElement treeViewCpt props []
@@ -70,16 +72,16 @@ treeView props = R.createElement treeViewCpt props []
             , reload
             , root
             , session
-            } _children = pure
-                        $ treeLoadView { asyncTasks
-                                       , frontends
-                                       , handed
-                                       , mCurrentRoute
-                                       , openNodes
-                                       , reload
-                                       , root
-                                       , session
-                                       }
+            } _children = do
+          pure $ treeLoadView { asyncTasks
+                              , frontends
+                              , handed
+                              , mCurrentRoute
+                              , openNodes
+                              , reload
+                              , root
+                              , session
+                              }
 
 treeLoadView :: Record Props -> R.Element
 treeLoadView p = R.createElement treeLoadViewCpt p []
@@ -114,10 +116,11 @@ getNodeTree :: Session -> GT.ID -> Aff FTree
 getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 
 --------------
-type TreeViewProps = ( asyncTasks :: GAT.Reductor
-                     , tree       :: FTree
-                     | CommonProps
-                     )
+type TreeViewProps = (
+    asyncTasks :: GAT.Reductor
+  , tree       :: FTree
+  | CommonProps
+  )
 
 loadedTreeView :: Record TreeViewProps -> R.Element
 loadedTreeView p = R.createElement loadedTreeViewCpt p []
@@ -134,30 +137,27 @@ loadedTreeView p = R.createElement loadedTreeViewCpt p []
             , session
             -- , tasks
             , tree
-          } _ = pure $ H.ul { className: "tree"
-                            }
-                             [ H.div { className: if handed == GT.RightHanded
-                                                    then "righthanded"
-                                                    else "lefthanded"
-                                     }
-                                     [ toHtml { asyncTasks
-                                              , frontends
-                                              , handed
-                                              , mCurrentRoute
-                                              , openNodes
-                                              , reload
-                                              , session
-                                              -- , tasks
-                                              , tree
-                                              }
-                                     ]
-                             ]
+          } _ = do
+          pure $ H.ul { className: "tree" } [
+            H.div { className: if handed == GT.RightHanded then "righthanded" else "lefthanded" } [
+               toHtml { asyncTasks
+                      , frontends
+                      , handed
+                      , mCurrentRoute
+                      , openNodes
+                      , reload
+                      , session
+                        -- , tasks
+                      , tree
+                      }
+               ]
+            ]
 
 ------------------------------------------------------------------------
 
 
-type ToHtmlProps =
-  ( asyncTasks :: GAT.Reductor
+type ToHtmlProps = (
+    asyncTasks :: GAT.Reductor
   -- , tasks      :: Record Tasks
   , tree       :: FTree
   | CommonProps

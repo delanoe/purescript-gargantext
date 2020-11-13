@@ -117,7 +117,9 @@ instance encodeJsonSessions :: EncodeJson Sessions where
 unSessions :: Sessions -> Array Session
 unSessions (Sessions {sessions:s}) = A.fromFoldable s
 
-useSessions :: R.Hooks (R2.Reductor Sessions Action)
+type Reductor = R2.Reductor Sessions Action
+
+useSessions :: R.Hooks Reductor
 useSessions = R2.useReductor actAndSave (const loadSessions) unit
   where
     actAndSave :: R2.Actor Sessions Action
