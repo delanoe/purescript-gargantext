@@ -4,10 +4,12 @@ module Gargantext.Components.Search where
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
-import Gargantext.Components.Category (Category)
 import Data.Maybe (Maybe(..))
+
 import Gargantext.Prelude (class Eq, class Read, class Show)
+
+import Gargantext.Components.Category.Types (Category)
+import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
 
 
 -- Example:

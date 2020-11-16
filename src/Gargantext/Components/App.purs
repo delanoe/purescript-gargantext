@@ -5,7 +5,6 @@ import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
-import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 

@@ -25,80 +25,61 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
-------------------------------------------------------------------------
+
 import Gargantext.Prelude
 
+import Gargantext.Components.Category.Types
+import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete, put)
-import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabType, showTabType')
+import Gargantext.Types (NodeID, NodeType(..), OrderBy(..), TableResult, TabType, showTabType')
 import Gargantext.Utils.CacheAPI as GUC
+
+thisModule :: String
+thisModule = "Gargantext.Components.Category"
+
 ------------------------------------------------------------------------
 
-data Category = Trash | UnRead | Checked | Topic | Favorite
 
-categories :: Array Category
-categories = [Trash, UnRead, Checked, Topic, Favorite]
-
-derive instance genericFavorite :: Generic Category _
-instance showCategory :: Show Category where
-  show = genericShow
-instance eqCategory :: Eq Category where
-  eq = genericEq
-instance decodeJsonCategory :: DecodeJson Category where
-  decodeJson json = do
-    obj <- decodeJson json
-    pure $ decodeCategory obj
-instance encodeJsonCategory :: EncodeJson Category where
-  encodeJson cat    = encodeJson (cat2score cat)
-
-favCategory :: Category -> Category
-favCategory Favorite = Topic
-favCategory _        = Favorite
-
-trashCategory :: Category -> Category
-trashCategory _     = Trash
--- TODO: ?
---trashCategory Trash = UnRead
-
-decodeCategory :: Int -> Category
-decodeCategory 0 = Trash
-decodeCategory 1 = UnRead
-decodeCategory 2 = Checked
-decodeCategory 3 = Topic
-decodeCategory 4 = Favorite
-decodeCategory _ = UnRead
-
-cat2score :: Category -> Int
-cat2score Trash    = 0
-cat2score UnRead   = 1
-cat2score Checked  = 2
-cat2score Topic    = 3
-cat2score Favorite = 4
+type CarousselProps = (
+    category           :: Category
+  , nodeId             :: NodeID
+  , row                :: DocumentsView
+  , session            :: Session
+  , setLocalCategories :: R.Setter LocalCategories
+  )
 
 -- caroussel :: Category -> R.Element
-caroussel session nodeId setLocalCategories r cat = H.div {className:"flex"} divs
+caroussel :: R2.Component CarousselProps
+caroussel = R.createElement carousselCpt
+
+carousselCpt :: R.Component CarousselProps
+carousselCpt = R.hooksComponentWithModule thisModule "caroussel" cpt
   where
-    divs = map (\c -> if cat == c
-                        then
-                          H.div { className : icon c (cat == c) } []
+    cpt { category, nodeId, row: DocumentsView r, session, setLocalCategories } _ = do
+      pure $ H.div {className:"flex"} divs
+      where
+        divs = map (\c -> if category == c
+                            then
+                              H.div { className : icon c (category == c) } []
 
-                        else
-                          H.div { className : icon c (cat == c)
-                            , on: { click: onClick c}
-                             } []
-                    ) (caroussel' cat)
+                            else
+                              H.div { className : icon c (category == c)
+                                , on: { click: onClick c}
+                                } []
+                        ) (caroussel' category)
 
-    caroussel' :: Category -> Array Category
-    caroussel' Trash = A.take 2 categories
-    caroussel' c   = A.take 3 $ A.drop (cat2score c - 1 ) categories
+        caroussel' :: Category -> Array Category
+        caroussel' Trash = A.take 2 categories
+        caroussel' c   = A.take 3 $ A.drop (cat2score c - 1 ) categories
 
-    onClick c = \_-> do
-      setLocalCategories $ Map.insert r._id c
-      void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [r._id], category: c}
+        onClick c = \_-> do
+          setLocalCategories $ Map.insert r._id c
+          void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [r._id], category: c}
 
 icon :: Category -> Boolean -> String
 icon cat b = btn b $ "glyphicon glyphicon-" <> (color $ size b $ icon' cat b)

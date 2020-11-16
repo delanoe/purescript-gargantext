@@ -22,15 +22,18 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Components.Category (Category(..), caroussel, decodeCategory)
+import Gargantext.Components.Category (caroussel)
+import Gargantext.Components.Category.Types (Category(..), decodeCategory)
+import Gargantext.Components.DocsTable.Types
 import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (NodeID, NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
@@ -51,19 +54,20 @@ type Path a = (
   )
 
 type LayoutProps = (
-    cacheState   :: R.State NT.CacheState
-  , corpusId     :: Maybe Int
-  , frontends    :: Frontends
-  , chart        :: R.Element
-  , listId       :: Int
-  , nodeId       :: Int
+    cacheState      :: R.State NT.CacheState
+  , corpusId        :: Maybe Int
+  , frontends       :: Frontends
+  , chart           :: R.Element
+  , listId          :: Int
+  , nodeId          :: Int
   -- , path         :: Record (Path a)
-  , session      :: Session
-  , showSearch   :: Boolean
-  , tabType      :: TabType
+  , session         :: Session
+  , showSearch      :: Boolean
+  , sidePanelTriggers :: Record SidePanelTriggers
+  , tabType         :: TabType
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
-  , totalRecords :: Int
+  , totalRecords    :: Int
   )
 
 type PageLayoutProps = (
@@ -76,96 +80,13 @@ type PageLayoutProps = (
   , params       :: T.Params
   , query        :: Query
   , session      :: Session
+  , sidePanelTriggers :: Record SidePanelTriggers
   , tabType      :: TabType
   , totalRecords :: Int
   )
 
-type LocalCategories = Map Int Category
-type Query = String
-
 _documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
 _localCategories     = prop (SProxy :: SProxy "localCategories")
-
-data Action
-  = MarkCategory Int Category
-
-newtype DocumentsView
-  = DocumentsView
-    { _id    :: Int
-    , category :: Category
-    , date   :: Int
-    , ngramCount :: Int
-    , source :: String
-    , title  :: String
-    , url    :: String
-    }
-
-{-
-derive instance genericDocumentsView :: Generic DocumentsView _
-instance showDocumentsView :: Show DocumentsView where
-  show = genericShow
-instance decodeJsonSearchType :: Argonaut.DecodeJson SearchType where
-  decodeJson = genericSumDecodeJson
-instance encodeJsonSearchType :: Argonaut.EncodeJson SearchType where
-  encodeJson = genericSumEncodeJson
-  -}
-
-instance decodeDocumentsView :: DecodeJson DocumentsView where
-  decodeJson json = do
-    obj <- decodeJson json
-    _id <- obj .: "id"
-    category <- obj .: "category"
-    date <- obj .: "date"
-    ngramCount <- obj .: "ngramCount"
-    source <- obj .: "source"
-    title <- obj .: "title"
-    url <- obj .: "url"
-    pure $ DocumentsView { _id, category, date, ngramCount, source, title, url }
-instance encodeDocumentsView :: EncodeJson DocumentsView where
-  encodeJson (DocumentsView dv) = 
-       "id" := dv._id
-    ~> "category" := dv.category
-    ~> "date" := dv.date
-    ~> "ngramCount" := dv.ngramCount
-    ~> "source" := dv.source
-    ~> "title" := dv.title
-    ~> "url" := dv.url
-    ~> jsonEmptyObject
-
-
-newtype Response = Response
-  { cid        :: Int
-  , hyperdata  :: Hyperdata
-  , category   :: Category
-  , ngramCount :: Int
-  , title      :: String
-  }
-
-
-newtype Hyperdata = Hyperdata
-  { title  :: String
-  , source :: String
-  , pub_year   :: Int
-  }
-
-
-instance decodeHyperdata :: DecodeJson Hyperdata where
-  decodeJson json = do
-    obj    <- decodeJson json
-    title  <- obj .: "title"
-    source <- obj .: "source"
-    pub_year <- obj .: "publication_year"
-    pure $ Hyperdata { title,source, pub_year}
-
-instance decodeResponse :: DecodeJson Response where
-  decodeJson json = do
-    obj        <- decodeJson json
-    category   <- obj .: "category"
-    cid        <- obj .: "id"
-    hyperdata  <- obj .: "hyperdata"
-    ngramCount <- obj .: "id"
-    title      <- obj .: "title"
-    pure $ Response { cid, title, category: decodeCategory category, ngramCount, hyperdata }
 
 docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
@@ -197,6 +118,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
                 , nodeId
                 , session
                 , showSearch
+                , sidePanelTriggers
                 , tabType
                 , totalRecords
                 }
@@ -217,6 +139,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
                        , params
                        , query: fst query
                        , session
+                       , sidePanelTriggers
                        , tabType
                        , totalRecords
                        } ] ] ]
@@ -310,7 +233,16 @@ pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
-  cpt props@{ cacheState, corpusId, frontends, listId, nodeId, params, query, session, tabType } _ = do
+  cpt props@{ cacheState
+            , corpusId
+            , frontends
+            , listId
+            , nodeId
+            , params
+            , query
+            , session
+            , sidePanelTriggers
+            , tabType } _ = do
     let path = { corpusId, listId, nodeId, params, query, tabType }
         handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
         handleResponse (HashedResponse { hash, value: res }) = ret
@@ -402,7 +334,7 @@ pagePaintRaw props = R.createElement pagePaintRawCpt props []
 pagePaintRawCpt :: R.Component PagePaintRawProps
 pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt where
   cpt { documents
-      , layout: { corpusId, frontends, listId, nodeId, session, totalRecords }
+      , layout: { corpusId, frontends, listId, nodeId, session, sidePanelTriggers, totalRecords }
       , localCategories
       , params } _ = do
     pure $ T.table
@@ -427,10 +359,10 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
         getCategory (localCategories /\ _) {_id, category} = fromMaybe category (localCategories ^. at _id)
         rows localCategories = row <$> A.toUnfoldable documents
           where
-            row (DocumentsView r) =
+            row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                 caroussel session nodeId setLocalCategories r cat
+                  caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } []
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { style } [ R2.showText r.date ]

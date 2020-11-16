@@ -28,7 +28,7 @@ import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, Sessions, sessionId, getCacheState, setCacheState)
-import Gargantext.Types (CTabNgramType(..), Handed(..), ReloadS, TabSubType(..), TabType(..))
+import Gargantext.Types (CTabNgramType(..), Handed(..), NodeID, ReloadS, TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
@@ -52,21 +52,31 @@ textsWithForestCpt = R.hooksComponentWithModule thisModule "textsWithForest" cpt
 
       pure $ Forest.forestLayoutWithTopBar forestProps [
         topBar { controls } []
-      , textsLayout (Record.merge textsProps { controls }) []
+      , H.div {className: "col-md-10"} [
+          H.div {id: "page-wrapper"} [
+            H.div {className: "container-fluid"} [
+              textsLayout (Record.merge textsProps { controls }) []
+            ]
+          ]
+        ]
+      , sidePanel { controls } []
       ]
 
 --------------------------------------------------------
 
 type TextsLayoutControls = (
-  showSidePanel :: R.State SidePanelState
+    showSidePanel :: R.State SidePanelState
+  , triggers      :: Record SidePanelTriggers
   )
 
 initialControls :: R.Hooks (Record TextsLayoutControls)
 initialControls = do
-  showSidePanel <- R.useState' InitialClosed
+  showSidePanel  <- R.useState' InitialClosed
+  triggers <- emptySidePanelTriggers
 
   pure $ {
-    showSidePanel
+      showSidePanel
+    , triggers
   }
 
 type TopBarProps = (
@@ -96,7 +106,7 @@ type CommonProps = (
   )
 
 type Props = (
-    controls      :: Record TextsLayoutControls
+    controls       :: Record TextsLayoutControls
   | CommonProps
   )
 
@@ -127,7 +137,7 @@ textsLayoutWithKey = R.createElement textsLayoutWithKeyCpt
 textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKey" cpt
   where
-    cpt { frontends, nodeId, session, sessionUpdate } _children = do
+    cpt { controls, frontends, nodeId, session, sessionUpdate } _children = do
       cacheState <- R.useState' $ getCacheState NT.CacheOff session nodeId
 
       pure $ loader { nodeId, session } loadCorpusWithChild $
@@ -145,7 +155,12 @@ textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKe
                                       , query
                                       , title
                                       , user: authors }
-            , tabs { cacheState, corpusData, corpusId, frontends, session }
+            , tabs { cacheState
+                   , corpusData
+                   , corpusId
+                   , frontends
+                   , session
+                   , sidePanelTriggers: controls.triggers }
           ]
       where
         afterCacheStateChange cacheState = do
@@ -166,11 +181,12 @@ modeTabType MoreLikeFav    = CTabAuthors  -- TODO
 modeTabType MoreLikeTrash  = CTabSources  -- TODO
 
 type TabsProps = (
-    cacheState :: R.State NT.CacheState
-  , corpusData :: CorpusData
-  , corpusId :: Int
-  , frontends :: Frontends
-  , session :: Session
+    cacheState      :: R.State NT.CacheState
+  , corpusData      :: CorpusData
+  , corpusId        :: Int
+  , frontends       :: Frontends
+  , session         :: Session
+  , sidePanelTriggers :: Record SidePanelTriggers
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -179,7 +195,7 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
-    cpt { cacheState, corpusId, corpusData, frontends, session } _ = do
+    cpt { cacheState, corpusId, corpusData, frontends, session, sidePanelTriggers } _ = do
       (selected /\ setSelected) <- R.useState' 0
 
       let path = initialPath
@@ -205,16 +221,18 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                                         , frontends
                                         -- , path
                                         , session
-                                        , tabType }
+                                        , tabType
+                                        , sidePanelTriggers }
 
 type DocViewProps a = (
-    cacheState :: R.State NT.CacheState
-  , corpusData :: CorpusData
-  , corpusId   :: Int
-  , frontends  :: Frontends
-  -- , path       :: Record DT.Path
-  , session    :: Session
-  , tabType    :: TabSubType a
+    cacheState      :: R.State NT.CacheState
+  , corpusData      :: CorpusData
+  , corpusId        :: Int
+  , frontends       :: Frontends
+  -- , path         :: Record DT.Path
+  , session         :: Session
+  , tabType         :: TabSubType a
+  , sidePanelTriggers :: Record SidePanelTriggers
   )
 
 docView :: forall a. Record (DocViewProps a) -> R.Element
@@ -227,7 +245,13 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
       pure $ DT.docViewLayout $ docViewLayoutRec props
 
 -- docViewLayoutRec :: forall a. DocViewProps a -> Record DT.LayoutProps
-docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType: TabDocs } =
+docViewLayoutRec { cacheState
+                 , corpusData: { defaultListId }
+                 , corpusId
+                 , frontends
+                 , session
+                 , tabType: TabDocs
+                 , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
   , corpusId: Just corpusId
@@ -237,10 +261,17 @@ docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontend
     -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: true
+  , sidePanelTriggers
   , tabType: TabCorpus TabDocs
   , totalRecords: 4737
   }
-docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType: TabMoreLikeFav } =
+docViewLayoutRec { cacheState
+                 , corpusData: { defaultListId }
+                 , corpusId
+                 , frontends
+                 , session
+                 , tabType: TabMoreLikeFav
+                 , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
   , corpusId: Just corpusId
@@ -250,10 +281,17 @@ docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontend
     -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: false
+  , sidePanelTriggers
   , tabType: TabCorpus TabMoreLikeFav
   , totalRecords: 4737
   }
-docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType: TabMoreLikeTrash } =
+docViewLayoutRec { cacheState
+                 , corpusData: { defaultListId }
+                 , corpusId
+                 , frontends
+                 , session
+                 , tabType: TabMoreLikeTrash
+                 , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
   , corpusId: Just corpusId
@@ -263,10 +301,17 @@ docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontend
   -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: false
+  , sidePanelTriggers
   , tabType: TabCorpus TabMoreLikeTrash
   , totalRecords: 4737
   }
-docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType: TabTrash } =
+docViewLayoutRec { cacheState
+                 , corpusData: { defaultListId }
+                 , corpusId
+                 , frontends
+                 , session
+                 , tabType: TabTrash
+                 , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
   , corpusId: Nothing
@@ -276,11 +321,18 @@ docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontend
   -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: true
+  , sidePanelTriggers
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
   }
 -- DUMMY
-docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontends, session, tabType } =
+docViewLayoutRec { cacheState
+                 , corpusData: { defaultListId }
+                 , corpusId
+                 , frontends
+                 , session
+                 , tabType
+                 , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
   , corpusId: Nothing
@@ -290,6 +342,29 @@ docViewLayoutRec { cacheState, corpusData: { defaultListId }, corpusId, frontend
   -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: true
+  , sidePanelTriggers
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
   }
+
+
+--------------------------------------------------------
+
+type SidePanelProps = (
+  controls :: Record TextsLayoutControls
+  )
+
+sidePanel :: R2.Component SidePanelProps
+sidePanel = R.createElement sidePanelCpt
+
+sidePanelCpt :: R.Component SidePanelProps
+sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
+  where
+    cpt { controls: { showSidePanel: (InitialClosed /\ _) } } _ = do
+      pure $ H.div {} []
+    cpt { controls: { showSidePanel: (Closed /\ _) } } _ = do
+      pure $ H.div {} []
+    cpt { controls: { showSidePanel: (Opened /\ _) } } _ = do
+      pure $ H.div { className: "side-bar" } [
+        H.h4 {} [ H.text "Side Bar" ]
+        ]

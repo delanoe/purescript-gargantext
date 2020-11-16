@@ -7,6 +7,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Reactix as R
 
 import Gargantext.AsyncTasks as GAT
@@ -16,9 +17,10 @@ import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Components.Nodes.Lists.Types as NTypes
+import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ReloadS, TabType(..), TabSubType(..), CTabNgramType(..), PTabNgramType(..))
+import Gargantext.Types (CTabNgramType(..), NodeID, PTabNgramType(..), ReloadS, TabType(..), TabSubType(..))
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
@@ -45,14 +47,15 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    appReload     :: ReloadS
-  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
-  , cacheState    :: R.State NTypes.CacheState
-  , contactData   :: ContactData
-  , frontends     :: Frontends
-  , nodeId        :: Int
-  , session       :: Session
-  , treeReloadRef  :: R.Ref (Maybe ReloadS)
+    appReload       :: ReloadS
+  , asyncTasksRef   :: R.Ref (Maybe GAT.Reductor)
+  , cacheState      :: R.State NTypes.CacheState
+  , contactData     :: ContactData
+  , frontends       :: Frontends
+  , nodeId          :: Int
+  , session         :: Session
+  , sidePanelTriggers :: Record SidePanelTriggers
+  , treeReloadRef   :: R.Ref (Maybe ReloadS)
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -61,7 +64,15 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
-    cpt { appReload, asyncTasksRef, cacheState, contactData: {defaultListId}, frontends, nodeId, session, treeReloadRef } _ = do
+    cpt { appReload
+        , asyncTasksRef
+        , cacheState
+        , contactData: {defaultListId}
+        , frontends
+        , nodeId
+        , session
+        , sidePanelTriggers
+        , treeReloadRef } _ = do
       active <- R.useState' 0
       pure $
         Tab.tabs { selected: fst active, tabs: tabs' }
@@ -74,9 +85,32 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
           , "Trash"         /\ docs -- TODO pass-in trash mode
           ]
           where
-            patentsView = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Patents, nodeId, session, treeReloadRef }
-            booksView   = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Books, nodeId, session, treeReloadRef }
-            commView    = { appReload, asyncTasksRef, cacheState, defaultListId, mode: Communication, nodeId, session, treeReloadRef }
+            patentsView = { appReload
+                          , asyncTasksRef
+                          , cacheState
+                          , defaultListId
+                          , mode: Patents
+                          , nodeId
+                          , session
+                          , sidePanelTriggers
+                          , treeReloadRef }
+            booksView   = { appReload
+                          , asyncTasksRef
+                          , cacheState
+                          , defaultListId
+                          , mode: Books
+                          , nodeId
+                          , session
+                          , sidePanelTriggers
+                          , treeReloadRef }
+            commView    = { appReload, asyncTasksRef
+                          , cacheState
+                          , defaultListId
+                          , mode: Communication
+                          , nodeId
+                          , session
+                          , sidePanelTriggers
+                          , treeReloadRef }
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
@@ -88,6 +122,7 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
               , nodeId
               , session
               , showSearch: true
+              , sidePanelTriggers
               , tabType: TabPairing TabDocs
               , totalRecords
               }
@@ -101,6 +136,7 @@ type NgramsViewTabsProps = (
   , mode          :: Mode
   , nodeId        :: Int
   , session       :: Session
+  , sidePanelTriggers :: Record SidePanelTriggers
   , treeReloadRef  :: R.Ref (Maybe ReloadS)
   )
 

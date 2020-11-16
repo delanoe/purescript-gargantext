@@ -28,5 +28,5 @@ sidePanelToggleButtonCpt = R.hooksComponentWithModule thisModule "sidePanelToggl
         H.button { className: "btn btn-primary"
                  , on: { click: \_ -> setOpen $ toggleSidePanelState } } [ H.text (text open) ]
     text InitialClosed = "Show Side Panel"
-    text Opened        = "Show Side Panel"
-    text Closed        = "Hide Side Panel"
+    text Opened        = "Hide Side Panel"
+    text Closed        = "Show Side Panel"

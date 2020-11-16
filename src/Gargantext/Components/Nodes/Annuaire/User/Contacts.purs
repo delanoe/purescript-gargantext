@@ -20,6 +20,7 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
@@ -198,6 +199,8 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
 
       cacheState <- R.useState' NT.CacheOn
 
+      sidePanelTriggers <- TT.emptySidePanelTriggers
+
       useLoader {nodeId, reload: fst reload, session} getContactWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
@@ -210,13 +213,13 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
                , frontends
                , nodeId
                , session
+               , sidePanelTriggers
                , treeReloadRef
                }
           ]
       where
         onUpdateHyperdata :: ReloadS -> HyperdataUser -> Effect Unit
         onUpdateHyperdata (_ /\ setReload) hd = do
-          log2 "[onUpdateHyperdata] hd" hd
           launchAff_ $ do
             _ <- saveContactHyperdata session nodeId hd
             liftEffect $ setReload $ (+) 1
@@ -256,6 +259,8 @@ annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayou
     cpt { annuaireId, appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
       cacheState <- R.useState' NT.CacheOn
 
+      sidePanelTriggers <- TT.emptySidePanelTriggers
+
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
@@ -268,6 +273,7 @@ annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayou
                , frontends
                , nodeId
                , session
+               , sidePanelTriggers
                , treeReloadRef
                }
           ]

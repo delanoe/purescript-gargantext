@@ -22,8 +22,7 @@ localStorageKey :: String
 localStorageKey = "garg-async-tasks"
 
 
-type NodeId = Int
-type Storage = Map.Map NodeId (Array GT.AsyncTaskWithType)
+type Storage = Map.Map GT.NodeID (Array GT.AsyncTaskWithType)
 
 empty :: Storage
 empty = Map.empty
@@ -41,7 +40,7 @@ getAsyncTasks = R2.getls >>= WSS.getItem localStorageKey >>= handleMaybe
     parse  s = GU.mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
     decode j = GU.mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
 
-getTasks :: Record ReductorProps -> NodeId -> Array GT.AsyncTaskWithType
+getTasks :: Record ReductorProps -> GT.NodeID -> Array GT.AsyncTaskWithType
 getTasks { storage } nodeId = fromMaybe [] $ Map.lookup nodeId storage
 
 removeTaskFromList :: Array GT.AsyncTaskWithType -> GT.AsyncTaskWithType -> Array GT.AsyncTaskWithType
@@ -68,9 +67,9 @@ useTasks appReload treeReload = R2.useReductor act initializer unit
       pure { appReload, treeReload, storage }
 
 data Action =
-    Insert NodeId GT.AsyncTaskWithType
-  | Finish NodeId GT.AsyncTaskWithType
-  | Remove NodeId GT.AsyncTaskWithType
+    Insert GT.NodeID GT.AsyncTaskWithType
+  | Finish GT.NodeID GT.AsyncTaskWithType
+  | Remove GT.NodeID GT.AsyncTaskWithType
 
 action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
 action p@{ treeReload, storage } (Insert nodeId t) = do

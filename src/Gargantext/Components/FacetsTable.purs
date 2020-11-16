@@ -22,7 +22,8 @@ import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Components.Category (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
+import Gargantext.Components.Category (CategoryQuery(..), putCategories)
+import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
 import Gargantext.Components.Search
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)

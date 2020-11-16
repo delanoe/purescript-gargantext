@@ -133,7 +133,7 @@ forestLayoutCpt :: R.Component ForestLayoutProps
 forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
   where
     cpt props@{ handed } children = do
-      pure $ R.fragment [ topBar { handed } [], forestLayoutMain props children ]
+      pure $ R.fragment [ topBar { handed } [], forestLayoutRaw props children ]
 
 -- a component, for which first child element is placed inside the top bar
 -- while the remaining ones are put into the main view
@@ -147,6 +147,39 @@ forestLayoutWithTopBarCpt = R.hooksComponentWithModule thisModule "forestLayoutW
       let { head: topBarChild, tail: mainChildren } =
             fromMaybe { head: H.div {} [], tail: [] } $ A.uncons children
       pure $ R.fragment [ topBar { handed } [ topBarChild ], forestLayoutMain props mainChildren ]
+
+forestLayoutRaw :: R2.Component ForestLayoutProps
+forestLayoutRaw props = R.createElement forestLayoutRawCpt props
+
+forestLayoutRawCpt :: R.Component ForestLayoutProps
+forestLayoutRawCpt = R.hooksComponentWithModule thisModule "forestLayoutRaw" cpt
+  where
+    cpt { appReload
+        , asyncTasksRef
+        , backend
+        , frontends
+        , handed
+        , route
+        , sessions
+        , showLogin
+        , treeReloadRef } children = do
+      let ordering =
+            case fst handed of
+              LeftHanded  -> A.reverse
+              RightHanded -> identity
+
+      pure $ R2.row $ ordering [
+        H.div { className: "col-md-2", style: { paddingTop: "60px" } } ([
+          forest { appReload
+                 , asyncTasksRef
+                 , backend
+                 , frontends
+                 , handed: fst handed
+                 , route
+                 , sessions
+                 , showLogin
+                 , treeReloadRef } ] <> children)
+        ]
 
 forestLayoutMain :: R2.Component ForestLayoutProps
 forestLayoutMain props = R.createElement forestLayoutMainCpt props
