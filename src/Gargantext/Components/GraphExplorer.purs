@@ -42,7 +42,7 @@ thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer"
 
 type LayoutProps = (
-    asyncTasks    :: GAT.Reductor
+    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
@@ -92,7 +92,8 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
   where
-    cpt props@{ asyncTasks
+    cpt props@{ asyncTasksRef
+              , backend
               , frontends
               , graph
               , graphId
@@ -104,7 +105,6 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
               , session
               , sessions
               , showLogin
-              , backend
               } _ = do
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
@@ -117,13 +117,14 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
       treeReload <- R.useState' 0
+      treeReloadRef <- R.useRef $ Just treeReload
       controls   <- Controls.useGraphControls { forceAtlasS
-                                              , graph
-                                              , graphId
-                                              , hyperdataGraph
-                                              , session
-                                              , treeReload: \_ -> (snd treeReload) $ (+) 1
-                                              }
+                                             , graph
+                                             , graphId
+                                             , hyperdataGraph
+                                             , session
+                                             , treeReload: \_ -> (snd treeReload) $ (+) 1
+                                             }
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -157,7 +158,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
               [ inner handed
                 [ rowControls [ Controls.controls controls ]
                 , R2.row $ mainLayout handed $
-                    tree { asyncTasks
+                    tree { asyncTasksRef
                          , backend
                          , frontends
                          , handed
@@ -165,7 +166,9 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
                          , reload: treeReload
                          , sessions
                          , show: fst controls.showTree
-                         , showLogin: snd showLogin }
+                         , showLogin: snd showLogin
+                         , treeReloadRef
+                         }
                     /\
                     RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
                     /\
@@ -212,9 +215,17 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { asyncTasks, backend, frontends, handed, mCurrentRoute: route, reload, sessions, showLogin } =
+    tree { asyncTasksRef, backend, frontends, handed, mCurrentRoute: route, reload, sessions, showLogin, treeReloadRef } =
       RH.div {className: "col-md-2 graph-tree"} [
-        forest { asyncTasks, backend, frontends, handed, reload, route, sessions, showLogin }
+        forest { appReload: reload
+               , asyncTasksRef
+               , backend
+               , frontends
+               , handed
+               , route
+               , sessions
+               , showLogin
+               , treeReloadRef }
       ]
 
     mSidebar :: Maybe GET.MetaData
@@ -226,7 +237,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
 type TreeProps =
   (
-    asyncTasks    :: GAT.Reductor
+    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , frontends     :: Frontends
   , handed        :: Types.Handed
@@ -235,6 +246,7 @@ type TreeProps =
   , sessions      :: Sessions
   , show          :: Boolean
   , showLogin     :: R.Setter Boolean
+  , treeReloadRef :: R.Ref (Maybe (R.State Int))
   )
 
 type MSidebarProps =

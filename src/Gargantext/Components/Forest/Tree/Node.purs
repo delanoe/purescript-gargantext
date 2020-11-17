@@ -3,6 +3,7 @@ module Gargantext.Components.Forest.Tree.Node where
 import Data.Array (reverse)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
+import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
@@ -40,8 +41,9 @@ thisModule = "Gargantext.Components.Forest.Tree.Node"
 
 
 -- Main Node
-type NodeMainSpanProps =
-  ( asyncTasks    :: GAT.Reductor
+type NodeMainSpanProps = (
+    appReload     :: R.State Int
+  , asyncTasks    :: GAT.Reductor
   , folderOpen    :: R.State Boolean
   , frontends     :: Frontends
   , id            :: ID
@@ -61,7 +63,8 @@ nodeMainSpan p = R.createElement nodeMainSpanCpt p []
 nodeMainSpanCpt :: R.Component NodeMainSpanProps
 nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
   where
-    cpt props@{ asyncTasks: (asyncTasks /\ dispatchAsyncTasks)
+    cpt props@{ appReload
+              , asyncTasks: (asyncTasks /\ dispatchAsyncTasks)
               , dispatch
               , folderOpen
               , frontends
@@ -104,7 +107,7 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                        , barType: Pie
                                                        , nodeId: id
-                                                       , onFinish: const $ dispatchAsyncTasks $ GAT.Remove id t
+                                                       , onFinish: onTaskFinish id t
                                                        , session
                                                        }
                                 ) $ GAT.getTasks asyncTasks id
@@ -124,7 +127,6 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
                         ]
                 else H.div {} []
 
-
                 , nodeActions { id
                               , nodeType
                               , refreshTree: const $ dispatch RefreshTree
@@ -134,6 +136,10 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
 
                 ]
         where
+          onTaskFinish id t _ = do
+            dispatchAsyncTasks $ GAT.Finish id t
+            snd appReload $ (_ + 1)
+
           SettingsBox {show: showBox} = settingsBox nodeType
           onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 

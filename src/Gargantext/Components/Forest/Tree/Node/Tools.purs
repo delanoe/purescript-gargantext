@@ -25,6 +25,7 @@ import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.ReactTooltip as ReactTooltip
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node.Tools"
 
 ------------------------------------------------------------------------
@@ -247,16 +248,18 @@ checkboxes :: forall a
            -> R.State (Set a)
            -> R.Element
 checkboxes xs (val /\ set) =
-  H.fieldset {} $ map (\a -> H.div {} [ H.input { type: "checkbox"
-                                           , checked: Set.member a val
-                                           , on: { click: \_ -> set
-                                                             $ const
-                                                             $ toggleSet a val
-                                                 }
-                                           }
-                                 , H.div {} [H.text $ show a]
-                                 ]
-                  ) xs
+  H.fieldset {} $ map (
+    \a -> H.div {} [
+      H.input { type: "checkbox"
+              , checked: Set.member a val
+              , on: { click: \_ -> set
+                                   $ const
+                                   $ toggleSet a val
+                    }
+              }
+      , H.div {} [H.text $ show a]
+      ]
+    ) xs
 
 
 prettyNodeType :: GT.NodeType -> String
