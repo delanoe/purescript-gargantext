@@ -167,62 +167,67 @@ toHtml :: Record ToHtmlProps -> R.Element
 toHtml p = R.createElement toHtmlCpt p []
 
 toHtmlCpt :: R.Component ToHtmlProps
-toHtmlCpt = R.hooksComponentWithModule thisModule "nodeView" cpt
-    where
-      cpt p@{ asyncTasks
-            , frontends
-            , handed
-            , mCurrentRoute
-            , openNodes
-            , reload: reload@(_ /\ setReload)
-            , session
-              -- , tasks: tasks@{ onTaskAdd
-              --                , onTaskFinish
-              --                , tasks: tasks'
-              --                }
-            , tree: tree@(NTree (LNode { id
-                                       , name
-                                       , nodeType
-                                       }
-                                ) ary
-                         )
-            } _ = do
-        let commonProps = RecordE.pick p :: Record CommonProps
-        let pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
+toHtmlCpt = R.hooksComponentWithModule thisModule "toHtml" cpt
+  where
+    cpt p@{ asyncTasks
+          , frontends
+          , handed
+          , mCurrentRoute
+          , openNodes
+          , reload: reload@(_ /\ setReload)
+          , session
+          -- , tasks: tasks@{ onTaskAdd
+          --                , onTaskFinish
+          --                , tasks: tasks'
+          --                }
+          , tree: tree@(NTree (LNode { id
+                                     , name
+                                     , nodeType
+                                     }
+                              ) ary
+                       )
+          } _ = do
+      let commonProps = RecordE.pick p :: Record CommonProps
+      let pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
 
-        let nodeId               = mkNodeId session id
-        let folderIsOpen         = Set.member nodeId (fst openNodes)
-        let setFn                = if folderIsOpen then Set.delete else Set.insert
-        let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
-        let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
+      let nodeId               = mkNodeId session id
+      let folderIsOpen         = Set.member nodeId (fst openNodes)
+      let setFn                = if folderIsOpen then Set.delete else Set.insert
+      let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
+      let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
 
-        let withId (NTree (LNode {id: id'}) _) = id'
+      let withId (NTree (LNode {id: id'}) _) = id'
 
-        pure $ H.li { className: if A.null ary then "no-children" else "with-children" } $
-          [ nodeMainSpan { asyncTasks
-                         , dispatch: pAction
-                         , folderOpen
-                         , frontends
-                         , handed
-                         , id
-                         , isLeaf: A.null ary
-                         , mCurrentRoute
-                         , name
-                         , nodeType
-                         , session
-                         -- , tasks
-                         } ]
-          <> childNodes ( Record.merge commonProps
-                          { asyncTasks
-                          , children: if isPublic nodeType
-                                         then map (\t -> map (\(LNode n@{ nodeType:nt } )
-                                                               -> (LNode (n { nodeType= publicize nt }))
-                                                            ) t) ary
-                                         else ary
-                          , folderOpen
-                          , handed
-                          }
-                        )
+      pure $ H.li { className: if A.null ary then "no-children" else "with-children" } $
+        [ nodeMainSpan
+          { asyncTasks
+          , dispatch: pAction
+          , folderOpen
+          , frontends
+          , handed
+          , id
+          , isLeaf: A.null ary
+          , mCurrentRoute
+          , name
+          , nodeType
+          , session
+          -- , tasks
+          } ]
+        <> childNodes ( Record.merge commonProps
+                        { asyncTasks
+                        , children: if isPublic nodeType
+                                    then map (\t -> map (\(LNode n@{ nodeType:nt } )
+                                                         -> (LNode (n { nodeType= publicize nt }))
+                                                        ) t) ary
+                                    else ary
+                        , folderOpen
+                        , handed
+                        }
+                      )
+      where
+        commonProps = RecordE.pick p :: Record CommonProps
+        pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
+
 
 
 type ChildNodesProps =

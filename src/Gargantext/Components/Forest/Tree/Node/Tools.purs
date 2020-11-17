@@ -6,6 +6,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
 import Data.String.CodeUnits as DSCU
+import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
@@ -294,7 +295,7 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
       popoverRef <- R.useRef null
 
       pure $
-        H.div { on: { click: \_ -> setFolderOpen $ not } }
+        H.div { on: { click: onClick } }
               [ H.a { data: { for: tooltipId
                             , tip: true
                             }
@@ -313,6 +314,12 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
               ]
 
       where
+        -- NOTE Don't toggle tree if it is not selected
+        -- This prevents some irritating behaviour
+        onClick _ = if isSelected then
+                      setFolderOpen not
+                    else
+                      pure unit
         tooltipId = "node-link-" <> show id
 -- END node link
 

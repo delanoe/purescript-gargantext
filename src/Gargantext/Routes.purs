@@ -10,27 +10,27 @@ import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, 
 import Gargantext.Types as GT
 
 data AppRoute
-  = Home
-  | Login
+  = Annuaire SessionId Int
+  | ContactPage    SessionId Int Int
+  | Corpus SessionId Int
+  | CorpusDocument SessionId Int Int Int
+  | Dashboard      SessionId Int
+  | Document       SessionId Int Int
   | Folder SessionId Int
   | FolderPrivate SessionId Int
   | FolderPublic SessionId Int
   | FolderShared SessionId Int
-    | Team SessionId Int
-  | Corpus SessionId Int
-    | Document       SessionId Int Int
-    | CorpusDocument SessionId Int Int Int
-    | PGraphExplorer SessionId Int
-    | Dashboard      SessionId Int
-    | Texts          SessionId Int
-    | Lists          SessionId Int
-  | Annuaire SessionId Int
-    | UserPage       SessionId Int
-    | ContactPage    SessionId Int Int
-  | RouteFrameWrite SessionId Int
+  | Home
+  | Lists          SessionId Int
+  | Login
+  | PGraphExplorer SessionId Int
+  | RouteFile       SessionId Int
   | RouteFrameCalc  SessionId Int
   | RouteFrameCode  SessionId Int
-  | RouteFile       SessionId Int
+  | RouteFrameWrite SessionId Int
+  | Team SessionId Int
+  | Texts          SessionId Int
+  | UserPage       SessionId Int
 
 
 derive instance eqAppRoute :: Eq AppRoute
@@ -108,14 +108,17 @@ appPath (RouteFile s i)       = "file/"      <> show s <> "/" <> show i
 
 nodeTypeAppRoute :: NodeType -> SessionId -> Int -> Maybe AppRoute
 nodeTypeAppRoute GT.Annuaire s i      = Just $ Annuaire s i
-nodeTypeAppRoute GT.NodeContact s i   = Just $ Annuaire s i
 nodeTypeAppRoute GT.Corpus s i        = Just $ Corpus s i
 nodeTypeAppRoute GT.Dashboard s i     = Just $ Dashboard s i
-nodeTypeAppRoute GT.Graph s i         = Just $ PGraphExplorer s i
-nodeTypeAppRoute GT.NodeList s i      = Just $ Lists s i
+nodeTypeAppRoute GT.Folder s i        = Just $ Folder s i
 nodeTypeAppRoute GT.FolderPrivate s i = Just $ FolderPrivate s i
 nodeTypeAppRoute GT.FolderPublic s i  = Just $ FolderPublic s i
 nodeTypeAppRoute GT.FolderShared s i  = Just $ FolderShared s i
+nodeTypeAppRoute GT.Graph s i         = Just $ PGraphExplorer s i
+nodeTypeAppRoute GT.NodeContact s i   = Just $ Annuaire s i
+nodeTypeAppRoute GT.NodeFile s i      = Just $ RouteFile s i
+nodeTypeAppRoute GT.NodeList s i      = Just $ Lists s i
 nodeTypeAppRoute GT.NodeUser s i      = Just $ UserPage s i
+nodeTypeAppRoute GT.Team s i          = Just $ Team s i
 nodeTypeAppRoute GT.Texts s i         = Just $ Texts s i
 nodeTypeAppRoute _ _ _                = Nothing
