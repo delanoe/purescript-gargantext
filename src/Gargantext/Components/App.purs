@@ -118,7 +118,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
             corpusLayout { nodeId, session }
           ]
           CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested [
-            documentLayout { corpusId: Just corpusId,  nodeId, listId, session }
+            documentLayout { listId, mCorpusId: Just corpusId,  nodeId, session } []
           ]
           Dashboard sid nodeId       -> withSession sid $ \session -> forested [
             dashboardLayout { nodeId, session }
@@ -126,7 +126,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Document sid listId nodeId ->
             withSession sid $
               \session -> forested [
-                documentLayout { corpusId: Nothing, nodeId, listId, session }
+                documentLayout { listId, mCorpusId: Nothing, nodeId, session } []
               ]
           Folder sid nodeId -> withSession sid $ \session -> forested [ corpusLayout { nodeId, session } ]
           FolderPrivate sid nodeId -> withSession sid $ \session -> forested [ corpusLayout { nodeId, session } ]

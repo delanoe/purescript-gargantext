@@ -15,6 +15,7 @@ import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log, log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -33,7 +34,7 @@ import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (NodeID, NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
@@ -97,7 +98,7 @@ docViewLayoutCpt = R.hooksComponentWithModule thisModule "docViewLayout" cpt
     cpt layout _children = do
       query <- R.useState' ""
       let params = T.initialParams
-      pure $ docView { layout, params, query }
+      pure $ docView { layout, params, query } []
 
 type Props = (
     layout :: Record LayoutProps
@@ -105,8 +106,8 @@ type Props = (
   , query :: R.State Query
   )
 
-docView :: Record Props -> R.Element
-docView props = R.createElement docViewCpt props []
+docView :: R2.Component Props
+docView = R.createElement docViewCpt
 
 docViewCpt :: R.Component Props
 docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
@@ -255,7 +256,9 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
                       Tuple res.count docs
     case cacheState of
       (NT.CacheOn  /\ _) -> do
-        let paint (Tuple count docs) = page params (props { totalRecords = count }) docs
+        let paint (Tuple count docs) = page { documents: docs
+                                            , layout: props { totalRecords = count }
+                                            , params } []
             mkRequest :: PageParams -> GUC.Request
             mkRequest p = GUC.makeGetRequest session $ tableRoute p
 
@@ -276,7 +279,7 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
                                                           , layout: props { params = fst paramsS
                                                                           , totalRecords = count }
                                                           , localCategories
-                                                          , params: paramsS }
+                                                          , params: paramsS } []
         useLoader (path { params = fst paramsS }) loader render
 
 type PageProps = (
@@ -285,14 +288,14 @@ type PageProps = (
   , params :: T.Params
   )
 
-page :: T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
-page params layout documents = R.createElement pageCpt { documents, layout, params } []
+page :: R2.Component PageProps
+page = R.createElement pageCpt
 
 pageCpt :: R.Component PageProps
 pageCpt = R.hooksComponentWithModule thisModule "pageCpt" cpt where
   cpt { documents, layout, params } _ = do
     paramsS <- R.useState' params
-    pure $ pagePaint { documents, layout, params: paramsS }
+    pure $ pagePaint { documents, layout, params: paramsS } []
 
 type PagePaintProps = (
     documents :: Array DocumentsView
@@ -300,25 +303,29 @@ type PagePaintProps = (
   , params :: R.State T.Params
 )
 
-pagePaint :: Record PagePaintProps -> R.Element
-pagePaint props = R.createElement pagePaintCpt props []
+pagePaint :: R2.Component PagePaintProps
+pagePaint = R.createElement pagePaintCpt
 
 pagePaintCpt :: R.Component PagePaintProps
-pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt where
-  cpt { documents, layout, params } _ = do
-    localCategories <- R.useState' (mempty :: LocalCategories)
-    pure $ pagePaintRaw { documents: A.fromFoldable filteredRows, layout, localCategories, params }
-      where
-        orderWith =
-          case convOrderBy (fst params).orderBy of
-            Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
-            Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
-            Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
-            Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
-            Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
-            Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
-            _               -> identity -- the server ordering is enough here
-        filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
+pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt
+  where
+    cpt { documents, layout, params } _ = do
+      localCategories <- R.useState' (mempty :: LocalCategories)
+      pure $ pagePaintRaw { documents: A.fromFoldable filteredRows
+                          , layout
+                          , localCategories
+                          , params } []
+        where
+          orderWith =
+            case convOrderBy (fst params).orderBy of
+              Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
+              Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
+              Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
+              Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
+              Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
+              Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
+              _               -> identity -- the server ordering is enough here
+          filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
 
 
 type PagePaintRawProps = (
@@ -328,13 +335,19 @@ type PagePaintRawProps = (
   , params :: R.State T.Params
   )
 
-pagePaintRaw :: Record PagePaintRawProps -> R.Element
-pagePaintRaw props = R.createElement pagePaintRawCpt props []
+pagePaintRaw :: R2.Component PagePaintRawProps
+pagePaintRaw = R.createElement pagePaintRawCpt
 
 pagePaintRawCpt :: R.Component PagePaintRawProps
 pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt where
   cpt { documents
-      , layout: { corpusId, frontends, listId, nodeId, session, sidePanelTriggers, totalRecords }
+      , layout: { corpusId
+                , frontends
+                , listId
+                , nodeId
+                , session
+                , sidePanelTriggers
+                , totalRecords }
       , localCategories
       , params } _ = do
     pure $ T.table
@@ -356,13 +369,14 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
           | otherwise = Routes.Document sid listId
         colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source"]
         wrapColElts = const identity
-        getCategory (localCategories /\ _) {_id, category} = fromMaybe category (localCategories ^. at _id)
-        rows localCategories = row <$> A.toUnfoldable documents
+        getCategory (lc /\ _) {_id, category} = fromMaybe category (lc ^. at _id)
+        rows lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
           where
             row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                   caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } []
+                , docChooser { listId, mCorpusId: corpusId, nodeId: r._id, sidePanelTriggers } []
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { style } [ R2.showText r.date ]
@@ -372,34 +386,42 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                 ]
               , delete: true }
               where
-                cat         = getCategory localCategories r
-                (_ /\ setLocalCategories) = localCategories
+                cat         = getCategory lc r
                 checked    = Trash == cat
                 style      = trashStyle cat
                 className  = gi cat
 
----------------------------------------------------------
-sampleData' :: DocumentsView
-sampleData' = DocumentsView { _id : 1
-                            , url : ""
-                            , date : 2010
-                            , title : "title"
-                            , source : "source"
-                            , category : UnRead
-                            , ngramCount : 1}
+type DocChooser = (
+    listId            :: ListId
+  , mCorpusId         :: Maybe NodeID
+  , nodeId            :: NodeID
+  , sidePanelTriggers :: Record SidePanelTriggers
+  )
 
-sampleData :: Array DocumentsView
---sampleData = replicate 10 sampleData'
-sampleData = map (\(Tuple t s) -> DocumentsView { _id : 1
-                                                , url : ""
-                                                , date : 2017
-                                                , title: t
-                                                , source: s
-                                                , category : UnRead
-                                                , ngramCount : 10}) sampleDocuments
+docChooser :: R2.Component DocChooser
+docChooser = R.createElement docChooserCpt
 
-sampleDocuments :: Array (Tuple String String)
-sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
+docChooserCpt :: R.Component DocChooser
+docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
+  where
+    cpt { mCorpusId: Nothing } _ = do
+      pure $ H.div {} []
+
+    cpt { listId
+        , mCorpusId: Just corpusId
+        , nodeId
+        , sidePanelTriggers: { triggerAnnotatedDocIdChange } } _ = do
+      pure $ H.div { className: "doc-chooser" } [
+        H.span { className: "fa fa-eye"
+               , on: { click: onClick } } []
+      ]
+      where
+        onClick _ = do
+          -- log2 "[docChooser] onClick, listId" listId
+          -- log2 "[docChooser] onClick, corpusId" corpusId
+          -- log2 "[docChooser] onClick, nodeId" nodeId
+          R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
+
 
 newtype SearchQuery = SearchQuery
   { query :: Array String

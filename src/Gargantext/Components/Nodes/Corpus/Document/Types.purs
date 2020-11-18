@@ -10,14 +10,14 @@ import Gargantext.Prelude
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.NgramsTable.Core (CoreState, Versioned(..) , VersionedNgramsTable)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (TabType)
+import Gargantext.Types (ListId, NodeID, TabType)
 
 type DocPath =
-  { corpusId :: Maybe Int
-  , listIds  :: Array Int
-  , nodeId   :: Int
-  , session  :: Session
-  , tabType  :: TabType
+  { listIds   :: Array ListId
+  , mCorpusId :: Maybe NodeID
+  , nodeId    :: NodeID
+  , session   :: Session
+  , tabType   :: TabType
   }
 
 type NodeDocument = NodePoly Document

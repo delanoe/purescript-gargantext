@@ -11,4 +11,8 @@
   top: 50%;
 }
 
+.table .doc-chooser {
+  cursor: pointer;
+}
+
 /*# sourceMappingURL=Styles.css.map */

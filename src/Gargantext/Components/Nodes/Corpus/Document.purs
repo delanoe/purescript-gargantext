@@ -8,6 +8,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 
 import Gargantext.Prelude (bind, pure, show, unit, ($), (<>), (<<<))
 
@@ -22,7 +23,7 @@ import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, sessionId)
-import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), ScoreType(..))
+import Gargantext.Types (CTabNgramType(..), ListId, NodeID, NodeType(..), TabSubType(..), TabType(..), ScoreType(..))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
 
@@ -35,8 +36,8 @@ publicationDate (Document doc@{publication_year: Just py, publication_month: Not
 publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Nothing}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm)
 publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Just pd}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm) <> "-" <> (U.zeroPad 2 pd)
 
-docViewWrapper :: Record Props -> R.Element
-docViewWrapper props = R.createElement docViewWrapperCpt props []
+docViewWrapper :: R2.Component Props
+docViewWrapper = R.createElement docViewWrapperCpt
 
 docViewWrapperCpt :: R.Component Props
 docViewWrapperCpt = R.hooksComponentWithModule thisModule "docViewWrapper" cpt
@@ -44,15 +45,15 @@ docViewWrapperCpt = R.hooksComponentWithModule thisModule "docViewWrapper" cpt
     cpt { loaded, path } _ = do
       state <- R.useState' $ initialState { loaded }
 
-      pure $ docView { loaded, path, state }
+      pure $ docView { loaded, path, state } []
 
 type DocViewProps = (
   state :: R.State State
   | Props
   )
 
-docView :: Record DocViewProps -> R.Element
-docView props = R.createElement docViewCpt props []
+docView :: R2.Component DocViewProps
+docView = R.createElement docViewCpt
 
 docViewCpt :: R.Component DocViewProps
 docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
@@ -126,44 +127,40 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
           NodePoly {hyperdata: Document doc} = document
 
 type LayoutProps = (
-    corpusId :: Maybe Int
-  , listId :: Int
-  , nodeId :: Int
-  , session :: Session
+    listId   :: ListId
+  , mCorpusId :: Maybe NodeID
+  , nodeId   :: NodeID
+  , session  :: Session
   )
 
-documentLayout :: Record LayoutProps -> R.Element
-documentLayout props = R.createElement documentLayoutCpt props []
+documentLayout :: R2.Component LayoutProps
+documentLayout = R.createElement documentLayoutCpt
 
 documentLayoutCpt :: R.Component LayoutProps
 documentLayoutCpt = R.hooksComponentWithModule thisModule "documentLayout" cpt
   where
-    cpt { corpusId, listId, nodeId, session } _ = do
+    cpt props@{ nodeId, session } _ = do
       let sid = sessionId session
 
-      pure $ documentLayoutWithKey { corpusId
-                                   , key: show sid <> "-" <> show nodeId
-                                   , listId
-                                   , nodeId
-                                   , session }
+      pure $ documentLayoutWithKey (Record.merge props { key: show sid <> "-" <> show nodeId }) []
 
 type KeyLayoutProps = (
   key :: String
   | LayoutProps
   )
 
-documentLayoutWithKey :: Record KeyLayoutProps -> R.Element
-documentLayoutWithKey props = R.createElement documentLayoutWithKeyCpt props []
+documentLayoutWithKey :: R2.Component KeyLayoutProps
+documentLayoutWithKey = R.createElement documentLayoutWithKeyCpt
 
 documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
 documentLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "documentLayoutWithKey" cpt
   where
-    cpt { corpusId, listId, nodeId, session } _ = do
+    cpt { listId, mCorpusId, nodeId, session } _ = do
       useLoader path loadData $ \loaded ->
-        docViewWrapper {path, loaded}
+        docViewWrapper { loaded, path } []
       where
         tabType = TabDocument (TabNgramType CTabTerms)
-        path = { corpusId, listIds: [listId], nodeId, session, tabType }
+        path = { listIds: [listId], mCorpusId, nodeId, session, tabType }
 
 ------------------------------------------------------------------------
 
@@ -174,14 +171,14 @@ loadData :: DocPath -> Aff LoadedData
 loadData {session, nodeId, listIds, tabType} = do
   document <- loadDocument session nodeId
   ngramsTable <- loadNgramsTable
-    { session
+    { listIds
     , nodeId
-    , listIds
     , params: { offset : 0, limit : 100, orderBy: Nothing, searchType: SearchDoc}
-    , tabType
+    , scoreType: Occurrences
     , searchQuery: ""
+    , session
+    , tabType
     , termListFilter: Nothing
     , termSizeFilter: Nothing
-    , scoreType: Occurrences
     }
-  pure {document, ngramsTable}
+  pure { document, ngramsTable }

@@ -225,7 +225,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
                , route
                , sessions
                , showLogin
-               , treeReloadRef }
+               , treeReloadRef } []
       ]
 
     mSidebar :: Maybe GET.MetaData

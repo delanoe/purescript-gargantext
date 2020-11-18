@@ -6,6 +6,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Reactix as R
@@ -20,6 +21,7 @@ import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
+import Gargantext.Components.Nodes.Corpus.Document as D
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..), getCorpusInfo, CorpusInfo(..))
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.SidePanelToggleButton (sidePanelToggleButton)
@@ -28,7 +30,7 @@ import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session, Sessions, sessionId, getCacheState, setCacheState)
-import Gargantext.Types (CTabNgramType(..), Handed(..), NodeID, ReloadS, TabSubType(..), TabType(..))
+import Gargantext.Types (CTabNgramType(..), Handed(..), ListId, NodeID, ReloadS, TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
@@ -47,37 +49,24 @@ textsWithForestCpt :: R.Component TextsWithForest
 textsWithForestCpt = R.hooksComponentWithModule thisModule "textsWithForest" cpt
   where
     cpt { forestProps
-        , textsProps } _ = do
+        , textsProps: textProps@{ session } } _ = do
       controls <- initialControls
 
       pure $ Forest.forestLayoutWithTopBar forestProps [
         topBar { controls } []
-      , H.div {className: "col-md-10"} [
+      , H.div { className: "col-md-10" } [
           H.div {id: "page-wrapper"} [
             H.div {className: "container-fluid"} [
-              textsLayout (Record.merge textsProps { controls }) []
+              textsLayout (Record.merge textProps { controls }) []
             ]
           ]
         ]
-      , sidePanel { controls } []
+      , H.div { className: "col-md-2" } [
+          sidePanel { controls, session } []
+        ]
       ]
 
 --------------------------------------------------------
-
-type TextsLayoutControls = (
-    showSidePanel :: R.State SidePanelState
-  , triggers      :: Record SidePanelTriggers
-  )
-
-initialControls :: R.Hooks (Record TextsLayoutControls)
-initialControls = do
-  showSidePanel  <- R.useState' InitialClosed
-  triggers <- emptySidePanelTriggers
-
-  pure $ {
-      showSidePanel
-    , triggers
-  }
 
 type TopBarProps = (
   controls :: Record TextsLayoutControls
@@ -214,29 +203,34 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
         }
 
       where
-        initialPath = { corpusId, listId: 0, limit: Nothing, tabType: TabCorpus TabDocs }
+        initialPath = { corpusId
+                      , listId: corpusData.defaultListId
+                      , limit: Nothing
+                      , tabType: TabCorpus TabDocs }
         docView' path tabType = docView { cacheState
                                         , corpusData
                                         , corpusId
                                         , frontends
+                                        , listId: path.listId
                                         -- , path
                                         , session
                                         , tabType
-                                        , sidePanelTriggers }
+                                        , sidePanelTriggers } []
 
 type DocViewProps a = (
     cacheState      :: R.State NT.CacheState
   , corpusData      :: CorpusData
-  , corpusId        :: Int
+  , corpusId        :: NodeID
   , frontends       :: Frontends
+  , listId          :: ListId
   -- , path         :: Record DT.Path
   , session         :: Session
   , tabType         :: TabSubType a
   , sidePanelTriggers :: Record SidePanelTriggers
   )
 
-docView :: forall a. Record (DocViewProps a) -> R.Element
-docView props = R.createElement docViewCpt props []
+docView :: forall a. R2.Component (DocViewProps a)
+docView = R.createElement docViewCpt
 
 docViewCpt :: forall a. R.Component (DocViewProps a)
 docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
@@ -246,9 +240,9 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
 
 -- docViewLayoutRec :: forall a. DocViewProps a -> Record DT.LayoutProps
 docViewLayoutRec { cacheState
-                 , corpusData: { defaultListId }
                  , corpusId
                  , frontends
+                 , listId
                  , session
                  , tabType: TabDocs
                  , sidePanelTriggers } =
@@ -256,7 +250,7 @@ docViewLayoutRec { cacheState
   , chart  : H.div {} []
   , corpusId: Just corpusId
   , frontends
-  , listId: defaultListId
+  , listId
   , nodeId: corpusId
     -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -266,9 +260,9 @@ docViewLayoutRec { cacheState
   , totalRecords: 4737
   }
 docViewLayoutRec { cacheState
-                 , corpusData: { defaultListId }
                  , corpusId
                  , frontends
+                 , listId
                  , session
                  , tabType: TabMoreLikeFav
                  , sidePanelTriggers } =
@@ -276,7 +270,7 @@ docViewLayoutRec { cacheState
   , chart  : H.div {} []
   , corpusId: Just corpusId
   , frontends
-  , listId: defaultListId
+  , listId
   , nodeId: corpusId
     -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -286,9 +280,9 @@ docViewLayoutRec { cacheState
   , totalRecords: 4737
   }
 docViewLayoutRec { cacheState
-                 , corpusData: { defaultListId }
                  , corpusId
                  , frontends
+                 , listId
                  , session
                  , tabType: TabMoreLikeTrash
                  , sidePanelTriggers } =
@@ -296,7 +290,7 @@ docViewLayoutRec { cacheState
   , chart  : H.div {} []
   , corpusId: Just corpusId
   , frontends
-  , listId: defaultListId
+  , listId
   , nodeId: corpusId
   -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -306,9 +300,9 @@ docViewLayoutRec { cacheState
   , totalRecords: 4737
   }
 docViewLayoutRec { cacheState
-                 , corpusData: { defaultListId }
                  , corpusId
                  , frontends
+                 , listId
                  , session
                  , tabType: TabTrash
                  , sidePanelTriggers } =
@@ -316,7 +310,7 @@ docViewLayoutRec { cacheState
   , chart  : H.div {} []
   , corpusId: Nothing
   , frontends
-  , listId: defaultListId
+  , listId
   , nodeId: corpusId
   -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -327,9 +321,9 @@ docViewLayoutRec { cacheState
   }
 -- DUMMY
 docViewLayoutRec { cacheState
-                 , corpusData: { defaultListId }
                  , corpusId
                  , frontends
+                 , listId
                  , session
                  , tabType
                  , sidePanelTriggers } =
@@ -337,7 +331,7 @@ docViewLayoutRec { cacheState
   , chart  : H.div {} []
   , corpusId: Nothing
   , frontends
-  , listId: defaultListId
+  , listId
   , nodeId: corpusId
   -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -351,7 +345,8 @@ docViewLayoutRec { cacheState
 --------------------------------------------------------
 
 type SidePanelProps = (
-  controls :: Record TextsLayoutControls
+    controls :: Record TextsLayoutControls
+  , session  :: Session
   )
 
 sidePanel :: R2.Component SidePanelProps
@@ -364,7 +359,55 @@ sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
       pure $ H.div {} []
     cpt { controls: { showSidePanel: (Closed /\ _) } } _ = do
       pure $ H.div {} []
-    cpt { controls: { showSidePanel: (Opened /\ _) } } _ = do
-      pure $ H.div { className: "side-bar" } [
-        H.h4 {} [ H.text "Side Bar" ]
-        ]
+    cpt { controls: { showSidePanel: (Opened /\ _)
+                    , triggers: { triggerAnnotatedDocIdChange } }
+        , session } _ = do
+      (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
+      (mListId /\ setMListId) <- R.useState' Nothing
+      (mNodeId /\ setMNodeId) <- R.useState' Nothing
+
+      R.useEffect2 mListId mNodeId $ do
+        let trigger :: Record TriggerAnnotatedDocIdChangeParams -> Effect Unit
+            trigger { corpusId, listId, nodeId } = do
+              -- log2 "[sidePanel trigger] trigger corpusId change" corpusId
+              -- log2 "[sidePanel trigger] trigger listId change" listId
+              -- log2 "[sidePanel trigger] trigger nodeId change" nodeId
+              setMCorpusId $ const $ Just corpusId
+              setMListId $ const $ Just listId
+              setMNodeId $ const $ Just nodeId
+        -- log2 "[sidePanel] trigger" trigger
+        R2.setTrigger triggerAnnotatedDocIdChange trigger
+
+        pure $ do
+          -- log "[sidePanel] clearing triggerAnnotatedDocIdChange"
+          R2.clearTrigger triggerAnnotatedDocIdChange
+
+      pure $ H.div { className: "side-panel" } [
+        sidePanelDocView { mCorpusId, mListId, mNodeId, session } []
+      ]
+
+type SidePanelDocView = (
+    mCorpusId :: Maybe NodeID
+  , mListId   :: Maybe ListId
+  , mNodeId   :: Maybe NodeID
+  , session  :: Session
+  )
+
+sidePanelDocView :: R2.Component SidePanelDocView
+sidePanelDocView = R.createElement sidePanelDocViewCpt
+
+sidePanelDocViewCpt :: R.Component SidePanelDocView
+sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
+  where
+    cpt { mListId: Nothing } _ = do
+      pure $ H.div {} []
+    cpt { mNodeId: Nothing } _ = do
+      pure $ H.div {} []
+    cpt { mCorpusId
+        , mListId: Just listId
+        , mNodeId: Just nodeId
+        , session } _ = do
+      -- pure $ H.h4 {} [ H.text txt ]
+      pure $ D.documentLayout { listId, mCorpusId, nodeId, session } []
+      where
+        txt = "mCorpusId: " <> show mCorpusId <> ", listId: " <> show listId <> ", nodeId: " <> show nodeId
