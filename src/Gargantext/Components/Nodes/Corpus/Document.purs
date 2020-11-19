@@ -181,7 +181,7 @@ loadDocument :: Session -> Int -> Aff NodeDocument
 loadDocument session nodeId = get session $ NodeAPI Node (Just nodeId) ""
 
 loadData :: DocPath -> Aff LoadedData
-loadData {session, nodeId, listIds, tabType} = do
+loadData { listIds, nodeId, session, tabType } = do
   document <- loadDocument session nodeId
   ngramsTable <- loadNgramsTable
     { listIds

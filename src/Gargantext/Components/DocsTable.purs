@@ -56,10 +56,10 @@ type Path a = (
 
 type LayoutProps = (
     cacheState      :: R.State NT.CacheState
-  , corpusId        :: Maybe Int
   , frontends       :: Frontends
   , chart           :: R.Element
   , listId          :: Int
+  , mCorpusId       :: Maybe Int
   , nodeId          :: Int
   -- , path         :: Record (Path a)
   , session         :: Session
@@ -73,10 +73,10 @@ type LayoutProps = (
 
 type PageLayoutProps = (
     cacheState   :: R.State NT.CacheState
-  , corpusId     :: Maybe Int
   , frontends    :: Frontends
   , key          :: String  -- NOTE Necessary to clear the component when cache state changes
   , listId       :: Int
+  , mCorpusId    :: Maybe Int
   , nodeId       :: Int
   , params       :: T.Params
   , query        :: Query
@@ -113,9 +113,9 @@ docViewCpt :: R.Component Props
 docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
   cpt { layout: { cacheState
                 , chart
-                , corpusId
                 , frontends
                 , listId
+                , mCorpusId
                 , nodeId
                 , session
                 , showSearch
@@ -132,10 +132,10 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
         , if showSearch then searchBar query else H.div {} []
         , H.div {className: "col-md-12"}
           [ pageLayout { cacheState
-                       , corpusId
                        , frontends
                        , key: "docView-" <> (show $ fst cacheState)
                        , listId
+                       , mCorpusId
                        , nodeId
                        , params
                        , query: fst query
@@ -190,16 +190,17 @@ searchBar (query /\ setQuery) = R.createElement el {} []
 mock :: Boolean
 mock = false
 
-type PageParams =
-  { corpusId :: Maybe Int
-  , listId :: Int
-  , nodeId :: Int
-  , tabType :: TabType
-  , query   :: Query
-  , params :: T.Params}
+type PageParams = {
+    listId    :: Int
+  , mCorpusId :: Maybe Int
+  , nodeId    :: Int
+  , tabType   :: TabType
+  , query     :: Query
+  , params    :: T.Params
+  }
 
 getPageHash :: Session -> PageParams -> Aff String
-getPageHash session { corpusId, listId, nodeId, query, tabType } = do
+getPageHash session { nodeId, tabType } = do
   (get session $ tableHashRoute nodeId tabType) :: Aff String
 
 convOrderBy :: Maybe (T.OrderByDirection T.ColumnName) -> Maybe OrderBy
@@ -235,16 +236,16 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
   cpt props@{ cacheState
-            , corpusId
             , frontends
             , listId
+            , mCorpusId
             , nodeId
             , params
             , query
             , session
             , sidePanelTriggers
             , tabType } _ = do
-    let path = { corpusId, listId, nodeId, params, query, tabType }
+    let path = { listId, mCorpusId, nodeId, params, query, tabType }
         handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
         handleResponse (HashedResponse { hash, value: res }) = ret
           where
@@ -341,9 +342,9 @@ pagePaintRaw = R.createElement pagePaintRawCpt
 pagePaintRawCpt :: R.Component PagePaintRawProps
 pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt where
   cpt { documents
-      , layout: { corpusId
-                , frontends
+      , layout: { frontends
                 , listId
+                , mCorpusId
                 , nodeId
                 , session
                 , sidePanelTriggers
@@ -365,7 +366,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
         trashStyle Trash = {textDecoration: "line-through"}
         trashStyle _ = {textDecoration: "none"}
         corpusDocument
-          | Just cid <- corpusId = Routes.CorpusDocument sid cid listId
+          | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
         colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source"]
         wrapColElts = const identity
@@ -376,12 +377,13 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                   caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } []
-                , docChooser { listId, mCorpusId: corpusId, nodeId: r._id, sidePanelTriggers } []
+                , docChooser { listId, mCorpusId, nodeId: r._id, sidePanelTriggers } []
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { style } [ R2.showText r.date ]
-                , H.div { style }
-                  [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ] ]
+                , H.div { style } [
+                   H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ]
+                 ]
                 , H.div { style } [ H.text $ if r.source == "" then "Source" else r.source ]
                 ]
               , delete: true }
@@ -423,15 +425,15 @@ docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
           R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
 
 
-newtype SearchQuery = SearchQuery
-  { query :: Array String
-  , parent_id :: Int
+newtype SearchQuery = SearchQuery {
+    parent_id :: Int
+  , query :: Array String
   }
 
 
 instance encodeJsonSQuery :: EncodeJson SearchQuery where
   encodeJson (SearchQuery {query, parent_id})
-     = "query" := query
+    = "query" := query
     ~> "parent_id" := parent_id
     ~> jsonEmptyObject
 
@@ -439,8 +441,8 @@ instance encodeJsonSQuery :: EncodeJson SearchQuery where
 documentsRoute :: Int -> SessionRoute
 documentsRoute nodeId = NodeAPI Node (Just nodeId) "documents"
 
-tableRoute :: forall row. {nodeId :: Int, tabType :: TabType, listId :: Int | row} -> SessionRoute
-tableRoute {nodeId, tabType, listId} = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId)
+tableRoute :: forall row. { listId :: Int, nodeId :: Int, tabType :: TabType | row} -> SessionRoute
+tableRoute { listId, nodeId, tabType } = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId)
 
 tableHashRoute :: Int -> TabType -> SessionRoute
 tableHashRoute nodeId tabType = NodeAPI Node (Just nodeId) $ "table/hash" <> "?tabType=" <> (showTabType' tabType)

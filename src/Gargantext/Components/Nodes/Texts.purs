@@ -243,9 +243,9 @@ docViewLayoutRec { cacheState
                  , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
-  , corpusId: Just corpusId
   , frontends
   , listId
+  , mCorpusId: Just corpusId
   , nodeId: corpusId
     -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -263,9 +263,9 @@ docViewLayoutRec { cacheState
                  , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
-  , corpusId: Just corpusId
   , frontends
   , listId
+  , mCorpusId: Just corpusId
   , nodeId: corpusId
     -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -283,9 +283,9 @@ docViewLayoutRec { cacheState
                  , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
-  , corpusId: Just corpusId
   , frontends
   , listId
+  , mCorpusId: Just corpusId
   , nodeId: corpusId
   -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -303,9 +303,9 @@ docViewLayoutRec { cacheState
                  , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
-  , corpusId: Nothing
   , frontends
   , listId
+  , mCorpusId: Just corpusId
   , nodeId: corpusId
   -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -324,9 +324,9 @@ docViewLayoutRec { cacheState
                  , sidePanelTriggers } =
   { cacheState
   , chart  : H.div {} []
-  , corpusId: Nothing
   , frontends
   , listId
+  , mCorpusId: Just corpusId
   , nodeId: corpusId
   -- ^ TODO merge nodeId and corpusId in DT
   , session
@@ -371,7 +371,6 @@ sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
               -- log2 "[sidePanel trigger] trigger corpusId change" corpusId
               -- log2 "[sidePanel trigger] trigger listId change" listId
               -- log2 "[sidePanel trigger] trigger nodeId change" nodeId
-              -- TODO work on this?
               setMCorpusId $ const $ Just corpusId
               setMListId $ const $ Just listId
               setMNodeId $ const $ Just nodeId

@@ -116,9 +116,9 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
             docs = DT.docViewLayout
               { cacheState
               , chart
-              , corpusId: Nothing
               , frontends
               , listId: defaultListId
+              , mCorpusId: Nothing
               , nodeId
               , session
               , showSearch: true
