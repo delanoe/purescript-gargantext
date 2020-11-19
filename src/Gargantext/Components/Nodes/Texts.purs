@@ -52,20 +52,9 @@ textsWithForestCpt = R.hooksComponentWithModule thisModule "textsWithForest" cpt
         , textsProps: textProps@{ session } } _ = do
       controls <- initialControls
 
-      R.useEffect' $ do
-        let trigger _ = do
-              snd controls.showSidePanel $ const InitialClosed
-        R2.setTrigger controls.triggers.triggerSidePanel trigger
-
       pure $ Forest.forestLayoutWithTopBar forestProps [
         topBar { controls } []
-      , H.div { className: "col-md-10" } [
-          H.div {id: "page-wrapper"} [
-            H.div {className: "container-fluid"} [
-              textsLayout (Record.merge textProps { controls }) []
-            ]
-          ]
-        ]
+      , textsLayout (Record.merge textProps { controls }) []
       , H.div { className: "side-panel" } [
           sidePanel { controls, session } []
         ]
@@ -84,12 +73,13 @@ topBarCpt :: R.Component TopBarProps
 topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
   where
     cpt { controls } _ = do
-      pure $
-        H.ul { className: "nav navbar-nav" } [
-          H.li {} [
-             sidePanelToggleButton { state: controls.showSidePanel } []
-             ]
-          ]  -- head (goes to top bar)
+      -- empty for now because the button is moved to the side panel
+      pure $ H.div {} []
+        -- H.ul { className: "nav navbar-nav" } [
+        --   H.li {} [
+        --      sidePanelToggleButton { state: controls.showSidePanel } []
+        --      ]
+        --   ]  -- head (goes to top bar)
 
 ------------------------------------------------------------------------
 type CommonProps = (
@@ -360,10 +350,17 @@ sidePanel = R.createElement sidePanelCpt
 sidePanelCpt :: R.Component SidePanelProps
 sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
   where
-    cpt { controls: { showSidePanel: (showSidePanel /\ _)
-                    , triggers: { triggerAnnotatedDocIdChange
+    cpt { controls: { triggers: { triggerAnnotatedDocIdChange
                                 , triggerSidePanel } }
         , session } _ = do
+
+      showSidePanel <- R.useState' InitialClosed
+
+      R.useEffect' $ do
+        let trigger _ = do
+              snd showSidePanel $ const Opened
+        R2.setTrigger triggerSidePanel trigger
+
       (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
       (mListId /\ setMListId) <- R.useState' Nothing
       (mNodeId /\ setMNodeId) <- R.useState' Nothing
@@ -386,12 +383,18 @@ sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
           -- log "[sidePanel] clearing triggerAnnotatedDocIdChange"
           R2.clearTrigger triggerAnnotatedDocIdChange
 
-      let mainStyle = case showSidePanel of
+      let mainStyle = case fst showSidePanel of
             Opened -> { display: "block" }
             _      -> { display: "none" }
 
       pure $ H.div { style: mainStyle } [
-        sidePanelDocView { mCorpusId, mListId, mNodeId, session } []
+        H.div { className: "header" } [
+          H.span { className: "btn btn-danger"
+                 , on: { click: \_ -> snd showSidePanel $ const Closed } } [
+            H.span { className: "fa fa-times" } []
+          ]
+        ]
+      , sidePanelDocView { mCorpusId, mListId, mNodeId, session } []
       ]
 
 type SidePanelDocView = (

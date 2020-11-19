@@ -40,16 +40,13 @@ emptySidePanelTriggers = do
 
 
 type TextsLayoutControls = (
-    showSidePanel :: R.State SidePanelState
-  , triggers      :: Record SidePanelTriggers
+    triggers      :: Record SidePanelTriggers
   )
 
 initialControls :: R.Hooks (Record TextsLayoutControls)
 initialControls = do
-  showSidePanel  <- R.useState' Opened
   triggers <- emptySidePanelTriggers
 
   pure $ {
-      showSidePanel
-    , triggers
+      triggers
   }

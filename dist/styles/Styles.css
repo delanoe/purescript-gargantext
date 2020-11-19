@@ -9,6 +9,9 @@
   top: 60px;
   width: 28%;
 }
+#page-wrapper .side-panel .header {
+  float: right;
+}
 
 .simple-layout {
   height: 100%;
