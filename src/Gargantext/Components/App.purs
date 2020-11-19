@@ -3,7 +3,6 @@ module Gargantext.Components.App where
 import Data.Array (fromFoldable)
 import Data.Maybe (Maybe(..), maybe')
 import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
 import Reactix as R
 
 import Gargantext.Prelude
@@ -31,7 +30,6 @@ import Gargantext.Routes (AppRoute(..))
 import Gargantext.Sessions (useSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types as GT
-import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.App"
@@ -204,4 +202,4 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
               , session
               , treeReloadRef
               }
-          ]
+            ]
