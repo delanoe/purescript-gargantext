@@ -4,7 +4,7 @@ import Prelude
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (fst)
+import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log, log2)
 import Effect (Effect)
@@ -52,6 +52,11 @@ textsWithForestCpt = R.hooksComponentWithModule thisModule "textsWithForest" cpt
         , textsProps: textProps@{ session } } _ = do
       controls <- initialControls
 
+      R.useEffect' $ do
+        let trigger _ = do
+              snd controls.showSidePanel $ const InitialClosed
+        R2.setTrigger controls.triggers.triggerSidePanel trigger
+
       pure $ Forest.forestLayoutWithTopBar forestProps [
         topBar { controls } []
       , H.div { className: "col-md-10" } [
@@ -61,7 +66,7 @@ textsWithForestCpt = R.hooksComponentWithModule thisModule "textsWithForest" cpt
             ]
           ]
         ]
-      , H.div { className: "col-md-2" } [
+      , H.div { className: "side-panel" } [
           sidePanel { controls, session } []
         ]
       ]
@@ -218,14 +223,14 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                                         , sidePanelTriggers } []
 
 type DocViewProps a = (
-    cacheState      :: R.State NT.CacheState
-  , corpusData      :: CorpusData
-  , corpusId        :: NodeID
-  , frontends       :: Frontends
-  , listId          :: ListId
-  -- , path         :: Record DT.Path
-  , session         :: Session
-  , tabType         :: TabSubType a
+    cacheState        :: R.State NT.CacheState
+  , corpusData        :: CorpusData
+  , corpusId          :: NodeID
+  , frontends         :: Frontends
+  , listId            :: ListId
+  -- , path           :: Record DT.Path
+  , session           :: Session
+  , tabType           :: TabSubType a
   , sidePanelTriggers :: Record SidePanelTriggers
   )
 
@@ -355,12 +360,9 @@ sidePanel = R.createElement sidePanelCpt
 sidePanelCpt :: R.Component SidePanelProps
 sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
   where
-    cpt { controls: { showSidePanel: (InitialClosed /\ _) } } _ = do
-      pure $ H.div {} []
-    cpt { controls: { showSidePanel: (Closed /\ _) } } _ = do
-      pure $ H.div {} []
-    cpt { controls: { showSidePanel: (Opened /\ _)
-                    , triggers: { triggerAnnotatedDocIdChange } }
+    cpt { controls: { showSidePanel: (showSidePanel /\ _)
+                    , triggers: { triggerAnnotatedDocIdChange
+                                , triggerSidePanel } }
         , session } _ = do
       (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
       (mListId /\ setMListId) <- R.useState' Nothing
@@ -372,9 +374,11 @@ sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
               -- log2 "[sidePanel trigger] trigger corpusId change" corpusId
               -- log2 "[sidePanel trigger] trigger listId change" listId
               -- log2 "[sidePanel trigger] trigger nodeId change" nodeId
+              -- TODO work on this?
               setMCorpusId $ const $ Just corpusId
               setMListId $ const $ Just listId
               setMNodeId $ const $ Just nodeId
+              R2.callTrigger triggerSidePanel unit
         -- log2 "[sidePanel] trigger" trigger
         R2.setTrigger triggerAnnotatedDocIdChange trigger
 
@@ -382,7 +386,11 @@ sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
           -- log "[sidePanel] clearing triggerAnnotatedDocIdChange"
           R2.clearTrigger triggerAnnotatedDocIdChange
 
-      pure $ H.div { className: "side-panel" } [
+      let mainStyle = case showSidePanel of
+            Opened -> { display: "block" }
+            _      -> { display: "none" }
+
+      pure $ H.div { style: mainStyle } [
         sidePanelDocView { mCorpusId, mListId, mNodeId, session } []
       ]
 
@@ -390,7 +398,7 @@ type SidePanelDocView = (
     mCorpusId :: Maybe NodeID
   , mListId   :: Maybe ListId
   , mNodeId   :: Maybe NodeID
-  , session  :: Session
+  , session   :: Session
   )
 
 sidePanelDocView :: R2.Component SidePanelDocView
@@ -408,6 +416,9 @@ sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
         , mNodeId: Just nodeId
         , session } _ = do
       -- pure $ H.h4 {} [ H.text txt ]
-      pure $ D.documentLayout { listId, mCorpusId, nodeId, session } []
+      pure $ D.documentLayout { listId
+                              , mCorpusId
+                              , nodeId
+                              , session } []
       where
         txt = "mCorpusId: " <> show mCorpusId <> ", listId: " <> show listId <> ", nodeId: " <> show nodeId

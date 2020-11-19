@@ -16,7 +16,7 @@ import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts (annuaireUserLayout, userLayout)
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
-import Gargantext.Components.Nodes.Corpus.Document (documentLayout)
+import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
@@ -116,7 +116,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
             corpusLayout { nodeId, session }
           ]
           CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested [
-            documentLayout { listId, mCorpusId: Just corpusId,  nodeId, session } []
+            documentMainLayout { listId, mCorpusId: Just corpusId,  nodeId, session } []
           ]
           Dashboard sid nodeId       -> withSession sid $ \session -> forested [
             dashboardLayout { nodeId, session }
@@ -124,7 +124,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Document sid listId nodeId ->
             withSession sid $
               \session -> forested [
-                documentLayout { listId, mCorpusId: Nothing, nodeId, session } []
+                documentMainLayout { listId, mCorpusId: Nothing, nodeId, session } []
               ]
           Folder sid nodeId -> withSession sid $ \session -> forested [ corpusLayout { nodeId, session } ]
           FolderPrivate sid nodeId -> withSession sid $ \session -> forested [ corpusLayout { nodeId, session } ]

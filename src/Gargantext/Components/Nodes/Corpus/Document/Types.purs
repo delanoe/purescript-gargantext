@@ -28,8 +28,8 @@ type LoadedData =
   }
 
 type Props = (
-    loaded :: LoadedData
-  , path   :: DocPath
+    loaded         :: LoadedData
+  , path           :: DocPath
   )
 
 -- This is a subpart of NgramsTable.State.

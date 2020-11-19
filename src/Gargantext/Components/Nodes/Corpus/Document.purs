@@ -42,10 +42,10 @@ docViewWrapper = R.createElement docViewWrapperCpt
 docViewWrapperCpt :: R.Component Props
 docViewWrapperCpt = R.hooksComponentWithModule thisModule "docViewWrapper" cpt
   where
-    cpt { loaded, path } _ = do
+    cpt props@{ loaded } _ = do
       state <- R.useState' $ initialState { loaded }
 
-      pure $ docView { loaded, path, state } []
+      pure $ docView (Record.merge props { state }) []
 
 type DocViewProps = (
   state :: R.State State
@@ -88,7 +88,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
         [
           R2.row
           [
-            R2.col 8
+            R2.col 12
             [ H.h4 {} [ annotate doc.title ]
             , H.ul { className: "list-group" }
               [ li' [ H.span {} [ text' doc.source ]
@@ -127,11 +127,24 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
           NodePoly {hyperdata: Document doc} = document
 
 type LayoutProps = (
-    listId   :: ListId
-  , mCorpusId :: Maybe NodeID
-  , nodeId   :: NodeID
-  , session  :: Session
+    listId         :: ListId
+  , mCorpusId      :: Maybe NodeID
+  , nodeId         :: NodeID
+  , session        :: Session
   )
+
+documentMainLayout :: R2.Component LayoutProps
+documentMainLayout = R.createElement documentMainLayoutCpt
+
+documentMainLayoutCpt :: R.Component LayoutProps
+documentMainLayoutCpt = R.hooksComponentWithModule thisModule "documentMainLayout" cpt
+  where
+    cpt props _ = do
+      pure $ R2.row [
+        R2.col 10 [
+           documentLayout props []
+           ]
+        ]
 
 documentLayout :: R2.Component LayoutProps
 documentLayout = R.createElement documentLayoutCpt

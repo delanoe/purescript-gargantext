@@ -1,6 +1,14 @@
 #page-wrapper .cache-toggle {
   cursor: pointer;
 }
+#page-wrapper .side-panel {
+  background-color: white;
+  left: 70%;
+  padding: 5px;
+  position: fixed;
+  top: 60px;
+  width: 28%;
+}
 
 .simple-layout {
   height: 100%;
