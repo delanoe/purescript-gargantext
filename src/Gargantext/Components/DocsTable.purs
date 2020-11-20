@@ -376,8 +376,10 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
             row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                  caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } []
-                , docChooser { listId, mCorpusId, nodeId: r._id, sidePanelTriggers } []
+                  H.div { className: "column-tag flex" } [
+                    caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } []
+                  , docChooser { listId, mCorpusId, nodeId: r._id, sidePanelTriggers } []
+                  ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { style } [ R2.showText r.date ]

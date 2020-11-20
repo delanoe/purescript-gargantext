@@ -22,8 +22,12 @@
   top: 50%;
 }
 
-.table .doc-chooser {
+.table .column-tag {
+  align-items: center;
+}
+.table .column-tag .doc-chooser {
   cursor: pointer;
+  padding: 10px;
 }
 
 /*# sourceMappingURL=Styles.css.map */
