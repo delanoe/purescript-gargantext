@@ -34,7 +34,7 @@ import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), ReloadS, TableResult, TabSubType, TabType, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
@@ -351,11 +351,14 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                 , totalRecords }
       , localCategories
       , params } _ = do
+
+    reload <- R.useState' 0
+
     pure $ T.table
       { colNames
       , container: T.defaultContainer { title: "Documents" }
       , params
-      , rows: rows localCategories
+      , rows: rows reload localCategories
       , totalRecords
       , wrapColElts
       }
@@ -371,14 +374,14 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
         colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source"]
         wrapColElts = const identity
         getCategory (lc /\ _) {_id, category} = fromMaybe category (lc ^. at _id)
-        rows lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
+        rows reload lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
           where
             row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                   H.div { className: "column-tag flex" } [
                     caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } []
-                  , docChooser { listId, mCorpusId, nodeId: r._id, sidePanelTriggers } []
+                  , docChooser { listId, mCorpusId, nodeId: r._id, sidePanelTriggers, tableReload: reload } []
                   ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
@@ -400,6 +403,7 @@ type DocChooser = (
   , mCorpusId         :: Maybe NodeID
   , nodeId            :: NodeID
   , sidePanelTriggers :: Record SidePanelTriggers
+  , tableReload       :: ReloadS
   )
 
 docChooser :: R2.Component DocChooser
@@ -414,9 +418,17 @@ docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
     cpt { listId
         , mCorpusId: Just corpusId
         , nodeId
-        , sidePanelTriggers: { triggerAnnotatedDocIdChange } } _ = do
+        , sidePanelTriggers: { currentDocIdRef
+                             , triggerAnnotatedDocIdChange }
+        , tableReload: (_ /\ setReload) } _ = do
+
+      let eyeClass = if (R.readRef currentDocIdRef) == Just nodeId then
+                       "fa-eye"
+                     else
+                       "fa-eye-slash"
+
       pure $ H.div { className: "doc-chooser" } [
-        H.span { className: "fa fa-eye"
+        H.span { className: "fa " <> eyeClass
                , on: { click: onClick } } []
       ]
       where
@@ -425,6 +437,7 @@ docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
           -- log2 "[docChooser] onClick, corpusId" corpusId
           -- log2 "[docChooser] onClick, nodeId" nodeId
           R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
+          setReload $ (_ + 1)
 
 
 newtype SearchQuery = SearchQuery {

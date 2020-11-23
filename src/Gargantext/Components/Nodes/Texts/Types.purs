@@ -24,17 +24,23 @@ type TriggerAnnotatedDocIdChangeParams = (
   )
 
 type SidePanelTriggers = (
-    triggerAnnotatedDocIdChange :: R2.Trigger (Record TriggerAnnotatedDocIdChangeParams)
-  , triggerSidePanel            :: R2.Trigger Unit
+    currentDocIdRef             :: R.Ref (Maybe Int)
+  , toggleSidePanel             :: R2.Trigger Unit  -- toggles side panel
+  , triggerAnnotatedDocIdChange :: R2.Trigger (Record TriggerAnnotatedDocIdChangeParams)
+  , triggerSidePanel            :: R2.Trigger Unit  -- opens side panel
 )
 
 emptySidePanelTriggers :: R.Hooks (Record SidePanelTriggers)
 emptySidePanelTriggers = do
+  currentDocIdRef             <- R.useRef Nothing
+  toggleSidePanel             <- R.useRef Nothing
   triggerAnnotatedDocIdChange <- R.useRef Nothing
   triggerSidePanel            <- R.useRef Nothing
 
   pure $ {
-      triggerAnnotatedDocIdChange
+      currentDocIdRef
+    , toggleSidePanel
+    , triggerAnnotatedDocIdChange
     , triggerSidePanel
     }
 

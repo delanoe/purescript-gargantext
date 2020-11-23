@@ -350,31 +350,40 @@ sidePanel = R.createElement sidePanelCpt
 sidePanelCpt :: R.Component SidePanelProps
 sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
   where
-    cpt { controls: { triggers: { triggerAnnotatedDocIdChange
-                                , triggerSidePanel } }
+    cpt { controls: { triggers: { currentDocIdRef
+                                , toggleSidePanel
+                                , triggerAnnotatedDocIdChange
+                                , triggerSidePanel
+                                } }
         , session } _ = do
 
       showSidePanel <- R.useState' InitialClosed
 
       R.useEffect' $ do
-        let trigger _ = do
-              snd showSidePanel $ const Opened
-        R2.setTrigger triggerSidePanel trigger
+        let toggleSidePanel' _  = snd showSidePanel toggleSidePanelState
+            triggerSidePanel' _ = snd showSidePanel $ const Opened
+        R2.setTrigger toggleSidePanel  toggleSidePanel'
+        R2.setTrigger triggerSidePanel triggerSidePanel'
 
       (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
       (mListId /\ setMListId) <- R.useState' Nothing
       (mNodeId /\ setMNodeId) <- R.useState' Nothing
 
-      R.useEffect2 mListId mNodeId $ do
+      R.useEffect3 mCorpusId mListId mNodeId $ do
         let trigger :: Record TriggerAnnotatedDocIdChangeParams -> Effect Unit
             trigger { corpusId, listId, nodeId } = do
               -- log2 "[sidePanel trigger] trigger corpusId change" corpusId
               -- log2 "[sidePanel trigger] trigger listId change" listId
               -- log2 "[sidePanel trigger] trigger nodeId change" nodeId
-              setMCorpusId $ const $ Just corpusId
-              setMListId $ const $ Just listId
-              setMNodeId $ const $ Just nodeId
-              R2.callTrigger triggerSidePanel unit
+              if mCorpusId == Just corpusId && mListId == Just listId && mNodeId == Just nodeId && R.readRef currentDocIdRef == Just nodeId then do
+                R.setRef currentDocIdRef Nothing
+                R2.callTrigger toggleSidePanel unit
+              else do
+                setMCorpusId $ const $ Just corpusId
+                setMListId $ const $ Just listId
+                setMNodeId $ const $ Just nodeId
+                R.setRef currentDocIdRef $ Just nodeId
+                R2.callTrigger triggerSidePanel unit
         -- log2 "[sidePanel] trigger" trigger
         R2.setTrigger triggerAnnotatedDocIdChange trigger
 
@@ -386,10 +395,14 @@ sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
             Opened -> { display: "block" }
             _      -> { display: "none" }
 
+      let closeSidePanel _ = do
+            R.setRef currentDocIdRef Nothing
+            snd showSidePanel $ const Closed
+
       pure $ H.div { style: mainStyle } [
         H.div { className: "header" } [
           H.span { className: "btn btn-danger"
-                 , on: { click: \_ -> snd showSidePanel $ const Closed } } [
+                 , on: { click: closeSidePanel } } [
             H.span { className: "fa fa-times" } []
           ]
         ]
