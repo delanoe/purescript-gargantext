@@ -21,6 +21,7 @@ import Reactix.DOM.HTML as HTML
 
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.ContextMenu.ContextMenu"
 
 type Props t = (

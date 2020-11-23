@@ -329,15 +329,15 @@ _NgramsRepoElement  :: Iso' NgramsRepoElement {
 _NgramsRepoElement = _Newtype
 
 ngramsRepoElementToNgramsElement :: NgramsTerm -> Int -> NgramsRepoElement -> NgramsElement
-ngramsRepoElementToNgramsElement ngrams occurrences (NgramsRepoElement { size, list, root, parent, children }) =
+ngramsRepoElementToNgramsElement ngrams occurrences (NgramsRepoElement { children, list, parent, root, size }) =
   NgramsElement
-  { ngrams
-  , size -- TODO should we assert that size(ngrams) == size?
+  { children
   , list
-  , root
-  , parent
-  , children
+  , ngrams
   , occurrences
+  , parent
+  , root
+  , size -- TODO should we assert that size(ngrams) == size?
   }
 
 -----------------------------------------------------------------------------------

@@ -30,4 +30,8 @@
   padding: 10px;
 }
 
+.context-menu {
+  position: fixed;
+}
+
 /*# sourceMappingURL=Styles.css.map */
