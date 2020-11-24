@@ -22,10 +22,16 @@
   top: 50%;
 }
 
-.table .column-tag {
+.table tr td .active {
+  font-weight: bold;
+}
+.table tr td .trash {
+  text-decoration: line-through;
+}
+.table tr td .column-tag {
   align-items: center;
 }
-.table .column-tag .doc-chooser {
+.table tr td .column-tag .doc-chooser {
   cursor: pointer;
   padding: 10px;
 }

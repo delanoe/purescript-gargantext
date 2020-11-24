@@ -19,11 +19,17 @@
     top: 50%
 
 .table
-  .column-tag
-    align-items: center
-    .doc-chooser
-      cursor: pointer
-      padding: 10px
+  tr
+    td
+      .active
+        font-weight: bold
+      .trash
+        text-decoration: line-through
+      .column-tag
+        align-items: center
+        .doc-chooser
+          cursor: pointer
+          padding: 10px
 
 .context-menu
   position: fixed

@@ -347,7 +347,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                 , mCorpusId
                 , nodeId
                 , session
-                , sidePanelTriggers
+                , sidePanelTriggers: sidePanelTriggers@{ currentDocIdRef }
                 , totalRecords }
       , localCategories
       , params } _ = do
@@ -366,8 +366,9 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
         sid = sessionId session
         gi Favorite  = "glyphicon glyphicon-star"
         gi _ = "glyphicon glyphicon-star-empty"
-        trashStyle Trash = {textDecoration: "line-through"}
-        trashStyle _ = {textDecoration: "none"}
+        trashClassName Trash _ = "trasn"
+        trashClassName _ true = "active"
+        trashClassName _ false = ""
         corpusDocument
           | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
@@ -381,27 +382,29 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                   H.div { className: "column-tag flex" } [
                     caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } []
-                  , docChooser { listId, mCorpusId, nodeId: r._id, sidePanelTriggers, tableReload: reload } []
+                  , docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
                   ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
-                , H.div { style } [ R2.showText r.date ]
-                , H.div { style } [
+                , H.div { className: tClassName } [ R2.showText r.date ]
+                , H.div { className: tClassName } [
                    H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ]
                  ]
-                , H.div { style } [ H.text $ if r.source == "" then "Source" else r.source ]
+                , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
                 ]
               , delete: true }
               where
                 cat         = getCategory lc r
                 checked    = Trash == cat
-                style      = trashStyle cat
+                tClassName = trashClassName cat selected
                 className  = gi cat
+                selected   = R.readRef currentDocIdRef == Just r._id
 
 type DocChooser = (
     listId            :: ListId
   , mCorpusId         :: Maybe NodeID
   , nodeId            :: NodeID
+  , selected          :: Boolean
   , sidePanelTriggers :: Record SidePanelTriggers
   , tableReload       :: ReloadS
   )
@@ -418,14 +421,11 @@ docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
     cpt { listId
         , mCorpusId: Just corpusId
         , nodeId
-        , sidePanelTriggers: { currentDocIdRef
-                             , triggerAnnotatedDocIdChange }
+        , selected
+        , sidePanelTriggers: { triggerAnnotatedDocIdChange }
         , tableReload: (_ /\ setReload) } _ = do
 
-      let eyeClass = if (R.readRef currentDocIdRef) == Just nodeId then
-                       "fa-eye"
-                     else
-                       "fa-eye-slash"
+      let eyeClass = if selected then "fa-eye" else "fa-eye-slash"
 
       pure $ H.div { className: "doc-chooser" } [
         H.span { className: "fa " <> eyeClass
