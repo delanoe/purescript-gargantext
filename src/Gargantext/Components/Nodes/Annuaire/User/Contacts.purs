@@ -19,7 +19,7 @@ import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
-import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
@@ -197,9 +197,9 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
     cpt { appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
       reload <- R.useState' 0
 
-      cacheState <- R.useState' NT.CacheOn
+      cacheState <- R.useState' LT.CacheOn
 
-      sidePanelTriggers <- TT.emptySidePanelTriggers
+      sidePanelTriggers <- LT.emptySidePanelTriggers
 
       useLoader {nodeId, reload: fst reload, session} getContactWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
@@ -257,9 +257,9 @@ annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
 annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayout" cpt
   where
     cpt { annuaireId, appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
-      cacheState <- R.useState' NT.CacheOn
+      cacheState <- R.useState' LT.CacheOn
 
-      sidePanelTriggers <- TT.emptySidePanelTriggers
+      sidePanelTriggers <- LT.emptySidePanelTriggers
 
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->

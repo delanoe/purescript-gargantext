@@ -25,15 +25,21 @@
 .table tr td .active {
   font-weight: bold;
 }
-.table tr td .trash {
-  text-decoration: line-through;
-}
 .table tr td .column-tag {
   align-items: center;
 }
 .table tr td .column-tag .doc-chooser {
   cursor: pointer;
   padding: 10px;
+}
+.table tr td .ngrams-selector {
+  display: flex;
+}
+.table tr td .ngrams-selector .ngrams-chooser {
+  padding: 3px;
+}
+.table tr td .trash {
+  text-decoration: line-through;
 }
 
 .context-menu {

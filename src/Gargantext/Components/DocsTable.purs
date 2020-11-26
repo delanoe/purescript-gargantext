@@ -72,18 +72,18 @@ type LayoutProps = (
   )
 
 type PageLayoutProps = (
-    cacheState   :: R.State NT.CacheState
-  , frontends    :: Frontends
-  , key          :: String  -- NOTE Necessary to clear the component when cache state changes
-  , listId       :: Int
-  , mCorpusId    :: Maybe Int
-  , nodeId       :: Int
-  , params       :: T.Params
-  , query        :: Query
-  , session      :: Session
+    cacheState        :: R.State NT.CacheState
+  , frontends         :: Frontends
+  , key               :: String  -- NOTE Necessary to clear the component when cache state changes
+  , listId            :: Int
+  , mCorpusId         :: Maybe Int
+  , nodeId            :: Int
+  , params            :: T.Params
+  , query             :: Query
+  , session           :: Session
   , sidePanelTriggers :: Record SidePanelTriggers
-  , tabType      :: TabType
-  , totalRecords :: Int
+  , tabType           :: TabType
+  , totalRecords      :: Int
   )
 
 _documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")

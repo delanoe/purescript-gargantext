@@ -20,7 +20,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart (getChartFunction)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
-import Gargantext.Components.Nodes.Lists.Types as NTypes
+import Gargantext.Components.Nodes.Lists.Types
 import Gargantext.Components.Tab as Tab
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), ReloadS, TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
@@ -30,13 +30,14 @@ thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    appReload     :: ReloadS
-  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
-  , cacheState    :: R.State NTypes.CacheState
-  , corpusData    :: CorpusData
-  , corpusId      :: Int
-  , session       :: Session
-  , treeReloadRef :: R.Ref (Maybe ReloadS)
+    appReload         :: ReloadS
+  , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
+  , cacheState        :: R.State CacheState
+  , corpusData        :: CorpusData
+  , corpusId          :: Int
+  , session           :: Session
+  , sidePanelTriggers :: Record SidePanelTriggers
+  , treeReloadRef     :: R.Ref (Maybe ReloadS)
   )
 
 type PropsWithKey = (
@@ -50,7 +51,14 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component PropsWithKey
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
-    cpt { appReload, asyncTasksRef, cacheState, corpusData, corpusId, session, treeReloadRef } _ = do
+    cpt { appReload
+        , asyncTasksRef
+        , cacheState
+        , corpusData
+        , corpusId
+        , session
+        , sidePanelTriggers
+        , treeReloadRef } _ = do
       (selected /\ setSelected) <- R.useState' 0
 
       pure $ Tab.tabs { selected, tabs: tabs' }
@@ -59,7 +67,15 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                 , "Institutes" /\ view Institutes
                 , "Sources"    /\ view Sources
                 , "Terms"      /\ view Terms ]
-        view mode = ngramsView { appReload, asyncTasksRef, cacheState, corpusData, corpusId, mode, session, treeReloadRef }
+        view mode = ngramsView { appReload
+                               , asyncTasksRef
+                               , cacheState
+                               , corpusData
+                               , corpusId
+                               , mode
+                               , session
+                               , sidePanelTriggers
+                               , treeReloadRef }
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
@@ -76,6 +92,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
         , corpusId
         , mode
         , session
+        , sidePanelTriggers
         , treeReloadRef
         } _ = do
 
@@ -106,6 +123,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
                                 , nodeId: corpusId
                                 , pathS
                                 , session
+                                , sidePanelTriggers
                                 , tabNgramType
                                 , tabType
                                 , treeReloadRef

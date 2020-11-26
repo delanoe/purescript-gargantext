@@ -16,8 +16,8 @@ import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
-import Gargantext.Components.Nodes.Lists.Types as NTypes
-import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
+import Gargantext.Components.Nodes.Lists.Types as LTypes
+import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), NodeID, PTabNgramType(..), ReloadS, TabType(..), TabSubType(..))
@@ -47,15 +47,15 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    appReload       :: ReloadS
-  , asyncTasksRef   :: R.Ref (Maybe GAT.Reductor)
-  , cacheState      :: R.State NTypes.CacheState
-  , contactData     :: ContactData
-  , frontends       :: Frontends
-  , nodeId          :: Int
-  , session         :: Session
-  , sidePanelTriggers :: Record SidePanelTriggers
-  , treeReloadRef   :: R.Ref (Maybe ReloadS)
+    appReload         :: ReloadS
+  , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
+  , cacheState        :: R.State LTypes.CacheState
+  , contactData       :: ContactData
+  , frontends         :: Frontends
+  , nodeId            :: Int
+  , session           :: Session
+  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
+  , treeReloadRef     :: R.Ref (Maybe ReloadS)
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -74,15 +74,15 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
         , sidePanelTriggers
         , treeReloadRef } _ = do
       active <- R.useState' 0
-      pure $
-        Tab.tabs { selected: fst active, tabs: tabs' }
+      textsSidePanelTriggers <- TTypes.emptySidePanelTriggers
+      pure $ Tab.tabs { selected: fst active, tabs: tabs' textsSidePanelTriggers }
       where
-        tabs' =
-          [ "Documents"     /\ docs
+        tabs' trg =
+          [ "Documents"     /\ docs trg
           , "Patents"       /\ ngramsView patentsView
           , "Books"         /\ ngramsView booksView
           , "Communication" /\ ngramsView commView
-          , "Trash"         /\ docs -- TODO pass-in trash mode
+          , "Trash"         /\ docs trg -- TODO pass-in trash mode
           ]
           where
             patentsView = { appReload
@@ -113,7 +113,7 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                           , treeReloadRef }
             chart       = mempty
             totalRecords = 4736 -- TODO
-            docs = DT.docViewLayout
+            docs sidePanelTriggers = DT.docViewLayout
               { cacheState
               , chart
               , frontends
@@ -129,15 +129,15 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    appReload     :: ReloadS
-  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
-  , cacheState    :: R.State NTypes.CacheState
-  , defaultListId :: Int
-  , mode          :: Mode
-  , nodeId        :: Int
-  , session       :: Session
-  , sidePanelTriggers :: Record SidePanelTriggers
-  , treeReloadRef  :: R.Ref (Maybe ReloadS)
+    appReload         :: ReloadS
+  , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
+  , cacheState        :: R.State LTypes.CacheState
+  , defaultListId     :: Int
+  , mode              :: Mode
+  , nodeId            :: Int
+  , session           :: Session
+  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
+  , treeReloadRef     :: R.Ref (Maybe ReloadS)
   )
 
 ngramsView :: Record NgramsViewTabsProps -> R.Element
@@ -146,7 +146,15 @@ ngramsView props = R.createElement ngramsViewCpt props []
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
   where
-    cpt { appReload, asyncTasksRef, cacheState, defaultListId, mode, nodeId, session, treeReloadRef } _ = do
+    cpt { appReload
+        , asyncTasksRef
+        , cacheState
+        , defaultListId
+        , mode
+        , nodeId
+        , session
+        , sidePanelTriggers
+        , treeReloadRef } _ = do
       pathS <- R.useState' $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
 
       pure $ NT.mainNgramsTable {
@@ -159,6 +167,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
         , pathS
         , tabType
         , session
+        , sidePanelTriggers
         , tabNgramType
         , treeReloadRef
         , withAutoUpdate: false

@@ -420,7 +420,7 @@ sidePanelDocView :: R2.Component SidePanelDocView
 sidePanelDocView = R.createElement sidePanelDocViewCpt
 
 sidePanelDocViewCpt :: R.Component SidePanelDocView
-sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
+sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanelDocView" cpt
   where
     cpt { mListId: Nothing } _ = do
       pure $ H.div {} []
@@ -430,10 +430,7 @@ sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
         , mListId: Just listId
         , mNodeId: Just nodeId
         , session } _ = do
-      -- pure $ H.h4 {} [ H.text txt ]
       pure $ D.documentLayout { listId
                               , mCorpusId
                               , nodeId
                               , session } []
-      where
-        txt = "mCorpusId: " <> show mCorpusId <> ", listId: " <> show listId <> ", nodeId: " <> show nodeId

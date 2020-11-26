@@ -1,5 +1,6 @@
 module Gargantext.Components.NgramsTable
   ( MainNgramsTableProps
+  , CommonProps
   , mainNgramsTable
   ) where
 
@@ -279,16 +280,22 @@ tableContainerCpt { dispatch
       ]
 
 -- NEXT
+
+type CommonProps = (
+    afterSync         :: Unit -> Aff Unit
+  , appReload         :: ReloadS
+  , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
+  , sidePanelTriggers :: Record NT.SidePanelTriggers
+  , tabNgramType      :: CTabNgramType
+  , treeReloadRef     :: R.Ref (Maybe ReloadS)
+  , withAutoUpdate    :: Boolean
+  )
+
 type Props = (
-    appReload      :: ReloadS
-  , afterSync      :: Unit -> Aff Unit
-  , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
-  , path           :: R.State PageParams
-  , state          :: R.State State
-  , tabNgramType   :: CTabNgramType
-  , treeReloadRef  :: R.Ref (Maybe ReloadS)
-  , versioned      :: VersionedNgramsTable
-  , withAutoUpdate :: Boolean
+    path              :: R.State PageParams
+  , state             :: R.State State
+  , versioned         :: VersionedNgramsTable
+  | CommonProps
   )
 
 loadedNgramsTable :: Record Props -> R.Element
@@ -301,6 +308,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
         , appReload
         , asyncTasksRef
         , path: path@(path'@{ listIds, nodeId, params, searchQuery, scoreType, termListFilter, termSizeFilter } /\ setPath)
+        , sidePanelTriggers
         , state: (state@{ ngramsChildren
                         , ngramsLocalPatch
                         , ngramsParent
@@ -443,7 +451,8 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                                       , ngramsLocalPatch
                                       , ngramsParent
                                       , ngramsSelection
-                                      , ngramsTable }
+                                      , ngramsTable
+                                      , sidePanelTriggers } []
           , delete: false
           }
         orderWith =
@@ -509,19 +518,14 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 
 
 type MainNgramsTableProps = (
-    afterSync      :: Unit -> Aff Unit
-  , appReload      :: ReloadS
-  , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
-  , cacheState     :: R.State NT.CacheState
-  , defaultListId  :: Int
-  , nodeId         :: Int
+    cacheState        :: R.State NT.CacheState
+  , defaultListId     :: Int
+  , nodeId            :: Int
     -- ^ This node can be a corpus or contact.
-  , pathS          :: R.State PageParams
-  , session        :: Session
-  , tabNgramType   :: CTabNgramType
-  , tabType        :: TabType
-  , treeReloadRef  :: R.Ref (Maybe ReloadS)
-  , withAutoUpdate :: Boolean
+  , pathS             :: R.State PageParams
+  , session           :: Session
+  , tabType           :: TabType
+  | CommonProps
   )
 
 mainNgramsTable :: Record MainNgramsTableProps -> R.Element
@@ -538,6 +542,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
               , nodeId
               , pathS
               , session
+              , sidePanelTriggers
               , tabNgramType
               , tabType
               , treeReloadRef
@@ -551,6 +556,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
                                                       , appReload
                                                       , asyncTasksRef
                                                       , path: fst pathS
+                                                      , sidePanelTriggers
                                                       , tabNgramType
                                                       , treeReloadRef
                                                       , versioned
@@ -568,6 +574,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
                                                              , appReload
                                                              , asyncTasksRef
                                                              , pathS
+                                                             , sidePanelTriggers
                                                              , tabNgramType
                                                              , treeReloadRef
                                                              , versioned
@@ -619,14 +626,9 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
     handleResponse v = v
 
 type MainNgramsTablePaintProps = (
-    afterSync      :: Unit -> Aff Unit
-  , appReload      :: ReloadS
-  , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
-  , path           :: PageParams
-  , tabNgramType   :: CTabNgramType
-  , treeReloadRef  :: R.Ref (Maybe ReloadS)
-  , versioned      :: VersionedNgramsTable
-  , withAutoUpdate :: Boolean
+    path              :: PageParams
+  , versioned         :: VersionedNgramsTable
+  | CommonProps
   )
 
 mainNgramsTablePaint :: Record MainNgramsTablePaintProps -> R.Element
@@ -635,7 +637,15 @@ mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
 mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
   where
-    cpt props@{ afterSync, appReload, asyncTasksRef, path, tabNgramType, treeReloadRef, versioned, withAutoUpdate } _ = do
+    cpt props@{ afterSync
+              , appReload
+              , asyncTasksRef
+              , path
+              , sidePanelTriggers
+              , tabNgramType
+              , treeReloadRef
+              , versioned
+              , withAutoUpdate } _ = do
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
 
@@ -644,6 +654,7 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
       , appReload
       , asyncTasksRef
       , path: pathS
+      , sidePanelTriggers
       , state
       , tabNgramType
       , treeReloadRef
@@ -652,14 +663,9 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
       }
 
 type MainNgramsTablePaintNoCacheProps = (
-    afterSync      :: Unit -> Aff Unit
-  , appReload      :: ReloadS
-  , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
-  , pathS          :: R.State PageParams
-  , tabNgramType   :: CTabNgramType
-  , treeReloadRef  :: R.Ref (Maybe ReloadS)
-  , versioned      :: VersionedNgramsTable
-  , withAutoUpdate :: Boolean
+    pathS             :: R.State PageParams
+  , versioned         :: VersionedNgramsTable
+  | CommonProps
   )
 
 mainNgramsTablePaintNoCache :: Record MainNgramsTablePaintNoCacheProps -> R.Element
@@ -668,7 +674,15 @@ mainNgramsTablePaintNoCache p = R.createElement mainNgramsTablePaintNoCacheCpt p
 mainNgramsTablePaintNoCacheCpt :: R.Component MainNgramsTablePaintNoCacheProps
 mainNgramsTablePaintNoCacheCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintNoCache" cpt
   where
-    cpt props@{ afterSync, appReload, asyncTasksRef, pathS, tabNgramType, treeReloadRef, versioned, withAutoUpdate } _ = do
+    cpt props@{ afterSync
+              , appReload
+              , asyncTasksRef
+              , pathS
+              , sidePanelTriggers
+              , tabNgramType
+              , treeReloadRef
+              , versioned
+              , withAutoUpdate } _ = do
       state <- R.useState' $ initialState versioned
 
       pure $ loadedNgramsTable {
@@ -676,6 +690,7 @@ mainNgramsTablePaintNoCacheCpt = R.hooksComponentWithModule thisModule "mainNgra
       , appReload
       , asyncTasksRef
       , path: pathS
+      , sidePanelTriggers
       , state
       , tabNgramType
       , treeReloadRef

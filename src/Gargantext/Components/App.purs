@@ -20,7 +20,7 @@ import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame  (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
-import Gargantext.Components.Nodes.Lists (listsLayout)
+import Gargantext.Components.Nodes.Lists as Lists
 import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.SimpleLayout (simpleLayout)
 import Gargantext.Config (defaultFrontends, defaultBackends, publicBackend)
@@ -134,16 +134,27 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
             homeLayout { backend, lang: LL_EN, publicBackend, sessions, visible: showLogin }
           ]
           Lists sid nodeId         -> withSession sid $
-            \session -> forested [
-              listsLayout {
-                  appReload
-                , asyncTasksRef
-                , nodeId
-                , session
-                , sessionUpdate
-                , treeReloadRef
+            \session -> Lists.listsWithForest {
+                  forestProps: {
+                      appReload
+                    , asyncTasksRef
+                    , backend
+                    , frontends
+                    , handed
+                    , route: fst route
+                    , sessions: fst sessions
+                    , showLogin: snd showLogin
+                    , treeReloadRef
+                  }
+                , listsProps: {
+                      appReload
+                    , asyncTasksRef
+                    , nodeId
+                    , session
+                    , sessionUpdate
+                    , treeReloadRef
                 }
-            ]
+              } []
           Login -> login { backend, backends, sessions, visible: showLogin }
           PGraphExplorer sid graphId ->
             withSession sid $
