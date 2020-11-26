@@ -12,6 +12,7 @@
 module Gargantext.Components.Annotation.AnnotatedField where
 
 import Prelude
+import Data.List ( List(..), (:) )
 import Data.Maybe ( Maybe(..), maybe )
 import Data.Tuple ( Tuple(..) )
 import Data.Tuple.Nested ( (/\) )
@@ -55,18 +56,15 @@ annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField"
 
       let wrapperProps = { className: "annotated-field-wrapper" }
 
-          onSelect :: String -> Maybe TermList -> MouseEvent -> Effect Unit
-          onSelect text' Nothing event = do
-            --log2 "[onSelect] text'" text'
+          onSelect :: Maybe (Tuple NgramsTerm TermList) -> MouseEvent -> Effect Unit
+          onSelect Nothing event = do
             maybeShowMenu setMenu menuRef setTermList ngrams event
-          onSelect text' (Just list) event = do
-            --log2 "[onSelect] text'" text'
-            --log2 "[onSelect] list" (show list)
+          onSelect (Just (Tuple ngram list)) event = do
             let x = E.clientX event
                 y = E.clientY event
                 setList t = do
                   R.setRef menuRef Nothing
-                  setTermList (normNgram CTabTerms text') (Just list) t
+                  setTermList ngram (Just list) t
                   --setMenu (const Nothing)
                 menu = Just {
                     x
@@ -153,14 +151,14 @@ maybeAddMenu
 maybeAddMenu (Just props /\ setMenu) e = annotationMenu setMenu props <> e
 maybeAddMenu _ e = e
 
-compile :: NgramsTable -> Maybe String -> Array (Tuple String (Maybe TermList))
+compile :: NgramsTable -> Maybe String -> Array (Tuple String (List (Tuple NgramsTerm TermList)))
 compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
 
 -- Runs
 
 type Run =
-  ( list :: (Maybe TermList)
-  , onSelect :: String -> Maybe TermList -> MouseEvent -> Effect Unit
+  ( list :: List (Tuple NgramsTerm TermList)
+  , onSelect :: Maybe (Tuple NgramsTerm TermList) -> MouseEvent -> Effect Unit
   , text :: String
   )
 
@@ -170,13 +168,14 @@ annotateRun p = R.createElement annotatedRunComponent p []
 annotatedRunComponent :: R.Component Run
 annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
   where
-    cpt    { list: Nothing, onSelect, text }     _ =
-      HTML.span { on: { mouseUp: \e -> onSelect text Nothing e } } [ HTML.text text ]
+    cpt    { list: Nil, onSelect, text }     _ =
+      HTML.span { on: { mouseUp: onSelect Nothing } } [ HTML.text text ]
 
-    cpt    { list: (Just list), onSelect, text } _ =
-      HTML.span { className: className list
-                , on: { click: \e -> onSelect text (Just list) e } } [ HTML.text text ]
+    cpt    { list: (ngram /\ list) : _otherLists, onSelect, text } _ =
+      -- TODO _otherLists
+      HTML.span { className
+                , on: { click: onSelect (Just (ngram /\ list)) } } [ HTML.text text ]
       where
-        className list' = "annotation-run bg-" <> termBootstrapClass list'
+        className = "annotation-run bg-" <> termBootstrapClass list
 
 

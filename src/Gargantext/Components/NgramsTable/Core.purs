@@ -93,6 +93,7 @@ import Data.Lens.Index (class Index, ix)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.List ((:), List(Nil))
+import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
@@ -435,9 +436,15 @@ wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <
   Left e  -> unsafePartial $ crashWith e
   Right r -> r
 
+type HighlightAccumulator =
+  { i0 :: Int    -- where are we in input
+  , s  :: String -- == drop i0 input
+  , l  :: List (Tuple String (List (Tuple NgramsTerm TermList)))
+  }
+
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
-highlightNgrams :: CTabNgramType -> NgramsTable -> String -> Array (Tuple String (Maybe TermList))
+highlightNgrams :: CTabNgramType -> NgramsTable -> String -> Array (Tuple String (List (Tuple NgramsTerm TermList)))
 highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     -- trace {pats, input0, input, ixs} \_ ->
     let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
@@ -453,49 +460,53 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     pats = A.fromFoldable (Map.keys elts)
     ixs = indicesOfAny (sp <<< ngramsTermText <$> pats) (normNgramInternal ntype input)
 
-    consOnJustTail s xs@(Tuple _ (Just _) : _) =
-      Tuple s Nothing : xs
+    consOnJustTail s xs@(Tuple _ (_ : _) : _) = Tuple s Nil : xs
     consOnJustTail _ xs = xs
 
     consNonEmpty x xs
       | S.null x  = xs
-      | otherwise = Tuple x Nothing : xs
+      | otherwise = Tuple x Nil : xs
+
+    goAcc :: Partial => NgramsTerm -> Int -> HighlightAccumulator -> HighlightAccumulator
+    goAcc pat i { i0, s, l } =
+      let lpat = S.length (db (ngramsTermText pat)) in
+      case lookupRootList pat table of
+        Nothing ->
+          crashWith "highlightNgrams: pattern missing from table"
+        Just ne_list ->
+          let
+            s1    = {-if i <= i0 then-} S.splitAt (i - i0) s {-else S.drop i input-}
+            s2    = S.splitAt lpat (S.drop 1 s1.after)
+            s3    = S.splitAt 1    s2.after
+            unspB = if i0 == 0 then S.drop 1 else identity
+            s3b   = s3.before
+            text  = undb s2.before
+          in
+          -- trace {s, i, i0, s1, s2, s3, pat, lpat, s3b} \_ ->
+          -- `undb s2.before` and pat might differ by casing only!
+          { i0: i + lpat + 2
+          , s:  s3.after
+          , l:  Tuple text ((normNgram ntype text /\ ne_list) : Nil) :
+                consOnJustTail s3b
+                (consNonEmpty (unspB (undb s1.before)) l)
+          }
 
     -- NOTE that only the first matching pattern is used, the others are ignored!
-    goFold :: Partial => _ -> Tuple Int (Array Int) -> _
-    goFold { i0, s, l } (Tuple i pis)
+    goFold :: Partial => HighlightAccumulator -> Tuple Int (Array Int) -> HighlightAccumulator
+    goFold acc@{ i0, s, l } (Tuple i pis)
       | i < i0    =
         -- Skip this pattern which is overlapping with a previous one.
         { i0, s, l }
       | otherwise =
-      case A.index pis 0 of
-        Nothing ->
+      case List.fromFoldable pis of
+        Nil ->
           { i0, s, l }
-        Just pi ->
+        pi : _ ->
           case A.index pats pi of
             Nothing ->
               crashWith "highlightNgrams: out of bounds pattern"
             Just pat ->
-              let lpat = S.length (db (ngramsTermText pat)) in
-              case lookupRootList pat table of
-                Nothing ->
-                  crashWith "highlightNgrams: pattern missing from table"
-                Just ne_list ->
-                  let
-                    s1    = S.splitAt (i - i0) s
-                    s2    = S.splitAt lpat     (S.drop 1 s1.after)
-                    s3    = S.splitAt 1        s2.after
-                    unspB = if i0 == 0 then S.drop 1 else identity
-                    s3b   = s3.before
-                  in
-                  -- trace {s, i, i0, s1, s2, s3, pat, lpat, s3b} \_ ->
-                  -- `undb s2.before` and pat might differ by casing only!
-                  { i0: i + lpat + 2
-                  , s:  s3.after
-                  , l:  Tuple (undb s2.before) (Just ne_list) :
-                        consOnJustTail s3b
-                        (consNonEmpty (unspB (undb s1.before)) l)
-                  }
+              goAcc pat i acc
 
 -----------------------------------------------------------------------------------
 
