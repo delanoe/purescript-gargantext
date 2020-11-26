@@ -19,6 +19,7 @@ import DOM.Simple.Console (log, log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
@@ -274,7 +275,11 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
         localCategories <- R.useState' (mempty :: LocalCategories)
         paramsS <- R.useState' params
         let loader p = do
-              res <- get session $ tableRouteWithPage (p { params = fst paramsS, query = query })
+              let route = tableRouteWithPage (p { params = fst paramsS, query = query })
+              res <- get session $ route
+              liftEffect $ do
+                log2 "[pageLayout] table route" route
+                log2 "[pageLayout] table res" res
               pure $ handleResponse res
             render (Tuple count documents) = pagePaintRaw { documents
                                                           , layout: props { params = fst paramsS
@@ -372,7 +377,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
         corpusDocument
           | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
-        colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source"]
+        colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source", "Score"]
         wrapColElts = const identity
         getCategory (lc /\ _) {_id, category} = fromMaybe category (lc ^. at _id)
         rows reload lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
@@ -391,6 +396,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                    H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ]
                  ]
                 , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
+                , H.div {} [ H.text $ show r.ngramCount ]
                 ]
               , delete: true }
               where
