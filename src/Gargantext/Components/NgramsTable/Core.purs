@@ -110,7 +110,7 @@ import Data.Symbol (SProxy(..))
 import Data.These (These(..))
 import Data.Traversable (for, traverse_, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_)
@@ -467,9 +467,8 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
       | S.null x  = xs
       | otherwise = Tuple x Nil : xs
 
-    goAcc :: Partial => NgramsTerm -> Int -> HighlightAccumulator -> HighlightAccumulator
-    goAcc pat i { i0, s, l } =
-      let lpat = S.length (db (ngramsTermText pat)) in
+    goAcc :: Partial => Tuple NgramsTerm Int -> Int -> HighlightAccumulator -> HighlightAccumulator
+    goAcc (pat /\ lpat) i { i0, s, l } =
       case lookupRootList pat table of
         Nothing ->
           crashWith "highlightNgrams: pattern missing from table"
@@ -498,7 +497,10 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
         -- Skip this pattern which is overlapping with a previous one.
         { i0, s, l }
       | otherwise =
-        let pats' = fromMaybe' (\_ -> crashWith "highlightNgrams: out of bounds pattern") (traverse (A.index pats) pis) in
+        let pats' = A.sortWith snd $
+                    map (\pat -> pat /\ S.length (db (ngramsTermText pat))) $
+                    fromMaybe' (\_ -> crashWith "highlightNgrams: out of bounds pattern") $
+                    traverse (A.index pats) pis in
         case List.fromFoldable pats' of
           Nil -> { i0, s, l }
           pat : _ -> goAcc pat i acc
