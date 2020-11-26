@@ -96,7 +96,7 @@ import Data.List ((:), List(Nil))
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', isJust)
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
@@ -108,7 +108,7 @@ import Data.String.Regex.Flags (global, multiline) as R
 import Data.String.Utils as SU
 import Data.Symbol (SProxy(..))
 import Data.These (These(..))
-import Data.Traversable (for, traverse_)
+import Data.Traversable (for, traverse_, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
@@ -498,15 +498,10 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
         -- Skip this pattern which is overlapping with a previous one.
         { i0, s, l }
       | otherwise =
-      case List.fromFoldable pis of
-        Nil ->
-          { i0, s, l }
-        pi : _ ->
-          case A.index pats pi of
-            Nothing ->
-              crashWith "highlightNgrams: out of bounds pattern"
-            Just pat ->
-              goAcc pat i acc
+        let pats' = fromMaybe' (\_ -> crashWith "highlightNgrams: out of bounds pattern") (traverse (A.index pats) pis) in
+        case List.fromFoldable pats' of
+          Nil -> { i0, s, l }
+          pat : _ -> goAcc pat i acc
 
 -----------------------------------------------------------------------------------
 
