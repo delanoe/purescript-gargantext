@@ -24,6 +24,7 @@
 
 .table tr td .active {
   font-weight: bold;
+  text-decoration: underline;
 }
 .table tr td .column-tag {
   align-items: center;
