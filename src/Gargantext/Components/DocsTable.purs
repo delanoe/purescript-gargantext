@@ -7,7 +7,7 @@ import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map (Map)
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -216,12 +216,13 @@ convOrderBy _ = Nothing
 res2corpus :: Response -> DocumentsView
 res2corpus (Response r) =
   DocumentsView { _id : r.cid
-  , url    : ""
-  , date   : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
-  , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
-  , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
-  , category : r.category
+  , category   : r.category
+  , date       : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
   , ngramCount : r.ngramCount
+  , score      : r.score
+  , source     : (\(Hyperdata hr) -> hr.source) r.hyperdata
+  , title      : (\(Hyperdata hr) -> hr.title) r.hyperdata
+  , url        : ""
 }
 
 filterDocs :: Query -> Array Response -> Array Response
@@ -396,7 +397,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                    H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ]
                  ]
                 , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
-                , H.div {} [ H.text $ show r.ngramCount ]
+                , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
                 ]
               , delete: true }
               where
