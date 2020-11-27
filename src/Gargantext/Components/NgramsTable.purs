@@ -463,7 +463,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
             Just TermDesc  -> sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
             _              -> identity -- the server ordering is enough here
 
-        colNames = T.ColumnName <$> ["Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
+        colNames = T.ColumnName <$> ["Show", "Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
         -- This is used to *decorate* the Select header with the checkbox.
         wrapColElts scProps (T.ColumnName "Select") = const [NTC.selectionCheckbox scProps]
         wrapColElts _       (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
