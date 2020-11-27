@@ -93,7 +93,7 @@ import Data.Lens.Index (class Index, ix)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.List ((:), List(Nil))
-import Data.List as List
+import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', isJust)
@@ -436,74 +436,70 @@ wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <
   Left e  -> unsafePartial $ crashWith e
   Right r -> r
 
-type HighlightAccumulator =
-  { i0 :: Int    -- where are we in input
-  , s  :: String -- == drop i0 input
-  , l  :: List (Tuple String (List (Tuple NgramsTerm TermList)))
-  }
+type HighlightElement = Tuple String (List (Tuple NgramsTerm TermList))
+type HighlightAccumulator = List HighlightElement
 
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
-highlightNgrams :: CTabNgramType -> NgramsTable -> String -> Array (Tuple String (List (Tuple NgramsTerm TermList)))
+highlightNgrams :: CTabNgramType -> NgramsTable -> String -> Array HighlightElement
 highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     -- trace {pats, input0, input, ixs} \_ ->
-    let sN = unsafePartial (foldl goFold {i0: 0, s: input, l: Nil} ixs) in
-    A.reverse (A.fromFoldable (consNonEmpty (undb (init sN.s)) sN.l))
+    A.fromFoldable ((\(s /\ ls)-> undb s /\ ls) <$> unsafePartial (foldl goFold ((input /\ Nil) : Nil) ixs))
   where
     spR x = " " <> R.replace wordBoundaryReg "$1$1" x <> " "
     reR = R.replace wordBoundaryReg " "
     db = S.replaceAll (S.Pattern " ") (S.Replacement "  ")
     sp x = " " <> db x <> " "
     undb = R.replace wordBoundaryReg2 "$1"
-    init x = S.take (S.length x - 1) x
     input = spR input0
     pats = A.fromFoldable (Map.keys elts)
     ixs = indicesOfAny (sp <<< ngramsTermText <$> pats) (normNgramInternal ntype input)
 
-    consOnJustTail s xs@(Tuple _ (_ : _) : _) = Tuple s Nil : xs
-    consOnJustTail _ xs = xs
+    splitAcc :: Partial => Int -> HighlightAccumulator
+             -> Tuple HighlightAccumulator HighlightAccumulator
+    splitAcc i = go 0 Nil
+      where
+      go j pref acc =
+        case compare i j of
+          LT -> crashWith "highlightNgrams: splitAcc': i < j"
+          EQ -> L.reverse pref /\ acc
+          GT ->
+            case acc of
+              Nil -> crashWith "highlightNgrams: splitAcc': acc=Nil" -- pref /\ Nil
+              elt@(s /\ ls) : elts ->
+                let slen = S.length s in
+                case compare i (j + slen) of
+                  LT -> let {before: s0, after: s1} = S.splitAt (i - j) s in
+                        L.reverse ((s0 /\ ls) : pref) /\ ((s1 /\ ls) : elts)
+                  EQ -> L.reverse (elt : pref) /\ elts
+                  GT -> go (j + slen) (elt : pref) elts
 
-    consNonEmpty x xs
-      | S.null x  = xs
-      | otherwise = Tuple x Nil : xs
 
-    goAcc :: Partial => Tuple NgramsTerm Int -> Int -> HighlightAccumulator -> HighlightAccumulator
-    goAcc (pat /\ lpat) i { i0, s, l } =
+    extractInputTextMatch :: Int -> Int -> String -> String
+    extractInputTextMatch i len input = undb $ S.take len $ S.drop (i + 1) input
+
+    addNgramElt ng ne_list (elt /\ elt_lists) = (elt /\ ((ng /\ ne_list) : elt_lists))
+
+    goAcc :: Partial => Int -> HighlightAccumulator -> Tuple NgramsTerm Int -> HighlightAccumulator
+    goAcc i acc (pat /\ lpat) =
       case lookupRootList pat table of
         Nothing ->
           crashWith "highlightNgrams: pattern missing from table"
         Just ne_list ->
           let
-            s1    = {-if i <= i0 then-} S.splitAt (i - i0) s {-else S.drop i input-}
-            s2    = S.splitAt lpat (S.drop 1 s1.after)
-            s3    = S.splitAt 1    s2.after
-            unspB = if i0 == 0 then S.drop 1 else identity
-            s3b   = s3.before
-            text  = undb s2.before
+            (acc0 /\ acc1_2) = splitAcc i acc
+            (acc1 /\ acc2) = splitAcc (lpat + 1) acc1_2
+            text = extractInputTextMatch i lpat input
+            ng = normNgram ntype text
           in
-          -- trace {s, i, i0, s1, s2, s3, pat, lpat, s3b} \_ ->
-          -- `undb s2.before` and pat might differ by casing only!
-          { i0: i + lpat + 2
-          , s:  s3.after
-          , l:  Tuple text ((normNgram ntype text /\ ne_list) : Nil) :
-                consOnJustTail s3b
-                (consNonEmpty (unspB (undb s1.before)) l)
-          }
+            acc0 <> (addNgramElt ng ne_list <$> acc1) <> acc2
 
-    -- NOTE that only the first matching pattern is used, the others are ignored!
     goFold :: Partial => HighlightAccumulator -> Tuple Int (Array Int) -> HighlightAccumulator
-    goFold acc@{ i0, s, l } (Tuple i pis)
-      | i < i0    =
-        -- Skip this pattern which is overlapping with a previous one.
-        { i0, s, l }
-      | otherwise =
-        let pats' = A.sortWith snd $
-                    map (\pat -> pat /\ S.length (db (ngramsTermText pat))) $
-                    fromMaybe' (\_ -> crashWith "highlightNgrams: out of bounds pattern") $
-                    traverse (A.index pats) pis in
-        case List.fromFoldable pats' of
-          Nil -> { i0, s, l }
-          pat : _ -> goAcc pat i acc
+    goFold acc (Tuple i pis) = foldl (goAcc i) acc $
+                           --  A.sortWith snd $
+                               map (\pat -> pat /\ S.length (db (ngramsTermText pat))) $
+                               fromMaybe' (\_ -> crashWith "highlightNgrams: out of bounds pattern") $
+                               traverse (A.index pats) pis
 
 -----------------------------------------------------------------------------------
 
