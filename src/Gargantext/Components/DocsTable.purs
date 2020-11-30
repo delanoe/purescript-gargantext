@@ -127,7 +127,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
       , params
       , query
       } _ = do
-    pure $ H.div {className: "container1"}
+    pure $ H.div { className: "doc-table-doc-view container1" }
       [ R2.row
         [ chart
         , if showSearch then searchBar query else H.div {} []
@@ -372,7 +372,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
         sid = sessionId session
         gi Favorite  = "glyphicon glyphicon-star"
         gi _ = "glyphicon glyphicon-star-empty"
-        trashClassName Trash _ = "trasn"
+        trashClassName Trash _ = "trash"
         trashClassName _ true = "active"
         trashClassName _ false = ""
         corpusDocument
