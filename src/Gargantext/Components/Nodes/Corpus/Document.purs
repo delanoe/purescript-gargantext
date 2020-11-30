@@ -89,21 +89,28 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
           R2.row
           [
             R2.col 12
-            [ H.h4 {} [ annotate doc.title ]
+            [ H.h4 {} [
+                H.span {} [
+                   badge "title"
+                 , annotate doc.title
+                ]
+              ]
             , H.ul { className: "list-group" }
-              [ li' [ H.span {} [ text' doc.source ]
-                    , badge "source"
+              [ li' [ badgeLi "source"
+                    , text' doc.source
                     ]
               -- TODO add href to /author/ if author present in
-              , li' [ H.span {} [ text' doc.authors ]
-                    , badge "authors"
+              , li' [ badgeLi "authors"
+                    , text' doc.authors
                     ]
-              , li' [ H.span {} [ H.text $ publicationDate $ Document doc ]
-                    , badge "date"
+              , li' [ badgeLi "date"
+                    , H.text $ publicationDate $ Document doc
                     ]
               ]
-            , badge "abstract"
-            , annotate doc.abstract
+            , H.span {} [
+                badge "abstract"
+              , annotate doc.abstract
+              ]
             , H.div { className: "jumbotron" }
               [ H.p {} [ H.text "Empty Full Text" ]
               ]
@@ -118,12 +125,17 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
                                                         , setTermList
                                                         , text }
           badge s = H.span { className: "badge badge-default badge-pill" } [ H.text s ]
+          badgeLi s = H.span { className: "list-group-item-heading" } [
+                        H.span { className: "badge-container" } [
+                          H.span { className: "badge badge-default badge-pill" } [ H.text s ]
+                        ]
+                      ]
           li' = H.li { className: "list-group-item justify-content-between" }
           setTermListOrAddA ngram Nothing        = addNewNgramA ngram
           setTermListOrAddA ngram (Just oldList) = setTermListA ngram <<< replace oldList
           setTermList ngram mOldList = dispatch <<< setTermListOrAddA (findNgramRoot ngrams ngram) mOldList
           -- Here the use of findNgramRoot makes that we always target the root of an ngram group.
-          text' x = H.text $ fromMaybe "Nothing" x
+          text' x = H.span { className: "list-group-item-text" } [ H.text $ fromMaybe "Nothing" x ]
           NodePoly {hyperdata: Document doc} = document
 
 type LayoutProps = (
