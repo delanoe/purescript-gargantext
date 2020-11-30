@@ -68,15 +68,15 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
     cpt {lang, backend, publicBackend, sessions, visible} _ = do
       let landingData = langLandingData lang
       pure $ H.span {}
-           [ H.div { className: "container1" } [ jumboTitle landingData false ]
-           , H.div { className: "container1" } [] -- TODO put research form
-           , H.div { className: "container1" } [ blocksRandomText' landingData ]
-           , H.div { className: "container1" } [ renderPublic { backend
-                                                              , publicBackend
-                                                              , sessions
-                                                              , visible
-                                                              }
-                                               ]
+           [ H.div { className: "home-title container1" } [ jumboTitle landingData false ]
+           , H.div { className: "home-research-form container1" } [] -- TODO put research form
+           , H.div { className: "home-landing-data container1" } [ blocksRandomText' landingData ]
+           , H.div { className: "home-public container1" } [ renderPublic { backend
+                                                                          , publicBackend
+                                                                          , sessions
+                                                                          , visible
+                                                                          }
+                                                           ]
            , license
            ]
 

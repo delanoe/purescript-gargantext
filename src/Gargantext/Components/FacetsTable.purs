@@ -109,7 +109,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
         else
           snd path $ const ipp
 
-      pure $ H.div { className: "container1" }
+      pure $ H.div { className: "facets-doc-view container1" }
         [ R2.row
           [ chart
           , H.div { className: "col-md-12" }
