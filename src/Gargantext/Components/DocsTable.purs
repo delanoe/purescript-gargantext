@@ -366,7 +366,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
         sid = sessionId session
         gi Favorite  = "glyphicon glyphicon-star"
         gi _ = "glyphicon glyphicon-star-empty"
-        trashClassName Trash _ = "trasn"
+        trashClassName Trash _ = "trash"
         trashClassName _ true = "active"
         trashClassName _ false = ""
         corpusDocument
