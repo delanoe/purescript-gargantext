@@ -84,7 +84,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
         --    H.text (stringifyWithIndent 2 (encodeJson (fst state)))
         --  ] ] <>
         [
-        H.div { className: "container1" }
+        H.div { className: "corpus-doc-view container1" }
         [
           R2.row
           [

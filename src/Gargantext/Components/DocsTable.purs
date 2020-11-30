@@ -126,7 +126,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
       , params
       , query
       } _ = do
-    pure $ H.div {className: "container1"}
+    pure $ H.div { className: "doc-table-doc-view container1" }
       [ R2.row
         [ chart
         , if showSearch then searchBar query else H.div {} []
