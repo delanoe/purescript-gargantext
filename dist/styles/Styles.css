@@ -16,6 +16,10 @@
   max-height: 200px;
   overflow-y: scroll;
 }
+#page-wrapper .side-panel .corpus-doc-view .list-group .list-group-item-heading {
+  display: inline-block;
+  width: 60px;
+}
 
 .simple-layout {
   height: 100%;
