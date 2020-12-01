@@ -7,7 +7,7 @@
         "install-ps": "psc-package install",
         "compile": "pulp build",
         "build": "pulp browserify -t dist/bundle.js",
-        "css": "sass src/sass/:dist/styles/",
+        "css": "sass src/sass/sass.sass:dist/styles/sass.css",
         "docs": "pulp docs -- --format html",
         "repl": "pulp repl",
         "clean": "rm -Rf output node_modules",
