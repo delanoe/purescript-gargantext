@@ -1,0 +1,757 @@
+/* styles for menu.html template (navbar etc) */
+#dafixedtop .navbar-text, #graphsfixedtop .navbar-text {
+  margin: 0;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  float: none;
+}
+
+#corporatop.nav-tabs > li {
+  padding-left: 1;
+  padding-right: 1;
+}
+
+#corporatop.nav-tabs > li > a {
+  padding-top: 8;
+  padding-bottom: 8;
+  line-height: 0.85;
+  margin-bottom: -5px;
+}
+
+.spacing-class {
+  margin-right: 10px;
+}
+
+.exportbtn {
+  /* border: 1px solid #333 */
+  margin-top: 17px;
+}
+
+.btn .glyphicon {
+  /* glyphicons are always rendered too high within bootstrap buttons */
+  vertical-align: middle;
+}
+
+/* graph name => editable input => submitName() => minimsg */
+.editable {
+  color: grey;
+}
+
+#graphname-edit {
+  color: white;
+  background-color: transparent;
+  border: none;
+  max-width: 8em;
+}
+
+.minimsg {
+  font-size: 0.7em;
+  padding: 7p0x 9px;
+}
+
+.minimsg * {
+  line-height: 100%;
+}
+
+.context-menu {
+  position: absolute;
+  left: 96px;
+  top: -64px;
+  background-color: white;
+  z-index: 1000;
+}
+
+.context-menu a.list-group-item {
+  cursor: pointer;
+}
+
+.search-bar-container {
+  margin-top: 11px;
+  text-align: center;
+  max-width: 800px;
+  height: 33px;
+  float: left;
+  display: grid;
+  grid-template-columns: auto auto auto;
+}
+
+.search-bar-toggle {
+  padding: 2px;
+  margin: 2px;
+  border: 0;
+}
+
+.search-bar.closed {
+  display: none;
+}
+
+#graph-explorer #toolbar {
+  display: flex;
+  flex-direction: column;
+}
+#graph-explorer #toolbar ul {
+  display: flex;
+  flex-direction: row;
+  margin: 0;
+}
+#graph-explorer #toolbar ul li {
+  display: flex;
+  max-width: 200px;
+}
+#graph-explorer #toggle-container {
+  position: fixed;
+  z-index: 999;
+  right: 25%;
+  top: 10px;
+  width: 50%;
+}
+#graph-explorer #toggle-container .container-fluid {
+  padding-top: 90px;
+}
+#graph-explorer #controls-container {
+  position: fixed;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.75);
+  overflow: auto;
+  left: 0;
+  right: 0;
+  top: 60px;
+}
+#graph-explorer .graph-tree {
+  position: absolute;
+  max-height: 600px;
+  top: 170px;
+  background-color: #fff;
+  z-index: 1;
+}
+#graph-explorer .lefthanded .graph-tree {
+  left: 80%;
+}
+#graph-explorer .righthanded .graph-tree {
+  left: 0%;
+}
+#graph-explorer #graph-view {
+  height: 95%;
+}
+#graph-explorer #sp-container {
+  position: absolute;
+  max-height: 600px;
+  top: 170px;
+  border: 1px white solid;
+  background-color: white;
+  width: 28%;
+  z-index: 15;
+}
+#graph-explorer #sp-container #myTab {
+  marginBottom: 18px;
+  marginTop: 18px;
+}
+#graph-explorer #sp-container #myTabContent {
+  borderBottom: 1px solid black;
+  paddingBottom: 19px;
+}
+#graph-explorer #sp-container #horizontal-checkbox ul {
+  display: inline;
+  float: left;
+}
+#graph-explorer .lefthanded #sp-container {
+  left: 0%;
+}
+#graph-explorer .righthanded #sp-container {
+  left: 70%;
+}
+#graph-explorer #tree {
+  position: absolute;
+  z-index: 1;
+}
+
+.input-with-autocomplete .completions {
+  position: fixed;
+  max-height: 300px;
+  overflow-y: scroll;
+  width: 300px;
+  top: 100px;
+}
+
+#dafixedtop {
+  z-index: 999;
+}
+
+.logoSmall {
+  line-height: 15px;
+  height: 10px;
+  padding: 10px 10px;
+}
+
+#logo-designed {
+  border: 15px;
+}
+#logo-designed img {
+  height: 150px;
+  border: 3px solid white;
+}
+
+#page-wrapper {
+  margin-top: 96px;
+}
+
+#user-page-header {
+  border-bottom: 1px solid black;
+}
+
+#user-page-info {
+  margin-top: 38px;
+}
+
+.tableHeader {
+  color: white;
+}
+
+#toolbar {
+  display: inline;
+}
+#toolbar ul li {
+  display: inline;
+  margin-right: 19px;
+}
+#toolbar ul li form {
+  display: inline;
+}
+
+#horizontal-checkbox ul li {
+  display: inline;
+  float: left;
+  margin-top: 12px;
+  margin-right: 21px;
+}
+
+li#rename #rename-a {
+  display: none;
+  position: absolute;
+  left: 125px;
+}
+
+#node-popup-tooltip {
+  background-color: white;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+#node-popup-tooltip:hover {
+  border: none;
+  text-decoration: none;
+}
+#node-popup-tooltip .popup-container {
+  display: flex;
+  flex-direction: colum;
+}
+#node-popup-tooltip .popup-container .panel {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin-bottom: 0px;
+}
+#node-popup-tooltip .popup-container .panel .glyphicon-pencil {
+  color: black;
+}
+#node-popup-tooltip .popup-container .panel .panel-body {
+  display: flex;
+  justify-content: center;
+  background-color: white;
+  border: none;
+}
+#node-popup-tooltip .popup-container .panel .panel-body .spacer {
+  margin: 10px;
+}
+#node-popup-tooltip .popup-container .frame-search.panel {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  height: 600px;
+  width: 1300px;
+}
+
+#create-node-tooltip {
+  position: absolute;
+  left: 96px;
+  top: -64px;
+  background-color: white;
+  z-index: 1000;
+}
+#create-node-tooltip .panel-body input {
+  min-width: 200px;
+}
+
+#file-type-tooltip {
+  position: absolute;
+  left: 96px;
+  top: -64px;
+  background-color: white;
+  z-index: 1000;
+}
+#file-type-tooltip .panel-body select {
+  min-width: 200px;
+}
+
+.glyphitem {
+  top: 0;
+  display: inline-block;
+  float: right;
+  opacity: 0.6;
+  padding-right: 5px;
+  cursor: pointer;
+  transition: transform 0.1s ease-out 0s;
+  font-size: 15px;
+  text-align: center;
+}
+.glyphitem:hover {
+  display: inline-block;
+  opacity: 1;
+  transform: scale(1.4);
+}
+
+#sp-container {
+  -webkit-transition: width 2s;
+  transition: width 2s;
+}
+
+.nooverflow {
+  max-width: 300px;
+  height: 24px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nooverflow:hover {
+  overflow: visible;
+  height: auto;
+}
+
+#graph-tree .tree {
+  margin-top: 27px;
+}
+
+.nopadding {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.row-no-padding > [class*=col-] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.tab-pane .reload-btn {
+  padding-right: 6px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.flex-center {
+  display: flex;
+  flew-wrap: wrap;
+  justify-content: center;
+}
+
+.flex-space-between, .flex-center {
+  display: flex;
+  justify-content: space-between;
+}
+
+a:focus, a:hover {
+  cursor: pointer;
+}
+
+body > .tree ul > li:first-child::before {
+  top: 12px;
+}
+
+li .leaf {
+  display: flex;
+  flex-direction: row;
+}
+li .leaf .folder-icon {
+  padding: 0 2 0 2;
+}
+li .leaf a.settings {
+  cursor: pointer;
+  display: block;
+  padding: 0 2 0 2;
+  text-decoration: none;
+  visibility: hidden;
+  z-index: 1;
+}
+li .leaf:hover a.settings {
+  visibility: visible;
+}
+
+.tree {
+  margin-top: 20px;
+}
+.tree ul li {
+  position: relative;
+}
+.tree ul li::after {
+  content: " ";
+  height: 1px;
+  position: absolute;
+  top: 12px;
+}
+.tree ul li::before {
+  bottom: -12px;
+  content: " ";
+  height: 7px;
+  position: absolute;
+  top: 5px;
+}
+.tree ul li:not(:first-child):last-child::before {
+  display: none;
+}
+.tree ul li:only-child::before {
+  bottom: 7px;
+  content: " ";
+  display: list-item;
+  position: absolute;
+  width: 1px;
+  top: 5px;
+}
+.tree ul li.with-children::after {
+  background-color: #000;
+}
+.tree ul li.with-children::before {
+  background-color: #000;
+}
+.tree .lefthanded .leaf {
+  justify-content: flex-end;
+}
+.tree .lefthanded ul {
+  margin-right: 5px;
+}
+.tree .lefthanded ul li {
+  margin-right: 10px;
+  padding-right: 5px;
+}
+.tree .lefthanded ul li.with-children::after {
+  right: -10px;
+  width: 5px;
+}
+.tree .lefthanded ul li.with-children::before {
+  right: -10px;
+  width: 1px;
+}
+.tree .righthanded .leaf {
+  justify-content: flex-start;
+}
+.tree .righthanded ul {
+  margin-left: 5px;
+}
+.tree .righthanded ul li {
+  margin-left: 10px;
+  padding-left: 5px;
+}
+.tree .righthanded ul li.with-children::after {
+  left: -10px;
+  width: 5px;
+}
+.tree .righthanded ul li.with-children::before {
+  left: -10px;
+  width: 1px;
+}
+.tree .righthanded ul li.with-children:only::before {
+  background-color: #000;
+  right: 10px;
+}
+.tree .file-dropped {
+  background-color: #d8dfe5;
+}
+.tree .node-actions {
+  padding-left: 5px;
+}
+.tree .node-actions .update-button.enabled {
+  cursor: pointer;
+}
+.tree .node-actions .update-button.disabled {
+  cursor: wait;
+}
+.tree .node {
+  margin-top: 1px;
+}
+.tree .node.node-type-valid .text {
+  color: blue;
+  text-decoration: underline;
+}
+
+.progress-pie {
+  background: rgba(51, 122, 183, 0.1);
+  border-radius: 100%;
+  height: calc(var(--size, 14) * 1px);
+  overflow: hidden;
+  position: relative;
+  width: calc(var(--size, 14) * 1px);
+}
+.progress-pie .progress-pie-segment {
+  --a: calc(var(--over50, 0) * -100%);
+  --b: calc((1 + var(--over50, 0)) * 100%);
+  --degrees: calc((var(--offset, 0) / 100) * 360);
+  -webkit-clip-path: polygon(var(--a) var(--a), var(--b) var(--a), var(--b) var(--b), var(--a) var(--b));
+  clip-path: polygon(var(--a) var(--a), var(--b) var(--a), var(--b) var(--b), var(--a) var(--b));
+  height: 100%;
+  position: absolute;
+  transform: translate(0, -50%) rotate(90deg) rotate(calc(var(--degrees) * 1deg));
+  transform-origin: 50% 100%;
+  width: 100%;
+  z-index: calc(1 + var(--over50));
+}
+.progress-pie .progress-pie-segment:after, .progress-pie .progress-pie-segment:before {
+  background: var(--bg, #337ab7);
+  content: "";
+  height: 100%;
+  position: absolute;
+  width: 100%;
+}
+.progress-pie .progress-pie-segment:before {
+  --degrees: calc((var(--value, 45) / 100) * 360);
+  transform: translate(0, 100%) rotate(calc(var(--degrees) * 1deg));
+  transform-origin: 50% 0%;
+}
+.progress-pie .progress-pie-segment:after {
+  opacity: var(--over50, 0);
+}
+
+#node-popup-tooltip .tree .node {
+  margin-top: 5px;
+}
+#node-popup-tooltip .tree .children .node {
+  padding-left: 15px;
+}
+
+.code-editor-heading {
+  display: flex;
+}
+.code-editor-heading .renameable {
+  flex-grow: 2;
+}
+.code-editor-heading .renameable .text {
+  padding-right: 10px;
+}
+.code-editor-heading .buttons-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.code-editor .toolbar {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+.code-editor .editor {
+  display: flex;
+  width: 100%;
+}
+.code-editor .editor .code-area {
+  flex-grow: 1;
+  max-height: 200px;
+  min-width: 25%;
+  overflow: auto;
+}
+.code-editor .editor .code-area .code-container {
+  background-color: #fafafa;
+  box-sizing: border-box;
+  position: relative;
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  font-size: 12px;
+  font-variant-ligatures: common-ligatures;
+  line-height: 1.5;
+  overflow: hidden;
+  padding: 0px;
+  text-align: left;
+}
+.code-editor .editor .code-area .code-container textarea {
+  border: 0px;
+  color: inherit;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  resize: none;
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+  -webkit-text-fill-color: transparent;
+  box-sizing: inherit;
+  display: inherit;
+  margin: 0px;
+  padding: 10px;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-variant-ligatures: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-indent: inherit;
+  text-rendering: inherit;
+  text-transform: inherit;
+}
+.code-editor .editor .code-area .code-container pre {
+  background: rgba(0, 0, 0, 0) none repeat scroll 0% 0%;
+  border: 0px none;
+  color: #000;
+  pointer-events: none;
+  position: relative;
+  box-sizing: inherit;
+  display: inherit;
+  margin: 0px;
+  padding: 10px;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: inherit;
+  font-variant-ligatures: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-indent: inherit;
+  text-rendering: inherit;
+  text-transform: inherit;
+}
+.code-editor .editor .v-divider {
+  border-left: 1px solid gray;
+  cursor: sw-resize;
+  height: 100%;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 1px;
+}
+.code-editor .editor .html {
+  flex-grow: 2;
+  margin-left: 25px;
+  padding-left: 25px;
+}
+.code-editor .editor .html.language-haskell {
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  white-space: pre;
+}
+.code-editor .editor .html.language-python {
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  white-space: pre;
+}
+.code-editor .editor .html.language-json {
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  white-space: pre;
+}
+.code-editor .editor .html.language-md ul li {
+  list-style: disc !important;
+}
+.code-editor .editor .html.language-md ol li {
+  list-style: decimal !important;
+}
+
+#page-wrapper .cache-toggle {
+  cursor: pointer;
+}
+#page-wrapper .side-panel {
+  background-color: white;
+  left: 70%;
+  padding: 5px;
+  position: fixed;
+  top: 60px;
+  width: 28%;
+}
+#page-wrapper .side-panel .header {
+  float: right;
+}
+#page-wrapper .side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
+  max-height: 200px;
+  overflow-y: scroll;
+}
+#page-wrapper .side-panel .corpus-doc-view .list-group .list-group-item-heading {
+  display: inline-block;
+  width: 60px;
+}
+
+.simple-layout {
+  height: 100%;
+}
+.simple-layout .spinner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.table tr td .active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+.table tr td .column-tag {
+  align-items: center;
+}
+.table tr td .column-tag .doc-chooser {
+  cursor: pointer;
+  padding: 10px;
+}
+.table tr td .ngrams-selector {
+  display: flex;
+}
+.table tr td .ngrams-selector .ngrams-chooser {
+  padding: 3px;
+}
+.table tr td .trash {
+  text-decoration: line-through;
+}
+
+.context-menu {
+  position: fixed;
+}
+
+.range {
+  width: 400px;
+  /* some space for the right knob */
+  padding-right: 30px;
+}
+.range .range-slider {
+  position: relative;
+}
+.range .range-slider .scale {
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  margin-top: 2px;
+  background-color: #d8d8d8;
+}
+.range .range-slider .scale-sel {
+  position: absolute;
+  background-color: #27c470;
+  width: 100%;
+  height: 7px;
+}
+.range .range-slider .knob {
+  position: absolute;
+  cursor: pointer;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -o-user-select: none;
+  margin-top: -4px;
+  z-index: 1;
+  box-shadow: 1px 1px 3px grey;
+}
+.range .range-slider .knob .button {
+  margin-top: -3px;
+  background: #eee;
+  width: 30px;
+  height: 20px;
+}
+
+/*# sourceMappingURL=sass.css.map */
