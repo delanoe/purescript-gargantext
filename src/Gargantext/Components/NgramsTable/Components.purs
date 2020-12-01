@@ -200,10 +200,10 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
         } _ = do
       pure $ Tbl.makeRow [
           H.div { className: "ngrams-selector" } [
-            H.span { className: "ngrams-chooser fa fa-eye"
+            H.span { className: "ngrams-chooser fa fa-eye-slash"
                    , on: { click: onClick } } []
-          , selected
           ]
+        , selected
         , checkbox T.MapTerm
         , checkbox T.StopTerm
         , H.div {} [
@@ -236,7 +236,8 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
           H.input { checked: Set.member ngrams ngramsSelection
                   , className: "checkbox"
                   , on: { change: const $ dispatch $ ToggleSelect ngrams }
-                  , type: "checkbox" }
+                  , type: "checkbox"
+                  }
         checkbox termList' =
           let chkd = termList == termList'
               termList'' = if chkd then T.CandidateTerm else termList'

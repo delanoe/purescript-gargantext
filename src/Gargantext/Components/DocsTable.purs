@@ -378,7 +378,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
         corpusDocument
           | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
-        colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source", "Score"]
+        colNames = T.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
         getCategory (lc /\ _) {_id, category} = fromMaybe category (lc ^. at _id)
         rows reload lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
@@ -386,10 +386,9 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
             row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                  H.div { className: "column-tag flex" } [
-                    caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } []
-                  , docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
-                  ]
+                            H.div { className: "column-tag flex" } [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
+                                                                   ]
+                          , H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
