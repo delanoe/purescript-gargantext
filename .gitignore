@@ -23,3 +23,10 @@ bundle.js
 !/dist/js/
 # css source maps
 /dist/styles/*map
+# production builds
+/prod
+/dce-output
+/app.js
+# docker
+/.bash_history
+/.lesshst

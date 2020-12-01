@@ -1,0 +1,12 @@
+version: "3.5"
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: "Dockerfile.dev"
+    volumes:
+      - type: bind
+        source: .
+        target: /opt/app
+    stdin_open: true # like docker run -i
+    tty: true # like docker run -t
