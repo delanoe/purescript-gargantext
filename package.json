@@ -4,10 +4,10 @@
     "scripts": {
         "rebase-set": "spago package-set-upgrade && spago psc-package-insdhall",
         "rebuild-set": "spago psc-package-insdhall",
-        "install-ps": "psc-package.exe install",
+        "install-ps": "psc-package install",
         "compile": "pulp build",
         "build": "pulp browserify -t dist/bundle.js",
-        "sass": "sass dist/styles/",
+        "css": "sass src/sass/:dist/styles/",
         "docs": "pulp docs -- --format html",
         "repl": "pulp repl",
         "clean": "rm -Rf output node_modules",
