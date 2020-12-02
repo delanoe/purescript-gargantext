@@ -4,9 +4,13 @@ services:
     build:
       context: .
       dockerfile: "Dockerfile.dev"
+    stdin_open: true
+    tty: true
+    user: $UID:$GID
+    ports:
+      - 5000:5000
     volumes:
-      - type: bind
-        source: .
-        target: /opt/app
-    stdin_open: true # like docker run -i
-    tty: true # like docker run -t
+      - .:/opt/app
+      - /etc/group:/etc/group:ro
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/shadow:/etc/shadow:ro

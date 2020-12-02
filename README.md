@@ -14,14 +14,47 @@ granted access to a [backend](https://gitlab.iscpif.fr/gargantext/haskell-gargan
 This software is free software, developed by the CNRS Complex Systems
 Institute of Paris Île-de-France (ISC-PIF) and its partners.
 
-## Dependencies
+## Getting set up
+
+There are two approaches to working with the build:
+1. Use our docker setup
+2. Install our dependencies yourself
+
+The javascript ecosystem kind of assumes if you're on linux, you're
+running on debian or ubuntu. I haven't yet managed to get garg to
+build on alpine linux, for example. If you're on an oddball system, I
+*strongly* recommend you just use the docker setup.
+
+### Docker setup
+
+You will need docker and docker-compose installed.
+
+First, Source our environment file:
+
+```shell
+source ./env.sh
+```
+
+WARNING: you must `source ./env.sh` before using the docker
+container. If you don't do that, the container will write files as
+root and you'll need root powers to get ownership back!
+
+Now build the docker image:
+
+```shell
+docker-compose build frontend
+```
+
+That's it, skip ahead to "Development".
+
+### Manual setup
 
 The build requires the following system dependencies preinstalled:
 
 * NodeJS (11+)
 * Yarn (Recent)
 
-### NodeJS
+#### NodeJS
 
 On debian testing, debian unstable or ubuntu:
 
@@ -55,7 +88,7 @@ brew install node
 
 For other platforms, please refer to [the nodejs website](https://nodejs.org/en/download/).
 
-### Yarn (javascript package manager)
+#### Yarn (javascript package manager)
 
 On debian or ubuntu:
 
@@ -75,83 +108,95 @@ For other platforms, please refer to [the yarn website](https://www.yarnpkg.com/
 
 ## Development
 
-Once you have node and yarn installed, you may install deps with:
+### Docker environment
+
+Are you using the docker setup? Run this:
 
 ```shell
-yarn install -D && yarn install-ps
+source ./env.sh
+```
+
+This enables the docker container to run as the current user so any
+files it writes will be readable by you. It also creates a `darn`
+shell alias (short for `docker yarn`) for running yarn commands inside
+the docker container.
+
+### Basic tasks
+
+Now we must install our javascript and purescript dependencies:
+
+```shell
+darn install -D && darn install-ps # for docker setup
+yarn install -D && yarn install-ps # for manual setup
 ```
 
 You will likely want to check your work in a browser. We provide a
 local development webserver that serves on port 5000 for this purpose:
 
 ```shell
-yarn server
+darn server # for docker setup
+yarn server # for manual setup
 ```
 
 To generate a new browser bundle to test:
 
 ```shell
-yarn build
+darn build # for docker setup
+yarn build # for manual setup
 ```
 
 If you are rapidly iterating and just want to type check your code:
 
 ```shell
-yarn compile
+darn compile # for docker setup
+yarn compile # for manual setup
 ```
 
 You may access a purescript repl if you want to explore:
 
 ```shell
-yarn repl
+darn repl # for docker setup
+yarn repl # for manual setup
 ```
 
 If you need to reinstall dependencies such as after a git pull or branch switch:
 
 ```shell
-yarn install -D && yarn install-ps # both javascript and purescript
+darn install -D && darn install-ps # for docker setup
+yarn install -D && yarn install-ps # for manual setup
 ```
 
 If something goes wrong building after a deps update, you may clean
 build artifacts and try again:
 
 ```shell
-yarn clean-js # clean javascript, very useful
-yarn clean-ps # clean purescript, should never be required, possible purescript bug
-yarn clean # clean both purescript and javascript
+# for docker setup
+darn clean-js # clean javascript, very useful
+darn clean-ps # clean purescript, should never be required, possible purescript bug
+darn clean # clean both purescript and javascript
+# for manual setup
+yarn clean-js
+yarn clean-ps
+yarn clean
 ```
 
 If you edit the SASS, you'll need to rebuild the CSS:
 
 ```shell
-yarn sass
+darn css # for docker setup
+yarn css # for manual setup
 ```
 
 <!-- A `purs ide` connection will be available on port 9002 while the -->
 <!-- development server is running. -->
 
 A guide to getting set up with the IDE integration is coming soon, I hope.
-of this document.
 
 ### Note to contributors
 
 Please follow CONTRIBUTING.md
 
 ### How do I?
-
-#### Change which backend to connect to?
-
-Edit `Config.purs`. Find the function `endConfig'` just after the
-imports and edit `back`. The definitions are not far below, just after
-the definitions of the various `front` options.
-
-Example (using `demo.gargantext.org` as backend):
-
-```
-endConfig' :: ApiVersion -> EndConfig
-endConfig' v = { front : frontRelative
-               , back  : backDemo v  }
-```
 
 #### Add a javascript dependency?
 
@@ -173,13 +218,13 @@ works. It's written in dhall, so you can use comments and such.
 You will then need to rebuild the package set:
 
 ```shell
-yarn rebuild-set
+yarn rebuild-set # or darn rebuild-set
 ```
 
 #### Upgrade the base package set local is based on to latest?
 
 ```shell
-yarn rebase-set && yarn rebuild-set
+yarn rebase-set && yarn rebuild-set # or darn rebase-set && darn rebuild-set
 ```
 
 This will occasionally result in swearing when you go on to build.
