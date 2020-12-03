@@ -69,7 +69,7 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
       nodeName@(name' /\ setNodeName) <- R.useState' "Name"
       nodeType'@(nt /\ setNodeType)   <- R.useState' $ fromMaybe Folder $ head nodeTypes
 
-      let 
+      let
           SettingsBox {edit} = settingsBox nt
           (maybeChoose /\ nt') = if length nodeTypes > 1
                            then ([ formChoiceSafe nodeTypes Error setNodeType ] /\ nt)
@@ -77,7 +77,7 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                                                   <> show defaultNt
                                                   <> " with name:"
                                            ]
-                                  ] /\ defaultNt 
+                                  ] /\ defaultNt
                                  )
                               where
                                 defaultNt = (fromMaybe Error $ head nodeTypes)
@@ -87,8 +87,8 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                             , onValueChanged: \val -> setNodeName $ const val
                             , autoFocus: true
                             , className: "form-control"
-                            , defaultValue: name'
-                            , placeholder: name'
+                            , defaultValue: name' -- (prettyNodeType nt')
+                            , placeholder: name'  -- (prettyNodeType nt')
                             , type: "text"
                             }
                           else H.div {} []
