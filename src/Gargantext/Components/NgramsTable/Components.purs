@@ -32,8 +32,7 @@ thisModule = "Gargantext.Components.NgramsTable.Components"
 
 
 type SearchInputProps =
-  (
-    key :: String  -- to prevent refreshing & losing input
+  ( key :: String  -- to prevent refreshing & losing input
   , onSearch :: String -> Effect Unit
   , searchQuery :: String
   )
@@ -44,19 +43,32 @@ searchInput props = R.createElement searchInputCpt props []
 searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
   where
-    cpt { onSearch, searchQuery } _ = do
-      pure $ H.div { className: "input-group" } [
-        H.div { className: "input-group-addon" } [
-           H.span { className: "fa fa-search" } []
-         ]
-      , H.input { className: "form-control"
-                , defaultValue: searchQuery
-                , name: "search"
-                , on: { input: onSearch <<< R.unsafeEventValue }
-                , placeholder: "Search"
-                , type: "value" }
-        ]
+    cpt { onSearch, searchQuery } _ = 
+      pure $ H.div { className: "input-group" }
+           [ searchButton
+           , fieldInput searchQuery
+           ]
+        where
+          searchButton = 
+            H.div { className: "input-group-addon" }
+                  [
+                   if searchQuery /= ""
+                       then removeButton
+                       else H.span { className: "fa fa-search" } []
+                  ]
+          removeButton =
+            H.button { className: "btn btn-danger"
+                     , on: {click: \e -> onSearch ""}}
+                     [ H.span {className: "fa fa-times"} []]
 
+          fieldInput  = 
+            H.input { className: "form-control"
+                    , defaultValue: searchQuery
+                    , name: "search"
+                    , on: { input: onSearch <<< R.unsafeEventValue }
+                    , placeholder: "Search"
+                    , type: "value"
+                    }
 
 type SelectionCheckboxProps =
   (
