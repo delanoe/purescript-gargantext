@@ -40,18 +40,20 @@ thisModule = "Gargantext.Components.FacetsTable"
 ------------------------------------------------------------------------
 
 type Props =
-  ( chart :: R.Element
-  , container :: Record T.TableContainerProps -> R.Element
-  , frontends :: Frontends
-  , listId :: Int
-  , nodeId :: Int
-  , query :: SearchQuery
-  , session :: Session
+  ( chart        :: R.Element
+  , container    :: Record T.TableContainerProps -> R.Element
+  , frontends    :: Frontends
+  , listId       :: Int
+  , nodeId       :: Int
+  , query        :: SearchQuery
+  , session      :: Session
   , totalRecords :: Int
   )
 
 -- | Tracks the ids of documents to delete and that have been deleted
-type Deletions = { pending :: Set Int, deleted :: Set Int }
+type Deletions = { pending :: Set Int
+                 , deleted :: Set Int
+                 }
 
 initialDeletions :: Deletions
 initialDeletions = { pending: mempty, deleted: mempty }

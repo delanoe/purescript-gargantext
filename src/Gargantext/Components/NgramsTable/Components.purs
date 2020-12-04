@@ -46,7 +46,7 @@ searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
     cpt { onSearch, searchQuery } _ = 
       pure $ H.div { className: "input-group" }
            [ searchButton
-           , fieldInput searchQuery
+           , fieldInput
            ]
         where
           searchButton = 

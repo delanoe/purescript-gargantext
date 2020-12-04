@@ -319,19 +319,19 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
         , versioned: Versioned { data: initTable }
         , withAutoUpdate } _ = do
 
-      let syncResetBtns = [
-        syncResetButtons { afterSync: chartsAfterSync
-                         , ngramsLocalPatch
-                         , performAction: performAction <<< CoreAction
-                         }
-        ]
+      let syncResetBtns = [ syncResetButtons 
+                            { afterSync: chartsAfterSync
+                            , ngramsLocalPatch
+                            , performAction: performAction <<< CoreAction
+                            }
+                          ]
 
       pure $ R.fragment $
         autoUpdate <> syncResetBtns <> [
-          H.h4 {style: {textAlign : "center"}} [
-              H.span {className: "glyphicon glyphicon-hand-down"} []
-            , H.text "Extracted Terms"
-            ]
+          H.h4 {style: {textAlign : "center"}}
+               [ H.span {className: "glyphicon glyphicon-hand-down"} []
+               , H.text "Extracted Terms"
+               ]
         , search
         , T.table { colNames
                   , container: tableContainer { dispatch: performAction
@@ -648,22 +648,20 @@ mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTable
               , withAutoUpdate } _ = do
       pathS <- R.useState' path
       state <- R.useState' $ initialState versioned
+      pure $ loadedNgramsTable { afterSync
+                               , appReload
+                               , asyncTasksRef
+                               , path: pathS
+                               , sidePanelTriggers
+                               , state
+                               , tabNgramType
+                               , treeReloadRef
+                               , versioned
+                               , withAutoUpdate
+                               }
 
-      pure $ loadedNgramsTable {
-        afterSync
-      , appReload
-      , asyncTasksRef
-      , path: pathS
-      , sidePanelTriggers
-      , state
-      , tabNgramType
-      , treeReloadRef
-      , versioned
-      , withAutoUpdate
-      }
-
-type MainNgramsTablePaintNoCacheProps = (
-    pathS             :: R.State PageParams
+type MainNgramsTablePaintNoCacheProps =
+  ( pathS             :: R.State PageParams
   , versioned         :: VersionedNgramsTable
   | CommonProps
   )

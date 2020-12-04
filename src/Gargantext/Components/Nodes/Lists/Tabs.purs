@@ -153,8 +153,15 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
                        }
 
         charts params CTabTerms (chartType /\ setChartType) _ = [
-          H.div { className: "row chart-type-selector" } [
-            H.div { className: "col-md-3" } [
+          H.div {className: "row"}
+                [ H.div {className: "col-md-offset-5 col-md-6 content"}
+                  [ H.img { src: "images/Gargantextuel-212x300.jpg"
+                          , id: "funnyimg"
+                        }
+                  ]
+                ]
+
+          {-
               R2.select { className: "form-control"
                         , defaultValue: show chartType
                         , on: { change: \e -> setChartType
@@ -173,6 +180,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
             ]
           ]
         , getChartFunction chartType $ { path: params, session }
+        -}
         ]
         charts params _ _ _         = [ chart params mode ]
 
