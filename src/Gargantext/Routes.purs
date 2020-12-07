@@ -50,6 +50,7 @@ data SessionRoute
   | RecomputeNgrams   (TabSubType CTabNgramType) Id ListId
   | RecomputeListChart ChartType  CTabNgramType  Id ListId
   | NodeAPI       NodeType (Maybe Id) String
+  | TreeFirstLevel (Maybe Id) String
   | GraphAPI      Id String
   | ListsRoute    ListId
   | ListDocument (Maybe ListId) (Maybe Id)

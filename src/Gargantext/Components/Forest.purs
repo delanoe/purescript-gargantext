@@ -85,7 +85,7 @@ forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
                  , reload
                  , root: treeId
                  , session: s
-                 }
+                 } []
 
 plus :: Handed -> R.Setter Boolean -> R.State (Maybe Backend) -> R.Element
 plus handed showLogin backend = H.div { className: handedClass } [
