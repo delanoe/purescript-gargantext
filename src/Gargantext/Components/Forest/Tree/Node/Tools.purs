@@ -318,11 +318,12 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
 
       where
         -- NOTE Don't toggle tree if it is not selected
-        -- This prevents some irritating behaviour
+        -- click on closed -> open
+        -- click on open   -> ?
         onClick _ = if isSelected then
-                      setFolderOpen not
+                      setFolderOpen (const true)
                     else
-                      pure unit
+                      setFolderOpen (const true)
         tooltipId = "node-link-" <> show id
 -- END node link
 
