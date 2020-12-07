@@ -56,9 +56,17 @@ type NodeMainSpanProps = (
 
 type IsLeaf = Boolean
 
-nodeMainSpan :: Record NodeMainSpanProps
-            -> R.Element
-nodeMainSpan p = R.createElement nodeMainSpanCpt p []
+nodeSpan :: R2.Component NodeMainSpanProps
+nodeSpan = R.createElement nodeSpanCpt
+
+nodeSpanCpt :: R.Component NodeMainSpanProps
+nodeSpanCpt = R.hooksComponentWithModule thisModule "nodeSpan" cpt
+  where
+    cpt props children = do
+      pure $ H.div {} ([ nodeMainSpan props [] ] <> children)
+
+nodeMainSpan :: R2.Component NodeMainSpanProps
+nodeMainSpan = R.createElement nodeMainSpanCpt
 
 nodeMainSpanCpt :: R.Component NodeMainSpanProps
 nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
@@ -155,20 +163,17 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
                                               , session
                                               }
 
-    chevronIcon isLeaf handed' nodeType (open /\ setOpen) =
-      if isLeaf
-         then H.div {} []
-         else
-           H.a { className: "chevron-icon"
-               , on: { click: \_ -> setOpen $ not }
-               }
-               [ H.i {
-                    className: if open
-                               then "fa fa-chevron-down"
-                               else if handed' == GT.RightHanded
-                                      then "fa fa-chevron-right"
-                                      else "fa fa-chevron-left"
-                    } [] ]
+    chevronIcon true handed' nodeType (open /\ setOpen) = H.div {} []
+    chevronIcon false handed' nodeType (open /\ setOpen) =
+      H.a { className: "chevron-icon"
+          , on: { click: \_ -> setOpen $ not }
+          }
+        [ H.i { className: if open
+                           then "fa fa-chevron-down"
+                           else if handed' == GT.RightHanded
+                                   then "fa fa-chevron-right"
+                                   else "fa fa-chevron-left"
+                } [] ]
 
     folderIcon nodeType (open /\ setOpen) =
       H.a { className: "folder-icon"
