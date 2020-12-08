@@ -744,11 +744,17 @@ mergeMap f m1 m2 = Map.mapMaybeWithKey f (Map.unionWith g (This <$> m1) (That <$
     g x _ = x -- impossible
 
 applyPatchMap :: forall k p v. Ord k => (p -> Maybe v -> Maybe v) -> PatchMap k p -> Map k v -> Map k v
+{-
 applyPatchMap applyPatchValue (PatchMap pm) m = mergeMap f pm m
   where
     f _ (This pv)   = applyPatchValue pv Nothing
     f _ (That v)    = Just v
     f _ (Both pv v) = applyPatchValue pv (Just v)
+-}
+applyPatchMap applyPatchValue (PatchMap pm) m =
+    foldl go m (Map.toUnfoldable pm :: List (Tuple k p))
+  where
+    go m (Tuple k pv) = Map.alter (applyPatchValue pv) k m
 
 type NgramsPatches = PatchMap NgramsTerm NgramsPatch
 type VersionedNgramsPatches = Versioned NgramsPatches
