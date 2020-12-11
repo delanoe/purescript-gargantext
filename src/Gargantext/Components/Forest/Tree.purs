@@ -337,7 +337,7 @@ toHtmlFirstLevel = R.createElement elCpt
                                         , id: cId
                                         }
                                       ) []
-                ) publicizedChildren
+                ) $ sorted publicizedChildren
           )
           -- childNodesFirstLevel ( Record.merge commonProps
           --                        { asyncTasks
@@ -350,6 +350,9 @@ toHtmlFirstLevel = R.createElement elCpt
           --                        , handed
           --                        }
           --                      )
+
+    sorted :: Array FTree -> Array FTree
+    sorted = A.sortWith (\(NTree (LNode {id}) _) -> id)
 
 
 type ChildNodesProps =
@@ -420,7 +423,9 @@ childNodeFirstLevelPaint = R.createElement elCpt
     elCpt :: R.Component ChildNodeFirstLevelPaintProps
     elCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
 
-    cpt props@{ asyncTasks, handed, folderOpen: (false /\ _), reload, tree: ctree@(NTree (LNode { id }) _) } _ = do
+    -- TODO folderOpen is unused
+
+    cpt props@{ asyncTasks, handed, reload, tree: ctree@(NTree (LNode { id }) _) } _ = do
       pure $ H.ul {} [
         toHtmlFirstLevel (Record.merge commonProps { asyncTasks
                                                    , handed
@@ -428,16 +433,6 @@ childNodeFirstLevelPaint = R.createElement elCpt
                         ) []
         ]
       -- pure $ H.div { } [ H.text $ "[closed] Node id " <> show id ]
-      where
-        commonProps = RecordE.pick props :: Record CommonProps
-    cpt props@{ asyncTasks, handed, folderOpen: (true /\ _), reload, tree: ctree@(NTree (LNode { id }) _) } _ = do
-      pure $ H.ul {} [
-        toHtmlFirstLevel (Record.merge commonProps { asyncTasks
-                                                   , handed
-                                                   , tree: ctree }
-                        ) []
-        ]
-      -- pure $ H.div { } [ H.text $ "[opened] Node id " <> show id ]
       where
         commonProps = RecordE.pick props :: Record CommonProps
 
