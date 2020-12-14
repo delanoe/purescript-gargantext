@@ -6,7 +6,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set as Set
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log)
+import DOM.Simple.Console (log, log2)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -71,13 +71,14 @@ forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
       /\ (fst asyncTasks).storage
       /\ handed
       )
-      (cpt' openNodes asyncTasks reload showLogin backend)
-  cpt' openNodes asyncTasks reload showLogin backend (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
+      (cpt' openNodes asyncTasks appReload reload showLogin backend)
+  cpt' openNodes asyncTasks appReload reload showLogin backend (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
     pure $ R2.row $ [plus handed showLogin backend] <> trees
     where
       trees = tree <$> unSessions sessions
       tree s@(Session {treeId}) =
-        treeView { asyncTasks
+        treeView { appReload
+                 , asyncTasks
                  , frontends
                  , handed
                  , mCurrentRoute: Just route

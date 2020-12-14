@@ -6,6 +6,7 @@ import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R
@@ -44,11 +45,12 @@ thisModule = "Gargantext.Components.Forest.Tree"
 
 ------------------------------------------------------------------------
 type CommonProps = (
-    frontends     :: Frontends
+    appReload     :: GT.ReloadS
+  , frontends     :: Frontends
   , handed        :: GT.Handed
   , mCurrentRoute :: Maybe AppRoute
   , openNodes     :: R.State OpenNodes
-  , reload        :: R.State Reload
+  , reload        :: GT.ReloadS
   , session       :: Session
   )
 
@@ -65,7 +67,8 @@ treeView = R.createElement elCpt
     elCpt :: R.Component Props
     elCpt = R.hooksComponentWithModule thisModule "treeView" cpt
 
-    cpt { asyncTasks
+    cpt { appReload
+        , asyncTasks
         , frontends
         , handed
         , mCurrentRoute
@@ -74,7 +77,8 @@ treeView = R.createElement elCpt
         , root
         , session
         } _children = do
-      pure $ treeLoadView { asyncTasks
+      pure $ treeLoadView { appReload
+                          , asyncTasks
                           , frontends
                           , handed
                           , mCurrentRoute
@@ -90,7 +94,8 @@ treeLoadView = R.createElement elCpt
     elCpt :: R.Component Props
     elCpt = R.hooksComponentWithModule thisModule "treeLoadView" cpt
 
-    cpt { asyncTasks
+    cpt { appReload
+        , asyncTasks
         , frontends
         , handed
         , mCurrentRoute
@@ -110,7 +115,8 @@ treeLoadView = R.createElement elCpt
       --                                   -- , tasks: tasksStruct root asyncTasks reload
       --                                   , tree: loaded
       --                                   } []
-      let paint loaded = loadedTreeViewFirstLevel { asyncTasks
+      let paint loaded = loadedTreeViewFirstLevel { appReload
+                                                  , asyncTasks
                                                   , frontends
                                                   , handed
                                                   , mCurrentRoute
@@ -135,36 +141,38 @@ type TreeViewProps = (
   | CommonProps
   )
 
-loadedTreeView :: R2.Component TreeViewProps
-loadedTreeView = R.createElement elCpt
-  where
-    elCpt :: R.Component TreeViewProps
-    elCpt = R.hooksComponentWithModule thisModule "loadedTreeView" cpt
+-- loadedTreeView :: R2.Component TreeViewProps
+-- loadedTreeView = R.createElement elCpt
+--   where
+--     elCpt :: R.Component TreeViewProps
+--     elCpt = R.hooksComponentWithModule thisModule "loadedTreeView" cpt
 
-    cpt { asyncTasks
-        , frontends
-        , handed
-        , mCurrentRoute
-        , openNodes
-        , reload
-        , session
-        -- , tasks
-        , tree
-      } _ = do
-      pure $ H.ul { className: "tree" } [
-        H.div { className: if handed == GT.RightHanded then "righthanded" else "lefthanded" } [
-          toHtml { asyncTasks
-                 , frontends
-                 , handed
-                 , mCurrentRoute
-                 , openNodes
-                 , reload
-                 , session
-                   -- , tasks
-                 , tree
-                 } []
-            ]
-        ]
+--     cpt { appReload
+--         , asyncTasks
+--         , frontends
+--         , handed
+--         , mCurrentRoute
+--         , openNodes
+--         , reload
+--         , session
+--         -- , tasks
+--         , tree
+--       } _ = do
+--       pure $ H.ul { className: "tree" } [
+--         H.div { className: if handed == GT.RightHanded then "righthanded" else "lefthanded" } [
+--           toHtml { appReload
+--                  , asyncTasks
+--                  , frontends
+--                  , handed
+--                  , mCurrentRoute
+--                  , openNodes
+--                  , reload
+--                  , session
+--                    -- , tasks
+--                  , tree
+--                  } []
+--             ]
+--         ]
 
 loadedTreeViewFirstLevel :: R2.Component TreeViewProps
 loadedTreeViewFirstLevel = R.createElement elCpt
@@ -172,7 +180,8 @@ loadedTreeViewFirstLevel = R.createElement elCpt
     elCpt :: R.Component TreeViewProps
     elCpt = R.hooksComponentWithModule thisModule "loadedTreeViewFirstLevel" cpt
 
-    cpt { asyncTasks
+    cpt { appReload
+        , asyncTasks
         , frontends
         , handed
         , mCurrentRoute
@@ -184,12 +193,14 @@ loadedTreeViewFirstLevel = R.createElement elCpt
       } _ = do
       pure $ H.ul { className: "tree" } [
         H.div { className: if handed == GT.RightHanded then "righthanded" else "lefthanded" } [
-          toHtmlFirstLevel { asyncTasks
+          toHtmlFirstLevel { appReload
+                           , asyncTasks
                            , frontends
                            , handed
                            , mCurrentRoute
                            , openNodes
                            , reload
+                           , reloadTree: reload
                            , session
                              -- , tasks
                            , tree
@@ -202,73 +213,83 @@ loadedTreeViewFirstLevel = R.createElement elCpt
 
 type ToHtmlProps = (
     asyncTasks :: GAT.Reductor
+  , reloadTree :: GT.ReloadS
   -- , tasks      :: Record Tasks
   , tree       :: FTree
   | CommonProps
   )
 
-toHtml :: R2.Component ToHtmlProps
-toHtml = R.createElement elCpt
-  where
-    elCpt :: R.Component ToHtmlProps
-    elCpt = R.hooksComponentWithModule thisModule "toHtml" cpt
+-- toHtml :: R2.Component ToHtmlProps
+-- toHtml = R.createElement elCpt
+--   where
+--     elCpt :: R.Component ToHtmlProps
+--     elCpt = R.hooksComponentWithModule thisModule "toHtml" cpt
 
-    cpt p@{ asyncTasks
-          , frontends
-          , handed
-          , mCurrentRoute
-          , openNodes
-          , reload: reload@(_ /\ setReload)
-          , session
-          , tree: tree@(NTree (LNode { id
-                                    , name
-                                    , nodeType
-                                    }
-                              ) ary
-                        )
-          } _ = do
-      let commonProps = RecordE.pick p :: Record CommonProps
-      let pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
+--     cpt p@{ appReload
+--           , asyncTasks
+--           , frontends
+--           , handed
+--           , mCurrentRoute
+--           , openNodes
+--           , reload: reload@(_ /\ setReload)
+--           , session
+--           , tree: tree@(NTree (LNode { id
+--                                     , name
+--                                     , nodeType
+--                                     }
+--                               ) ary
+--                         )
+--           } _ = do
+--       setPopoverRef <- R.useRef Nothing
 
-      let nodeId               = mkNodeId session id
-      let folderIsOpen         = Set.member nodeId (fst openNodes)
-      let setFn                = if folderIsOpen then Set.delete else Set.insert
-      let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
-      let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
+--       let commonProps = RecordE.pick p :: Record CommonProps
+--       let pAction a   = performAction a (RecordE.pick (Record.merge { appReload, setPopoverRef } p) :: Record PerformActionProps)
 
-      let withId (NTree (LNode {id: id'}) _) = id'
+--       let nodeId               = mkNodeId session id
+--       let folderIsOpen         = Set.member nodeId (fst openNodes)
+--       let setFn                = if folderIsOpen then Set.delete else Set.insert
+--       let toggleFolderIsOpen _ = (snd openNodes) (setFn nodeId)
+--       let folderOpen           = Tuple folderIsOpen toggleFolderIsOpen
 
-      let publicizedChildren = if isPublic nodeType
-                              then map (\t -> map (\(LNode n@{ nodeType: nt } )
-                                                    -> (LNode (n { nodeType = publicize nt }))
-                                                  ) t) ary
-                              else ary
+--       let withId (NTree (LNode {id: id'}) _) = id'
 
-      pure $ H.li { className: if A.null ary then "no-children" else "with-children" }
-        [ nodeSpan { appReload: reload
-                  , asyncTasks
-                  , dispatch: pAction
-                  , folderOpen
-                  , frontends
-                  , handed
-                  , id
-                  , isLeaf: A.null ary
-                  , mCurrentRoute
-                  , name
-                  , nodeType
-                  , session
-                  -- , tasks
-                  }
-            (
-              childNodes ( Record.merge commonProps
-                          { asyncTasks
-                          , children: publicizedChildren
-                          , folderOpen
-                          , handed
-                          }
-                        )
-            )
-        ]
+--       let publicizedChildren = if isPublic nodeType
+--                               then map (\t -> map (\(LNode n@{ nodeType: nt } )
+--                                                     -> (LNode (n { nodeType = publicize nt }))
+--                                                   ) t) ary
+--                               else ary
+
+--       pure $ H.li { className: if A.null ary then "no-children" else "with-children" }
+--         [ nodeSpan { appReload
+--                    , asyncTasks
+--                    , dispatch: pAction
+--                    , folderOpen
+--                    , frontends
+--                    , handed
+--                    , id
+--                    , isLeaf: A.null ary
+--                    , mCurrentRoute
+--                    , name
+--                    , nodeType
+--                    , session
+--                    , setPopoverRef
+--                    -- , tasks
+--                    }
+--             (
+--               childNodes ( Record.merge commonProps
+--                           { asyncTasks
+--                           , children: publicizedChildren
+--                           , folderOpen
+--                           , handed
+--                           }
+--                         )
+--             )
+--         ]
+
+-- type ToHtmlFirstLevelProps = (
+--   appReload :: GT.ReloadS
+--   | ToHtmlProps
+--   )
 
 toHtmlFirstLevel :: R2.Component ToHtmlProps
 toHtmlFirstLevel = R.createElement elCpt
@@ -276,12 +297,14 @@ toHtmlFirstLevel = R.createElement elCpt
     elCpt :: R.Component ToHtmlProps
     elCpt = R.hooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
 
-    cpt p@{ asyncTasks
+    cpt p@{ appReload
+          , asyncTasks
           , frontends
           , handed
           , mCurrentRoute
           , openNodes
           , reload: reload@(_ /\ setReload)
+          , reloadTree
           , session
           , tree: tree@(NTree (LNode { id
                                       , name
@@ -290,7 +313,9 @@ toHtmlFirstLevel = R.createElement elCpt
                               ) ary
                         )
           } _ = do
-      let pAction a   = performAction a (RecordE.pick p :: Record PerformActionProps)
+      setPopoverRef <- R.useRef Nothing
+
+      let pAction a   = performAction a (RecordE.pick (Record.merge p { setPopoverRef }) :: Record PerformActionProps)
 
       let nodeId               = mkNodeId session id
       let folderIsOpen         = Set.member nodeId (fst openNodes)
@@ -301,20 +326,21 @@ toHtmlFirstLevel = R.createElement elCpt
       let withId (NTree (LNode {id: id'}) _) = id'
 
       pure $ H.li { className: if A.null ary then "no-children" else "with-children" } $
-        [ nodeSpan { appReload: reload
-                    , asyncTasks
-                    , dispatch: pAction
-                    , folderOpen
-                    , frontends
-                    , handed
-                    , id
-                    , isLeaf: A.null ary
-                    , mCurrentRoute
-                    , name
-                    , nodeType
-                    , session
-                    -- , tasks
-                    }
+        [ nodeSpan { appReload
+                   , asyncTasks
+                   , dispatch: pAction
+                   , folderOpen
+                   , frontends
+                   , handed
+                   , id
+                   , isLeaf: A.null ary
+                   , mCurrentRoute
+                   , name
+                   , nodeType
+                   , session
+                   , setPopoverRef
+                   -- , tasks
+                   }
           $ renderChildren folderOpen publicizedChildren
         ]
       where
@@ -335,6 +361,7 @@ toHtmlFirstLevel = R.createElement elCpt
                                         , folderOpen
                                         , handed
                                         , id: cId
+                                        , reloadTree
                                         }
                                       ) []
                 ) $ sorted publicizedChildren
@@ -355,35 +382,36 @@ toHtmlFirstLevel = R.createElement elCpt
     sorted = A.sortWith (\(NTree (LNode {id}) _) -> id)
 
 
-type ChildNodesProps =
-  ( asyncTasks :: GAT.Reductor
-  , children   :: Array FTree
-  , folderOpen :: R.State Boolean
-  | CommonProps
-  )
+-- type ChildNodesProps =
+--   ( asyncTasks :: GAT.Reductor
+--   , children   :: Array FTree
+--   , folderOpen :: R.State Boolean
+--   | CommonProps
+--   )
 
-childNodes :: Record ChildNodesProps -> Array R.Element
-childNodes { children: []                       } = []
-childNodes { folderOpen: (false /\ _)           } = []
-childNodes props@{ asyncTasks, children, reload, handed } =
-  map (\ctree@(NTree (LNode {id}) _) -> H.ul {} [
-        toHtml (Record.merge commonProps { asyncTasks
-                                         , handed
-                                         -- , tasks: tasksStruct id asyncTasks reload
-                                         , tree: ctree
-                                         }
-               ) []
-        ]
-      ) $ sorted children
-  where
-    commonProps = RecordE.pick props :: Record CommonProps
-    sorted :: Array FTree -> Array FTree
-    sorted = A.sortWith (\(NTree (LNode {id}) _) -> id)
+-- childNodes :: Record ChildNodesProps -> Array R.Element
+-- childNodes { children: []                       } = []
+-- childNodes { folderOpen: (false /\ _)           } = []
+-- childNodes props@{ asyncTasks, children, reload, handed } =
+--   map (\ctree@(NTree (LNode {id}) _) -> H.ul {} [
+--         toHtml (Record.merge commonProps { asyncTasks
+--                                          , handed
+--                                          -- , tasks: tasksStruct id asyncTasks reload
+--                                          , tree: ctree
+--                                          }
+--                ) []
+--         ]
+--       ) $ sorted children
+--   where
+--     commonProps = RecordE.pick props :: Record CommonProps
+--     sorted :: Array FTree -> Array FTree
+--     sorted = A.sortWith (\(NTree (LNode {id}) _) -> id)
 
 type ChildNodeFirstLevelProps = (
-    asyncTasks :: GAT.Reductor
-  , folderOpen :: R.State Boolean
-  , id         :: ID
+    asyncTasks   :: GAT.Reductor
+  , folderOpen   :: R.State Boolean
+  , id           :: ID
+  , reloadTree   :: GT.ReloadS
   | CommonProps
   )
 
@@ -393,27 +421,40 @@ childNodeFirstLevel = R.createElement elCpt
     elCpt :: R.Component ChildNodeFirstLevelProps
     elCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevel" cpt
 
-    cpt props@{ asyncTasks, folderOpen, id, frontends, handed, mCurrentRoute, openNodes, reload, session } _ = do
+    cpt props@{ appReload
+              , asyncTasks
+              , folderOpen
+              , id
+              , frontends
+              , handed
+              , mCurrentRoute
+              , openNodes
+              , reload
+              , reloadTree
+              , session } _ = do
       cptReload <- R.useState' 0
 
       let fetch _ = getNodeTreeFirstLevel session id
-      let paint loaded = childNodeFirstLevelPaint { asyncTasks
+      let paint loaded = childNodeFirstLevelPaint { appReload
+                                                  , asyncTasks
                                                   , folderOpen
                                                   , frontends
                                                   , handed
                                                   , mCurrentRoute
                                                   , openNodes
                                                   , reload: cptReload
+                                                  , reloadTree
                                                   , session
                                                   , tree: loaded } []
 
-      useLoader { counter: fst cptReload, root: id } fetch paint
+      useLoader { counter: fst cptReload, root: id, treeCounter: fst reloadTree } fetch paint
 
 
 type ChildNodeFirstLevelPaintProps = (
-    asyncTasks :: GAT.Reductor
-  , folderOpen :: R.State Boolean
-  , tree       :: FTree
+    asyncTasks   :: GAT.Reductor
+  , folderOpen   :: R.State Boolean
+  , reloadTree   :: GT.ReloadS
+  , tree         :: FTree
   | CommonProps
   )
 
@@ -425,10 +466,15 @@ childNodeFirstLevelPaint = R.createElement elCpt
 
     -- TODO folderOpen is unused
 
-    cpt props@{ asyncTasks, handed, reload, tree: ctree@(NTree (LNode { id }) _) } _ = do
+    cpt props@{ asyncTasks
+              , handed
+              , reload
+              , reloadTree
+              , tree: ctree@(NTree (LNode { id }) _) } _ = do
       pure $ H.ul {} [
         toHtmlFirstLevel (Record.merge commonProps { asyncTasks
                                                    , handed
+                                                   , reloadTree
                                                    , tree: ctree }
                         ) []
         ]
@@ -437,13 +483,16 @@ childNodeFirstLevelPaint = R.createElement elCpt
         commonProps = RecordE.pick props :: Record CommonProps
 
 
-type PerformActionProps =
-  ( asyncTasks :: GAT.Reductor
-  , openNodes :: R.State OpenNodes
-  , reload    :: R.State Reload
-  , session   :: Session
+type PerformActionProps = (
+    appReload    :: GT.ReloadS
+  , asyncTasks   :: GAT.Reductor
+  , openNodes    :: R.State OpenNodes
+  , reload       :: GT.ReloadS
+  , reloadTree   :: GT.ReloadS
+  , session      :: Session
+  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   -- , tasks     :: Record Tasks
-  , tree      :: FTree
+  , tree         :: FTree
   )
 
 -------
@@ -451,7 +500,6 @@ performAction :: Action
               -> Record PerformActionProps
               -> Aff Unit
 performAction (DeleteNode nt) p@{ openNodes: (_ /\ setOpenNodes)
-                                , reload: (_ /\ setReload)
                                 , session
                                 , tree: (NTree (LNode {id, parent_id}) _)
                                 } =
@@ -485,8 +533,7 @@ performAction (UpdateNode params) { asyncTasks: (_ /\ dispatch)
 
 
 -------
-performAction (RenameNode name) p@{ reload: (_ /\ setReload)
-                                  , session
+performAction (RenameNode name) p@{ session
                                   , tree: (NTree (LNode {id}) _)
                                   } =
   do
@@ -494,8 +541,7 @@ performAction (RenameNode name) p@{ reload: (_ /\ setReload)
     performAction RefreshTree p
 
 -------
-performAction (ShareTeam username) p@{ reload: (_ /\ setReload)
-                                     , session
+performAction (ShareTeam username) p@{ session
                                      , tree: (NTree (LNode {id}) _)
                                      } =
   do
@@ -513,8 +559,7 @@ performAction (SharePublic {params}) p@{ session
       performAction RefreshTree p
 
 
-performAction (AddContact params) p@{ reload: (_ /\ setReload)
-                                     , session
+performAction (AddContact params) p@{ session
                                      , tree: (NTree (LNode {id}) _)
                                      } =
     void $ Contact.contactReq session id params
@@ -523,7 +568,6 @@ performAction (AddContact params) p@{ reload: (_ /\ setReload)
 
 -------
 performAction (AddNode name nodeType) p@{ openNodes: (_ /\ setOpenNodes)
-                                        , reload:    (_ /\ setReload)
                                         , session
                                         , tree: (NTree (LNode {id}) _)
                                         } =
@@ -577,8 +621,13 @@ performAction (LinkNode {nodeType, params}) p@{session} = do
       performAction RefreshTree p
 
 -------
-performAction RefreshTree { reload: (_ /\ setReload) } = do
-  liftEffect $ setReload (_ + 1)
+performAction RefreshTree { reloadTree: (_ /\ setReload)
+                          , setPopoverRef } = do
+  liftEffect $ do
+    setReload (_ + 1)
+    case R.readRef setPopoverRef of
+      Nothing -> pure unit
+      Just setPopover -> setPopover false
 -------
 performAction NoAction _ = do
     liftEffect $ log "[performAction] NoAction"

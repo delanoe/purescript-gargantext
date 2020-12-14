@@ -5,6 +5,7 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import React.SyntheticEvent as E
@@ -39,7 +40,6 @@ import Gargantext.Utils.Reactix as R2
 thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node"
 
-
 -- Main Node
 type NodeMainSpanProps = (
     appReload     :: GT.ReloadS
@@ -51,6 +51,7 @@ type NodeMainSpanProps = (
   , mCurrentRoute :: Maybe Routes.AppRoute
   , name          :: Name
   , nodeType      :: GT.NodeType
+  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   | CommonProps
   )
 
@@ -83,12 +84,16 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
               , name
               , nodeType
               , session
+              , setPopoverRef
               } _ = do
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
 
       popoverRef    <- R.useRef null
+
+      R.useEffect' $ do
+        R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
 
       let ordering =
             case handed of
