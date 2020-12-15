@@ -65,9 +65,6 @@ nodePopupCpt = R.hooksComponentWithModule thisModule "nodePopupView" cpt
       search  <- R.useState'
                $ defaultSearch { node_id = Just p.id }
 
-      R.useEffect' $ do
-        log2 "[nodePopup] nodePopupState" $ fst nodePopupState
-
       pure $ H.div tooltipProps $
         [ H.div { className: "popup-container" }
           [ H.div { className: "panel panel-default" }

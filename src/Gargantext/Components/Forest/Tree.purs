@@ -583,8 +583,9 @@ performAction (UploadFile nodeType fileType mName blob) { asyncTasks: (_ /\ disp
                                                         } =
   do
     task <- uploadFile session nodeType id fileType {mName, blob}
-    liftEffect $ dispatch $ GAT.Insert id task
-    liftEffect $ log2 "Uploaded, task:" task
+    liftEffect $ do
+      dispatch $ GAT.Insert id task
+      log2 "[performAction] UploadFile, uploaded, task:" task
 
 performAction (UploadArbitraryFile mName blob) { asyncTasks: (_ /\ dispatch)
                                                , session
@@ -592,8 +593,9 @@ performAction (UploadArbitraryFile mName blob) { asyncTasks: (_ /\ dispatch)
                                                } =
   do
     task <- uploadArbitraryFile session id { blob, mName }
-    liftEffect $ dispatch $ GAT.Insert id task
-    liftEffect $ log2 "Uploaded, task:" task
+    liftEffect $ do
+      dispatch $ GAT.Insert id task
+      log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 
 -------
 performAction DownloadNode _ = do
@@ -621,14 +623,17 @@ performAction (LinkNode {nodeType, params}) p@{session} = do
       performAction RefreshTree p
 
 -------
-performAction RefreshTree { reloadTree: (_ /\ setReload)
-                          , setPopoverRef } = do
+performAction RefreshTree p@{ reloadTree: (_ /\ setReload)
+                            , setPopoverRef } = do
   liftEffect $ do
     setReload (_ + 1)
-    case R.readRef setPopoverRef of
-      Nothing -> pure unit
-      Just setPopover -> setPopover false
+  performAction ClosePopover p
 -------
 performAction NoAction _ = do
     liftEffect $ log "[performAction] NoAction"
 
+performAction ClosePopover { setPopoverRef } = do
+  liftEffect $ do
+    case R.readRef setPopoverRef of
+      Nothing -> pure unit
+      Just setPopover -> setPopover false

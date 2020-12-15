@@ -175,6 +175,7 @@ uploadButtonCpt = R.hooksComponentWithModule thisModule "uploadButton" cpt
               setMFile     $ const $ Nothing
               setFileType  $ const $ CSV
               setLang      $ const $ EN
+            dispatch ClosePopover
 
 -- START File Type View
 type FileTypeProps =

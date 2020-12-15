@@ -27,25 +27,27 @@ data NodeAction = Documentation NodeType
                 | Link  { subTreeParams :: SubTreeParams }
                 | Clone
                 | AddingContact
+                | CloseNodePopover
 
 ------------------------------------------------------------------------
 instance eqNodeAction :: Eq NodeAction where
   eq (Documentation x) (Documentation y) = true && (x == y)
-  eq SearchBox SearchBox = true
-  eq Download Download = true
-  eq Upload Upload     = true
-  eq Refresh Refresh   = true
-  eq (Move x) (Move y) = x == y
-  eq Clone Clone       = true
-  eq Delete Delete     = true
-  eq Share Share       = true
-  eq (Link x) (Link y)   = x == y
-  eq (Add  x) (Add  y)   = x == y
-  eq (Merge x) (Merge y) = x == y
-  eq Config Config     = true
-  eq (Publish x) (Publish y) = x == y
-  eq AddingContact AddingContact = true
-  eq _ _               = false
+  eq SearchBox SearchBox                 = true
+  eq Download Download                   = true
+  eq Upload Upload                       = true
+  eq Refresh Refresh                     = true
+  eq (Move x) (Move y)                   = x == y
+  eq Clone Clone                         = true
+  eq Delete Delete                       = true
+  eq Share Share                         = true
+  eq (Link x) (Link y)                   = x == y
+  eq (Add  x) (Add  y)                   = x == y
+  eq (Merge x) (Merge y)                 = x == y
+  eq Config Config                       = true
+  eq (Publish x) (Publish y)             = x == y
+  eq AddingContact AddingContact         = true
+  eq CloseNodePopover CloseNodePopover   = true
+  eq _ _                                 = false
 
 instance showNodeAction :: Show NodeAction where
   show (Documentation x) = "Documentation of " <> show x
@@ -63,6 +65,7 @@ instance showNodeAction :: Show NodeAction where
   show (Merge t)         = "Merge with subtree" <> show t
   show (Publish x)       = "Publish" <> show x
   show AddingContact     = "AddingContact"
+  show CloseNodePopover  = "CloseNodePopover"
 
 glyphiconNodeAction :: NodeAction -> String
 glyphiconNodeAction (Documentation _) = "question-circle"
@@ -79,6 +82,7 @@ glyphiconNodeAction Share             = "user-plus"
 glyphiconNodeAction AddingContact     = "user-plus"
 glyphiconNodeAction (Move _)          = "share-square-o"
 glyphiconNodeAction (Publish _)       = fldr FolderPublic true
+glyphiconNodeAction CloseNodePopover  = "close"
 glyphiconNodeAction _                 = ""
 
 ------------------------------------------------------------------------
