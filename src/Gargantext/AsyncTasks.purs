@@ -55,7 +55,6 @@ type ReductorProps = (
 
 type Reductor = R2.Reductor (Record ReductorProps) Action
 type ReductorAction = Action -> Effect Unit
-type OnFinish = Effect Unit
 
 useTasks :: GT.ReloadS -> GT.ReloadS -> R.Hooks Reductor
 useTasks appReload treeReload = R2.useReductor act initializer unit
@@ -78,7 +77,14 @@ action p@{ treeReload, storage } (Insert nodeId t) = do
   pure $ p { storage = newStorage }
 action p (Finish nodeId t) = do
   action p (Remove nodeId t)
-action p@{ appReload, storage } (Remove nodeId t) = do
-  _ <- snd appReload $ (_ + 1)
+action p@{ appReload, treeReload, storage } (Remove nodeId t@(GT.AsyncTaskWithType { typ })) = do
+  _ <- if GT.asyncTaskTriggersAppReload typ then
+    snd appReload $ (_ + 1)
+  else
+    pure unit
+  _ <- if GT.asyncTaskTriggersTreeReload typ then
+    snd treeReload $ (_ + 1)
+  else
+    pure unit
   let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage
   pure $ p { storage = newStorage }
