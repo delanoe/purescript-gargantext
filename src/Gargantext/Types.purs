@@ -595,7 +595,7 @@ modeFromString _            = Nothing
 
 -- corresponds to /add/form/async or /add/query/async
 data AsyncTaskType = AddNode
-                   | Form
+                   | Form  -- this is file upload too
                    | GraphRecompute
                    | Query
                    | UpdateNgramsCharts
@@ -630,6 +630,14 @@ asyncTaskTypePath Query              = "query/"
 asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"
 asyncTaskTypePath UploadFile         = "async/file/add/"
+
+asyncTaskTriggersAppReload :: AsyncTaskType -> Boolean
+asyncTaskTriggersAppReload _ = true
+
+asyncTaskTriggersTreeReload :: AsyncTaskType -> Boolean
+asyncTaskTriggersTreeReload Form       = true
+asyncTaskTriggersTreeReload UploadFile = true
+asyncTaskTriggersTreeReload _          = false
 
 
 type AsyncTaskID = String

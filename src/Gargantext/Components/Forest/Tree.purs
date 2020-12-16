@@ -126,7 +126,9 @@ treeLoadView = R.createElement elCpt
                                                   -- , tasks: tasksStruct root asyncTasks reload
                                                   , tree: loaded
                                                   } []
-      useLoader { root, counter: fst reload } fetch paint
+      useLoader { appCounter: fst appReload
+                , counter: fst reload
+                , root } fetch paint
 
 --------------
 getNodeTree :: Session -> GT.ID -> Aff FTree
