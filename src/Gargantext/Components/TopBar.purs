@@ -39,8 +39,8 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
                              <> "the interface by clicking on me. Click "
                              <> "again to come back to previous state."
                        , className: "nav navbar-nav" <> navHanded
-                       } [handedChooser { handed }]
-                , H.ul { className: "nav navbar-nav" <> navHanded} [divDropdownLeft]
+                       } [handedChooser { handed } []]
+                , H.ul { className: "nav navbar-nav" <> navHanded} [divDropdownLeft {} []]
                 {-, H.ul { title: "Dark Mode soon here"
                         , className : "nav navbar-nav"
                          } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
@@ -70,90 +70,119 @@ logo handed =
     navHanded = if handed == LeftHanded then " navbar-right" else ""
 
 
-divDropdownLeft :: R.Element
-divDropdownLeft =
-  divDropdownLeft' $
-    LiNav { title : "About Gargantext"
-          , href  : "#"
-          , icon  : "fa fa-info-circle"
-          , text  : "Info" }
+divDropdownLeft :: R2.Component ()
+divDropdownLeft = R.createElement divDropdownLeftCpt
 
-divDropdownLeft' :: LiNav -> R.Element
-divDropdownLeft' mb =
-  H.li {className: "dropdown"} [ menuButton mb, menuElements' ]
+divDropdownLeftCpt :: R.Component ()
+divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
+  where
+    cpt {} _ = do
+      show <- R.useState' false
 
+      pure $ H.li { className: "dropdown" } [
+          menuButton { element: menuElement, show } []
+        , menuElements { elements, show } []
+        ]
 
-menuButton :: LiNav -> R.Element
-menuButton (LiNav { title, href, icon, text } ) =
-  H.a { className: "dropdown-toggle navbar-text"
-      , data: {toggle: "dropdown"}
-      , href, title
-      , role: "button" }
-  [ H.span { aria: {hidden : true}, className: icon } []
-  , H.text (" " <> text) ]
+    menuElement = LiNav { title : "About Gargantext"
+                        , href  : "#"
+                        , icon  : "fa fa-info-circle"
+                        , text  : "Info" }
 
-menuElements' :: R.Element
-menuElements' = menuElements-- title, icon, text
-  [ -- ===========================================================
-    [ LiNav { title : "Quick start, tutorials and methodology"
-            , href  : "https://iscpif.fr/gargantext/your-first-map/"
-            , icon  : "fa fa-lightbulb-o"
-            , text  : "Tutorials"
-            }
-    , LiNav { title : "Report bug here"
-            , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
-            , icon  : "glyphicon glyphicon-bullhorn"
-            , text  : "Feedback"
-            }
-    ]
-    , -----------------------------------------------------------
-    [ LiNav { title : "Chat"
-            , href  : "https://chat.iscpif.fr/channel/gargantext"
-            , icon  : "fa fa-rocket"
-            , text  : "Chat"
-            }
-    , LiNav { title : "Forums"
-            , href  : "https://discourse.iscpif.fr/c/gargantext"
-            , icon  : "fa fa-weixin"
-            , text  : "Forum"
-            }
-    ]
-    ,------------------------------------------------------------
-    [ LiNav { title : "Code documentation"
-            , href  : "https://doc.gargantext.org"
-            , icon  : "glyphicon glyphicon-book"
-            , text  : "Source Code Documentation"
-            }
-    , LiNav { title : "API documentation"
-            , href  : "https://v4.gargantext.org/swagger-ui"
-            , icon  : "fa fa-code-fork"
-            , text  : "API documentation"
-            }
-    , LiNav { title : "Source code"
-            , href  : "https://gitlab.iscpif.fr/gargantext/haskell-gargantext"
-            , icon  : "fa fa-code"
-            , text  : "Source Code"
-            }
-    ]
+    elements = [
+      [
+        LiNav { title : "Quick start, tutorials and methodology"
+              , href  : "https://iscpif.fr/gargantext/your-first-map/"
+              , icon  : "fa fa-lightbulb-o"
+              , text  : "Tutorials"
+              }
+      , LiNav { title : "Report bug here"
+              , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
+              , icon  : "glyphicon glyphicon-bullhorn"
+              , text  : "Feedback"
+              }
+      ]
+      , -----------------------------------------------------------
+      [ LiNav { title : "Chat"
+              , href  : "https://chat.iscpif.fr/channel/gargantext"
+              , icon  : "fa fa-rocket"
+              , text  : "Chat"
+              }
+      , LiNav { title : "Forums"
+              , href  : "https://discourse.iscpif.fr/c/gargantext"
+              , icon  : "fa fa-weixin"
+              , text  : "Forum"
+              }
+      ]
+      ,------------------------------------------------------------
+      [ LiNav { title : "Code documentation"
+              , href  : "https://doc.gargantext.org"
+              , icon  : "glyphicon glyphicon-book"
+              , text  : "Source Code Documentation"
+              }
+      , LiNav { title : "API documentation"
+              , href  : "https://v4.gargantext.org/swagger-ui"
+              , icon  : "fa fa-code-fork"
+              , text  : "API documentation"
+              }
+      , LiNav { title : "Source code"
+              , href  : "https://gitlab.iscpif.fr/gargantext/haskell-gargantext"
+              , icon  : "fa fa-code"
+              , text  : "Source Code"
+              }
+      ]
 
-    ,------------------------------------------------------------
-    [ LiNav { title : "More about us (you)"
-            , href  : "https://iscpif.fr"
-            , icon  : "glyphicon glyphicon-question-sign"
-            , text  : "About"
-            }
-    ]
-  ] -- ===========================================================
+      ,------------------------------------------------------------
+      [ LiNav { title : "More about us (you)"
+              , href  : "https://iscpif.fr"
+              , icon  : "glyphicon glyphicon-question-sign"
+              , text  : "About"
+              }
+      ]
+    ] -- ===========================================================
+
+type MenuButtonProps = (
+    element :: LiNav
+  , show :: R.State Boolean
+  )
+
+menuButton :: R2.Component MenuButtonProps
+menuButton = R.createElement menuButtonCpt
+  where
+    menuButtonCpt :: R.Component MenuButtonProps
+    menuButtonCpt = R.hooksComponentWithModule thisModule "menuButton" cpt
+
+    cpt { element: LiNav { title, href, icon, text }, show: (_ /\ setShow) } _ = do
+      pure $ H.a { className: "dropdown-toggle navbar-text"
+                -- , data: {toggle: "dropdown"}
+                , href, title
+                , on: { click: \_ -> setShow $ not }
+                , role: "button" } [
+          H.span { aria: {hidden : true}, className: icon } []
+        , H.text (" " <> text)
+        ]
 
 -- | Menu in the sidebar, syntactic sugar
-menuElements :: Array (Array LiNav) -> R.Element
-menuElements ns = dropDown $ intercalate divider $ map (map liNav) ns
-  where
-    dropDown :: Array R.Element -> R.Element
-    dropDown = H.ul {className: "dropdown-menu"}
+type MenuElementsProps = (
+    elements :: Array (Array LiNav)
+  , show :: R.State Boolean
+  )
 
-    divider :: Array R.Element
-    divider = [H.li {className: "divider"} []]
+menuElements :: R2.Component MenuElementsProps
+menuElements = R.createElement menuElementsCpt
+  where
+    menuElementsCpt :: R.Component MenuElementsProps
+    menuElementsCpt = R.hooksComponentWithModule thisModule "menuElements" cpt
+
+    cpt { show: false /\ _ } _ = do
+      pure $ H.div {} []
+    cpt { elements, show: (true /\ setShow) } _ = do
+      pure $ H.ul { className: "dropdown-menu"
+                  , on: { click: setShow $ const false }
+                  , style: { display: "block" } } $ intercalate divider $ map (map liNav) elements
+      where
+        divider :: Array R.Element
+        divider = [H.li {className: "divider"} []]
 
 -- | surgar for target : "blank"
 --data LiNav_ = LiNav_ { title  :: String
@@ -189,8 +218,8 @@ type HandedChooserProps = (
   handed :: R.State Handed
   )
 
-handedChooser :: Record HandedChooserProps -> R.Element
-handedChooser props = R.createElement handedChooserCpt props []
+handedChooser :: R2.Component HandedChooserProps
+handedChooser = R.createElement handedChooserCpt
 
 handedChooserCpt :: R.Component HandedChooserProps
 handedChooserCpt = R.hooksComponentWithModule thisModule "handedChooser" cpt
