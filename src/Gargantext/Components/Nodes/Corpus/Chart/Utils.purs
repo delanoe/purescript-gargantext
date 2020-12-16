@@ -18,13 +18,13 @@ import Gargantext.Utils.Reactix as R2
 
 thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Utils"
 
-reloadButtonWrap :: R.State Int -> R.Element -> R.Element
+reloadButtonWrap :: T.ReloadS -> R.Element -> R.Element
 reloadButtonWrap setReload el = H.div {} [
     reloadButton setReload
   , el
   ]
 
-reloadButton :: R.State Int -> R.Element
+reloadButton :: T.ReloadS -> R.Element
 reloadButton (_ /\ setReload) = H.a { className
                                    , on: { click: onClick }
                                    , title: "Reload" } []
@@ -44,7 +44,7 @@ mNgramsTypeFromTabType (T.TabPairing _)                           = Nothing
 type ChartUpdateButtonProps = (
     chartType :: T.ChartType
   , path :: Record Path
-  , reload :: R.State Int
+  , reload :: T.ReloadS
   , session :: Session
   )
 

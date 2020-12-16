@@ -1,34 +1,44 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
+import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 
 import Gargantext.Prelude
 
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.NgramsTable as NT
+import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart (getChartFunction)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
-import Gargantext.Components.Nodes.Lists.Types as NTypes
+import Gargantext.Components.Nodes.Lists.Types
 import Gargantext.Components.Tab as Tab
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
+import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), ReloadS, TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
 import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
 
-type Props = ( cacheState :: R.State NTypes.CacheState
-             , corpusData :: CorpusData
-             , corpusId   :: Int
-             , session    :: Session
-             )
+type Props = (
+    appReload         :: ReloadS
+  , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
+  , cacheState        :: R.State CacheState
+  , corpusData        :: CorpusData
+  , corpusId          :: Int
+  , session           :: Session
+  , sidePanelTriggers :: Record SidePanelTriggers
+  , treeReloadRef     :: R.Ref (Maybe ReloadS)
+  )
 
 type PropsWithKey = (
   key        :: String
@@ -41,7 +51,14 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component PropsWithKey
 tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
   where
-    cpt { cacheState, corpusData: corpusData@{ defaultListId }, corpusId, session } _ = do
+    cpt { appReload
+        , asyncTasksRef
+        , cacheState
+        , corpusData
+        , corpusId
+        , session
+        , sidePanelTriggers
+        , treeReloadRef } _ = do
       (selected /\ setSelected) <- R.useState' 0
 
       pure $ Tab.tabs { selected, tabs: tabs' }
@@ -50,7 +67,15 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                 , "Institutes" /\ view Institutes
                 , "Sources"    /\ view Sources
                 , "Terms"      /\ view Terms ]
-        view mode = ngramsView { cacheState, corpusData, corpusId, mode, session }
+        view mode = ngramsView { appReload
+                               , asyncTasksRef
+                               , cacheState
+                               , corpusData
+                               , corpusId
+                               , mode
+                               , session
+                               , sidePanelTriggers
+                               , treeReloadRef }
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
@@ -60,24 +85,48 @@ ngramsView props = R.createElement ngramsViewCpt props []
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
   where
-    cpt { cacheState
+    cpt { appReload
+        , asyncTasksRef
+        , cacheState
         , corpusData: { defaultListId }
         , corpusId
         , mode
-        , session } _ = do
+        , session
+        , sidePanelTriggers
+        , treeReloadRef
+        } _ = do
 
       chartType <- R.useState' Histo
       chartsReload <- R.useState' 0
+      pathS <- R.useState' $ NTC.initialPageParams session initialPath.corpusId [initialPath.listId] initialPath.tabType
+      let listId' = fromMaybe defaultListId $ A.head (fst pathS).listIds
+      let path = {
+          corpusId: (fst pathS).nodeId
+        , limit: (fst pathS).params.limit
+        , listId: listId'
+        , tabType: (fst pathS).tabType
+        }
+      let chartParams = {
+          corpusId: path.corpusId
+        , limit: Just path.limit
+        , listId: path.listId
+        , tabType: path.tabType
+        }
 
       pure $ R.fragment
-        ( charts tabNgramType chartType chartsReload
+        ( charts chartParams tabNgramType chartType chartsReload
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
+                                , appReload
+                                , asyncTasksRef
                                 , cacheState
                                 , defaultListId
                                 , nodeId: corpusId
+                                , pathS
                                 , session
+                                , sidePanelTriggers
                                 , tabNgramType
                                 , tabType
+                                , treeReloadRef
                                 , withAutoUpdate: false
                                 }
            ]
@@ -95,25 +144,33 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
 
         tabNgramType = modeTabType mode
         tabType      = TabCorpus (TabNgramType tabNgramType)
-        mNgramsType = mNgramsTypeFromTabType tabType
+        mNgramsType  = mNgramsTypeFromTabType tabType
         listId       = defaultListId
-        path         = { corpusId
-                       , limit: Just 1000
+        initialPath  = { corpusId
+                       -- , limit: Just 1000
                        , listId
                        , tabType
                        }
 
-        charts CTabTerms (chartType /\ setChartType) _ = [
-          H.div { className: "row chart-type-selector" } [
-            H.div { className: "col-md-3" } [
+        charts params CTabTerms (chartType /\ setChartType) _ = [
+          H.div {className: "row"}
+                [ H.div {className: "col-md-offset-5 col-md-6 content"}
+                  [ H.img { src: "images/Gargantextuel-212x300.jpg"
+                          , id: "funnyimg"
+                        }
+                  ]
+                ]
+
+          {-
               R2.select { className: "form-control"
-                        ,  on: { change: \e -> setChartType
+                        , defaultValue: show chartType
+                        , on: { change: \e -> setChartType
                                              $ const
                                              $ fromMaybe Histo
                                              $ chartTypeFromString
                                              $ R.unsafeEventValue e
-                               }
-                        , defaultValue: show chartType } [
+                              }
+                        } [
                 H.option { value: show Histo     } [ H.text $ show Histo     ]
               , H.option { value: show Scatter   } [ H.text $ show Scatter   ]
               , H.option { value: show ChartBar  } [ H.text $ show ChartBar  ]
@@ -122,11 +179,12 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
               ]
             ]
           ]
-        , getChartFunction chartType $ { session, path }
+        , getChartFunction chartType $ { path: params, session }
+        -}
         ]
-        charts _ _ _       = [ chart mode ]
+        charts params _ _ _         = [ chart params mode ]
 
-        chart Authors    = pie     { path, session }
-        chart Institutes = tree    { path, session }
-        chart Sources    = bar     { path, session }
-        chart Terms      = metrics { path, session }
+        chart path Authors    = pie     { path, session }
+        chart path Institutes = tree    { path, session }
+        chart path Sources    = bar     { path, session }
+        chart path Terms      = metrics { path, session }

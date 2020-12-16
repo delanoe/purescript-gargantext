@@ -167,9 +167,13 @@ sessionPath (R.PutNgrams t listId termList i) =
      <> showTabType' t
      <> maybe "" (\x -> "&list=" <> show x) listId
      <> foldMap (\x -> "&listType=" <> show x) termList
+sessionPath (R.PostNgramsChartsAsync i) =
+  sessionPath $ R.NodeAPI Node i $ "ngrams/async/charts/update"
 sessionPath (R.NodeAPI nt i p) = nodeTypePath nt
                               <> (maybe "" (\i' -> "/" <> show i') i)
                               <> (if p == "" then "" else "/" <> p)
+sessionPath (R.TreeFirstLevel nId p) = nodeTypePath Tree
+                                    <> (maybe "" (\nId' -> "/" <> show nId') nId) <> "/first-level" <> p
 sessionPath (R.Search {listId, limit, offset, orderBy} Nothing) =
   sessionPath $ R.NodeAPI Corpus Nothing
      $ "search?list_id=" <> show listId

@@ -28,6 +28,7 @@ import Gargantext.Types (ChartType(..), TabType)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Pie"
 
 newtype ChartMetrics = ChartMetrics {

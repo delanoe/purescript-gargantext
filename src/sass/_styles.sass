@@ -1,0 +1,49 @@
+#page-wrapper
+  .cache-toggle
+    cursor: pointer
+  .side-panel
+    background-color: white
+    left: 70%
+    padding: 5px
+    position: fixed
+    top: 60px
+    width: 28%
+    .header
+      float: right
+    .corpus-doc-view
+      .annotated-field-wrapper
+        .annotated-field-runs
+          max-height: 200px
+          overflow-y: scroll
+      .list-group
+        .list-group-item-heading
+          display: inline-block
+          width: 60px
+
+.simple-layout
+  height: 100%
+  .spinner
+    position: absolute
+    left: 50%
+    top: 50%
+
+.table
+  tr
+    td
+      .active
+        font-weight: bold
+        text-decoration: underline
+      .column-tag
+        align-items: center
+        .doc-chooser
+          cursor: pointer
+          padding: 10px
+      .ngrams-selector
+        display: flex
+        .ngrams-chooser
+          padding: 3px
+      .trash
+        text-decoration: line-through
+
+.context-menu
+  position: fixed

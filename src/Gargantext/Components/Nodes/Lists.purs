@@ -1,32 +1,97 @@
 module Gargantext.Components.Nodes.Lists where
 
-import Data.Tuple (fst)
+import Data.Maybe (Maybe(..))
+import Data.Tuple (fst, snd)
+import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
 ------------------------------------------------------------------------
+import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.Forest as Forest
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
 import Gargantext.Components.Nodes.Lists.Tabs as Tabs
-import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Nodes.Lists.Types
 import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session, sessionId, getCacheState, setCacheState)
+import Gargantext.Types as GT
+import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
-------------------------------------------------------------------------
-
-type Props = (
-    nodeId :: Int
-  , session :: Session
+type ListsWithForest = (
+    forestProps :: Record Forest.ForestLayoutProps
+  , listsProps  :: Record CommonProps
   )
 
-listsLayout :: Record Props -> R.Element
-listsLayout props = R.createElement listsLayoutCpt props []
+listsWithForest :: R2.Component ListsWithForest
+listsWithForest = R.createElement listsWithForestCpt
+
+listsWithForestCpt :: R.Component ListsWithForest
+listsWithForestCpt = R.hooksComponentWithModule thisModule "listsWithForest" cpt
+  where
+    cpt { forestProps
+        , listsProps: listsProps@{ session } } _ = do
+      controls <- initialControls
+
+      pure $ Forest.forestLayoutWithTopBar forestProps [
+        topBar { controls } []
+      , listsLayout (Record.merge listsProps { controls }) []
+      , H.div { className: "side-panel" } [
+          sidePanel { controls, session } []
+        ]
+      ]
+--------------------------------------------------------
+
+type TopBarProps = (
+  controls :: Record ListsLayoutControls
+  )
+
+topBar :: R2.Component TopBarProps
+topBar = R.createElement topBarCpt
+
+topBarCpt :: R.Component TopBarProps
+topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
+  where
+    cpt { controls } _ = do
+      -- empty for now because the button is moved to the side panel
+      pure $ H.div {} []
+        -- H.ul { className: "nav navbar-nav" } [
+        --   H.li {} [
+        --      sidePanelToggleButton { state: controls.showSidePanel } []
+        --      ]
+        --   ]  -- head (goes to top bar)
+--------------------------------------------------------
+
+type CommonProps = (
+    appReload     :: GT.ReloadS
+  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  , nodeId        :: Int
+  , session       :: Session
+  , sessionUpdate :: Session -> Effect Unit
+  , treeReloadRef :: R.Ref (Maybe GT.ReloadS)
+  )
+
+type Props = (
+  controls :: Record ListsLayoutControls
+  | CommonProps
+  )
+
+type WithTreeProps = (
+    handed :: GT.Handed
+  | Props
+  )
+
+listsLayout :: R2.Component Props
+listsLayout = R.createElement listsLayoutCpt
 
 listsLayoutCpt :: R.Component Props
 listsLayoutCpt = R.hooksComponentWithModule thisModule "listsLayout" cpt
@@ -34,7 +99,7 @@ listsLayoutCpt = R.hooksComponentWithModule thisModule "listsLayout" cpt
     cpt path@{ nodeId, session } _ = do
       let sid = sessionId session
 
-      pure $ listsLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
+      pure $ listsLayoutWithKey $ Record.merge path { key: show sid <> "-" <> show nodeId }
 
 type KeyProps = (
   key :: String
@@ -47,10 +112,16 @@ listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 listsLayoutWithKeyCpt :: R.Component KeyProps
 listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
   where
-    cpt { nodeId, session } _ = do
+    cpt { appReload
+        , asyncTasksRef
+        , controls
+        , nodeId
+        , session
+        , sessionUpdate
+        , treeReloadRef } _ = do
       let path = { nodeId, session }
 
-      cacheState <- R.useState' NT.CacheOn
+      cacheState <- R.useState' $ getCacheState CacheOn session nodeId
 
       useLoader path loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode: NodePoly poly, defaultListId } ->
@@ -59,7 +130,7 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
           in
           R.fragment [
             Table.tableHeaderLayout {
-                afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
+                afterCacheStateChange
               , cacheState
               , date
               , desc
@@ -68,10 +139,78 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
               , title: "Corpus " <> name
               , user: authors }
           , Tabs.tabs {
-               cacheState
+               appReload
+             , asyncTasksRef
+             , cacheState
              , corpusData
              , corpusId
              , key: "listsLayoutWithKey-tabs-" <> (show $ fst cacheState)
-             , session }
+             , session
+             , sidePanelTriggers: controls.triggers
+             , treeReloadRef
+             }
           ]
+      where
+        afterCacheStateChange cacheState = do
+          launchAff_ $ clearCache unit
+          sessionUpdate $ setCacheState session nodeId cacheState
 ------------------------------------------------------------------------
+
+type SidePanelProps = (
+    controls :: Record ListsLayoutControls
+  , session  :: Session
+  )
+
+sidePanel :: R2.Component SidePanelProps
+sidePanel = R.createElement sidePanelCpt
+
+sidePanelCpt :: R.Component SidePanelProps
+sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
+  where
+    cpt { controls: { triggers: { toggleSidePanel
+                                , triggerSidePanel
+                                } }
+        , session } _ = do
+
+      showSidePanel <- R.useState' InitialClosed
+
+      R.useEffect' $ do
+        let toggleSidePanel' _  = snd showSidePanel toggleSidePanelState
+            triggerSidePanel' _ = snd showSidePanel $ const Opened
+        R2.setTrigger toggleSidePanel  toggleSidePanel'
+        R2.setTrigger triggerSidePanel triggerSidePanel'
+
+      (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
+      (mListId /\ setMListId) <- R.useState' Nothing
+      (mNodeId /\ setMNodeId) <- R.useState' Nothing
+
+      let mainStyle = case fst showSidePanel of
+            Opened -> { display: "block" }
+            _      -> { display: "none" }
+
+      let closeSidePanel _ = do
+            snd showSidePanel $ const Closed
+
+      pure $ H.div { style: mainStyle } [
+        H.div { className: "header" } [
+          H.span { className: "btn btn-danger"
+                 , on: { click: closeSidePanel } } [
+            H.span { className: "fa fa-times" } []
+          ]
+        ]
+      , sidePanelDocView { session } []
+      ]
+
+type SidePanelDocView = (
+    session   :: Session
+  )
+
+sidePanelDocView :: R2.Component SidePanelDocView
+sidePanelDocView = R.createElement sidePanelDocViewCpt
+
+sidePanelDocViewCpt :: R.Component SidePanelDocView
+sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanelDocView" cpt
+  where
+    cpt { session } _ = do
+      -- pure $ H.h4 {} [ H.text txt ]
+      pure $ H.div {} [ H.text "Hello ngrams" ]

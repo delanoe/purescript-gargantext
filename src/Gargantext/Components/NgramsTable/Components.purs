@@ -23,6 +23,7 @@ import Gargantext.Components.NgramsTable.Core ( Action(..), Dispatch, NgramsElem
                                               , _list, _ngrams, _occurrences, ngramsTermText, replace
                                               , singletonNgramsTablePatch, setTermListA
                                               )
+import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
@@ -31,8 +32,7 @@ thisModule = "Gargantext.Components.NgramsTable.Components"
 
 
 type SearchInputProps =
-  (
-    key :: String  -- to prevent refreshing & losing input
+  ( key :: String  -- to prevent refreshing & losing input
   , onSearch :: String -> Effect Unit
   , searchQuery :: String
   )
@@ -43,19 +43,32 @@ searchInput props = R.createElement searchInputCpt props []
 searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
   where
-    cpt { onSearch, searchQuery } _ = do
-      pure $ H.div { className: "input-group" } [
-        H.div { className: "input-group-addon" } [
-           H.span { className: "fa fa-search" } []
-         ]
-      , H.input { className: "form-control"
-                , defaultValue: searchQuery
-                , name: "search"
-                , on: { input: onSearch <<< R.unsafeEventValue }
-                , placeholder: "Search"
-                , type: "value" }
-        ]
+    cpt { onSearch, searchQuery } _ = 
+      pure $ H.div { className: "input-group" }
+           [ searchButton
+           , fieldInput
+           ]
+        where
+          searchButton = 
+            H.div { className: "input-group-addon" }
+                  [
+                   if searchQuery /= ""
+                       then removeButton
+                       else H.span { className: "fa fa-search" } []
+                  ]
+          removeButton =
+            H.button { className: "btn btn-danger"
+                     , on: {click: \e -> onSearch ""}}
+                     [ H.span {className: "fa fa-times"} []]
 
+          fieldInput  = 
+            H.input { className: "form-control"
+                    , defaultValue: searchQuery
+                    , name: "search"
+                    , on: { input: onSearch <<< R.unsafeEventValue }
+                    , placeholder: "Search"
+                    , type: "value"
+                    }
 
 type SelectionCheckboxProps =
   (
@@ -171,18 +184,19 @@ treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
             H.ul {} <<< map (\ngrams -> tree (params { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
 
 
-type RenderNgramsItem =
-  ( dispatch :: Action -> Effect Unit
-  , ngrams :: NgramsTerm
-  , ngramsElement :: NgramsElement
-  , ngramsLocalPatch :: NgramsTablePatch
-  , ngramsParent :: Maybe NgramsTerm
-  , ngramsSelection :: Set NgramsTerm
-  , ngramsTable :: NgramsTable
+type RenderNgramsItem = (
+    dispatch          :: Action -> Effect Unit
+  , ngrams            :: NgramsTerm
+  , ngramsElement     :: NgramsElement
+  , ngramsLocalPatch  :: NgramsTablePatch
+  , ngramsParent      :: Maybe NgramsTerm
+  , ngramsSelection   :: Set NgramsTerm
+  , ngramsTable       :: NgramsTable
+  , sidePanelTriggers :: Record NT.SidePanelTriggers
   )
 
-renderNgramsItem :: Record RenderNgramsItem -> R.Element
-renderNgramsItem p = R.createElement renderNgramsItemCpt p []
+renderNgramsItem :: R2.Component RenderNgramsItem
+renderNgramsItem = R.createElement renderNgramsItemCpt
 
 renderNgramsItemCpt :: R.Component RenderNgramsItem
 renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" cpt
@@ -193,21 +207,31 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
         , ngramsLocalPatch
         , ngramsParent
         , ngramsSelection
-        , ngramsTable } _ =
+        , ngramsTable
+        , sidePanelTriggers: { toggleSidePanel }
+        } _ = do
       pure $ Tbl.makeRow [
-          selected
+          H.div { className: "ngrams-selector" } [
+            H.span { className: "ngrams-chooser fa fa-eye-slash"
+                   , on: { click: onClick } } []
+          ]
+        , selected
         , checkbox T.MapTerm
         , checkbox T.StopTerm
-        , if ngramsParent == Nothing
-          then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
-          else
-            H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } } [
-                H.i { className: "glyphicon glyphicon-plus" } []
-              , (R2.buff $ span ngramsStyle [text $ " " <> ngramsTermText ngrams])
-            ]
+        , H.div {} [
+          if ngramsParent == Nothing
+            then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
+            else
+              H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } } [
+                  H.i { className: "glyphicon glyphicon-plus" } []
+                , (R2.buff $ span ngramsStyle [text $ " " <> ngramsTermText ngrams])
+              ]
+        ]
         , H.text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
       ]
       where
+        onClick _ = do
+          R2.callTrigger toggleSidePanel unit
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle = [termStyle termList ngramsOpacity]
         ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
@@ -224,7 +248,8 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
           H.input { checked: Set.member ngrams ngramsSelection
                   , className: "checkbox"
                   , on: { change: const $ dispatch $ ToggleSelect ngrams }
-                  , type: "checkbox" }
+                  , type: "checkbox"
+                  }
         checkbox termList' =
           let chkd = termList == termList'
               termList'' = if chkd then T.CandidateTerm else termList'

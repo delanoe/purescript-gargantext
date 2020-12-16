@@ -22,7 +22,8 @@ import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Components.Category (Category(..), CategoryQuery(..), favCategory, decodeCategory, putCategories)
+import Gargantext.Components.Category (CategoryQuery(..), putCategories)
+import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
 import Gargantext.Components.Search
 import Gargantext.Components.Table as T
 import Gargantext.Ends (url, Frontends)
@@ -39,18 +40,20 @@ thisModule = "Gargantext.Components.FacetsTable"
 ------------------------------------------------------------------------
 
 type Props =
-  ( chart :: R.Element
-  , container :: Record T.TableContainerProps -> R.Element
-  , frontends :: Frontends
-  , listId :: Int
-  , nodeId :: Int
-  , query :: SearchQuery
-  , session :: Session
+  ( chart        :: R.Element
+  , container    :: Record T.TableContainerProps -> R.Element
+  , frontends    :: Frontends
+  , listId       :: Int
+  , nodeId       :: Int
+  , query        :: SearchQuery
+  , session      :: Session
   , totalRecords :: Int
   )
 
 -- | Tracks the ids of documents to delete and that have been deleted
-type Deletions = { pending :: Set Int, deleted :: Set Int }
+type Deletions = { pending :: Set Int
+                 , deleted :: Set Int
+                 }
 
 initialDeletions :: Deletions
 initialDeletions = { pending: mempty, deleted: mempty }
@@ -108,7 +111,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
         else
           snd path $ const ipp
 
-      pure $ H.div { className: "container1" }
+      pure $ H.div { className: "facets-doc-view container1" }
         [ R2.row
           [ chart
           , H.div { className: "col-md-12" }
@@ -330,7 +333,10 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
               , maybeStricken delete [ H.text source ]
               , maybeStricken delete [ H.text authors ]
                 -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
-              , H.input { type: "checkbox", checked: isChecked id, on: { click: toggleClick } }
+              , H.input { defaultChecked: isChecked id
+                        , on: { click: toggleClick }
+                        , type: "checkbox"
+                        }
               ]
           , delete: true }
           where

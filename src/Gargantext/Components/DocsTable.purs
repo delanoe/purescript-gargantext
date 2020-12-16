@@ -7,7 +7,7 @@ import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map (Map)
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -15,22 +15,27 @@ import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log, log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Components.Category (Category(..), caroussel, decodeCategory)
+import Gargantext.Components.Category (caroussel)
+import Gargantext.Components.Category.Types (Category(..), decodeCategory)
+import Gargantext.Components.DocsTable.Types
 import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), ReloadS, TableResult, TabSubType, TabType, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
@@ -51,121 +56,39 @@ type Path a = (
   )
 
 type LayoutProps = (
-    cacheState   :: R.State NT.CacheState
-  , corpusId     :: Maybe Int
-  , frontends    :: Frontends
-  , chart        :: R.Element
-  , listId       :: Int
-  , nodeId       :: Int
+    cacheState      :: R.State NT.CacheState
+  , frontends       :: Frontends
+  , chart           :: R.Element
+  , listId          :: Int
+  , mCorpusId       :: Maybe Int
+  , nodeId          :: Int
   -- , path         :: Record (Path a)
-  , session      :: Session
-  , showSearch   :: Boolean
-  , tabType      :: TabType
+  , session         :: Session
+  , showSearch      :: Boolean
+  , sidePanelTriggers :: Record SidePanelTriggers
+  , tabType         :: TabType
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
-  , totalRecords :: Int
+  , totalRecords    :: Int
   )
 
 type PageLayoutProps = (
-    cacheState   :: R.State NT.CacheState
-  , corpusId     :: Maybe Int
-  , frontends    :: Frontends
-  , key          :: String  -- NOTE Necessary to clear the component when cache state changes
-  , listId       :: Int
-  , nodeId       :: Int
-  , params       :: T.Params
-  , query        :: Query
-  , session      :: Session
-  , tabType      :: TabType
-  , totalRecords :: Int
+    cacheState        :: R.State NT.CacheState
+  , frontends         :: Frontends
+  , key               :: String  -- NOTE Necessary to clear the component when cache state changes
+  , listId            :: Int
+  , mCorpusId         :: Maybe Int
+  , nodeId            :: Int
+  , params            :: T.Params
+  , query             :: Query
+  , session           :: Session
+  , sidePanelTriggers :: Record SidePanelTriggers
+  , tabType           :: TabType
+  , totalRecords      :: Int
   )
-
-type LocalCategories = Map Int Category
-type Query = String
 
 _documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
 _localCategories     = prop (SProxy :: SProxy "localCategories")
-
-data Action
-  = MarkCategory Int Category
-
-newtype DocumentsView
-  = DocumentsView
-    { _id    :: Int
-    , category :: Category
-    , date   :: Int
-    , ngramCount :: Int
-    , source :: String
-    , title  :: String
-    , url    :: String
-    }
-
-{-
-derive instance genericDocumentsView :: Generic DocumentsView _
-instance showDocumentsView :: Show DocumentsView where
-  show = genericShow
-instance decodeJsonSearchType :: Argonaut.DecodeJson SearchType where
-  decodeJson = genericSumDecodeJson
-instance encodeJsonSearchType :: Argonaut.EncodeJson SearchType where
-  encodeJson = genericSumEncodeJson
-  -}
-
-instance decodeDocumentsView :: DecodeJson DocumentsView where
-  decodeJson json = do
-    obj <- decodeJson json
-    _id <- obj .: "id"
-    category <- obj .: "category"
-    date <- obj .: "date"
-    ngramCount <- obj .: "ngramCount"
-    source <- obj .: "source"
-    title <- obj .: "title"
-    url <- obj .: "url"
-    pure $ DocumentsView { _id, category, date, ngramCount, source, title, url }
-instance encodeDocumentsView :: EncodeJson DocumentsView where
-  encodeJson (DocumentsView dv) = 
-       "id" := dv._id
-    ~> "category" := dv.category
-    ~> "date" := dv.date
-    ~> "ngramCount" := dv.ngramCount
-    ~> "source" := dv.source
-    ~> "title" := dv.title
-    ~> "url" := dv.url
-    ~> jsonEmptyObject
-
-
-newtype Response = Response
-  { cid        :: Int
-  , hyperdata  :: Hyperdata
-  , category   :: Category
-  , ngramCount :: Int
-  , title      :: String
-  }
-
-
-newtype Hyperdata = Hyperdata
-  { title  :: String
-  , source :: String
-  , pub_year   :: Int
-  }
-
-
-instance decodeHyperdata :: DecodeJson Hyperdata where
-  decodeJson json = do
-    obj    <- decodeJson json
-    title  <- obj .: "title"
-    source <- obj .: "source"
-    pub_year <- obj .: "publication_year"
-    pure $ Hyperdata { title,source, pub_year}
-
-instance decodeResponse :: DecodeJson Response where
-  decodeJson json = do
-    obj        <- decodeJson json
-    category   <- obj .: "category"
-    cid        <- obj .: "id"
-    hyperdata  <- obj .: "hyperdata"
-    ngramCount <- obj .: "id"
-    title      <- obj .: "title"
-    pure $ Response { cid, title, category: decodeCategory category, ngramCount, hyperdata }
 
 docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
@@ -176,7 +99,7 @@ docViewLayoutCpt = R.hooksComponentWithModule thisModule "docViewLayout" cpt
     cpt layout _children = do
       query <- R.useState' ""
       let params = T.initialParams
-      pure $ docView { layout, params, query }
+      pure $ docView { layout, params, query } []
 
 type Props = (
     layout :: Record LayoutProps
@@ -184,39 +107,41 @@ type Props = (
   , query :: R.State Query
   )
 
-docView :: Record Props -> R.Element
-docView props = R.createElement docViewCpt props []
+docView :: R2.Component Props
+docView = R.createElement docViewCpt
 
 docViewCpt :: R.Component Props
 docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
   cpt { layout: { cacheState
                 , chart
-                , corpusId
                 , frontends
                 , listId
+                , mCorpusId
                 , nodeId
                 , session
                 , showSearch
+                , sidePanelTriggers
                 , tabType
                 , totalRecords
                 }
       , params
       , query
       } _ = do
-    pure $ H.div {className: "container1"}
+    pure $ H.div { className: "doc-table-doc-view container1" }
       [ R2.row
         [ chart
         , if showSearch then searchBar query else H.div {} []
         , H.div {className: "col-md-12"}
           [ pageLayout { cacheState
-                       , corpusId
                        , frontends
                        , key: "docView-" <> (show $ fst cacheState)
                        , listId
+                       , mCorpusId
                        , nodeId
                        , params
                        , query: fst query
                        , session
+                       , sidePanelTriggers
                        , tabType
                        , totalRecords
                        } ] ] ]
@@ -266,16 +191,17 @@ searchBar (query /\ setQuery) = R.createElement el {} []
 mock :: Boolean
 mock = false
 
-type PageParams =
-  { nodeId :: Int
-  , listId :: Int
-  , corpusId :: Maybe Int
-  , tabType :: TabType
-  , query   :: Query
-  , params :: T.Params}
+type PageParams = {
+    listId    :: Int
+  , mCorpusId :: Maybe Int
+  , nodeId    :: Int
+  , tabType   :: TabType
+  , query     :: Query
+  , params    :: T.Params
+  }
 
 getPageHash :: Session -> PageParams -> Aff String
-getPageHash session { corpusId, listId, nodeId, query, tabType } = do
+getPageHash session { nodeId, tabType } = do
   (get session $ tableHashRoute nodeId tabType) :: Aff String
 
 convOrderBy :: Maybe (T.OrderByDirection T.ColumnName) -> Maybe OrderBy
@@ -290,12 +216,13 @@ convOrderBy _ = Nothing
 res2corpus :: Response -> DocumentsView
 res2corpus (Response r) =
   DocumentsView { _id : r.cid
-  , url    : ""
-  , date   : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
-  , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
-  , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
-  , category : r.category
+  , category   : r.category
+  , date       : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
   , ngramCount : r.ngramCount
+  , score      : r.score
+  , source     : (\(Hyperdata hr) -> hr.source) r.hyperdata
+  , title      : (\(Hyperdata hr) -> hr.title) r.hyperdata
+  , url        : ""
 }
 
 filterDocs :: Query -> Array Response -> Array Response
@@ -310,8 +237,17 @@ pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
-  cpt props@{ cacheState, corpusId, frontends, listId, nodeId, params, query, session, tabType } _ = do
-    let path = { corpusId, listId, nodeId, params, query, tabType }
+  cpt props@{ cacheState
+            , frontends
+            , listId
+            , mCorpusId
+            , nodeId
+            , params
+            , query
+            , session
+            , sidePanelTriggers
+            , tabType } _ = do
+    let path = { listId, mCorpusId, nodeId, params, query, tabType }
         handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
         handleResponse (HashedResponse { hash, value: res }) = ret
           where
@@ -323,7 +259,9 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
                       Tuple res.count docs
     case cacheState of
       (NT.CacheOn  /\ _) -> do
-        let paint (Tuple count docs) = page params (props { totalRecords = count }) docs
+        let paint (Tuple count docs) = page { documents: docs
+                                            , layout: props { totalRecords = count }
+                                            , params } []
             mkRequest :: PageParams -> GUC.Request
             mkRequest p = GUC.makeGetRequest session $ tableRoute p
 
@@ -338,13 +276,17 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
         localCategories <- R.useState' (mempty :: LocalCategories)
         paramsS <- R.useState' params
         let loader p = do
-              res <- get session $ tableRouteWithPage (p { params = fst paramsS, query = query })
+              let route = tableRouteWithPage (p { params = fst paramsS, query = query })
+              res <- get session $ route
+              liftEffect $ do
+                log2 "[pageLayout] table route" route
+                log2 "[pageLayout] table res" res
               pure $ handleResponse res
             render (Tuple count documents) = pagePaintRaw { documents
                                                           , layout: props { params = fst paramsS
                                                                           , totalRecords = count }
                                                           , localCategories
-                                                          , params: paramsS }
+                                                          , params: paramsS } []
         useLoader (path { params = fst paramsS }) loader render
 
 type PageProps = (
@@ -353,14 +295,14 @@ type PageProps = (
   , params :: T.Params
   )
 
-page :: T.Params -> Record PageLayoutProps -> Array DocumentsView -> R.Element
-page params layout documents = R.createElement pageCpt { documents, layout, params } []
+page :: R2.Component PageProps
+page = R.createElement pageCpt
 
 pageCpt :: R.Component PageProps
 pageCpt = R.hooksComponentWithModule thisModule "pageCpt" cpt where
   cpt { documents, layout, params } _ = do
     paramsS <- R.useState' params
-    pure $ pagePaint { documents, layout, params: paramsS }
+    pure $ pagePaint { documents, layout, params: paramsS } []
 
 type PagePaintProps = (
     documents :: Array DocumentsView
@@ -368,25 +310,29 @@ type PagePaintProps = (
   , params :: R.State T.Params
 )
 
-pagePaint :: Record PagePaintProps -> R.Element
-pagePaint props = R.createElement pagePaintCpt props []
+pagePaint :: R2.Component PagePaintProps
+pagePaint = R.createElement pagePaintCpt
 
 pagePaintCpt :: R.Component PagePaintProps
-pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt where
-  cpt { documents, layout, params } _ = do
-    localCategories <- R.useState' (mempty :: LocalCategories)
-    pure $ pagePaintRaw { documents: A.fromFoldable filteredRows, layout, localCategories, params }
-      where
-        orderWith =
-          case convOrderBy (fst params).orderBy of
-            Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
-            Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
-            Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
-            Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
-            Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
-            Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
-            _               -> identity -- the server ordering is enough here
-        filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
+pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt
+  where
+    cpt { documents, layout, params } _ = do
+      localCategories <- R.useState' (mempty :: LocalCategories)
+      pure $ pagePaintRaw { documents: A.fromFoldable filteredRows
+                          , layout
+                          , localCategories
+                          , params } []
+        where
+          orderWith =
+            case convOrderBy (fst params).orderBy of
+              Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
+              Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
+              Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
+              Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
+              Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
+              Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
+              _               -> identity -- the server ordering is enough here
+          filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
 
 
 type PagePaintRawProps = (
@@ -396,20 +342,29 @@ type PagePaintRawProps = (
   , params :: R.State T.Params
   )
 
-pagePaintRaw :: Record PagePaintRawProps -> R.Element
-pagePaintRaw props = R.createElement pagePaintRawCpt props []
+pagePaintRaw :: R2.Component PagePaintRawProps
+pagePaintRaw = R.createElement pagePaintRawCpt
 
 pagePaintRawCpt :: R.Component PagePaintRawProps
 pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt where
   cpt { documents
-      , layout: { corpusId, frontends, listId, nodeId, session, totalRecords }
+      , layout: { frontends
+                , listId
+                , mCorpusId
+                , nodeId
+                , session
+                , sidePanelTriggers: sidePanelTriggers@{ currentDocIdRef }
+                , totalRecords }
       , localCategories
       , params } _ = do
+
+    reload <- R.useState' 0
+
     pure $ T.table
       { colNames
       , container: T.defaultContainer { title: "Documents" }
       , params
-      , rows: rows localCategories
+      , rows: rows reload localCategories
       , totalRecords
       , wrapColElts
       }
@@ -417,67 +372,89 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
         sid = sessionId session
         gi Favorite  = "glyphicon glyphicon-star"
         gi _ = "glyphicon glyphicon-star-empty"
-        trashStyle Trash = {textDecoration: "line-through"}
-        trashStyle _ = {textDecoration: "none"}
+        trashClassName Trash _ = "trash"
+        trashClassName _ true = "active"
+        trashClassName _ false = ""
         corpusDocument
-          | Just cid <- corpusId = Routes.CorpusDocument sid cid listId
+          | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
-        colNames = T.ColumnName <$> [ "Tag", "Date", "Title", "Source"]
+        colNames = T.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        getCategory (localCategories /\ _) {_id, category} = fromMaybe category (localCategories ^. at _id)
-        rows localCategories = row <$> A.toUnfoldable documents
+        getCategory (lc /\ _) {_id, category} = fromMaybe category (lc ^. at _id)
+        rows reload lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
           where
-            row (DocumentsView r) =
+            row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                 caroussel session nodeId setLocalCategories r cat
+                            H.div { className: "column-tag flex" } [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
+                                                                   ]
+                          , H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
-                , H.div { style } [ R2.showText r.date ]
-                , H.div { style }
-                  [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ] ]
-                , H.div { style } [ H.text $ if r.source == "" then "Source" else r.source ]
+                , H.div { className: tClassName } [ R2.showText r.date ]
+                , H.div { className: tClassName } [
+                   H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ]
+                 ]
+                , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
+                , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
                 ]
               , delete: true }
               where
-                cat         = getCategory localCategories r
-                (_ /\ setLocalCategories) = localCategories
+                cat         = getCategory lc r
                 checked    = Trash == cat
-                style      = trashStyle cat
+                tClassName = trashClassName cat selected
                 className  = gi cat
+                selected   = R.readRef currentDocIdRef == Just r._id
 
----------------------------------------------------------
-sampleData' :: DocumentsView
-sampleData' = DocumentsView { _id : 1
-                            , url : ""
-                            , date : 2010
-                            , title : "title"
-                            , source : "source"
-                            , category : UnRead
-                            , ngramCount : 1}
+type DocChooser = (
+    listId            :: ListId
+  , mCorpusId         :: Maybe NodeID
+  , nodeId            :: NodeID
+  , selected          :: Boolean
+  , sidePanelTriggers :: Record SidePanelTriggers
+  , tableReload       :: ReloadS
+  )
 
-sampleData :: Array DocumentsView
---sampleData = replicate 10 sampleData'
-sampleData = map (\(Tuple t s) -> DocumentsView { _id : 1
-                                                , url : ""
-                                                , date : 2017
-                                                , title: t
-                                                , source: s
-                                                , category : UnRead
-                                                , ngramCount : 10}) sampleDocuments
+docChooser :: R2.Component DocChooser
+docChooser = R.createElement docChooserCpt
 
-sampleDocuments :: Array (Tuple String String)
-sampleDocuments = [Tuple "Macroscopic dynamics of the fusion process" "Journal de Physique Lettres",Tuple "Effects of static and cyclic fatigue at high temperature upon reaction bonded silicon nitride" "Journal de Physique Colloques",Tuple "Reliability of metal/glass-ceramic junctions made by solid state bonding" "Journal de Physique Colloques",Tuple "High temperature mechanical properties and intergranular structure of sialons" "Journal de Physique Colloques",Tuple "SOLUTIONS OF THE LANDAU-VLASOV EQUATION IN NUCLEAR PHYSICS" "Journal de Physique Colloques",Tuple "A STUDY ON THE FUSION REACTION 139La + 12C AT 50 MeV/u WITH THE VUU EQUATION" "Journal de Physique Colloques",Tuple "Atomic structure of \"vitreous\" interfacial films in sialon" "Journal de Physique Colloques",Tuple "MICROSTRUCTURAL AND ANALYTICAL CHARACTERIZATION OF Al2O3/Al-Mg COMPOSITE INTERFACES" "Journal de Physique Colloques",Tuple "Development of oxidation resistant high temperature NbTiAl alloys and intermetallics" "Journal de Physique IV Colloque",Tuple "Determination of brazed joint constitutive law by inverse method" "Journal de Physique IV Colloque",Tuple "Two dimensional estimates from ocean SAR images" "Nonlinear Processes in Geophysics",Tuple "Comparison Between New Carbon Nanostructures Produced by Plasma with Industrial Carbon Black Grades" "Journal de Physique III",Tuple "<i>Letter to the Editor:</i> SCIPION, a new flexible ionospheric sounder in Senegal" "Annales Geophysicae",Tuple "Is reducibility in nuclear multifragmentation related to thermal scaling?" "Physics Letters B",Tuple "Independence of fragment charge distributions of the size of heavy multifragmenting sources" "Physics Letters B",Tuple "Hard photons and neutral pions as probes of hot and dense nuclear matter" "Nuclear Physics A",Tuple "Surveying the nuclear caloric curve" "Physics Letters B",Tuple "A hot expanding source in 50 A MeV Xe+Sn central reactions" "Physics Letters B"]
+docChooserCpt :: R.Component DocChooser
+docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
+  where
+    cpt { mCorpusId: Nothing } _ = do
+      pure $ H.div {} []
 
-newtype SearchQuery = SearchQuery
-  { query :: Array String
-  , parent_id :: Int
+    cpt { listId
+        , mCorpusId: Just corpusId
+        , nodeId
+        , selected
+        , sidePanelTriggers: { triggerAnnotatedDocIdChange }
+        , tableReload: (_ /\ setReload) } _ = do
+
+      let eyeClass = if selected then "fa-eye" else "fa-eye-slash"
+
+      pure $ H.div { className: "doc-chooser" } [
+        H.span { className: "fa " <> eyeClass
+               , on: { click: onClick } } []
+      ]
+      where
+        onClick _ = do
+          -- log2 "[docChooser] onClick, listId" listId
+          -- log2 "[docChooser] onClick, corpusId" corpusId
+          -- log2 "[docChooser] onClick, nodeId" nodeId
+          R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
+          setReload $ (_ + 1)
+
+
+newtype SearchQuery = SearchQuery {
+    parent_id :: Int
+  , query :: Array String
   }
 
 
 instance encodeJsonSQuery :: EncodeJson SearchQuery where
   encodeJson (SearchQuery {query, parent_id})
-     = "query" := query
+    = "query" := query
     ~> "parent_id" := parent_id
     ~> jsonEmptyObject
 
@@ -485,8 +462,8 @@ instance encodeJsonSQuery :: EncodeJson SearchQuery where
 documentsRoute :: Int -> SessionRoute
 documentsRoute nodeId = NodeAPI Node (Just nodeId) "documents"
 
-tableRoute :: forall row. {nodeId :: Int, tabType :: TabType, listId :: Int | row} -> SessionRoute
-tableRoute {nodeId, tabType, listId} = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId)
+tableRoute :: forall row. { listId :: Int, nodeId :: Int, tabType :: TabType | row} -> SessionRoute
+tableRoute { listId, nodeId, tabType } = NodeAPI Node (Just nodeId) $ "table" <> "?tabType=" <> (showTabType' tabType) <> "&list=" <> (show listId)
 
 tableHashRoute :: Int -> TabType -> SessionRoute
 tableHashRoute nodeId tabType = NodeAPI Node (Just nodeId) $ "table/hash" <> "?tabType=" <> (showTabType' tabType)

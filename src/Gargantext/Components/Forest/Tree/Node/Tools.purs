@@ -6,6 +6,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
 import Data.String.CodeUnits as DSCU
+import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
@@ -24,6 +25,7 @@ import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.ReactTooltip as ReactTooltip
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node.Tools"
 
 ------------------------------------------------------------------------
@@ -247,7 +249,7 @@ checkboxes :: forall a
            -> R.Element
 checkboxes xs (val /\ set) =
   H.fieldset {} $ map (\a -> H.div {} [ H.input { type: "checkbox"
-                                           , checked: Set.member a val
+                                           , defaultChecked: Set.member a val
                                            , on: { click: \_ -> set
                                                              $ const
                                                              $ toggleSet a val
@@ -282,11 +284,19 @@ nodeLink p = R.createElement nodeLinkCpt p []
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
   where
-    cpt { frontends, id, isSelected, name, nodeType, session, handed, folderOpen} _ = do
+    cpt { folderOpen: (_ /\ setFolderOpen)
+        , frontends
+        , handed
+        , id
+        , isSelected
+        , name
+        , nodeType
+        , session
+        } _ = do
       popoverRef <- R.useRef null
 
       pure $
-        H.div { onClick: R2.effToggler folderOpen } 
+        H.div { on: { click: onClick } }
               [ H.a { data: { for: tooltipId
                             , tip: true
                             }
@@ -305,6 +315,13 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
               ]
 
       where
+        -- NOTE Don't toggle tree if it is not selected
+        -- click on closed -> open
+        -- click on open   -> ?
+        onClick _ = if isSelected then
+                      setFolderOpen (const true)
+                    else
+                      setFolderOpen (const true)
         tooltipId = "node-link-" <> show id
 -- END node link
 

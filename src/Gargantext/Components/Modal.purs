@@ -21,7 +21,7 @@ thisModule = "Gargantext.Components.Modal"
 
 type Props = ( setVisible :: R.Setter Boolean )
 
-modal :: Record Props -> Array R.Element -> R.Element
+modal :: R2.Component Props
 modal = R.createElement modalCpt
 
 modalCpt :: R.Component Props

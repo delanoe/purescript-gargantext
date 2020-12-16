@@ -17,6 +17,7 @@ import Data.Maybe (Maybe(..), fromJust, fromMaybe, isJust)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Console (logShow)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
@@ -41,6 +42,8 @@ import Web.File.FileList (FileList, item)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (Storage, getItem, setItem)
+
+type Component p = Record p -> Array R.Element -> R.Element
 
 newtype Point = Point { x :: Number, y :: Number }
 
@@ -108,9 +111,6 @@ select = createDOM "select"
 
 menu :: ElemFactory
 menu = createDOM "menu"
-
-effToggler :: forall e. R.State Boolean -> EffectFn1 e Unit
-effToggler (value /\ setValue) = mkEffectFn1 $ \_ -> setValue $ const $ not value
 
 keyCode :: forall event. event -> Effect Int
 keyCode = runEffectFn1 _keyCode
@@ -326,3 +326,22 @@ focus nEl = case toMaybe nEl of
 
 setIndeterminateCheckbox :: R.Element -> Boolean -> Effect R.Element
 setIndeterminateCheckbox el val = pure $ (el .= "indeterminate") val
+
+
+-- A "trigger" is a ref to a function which is used to make changes without
+-- modifying too much DOM.
+-- This is to escape passing explicit state to nested child components.
+type Trigger a = R.Ref (Maybe (a -> Effect Unit))
+
+callTrigger :: forall a. Trigger a -> a -> Effect Unit
+callTrigger tRef arg = case R.readRef tRef of
+  Nothing -> do
+    log2 "[callTrigger] trigger is empty" tRef
+    pure unit
+  Just t  -> t arg
+
+setTrigger :: forall a. Trigger a -> (a -> Effect Unit) -> Effect Unit
+setTrigger tRef fun = R.setRef tRef $ Just fun
+
+clearTrigger :: forall a. Trigger a -> Effect Unit
+clearTrigger tRef = R.setRef tRef Nothing

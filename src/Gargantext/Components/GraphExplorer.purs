@@ -20,6 +20,7 @@ import Reactix as R
 import Reactix.DOM.HTML as RH
 import Record as Record
 
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
@@ -40,20 +41,21 @@ import Gargantext.Utils.Reactix as R2
 thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer"
 
-type LayoutProps =
-  ( frontends     :: Frontends
+type LayoutProps = (
+    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  , backend       :: R.State (Maybe Backend)
+  , frontends     :: Frontends
   , graphId       :: GET.GraphId
   , handed        :: Types.Handed
   , mCurrentRoute :: AppRoute
   , session       :: Session
   , sessions      :: Sessions
   , showLogin     :: R.State Boolean
-  , backend       :: R.State (Maybe Backend)
   )
 
 type Props =
   ( graph          :: SigmaxT.SGraph
-  , graphVersion   :: R.State Int
+  , graphVersion   :: Types.ReloadS
   , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData      :: Maybe GET.MetaData
   | LayoutProps
@@ -70,7 +72,7 @@ explorerLayoutCpt = R.hooksComponentWithModule thisModule "explorerLayout" cpt
       graphVersion <- R.useState' 0
       pure $ explorerLayoutView graphVersion props
 
-explorerLayoutView :: R.State Int -> Record LayoutProps -> R.Element
+explorerLayoutView :: Types.ReloadS -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
     el = R.hooksComponentWithModule thisModule "explorerLayoutView" cpt
@@ -90,7 +92,9 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
   where
-    cpt props@{ frontends
+    cpt props@{ asyncTasksRef
+              , backend
+              , frontends
               , graph
               , graphId
               , graphVersion
@@ -101,7 +105,6 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
               , session
               , sessions
               , showLogin
-              , backend
               } _ = do
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
@@ -114,13 +117,14 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
       graphRef <- R.useRef null
       graphVersionRef       <- R.useRef (fst graphVersion)
       treeReload <- R.useState' 0
+      treeReloadRef <- R.useRef $ Just treeReload
       controls   <- Controls.useGraphControls { forceAtlasS
-                                              , graph
-                                              , graphId
-                                              , hyperdataGraph
-                                              , session
-                                              , treeReload: \_ -> (snd treeReload) $ (+) 1
-                                              }
+                                             , graph
+                                             , graphId
+                                             , hyperdataGraph
+                                             , session
+                                             , treeReload: \_ -> (snd treeReload) $ (+) 1
+                                             }
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -154,14 +158,17 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
               [ inner handed
                 [ rowControls [ Controls.controls controls ]
                 , R2.row $ mainLayout handed $
-                    tree { frontends
-                          , handed
-                          , mCurrentRoute
-                          , reload: treeReload
-                          , sessions
-                          , show: fst controls.showTree
-                          , showLogin: snd showLogin 
-                          , backend}
+                    tree { asyncTasksRef
+                         , backend
+                         , frontends
+                         , handed
+                         , mCurrentRoute
+                         , reload: treeReload
+                         , sessions
+                         , show: fst controls.showTree
+                         , showLogin: snd showLogin
+                         , treeReloadRef
+                         }
                     /\
                     RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
                     /\
@@ -208,9 +215,17 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { frontends, handed, mCurrentRoute: route, reload, sessions, showLogin, backend} =
+    tree { asyncTasksRef, backend, frontends, handed, mCurrentRoute: route, reload, sessions, showLogin, treeReloadRef } =
       RH.div {className: "col-md-2 graph-tree"} [
-        forest { frontends, handed, reload, route, sessions, showLogin, backend}
+        forest { appReload: reload
+               , asyncTasksRef
+               , backend
+               , frontends
+               , handed
+               , route
+               , sessions
+               , showLogin
+               , treeReloadRef } []
       ]
 
     mSidebar :: Maybe GET.MetaData
@@ -222,26 +237,28 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
 type TreeProps =
   (
-    frontends :: Frontends
-  , handed :: Types.Handed
+    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  , backend       :: R.State (Maybe Backend)
+  , frontends     :: Frontends
+  , handed        :: Types.Handed
   , mCurrentRoute :: AppRoute
-  , reload :: R.State Int
-  , sessions :: Sessions
-  , show :: Boolean
-  , showLogin :: R.Setter Boolean
-  , backend   :: R.State (Maybe Backend)
+  , reload        :: Types.ReloadS
+  , sessions      :: Sessions
+  , show          :: Boolean
+  , showLogin     :: R.Setter Boolean
+  , treeReloadRef :: R.Ref (Maybe Types.ReloadS)
   )
 
 type MSidebarProps =
   ( frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphId         :: GET.GraphId
-  , graphVersion    :: R.State Int
+  , graphVersion    :: Types.ReloadS
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , showSidePanel   :: R.State GET.SidePanelState
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
-  , treeReload      :: R.State Int
+  , treeReload      :: Types.ReloadS
   )
 
 type GraphProps = (
@@ -349,7 +366,7 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> R.State Int -> GET.GraphId -> Aff GET.HyperdataGraph
+getNodes :: Session -> Types.ReloadS -> GET.GraphId -> Aff GET.HyperdataGraph
 getNodes session (graphVersion /\ _) graphId =
   get session $ NodeAPI Types.Graph
                         (Just graphId)

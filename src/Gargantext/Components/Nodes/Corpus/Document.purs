@@ -8,6 +8,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 
 import Gargantext.Prelude (bind, pure, show, unit, ($), (<>), (<<<))
 
@@ -22,7 +23,7 @@ import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, sessionId)
-import Gargantext.Types (CTabNgramType(..), NodeType(..), TabSubType(..), TabType(..), ScoreType(..))
+import Gargantext.Types (CTabNgramType(..), ListId, NodeID, NodeType(..), TabSubType(..), TabType(..), ScoreType(..))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
 
@@ -35,24 +36,24 @@ publicationDate (Document doc@{publication_year: Just py, publication_month: Not
 publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Nothing}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm)
 publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Just pd}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm) <> "-" <> (U.zeroPad 2 pd)
 
-docViewWrapper :: Record Props -> R.Element
-docViewWrapper props = R.createElement docViewWrapperCpt props []
+docViewWrapper :: R2.Component Props
+docViewWrapper = R.createElement docViewWrapperCpt
 
 docViewWrapperCpt :: R.Component Props
 docViewWrapperCpt = R.hooksComponentWithModule thisModule "docViewWrapper" cpt
   where
-    cpt { loaded, path } _ = do
+    cpt props@{ loaded } _ = do
       state <- R.useState' $ initialState { loaded }
 
-      pure $ docView { loaded, path, state }
+      pure $ docView (Record.merge props { state }) []
 
 type DocViewProps = (
   state :: R.State State
   | Props
   )
 
-docView :: Record DocViewProps -> R.Element
-docView props = R.createElement docViewCpt props []
+docView :: R2.Component DocViewProps
+docView = R.createElement docViewCpt
 
 docViewCpt :: R.Component DocViewProps
 docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
@@ -83,26 +84,33 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
         --    H.text (stringifyWithIndent 2 (encodeJson (fst state)))
         --  ] ] <>
         [
-        H.div { className: "container1" }
+        H.div { className: "corpus-doc-view container1" }
         [
           R2.row
           [
-            R2.col 8
-            [ H.h4 {} [ annotate doc.title ]
+            R2.col 12
+            [ H.h4 {} [
+                H.span {} [
+                   badge "title"
+                 , annotate doc.title
+                ]
+              ]
             , H.ul { className: "list-group" }
-              [ li' [ H.span {} [ text' doc.source ]
-                    , badge "source"
+              [ li' [ badgeLi "source"
+                    , text' doc.source
                     ]
               -- TODO add href to /author/ if author present in
-              , li' [ H.span {} [ text' doc.authors ]
-                    , badge "authors"
+              , li' [ badgeLi "authors"
+                    , text' doc.authors
                     ]
-              , li' [ H.span {} [ H.text $ publicationDate $ Document doc ]
-                    , badge "date"
+              , li' [ badgeLi "date"
+                    , H.text $ publicationDate $ Document doc
                     ]
               ]
-            , badge "abstract"
-            , annotate doc.abstract
+            , H.span {} [
+                badge "abstract"
+              , annotate doc.abstract
+              ]
             , H.div { className: "jumbotron" }
               [ H.p {} [ H.text "Empty Full Text" ]
               ]
@@ -117,53 +125,67 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
                                                         , setTermList
                                                         , text }
           badge s = H.span { className: "badge badge-default badge-pill" } [ H.text s ]
+          badgeLi s = H.span { className: "list-group-item-heading" } [
+                        H.span { className: "badge-container" } [
+                          H.span { className: "badge badge-default badge-pill" } [ H.text s ]
+                        ]
+                      ]
           li' = H.li { className: "list-group-item justify-content-between" }
           setTermListOrAddA ngram Nothing        = addNewNgramA ngram
           setTermListOrAddA ngram (Just oldList) = setTermListA ngram <<< replace oldList
           setTermList ngram mOldList = dispatch <<< setTermListOrAddA (findNgramRoot ngrams ngram) mOldList
           -- Here the use of findNgramRoot makes that we always target the root of an ngram group.
-          text' x = H.text $ fromMaybe "Nothing" x
+          text' x = H.span { className: "list-group-item-text" } [ H.text $ fromMaybe "Nothing" x ]
           NodePoly {hyperdata: Document doc} = document
 
 type LayoutProps = (
-    corpusId :: Maybe Int
-  , listId :: Int
-  , nodeId :: Int
-  , session :: Session
+    listId         :: ListId
+  , mCorpusId      :: Maybe NodeID
+  , nodeId         :: NodeID
+  , session        :: Session
   )
 
-documentLayout :: Record LayoutProps -> R.Element
-documentLayout props = R.createElement documentLayoutCpt props []
+documentMainLayout :: R2.Component LayoutProps
+documentMainLayout = R.createElement documentMainLayoutCpt
+
+documentMainLayoutCpt :: R.Component LayoutProps
+documentMainLayoutCpt = R.hooksComponentWithModule thisModule "documentMainLayout" cpt
+  where
+    cpt props _ = do
+      pure $ R2.row [
+        R2.col 10 [
+           documentLayout props []
+           ]
+        ]
+
+documentLayout :: R2.Component LayoutProps
+documentLayout = R.createElement documentLayoutCpt
 
 documentLayoutCpt :: R.Component LayoutProps
 documentLayoutCpt = R.hooksComponentWithModule thisModule "documentLayout" cpt
   where
-    cpt { corpusId, listId, nodeId, session } _ = do
+    cpt props@{ nodeId, session } _ = do
       let sid = sessionId session
 
-      pure $ documentLayoutWithKey { corpusId
-                                   , key: show sid <> "-" <> show nodeId
-                                   , listId
-                                   , nodeId
-                                   , session }
+      pure $ documentLayoutWithKey (Record.merge props { key: show sid <> "-" <> show nodeId }) []
 
 type KeyLayoutProps = (
   key :: String
   | LayoutProps
   )
 
-documentLayoutWithKey :: Record KeyLayoutProps -> R.Element
-documentLayoutWithKey props = R.createElement documentLayoutWithKeyCpt props []
+documentLayoutWithKey :: R2.Component KeyLayoutProps
+documentLayoutWithKey = R.createElement documentLayoutWithKeyCpt
 
 documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
 documentLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "documentLayoutWithKey" cpt
   where
-    cpt { corpusId, listId, nodeId, session } _ = do
+    cpt { listId, mCorpusId, nodeId, session } _ = do
       useLoader path loadData $ \loaded ->
-        docViewWrapper {path, loaded}
+        docViewWrapper { loaded, path } []
       where
         tabType = TabDocument (TabNgramType CTabTerms)
-        path = { corpusId, listIds: [listId], nodeId, session, tabType }
+        path = { listIds: [listId], mCorpusId, nodeId, session, tabType }
 
 ------------------------------------------------------------------------
 
@@ -171,17 +193,17 @@ loadDocument :: Session -> Int -> Aff NodeDocument
 loadDocument session nodeId = get session $ NodeAPI Node (Just nodeId) ""
 
 loadData :: DocPath -> Aff LoadedData
-loadData {session, nodeId, listIds, tabType} = do
+loadData { listIds, nodeId, session, tabType } = do
   document <- loadDocument session nodeId
   ngramsTable <- loadNgramsTable
-    { session
+    { listIds
     , nodeId
-    , listIds
     , params: { offset : 0, limit : 100, orderBy: Nothing, searchType: SearchDoc}
-    , tabType
+    , scoreType: Occurrences
     , searchQuery: ""
+    , session
+    , tabType
     , termListFilter: Nothing
     , termSizeFilter: Nothing
-    , scoreType: Occurrences
     }
-  pure {document, ngramsTable}
+  pure { document, ngramsTable }

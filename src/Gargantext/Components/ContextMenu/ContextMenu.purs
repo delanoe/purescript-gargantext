@@ -21,22 +21,22 @@ import Reactix.DOM.HTML as HTML
 
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.ContextMenu.ContextMenu"
 
 type Props t = (
     x :: Number
   , y :: Number
-  , onClose :: Unit -> Effect Unit
-  , setMenu :: R.Setter (Maybe t)
+  , onClose :: Effect Unit
   )
 
-contextMenu :: forall t. Record (Props t) -> Array R.Element -> R.Element
+contextMenu :: forall t. R2.Component (Props t)
 contextMenu = R.createElement contextMenuCpt
 
 contextMenuCpt :: forall t. R.Component (Props t)
 contextMenuCpt = R.hooksComponentWithModule thisModule "contextMenu" cpt
   where
-    cpt menu@{ x, y, onClose, setMenu } children = do
+    cpt menu@{ x, y, onClose } children = do
       host <- R2.getPortalHost
       root <- R.useRef null
       rect /\ setRect <- R.useState $ \_ -> Nothing
@@ -45,7 +45,7 @@ contextMenuCpt = R.hooksComponentWithModule thisModule "contextMenu" cpt
           (\r -> setRect (\_ -> Just (Element.boundingRect r)))
           (toMaybe $ R.readRef root)
         pure $ pure unit
-      R.useLayoutEffect2 root rect (contextMenuEffect onClose setMenu root)
+      R.useLayoutEffect2 root rect (contextMenuEffect onClose root)
       let cs = [
             HTML.div { className: "popover-content" }
             [ HTML.div { className: "panel panel-default" }
@@ -57,27 +57,28 @@ contextMenuCpt = R.hooksComponentWithModule thisModule "contextMenu" cpt
       pure $ R.createPortal [ elems root menu rect $ cs ] host
     elems ref menu (Just rect) = HTML.div
         { ref
+        , key: "context-menu"
         , className: "context-menu"
         , style: position menu rect
         , data: {toggle: "popover", placement: "right"}
         }
     elems ref _ _ = HTML.div
         { ref
+        , key: "context-menu"
         , className: "context-menu"
         , data: {toggle: "popover", placement: "right"}
         }
 
 contextMenuEffect
   :: forall t.
-    (Unit -> Effect Unit)
-  -> R.Setter (Maybe t)
+     Effect Unit
   -> R.Ref (Nullable DOM.Element)
   -> Effect (Effect Unit)
-contextMenuEffect onClose setMenu rootRef =
+contextMenuEffect onClose rootRef =
   case R.readNullableRef rootRef of
     Just root -> do
-      let onClick = documentClickHandler onClose setMenu root
-      let onScroll = documentScrollHandler setMenu
+      let onClick = documentClickHandler onClose root
+      let onScroll = documentScrollHandler onClose
       DOM.addEventListener document "click" onClick
       DOM.addEventListener document "scroll" onScroll
       pure $ do
@@ -85,18 +86,14 @@ contextMenuEffect onClose setMenu rootRef =
         DOM.removeEventListener document "scroll" onScroll
     Nothing -> pure R.nothing
 
-documentClickHandler :: forall t. (Unit -> Effect Unit) -> R.Setter (Maybe t) -> DOM.Element -> Callback DE.MouseEvent
-documentClickHandler onClose hide menu =
+documentClickHandler :: Effect Unit -> DOM.Element -> Callback DE.MouseEvent
+documentClickHandler onClose menu =
   R2.named "hideMenuOnClickOutside" $ callback $ \e ->
-    if Element.contains menu (DE.target e)
-      then pure unit
-      else do
-        hide (const Nothing)
-        onClose unit
+    when (Element.contains menu (DE.target e)) onClose
 
-documentScrollHandler :: forall t. R.Setter (Maybe t) -> Callback DE.MouseEvent
-documentScrollHandler hide =
-  R2.named "hideMenuOnScroll" $ callback $ \e -> hide (const Nothing)
+documentScrollHandler :: Effect Unit -> Callback DE.MouseEvent
+documentScrollHandler onClose =
+  R2.named "hideMenuOnScroll" $ callback $ \e -> onClose
 
 position :: forall t. Record (Props t) -> DOMRect -> { left :: Number, top :: Number }
 position mouse {width: menuWidth, height: menuHeight} = {left, top}

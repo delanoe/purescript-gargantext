@@ -15,35 +15,46 @@ import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
-import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), ReloadS)
+import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts"
 
-display :: String -> Array R.Element -> R.Element
-display title elems =
-  H.div { className: "container-fluid" }
-  [ H.div { className: "row", id: "contact-page-header" }
-    [ H.div { className: "col-md-6"} [ H.h3 {} [ H.text title ] ]
-    , H.div { className: "col-md-8"} []
-    , H.div { className: "col-md-2"} [ H.span {} [ H.text "" ] ]
-    ]
-  , H.div { className: "row", id: "contact-page-info" }
-    [ H.div { className: "col-md-12" }
-      [ H.div { className: "row" }
-        [ H.div { className: "col-md-2" } [ H.img { src: "/images/Gargantextuel-212x300.jpg"} ]
-        , H.div { className: "col-md-1"} []
-        , H.div { className: "col-md-8"} elems
-        ]]]]
+type DisplayProps = (
+  title :: String
+  )
+
+display :: R2.Component DisplayProps
+display = R.createElement displayCpt
+
+displayCpt :: R.Component DisplayProps
+displayCpt = R.hooksComponentWithModule thisModule "display" cpt
+  where
+    cpt { title } children = do
+      pure $ H.div { className: "container-fluid" }
+        [ H.div { className: "row", id: "contact-page-header" }
+          [ H.div { className: "col-md-6"} [ H.h3 {} [ H.text title ] ]
+          , H.div { className: "col-md-8"} []
+          , H.div { className: "col-md-2"} [ H.span {} [ H.text "" ] ]
+          ]
+        , H.div { className: "row", id: "contact-page-info" }
+          [ H.div { className: "col-md-12" }
+            [ H.div { className: "row" }
+              [ H.div { className: "col-md-2" } [ H.img { src: "/images/Gargantextuel-212x300.jpg"} ]
+              , H.div { className: "col-md-1"} []
+              , H.div { className: "col-md-8"} children
+              ]]]]
 
 -- | TODO format data in better design (UI) shape
 contactInfos :: HyperdataUser -> (HyperdataUser -> Effect Unit) -> Array R.Element
@@ -144,9 +155,12 @@ infoRender (Tuple title content) =
   , H.span {} [H.text content] ]
 
 type LayoutProps = (
-    frontends :: Frontends
-  , nodeId :: Int
-  , session :: Session
+    appReload     :: ReloadS
+  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  , frontends     :: Frontends
+  , nodeId        :: Int
+  , session       :: Session
+  , treeReloadRef :: R.Ref (Maybe ReloadS)
   )
 
 type KeyLayoutProps = (
@@ -160,10 +174,18 @@ userLayout props = R.createElement userLayoutCpt props []
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = R.hooksComponentWithModule thisModule "userLayout" cpt
   where
-    cpt { frontends, nodeId, session } _ = do
+    cpt { appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
       let sid = sessionId session
 
-      pure $ userLayoutWithKey { frontends, key: show sid <> "-" <> show nodeId, nodeId, session }
+      pure $ userLayoutWithKey {
+          appReload
+        , asyncTasksRef
+        , frontends
+        , key: show sid <> "-" <> show nodeId
+        , nodeId
+        , session
+        , treeReloadRef
+        }
 
 userLayoutWithKey :: Record KeyLayoutProps -> R.Element
 userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
@@ -171,21 +193,32 @@ userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey" cpt
   where
-    cpt { frontends, nodeId, session } _ = do
+    cpt { appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
       reload <- R.useState' 0
 
-      cacheState <- R.useState' NT.CacheOn
+      cacheState <- R.useState' LT.CacheOn
+
+      sidePanelTriggers <- LT.emptySidePanelTriggers
 
       useLoader {nodeId, reload: fst reload, session} getContactWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
-            display (fromMaybe "no name" name) (contactInfos hyperdata (onUpdateHyperdata reload))
-          , Tabs.tabs { cacheState, contactData, frontends, nodeId, session }
+            display { title: fromMaybe "no name" name } (contactInfos hyperdata (onUpdateHyperdata reload))
+          , Tabs.tabs {
+                 appReload
+               , asyncTasksRef
+               , cacheState
+               , contactData
+               , frontends
+               , nodeId
+               , session
+               , sidePanelTriggers
+               , treeReloadRef
+               }
           ]
       where
-        onUpdateHyperdata :: R.State Int -> HyperdataUser -> Effect Unit
+        onUpdateHyperdata :: ReloadS -> HyperdataUser -> Effect Unit
         onUpdateHyperdata (_ /\ setReload) hd = do
-          log2 "[onUpdateHyperdata] hd" hd
           launchAff_ $ do
             _ <- saveContactHyperdata session nodeId hd
             liftEffect $ setReload $ (+) 1
@@ -211,8 +244,8 @@ saveContactHyperdata session id h = do
   put session (Routes.NodeAPI Node (Just id) "") h
 
 
-type AnnuaireLayoutProps =
-  ( annuaireId :: Int
+type AnnuaireLayoutProps = (
+    annuaireId :: Int
   | LayoutProps )
 
 
@@ -222,14 +255,27 @@ annuaireUserLayout props = R.createElement annuaireUserLayoutCpt props []
 annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
 annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayout" cpt
   where
-    cpt { annuaireId, frontends, nodeId, session } _ = do
-      cacheState <- R.useState' NT.CacheOn
+    cpt { annuaireId, appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
+      cacheState <- R.useState' LT.CacheOn
+
+      sidePanelTriggers <- LT.emptySidePanelTriggers
 
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
-          H.ul { className: "col-md-12 list-group" }
-          [ display (fromMaybe "no name" name) (contactInfos hyperdata onUpdateHyperdata)
-          , Tabs.tabs { cacheState, contactData, frontends, nodeId, session } ]
+          H.ul { className: "col-md-12 list-group" } [
+            display { title: fromMaybe "no name" name } (contactInfos hyperdata onUpdateHyperdata)
+          , Tabs.tabs {
+                 appReload
+               , asyncTasksRef
+               , cacheState
+               , contactData
+               , frontends
+               , nodeId
+               , session
+               , sidePanelTriggers
+               , treeReloadRef
+               }
+          ]
 
       where
         onUpdateHyperdata :: HyperdataUser -> Effect Unit

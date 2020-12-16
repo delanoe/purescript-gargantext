@@ -1,7 +1,6 @@
 -- | A module for authenticating to create sessions and handling them
 module Gargantext.Sessions where
 
-import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:))
 import Data.Argonaut.Core (Json, fromArray, jsonEmptyObject, stringify)
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
@@ -10,32 +9,38 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
-import Data.Maybe (Maybe(..))
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Traversable (traverse)
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<), bind)
+import Reactix as R
+import Web.Storage.Storage (getItem, removeItem, setItem)
+
 import Gargantext.Components.Login.Types (AuthData(..), AuthInvalid(..), AuthRequest(..), AuthResponse(..), TreeId)
+import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend(..), backendUrl, sessionPath, toUrl)
 import Gargantext.Routes (SessionRoute)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
 import Gargantext.Utils.Reactix (getls)
 import Gargantext.Utils.Reactix as R2
-import Prelude (class Eq, class Show, Unit, const, otherwise, pure, show, unit, ($), (*>), (<*), (<$>), (<>), (==), (/=), (>>=), (<<<), bind)
-import Reactix as R
-import Web.Storage.Storage (getItem, removeItem, setItem)
 
 
 -- | A Session represents an authenticated session for a user at a
 -- | backend. It contains a token and root tree id.
 newtype Session = Session
   { backend  :: Backend
-  , username :: String
+  , caches   :: Map Int NT.CacheState  -- whether cache is turned on for node id
   , token    :: String
   , treeId   :: TreeId
+  , username :: String
   }
 
 ------------------------------------------------------------------------
@@ -64,21 +69,23 @@ sessionId = SessionId <<< show
 --------------------
 -- | JSON instances
 instance encodeJsonSession :: EncodeJson Session where
-  encodeJson (Session {backend, username, token, treeId})
-    =  "backend"  := encodeJson backend
-    ~> "username" := username
-    ~> "token"    :=  token
+  encodeJson (Session { backend, caches, username, token, treeId })
+    = "backend"  := encodeJson backend
+    ~> "caches"   := encodeJson caches
+    ~> "token"    := token
     ~> "treeId"   := treeId
+    ~> "username" := username
     ~> jsonEmptyObject
 
 instance decodeJsonSession :: DecodeJson Session where
   decodeJson json = do
     obj      <- decodeJson json
     backend  <- obj .: "backend"
-    username <- obj .: "username"
+    caches   <- obj .: "caches"
     token    <- obj .: "token"
     treeId   <- obj .: "treeId"
-    pure $ Session { backend, username, token, treeId}
+    username <- obj .: "username"
+    pure $ Session { backend, caches, token, treeId, username }
 
 ------------------------------------------------------------------------
 
@@ -110,7 +117,9 @@ instance encodeJsonSessions :: EncodeJson Sessions where
 unSessions :: Sessions -> Array Session
 unSessions (Sessions {sessions:s}) = A.fromFoldable s
 
-useSessions :: R.Hooks (R2.Reductor Sessions Action)
+type Reductor = R2.Reductor Sessions Action
+
+useSessions :: R.Hooks Reductor
 useSessions = R2.useReductor actAndSave (const loadSessions) unit
   where
     actAndSave :: R2.Actor Sessions Action
@@ -124,10 +133,18 @@ cons :: Session -> Sessions -> Sessions
 cons s (Sessions {sessions:ss}) = Sessions {sessions:(Seq.cons s ss)}
 
 tryCons :: Session -> Sessions -> Either Unit Sessions
-tryCons s ss = try (lookup sid ss) where
-  sid = sessionId s
-  try Nothing = Right (cons s ss)
-  try _ = Left unit
+tryCons s ss = try $ lookup sid ss
+  where
+    sid = sessionId s
+    try Nothing = Right (cons s ss)
+    try _ = Left unit
+
+update :: Session -> Sessions -> Sessions
+update s ss = up $ lookup sid ss
+  where
+    sid = sessionId s
+    up Nothing = cons s ss
+    up _ = cons s $ remove sid ss
 
 remove :: SessionId -> Sessions -> Sessions
 remove sid (Sessions {sessions:ss}) = Sessions {sessions: Seq.filter f ss} where
@@ -157,6 +174,7 @@ instance toUrlSessionString :: ToUrl Session String where
 data Action
   = Login Session
   | Logout Session
+  | Update Session
 
 act :: Sessions -> Action -> Effect Sessions
 act ss (Login s) =
@@ -167,18 +185,26 @@ act old@(Sessions ss) (Logout s) =
   case tryRemove (sessionId s) old of
     Right new -> pure $ new
     _ -> pure old <* log2 "Logged out of stale session:" (sessionId s)
+act ss (Update s) = saveSessions $ update s ss
 
 -- Key we will store the data under
 localStorageKey :: String
 localStorageKey = "garg-sessions"
 
 empty :: Sessions
-empty = Sessions {sessions:Seq.empty}
+empty = Sessions { sessions: Seq.empty }
 
 -- True if there are no sessions stored
 null :: Sessions -> Boolean
-null (Sessions {sessions:seq}) = Seq.null seq
+null (Sessions { sessions: seq }) = Seq.null seq
 
+getCacheState :: NT.CacheState -> Session -> Int -> NT.CacheState
+getCacheState defaultCacheState (Session { caches }) nodeId =
+  fromMaybe defaultCacheState $ Map.lookup nodeId caches
+
+setCacheState :: Session -> Int -> NT.CacheState -> Session
+setCacheState (Session session@{ caches }) nodeId cacheState =
+  Session $ session { caches = Map.insert nodeId cacheState caches }
 
 -- | Will attempt to load saved sessions from localstorage. should log
 -- | if decoding fails
@@ -208,6 +234,12 @@ saveSessions sessions = effect *> pure sessions where
     | null sessions = rem
     | otherwise = set (stringify $ encodeJson sessions)
 
+updateSession :: Session -> Effect Unit
+updateSession s = do
+  ss <- loadSessions
+  _ <- saveSessions $ update s ss
+  pure unit
+
 postAuthRequest :: Backend -> AuthRequest -> Aff (Either String Session)
 postAuthRequest backend ar@(AuthRequest {username}) =
   decode <$> REST.post Nothing (toUrl backend "auth") ar
@@ -215,7 +247,7 @@ postAuthRequest backend ar@(AuthRequest {username}) =
     decode (AuthResponse ar2)
       | {inval: Just (AuthInvalid {message})}     <- ar2 = Left message
       | {valid: Just (AuthData {token, tree_id})} <- ar2 =
-          Right $ Session { backend, username, token, treeId: tree_id }
+          Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username }
       | otherwise = Left "Invalid response from server"
 
 get :: forall a p. DecodeJson a => ToUrl Session p => Session -> p -> Aff a

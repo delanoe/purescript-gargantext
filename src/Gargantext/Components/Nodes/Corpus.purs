@@ -26,18 +26,17 @@ import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), AffTableResult)
+import Gargantext.Types (NodeType(..), AffTableResult, ReloadS)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus"
 
 type Props =
   ( nodeId  :: Int
   , session :: Session
   )
-
-type Reload = R.State Int
 
 type KeyProps =
   ( key :: String
@@ -70,7 +69,7 @@ corpusLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "corpusLayoutWith
 
 type ViewProps =
   ( corpus  :: NodePoly Hyperdata
-  , reload  :: Reload
+  , reload  :: ReloadS
   | Props
   )
 
@@ -123,9 +122,9 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
     saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
 
     onClickSave :: forall e. { fields :: R.State FTFieldsWithIndex
-                             , nodeId :: Int
-                             , reload :: R.State Int
-                             , session :: Session } -> e -> Effect Unit
+                       , nodeId :: Int
+                       , reload :: ReloadS
+                       , session :: Session } -> e -> Effect Unit
     onClickSave {fields: (fieldsS /\ _), nodeId, reload: (_ /\ setReload), session} _ = do
       log2 "[corpusLayoutViewCpt] onClickSave fieldsS" fieldsS
       launchAff_ do
@@ -174,12 +173,12 @@ fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt
         fromMaybe fields $
           List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields
 
-    onMoveDown :: R.State Int -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
+    onMoveDown :: ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onMoveDown (_ /\ setMasterKey) (fs /\ setFields) idx _ = do
       setMasterKey $ (+) 1
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
 
-    onMoveUp :: R.State Int -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
+    onMoveUp :: ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onMoveUp (_ /\ setMasterKey) (_ /\ setFields) idx _ = do
       setMasterKey $ (+) 1
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
