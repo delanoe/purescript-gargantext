@@ -11,9 +11,11 @@
 -- | 2. We will need a more ambitious search algorithm for skipgrams.
 module Gargantext.Components.Annotation.AnnotatedField where
 
-import Data.List ( List(..), (:) )
+import Data.Array as A
+import Data.List ( List(..), (:), length )
 import Data.Maybe ( Maybe(..), maybe )
-import Data.Tuple (Tuple(..))
+import Data.String.Common ( joinWith )
+import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ( (/\) )
 --import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
@@ -25,9 +27,10 @@ import Reactix.SyntheticEvent as E
 import Gargantext.Prelude
 
 import Gargantext.Types (CTabNgramType(..), TermList)
-import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
+import Gargantext.Components.Annotation.Utils ( termBootstrapClass, termClass )
 import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
 import Gargantext.Components.Annotation.Menu ( annotationMenu, MenuType(..) )
+import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
 
 thisModule :: String
@@ -44,8 +47,8 @@ type MouseEvent = E.SyntheticEvent DE.MouseEvent
 -- defaultProps :: Record Props
 -- defaultProps = { ngrams: NgramsTable Map.empty, text: Nothing, setTermList: \_ _ _ -> pure unit }
 
-annotatedField :: Record Props -> R.Element
-annotatedField p = R.createElement annotatedFieldComponent p []
+annotatedField :: R2.Component Props
+annotatedField = R.createElement annotatedFieldComponent
 
 annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField" cpt
@@ -103,9 +106,7 @@ annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField"
       pure $ HTML.div wrapperProps
         [ maybe (HTML.div {} []) annotationMenu $ R.readRef menuRef
         , HTML.div { className: "annotated-field-runs" }
-             $ annotateRun
-            <$> wrap
-            <$> compile ngrams fieldText
+             ((\p -> annotateRun p []) <$> wrap <$> compile ngrams fieldText)
         ]
 
 compile :: NgramsTable -> Maybe String -> Array (Tuple String (List (Tuple NgramsTerm TermList)))
@@ -119,8 +120,8 @@ type Run =
   , text :: String
   )
 
-annotateRun :: Record Run -> R.Element
-annotateRun p = R.createElement annotatedRunComponent p []
+annotateRun :: R2.Component Run
+annotateRun = R.createElement annotatedRunComponent
 
 annotatedRunComponent :: R.Component Run
 annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
@@ -128,10 +129,10 @@ annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
     cpt    { list: Nil, onSelect, text }     _ =
       HTML.span { on: { mouseUp: onSelect Nothing } } [ HTML.text text ]
 
-    cpt    { list: (ngram /\ list) : _otherLists, onSelect, text } _ =
-      -- TODO _otherLists
+    cpt    { list: lst@((ngram /\ list) : otherLists), onSelect, text } _ =
       HTML.span { className
                 , on: { click: onSelect (Just (ngram /\ list)) } } [ HTML.text text ]
       where
-        className = "annotation-run bg-" <> termBootstrapClass list
-
+        bgClasses = joinWith " " $ A.fromFoldable $ termClass <<< snd <$> lst
+        -- className = "annotation-run bg-" <> termBootstrapClass list
+        className = "annotation-run " <> bgClasses

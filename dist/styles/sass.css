@@ -754,4 +754,49 @@ li .leaf:hover a.settings {
   height: 20px;
 }
 
+.annotation-run {
+  cursor: pointer;
+}
+.annotation-run.candidate-term.graph-term.stop-term {
+  color: #000;
+  background-image: linear-gradient(rgba(255, 152, 0, 0.34), rgba(255, 152, 0, 0.34)), linear-gradient(rgba(67, 160, 71, 0.33), rgba(67, 160, 71, 0.33)), linear-gradient(rgba(229, 57, 53, 0.33), rgba(229, 57, 53, 0.33));
+}
+.annotation-run.candidate-term.graph-term {
+  color: #000;
+  background-image: linear-gradient(rgba(255, 152, 0, 0.5), rgba(255, 152, 0, 0.5)), linear-gradient(rgba(67, 160, 71, 0.5), rgba(67, 160, 71, 0.5));
+}
+.annotation-run.candidate-term.stop-term {
+  color: #000;
+  background-image: linear-gradient(rgba(255, 152, 0, 0.5), rgba(255, 152, 0, 0.5)), linear-gradient(rgba(229, 57, 53, 0.5), rgba(229, 57, 53, 0.5));
+}
+.annotation-run.graph-term.stop-term {
+  color: #000;
+  background-image: linear-gradient(rgba(67, 160, 71, 0.5), rgba(67, 160, 71, 0.5)), linear-gradient(rgba(229, 57, 53, 0.5), rgba(229, 57, 53, 0.5));
+}
+.annotation-run.candidate-term {
+  color: #000;
+  background-color: #FF9800;
+}
+.annotation-run.graph-term {
+  color: #000;
+  background-color: #43A047;
+}
+.annotation-run.stop-term {
+  color: #000;
+  background-color: #E53935;
+}
+
+.context-menu .candidate-term {
+  color: #000;
+  background-color: #FF9800;
+}
+.context-menu .graph-term {
+  color: #000;
+  background-color: #43A047;
+}
+.context-menu .stop-term {
+  color: #000;
+  background-color: #E53935;
+}
+
 /*# sourceMappingURL=sass.css.map */
