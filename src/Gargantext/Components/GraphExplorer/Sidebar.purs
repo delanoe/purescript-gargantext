@@ -224,7 +224,7 @@ deleteNode :: TermList
            -> Record SigmaxT.Node
            -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = do
-    ret <- NTC.putNgramsPatches coreParams versioned
+    ret  <- NTC.putNgramsPatches coreParams versioned
     task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
     pure ret
   where

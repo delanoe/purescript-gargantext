@@ -37,6 +37,7 @@ import Gargantext.Prelude
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Components.Table.Types as T
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
@@ -319,21 +320,16 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
         , versioned: Versioned { data: initTable }
         , withAutoUpdate } _ = do
 
-      let syncResetBtns = [ syncResetButtons 
-                            { afterSync: chartsAfterSync
-                            , ngramsLocalPatch
-                            , performAction: performAction <<< CoreAction
-                            }
-                          ]
-
       pure $ R.fragment $
-        autoUpdate <> syncResetBtns <> [
+        autoUpdate <> [
           H.h4 {style: {textAlign : "center"}}
                [ H.span {className: "glyphicon glyphicon-hand-down"} []
                , H.text "Extracted Terms"
                ]
-        , search
-        , T.table { colNames
+        , search ]
+        <> syncResetButton <>
+        [ T.table { syncResetButton
+                  , colNames
                   , container: tableContainer { dispatch: performAction
                                               , ngramsChildren
                                               , ngramsParent
@@ -350,28 +346,30 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                                              , ngramsSelection
                                              }
                   }
-        ] <> syncResetBtns
+        ] <> syncResetButton
+
       where
-        chartsAfterSync _ = do
-          task <- postNgramsChartsAsync path'
-          liftEffect $ do
-            log2 "[chartsAfterSync] Synchronize task" task
-            case R.readRef asyncTasksRef of
-              Nothing -> log "[chartsAfterSync] asyncTasksRef is Nothing"
-              Just asyncTasks -> do
-                snd asyncTasks $ GAT.Insert nodeId task
-                case R.readRef treeReloadRef of
-                  Nothing -> log "[chartsAfterSync] can't reload tree: ref empty"
-                  Just treeReload -> do
-                    snd treeReload $ (_ + 1)
-                    -- snd appReload $ (_ + 1)
+
+        syncResetButton = syncResetBtns (chartsAfterSync path' asyncTasksRef nodeId treeReloadRef)
+                         ngramsLocalPatch
+                         performAction
+
 
         autoUpdate :: Array R.Element
         autoUpdate = if withAutoUpdate then
-                       [ R2.buff $ autoUpdateElt {
-                              duration: 5000
-                            , effect: performAction $ CoreAction $ Synchronize { afterSync: chartsAfterSync }
-                            } ]
+                       [ R2.buff
+                       $ autoUpdateElt
+                         { duration: 5000
+                         , effect: performAction
+                         $ CoreAction
+                         $ Synchronize { afterSync: chartsAfterSync
+                                                      path'
+                                                      asyncTasksRef
+                                                      nodeId
+                                                      treeReloadRef
+                                        }
+                         }
+                       ]
                      else []
 
         setParentResetChildren :: Maybe NgramsTerm -> State -> State
@@ -747,3 +745,6 @@ sumOccurrences nt = sumOccChildren mempty
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> R.Element
 optps1 { desc, mval } = H.option { value: value } [H.text desc]
   where value = maybe "" show mval
+
+
+

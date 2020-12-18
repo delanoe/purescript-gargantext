@@ -27,6 +27,7 @@ import Gargantext.Prelude
 import Gargantext.Components.Category (caroussel)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory)
 import Gargantext.Components.DocsTable.Types
+import Gargantext.Components.Table.Types as T
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
 import Gargantext.Components.Table as T
@@ -361,7 +362,8 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
     reload <- R.useState' 0
 
     pure $ T.table
-      { colNames
+      { syncResetButton : [ H.div {} [] ]
+      , colNames
       , container: T.defaultContainer { title: "Documents" }
       , params
       , rows: rows reload localCategories

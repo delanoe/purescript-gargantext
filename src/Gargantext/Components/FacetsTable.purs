@@ -26,6 +26,7 @@ import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
 import Gargantext.Components.Search
 import Gargantext.Components.Table as T
+import Gargantext.Components.Table.Types as T
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
@@ -304,7 +305,10 @@ pageCpt :: R.Component PageProps
 pageCpt = R.hooksComponentWithModule thisModule "page" cpt
   where
     cpt {frontends, totalRecords, container, deletions, documents, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
-      pure $ T.table { rows, container, colNames, totalRecords, params, wrapColElts }
+      pure $ T.table { syncResetButton : [ H.div {} [] ]
+                     , rows, container, colNames
+                     , totalRecords, params, wrapColElts
+                     }
       where
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
         params = (fst path).params /\ setParams

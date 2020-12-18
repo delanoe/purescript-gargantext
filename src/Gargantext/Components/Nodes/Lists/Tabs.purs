@@ -63,10 +63,11 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
 
       pure $ Tab.tabs { selected, tabs: tabs' }
       where
-        tabs' = [ "Authors"    /\ view Authors
+        tabs' = [ "Terms"      /\ view Terms
+                , "Authors"    /\ view Authors
                 , "Institutes" /\ view Institutes
                 , "Sources"    /\ view Sources
-                , "Terms"      /\ view Terms ]
+                ]
         view mode = ngramsView { appReload
                                , asyncTasksRef
                                , cacheState

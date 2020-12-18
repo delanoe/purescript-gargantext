@@ -17,19 +17,13 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
-import Gargantext.Components.NgramsTable.Core ( Action(..), Dispatch, NgramsElement, NgramsPatch(..)
-                                              , NgramsTable, NgramsTablePatch, NgramsTerm, Replace
-                                              , _NgramsElement, _NgramsRepoElement, _PatchMap, _children
-                                              , _list, _ngrams, _occurrences, ngramsTermText, replace
-                                              , singletonNgramsTablePatch, setTermListA
-                                              )
+import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
 
 thisModule = "Gargantext.Components.NgramsTable.Components"
-
 
 type SearchInputProps =
   ( key :: String  -- to prevent refreshing & losing input
@@ -71,8 +65,7 @@ searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
                     }
 
 type SelectionCheckboxProps =
-  (
-    allNgramsSelected :: Boolean
+  ( allNgramsSelected :: Boolean
   , dispatch          :: Dispatch
   , ngramsSelection   :: Set NgramsTerm
   )
@@ -137,8 +130,7 @@ type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 
 type TreeProps =
-  (
-    ngramsClick :: NgramsClick
+  ( ngramsClick :: NgramsClick
   , ngramsDepth :: NgramsDepth
   , ngramsEdit  :: NgramsClick
   , ngramsStyle :: Array DOM.Props

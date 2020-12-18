@@ -17,6 +17,7 @@ import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
+import Gargantext.Components.Table.Types as T
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -149,7 +150,11 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
   where
     cpt { session, pagePath, frontends
         , table: ({count: totalRecords, docs})} _ = do
-      pure $ T.table { rows, params, container, colNames, totalRecords, wrapColElts }
+      pure $ T.table { syncResetButton : [ H.div {} [] ]
+                     , rows, params, container
+                     , colNames, totalRecords
+                     , wrapColElts
+                     }
       where
         path = fst pagePath
         rows = (\c -> {

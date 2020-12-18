@@ -24,7 +24,7 @@ import Reactix.SyntheticEvent as E
 
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
-import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
+import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Annotation.Menu ( annotationMenu, MenuType(..) )
 import Gargantext.Utils.Selection as Sel
 

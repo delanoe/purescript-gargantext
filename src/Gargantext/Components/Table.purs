@@ -7,12 +7,15 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Data.Tuple (fst, snd)
+import Effect.Aff (Aff, launchAff_)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
+import Gargantext.Sessions (Session, get)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Components.Table.Types
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Search
 import Gargantext.Utils.Reactix as R2
@@ -20,60 +23,6 @@ import Gargantext.Utils.Reactix (effectLink)
 
 thisModule :: String
 thisModule = "Gargantext.Components.Table"
-
-type TableContainerProps =
-  ( pageSizeControl     :: R.Element
-  , pageSizeDescription :: R.Element
-  , paginationLinks     :: R.Element
-  , tableHead           :: R.Element
-  , tableBody           :: Array R.Element
-  )
-
-type Row = { row :: R.Element, delete :: Boolean }
-type Rows = Seq.Seq Row
-
-type OrderBy = Maybe (OrderByDirection ColumnName)
-
-type Params = { limit      :: Int
-              , offset     :: Int
-              , orderBy    :: OrderBy
-              , searchType :: SearchType
-              }
-
-newtype ColumnName = ColumnName String
-
-derive instance genericColumnName :: Generic ColumnName _
-
-instance showColumnName :: Show ColumnName where
-  show = genericShow
-
-derive instance eqColumnName :: Eq ColumnName
-
-columnName :: ColumnName -> String
-columnName (ColumnName c) = c
-
-data OrderByDirection a = ASC a | DESC a
-
-derive instance genericOrderByDirection :: Generic (OrderByDirection a) _
-
-instance showOrderByDirection :: Show a => Show (OrderByDirection a) where
-  show = genericShow
-
-derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
-
-orderByToForm :: OrderByDirection ColumnName -> String
-orderByToForm (ASC (ColumnName x)) = x <> "Asc"
-orderByToForm (DESC (ColumnName x)) = x <> "Desc"
-
-type Props =
-  ( colNames     :: Array ColumnName
-  , container    :: Record TableContainerProps -> R.Element
-  , params       :: R.State Params
-  , rows         :: Rows
-  , totalRecords :: Int
-  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
-                 -- ^ Use `const identity` as a default behavior.
-  )
 
 type State =
   { page       :: Int
@@ -174,7 +123,7 @@ table props = R.createElement tableCpt props []
 tableCpt :: R.Component Props
 tableCpt = R.hooksComponentWithModule thisModule "table" cpt
   where
-    cpt {container, colNames, wrapColElts, totalRecords, rows, params} _ = do
+    cpt {container, syncResetButton, colNames, wrapColElts, totalRecords, rows, params} _ = do
       let
         state = paramsState $ fst params
         ps = pageSizes2Int state.pageSize
@@ -187,11 +136,12 @@ tableCpt = R.hooksComponentWithModule thisModule "table" cpt
             cs =
               wrapColElts c $
               case state.orderBy of
-                Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC ", lnk Nothing (columnName c)]
-                Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ",  lnk Nothing (columnName c)]
+                Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC " , lnk Nothing (columnName c)]
+                Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ", lnk Nothing (columnName c)]
                 _ -> [lnk (Just (ASC c)) (columnName c)]
       pure $ container
-        { pageSizeControl: sizeDD { params }
+        { syncResetButton
+        , pageSizeControl: sizeDD { params }
         , pageSizeDescription: textDescription state.page state.pageSize totalRecords
         , paginationLinks: pagination params totalPages
         , tableBody: map _.row $ A.fromFoldable rows
@@ -213,17 +163,18 @@ filterRows { params: { limit, offset, orderBy } } rs = newRs
     newRs = Seq.take limit $ Seq.drop offset $ rs
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
-defaultContainer {title} props = R.fragment
-  [ R2.row
-    [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
-    , H.div {className: "col-md-4"} [ props.paginationLinks ]
-    , H.div {className: "col-md-4"} [ props.pageSizeControl ]
-    ]
-  , H.table {className: "table"}
-    [ H.thead {className: "thead-dark"} [ props.tableHead ]
-    , H.tbody {} props.tableBody
-    ]
-  ]
+defaultContainer {title} props = R.fragment $ props.syncResetButton <> controls
+  where
+    controls = [ R2.row
+                 [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
+                 , H.div {className: "col-md-4"} [ props.paginationLinks ]
+                 , H.div {className: "col-md-4"} [ props.pageSizeControl ]
+                 ]
+               , H.table {className: "table"}
+                 [ H.thead {className: "thead-dark"} [ props.tableHead ]
+                 , H.tbody {} props.tableBody
+                 ]
+               ]
 
 -- TODO: this needs to be in Gargantext.Pages.Corpus.Graph.Tabs
 graphContainer :: {title :: String} -> Record TableContainerProps -> R.Element
@@ -356,3 +307,11 @@ string2PageSize "50" = PS50
 string2PageSize "100" = PS100
 string2PageSize "200" = PS200
 string2PageSize _    = PS10
+
+
+
+
+
+
+
+
