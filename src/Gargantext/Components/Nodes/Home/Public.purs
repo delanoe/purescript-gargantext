@@ -117,12 +117,12 @@ publicLayoutCpt = R.hooksComponentWithModule thisModule "publicLayout" cpt
                      [ H.div { className:"container1"
                              , style: { marginBottom : "15px"}
                              }
-                             [ H.h2 {} [H.text "Discover knowledge"
-                             , H.p { className: "lead text-muted center"}
-                                   [ H.text "maps made with "
-                                   , H.span {className: "fa fa-heart"} []
-                                   ]
-                             ]
+                             [ H.h2 {} [ H.text "Discover knowledge"
+                                       , H.p { className: "lead text-muted center"}
+                                             [ H.text "maps made with "
+                                             , H.span {className: "fa fa-heart"} []
+                                             ]
+                                       ]
                              ]
                      ]
              -- | TODO browse maps

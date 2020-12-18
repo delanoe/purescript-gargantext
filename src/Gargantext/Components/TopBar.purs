@@ -6,7 +6,6 @@ import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
-
 import Gargantext.Prelude
 
 import Gargantext.Types (Handed(..))
@@ -15,9 +14,7 @@ import Gargantext.Utils.Reactix as R2
 thisModule :: String
 thisModule = "Gargantext.Components.TopBar"
 
-type TopBarProps = (
-  handed :: R.State Handed
-  )
+type TopBarProps = (handed :: R.State Handed)
 
 topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
@@ -31,35 +28,41 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
                    , className: "navbar navbar-inverse navbar-fixed-top" }
         [ H.div { className: "container-fluid" }
             [ H.div { className: "navbar-inner" }
-              [ logo (fst handed)
-              , H.div { className: "collapse navbar-collapse"  <> navHanded} (
-                [
-                  H.ul { className: "nav navbar-nav" <> navHanded} []
-                , H.ul { title: "If you are Left Handed you can change "
-                             <> "the interface by clicking on me. Click "
-                             <> "again to come back to previous state."
-                       , className: "nav navbar-nav" <> navHanded
-                       } [handedChooser { handed } []]
-                , H.ul { className: "nav navbar-nav" <> navHanded} [divDropdownLeft {} []]
-                {-, H.ul { title: "Dark Mode soon here"
-                        , className : "nav navbar-nav"
-                         } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
-                                                  ]
-                                         ]
-                               ]
-                      -}
-                ] <> children)
-              ]
+                    [ logo false (fst handed)
+                    , H.div { className: "collapse navbar-collapse"  <> navHanded false}
+                            ( [
+                                H.ul { className: "nav navbar-nav" <> navHanded false} []
+                              , handButton false handed
+                              , H.ul { className: "nav navbar-nav" <> navHanded false} [divDropdownLeft {} []]
+                              {-, H.ul { title: "Dark Mode soon here"
+                                      , className : "nav navbar-nav"
+                                       } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+                                                                ]
+                                                       ]
+                                             ]
+                                    -}
+                              ] <> children 
+                            )
+                    ]
+            , H.div { className: "navbar-inner" }
+                    [ handButton true handed 
+                    ]
             ]
         ]
           where
-            navHanded  = if fst handed == LeftHanded then " navbar-right" else ""
+            navHanded t = if xor t (fst handed == LeftHanded) then " navbar-right" else " navbar-left"
+            handButton t handed = H.ul { title: "If you are Left Handed you can change "
+                                           <> "the interface by clicking on me. Click "
+                                           <> "again to come back to previous state."
+                                     , className: "nav navbar-nav" <> navHanded t
+                                     } [handedChooser { handed } []]
+
             -- sortHanded = if fst handed == LeftHanded then reverse else reverse -- identity
             -- SB.searchBar {session, databases: allDatabases}
 
 
-logo :: Handed -> R.Element
-logo handed =
+logo :: Boolean -> Handed -> R.Element
+logo b handed =
   H.a { className, href: "#/" }
   [ H.img { src, title, width: "30", height: "28" }
   ]
@@ -67,7 +70,7 @@ logo handed =
     className = "navbar-brand logoSmall" <> navHanded
     src       = "images/logoSmall.png"
     title     = "Back to home."
-    navHanded = if handed == LeftHanded then " navbar-right" else ""
+    navHanded = if xor b (handed == LeftHanded) then " navbar-right" else ""
 
 
 divDropdownLeft :: R2.Component ()

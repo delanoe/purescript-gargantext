@@ -10,22 +10,20 @@ import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Tuple (fst, snd)
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Gargantext.Prelude
 import Prim.Row (class Union)
 import Reactix as R
 import URI.Query (Query)
 
-import Gargantext.Prelude
-
+-------------------------------------------------------------------------
 data Handed = LeftHanded | RightHanded
 
 derive instance genericHanded :: Generic Handed _
 instance eqHanded :: Eq Handed where
   eq = genericEq
-
-reverseHanded :: Handed -> Handed
-reverseHanded LeftHanded  = RightHanded
-reverseHanded RightHanded = LeftHanded
 
 -------------------------------------------------------------------------
 type ID      = Int
