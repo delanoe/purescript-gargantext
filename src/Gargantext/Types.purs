@@ -23,6 +23,9 @@ derive instance genericHanded :: Generic Handed _
 instance eqHanded :: Eq Handed where
   eq = genericEq
 
+reverseHanded :: Handed -> Handed
+reverseHanded LeftHanded  = RightHanded
+reverseHanded RightHanded = LeftHanded
 
 -------------------------------------------------------------------------
 type ID      = Int

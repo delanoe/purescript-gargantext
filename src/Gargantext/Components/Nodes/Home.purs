@@ -1,24 +1,24 @@
 module Gargantext.Components.Nodes.Home where
 
+import DOM.Simple.Console (log)
+import Data.Tuple (snd)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Routing.Hash (setHash)
-
-import Gargantext.Ends (Backend(..))
-import Gargantext.Sessions (Sessions(..))
-import Gargantext.Sessions as Sessions
-
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Nodes.Home.Public (renderPublic)
+import Gargantext.Ends (Backend(..))
 import Gargantext.License (license)
-import Gargantext.Prelude (Unit, map, pure, unit, void, ($), (<>))
+import Gargantext.Prelude -- (Unit, map, pure, unit, void, ($), (<>), (*>))
+import Gargantext.Sessions (Sessions(..))
+import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Routing.Hash (setHash)
 
 thisModule = "Gargantext.Components.Nodes.Home"
 
@@ -70,15 +70,36 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
       pure $ H.span {}
            [ H.div { className: "home-title container1" } [ jumboTitle landingData false ]
            , H.div { className: "home-research-form container1" } [] -- TODO put research form
-           , H.div { className: "home-landing-data container1" } [ blocksRandomText' landingData ]
            , H.div { className: "home-public container1" } [ renderPublic { backend
                                                                           , publicBackend
                                                                           , sessions
                                                                           , visible
                                                                           }
                                                            ]
+
+           , H.div {className:"center"}
+                   [ H.h1 {} [ -- H.span {className: "fa fa-star-o"} []
+                              H.text ""
+                             ]
+                   ]
+           , H.div { className: "home-landing-data container1" } [ blocksRandomText' landingData ]
+           , joinButton
            , license
            ]
+      where
+        joinButton = H.div { className:"flex-space-around center" 
+                       , paddingTop: "100px"
+                       , paddingBottom: "100px"
+                       }
+                       [ H.button { className: "btn btn-primary my-2"
+                                  , on : {click}
+                                  , title: "Connect to the server"
+                                  } [ H.text "Join"
+                                    ]
+                       ]
+        click _ = log "click!" *> (snd backend) (const $ Just publicBackend)
+                               *> (snd visible) (const true)
+
 
 ------------------------------------------------------------------------
 
@@ -116,18 +137,18 @@ docButton (Button b) =
 jumboTitle :: LandingData -> Boolean -> R.Element
 jumboTitle (LandingData hd) b =
   H.div {className: jumbo}
-  [ H.div { className: "row" }
-    [ H.div { className: "col-md-12 content" }
-      [ H.div { className: "center" }
-        [ H.div { id: "logo-designed" }
-          [ H.img { src: "images/logo.png"
-                  , title: hd.logoTitle
-                  }
+        [ H.div { className: "row" }
+          [ H.div { className: "col-md-12 content" }
+            [ H.div { className: "center" }
+              [ H.div { id: "logo-designed" }
+                [ H.img { src: "images/logo.png"
+                        , title: hd.logoTitle
+                        }
+                ]
+              ]
+            ]
           ]
         ]
-      ]
-    ]
-  ]
   where
     jumbo = case b of
       true  -> "jumbotron"

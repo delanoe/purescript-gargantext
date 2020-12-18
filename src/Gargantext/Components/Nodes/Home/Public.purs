@@ -112,22 +112,17 @@ publicLayoutCpt = R.hooksComponentWithModule thisModule "publicLayout" cpt
   where
     cpt {publicDatas, visible, backend, publicBackend, sessions} _ = do
       pure $ H.span {}
-             [ H.div { className: "text-center" }
+             [ joinButton
+             , H.div { className: "text-center" }
                      [ H.div { className:"container1"
                              , style: { marginBottom : "15px"}
                              }
-                             [ H.h2 {} [H.text "Public Maps"]
-                             , H.p { className: "lead text-muted"}
-                                   [ H.text "Discover maps made with "
+                             [ H.h2 {} [H.text "Discover maps"
+                             , H.p { className: "lead text-muted center"}
+                                   [ H.text "made with "
                                    , H.span {className: "fa fa-heart"} []
                                    ]
-                             , H.div { className:"flex-space-around" }
-                                   [ H.button { className: "btn btn-primary my-2"
-                                              , on : { click }
-                                              , title: "Connect to the server"
-                                              } [ H.text "Join"
-                                                ]
-                                   ]
+                             ]
                              ]
                      ]
              -- | TODO browse maps
@@ -137,6 +132,15 @@ publicLayoutCpt = R.hooksComponentWithModule thisModule "publicLayout" cpt
         where
           click _ = log "click!" *> (snd backend) (const $ Just publicBackend)
                                  *> (snd visible) (const true)
+
+          joinButton =  H.div { className:"flex-space-around center" }
+                                   [ H.button { className: "btn btn-primary my-2"
+                                              , on : { click }
+                                              , title: "Connect to the server"
+                                              } [ H.text "Login"
+                                                ]
+                                   ]
+
 
 album :: Array PublicData -> R.Element
 album pds = H.div {className: "album py-5 bg-light"}

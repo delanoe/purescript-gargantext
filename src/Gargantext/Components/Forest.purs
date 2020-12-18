@@ -96,7 +96,7 @@ plus handed showLogin backend = H.div { className: handedClass } [
            }
           [ H.div { "type": ""
                   , className: "fa fa-universal-access fa-lg"
-                  } [H.text " Log "]
+                  } [H.text " Log in/out "]
           , H.div {} [H.text "    "]
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
   --, H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
