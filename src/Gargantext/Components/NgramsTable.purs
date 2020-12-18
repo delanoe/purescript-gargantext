@@ -131,6 +131,7 @@ type TableContainerProps =
   , ngramsTable      :: NgramsTable
   , path             :: R.State PageParams
   , tabNgramType     :: CTabNgramType
+  , syncResetButton  :: Array R.Element
   )
 
 tableContainer :: Record TableContainerProps -> Record T.TableContainerProps -> R.Element
@@ -144,94 +145,91 @@ tableContainerCpt { dispatch
                   , ngramsTable: ngramsTableCache
                   , path: {searchQuery, termListFilter, termSizeFilter} /\ setPath
                   , tabNgramType
+                  , syncResetButton
                   } = R.hooksComponentWithModule thisModule "tableContainer" cpt
   where
     cpt props _ = do
-      pure $ H.div {className: "container-fluid"} [
-        H.div {className: "jumbotron1"}
-        [ R2.row
-          [ H.div {className: "panel panel-default"}
-            [ H.div {className: "panel-heading"} [
-              R2.row
-              [ H.div {className: "col-md-2", style: {marginTop: "6px"}}
-                [
-                  if A.null props.tableBody && searchQuery /= "" then
-                    H.li { className: "list-group-item" } [
-                      H.button { className: "btn btn-primary"
-                                , on: { click: const $ dispatch
-                                      $ CoreAction
-                                      $ addNewNgramA
-                                          (normNgram tabNgramType searchQuery)
-                                          CandidateTerm
-                                      }
-                                }
-                      [ H.text ("Add " <> searchQuery) ]
-                    ] else H.div {} []
-                ]
-              , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-                [ H.li {className: "list-group-item"}
-                  [ R2.select { id: "picklistmenu"
-                              , className: "form-control custom-select"
-                              , defaultValue: (maybe "" show termListFilter)
-                              , on: {change: setTermListFilter <<< read <<< R.unsafeEventValue}}
-                    (map optps1 termLists)]
-                ]
-              , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-                [ H.li {className: "list-group-item"}
-                  [ R2.select {id: "picktermtype"
-                              , className: "form-control custom-select"
-                              , defaultValue: (maybe "" show termSizeFilter)
-                              , on: {change: setTermSizeFilter <<< read <<< R.unsafeEventValue}}
-                    (map optps1 termSizes)]
-                ]
-              , H.div { className: "col-md-2", style: { marginTop: "6px" } } [
-                  H.li {className: "list-group-item"} [
-                     H.div { className: "form-inline" } [
-                    H.div { className: "form-group" } [
-                       props.pageSizeControl
-                     , H.label {} [ H.text " items" ]
-                    --   H.div { className: "col-md-6" } [ props.pageSizeControl ]
-                    -- , H.div { className: "col-md-6" } [
-                    --    ]
+      pure $ H.div {className: "container-fluid"}
+                   [ H.div {className: "jumbotron1"}
+                           [ R2.row
+                             [ H.div {className: "panel panel-default"}
+                               [ H.div {className: "panel-heading"} 
+                                       [
+                                         R2.row [ H.div {className: "col-md-2", style: {marginTop: "6px"}}
+                                                        [ H.div {} syncResetButton
+                                                          , if A.null props.tableBody && searchQuery /= "" then
+                                                              H.li { className: "list-group-item" } [
+                                                                H.button { className: "btn btn-primary"
+                                                                          , on: { click: const $ dispatch
+                                                                                $ CoreAction
+                                                                                $ addNewNgramA
+                                                                                    (normNgram tabNgramType searchQuery)
+                                                                                    CandidateTerm
+                                                                                }
+                                                                          }
+                                                                [ H.text ("Add " <> searchQuery) ]
+                                                              ] else H.div {} []
+                                                        ]
+                                                 , H.div {className: "col-md-2", style: {marginTop : "6px"}}
+                                                          [ H.li {className: "list-group-item"}
+                                                            [ R2.select { id: "picklistmenu"
+                                                                        , className: "form-control custom-select"
+                                                                        , defaultValue: (maybe "" show termListFilter)
+                                                                        , on: {change: setTermListFilter <<< read <<< R.unsafeEventValue}}
+                                                              (map optps1 termLists)]
+                                                          ]
+                                                 , H.div {className: "col-md-2", style: {marginTop : "6px"}}
+                                                          [ H.li {className: "list-group-item"}
+                                                            [ R2.select {id: "picktermtype"
+                                                                        , className: "form-control custom-select"
+                                                                        , defaultValue: (maybe "" show termSizeFilter)
+                                                                        , on: {change: setTermSizeFilter <<< read <<< R.unsafeEventValue}}
+                                                              (map optps1 termSizes)]
+                                                          ]
+                                                  , H.div { className: "col-md-2", style: { marginTop: "6px" } }
+                                                          [ H.li {className: "list-group-item"}
+                                                                 [ H.div { className: "form-inline" } 
+                                                                         [ H.div { className: "form-group" } 
+                                                                                 [ props.pageSizeControl
+                                                                                 , H.label {} [ H.text " items" ]
+                                                                                  --   H.div { className: "col-md-6" } [ props.pageSizeControl ]
+                                                                                  -- , H.div { className: "col-md-6" } [
+                                                                                  --    ]
+                                                                                 ]
+                                                                          ]
+                                                                 ]
+                                                           ]
+                                                   , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
+                                                           [ H.li {className: "list-group-item"} 
+                                                                  [ props.pageSizeDescription
+                                                                  , props.paginationLinks
+                                                                  ]
+                                                           ]
+                                                   ]
+                                           ]
+                                 , editor
+                                 , if (selectionsExist ngramsSelection)
+                                      then H.li {className: "list-group-item"}
+                                                [selectButtons true]
+                                      else H.div {} []
+                                 , H.div {id: "terms_table", className: "panel-body"}
+                                         [ H.table {className: "table able"}
+                                           [ H.thead {className: "tableHeader"} [props.tableHead]
+                                           , H.tbody {} props.tableBody
+                                           ]
+                                         , H.li {className: "list-group-item"}
+                                                [ H.div { className: "row" }
+                                                        [ H.div { className: "col-md-4" }
+                                                                [selectButtons (selectionsExist ngramsSelection)]
+                                                        , H.div {className: "col-md-4 col-md-offset-4"}
+                                                                [props.paginationLinks]
+                                                        ]
+                                                ]
+                                         ]
+                                 ]
+                             ]
+                           ]
                     ]
-                    ]
-                  ]
-                ]
-              , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}} [
-                   H.li {className: "list-group-item"} [
-                        props.pageSizeDescription
-                      , props.paginationLinks
-                      ]
-                   ]
-              ]
-              ]
-            , editor
-            , if (selectionsExist ngramsSelection) then
-                H.li {className: "list-group-item"} [
-                  selectButtons true
-                ] else
-                H.div {} []
-            , H.div {id: "terms_table", className: "panel-body"}
-              [ H.table {className: "table able"}
-                [ H.thead {className: "tableHeader"} [props.tableHead]
-                , H.tbody {} props.tableBody
-                ]
-
-              , H.li {className: "list-group-item"} [
-                 H.div { className: "row" } [
-                    H.div { className: "col-md-4" } [
-                       selectButtons (selectionsExist ngramsSelection)
-                      ]
-                    , H.div { className: "col-md-4 col-md-offset-4" } [
-                       props.paginationLinks
-                      ]
-                    ]
-                 ]
-              ]
-            ]
-          ]
-        ]
-      ]
     -- WHY setPath     f = origSetPageParams (const $ f path)
     setTermListFilter x = setPath $ _ { termListFilter = x }
     setTermSizeFilter x = setPath $ _ { termSizeFilter = x }
@@ -327,7 +325,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                , H.text "Extracted Terms"
                ]
         , search ]
-        <> syncResetButton <>
+        <>
         [ T.table { syncResetButton
                   , colNames
                   , container: tableContainer { dispatch: performAction
@@ -337,6 +335,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                                               , ngramsTable
                                               , path
                                               , tabNgramType
+                                              , syncResetButton
                                               }
                   , params: params /\ setParams -- TODO-LENS
                   , rows: filteredConvertedRows
