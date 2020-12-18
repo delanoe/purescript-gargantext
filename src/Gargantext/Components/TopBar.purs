@@ -4,12 +4,11 @@ import Data.Array (reverse)
 import Data.Foldable (intercalate)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Reactix as R
-import Reactix.DOM.HTML as H
 import Gargantext.Prelude
-
 import Gargantext.Types (Handed(..))
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 thisModule :: String
 thisModule = "Gargantext.Components.TopBar"
@@ -25,37 +24,46 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
     cpt { handed } children = do
       pure $ H.div { id: "dafixedtop"
                    , role: "navigation"
-                   , className: "navbar navbar-inverse navbar-fixed-top" }
-        [ H.div { className: "container-fluid" }
-            [ H.div { className: "navbar-inner" }
-                    [ logo false (fst handed)
-                    , H.div { className: "collapse navbar-collapse"  <> navHanded false}
-                            ( [
-                                H.ul { className: "nav navbar-nav" <> navHanded false} []
-                              , handButton false handed
-                              , H.ul { className: "nav navbar-nav" <> navHanded false} [divDropdownLeft {} []]
-                              {-, H.ul { title: "Dark Mode soon here"
-                                      , className : "nav navbar-nav"
-                                       } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
-                                                                ]
-                                                       ]
-                                             ]
-                                    -}
-                              ] <> children 
-                            )
-                    ]
-            , H.div { className: "navbar-inner" }
-                    [ handButton true handed 
-                    ]
-            ]
-        ]
+                   , className: "navbar navbar-inverse navbar-fixed-top" 
+                   }
+                   [ H.div { className: "container-fluid" }
+                       [ H.div { className: "navbar-inner" } [ logo false (fst handed)]
+                       , infoMenu
+                       , H.div { className: "navbar-inner" } [ handButton true handed ]
+                       , H.div { className: "navbar-inner" } [ smiley     true        ]
+                       ]
+                   ]
           where
             navHanded t = if xor t (fst handed == LeftHanded) then " navbar-right" else " navbar-left"
-            handButton t handed = H.ul { title: "If you are Left Handed you can change "
-                                           <> "the interface by clicking on me. Click "
+ 
+            handButton t handed = H.ul { title: "If you are Left Handed you can change\n"
+                                           <> "the interface by clicking on me. Click\n"
                                            <> "again to come back to previous state."
                                      , className: "nav navbar-nav" <> navHanded t
                                      } [handedChooser { handed } []]
+
+            smiley t = H.ul { title: "Hello! Looking for the tree ?\n"
+                                    <> "Just watch on the other side!\n"
+                                    <> "Click on the hand again to see it back."
+                            , className : "nav navbar-nav" <> navHanded t
+                            }
+                            [H.li {} [ H.a {} [H.span {className: "fa fa-question-circle-o"} [] ]]
+                            ]
+
+            infoMenu = H.div { className: "collapse navbar-collapse"  <> navHanded false}
+                             ( [
+                                 H.ul { className: "nav navbar-nav" <> navHanded false} []
+                               , H.ul { className: "nav navbar-nav" <> navHanded false} [divDropdownLeft {} []]
+                               , handButton false handed
+                               {-, H.ul { title: "Dark Mode soon here"
+                                       , className : "nav navbar-nav"
+                                        } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+                                                                 ]
+                                                        ]
+                                              ]
+                                     -}
+                               ] <> children 
+                             )
 
             -- sortHanded = if fst handed == LeftHanded then reverse else reverse -- identity
             -- SB.searchBar {session, databases: allDatabases}
