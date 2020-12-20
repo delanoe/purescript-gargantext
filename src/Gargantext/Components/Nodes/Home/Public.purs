@@ -112,8 +112,7 @@ publicLayoutCpt = R.hooksComponentWithModule thisModule "publicLayout" cpt
   where
     cpt {publicDatas, visible, backend, publicBackend, sessions} _ = do
       pure $ H.span {}
-             [ joinButton
-             , H.div { className: "text-center" }
+             [ H.div { className: "text-center" }
                      [ H.div { className:"container1"
                              , style: { marginBottom : "15px"}
                              }
@@ -129,17 +128,6 @@ publicLayoutCpt = R.hooksComponentWithModule thisModule "publicLayout" cpt
              -- | TODO random maps
              , album publicDatas
              ]
-        where
-          click _ = log "click!" *> (snd backend) (const $ Just publicBackend)
-                                 *> (snd visible) (const true)
-
-          joinButton =  H.div { className:"flex-space-around center" }
-                                   [ H.button { className: "btn btn-primary my-2"
-                                              , on : { click }
-                                              , title: "Connect to the server"
-                                              } [ H.text "Login"
-                                                ]
-                                   ]
 
 
 album :: Array PublicData -> R.Element

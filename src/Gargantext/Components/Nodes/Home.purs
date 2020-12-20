@@ -1,9 +1,11 @@
 module Gargantext.Components.Nodes.Home where
 
+import Data.Array as Array
 import DOM.Simple.Console (log)
-import Data.Tuple (snd)
+import Data.Tuple (fst, snd)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
+import Data.Sequence as Seq
 import Effect (Effect)
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.Lang (LandingLang(..))
@@ -13,7 +15,7 @@ import Gargantext.Components.Nodes.Home.Public (renderPublic)
 import Gargantext.Ends (Backend(..))
 import Gargantext.License (license)
 import Gargantext.Prelude -- (Unit, map, pure, unit, void, ($), (<>), (*>))
-import Gargantext.Sessions (Sessions(..))
+import Gargantext.Sessions (Sessions(..), unSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -70,6 +72,18 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
       pure $ H.span {}
            [ H.div { className: "home-title container1" } [ jumboTitle landingData false ]
            , H.div { className: "home-research-form container1" } [] -- TODO put research form
+           , joinButton
+
+           , if Array.length (unSessions $ fst sessions) > 0 
+                then H.div {className:"center"}
+                           [ H.h1 {} [H.text "Welcome! Just watch the tutoriel now"]
+                           , H.img { src: "images/Gargantextuel-212x300.jpg"
+                                   , id: "funnyimg"
+                                   , title: "tutoriel video here"
+                                   }
+                           ]
+                else H.div {} []
+
            , H.div { className: "home-public container1" } [ renderPublic { backend
                                                                           , publicBackend
                                                                           , sessions
