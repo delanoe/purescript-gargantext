@@ -72,7 +72,6 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
       pure $ H.span {}
            [ H.div { className: "home-title container1" } [ jumboTitle landingData false ]
            , H.div { className: "home-research-form container1" } [] -- TODO put research form
-           , joinButton
 
            , if Array.length (unSessions $ fst sessions) > 0 
                 then H.div {className:"center"}
@@ -82,7 +81,7 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                                    , title: "tutoriel video here"
                                    }
                            ]
-                else H.div {} []
+                else joinButton
 
            , H.div { className: "home-public container1" } [ renderPublic { backend
                                                                           , publicBackend
@@ -97,7 +96,6 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                              ]
                    ]
            , H.div { className: "home-landing-data container1" } [ blocksRandomText' landingData ]
-           , joinButton
            , license
            ]
       where
