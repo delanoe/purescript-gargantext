@@ -73,7 +73,7 @@ forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
       )
       (cpt' openNodes asyncTasks appReload reload showLogin backend)
   cpt' openNodes asyncTasks appReload reload showLogin backend (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
-    pure $ R2.row $ [plus handed showLogin backend] <> trees
+    pure $ H.div { className: "row forest" } $ [plus handed showLogin backend] <> trees
     where
       trees = tree <$> unSessions sessions
       tree s@(Session {treeId}) =
@@ -106,9 +106,9 @@ plus handed showLogin backend = H.div { className: handedClass } [
   -- [ H.i { className: "material-icons md-36"} [] ]
   where
     handedClass = if handed == RightHanded then
-                        "flex-start"  -- TODO we should use lefthanded SASS class here
+                        "right-handed"
                   else
-                        "flex-end"
+                        "left-handed"
 
     click _ = (snd backend) (const Nothing)
             *> showLogin (const true)

@@ -21,49 +21,41 @@ topBar = R.createElement topBarCpt
 topBarCpt :: R.Component TopBarProps
 topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
   where
-    cpt { handed } children = do
+    cpt { handed } _children = do
       pure $ H.div { id: "dafixedtop"
                    , role: "navigation"
-                   , className: "navbar navbar-inverse navbar-fixed-top" 
-                   }
-                   [ H.div { className: "container-fluid" }
-                       [ H.div { className: "navbar-inner" } [ logo false (fst handed)]
-                       , infoMenu
-                       , H.div { className: "navbar-inner" } [ handButton true handed ]
-                       , H.div { className: "navbar-inner" } [ smiley     true        ]
-                       ]
+                   , className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
+                   } [
+                     logo false (fst handed)
+                   , H.ul { className: "navbar-nav" } [
+                       divDropdownLeft {} []
+                     , handButton true handed
+                     , smiley     true
+                     ]
                    ]
           where
             navHanded t = if xor t (fst handed == LeftHanded) then " navbar-right" else " navbar-left"
  
-            handButton t handed = H.ul { title: "If you are Left Handed you can change\n"
+            handButton t handed = H.li { title: "If you are Left Handed you can change\n"
                                            <> "the interface by clicking on me. Click\n"
                                            <> "again to come back to previous state."
-                                     , className: "nav navbar-nav" <> navHanded t
+                                     , className: "nav-item " <> navHanded t
                                      } [handedChooser { handed } []]
 
-            smiley t = H.ul { title: "Hello! Looking for the tree ?\n"
+            smiley t = H.li { title: "Hello! Looking for the tree ?\n"
                                     <> "Just watch on the other side!\n"
                                     <> "Click on the hand again to see it back."
-                            , className : "nav navbar-nav" <> navHanded t
+                            , className : "nav-item " <> navHanded t
                             }
-                            [H.li {} [ H.a {} [H.span {className: "fa fa-question-circle-o"} [] ]]
-                            ]
+                            [ H.a { className: "nav-link" } [H.span {className: "fa fa-question-circle-o"} [] ]]
 
-            infoMenu = H.div { className: "collapse navbar-collapse"  <> navHanded false}
-                             ( [
-                                 H.ul { className: "nav navbar-nav" <> navHanded false} []
-                               , H.ul { className: "nav navbar-nav" <> navHanded false} [divDropdownLeft {} []]
-                               , handButton false handed
-                               {-, H.ul { title: "Dark Mode soon here"
-                                       , className : "nav navbar-nav"
-                                        } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
-                                                                 ]
-                                                        ]
-                                              ]
-                                     -}
-                               ] <> children 
-                             )
+                        {-, H.ul { title: "Dark Mode soon here"
+                                , className : "nav navbar-nav"
+                                } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+                                                          ]
+                                                ]
+                                      ]
+                              -}
 
             -- sortHanded = if fst handed == LeftHanded then reverse else reverse -- identity
             -- SB.searchBar {session, databases: allDatabases}
@@ -77,7 +69,7 @@ logo b handed =
   where
     className = "navbar-brand logoSmall" <> navHanded
     src       = "images/logoSmall.png"
-    title     = "Back to home."
+    title     = "Back home."
     navHanded = if xor b (handed == LeftHanded) then " navbar-right" else ""
 
 
@@ -90,7 +82,7 @@ divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
     cpt {} _ = do
       show <- R.useState' false
 
-      pure $ H.li { className: "dropdown" } [
+      pure $ H.li { className: "nav-item dropdown" } [
           menuButton { element: menuElement, show } []
         , menuElements { elements, show } []
         ]
@@ -236,11 +228,9 @@ handedChooserCpt :: R.Component HandedChooserProps
 handedChooserCpt = R.hooksComponentWithModule thisModule "handedChooser" cpt
   where
     cpt { handed } _ = do
-      pure $ H.li {} [
-        H.a {} [
-          H.span { className: handedClass handed
-                 , on: { click: onClick handed } } []
-          ]
+      pure $ H.a { className: "nav-link" } [
+        H.span { className: handedClass handed
+                , on: { click: onClick handed } } []
         ]
 
     handedClass (LeftHanded  /\ _) = "fa fa-hand-o-left"
