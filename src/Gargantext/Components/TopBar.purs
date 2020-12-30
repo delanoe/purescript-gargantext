@@ -25,29 +25,30 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
       pure $ H.div { id: "dafixedtop"
                    , role: "navigation"
                    , className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
-                   } [
-                     logo false (fst handed)
-                   , H.ul { className: "navbar-nav" } [
+                   } $ sortHanded [
+                     -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
+                     -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
+                     -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
+                     logo
+                   , H.ul { className: "navbar-nav " <> if fst handed == LeftHanded then "ml-auto" else "" } [
                        divDropdownLeft {} []
-                     , handButton true handed
-                     , smiley     true
+                     , handButton handed
+                     , smiley
                      ]
                    ]
           where
-            navHanded t = if xor t (fst handed == LeftHanded) then " navbar-right" else " navbar-left"
- 
-            handButton t handed = H.li { title: "If you are Left Handed you can change\n"
+            handButton handed = H.li { title: "If you are Left Handed you can change\n"
                                            <> "the interface by clicking on me. Click\n"
                                            <> "again to come back to previous state."
-                                     , className: "nav-item " <> navHanded t
+                                     , className: "nav-item"
                                      } [handedChooser { handed } []]
 
-            smiley t = H.li { title: "Hello! Looking for the tree ?\n"
-                                    <> "Just watch on the other side!\n"
-                                    <> "Click on the hand again to see it back."
-                            , className : "nav-item " <> navHanded t
-                            }
-                            [ H.a { className: "nav-link" } [H.span {className: "fa fa-question-circle-o"} [] ]]
+            smiley = H.li { title: "Hello! Looking for the tree ?\n"
+                                <> "Just watch on the other side!\n"
+                                <> "Click on the hand again to see it back."
+                          , className : "nav-item"
+                          }
+                          [ H.a { className: "nav-link" } [H.span {className: "fa fa-question-circle-o"} [] ]]
 
                         {-, H.ul { title: "Dark Mode soon here"
                                 , className : "nav navbar-nav"
@@ -57,20 +58,19 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
                                       ]
                               -}
 
-            -- sortHanded = if fst handed == LeftHanded then reverse else reverse -- identity
+            sortHanded = if fst handed == LeftHanded then reverse else reverse -- identity
             -- SB.searchBar {session, databases: allDatabases}
 
 
-logo :: Boolean -> Handed -> R.Element
-logo b handed =
-  H.a { className, href: "#/" }
-  [ H.img { src, title, width: "30", height: "28" }
+logo :: R.Element
+logo =
+  H.a { className, href: "#/" } [
+    H.img { src, title, width: "30", height: "28" }
   ]
   where
-    className = "navbar-brand logoSmall" <> navHanded
+    className = "navbar-brand logoSmall"
     src       = "images/logoSmall.png"
     title     = "Back home."
-    navHanded = if xor b (handed == LeftHanded) then " navbar-right" else ""
 
 
 divDropdownLeft :: R2.Component ()
@@ -230,7 +230,7 @@ handedChooserCpt = R.hooksComponentWithModule thisModule "handedChooser" cpt
     cpt { handed } _ = do
       pure $ H.a { className: "nav-link" } [
         H.span { className: handedClass handed
-                , on: { click: onClick handed } } []
+               , on: { click: onClick handed } } []
         ]
 
     handedClass (LeftHanded  /\ _) = "fa fa-hand-o-left"
