@@ -30,7 +30,7 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
                      -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
                      -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
                      logo
-                   , H.ul { className: "navbar-nav " <> if fst handed == LeftHanded then "ml-auto" else "" } [
+                   , H.ul { className: "navbar-nav " <> if fst handed == LeftHanded then "ml-auto" else "" } $ sortHanded [
                        divDropdownLeft {} []
                      , handButton handed
                      , smiley
@@ -58,7 +58,7 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
                                       ]
                               -}
 
-            sortHanded = if fst handed == LeftHanded then reverse else reverse -- identity
+            sortHanded = if fst handed == LeftHanded then reverse else identity
             -- SB.searchBar {session, databases: allDatabases}
 
 
