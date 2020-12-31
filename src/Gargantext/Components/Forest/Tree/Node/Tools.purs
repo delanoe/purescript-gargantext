@@ -232,10 +232,9 @@ submitButtonHref action href =
 
 checkbox :: R.State Boolean -> R.Element
 checkbox ( val /\ set ) =
-  H.input { id: "checkbox-id"
+  H.input { className : "form-check-input"
           , type: "checkbox"
           , value: val
-          , className : "checkbox"
           , on: { click: \_ -> set $ const $ not val}
           }
 
