@@ -92,7 +92,7 @@ plus :: Handed -> R.Setter Boolean -> R.State (Maybe Backend) -> R.Element
 plus handed showLogin backend = H.div { className: handedClass } [
   H.button { title: "Add or remove connections to the server(s)."
            , on: {click}
-           , className: "btn btn-default"
+           , className: "btn btn-secondary"
            }
           [ H.div { "type": ""
                   , className: "fa fa-universal-access fa-lg"

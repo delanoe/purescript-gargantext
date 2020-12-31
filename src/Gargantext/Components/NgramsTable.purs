@@ -321,7 +321,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
       pure $ R.fragment $
         autoUpdate <> [
           H.h4 {style: {textAlign : "center"}}
-               [ H.span {className: "glyphicon glyphicon-hand-down"} []
+               [ H.span {className: "fa fa-hand-o-down"} []
                , H.text "Extracted Terms"
                ]
         , search ]

@@ -101,7 +101,7 @@ divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
               }
       , LiNav { title : "Report bug here"
               , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
-              , icon  : "glyphicon glyphicon-bullhorn"
+              , icon  : "fa fa-bullhorn"
               , text  : "Feedback"
               }
       ]
@@ -120,7 +120,7 @@ divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
       ,------------------------------------------------------------
       [ LiNav { title : "Code documentation"
               , href  : "https://doc.gargantext.org"
-              , icon  : "glyphicon glyphicon-book"
+              , icon  : "fa fa-book"
               , text  : "Source Code Documentation"
               }
       , LiNav { title : "API documentation"
@@ -138,7 +138,7 @@ divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
       ,------------------------------------------------------------
       [ LiNav { title : "More about us (you)"
               , href  : "https://iscpif.fr"
-              , icon  : "glyphicon glyphicon-question-sign"
+              , icon  : "fa fa-question"
               , text  : "About"
               }
       ]
@@ -185,7 +185,7 @@ menuElements = R.createElement menuElementsCpt
                   , style: { display: "block" } } $ intercalate divider $ map (map liNav) elements
       where
         divider :: Array R.Element
-        divider = [H.li {className: "divider"} []]
+        divider = [H.li {className: "dropdown-divider"} []]
 
 -- | surgar for target : "blank"
 --data LiNav_ = LiNav_ { title  :: String
@@ -207,14 +207,15 @@ liNav (LiNav { title : title'
              , icon  : icon'
              , text  : text'
              }
-      ) = H.li {} [ H.a { tabIndex: (-1)
-                        , target: "blank"
-                        , title: title'
-                        , href: href'
-                        } [ H.span { className: icon' } []
-                          , H.text $ " " <> text'
-                          ]
+      ) = H.li { className: "dropdown-item" } [
+            H.a { tabIndex: (-1)
+                , target: "blank"
+                , title: title'
+                , href: href'
+                } [ H.span { className: icon' } []
+                  , H.text $ " " <> text'
                   ]
+            ]
 
 
 type HandedChooserProps = (

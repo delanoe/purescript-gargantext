@@ -100,7 +100,7 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
 
       pure $ H.div {} [
         H.div { className: "row" } [
-           H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
+           H.div { className: "btn btn-secondary " <> (saveEnabled fieldsWithIndex fieldsS)
                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
                  } [
               H.span { className: "fa fa-floppy-o" } [  ]
@@ -110,7 +110,7 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
                                       , nodeId
                                       , session } ]
         , H.div { className: "row" } [
-           H.div { className: "btn btn-default"
+           H.div { className: "btn btn-secondary"
                  , on: { click: onClickAdd fieldsS }
                  } [
               H.span { className: "fa fa-plus" } [  ]
@@ -244,14 +244,14 @@ fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEdit
       where
         moveDownButton false = H.div {} []
         moveDownButton true =
-          H.div { className: "btn btn-default"
+          H.div { className: "btn btn-secondary"
                 , on: { click: \_ -> onMoveDown unit }
                 } [
             H.span { className: "fa fa-arrow-down" } [  ]
             ]
         moveUpButton false = H.div {} []
         moveUpButton true =
-          H.div { className: "btn btn-default"
+          H.div { className: "btn btn-secondary"
                 , on: { click: \_ -> onMoveUp unit }
                 } [
             H.span { className: "fa fa-arrow-up" } [  ]

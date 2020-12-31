@@ -694,13 +694,6 @@ li .leaf:hover a.settings {
   font-weight: bold;
   text-decoration: underline;
 }
-.table tr td .column-tag {
-  align-items: center;
-}
-.table tr td .column-tag .doc-chooser {
-  cursor: pointer;
-  padding: 10px;
-}
 .table tr td .ngrams-selector {
   display: flex;
 }
