@@ -147,11 +147,11 @@ codeEditorCpt = R.hooksComponentWithModule thisModule "codeEditor" cpt
     codeHidden :: ViewType -> String
     codeHidden Code = ""
     codeHidden Both = ""
-    codeHidden _ = " hidden"
+    codeHidden _ = " d-none"
 
     dividerHidden :: ViewType -> String
     dividerHidden Both = ""
-    dividerHidden _ = " hidden"
+    dividerHidden _ = " d-none"
 
     langClass :: CodeType -> String
     langClass Haskell  = " language-haskell"
@@ -162,7 +162,7 @@ codeEditorCpt = R.hooksComponentWithModule thisModule "codeEditor" cpt
     previewHidden :: ViewType -> String
     previewHidden Preview = ""
     previewHidden Both = ""
-    previewHidden _ = " hidden"
+    previewHidden _ = " d-none"
 
     onEditChange :: forall e. Record Controls -> (CodeType -> Code -> Effect Unit) -> e -> Effect Unit
     onEditChange controls@{codeElRef, codeOverlayElRef, codeType: (codeType /\ _), codeS} onChange e = do
@@ -289,18 +289,19 @@ viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
 viewTypeSelectorCpt = R.hooksComponentWithModule thisModule "viewTypeSelector" cpt
   where
     cpt {state} _ =
-      pure $ H.div { className: "btn-group" } [
+      pure $ H.div { className: "btn-group"
+                   , role: "group" } [
           viewTypeButton Code state
         , viewTypeButton Both state
         , viewTypeButton Preview state
         ]
 
     viewTypeButton viewType (state /\ setState) =
-      H.label {
-        className: "btn btn-default" <> active
-        , on: { click: onClick }
-      } [
-        H.i { className: "glyphicon " <> (icon viewType) } []
+      H.button { className: "btn btn-secondary" <> active
+               , on: { click: onClick }
+               , type: "button"
+               } [
+        H.i { className: "fa " <> (icon viewType) } []
       ]
       where
         active = if viewType == state then " active" else ""
@@ -308,9 +309,9 @@ viewTypeSelectorCpt = R.hooksComponentWithModule thisModule "viewTypeSelector" c
         onClick _ = do
           setState $ const viewType
 
-    icon Preview = "glyphicon-eye-open"
-    icon Both = "glyphicon-transfer"
-    icon Code = "glyphicon-pencil"
+    icon Preview = "fa-eye"
+    icon Both = "fa-columns"
+    icon Code = "fa-pencil"
 
 type Controls =
   (
