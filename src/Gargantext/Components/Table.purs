@@ -168,9 +168,11 @@ defaultContainer {title} props = R.fragment $ props.syncResetButton <> controls
                  , H.div {className: "col-md-4"} [ props.paginationLinks ]
                  , H.div {className: "col-md-4"} [ props.pageSizeControl ]
                  ]
-               , H.table {className: "table"}
-                 [ H.thead {className: "thead-dark"} [ props.tableHead ]
-                 , H.tbody {} props.tableBody
+               , R2.row [
+                   H.table {className: "col-md-12 table"}
+                   [ H.thead {className: "thead-dark"} [ props.tableHead ]
+                   , H.tbody {} props.tableBody
+                   ]
                  ]
                ]
 

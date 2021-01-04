@@ -38,17 +38,21 @@ searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
   where
     cpt { onSearch, searchQuery } _ = 
-      pure $ H.div { className: "input-group" }
-           [ searchButton
-           , fieldInput
-           ]
+      pure $ R2.row [
+        H.div { className: "col-12" } [
+          H.div { className: "input-group" } [
+            searchButton
+            , fieldInput
+            ]
+          ]
+        ]
         where
           searchButton = 
-            H.div { className: "input-group-addon" }
+            H.div { className: "input-group-prepend" }
                   [
                    if searchQuery /= ""
                        then removeButton
-                       else H.span { className: "fa fa-search" } []
+                       else H.span { className: "fa fa-search input-group-text" } []
                   ]
           removeButton =
             H.button { className: "btn btn-danger"

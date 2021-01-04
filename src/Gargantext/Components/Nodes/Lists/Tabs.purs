@@ -155,7 +155,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
 
         charts params CTabTerms (chartType /\ setChartType) _ = [
           H.div {className: "row"}
-                [ H.div {className: "col-md-offset-5 col-md-6 content"}
+                [ H.div {className: "col-6 ml-auto mr-auto"}
                   [ H.img { src: "images/Gargantextuel-212x300.jpg"
                           , id: "funnyimg"
                         }
