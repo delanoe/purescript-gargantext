@@ -360,15 +360,6 @@ a:focus, a:hover {
   cursor: pointer;
 }
 
-.forest .left-handed {
-  display: flex;
-  justify-content: flex-end;
-}
-.forest .right-handed {
-  display: flex;
-  justify-content: flex-start;
-}
-
 body > .tree ul > li:first-child::before {
   top: 12px;
 }

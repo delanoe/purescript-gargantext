@@ -73,7 +73,7 @@ forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
       )
       (cpt' openNodes asyncTasks appReload reload showLogin backend)
   cpt' openNodes asyncTasks appReload reload showLogin backend (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
-    pure $ H.div { className: "row forest" } $ [plus handed showLogin backend] <> trees
+    pure $ H.div { className: "forest" } $ [plus handed showLogin backend] <> trees
     where
       trees = tree <$> unSessions sessions
       tree s@(Session {treeId}) =
@@ -89,13 +89,13 @@ forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
                  } []
 
 plus :: Handed -> R.Setter Boolean -> R.State (Maybe Backend) -> R.Element
-plus handed showLogin backend = H.div { className: handedClass } [
+plus handed showLogin backend = H.div { className: "row" } [
   H.button { title: "Add or remove connections to the server(s)."
            , on: {click}
-           , className: "btn btn-secondary"
+           , className: "btn btn-secondary col-5 " <> if handed == RightHanded then "ml-1 mr-auto" else "ml-auto mr-1"
            }
           [ H.div { "type": ""
-                  , className: "fa fa-universal-access fa-lg"
+                  , className: "fa fa-universal-access"  -- fa-lg
                   } [H.text " Log in/out "]
           , H.div {} [H.text "    "]
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
@@ -105,11 +105,6 @@ plus handed showLogin backend = H.div { className: handedClass } [
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
   where
-    handedClass = if handed == RightHanded then
-                        "right-handed"
-                  else
-                        "left-handed"
-
     click _ = (snd backend) (const Nothing)
             *> showLogin (const true)
 
