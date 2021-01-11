@@ -75,11 +75,13 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
 
            , if Array.length (unSessions $ fst sessions) > 0 
                 then H.div {className:"center"}
-                           [ H.h1 {} [H.text "Welcome! Just watch the tutoriel now"]
-                           , H.img { src: "images/Gargantextuel-212x300.jpg"
-                                   , id: "funnyimg"
-                                   , title: "tutoriel video here"
-                                   }
+                           [ H.h1 {} [H.text "Welcome! For easy start, just watch the tutorial:"]
+                           , H.video { src: "http://dl.gargantext.org/video_tutorial.ogv"
+                                   , id: "video_tutorial"
+                                   , width: "1000"
+                                   , controls: "true"
+                                   , title: "tutorial video here"
+                                   } [H.text "sorry your browser is not compatible"]
                            ]
                 else joinButton
 
