@@ -148,7 +148,8 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
       pure $
         RH.div
-          { id: "graph-explorer" }
+          { id: "graph-explorer"
+          , className: "fixed-top navbar navbar-expand-lg" }
           [ rowToggle
                   [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
                   , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
@@ -205,12 +206,15 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
         hClass = case h of
           Types.LeftHanded  -> "lefthanded"
           Types.RightHanded -> "righthanded"
-    rowToggle  = RH.div { id: "toggle-container" }
+    -- rowToggle  = RH.div { id: "toggle-container" }
+    rowToggle  = RH.ul { className: "navbar-nav ml-auto mr-auto" }
     rowControls = RH.div { id: "controls-container" }
-    col       = RH.div { className: "col-md-4" }
+    -- col       = RH.div { className: "col-md-4" }
+    col = RH.li { className: "nav-item" }
     pullLeft  = RH.div { className: "pull-left"  }
     pullRight = RH.div { className: "pull-right" }
-    spaces    = RH.div { className: "flex-space-between" }
+    -- spaces    = RH.div { className: "flex-space-between" }
+    spaces = RH.a { className: "nav-link" }
 
 
     tree :: Record TreeProps -> R.Element

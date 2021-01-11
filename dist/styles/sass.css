@@ -83,6 +83,16 @@
   display: none;
 }
 
+#graph-explorer {
+  /* #toggle-container */
+  /*   position: fixed */
+  /*   z-index: 999 // needs to appear above solid menu bar */
+  /*   right: 25% */
+  /*   top: 10px */
+  /*   width: 50% */
+  /*   .container-fluid */
+  /*     padding-top: 90px */
+}
 #graph-explorer #toolbar {
   display: flex;
   flex-direction: column;
@@ -95,16 +105,6 @@
 #graph-explorer #toolbar ul li {
   display: flex;
   max-width: 200px;
-}
-#graph-explorer #toggle-container {
-  position: fixed;
-  z-index: 999;
-  right: 25%;
-  top: 10px;
-  width: 50%;
-}
-#graph-explorer #toggle-container .container-fluid {
-  padding-top: 90px;
 }
 #graph-explorer #controls-container {
   position: fixed;
