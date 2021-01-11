@@ -138,36 +138,36 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
         start_tutos :: Array Tuto
         start_tutos = [ Tuto { title : "The tree is your friend"
                             , id    : "video_tutorial.ogv#t=,8"
-                            , text  : "The tree enables you to control all your actions."
+                            , text  : "The tree enables you to control all your actions. The Tree has typed nodes. Each nodes has some attributes and methods which depend on its type. This specific feature ease to memorize all the complexity of the GarganText ergonomy."
                           }
                      ,  Tuto { title : "Edit your profile"
                             , id    : "video_tutorial.ogv#t=9,24"
-                            , text  : "At the root of the tree, there is your user node. Your profile is what others users could see to reach you and watch your work. If you delete it you remove all your data from the specified instance."
+                            , text  : "At the root of the tree, there is your user node, parent of all others nodes. Your profile is what others users will see or search for to reach you or to watch/follow your work. If you delete it you remove all your data from the specified instance, clear and simple."
                             }
                      , Tuto { title : "Discover the nodes of the tree"
                             , id    : "video_tutorial.ogv#t=25,42"
-                            , text  : "Under your User node"
+                            , text  : "Under your user node you have 3 main nodes: private, shared and public nodes. Each node has its specific attributes and methods! Under private node, all your work is private only. Under shared folder you can create teams to invite your partners, students or colleagues. Under public node, you can publish your work with the world: hello word!"
                             }
                      , Tuto { title : "Read a corpus"
                             , id    : "video_tutorial.ogv#t=43,79"
-                            , text  : "The node corpus has 4 children: docs, list, board, graph.."
+                            , text  : "Each fresh corpus node has 4 children only: docs, list, board, graph. The docs node enable you to manage your documents and rate it. The list node let the user to manage its ngrams. The board node sum up your analysis with the main charts you made with your ngrams. The graph node let you explore your data in a new way. Others new type of nodes are coming such as Phylo node..."
                             }
                      , Tuto { title : "Manage your ngrams"
                             , id    : "video_tutorial.ogv#t=80,214"
-                            , text  : "4 type of ngrams: Terms, Institutes, Sources, Authors. You will learn how to change the status, group the ngrams and create new categories. You need do save with the sycn button. Then the charts are updated after each sync."
+                            , text  : "By default, 4 types of ngrams are created: Terms extracted from text fields such as title or abstract, Institutes are extracted from the Institute field of the metadata, Sources, Authors. In that tutorial, you will learn how to change the status of ngrams, group it or create new categories. Remember you need to save your work with the sycn button. Then the charts are updated after each sync. Your work is either synchronous or asynchronous: you can save locally your data, disconnect your device and sync when your Internet connection is back."
                             }
                      , Tuto { title : "Watch with the board"
                             , id    : "video_tutorial.ogv#t=215,237"
-                            , text  : "Build your own watchboard! All your list enable you to have chart to follow the evolution of your corpus."
+                            , text  : "Build your own watchboard! Easy. All your list enable you to have charts to follow the evolution of your corpus."
                             }
                      , Tuto { title : "Explore with the graph"
                             , id    : "video_tutorial.ogv#t=238,293"
-                            , text  : "With the map terms you have selected, the graph is built. 3 main panels can be hidden or not to give you more space: tree, controls, side panel (legend, Build your own watchboard! All your list enable you to have chart to follow the evolution of your corpus."
+                            , text  : "With the map terms you have selected already, the graph is built. 3 main panels can be hidden or shown to give you more visual space: tree, controls, side panel. The side panel shows the legend, the selected data and the community you are watching. You can link your corpus with a community (check nodes methods to do this)."
                             }
 
                      , Tuto { title : "Edit ngrams in your documents"
                             , id    : "video_tutorial.ogv#t=294,312"
-                            , text  : "All selected ngrams can be updated in the document and are autmatically updated in the lists."
+                            , text  : "All selected ngrams can be updated in the document and they are autmatically updated in the lists."
                             }
 
                      ]
@@ -175,26 +175,26 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
         play_tutos :: Array Tuto
         play_tutos = [ Tuto { title : "Again the tree is your friend"
                             , id    : "video_tutorial_1.ogv#t=,46"
-                            , text  : "At the right of each node, you have a wheel which enable functions exections"
+                            , text  : "At the right of each node, its wheel shows its attributes or enables the execution of its methods. Each type of node has different attributes and methods to help user in an ergonomic way."
                           }
                       , Tuto { title : "Build your analysis"
-                            , id    : "video_tutorial_1.ogv#t=47,146"
-                            , text  : "To build your analysis you need to create a corpus. Suppose you want to create it in your private folder. Use the wheel to execute any function on the corpus node in the tree. Search in database to add document to your corpus."
-                          }
+                             , id    : "video_tutorial_1.ogv#t=47,146"
+                             , text  : "To build your analysis you need to create a corpus. Suppose you want to create it in your private folder in this tutorial. Use the wheel to execute any function on the corpus node in the tree. You can search the local database instance, the web or through apis connected to public databases. It becomes easy to add many documents to your dynamic corpus."
+                            }
 
-                      , Tuto { title : "Add document with files, download data"
+                      , Tuto { title : "Add documents with files and download your data"
                             , id    : "video_tutorial_1.ogv#t=157,166"
-                            , text  : "You can add CSV files."
+                            , text  : "You can add CSV files from Gargantext V3 legacy version: in your previous account, export your corpus and download it on your device. Then, upload it to v4 as CSV file."
                           }
 
                       , Tuto { title : "Move your corpus elsewhere in the tree"
                             , id    : "video_tutorial_1.ogv#t=167,175"
-                            , text  : "Each node can be moved with this function."
+                            , text  : "Each node can be moved with this function. Move it in your team to share it. Remove it to unshare it. Some nodes can not be moved, it depends on the types methods."
                           }
 
                       , Tuto { title : "Rename your corpus"
                             , id    : "video_tutorial_1.ogv#t=145,160"
-                            , text  : "Each node can be renamed."
+                            , text  : "Some nodes can be renamed, most of them. But you can not rename your User Node which is the root of the tree."
                           }
 
                       , Tuto { title : "Delete your corpus"
@@ -214,7 +214,7 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                                      , "type": "video/ogg"
                                      , controls: "true"
                                      , muted   : "true"
-                                     } [H.text "sorry your browser is not compatible"]
+                                   } [H.text "Sorry your browser is not compatible: use Firefox or Chromium instead."]
                                    ]
 
         joinButton = H.div { className:"flex-space-around center" 
