@@ -97,42 +97,58 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                  $  [ H.h1 {} [H.text "Welcome!"]
                     , H.h2 {} [H.text "For easy start, just watch the tutorials"]
                     ]
-                 <> [ H.div { className: "alert alert-info part" } summary ]
+                 <> [ H.div { className: "" } summary ]
                  <> tutos
 
         summary :: Array R.Element
-        summary = [ H.h3 {} [H.text "Tutorial summary"]
-                  , H.ol {} [ H.li {} [ H.h4 {} [H.text "How to start ?"]
-                                      , H.ol {} toRead
-                                      ]
-                            , H.li {} [ H.h4 {} [H.text ""]]
-                            , H.li {} [ H.h4 {} [H.text "How to play ?"]
-                                      , H.ol {} toPlay
-                                      ]
+        summary = [ H.h3 {} [ H.text "Tutorial summary"]
+                            , H.ol {} [ H.div {className: "alert alert-info"}
+                                    [ H.li {} [ H.h4 {} [H.text "How to start (beginner users) ?"]
+                                              , H.ol {} (toSummary start_tutos)
+                                              ]
+                                    ]
+                            , H.div {className: "alert alert-warning"}
+                                    [ H.li {} [ H.h4 {} [H.text "How to play (advanced users)?"]
+                                              , H.ol {} (toSummary play_tutos)
+                                              ]
+                                    ]
+
+                            , H.div {className: "alert alert-danger"}
+                                    [ H.li {} [ H.h4 {} [H.text "How to master (expert users)?"]
+                                              , H.ol {} (toSummary expert_tutos)
+                                              ]
+                                    ]
                             ]
                   ]
             where
-              toRead = map (\(Tuto x) -> H.li {} [H.a {href : "#" <> x.id} [H.text x.title]]) start_tutos
-              toPlay = map (\(Tuto x) -> H.li {} [H.a {href : "#" <> x.id} [H.text x.title]]) play_tutos
+              toSummary x = map (\(Tuto x) -> H.li {} [H.a {href : "#" <> x.id} [H.text x.title]]) x
 
         tutos :: Array R.Element
         tutos = [ H.h3 {} [H.text "Tutorial resources"]
-                , H.div {className : "alert alert-success part"}
+                , H.div {className : ""}
                         $ [ H.h4 {} [H.text "How to start ?"] ]
-                        <> map (\ (Tuto x) -> H.div { className : "alert alert-success part", id : x.id}
+                        <> map (\ (Tuto x) -> H.div { className : "alert alert-info", id : x.id}
                                             [ video x.id
                                             , H.h4 {} [H.text x.title]
                                             , H.p  {} [H.text x.text ]
                                             ]
                          ) start_tutos
-                , H.div {className : "alert alert-warning part"}
+                , H.div {className : ""}
                         $ [H.h4 {} [H.text "How to play ?"]]
-                        <> map (\ (Tuto x) -> H.div { className : "alert alert-warning part", id : x.id}
+                        <> map (\ (Tuto x) -> H.div { className : "alert alert-warning", id : x.id}
                                                     [ video x.id
                                                     , H.h4 {} [H.text x.title]
                                                     , H.p  {} [H.text x.text]
                                                     ]
                                ) play_tutos
+                , H.div {className : ""}
+                        $ [H.h4 {} [H.text "How to master ?"]]
+                        <> map (\ (Tuto x) -> H.div { className : "alert alert-danger", id : x.id}
+                                                    [ video x.id
+                                                    , H.h4 {} [H.text x.title]
+                                                    , H.p  {} [H.text x.text]
+                                                    ]
+                               ) expert_tutos
                 ]
 
         start_tutos :: Array Tuto
@@ -204,6 +220,41 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
 
                       ]
 
+        expert_tutos :: Array Tuto
+        expert_tutos = [ Tuto { title : "Multi instance connections"
+                              , id    : "video_tutorial_2.ogv#t=,46"
+                              , text  : "[Link to update]"
+                          }
+                       , Tuto { title : "Link a corpus with a community"
+                              , id    : "video_tutorial_2.ogv#t=,46"
+                              , text  : "[Link to update]"
+                          }
+                       ,  Tuto { title : "Social lists"
+                              , id    : "video_tutorial_2.ogv#t=,46"
+                              , text  : "[Link to update]"
+                          }
+                       ,  Tuto { title : "Data mining with calc"
+                              , id    : "video_tutorial_2.ogv#t=,46"
+                              , text  : "[Link to update]"
+                          }
+                      ,  Tuto { title : "Collaborative sync edition notes"
+                                , id    : "video_tutorial_2.ogv#t=,46"
+                                , text  : "[Link to update]"
+                            }
+                      ,  Tuto { title : "Coding with our notebooks"
+                                , id    : "video_tutorial_2.ogv#t=,46"
+                                , text  : "[Link to update]"
+                            }
+
+                      ,  Tuto { title : "Our api"
+                                , id    : "video_tutorial_2.ogv#t=,46"
+                                , text  : "[Link to update]"
+                            }
+                      ,  Tuto { title : "A tour in the code"
+                                , id    : "video_tutorial_2.ogv#t=,46"
+                                , text  : "[Link to update]"
+                            }
+                      ]
 
 
         video fileDuration = H.div {className:"center"}
