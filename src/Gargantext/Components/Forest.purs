@@ -74,26 +74,26 @@ forest = R.createElement forestCpt
         )
         (cpt' openNodes asyncTasks appReload reload showLogin backend)
     cpt' openNodes asyncTasks appReload reload showLogin backend (frontends /\ currentRoute /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
-      pure $ R2.row $ [plus handed showLogin backend] <> trees
+      pure $ R2.row $ [ plus handed showLogin backend ] <> trees
       where
         trees = tree <$> unSessions sessions
         tree s@(Session {treeId}) =
           treeView { appReload
-                  , asyncTasks
-                  , currentRoute
-                  , frontends
-                  , handed
-                  , openNodes
-                  , reload
-                  , root: treeId
-                  , session: s
-                  } []
+                   , asyncTasks
+                   , currentRoute
+                   , frontends
+                   , handed
+                   , openNodes
+                   , reload
+                   , root: treeId
+                   , session: s
+                   } []
 
 plus :: Handed -> R.Setter Boolean -> R.State (Maybe Backend) -> R.Element
 plus handed showLogin backend = H.div { className: handedClass } [
-  H.button { title: "Add or remove connections to the server(s)."
+  H.button { className: "btn btn-default"
            , on: {click}
-           , className: "btn btn-default"
+           , title: "Add or remove connections to the server(s)."
            }
           [ H.div { "type": ""
                   , className: "fa fa-universal-access fa-lg"
