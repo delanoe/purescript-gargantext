@@ -27,9 +27,9 @@ type Props = (
     appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
+  , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , handed        :: Handed
-  , route         :: AppRoute
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
   , treeReloadRef :: R.Ref (Maybe ReloadS)
@@ -37,62 +37,63 @@ type Props = (
 
 forest :: R2.Component Props
 forest = R.createElement forestCpt
+  where
+    forestCpt :: R.Component Props
+    forestCpt = R.hooksComponentWithModule thisModule "forest" cpt
 
-forestCpt :: R.Component Props
-forestCpt = R.hooksComponentWithModule thisModule "forest" cpt where
-  cpt { appReload
-      , asyncTasksRef
-      , backend
-      , frontends
-      , handed
-      , route
-      , sessions
-      , showLogin
-      , treeReloadRef } _ = do
-    -- NOTE: this is a hack to reload the tree view on demand
-    reload     <- R.useState' (0 :: Reload)
-    asyncTasks <- GAT.useTasks appReload reload
-    openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
+    cpt { appReload
+        , asyncTasksRef
+        , backend
+        , currentRoute
+        , frontends
+        , handed
+        , sessions
+        , showLogin
+        , treeReloadRef } _ = do
+      -- NOTE: this is a hack to reload the tree view on demand
+      reload     <- R.useState' (0 :: Reload)
+      asyncTasks <- GAT.useTasks appReload reload
+      openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
 
-    -- TODO If `treeReloadRef` is set, `reload` state should be updated
-    R.useEffect' $ do
-      R.setRef asyncTasksRef $ Just asyncTasks
-      case R.readRef treeReloadRef of
-        Nothing -> R.setRef treeReloadRef $ Just reload
-        Just _  -> pure unit
+      -- TODO If `treeReloadRef` is set, `reload` state should be updated
+      R.useEffect' $ do
+        R.setRef asyncTasksRef $ Just asyncTasks
+        case R.readRef treeReloadRef of
+          Nothing -> R.setRef treeReloadRef $ Just reload
+          Just _  -> pure unit
 
-    R2.useCache (
-        frontends
-      /\ route
-      /\ sessions
-      /\ fst openNodes
-      /\ fst appReload
-      /\ fst reload
-      /\ (fst asyncTasks).storage
-      /\ handed
-      )
-      (cpt' openNodes asyncTasks appReload reload showLogin backend)
-  cpt' openNodes asyncTasks appReload reload showLogin backend (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
-    pure $ R2.row $ [plus handed showLogin backend] <> trees
-    where
-      trees = tree <$> unSessions sessions
-      tree s@(Session {treeId}) =
-        treeView { appReload
-                 , asyncTasks
-                 , frontends
-                 , handed
-                 , mCurrentRoute: Just route
-                 , openNodes
-                 , reload
-                 , root: treeId
-                 , session: s
-                 } []
+      R2.useCache (
+          frontends
+        /\ currentRoute
+        /\ sessions
+        /\ fst openNodes
+        /\ fst appReload
+        /\ fst reload
+        /\ (fst asyncTasks).storage
+        /\ handed
+        )
+        (cpt' openNodes asyncTasks appReload reload showLogin backend)
+    cpt' openNodes asyncTasks appReload reload showLogin backend (frontends /\ currentRoute /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
+      pure $ R2.row $ [ plus handed showLogin backend ] <> trees
+      where
+        trees = tree <$> unSessions sessions
+        tree s@(Session {treeId}) =
+          treeView { appReload
+                   , asyncTasks
+                   , currentRoute
+                   , frontends
+                   , handed
+                   , openNodes
+                   , reload
+                   , root: treeId
+                   , session: s
+                   } []
 
 plus :: Handed -> R.Setter Boolean -> R.State (Maybe Backend) -> R.Element
 plus handed showLogin backend = H.div { className: handedClass } [
-  H.button { title: "Add or remove connections to the server(s)."
+  H.button { className: "btn btn-default"
            , on: {click}
-           , className: "btn btn-default"
+           , title: "Add or remove connections to the server(s)."
            }
           [ H.div { "type": ""
                   , className: "fa fa-universal-access fa-lg"
@@ -119,9 +120,9 @@ type ForestLayoutProps = (
     appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
+  , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , handed        :: R.State Handed
-  , route         :: AppRoute
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
   , treeReloadRef :: R.Ref (Maybe ReloadS)
@@ -129,10 +130,10 @@ type ForestLayoutProps = (
 
 forestLayout :: R2.Component ForestLayoutProps
 forestLayout props = R.createElement forestLayoutCpt props
-
-forestLayoutCpt :: R.Component ForestLayoutProps
-forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
   where
+    forestLayoutCpt :: R.Component ForestLayoutProps
+    forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
+
     cpt props@{ handed } children = do
       pure $ R.fragment [ topBar { handed } [], forestLayoutMain props children ]
 
@@ -140,10 +141,10 @@ forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
 -- while the remaining ones are put into the main view
 forestLayoutWithTopBar :: R2.Component ForestLayoutProps
 forestLayoutWithTopBar props = R.createElement forestLayoutWithTopBarCpt props
-
-forestLayoutWithTopBarCpt :: R.Component ForestLayoutProps
-forestLayoutWithTopBarCpt = R.hooksComponentWithModule thisModule "forestLayoutWithTopBar" cpt
   where
+    forestLayoutWithTopBarCpt :: R.Component ForestLayoutProps
+    forestLayoutWithTopBarCpt = R.hooksComponentWithModule thisModule "forestLayoutWithTopBar" cpt
+
     cpt props@{ handed } children = do
       let { head: topBarChild, tail: mainChildren } =
             fromMaybe { head: H.div {} [], tail: [] } $ A.uncons children
@@ -154,10 +155,10 @@ forestLayoutWithTopBarCpt = R.hooksComponentWithModule thisModule "forestLayoutW
 
 forestLayoutMain :: R2.Component ForestLayoutProps
 forestLayoutMain props = R.createElement forestLayoutMainCpt props
-
-forestLayoutMainCpt :: R.Component ForestLayoutProps
-forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
   where
+    forestLayoutMainCpt :: R.Component ForestLayoutProps
+    forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
+
     cpt props children = do
       pure $ forestLayoutRaw props [
           mainPage {} children
@@ -165,16 +166,16 @@ forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" c
 
 forestLayoutRaw :: R2.Component ForestLayoutProps
 forestLayoutRaw props = R.createElement forestLayoutRawCpt props
-
-forestLayoutRawCpt :: R.Component ForestLayoutProps
-forestLayoutRawCpt = R.hooksComponentWithModule thisModule "forestLayoutRaw" cpt
   where
+    forestLayoutRawCpt :: R.Component ForestLayoutProps
+    forestLayoutRawCpt = R.hooksComponentWithModule thisModule "forestLayoutRaw" cpt
+
     cpt { appReload
         , asyncTasksRef
         , backend
+        , currentRoute
         , frontends
         , handed
-        , route
         , sessions
         , showLogin
         , treeReloadRef } children = do
@@ -188,9 +189,9 @@ forestLayoutRawCpt = R.hooksComponentWithModule thisModule "forestLayoutRaw" cpt
           forest { appReload
                  , asyncTasksRef
                  , backend
+                 , currentRoute
                  , frontends
                  , handed: fst handed
-                 , route
                  , sessions
                  , showLogin
                  , treeReloadRef } []
@@ -199,10 +200,10 @@ forestLayoutRawCpt = R.hooksComponentWithModule thisModule "forestLayoutRaw" cpt
 
 mainPage :: R2.Component ()
 mainPage = R.createElement mainPageCpt
-
-mainPageCpt :: R.Component ()
-mainPageCpt = R.hooksComponentWithModule thisModule "mainPage" cpt
   where
+    mainPageCpt :: R.Component ()
+    mainPageCpt = R.hooksComponentWithModule thisModule "mainPage" cpt
+
     cpt {} children = do
       pure $ H.div {className: "col-md-10"} [
         H.div {id: "page-wrapper"} [
