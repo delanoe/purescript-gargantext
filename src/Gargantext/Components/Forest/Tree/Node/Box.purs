@@ -48,10 +48,10 @@ type CommonProps =
 
 nodePopupView :: Record NodePopupProps -> R.Element
 nodePopupView p = R.createElement nodePopupCpt p []
-
-nodePopupCpt :: R.Component NodePopupProps
-nodePopupCpt = R.hooksComponentWithModule thisModule "nodePopupView" cpt
   where
+    nodePopupCpt :: R.Component NodePopupProps
+    nodePopupCpt = R.hooksComponentWithModule thisModule "nodePopupView" cpt
+
     cpt p _ = do
       isOpen    <- R.useState' false
 
