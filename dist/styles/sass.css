@@ -84,6 +84,7 @@
 }
 
 #graph-explorer {
+  padding-top: 0px;
   /* #toggle-container */
   /*   position: fixed */
   /*   z-index: 999 // needs to appear above solid menu bar */
