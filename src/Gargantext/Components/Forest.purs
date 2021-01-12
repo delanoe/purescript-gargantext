@@ -27,9 +27,9 @@ type Props = (
     appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
+  , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , handed        :: Handed
-  , route         :: AppRoute
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
   , treeReloadRef :: R.Ref (Maybe ReloadS)
@@ -44,9 +44,9 @@ forest = R.createElement forestCpt
     cpt { appReload
         , asyncTasksRef
         , backend
+        , currentRoute
         , frontends
         , handed
-        , route
         , sessions
         , showLogin
         , treeReloadRef } _ = do
@@ -64,7 +64,7 @@ forest = R.createElement forestCpt
 
       R2.useCache (
           frontends
-        /\ route
+        /\ currentRoute
         /\ sessions
         /\ fst openNodes
         /\ fst appReload
@@ -73,16 +73,16 @@ forest = R.createElement forestCpt
         /\ handed
         )
         (cpt' openNodes asyncTasks appReload reload showLogin backend)
-    cpt' openNodes asyncTasks appReload reload showLogin backend (frontends /\ route /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
+    cpt' openNodes asyncTasks appReload reload showLogin backend (frontends /\ currentRoute /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
       pure $ R2.row $ [plus handed showLogin backend] <> trees
       where
         trees = tree <$> unSessions sessions
         tree s@(Session {treeId}) =
           treeView { appReload
                   , asyncTasks
+                  , currentRoute
                   , frontends
                   , handed
-                  , mCurrentRoute: Just route
                   , openNodes
                   , reload
                   , root: treeId
@@ -120,9 +120,9 @@ type ForestLayoutProps = (
     appReload     :: ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
+  , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , handed        :: R.State Handed
-  , route         :: AppRoute
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
   , treeReloadRef :: R.Ref (Maybe ReloadS)
@@ -173,9 +173,9 @@ forestLayoutRaw props = R.createElement forestLayoutRawCpt props
     cpt { appReload
         , asyncTasksRef
         , backend
+        , currentRoute
         , frontends
         , handed
-        , route
         , sessions
         , showLogin
         , treeReloadRef } children = do
@@ -189,9 +189,9 @@ forestLayoutRaw props = R.createElement forestLayoutRawCpt props
           forest { appReload
                  , asyncTasksRef
                  , backend
+                 , currentRoute
                  , frontends
                  , handed: fst handed
-                 , route
                  , sessions
                  , showLogin
                  , treeReloadRef } []

@@ -64,9 +64,9 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     let forested = forestLayout { appReload
                                 , asyncTasksRef
                                 , backend
+                                , currentRoute: fst route
                                 , frontends
                                 , handed
-                                , route: fst route
                                 , sessions: fst sessions
                                 , showLogin: snd showLogin
                                 , treeReloadRef
@@ -74,9 +74,9 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     let forestedTB = forestLayoutWithTopBar { appReload
                                             , asyncTasksRef
                                             , backend
+                                            , currentRoute: fst route
                                             , frontends
                                             , handed
-                                            , route: fst route
                                             , sessions: fst sessions
                                             , showLogin: snd showLogin
                                             , treeReloadRef
@@ -138,9 +138,9 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                       appReload
                     , asyncTasksRef
                     , backend
+                    , currentRoute: fst route
                     , frontends
                     , handed
-                    , route: fst route
                     , sessions: fst sessions
                     , showLogin: snd showLogin
                     , treeReloadRef
@@ -161,10 +161,10 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                 simpleLayout { handed } [
                   explorerLayout { asyncTasksRef
                                  , backend
+                                 , currentRoute: fst route
                                  , frontends
                                  , graphId
                                  , handed: fst handed
-                                 , mCurrentRoute: fst route
                                  , session
                                  , sessions: (fst sessions)
                                  , showLogin
@@ -189,9 +189,9 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                       appReload
                     , asyncTasksRef
                     , backend
+                    , currentRoute: fst route
                     , frontends
                     , handed
-                    , route: fst route
                     , sessions: fst sessions
                     , showLogin: snd showLogin
                     , treeReloadRef
