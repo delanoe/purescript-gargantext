@@ -154,7 +154,7 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
         start_tutos :: Array Tuto
         start_tutos = [ Tuto { title : "The tree is your friend"
                             , id    : "video_tutorial.ogv#t=,8"
-                            , text  : "The tree enables you to control all your actions. The Tree has typed nodes. Each node has some attributes and some methods which depend on its type. This specific feature ease to memorize all the complexity of the GarganText ergonomy: hence you do not need to memorize all the documentation! Just remember these simple axioms, the Tree is built with parent-children relations of nodes which have specific attributes and methods. To get its methods and attributes, just click on the wheel near its name (for this feature, see advanced tutorial: how to play with GarganText)."
+                            , text  : "The tree enables you to control all your actions. The Tree has typed nodes. Each node has some attributes and some methods which depend on its type. This specific ergonomy helps the memorization of all the complexity of the GarganTexts' features: hence you do not need to remember all the documentation! Just remember these simple axioms, the Tree is built with parent-children relations of nodes which have specific attributes and methods. To get its methods and attributes, just click on the wheel near its name (for this feature, see advanced tutorial: how to play with GarganText)."
                           }
                      ,  Tuto { title : "Edit your profile"
                             , id    : "video_tutorial.ogv#t=9,24"
