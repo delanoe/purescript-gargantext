@@ -89,7 +89,6 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                      , visible: showLogin
                      }
           ]
-    let mCurrentRoute     = fst route
     let withSession sid f = maybe' defaultView (ff f) (Sessions.lookup sid (fst sessions))
 
     let sessionUpdate s = snd sessions $ Sessions.Update s
@@ -165,7 +164,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                                  , frontends
                                  , graphId
                                  , handed: fst handed
-                                 , mCurrentRoute
+                                 , mCurrentRoute: fst route
                                  , session
                                  , sessions: (fst sessions)
                                  , showLogin

@@ -59,19 +59,19 @@ type IsLeaf = Boolean
 
 nodeSpan :: R2.Component NodeMainSpanProps
 nodeSpan = R.createElement nodeSpanCpt
-
-nodeSpanCpt :: R.Component NodeMainSpanProps
-nodeSpanCpt = R.hooksComponentWithModule thisModule "nodeSpan" cpt
   where
+    nodeSpanCpt :: R.Component NodeMainSpanProps
+    nodeSpanCpt = R.hooksComponentWithModule thisModule "nodeSpan" cpt
+
     cpt props children = do
       pure $ H.div {} ([ nodeMainSpan props [] ] <> children)
 
 nodeMainSpan :: R2.Component NodeMainSpanProps
 nodeMainSpan = R.createElement nodeMainSpanCpt
-
-nodeMainSpanCpt :: R.Component NodeMainSpanProps
-nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
   where
+    nodeMainSpanCpt :: R.Component NodeMainSpanProps
+    nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
+
     cpt props@{ appReload
               , asyncTasks: (asyncTasks /\ dispatchAsyncTasks)
               , dispatch
@@ -142,8 +142,8 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
 
                 , nodeActions { id
                               , nodeType
-                              , refreshTree: const $ dispatch RefreshTree
                               , session
+                              , triggerRefresh: const $ dispatch RefreshTree
                               }
 
 
@@ -242,33 +242,33 @@ fldr nt open = if open
 type NodeActionsProps =
   ( id          :: ID
   , nodeType    :: GT.NodeType
-  , refreshTree :: Unit -> Aff Unit
   , session     :: Session
+  , triggerRefresh :: Unit -> Aff Unit
   )
 
 nodeActions :: Record NodeActionsProps -> R.Element
 nodeActions p = R.createElement nodeActionsCpt p []
-
-nodeActionsCpt :: R.Component NodeActionsProps
-nodeActionsCpt = R.hooksComponentWithModule thisModule "nodeActions" cpt
   where
+    nodeActionsCpt :: R.Component NodeActionsProps
+    nodeActionsCpt = R.hooksComponentWithModule thisModule "nodeActions" cpt
+
     cpt { id
         , nodeType: GT.Graph
-        , refreshTree
         , session
+        , triggerRefresh
         } _ = do
 
       useLoader id (graphVersions session) $ \gv ->
         nodeActionsGraph { id
                          , graphVersions: gv
                          , session
-                         , triggerRefresh: triggerRefresh refreshTree
+                         , triggerRefresh
                          }
 
     cpt { id
         , nodeType: GT.NodeList
-        , refreshTree
         , session
+        , triggerRefresh
         } _ = do
       useLoader { nodeId: id, session } loadCorpusWithChild $
         \{ corpusId } ->
@@ -276,13 +276,12 @@ nodeActionsCpt = R.hooksComponentWithModule thisModule "nodeActions" cpt
                               , nodeId: corpusId
                               , nodeType: GT.TabNgramType GT.CTabTerms
                               , session
-                              , triggerRefresh: triggerRefresh refreshTree
+                              , triggerRefresh
                               }
     cpt _ _ = do
       pure $ H.div {} []
 
     graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
-    triggerRefresh refreshTree    = refreshTree
 
 
 -- END nodeActions
