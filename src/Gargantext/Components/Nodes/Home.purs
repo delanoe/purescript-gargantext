@@ -221,15 +221,31 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                       ]
 
         expert_tutos :: Array Tuto
-        expert_tutos = [ Tuto { title : "Multi instance connections"
+        expert_tutos = [ Tuto { title : "Share with a team and send invitations"
                               , id    : "video_tutorial_2.ogv#t=,46"
                               , text  : "[Link to update]"
                           }
-                       , Tuto { title : "Link a corpus with a community"
+
+                       , Tuto { title : "Multi instance connections"
                               , id    : "video_tutorial_2.ogv#t=,46"
                               , text  : "[Link to update]"
                           }
-                       ,  Tuto { title : "Social lists"
+
+                       , Tuto { title : "Freeze a graph"
+                              , id    : "video_tutorial_2.ogv#t=,46"
+                              , text  : "[Link to update]"
+                          }
+
+                       , Tuto { title : "Publish"
+                              , id    : "video_tutorial_2.ogv#t=,46"
+                              , text  : "[Link to update]"
+                          }
+
+                       , Tuto { title : "Link a set of document (corpus) with a set of persons (community)"
+                              , id    : "video_tutorial_2.ogv#t=,46"
+                              , text  : "[Link to update]"
+                          }
+                       ,  Tuto { title : "Social lists: cumulative work made easy"
                               , id    : "video_tutorial_2.ogv#t=,46"
                               , text  : "[Link to update]"
                           }
