@@ -153,36 +153,36 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
 
         start_tutos :: Array Tuto
         start_tutos = [ Tuto { title : "The tree is your friend"
-                            , id    : "video_tutorial.ogv#t=,8"
+                            , id    : "video_tutoriel.mp4#t=,8"
                             , text  : "The tree enables you to control all your actions. The Tree has typed nodes. Each node has some attributes and some methods which depend on its type. This specific ergonomy helps the memorization of all the complexity of the GarganTexts' features: hence you do not need to remember all the documentation! Just remember these simple axioms, the Tree is built with parent-children relations of nodes which have specific attributes and methods. To get its methods and attributes, just click on the wheel near its name (for this feature, see advanced tutorial: how to play with GarganText)."
                           }
                      ,  Tuto { title : "Edit your profile"
-                            , id    : "video_tutorial.ogv#t=9,24"
+                            , id    : "video_tutoriel.mp4#t=9,24"
                             , text  : "At the root of the tree, there is your user node, parent of all others nodes. Your profile is what others users will see or search for to reach you or to watch/follow your work. If you delete it you remove all your data from the specified instance, clear and simple."
                             }
                      , Tuto { title : "Discover the nodes of the tree"
-                            , id    : "video_tutorial.ogv#t=25,42"
+                            , id    : "video_tutoriel.mp4#t=25,42"
                             , text  : "Under your user node you have 3 main nodes: private, shared and public nodes. Each node has its specific attributes and methods! Under private node, all your work is private only. Under shared folder you can create teams to invite your partners, students or colleagues. Under public node, you can publish your work with the world: hello word!"
                             }
                      , Tuto { title : "Read a corpus"
-                            , id    : "video_tutorial.ogv#t=43,79"
+                            , id    : "video_tutoriel.mp4#t=43,79"
                             , text  : "Each fresh corpus node has 4 children only: docs, list, board, graph. The docs node enable you to manage your documents and rate it. The list node let the user to manage its ngrams. The board node sum up your analysis with the main charts you made with your ngrams. The graph node let you explore your data in a new way. Others new type of nodes are coming such as Phylo node..."
                             }
                      , Tuto { title : "Manage your ngrams"
-                            , id    : "video_tutorial.ogv#t=80,214"
+                            , id    : "video_tutoriel.mp4#t=80,214"
                             , text  : "By default, 4 types of ngrams are created: Terms extracted from text fields such as title or abstract, Institutes are extracted from the Institute field of the metadata, Sources, Authors. In that tutorial, you will learn how to change the status of ngrams, group it or create new categories. Remember you need to save your work with the sycn button. Then the charts are updated after each sync. Your work is either synchronous or asynchronous: you can save locally your data, disconnect your device and sync when your Internet connection is back."
                             }
                      , Tuto { title : "Watch with the board"
-                            , id    : "video_tutorial.ogv#t=215,237"
+                            , id    : "video_tutoriel.mp4#t=215,237"
                             , text  : "Build your own watchboard! Easy. All your list enable you to have charts to follow the evolution of your corpus."
                             }
                      , Tuto { title : "Explore with the graph"
-                            , id    : "video_tutorial.ogv#t=238,293"
+                            , id    : "video_tutoriel.mp4#t=238,293"
                             , text  : "With the map terms you have selected already, the graph is built. 3 main panels can be hidden or shown to give you more visual space: tree, controls, side panel. The side panel shows the legend, the selected data and the community you are watching. You can link your corpus with a community (check nodes methods to do this)."
                             }
 
                      , Tuto { title : "Edit ngrams in your documents"
-                            , id    : "video_tutorial.ogv#t=294,312"
+                            , id    : "video_tutoriel.mp4#t=294,312"
                             , text  : "All selected ngrams can be updated in the document and they are autmatically updated in the lists."
                             }
 
