@@ -55,15 +55,15 @@ instance showNodeAction :: Show NodeAction where
   show Download          = "Download"
   show Upload            = "Upload"
   show Refresh           = "Refresh"
-  show (Move t)          = "Move with subtree params" <> show t
+  show (Move t)          = "Move with subtree params" -- <> show t
   show Clone             = "Clone"
   show Delete            = "Delete"
   show Share             = "Share"
   show Config            = "Config"
-  show (Link x)          = "Link to " <> show x
-  show (Add xs)          = foldl (\a b -> a <> show b) "Add " xs
-  show (Merge t)         = "Merge with subtree" <> show t
-  show (Publish x)       = "Publish" <> show x
+  show (Link x)          = "Link to " -- <> show x
+  show (Add xs)          = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
+  show (Merge t)         = "Merge with subtree" -- <> show t
+  show (Publish x)       = "Publish" -- <> show x
   show AddingContact     = "AddingContact"
   show CloseNodePopover  = "CloseNodePopover"
 
@@ -175,18 +175,18 @@ settingsBox Corpus =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation Corpus
-              , buttons : [ Add [ NodeList
+              , buttons : [ Upload
+                          , SearchBox
+                          , Download
+                            --, Clone
+                          , Add [ NodeList
                                 , Graph
                                 , Dashboard
                                 , NodeFrameWrite
                                 , NodeFrameCalc
                                 ]
-                          , SearchBox
-                          , Upload
-                          , Download
-                          , Move moveParameters
-                            --, Clone
                           , Link (linkParams Annuaire)
+                          , Move moveParameters
                           , Delete
                           ]
               }

@@ -15,5 +15,6 @@ hasStatus _ (Merge _)         = Dev
 hasStatus _ (Documentation _) = Dev
 hasStatus Annuaire Upload     = Dev
 hasStatus Texts    Upload     = Dev
+hasStatus Corpus   (Add _)    = Dev
 hasStatus _ _                 = Stable
 
