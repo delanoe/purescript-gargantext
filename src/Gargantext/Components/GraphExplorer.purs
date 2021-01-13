@@ -147,55 +147,55 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
           snd controls.showSidePanel   $ const GET.InitialClosed
 
       pure $
-        RH.div
-          { id: "graph-explorer"
-          , className: "fixed-top navbar navbar-expand-lg" }
-          [ rowToggle
-                  [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
-                  , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
-                  , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
-                  ], R2.row
-            [ outer
-              [ inner handed
-                [ rowControls [ Controls.controls controls ]
-                , R2.row $ mainLayout handed $
-                    tree { asyncTasksRef
-                         , backend
-                         , currentRoute
-                         , frontends
-                         , handed
-                         , reload: treeReload
-                         , sessions
-                         , show: fst controls.showTree
-                         , showLogin: snd showLogin
-                         , treeReloadRef
-                         }
-                    /\
-                    RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
-                    /\
-                    graphView { controls
-                              , elRef: graphRef
-                              , graphId
-                              , graph
-                              , hyperdataGraph
-                              , mMetaData
-                              , multiSelectEnabledRef
-                              }
-                    /\
-                    mSidebar mMetaData { frontends
-                                        , graph
-                                        , graphId
-                                        , graphVersion
-                                        , removedNodeIds : controls.removedNodeIds
-                                        , session
-                                        , selectedNodeIds: controls.selectedNodeIds
-                                        , showSidePanel  :   controls.showSidePanel
-                                        , treeReload
-                                        }
-                ]
-              ]
+        RH.div { className: "graph-meta-container" } [
+          RH.div { className: "fixed-top navbar navbar-expand-lg"
+                 , id: "graph-explorer" }
+            [ rowToggle
+                    [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
+                    , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
+                    , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
+                    ]
+            ]
+        , RH.div { className: "graph-container" } [
+            inner handed [
+              rowControls [ Controls.controls controls ]
+            , R2.row $ mainLayout handed $
+                tree { asyncTasksRef
+                    , backend
+                    , currentRoute
+                    , frontends
+                    , handed
+                    , reload: treeReload
+                    , sessions
+                    , show: fst controls.showTree
+                    , showLogin: snd showLogin
+                    , treeReloadRef
+                    }
+                /\
+                RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
+                /\
+                graphView { controls
+                          , elRef: graphRef
+                          , graphId
+                          , graph
+                          , hyperdataGraph
+                          , mMetaData
+                          , multiSelectEnabledRef
+                          }
+                /\
+                mSidebar mMetaData { frontends
+                                  , graph
+                                  , graphId
+                                  , graphVersion
+                                  , removedNodeIds : controls.removedNodeIds
+                                  , session
+                                  , selectedNodeIds: controls.selectedNodeIds
+                                  , showSidePanel  :   controls.showSidePanel
+                                  , treeReload
+                                  }
             ]
           ]
+        ]
 
     mainLayout Types.RightHanded (tree' /\ gc /\ gv /\ sdb) = [tree', gc, gv, sdb]
     mainLayout Types.LeftHanded  (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']

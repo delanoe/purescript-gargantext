@@ -53,10 +53,10 @@ type Props =
 
 sidebar :: Record Props -> R.Element
 sidebar props = R.createElement sidebarCpt props []
-
-sidebarCpt :: R.Component Props
-sidebarCpt = R.hooksComponentWithModule thisModule "sidebar" cpt
   where
+    sidebarCpt :: R.Component Props
+    sidebarCpt = R.hooksComponentWithModule thisModule "sidebar" cpt
+
     cpt {showSidePanel: (GET.Closed /\ _)} _children = do
       pure $ RH.div {} []
     cpt {showSidePanel: (GET.InitialClosed /\ _)} _children = do

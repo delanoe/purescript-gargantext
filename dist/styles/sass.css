@@ -85,6 +85,10 @@
 
 #graph-explorer {
   padding-top: 0px;
+}
+
+.graph-container {
+  position: absolute;
   /* #toggle-container */
   /*   position: fixed */
   /*   z-index: 999 // needs to appear above solid menu bar */
@@ -94,20 +98,47 @@
   /*   .container-fluid */
   /*     padding-top: 90px */
 }
-#graph-explorer #toolbar {
-  display: flex;
-  flex-direction: column;
+.graph-container #sp-container {
+  position: absolute;
+  max-height: 600px;
+  top: 170px;
+  border: 1px white solid;
+  background-color: white;
+  width: 28%;
+  z-index: 15;
 }
-#graph-explorer #toolbar ul {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
+.graph-container #sp-container #myTab {
+  marginBottom: 18px;
+  marginTop: 18px;
 }
-#graph-explorer #toolbar ul li {
-  display: flex;
-  max-width: 200px;
+.graph-container #sp-container #myTabContent {
+  borderBottom: 1px solid black;
+  paddingBottom: 19px;
 }
-#graph-explorer #controls-container {
+.graph-container #sp-container #horizontal-checkbox ul {
+  display: inline;
+  float: left;
+}
+.graph-container .lefthanded #sp-container {
+  left: 0%;
+}
+.graph-container .righthanded #sp-container {
+  left: 70%;
+}
+.graph-container .graph-tree {
+  position: absolute;
+  max-height: 600px;
+  top: 170px;
+  background-color: #fff;
+  z-index: 1;
+}
+.graph-container .lefthanded .graph-tree {
+  left: 80%;
+}
+.graph-container .righthanded .graph-tree {
+  left: 0%;
+}
+.graph-container #controls-container {
   position: fixed;
   z-index: 999;
   backdrop-filter: blur(4px);
@@ -117,50 +148,25 @@
   right: 0;
   top: 60px;
 }
-#graph-explorer .graph-tree {
-  position: absolute;
-  max-height: 600px;
-  top: 170px;
-  background-color: #fff;
-  z-index: 1;
+.graph-container #controls-container #toolbar {
+  display: flex;
+  flex-direction: column;
 }
-#graph-explorer .lefthanded .graph-tree {
-  left: 80%;
+.graph-container #controls-container #toolbar ul {
+  display: flex;
+  flex-direction: row;
+  margin: 0;
 }
-#graph-explorer .righthanded .graph-tree {
-  left: 0%;
+.graph-container #controls-container #toolbar ul li {
+  max-width: 200px;
 }
-#graph-explorer #graph-view {
-  height: 95%;
+.graph-container #graph-view {
+  display: block;
+  height: 500px;
+  position: relative;
+  width: 500px;
 }
-#graph-explorer #sp-container {
-  position: absolute;
-  max-height: 600px;
-  top: 170px;
-  border: 1px white solid;
-  background-color: white;
-  width: 28%;
-  z-index: 15;
-}
-#graph-explorer #sp-container #myTab {
-  marginBottom: 18px;
-  marginTop: 18px;
-}
-#graph-explorer #sp-container #myTabContent {
-  borderBottom: 1px solid black;
-  paddingBottom: 19px;
-}
-#graph-explorer #sp-container #horizontal-checkbox ul {
-  display: inline;
-  float: left;
-}
-#graph-explorer .lefthanded #sp-container {
-  left: 0%;
-}
-#graph-explorer .righthanded #sp-container {
-  left: 70%;
-}
-#graph-explorer #tree {
+.graph-container #tree {
   position: absolute;
   z-index: 1;
 }
