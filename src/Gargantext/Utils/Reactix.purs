@@ -203,7 +203,7 @@ appendChildToParentId ps c = delay unit $ \_ -> do
     Just el -> appendChild el c
 
 effectLink :: Effect Unit -> String -> R.Element
-effectLink eff msg = H.a {on: {click: const eff}} [H.text msg]
+effectLink eff msg = H.a { on: {click: const eff} } [H.text msg]
 
 useCache :: forall i o. Eq i => i -> (i -> R.Hooks o) -> R.Hooks o
 useCache i f = do

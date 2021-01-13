@@ -72,31 +72,29 @@ tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout"
           [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
         ]
       , R2.row
-        [ H.div {className: "jumbotron1", style: {padding: "12px 0px 20px 12px"}}
-          [ H.div {className: "col-md-8 content"}
-            [ H.p {}
-              [ H.span {className: "fa fa-globe"} []
-              , H.text $ " " <> desc
-              ]
-            , H.p {}
-              [ H.span {className: "fa fa-search-plus"} []
-              , H.text $ " " <> query
-              ]
-            , H.p { className: "cache-toggle"
-                  , on: { click: cacheClick cacheState afterCacheStateChange } }
-              [ H.span { className: "fa " <> (cacheToggle cacheState) } []
-              , H.text $ cacheText cacheState
-              ]
+        [ H.div {className: "col-md-8 content"}
+          [ H.p {}
+            [ H.span {className: "fa fa-globe"} []
+            , H.text $ " " <> desc
             ]
-          , H.div {className: "col-md-4 content"}
-            [ H.p {}
-              [ H.span {className: "fa fa-calendar"} []
-              , H.text $ " " <> date
-              ]
-            , H.p {}
-              [ H.span {className: "fa fa-user"} []
-              , H.text $ " " <> user
-              ]
+          , H.p {}
+            [ H.span {className: "fa fa-search-plus"} []
+            , H.text $ " " <> query
+            ]
+          , H.p { className: "cache-toggle"
+                , on: { click: cacheClick cacheState afterCacheStateChange } }
+            [ H.span { className: "fa " <> (cacheToggle cacheState) } []
+            , H.text $ cacheText cacheState
+            ]
+          ]
+        , H.div {className: "col-md-4 content"}
+          [ H.p {}
+            [ H.span {className: "fa fa-calendar"} []
+            , H.text $ " " <> date
+            ]
+          , H.p {}
+            [ H.span {className: "fa fa-user"} []
+            , H.text $ " " <> user
             ]
           ]
         ]
@@ -170,9 +168,11 @@ defaultContainer {title} props = R.fragment $ props.syncResetButton <> controls
                  , H.div {className: "col-md-4"} [ props.paginationLinks ]
                  , H.div {className: "col-md-4"} [ props.pageSizeControl ]
                  ]
-               , H.table {className: "table"}
-                 [ H.thead {className: "thead-dark"} [ props.tableHead ]
-                 , H.tbody {} props.tableBody
+               , R2.row [
+                   H.table {className: "col-md-12 table"}
+                   [ H.thead {className: "thead-dark"} [ props.tableHead ]
+                   , H.tbody {} props.tableBody
+                   ]
                  ]
                ]
 

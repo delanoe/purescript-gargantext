@@ -1,5 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar
-  ( Props, searchBar, searchBarCpt
+  ( Props
+  , searchBar
   ) where
 
 import Data.Tuple.Nested ((/\))
@@ -25,13 +26,13 @@ type Props = ( langs     :: Array Lang
 
 searchBar :: Record Props -> R.Element
 searchBar props = R.createElement searchBarCpt props []
-
-searchBarCpt :: R.Component Props
-searchBarCpt = R.hooksComponentWithModule thisModule "searchBar" cpt
   where
+    searchBarCpt :: R.Component Props
+    searchBarCpt = R.hooksComponentWithModule thisModule "searchBar" cpt
+
     cpt {langs, onSearch, search: search@(s /\ _), session} _ = do
       --onSearchChange session s
-      pure $ H.div {"style": {"margin" :"10px"}}
+      pure $ H.div { className: "search-bar" }
                    [ searchField { databases:allDatabases
                                  , langs
                                  , onSearch

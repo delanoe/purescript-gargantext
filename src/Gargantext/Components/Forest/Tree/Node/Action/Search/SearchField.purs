@@ -45,12 +45,12 @@ type Props =
 
 searchField :: Record Props -> R.Element
 searchField p = R.createElement searchFieldComponent p []
-
---searchFieldComponent :: R.Memo Props
---searchFieldComponent = R.memo (R.hooksComponentWithModule thisModule "searchField" cpt) eqProps
-searchFieldComponent :: R.Component Props
-searchFieldComponent = R.hooksComponentWithModule thisModule "searchField" cpt
   where
+    --searchFieldComponent :: R.Memo Props
+    --searchFieldComponent = R.memo (R.hooksComponentWithModule thisModule "searchField" cpt) eqProps
+    searchFieldComponent :: R.Component Props
+    searchFieldComponent = R.hooksComponentWithModule thisModule "searchField" cpt
+
     cpt props@{onSearch, search: search@(s /\ _)} _ = do
       iframeRef <- R.useRef    null
       let params = 
@@ -361,15 +361,15 @@ type SubmitButtonProps =
 
 submitButton :: Record SubmitButtonProps -> R.Element
 submitButton p = R.createElement submitButtonComponent p []
-
-submitButtonComponent :: R.Component SubmitButtonProps
-submitButtonComponent = R.hooksComponentWithModule thisModule "submitButton" cpt
   where
+    submitButtonComponent :: R.Component SubmitButtonProps
+    submitButtonComponent = R.hooksComponentWithModule thisModule "submitButton" cpt
+
     cpt {onSearch, search: (mySearch /\ _), session} _ =
       pure $
         H.button { className: "btn btn-primary"
                  , "type"   : "button"
-                 , on       : {click: doSearch onSearch session mySearch}
+                 , on       : { click: doSearch onSearch session mySearch }
                  , style    : { width: "100%" }
                  } [ H.text "Launch Search" ]
 

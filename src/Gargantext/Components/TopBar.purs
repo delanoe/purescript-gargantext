@@ -21,64 +21,56 @@ topBar = R.createElement topBarCpt
 topBarCpt :: R.Component TopBarProps
 topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
   where
-    cpt { handed } children = do
+    cpt { handed } _children = do
       pure $ H.div { id: "dafixedtop"
                    , role: "navigation"
-                   , className: "navbar navbar-inverse navbar-fixed-top" 
-                   }
-                   [ H.div { className: "container-fluid" }
-                       [ H.div { className: "navbar-inner" } [ logo false (fst handed)]
-                       , infoMenu
-                       , H.div { className: "navbar-inner" } [ handButton true handed ]
-                       , H.div { className: "navbar-inner" } [ smiley     true        ]
-                       ]
+                   , className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
+                   } $ sortHanded [
+                     -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
+                     -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
+                     -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
+                     logo
+                   , H.ul { className: "navbar-nav " <> if fst handed == LeftHanded then "ml-auto" else "" } $ sortHanded [
+                       divDropdownLeft {} []
+                     , handButton handed
+                     , smiley
+                     ]
                    ]
           where
-            navHanded t = if xor t (fst handed == LeftHanded) then " navbar-right" else " navbar-left"
- 
-            handButton t handed = H.ul { title: "If you are Left Handed you can change\n"
+            handButton handed = H.li { title: "If you are Left Handed you can change\n"
                                            <> "the interface by clicking on me. Click\n"
                                            <> "again to come back to previous state."
-                                     , className: "nav navbar-nav" <> navHanded t
+                                     , className: "nav-item"
                                      } [handedChooser { handed } []]
 
-            smiley t = H.ul { title: "Hello! Looking for the tree ?\n"
-                                    <> "Just watch on the other side!\n"
-                                    <> "Click on the hand again to see it back."
-                            , className : "nav navbar-nav" <> navHanded t
-                            }
-                            [H.li {} [ H.a {} [H.span {className: "fa fa-question-circle-o"} [] ]]
-                            ]
+            smiley = H.li { title: "Hello! Looking for the tree ?\n"
+                                <> "Just watch on the other side!\n"
+                                <> "Click on the hand again to see it back."
+                          , className : "nav-item"
+                          }
+                          [ H.a { className: "nav-link" } [H.span {className: "fa fa-question-circle-o"} [] ]]
 
-            infoMenu = H.div { className: "collapse navbar-collapse"  <> navHanded false}
-                             ( [
-                                 H.ul { className: "nav navbar-nav" <> navHanded false} []
-                               , H.ul { className: "nav navbar-nav" <> navHanded false} [divDropdownLeft {} []]
-                               , handButton false handed
-                               {-, H.ul { title: "Dark Mode soon here"
-                                       , className : "nav navbar-nav"
-                                        } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
-                                                                 ]
-                                                        ]
-                                              ]
-                                     -}
-                               ] <> children 
-                             )
+                        {-, H.ul { title: "Dark Mode soon here"
+                                , className : "nav navbar-nav"
+                                } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+                                                          ]
+                                                ]
+                                      ]
+                              -}
 
-            -- sortHanded = if fst handed == LeftHanded then reverse else reverse -- identity
+            sortHanded = if fst handed == LeftHanded then reverse else identity
             -- SB.searchBar {session, databases: allDatabases}
 
 
-logo :: Boolean -> Handed -> R.Element
-logo b handed =
-  H.a { className, href: "#/" }
-  [ H.img { src, title, width: "30", height: "28" }
+logo :: R.Element
+logo =
+  H.a { className, href: "#/" } [
+    H.img { src, title, width: "30", height: "28" }
   ]
   where
-    className = "navbar-brand logoSmall" <> navHanded
+    className = "navbar-brand logoSmall"
     src       = "images/logoSmall.png"
-    title     = "Back to home."
-    navHanded = if xor b (handed == LeftHanded) then " navbar-right" else ""
+    title     = "Back home."
 
 
 divDropdownLeft :: R2.Component ()
@@ -90,7 +82,7 @@ divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
     cpt {} _ = do
       show <- R.useState' false
 
-      pure $ H.li { className: "dropdown" } [
+      pure $ H.li { className: "nav-item dropdown" } [
           menuButton { element: menuElement, show } []
         , menuElements { elements, show } []
         ]
@@ -109,7 +101,7 @@ divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
               }
       , LiNav { title : "Report bug here"
               , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
-              , icon  : "glyphicon glyphicon-bullhorn"
+              , icon  : "fa fa-bullhorn"
               , text  : "Feedback"
               }
       ]
@@ -128,7 +120,7 @@ divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
       ,------------------------------------------------------------
       [ LiNav { title : "Code documentation"
               , href  : "https://doc.gargantext.org"
-              , icon  : "glyphicon glyphicon-book"
+              , icon  : "fa fa-book"
               , text  : "Source Code Documentation"
               }
       , LiNav { title : "API documentation"
@@ -146,7 +138,7 @@ divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
       ,------------------------------------------------------------
       [ LiNav { title : "More about us (you)"
               , href  : "https://iscpif.fr"
-              , icon  : "glyphicon glyphicon-question-sign"
+              , icon  : "fa fa-question"
               , text  : "About"
               }
       ]
@@ -193,7 +185,7 @@ menuElements = R.createElement menuElementsCpt
                   , style: { display: "block" } } $ intercalate divider $ map (map liNav) elements
       where
         divider :: Array R.Element
-        divider = [H.li {className: "divider"} []]
+        divider = [H.li {className: "dropdown-divider"} []]
 
 -- | surgar for target : "blank"
 --data LiNav_ = LiNav_ { title  :: String
@@ -215,14 +207,15 @@ liNav (LiNav { title : title'
              , icon  : icon'
              , text  : text'
              }
-      ) = H.li {} [ H.a { tabIndex: (-1)
-                        , target: "blank"
-                        , title: title'
-                        , href: href'
-                        } [ H.span { className: icon' } []
-                          , H.text $ " " <> text'
-                          ]
+      ) = H.li { className: "dropdown-item" } [
+            H.a { tabIndex: (-1)
+                , target: "blank"
+                , title: title'
+                , href: href'
+                } [ H.span { className: icon' } []
+                  , H.text $ " " <> text'
                   ]
+            ]
 
 
 type HandedChooserProps = (
@@ -236,11 +229,9 @@ handedChooserCpt :: R.Component HandedChooserProps
 handedChooserCpt = R.hooksComponentWithModule thisModule "handedChooser" cpt
   where
     cpt { handed } _ = do
-      pure $ H.li {} [
-        H.a {} [
-          H.span { className: handedClass handed
-                 , on: { click: onClick handed } } []
-          ]
+      pure $ H.a { className: "nav-link" } [
+        H.span { className: handedClass handed
+               , on: { click: onClick handed } } []
         ]
 
     handedClass (LeftHanded  /\ _) = "fa fa-hand-o-left"

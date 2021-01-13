@@ -44,10 +44,10 @@ thisModule = "Gargantext.Components.GraphExplorer"
 type LayoutProps = (
     asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
+  , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
   , handed        :: Types.Handed
-  , mCurrentRoute :: AppRoute
   , session       :: Session
   , sessions      :: Sessions
   , showLogin     :: R.State Boolean
@@ -94,13 +94,13 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
   where
     cpt props@{ asyncTasksRef
               , backend
+              , currentRoute
               , frontends
               , graph
               , graphId
               , graphVersion
               , handed
               , hyperdataGraph
-              , mCurrentRoute
               , mMetaData
               , session
               , sessions
@@ -147,54 +147,55 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
           snd controls.showSidePanel   $ const GET.InitialClosed
 
       pure $
-        RH.div
-          { id: "graph-explorer" }
-          [ rowToggle
-                  [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
-                  , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
-                  , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
-                  ], R2.row
-            [ outer
-              [ inner handed
-                [ rowControls [ Controls.controls controls ]
-                , R2.row $ mainLayout handed $
-                    tree { asyncTasksRef
-                         , backend
-                         , frontends
-                         , handed
-                         , mCurrentRoute
-                         , reload: treeReload
-                         , sessions
-                         , show: fst controls.showTree
-                         , showLogin: snd showLogin
-                         , treeReloadRef
-                         }
-                    /\
-                    RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
-                    /\
-                    graphView { controls
-                              , elRef: graphRef
-                              , graphId
-                              , graph
-                              , hyperdataGraph
-                              , mMetaData
-                              , multiSelectEnabledRef
-                              }
-                    /\
-                    mSidebar mMetaData { frontends
-                                        , graph
-                                        , graphId
-                                        , graphVersion
-                                        , removedNodeIds : controls.removedNodeIds
-                                        , session
-                                        , selectedNodeIds: controls.selectedNodeIds
-                                        , showSidePanel  :   controls.showSidePanel
-                                        , treeReload
-                                        }
-                ]
-              ]
+        RH.div { className: "graph-meta-container" } [
+          RH.div { className: "fixed-top navbar navbar-expand-lg"
+                 , id: "graph-explorer" }
+            [ rowToggle
+                    [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
+                    , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
+                    , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
+                    ]
+            ]
+        , RH.div { className: "graph-container" } [
+            inner handed [
+              rowControls [ Controls.controls controls ]
+            , R2.row $ mainLayout handed $
+                tree { asyncTasksRef
+                    , backend
+                    , currentRoute
+                    , frontends
+                    , handed
+                    , reload: treeReload
+                    , sessions
+                    , show: fst controls.showTree
+                    , showLogin: snd showLogin
+                    , treeReloadRef
+                    }
+                /\
+                RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
+                /\
+                graphView { controls
+                          , elRef: graphRef
+                          , graphId
+                          , graph
+                          , hyperdataGraph
+                          , mMetaData
+                          , multiSelectEnabledRef
+                          }
+                /\
+                mSidebar mMetaData { frontends
+                                  , graph
+                                  , graphId
+                                  , graphVersion
+                                  , removedNodeIds : controls.removedNodeIds
+                                  , session
+                                  , selectedNodeIds: controls.selectedNodeIds
+                                  , showSidePanel  :   controls.showSidePanel
+                                  , treeReload
+                                  }
             ]
           ]
+        ]
 
     mainLayout Types.RightHanded (tree' /\ gc /\ gv /\ sdb) = [tree', gc, gv, sdb]
     mainLayout Types.LeftHanded  (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']
@@ -205,24 +206,27 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
         hClass = case h of
           Types.LeftHanded  -> "lefthanded"
           Types.RightHanded -> "righthanded"
-    rowToggle  = RH.div { id: "toggle-container" }
+    -- rowToggle  = RH.div { id: "toggle-container" }
+    rowToggle  = RH.ul { className: "navbar-nav ml-auto mr-auto" }
     rowControls = RH.div { id: "controls-container" }
-    col       = RH.div { className: "col-md-4" }
+    -- col       = RH.div { className: "col-md-4" }
+    col = RH.li { className: "nav-item" }
     pullLeft  = RH.div { className: "pull-left"  }
     pullRight = RH.div { className: "pull-right" }
-    spaces    = RH.div { className: "flex-space-between" }
+    -- spaces    = RH.div { className: "flex-space-between" }
+    spaces = RH.a { className: "nav-link" }
 
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { asyncTasksRef, backend, frontends, handed, mCurrentRoute: route, reload, sessions, showLogin, treeReloadRef } =
+    tree { asyncTasksRef, backend, frontends, handed, currentRoute, reload, sessions, showLogin, treeReloadRef } =
       RH.div {className: "col-md-2 graph-tree"} [
         forest { appReload: reload
                , asyncTasksRef
                , backend
+               , currentRoute
                , frontends
                , handed
-               , route
                , sessions
                , showLogin
                , treeReloadRef } []
@@ -239,9 +243,9 @@ type TreeProps =
   (
     asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
+  , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , handed        :: Types.Handed
-  , mCurrentRoute :: AppRoute
   , reload        :: Types.ReloadS
   , sessions      :: Sessions
   , show          :: Boolean

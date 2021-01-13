@@ -54,7 +54,7 @@ allPredefinedCharts :: Array PredefinedChart
 allPredefinedCharts =
   [ CDocsHistogram
   , CAuthorsPie
-  , CTermsMetrics
+--  , CTermsMetrics
   , CInstitutesTree
   , CSourcesBar
   ]

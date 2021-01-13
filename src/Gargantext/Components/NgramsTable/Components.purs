@@ -38,17 +38,21 @@ searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
   where
     cpt { onSearch, searchQuery } _ = 
-      pure $ H.div { className: "input-group" }
-           [ searchButton
-           , fieldInput
-           ]
+      pure $ R2.row [
+        H.div { className: "col-12" } [
+          H.div { className: "input-group" } [
+            searchButton
+            , fieldInput
+            ]
+          ]
+        ]
         where
           searchButton = 
-            H.div { className: "input-group-addon" }
+            H.div { className: "input-group-prepend" }
                   [
                    if searchQuery /= ""
                        then removeButton
-                       else H.span { className: "fa fa-search" } []
+                       else H.span { className: "fa fa-search input-group-text" } []
                   ]
           removeButton =
             H.button { className: "btn btn-danger"
@@ -158,11 +162,11 @@ treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
             Nothing ->
               span ngramsStyle
         edit effect = [ H.text " "
-                      , H.i { className: "glyphicon glyphicon-pencil"
+                      , H.i { className: "fa fa-pencil"
                             , on: { click: const effect } } []
                       ]
         leaf = L.null cs
-        className = "glyphicon glyphicon-chevron-" <> if open then "down" else "right"
+        className = "fa fa-chevron-" <> if open then "down" else "right"
         style = if leaf then {color: "#adb5bd"} else {color: ""}
         open = not leaf || false {- TODO -}
         cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsRepoElement <<< _children <<< folded
@@ -215,7 +219,7 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
             then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
             else
               H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } } [
-                  H.i { className: "glyphicon glyphicon-plus" } []
+                  H.i { className: "fa fa-plus" } []
                 , (R2.buff $ span ngramsStyle [text $ " " <> ngramsTermText ngrams])
               ]
         ]

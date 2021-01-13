@@ -141,38 +141,35 @@ controlsCpt = R.hooksComponentWithModule thisModule "controls" cpt
 
       pure $ case getShowControls props of
         false -> RH.div {} []
-        true -> RH.div {}
-            [ R2.menu { id: "toolbar" }
-              [ RH.ul {}
-                [ -- change type button (?)
-                  RH.li {} [ centerButton props.sigmaRef ]
-                , RH.li {} [ pauseForceAtlasButton {state: props.forceAtlasState} ]
-                , RH.li {} [ edgesToggleButton {state: props.showEdges} ]
-                , RH.li {} [ louvainToggleButton props.showLouvain ]
-                , RH.li {} [ edgeConfluenceControl edgeConfluenceRange props.edgeConfluence ]
-                , RH.li {} [ edgeWeightControl edgeWeightRange props.edgeWeight ]
-                  -- change level
-                  -- file upload
-                  -- run demo
-                  -- search button
-                  -- search topics
-                , RH.li {} [ labelSizeButton props.sigmaRef localControls.labelSize ] -- labels size: 1-4
-                , RH.li {} [ nodeSizeControl nodeSizeRange props.nodeSize ]
-                  -- zoom: 0 -100 - calculate ratio
-                , RH.li {} [ multiSelectEnabledButton props.multiSelectEnabled ]  -- toggle multi node selection
-                  -- save button
-                , RH.li {} [ nodeSearchControl { graph: props.graph
-                                               , multiSelectEnabled: props.multiSelectEnabled
-                                               , selectedNodeIds: props.selectedNodeIds } ]
-                , RH.li {} [ mouseSelectorSizeButton props.sigmaRef localControls.mouseSelectorSize ]
-                , RH.li {} [ cameraButton { id: props.graphId
-                                          , hyperdataGraph: props.hyperdataGraph
-                                          , session: props.session
-                                          , sigmaRef: props.sigmaRef
-                                          , treeReload: props.treeReload } ]
-                ]
-              ]
+        true -> R2.menu { id: "toolbar" } [
+            RH.ul {} [ -- change type button (?)
+              RH.li {} [ centerButton props.sigmaRef ]
+            , RH.li {} [ pauseForceAtlasButton {state: props.forceAtlasState} ]
+            , RH.li {} [ edgesToggleButton {state: props.showEdges} ]
+            , RH.li {} [ louvainToggleButton props.showLouvain ]
+            , RH.li {} [ edgeConfluenceControl edgeConfluenceRange props.edgeConfluence ]
+            , RH.li {} [ edgeWeightControl edgeWeightRange props.edgeWeight ]
+              -- change level
+              -- file upload
+              -- run demo
+              -- search button
+              -- search topics
+            , RH.li {} [ labelSizeButton props.sigmaRef localControls.labelSize ] -- labels size: 1-4
+            , RH.li {} [ nodeSizeControl nodeSizeRange props.nodeSize ]
+              -- zoom: 0 -100 - calculate ratio
+            , RH.li {} [ multiSelectEnabledButton props.multiSelectEnabled ]  -- toggle multi node selection
+              -- save button
+            , RH.li {} [ nodeSearchControl { graph: props.graph
+                                           , multiSelectEnabled: props.multiSelectEnabled
+                                           , selectedNodeIds: props.selectedNodeIds } ]
+            , RH.li {} [ mouseSelectorSizeButton props.sigmaRef localControls.mouseSelectorSize ]
+            , RH.li {} [ cameraButton { id: props.graphId
+                                      , hyperdataGraph: props.hyperdataGraph
+                                      , session: props.session
+                                      , sigmaRef: props.sigmaRef
+                                      , treeReload: props.treeReload } ]
             ]
+          ]
 
 useGraphControls :: { forceAtlasS :: SigmaxT.ForceAtlasState
                    , graph :: SigmaxT.SGraph

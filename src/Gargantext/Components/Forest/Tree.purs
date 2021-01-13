@@ -46,9 +46,9 @@ thisModule = "Gargantext.Components.Forest.Tree"
 ------------------------------------------------------------------------
 type CommonProps = (
     appReload     :: GT.ReloadS
+  , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , handed        :: GT.Handed
-  , mCurrentRoute :: Maybe AppRoute
   , openNodes     :: R.State OpenNodes
   , reload        :: GT.ReloadS
   , session       :: Session
@@ -69,9 +69,9 @@ treeView = R.createElement elCpt
 
     cpt { appReload
         , asyncTasks
+        , currentRoute
         , frontends
         , handed
-        , mCurrentRoute
         , openNodes
         , reload
         , root
@@ -79,9 +79,9 @@ treeView = R.createElement elCpt
         } _children = do
       pure $ treeLoadView { appReload
                           , asyncTasks
+                          , currentRoute
                           , frontends
                           , handed
-                          , mCurrentRoute
                           , openNodes
                           , reload
                           , root
@@ -96,9 +96,9 @@ treeLoadView = R.createElement elCpt
 
     cpt { appReload
         , asyncTasks
+        , currentRoute
         , frontends
         , handed
-        , mCurrentRoute
         , openNodes
         , reload
         , root
@@ -106,9 +106,9 @@ treeLoadView = R.createElement elCpt
         } _children = do
       let fetch _ = getNodeTree session root
       -- let paint loaded = loadedTreeView { asyncTasks
+      --                                   , currentRoute
       --                                   , frontends
       --                                   , handed
-      --                                   , mCurrentRoute
       --                                   , openNodes
       --                                   , reload
       --                                   , session
@@ -117,9 +117,9 @@ treeLoadView = R.createElement elCpt
       --                                   } []
       let paint loaded = loadedTreeViewFirstLevel { appReload
                                                   , asyncTasks
+                                                  , currentRoute
                                                   , frontends
                                                   , handed
-                                                  , mCurrentRoute
                                                   , openNodes
                                                   , reload
                                                   , session
@@ -151,9 +151,9 @@ type TreeViewProps = (
 
 --     cpt { appReload
 --         , asyncTasks
+--         , currentRoute
 --         , frontends
 --         , handed
---         , mCurrentRoute
 --         , openNodes
 --         , reload
 --         , session
@@ -164,9 +164,9 @@ type TreeViewProps = (
 --         H.div { className: if handed == GT.RightHanded then "righthanded" else "lefthanded" } [
 --           toHtml { appReload
 --                  , asyncTasks
+--                  , currentRoute
 --                  , frontends
 --                  , handed
---                  , mCurrentRoute
 --                  , openNodes
 --                  , reload
 --                  , session
@@ -184,22 +184,22 @@ loadedTreeViewFirstLevel = R.createElement elCpt
 
     cpt { appReload
         , asyncTasks
+        , currentRoute
         , frontends
         , handed
-        , mCurrentRoute
         , openNodes
         , reload
         , session
         -- , tasks
         , tree
       } _ = do
-      pure $ H.ul { className: "tree" } [
+      pure $ H.ul { className: "tree " <> if handed == GT.RightHanded then "mr-auto" else "ml-auto" } [
         H.div { className: if handed == GT.RightHanded then "righthanded" else "lefthanded" } [
           toHtmlFirstLevel { appReload
                            , asyncTasks
+                           , currentRoute
                            , frontends
                            , handed
-                           , mCurrentRoute
                            , openNodes
                            , reload
                            , reloadTree: reload
@@ -229,9 +229,9 @@ type ToHtmlProps = (
 
 --     cpt p@{ appReload
 --           , asyncTasks
+--           , currentRoute
 --           , frontends
 --           , handed
---           , mCurrentRoute
 --           , openNodes
 --           , reload: reload@(_ /\ setReload)
 --           , session
@@ -264,13 +264,13 @@ type ToHtmlProps = (
 --       pure $ H.li { className: if A.null ary then "no-children" else "with-children" }
 --         [ nodeSpan { appReload
 --                    , asyncTasks
+--                    , currentRoute
 --                    , dispatch: pAction
 --                    , folderOpen
 --                    , frontends
 --                    , handed
 --                    , id
 --                    , isLeaf: A.null ary
---                    , mCurrentRoute
 --                    , name
 --                    , nodeType
 --                    , session
@@ -301,9 +301,9 @@ toHtmlFirstLevel = R.createElement elCpt
 
     cpt p@{ appReload
           , asyncTasks
+          , currentRoute
           , frontends
           , handed
-          , mCurrentRoute
           , openNodes
           , reload: reload@(_ /\ setReload)
           , reloadTree
@@ -330,13 +330,13 @@ toHtmlFirstLevel = R.createElement elCpt
       pure $ H.li { className: if A.null ary then "no-children" else "with-children" } $
         [ nodeSpan { appReload
                    , asyncTasks
+                   , currentRoute
                    , dispatch: pAction
                    , folderOpen
                    , frontends
                    , handed
                    , id
                    , isLeaf: A.null ary
-                   , mCurrentRoute
                    , name
                    , nodeType
                    , session
@@ -425,11 +425,11 @@ childNodeFirstLevel = R.createElement elCpt
 
     cpt props@{ appReload
               , asyncTasks
+              , currentRoute
               , folderOpen
               , id
               , frontends
               , handed
-              , mCurrentRoute
               , openNodes
               , reload
               , reloadTree
@@ -439,10 +439,10 @@ childNodeFirstLevel = R.createElement elCpt
       let fetch _ = getNodeTreeFirstLevel session id
       let paint loaded = childNodeFirstLevelPaint { appReload
                                                   , asyncTasks
+                                                  , currentRoute
                                                   , folderOpen
                                                   , frontends
                                                   , handed
-                                                  , mCurrentRoute
                                                   , openNodes
                                                   , reload: cptReload
                                                   , reloadTree

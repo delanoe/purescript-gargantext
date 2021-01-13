@@ -93,7 +93,7 @@ dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayou
                   ] <> chartsEls <> [addNew])
       where
         addNew = H.div { className: "row" } [
-          H.span { className: "btn btn-default"
+          H.span { className: "btn btn-secondary"
                  , on: { click: onClickAdd }} [ H.span { className: "fa fa-plus" } [] ]
           ]
           where
