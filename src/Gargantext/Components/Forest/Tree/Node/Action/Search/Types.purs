@@ -46,8 +46,8 @@ class Doc a where
 
 dataFields :: Array DataField
 dataFields = [ Gargantext
-             , Web
              , External Nothing
+             , Web
              -- , Files
              ]
 
@@ -59,8 +59,8 @@ data DataField = Gargantext
 
 instance showDataField :: Show DataField where
   show Gargantext   = "Gargantext"
-  show (External _) = "Others" -- <> show x
-  show Web          = "Web"
+  show (External _) = "Databases (APIs)" -- <> show x
+  show Web          = "Soon: web"
   show Files        = "Files"
 
 instance docDataField :: Doc DataField where
