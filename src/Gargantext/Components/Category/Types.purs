@@ -27,7 +27,7 @@ instance encodeJsonStar :: EncodeJson Star where
   encodeJson x    = encodeJson (star2score x)
 
 decodeStar :: Int -> Star
-decodeStar 0 = Star_1
+decodeStar 0 = Star_0
 decodeStar 1 = Star_1
 decodeStar 2 = Star_2
 decodeStar 3 = Star_3
