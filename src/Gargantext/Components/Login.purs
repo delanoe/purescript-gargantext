@@ -14,6 +14,7 @@ import DOM.Simple.Console (log)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -215,7 +216,8 @@ formCpt = R.hooksComponentWithModule thisModule "form" cpt where
         else H.div {} []
       ]
     ]
-  onClick {backend, sessions, visible} error username password e =
+  onClick {backend, sessions, visible} error username password e = do
+    E.preventDefault  e
     launchAff_ $ do
       let req = AuthRequest {username: fst username, password: fst password}
       res <- postAuthRequest backend req
@@ -271,7 +273,7 @@ passwordInput password =
 
 loginSubmit :: forall e. (e -> Effect Unit) -> R.Element
 loginSubmit click =
-  H.button { id, className, type: "submit", on: {click} } [ H.text "Login" ]
+  H.button { id, className, type: "submit", on: { click } } [ H.text "Login" ]
   where
     id = "login-button"
     className = "btn btn-primary btn-rounded"
