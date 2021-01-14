@@ -159,7 +159,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
         , RH.div { className: "graph-container" } [
             inner handed [
               rowControls [ Controls.controls controls ]
-            , R2.row $ mainLayout handed $
+            , RH.div { className: "row graph-row" } $ mainLayout handed $
                 tree { asyncTasksRef
                     , backend
                     , currentRoute

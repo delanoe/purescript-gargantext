@@ -286,8 +286,8 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                                      , id: "source_" <> fileDuration
                                      , width: "900"
                                      , "type": "video/ogg"
-                                     , controls: "true"
-                                     , muted   : "true"
+                                     , controls: true
+                                     , muted   : true
                                    } [H.text "Sorry your browser is not compatible: use Firefox or Chromium instead."]
                                    ]
 

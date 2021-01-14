@@ -9,8 +9,6 @@
   padding-top: 0px
 
 .graph-container
-  position: absolute
-
   #sp-container
     @include sidePanelCommon
     border: 1px white solid
@@ -74,12 +72,11 @@
         li
           max-width: 200px
 
-  #graph-view
-    display: block
-    //height: 95%
-    height: 500px
-    position: relative
-    width: 500px
+  .graph-row
+    height: 100%
+
+    #graph-view
+      height: 95%
 
   #tree
     position: absolute
