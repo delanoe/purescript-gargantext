@@ -156,19 +156,21 @@ tableContainerCpt { dispatch
                                [ H.div {className: "panel-heading"} 
                                        [
                                          R2.row [ H.div {className: "col-md-2", style: {marginTop: "6px"}}
-                                                        [ H.div {} syncResetButton
-                                                          , if A.null props.tableBody && searchQuery /= "" then
-                                                              H.li { className: "list-group-item" } [
-                                                                H.button { className: "btn btn-primary"
-                                                                          , on: { click: const $ dispatch
-                                                                                $ CoreAction
-                                                                                $ addNewNgramA
-                                                                                    (normNgram tabNgramType searchQuery)
-                                                                                    CandidateTerm
-                                                                                }
-                                                                          }
-                                                                [ H.text ("Add " <> searchQuery) ]
-                                                              ] else H.div {} []
+                                                        [ if A.null props.tableBody && searchQuery /= ""
+                                                            then H.li { className: "list-group-item" }
+                                                                      [ H.button { className: "btn btn-primary"
+                                                                                 , on: { click : const
+                                                                                               $ dispatch
+                                                                                               $ CoreAction
+                                                                                               $ addNewNgramA
+                                                                                               (normNgram tabNgramType searchQuery)
+                                                                                               MapTerm
+                                                                                       }
+                                                                                  }
+                                                                                  [ H.text ("Add " <> searchQuery) ]
+                                                                      ]
+                                                             else H.div {} []
+                                                        , H.div {} syncResetButton
                                                         ]
                                                  , H.div {className: "col-md-2", style: {marginTop : "6px"}}
                                                           [ H.li {className: "list-group-item"}
