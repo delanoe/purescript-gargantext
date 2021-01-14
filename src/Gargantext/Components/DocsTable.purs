@@ -24,8 +24,8 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Components.Category (caroussel)
-import Gargantext.Components.Category.Types (Category(..), decodeCategory)
+import Gargantext.Components.Category (caroussel, rating)
+import Gargantext.Components.Category.Types (Category(..), decodeCategory, Star(..), decodeStar)
 import Gargantext.Components.DocsTable.Types
 import Gargantext.Components.Table.Types as T
 import Gargantext.Components.Nodes.Lists.Types as NT
@@ -274,7 +274,7 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
           , renderer: paint
           }
       (NT.CacheOff /\ _) -> do
-        localCategories <- R.useState' (mempty :: LocalCategories)
+        localCategories <- R.useState' (mempty :: LocalUserScore)
         paramsS <- R.useState' params
         let loader p = do
               let route = tableRouteWithPage (p { params = fst paramsS, query = query })
@@ -318,7 +318,7 @@ pagePaintCpt :: R.Component PagePaintProps
 pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt
   where
     cpt { documents, layout, params } _ = do
-      localCategories <- R.useState' (mempty :: LocalCategories)
+      localCategories <- R.useState' (mempty :: LocalUserScore)
       pure $ pagePaintRaw { documents: A.fromFoldable filteredRows
                           , layout
                           , localCategories
@@ -339,7 +339,7 @@ pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt
 type PagePaintRawProps = (
     documents :: Array DocumentsView
   , layout :: Record PageLayoutProps
-  , localCategories :: R.State LocalCategories
+  , localCategories :: R.State LocalUserScore
   , params :: R.State T.Params
   )
 
@@ -372,9 +372,9 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
       }
       where
         sid = sessionId session
-        gi Favorite  = "glyphicon glyphicon-star"
+        gi Star_1  = "glyphicon glyphicon-star"
         gi _ = "glyphicon glyphicon-star-empty"
-        trashClassName Trash _ = "trash"
+        trashClassName Star_0 _ = "trash"
         trashClassName _ true = "active"
         trashClassName _ false = ""
         corpusDocument
@@ -390,7 +390,8 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "column-tag flex" } [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
                                                                    ]
-                          , H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+                          --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+                          , H.div { className: "column-tag flex" } [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
@@ -403,7 +404,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
               , delete: true }
               where
                 cat         = getCategory lc r
-                checked    = Trash == cat
+                checked    = Star_1 == cat
                 tClassName = trashClassName cat selected
                 className  = gi cat
                 selected   = R.readRef currentDocIdRef == Just r._id

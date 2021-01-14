@@ -8,7 +8,7 @@ import Data.Tuple (Tuple(..))
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Category.Types (Category(..), decodeCategory)
+import Gargantext.Components.Category.Types (Category(..), decodeCategory, Star(..), decodeStar)
 
 data Action
   = MarkCategory Int Category
@@ -16,7 +16,7 @@ data Action
 newtype DocumentsView
   = DocumentsView
     { _id        :: Int
-    , category   :: Category
+    , category   :: Star
     , date       :: Int
     , ngramCount :: Maybe Int
     , score      :: Maybe Int
@@ -63,7 +63,7 @@ instance encodeDocumentsView :: EncodeJson DocumentsView where
 newtype Response = Response
   { cid        :: Int
   , hyperdata  :: Hyperdata
-  , category   :: Category
+  , category   :: Star
   , ngramCount :: Maybe Int
   , score      :: Maybe Int
   , title      :: String
@@ -94,10 +94,11 @@ instance decodeResponse :: DecodeJson Response where
     ngramCount <- obj .: "ngramCount"
     score      <- obj .: "score"
     title      <- obj .: "title"
-    pure $ Response { category: decodeCategory category, cid, hyperdata, ngramCount, score, title }
-
+    --pure $ Response { category: decodeCategory category, cid, hyperdata, ngramCount, score, title }
+    pure $ Response { category: decodeStar category, cid, hyperdata, ngramCount, score, title }
 
 type LocalCategories = Map Int Category
+type LocalUserScore  = Map Int Star
 type Query = String
 
 ---------------------------------------------------------
@@ -107,7 +108,7 @@ sampleData' = DocumentsView { _id : 1
                             , date : 2010
                             , title : "title"
                             , source : "source"
-                            , category : UnRead
+                            , category : Star_1
                             , ngramCount : Just 1
                             , score: Just 1 }
 
@@ -118,7 +119,7 @@ sampleData = map (\(Tuple t s) -> DocumentsView { _id : 1
                                                 , date : 2017
                                                 , title: t
                                                 , source: s
-                                                , category : UnRead
+                                                , category : Star_1
                                                 , ngramCount : Just 10
                                                 , score: Just 1 }) sampleDocuments
 
