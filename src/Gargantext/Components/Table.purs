@@ -170,7 +170,7 @@ defaultContainer {title} props = R.fragment $ props.syncResetButton <> controls
                  ]
                , R2.row [
                    H.table {className: "col-md-12 table"}
-                   [ H.thead {className: "thead-dark"} [ props.tableHead ]
+                   [ H.thead {className: ""} [ props.tableHead ]
                    , H.tbody {} props.tableBody
                    ]
                  ]
@@ -181,7 +181,7 @@ graphContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 graphContainer {title} props =
   -- TODO title in tabs name (above)
   H.table {className: "table"}
-  [ H.thead {className: "thead-dark"} [ props.tableHead ]
+  [ H.thead {className: ""} [ props.tableHead ]
   , H.tbody {} props.tableBody
   ]
    -- TODO better rendering of the paginationLinks
