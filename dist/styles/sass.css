@@ -376,6 +376,10 @@ li .leaf {
 }
 li .leaf .folder-icon {
   padding: 0 2 0 2;
+  cursor: pointer;
+}
+li .leaf .node-link {
+  cursor: pointer;
 }
 li .leaf a.settings {
   cursor: pointer;

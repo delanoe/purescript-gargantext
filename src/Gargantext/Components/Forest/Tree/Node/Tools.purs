@@ -295,7 +295,8 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
       popoverRef <- R.useRef null
 
       pure $
-        H.div { on: { click: onClick } }
+        H.div { className: "node-link"
+              , on: { click: onClick } }
               [ H.a { data: { for: tooltipId
                             , tip: true
                             }
