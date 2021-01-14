@@ -13,10 +13,12 @@ import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Prelude
+
 import Gargantext.Components.Forest.Tree.Node.Tools (panel)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
+import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Prelude (Unit, bind, discard, map, pure, show, ($), (<), (<$>), (<>), (==), read)
 import Gargantext.Sessions (Session)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Types as GT
@@ -62,7 +64,7 @@ searchField p = R.createElement searchFieldComponent p []
                     H.div {} [ dataFieldNav search dataFields
 
                              , if isExternal s.datafield
-                                 then databaseInput search props.databases
+                                 then databaseInput { databases: props.databases, search } []
                                  else H.div {} []
  
                              , if isHAL s.datafield
@@ -236,7 +238,7 @@ dataFieldNav ({datafield} /\ setSearch) datafields =
       liItem :: DataField -> R.Element
       liItem  df' =
         H.div { className : "nav-item nav-link"
-                          <> if (Just df') == datafield
+                          <> if isActive  --(Just df') == datafield
                                then " active"
                                else ""
             , on: { click: \_ -> setSearch $ _ { datafield = Just df'
@@ -246,6 +248,8 @@ dataFieldNav ({datafield} /\ setSearch) datafields =
             -- just one database query for now
             -- a list a selected database needs more ergonomy
             } [ H.text (show df') ]
+        where
+          isActive = show (Just df') == show datafield
 
 ------------------------------------------------------------------------
 {-
@@ -270,30 +274,44 @@ databaseNav ({datafield} /\ setSearch) dbs =
             } [ H.text (show df') ]
             -}
 
-databaseInput :: R.State Search
-              -> Array Database
-              -> R.Element
-databaseInput (search /\ setSearch) dbs =
-   H.div { className: "form-group" }
-   [ H.div {className: "text-primary center"} [H.text "in database"]
-   , R2.select { className: "form-control"
-               , on: { change: onChange }
-               } (liItem <$> dbs)
-   , H.div {className:"center"} [ H.text $ maybe "" doc db ]
-   ]
-    where
-      db = case search.datafield of
-        (Just (External (Just x))) -> Just x
-        _                          -> Nothing
+type DatabaseInputProps = (
+    databases :: Array Database
+  , search    :: R.State Search
+  )
 
-      liItem :: Database -> R.Element
-      liItem  db' = H.option {className : "text-primary center"} [ H.text (show db') ]
+databaseInput :: R2.Component DatabaseInputProps
+databaseInput = R.createElement databaseInputCpt
+  where
+    databaseInputCpt :: R.Component DatabaseInputProps
+    databaseInputCpt = R.hooksComponentWithModule thisModule "databaseInput" cpt
 
-      onChange e = do
-        let value = read $ R.unsafeEventValue e
-        setSearch $ _ { datafield = Just $ External value
-                      , databases = fromMaybe Empty value
-                      }
+    cpt { databases
+        , search: (search /\ setSearch) } _ = do
+      pure $
+        H.div { className: "form-group" } [
+          H.div {className: "text-primary center"} [ H.text "in database" ]
+        , R2.select { className: "form-control"
+                    , defaultValue: defaultValue search.datafield
+                    , on: { change: onChange }
+                    } (liItem <$> databases)
+        , H.div {className:"center"} [ H.text $ maybe "" doc db ]
+        ]
+        where
+          defaultValue datafield = show $ maybe Empty datafield2database datafield
+
+          db = case search.datafield of
+            (Just (External (Just x))) -> Just x
+            _                          -> Nothing
+
+          liItem :: Database -> R.Element
+          liItem  db' = H.option { className : "text-primary center"
+                                 , value: show db' } [ H.text (show db') ]
+
+          onChange e = do
+            let value = read $ R.unsafeEventValue e
+            setSearch $ _ { datafield = Just $ External value
+                          , databases = fromMaybe Empty value
+                          }
 
 
 orgInput :: R.State Search -> Array Org -> R.Element
@@ -335,23 +353,38 @@ type SearchInputProps =
 
 searchInput :: Record SearchInputProps -> R.Element
 searchInput p = R.createElement searchInputComponent p []
-
-searchInputComponent :: R.Component SearchInputProps
-searchInputComponent = R.hooksComponentWithModule thisModule "searchInput" cpt
   where
-    cpt {search: (search /\ setSearch)} _ = do
-      pure $
-        H.div { className : "" }
-        [ H.input { className: "form-control"
-                  , defaultValue: search.term
-                  , on: { change : onChange setSearch }
-                  , placeholder: "Your Query here"
-                  , type: "text"
-                  }
-        ]
-    onChange setSearch e = do
-      let value = R.unsafeEventValue e
-      setSearch $ _ { term = value }
+    searchInputComponent :: R.Component SearchInputProps
+    searchInputComponent = R.hooksComponentWithModule thisModule "searchInput" cpt
+
+    cpt {search: (search@{ term } /\ setSearch)} _ = do
+      valueRef <- R.useRef term
+
+      pure $ H.div { className: "" } [
+        inputWithEnter { onEnter: onEnter valueRef setSearch
+                       , onValueChanged: onValueChanged valueRef
+                       , autoFocus: false
+                       , className: "form-control"
+                       , defaultValue: R.readRef valueRef
+                       , placeholder: "Your query here"
+                       , type: "text" }
+      ]
+
+      -- pure $
+      --   H.div { className : "" }
+      --   [ H.input { className: "form-control"
+      --             , defaultValue: search.term
+      --             , on: { input : onInput valueRef setSearch }
+      --             , placeholder: "Your Query here"
+      --             , type: "text"
+      --             }
+      --   ]
+    onEnter valueRef setSearch _ = do
+      setSearch $ _ { term = R.readRef valueRef }
+
+    onValueChanged valueRef value = do
+      R.setRef valueRef value
+      -- setSearch $ _ { term = value }
 
 type SubmitButtonProps =
   ( onSearch :: GT.AsyncTaskWithType -> Effect Unit
