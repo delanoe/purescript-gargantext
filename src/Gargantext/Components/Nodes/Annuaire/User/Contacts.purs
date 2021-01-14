@@ -102,40 +102,42 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
       let value = (L.view cLens hyperdata) :: String
       valueRef <- R.useRef value
 
-      pure $ H.li { className: "list-group-item" } [
-          H.span { className: "badge badge-default badge-pill"} [ H.text label ]
-        , item isEditing valueRef
+      pure $ H.div { className: "form-group row" } [
+        H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
+      , item isEditing valueRef
       ]
+
       where
         cLens = L.cloneLens lens
-        usePlaceholder valueRef =
-          if R.readRef valueRef == "" then
-            Tuple true placeholder
-          else
-            Tuple false $ R.readRef valueRef
         item (false /\ setIsEditing) valueRef =
-          H.span {} [
-              H.span { className: if (fst $ usePlaceholder valueRef) then "text-muted" else "" } [
-                H.text $ snd $ usePlaceholder valueRef
-              ]
-            , H.span { className: "fa fa-pencil"
-                     , on: {click: onClick} } []
+          H.div { className: "input-group col-sm-6" } [
+            H.input { className: "form-control"
+                    , defaultValue: placeholder
+                    , disabled: 1
+                    , type: "text" }
+          , H.div { className: "btn input-group-append"
+                  , on: { click: onClick } } [
+              H.div { className: "input-group-text fa fa-pencil" } []
+            ]
           ]
           where
+            placeholder = R.readRef valueRef
             onClick _ = setIsEditing $ const true
         item (true /\ setIsEditing) valueRef =
-          H.span {} [
-              inputWithEnter {
-                  onEnter: onClick
-                , onValueChanged: R.setRef valueRef
-                , autoFocus: true
-                , className: "form-control"
-                , defaultValue: R.readRef valueRef
-                , placeholder
-                , type: "text"
-                }
-            , H.span { className: "fa fa-floppy-o"
-                     , on: {click: onClick} } []
+          H.div { className: "input-group col-sm-6" } [
+            inputWithEnter {
+                autoFocus: true
+              , className: "form-control"
+              , defaultValue: R.readRef valueRef
+              , onEnter: onClick
+              , onValueChanged: R.setRef valueRef
+              , placeholder
+              , type: "text"
+              }
+          , H.div { className: "btn input-group-append"
+                  , on: { click: onClick } } [
+              H.div { className: "input-group-text fa fa-floppy-o" } []
+            ]
           ]
           where
             onClick _ = do
@@ -143,16 +145,8 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
               let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
               onUpdateHyperdata newHyperdata
 
-listInfo :: Tuple String String -> R.Element
-listInfo s = listElement $ infoRender s
-
 listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
-
-infoRender :: Tuple String String -> Array R.Element
-infoRender (Tuple title content) =
-  [ H.span { className: "badge badge-default badge-pill"} [ H.text title ]
-  , H.span {} [H.text content] ]
 
 type LayoutProps = (
     appReload     :: ReloadS

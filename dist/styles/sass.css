@@ -1,11 +1,9 @@
 /* styles for menu.html template (navbar etc) */
-#dafixedtop .navbar-text, #graphsfixedtop .navbar-text {
-  margin: 0;
-  padding-top: 15px;
-  padding-bottom: 15px;
-  float: none;
-}
-
+/* #dafixedtop .navbar-text, #graphsfixedtop .navbar-text */
+/*     margin: 0 */
+/*     padding-top: 15px */
+/*     padding-bottom: 15px */
+/*     float: none */
 #corporatop.nav-tabs > li {
   padding-left: 1;
   padding-right: 1;
@@ -85,30 +83,61 @@
   display: none;
 }
 
-#graph-explorer #toolbar {
-  display: flex;
-  flex-direction: column;
+#graph-explorer {
+  padding-top: 0px;
 }
-#graph-explorer #toolbar ul {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
+
+.graph-container {
+  /* #toggle-container */
+  /*   position: fixed */
+  /*   z-index: 999 // needs to appear above solid menu bar */
+  /*   right: 25% */
+  /*   top: 10px */
+  /*   width: 50% */
+  /*   .container-fluid */
+  /*     padding-top: 90px */
 }
-#graph-explorer #toolbar ul li {
-  display: flex;
-  max-width: 200px;
+.graph-container #sp-container {
+  position: absolute;
+  max-height: 600px;
+  top: 170px;
+  border: 1px white solid;
+  background-color: white;
+  width: 28%;
+  z-index: 15;
 }
-#graph-explorer #toggle-container {
-  position: fixed;
-  z-index: 999;
-  right: 25%;
-  top: 10px;
-  width: 50%;
+.graph-container #sp-container #myTab {
+  marginBottom: 18px;
+  marginTop: 18px;
 }
-#graph-explorer #toggle-container .container-fluid {
-  padding-top: 90px;
+.graph-container #sp-container #myTabContent {
+  borderBottom: 1px solid black;
+  paddingBottom: 19px;
 }
-#graph-explorer #controls-container {
+.graph-container #sp-container #horizontal-checkbox ul {
+  display: inline;
+  float: left;
+}
+.graph-container .lefthanded #sp-container {
+  left: 0%;
+}
+.graph-container .righthanded #sp-container {
+  left: 70%;
+}
+.graph-container .graph-tree {
+  position: absolute;
+  max-height: 600px;
+  top: 170px;
+  background-color: #fff;
+  z-index: 1;
+}
+.graph-container .lefthanded .graph-tree {
+  left: 80%;
+}
+.graph-container .righthanded .graph-tree {
+  left: 0%;
+}
+.graph-container #controls-container {
   position: fixed;
   z-index: 999;
   backdrop-filter: blur(4px);
@@ -118,50 +147,25 @@
   right: 0;
   top: 60px;
 }
-#graph-explorer .graph-tree {
-  position: absolute;
-  max-height: 600px;
-  top: 170px;
-  background-color: #fff;
-  z-index: 1;
+.graph-container #controls-container #toolbar {
+  display: flex;
+  flex-direction: column;
 }
-#graph-explorer .lefthanded .graph-tree {
-  left: 80%;
+.graph-container #controls-container #toolbar ul {
+  display: flex;
+  flex-direction: row;
+  margin: 0;
 }
-#graph-explorer .righthanded .graph-tree {
-  left: 0%;
+.graph-container #controls-container #toolbar ul li {
+  max-width: 200px;
 }
-#graph-explorer #graph-view {
+.graph-container .graph-row {
+  height: 100%;
+}
+.graph-container .graph-row #graph-view {
   height: 95%;
 }
-#graph-explorer #sp-container {
-  position: absolute;
-  max-height: 600px;
-  top: 170px;
-  border: 1px white solid;
-  background-color: white;
-  width: 28%;
-  z-index: 15;
-}
-#graph-explorer #sp-container #myTab {
-  marginBottom: 18px;
-  marginTop: 18px;
-}
-#graph-explorer #sp-container #myTabContent {
-  borderBottom: 1px solid black;
-  paddingBottom: 19px;
-}
-#graph-explorer #sp-container #horizontal-checkbox ul {
-  display: inline;
-  float: left;
-}
-#graph-explorer .lefthanded #sp-container {
-  left: 0%;
-}
-#graph-explorer .righthanded #sp-container {
-  left: 70%;
-}
-#graph-explorer #tree {
+.graph-container #tree {
   position: absolute;
   z-index: 1;
 }
@@ -176,12 +180,6 @@
 
 #dafixedtop {
   z-index: 999;
-}
-
-.logoSmall {
-  line-height: 15px;
-  height: 10px;
-  padding: 10px 10px;
 }
 
 #logo-designed {
@@ -378,6 +376,10 @@ li .leaf {
 }
 li .leaf .folder-icon {
   padding: 0 2 0 2;
+  cursor: pointer;
+}
+li .leaf .node-link {
+  cursor: pointer;
 }
 li .leaf a.settings {
   cursor: pointer;
@@ -692,13 +694,6 @@ li .leaf:hover a.settings {
 .table tr td .active {
   font-weight: bold;
   text-decoration: underline;
-}
-.table tr td .column-tag {
-  align-items: center;
-}
-.table tr td .column-tag .doc-chooser {
-  cursor: pointer;
-  padding: 10px;
 }
 .table tr td .ngrams-selector {
   display: flex;

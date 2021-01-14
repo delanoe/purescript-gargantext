@@ -89,7 +89,7 @@ inputWithAutocompleteCpt = R.hooksComponentWithModule thisModule "inputWithAutoc
             H.div { className: "list-group" } (cCpt <$> completions)
           ]
           where
-            className = "completions " <> (if completions == [] then "hidden" else "")
+            className = "completions " <> (if completions == [] then "d-none" else "")
 
             cCpt c =
               H.button { type: "button"

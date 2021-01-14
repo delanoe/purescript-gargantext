@@ -154,17 +154,17 @@ searchBar (query /\ setQuery) = R.createElement el {} []
     cpt {} _children = do
       queryText <- R.useState' query
 
-      pure $ H.div {className: "row"}
-        [ H.div {className: "col col-md-3"} []
-        , H.div {className: "col col-md-1"} [if query /= "" then clearButton else H.div {} []]
-        , H.div {className: "col col-md-3 form-group"}
+      pure $ H.div {className: "col-md-12 row"}
+        [ H.div {className: "col-md-3"} []
+        , H.div {className: "col-md-1"} [if query /= "" then clearButton else H.div {} []]
+        , H.div {className: "col-md-3 form-group"}
           [ H.input { type: "text"
                     , className: "form-control"
                     , on: {change: onSearchChange queryText, keyUp: onSearchKeyup queryText}
                     , placeholder: query
                     , defaultValue: query}
           ]
-        , H.div {className: "col col-md-1"} [searchButton queryText]
+        , H.div {className: "col-md-1"} [searchButton queryText]
         ]
 
     onSearchChange :: forall e. R.State Query -> e -> Effect Unit
@@ -180,14 +180,14 @@ searchBar (query /\ setQuery) = R.createElement el {} []
 
     searchButton (queryText /\ _) =
       H.button { type: "submit"
-               , className: "btn btn-default"
+               , className: "btn btn-secondary"
                , on: {click: \e -> setQuery $ const queryText}}
-      [ H.span {className: "glyphicon glyphicon-search"} [] ]
+      [ H.span {className: "fa fa-search"} [] ]
 
     clearButton =
       H.button { className: "btn btn-danger"
                , on: {click: \e -> setQuery $ const ""}}
-      [ H.span {className: "glyphicon glyphicon-remove"} [] ]
+      [ H.span {className: "fa fa-times"} [] ]
 
 mock :: Boolean
 mock = false
@@ -388,7 +388,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
             row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                            H.div { className: "column-tag flex" } [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
+                            H.div { className: "" } [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
                                                                    ]
                           --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                           , H.div { className: "column-tag flex" } [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
@@ -436,7 +436,7 @@ docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
 
       let eyeClass = if selected then "fa-eye" else "fa-eye-slash"
 
-      pure $ H.div { className: "doc-chooser" } [
+      pure $ H.div { className: "btn" } [
         H.span { className: "fa " <> eyeClass
                , on: { click: onClick } } []
       ]

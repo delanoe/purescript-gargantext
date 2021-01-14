@@ -193,7 +193,7 @@ loadedTreeViewFirstLevel = R.createElement elCpt
         -- , tasks
         , tree
       } _ = do
-      pure $ H.ul { className: "tree" } [
+      pure $ H.ul { className: "tree " <> if handed == GT.RightHanded then "mr-auto" else "ml-auto" } [
         H.div { className: if handed == GT.RightHanded then "righthanded" else "lefthanded" } [
           toHtmlFirstLevel { appReload
                            , asyncTasks

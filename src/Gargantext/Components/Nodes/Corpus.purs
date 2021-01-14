@@ -100,7 +100,7 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
 
       pure $ H.div {} [
         H.div { className: "row" } [
-           H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
+           H.div { className: "btn btn-secondary " <> (saveEnabled fieldsWithIndex fieldsS)
                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
                  } [
               H.span { className: "fa fa-floppy-o" } [  ]
@@ -110,7 +110,7 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
                                       , nodeId
                                       , session } ]
         , H.div { className: "row" } [
-           H.div { className: "btn btn-default"
+           H.div { className: "btn btn-secondary"
                  , on: { click: onClickAdd fieldsS }
                  } [
               H.span { className: "fa fa-plus" } [  ]
@@ -219,36 +219,39 @@ fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorWrapperCpt" cpt
   where
     cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
-      pure $ H.div { className: "row panel panel-default" } [
-        H.div { className: "panel-heading" } [
-          H.div { className: "code-editor-heading" } [
-              renameable {onRename, text: name}
-            , H.div { className: "buttons-right" } [
+      pure $ H.div { className: "row card" } [
+        H.div { className: "card-header" } [
+          H.div { className: "code-editor-heading row" } [
+              H.div { className: "col-sm-4" } [
+                renameable {onRename, text: name}
+              ]
+            , H.div { className: "col-sm-7" } []
+            , H.div { className: "buttons-right col-sm-1" } [
                 H.div { className: "btn btn-danger"
                       , on: { click: \_ -> onRemove unit }
                       } [
                   H.span { className: "fa fa-trash" } [  ]
                   ]
-                ]
               , moveDownButton canMoveDown
               , moveUpButton canMoveUp
+              ]
             ]
          ]
-        , H.div { className: "panel-body" } [
+        , H.div { className: "card-body" } [
            fieldCodeEditor props
            ]
         ]
       where
         moveDownButton false = H.div {} []
         moveDownButton true =
-          H.div { className: "btn btn-default"
+          H.div { className: "btn btn-secondary"
                 , on: { click: \_ -> onMoveDown unit }
                 } [
             H.span { className: "fa fa-arrow-down" } [  ]
             ]
         moveUpButton false = H.div {} []
         moveUpButton true =
-          H.div { className: "btn btn-default"
+          H.div { className: "btn btn-secondary"
                 , on: { click: \_ -> onMoveUp unit }
                 } [
             H.span { className: "fa fa-arrow-up" } [  ]
@@ -297,25 +300,28 @@ renameableTextCpt :: R.Component RenameableTextProps
 renameableTextCpt = R.hooksComponentWithModule thisModule "renameableTextCpt" cpt
   where
     cpt {isEditing: (false /\ setIsEditing), state: (text /\ _)} _ = do
-      pure $ H.div {} [
-        H.span { className: "text" } [ H.text text ]
-        , H.span { className: "btn btn-default"
-                 , on: { click: \_ -> setIsEditing $ const true } } [
+      pure $ H.div { className: "input-group" } [
+        H.input { className: "form-control"
+                , defaultValue: text
+                , disabled: 1
+                , type: "text" }
+        , H.div { className: "btn input-group-append"
+                , on: { click: \_ -> setIsEditing $ const true } } [
            H.span { className: "fa fa-pencil" } []
            ]
         ]
     cpt {isEditing: (true /\ setIsEditing), onRename, state: (text /\ setText)} _ = do
-      pure $ H.div {} [
+      pure $ H.div { className: "input-group" } [
           inputWithEnter {
-               onEnter: submit
-             , onValueChanged: setText <<< const
-             , autoFocus: false
+               autoFocus: false
              , className: "form-control text"
              , defaultValue: text
+             , onEnter: submit
+             , onValueChanged: setText <<< const
              , placeholder: ""
              , type: "text"
              }
-        , H.span { className: "btn btn-default"
+        , H.div { className: "btn input-group-append"
                  , on: { click: submit } } [
            H.span { className: "fa fa-floppy-o" } []
            ]

@@ -14,6 +14,7 @@ import DOM.Simple.Console (log)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -73,12 +74,12 @@ modalCpt = R.hooksComponentWithModule thisModule "modal" cpt where
       elems = 
         [ H.div { id: "loginModal", className: modalClass (fst visible), key: 0
                 , role: "dialog", "data": {show: true}, style: {display: "block"}}
-          [ H.div { className: "modal-dialog", role: "document"}
+          [ H.div { className: "modal-dialog modal-lg", role: "document"}
             [ H.div { className: "modal-content" }
-              [ H.div { className: "modal-header" }
-                [ closing
-                , logo
-                ]
+              [ H.div { className: "modal-header" } [
+                logo
+              , closing
+              ]
               , H.div { className: "modal-body" } children ] ] ] ]
       modalClass s = "modal myModal" <> if s then "" else " fade"
       logo =
@@ -91,7 +92,7 @@ modalCpt = R.hooksComponentWithModule thisModule "modal" cpt where
       closing = H.button { "type": "button", className: "close"
                            , "data": { dismiss: "modal" } }
                            [ H.a { on: {click}
-                                 , className: "btn glyphicon glyphicon-remove-circle" 
+                                 , className: "btn fa fa-times"
                                  -- TODO , font-size : "50px"
                                  } [] 
                            ]
@@ -162,7 +163,8 @@ renderBackend state backend@(Backend {name}) =
           ]
     where
       iconLog = H.td {} [ H.a { on : {click}
-                        , className : "glyphitem glyphicon glyphicon-log-in"
+                        --, className : "glyphitem glyphicon glyphicon-log-in"
+                        , className : "fa fa-hand-o-right"
                         , title: "Log In"} []
                         ]
 
@@ -187,39 +189,35 @@ formCpt = R.hooksComponentWithModule thisModule "form" cpt where
     username <- R.useState' ""
     password <- R.useState' ""
     setBox@(checkBox /\ setCheckBox) <- R.useState' false
-    pure $ R2.row
-      [ cardGroup
-        [ cardBlock
-          [ center
-          [ H.h4 {}{-className: "text-muted"-}
-              [ H.text $ "Login to garg://" <> show backend]
-              , requestAccessLink {}
-              ]
-          , H.div {}
-            [ csrfTokenInput {}
-            , formGroup [ H.p {} [ H.text (fst error) ], usernameInput username ]
-            , formGroup [ passwordInput password, clearfix {} ]
-            , center
-               [ H.label {}
-                 [ H.div {className: "checkbox"}
-                    [ checkbox setBox
-                    , H.text "I hereby accept "
-                    , H.a { target: "_blank"
-                          , href: "http://gitlab.iscpif.fr/humanities/tofu/tree/master"
-                          } [ H.text "the terms of use" ]
-                    ]
-                  ]
-                ]
-            ]
-          , if checkBox == true
-               && fst username /= ""
-               && fst password /= ""
-               then H.div {} [center [loginSubmit $ onClick props error username password]]
-               else H.div {} []
-          ] 
-        ] 
+    pure $ R2.row [
+      H.form { className: "col-md-12" } [
+        H.h4 { className: "text-center" } {-className: "text-muted"-} [
+          H.text $ "Login to garg://" <> show backend
+        ]
+      , requestAccessLink {}
+      , csrfTokenInput {}
+      , formGroup [ H.p {} [ H.text (fst error) ], usernameInput username ]
+      , formGroup [ passwordInput password, clearfix {} ]
+      , H.div { className: "form-group form-check text-center" } [
+             checkbox setBox
+           , H.label { className: "form-check-label" } [
+             H.text "I hereby accept "
+             , H.a { target: "_blank"
+                   , href: "http://gitlab.iscpif.fr/humanities/tofu/tree/master"
+                   } [ H.text "the terms of use" ]
+             ]
+           ]
+      , if checkBox == true
+           && fst username /= ""
+           && fst password /= ""
+        then H.div { className: "text-center" } [
+          loginSubmit $ onClick props error username password
+          ]
+        else H.div {} []
       ]
-  onClick {backend, sessions, visible} error username password e =
+    ]
+  onClick {backend, sessions, visible} error username password e = do
+    E.preventDefault  e
     launchAff_ $ do
       let req = AuthRequest {username: fst username, password: fst password}
       res <- postAuthRequest backend req
@@ -244,18 +242,21 @@ termsLink _ =
 
 requestAccessLink :: {} -> R.Element
 requestAccessLink _ =
-  H.a { target: "_blank", href: applyUrl } [ H.text " request access" ]
+  H.div { className: "text-center" } [
+    H.a { href: applyUrl
+        , target: "_blank" } [ H.text " request access" ]
+    ]
   where applyUrl = "https://iscpif.fr/apply-for-a-services-account/"
 
 usernameInput :: R.State String -> R.Element
 usernameInput username =
   H.input { className: "form-control"
+          , defaultValue: (fst username)
           , id: "id_username"
           , maxLength: "254"
           , name: "username"
           , placeholder: "username"
           , type: "text"
-          , defaultValue: (fst username)
           --, on: {input: \e -> dispatch (SetUserName $ R.unsafeEventValue e)}
           , on: {change: \e -> (snd username) $ const $ R.unsafeEventValue e} }
  
@@ -272,7 +273,7 @@ passwordInput password =
 
 loginSubmit :: forall e. (e -> Effect Unit) -> R.Element
 loginSubmit click =
-  H.button { id, className, type: "submit", on: {click} } [ H.text "Login" ]
+  H.button { id, className, type: "submit", on: { click } } [ H.text "Login" ]
   where
     id = "login-button"
     className = "btn btn-primary btn-rounded"

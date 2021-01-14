@@ -135,27 +135,27 @@ carousselCpt = R.hooksComponentWithModule thisModule "caroussel" cpt
                $ CategoryQuery {nodeIds: [r._id], category: c}
 
 icon :: Category -> Boolean -> String
-icon cat b = btn b $ "glyphicon glyphicon-" <> (color $ size b $ icon' cat b)
+icon cat b = btn b $ "fa fa-" <> (color $ size b $ icon' cat b)
   where
     icon' :: Category -> Boolean -> String
-    icon' Trash   false = "remove"
-    icon' Trash   true  = "remove-sign"
+    icon' Trash   false = "times"
+    icon' Trash   true  = "times-circle"
 
-    icon' UnRead  true  = "question-sign"
-    icon' UnRead  false = "question-sign"
+    icon' UnRead  false = "question"
+    icon' UnRead  true  = "question-circle"
 
-    icon' Checked true  = "ok-sign"
-    icon' Checked false = "ok"
+    icon' Checked false = "check"
+    icon' Checked true  = "check-circle"
 
+    icon' Topic  false = "star-o"
     icon' Topic  true  = "star"
-    icon' Topic  false = "star-empty"
 
+    icon' Favorite false = "heart-o"
     icon' Favorite true = "heart"
-    icon' Favorite false = "heart-empty"
 
     size :: Boolean -> String -> String
     size true  s = s <> " btn-lg"
-    size false s = s <> " btn-xs"
+    size false s = s <> " btn-sm"
 
     color :: String -> String
     color x = x <> " text-primary"

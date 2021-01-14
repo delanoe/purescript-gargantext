@@ -158,11 +158,11 @@ tableau (PublicData {title, abstract, img, url, date, database, author}) =
                         [ H.div { className: "btn-group" }
                                 [ 
 {- TODO
-                                H.button { className : "btn btn-default flex-between"
+                                H.button { className : "btn btn-secondary flex-between"
                                            , href : url
                                            , role : "button"
                                            } [ H.text "View the map" ]
-                                , H.button { className : "btn btn-default flex-start"
+                                , H.button { className : "btn btn-secondary flex-start"
                                            , href : url
                                            , role : "button"
                                            } [ H.text "More like this" ]

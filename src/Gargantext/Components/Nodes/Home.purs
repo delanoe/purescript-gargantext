@@ -70,7 +70,7 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
     cpt {lang, backend, publicBackend, sessions, visible} _ = do
       let landingData = langLandingData lang
       pure $ H.span {}
-           [ H.div { className: "home-title container1" } [ jumboTitle landingData false ]
+           [ H.div { className: "home-title container1" } [ jumboTitle landingData ]
            , H.div { className: "home-research-form container1" } [] -- TODO put research form
 
            , if Array.length (unSessions $ fst sessions) > 0 
@@ -93,7 +93,7 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
            , license
            ]
       where
-        tutorial =  H.div {className:""}
+        tutorial =  H.div {className: "mx-auto container"}
                  $  [ H.h1 {} [H.text "Welcome!"]
                     , H.h2 {} [H.text "For easy start, just watch the tutorials"]
                     ]
@@ -287,8 +287,8 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                                      , id: "source_" <> fileDuration
                                      , width: "900"
                                      , "type": "video/ogg"
-                                     , controls: "true"
-                                     , muted   : "true"
+                                     , controls: true
+                                     , muted   : true
                                    } [H.text "Sorry your browser is not compatible: use Firefox or Chromium instead."]
                                    ]
 
@@ -343,25 +343,19 @@ docButton (Button b) =
 
 -- | TODO
 -- <img src='logo.png' onmouseover="this.src='gargantextuel.png';" onmouseout="this.src='logo.png';" />
-jumboTitle :: LandingData -> Boolean -> R.Element
-jumboTitle (LandingData hd) b =
-  H.div {className: jumbo}
-        [ H.div { className: "row" }
-          [ H.div { className: "col-md-12 content" }
-            [ H.div { className: "center" }
-              [ H.div { id: "logo-designed" }
-                [ H.img { src: "images/logo.png"
-                        , title: hd.logoTitle
-                        }
-                ]
-              ]
-            ]
+jumboTitle :: LandingData -> R.Element
+jumboTitle (LandingData hd) =
+  H.div {} [
+    H.div { className: "row" } [
+       H.div { className: "mx-auto" } [
+          H.div { id: "logo-designed" } [
+             H.img { src: "images/logo.png"
+                   , title: hd.logoTitle
+                   }
+             ]
           ]
-        ]
-  where
-    jumbo = case b of
-      true  -> "jumbotron"
-      false -> ""
+       ]
+    ]
 
 imageEnter :: forall t. LandingData -> t -> R.Element
 imageEnter (LandingData hd) action =

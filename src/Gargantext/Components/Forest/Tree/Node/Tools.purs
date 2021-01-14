@@ -232,10 +232,9 @@ submitButtonHref action href =
 
 checkbox :: R.State Boolean -> R.Element
 checkbox ( val /\ set ) =
-  H.input { id: "checkbox-id"
+  H.input { className : "form-check-input"
           , type: "checkbox"
           , value: val
-          , className : "checkbox"
           , on: { click: \_ -> set $ const $ not val}
           }
 
@@ -296,7 +295,8 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
       popoverRef <- R.useRef null
 
       pure $
-        H.div { on: { click: onClick } }
+        H.div { className: "node-link"
+              , on: { click: onClick } }
               [ H.a { data: { for: tooltipId
                             , tip: true
                             }

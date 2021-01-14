@@ -74,29 +74,29 @@ forest = R.createElement forestCpt
         )
         (cpt' openNodes asyncTasks appReload reload showLogin backend)
     cpt' openNodes asyncTasks appReload reload showLogin backend (frontends /\ currentRoute /\ sessions /\ _ /\ _ /\ _ /\ _ /\ handed) = do
-      pure $ R2.row $ [ plus handed showLogin backend ] <> trees
+      pure $ H.div { className: "forest" } $ [plus handed showLogin backend] <> trees
       where
         trees = tree <$> unSessions sessions
         tree s@(Session {treeId}) =
           treeView { appReload
-                   , asyncTasks
-                   , currentRoute
-                   , frontends
-                   , handed
-                   , openNodes
-                   , reload
-                   , root: treeId
-                   , session: s
-                   } []
+                  , asyncTasks
+                    , currentRoute
+                  , frontends
+                  , handed
+                  , openNodes
+                  , reload
+                  , root: treeId
+                  , session: s
+                  } []
 
 plus :: Handed -> R.Setter Boolean -> R.State (Maybe Backend) -> R.Element
-plus handed showLogin backend = H.div { className: handedClass } [
-  H.button { className: "btn btn-default"
+plus handed showLogin backend = H.div { className: "row" } [
+  H.button { className: "btn btn-secondary col-5 " <> if handed == RightHanded then "ml-1 mr-auto" else "ml-auto mr-1"
            , on: {click}
            , title: "Add or remove connections to the server(s)."
            }
           [ H.div { "type": ""
-                  , className: "fa fa-universal-access fa-lg"
+                  , className: "fa fa-universal-access"  -- fa-lg
                   } [H.text " Log in/out "]
           , H.div {} [H.text "    "]
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
@@ -106,11 +106,6 @@ plus handed showLogin backend = H.div { className: handedClass } [
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
   where
-    handedClass = if handed == RightHanded then
-                        "flex-start"  -- TODO we should use lefthanded SASS class here
-                  else
-                        "flex-end"
-
     click _ = (snd backend) (const Nothing)
             *> showLogin (const true)
 
