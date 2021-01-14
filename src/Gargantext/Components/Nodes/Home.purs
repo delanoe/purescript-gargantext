@@ -160,10 +160,11 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                             , id    : "0_tree.ogv"
                             , text  : "The tree enables you to control all your actions. The Tree has typed nodes. Each node has some attributes and some methods which depend on its type. This specific ergonomy helps the memorization of all the complexity of the GarganTexts' features: hence you do not need to remember all the documentation! Just remember these simple axioms, the Tree is built with parent-children relations of nodes which have specific attributes and methods. To get its methods and attributes, just click on the wheel near its name (for this feature, see advanced tutorial: how to play with GarganText)."
                           }
-                     ,  Tuto { title : "Edit your profile"
+                     {-,  Tuto { title : "Edit your profile"
                             , id    : "0_edit.ogv"
                             , text  : "At the root of the tree, there is your user node, parent of all others nodes. Your profile is what others users will see or search for to reach you or to watch/follow your work. If you delete it you remove all your data from the specified instance, clear and simple."
                             }
+                     -}
                      , Tuto { title : "Discover the nodes of the tree"
                             , id    : "0_nodes.ogv"
                             , text  : "Under your user node you have 3 main nodes: private, shared and public nodes. Each node has its specific attributes and methods! Under private node, all your work is private only. Under shared folder you can create teams to invite your partners, students or colleagues. Under public node, you can publish your work with the world: hello word!"
