@@ -70,7 +70,7 @@ nodePopupView p = R.createElement nodePopupCpt p []
           [ H.div { className: "card" }
             [ panelHeading renameIsOpen   p
             , panelBody    nodePopupState p
-            , H.div { className: "card-footer" } [ mPanelAction nodePopupState p ]
+            , mPanelAction nodePopupState p
             ]
           ]
         ]
@@ -158,12 +158,15 @@ nodePopupView p = R.createElement nodePopupCpt p []
                      -> Record NodePopupProps
                      -> R.Element
         mPanelAction ({action: Nothing    } /\ _) _     =
-          H.div {className:"center fa-hand-pointer-o"}
-            [ H.h5 {} [H.text " Select available actions of this node"]
-            , H.ul {} [ H.div {style:{color:"black"} , className: "fa-thumbs-o-up"         } [H.text " Black: yes you can use it"    ]
-                      , H.div {style:{color:"orange"}, className: "fa-exclamation-triangle"} [H.text " Orange: almost useable"       ]
-                      , H.div {style:{color:"red"}   , className: "fa-rocket"              } [H.text " Red: development in progress" ]
-                      ]
+          H.div { className: "card-footer" }
+            [ H.div {className:"center fa-hand-pointer-o"}
+              [ H.h5 {} [ H.text " Select available actions of this node" ]
+              , H.ul { className: "panel-actions" }
+                [ H.div { className: "fa-thumbs-o-up ok-to-use" } [ H.text " Black: yes you can use it" ]
+                , H.div { className: "fa-exclamation-triangle almost-useable" } [ H.text " Orange: almost useable" ]
+                , H.div { className: "fa-rocket development-in-progress" } [ H.text " Red: development in progress" ]
+                ]
+              ]
             ]
         mPanelAction ({action: Just action} /\ _) props =
             panelAction { action
@@ -251,10 +254,10 @@ type PanelActionProps =
 
 panelAction :: Record PanelActionProps -> R.Element
 panelAction p = R.createElement panelActionCpt p []
-
-panelActionCpt :: R.Component PanelActionProps
-panelActionCpt = R.hooksComponentWithModule thisModule "panelAction" cpt
   where
+    panelActionCpt :: R.Component PanelActionProps
+    panelActionCpt = R.hooksComponentWithModule thisModule "panelAction" cpt
+
     cpt {action: Documentation nodeType}                  _ = actionDoc      nodeType
     cpt {action: Download, id, nodeType, session}         _ = actionDownload nodeType id session
     cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload   nodeType id session dispatch

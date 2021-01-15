@@ -245,22 +245,22 @@ li#rename #rename-a {
   display: flex;
   flex-direction: colum;
 }
-#node-popup-tooltip .popup-container .card {
+#node-popup-tooltip .popup-container > .card {
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   margin-bottom: 0px;
   width: 34rem;
 }
-#node-popup-tooltip .popup-container .card .fa-pencil {
+#node-popup-tooltip .popup-container > .card .fa-pencil {
   color: black;
 }
-#node-popup-tooltip .popup-container .card .card-body {
+#node-popup-tooltip .popup-container > .card .card-body {
   display: flex;
   justify-content: center;
   background-color: white;
   border: none;
 }
-#node-popup-tooltip .popup-container .card .card-body .spacer {
+#node-popup-tooltip .popup-container > .card .card-body .spacer {
   margin: 10px;
 }
 #node-popup-tooltip .popup-container .frame-search.card {
@@ -527,6 +527,16 @@ li .leaf:hover a.settings {
 }
 #node-popup-tooltip .tree .children .node {
   padding-left: 15px;
+}
+
+.panel-actions .almost-useable {
+  color: orange;
+}
+.panel-actions .development-in-progress {
+  color: red;
+}
+.panel-actions .ok-to-use {
+  color: black;
 }
 
 .code-editor-heading {

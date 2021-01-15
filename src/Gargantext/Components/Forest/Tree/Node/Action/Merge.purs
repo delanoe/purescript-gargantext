@@ -8,7 +8,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel, checkbox, checkboxes)
+import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel, checkbox, checkboxesListGroup)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
@@ -24,10 +24,10 @@ mergeNodeReq session fromId toId =
 
 mergeNode :: Record SubTreeParamsIn -> R.Element
 mergeNode p = R.createElement mergeNodeCpt p []
-
-mergeNodeCpt :: R.Component SubTreeParamsIn
-mergeNodeCpt = R.hooksComponentWithModule thisModule "mergeNode" cpt
   where
+    mergeNodeCpt :: R.Component SubTreeParamsIn
+    mergeNodeCpt = R.hooksComponentWithModule thisModule "mergeNode" cpt
+
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
 
@@ -48,13 +48,21 @@ mergeNodeCpt = R.hooksComponentWithModule thisModule "mergeNode" cpt
                       , subTreeParams
                       , handed
                       }
-                  , H.div { className:"card card-primary"}
-                          [ H.text "Merge which list?"
-                          , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options
-                          ]
-                  , H.div { className:"card card-primary"}
-                          [ H.text "Title"
-                          , H.div {className: "checkbox"}
-                                  [checkbox merge, H.text "Merge data?"]
-                          ]
-                  ] button
+                  , H.ul { className:"merge mx-auto list-group"}
+                     ([ H.li { className: "list-group-item" }
+                       [ H.h5 { className: "mb-1" } [ H.text "Merge which list?" ]
+                       ]
+                     ] <> (checkboxesListGroup [ GT.MapTerm, GT.CandidateTerm, GT.StopTerm ] options))
+                  , H.ul { className:"merge mx-auto list-group"}
+                     [ H.li { className: "list-group-item" }
+                       [ H.h5 { className: "mb-1" } [ H.text "Title" ]
+                       ]
+                     , H.li { className: "list-group-item" }
+                       [ H.div { className: " form-check" }
+                         [ checkbox merge
+                         , H.label { className: "form-check-label" } [ H.text "Merge data?" ]
+                         ]
+                       ]
+                     ]
+                  ]
+                  button

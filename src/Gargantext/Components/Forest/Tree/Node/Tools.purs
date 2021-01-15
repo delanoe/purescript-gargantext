@@ -35,21 +35,22 @@ type Footer  = R.Element
 
 panel :: Body -> Footer -> R.Element
 panel bodies submit =
-  H.div {} [ panelBody bodies, footer submit ]
+  R.fragment [ panelBody bodies, footer submit ]
     where
       panelBody bs =
-          H.div {className: "card-body"}
-          [ H.div { className: "row spacer" }
-                  [ H.div { className: "col-md-12" } bs
+          H.div { className: "card-body" }
+          [ H.div { className: "row" }
+                  [ H.div { className: "col-12" } bs
                           -- TODO add type for text or form here
                           -- [ H.form {className: "form-horizontal"} bs ]
                   ]
             ]
       footer sb = 
         H.div {className: "card-footer"}
-            [ H.div {} []
-            , H.div { className: "center"} [ sb ]
-            ]
+          [ H.div { className: "row" }
+              [ H.div { className: "mx-auto"} [ sb ]
+              ]
+          ]
 
 
 ------------------------------------------------------------------------
@@ -82,7 +83,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
             [ inputWithEnter {
                  onEnter: submit renameNodeNameRef
                , onValueChanged: R.setRef renameNodeNameRef
-               , autoFocus: false
+               , autoFocus: true
                , autoSave: false
                , className: "form-control"
                , defaultValue: text
@@ -209,7 +210,6 @@ submitButton :: Action -> (Action -> Aff Unit) -> R.Element
 submitButton action dispatch =
   H.button { className : "btn btn-primary fa fa-" <> icon action
            , type: "button"
-           , style : { width: "50%" }
            , id: S.toLower $ show action
            , title: show action
            , on: {click: \_ -> launchAff $ dispatch action}
@@ -221,7 +221,6 @@ type Href  = String
 submitButtonHref :: Action -> Href -> R.Element
 submitButtonHref action href =
   H.a { className : "btn btn-primary fa fa-" <> icon action
-      , style : { width: "50%" }
       , href
       , target: "_blank"
       }
@@ -259,6 +258,28 @@ checkboxes xs (val /\ set) =
                                  , H.div {} [H.text $ show a]
                                  ]
                   ) xs
+
+checkboxesListGroup :: forall a
+           .  Ord   a
+           => Show  a
+           => Array a
+           -> R.State (Set a)
+           -> Array R.Element
+checkboxesListGroup xs (val /\ set) =
+  map (\a -> H.li { className: "list-group-item" }
+             [ H.div { className: "form-check" }
+               [ H.input { type: "checkbox"
+                         , className: "form-check-input"
+                         , defaultChecked: Set.member a val
+                         , on: { click: \_ -> set
+                                            $ const
+                                            $ toggleSet a val
+                             }
+                       }
+               , H.label { className: "form-check-label" } [ H.text $ show a ]
+               ]
+             ]
+      ) xs
 
 
 prettyNodeType :: GT.NodeType -> String

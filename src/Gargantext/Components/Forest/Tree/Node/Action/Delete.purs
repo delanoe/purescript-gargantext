@@ -42,15 +42,9 @@ actionDelete NodeUser _ = do
                (H.div {} [])
 
 actionDelete nt dispatch = do
-  pure $ panel [ H.div {style: {margin: "10px"}} 
-                (map (\t -> H.p {} [H.text t]) 
+  pure $ panel (map (\t -> H.p {} [H.text t])
                      [ "Are your sure you want to delete it ?"
                      , "If yes, click again below."
                      ]
                 )
-               ]
-               (submitButton (DeleteNode nt) dispatch)
-
-
-
-
+                (submitButton (DeleteNode nt) dispatch)
