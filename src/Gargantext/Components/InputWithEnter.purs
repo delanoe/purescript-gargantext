@@ -16,6 +16,7 @@ type Props a = (
   , onValueChanged :: String -> Effect Unit
 
   , autoFocus :: Boolean
+  , autoSave :: Boolean
   , className :: String
   , defaultValue :: String
   , placeholder :: String
@@ -29,8 +30,8 @@ inputWithEnter props = R.createElement inputWithEnterCpt props []
     inputWithEnterCpt = R.hooksComponentWithModule thisModule "inputWithEnter" cpt
 
     cpt props@{ onEnter, onValueChanged
-              , autoFocus, className, defaultValue, placeholder } _ = do
-      pure $ H.input { on: { blur: \_ -> onEnter unit
+              , autoFocus, autoSave, className, defaultValue, placeholder } _ = do
+      pure $ H.input { on: { blur: \_ -> if autoSave then onEnter unit else pure unit
                            , input: onInput
                            , keyPress: onKeyPress }
                      , autoFocus

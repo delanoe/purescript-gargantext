@@ -81,7 +81,8 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
             inputWithEnter {
                  onEnter: submit newName
                , onValueChanged: setNewName <<< const
-               , autoFocus: false
+               , autoFocus: true
+               , autoSave: false
                , className: "form-control"
                , defaultValue: text
                , placeholder: (boxName <> " Node")

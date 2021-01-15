@@ -364,6 +364,7 @@ searchInput p = R.createElement searchInputComponent p []
         inputWithEnter { onEnter: onEnter valueRef setSearch
                        , onValueChanged: onValueChanged valueRef
                        , autoFocus: false
+                       , autoSave: true
                        , className: "form-control"
                        , defaultValue: R.readRef valueRef
                        , placeholder: "Your query here"

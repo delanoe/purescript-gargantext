@@ -310,6 +310,7 @@ renameableTextCpt = R.hooksComponentWithModule thisModule "renameableTextCpt" cp
                onEnter: submit
              , onValueChanged: setText <<< const
              , autoFocus: false
+             , autoSave: false
              , className: "form-control text"
              , defaultValue: text
              , placeholder: ""

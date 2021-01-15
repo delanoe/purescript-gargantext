@@ -125,15 +125,16 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
             onClick _ = setIsEditing $ const true
         item (true /\ setIsEditing) valueRef =
           H.span {} [
-              inputWithEnter {
-                  onEnter: onClick
-                , onValueChanged: R.setRef valueRef
-                , autoFocus: true
-                , className: "form-control"
-                , defaultValue: R.readRef valueRef
-                , placeholder
-                , type: "text"
-                }
+             inputWithEnter {
+                 onEnter: onClick
+               , onValueChanged: R.setRef valueRef
+               , autoFocus: true
+               , autoSave: false
+               , className: "form-control"
+               , defaultValue: R.readRef valueRef
+               , placeholder
+               , type: "text"
+               }
             , H.span { className: "fa fa-floppy-o"
                      , on: {click: onClick} } []
           ]
