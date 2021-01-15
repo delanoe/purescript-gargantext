@@ -119,7 +119,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
             [ pageLayout { deletions, frontends, totalRecords, container, session, path } ]
           , H.div { className: "col-md-12" }
             [ H.button { style: buttonStyle, on: { click: trashClick deletions } }
-              [ H.i { className: "glyphitem glyphicon glyphicon-trash"
+              [ H.i { className: "glyphitem fa fa-trash"
                     , style: { marginRight : "9px" }} []
               , H.text "Delete document!" ] ] ] ]
         where
@@ -168,7 +168,7 @@ docViewGraphCpt = R.hooksComponentWithModule thisModule "docViewGraph" cpt
             , H.div { className: "col-md-12" }
               [ pageLayout { frontends, totalRecords, deletions, container, session, path }
               , H.button { style: buttonStyle, on: { click: performClick } }
-                [ H.i { className: "glyphitem glyphicon glyphicon-trash"
+                [ H.i { className: "glyphitem fa fa-trash"
                       , style: { marginRight : "9px" } } []
                 , H.text "Delete document!" 
                 ]
@@ -315,8 +315,8 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
         colNames = T.ColumnName <$> [ "", "Date", "Title", "Source", "Authors", "Delete" ]
         wrapColElts = const identity
         -- TODO: how to interprete other scores?
-        gi Favorite = "glyphicon glyphicon-star-empty"
-        gi _ = "glyphicon glyphicon-star"
+        gi Favorite = "fa fa-star-empty"
+        gi _ = "fa fa-star"
         isChecked id = Set.member id (fst deletions).pending
         isDeleted (DocumentsView {id}) = Set.member id (fst deletions).deleted
         pairUrl (Pair {id,label})

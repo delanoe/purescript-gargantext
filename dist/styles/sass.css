@@ -245,24 +245,25 @@ li#rename #rename-a {
   display: flex;
   flex-direction: colum;
 }
-#node-popup-tooltip .popup-container .panel {
+#node-popup-tooltip .popup-container .card {
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   margin-bottom: 0px;
+  width: 34rem;
 }
-#node-popup-tooltip .popup-container .panel .glyphicon-pencil {
+#node-popup-tooltip .popup-container .card .fa-pencil {
   color: black;
 }
-#node-popup-tooltip .popup-container .panel .panel-body {
+#node-popup-tooltip .popup-container .card .card-body {
   display: flex;
   justify-content: center;
   background-color: white;
   border: none;
 }
-#node-popup-tooltip .popup-container .panel .panel-body .spacer {
+#node-popup-tooltip .popup-container .card .card-body .spacer {
   margin: 10px;
 }
-#node-popup-tooltip .popup-container .frame-search.panel {
+#node-popup-tooltip .popup-container .frame-search.card {
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   height: 600px;
@@ -276,7 +277,7 @@ li#rename #rename-a {
   background-color: white;
   z-index: 1000;
 }
-#create-node-tooltip .panel-body input {
+#create-node-tooltip .card-body input {
   min-width: 200px;
 }
 
@@ -287,7 +288,7 @@ li#rename #rename-a {
   background-color: white;
   z-index: 1000;
 }
-#file-type-tooltip .panel-body select {
+#file-type-tooltip .card-body select {
   min-width: 200px;
 }
 
@@ -331,11 +332,6 @@ li#rename #rename-a {
 .nopadding {
   padding: 0 !important;
   margin: 0 !important;
-}
-
-.row-no-padding > [class*=col-] {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
 }
 
 .tab-pane .reload-btn {

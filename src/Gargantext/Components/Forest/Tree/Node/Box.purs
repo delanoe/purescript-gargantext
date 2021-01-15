@@ -53,7 +53,7 @@ nodePopupView p = R.createElement nodePopupCpt p []
     nodePopupCpt = R.hooksComponentWithModule thisModule "nodePopupView" cpt
 
     cpt p _ = do
-      isOpen    <- R.useState' false
+      renameIsOpen    <- R.useState' false
 
       nodePopupState@(nodePopup /\ setNodePopup)
         <- R.useState' { action  : Nothing
@@ -65,20 +65,12 @@ nodePopupView p = R.createElement nodePopupCpt p []
       search  <- R.useState'
                $ defaultSearch { node_id = Just p.id }
 
-      pure $ H.div tooltipProps $
+      pure $ H.div tooltipProps
         [ H.div { className: "popup-container" }
-          [ H.div { className: "panel panel-default" }
-            [ H.div {className: ""}
-            [ H.div { className : "col-md-10 flex-between"}
-                [ H.h3 { className: GT.fldr p.nodeType true} []
-                -- TODO fix names
-                , H.text $ prettyNodeType p.nodeType
-                , H.p {className: "text-primary center"} [H.text p.name]
-                ]
-              ]
-            , panelHeading isOpen         p
+          [ H.div { className: "card" }
+            [ panelHeading renameIsOpen   p
             , panelBody    nodePopupState p
-            , mPanelAction nodePopupState p
+            , H.div { className: "card-footer" } [ mPanelAction nodePopupState p ]
             ]
           ]
         ]
@@ -92,53 +84,55 @@ nodePopupView p = R.createElement nodePopupCpt p []
                          --, style: { top: y - 65.0, left: x + 10.0 }
                        }
 
-        panelHeading isOpen@(open /\ _) {dispatch, id, name, nodeType} =
-          H.div {className: "panel-heading"}
-                [ R2.row
-                        [ H.div {className: "col-md-8 flex-end"}
-                                [ textInputBox { boxAction: renameAction
-                                               , boxName: "Rename"
-                                               , dispatch
-                                               , id
-                                               , text:name
-                                               , isOpen
-                                               }
-                                ]
-
-                        , H.div {className: "flex-end"}
-                                [ if edit then editIcon isOpen else H.div {} []
-                                , H.div {className: "col-md-1"}
-                                        [ H.a { "type"   : "button"
-                                              , className: glyphicon "window-close"
-                                              , on       : { click: \e -> p.onPopoverClose
-                                                                        $ R.unsafeEventTarget e
-                                                           }
-                                              , title    : "Close"
-                                              } []
-                                        ]
-                                 ]
-                        ]
+        panelHeading renameIsOpen@(open /\ _) {dispatch, id, name, nodeType} =
+          H.div {className: "card-header"}
+            [ R2.row
+              [ H.div { className: "col-4" }
+                [ H.span { className: GT.fldr p.nodeType true} []
+                -- TODO fix names
+                , H.span { className: "h5" } [ H.text $ prettyNodeType p.nodeType ]
                 ]
+              , H.div { className: "col-6" }
+                [ if open then
+                    textInputBox { boxAction: renameAction
+                                 , boxName: "Rename"
+                                 , dispatch
+                                 , id
+                                 , text: name
+                                 , isOpen: renameIsOpen
+                                 }
+                  else
+                    H.span { className: "text-primary center" } [H.text p.name]
+                ]
+              , H.div {className: "col-1"}
+                  [ editIcon renameIsOpen ]
+              , H.div {className: "col-1"}
+                  [ H.a { "type"   : "button"
+                        , className: glyphicon "window-close"
+                        , on       : { click: \e -> p.onPopoverClose
+                                                    $ R.unsafeEventTarget e
+                                     }
+                        , title    : "Close"
+                        } []
+                  ]
+              ]
+            ]
           where
             SettingsBox {edit, doc, buttons} = settingsBox nodeType
 
             editIcon :: R.State Boolean -> R.Element
-            editIcon (false /\ setIsOpen) =
-              H.div {className : "col-md-1"}
-              [ H.a { className: glyphicon "pencil"
-                    , id       : "rename1"
-                    , title    : "Rename"
-                    , on: { click: \_ -> setIsOpen $ const true }
-                    }
-                []
-              ]
+            editIcon (false /\ setIsOpen) = H.a { className: glyphicon "pencil"
+                                               , id       : "rename1"
+                                               , title    : "Rename"
+                                               , on: { click: \_ -> setIsOpen $ const true }
+                                               } []
             editIcon (true /\ _) = H.div {} []
 
         panelBody :: R.State (Record ActionState)
                   -> Record NodePopupProps
                   -> R.Element
         panelBody nodePopupState {dispatch: d, nodeType} =
-          H.div {className: "panel-body flex-space-between"}
+          H.div {className: "card-body flex-space-between"}
                 $ [ H.p { className: "spacer" } []
                   , H.div { className: "flex-center" }
                           [ buttonClick { action: doc
@@ -155,7 +149,7 @@ nodePopupView p = R.createElement nodePopupCpt p []
                   ]
                 -- FIXME trick to increase the size of the box
                 <> if A.length buttons < 2
-                        then [H.div {className: "col-md-4"} []]
+                        then [H.div {className: "col-4"} []]
                         else []
           where
             SettingsBox {edit, doc, buttons} = settingsBox nodeType
@@ -165,10 +159,10 @@ nodePopupView p = R.createElement nodePopupCpt p []
                      -> R.Element
         mPanelAction ({action: Nothing    } /\ _) _     =
           H.div {className:"center fa-hand-pointer-o"}
-            [ H.h4 {} [H.text " Select available actions of this node"]
-            , H.ul {} [ H.h5 {style:{color:"black"} , className: "fa-thumbs-o-up"         } [H.text " Black: yes you can use it"    ]
-                      , H.h5 {style:{color:"orange"}, className: "fa-exclamation-triangle"} [H.text " Orange: almost useable"       ]
-                      , H.h5 {style:{color:"red"}   , className: "fa-rocket"              } [H.text " Red: development in progress" ]
+            [ H.h5 {} [H.text " Select available actions of this node"]
+            , H.ul {} [ H.div {style:{color:"black"} , className: "fa-thumbs-o-up"         } [H.text " Black: yes you can use it"    ]
+                      , H.div {style:{color:"orange"}, className: "fa-exclamation-triangle"} [H.text " Orange: almost useable"       ]
+                      , H.div {style:{color:"red"}   , className: "fa-rocket"              } [H.text " Red: development in progress" ]
                       ]
             ]
         mPanelAction ({action: Just action} /\ _) props =
@@ -202,7 +196,7 @@ buttonClickCpt :: R.Component ButtonClickProps
 buttonClickCpt = R.hooksComponentWithModule thisModule "buttonClick" cpt
   where
     cpt {action: todo, state: (node@{action} /\ setNodePopup), nodeType} _ = do
-      pure $ H.div {className: "col-md-1"}
+      pure $ H.div {className: "col-1"}
                    [ H.a { style: (iconAStyle nodeType todo)
                          , className: glyphiconActive (glyphiconNodeAction todo)
                                                       (action == (Just todo)   )

@@ -163,7 +163,7 @@ renderBackend state backend@(Backend {name}) =
           ]
     where
       iconLog = H.td {} [ H.a { on : {click}
-                        --, className : "glyphitem glyphicon glyphicon-log-in"
+                        --, className : "glyphitem fa fa-log-in"
                         , className : "fa fa-hand-o-right"
                         , title: "Log In"} []
                         ]

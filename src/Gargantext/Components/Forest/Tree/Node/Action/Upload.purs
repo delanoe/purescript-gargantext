@@ -197,7 +197,7 @@ fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
         , isDragOver: (_ /\ setIsDragOver)
         , nodeType
         } _ = pure
-            $ H.div tooltipProps [ H.div { className: "panel panel-default"}
+            $ H.div tooltipProps [ H.div { className: "card"}
                                          [ panelHeading
                                          , panelBody
                                          , panelFooter
@@ -212,12 +212,12 @@ fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
                                     }
                        }
         panelHeading =
-          H.div {className: "panel-heading"}
+          H.div {className: "card-header"}
           [ H.div {className: "row"}
             [ H.div {className: "col-md-10"}
               [ H.h5 {} [H.text "Choose file type"] ]
             , H.div {className: "col-md-2"}
-              [ H.a {className: "btn glyphitem glyphicon glyphicon-remove-circle"
+              [ H.a {className: "btn glyphitem fa fa-remove-circle"
                     , on: {click: \_ -> do
                               setDroppedFile $ const Nothing
                               setIsDragOver  $ const false
@@ -228,7 +228,7 @@ fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
           ]
 
         panelBody =
-          H.div {className: "panel-body"}
+          H.div {className: "card-body"}
           [ R2.select {className: "col-md-12 form-control"
                       , on: {change: onChange}
                       }
@@ -243,7 +243,7 @@ fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
             renderOption opt = H.option {} [ H.text $ show opt ]
 
         panelFooter =
-          H.div {className: "panel-footer"}
+          H.div {className: "card-footer"}
           [
             case fileType of
               Just ft ->

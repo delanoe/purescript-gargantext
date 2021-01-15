@@ -48,11 +48,11 @@ mergeNodeCpt = R.hooksComponentWithModule thisModule "mergeNode" cpt
                       , subTreeParams
                       , handed
                       }
-                  , H.div { className:"panel panel-primary"}
+                  , H.div { className:"card card-primary"}
                           [ H.text "Merge which list?"
                           , checkboxes [GT.MapTerm, GT.CandidateTerm, GT.StopTerm] options
                           ]
-                  , H.div { className:"panel panel-primary"}
+                  , H.div { className:"card card-primary"}
                           [ H.text "Title"
                           , H.div {className: "checkbox"}
                                   [checkbox merge, H.text "Merge data?"]

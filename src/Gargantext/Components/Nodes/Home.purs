@@ -336,7 +336,7 @@ docButton (Button b) =
       , target: "blank"
       , title: b.title
       } [ H.span { aria: {hidden : true}
-                 , className: "glyphicon glyphicon-hand-right"
+                 , className: "fa fa-hand-right"
                  } []
         , H.text b.text
         ]

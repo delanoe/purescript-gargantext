@@ -21,7 +21,7 @@ import Gargantext.Ends (Frontends, url)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
-import Gargantext.Utils (toggleSet)
+import Gargantext.Utils (glyphicon, toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.ReactTooltip as ReactTooltip
 
@@ -38,7 +38,7 @@ panel bodies submit =
   H.div {} [ panelBody bodies, footer submit ]
     where
       panelBody bs =
-          H.div {className: "panel-body"}
+          H.div {className: "card-body"}
           [ H.div { className: "row spacer" }
                   [ H.div { className: "col-md-12" } bs
                           -- TODO add type for text or form here
@@ -46,7 +46,7 @@ panel bodies submit =
                   ]
             ]
       footer sb = 
-        H.div {className: "panel-footer"}
+        H.div {className: "card-footer"}
             [ H.div {} []
             , H.div { className: "center"} [ sb ]
             ]
@@ -67,20 +67,21 @@ textInputBox :: Record TextInputBoxProps -> R.Element
 textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R.createElement el p []
   where
     el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
+
     cpt {id, text} _ = do
-      renameNodeName <- R.useState' text
-      pure $ H.div {className: "from-group row-no-padding"}
-        [ textInput renameNodeName
-        , submitBtn renameNodeName
+      renameNodeNameRef <- R.useRef text
+
+      pure $ H.div {className: "from-group row"}
+        [ textInput renameNodeNameRef
+        , submitBtn renameNodeNameRef
         , cancelBtn
         ]
       where
-        textInput (newName /\ setNewName) =
-          H.div {className: "col-md-8"}
-          [
-            inputWithEnter {
-                 onEnter: submit newName
-               , onValueChanged: setNewName <<< const
+        textInput renameNodeNameRef =
+          H.div {className: "col-8"}
+            [ inputWithEnter {
+                 onEnter: submit $ R.readRef renameNodeNameRef
+               , onValueChanged: R.setRef renameNodeNameRef
                , autoFocus: false
                , className: "form-control"
                , defaultValue: text
@@ -96,14 +97,14 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
           --                      <<< R.unsafeEventValue }
           --           }
           ]
-        submitBtn (newName /\ _) =
-          H.a {className: "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
+        submitBtn renameNodeNameRef =
+          H.a {className: "col-2 " <>  glyphicon "floppy-o"
               , type: "button"
-              , on: { click: submit newName }
+              , on: { click: submit $ R.readRef renameNodeNameRef }
               , title: "Submit"
               } []
         cancelBtn =
-          H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
+          H.a {className: "text-danger col-2 " <> glyphicon "times"
               , type: "button"
               , on: { click: \_ -> setIsOpen $ const false }
               , title: "Cancel"

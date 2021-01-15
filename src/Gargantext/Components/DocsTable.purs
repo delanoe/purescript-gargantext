@@ -372,8 +372,8 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
       }
       where
         sid = sessionId session
-        gi Star_1  = "glyphicon glyphicon-star"
-        gi _ = "glyphicon glyphicon-star-empty"
+        gi Star_1  = "fa fa-star"
+        gi _ = "fa fa-star-empty"
         trashClassName Star_0 _ = "trash"
         trashClassName _ true = "active"
         trashClassName _ false = ""

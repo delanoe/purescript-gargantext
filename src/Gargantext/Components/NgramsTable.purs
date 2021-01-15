@@ -211,7 +211,7 @@ tableContainerCpt { dispatch
             then H.li {className: "list-group-item"}
                  [selectButtons true]
             else H.div {} []
-          , H.div {id: "terms_table", className: "panel-body"}
+          , H.div {id: "terms_table", className: "card-body"}
             [ H.table {className: "table able"}
               [ H.thead {className: ""} [props.tableHead]
               , H.tbody {} props.tableBody

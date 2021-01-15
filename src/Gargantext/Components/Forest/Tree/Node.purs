@@ -228,7 +228,7 @@ nodeMainSpan = R.createElement nodeMainSpanCpt
 fldr nt open = if open
                then "fa fa-globe" -- <> color nt
                else "fa fa-folder-globe" -- <> color nt
-               --else "glyphicon glyphicon-folder-close" <> color nt
+               --else "fa fa-folder-close" <> color nt
                  where
                    color GT.NodeUser     = ""
                    color FolderPublic = ""
