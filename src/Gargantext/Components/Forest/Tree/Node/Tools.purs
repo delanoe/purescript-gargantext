@@ -80,7 +80,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
         textInput renameNodeNameRef =
           H.div {className: "col-8"}
             [ inputWithEnter {
-                 onEnter: submit $ R.readRef renameNodeNameRef
+                 onEnter: submit renameNodeNameRef
                , onValueChanged: R.setRef renameNodeNameRef
                , autoFocus: false
                , className: "form-control"
@@ -100,7 +100,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
         submitBtn renameNodeNameRef =
           H.a {className: "col-2 " <>  glyphicon "floppy-o"
               , type: "button"
-              , on: { click: submit $ R.readRef renameNodeNameRef }
+              , on: { click: submit renameNodeNameRef }
               , title: "Submit"
               } []
         cancelBtn =
@@ -109,9 +109,9 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
               , on: { click: \_ -> setIsOpen $ const false }
               , title: "Cancel"
               } []
-        submit newName _ = do
+        submit renameNodeNameRef _ = do
           setIsOpen $ const false
-          launchAff_ $ dispatch ( boxAction newName )
+          launchAff_ $ dispatch ( boxAction $ R.readRef renameNodeNameRef )
 textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
   where
     el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
