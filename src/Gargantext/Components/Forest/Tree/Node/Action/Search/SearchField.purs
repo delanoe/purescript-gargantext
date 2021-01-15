@@ -57,11 +57,11 @@ searchField p = R.createElement searchFieldComponent p []
       iframeRef <- R.useRef    null
       let params = 
                 [ searchInput {search}
-                , if length s.term < 3  -- search with love : <3
-                  then
-                    H.div {}[]
-                  else
-                    H.div {} [ dataFieldNav search dataFields
+                -- , if length s.term < 3  -- search with love : <3
+                --   then
+                --     H.div {}[]
+                --   else
+                , H.div {} [ dataFieldNav search dataFields
 
                              , if isExternal s.datafield
                                  then databaseInput { databases: props.databases, search } []
