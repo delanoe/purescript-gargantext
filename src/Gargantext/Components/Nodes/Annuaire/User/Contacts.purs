@@ -127,6 +127,7 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
           H.div { className: "input-group col-sm-6" } [
             inputWithEnter {
                 autoFocus: true
+              , autoSave: false
               , className: "form-control"
               , defaultValue: R.readRef valueRef
               , onEnter: onClick

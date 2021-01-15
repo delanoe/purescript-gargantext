@@ -83,6 +83,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
                  onEnter: submit renameNodeNameRef
                , onValueChanged: R.setRef renameNodeNameRef
                , autoFocus: false
+               , autoSave: false
                , className: "form-control"
                , defaultValue: text
                , placeholder: (boxName <> " Node")
