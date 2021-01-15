@@ -71,33 +71,42 @@ type UploadFile =
 
 uploadFileView :: Record Props -> R.Element
 uploadFileView props = R.createElement uploadFileViewCpt props []
-
-uploadFileViewCpt :: R.Component Props
-uploadFileViewCpt = R.hooksComponentWithModule thisModule "uploadFileView" cpt
   where
+    uploadFileViewCpt :: R.Component Props
+    uploadFileViewCpt = R.hooksComponentWithModule thisModule "uploadFileView" cpt
+
     cpt {dispatch, id, nodeType} _ = do
       mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       fileType@(_ /\ setFileType)   <- R.useState'  CSV
       lang@( _chosenLang /\ setLang) <- R.useState' EN
 
-      let    bodies = [ H.div { className:"col-md-6 flex-space-around"}
-                           [ H.input { type: "file"
-                                        , placeholder: "Choose file"
-                                        , on: {change: onChangeContents mFile}
-                                        }
-                              ]
-                   , H.div {className:"col-md-3 flex-space-around"}
-                           [ formChoiceSafe [ CSV
-                                            , CSV_HAL
-                                            , WOS
-                                            , PresseRIS
-                                            , Arbitrary
-                                            ] CSV setFileType
-                           ]
-
-                   , H.div {className:"col-md-3 flex-space-around"}
-                           [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang ]
-                   ]
+      let bodies =
+            [ R2.row
+              [ H.div { className:"col-12 flex-space-around"}
+                [ H.div { className: "form-group" }
+                  [ H.input { type: "file"
+                            , className: "form-control"
+                            , placeholder: "Choose file"
+                            , on: {change: onChangeContents mFile}
+                            }
+                  ]
+                ]
+              ]
+            , R2.row
+              [ H.div {className:"col-6 flex-space-around"}
+                [ formChoiceSafe [ CSV
+                                 , CSV_HAL
+                                 , WOS
+                                 , PresseRIS
+                                 , Arbitrary
+                                 ] CSV setFileType
+                ]
+              ]
+            , R2.row
+              [ H.div {className:"col-6 flex-space-around"}
+                [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang ]
+              ]
+            ]
 
       let footer = H.div {} [ uploadButton { dispatch
                                            , fileType
