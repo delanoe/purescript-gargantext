@@ -16,12 +16,11 @@ import Prelude
 import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 thisModule = "Gargantext.Components.GraphExplorer.ToggleButton"
 
@@ -40,13 +39,13 @@ toggleButtonCpt = R.hooksComponentWithModule thisModule "toggleButton" cpt
   where
     cpt {state, onMessage, offMessage, onClick} _ = do
       let (toggled /\ _) = state
-      pure $
-        H.span {}
-          [
-            H.button
-              { className: "btn btn-primary", on: {click: onClick} }
-              [ H.text (text onMessage offMessage toggled) ]
-          ]
+
+      pure $ H.button { className: "btn btn-outline-primary " <> cls toggled
+                      , on: {click: onClick}
+                      } [ R2.small {} [ H.text (text onMessage offMessage toggled) ] ]
+
+    cls true = "active"
+    cls false = ""
     text on _off true = on
     text _on off false = off
 
@@ -70,14 +69,14 @@ edgesToggleButtonCpt :: R.Component EdgesButtonProps
 edgesToggleButtonCpt = R.hooksComponentWithModule thisModule "edgesToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
-      pure $
-        H.span {}
-          [
-            H.button
-              { className: "btn btn-primary", on: {click: onClick setState} }
-              [ H.text (text state) ]
-          ]
+      pure $ H.button { className: "btn btn-outline-primary " <> cls state
+                      , on: { click: onClick setState }
+                      } [ R2.small {} [ H.text (text state) ] ]
+
     text s = if SigmaxTypes.edgeStateHidden s then "Show edges" else "Hide edges"
+
+    cls SigmaxTypes.EShow = "active"
+    cls _ = ""
 
     -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
     onClick setState _ = setState SigmaxTypes.toggleShowEdgesState
@@ -111,13 +110,14 @@ pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
 pauseForceAtlasButtonCpt = R.hooksComponentWithModule thisModule "forceAtlasToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
-      pure $
-        H.span {}
-          [
-            H.button
-              { className: "btn btn-primary", on: {click: onClick setState} }
-              [ H.text (text state) ]
-          ]
+      pure $ H.button { className: "btn btn-outline-primary " <> cls state
+                      , on: { click: onClick setState }
+                      } [ R2.small {} [ H.text (text state) ] ]
+
+    cls SigmaxTypes.InitialRunning = "active"
+    cls SigmaxTypes.Running = "active"
+    cls _ = ""
+
     text SigmaxTypes.InitialRunning = "Pause Force Atlas"
     text SigmaxTypes.InitialStopped = "Start Force Atlas"
     text SigmaxTypes.Running = "Pause Force Atlas"
@@ -139,13 +139,13 @@ sidebarToggleButton (state /\ setState) = R.createElement el {} []
   where
     el = R.hooksComponentWithModule thisModule "sidebarToggleButton" cpt
     cpt {} _ = do
-      pure $
-        H.span {}
-          [
-            H.button
-              { className: "btn btn-primary", on: {click: onClick} }
-              [ H.text (text onMessage offMessage state) ]
-          ]
+      pure $ H.button { className: "btn btn-outline-primary " <> cls state
+                      , on: { click: onClick}
+                      } [ R2.small {} [ H.text (text onMessage offMessage state) ] ]
+
+    cls (GET.Opened _) = "active"
+    cls _ = ""
+
     onMessage = "Hide Sidebar"
     offMessage = "Show Sidebar"
     text on _off (GET.Opened _)    = on

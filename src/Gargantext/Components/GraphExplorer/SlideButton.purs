@@ -35,8 +35,8 @@ sizeButtonCpt = R.hooksComponentWithModule thisModule "sizeButton" cpt
     cpt {state, caption, min, max, onChange} _ = do
       let (value /\ setValue) = state
       pure $
-        H.span {}
-          [ H.label {} [ H.text caption ]
+        H.span { class: "range-simple" }
+          [ H.label {} [ R2.small {} [ H.text caption ] ]
           , H.input { type: "range"
                     , className: "form-control"
                     , min: show min

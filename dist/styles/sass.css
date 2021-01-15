@@ -147,17 +147,8 @@
   right: 0;
   top: 60px;
 }
-.graph-container #controls-container #toolbar {
-  display: flex;
-  flex-direction: column;
-}
-.graph-container #controls-container #toolbar ul {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
-}
-.graph-container #controls-container #toolbar ul li {
-  max-width: 200px;
+.graph-container #controls-container .nav-item {
+  padding-left: 0.8rem;
 }
 .graph-container .graph-row {
   height: 100%;
@@ -730,6 +721,7 @@ li .leaf:hover a.settings {
 }
 .range .range-slider {
   position: relative;
+  width: 85%;
 }
 .range .range-slider .scale {
   position: absolute;
@@ -761,6 +753,10 @@ li .leaf:hover a.settings {
   background: #eee;
   width: 30px;
   height: 20px;
+}
+
+.range-simple input {
+  width: 85%;
 }
 
 /*# sourceMappingURL=sass.css.map */

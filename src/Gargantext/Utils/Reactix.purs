@@ -106,6 +106,9 @@ named = flip $ defineProperty "name"
 overState :: forall t. (t -> t) -> R.State t -> Effect Unit
 overState f (_state /\ setState) = setState f
 
+small :: ElemFactory
+small = createDOM "small"
+
 select :: ElemFactory
 select = createDOM "select"
 
