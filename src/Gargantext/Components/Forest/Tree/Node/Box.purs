@@ -28,7 +28,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNode)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
-import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, prettyNodeType)
+import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, panel, prettyNodeType)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
@@ -285,14 +285,14 @@ panelAction p = R.createElement panelActionCpt p []
 
     cpt {action : Share, dispatch, id, name } _ = do
       isOpen <- R.useState' true
-      pure $ H.div {} [ textInputBox { boxAction: Share.shareAction
-                                     , boxName: "Share"
-                                     , dispatch
-                                     , id
-                                     , text: "username"
-                                     , isOpen
-                                     }
-                      ]
+      pure $ panel [ textInputBox { boxAction: Share.shareAction
+                                  , boxName: "Share"
+                                  , dispatch
+                                  , id
+                                  , text: "username"
+                                  , isOpen
+                                  }
+                   ] $ H.div {} []
 
     cpt {action : AddingContact, dispatch, id, name } _ = do
       isOpen <- R.useState' true
