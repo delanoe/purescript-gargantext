@@ -16,8 +16,9 @@ import Gargantext.Components.Nodes.Dashboard.Types as DT
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (NodeID, ReloadS)
+import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule = "Gargantext.Components.Nodes.Corpus.Dashboard"
 
@@ -49,27 +50,27 @@ dashboardLayoutWithKeyCpt :: R.Component KeyProps
 dashboardLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "dashboardLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
-      reload <- R.useState' 0
+      reload <- GUR.new
 
-      useLoader {nodeId, reload: fst reload, session} DT.loadDashboardWithReload $
+      useLoader {nodeId, reload: GUR.value reload, session} DT.loadDashboardWithReload $
         \dashboardData@{hyperdata: DT.Hyperdata h, parentId} -> do
           let { charts } = h
           dashboardLayoutLoaded { charts
                                 , corpusId: parentId
                                 , defaultListId: 0
-                                , key: show $ fst reload
+                                , key: show $ GUR.value reload
                                 , nodeId
                                 , onChange: onChange nodeId reload (DT.Hyperdata h)
                                 , session }
 
       where
-        onChange :: NodeID -> ReloadS -> DT.Hyperdata -> Array P.PredefinedChart -> Effect Unit
-        onChange nodeId' (_ /\ setReload) (DT.Hyperdata h) charts = do
+        onChange :: NodeID -> GUR.ReloadS -> DT.Hyperdata -> Array P.PredefinedChart -> Effect Unit
+        onChange nodeId' reload (DT.Hyperdata h) charts = do
           launchAff_ do
             DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts }
                              , nodeId:nodeId'
                              , session }
-            liftEffect $ setReload $ (+) 1
+            liftEffect $ GUR.bump reload
 
 type LoadedProps =
   ( charts :: Array P.PredefinedChart

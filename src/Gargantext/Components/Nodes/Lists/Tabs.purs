@@ -23,21 +23,22 @@ import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Lists.Types
 import Gargantext.Components.Tab as Tab
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), ReloadS, TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
+import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    appReload         :: ReloadS
+    appReload         :: GUR.ReloadS
   , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
   , cacheState        :: R.State CacheState
   , corpusData        :: CorpusData
   , corpusId          :: Int
   , session           :: Session
   , sidePanelTriggers :: Record SidePanelTriggers
-  , treeReloadRef     :: R.Ref (Maybe ReloadS)
+  , treeReloadRef     :: GUR.ReloadWithInitializeRef
   )
 
 type PropsWithKey = (
@@ -98,7 +99,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
         } _ = do
 
       chartType <- R.useState' Histo
-      chartsReload <- R.useState' 0
+      chartsReload <- GUR.new
       pathS <- R.useState' $ NTC.initialPageParams session initialPath.corpusId [initialPath.listId] initialPath.tabType
       let listId' = fromMaybe defaultListId $ A.head (fst pathS).listIds
       let path = {
@@ -133,14 +134,14 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
            ]
         )
       where
-        afterSync (_ /\ setChartsReload) _ = do
+        afterSync chartsReload _ = do
           case mNgramsType of
             Just ngramsType -> do
               -- NOTE: No need to recompute chart, after ngrams are sync this
               -- should be recomputed already
               -- We just refresh it
               -- _ <- recomputeChart session chartType ngramsType corpusId listId
-              liftEffect $ setChartsReload $ (+) 1
+              liftEffect $ GUR.bump chartsReload
             Nothing         -> pure unit
 
         tabNgramType = modeTabType mode

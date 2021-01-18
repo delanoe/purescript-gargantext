@@ -5,9 +5,8 @@ import Data.Tuple (Tuple)
 import Reactix as R
 
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ReloadS, TabType)
-
-type Reload = Int
+import Gargantext.Types (TabType)
+import Gargantext.Utils.Reload as GUR
 
 type Path = (
     corpusId :: Int
@@ -22,8 +21,8 @@ type Props = (
   )
 
 type MetricsProps = (
-    reload  :: ReloadS
+    reload  :: GUR.ReloadS
   | Props
 )
 
-type ReloadPath = Tuple Reload (Record Path)
+type ReloadPath = Tuple GUR.Reload (Record Path)

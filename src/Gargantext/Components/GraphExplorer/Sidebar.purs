@@ -32,8 +32,9 @@ import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, ReloadS, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 import Partial.Unsafe (unsafePartial)
 
 thisModule = "Gargantext.Components.GraphExplorer.Sidebar"
@@ -42,13 +43,13 @@ type Props =
   ( frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphId         :: Int
-  , graphVersion    :: ReloadS
+  , graphVersion    :: GUR.ReloadS
   , metaData        :: GET.MetaData
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
   , showSidePanel   :: R.State GET.SidePanelState
-  , treeReload      :: ReloadS
+  , treeReload      :: GUR.ReloadS
   )
 
 sidebar :: Record Props -> R.Element
@@ -204,7 +205,7 @@ type DeleteNodes =
   , nodes :: Array (Record SigmaxT.Node)
   , session :: Session
   , termList :: TermList
-  , treeReload :: ReloadS
+  , treeReload :: GUR.ReloadS
   )
 
 deleteNodes :: Record DeleteNodes -> Effect Unit
@@ -215,7 +216,7 @@ deleteNodes { graphId, metaData, nodes, session, termList, treeReload } = do
     case mPatch of
       Nothing -> pure unit
       Just (NTC.Versioned patch) -> do
-        liftEffect $ snd treeReload $ (+) 1
+        liftEffect $ GUR.bump treeReload
 
 -- Why is this called delete node?
 deleteNode :: TermList

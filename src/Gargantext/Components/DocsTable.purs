@@ -36,11 +36,12 @@ import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), ReloadS, TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.DocsTable"
@@ -415,7 +416,7 @@ type DocChooser = (
   , nodeId            :: NodeID
   , selected          :: Boolean
   , sidePanelTriggers :: Record SidePanelTriggers
-  , tableReload       :: ReloadS
+  , tableReload       :: GUR.ReloadS
   )
 
 docChooser :: R2.Component DocChooser
@@ -432,7 +433,7 @@ docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
         , nodeId
         , selected
         , sidePanelTriggers: { triggerAnnotatedDocIdChange }
-        , tableReload: (_ /\ setReload) } _ = do
+        , tableReload } _ = do
 
       let eyeClass = if selected then "fa-eye" else "fa-eye-slash"
 
@@ -446,7 +447,7 @@ docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
           -- log2 "[docChooser] onClick, corpusId" corpusId
           -- log2 "[docChooser] onClick, nodeId" nodeId
           R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
-          setReload $ (_ + 1)
+          GUR.bump tableReload
 
 
 newtype SearchQuery = SearchQuery {

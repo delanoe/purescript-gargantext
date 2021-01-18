@@ -45,10 +45,11 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (CTabNgramType, OrderBy(..), ReloadS, SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
+import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet, sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Seq (mapMaybe) as Seq
 
 thisModule :: String
@@ -280,11 +281,11 @@ tableContainerCpt { dispatch
 
 type CommonProps = (
     afterSync         :: Unit -> Aff Unit
-  , appReload         :: ReloadS
+  , appReload         :: GUR.ReloadS
   , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
   , sidePanelTriggers :: Record NT.SidePanelTriggers
   , tabNgramType      :: CTabNgramType
-  , treeReloadRef     :: R.Ref (Maybe ReloadS)
+  , treeReloadRef     :: GUR.ReloadWithInitializeRef
   , withAutoUpdate    :: Boolean
   )
 
@@ -324,7 +325,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                ]
         , search ]
         <>
-        [ T.table { syncResetButton
+        [ T.table { syncResetButton: [ syncResetButton ]
                   , colNames
                   , container: tableContainer { dispatch: performAction
                                               , ngramsChildren
@@ -333,7 +334,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                                               , ngramsTable
                                               , path
                                               , tabNgramType
-                                              , syncResetButton
+                                              , syncResetButton: [ syncResetButton ]
                                               }
                   , params: params /\ setParams -- TODO-LENS
                   , rows: filteredConvertedRows
@@ -343,13 +344,14 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                                              , ngramsSelection
                                              }
                   }
-        ] <> syncResetButton
+        , syncResetButton ]
 
       where
+        afterSync = chartsAfterSync path' asyncTasksRef nodeId treeReloadRef
 
-        syncResetButton = syncResetBtns (chartsAfterSync path' asyncTasksRef nodeId treeReloadRef)
-                         ngramsLocalPatch
-                         performAction
+        syncResetButton = syncResetButtons { afterSync
+                                           , ngramsLocalPatch
+                                           , performAction: performAction <<< CoreAction }
 
 
         autoUpdate :: Array R.Element
@@ -359,12 +361,7 @@ loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable"
                          { duration: 5000
                          , effect: performAction
                          $ CoreAction
-                         $ Synchronize { afterSync: chartsAfterSync
-                                                      path'
-                                                      asyncTasksRef
-                                                      nodeId
-                                                      treeReloadRef
-                                        }
+                         $ Synchronize { afterSync }
                          }
                        ]
                      else []

@@ -30,6 +30,7 @@ import Gargantext.Routes (AppRoute(..))
 import Gargantext.Sessions (useSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types as GT
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.App"
@@ -48,12 +49,12 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
     route      <- useHashRouter router Home
 
     asyncTasksRef <- R.useRef Nothing
-    treeReloadRef <- R.useRef Nothing
+    treeReloadRef <- GUR.newI
 
     showLogin  <- R.useState' false
     backend    <- R.useState' Nothing
 
-    appReload  <- R.useState' 0
+    appReload  <- GUR.new
 
     showCorpus <- R.useState' false
 

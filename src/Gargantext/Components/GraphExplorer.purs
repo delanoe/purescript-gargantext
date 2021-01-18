@@ -37,6 +37,7 @@ import Gargantext.Sessions (Session, Sessions, get)
 import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer"
@@ -55,7 +56,7 @@ type LayoutProps = (
 
 type Props =
   ( graph          :: SigmaxT.SGraph
-  , graphVersion   :: Types.ReloadS
+  , graphVersion   :: GUR.ReloadS
   , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData      :: Maybe GET.MetaData
   | LayoutProps
@@ -69,10 +70,10 @@ explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = R.hooksComponentWithModule thisModule "explorerLayout" cpt
   where
     cpt props _ = do
-      graphVersion <- R.useState' 0
+      graphVersion <- GUR.new
       pure $ explorerLayoutView graphVersion props
 
-explorerLayoutView :: Types.ReloadS -> Record LayoutProps -> R.Element
+explorerLayoutView :: GUR.ReloadS -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
     el = R.hooksComponentWithModule thisModule "explorerLayoutView" cpt
@@ -115,16 +116,16 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
-      graphVersionRef       <- R.useRef (fst graphVersion)
-      treeReload <- R.useState' 0
-      treeReloadRef <- R.useRef $ Just treeReload
-      controls   <- Controls.useGraphControls { forceAtlasS
-                                             , graph
-                                             , graphId
-                                             , hyperdataGraph
-                                             , session
-                                             , treeReload: \_ -> (snd treeReload) $ (+) 1
-                                             }
+      graphVersionRef <- R.useRef (GUR.value graphVersion)
+      treeReload <- GUR.new
+      treeReloadRef <- GUR.newIInitialized treeReload
+      controls <- Controls.useGraphControls { forceAtlasS
+                                           , graph
+                                           , graphId
+                                           , hyperdataGraph
+                                           , session
+                                           , treeReload: \_ -> GUR.bump treeReload
+                                           }
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -137,7 +138,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
           let rSigma = R.readRef controls.sigmaRef
           Sigmax.cleanupSigma rSigma "explorerCpt"
           R.setRef dataRef graph
-          R.setRef graphVersionRef (fst graphVersion)
+          R.setRef graphVersionRef (GUR.value graphVersion)
           -- Reinitialize bunch of state as well.
           snd controls.removedNodeIds  $ const SigmaxT.emptyNodeIds
           snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
@@ -246,23 +247,23 @@ type TreeProps =
   , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , handed        :: Types.Handed
-  , reload        :: Types.ReloadS
+  , reload        :: GUR.ReloadS
   , sessions      :: Sessions
   , show          :: Boolean
   , showLogin     :: R.Setter Boolean
-  , treeReloadRef :: R.Ref (Maybe Types.ReloadS)
+  , treeReloadRef :: GUR.ReloadWithInitializeRef
   )
 
 type MSidebarProps =
   ( frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphId         :: GET.GraphId
-  , graphVersion    :: Types.ReloadS
+  , graphVersion    :: GUR.ReloadS
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , showSidePanel   :: R.State GET.SidePanelState
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
-  , treeReload      :: Types.ReloadS
+  , treeReload      :: GUR.ReloadS
   )
 
 type GraphProps = (
@@ -370,11 +371,11 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> Types.ReloadS -> GET.GraphId -> Aff GET.HyperdataGraph
-getNodes session (graphVersion /\ _) graphId =
+getNodes :: Session -> GUR.ReloadS -> GET.GraphId -> Aff GET.HyperdataGraph
+getNodes session graphVersion graphId =
   get session $ NodeAPI Types.Graph
                         (Just graphId)
-                        ("?version=" <> show graphVersion)
+                        ("?version=" <> (show $ GUR.value graphVersion))
 
 
 transformGraph :: Record Controls.Controls -> SigmaxT.SGraph -> SigmaxT.SGraph
