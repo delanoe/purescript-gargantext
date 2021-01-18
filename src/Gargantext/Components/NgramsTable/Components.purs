@@ -129,12 +129,26 @@ renderNgramsTreeCpt = R.hooksComponentWithModule thisModule "renderNgramsTree" c
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 
-type TreeProps =
+type TagProps =
   ( ngramsClick :: NgramsClick
   , ngramsDepth :: NgramsDepth
-  , ngramsEdit  :: NgramsClick
   , ngramsStyle :: Array DOM.Props
+  )
+
+{- TODO refactor here
+-- tag :: TagProps -> Array R.Element -> R.Element
+tag tagProps =
+  case tagProps.ngramsClick tagProps.ngramsDepth of
+    Just effect ->
+      a (tagProps.ngramsStyle <> [DOM.onClick $ const effect])
+    Nothing ->
+      span tagProps.ngramsStyle
+-}
+
+type TreeProps =
+  ( ngramsEdit  :: NgramsClick
   , ngramsTable :: NgramsTable
+  | TagProps
   )
 
 tree :: Record TreeProps -> R.Element
@@ -149,7 +163,8 @@ treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
           ([ H.i { className, style } [] ]
            <> [ R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ] ]
            <> maybe [] edit (ngramsEdit ngramsDepth)
-           <> [ forest cs ])
+           <> [ forest cs ]
+          )
       where
         tag =
           case ngramsClick ngramsDepth of
