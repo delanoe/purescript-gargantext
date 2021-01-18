@@ -313,7 +313,7 @@ renameableTextCpt = R.hooksComponentWithModule thisModule "renameableTextCpt" cp
     cpt {isEditing: (true /\ setIsEditing), onRename, state: (text /\ setText)} _ = do
       pure $ H.div { className: "input-group" } [
           inputWithEnter {
-               autoFocus: false
+              autoFocus: false
              , autoSave: false
              , className: "form-control text"
              , defaultValue: text
