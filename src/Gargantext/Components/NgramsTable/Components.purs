@@ -111,7 +111,7 @@ renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
 renderNgramsTreeCpt :: R.Component RenderNgramsTree
 renderNgramsTreeCpt = R.hooksComponentWithModule thisModule "renderNgramsTree" cpt
   where
-    cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit } _ =
+    cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit} _ =
       pure $ H.ul {} [
         H.span { className: "tree" } [
           H.span { className: "righthanded" } [
@@ -210,18 +210,23 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
         , selected
         , checkbox T.MapTerm
         , checkbox T.StopTerm
-        , H.div {} [
-          if ngramsParent == Nothing
-            then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
-            else
-              H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } } [
-                  H.i { className: "glyphicon glyphicon-plus" } []
-                , (R2.buff $ span ngramsStyle [text $ " " <> ngramsTermText ngrams])
-              ]
-        ]
+        , H.div {} ( if ngramsParent == Nothing
+                       then [renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }]
+                       else [H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
+                                 [ H.i { className: "glyphicon glyphicon-plus" } []]
+                            , R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
+                            ]
+                   )
         , H.text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
       ]
       where
+        ngramsDepth= {ngrams, depth: 0 }
+        tag =
+          case ngramsClick ngramsDepth of
+            Just effect ->
+              a (ngramsStyle <> [DOM.onClick $ const effect])
+            Nothing ->
+              span ngramsStyle
         onClick _ = do
           R2.callTrigger toggleSidePanel unit
         termList    = ngramsElement ^. _NgramsElement <<< _list
