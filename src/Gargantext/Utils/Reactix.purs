@@ -115,6 +115,12 @@ select = createDOM "select"
 menu :: ElemFactory
 menu = createDOM "menu"
 
+frame :: ElemFactory
+frame = createDOM "frame"
+
+frameset :: ElemFactory
+frameset = createDOM "frameset"
+
 keyCode :: forall event. event -> Effect Int
 keyCode = runEffectFn1 _keyCode
 
