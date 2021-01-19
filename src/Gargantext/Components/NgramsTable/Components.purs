@@ -232,7 +232,7 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
         , H.div {} ( if ngramsParent == Nothing
                        then [renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }]
                        else [H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
-                                 [ H.i { className: "glyphicon glyphicon-plus" } []]
+                                 [ H.i { className: "fa fa-plus" } []]
                             , R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
                             ]
                    )
